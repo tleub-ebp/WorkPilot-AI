@@ -171,15 +171,9 @@ def detect_project_type(project_dir: Path) -> str:
         # Try to detect API framework
         deps_text = ""
         if requirements.exists():
-            try:
-                deps_text = requirements.read_text(encoding="utf-8").lower()
-            except (OSError, UnicodeDecodeError):
-                pass  # Skip if file is unreadable
+            deps_text = requirements.read_text().lower()
         if pyproject.exists():
-            try:
-                deps_text += pyproject.read_text(encoding="utf-8").lower()
-            except (OSError, UnicodeDecodeError):
-                pass  # Skip if file is unreadable
+            deps_text += pyproject.read_text().lower()
 
         if "fastapi" in deps_text or "flask" in deps_text or "django" in deps_text:
             return "python_api"

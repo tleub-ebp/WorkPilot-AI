@@ -82,7 +82,7 @@ class AgentRunner:
             return False, f"Prompt not found: {prompt_path}"
 
         # Load prompt
-        prompt = prompt_path.read_text(encoding="utf-8")
+        prompt = prompt_path.read_text()
         debug_detailed(
             "agent_runner",
             "Loaded prompt file",
