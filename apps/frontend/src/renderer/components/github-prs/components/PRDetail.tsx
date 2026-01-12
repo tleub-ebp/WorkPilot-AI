@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Bot,
@@ -13,13 +13,17 @@ import {
   CheckCheck,
   MessageSquare,
   FileText,
+  ExternalLink,
+  Play,
+  Clock,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { Card, CardContent } from '../../ui/card';
 import { ScrollArea } from '../../ui/scroll-area';
 import { Progress } from '../../ui/progress';
-import { formatDate } from '../utils/formatDate';
 
 // Local components
 import { CollapsibleCard } from './CollapsibleCard';
@@ -29,21 +33,24 @@ import { ReviewFindings } from './ReviewFindings';
 import { PRLogs } from './PRLogs';
 
 import type { PRData, PRReviewResult, PRReviewProgress } from '../hooks/useGitHubPRs';
-import type { NewCommitsCheck, PRLogs as PRLogsType } from '../../../../preload/api/modules/github-api';
+import type { NewCommitsCheck, MergeReadiness, PRLogs as PRLogsType, WorkflowsAwaitingApprovalResult } from '../../../../preload/api/modules/github-api';
 
 interface PRDetailProps {
   pr: PRData;
+  projectId: string;
   reviewResult: PRReviewResult | null;
   previousReviewResult: PRReviewResult | null;
   reviewProgress: PRReviewProgress | null;
+  startedAt: string | null;
   isReviewing: boolean;
   initialNewCommitsCheck?: NewCommitsCheck | null;
   isActive?: boolean;
+  isLoadingFiles?: boolean;
   onRunReview: () => void;
   onRunFollowupReview: () => void;
   onCheckNewCommits: () => Promise<NewCommitsCheck>;
   onCancelReview: () => void;
-  onPostReview: (selectedFindingIds?: string[]) => Promise<boolean>;
+  onPostReview: (selectedFindingIds?: string[], options?: { forceApprove?: boolean }) => Promise<boolean>;
   onPostComment: (body: string) => void;
   onMergePR: (mergeMethod?: 'merge' | 'squash' | 'rebase') => void;
   onAssignPR: (username: string) => void;
@@ -63,12 +70,15 @@ function getStatusColor(status: PRReviewResult['overallStatus']): string {
 
 export function PRDetail({
   pr,
+  projectId,
   reviewResult,
   previousReviewResult,
   reviewProgress,
+  startedAt,
   isReviewing,
   initialNewCommitsCheck,
-  isActive = false,
+  isActive: _isActive = false,
+  isLoadingFiles = false,
   onRunReview,
   onRunFollowupReview,
   onCheckNewCommits,
@@ -79,13 +89,17 @@ export function PRDetail({
   onAssignPR: _onAssignPR,
   onGetLogs,
 }: PRDetailProps) {
-  const { t, i18n } = useTranslation('common');
+  const { t } = useTranslation('common');
   // Selection state for findings
   const [selectedFindingIds, setSelectedFindingIds] = useState<Set<string>>(new Set());
   const [postedFindingIds, setPostedFindingIds] = useState<Set<string>>(new Set());
   const [isPostingFindings, setIsPostingFindings] = useState(false);
   const [postSuccess, setPostSuccess] = useState<{ count: number; timestamp: number } | null>(null);
   const [isPosting, setIsPosting] = useState(false);
+  const [isPostingCleanReview, setIsPostingCleanReview] = useState(false);
+  const [cleanReviewPosted, setCleanReviewPosted] = useState(false);
+  const [cleanReviewError, setCleanReviewError] = useState<string | null>(null);
+  const [showCleanReviewErrorDetails, setShowCleanReviewErrorDetails] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
   // Initialize with store value, then sync and update via local checks
   const [newCommitsCheck, setNewCommitsCheck] = useState<NewCommitsCheck | null>(initialNewCommitsCheck ?? null);
@@ -98,6 +112,18 @@ export function PRDetail({
   const [prLogs, setPrLogs] = useState<PRLogsType | null>(null);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
   const logsLoadedRef = useRef(false);
+
+  // Merge readiness state (real-time validation of AI verdict freshness)
+  const [mergeReadiness, setMergeReadiness] = useState<MergeReadiness | null>(null);
+  const mergeReadinessAbortRef = useRef<AbortController | null>(null);
+
+  // Workflows awaiting approval state (for fork PRs)
+  const [workflowsAwaiting, setWorkflowsAwaiting] = useState<WorkflowsAwaitingApprovalResult | null>(null);
+  const [isApprovingWorkflow, setIsApprovingWorkflow] = useState<number | null>(null);
+  const [workflowsExpanded, setWorkflowsExpanded] = useState(true);
+
+  // Generate stable IDs for accessibility
+  const cleanReviewErrorDetailsId = useId();
 
   // Sync with store's newCommitsCheck when it changes (e.g., when switching PRs or after refresh)
   // Always sync to keep local state in sync with store, including null values
@@ -240,7 +266,100 @@ export function PRDetail({
     logsLoadedRef.current = false;
     setPrLogs(null);
     setLogsExpanded(false);
+    setCleanReviewPosted(false);
+    setCleanReviewError(null);
+    setIsPostingCleanReview(false);
+    setShowCleanReviewErrorDetails(false);
   }, [pr.number]);
+
+  // Check for workflows awaiting approval (fork PRs) when PR changes or review completes
+  useEffect(() => {
+    const checkWorkflows = async () => {
+      try {
+        const result = await window.electronAPI.github.getWorkflowsAwaitingApproval(
+          '', // projectId will be resolved from active project
+          pr.number
+        );
+        setWorkflowsAwaiting(result);
+      } catch {
+        setWorkflowsAwaiting(null);
+      }
+    };
+
+    checkWorkflows();
+    // Re-check when a review is completed (CI status might have changed)
+  }, [pr.number, reviewResult]);
+
+  // Check merge readiness (real-time validation) when PR is selected
+  // This runs on every PR selection to catch stale verdicts
+  useEffect(() => {
+    // Cancel any pending check
+    if (mergeReadinessAbortRef.current) {
+      mergeReadinessAbortRef.current.abort();
+    }
+    mergeReadinessAbortRef.current = new AbortController();
+
+    const checkMergeReadiness = async () => {
+      if (!projectId) {
+        setMergeReadiness(null);
+        return;
+      }
+
+      try {
+        const result = await window.electronAPI.github.checkMergeReadiness(projectId, pr.number);
+        // Only update if not aborted
+        if (!mergeReadinessAbortRef.current?.signal.aborted) {
+          setMergeReadiness(result);
+        }
+      } catch {
+        if (!mergeReadinessAbortRef.current?.signal.aborted) {
+          setMergeReadiness(null);
+        }
+      }
+    };
+
+    checkMergeReadiness();
+
+    return () => {
+      if (mergeReadinessAbortRef.current) {
+        mergeReadinessAbortRef.current.abort();
+      }
+    };
+  }, [pr.number, projectId]);
+
+  // Handler to approve a workflow
+  const handleApproveWorkflow = useCallback(async (runId: number) => {
+    setIsApprovingWorkflow(runId);
+    try {
+      const success = await window.electronAPI.github.approveWorkflow('', runId);
+      if (success) {
+        // Refresh the workflows list after approval
+        const result = await window.electronAPI.github.getWorkflowsAwaitingApproval('', pr.number);
+        setWorkflowsAwaiting(result);
+      }
+    } finally {
+      setIsApprovingWorkflow(null);
+    }
+  }, [pr.number]);
+
+  // Handler to approve all workflows at once
+  const handleApproveAllWorkflows = useCallback(async () => {
+    if (!workflowsAwaiting?.workflow_runs.length) return;
+
+    for (const workflow of workflowsAwaiting.workflow_runs) {
+      setIsApprovingWorkflow(workflow.id);
+      try {
+        await window.electronAPI.github.approveWorkflow('', workflow.id);
+      } catch {
+        // Continue with other workflows even if one fails
+      }
+    }
+    setIsApprovingWorkflow(null);
+
+    // Refresh the workflows list
+    const result = await window.electronAPI.github.getWorkflowsAwaitingApproval('', pr.number);
+    setWorkflowsAwaiting(result);
+  }, [pr.number, workflowsAwaiting]);
 
   // Count selected findings by type for the button label
   const selectedCount = selectedFindingIds.size;
@@ -275,8 +394,20 @@ export function PRDetail({
   }, [reviewResult]);
 
   // Compute the overall PR review status for visual display
-  type PRStatus = 'not_reviewed' | 'reviewed_pending_post' | 'waiting_for_changes' | 'ready_to_merge' | 'needs_attention' | 'ready_for_followup' | 'followup_issues_remain';
+  type PRStatus = 'not_reviewed' | 'reviewed_pending_post' | 'waiting_for_changes' | 'ready_to_merge' | 'needs_attention' | 'ready_for_followup' | 'followup_issues_remain' | 'reviewing';
   const prStatus: { status: PRStatus; label: string; description: string; icon: React.ReactNode; color: string } = useMemo(() => {
+    // Check for in-progress review FIRST (before checking result)
+    // This ensures the running review state is visible when switching back to a PR
+    if (isReviewing) {
+      return {
+        status: 'reviewing',
+        label: t('prReview.aiReviewInProgress'),
+        description: reviewProgress?.message || t('prReview.analysisInProgress'),
+        icon: <Bot className="h-5 w-5 animate-pulse" />,
+        color: 'bg-blue-500/10 text-blue-500 border-blue-500/30',
+      };
+    }
+
     if (!reviewResult || !reviewResult.success) {
       return {
         status: 'not_reviewed',
@@ -419,17 +550,20 @@ export function PRDetail({
       icon: <MessageSquare className="h-5 w-5" />,
       color: 'bg-primary/20 text-primary border-primary/50',
     };
-  }, [reviewResult, postedFindingIds, isReadyToMerge, newCommitsCheck, t]);
+  }, [isReviewing, reviewProgress, reviewResult, postedFindingIds, isReadyToMerge, newCommitsCheck, t]);
 
   const handlePostReview = async () => {
     const idsToPost = Array.from(selectedFindingIds);
     if (idsToPost.length === 0) return;
 
+    // Capture current PR number to prevent state leaks across PR switches
+    const currentPr = pr.number;
+
     setIsPostingFindings(true);
     try {
       const success = await onPostReview(idsToPost);
-      if (success) {
-        // Mark these findings as posted
+      if (success && pr.number === currentPr) {
+        // Mark these findings as posted only if PR hasn't changed
         setPostedFindingIds(prev => new Set([...prev, ...idsToPost]));
         // Clear selection
         setSelectedFindingIds(new Set());
@@ -440,68 +574,110 @@ export function PRDetail({
         setTimeout(() => checkForNewCommits(), 500);
       }
     } finally {
-      setIsPostingFindings(false);
+      // Clear loading state if PR hasn't changed
+      if (pr.number === currentPr) {
+        setIsPostingFindings(false);
+      }
     }
   };
 
   const handleApprove = async () => {
     if (!reviewResult) return;
 
+    // Capture current PR number to prevent state leaks across PR switches
+    const currentPr = pr.number;
+
     setIsPosting(true);
     try {
       // Auto-assign current user (you can get from GitHub config)
       // For now, we'll just post the comment
       const approvalMessage = `## ✅ Auto Claude PR Review - APPROVED\n\n${reviewResult.summary}\n\n---\n*This approval was generated by Auto Claude.*`;
-      await onPostComment(approvalMessage);
+      await Promise.resolve(onPostComment(approvalMessage));
     } finally {
-      setIsPosting(false);
+      // Clear loading state if PR hasn't changed
+      if (pr.number === currentPr) {
+        setIsPosting(false);
+      }
     }
   };
 
-  // Auto-approval for clean PRs - posts LOW findings as suggestions + approval comment
+  // Auto-approval for clean PRs - posts approval with LOW findings as suggestions in a SINGLE comment
   // NOTE: GitHub PR comments are intentionally in English as it's the lingua franca
   // for code reviews and GitHub's international developer community. The comment
   // content is meant to be read by contributors who may have different locales.
   const handleAutoApprove = async () => {
     if (!reviewResult) return;
+
+    // Capture current PR number to prevent state leaks across PR switches
+    const currentPr = pr.number;
+
     setIsPosting(true);
     try {
-      // Step 1: Post any LOW findings as non-blocking suggestions
+      // Post approval with suggestions in a single review comment
+      // This uses forceApprove to set APPROVE status even with LOW findings
       const lowFindingIds = lowSeverityFindings.map(f => f.id);
-      if (lowFindingIds.length > 0) {
-        const success = await onPostReview(lowFindingIds);
-        if (!success) {
-          // Failed to post findings, don't proceed with approval
-          return;
-        }
-        // Mark them as posted locally
+
+      const success = await onPostReview(lowFindingIds, { forceApprove: true });
+      if (success && lowFindingIds.length > 0 && pr.number === currentPr) {
+        // Mark findings as posted locally only if PR hasn't changed
         setPostedFindingIds(prev => new Set([...prev, ...lowFindingIds]));
       }
-
-      // Step 2: Post the approval comment
-      const findingsNote = lowFindingIds.length > 0
-        ? `- ${lowFindingIds.length} low-severity suggestion${lowFindingIds.length !== 1 ? 's' : ''} posted above`
-        : '- No issues found';
-
-      const approvalMessage = `## Auto Claude Review - APPROVED
-
-**Status:** Ready to Merge
-
-**Summary:** ${reviewResult.summary}
-
----
-**Review Details:**
-${findingsNote}
-- Reviewed at: ${formatDate(reviewResult.reviewedAt, i18n.language)}
-${reviewResult.isFollowupReview ? `- Follow-up review: All previous blocking issues resolved` : ''}
-
-*This automated review found no blocking issues. The PR can be safely merged.*
-
----
-*Generated by Auto Claude*`;
-      await onPostComment(approvalMessage);
     } finally {
-      setIsPosting(false);
+      // Clear loading state if PR hasn't changed
+      if (pr.number === currentPr) {
+        setIsPosting(false);
+      }
+    }
+  };
+
+  // Post clean review as a comment (does not change PR review status)
+  // This is for when a review has no findings or only LOW severity findings
+  // NOTE: GitHub PR comments are intentionally in English as it's the lingua franca
+  // for code reviews and GitHub's international developer community.
+  const handlePostCleanReview = async () => {
+    if (!reviewResult) return;
+
+    // Capture current PR number to prevent state leaks across PR switches
+    const currentPr = pr.number;
+
+    setIsPostingCleanReview(true);
+    setCleanReviewError(null); // Clear previous error
+    setShowCleanReviewErrorDetails(false); // Reset error details visibility
+    try {
+      // Format the clean review comment using i18n translations
+      const cleanReviewMessage = `${t('prReview.cleanReviewMessageTitle')}
+
+${t('prReview.cleanReviewMessageStatus')}
+
+${reviewResult.summary}
+
+---
+
+${t('prReview.cleanReviewMessageFooter')}`;
+
+      // Use Promise.resolve to handle both Promise and non-Promise implementations
+      await Promise.resolve(onPostComment(cleanReviewMessage));
+
+      // Only mark as posted on success if PR hasn't changed
+      if (pr.number === currentPr) {
+        setCleanReviewPosted(true);
+        setCleanReviewError(null);
+      }
+    } catch (err) {
+      // Log full error to console for debugging before rendering
+      console.error('Failed to post clean review comment:', err);
+
+      // Set user-friendly error message using translation key
+      const fullError = err instanceof Error ? err.message : String(err);
+      if (pr.number === currentPr) {
+        setCleanReviewError(fullError);
+      }
+      // Do NOT set cleanReviewPosted on failure
+    } finally {
+      // Clear loading state if PR hasn't changed
+      if (pr.number === currentPr) {
+        setIsPostingCleanReview(false);
+      }
     }
   };
 
@@ -519,12 +695,42 @@ ${reviewResult.isFollowupReview ? `- Follow-up review: All previous blocking iss
       <div className="p-6 max-w-5xl mx-auto space-y-6">
 
         {/* Refactored Header */}
-        <PRHeader pr={pr} />
+        <PRHeader pr={pr} isLoadingFiles={isLoadingFiles} />
+
+        {/* Merge Readiness Warning Banner - shows when real-time status contradicts AI verdict */}
+        {mergeReadiness && mergeReadiness.blockers.length > 0 && reviewResult?.success && (
+          prStatus.status === 'ready_to_merge' || prStatus.status === 'reviewed_pending_post'
+        ) && (
+          <Card className="border-warning/50 bg-warning/10 animate-in fade-in slide-in-from-top-2 duration-300">
+            <CardContent className="py-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-2">
+                  <p className="font-semibold text-warning">
+                    {t('prReview.verdictOutdated', 'AI verdict may be outdated')}
+                  </p>
+                  <ul className="text-sm text-warning/90 space-y-1">
+                    {mergeReadiness.blockers.map((blocker, idx) => (
+                      <li key={idx} className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-warning/70" />
+                        {blocker}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-warning/70 mt-2">
+                    {t('prReview.rerunReviewSuggestion', 'Consider re-running the review after resolving these issues.')}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Review Status & Actions */}
         <ReviewStatusTree
           status={prStatus.status}
           isReviewing={isReviewing}
+          startedAt={startedAt}
           reviewResult={reviewResult}
           previousReviewResult={previousReviewResult}
           postedCount={new Set([...postedFindingIds, ...(reviewResult?.postedFindingIds ?? [])]).size}
@@ -554,11 +760,34 @@ ${reviewResult.isFollowupReview ? `- Follow-up review: All previous blocking iss
                 </Button>
              )}
 
-             {/* Auto-approve for clean PRs (only LOW findings or no findings) */}
-             {isCleanReview && (
+             {/* Post Clean Review button - shows when review is clean and no findings are selected */}
+             {selectedCount === 0 && isCleanReview && !hasPostedFindings && !cleanReviewPosted && reviewResult?.overallStatus !== 'request_changes' && (
+                <Button
+                  onClick={handlePostCleanReview}
+                  disabled={isPostingCleanReview || isPosting}
+                  variant="secondary"
+                  className="flex-1 sm:flex-none"
+                >
+                  {isPostingCleanReview ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {t('prReview.postingCleanReview')}
+                    </>
+                  ) : (
+                    <>
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      {t('prReview.postCleanReview')}
+                    </>
+                  )}
+                </Button>
+             )}
+
+             {/* Approve button - consolidated logic to avoid duplicate buttons */}
+             {/* Don't show when overallStatus is 'request_changes' (e.g., workflows blocked, or other issues) */}
+             {isCleanReview && !hasPostedFindings && reviewResult?.overallStatus !== 'request_changes' && (
                 <Button
                   onClick={handleAutoApprove}
-                  disabled={isPosting}
+                  disabled={isPosting || isPostingCleanReview}
                   variant="default"
                   className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
@@ -581,33 +810,91 @@ ${reviewResult.isFollowupReview ? `- Follow-up review: All previous blocking iss
                 </Button>
              )}
 
-             {isReadyToMerge && (
-                <>
-                  <Button
-                    onClick={handleApprove}
-                    disabled={isPosting}
-                    variant="default"
-                    className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white"
-                  >
-                    {isPosting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
-                    {t('prReview.approve')}
-                  </Button>
-                  <Button
-                    onClick={handleMerge}
-                    disabled={isMerging}
-                    variant="outline"
-                    className="flex-1 sm:flex-none"
-                  >
-                    {isMerging ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <GitMerge className="h-4 w-4 mr-2" />}
-                    {t('prReview.merge')}
-                  </Button>
-                </>
+             {/* Manual approve button - only show for non-clean reviews that are ready to merge */}
+             {/* isReadyToMerge already checks for 'approve' status, so no need for additional check */}
+             {isReadyToMerge && !isCleanReview && !hasPostedFindings && (
+                <Button
+                  onClick={handleApprove}
+                  disabled={isPosting}
+                  variant="default"
+                  className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  {isPosting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                  {t('prReview.approve')}
+                </Button>
+             )}
+
+             {/* Merge button - only show after approval has been posted */}
+             {hasPostedFindings && (
+                <Button
+                  onClick={handleMerge}
+                  disabled={isMerging}
+                  variant="outline"
+                  className="flex-1 sm:flex-none gap-1.5 text-muted-foreground hover:text-foreground"
+                  title={t('prReview.mergeViaGitHub')}
+                >
+                  {isMerging ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <GitMerge className="h-4 w-4" />
+                      <span>{t('prReview.merge')}</span>
+                      <ExternalLink className="h-3 w-3 opacity-50" />
+                    </>
+                  )}
+                </Button>
              )}
 
              {postSuccess && (
                <div className="ml-auto flex items-center gap-2 text-emerald-600 text-sm font-medium animate-pulse">
                  <CheckCircle className="h-4 w-4" />
                  {t('prReview.postedFindings', { count: postSuccess.count })}
+               </div>
+             )}
+
+             {cleanReviewPosted && !postSuccess && (
+               <div className="ml-auto flex items-center gap-2 text-emerald-600 text-sm font-medium animate-pulse">
+                 <CheckCircle className="h-4 w-4" />
+                 {t('prReview.cleanReviewPosted')}
+               </div>
+             )}
+
+             {/* Clean review error display - inline pattern for action bar context */}
+             {/* Note: Uses inline layout (not Card) to match other action bar status messages.
+                 Separate Card-based error at line 972 handles review result errors. */}
+             {cleanReviewError && (
+               <div className="ml-auto flex items-center gap-2">
+                 <div className="flex items-center gap-2 text-destructive text-sm font-medium">
+                   <XCircle className="h-4 w-4" />
+                   {t('prReview.failedPostCleanReview')}
+                 </div>
+                 <button
+                   onClick={() => setShowCleanReviewErrorDetails(!showCleanReviewErrorDetails)}
+                   aria-expanded={showCleanReviewErrorDetails}
+                   aria-controls={cleanReviewErrorDetailsId}
+                   className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                 >
+                   {showCleanReviewErrorDetails ? (
+                     <>
+                       {t('prReview.hideErrorDetails')}
+                       <ChevronUp className="h-3 w-3" />
+                     </>
+                   ) : (
+                     <>
+                       {t('prReview.viewErrorDetails')}
+                       <ChevronDown className="h-3 w-3" />
+                     </>
+                   )}
+                 </button>
+               </div>
+             )}
+             {cleanReviewError && showCleanReviewErrorDetails && (
+               <div
+                 id={cleanReviewErrorDetailsId}
+                 className="ml-auto text-xs text-muted-foreground max-w-md truncate"
+                 title={cleanReviewError}
+               >
+                 {cleanReviewError}
                </div>
              )}
           </div>
@@ -646,7 +933,7 @@ ${reviewResult.isFollowupReview ? `- Follow-up review: All previous blocking iss
             <div className="p-4 space-y-6">
               {/* Follow-up Review Resolution Status */}
               {reviewResult.isFollowupReview && (
-                <div className="flex flex-wrap gap-3 pb-4 border-b border-border/50">
+                <div className="flex flex-wrap items-center gap-3 pb-4 border-b border-border/50">
                   {(reviewResult.resolvedFindings?.length ?? 0) > 0 && (
                     <Badge variant="outline" className="bg-success/10 text-success border-success/30 px-3 py-1">
                       <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
@@ -665,6 +952,21 @@ ${reviewResult.isFollowupReview ? `- Follow-up review: All previous blocking iss
                       {t('prReview.newIssue', { count: reviewResult.newFindingsSinceLastReview?.length ?? 0 })}
                     </Badge>
                   )}
+                  {/* Re-run follow-up review button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 ml-auto text-muted-foreground hover:text-foreground"
+                    onClick={onRunFollowupReview}
+                    disabled={isReviewing}
+                    title={t('prReview.rerunFollowup')}
+                  >
+                    {isReviewing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
                 </div>
               )}
 
@@ -696,6 +998,94 @@ ${reviewResult.isFollowupReview ? `- Follow-up review: All previous blocking iss
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Workflows Awaiting Approval - for fork PRs */}
+        {workflowsAwaiting && workflowsAwaiting.awaiting_approval > 0 && (
+          <CollapsibleCard
+            title={t('prReview.workflowsAwaitingApproval', { count: workflowsAwaiting.awaiting_approval })}
+            icon={<Clock className="h-4 w-4 text-warning" />}
+            badge={
+              <Badge variant="outline" className="text-xs bg-warning/10 text-warning border-warning/30">
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                {t('prReview.blockedByWorkflows')}
+              </Badge>
+            }
+            open={workflowsExpanded}
+            onOpenChange={setWorkflowsExpanded}
+          >
+            <div className="p-4 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {t('prReview.workflowsAwaitingDescription')}
+              </p>
+
+              <div className="space-y-2">
+                {workflowsAwaiting.workflow_runs.map((workflow) => (
+                  <div
+                    key={workflow.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border/50"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Clock className="h-4 w-4 text-warning shrink-0" />
+                      <div className="min-w-0">
+                        <span className="text-sm font-medium truncate block">
+                          {workflow.workflow_name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {workflow.name}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs"
+                        onClick={() => window.open(workflow.html_url, '_blank')}
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        {t('prReview.viewOnGitHub')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="h-7 text-xs"
+                        onClick={() => handleApproveWorkflow(workflow.id)}
+                        disabled={isApprovingWorkflow !== null}
+                      >
+                        {isApprovingWorkflow === workflow.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <>
+                            <Play className="h-3 w-3 mr-1" />
+                            {t('prReview.approveWorkflow')}
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {workflowsAwaiting.workflow_runs.length > 1 && (
+                <div className="flex justify-end pt-2 border-t border-border/50">
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={handleApproveAllWorkflows}
+                    disabled={isApprovingWorkflow !== null}
+                  >
+                    {isApprovingWorkflow !== null ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Play className="h-4 w-4 mr-2" />
+                    )}
+                    {t('prReview.approveAllWorkflows')}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CollapsibleCard>
         )}
 
         {/* Review Logs - show during review or after completion */}
