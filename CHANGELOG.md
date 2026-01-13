@@ -1,4 +1,4 @@
-## 2.7.3 - Terminal & Workflow Enhancements
+## 2.7.4 - Terminal & Workflow Enhancements
 
 ### ✨ New Features
 
