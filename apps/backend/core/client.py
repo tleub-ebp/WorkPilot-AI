@@ -709,6 +709,7 @@ def create_client(
        (see security.py for ALLOWED_COMMANDS)
     4. Tool filtering - Each agent type only sees relevant tools (prevents misuse)
     """
+    # Get OAuth token - Claude CLI handles token lifecycle internally
     oauth_token = require_auth_token()
 
     # Validate token is not encrypted before passing to SDK
