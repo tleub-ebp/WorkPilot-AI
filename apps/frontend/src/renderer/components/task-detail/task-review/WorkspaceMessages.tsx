@@ -107,22 +107,15 @@ export function StagedInProjectMessage({ task, projectPath, hasWorktree = false,
 
     try {
       // Call the discard/delete worktree command
-      // Pass skipStatusChange=true to prevent backend from resetting to 'backlog'
-      // since we explicitly set status to 'done' immediately after
-      const result = await window.electronAPI.discardWorktree(task.id, true);
+      const result = await window.electronAPI.discardWorktree(task.id);
 
       if (!result.success) {
         setError(result.error || 'Failed to delete worktree');
         return;
       }
 
-      // Mark task as done - check result since worktree is already deleted
-      const statusResult = await persistTaskStatus(task.id, 'done');
-      if (!statusResult.success) {
-        // Worktree is already deleted but status update failed - inform user of inconsistent state
-        setError('Worktree deleted but failed to update task status: ' + (statusResult.error || 'Unknown error'));
-        return;
-      }
+      // Mark task as done
+      await persistTaskStatus(task.id, 'done');
 
       // Auto-close modal after marking as done
       onClose?.();

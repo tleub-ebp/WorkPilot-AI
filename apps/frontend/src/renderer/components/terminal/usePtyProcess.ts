@@ -2,9 +2,7 @@ import { useEffect, useRef, useCallback, useState, type RefObject } from 'react'
 import { useTerminalStore } from '../../stores/terminal-store';
 
 // Maximum retry attempts for recreation when dimensions aren't ready
-// Increased from 10 to 30 (3 seconds total) to handle slow app startup scenarios
-// where xterm dimensions may take longer to stabilize
-const MAX_RECREATION_RETRIES = 30;
+const MAX_RECREATION_RETRIES = 10;
 // Delay between retry attempts in ms
 const RECREATION_RETRY_DELAY = 100;
 

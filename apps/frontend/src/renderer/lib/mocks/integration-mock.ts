@@ -98,7 +98,7 @@ export const integrationMock = {
 
   getGitHubIssues: async () => ({
     success: true,
-    data: { issues: [], hasMore: false }
+    data: []
   }),
 
   getGitHubIssue: async () => ({

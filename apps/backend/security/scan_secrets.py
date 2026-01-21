@@ -264,7 +264,7 @@ def load_secretsignore(project_dir: Path) -> list[str]:
 
     patterns = []
     try:
-        content = ignore_file.read_text(encoding="utf-8")
+        content = ignore_file.read_text()
         for line in content.splitlines():
             line = line.strip()
             # Skip comments and empty lines

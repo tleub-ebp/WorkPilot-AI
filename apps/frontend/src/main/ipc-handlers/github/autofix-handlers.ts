@@ -13,7 +13,6 @@ import type { BrowserWindow } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { IPC_CHANNELS } from '../../../shared/constants';
-import type { AuthFailureInfo } from '../../../shared/types/terminal';
 import { getGitHubConfig, githubFetch } from './utils';
 import { createSpecForIssue, buildIssueContext, buildInvestigationTask, updateImplementationPlanStatus } from './spec-utils';
 import type { Project } from '../../../shared/types';
@@ -33,21 +32,6 @@ import { getRunnerEnv } from './utils/runner-env';
 
 // Debug logging
 const { debug: debugLog } = createContextLogger('GitHub AutoFix');
-
-/**
- * Create an auth failure callback for subprocess runners.
- * This reduces duplication of the auth failure handling pattern.
- */
-function createAuthFailureCallback(
-  mainWindow: BrowserWindow | null,
-  context: string
-): ((authFailureInfo: AuthFailureInfo) => void) | undefined {
-  if (!mainWindow) return undefined;
-  return (authFailureInfo: AuthFailureInfo) => {
-    debugLog(`Auth failure detected in ${context}`, authFailureInfo);
-    mainWindow.webContents.send(IPC_CHANNELS.CLAUDE_AUTH_FAILURE, authFailureInfo);
-  };
-}
 
 /**
  * Auto-fix configuration stored in .auto-claude/github/config.json
@@ -138,7 +122,7 @@ function getAutoFixConfig(project: Project): AutoFixConfig {
       labels: data.auto_fix_labels ?? ['auto-fix'],
       requireHumanApproval: data.require_human_approval ?? true,
       botToken: data.bot_token,
-      model: data.model ?? 'claude-sonnet-4-5-20250929',
+      model: data.model ?? 'claude-sonnet-4-20250514',
       thinkingLevel: data.thinking_level ?? 'medium',
     };
   } catch {
@@ -149,7 +133,7 @@ function getAutoFixConfig(project: Project): AutoFixConfig {
     enabled: false,
     labels: ['auto-fix'],
     requireHumanApproval: true,
-    model: 'claude-sonnet-4-5-20250929',
+    model: 'claude-sonnet-4-20250514',
     thinkingLevel: 'medium',
   };
 }
@@ -280,10 +264,7 @@ async function checkAutoFixLabels(project: Project): Promise<number[]> {
 /**
  * Check for NEW issues not yet in the auto-fix queue (no labels required)
  */
-async function checkNewIssues(
-  project: Project,
-  onAuthFailure?: (authFailureInfo: AuthFailureInfo) => void
-): Promise<Array<{number: number}>> {
+async function checkNewIssues(project: Project): Promise<Array<{number: number}>> {
   const config = getAutoFixConfig(project);
   if (!config.enabled) {
     return [];
@@ -304,7 +285,6 @@ async function checkNewIssues(
     args,
     cwd: backendPath,
     env: subprocessEnv,
-    onAuthFailure,
     onComplete: (stdout) => {
       return parseJSONFromOutput<Array<{number: number}>>(stdout);
     },
@@ -555,12 +535,8 @@ export function registerAutoFixHandlers(
     IPC_CHANNELS.GITHUB_AUTOFIX_CHECK_NEW,
     async (_, projectId: string): Promise<Array<{number: number}>> => {
       debugLog('checkNewIssues handler called', { projectId });
-      const mainWindow = getMainWindow();
       const result = await withProjectOrNull(projectId, async (project) => {
-        const issues = await checkNewIssues(
-          project,
-          createAuthFailureCallback(mainWindow, 'check-new')
-        );
+        const issues = await checkNewIssues(project);
         debugLog('New issues found', { count: issues.length, issues });
         return issues;
       });
@@ -662,7 +638,6 @@ export function registerAutoFixHandlers(
             },
             onStdout: (line) => debugLog('STDOUT:', line),
             onStderr: (line) => debugLog('STDERR:', line),
-            onAuthFailure: createAuthFailureCallback(mainWindow, 'batch auto-fix'),
             onComplete: () => {
               const batches = getBatches(project);
               debugLog('Batch auto-fix completed', { batchCount: batches.length });
@@ -779,7 +754,6 @@ export function registerAutoFixHandlers(
             },
             onStdout: (line) => debugLog('STDOUT:', line),
             onStderr: (line) => debugLog('STDERR:', line),
-            onAuthFailure: createAuthFailureCallback(mainWindow, 'analyze preview'),
             onComplete: (stdout) => {
               const rawResult = parseJSONFromOutput<Record<string, unknown>>(stdout);
               const convertedResult = convertAnalyzePreviewResult(rawResult);

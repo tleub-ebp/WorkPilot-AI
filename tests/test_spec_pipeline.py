@@ -14,8 +14,9 @@ import json
 import pytest
 import sys
 import time
+from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 
 # Add auto-claude directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "Apps" / "backend"))
@@ -203,10 +204,10 @@ class TestSpecOrchestratorInit:
 
             orchestrator = SpecOrchestrator(
                 project_dir=temp_dir,
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-20250514",
             )
 
-            assert orchestrator.model == "claude-sonnet-4-5-20250929"
+            assert orchestrator.model == "claude-sonnet-4-20250514"
 
 
 class TestCreateSpecDir:
@@ -355,6 +356,9 @@ class TestCleanupOrphanedPendingFolders:
             import os
             os.utime(old_pending, (old_time, old_time))
 
+            # Store the inode to verify it's actually deleted and recreated
+            old_inode = old_pending.stat().st_ino
+
             # Creating orchestrator triggers cleanup
             # The cleanup removes 002-pending (empty and old)
             # Then _create_spec_dir creates 004-pending (after 003)
@@ -382,8 +386,8 @@ class TestCleanupOrphanedPendingFolders:
             import os
             os.utime(pending_with_req, (old_time, old_time))
 
-            # Creating orchestrator triggers cleanup (instance not used)
-            SpecOrchestrator(project_dir=temp_dir)
+            # Creating orchestrator triggers cleanup
+            orchestrator = SpecOrchestrator(project_dir=temp_dir)
 
             assert pending_with_req.exists()
 
@@ -404,8 +408,8 @@ class TestCleanupOrphanedPendingFolders:
             import os
             os.utime(pending_with_spec, (old_time, old_time))
 
-            # Creating orchestrator triggers cleanup (instance not used)
-            SpecOrchestrator(project_dir=temp_dir)
+            # Creating orchestrator triggers cleanup
+            orchestrator = SpecOrchestrator(project_dir=temp_dir)
 
             assert pending_with_spec.exists()
 
@@ -420,8 +424,8 @@ class TestCleanupOrphanedPendingFolders:
             recent_pending = specs_dir / "001-pending"
             recent_pending.mkdir()
 
-            # Creating orchestrator triggers cleanup (instance not used)
-            SpecOrchestrator(project_dir=temp_dir)
+            # Creating orchestrator triggers cleanup
+            orchestrator = SpecOrchestrator(project_dir=temp_dir)
 
             # Recent folder should still exist (unless orchestrator created 002-pending)
             # The folder might be gone if orchestrator picked a different name

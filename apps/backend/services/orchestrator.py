@@ -147,7 +147,7 @@ class ServiceOrchestrator:
 
         if not HAS_YAML:
             # Basic parsing without yaml module
-            content = self._compose_file.read_text(encoding="utf-8")
+            content = self._compose_file.read_text()
             if "services:" in content:
                 # Very basic service name extraction
                 lines = content.split("\n")

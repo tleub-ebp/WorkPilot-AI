@@ -109,21 +109,28 @@ export function RateLimitModal() {
       });
 
       if (result.success && result.data) {
-        // Reload profiles
-        loadClaudeProfiles();
-        setNewProfileName('');
-        // Close the modal
-        hideRateLimitModal();
+        // Initialize the profile (creates terminal and runs claude setup-token)
+        const initResult = await window.electronAPI.initializeClaudeProfile(result.data.id);
 
-        // Direct user to Settings to complete authentication
-        alert(
-          `${t('profileCreated.title', { profileName })}\n\n` +
-          `${t('profileCreated.instructions')}\n` +
-          `1. ${t('profileCreated.step1')}\n` +
-          `2. ${t('profileCreated.step2')}\n` +
-          `3. ${t('profileCreated.step3')}\n\n` +
-          `${t('profileCreated.footer')}`
-        );
+        if (initResult.success) {
+          // Reload profiles
+          loadClaudeProfiles();
+          setNewProfileName('');
+          // Close the modal so user can see the terminal
+          hideRateLimitModal();
+
+          // Notify the user about the terminal (non-blocking)
+          toast({
+            title: t('rateLimit.toast.authenticating', { profileName }),
+            description: t('rateLimit.toast.checkTerminal'),
+          });
+        } else {
+          toast({
+            variant: 'destructive',
+            title: t('rateLimit.toast.authStartFailed'),
+            description: initResult.error || t('rateLimit.toast.tryAgain'),
+          });
+        }
       }
     } catch (err) {
       debugError('[RateLimitModal] Failed to add profile:', err);

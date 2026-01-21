@@ -1,13 +1,11 @@
-import { useState, useRef } from 'react';
-import { useTranslation, Trans } from 'react-i18next';
+import { useState, useEffect, useRef } from 'react';
 import {
   Key,
   Loader2,
   CheckCircle2,
   AlertCircle,
   Info,
-  Sparkles,
-  RefreshCw
+  Sparkles
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
@@ -19,21 +17,57 @@ interface ClaudeOAuthFlowProps {
 
 /**
  * Claude OAuth flow component for setup wizard
- * Guides users through authenticating with Claude by opening a visible terminal
- * where they type /login to authenticate. Uses manual verification instead of
- * auto-polling to avoid race conditions with keychain auto-reconnect.
+ * Guides users through authenticating with Claude using claude setup-token
  */
 export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
-  const { t } = useTranslation('common');
-  const [status, setStatus] = useState<'ready' | 'authenticating' | 'verifying' | 'success' | 'error'>('ready');
+  const [status, setStatus] = useState<'ready' | 'authenticating' | 'success' | 'error'>('ready');
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState<string | undefined>();
-  const [authenticatingProfileId, setAuthenticatingProfileId] = useState<string | null>(null);
 
   // Track if we've already started auth to prevent double-execution
   const hasStartedRef = useRef(false);
   // Track the auto-advance timeout so we can cancel it on unmount/re-render
   const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Listen for OAuth token detection
+  useEffect(() => {
+    // Clear any pending timeout from previous effect run
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
+    }
+
+    const unsubscribe = window.electronAPI.onTerminalOAuthToken((info) => {
+      console.warn('[ClaudeOAuth] Token event received:', {
+        success: info.success,
+        hasEmail: !!info.email,
+        profileId: info.profileId
+      });
+
+      if (info.success) {
+        setEmail(info.email);
+        setStatus('success');
+        // Auto-advance after a short delay to show success message
+        // Store the timeout ID so cleanup can cancel it if needed
+        successTimeoutRef.current = setTimeout(() => {
+          successTimeoutRef.current = null; // Clear ref since timeout fired
+          onSuccess();
+        }, 1500);
+      } else {
+        setError(info.message || 'Failed to save OAuth token');
+        setStatus('error');
+      }
+    });
+
+    return () => {
+      unsubscribe?.();
+      // Clear timeout on cleanup to prevent calling onSuccess after unmount
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+        successTimeoutRef.current = null;
+      }
+    };
+  }, [onSuccess]);
 
   const handleStartAuth = async () => {
     if (hasStartedRef.current) {
@@ -55,17 +89,17 @@ export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
       }
 
       const activeProfileId = profilesResult.data.activeProfileId;
-      console.warn('[ClaudeOAuth] Authenticating profile:', activeProfileId);
+      console.warn('[ClaudeOAuth] Initializing profile:', activeProfileId);
 
-      // Open visible terminal for authentication
-      const result = await window.electronAPI.authenticateClaudeProfile(activeProfileId);
+      // Initialize the profile - this opens a terminal and runs 'claude setup-token'
+      const result = await window.electronAPI.initializeClaudeProfile(activeProfileId);
 
       if (!result.success) {
-        throw new Error(result.error || 'Failed to open terminal for authentication');
+        throw new Error(result.error || 'Failed to start authentication');
       }
 
-      setAuthenticatingProfileId(activeProfileId);
-      console.warn('[ClaudeOAuth] Terminal opened, waiting for user to complete /login...');
+      console.warn('[ClaudeOAuth] Authentication started, waiting for token...');
+      // Status will be updated by the event listener when token is detected
     } catch (err) {
       console.error('[ClaudeOAuth] Authentication failed:', err);
       setError(err instanceof Error ? err.message : 'Authentication failed');
@@ -74,45 +108,10 @@ export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
     }
   };
 
-  const handleVerifyAuth = async () => {
-    if (!authenticatingProfileId) {
-      setError(t('oauth.noProfileSelected'));
-      return;
-    }
-
-    setStatus('verifying');
-    setError(null);
-
-    try {
-      const result = await window.electronAPI.verifyClaudeProfileAuth(authenticatingProfileId);
-      console.warn('[ClaudeOAuth] Verification result:', result);
-
-      if (result.success && result.data?.authenticated) {
-        console.warn('[ClaudeOAuth] Auth verified! Email:', result.data.email);
-        setEmail(result.data.email);
-        setStatus('success');
-
-        // Auto-advance after a short delay to show success message
-        successTimeoutRef.current = setTimeout(() => {
-          successTimeoutRef.current = null;
-          onSuccess();
-        }, 1500);
-      } else {
-        setError(t('oauth.authNotDetected'));
-        setStatus('authenticating');
-      }
-    } catch (err) {
-      console.error('[ClaudeOAuth] Verification failed:', err);
-      setError(err instanceof Error ? err.message : 'Verification failed');
-      setStatus('authenticating');
-    }
-  };
-
   const handleRetry = () => {
     hasStartedRef.current = false;
     setStatus('ready');
     setError(null);
-    setAuthenticatingProfileId(null);
   };
 
   return (
@@ -126,13 +125,15 @@ export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
                 <Key className="h-6 w-6 text-info shrink-0 mt-0.5" />
                 <div className="flex-1 space-y-3">
                   <h3 className="text-lg font-medium text-foreground">
-                    {t('oauth.authenticateTitle')}
+                    Authenticate with Claude
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    {t('oauth.authenticateDescription')}
+                    Auto Claude requires Claude AI authentication for AI-powered features like
+                    Roadmap generation, Task automation, and Ideation.
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {t('oauth.authenticateTerminalInfo')}
+                    This will open a browser window to authenticate with your Claude account.
+                    Your credentials are stored securely and are valid for 1 year.
                   </p>
                 </div>
               </div>
@@ -142,25 +143,25 @@ export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
           <div className="flex justify-center">
             <Button onClick={handleStartAuth} size="lg" className="gap-2">
               <Key className="h-5 w-5" />
-              {t('oauth.authenticateTitle')}
+              Authenticate with Claude
             </Button>
           </div>
         </div>
       )}
 
-      {/* Authenticating - waiting for user to complete /login */}
+      {/* Authenticating */}
       {status === 'authenticating' && (
         <Card className="border border-info/30 bg-info/10">
           <CardContent className="p-6">
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <Key className="h-6 w-6 text-info shrink-0" />
+                <Loader2 className="h-6 w-6 animate-spin text-info shrink-0" />
                 <div className="flex-1">
                   <h3 className="text-lg font-medium text-foreground">
-                    {t('oauth.completeAuthTitle')}
+                    Authenticating...
                   </h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {t('oauth.terminalOpened')}
+                    A terminal window has opened. Please complete the authentication in your browser.
                   </p>
                 </div>
               </div>
@@ -169,57 +170,16 @@ export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
                 <div className="flex items-start gap-2">
                   <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                   <div className="text-xs text-muted-foreground space-y-1">
-                    <p className="font-medium">{t('oauth.completeStepsTitle')}</p>
+                    <p className="font-medium">What's happening:</p>
                     <ol className="list-decimal list-inside space-y-1 ml-2">
-                      <li>
-                        <Trans
-                          i18nKey="oauth.stepTypeLogin"
-                          components={{ code: <code className="font-mono bg-muted px-1 rounded" /> }}
-                        />
-                      </li>
-                      <li>{t('oauth.stepBrowserOpen')}</li>
-                      <li>{t('oauth.stepCompleteOAuth')}</li>
-                      <li>
-                        <Trans
-                          i18nKey="oauth.stepReturnAndVerify"
-                          components={{ strong: <strong className="font-semibold" /> }}
-                        />
-                      </li>
+                      <li>A terminal opened and ran <code className="px-1 bg-muted rounded">claude setup-token</code></li>
+                      <li>Your browser should open to authenticate with Claude</li>
+                      <li>Complete the OAuth flow in your browser</li>
+                      <li>The terminal will display your token (starts with sk-ant-oat01-...)</li>
+                      <li>Auto Claude will automatically detect and save it</li>
                     </ol>
                   </div>
                 </div>
-              </div>
-
-              {error && (
-                <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-3">
-                  <p className="text-sm text-destructive">{error}</p>
-                </div>
-              )}
-
-              <div className="flex justify-center gap-3">
-                <Button onClick={handleVerifyAuth} className="gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  {t('oauth.verifyAuth')}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Verifying */}
-      {status === 'verifying' && (
-        <Card className="border border-info/30 bg-info/10">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <Loader2 className="h-6 w-6 animate-spin text-info shrink-0" />
-              <div className="flex-1">
-                <h3 className="text-lg font-medium text-foreground">
-                  {t('oauth.verifyingAuth')}
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t('oauth.checkingCredentials')}
-                </p>
               </div>
             </div>
           </CardContent>
@@ -234,14 +194,14 @@ export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
               <CheckCircle2 className="h-6 w-6 text-success shrink-0 mt-0.5" />
               <div className="flex-1">
                 <h3 className="text-lg font-medium text-success">
-                  {t('oauth.successTitle')}
+                  Successfully Authenticated!
                 </h3>
                 <p className="text-sm text-success/80 mt-1">
-                  {email ? t('oauth.connectedAs', { email }) : t('oauth.credentialsSaved')}
+                  {email ? `Connected as ${email}` : 'Your Claude credentials have been saved'}
                 </p>
                 <div className="flex items-center gap-2 mt-3 text-xs text-success/70">
                   <Sparkles className="h-3 w-3" />
-                  <span>{t('oauth.canUseFeatures')}</span>
+                  <span>You can now use all Auto Claude AI features</span>
                 </div>
               </div>
             </div>
@@ -258,7 +218,7 @@ export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
                 <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <h3 className="text-lg font-medium text-destructive">
-                    {t('oauth.authFailed')}
+                    Authentication Failed
                   </h3>
                   <p className="text-sm text-destructive/80 mt-1">{error}</p>
                 </div>
@@ -267,13 +227,12 @@ export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
           </Card>
 
           <div className="flex justify-center gap-3">
-            <Button onClick={handleRetry} variant="outline" className="gap-2">
-              <RefreshCw className="h-4 w-4" />
-              {t('buttons.retry')}
+            <Button onClick={handleRetry} variant="outline">
+              Retry
             </Button>
             {onCancel && (
               <Button onClick={onCancel} variant="ghost">
-                {t('buttons.cancel')}
+                Cancel
               </Button>
             )}
           </div>
@@ -284,7 +243,7 @@ export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
       {(status === 'ready' || status === 'authenticating') && onCancel && (
         <div className="flex justify-center pt-2">
           <Button onClick={onCancel} variant="ghost" size="sm">
-            {t('oauth.skipForNow')}
+            Skip for now
           </Button>
         </div>
       )}

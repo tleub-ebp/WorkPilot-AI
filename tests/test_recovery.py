@@ -11,26 +11,20 @@ Tests the recovery system functionality including:
 """
 
 import json
-import os
 import sys
 import tempfile
 import shutil
 from pathlib import Path
+from datetime import datetime
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from recovery import RecoveryManager, FailureType
+from recovery import RecoveryManager, FailureType, RecoveryAction
 
 
 def setup_test_environment():
-    """Create temporary directories for testing.
-
-    IMPORTANT: This function properly isolates git operations by clearing
-    git environment variables that may be set by pre-commit hooks. Without
-    this isolation, git operations could affect the parent repository when
-    tests run inside a git worktree (e.g., during pre-commit validation).
-    """
+    """Create temporary directories for testing."""
     temp_dir = Path(tempfile.mkdtemp())
     spec_dir = temp_dir / "spec"
     project_dir = temp_dir / "project"
@@ -38,27 +32,9 @@ def setup_test_environment():
     spec_dir.mkdir(parents=True)
     project_dir.mkdir(parents=True)
 
-    # Clear git environment variables that may be set by pre-commit hooks
-    # to avoid git operations affecting the parent repository
-    import subprocess
-    git_vars_to_clear = [
-        "GIT_DIR",
-        "GIT_WORK_TREE",
-        "GIT_INDEX_FILE",
-        "GIT_OBJECT_DIRECTORY",
-        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
-    ]
-
-    saved_env = {}
-    for key in git_vars_to_clear:
-        saved_env[key] = os.environ.pop(key, None)
-
-    # Set GIT_CEILING_DIRECTORIES to prevent git from discovering parent .git
-    saved_env["GIT_CEILING_DIRECTORIES"] = os.environ.get("GIT_CEILING_DIRECTORIES")
-    os.environ["GIT_CEILING_DIRECTORIES"] = str(temp_dir)
-
     # Initialize git repo in project dir
-    subprocess.run(["git", "init"], cwd=project_dir, capture_output=True, check=True)
+    import subprocess
+    subprocess.run(["git", "init"], cwd=project_dir, capture_output=True)
     subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=project_dir, capture_output=True)
     subprocess.run(["git", "config", "user.name", "Test User"], cwd=project_dir, capture_output=True)
 
@@ -68,35 +44,22 @@ def setup_test_environment():
     subprocess.run(["git", "add", "."], cwd=project_dir, capture_output=True)
     subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=project_dir, capture_output=True)
 
-    # Ensure branch is named 'main' (some git configs default to 'master')
-    subprocess.run(["git", "branch", "-M", "main"], cwd=project_dir, capture_output=True)
-
-    # Return saved_env so caller can restore it in cleanup
-    return temp_dir, spec_dir, project_dir, saved_env
+    return temp_dir, spec_dir, project_dir
 
 
-def cleanup_test_environment(temp_dir, saved_env=None):
-    """Remove temporary directories and restore environment variables."""
+def cleanup_test_environment(temp_dir):
+    """Remove temporary directories."""
     shutil.rmtree(temp_dir, ignore_errors=True)
-
-    # Restore original environment variables if provided
-    if saved_env is not None:
-        for key, value in saved_env.items():
-            if value is None:
-                os.environ.pop(key, None)
-            else:
-                os.environ[key] = value
 
 
 def test_initialization():
     """Test RecoveryManager initialization."""
     print("TEST: Initialization")
 
-    temp_dir, spec_dir, project_dir, saved_env = setup_test_environment()
+    temp_dir, spec_dir, project_dir = setup_test_environment()
 
     try:
-        # Initialize manager to trigger directory creation (manager instance not needed)
-        _manager = RecoveryManager(spec_dir, project_dir)
+        manager = RecoveryManager(spec_dir, project_dir)
 
         # Check that memory directory was created
         assert (spec_dir / "memory").exists(), "Memory directory not created"
@@ -118,14 +81,14 @@ def test_initialization():
         print()
 
     finally:
-        cleanup_test_environment(temp_dir, saved_env)
+        cleanup_test_environment(temp_dir)
 
 
 def test_record_attempt():
     """Test recording chunk attempts."""
     print("TEST: Recording Attempts")
 
-    temp_dir, spec_dir, project_dir, saved_env = setup_test_environment()
+    temp_dir, spec_dir, project_dir = setup_test_environment()
 
     try:
         manager = RecoveryManager(spec_dir, project_dir)
@@ -167,14 +130,14 @@ def test_record_attempt():
         print()
 
     finally:
-        cleanup_test_environment(temp_dir, saved_env)
+        cleanup_test_environment(temp_dir)
 
 
 def test_circular_fix_detection():
     """Test circular fix detection."""
     print("TEST: Circular Fix Detection")
 
-    temp_dir, spec_dir, project_dir, saved_env = setup_test_environment()
+    temp_dir, spec_dir, project_dir = setup_test_environment()
 
     try:
         manager = RecoveryManager(spec_dir, project_dir)
@@ -199,14 +162,14 @@ def test_circular_fix_detection():
         print()
 
     finally:
-        cleanup_test_environment(temp_dir, saved_env)
+        cleanup_test_environment(temp_dir)
 
 
 def test_failure_classification():
     """Test failure type classification."""
     print("TEST: Failure Classification")
 
-    temp_dir, spec_dir, project_dir, saved_env = setup_test_environment()
+    temp_dir, spec_dir, project_dir = setup_test_environment()
 
     try:
         manager = RecoveryManager(spec_dir, project_dir)
@@ -229,14 +192,14 @@ def test_failure_classification():
         print()
 
     finally:
-        cleanup_test_environment(temp_dir, saved_env)
+        cleanup_test_environment(temp_dir)
 
 
 def test_recovery_action_determination():
     """Test recovery action determination."""
     print("TEST: Recovery Action Determination")
 
-    temp_dir, spec_dir, project_dir, saved_env = setup_test_environment()
+    temp_dir, spec_dir, project_dir = setup_test_environment()
 
     try:
         manager = RecoveryManager(spec_dir, project_dir)
@@ -269,14 +232,14 @@ def test_recovery_action_determination():
         print()
 
     finally:
-        cleanup_test_environment(temp_dir, saved_env)
+        cleanup_test_environment(temp_dir)
 
 
 def test_good_commit_tracking():
     """Test tracking of good commits."""
     print("TEST: Good Commit Tracking")
 
-    temp_dir, spec_dir, project_dir, saved_env = setup_test_environment()
+    temp_dir, spec_dir, project_dir = setup_test_environment()
 
     try:
         manager = RecoveryManager(spec_dir, project_dir)
@@ -322,14 +285,14 @@ def test_good_commit_tracking():
         print()
 
     finally:
-        cleanup_test_environment(temp_dir, saved_env)
+        cleanup_test_environment(temp_dir)
 
 
 def test_mark_subtask_stuck():
     """Test marking chunks as stuck."""
     print("TEST: Mark Chunk Stuck")
 
-    temp_dir, spec_dir, project_dir, saved_env = setup_test_environment()
+    temp_dir, spec_dir, project_dir = setup_test_environment()
 
     try:
         manager = RecoveryManager(spec_dir, project_dir)
@@ -356,14 +319,14 @@ def test_mark_subtask_stuck():
         print()
 
     finally:
-        cleanup_test_environment(temp_dir, saved_env)
+        cleanup_test_environment(temp_dir)
 
 
 def test_recovery_hints():
     """Test recovery hints generation."""
     print("TEST: Recovery Hints")
 
-    temp_dir, spec_dir, project_dir, saved_env = setup_test_environment()
+    temp_dir, spec_dir, project_dir = setup_test_environment()
 
     try:
         manager = RecoveryManager(spec_dir, project_dir)
@@ -388,7 +351,7 @@ def test_recovery_hints():
         print()
 
     finally:
-        cleanup_test_environment(temp_dir, saved_env)
+        cleanup_test_environment(temp_dir)
 
 
 def run_all_tests():

@@ -56,9 +56,7 @@ def import_dotenv():
 
 # Load .env with helpful error if dependencies not installed
 load_dotenv = import_dotenv()
-# NOTE: graphiti_config is imported lazily in validate_environment() to avoid
-# triggering graphiti_core -> real_ladybug -> pywintypes import chain before
-# platform dependency validation can run. See ACS-253.
+from graphiti_config import get_graphiti_status
 from linear_integration import LinearManager
 from linear_updater import is_linear_enabled
 from spec.pipeline import get_specs_dir
@@ -207,9 +205,6 @@ def validate_environment(spec_dir: Path) -> bool:
         print("Linear integration: DISABLED (set LINEAR_API_KEY to enable)")
 
     # Check Graphiti integration (optional but show status)
-    # Lazy import to avoid triggering pywintypes import before validation (ACS-253)
-    from graphiti_config import get_graphiti_status
-
     graphiti_status = get_graphiti_status()
     if graphiti_status["available"]:
         print("Graphiti memory: ENABLED")

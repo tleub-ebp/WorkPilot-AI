@@ -15,7 +15,6 @@ import type {
   WindowGetter,
   TerminalOperationResult
 } from './types';
-import { isWindows } from '../platform';
 import { debugLog, debugError } from '../../shared/utils/debug-logger';
 
 /**
@@ -43,9 +42,9 @@ export async function createTerminal(
   getWindow: WindowGetter,
   dataHandler: DataHandlerFn
 ): Promise<TerminalOperationResult> {
-  const { id, cwd, cols = 80, rows = 24, projectPath, skipOAuthToken, env: customEnv } = options;
+  const { id, cwd, cols = 80, rows = 24, projectPath } = options;
 
-  debugLog('[TerminalLifecycle] Creating terminal:', { id, cwd, cols, rows, projectPath, skipOAuthToken, hasCustomEnv: !!customEnv });
+  debugLog('[TerminalLifecycle] Creating terminal:', { id, cwd, cols, rows, projectPath });
 
   if (terminals.has(id)) {
     debugLog('[TerminalLifecycle] Terminal already exists, returning success:', id);
@@ -53,19 +52,10 @@ export async function createTerminal(
   }
 
   try {
-    // For auth terminals, don't inject existing OAuth token - we want a fresh login
-    const profileEnv = skipOAuthToken ? {} : PtyManager.getActiveProfileEnv();
+    const profileEnv = PtyManager.getActiveProfileEnv();
 
-    // Merge custom environment variables (e.g., CLAUDE_CONFIG_DIR for auth terminals)
-    const mergedEnv = customEnv ? { ...profileEnv, ...customEnv } : profileEnv;
-
-    if (mergedEnv.CLAUDE_CODE_OAUTH_TOKEN) {
+    if (profileEnv.CLAUDE_CODE_OAUTH_TOKEN) {
       debugLog('[TerminalLifecycle] Injecting OAuth token from active profile');
-    } else if (skipOAuthToken) {
-      debugLog('[TerminalLifecycle] Skipping OAuth token injection (auth terminal)');
-    }
-    if (mergedEnv.CLAUDE_CONFIG_DIR) {
-      debugLog('[TerminalLifecycle] Setting CLAUDE_CONFIG_DIR:', mergedEnv.CLAUDE_CONFIG_DIR);
     }
 
     // Validate cwd exists - if the directory doesn't exist (e.g., worktree removed),
@@ -76,14 +66,14 @@ export async function createTerminal(
       effectiveCwd = projectPath || os.homedir();
     }
 
-    const { pty: ptyProcess, shellType } = PtyManager.spawnPtyProcess(
+    const ptyProcess = PtyManager.spawnPtyProcess(
       effectiveCwd || os.homedir(),
       cols,
       rows,
-      mergedEnv
+      profileEnv
     );
 
-    debugLog('[TerminalLifecycle] PTY process spawned, pid:', ptyProcess.pid, 'shellType:', shellType);
+    debugLog('[TerminalLifecycle] PTY process spawned, pid:', ptyProcess.pid);
 
     const terminalCwd = effectiveCwd || os.homedir();
     const terminal: TerminalProcess = {
@@ -93,8 +83,7 @@ export async function createTerminal(
       projectPath,
       cwd: terminalCwd,
       outputBuffer: '',
-      title: `Terminal ${terminals.size + 1}`,
-      shellType
+      title: `Terminal ${terminals.size + 1}`
     };
 
     terminals.set(id, terminal);
@@ -108,7 +97,7 @@ export async function createTerminal(
     );
 
     if (projectPath) {
-      SessionHandler.persistSessionAsync(terminal);
+      SessionHandler.persistSession(terminal);
     }
 
     debugLog('[TerminalLifecycle] Terminal created successfully:', id);
@@ -141,8 +130,6 @@ export async function restoreTerminal(
   const storedSession = storedSessions.find(s => s.id === session.id);
   const storedIsClaudeMode = storedSession?.isClaudeMode ?? session.isClaudeMode;
   const storedClaudeSessionId = storedSession?.claudeSessionId ?? session.claudeSessionId;
-  // Get worktreeConfig from stored session (authoritative) since renderer-passed value may be stale
-  const storedWorktreeConfig = storedSession?.worktreeConfig ?? session.worktreeConfig;
 
   debugLog('[TerminalLifecycle] Restoring terminal session:', session.id,
     'Passed Claude mode:', session.isClaudeMode,
@@ -183,9 +170,8 @@ export async function restoreTerminal(
   terminal.title = session.title;
   // Only restore worktree config if the worktree directory still exists
   // (effectiveCwd matching session.cwd means no fallback was needed)
-  // Use storedWorktreeConfig (from disk) as the authoritative source
   if (effectiveCwd === session.cwd) {
-    terminal.worktreeConfig = storedWorktreeConfig;
+    terminal.worktreeConfig = session.worktreeConfig;
   } else {
     // Worktree was deleted, clear the config and update terminal's cwd
     terminal.worktreeConfig = undefined;
@@ -196,7 +182,7 @@ export async function restoreTerminal(
   // Re-persist after restoring title and worktreeConfig
   // (createTerminal persists before these are set, so we need to persist again)
   if (terminal.projectPath) {
-    SessionHandler.persistSessionAsync(terminal);
+    SessionHandler.persistSession(terminal);
   }
 
   // Send title change event for all restored terminals so renderer updates
@@ -231,7 +217,7 @@ export async function restoreTerminal(
 
     // Persist the Claude mode and pending resume state
     if (terminal.projectPath) {
-      SessionHandler.persistSessionAsync(terminal);
+      SessionHandler.persistSession(terminal);
     }
   }
 
@@ -242,9 +228,7 @@ export async function restoreTerminal(
 }
 
 /**
- * Destroy a terminal process.
- * On Windows, waits for the PTY to actually exit before returning to prevent
- * race conditions when recreating terminals (e.g., worktree switching).
+ * Destroy a terminal process
  */
 export async function destroyTerminal(
   id: string,
@@ -261,18 +245,8 @@ export async function destroyTerminal(
     // Release any claimed session ID for this terminal
     SessionHandler.releaseSessionId(id);
     onCleanup(id);
-
-    // Delete from map BEFORE killing to prevent race with onExit handler
+    PtyManager.killPty(terminal);
     terminals.delete(id);
-
-    // On Windows, wait for PTY to actually exit before returning
-    // This prevents race conditions when recreating terminals
-    if (isWindows()) {
-      await PtyManager.killPty(terminal, true);
-    } else {
-      PtyManager.killPty(terminal);
-    }
-
     return { success: true };
   } catch (error) {
     return {
@@ -289,7 +263,7 @@ export async function destroyAllTerminals(
   terminals: Map<string, TerminalProcess>,
   saveTimer: NodeJS.Timeout | null
 ): Promise<NodeJS.Timeout | null> {
-  await SessionHandler.persistAllSessionsAsync(terminals);
+  SessionHandler.persistAllSessions(terminals);
 
   if (saveTimer) {
     clearInterval(saveTimer);
@@ -302,9 +276,6 @@ export async function destroyAllTerminals(
     promises.push(
       new Promise((resolve) => {
         try {
-          // Note: We intentionally don't wait for PTY exit here (unlike destroyTerminal)
-          // because this function is only called during app shutdown when no terminals
-          // will be recreated. Waiting would only delay shutdown unnecessarily.
           PtyManager.killPty(terminal);
         } catch {
           // Ignore errors during cleanup

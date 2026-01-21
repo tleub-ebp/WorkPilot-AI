@@ -21,8 +21,6 @@ import time
 from pathlib import Path
 from typing import NamedTuple
 
-from core.git_executable import get_isolated_git_env
-
 logger = logging.getLogger(__name__)
 
 # Default cleanup policies (can be overridden via environment variables)
@@ -131,15 +129,14 @@ class PRWorktreeManager:
 
         logger.debug(f"Creating worktree: {worktree_path}")
 
-        env = get_isolated_git_env()
         try:
+            # Fetch the commit if not available locally (handles fork PRs)
             fetch_result = subprocess.run(
                 ["git", "fetch", "origin", head_sha],
                 cwd=self.project_dir,
                 capture_output=True,
                 text=True,
                 timeout=60,
-                env=env,
             )
 
             if fetch_result.returncode != 0:
@@ -152,13 +149,13 @@ class PRWorktreeManager:
             )
 
         try:
+            # Create detached worktree at the PR commit
             result = subprocess.run(
                 ["git", "worktree", "add", "--detach", str(worktree_path), head_sha],
                 cwd=self.project_dir,
                 capture_output=True,
                 text=True,
                 timeout=120,
-                env=env,
             )
 
             if result.returncode != 0:
@@ -196,7 +193,7 @@ class PRWorktreeManager:
 
         logger.debug(f"Removing worktree: {worktree_path}")
 
-        env = get_isolated_git_env()
+        # Try 1: git worktree remove
         try:
             result = subprocess.run(
                 ["git", "worktree", "remove", "--force", str(worktree_path)],
@@ -204,7 +201,6 @@ class PRWorktreeManager:
                 capture_output=True,
                 text=True,
                 timeout=60,
-                env=env,
             )
 
             if result.returncode == 0:
@@ -215,6 +211,7 @@ class PRWorktreeManager:
                 f"Timeout removing worktree {worktree_path.name}, falling back to shutil"
             )
 
+        # Try 2: shutil.rmtree fallback
         try:
             shutil.rmtree(worktree_path, ignore_errors=True)
             subprocess.run(
@@ -222,7 +219,6 @@ class PRWorktreeManager:
                 cwd=self.project_dir,
                 capture_output=True,
                 timeout=30,
-                env=env,
             )
             logger.warning(
                 f"[WorktreeManager] Used shutil fallback for: {worktree_path.name}"
@@ -287,7 +283,6 @@ class PRWorktreeManager:
                 capture_output=True,
                 text=True,
                 timeout=30,
-                env=get_isolated_git_env(),
             )
         except subprocess.TimeoutExpired:
             logger.warning("Timeout listing worktrees, returning empty set")
@@ -343,13 +338,13 @@ class PRWorktreeManager:
                 shutil.rmtree(wt.path, ignore_errors=True)
                 stats["orphaned"] += 1
 
+        # Refresh worktree list after orphan cleanup
         try:
             subprocess.run(
                 ["git", "worktree", "prune"],
                 cwd=self.project_dir,
                 capture_output=True,
                 timeout=30,
-                env=get_isolated_git_env(),
             )
         except subprocess.TimeoutExpired:
             logger.warning("Timeout pruning worktrees, continuing anyway")
@@ -434,7 +429,6 @@ class PRWorktreeManager:
                     cwd=self.project_dir,
                     capture_output=True,
                     timeout=30,
-                    env=get_isolated_git_env(),
                 )
             except subprocess.TimeoutExpired:
                 logger.warning("Timeout pruning worktrees after cleanup")

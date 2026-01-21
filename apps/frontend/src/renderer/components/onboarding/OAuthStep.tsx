@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useTranslation, Trans } from 'react-i18next';
+import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
+  Key,
   Eye,
   EyeOff,
   Info,
@@ -24,8 +25,8 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card, CardContent } from '../ui/card';
 import { cn } from '../../lib/utils';
-import { AuthTerminal } from '../settings/AuthTerminal';
 import { loadClaudeProfiles as loadGlobalClaudeProfiles } from '../../stores/claude-profile-store';
+import { useClaudeLoginTerminal } from '../../hooks/useClaudeLoginTerminal';
 import { useToast } from '../../hooks/use-toast';
 import type { ClaudeProfile } from '../../../shared/types';
 
@@ -41,7 +42,7 @@ interface OAuthStepProps {
  * reusing patterns from IntegrationSettings.tsx.
  */
 export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
-  const { t } = useTranslation(['onboarding', 'common']);
+  const { t } = useTranslation('onboarding');
   const { toast } = useToast();
 
   // Claude Profiles state
@@ -64,14 +65,6 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 
   // Error state
   const [error, setError] = useState<string | null>(null);
-
-  // Auth terminal state - for embedded authentication
-  const [authTerminal, setAuthTerminal] = useState<{
-    terminalId: string;
-    configDir: string;
-    profileId: string;
-    profileName: string;
-  } | null>(null);
 
   // Derived state: check if at least one profile is authenticated
   const hasAuthenticatedProfile = claudeProfiles.some(
@@ -101,6 +94,26 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
   useEffect(() => {
     loadClaudeProfiles();
   }, []);
+
+  // Listen for login terminal creation - makes the terminal visible so user can see OAuth flow
+  useClaudeLoginTerminal();
+
+  // Listen for OAuth authentication completion
+  useEffect(() => {
+    const unsubscribe = window.electronAPI.onTerminalOAuthToken(async (info) => {
+      if (info.success && info.profileId) {
+        // Reload profiles to show updated state
+        await loadClaudeProfiles();
+        // Show simple success notification (non-blocking)
+        toast({
+          title: t('oauth.toast.authSuccess'),
+          description: info.email ? t('oauth.toast.authSuccessWithEmail', { email: info.email }) : t('oauth.toast.authSuccessGeneric'),
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, [t, toast]);
 
   // Profile management handlers - following patterns from IntegrationSettings.tsx
   const handleAddProfile = async () => {
@@ -133,27 +146,22 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
       });
 
       if (result.success && result.data) {
-        await loadClaudeProfiles();
-        const savedProfileName = newProfileName.trim();
-        setNewProfileName('');
+        // Initialize the profile (starts OAuth flow)
+        const initResult = await window.electronAPI.initializeClaudeProfile(result.data.id);
 
-        // Get terminal config for authentication
-        const authResult = await window.electronAPI.authenticateClaudeProfile(result.data.id);
+        if (initResult.success) {
+          await loadClaudeProfiles();
+          setNewProfileName('');
 
-        if (authResult.success && authResult.data) {
-          setAuthenticatingProfileId(result.data.id);
-
-          // Set up embedded auth terminal
-          setAuthTerminal({
-            terminalId: authResult.data.terminalId,
-            configDir: authResult.data.configDir,
-            profileId: result.data.id,
-            profileName: savedProfileName,
-          });
-
-          console.warn('[OAuthStep] New profile auth terminal ready:', authResult.data);
+          // Note: The terminal is now visible in the UI via the onTerminalAuthCreated event
+          // Users can see the 'claude setup-token' output directly
         } else {
-          alert(t('oauth.alerts.profileCreatedAuthFailed', { error: authResult.error || t('oauth.toast.tryAgain') }));
+          await loadClaudeProfiles();
+          toast({
+            variant: 'destructive',
+            title: t('oauth.toast.authStartFailed'),
+            description: initResult.error || t('oauth.toast.tryAgain'),
+          });
         }
       }
     } catch (err) {
@@ -223,59 +231,28 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
     }
   };
 
-  // Handle auth terminal close
-  const handleAuthTerminalClose = useCallback(() => {
-    setAuthTerminal(null);
-    setAuthenticatingProfileId(null);
-  }, []);
-
-  // Handle auth terminal success
-  const handleAuthTerminalSuccess = useCallback(async (email?: string) => {
-    console.warn('[OAuthStep] Auth success:', email);
-
-    // Close terminal immediately
-    setAuthTerminal(null);
-    setAuthenticatingProfileId(null);
-
-    // Reload profiles to get updated auth state
-    await loadClaudeProfiles();
-  }, []);
-
-  // Handle auth terminal error
-  const handleAuthTerminalError = useCallback((error: string) => {
-    console.error('[OAuthStep] Auth error:', error);
-    // Don't auto-close on error - let user see the error and close manually
-  }, []);
-
   const handleAuthenticateProfile = async (profileId: string) => {
-    // Find the profile name for display
-    const profile = claudeProfiles.find(p => p.id === profileId);
-    const profileName = profile?.name || 'Profile';
-
     setAuthenticatingProfileId(profileId);
     setError(null);
     try {
-      // Get terminal config from backend (terminalId and configDir)
-      const result = await window.electronAPI.authenticateClaudeProfile(profileId);
-
-      if (!result.success || !result.data) {
-        alert(t('oauth.alerts.authPrepareFailed', { error: result.error || t('oauth.toast.tryAgain') }));
-        setAuthenticatingProfileId(null);
-        return;
+      const initResult = await window.electronAPI.initializeClaudeProfile(profileId);
+      if (!initResult.success) {
+        toast({
+          variant: 'destructive',
+          title: t('oauth.toast.authStartFailed'),
+          description: initResult.error || t('oauth.toast.tryAgain'),
+        });
       }
-
-      // Set up embedded auth terminal
-      setAuthTerminal({
-        terminalId: result.data.terminalId,
-        configDir: result.data.configDir,
-        profileId,
-        profileName,
-      });
-
-      console.warn('[OAuthStep] Auth terminal ready:', result.data);
+      // Note: If successful, the terminal is now visible in the UI via the onTerminalAuthCreated event
+      // Users can see the 'claude setup-token' output and complete OAuth flow directly
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to authenticate profile');
-      alert(t('oauth.alerts.authStartFailedMessage'));
+      toast({
+        variant: 'destructive',
+        title: t('oauth.toast.authStartFailed'),
+        description: t('oauth.toast.tryAgain'),
+      });
+    } finally {
       setAuthenticatingProfileId(null);
     }
   };
@@ -539,7 +516,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
                               size="icon"
                               onClick={() => toggleTokenEntry(profile.id)}
                               className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                              title={expandedTokenProfileId === profile.id ? t('common:accessibility.hideTokenEntryAriaLabel') : t('common:accessibility.enterTokenManuallyAriaLabel')}
+                              title={expandedTokenProfileId === profile.id ? "Hide token entry" : "Enter token manually"}
                             >
                               {expandedTokenProfileId === profile.id ? (
                                 <ChevronDown className="h-3 w-3" />
@@ -552,7 +529,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
                               size="icon"
                               onClick={() => startEditingProfile(profile)}
                               className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                              title={t('common:accessibility.renameProfileAriaLabel')}
+                              title="Rename profile"
                             >
                               <Pencil className="h-3 w-3" />
                             </Button>
@@ -563,7 +540,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
                                 onClick={() => handleDeleteProfile(profile.id)}
                                 disabled={deletingProfileId === profile.id}
                                 className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                title={t('common:accessibility.deleteProfileAriaLabel')}
+                                title="Delete profile"
                               >
                                 {deletingProfileId === profile.id ? (
                                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -582,13 +559,10 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
                           <div className="bg-muted/30 rounded-lg p-3 mt-3 space-y-3">
                             <div className="flex items-center justify-between">
                               <Label className="text-xs font-medium text-muted-foreground">
-                                {t('common:oauth.manualTokenEntry')}
+                                Manual Token Entry
                               </Label>
                               <span className="text-xs text-muted-foreground">
-                                <Trans
-                                  i18nKey="common:oauth.tokenCommandHint"
-                                  components={{ code: <code className="font-mono bg-muted px-1 rounded" /> }}
-                                />
+                                Run <code className="px-1 py-0.5 bg-muted rounded font-mono text-xs">claude setup-token</code> to get your token
                               </span>
                             </div>
 
@@ -612,7 +586,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 
                               <Input
                                 type="email"
-                                placeholder={t('common:oauth.emailOptionalPlaceholder')}
+                                placeholder="Email (optional, for display)"
                                 value={manualTokenEmail}
                                 onChange={(e) => setManualTokenEmail(e.target.value)}
                                 className="text-xs h-8"
@@ -626,7 +600,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
                                 onClick={() => toggleTokenEntry(profile.id)}
                                 className="h-7 text-xs"
                               >
-                                {t('common:buttons.cancel')}
+                                Cancel
                               </Button>
                               <Button
                                 size="sm"
@@ -639,7 +613,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
                                 ) : (
                                   <Check className="h-3 w-3" />
                                 )}
-                                {t('common:oauth.saveToken')}
+                                Save Token
                               </Button>
                             </div>
                           </div>
@@ -650,26 +624,10 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
                 </div>
               )}
 
-              {/* Embedded Auth Terminal */}
-              {authTerminal && (
-                <div className="mb-4">
-                  <div className="rounded-lg border border-primary/30 overflow-hidden" style={{ height: '320px' }}>
-                    <AuthTerminal
-                      terminalId={authTerminal.terminalId}
-                      configDir={authTerminal.configDir}
-                      profileName={authTerminal.profileName}
-                      onClose={handleAuthTerminalClose}
-                      onAuthSuccess={handleAuthTerminalSuccess}
-                      onAuthError={handleAuthTerminalError}
-                    />
-                  </div>
-                </div>
-              )}
-
               {/* Add new account input */}
               <div className="flex items-center gap-2">
                 <Input
-                  placeholder={t('common:oauth.accountNamePlaceholder')}
+                  placeholder="Account name (e.g., Work, Personal)"
                   value={newProfileName}
                   onChange={(e) => setNewProfileName(e.target.value)}
                   className="flex-1 h-8 text-sm"
@@ -690,7 +648,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
                   ) : (
                     <Plus className="h-3 w-3" />
                   )}
-                  {t('common:buttons.add')}
+                  Add
                 </Button>
               </div>
             </div>
@@ -702,7 +660,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
                     <p className="text-sm text-success">
-                      {t('common:oauth.hasAuthenticatedAccount')}
+                      You have at least one authenticated Claude account. You can continue to the next step.
                     </p>
                   </div>
                 </CardContent>

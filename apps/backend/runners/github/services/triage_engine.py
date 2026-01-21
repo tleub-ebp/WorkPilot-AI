@@ -10,13 +10,11 @@ from __future__ import annotations
 from pathlib import Path
 
 try:
-    from ...phase_config import resolve_model_id
     from ..models import GitHubRunnerConfig, TriageCategory, TriageResult
     from .prompt_manager import PromptManager
     from .response_parsers import ResponseParser
 except (ImportError, ValueError, SystemError):
     from models import GitHubRunnerConfig, TriageCategory, TriageResult
-    from phase_config import resolve_model_id
     from services.prompt_manager import PromptManager
     from services.response_parsers import ResponseParser
 
@@ -73,12 +71,10 @@ class TriageEngine:
         full_prompt = prompt + "\n\n---\n\n" + context
 
         # Run AI
-        # Resolve model shorthand (e.g., "sonnet") to full model ID for API compatibility
-        model = resolve_model_id(self.config.model or "sonnet")
         client = create_client(
             project_dir=self.project_dir,
             spec_dir=self.github_dir,
-            model=model,
+            model=self.config.model,
             agent_type="qa_reviewer",
         )
 

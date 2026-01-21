@@ -600,26 +600,25 @@ class FollowupReviewer:
             ]
         )
 
-        # Format commits with timestamps (for timeline correlation with AI comments)
+        # Format commits
         commits_text = "\n".join(
             [
-                f"- {c.get('sha', '')[:8]} ({c.get('commit', {}).get('author', {}).get('date', 'unknown')}): {c.get('commit', {}).get('message', '').split(chr(10))[0]}"
+                f"- {c.get('sha', '')[:8]}: {c.get('commit', {}).get('message', '').split(chr(10))[0]}"
                 for c in context.commits_since_review
             ]
         )
 
-        # Format contributor comments with timestamps
+        # Format comments
         contributor_comments_text = "\n".join(
             [
-                f"- @{c.get('user', {}).get('login', 'unknown')} ({c.get('created_at', 'unknown')}): {c.get('body', '')[:200]}"
+                f"- @{c.get('user', {}).get('login', 'unknown')}: {c.get('body', '')[:200]}"
                 for c in context.contributor_comments_since_review
             ]
         )
 
-        # Format AI comments with timestamps for timeline awareness
         ai_comments_text = "\n".join(
             [
-                f"- @{c.get('user', {}).get('login', 'unknown')} ({c.get('created_at', 'unknown')}): {c.get('body', '')[:200]}"
+                f"- @{c.get('user', {}).get('login', 'unknown')}: {c.get('body', '')[:200]}"
                 for c in context.ai_bot_comments_since_review
             ]
         )
@@ -683,10 +682,9 @@ Analyze this follow-up review context and provide your structured response.
             # Use Claude Agent SDK query() with structured outputs
             # Reference: https://platform.claude.com/docs/en/agent-sdk/structured-outputs
             from claude_agent_sdk import ClaudeAgentOptions, query
-            from phase_config import get_thinking_budget, resolve_model_id
+            from phase_config import get_thinking_budget
 
-            model_shorthand = self.config.model or "sonnet"
-            model = resolve_model_id(model_shorthand)
+            model = self.config.model or "claude-sonnet-4-5-20250929"
             thinking_level = self.config.thinking_level or "medium"
             thinking_budget = get_thinking_budget(thinking_level)
 

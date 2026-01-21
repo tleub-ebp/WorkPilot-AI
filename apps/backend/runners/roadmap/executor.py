@@ -102,7 +102,7 @@ class AgentExecutor:
             return False, f"Prompt not found: {prompt_path}"
 
         # Load prompt
-        prompt = prompt_path.read_text(encoding="utf-8")
+        prompt = prompt_path.read_text()
         debug_detailed(
             "roadmap_executor", "Loaded prompt file", prompt_length=len(prompt)
         )

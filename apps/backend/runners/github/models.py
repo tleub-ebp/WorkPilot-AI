@@ -84,7 +84,6 @@ class AICommentVerdict(str, Enum):
     NICE_TO_HAVE = "nice_to_have"  # Optional improvement
     TRIVIAL = "trivial"  # Can be ignored
     FALSE_POSITIVE = "false_positive"  # AI was wrong
-    ADDRESSED = "addressed"  # Valid issue that was fixed in a subsequent commit
 
 
 class TriageCategory(str, Enum):
@@ -240,13 +239,6 @@ class PRReviewFinding:
     validation_evidence: str | None = None  # Code snippet examined during validation
     validation_explanation: str | None = None  # Why finding was validated/dismissed
 
-    # Cross-validation and confidence routing fields
-    confidence: float = 0.5  # Confidence score (0.0-1.0), defaults to medium confidence
-    source_agents: list[str] = field(
-        default_factory=list
-    )  # Which agents reported this finding
-    cross_validated: bool = False  # Whether multiple agents agreed on this finding
-
     def to_dict(self) -> dict:
         return {
             "id": self.id,
@@ -267,10 +259,6 @@ class PRReviewFinding:
             "validation_status": self.validation_status,
             "validation_evidence": self.validation_evidence,
             "validation_explanation": self.validation_explanation,
-            # Cross-validation and confidence routing fields
-            "confidence": self.confidence,
-            "source_agents": self.source_agents,
-            "cross_validated": self.cross_validated,
         }
 
     @classmethod
@@ -294,10 +282,6 @@ class PRReviewFinding:
             validation_status=data.get("validation_status"),
             validation_evidence=data.get("validation_evidence"),
             validation_explanation=data.get("validation_explanation"),
-            # Cross-validation and confidence routing fields
-            confidence=data.get("confidence", 0.5),
-            source_agents=data.get("source_agents", []),
-            cross_validated=data.get("cross_validated", False),
         )
 
 
@@ -565,7 +549,7 @@ class PRReviewResult:
         if not review_file.exists():
             return None
 
-        with open(review_file, encoding="utf-8") as f:
+        with open(review_file) as f:
             return cls.from_dict(json.load(f))
 
 
@@ -678,7 +662,7 @@ class TriageResult:
         if not triage_file.exists():
             return None
 
-        with open(triage_file, encoding="utf-8") as f:
+        with open(triage_file) as f:
             return cls.from_dict(json.load(f))
 
 
@@ -812,7 +796,7 @@ class AutoFixState:
         if not autofix_file.exists():
             return None
 
-        with open(autofix_file, encoding="utf-8") as f:
+        with open(autofix_file) as f:
             return cls.from_dict(json.load(f))
 
 
@@ -856,9 +840,7 @@ class GitHubRunnerConfig:
     )
 
     # Model settings
-    # Note: Default uses shorthand "sonnet" which gets resolved via resolve_model_id()
-    # to respect environment variable overrides (e.g., ANTHROPIC_DEFAULT_SONNET_MODEL)
-    model: str = "sonnet"
+    model: str = "claude-sonnet-4-20250514"
     thinking_level: str = "medium"
 
     def to_dict(self) -> dict:
@@ -894,7 +876,7 @@ class GitHubRunnerConfig:
         settings.pop("token", None)
         settings.pop("bot_token", None)
 
-        with open(config_file, "w", encoding="utf-8") as f:
+        with open(config_file, "w") as f:
             json.dump(settings, f, indent=2)
 
     @classmethod
@@ -905,7 +887,7 @@ class GitHubRunnerConfig:
         config_file = github_dir / "config.json"
 
         if config_file.exists():
-            with open(config_file, encoding="utf-8") as f:
+            with open(config_file) as f:
                 settings = json.load(f)
         else:
             settings = {}
@@ -932,7 +914,6 @@ class GitHubRunnerConfig:
             review_own_prs=settings.get("review_own_prs", False),
             auto_post_reviews=settings.get("auto_post_reviews", False),
             allow_fix_commits=settings.get("allow_fix_commits", True),
-            # Note: model is stored as shorthand and resolved via resolve_model_id()
-            model=settings.get("model", "sonnet"),
+            model=settings.get("model", "claude-sonnet-4-20250514"),
             thinking_level=settings.get("thinking_level", "medium"),
         )

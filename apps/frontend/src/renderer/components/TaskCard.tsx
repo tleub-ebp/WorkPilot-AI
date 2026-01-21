@@ -4,7 +4,6 @@ import { Play, Square, Clock, Zap, Target, Shield, Gauge, Palette, FileCode, Bug
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Checkbox } from './ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,9 +26,7 @@ import {
   EXECUTION_PHASE_LABELS,
   EXECUTION_PHASE_BADGE_COLORS,
   TASK_STATUS_COLUMNS,
-  TASK_STATUS_LABELS,
-  JSON_ERROR_PREFIX,
-  JSON_ERROR_TITLE_SUFFIX
+  TASK_STATUS_LABELS
 } from '../../shared/constants';
 import { startTask, stopTask, checkTaskRunning, recoverStuckTask, isIncompleteHumanReview, archiveTasks } from '../stores/task-store';
 import type { Task, TaskCategory, ReviewReason, TaskStatus } from '../../shared/types';
@@ -47,22 +44,10 @@ const CategoryIcon: Record<TaskCategory, typeof Zap> = {
   testing: FileCode
 };
 
-// Phases where stuck detection should be skipped (terminal states + initial planning)
-// Defined outside component to avoid recreation on every render
-const STUCK_CHECK_SKIP_PHASES = ['complete', 'failed', 'planning'] as const;
-
-function shouldSkipStuckCheck(phase: string | undefined): boolean {
-  return STUCK_CHECK_SKIP_PHASES.includes(phase as typeof STUCK_CHECK_SKIP_PHASES[number]);
-}
-
 interface TaskCardProps {
   task: Task;
   onClick: () => void;
   onStatusChange?: (newStatus: TaskStatus) => unknown;
-  // Optional selectable mode props for multi-selection
-  isSelectable?: boolean;
-  isSelected?: boolean;
-  onToggleSelect?: () => void;
 }
 
 // Custom comparator for React.memo - only re-render when relevant task data changes
@@ -70,24 +55,9 @@ function taskCardPropsAreEqual(prevProps: TaskCardProps, nextProps: TaskCardProp
   const prevTask = prevProps.task;
   const nextTask = nextProps.task;
 
-  // Fast path: same reference (include selectable props)
-  if (
-    prevTask === nextTask &&
-    prevProps.onClick === nextProps.onClick &&
-    prevProps.onStatusChange === nextProps.onStatusChange &&
-    prevProps.isSelectable === nextProps.isSelectable &&
-    prevProps.isSelected === nextProps.isSelected &&
-    prevProps.onToggleSelect === nextProps.onToggleSelect
-  ) {
+  // Fast path: same reference
+  if (prevTask === nextTask && prevProps.onClick === nextProps.onClick && prevProps.onStatusChange === nextProps.onStatusChange) {
     return true;
-  }
-
-  // Check selectable props first (cheap comparison)
-  if (
-    prevProps.isSelectable !== nextProps.isSelectable ||
-    prevProps.isSelected !== nextProps.isSelected
-  ) {
-    return false;
   }
 
   // Compare only the fields that affect rendering
@@ -125,15 +95,8 @@ function taskCardPropsAreEqual(prevProps: TaskCardProps, nextProps: TaskCardProp
   return isEqual;
 }
 
-export const TaskCard = memo(function TaskCard({
-  task,
-  onClick,
-  onStatusChange,
-  isSelectable,
-  isSelected,
-  onToggleSelect
-}: TaskCardProps) {
-  const { t } = useTranslation(['tasks', 'errors']);
+export const TaskCard = memo(function TaskCard({ task, onClick, onStatusChange }: TaskCardProps) {
+  const { t } = useTranslation('tasks');
   const [isStuck, setIsStuck] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
   const stuckCheckRef = useRef<{ timeout: NodeJS.Timeout | null; interval: NodeJS.Timeout | null }>({
@@ -150,26 +113,10 @@ export const TaskCard = memo(function TaskCard({
 
   // Memoize expensive computations to avoid running on every render
   // Truncate description for card display - full description shown in modal
-  // Handle JSON error tasks with i18n
-  const sanitizedDescription = useMemo(() => {
-    if (!task.description) return null;
-    // Check for JSON error marker and use i18n
-    if (task.description.startsWith(JSON_ERROR_PREFIX)) {
-      const errorMessage = task.description.slice(JSON_ERROR_PREFIX.length);
-      const translatedDesc = t('errors:task.jsonError.description', { error: errorMessage });
-      return sanitizeMarkdownForDisplay(translatedDesc, 120);
-    }
-    return sanitizeMarkdownForDisplay(task.description, 120);
-  }, [task.description, t]);
-
-  // Memoize title with JSON error suffix handling
-  const displayTitle = useMemo(() => {
-    if (task.title.endsWith(JSON_ERROR_TITLE_SUFFIX)) {
-      const baseName = task.title.slice(0, -JSON_ERROR_TITLE_SUFFIX.length);
-      return `${baseName} ${t('errors:task.jsonError.titleSuffix')}`;
-    }
-    return task.title;
-  }, [task.title, t]);
+  const sanitizedDescription = useMemo(
+    () => task.description ? sanitizeMarkdownForDisplay(task.description, 120) : null,
+    [task.description]
+  );
 
   // Memoize relative time (recalculates only when updatedAt changes)
   const relativeTime = useMemo(
@@ -192,11 +139,11 @@ export const TaskCard = memo(function TaskCard({
 
   // Memoized stuck check function to avoid recreating on every render
   const performStuckCheck = useCallback(() => {
+    // IMPORTANT: If the execution phase is 'complete' or 'failed', the task is NOT stuck.
+    // It means the process has finished and status update is pending.
+    // This prevents false-positive "stuck" indicators when the process exits normally.
     const currentPhase = task.executionProgress?.phase;
-    if (shouldSkipStuckCheck(currentPhase)) {
-      if (window.DEBUG) {
-        console.log(`[TaskCard] Stuck check skipped for ${task.id} - phase is '${currentPhase}' (planning/terminal phases don't need process verification)`);
-      }
+    if (currentPhase === 'complete' || currentPhase === 'failed') {
       setIsStuck(false);
       return;
     }
@@ -206,7 +153,7 @@ export const TaskCard = memo(function TaskCard({
       checkTaskRunning(task.id).then((actuallyRunning) => {
         // Double-check the phase again in case it changed while waiting
         const latestPhase = task.executionProgress?.phase;
-        if (shouldSkipStuckCheck(latestPhase)) {
+        if (latestPhase === 'complete' || latestPhase === 'failed') {
           setIsStuck(false);
         } else {
           setIsStuck(!actuallyRunning);
@@ -320,6 +267,8 @@ export const TaskCard = memo(function TaskCard({
         return 'success';
       case 'done':
         return 'success';
+      case 'error':
+        return 'destructive';
       default:
         return 'secondary';
     }
@@ -337,6 +286,8 @@ export const TaskCard = memo(function TaskCard({
         return t('columns.pr_created');
       case 'done':
         return t('status.complete');
+      case 'error':
+        return t('columns.error');
       default:
         return t('labels.pending');
     }
@@ -368,33 +319,18 @@ export const TaskCard = memo(function TaskCard({
         'card-surface task-card-enhanced cursor-pointer',
         isRunning && !isStuck && 'ring-2 ring-primary border-primary task-running-pulse',
         isStuck && 'ring-2 ring-warning border-warning task-stuck-pulse',
-        isArchived && 'opacity-60 hover:opacity-80',
-        isSelectable && isSelected && 'ring-2 ring-ring border-ring bg-accent/10'
+        isArchived && 'opacity-60 hover:opacity-80'
       )}
       onClick={onClick}
     >
       <CardContent className="p-4">
-        <div className={isSelectable ? 'flex gap-3' : undefined}>
-          {/* Checkbox for selectable mode - stops event propagation */}
-          {isSelectable && (
-            <div className="flex-shrink-0 pt-0.5">
-              <Checkbox
-                checked={isSelected}
-                onCheckedChange={onToggleSelect}
-                onClick={(e) => e.stopPropagation()}
-                aria-label={t('tasks:actions.selectTask', { title: displayTitle })}
-              />
-            </div>
-          )}
-
-          <div className={isSelectable ? 'flex-1 min-w-0' : undefined}>
-            {/* Title - full width, no wrapper */}
-            <h3
-              className="font-semibold text-sm text-foreground line-clamp-2 leading-snug"
-              title={displayTitle}
-            >
-              {displayTitle}
-            </h3>
+        {/* Title - full width, no wrapper */}
+        <h3
+          className="font-semibold text-sm text-foreground line-clamp-2 leading-snug"
+          title={task.title}
+        >
+          {task.title}
+        </h3>
 
         {/* Description - sanitized to handle markdown content (memoized) */}
         {sanitizedDescription && (
@@ -538,7 +474,6 @@ export const TaskCard = memo(function TaskCard({
             <PhaseProgressIndicator
               phase={executionPhase}
               subtasks={task.subtasks}
-              phaseProgress={task.executionProgress?.phaseProgress}
               isStuck={isStuck}
               isRunning={isRunning}
             />
@@ -663,10 +598,6 @@ export const TaskCard = memo(function TaskCard({
               </DropdownMenu>
             )}
           </div>
-        </div>
-        {/* Close content wrapper for selectable mode */}
-        </div>
-        {/* Close flex container for selectable mode */}
         </div>
       </CardContent>
     </Card>

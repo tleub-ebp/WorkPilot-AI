@@ -224,7 +224,7 @@ class PurgeStrategy:
             result: PurgeResult to update
         """
         try:
-            with open(file_path, encoding="utf-8") as f:
+            with open(file_path) as f:
                 data = json.load(f)
 
             # Verify key matches value

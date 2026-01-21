@@ -4,11 +4,11 @@ import { TaskAPI, createTaskAPI } from './task-api';
 import { SettingsAPI, createSettingsAPI } from './settings-api';
 import { FileAPI, createFileAPI } from './file-api';
 import { AgentAPI, createAgentAPI } from './agent-api';
-import type { IdeationAPI } from './modules/ideation-api';
-import type { InsightsAPI } from './modules/insights-api';
+import { IdeationAPI, createIdeationAPI } from './modules/ideation-api';
+import { InsightsAPI, createInsightsAPI } from './modules/insights-api';
 import { AppUpdateAPI, createAppUpdateAPI } from './app-update-api';
 import { GitHubAPI, createGitHubAPI } from './modules/github-api';
-import type { GitLabAPI } from './modules/gitlab-api';
+import { GitLabAPI, createGitLabAPI } from './modules/gitlab-api';
 import { DebugAPI, createDebugAPI } from './modules/debug-api';
 import { ClaudeCodeAPI, createClaudeCodeAPI } from './modules/claude-code-api';
 import { McpAPI, createMcpAPI } from './modules/mcp-api';
@@ -38,8 +38,11 @@ export const createElectronAPI = (): ElectronAPI => ({
   ...createTaskAPI(),
   ...createSettingsAPI(),
   ...createFileAPI(),
-  ...createAgentAPI(),  // Includes: Roadmap, Ideation, Insights, Changelog, Linear, GitHub, GitLab, Shell
+  ...createAgentAPI(),
+  ...createIdeationAPI(),
+  ...createInsightsAPI(),
   ...createAppUpdateAPI(),
+  ...createGitLabAPI(),
   ...createDebugAPI(),
   ...createClaudeCodeAPI(),
   ...createMcpAPI(),
@@ -48,7 +51,6 @@ export const createElectronAPI = (): ElectronAPI => ({
 });
 
 // Export individual API creators for potential use in tests or specialized contexts
-// Note: IdeationAPI, InsightsAPI, and GitLabAPI are included in AgentAPI
 export {
   createProjectAPI,
   createTerminalAPI,
@@ -56,9 +58,12 @@ export {
   createSettingsAPI,
   createFileAPI,
   createAgentAPI,
+  createIdeationAPI,
+  createInsightsAPI,
   createAppUpdateAPI,
   createProfileAPI,
   createGitHubAPI,
+  createGitLabAPI,
   createDebugAPI,
   createClaudeCodeAPI,
   createMcpAPI

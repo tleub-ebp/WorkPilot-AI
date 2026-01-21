@@ -15,18 +15,12 @@ export type SentryInitOptions = {
   enabled?: boolean;
 };
 
-export function init(_options: SentryInitOptions): void {
-  // Mock: no-op for tests
-}
+export function init(_options: SentryInitOptions): void {}
 
-export function captureException(_error: Error): void {
-  // Mock: no-op for tests
-}
+export function captureException(_error: Error): void {}
 
 export function withScope(callback: (scope: SentryScope) => void): void {
   callback({
-    setContext: () => {
-      // Mock: no-op for tests
-    }
+    setContext: () => {}
   });
 }

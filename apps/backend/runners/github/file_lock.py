@@ -212,7 +212,7 @@ class FileLock:
 
 
 @contextmanager
-def atomic_write(filepath: str | Path, mode: str = "w", encoding: str = "utf-8"):
+def atomic_write(filepath: str | Path, mode: str = "w"):
     """
     Atomic file write using temp file and rename.
 
@@ -222,7 +222,6 @@ def atomic_write(filepath: str | Path, mode: str = "w", encoding: str = "utf-8")
     Args:
         filepath: Target file path
         mode: File open mode (default: "w")
-        encoding: Text encoding (default: "utf-8")
 
     Example:
         with atomic_write("/path/to/file.json") as f:
@@ -237,9 +236,8 @@ def atomic_write(filepath: str | Path, mode: str = "w", encoding: str = "utf-8")
     )
 
     try:
-        # Open temp file with requested mode and encoding
-        # Only use encoding for text modes (not binary modes)
-        with os.fdopen(fd, mode, encoding=encoding if "b" not in mode else None) as f:
+        # Open temp file with requested mode
+        with os.fdopen(fd, mode) as f:
             yield f
 
         # Atomic replace - succeeds or fails completely
@@ -256,10 +254,7 @@ def atomic_write(filepath: str | Path, mode: str = "w", encoding: str = "utf-8")
 
 @asynccontextmanager
 async def locked_write(
-    filepath: str | Path,
-    timeout: float = 5.0,
-    mode: str = "w",
-    encoding: str = "utf-8",
+    filepath: str | Path, timeout: float = 5.0, mode: str = "w"
 ) -> Any:
     """
     Async context manager combining file locking and atomic writes.
@@ -271,7 +266,6 @@ async def locked_write(
         filepath: Target file path
         timeout: Lock timeout in seconds (default: 5.0)
         mode: File open mode (default: "w")
-        encoding: Text encoding (default: "utf-8")
 
     Example:
         async with locked_write("/path/to/file.json", timeout=5.0) as f:
@@ -297,8 +291,7 @@ async def locked_write(
 
         try:
             # Open temp file and yield to caller
-            # Only use encoding for text modes (not binary modes)
-            f = os.fdopen(fd, mode, encoding=encoding if "b" not in mode else None)
+            f = os.fdopen(fd, mode)
             try:
                 yield f
             finally:
@@ -355,7 +348,7 @@ async def locked_read(filepath: str | Path, timeout: float = 5.0) -> Any:
 
     try:
         # Open file for reading
-        with open(filepath, encoding="utf-8") as f:
+        with open(filepath) as f:
             yield f
     finally:
         # Release lock
@@ -448,7 +441,7 @@ async def locked_json_update(
         # Read current data
         def _read_json():
             if filepath.exists():
-                with open(filepath, encoding="utf-8") as f:
+                with open(filepath) as f:
                     return json.load(f)
             return None
 
@@ -466,7 +459,7 @@ async def locked_json_update(
         )
 
         try:
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
+            with os.fdopen(fd, "w") as f:
                 json.dump(updated_data, f, indent=indent)
 
             await asyncio.get_running_loop().run_in_executor(

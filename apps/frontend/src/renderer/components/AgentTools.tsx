@@ -52,15 +52,13 @@ import type { ProjectEnvConfig, AgentMcpOverrides, AgentMcpOverride, CustomMcpSe
 import { CustomMcpDialog } from './CustomMcpDialog';
 import { useTranslation } from 'react-i18next';
 import {
+  DEFAULT_PHASE_MODELS,
+  DEFAULT_PHASE_THINKING,
+  DEFAULT_FEATURE_MODELS,
+  DEFAULT_FEATURE_THINKING,
   AVAILABLE_MODELS,
-  THINKING_LEVELS,
+  THINKING_LEVELS
 } from '../../shared/constants/models';
-import {
-  useResolvedAgentSettings,
-  resolveAgentSettings as resolveAgentModelConfig,
-  type AgentSettingsSource,
-  type ResolvedAgentSettings,
-} from '../hooks';
 import type { ModelTypeShort, ThinkingLevel } from '../../shared/types/settings';
 
 // Agent configuration data - mirrors AGENT_CONFIGS from backend
@@ -73,7 +71,17 @@ interface AgentConfig {
   mcp_servers: string[];
   mcp_optional?: string[];
   // Maps to settings source - either a phase or a feature
-  settingsSource: AgentSettingsSource;
+  settingsSource: {
+    type: 'phase';
+    phase: 'spec' | 'planning' | 'coding' | 'qa';
+  } | {
+    type: 'feature';
+    feature: 'insights' | 'ideation' | 'roadmap' | 'githubIssues' | 'githubPrs' | 'utility';
+  } | {
+    type: 'fixed';  // For agents not yet configurable
+    model: ModelTypeShort;
+    thinking: ThinkingLevel;
+  };
 }
 
 // Helper to get model label from short name
@@ -963,9 +971,11 @@ export function AgentTools() {
     }
   }, []);
 
-  // Resolve agent settings using the centralized utility
-  // Resolution order: custom overrides -> selected profile's config -> global defaults
-  const { phaseModels, phaseThinking, featureModels, featureThinking } = useResolvedAgentSettings(settings);
+  // Get phase and feature settings with defaults
+  const phaseModels = settings.customPhaseModels || DEFAULT_PHASE_MODELS;
+  const phaseThinking = settings.customPhaseThinking || DEFAULT_PHASE_THINKING;
+  const featureModels = settings.featureModels || DEFAULT_FEATURE_MODELS;
+  const featureThinking = settings.featureThinking || DEFAULT_FEATURE_THINKING;
 
   // Get MCP server states for display
   const mcpServers = envConfig?.mcpServers || {};
@@ -981,9 +991,27 @@ export function AgentTools() {
   ].filter(Boolean).length;
 
   // Resolve model and thinking for an agent based on its settings source
-  const getAgentModelConfig = useMemo(() => {
+  const resolveAgentSettings = useMemo(() => {
     return (config: AgentConfig): { model: ModelTypeShort; thinking: ThinkingLevel } => {
-      return resolveAgentModelConfig(config.settingsSource, { phaseModels, phaseThinking, featureModels, featureThinking });
+      const source = config.settingsSource;
+
+      if (source.type === 'phase') {
+        return {
+          model: phaseModels[source.phase],
+          thinking: phaseThinking[source.phase],
+        };
+      } else if (source.type === 'feature') {
+        return {
+          model: featureModels[source.feature],
+          thinking: featureThinking[source.feature],
+        };
+      } else {
+        // Fixed settings
+        return {
+          model: source.model,
+          thinking: source.thinking,
+        };
+      }
     };
   }, [phaseModels, phaseThinking, featureModels, featureThinking]);
 
@@ -1343,7 +1371,7 @@ export function AgentTools() {
                 {isExpanded && (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pl-6">
                     {agents.map(({ id, config }) => {
-                      const { model, thinking } = getAgentModelConfig(config);
+                      const { model, thinking } = resolveAgentSettings(config);
                       return (
                         <AgentCard
                           key={id}

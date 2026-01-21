@@ -3,9 +3,8 @@ import { unstable_batchedUpdates } from 'react-dom';
 import { useTaskStore } from '../stores/task-store';
 import { useRoadmapStore } from '../stores/roadmap-store';
 import { useRateLimitStore } from '../stores/rate-limit-store';
-import { useAuthFailureStore } from '../stores/auth-failure-store';
 import { useProjectStore } from '../stores/project-store';
-import type { ImplementationPlan, TaskStatus, RoadmapGenerationStatus, Roadmap, ExecutionProgress, RateLimitInfo, SDKRateLimitInfo, AuthFailureInfo } from '../../shared/types';
+import type { ImplementationPlan, TaskStatus, RoadmapGenerationStatus, Roadmap, ExecutionProgress, RateLimitInfo, SDKRateLimitInfo } from '../../shared/types';
 
 /**
  * Batched update queue for IPC events.
@@ -334,20 +333,6 @@ export function useIpcListeners(): void {
       }
     );
 
-    // Auth failure listener (401 errors requiring re-authentication)
-    const showAuthFailureModal = useAuthFailureStore.getState().showAuthFailureModal;
-    const cleanupAuthFailure = window.electronAPI.onAuthFailure(
-      (info: AuthFailureInfo) => {
-        // Convert detectedAt string to Date if needed
-        showAuthFailureModal({
-          ...info,
-          detectedAt: typeof info.detectedAt === 'string'
-            ? new Date(info.detectedAt)
-            : info.detectedAt
-        });
-      }
-    );
-
     // Cleanup on unmount
     return () => {
       // Flush any pending batched updates before cleanup
@@ -367,7 +352,6 @@ export function useIpcListeners(): void {
       cleanupRoadmapStopped();
       cleanupRateLimit();
       cleanupSDKRateLimit();
-      cleanupAuthFailure();
     };
   }, [updateTaskFromPlan, updateTaskStatus, updateExecutionProgress, appendLog, batchAppendLogs, setError]);
 }

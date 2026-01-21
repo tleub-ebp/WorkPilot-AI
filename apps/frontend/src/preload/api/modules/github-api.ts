@@ -7,8 +7,7 @@ import type {
   GitHubInvestigationStatus,
   GitHubInvestigationResult,
   IPCResult,
-  VersionSuggestion,
-  PaginatedIssuesResult
+  VersionSuggestion
 } from '../../../shared/types';
 import { createIpcListener, invokeIpc, sendIpc, IpcListenerCleanup } from './ipc-utils';
 
@@ -146,21 +145,13 @@ export interface WorkflowsAwaitingApprovalResult {
   error?: string;
 }
 
-// Re-export PaginatedIssuesResult from shared types for API consumers
-export type { PaginatedIssuesResult };
-
 /**
  * GitHub Integration API operations
  */
 export interface GitHubAPI {
   // Operations
   getGitHubRepositories: (projectId: string) => Promise<IPCResult<GitHubRepository[]>>;
-  getGitHubIssues: (
-    projectId: string,
-    state?: 'open' | 'closed' | 'all',
-    page?: number,
-    fetchAll?: boolean
-  ) => Promise<IPCResult<PaginatedIssuesResult>>;
+  getGitHubIssues: (projectId: string, state?: 'open' | 'closed' | 'all') => Promise<IPCResult<GitHubIssue[]>>;
   getGitHubIssue: (projectId: string, issueNumber: number) => Promise<IPCResult<GitHubIssue>>;
   getIssueComments: (projectId: string, issueNumber: number) => Promise<IPCResult<any[]>>;
   checkGitHubConnection: (projectId: string) => Promise<IPCResult<GitHubSyncStatus>>;
@@ -272,14 +263,12 @@ export interface GitHubAPI {
   postPRComment: (projectId: string, prNumber: number, body: string) => Promise<boolean>;
   mergePR: (projectId: string, prNumber: number, mergeMethod?: 'merge' | 'squash' | 'rebase') => Promise<boolean>;
   assignPR: (projectId: string, prNumber: number, username: string) => Promise<boolean>;
-  markReviewPosted: (projectId: string, prNumber: number) => Promise<boolean>;
   getPRReview: (projectId: string, prNumber: number) => Promise<PRReviewResult | null>;
   getPRReviewsBatch: (projectId: string, prNumbers: number[]) => Promise<Record<number, PRReviewResult | null>>;
 
   // Follow-up review operations
   checkNewCommits: (projectId: string, prNumber: number) => Promise<NewCommitsCheck>;
   checkMergeReadiness: (projectId: string, prNumber: number) => Promise<MergeReadiness>;
-  updatePRBranch: (projectId: string, prNumber: number) => Promise<{ success: boolean; error?: string }>;
   runFollowupReview: (projectId: string, prNumber: number) => void;
 
   // PR logs
@@ -380,12 +369,6 @@ export interface NewCommitsCheck {
   currentHeadCommit?: string;
   /** Whether new commits happened AFTER findings were posted (for "Ready for Follow-up" status) */
   hasCommitsAfterPosting?: boolean;
-  /** Whether new commits touch files that had findings (requires verification) */
-  hasOverlapWithFindings?: boolean;
-  /** Files from new commits that overlap with finding files */
-  overlappingFiles?: string[];
-  /** Whether this appears to be a merge from base branch (develop/main) */
-  isMergeFromBase?: boolean;
 }
 
 /**
@@ -473,13 +456,8 @@ export const createGitHubAPI = (): GitHubAPI => ({
   getGitHubRepositories: (projectId: string): Promise<IPCResult<GitHubRepository[]>> =>
     invokeIpc(IPC_CHANNELS.GITHUB_GET_REPOSITORIES, projectId),
 
-  getGitHubIssues: (
-    projectId: string,
-    state?: 'open' | 'closed' | 'all',
-    page?: number,
-    fetchAll?: boolean
-  ): Promise<IPCResult<PaginatedIssuesResult>> =>
-    invokeIpc(IPC_CHANNELS.GITHUB_GET_ISSUES, projectId, state, page, fetchAll),
+  getGitHubIssues: (projectId: string, state?: 'open' | 'closed' | 'all'): Promise<IPCResult<GitHubIssue[]>> =>
+    invokeIpc(IPC_CHANNELS.GITHUB_GET_ISSUES, projectId, state),
 
   getGitHubIssue: (projectId: string, issueNumber: number): Promise<IPCResult<GitHubIssue>> =>
     invokeIpc(IPC_CHANNELS.GITHUB_GET_ISSUE, projectId, issueNumber),
@@ -679,9 +657,6 @@ export const createGitHubAPI = (): GitHubAPI => ({
   assignPR: (projectId: string, prNumber: number, username: string): Promise<boolean> =>
     invokeIpc(IPC_CHANNELS.GITHUB_PR_ASSIGN, projectId, prNumber, username),
 
-  markReviewPosted: (projectId: string, prNumber: number): Promise<boolean> =>
-    invokeIpc(IPC_CHANNELS.GITHUB_PR_MARK_REVIEW_POSTED, projectId, prNumber),
-
   getPRReview: (projectId: string, prNumber: number): Promise<PRReviewResult | null> =>
     invokeIpc(IPC_CHANNELS.GITHUB_PR_GET_REVIEW, projectId, prNumber),
 
@@ -694,9 +669,6 @@ export const createGitHubAPI = (): GitHubAPI => ({
 
   checkMergeReadiness: (projectId: string, prNumber: number): Promise<MergeReadiness> =>
     invokeIpc(IPC_CHANNELS.GITHUB_PR_CHECK_MERGE_READINESS, projectId, prNumber),
-
-  updatePRBranch: (projectId: string, prNumber: number): Promise<{ success: boolean; error?: string }> =>
-    invokeIpc(IPC_CHANNELS.GITHUB_PR_UPDATE_BRANCH, projectId, prNumber),
 
   runFollowupReview: (projectId: string, prNumber: number): void =>
     sendIpc(IPC_CHANNELS.GITHUB_PR_FOLLOWUP_REVIEW, projectId, prNumber),

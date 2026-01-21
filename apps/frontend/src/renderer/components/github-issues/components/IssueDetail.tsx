@@ -1,6 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { ExternalLink, User, Clock, MessageCircle, Sparkles, CheckCircle2, Eye } from 'lucide-react';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
@@ -164,8 +162,10 @@ export function IssueDetail({
           </CardHeader>
           <CardContent>
             {issue.body ? (
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{issue.body}</ReactMarkdown>
+              <div className="prose prose-sm prose-invert max-w-none">
+                <pre className="whitespace-pre-wrap text-sm text-muted-foreground font-sans">
+                  {issue.body}
+                </pre>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground italic">

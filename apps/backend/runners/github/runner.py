@@ -56,12 +56,6 @@ if sys.platform == "win32":
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-# Validate platform-specific dependencies BEFORE any imports that might
-# trigger graphiti_core -> real_ladybug -> pywintypes import chain (ACS-253)
-from core.dependency_validator import validate_platform_dependencies
-
-validate_platform_dependencies()
-
 # Load .env file with centralized error handling
 from cli.utils import import_dotenv
 
@@ -100,16 +94,26 @@ def print_progress(callback: ProgressCallback) -> None:
 
 def get_config(args) -> GitHubRunnerConfig:
     """Build config from CLI args and environment."""
+    import shutil
     import subprocess
-
-    from core.gh_executable import get_gh_executable
 
     token = args.token or os.environ.get("GITHUB_TOKEN", "")
     bot_token = args.bot_token or os.environ.get("GITHUB_BOT_TOKEN")
     repo = args.repo or os.environ.get("GITHUB_REPO", "")
 
-    # Find gh CLI - use get_gh_executable for cross-platform support
-    gh_path = get_gh_executable()
+    # Find gh CLI - use shutil.which for cross-platform support
+    gh_path = shutil.which("gh")
+    if not gh_path and sys.platform == "win32":
+        # Fallback: check common Windows installation paths
+        common_paths = [
+            r"C:\Program Files\GitHub CLI\gh.exe",
+            r"C:\Program Files (x86)\GitHub CLI\gh.exe",
+            os.path.expandvars(r"%LOCALAPPDATA%\Programs\GitHub CLI\gh.exe"),
+        ]
+        for path in common_paths:
+            if os.path.exists(path):
+                gh_path = path
+                break
 
     if os.environ.get("DEBUG"):
         safe_print(f"[DEBUG] gh CLI path: {gh_path}")
@@ -613,9 +617,9 @@ async def cmd_approve_batches(args) -> int:
 
     # Load approved batches from file
     try:
-        with open(args.batch_file, encoding="utf-8") as f:
+        with open(args.batch_file) as f:
             approved_batches = json.load(f)
-    except (json.JSONDecodeError, FileNotFoundError, UnicodeDecodeError) as e:
+    except (json.JSONDecodeError, FileNotFoundError) as e:
         safe_print(f"Error loading batch file: {e}")
         return 1
 
@@ -672,7 +676,7 @@ def main():
     parser.add_argument(
         "--model",
         type=str,
-        default="claude-sonnet-4-5-20250929",
+        default="claude-sonnet-4-20250514",
         help="AI model to use",
     )
     parser.add_argument(

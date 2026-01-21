@@ -10,8 +10,7 @@ import type { TerminalSession } from '../terminal-session-store';
 import type {
   TerminalProcess,
   WindowGetter,
-  TerminalOperationResult,
-  TerminalProfileChangeInfo
+  TerminalOperationResult
 } from './types';
 import * as PtyManager from './pty-manager';
 import * as SessionHandler from './session-handler';
@@ -41,9 +40,7 @@ export class TerminalManager {
 
     // Periodically save session data (every 30 seconds)
     this.saveTimer = setInterval(() => {
-      SessionHandler.persistAllSessionsAsync(this.terminals).catch((error) => {
-        console.error('[TerminalManager] Failed to persist sessions:', error);
-      });
+      SessionHandler.persistAllSessions(this.terminals);
     }, 30000);
   }
 
@@ -294,16 +291,6 @@ export class TerminalManager {
   }
 
   /**
-   * Update display orders for terminals after drag-drop reorder
-   */
-  updateDisplayOrders(
-    projectPath: string,
-    orders: Array<{ terminalId: string; displayOrder: number }>
-  ): void {
-    SessionHandler.updateDisplayOrders(projectPath, orders);
-  }
-
-  /**
    * Restore all sessions from a specific date
    */
   async restoreSessionsFromDate(
@@ -349,13 +336,6 @@ export class TerminalManager {
   }
 
   /**
-   * Get a terminal by ID (for debugging/inspection)
-   */
-  getTerminal(id: string): TerminalProcess | undefined {
-    return this.terminals.get(id);
-  }
-
-  /**
    * Check if a terminal is in Claude mode
    */
   isClaudeMode(id: string): boolean {
@@ -369,27 +349,6 @@ export class TerminalManager {
   getClaudeSessionId(id: string): string | undefined {
     const terminal = this.terminals.get(id);
     return terminal?.claudeSessionId;
-  }
-
-  /**
-   * Get info about all terminals for profile change operations.
-   * Returns info needed to migrate sessions and notify frontend.
-   */
-  getTerminalsForProfileChange(): TerminalProfileChangeInfo[] {
-    const result: TerminalProfileChangeInfo[] = [];
-
-    for (const [id, terminal] of this.terminals) {
-      result.push({
-        id,
-        cwd: terminal.cwd,
-        projectPath: terminal.projectPath,
-        claudeSessionId: terminal.claudeSessionId,
-        claudeProfileId: terminal.claudeProfileId,
-        isClaudeMode: terminal.isClaudeMode
-      });
-    }
-
-    return result;
   }
 
   /**
@@ -409,9 +368,9 @@ export class TerminalManager {
     const terminal = this.terminals.get(id);
     if (terminal) {
       terminal.worktreeConfig = config;
-      // Persist immediately when worktree config changes (async to avoid blocking)
+      // Persist immediately when worktree config changes
       if (terminal.projectPath) {
-        SessionHandler.persistSessionAsync(terminal);
+        SessionHandler.persistSession(terminal);
       }
     }
   }

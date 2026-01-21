@@ -163,7 +163,7 @@ class CIDiscovery:
             )
 
             try:
-                content = wf_file.read_text(encoding="utf-8")
+                content = wf_file.read_text()
                 workflow_data = self._parse_yaml(content)
 
                 if not workflow_data:
@@ -242,7 +242,7 @@ class CIDiscovery:
         )
 
         try:
-            content = config_file.read_text(encoding="utf-8")
+            content = config_file.read_text()
             data = self._parse_yaml(content)
 
             if not data:
@@ -312,7 +312,7 @@ class CIDiscovery:
         )
 
         try:
-            content = config_file.read_text(encoding="utf-8")
+            content = config_file.read_text()
             data = self._parse_yaml(content)
 
             if not data:
@@ -370,7 +370,7 @@ class CIDiscovery:
         )
 
         try:
-            content = jenkinsfile.read_text(encoding="utf-8")
+            content = jenkinsfile.read_text()
 
             # Extract sh commands using regex
             sh_pattern = re.compile(r'sh\s+[\'"]([^\'"]+)[\'"]')

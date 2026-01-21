@@ -26,12 +26,6 @@ from pathlib import Path
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-# Validate platform-specific dependencies BEFORE any imports that might
-# trigger graphiti_core -> real_ladybug -> pywintypes import chain (ACS-253)
-from core.dependency_validator import validate_platform_dependencies
-
-validate_platform_dependencies()
-
 # Load .env file with centralized error handling
 from cli.utils import import_dotenv
 
@@ -91,7 +85,7 @@ def get_config(args) -> GitLabRunnerConfig:
         config_path = Path(args.project_dir) / ".auto-claude" / "gitlab" / "config.json"
         if config_path.exists():
             try:
-                with open(config_path, encoding="utf-8") as f:
+                with open(config_path) as f:
                     data = json.load(f)
                     project = data.get("project", "")
                     instance_url = data.get("instance_url", instance_url)
@@ -270,7 +264,7 @@ def main():
     parser.add_argument(
         "--model",
         type=str,
-        default="claude-sonnet-4-5-20250929",
+        default="claude-sonnet-4-20250514",
         help="AI model to use",
     )
     parser.add_argument(

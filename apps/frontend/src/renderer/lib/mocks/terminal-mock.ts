@@ -88,10 +88,6 @@ export const terminalMock = {
     data: { alive: false }
   }),
 
-  updateTerminalDisplayOrders: async () => ({
-    success: true
-  }),
-
   // Terminal Event Listeners (no-op in browser)
   onTerminalOutput: () => () => {},
   onTerminalExit: () => () => {},
@@ -103,13 +99,5 @@ export const terminalMock = {
   onTerminalAuthCreated: () => () => {},
   onTerminalClaudeBusy: () => () => {},
   onTerminalClaudeExit: () => () => {},
-  onTerminalOnboardingComplete: () => () => {},
-  onTerminalPendingResume: () => () => {},
-  onTerminalProfileChanged: () => () => {},
-  onTerminalOAuthCodeNeeded: () => () => {},
-
-  // OAuth code submission
-  submitOAuthCode: async () => ({
-    success: true
-  })
+  onTerminalPendingResume: () => () => {}
 };

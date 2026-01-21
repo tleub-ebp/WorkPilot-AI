@@ -58,8 +58,6 @@ export const claudeProfileMock = {
 
   onSDKRateLimit: () => () => {},
 
-  onAuthFailure: () => () => {},
-
   retryWithProfile: async () => ({ success: true }),
 
   // Usage Monitoring (Proactive Account Switching)
@@ -70,16 +68,5 @@ export const claudeProfileMock = {
 
   onUsageUpdated: () => () => {},
 
-  onProactiveSwapNotification: () => () => {},
-
-  // Returns terminal config for embedded authentication
-  authenticateClaudeProfile: async (profileId: string) => ({
-    success: true,
-    data: { terminalId: `claude-login-${profileId}-${Date.now()}`, configDir: '/mock/config' }
-  }),
-
-  verifyClaudeProfileAuth: async (_profileId: string) => ({
-    success: true,
-    data: { authenticated: false, email: undefined }
-  })
+  onProactiveSwapNotification: () => () => {}
 };

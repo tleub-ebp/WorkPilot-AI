@@ -5,9 +5,6 @@
  * Used by the Graphiti memory integration for embedding and LLM operations.
  */
 
-import https from 'https';
-import type { IncomingMessage } from 'http';
-
 export interface ApiValidationResult {
   success: boolean;
   message: string;
@@ -46,6 +43,8 @@ export async function validateOpenAIApiKey(
 
     // Use native https module to avoid additional dependencies
     const result = await new Promise<ApiValidationResult>((resolve) => {
+      const https = require('https');
+
       const options = {
         hostname: 'api.openai.com',
         port: 443,
@@ -58,7 +57,7 @@ export async function validateOpenAIApiKey(
         timeout: 15000,
       };
 
-      const req = https.request(options, (res: IncomingMessage) => {
+      const req = https.request(options, (res: { statusCode: number; on: (event: string, callback: (chunk: Buffer) => void) => void }) => {
         let data = '';
 
         res.on('data', (chunk: Buffer) => {
@@ -67,9 +66,8 @@ export async function validateOpenAIApiKey(
 
         res.on('end', () => {
           const latencyMs = Date.now() - startTime;
-          const statusCode = res.statusCode ?? 0;
 
-          if (statusCode === 200) {
+          if (res.statusCode === 200) {
             resolve({
               success: true,
               message: 'OpenAI API key is valid',
@@ -78,12 +76,12 @@ export async function validateOpenAIApiKey(
                 latencyMs,
               },
             });
-          } else if (statusCode === 401) {
+          } else if (res.statusCode === 401) {
             resolve({
               success: false,
               message: 'Invalid API key. Please check your OpenAI API key.',
             });
-          } else if (statusCode === 429) {
+          } else if (res.statusCode === 429) {
             // Rate limited but key is valid
             resolve({
               success: true,
@@ -98,12 +96,12 @@ export async function validateOpenAIApiKey(
               const errorData = JSON.parse(data);
               resolve({
                 success: false,
-                message: errorData.error?.message || `API error: ${statusCode}`,
+                message: errorData.error?.message || `API error: ${res.statusCode}`,
               });
             } catch {
               resolve({
                 success: false,
-                message: `API error: ${statusCode}`,
+                message: `API error: ${res.statusCode}`,
               });
             }
           }

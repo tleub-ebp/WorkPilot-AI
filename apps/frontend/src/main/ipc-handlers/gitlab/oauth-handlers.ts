@@ -4,11 +4,10 @@
  */
 
 import { ipcMain, shell } from 'electron';
-import { execFileSync, spawn } from 'child_process';
+import { execSync, execFileSync, spawn } from 'child_process';
 import { IPC_CHANNELS } from '../../../shared/constants';
 import type { IPCResult } from '../../../shared/types';
 import { getAugmentedEnv, findExecutable } from '../../env-utils';
-import { getIsolatedGitEnv } from '../../utils/git-isolation';
 import { openTerminalWithCommand } from '../claude-code-handlers';
 import type { GitLabAuthStartResult } from './types';
 
@@ -473,7 +472,7 @@ export function registerDetectGitLabProject(): void {
           encoding: 'utf-8',
           cwd: projectPath,
           stdio: 'pipe',
-          env: getIsolatedGitEnv()
+          env: getAugmentedEnv()
         }).trim();
 
         debugLog('Remote URL:', remoteUrl);
@@ -671,15 +670,13 @@ export function registerAddGitLabRemote(): void {
           execFileSync('git', ['remote', 'get-url', 'origin'], {
             cwd: projectPath,
             encoding: 'utf-8',
-            stdio: 'pipe',
-            env: getIsolatedGitEnv()
+            stdio: 'pipe'
           });
           // Remove existing origin
           execFileSync('git', ['remote', 'remove', 'origin'], {
             cwd: projectPath,
             encoding: 'utf-8',
-            stdio: 'pipe',
-            env: getIsolatedGitEnv()
+            stdio: 'pipe'
           });
         } catch {
           // No origin exists
@@ -688,8 +685,7 @@ export function registerAddGitLabRemote(): void {
         execFileSync('git', ['remote', 'add', 'origin', remoteUrl], {
           cwd: projectPath,
           encoding: 'utf-8',
-          stdio: 'pipe',
-          env: getIsolatedGitEnv()
+          stdio: 'pipe'
         });
 
         return {

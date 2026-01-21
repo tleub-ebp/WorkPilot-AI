@@ -47,7 +47,6 @@ if sys.version_info < (3, 10):  # noqa: UP036
 import asyncio
 import io
 import os
-import subprocess
 from pathlib import Path
 
 # Configure safe encoding on Windows BEFORE any imports that might print
@@ -82,12 +81,6 @@ if sys.platform == "win32":
 # Add auto-claude to path (parent of runners/)
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Validate platform-specific dependencies BEFORE any imports that might
-# trigger graphiti_core -> real_ladybug -> pywintypes import chain (ACS-253)
-from core.dependency_validator import validate_platform_dependencies
-
-validate_platform_dependencies()
-
 # Load .env file with centralized error handling
 from cli.utils import import_dotenv
 
@@ -105,7 +98,6 @@ from core.sentry import capture_exception, init_sentry
 
 init_sentry(component="spec-runner")
 
-from core.platform import is_windows
 from debug import debug, debug_error, debug_section, debug_success
 from phase_config import resolve_model_id
 from review import ReviewState
@@ -234,7 +226,7 @@ Examples:
         if not args.task_file.exists():
             print(f"Error: Task file not found: {args.task_file}")
             sys.exit(1)
-        task_description = args.task_file.read_text(encoding="utf-8").strip()
+        task_description = args.task_file.read_text().strip()
         if not task_description:
             print(f"Error: Task file is empty: {args.task_file}")
             sys.exit(1)
@@ -371,32 +363,8 @@ Examples:
             print(f"  {muted('Running:')} {' '.join(run_cmd)}")
             print()
 
-            # Execute run.py - use subprocess on Windows to maintain connection with Electron
-            # Fix for issue #609: os.execv() breaks connection on Windows
-            if is_windows():
-                try:
-                    result = subprocess.run(run_cmd)
-                    sys.exit(result.returncode)
-                except FileNotFoundError:
-                    debug_error(
-                        "spec_runner",
-                        "Could not start coding phase - executable not found",
-                    )
-                    print_status(
-                        "Could not start coding phase - executable not found", "error"
-                    )
-                    sys.exit(1)
-                except OSError as e:
-                    debug_error("spec_runner", f"Error starting coding phase: {e}")
-                    print_status(f"Error starting coding phase: {e}", "error")
-                    sys.exit(1)
-                except KeyboardInterrupt:
-                    debug_error("spec_runner", "Coding phase interrupted by user")
-                    print("\n\nCoding phase interrupted.")
-                    sys.exit(1)
-            else:
-                # On Unix/macOS, os.execv() works correctly - replaces current process
-                os.execv(sys.executable, run_cmd)
+            # Execute run.py - replace current process
+            os.execv(sys.executable, run_cmd)
 
         sys.exit(0)
 

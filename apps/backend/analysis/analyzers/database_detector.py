@@ -52,7 +52,7 @@ class DatabaseDetector(BaseAnalyzer):
 
         for file_path in py_files:
             try:
-                content = file_path.read_text(encoding="utf-8")
+                content = file_path.read_text()
             except (OSError, UnicodeDecodeError):
                 continue
 
@@ -119,7 +119,7 @@ class DatabaseDetector(BaseAnalyzer):
 
         for file_path in model_files:
             try:
-                content = file_path.read_text(encoding="utf-8")
+                content = file_path.read_text()
             except (OSError, UnicodeDecodeError):
                 continue
 
@@ -168,7 +168,7 @@ class DatabaseDetector(BaseAnalyzer):
             return models
 
         try:
-            content = schema_file.read_text(encoding="utf-8")
+            content = schema_file.read_text()
         except (OSError, UnicodeDecodeError):
             return models
 
@@ -216,7 +216,7 @@ class DatabaseDetector(BaseAnalyzer):
 
         for file_path in ts_files:
             try:
-                content = file_path.read_text(encoding="utf-8")
+                content = file_path.read_text()
             except (OSError, UnicodeDecodeError):
                 continue
 
@@ -265,7 +265,7 @@ class DatabaseDetector(BaseAnalyzer):
 
         for file_path in schema_files:
             try:
-                content = file_path.read_text(encoding="utf-8")
+                content = file_path.read_text()
             except (OSError, UnicodeDecodeError):
                 continue
 
@@ -295,7 +295,7 @@ class DatabaseDetector(BaseAnalyzer):
 
         for file_path in model_files:
             try:
-                content = file_path.read_text(encoding="utf-8")
+                content = file_path.read_text()
             except (OSError, UnicodeDecodeError):
                 continue
 
