@@ -24,6 +24,38 @@ interface UseXtermOptions {
   onDimensionsReady?: (cols: number, rows: number) => void;
 }
 
+/**
+ * Return type for the useXterm hook.
+ * Provides terminal control methods and state.
+ */
+export interface UseXtermReturn {
+  /** Ref to attach to the terminal container div */
+  terminalRef: React.RefObject<HTMLDivElement | null>;
+  /** Ref to the xterm.js Terminal instance */
+  xtermRef: React.MutableRefObject<XTerm | null>;
+  /** Ref to the FitAddon instance */
+  fitAddonRef: React.MutableRefObject<FitAddon | null>;
+  /**
+   * Fit the terminal content to the container dimensions.
+   * @returns boolean indicating whether fit was successful (had valid dimensions)
+   */
+  fit: () => boolean;
+  /** Write data to the terminal */
+  write: (data: string) => void;
+  /** Write a line to the terminal */
+  writeln: (data: string) => void;
+  /** Focus the terminal */
+  focus: () => void;
+  /** Dispose of the terminal and clean up resources */
+  dispose: () => void;
+  /** Current number of columns */
+  cols: number;
+  /** Current number of rows */
+  rows: number;
+  /** Whether dimensions have been measured and are ready */
+  dimensionsReady: boolean;
+}
+
 // Debounce helper function
 function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -33,7 +65,7 @@ function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T 
   }) as T;
 }
 
-export function useXterm({ terminalId, onCommandEnter, onResize, onDimensionsReady }: UseXtermOptions) {
+export function useXterm({ terminalId, onCommandEnter, onResize, onDimensionsReady }: UseXtermOptions): UseXtermReturn {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -379,10 +411,23 @@ export function useXterm({ terminalId, onCommandEnter, onResize, onDimensionsRea
     return () => window.removeEventListener('terminal-refit-all', handleRefitAll);
   }, []);
 
-  const fit = useCallback(() => {
-    if (fitAddonRef.current && xtermRef.current) {
-      fitAddonRef.current.fit();
+  /**
+   * Fit the terminal content to the container dimensions.
+   * @returns boolean indicating whether fit was successful (had valid dimensions)
+   */
+  const fit = useCallback((): boolean => {
+    if (fitAddonRef.current && xtermRef.current && terminalRef.current) {
+      // Validate container has valid dimensions before fitting
+      const rect = terminalRef.current.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        fitAddonRef.current.fit();
+        const cols = xtermRef.current.cols;
+        const rows = xtermRef.current.rows;
+        setDimensions({ cols, rows });
+        return true;
+      }
     }
+    return false;
   }, []);
 
   const write = useCallback((data: string) => {
