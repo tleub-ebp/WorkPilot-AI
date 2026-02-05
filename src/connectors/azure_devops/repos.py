@@ -329,9 +329,12 @@ class AzureReposClient:
                 f"in repository '{repository_id}' (project '{project}')."
             )
 
+        # Ensure content is typed as str for mypy
+        content_str: str = str(content)
+
         logger.info(
             "Retrieved file content for '%s' (%d characters).",
             file_path,
-            len(content),
+            len(content_str),
         )
-        return content
+        return content_str
