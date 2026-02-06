@@ -1,4 +1,4 @@
-{
+﻿{
   "title": "Settings",
   "tabs": {
     "app": "App Settings",
@@ -360,6 +360,13 @@
       "integrationTitle": "GitLab Integration",
       "integrationDescription": "Connect to GitLab for issue tracking",
       "syncDescription": "Sync with GitLab Issues"
+    },
+    "azure-devops": {
+      "title": "Azure DevOps",
+      "description": "Azure DevOps work items",
+      "integrationTitle": "Azure DevOps Integration",
+      "integrationDescription": "Connect to Azure DevOps for work item management",
+      "syncDescription": "Sync with Azure DevOps Backlog"
     },
     "memory": {
       "title": "Memory",
@@ -879,5 +886,60 @@
       "label": "PR Template Filler",
       "description": "AI-fills GitHub PR templates from code changes"
     }
+  },
+  "azureDevOps": {
+    "enableSyncLabel": "Enable Azure DevOps Sync",
+    "enableSyncDescription": "Automatically manage work items from Azure DevOps backlog",
+    "orgUrlLabel": "Organization URL",
+    "orgUrlDescription": "Your Azure DevOps organization URL (e.g., https://dev.azure.com/your-org)",
+    "orgUrlPlaceholder": "https://dev.azure.com/your-org",
+    "patLabel": "Personal Access Token (PAT)",
+    "patDescriptionPrefix": "Generate a PAT from",
+    "patDescriptionSuffix": "Requires scope: Work Items (Read & Write).",
+    "patLinkLabel": "Azure DevOps User Settings",
+    "patPlaceholder": "Enter your PAT",
+    "defaultProjectLabel": "Default Project (Optional)",
+    "defaultProjectDescription": "Leave empty to specify during import, or set a default project name",
+    "defaultProjectPlaceholder": "MyProject",
+    "connectionStatusTitle": "Connection Status",
+    "connectionChecking": "Checking...",
+    "connectionConnected": "Connected",
+    "connectionConnectedProject": "Connected to project {{projectName}}",
+    "connectionNotConnected": "Not connected",
+    "connectionWorkItemCount": "{{count}}+ work items available to import",
+    "importPromptTitle": "Import Work Items",
+    "importPromptDescription": "Select and import work items from your Azure DevOps backlog to create Auto-Claude tasks.",
+    "importPromptButton": "Select Work Items to Import",
+    "autoSyncLabel": "Auto-Sync Work Items",
+    "autoSyncDescription": "Automatically import new work items when the project opens",
+    "autoSyncNoteLabel": "Note:",
+    "autoSyncNoteDescription": "Auto-sync will fetch new work items marked as unresolved and import them as pending tasks."
+  },
+  "azureDevOpsImport": {
+    "title": "Import Azure DevOps Work Items",
+    "description": "Select work items from Azure DevOps to import into Auto-Claude",
+    "successTitle": "Import Successful!",
+    "successCount": "Imported {{count}} work item.",
+    "successCount_plural": "Imported {{count}} work items.",
+    "successFailedSuffix": "{{count}} failed.",
+    "errorNotConfigured": "Azure DevOps not configured",
+    "errorCheckConnectionFailed": "Failed to check connection",
+    "errorUnknown": "Unknown error",
+    "errorLoadWorkItemsFailed": "Failed to load work items",
+    "errorImportFailed": "Import failed",
+    "projectLabel": "Project:",
+    "searchPlaceholder": "Search work items...",
+    "filterTypeLabel": "Work Item Type",
+    "filterTypeAll": "All Types",
+    "filterStateLabel": "State",
+    "filterStateAll": "All States",
+    "selectionCount": "{{selected}} of {{total}} selected",
+    "emptyTitle": "No work items found",
+    "emptySubtitle": "Try adjusting your filters",
+    "done": "Done",
+    "cancel": "Cancel",
+    "importing": "Importing...",
+    "importButton": "Import {{count}} item",
+    "importButton_plural": "Import {{count}} items"
   }
 }

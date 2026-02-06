@@ -80,7 +80,7 @@ class AzureWorkItemsClient:
         self,
         project: str,
         query: str,
-        max_items: int = 100,
+        max_items: int = 1000,
     ) -> List[WorkItem]:
         """Query work items using WIQL (Work Item Query Language).
 
@@ -118,7 +118,6 @@ class AzureWorkItemsClient:
             wiql = Wiql(query=query)
             results = wit_client.query_by_wiql(
                 wiql=wiql,
-                project=project,
                 top=max_items,
             )
         except AzureDevOpsError:
@@ -146,11 +145,34 @@ class AzureWorkItemsClient:
         # Step 2: Fetch full work item details by IDs
         try:
             # CRITICAL: error_policy='omit' to skip inaccessible items
-            api_work_items = wit_client.get_work_items(
-                ids=ids,
-                project=project,
-                error_policy="omit",
-            )
+            api_work_items: List[Any] = []
+            batch_size = 200
+            for i in range(0, len(ids), batch_size):
+                batch = ids[i : i + batch_size]
+                try:
+                    api_work_items.extend(
+                        wit_client.get_work_items(
+                            ids=batch,
+                            error_policy="omit",
+                        )
+                    )
+                except Exception as exc:
+                    logger.warning(
+                        "Batch fetch failed for %d items in project '%s': %s",
+                        len(batch),
+                        project,
+                        exc,
+                    )
+                    for work_item_id in batch:
+                        try:
+                            item = wit_client.get_work_item(
+                                id=work_item_id,
+                                project=project,
+                            )
+                            if item is not None:
+                                api_work_items.append(item)
+                        except Exception:
+                            continue
         except AzureDevOpsError:
             raise
         except Exception as exc:
@@ -205,7 +227,6 @@ class AzureWorkItemsClient:
             wit_client = self._get_wit_client()
             api_work_item = wit_client.get_work_item(
                 id=work_item_id,
-                project=project,
             )
         except AzureDevOpsError:
             raise
@@ -239,7 +260,7 @@ class AzureWorkItemsClient:
         self,
         project: str,
         item_types: Optional[List[str]] = None,
-        max_items: int = 100,
+        max_items: int = 1000,
     ) -> List[WorkItem]:
         """List work items from the project backlog.
 
