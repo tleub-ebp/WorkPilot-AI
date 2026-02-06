@@ -8,6 +8,7 @@ Verifies that:
 3. Complete workflow integration functions properly
 """
 
+import importlib
 import json
 import sys
 import types
@@ -15,58 +16,47 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 # Add auto-claude directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
+_BACKEND = str(Path(__file__).parent.parent / "apps" / "backend")
+sys.path.insert(0, _BACKEND)
 
 # ---------------------------------------------------------------------------
 # Guard against MagicMock pollution of top-level package names coming from
 # other test files collected in the same pytest session.
-# We need "spec" and "implementation_plan" to be real packages (not MagicMock)
-# so that their submodule imports resolve correctly.
+#
+# Some test files set  sys.modules["spec"] = MagicMock()  (or "core", etc.)
+# at import-time.  When *this* file is collected later, Python sees the Mock
+# and can't resolve sub-modules like "spec.critique".
+#
+# Fix: forcibly re-import the real packages from the backend directory so
+# that Python's import machinery can locate their sub-modules.
 # ---------------------------------------------------------------------------
 
-_MOCKED_MODULES: dict[str, MagicMock] = {}
 
-
-def _ensure(name: str) -> MagicMock:
-    """Insert a MagicMock into sys.modules only if the key is missing."""
-    if name not in sys.modules:
-        mod = MagicMock()
-        mod.__name__ = name
-        sys.modules[name] = mod
-        _MOCKED_MODULES[name] = mod
-    return sys.modules[name]
-
-
-def _ensure_real_package(name: str) -> types.ModuleType:
-    """Ensure *name* is a real module (not a MagicMock) in sys.modules."""
+def _force_real_package(name: str) -> None:
+    """Remove any MagicMock and re-import *name* as a real package."""
     existing = sys.modules.get(name)
-    if existing is None or isinstance(existing, MagicMock):
-        mod = types.ModuleType(name)
-        mod.__path__ = []  # mark as package so sub-imports work
-        sys.modules[name] = mod
-        return mod
-    return existing  # type: ignore[return-value]
+    if existing is not None and not isinstance(existing, MagicMock):
+        return  # already a real module
+
+    # Remove the Mock (and any cached sub-modules under it)
+    keys_to_remove = [k for k in sys.modules if k == name or k.startswith(name + ".")]
+    for k in keys_to_remove:
+        if isinstance(sys.modules.get(k), MagicMock):
+            del sys.modules[k]
+
+    # Re-import the real package from the backend directory
+    importlib.import_module(name)
 
 
-# Make sure "spec" is a real package so "spec.critique" can be resolved
-_ensure_real_package("spec")
-
-# Make sure "implementation_plan" is a real package
-_ensure_real_package("implementation_plan")
-
-# Also guard core.* chain that may be transitively needed
-for _m in [
-    "core", "core.io_utils", "core.platform", "core.platform.detect",
-    "core.client", "core.auth", "core.agent", "core.worktree",
-]:
-    _ensure(_m)
+_force_real_package("spec")
+_force_real_package("implementation_plan")
 
 from critique import (
+    CritiqueResult,
+    format_critique_summary,
     generate_critique_prompt,
     parse_critique_response,
     should_proceed,
-    format_critique_summary,
-    CritiqueResult,
 )
 from implementation_plan import Subtask, SubtaskStatus, Verification, VerificationType
 
