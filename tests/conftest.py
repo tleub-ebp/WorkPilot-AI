@@ -88,6 +88,69 @@ def pytest_collectstart(collector) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Git repository fixture used by multiple test files
+# ---------------------------------------------------------------------------
+
+import subprocess
+import tempfile
+
+
+@pytest.fixture
+def temp_git_repo(tmp_path):
+    """Create a temporary directory with an initialised git repository.
+
+    Yields the ``Path`` to the repository root.  The fixture isolates the
+    git environment so that the host user's global git config does not
+    interfere with tests (e.g. hooks, signing, templates).
+    """
+    repo = tmp_path / "repo"
+    repo.mkdir()
+
+    env = {
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "HOME": str(tmp_path),
+        "GIT_AUTHOR_NAME": "Test",
+        "GIT_AUTHOR_EMAIL": "test@test.com",
+        "GIT_COMMITTER_NAME": "Test",
+        "GIT_COMMITTER_EMAIL": "test@test.com",
+    }
+
+    subprocess.run(
+        ["git", "init", "--initial-branch=main"],
+        cwd=repo,
+        env={**subprocess.os.environ, **env},
+        capture_output=True,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "test@test.com"],
+        cwd=repo,
+        capture_output=True,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test"],
+        cwd=repo,
+        capture_output=True,
+        check=True,
+    )
+
+    # Create an initial commit so HEAD exists
+    readme = repo / "README.md"
+    readme.write_text("# Test repo\n")
+    subprocess.run(["git", "add", "."], cwd=repo, capture_output=True, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "Initial commit"],
+        cwd=repo,
+        env={**subprocess.os.environ, **env},
+        capture_output=True,
+        check=True,
+    )
+
+    yield repo
+
+
+# ---------------------------------------------------------------------------
 # Azure DevOps connector imports and fixtures
 # ---------------------------------------------------------------------------
 
