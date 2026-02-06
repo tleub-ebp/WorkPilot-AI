@@ -1,15 +1,95 @@
-"""Shared pytest fixtures for the Azure DevOps connector test suite.
+"""Shared pytest fixtures and collection-time MagicMock cleanup.
 
-Provides reusable fixtures for creating mock API clients, sample
-API response objects, and pre-configured connector instances. All
-fixtures use ``unittest.mock`` to avoid real Azure DevOps API calls.
+Provides:
+1. A ``pytest_collectstart`` hook that removes MagicMock entries from
+   ``sys.modules`` before each test module is collected.  Several test
+   files set ``sys.modules["core"] = MagicMock()`` (and similar) at
+   module level so they can import backend code without all transitive
+   dependencies.  This pollutes the module cache and causes *other*
+   test files to fail with "'core' is not a package" errors.
+
+2. Reusable fixtures for creating mock Azure DevOps API clients,
+   sample API response objects, and pre-configured connector instances.
 """
 
+import importlib
+import sys
 from datetime import datetime
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
+
+# ---------------------------------------------------------------------------
+# Backend packages that are frequently polluted by MagicMock in test files.
+# Before each test file is collected we remove any MagicMock entries so
+# Python's import machinery can resolve real sub-modules.
+# ---------------------------------------------------------------------------
+
+_BACKEND = str(Path(__file__).parent.parent / "apps" / "backend")
+if _BACKEND not in sys.path:
+    sys.path.insert(0, _BACKEND)
+
+# Packages that get polluted by test files setting sys.modules[name] = MagicMock()
+_PROTECTED_PACKAGES = [
+    "core",
+    "spec",
+    "integrations",
+    "security",
+    "prompts_pkg",
+    "task_logger",
+    "implementation_plan",
+    "agents",
+    "runners",
+    "context",
+    "memory",
+    "recovery",
+    "init",
+    "validate_spec",
+    "phase_config",
+    "progress",
+    "graphiti_config",
+    "graphiti_providers",
+    "insight_extractor",
+    "ui",
+    "linear_updater",
+    "client",
+    "rate_limiter",
+]
+
+
+def _clean_mock_modules() -> None:
+    """Remove any MagicMock entries from sys.modules for protected packages.
+
+    This allows subsequent imports to find the real packages on disk
+    instead of hitting a MagicMock that cannot resolve sub-modules.
+    """
+    keys_to_remove = []
+    for key, mod in list(sys.modules.items()):
+        if not isinstance(mod, MagicMock):
+            continue
+        # Check if this key belongs to a protected package
+        for pkg in _PROTECTED_PACKAGES:
+            if key == pkg or key.startswith(pkg + "."):
+                keys_to_remove.append(key)
+                break
+    for key in keys_to_remove:
+        del sys.modules[key]
+
+
+def pytest_collectstart(collector) -> None:
+    """Remove MagicMock pollution from sys.modules before collecting each file.
+
+    This hook fires before each collector (test file) is imported, giving
+    us a chance to clean up mocks left by previously-collected files.
+    """
+    _clean_mock_modules()
+
+
+# ---------------------------------------------------------------------------
+# Azure DevOps connector imports and fixtures
+# ---------------------------------------------------------------------------
 
 from src.config.settings import Settings
 from src.connectors.azure_devops.client import AzureDevOpsClient
