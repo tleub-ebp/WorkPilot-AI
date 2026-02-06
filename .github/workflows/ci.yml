@@ -79,7 +79,7 @@ jobs:
         working-directory: apps/backend
         shell: bash
         env:
-          PYTHONPATH: ${{ github.workspace }}/apps/backend
+          PYTHONPATH: ${{ github.workspace }}/apps/backend${{ runner.os == 'Windows' && ';' || ':' }}${{ github.workspace }}
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
             source .venv/Scripts/activate
@@ -93,7 +93,7 @@ jobs:
         working-directory: apps/backend
         shell: bash
         env:
-          PYTHONPATH: ${{ github.workspace }}/apps/backend
+          PYTHONPATH: ${{ github.workspace }}/apps/backend:${{ github.workspace }}
         run: |
           source .venv/bin/activate
           pytest ../../tests/ -v --cov=. --cov-report=xml --cov-report=term-missing --cov-fail-under=10
