@@ -10,10 +10,56 @@ Verifies that:
 
 import json
 import sys
+import types
 from pathlib import Path
+from unittest.mock import MagicMock
 
 # Add auto-claude directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
+
+# ---------------------------------------------------------------------------
+# Guard against MagicMock pollution of top-level package names coming from
+# other test files collected in the same pytest session.
+# We need "spec" and "implementation_plan" to be real packages (not MagicMock)
+# so that their submodule imports resolve correctly.
+# ---------------------------------------------------------------------------
+
+_MOCKED_MODULES: dict[str, MagicMock] = {}
+
+
+def _ensure(name: str) -> MagicMock:
+    """Insert a MagicMock into sys.modules only if the key is missing."""
+    if name not in sys.modules:
+        mod = MagicMock()
+        mod.__name__ = name
+        sys.modules[name] = mod
+        _MOCKED_MODULES[name] = mod
+    return sys.modules[name]
+
+
+def _ensure_real_package(name: str) -> types.ModuleType:
+    """Ensure *name* is a real module (not a MagicMock) in sys.modules."""
+    existing = sys.modules.get(name)
+    if existing is None or isinstance(existing, MagicMock):
+        mod = types.ModuleType(name)
+        mod.__path__ = []  # mark as package so sub-imports work
+        sys.modules[name] = mod
+        return mod
+    return existing  # type: ignore[return-value]
+
+
+# Make sure "spec" is a real package so "spec.critique" can be resolved
+_ensure_real_package("spec")
+
+# Make sure "implementation_plan" is a real package
+_ensure_real_package("implementation_plan")
+
+# Also guard core.* chain that may be transitively needed
+for _m in [
+    "core", "core.io_utils", "core.platform", "core.platform.detect",
+    "core.client", "core.auth", "core.agent", "core.worktree",
+]:
+    _ensure(_m)
 
 from critique import (
     generate_critique_prompt,
