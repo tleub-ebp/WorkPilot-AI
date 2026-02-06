@@ -19,12 +19,40 @@ from unittest.mock import MagicMock, AsyncMock, patch
 # Store original modules before mocking (for cleanup)
 _original_modules = {}
 _mocked_module_names = [
-    'claude_code_sdk',
-    'claude_code_sdk.types',
-    'claude_agent_sdk',
-    'graphiti_providers',
-    'validate_spec',
+    # External SDKs
+    'claude_code_sdk', 'claude_code_sdk.types',
+    'claude_agent_sdk', 'claude_agent_sdk.types',
+    # Core infrastructure
+    'core', 'core.auth', 'core.client', 'core.simple_client',
+    'core.task_event', 'core.workspace', 'core.workspace.models',
+    'core.file_utils', 'core.plan_normalization', 'core.platform',
     'client',
+    # Config & phases
+    'phase_config', 'phase_event',
+    # Logging & UI
+    'debug', 'ui', 'ui.capabilities', 'task_logger',
+    'linear_updater', 'progress',
+    # Prompts
+    'prompts_pkg', 'prompts_pkg.project_context',
+    # Security
+    'security', 'security.constants', 'security.tool_input_validator',
+    # Review system
+    'review', 'review.diff_analyzer', 'review.formatters',
+    'review.reviewer', 'review.state',
+    # Agents
+    'agents', 'agents.memory_manager', 'agents.tools_pkg',
+    # Analysis
+    'analysis', 'analysis.analyzers',
+    # Spec submodules (transitive)
+    'spec.complexity', 'spec.compaction',
+    'spec.validate_pkg', 'spec.validate_pkg.spec_validator',
+    'spec.validate_pkg.validators',
+    # Validate spec (legacy)
+    'validate_spec',
+    # Graphiti
+    'graphiti_providers',
+    # Integrations
+    'integrations', 'integrations.linear', 'integrations.linear.updater',
 ]
 
 for name in _mocked_module_names:
@@ -33,34 +61,16 @@ for name in _mocked_module_names:
 
 # Mock ALL external dependencies before ANY imports from the spec module
 # The import chain is: spec.phases -> spec.__init__ -> spec.pipeline -> client -> claude_agent_sdk
-mock_sdk = MagicMock()
-mock_sdk.ClaudeSDKClient = MagicMock()
-mock_sdk.ClaudeCodeOptions = MagicMock()
-mock_sdk.HookMatcher = MagicMock()
-sys.modules['claude_code_sdk'] = mock_sdk
-sys.modules['claude_code_sdk.types'] = mock_sdk
+for name in _mocked_module_names:
+    sys.modules[name] = MagicMock()
 
-# Mock claude_agent_sdk
-mock_agent_sdk = MagicMock()
-mock_agent_sdk.ClaudeSDKClient = MagicMock()
-mock_agent_sdk.ClaudeAgentOptions = MagicMock()
-sys.modules['claude_agent_sdk'] = mock_agent_sdk
-
-# Mock graphiti_providers module
-mock_graphiti = MagicMock()
+# Set up specific mock attributes
+mock_graphiti = sys.modules['graphiti_providers']
 mock_graphiti.is_graphiti_enabled = MagicMock(return_value=False)
 mock_graphiti.get_graph_hints = AsyncMock(return_value=[])
-sys.modules['graphiti_providers'] = mock_graphiti
 
-# Mock validate_spec module
-mock_validate_spec = MagicMock()
+mock_validate_spec = sys.modules['validate_spec']
 mock_validate_spec.auto_fix_plan = MagicMock(return_value=False)
-sys.modules['validate_spec'] = mock_validate_spec
-
-# Mock client module to avoid circular imports
-mock_client = MagicMock()
-mock_client.create_client = MagicMock()
-sys.modules['client'] = mock_client
 
 # Now import the phases module directly (bypasses __init__.py issues)
 from spec.phases import PhaseExecutor, PhaseResult, MAX_RETRIES
