@@ -466,6 +466,13 @@ export interface GitStatus {
   error?: string;
 }
 
+export interface RepoProviderDetectionResult {
+  provider: 'github' | 'azure_devops' | 'unknown';
+  remoteName?: string;
+  remoteUrl?: string;
+}
+
+
 export interface CreateProjectFolderResult {
   path: string;
   name: string;
