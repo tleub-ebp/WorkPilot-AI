@@ -80,7 +80,7 @@ class AzureWorkItemsClient:
         self,
         project: str,
         query: str,
-        max_items: int = 1000,
+        max_items: int = 100,
     ) -> List[WorkItem]:
         """Query work items using WIQL (Work Item Query Language).
 
@@ -144,44 +144,26 @@ class AzureWorkItemsClient:
         )
 
         # Step 2: Fetch full work item details by IDs
-        try:
-            # CRITICAL: error_policy='omit' to skip inaccessible items
-            api_work_items: List[Any] = []
-            batch_size = 200
-            for i in range(0, len(ids), batch_size):
-                batch = ids[i : i + batch_size]
-                try:
-                    api_work_items.extend(
-                        wit_client.get_work_items(
-                            ids=batch,
-                            project=project,
-                            error_policy="omit",
-                        )
+        # CRITICAL: error_policy='omit' to skip inaccessible items
+        api_work_items: List[Any] = []
+        batch_size = 200
+        for i in range(0, len(ids), batch_size):
+            batch = ids[i : i + batch_size]
+            try:
+                api_work_items.extend(
+                    wit_client.get_work_items(
+                        ids=batch,
+                        project=project,
+                        error_policy="omit",
                     )
-                except Exception as exc:
-                    logger.warning(
-                        "Batch fetch failed for %d items in project '%s': %s",
-                        len(batch),
-                        project,
-                        exc,
-                    )
-                    for work_item_id in batch:
-                        try:
-                            item = wit_client.get_work_item(
-                                id=work_item_id,
-                                project=project,
-                            )
-                            if item is not None:
-                                api_work_items.append(item)
-                        except Exception:
-                            continue
-        except AzureDevOpsError:
-            raise
-        except Exception as exc:
-            raise APIError(
-                f"Failed to fetch work item details for "
-                f"{len(ids)} items in project '{project}': {exc}"
-            ) from exc
+                )
+            except AzureDevOpsError:
+                raise
+            except Exception as exc:
+                raise APIError(
+                    f"Failed to fetch work item details for "
+                    f"{len(ids)} items in project '{project}': {exc}"
+                ) from exc
 
         # Filter out None entries (omitted due to error_policy)
         work_items = [
@@ -262,7 +244,7 @@ class AzureWorkItemsClient:
         self,
         project: str,
         item_types: Optional[List[str]] = None,
-        max_items: int = 1000,
+        max_items: int = 100,
     ) -> List[WorkItem]:
         """List work items from the project backlog.
 
