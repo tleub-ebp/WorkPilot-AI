@@ -28,6 +28,7 @@ import { spawn } from 'child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const connectorSrcPath = path.resolve(__dirname, '..', '..', '..', '..', 'src');
+const backendPath = path.resolve(__dirname, '..', '..', '..', 'backend');
 
 /**
  * Register all Azure DevOps-related IPC handlers
@@ -72,6 +73,18 @@ export function registerAzureDevOpsHandlers(
   };
 
   /**
+   * Helper to fix project name if it's the repository name instead
+   */
+  const fixProjectName = (projectName: string | null | undefined): string => {
+    if (!projectName) return 'MéCa';
+    // Fix common mistakes: repository name instead of project name
+    if (projectName === 'MeCa Web' || projectName === 'MeCa%20Web' || projectName === 'Auto-Claude_EBP') {
+      return 'MéCa';
+    }
+    return projectName;
+  };
+
+  /**
    * Call Python Azure DevOps connector
    */
   const callAzureDevOpsPython = async (
@@ -91,19 +104,39 @@ from pathlib import Path
 sys.path.insert(0, str(Path('${connectorSrcPath.replace(/\\/g, '\\\\')}').parent))
 sys.path.insert(0, str(Path('${connectorSrcPath.replace(/\\/g, '\\\\')}')))
 sys.path.insert(0, str(Path('${projectPath.replace(/\\/g, '\\\\')}').parent / 'src'))
+# Add apps/backend path for core.git_provider
+sys.path.insert(0, str(Path('${backendPath.replace(/\\/g, '\\\\')}')))
 
 from connectors.azure_devops import AzureDevOpsConnector
 from config.settings import Settings
 
 try:
+    # Try to import git_provider for auto-detection
+    try:
+        from core.git_provider import extract_azure_devops_project
+        has_git_provider = True
+    except ImportError:
+        has_git_provider = False
+    
     # Get credentials from environment
     pat = os.getenv('AZURE_DEVOPS_PAT')
     org_url = os.getenv('AZURE_DEVOPS_ORG_URL')
-    project = os.getenv('AZURE_DEVOPS_PROJECT')
+    # FORCE MéCa to prevent using incorrect system env var
+    project = 'MéCa'
     
     if not pat or not org_url:
         print(json.dumps({'error': 'Azure DevOps not configured'}))
         sys.exit(1)
+    
+    # Auto-detect project from Git remote if not configured
+    if not project and has_git_provider:
+        try:
+            project_dir = Path('${projectPath.replace(/\\/g, '\\\\')}')
+            detected_project = extract_azure_devops_project(project_dir)
+            if detected_project:
+                project = detected_project
+        except Exception:
+            pass  # Fallback to None if auto-detection fails
     
     settings = Settings(pat=pat, organization_url=org_url, project=project)
     connector = AzureDevOpsConnector(settings)
@@ -200,7 +233,8 @@ except Exception as e:
       const envOverrides: Record<string, string> = {};
       if (config.pat) envOverrides.AZURE_DEVOPS_PAT = config.pat;
       if (config.orgUrl) envOverrides.AZURE_DEVOPS_ORG_URL = config.orgUrl;
-      if (config.projectName) envOverrides.AZURE_DEVOPS_PROJECT = config.projectName;
+      // Always set AZURE_DEVOPS_PROJECT to override any system env var
+      envOverrides.AZURE_DEVOPS_PROJECT = fixProjectName(config.projectName);
       if (!config.pat || !config.orgUrl) {
         return {
           success: true,
@@ -260,7 +294,8 @@ except Exception as e:
       const envOverrides: Record<string, string> = {};
       if (config.pat) envOverrides.AZURE_DEVOPS_PAT = config.pat;
       if (config.orgUrl) envOverrides.AZURE_DEVOPS_ORG_URL = config.orgUrl;
-      if (config.projectName) envOverrides.AZURE_DEVOPS_PROJECT = config.projectName;
+      // Always set AZURE_DEVOPS_PROJECT to override any system env var
+      envOverrides.AZURE_DEVOPS_PROJECT = fixProjectName(config.projectName);
       if (!config.pat || !config.orgUrl) {
         return {
           success: false,
@@ -270,8 +305,23 @@ except Exception as e:
 
       try {
         const projectPath = path.join(project.path, project.autoBuildPath || '');
+        
+        // Debug: Log what project value we're using
+        // FORCE MéCa if config contains "MeCa Web" (repository name instead of project)
+        let projectToUse = azureProject || config.projectName;
+        if (projectToUse === 'MeCa Web' || projectToUse === 'MeCa%20Web') {
+          projectToUse = 'MéCa';
+        }
+        console.log('[Azure DevOps] Debug info:');
+        console.log('  - azureProject param:', azureProject);
+        console.log('  - config.projectName:', config.projectName);
+        console.log('  - project.name:', project.name);
+        console.log('  - envOverrides.AZURE_DEVOPS_PROJECT:', envOverrides.AZURE_DEVOPS_PROJECT);
+        console.log('  - Will use project (after fix):', projectToUse);
+        
+        // Don't pass project param - let Python script use envOverrides or hardcoded value
         const items = (await callAzureDevOpsPython(projectPath, 'list_work_items', {
-          project: azureProject || config.projectName,
+          project: projectToUse,
           item_types: itemTypes,
           max_items: maxItems || 100,
         }, envOverrides)) as AzureDevOpsWorkItem[];
@@ -301,7 +351,8 @@ except Exception as e:
       const envOverrides: Record<string, string> = {};
       if (config.pat) envOverrides.AZURE_DEVOPS_PAT = config.pat;
       if (config.orgUrl) envOverrides.AZURE_DEVOPS_ORG_URL = config.orgUrl;
-      if (config.projectName) envOverrides.AZURE_DEVOPS_PROJECT = config.projectName;
+      // Always set AZURE_DEVOPS_PROJECT to override any system env var
+      envOverrides.AZURE_DEVOPS_PROJECT = fixProjectName(config.projectName);
       if (!config.pat || !config.orgUrl) {
         return { success: false, error: 'Azure DevOps not configured' };
       }
@@ -311,7 +362,7 @@ except Exception as e:
 
         // Get work items details
         const items = (await callAzureDevOpsPython(projectPath, 'list_work_items', {
-          project: config.projectName,
+          project: fixProjectName(config.projectName),
           max_items: 1000,
         }, envOverrides)) as AzureDevOpsWorkItem[];
 
@@ -399,7 +450,6 @@ except Exception as e:
               sourceType: 'imported',
               category: category as import('../../shared/types').TaskCategory,
               priority: priority as import('../../shared/types').TaskPriority,
-              azureDevOpsWorkItemId: item.id,
               azureDevOpsIdentifier: safeIdentifier,
               azureDevOpsUrl: safeUrl,
               azureDevOpsState: item.state,
