@@ -118,6 +118,7 @@ class AzureWorkItemsClient:
             wiql = Wiql(query=query)
             results = wit_client.query_by_wiql(
                 wiql=wiql,
+                project=project,
                 top=max_items,
             )
         except AzureDevOpsError:
