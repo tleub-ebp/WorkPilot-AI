@@ -18,7 +18,7 @@ Example:
 import logging
 from typing import Any, List, Optional
 
-from azure.devops.v7_0.work_item_tracking.models import Wiql
+from azure.devops.v7_0.work_item_tracking.models import Wiql, TeamContext
 
 from src.connectors.azure_devops.client import AzureDevOpsClient
 from src.connectors.azure_devops.exceptions import (
@@ -116,9 +116,10 @@ class AzureWorkItemsClient:
         try:
             wit_client = self._get_wit_client()
             wiql = Wiql(query=query)
+            team_context = TeamContext(project=project)
             results = wit_client.query_by_wiql(
                 wiql=wiql,
-                project=project,
+                team_context=team_context,
                 top=max_items,
             )
         except AzureDevOpsError:
