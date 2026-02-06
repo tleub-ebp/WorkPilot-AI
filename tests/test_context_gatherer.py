@@ -24,6 +24,52 @@ if str(_github_dir) not in sys.path:
 if str(_backend_dir) not in sys.path:
     sys.path.insert(0, str(_backend_dir))
 
+# ---------------------------------------------------------------------------
+# sys.modules mocking  – prevent deep backend imports from failing in CI
+# ---------------------------------------------------------------------------
+_MOCKED_MODULES: dict[str, MagicMock] = {}
+
+
+def _ensure(name: str) -> MagicMock:
+    if name not in sys.modules:
+        mod = MagicMock()
+        mod.__name__ = name
+        sys.modules[name] = mod
+        _MOCKED_MODULES[name] = mod
+    return sys.modules[name]
+
+
+# core.* chain (needed by context_gatherer → core.io_utils, gh_client → core.gh_executable)
+for _m in [
+    "core",
+    "core.io_utils",
+    "core.gh_executable",
+    "core.platform",
+    "core.platform.detect",
+    "core.client",
+    "core.auth",
+    "core.agent",
+    "core.worktree",
+]:
+    _ensure(_m)
+
+# Provide safe_print and get_gh_executable as callables
+sys.modules["core.io_utils"].safe_print = MagicMock()
+sys.modules["core.gh_executable"].get_gh_executable = MagicMock(return_value="gh")
+
+# rate_limiter (needed by gh_client)
+_rl = _ensure("rate_limiter")
+_rl.RateLimiter = MagicMock()
+_rl.RateLimitExceeded = type("RateLimitExceeded", (Exception,), {})
+
+# file_lock (needed by models)
+_fl = _ensure("file_lock")
+_fl.locked_json_update = MagicMock()
+_fl.locked_json_write = MagicMock()
+
+# ---------------------------------------------------------------------------
+# Now safe to import
+# ---------------------------------------------------------------------------
 from context_gatherer import AI_BOT_PATTERNS, FollowupContextGatherer
 from models import PRReviewResult, FollowupReviewContext
 

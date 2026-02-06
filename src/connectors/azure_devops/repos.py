@@ -1,0 +1,340 @@
+"""Repository operations for the Azure DevOps connector.
+
+Provides methods for listing repositories, retrieving repository details,
+browsing file structures, and fetching file content from Azure DevOps
+Git repositories via the Azure DevOps SDK.
+
+Example:
+    >>> from src.connectors.azure_devops.client import AzureDevOpsClient
+    >>> from src.connectors.azure_devops.repos import AzureReposClient
+    >>> client = AzureDevOpsClient.from_env()
+    >>> repos = AzureReposClient(client)
+    >>> repositories = repos.list_repositories("MyProject")
+"""
+
+import logging
+from typing import Any, List, Optional
+
+from azure.devops.v7_0.git.models import GitVersionDescriptor
+
+from src.connectors.azure_devops.client import AzureDevOpsClient
+from src.connectors.azure_devops.exceptions import (
+    APIError,
+    AzureDevOpsError,
+    RepositoryNotFoundError,
+)
+from src.connectors.azure_devops.models import FileItem, Repository
+
+logger = logging.getLogger(__name__)
+
+
+class AzureReposClient:
+    """Client for Azure DevOps Git repository operations.
+
+    Wraps the Azure DevOps Git API client to provide high-level methods
+    for listing repositories, browsing file structures, and retrieving
+    file content. All API responses are mapped to clean data models.
+
+    Attributes:
+        _client: The underlying AzureDevOpsClient providing authenticated
+            access to the Git API.
+
+    Example:
+        >>> client = AzureDevOpsClient.from_env()
+        >>> repos_client = AzureReposClient(client)
+        >>> for repo in repos_client.list_repositories("MyProject"):
+        ...     print(repo.name)
+    """
+
+    def __init__(self, client: AzureDevOpsClient) -> None:
+        """Initialize the repository operations client.
+
+        Args:
+            client: An authenticated AzureDevOpsClient instance.
+                Must have an active connection (connect() must have
+                been called).
+        """
+        self._client = client
+
+    def _get_git_client(self) -> Any:
+        """Get the Git API client from the underlying connection.
+
+        Returns:
+            An Azure DevOps GitClient instance for making API calls.
+
+        Raises:
+            ConfigurationError: If the client is not connected.
+            AuthenticationError: If credentials are invalid.
+        """
+        return self._client.get_git_client()
+
+    def list_repositories(self, project: str) -> List[Repository]:
+        """List all Git repositories in an Azure DevOps project.
+
+        Args:
+            project: The project name or identifier.
+
+        Returns:
+            A list of Repository objects representing all repositories
+            in the specified project. Returns an empty list if the
+            project has no repositories.
+
+        Raises:
+            APIError: If the API call fails unexpectedly.
+        """
+        logger.info("Listing repositories for project '%s'.", project)
+
+        try:
+            git_client = self._get_git_client()
+            api_repos = git_client.get_repositories(project=project)
+        except AzureDevOpsError:
+            raise
+        except Exception as exc:
+            raise APIError(
+                f"Failed to list repositories for project '{project}': {exc}"
+            ) from exc
+
+        if not api_repos:
+            logger.info(
+                "No repositories found in project '%s'.", project
+            )
+            return []
+
+        repositories = [
+            Repository.from_api_response(repo) for repo in api_repos
+        ]
+
+        logger.info(
+            "Found %d repositories in project '%s'.",
+            len(repositories),
+            project,
+        )
+        return repositories
+
+    def get_repository(
+        self, project: str, repository_id: str
+    ) -> Repository:
+        """Get a single repository by its name or ID.
+
+        Args:
+            project: The project name or identifier.
+            repository_id: The repository name or unique ID.
+
+        Returns:
+            A Repository object for the requested repository.
+
+        Raises:
+            RepositoryNotFoundError: If the repository does not exist
+                in the specified project.
+            APIError: If the API call fails unexpectedly.
+        """
+        logger.info(
+            "Getting repository '%s' in project '%s'.",
+            repository_id,
+            project,
+        )
+
+        try:
+            git_client = self._get_git_client()
+            api_repo = git_client.get_repository(
+                repository_id=repository_id,
+                project=project,
+            )
+        except AzureDevOpsError:
+            raise
+        except Exception as exc:
+            error_msg = str(exc).lower()
+            if "404" in error_msg or "not found" in error_msg:
+                raise RepositoryNotFoundError(
+                    repository_id=repository_id, project=project
+                ) from exc
+            raise APIError(
+                f"Failed to get repository '{repository_id}' "
+                f"in project '{project}': {exc}"
+            ) from exc
+
+        return Repository.from_api_response(api_repo)
+
+    def list_files(
+        self,
+        project: str,
+        repository_id: str,
+        path: str = "/",
+        branch: Optional[str] = None,
+    ) -> List[FileItem]:
+        """List files and directories at a given path in a repository.
+
+        Retrieves the tree structure at the specified path, with one level
+        of recursion to list immediate children.
+
+        Args:
+            project: The project name or identifier.
+            repository_id: The repository name or unique ID.
+            path: The path within the repository to list. Defaults to
+                the root ("/").
+            branch: The branch to list from. If None, uses the
+                repository's default branch.
+
+        Returns:
+            A list of FileItem objects representing files and directories
+            at the specified path. Returns an empty list for empty
+            repositories or paths with no items.
+
+        Raises:
+            RepositoryNotFoundError: If the repository does not exist.
+            APIError: If the API call fails unexpectedly.
+        """
+        logger.info(
+            "Listing files in '%s/%s' (path='%s', branch=%s).",
+            project,
+            repository_id,
+            path,
+            branch or "default",
+        )
+
+        version_descriptor = None
+        if branch:
+            version_descriptor = GitVersionDescriptor(
+                version=branch,
+                version_type="branch",
+            )
+
+        try:
+            git_client = self._get_git_client()
+            api_items = git_client.get_items(
+                repository_id=repository_id,
+                project=project,
+                scope_path=path,
+                recursion_level="oneLevel",
+                version_descriptor=version_descriptor,
+            )
+        except AzureDevOpsError:
+            raise
+        except Exception as exc:
+            error_msg = str(exc).lower()
+            if "404" in error_msg or "not found" in error_msg:
+                raise RepositoryNotFoundError(
+                    repository_id=repository_id, project=project
+                ) from exc
+            raise APIError(
+                f"Failed to list files in repository "
+                f"'{repository_id}': {exc}"
+            ) from exc
+
+        if not api_items:
+            logger.info(
+                "No items found at path '%s' in repository '%s'.",
+                path,
+                repository_id,
+            )
+            return []
+
+        # Filter out the scope path itself (first item is the directory)
+        file_items = []
+        for item in api_items:
+            item_path = getattr(item, "path", "")
+            # Skip the root/scope path entry itself
+            if item_path == path:
+                continue
+            file_items.append(FileItem.from_api_response(item))
+
+        logger.info(
+            "Found %d items at path '%s' in repository '%s'.",
+            len(file_items),
+            path,
+            repository_id,
+        )
+        return file_items
+
+    def get_file_content(
+        self,
+        project: str,
+        repository_id: str,
+        file_path: str,
+        branch: Optional[str] = None,
+    ) -> str:
+        """Get the content of a file from a repository.
+
+        Retrieves the raw content of a file at the specified path and
+        branch. Uses include_content=True to fetch the actual file data
+        rather than just metadata.
+
+        Args:
+            project: The project name or identifier.
+            repository_id: The repository name or unique ID.
+            file_path: The full path to the file within the repository
+                (e.g., '/src/main.py').
+            branch: The branch to read from. If None, uses the
+                repository's default branch.
+
+        Returns:
+            The file content as a string.
+
+        Raises:
+            FileNotFoundError: If the file does not exist at the
+                specified path.
+            RepositoryNotFoundError: If the repository does not exist.
+            APIError: If the API call fails unexpectedly.
+        """
+        logger.info(
+            "Getting file content for '%s' in '%s/%s' (branch=%s).",
+            file_path,
+            project,
+            repository_id,
+            branch or "default",
+        )
+
+        version_descriptor = None
+        if branch:
+            version_descriptor = GitVersionDescriptor(
+                version=branch,
+                version_type="branch",
+            )
+
+        try:
+            git_client = self._get_git_client()
+            # CRITICAL: include_content=True is required to get actual
+            # file content; the default returns metadata only.
+            item = git_client.get_item(
+                repository_id=repository_id,
+                path=file_path,
+                project=project,
+                version_descriptor=version_descriptor,
+                include_content=True,
+            )
+        except AzureDevOpsError:
+            raise
+        except Exception as exc:
+            error_msg = str(exc).lower()
+            if "404" in error_msg or "not found" in error_msg:
+                # Distinguish between repo not found and file not found
+                if "repository" in error_msg:
+                    raise RepositoryNotFoundError(
+                        repository_id=repository_id, project=project
+                    ) from exc
+                raise FileNotFoundError(
+                    f"File '{file_path}' not found in repository "
+                    f"'{repository_id}' (project '{project}', "
+                    f"branch='{branch or 'default'}')."
+                ) from exc
+            raise APIError(
+                f"Failed to get file content for '{file_path}' "
+                f"in repository '{repository_id}': {exc}"
+            ) from exc
+
+        content = getattr(item, "content", None)
+        if content is None:
+            raise FileNotFoundError(
+                f"File '{file_path}' exists but returned no content "
+                f"in repository '{repository_id}' (project '{project}')."
+            )
+
+        # Ensure content is typed as str for mypy
+        content_str: str = str(content)
+
+        logger.info(
+            "Retrieved file content for '%s' (%d characters).",
+            file_path,
+            len(content_str),
+        )
+        return content_str

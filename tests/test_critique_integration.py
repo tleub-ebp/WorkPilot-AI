@@ -8,19 +8,55 @@ Verifies that:
 3. Complete workflow integration functions properly
 """
 
+import importlib
 import json
 import sys
+import types
 from pathlib import Path
+from unittest.mock import MagicMock
 
 # Add auto-claude directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
+_BACKEND = str(Path(__file__).parent.parent / "apps" / "backend")
+sys.path.insert(0, _BACKEND)
+
+# ---------------------------------------------------------------------------
+# Guard against MagicMock pollution of top-level package names coming from
+# other test files collected in the same pytest session.
+#
+# Some test files set  sys.modules["spec"] = MagicMock()  (or "core", etc.)
+# at import-time.  When *this* file is collected later, Python sees the Mock
+# and can't resolve sub-modules like "spec.critique".
+#
+# Fix: forcibly re-import the real packages from the backend directory so
+# that Python's import machinery can locate their sub-modules.
+# ---------------------------------------------------------------------------
+
+
+def _force_real_package(name: str) -> None:
+    """Remove any MagicMock and re-import *name* as a real package."""
+    existing = sys.modules.get(name)
+    if existing is not None and not isinstance(existing, MagicMock):
+        return  # already a real module
+
+    # Remove the Mock (and any cached sub-modules under it)
+    keys_to_remove = [k for k in sys.modules if k == name or k.startswith(name + ".")]
+    for k in keys_to_remove:
+        if isinstance(sys.modules.get(k), MagicMock):
+            del sys.modules[k]
+
+    # Re-import the real package from the backend directory
+    importlib.import_module(name)
+
+
+_force_real_package("spec")
+_force_real_package("implementation_plan")
 
 from critique import (
+    CritiqueResult,
+    format_critique_summary,
     generate_critique_prompt,
     parse_critique_response,
     should_proceed,
-    format_critique_summary,
-    CritiqueResult,
 )
 from implementation_plan import Subtask, SubtaskStatus, Verification, VerificationType
 

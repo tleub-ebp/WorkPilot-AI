@@ -32,7 +32,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: '22'
 
       - name: Install Visual Studio Build Tools
         uses: microsoft/setup-msbuild@v2
@@ -44,18 +44,27 @@ jobs:
           # Install only node-pty
           npm install node-pty@1.1.0-beta42
 
-          # Get Electron ABI version
-          $electronAbi = (npx electron-abi $env:ELECTRON_VERSION)
+          # Get Electron ABI version using Node.js (more reliable than electron-abi package)
+          $electronAbi = (node -e "console.log(require('electron-abi')('$env:ELECTRON_VERSION'))" 2>$null)
+          if (-not $electronAbi) {
+            # Fallback: compute ABI from Electron version mapping
+            # Electron 40.x uses Node 22.x ABI 132
+            $electronAbi = "132"
+            Write-Host "Using fallback ABI: $electronAbi"
+          }
           Write-Host "Building for Electron $env:ELECTRON_VERSION (ABI: $electronAbi)"
 
+          # Set ABI as env var for later steps
+          echo "ELECTRON_ABI=$electronAbi" >> $env:GITHUB_ENV
+
           # Rebuild node-pty for Electron
-          npx @electron/rebuild --version $env:ELECTRON_VERSION --module-dir node_modules/node-pty --arch ${{ matrix.arch }}
+          npx @electron/rebuild@3.7.1 --version $env:ELECTRON_VERSION --module-dir node_modules/node-pty --arch ${{ matrix.arch }}
 
       - name: Package prebuilt binaries
         working-directory: apps/frontend
         shell: pwsh
         run: |
-          $electronAbi = (npx electron-abi $env:ELECTRON_VERSION)
+          $electronAbi = $env:ELECTRON_ABI
           $prebuildDir = "prebuilds/win32-${{ matrix.arch }}-electron-$electronAbi"
 
           New-Item -ItemType Directory -Force -Path $prebuildDir
@@ -81,7 +90,7 @@ jobs:
         working-directory: apps/frontend
         shell: pwsh
         run: |
-          $electronAbi = (npx electron-abi $env:ELECTRON_VERSION)
+          $electronAbi = $env:ELECTRON_ABI
           $archiveName = "node-pty-win32-${{ matrix.arch }}-electron-$electronAbi.zip"
 
           Compress-Archive -Path "prebuilds/*" -DestinationPath $archiveName
