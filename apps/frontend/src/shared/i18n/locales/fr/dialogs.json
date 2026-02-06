@@ -46,6 +46,25 @@
     "selectOrgAriaLabel": "Sélectionner {{org}} comme propriétaire du dépôt",
     "selectVisibilityAriaLabel": "Définir la visibilité du dépôt sur {{visibility}}"
   },
+  "repoProvider": {
+    "title": "Choisir le fournisseur de depot",
+    "description": "Choisissez ou {{projectName}} doit se connecter pour le suivi des tickets.",
+    "githubTitle": "Depot GitHub",
+    "githubDescription": "Utiliser GitHub pour les issues, PR et branches.",
+    "azureTitle": "Azure DevOps",
+    "azureDescription": "Utiliser Azure DevOps Boards pour les work items.",
+    "skip": "Ignorer pour le moment"
+  },
+  "azureDevOpsSetup": {
+    "title": "Connecter ? Azure DevOps",
+    "description": "Ajoutez vos identifiants Azure DevOps pour importer et synchroniser les work items.",
+    "loading": "Chargement des param?tres...",
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "skip": "Ignorer pour le moment",
+    "orgUrlRequired": "L'URL d'organisation est requise",
+    "patRequired": "Le jeton d'acc?s personnel est requis"
+  },
   "worktrees": {
     "title": "Worktrees",
     "description": "Gérez les espaces de travail isolés pour vos tâches Auto Claude",

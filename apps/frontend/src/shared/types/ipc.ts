@@ -21,6 +21,7 @@ import type {
   GraphitiValidationResult,
   GraphitiConnectionTestResult,
   GitStatus,
+  RepoProviderDetectionResult,
   CustomMcpServer,
   McpHealthCheckResult,
   McpTestConnectionResult
@@ -843,6 +844,7 @@ export interface ElectronAPI {
   getCurrentGitBranch: (projectPath: string) => Promise<IPCResult<string | null>>;
   detectMainBranch: (projectPath: string) => Promise<IPCResult<string | null>>;
   checkGitStatus: (projectPath: string) => Promise<IPCResult<GitStatus>>;
+  detectRepoProvider: (projectPath: string) => Promise<IPCResult<RepoProviderDetectionResult>>;
   initializeGit: (projectPath: string) => Promise<IPCResult<InitializationResult>>;
 
   // Ollama model detection operations
