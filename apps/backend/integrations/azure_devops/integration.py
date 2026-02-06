@@ -9,9 +9,7 @@ gracefully no-op and the application continues with local tracking only.
 """
 
 import logging
-import os
 from pathlib import Path
-from typing import List, Optional
 
 from src.connectors.azure_devops import AzureDevOpsConnector
 from src.config.settings import Settings
@@ -42,14 +40,14 @@ class AzureDevOpsManager:
         """
         self.project_dir = project_dir
         self.config = AzureDevOpsConfig.from_env()
-        self._connector: Optional[AzureDevOpsConnector] = None
+        self._connector: AzureDevOpsConnector | None = None
 
     @property
     def is_enabled(self) -> bool:
         """Check if Azure DevOps integration is enabled and configured."""
         return self.config.is_valid()
 
-    def get_connector(self) -> Optional[AzureDevOpsConnector]:
+    def get_connector(self) -> AzureDevOpsConnector | None:
         """
         Get or create an Azure DevOps connector.
 
@@ -76,7 +74,7 @@ class AzureDevOpsManager:
 
         return self._connector
 
-    def test_connection(self) -> tuple[bool, Optional[str]]:
+    def test_connection(self) -> tuple[bool, str | None]:
         """
         Test the Azure DevOps connection.
 
@@ -101,10 +99,10 @@ class AzureDevOpsManager:
 
     def list_work_items(
         self,
-        project: Optional[str] = None,
-        item_types: Optional[List[str]] = None,
+        project: str | None = None,
+        item_types: list[str] | None = None,
         max_items: int = 100,
-    ) -> List:
+    ) -> list:
         """
         List work items from Azure DevOps backlog.
 

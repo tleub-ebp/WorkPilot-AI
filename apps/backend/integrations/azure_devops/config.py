@@ -6,16 +6,15 @@ Manages environment variables and connection settings for Azure DevOps.
 
 import os
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
 class AzureDevOpsConfig:
     """Configuration for Azure DevOps integration."""
 
-    pat: Optional[str] = None
-    organization_url: Optional[str] = None
-    project: Optional[str] = None
+    pat: str | None = None
+    organization_url: str | None = None
+    project: str | None = None
 
     @classmethod
     def from_env(cls) -> "AzureDevOpsConfig":
@@ -34,7 +33,7 @@ class AzureDevOpsConfig:
             and self.organization_url.startswith("https://")
         )
 
-    def validate(self) -> tuple[bool, Optional[str]]:
+    def validate(self) -> tuple[bool, str | None]:
         """
         Validate the configuration.
 
