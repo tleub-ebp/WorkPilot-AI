@@ -31,31 +31,54 @@ _BACKEND = str(Path(__file__).parent.parent / "apps" / "backend")
 if _BACKEND not in sys.path:
     sys.path.insert(0, _BACKEND)
 
-# Packages that get polluted by test files setting sys.modules[name] = MagicMock()
+# Packages that get polluted by test files setting sys.modules[name] = MagicMock().
+# This list must cover EVERY top-level package name that any test file mocks via
+# sys.modules so the cleanup hook can restore real imports between test files.
 _PROTECTED_PACKAGES = [
+    # Core infrastructure
     "core",
-    "spec",
-    "integrations",
-    "security",
-    "prompts_pkg",
-    "task_logger",
-    "implementation_plan",
+    "client",
+    "init",
+    "debug",
+    # SDKs
+    "claude_code_sdk",
+    "claude_agent_sdk",
+    # Agents & tools
     "agents",
     "runners",
     "context",
-    "memory",
-    "recovery",
-    "init",
+    # Spec system
+    "spec",
     "validate_spec",
+    "implementation_plan",
+    # Security
+    "security",
+    # Prompts
+    "prompts",
+    "prompts_pkg",
+    "prompt_generator",
+    # Config & phases
     "phase_config",
+    "phase_event",
+    # Logging & UI
+    "task_logger",
     "progress",
-    "graphiti_config",
-    "graphiti_providers",
-    "insight_extractor",
     "ui",
     "linear_updater",
-    "client",
+    # Memory & graph
+    "memory",
+    "graphiti_config",
+    "graphiti_providers",
+    # Recovery & analysis
+    "recovery",
+    "insight_extractor",
+    "review",
+    "analysis",
+    # Integrations
+    "integrations",
+    # Utilities
     "rate_limiter",
+    "file_lock",
 ]
 
 
