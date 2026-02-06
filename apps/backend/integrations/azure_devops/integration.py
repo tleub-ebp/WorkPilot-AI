@@ -13,6 +13,7 @@ from pathlib import Path
 
 from src.config.settings import Settings
 from src.connectors.azure_devops import AzureDevOpsConnector
+from src.core.git_provider import extract_azure_devops_project
 
 from .config import AzureDevOpsConfig
 
@@ -41,6 +42,15 @@ class AzureDevOpsManager:
         self.project_dir = project_dir
         self.config = AzureDevOpsConfig.from_env()
         self._connector: AzureDevOpsConnector | None = None
+        
+        # Auto-detect project from Git remote if not configured
+        if not self.config.project:
+            detected_project = extract_azure_devops_project(project_dir)
+            if detected_project:
+                self.config.project = detected_project
+                logger.info(
+                    f"Auto-detected Azure DevOps project from Git remote: {detected_project}"
+                )
 
     @property
     def is_enabled(self) -> bool:
