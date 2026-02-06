@@ -238,6 +238,12 @@ export const IPC_CHANNELS = {
   LINEAR_IMPORT_ISSUES: 'linear:importIssues',
   LINEAR_CHECK_CONNECTION: 'linear:checkConnection',
 
+  // Azure DevOps integration
+  AZURE_DEVOPS_GET_PROJECTS: 'azureDevOps:getProjects',
+  AZURE_DEVOPS_GET_WORK_ITEMS: 'azureDevOps:getWorkItems',
+  AZURE_DEVOPS_IMPORT_WORK_ITEMS: 'azureDevOps:importWorkItems',
+  AZURE_DEVOPS_CHECK_CONNECTION: 'azureDevOps:checkConnection',
+
   // GitHub integration
   GITHUB_GET_REPOSITORIES: 'github:getRepositories',
   GITHUB_GET_ISSUES: 'github:getIssues',
