@@ -23,65 +23,91 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
 # Store original modules for cleanup
 _original_modules = {}
 _mocked_module_names = [
+    # External SDKs
     'claude_code_sdk',
     'claude_code_sdk.types',
-    'init',
+    'claude_agent_sdk',
+    'claude_agent_sdk.types',
+    # Core infrastructure
+    'core',
+    'core.auth',
+    'core.client',
+    'core.simple_client',
+    'core.task_event',
+    'core.workspace',
+    'core.workspace.models',
+    'core.file_utils',
+    'core.plan_normalization',
+    'core.platform',
     'client',
-    'review',
-    'task_logger',
+    'init',
+    # Config & phases
+    'phase_config',
+    'phase_event',
+    # Logging & UI
+    'debug',
     'ui',
+    'ui.capabilities',
+    'task_logger',
+    'linear_updater',
+    'progress',
+    # Prompts
+    'prompts_pkg',
+    'prompts_pkg.project_context',
+    # Security
+    'security',
+    'security.constants',
+    'security.tool_input_validator',
+    # Review system
+    'review',
+    'review.diff_analyzer',
+    'review.formatters',
+    'review.reviewer',
+    'review.state',
+    # Agents
+    'agents',
+    'agents.memory_manager',
+    'agents.tools_pkg',
+    # Analysis
+    'analysis',
+    'analysis.analyzers',
+    # Spec submodules (import chain from spec.pipeline)
+    'spec.complexity',
+    'spec.compaction',
+    'spec.context',
+    'spec.discovery',
+    'spec.requirements',
+    'spec.validator',
+    'spec.writer',
+    'spec.phases',
+    'spec.phases.executor',
+    'spec.phases.discovery_phases',
+    'spec.phases.requirements_phases',
+    'spec.phases.spec_phases',
+    'spec.phases.planning_phases',
+    'spec.phases.models',
+    'spec.phases.utils',
+    'spec.validate_pkg',
+    'spec.validate_pkg.spec_validator',
+    'spec.validate_pkg.validators',
+    # Validate spec (legacy)
     'validate_spec',
+    # Integrations
+    'integrations',
+    'integrations.linear',
+    'integrations.linear.updater',
 ]
 
 for name in _mocked_module_names:
     if name in sys.modules:
         _original_modules[name] = sys.modules[name]
 
-# Mock modules that have external dependencies
-mock_sdk = MagicMock()
-mock_sdk.ClaudeSDKClient = MagicMock()
-mock_sdk.ClaudeCodeOptions = MagicMock()
-mock_types = MagicMock()
-mock_types.HookMatcher = MagicMock()
-sys.modules['claude_code_sdk'] = mock_sdk
-sys.modules['claude_code_sdk.types'] = mock_types
+# Mock all modules with MagicMock
+for name in _mocked_module_names:
+    sys.modules[name] = MagicMock()
 
-# Mock init module to prevent side effects
-mock_init = MagicMock()
-mock_init.init_auto_claude_dir = MagicMock(return_value=(Path("/tmp"), False))
-sys.modules['init'] = mock_init
-
-# Mock other external dependencies
-mock_client = MagicMock()
-mock_client.create_client = MagicMock()
-sys.modules['client'] = mock_client
-
-mock_review = MagicMock()
-mock_review.ReviewState = MagicMock()
-mock_review.run_review_checkpoint = MagicMock()
-sys.modules['review'] = mock_review
-
-mock_task_logger = MagicMock()
-mock_task_logger.LogEntryType = MagicMock()
-mock_task_logger.LogPhase = MagicMock()
-mock_task_logger.get_task_logger = MagicMock()
-mock_task_logger.update_task_logger_path = MagicMock()
-sys.modules['task_logger'] = mock_task_logger
-
-mock_ui = MagicMock()
-mock_ui.Icons = MagicMock()
-mock_ui.box = MagicMock(return_value="")
-mock_ui.highlight = MagicMock(return_value="")
-mock_ui.icon = MagicMock(return_value="")
-mock_ui.muted = MagicMock(return_value="")
-mock_ui.print_key_value = MagicMock()
-mock_ui.print_section = MagicMock()
-mock_ui.print_status = MagicMock()
-sys.modules['ui'] = mock_ui
-
-mock_validate_spec = MagicMock()
-mock_validate_spec.SpecValidator = MagicMock()
-sys.modules['validate_spec'] = mock_validate_spec
+# Set specific return values needed by module-level code
+sys.modules['init'].init_auto_claude_dir = MagicMock(return_value=(Path("/tmp"), False))
 
 # Now import the module under test
 from spec.pipeline import SpecOrchestrator, get_specs_dir
