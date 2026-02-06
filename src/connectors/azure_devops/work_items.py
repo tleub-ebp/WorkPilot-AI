@@ -154,6 +154,7 @@ class AzureWorkItemsClient:
                     api_work_items.extend(
                         wit_client.get_work_items(
                             ids=batch,
+                            project=project,
                             error_policy="omit",
                         )
                     )
