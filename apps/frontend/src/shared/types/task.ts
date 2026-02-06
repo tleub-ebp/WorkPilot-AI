@@ -190,6 +190,10 @@ export interface TaskMetadata {
   githubBatchTheme?: string;  // Theme/title of the GitHub issue batch
   gitlabIssueIid?: number;  // Reference to GitLab issue IID if from GitLab
   gitlabUrl?: string;  // GitLab issue URL
+  azureDevOpsIdentifier?: string;  // Azure DevOps work item identifier (e.g., '12345')
+  azureDevOpsUrl?: string;  // Azure DevOps work item URL
+  azureDevOpsState?: string;  // Azure DevOps work item state
+  azureDevOpsType?: string;  // Azure DevOps work item type (Bug, User Story, Task, etc.)
 
   // Classification
   category?: TaskCategory;
