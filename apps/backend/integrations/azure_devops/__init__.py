@@ -1,4 +1,4 @@
-﻿"""
+"""
 Azure DevOps integration module.
 
 Provides Azure DevOps work item tracking integration.

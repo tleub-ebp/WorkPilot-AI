@@ -1,4 +1,4 @@
-﻿"""
+"""
 Azure DevOps Integration Manager.
 
 Manages synchronization between Auto-Claude tasks and Azure DevOps work items.
