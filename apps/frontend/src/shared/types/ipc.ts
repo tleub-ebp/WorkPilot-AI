@@ -724,6 +724,12 @@ export interface ElectronAPI {
   onAppUpdateStableDowngrade: (
     callback: (info: AppUpdateInfo) => void
   ) => () => void;
+  onAppUpdateReadOnlyVolume: (
+    callback: (info: { appPath: string }) => void
+  ) => () => void;
+  onAppUpdateError: (
+    callback: (error: AppUpdateErrorEvent) => void
+  ) => () => void;
 
   // Shell operations
   openExternal: (url: string) => Promise<void>;
