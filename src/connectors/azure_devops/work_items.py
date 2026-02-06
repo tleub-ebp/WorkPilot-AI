@@ -125,6 +125,14 @@ class AzureWorkItemsClient:
         except AzureDevOpsError:
             raise
         except Exception as exc:
+            error_msg = str(exc)
+            # Check if the error is about a non-existent project
+            if "does not exist" in error_msg.lower() and "project" in error_msg.lower():
+                raise APIError(
+                    f"Failed to execute WIQL query in project '{project}': {exc}\n"
+                    f"Note: Ensure you are passing the Azure DevOps PROJECT name, "
+                    f"not the repository name. Projects contain repositories."
+                ) from exc
             raise APIError(
                 f"Failed to execute WIQL query in project "
                 f"'{project}': {exc}"
