@@ -1,4 +1,4 @@
-﻿"""
+"""
 Azure DevOps integration configuration.
 
 Manages environment variables and connection settings for Azure DevOps.

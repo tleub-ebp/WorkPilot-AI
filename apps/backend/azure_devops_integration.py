@@ -1,4 +1,4 @@
-﻿"""
+"""
 Azure DevOps integration module facade.
 
 Provides Azure DevOps work item tracking integration.
