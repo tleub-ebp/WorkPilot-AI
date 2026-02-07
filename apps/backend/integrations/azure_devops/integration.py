@@ -12,8 +12,8 @@ import logging
 from pathlib import Path
 
 from src.config.settings import Settings
-from src.core.git_provider import extract_azure_devops_project
 from src.connectors.azure_devops import AzureDevOpsConnector
+from src.core.git_provider import extract_azure_devops_project
 
 from .config import AzureDevOpsConfig
 
