@@ -21,10 +21,10 @@ import pytest
 # Store original modules for cleanup
 _original_modules = {}
 _mocked_module_names = [
-    'claude_code_sdk',
-    'claude_code_sdk.types',
-    'claude_agent_sdk',
-    'claude_agent_sdk.types',
+    "claude_code_sdk",
+    "claude_code_sdk.types",
+    "claude_agent_sdk",
+    "claude_agent_sdk.types",
 ]
 
 for name in _mocked_module_names:
@@ -45,10 +45,10 @@ mock_agent_sdk.ClaudeSDKClient = MagicMock()
 mock_agent_types = MagicMock()
 mock_agent_types.HookMatcher = MagicMock()
 
-sys.modules['claude_code_sdk'] = mock_code_sdk
-sys.modules['claude_code_sdk.types'] = mock_code_types
-sys.modules['claude_agent_sdk'] = mock_agent_sdk
-sys.modules['claude_agent_sdk.types'] = mock_agent_types
+sys.modules["claude_code_sdk"] = mock_code_sdk
+sys.modules["claude_code_sdk.types"] = mock_code_types
+sys.modules["claude_agent_sdk"] = mock_agent_sdk
+sys.modules["claude_agent_sdk.types"] = mock_agent_types
 
 # Add auto-claude directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
@@ -163,8 +163,13 @@ class TestPhasesToRun:
         )
         phases = assessment.phases_to_run()
         assert phases == [
-            "discovery", "historical_context", "requirements",
-            "context", "spec_writing", "planning", "validation"
+            "discovery",
+            "historical_context",
+            "requirements",
+            "context",
+            "spec_writing",
+            "planning",
+            "validation",
         ]
 
     def test_standard_phases_with_research(self):
@@ -177,8 +182,14 @@ class TestPhasesToRun:
         phases = assessment.phases_to_run()
         assert "research" in phases
         assert phases == [
-            "discovery", "historical_context", "requirements", "research",
-            "context", "spec_writing", "planning", "validation"
+            "discovery",
+            "historical_context",
+            "requirements",
+            "research",
+            "context",
+            "spec_writing",
+            "planning",
+            "validation",
         ]
 
     def test_complex_phases(self):
@@ -189,8 +200,15 @@ class TestPhasesToRun:
         )
         phases = assessment.phases_to_run()
         assert phases == [
-            "discovery", "historical_context", "requirements", "research",
-            "context", "spec_writing", "self_critique", "planning", "validation"
+            "discovery",
+            "historical_context",
+            "requirements",
+            "research",
+            "context",
+            "spec_writing",
+            "self_critique",
+            "planning",
+            "validation",
         ]
 
     def test_recommended_phases_override(self):
@@ -232,7 +250,9 @@ class TestDetectIntegrations:
     def test_detects_database_integrations(self):
         """Detects database integrations."""
         analyzer = ComplexityAnalyzer()
-        result = analyzer._detect_integrations("migrate postgres database with redis cache")
+        result = analyzer._detect_integrations(
+            "migrate postgres database with redis cache"
+        )
         assert "postgres" in result
         assert "redis" in result
 
@@ -245,13 +265,17 @@ class TestDetectIntegrations:
     def test_detects_auth_integrations(self):
         """Detects authentication integrations."""
         analyzer = ComplexityAnalyzer()
-        result = analyzer._detect_integrations("add oauth authentication with jwt tokens")
+        result = analyzer._detect_integrations(
+            "add oauth authentication with jwt tokens"
+        )
         assert "oauth" in result or "jwt" in result
 
     def test_detects_queue_integrations(self):
         """Detects message queue integrations."""
         analyzer = ComplexityAnalyzer()
-        result = analyzer._detect_integrations("process messages with kafka and rabbitmq")
+        result = analyzer._detect_integrations(
+            "process messages with kafka and rabbitmq"
+        )
         assert "kafka" in result
         assert "rabbitmq" in result
 
@@ -280,8 +304,13 @@ class TestDetectInfrastructureChanges:
     def test_detects_kubernetes(self):
         """Detects Kubernetes infrastructure."""
         analyzer = ComplexityAnalyzer()
-        assert analyzer._detect_infrastructure_changes("deploy to kubernetes cluster") is True
-        assert analyzer._detect_infrastructure_changes("configure k8s deployment") is True
+        assert (
+            analyzer._detect_infrastructure_changes("deploy to kubernetes cluster")
+            is True
+        )
+        assert (
+            analyzer._detect_infrastructure_changes("configure k8s deployment") is True
+        )
 
     def test_detects_deployment(self):
         """Detects deployment changes."""
@@ -296,7 +325,9 @@ class TestDetectInfrastructureChanges:
     def test_detects_environment_config(self):
         """Detects environment configuration."""
         analyzer = ComplexityAnalyzer()
-        assert analyzer._detect_infrastructure_changes("add environment variable") is True
+        assert (
+            analyzer._detect_infrastructure_changes("add environment variable") is True
+        )
         assert analyzer._detect_infrastructure_changes("update config file") is True
 
     def test_detects_schema_changes(self):
@@ -380,7 +411,7 @@ class TestEstimateServices:
         analyzer = ComplexityAnalyzer()
         result = analyzer._estimate_services(
             "backend frontend worker service api client server database queue cache proxy",
-            None
+            None,
         )
         assert result <= 5
 
@@ -608,6 +639,7 @@ class TestRunAIComplexityAssessment:
     @pytest.mark.asyncio
     async def test_returns_none_on_agent_failure(self, spec_dir: Path):
         """Returns None when agent fails."""
+
         async def mock_agent(prompt_file, additional_context=None):
             return (False, "Agent failed")
 
@@ -622,6 +654,7 @@ class TestRunAIComplexityAssessment:
     @pytest.mark.asyncio
     async def test_returns_none_on_missing_file(self, spec_dir: Path):
         """Returns None when assessment file not created."""
+
         async def mock_agent(prompt_file, additional_context=None):
             return (True, "Success but no file")
 
@@ -659,7 +692,9 @@ class TestRunAIComplexityAssessment:
                 "needs_self_critique": False,
             },
         }
-        (spec_dir / "complexity_assessment.json").write_text(json.dumps(assessment_data))
+        (spec_dir / "complexity_assessment.json").write_text(
+            json.dumps(assessment_data)
+        )
 
         async def mock_agent(prompt_file, additional_context=None):
             return (True, "Assessment created")
@@ -710,6 +745,7 @@ class TestRunAIComplexityAssessment:
     @pytest.mark.asyncio
     async def test_handles_exception_gracefully(self, spec_dir: Path):
         """Returns None on exception."""
+
         async def mock_agent(prompt_file, additional_context=None):
             raise Exception("Unexpected error")
 
@@ -774,7 +810,9 @@ class TestEdgeCases:
     def test_special_characters_in_task(self):
         """Handles special characters in task."""
         analyzer = ComplexityAnalyzer()
-        result = analyzer.analyze("fix bug in <Component /> with @decorator & regex /pattern/")
+        result = analyzer.analyze(
+            "fix bug in <Component /> with @decorator & regex /pattern/"
+        )
         assert isinstance(result, ComplexityAssessment)
 
     def test_unicode_in_task(self):

@@ -21,27 +21,48 @@ import pytest
 _original_modules = {}
 _mocked_module_names = [
     # External SDKs
-    'claude_code_sdk', 'claude_code_sdk.types',
-    'claude_agent_sdk', 'claude_agent_sdk.types',
+    "claude_code_sdk",
+    "claude_code_sdk.types",
+    "claude_agent_sdk",
+    "claude_agent_sdk.types",
     # Core infrastructure
-    'core', 'core.auth', 'core.client', 'core.simple_client',
-    'core.task_event', 'core.workspace', 'core.workspace.models',
-    'core.file_utils', 'core.plan_normalization', 'core.platform',
-    'client',
+    "core",
+    "core.auth",
+    "core.client",
+    "core.simple_client",
+    "core.task_event",
+    "core.workspace",
+    "core.workspace.models",
+    "core.file_utils",
+    "core.plan_normalization",
+    "core.platform",
+    "client",
     # Config & phases
-    'phase_config', 'phase_event',
+    "phase_config",
+    "phase_event",
     # Logging & UI
-    'debug', 'ui', 'ui.capabilities', 'task_logger',
-    'linear_updater', 'progress',
+    "debug",
+    "ui",
+    "ui.capabilities",
+    "task_logger",
+    "linear_updater",
+    "progress",
     # Prompts
-    'prompts_pkg', 'prompts_pkg.project_context',
+    "prompts_pkg",
+    "prompts_pkg.project_context",
     # Security
-    'security', 'security.constants', 'security.tool_input_validator',
-    'security.bash_security_hook',
+    "security",
+    "security.constants",
+    "security.tool_input_validator",
+    "security.bash_security_hook",
     # Agents
-    'agents', 'agents.memory_manager', 'agents.tools_pkg',
+    "agents",
+    "agents.memory_manager",
+    "agents.tools_pkg",
     # Integrations
-    'integrations', 'integrations.linear', 'integrations.linear.updater',
+    "integrations",
+    "integrations.linear",
+    "integrations.linear.updater",
 ]
 
 for name in _mocked_module_names:
@@ -54,7 +75,7 @@ for name in _mocked_module_names:
     sys.modules[name] = MagicMock()
 
 # Set up specific mock attributes needed by tests
-mock_progress = sys.modules['progress']
+mock_progress = sys.modules["progress"]
 
 from qa_loop import (
     MAX_QA_ITERATIONS,
@@ -86,7 +107,9 @@ def cleanup_mocked_modules():
 class TestImplementationPlanIO:
     """Tests for implementation plan loading/saving."""
 
-    def test_load_implementation_plan(self, spec_dir: Path, sample_implementation_plan: dict):
+    def test_load_implementation_plan(
+        self, spec_dir: Path, sample_implementation_plan: dict
+    ):
         """Loads implementation plan from JSON."""
         plan_file = spec_dir / "implementation_plan.json"
         plan_file.write_text(json.dumps(sample_implementation_plan))
@@ -261,7 +284,9 @@ class TestShouldRunQA:
         result = should_run_qa(spec_dir)
         assert result is False
 
-    def test_should_run_qa_already_approved(self, spec_dir: Path, qa_signoff_approved: dict):
+    def test_should_run_qa_already_approved(
+        self, spec_dir: Path, qa_signoff_approved: dict
+    ):
         """Returns False when already approved."""
         plan = {
             "feature": "Test",
@@ -304,7 +329,9 @@ class TestShouldRunQA:
 class TestShouldRunFixes:
     """Tests for should_run_fixes logic."""
 
-    def test_should_run_fixes_when_rejected(self, spec_dir: Path, qa_signoff_rejected: dict):
+    def test_should_run_fixes_when_rejected(
+        self, spec_dir: Path, qa_signoff_rejected: dict
+    ):
         """Returns True when QA rejected and under max iterations."""
         plan = {
             "feature": "Test",
@@ -329,7 +356,9 @@ class TestShouldRunFixes:
         result = should_run_fixes(spec_dir)
         assert result is False
 
-    def test_should_run_fixes_not_rejected(self, spec_dir: Path, qa_signoff_approved: dict):
+    def test_should_run_fixes_not_rejected(
+        self, spec_dir: Path, qa_signoff_approved: dict
+    ):
         """Returns False when not rejected."""
         plan = {
             "feature": "Test",
@@ -433,7 +462,10 @@ class TestQAStateMachine:
 
     def test_iteration_count_increments(self, spec_dir: Path):
         """QA session counter increments through iterations."""
-        plan = {"feature": "Test", "qa_signoff": {"status": "rejected", "qa_session": 1}}
+        plan = {
+            "feature": "Test",
+            "qa_signoff": {"status": "rejected", "qa_session": 1},
+        }
         save_implementation_plan(spec_dir, plan)
         assert get_qa_iteration_count(spec_dir) == 1
 

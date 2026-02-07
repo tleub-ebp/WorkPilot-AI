@@ -9,6 +9,7 @@ Examples:
     python scripts/update-readme.py 2.8.0              # Stable release
     python scripts/update-readme.py 2.8.0-beta.1 --prerelease  # Beta release
 """
+
 import argparse
 import re
 import sys
@@ -22,7 +23,9 @@ def validate_version(version: str) -> bool:
     return bool(SEMVER_PATTERN.match(version))
 
 
-def update_section(text: str, start_marker: str, end_marker: str, replacements: list) -> str:
+def update_section(
+    text: str, start_marker: str, end_marker: str, replacements: list
+) -> str:
     """Update content between markers with given replacements."""
     pattern = f"({re.escape(start_marker)})(.*?)({re.escape(end_marker)})"
 
@@ -50,7 +53,7 @@ def update_readme(version: str, is_prerelease: bool) -> bool:
     version_badge = version.replace("-", "--")
 
     # Read README
-    with open("README.md", "r") as f:
+    with open("README.md") as f:
         original_content = f.read()
 
     content = original_content
@@ -65,7 +68,9 @@ def update_readme(version: str, is_prerelease: bool) -> bool:
         print(f"Updating BETA section to {version} (badge: {version_badge})")
 
         # Update beta badge
-        content = re.sub(rf"beta-{semver_badge}-orange", f"beta-{version_badge}-orange", content)
+        content = re.sub(
+            rf"beta-{semver_badge}-orange", f"beta-{version_badge}-orange", content
+        )
 
         # Update beta version badge link
         content = update_section(
@@ -100,7 +105,9 @@ def update_readme(version: str, is_prerelease: bool) -> bool:
         )
 
         # Update stable badge
-        content = re.sub(rf"stable-{semver_badge}-blue", f"stable-{version_badge}-blue", content)
+        content = re.sub(
+            rf"stable-{semver_badge}-blue", f"stable-{version_badge}-blue", content
+        )
 
         # Update stable version badge link
         content = update_section(
@@ -135,15 +142,22 @@ def update_readme(version: str, is_prerelease: bool) -> bool:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Update README.md version badges and download links")
+    parser = argparse.ArgumentParser(
+        description="Update README.md version badges and download links"
+    )
     parser.add_argument("version", help="Version string (e.g., 2.8.0 or 2.8.0-beta.1)")
-    parser.add_argument("--prerelease", action="store_true", help="Mark as prerelease version")
+    parser.add_argument(
+        "--prerelease", action="store_true", help="Mark as prerelease version"
+    )
     args = parser.parse_args()
 
     # Validate version format
     if not validate_version(args.version):
         print(f"ERROR: Invalid version format: {args.version}", file=sys.stderr)
-        print("Expected format: X.Y.Z or X.Y.Z-prerelease.N (e.g., 2.8.0 or 2.8.0-beta.1)", file=sys.stderr)
+        print(
+            "Expected format: X.Y.Z or X.Y.Z-prerelease.N (e.g., 2.8.0 or 2.8.0-beta.1)",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     # Auto-detect prerelease if not explicitly set

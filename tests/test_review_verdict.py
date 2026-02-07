@@ -84,9 +84,18 @@ class TestMergeVerdictEnum:
         }
 
         # BLOCKED is the most severe
-        assert severity_order[MergeVerdict.BLOCKED] > severity_order[MergeVerdict.NEEDS_REVISION]
-        assert severity_order[MergeVerdict.NEEDS_REVISION] > severity_order[MergeVerdict.MERGE_WITH_CHANGES]
-        assert severity_order[MergeVerdict.MERGE_WITH_CHANGES] > severity_order[MergeVerdict.READY_TO_MERGE]
+        assert (
+            severity_order[MergeVerdict.BLOCKED]
+            > severity_order[MergeVerdict.NEEDS_REVISION]
+        )
+        assert (
+            severity_order[MergeVerdict.NEEDS_REVISION]
+            > severity_order[MergeVerdict.MERGE_WITH_CHANGES]
+        )
+        assert (
+            severity_order[MergeVerdict.MERGE_WITH_CHANGES]
+            > severity_order[MergeVerdict.READY_TO_MERGE]
+        )
 
 
 # ============================================================================
@@ -356,7 +365,11 @@ class TestBlockerGeneration:
         blockers = []
 
         for finding in findings:
-            if finding.severity in (ReviewSeverity.CRITICAL, ReviewSeverity.HIGH, ReviewSeverity.MEDIUM):
+            if finding.severity in (
+                ReviewSeverity.CRITICAL,
+                ReviewSeverity.HIGH,
+                ReviewSeverity.MEDIUM,
+            ):
                 blockers.append(f"{finding.category.value}: {finding.title}")
 
         assert len(blockers) == 1
@@ -378,7 +391,11 @@ class TestBlockerGeneration:
         blockers = []
 
         for finding in findings:
-            if finding.severity in (ReviewSeverity.CRITICAL, ReviewSeverity.HIGH, ReviewSeverity.MEDIUM):
+            if finding.severity in (
+                ReviewSeverity.CRITICAL,
+                ReviewSeverity.HIGH,
+                ReviewSeverity.MEDIUM,
+            ):
                 blockers.append(f"{finding.category.value}: {finding.title}")
 
         assert len(blockers) == 1
@@ -400,7 +417,11 @@ class TestBlockerGeneration:
         blockers = []
 
         for finding in findings:
-            if finding.severity in (ReviewSeverity.CRITICAL, ReviewSeverity.HIGH, ReviewSeverity.MEDIUM):
+            if finding.severity in (
+                ReviewSeverity.CRITICAL,
+                ReviewSeverity.HIGH,
+                ReviewSeverity.MEDIUM,
+            ):
                 blockers.append(f"{finding.category.value}: {finding.title}")
 
         assert len(blockers) == 1
@@ -422,7 +443,11 @@ class TestBlockerGeneration:
         blockers = []
 
         for finding in findings:
-            if finding.severity in (ReviewSeverity.CRITICAL, ReviewSeverity.HIGH, ReviewSeverity.MEDIUM):
+            if finding.severity in (
+                ReviewSeverity.CRITICAL,
+                ReviewSeverity.HIGH,
+                ReviewSeverity.MEDIUM,
+            ):
                 blockers.append(f"{finding.category.value}: {finding.title}")
 
         assert len(blockers) == 0
@@ -461,7 +486,11 @@ class TestBlockerGeneration:
         blockers = []
 
         for finding in findings:
-            if finding.severity in (ReviewSeverity.CRITICAL, ReviewSeverity.HIGH, ReviewSeverity.MEDIUM):
+            if finding.severity in (
+                ReviewSeverity.CRITICAL,
+                ReviewSeverity.HIGH,
+                ReviewSeverity.MEDIUM,
+            ):
                 blockers.append(f"{finding.category.value}: {finding.title}")
 
         assert len(blockers) == 2  # Only CRITICAL and HIGH, not LOW
@@ -551,7 +580,9 @@ class TestCombinedVerdictScenarios:
         ]
 
         # Count by severity
-        critical_count = sum(1 for f in findings if f.severity == ReviewSeverity.CRITICAL)
+        critical_count = sum(
+            1 for f in findings if f.severity == ReviewSeverity.CRITICAL
+        )
         high_count = sum(1 for f in findings if f.severity == ReviewSeverity.HIGH)
         medium_count = sum(1 for f in findings if f.severity == ReviewSeverity.MEDIUM)
         low_count = sum(1 for f in findings if f.severity == ReviewSeverity.LOW)
@@ -583,7 +614,10 @@ class TestVerdictConstants:
         """Test that BRANCH_BEHIND_BLOCKER_MSG is properly defined."""
         assert BRANCH_BEHIND_BLOCKER_MSG is not None
         assert len(BRANCH_BEHIND_BLOCKER_MSG) > 0
-        assert "behind" in BRANCH_BEHIND_BLOCKER_MSG.lower() or "out of date" in BRANCH_BEHIND_BLOCKER_MSG.lower()
+        assert (
+            "behind" in BRANCH_BEHIND_BLOCKER_MSG.lower()
+            or "out of date" in BRANCH_BEHIND_BLOCKER_MSG.lower()
+        )
 
     def test_branch_behind_reasoning_defined(self):
         """Test that BRANCH_BEHIND_REASONING is properly defined."""

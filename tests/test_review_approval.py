@@ -22,21 +22,23 @@ from tests.review_fixtures import approved_state, pending_state, review_spec_dir
 class TestReviewStateApproval:
     """Tests for approve(), reject(), and related methods."""
 
-    def test_is_approved_true(self, approved_state: ReviewState) -> None:
+    def test_is_approved_true(self, approved_state) -> None:
         """is_approved() returns True for approved state."""
         assert approved_state.is_approved() is True
 
-    def test_is_approved_false(self, pending_state: ReviewState) -> None:
+    def test_is_approved_false(self, pending_state) -> None:
         """is_approved() returns False for pending state."""
         assert pending_state.is_approved() is False
 
-    def test_approve_sets_fields(self, review_spec_dir: Path) -> None:
+    def test_approve_sets_fields(self, review_spec_dir) -> None:
         """approve() sets all required fields correctly."""
         state = ReviewState()
 
         # Freeze time for consistent testing
         with patch("review.state.datetime") as mock_datetime:
-            mock_datetime.now.return_value.isoformat.return_value = "2024-07-01T10:00:00"
+            mock_datetime.now.return_value.isoformat.return_value = (
+                "2024-07-01T10:00:00"
+            )
             state.approve(review_spec_dir, approved_by="approver")
 
         assert state.approved is True
@@ -45,7 +47,7 @@ class TestReviewStateApproval:
         assert state.spec_hash != ""  # Hash should be computed
         assert state.review_count == 1
 
-    def test_approve_increments_review_count(self, review_spec_dir: Path) -> None:
+    def test_approve_increments_review_count(self, review_spec_dir) -> None:
         """approve() increments review_count each time."""
         state = ReviewState(review_count=3)
 
@@ -53,7 +55,7 @@ class TestReviewStateApproval:
 
         assert state.review_count == 4
 
-    def test_approve_auto_saves(self, review_spec_dir: Path) -> None:
+    def test_approve_auto_saves(self, review_spec_dir) -> None:
         """approve() saves state when auto_save=True (default)."""
         state = ReviewState()
         state.approve(review_spec_dir, approved_by="user")
@@ -64,7 +66,7 @@ class TestReviewStateApproval:
         loaded = ReviewState.load(review_spec_dir)
         assert loaded.approved is True
 
-    def test_approve_no_auto_save(self, review_spec_dir: Path) -> None:
+    def test_approve_no_auto_save(self, review_spec_dir) -> None:
         """approve() doesn't save when auto_save=False."""
         state = ReviewState()
         state.approve(review_spec_dir, approved_by="user", auto_save=False)
@@ -72,7 +74,7 @@ class TestReviewStateApproval:
         state_file = review_spec_dir / REVIEW_STATE_FILE
         assert not state_file.exists()
 
-    def test_reject_clears_approval(self, review_spec_dir: Path) -> None:
+    def test_reject_clears_approval(self, review_spec_dir) -> None:
         """reject() clears approval fields."""
         state = ReviewState(
             approved=True,
@@ -90,7 +92,7 @@ class TestReviewStateApproval:
         assert state.spec_hash == ""
         assert state.review_count == 6  # Still incremented
 
-    def test_invalidate_keeps_feedback(self, review_spec_dir: Path) -> None:
+    def test_invalidate_keeps_feedback(self, review_spec_dir) -> None:
         """invalidate() keeps feedback history."""
         state = ReviewState(
             approved=True,
@@ -106,7 +108,7 @@ class TestReviewStateApproval:
         assert state.feedback == ["Important feedback"]  # Preserved
         assert state.approved_by == "user"  # Kept as history
 
-    def test_multiple_review_sessions(self, review_spec_dir: Path) -> None:
+    def test_multiple_review_sessions(self, review_spec_dir) -> None:
         """Test multiple review sessions increment count correctly."""
         state = ReviewState()
         assert state.review_count == 0
@@ -127,7 +129,7 @@ class TestReviewStateApproval:
         state.approve(review_spec_dir, approved_by="user2")
         assert state.review_count == 3
 
-    def test_auto_approve_workflow(self, review_spec_dir: Path) -> None:
+    def test_auto_approve_workflow(self, review_spec_dir) -> None:
         """Test the auto-approve workflow (--auto-approve flag)."""
         # Simulate spec_runner.py with --auto-approve
         state = ReviewState()
@@ -141,7 +143,7 @@ class TestReviewStateApproval:
         loaded = ReviewState.load(review_spec_dir)
         assert loaded.approved_by == "auto"
 
-    def test_rejection_preserves_history(self, review_spec_dir: Path) -> None:
+    def test_rejection_preserves_history(self, review_spec_dir) -> None:
         """Test that rejection properly clears approval but preserves feedback."""
         # Initial approval with feedback
         state = ReviewState()
@@ -162,7 +164,7 @@ class TestReviewStateApproval:
         assert state.feedback == original_feedback  # Preserved
         assert state.review_count == 2  # Incremented
 
-    def test_invalidate_vs_reject_difference(self, review_spec_dir: Path) -> None:
+    def test_invalidate_vs_reject_difference(self, review_spec_dir) -> None:
         """
         Test the difference between invalidate() and reject().
 
@@ -179,7 +181,9 @@ class TestReviewStateApproval:
         state_for_invalidate.invalidate(review_spec_dir, auto_save=False)
 
         assert not state_for_invalidate.approved
-        assert state_for_invalidate.approved_by == "original_approver"  # Kept as history
+        assert (
+            state_for_invalidate.approved_by == "original_approver"
+        )  # Kept as history
         assert state_for_invalidate.approved_at == ""  # Cleared
         assert state_for_invalidate.spec_hash == ""  # Cleared
         assert len(state_for_invalidate.feedback) == 1  # Preserved
@@ -194,7 +198,7 @@ class TestReviewStateApproval:
         assert state_for_reject.spec_hash == ""  # Cleared
         assert len(state_for_reject.feedback) == 1  # Preserved
 
-    def test_review_count_tracks_all_interactions(self, review_spec_dir: Path) -> None:
+    def test_review_count_tracks_all_interactions(self, review_spec_dir) -> None:
         """Test that review_count accurately tracks user interactions."""
         state = ReviewState()
         assert state.review_count == 0

@@ -254,7 +254,10 @@ class TestParallelFollowupResponseWithValidation:
             verdict_reasoning="Previous finding was a false positive, now dismissed",
         )
         assert len(response.finding_validations) == 1
-        assert response.finding_validations[0].validation_status == "dismissed_false_positive"
+        assert (
+            response.finding_validations[0].validation_status
+            == "dismissed_false_positive"
+        )
 
 
 # ============================================================================
@@ -381,11 +384,13 @@ class TestValidationIntegration:
 
         # Verify validation counts can be computed from the response
         confirmed_count = sum(
-            1 for fv in response.finding_validations
+            1
+            for fv in response.finding_validations
             if fv.validation_status == "confirmed_valid"
         )
         dismissed_count = sum(
-            1 for fv in response.finding_validations
+            1
+            for fv in response.finding_validations
             if fv.validation_status == "dismissed_false_positive"
         )
 
@@ -396,7 +401,11 @@ class TestValidationIntegration:
 
     def test_validation_status_enum_values(self):
         """Test all valid validation status values."""
-        valid_statuses = ["confirmed_valid", "dismissed_false_positive", "needs_human_review"]
+        valid_statuses = [
+            "confirmed_valid",
+            "dismissed_false_positive",
+            "needs_human_review",
+        ]
 
         for status in valid_statuses:
             result = FindingValidationResult(
@@ -577,7 +586,9 @@ class TestScopeFiltering:
             ),
         ]
 
-        security_findings = [f for f in findings if f.category == ReviewCategory.SECURITY]
+        security_findings = [
+            f for f in findings if f.category == ReviewCategory.SECURITY
+        ]
         assert len(security_findings) == 2
         assert all(f.category == ReviewCategory.SECURITY for f in security_findings)
 
@@ -641,7 +652,8 @@ class TestScopeFiltering:
         ]
 
         critical_or_high = [
-            f for f in findings
+            f
+            for f in findings
             if f.severity in (ReviewSeverity.CRITICAL, ReviewSeverity.HIGH)
         ]
         assert len(critical_or_high) == 2
@@ -712,8 +724,12 @@ class TestScopeFiltering:
         ]
 
         confirmed = [v for v in validations if v.validation_status == "confirmed_valid"]
-        dismissed = [v for v in validations if v.validation_status == "dismissed_false_positive"]
-        needs_review = [v for v in validations if v.validation_status == "needs_human_review"]
+        dismissed = [
+            v for v in validations if v.validation_status == "dismissed_false_positive"
+        ]
+        needs_review = [
+            v for v in validations if v.validation_status == "needs_human_review"
+        ]
 
         assert len(confirmed) == 1
         assert len(dismissed) == 1
@@ -792,7 +808,8 @@ class TestScopeFiltering:
 
         # Filter: security + critical + confirmed
         filtered = [
-            f for f in findings
+            f
+            for f in findings
             if f.category == ReviewCategory.SECURITY
             and f.severity == ReviewSeverity.CRITICAL
             and f.validation_status == "confirmed_valid"
@@ -859,15 +876,17 @@ class TestScopeFiltering:
 
         findings = []
         for i, category in enumerate(categories):
-            findings.append(PRReviewFinding(
-                id=f"CAT-{i:03d}",
-                severity=ReviewSeverity.MEDIUM,
-                category=category,
-                title=f"Finding for {category.value}",
-                description=f"Description for {category.value}",
-                file=f"src/{category.value}.py",
-                line=i + 1,
-            ))
+            findings.append(
+                PRReviewFinding(
+                    id=f"CAT-{i:03d}",
+                    severity=ReviewSeverity.MEDIUM,
+                    category=category,
+                    title=f"Finding for {category.value}",
+                    description=f"Description for {category.value}",
+                    file=f"src/{category.value}.py",
+                    line=i + 1,
+                )
+            )
 
         assert len(findings) == len(categories)
 
@@ -1072,7 +1091,10 @@ class TestFindingDeduplication:
                 location_findings[location] = finding
             else:
                 existing = location_findings[location]
-                if severity_priority[finding.severity] > severity_priority[existing.severity]:
+                if (
+                    severity_priority[finding.severity]
+                    > severity_priority[existing.severity]
+                ):
                     location_findings[location] = finding
 
         unique_findings = list(location_findings.values())
@@ -1261,9 +1283,18 @@ class TestFindingSeverityMapping:
             ReviewSeverity.LOW: 1,
         }
 
-        assert severity_priority[ReviewSeverity.CRITICAL] > severity_priority[ReviewSeverity.HIGH]
-        assert severity_priority[ReviewSeverity.HIGH] > severity_priority[ReviewSeverity.MEDIUM]
-        assert severity_priority[ReviewSeverity.MEDIUM] > severity_priority[ReviewSeverity.LOW]
+        assert (
+            severity_priority[ReviewSeverity.CRITICAL]
+            > severity_priority[ReviewSeverity.HIGH]
+        )
+        assert (
+            severity_priority[ReviewSeverity.HIGH]
+            > severity_priority[ReviewSeverity.MEDIUM]
+        )
+        assert (
+            severity_priority[ReviewSeverity.MEDIUM]
+            > severity_priority[ReviewSeverity.LOW]
+        )
 
     def test_sort_findings_by_severity(self):
         """Test sorting findings by severity (highest first)."""
@@ -1314,9 +1345,7 @@ class TestFindingSeverityMapping:
         }
 
         sorted_findings = sorted(
-            findings,
-            key=lambda f: severity_priority[f.severity],
-            reverse=True
+            findings, key=lambda f: severity_priority[f.severity], reverse=True
         )
 
         assert sorted_findings[0].severity == ReviewSeverity.CRITICAL
@@ -1413,7 +1442,9 @@ class TestFindingSeverityMapping:
             ),
         ]
 
-        critical_count = sum(1 for f in findings if f.severity == ReviewSeverity.CRITICAL)
+        critical_count = sum(
+            1 for f in findings if f.severity == ReviewSeverity.CRITICAL
+        )
         high_count = sum(1 for f in findings if f.severity == ReviewSeverity.HIGH)
         medium_count = sum(1 for f in findings if f.severity == ReviewSeverity.MEDIUM)
         low_count = sum(1 for f in findings if f.severity == ReviewSeverity.LOW)
@@ -1491,7 +1522,8 @@ class TestFindingSeverityMapping:
         # Filter for confirmed valid critical/high findings (true blockers)
         blocking_severities = {ReviewSeverity.CRITICAL, ReviewSeverity.HIGH}
         true_blockers = [
-            f for f in findings
+            f
+            for f in findings
             if f.severity in blocking_severities
             and f.validation_status == "confirmed_valid"
         ]
@@ -1555,7 +1587,9 @@ class TestFindingSeverityMapping:
         }
 
         if findings:
-            highest_severity = max(findings, key=lambda f: severity_priority[f.severity]).severity
+            highest_severity = max(
+                findings, key=lambda f: severity_priority[f.severity]
+            ).severity
         else:
             highest_severity = None
 
@@ -1573,7 +1607,9 @@ class TestFindingSeverityMapping:
         }
 
         if findings:
-            highest_severity = max(findings, key=lambda f: severity_priority[f.severity]).severity
+            highest_severity = max(
+                findings, key=lambda f: severity_priority[f.severity]
+            ).severity
         else:
             highest_severity = None
 
@@ -1605,7 +1641,9 @@ class TestFindingSeverityMapping:
         ]
 
         # Verify fixable aligns with severity
-        critical_finding = next(f for f in findings if f.severity == ReviewSeverity.CRITICAL)
+        critical_finding = next(
+            f for f in findings if f.severity == ReviewSeverity.CRITICAL
+        )
         low_finding = next(f for f in findings if f.severity == ReviewSeverity.LOW)
 
         assert critical_finding.fixable is False

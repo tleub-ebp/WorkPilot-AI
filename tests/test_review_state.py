@@ -21,6 +21,7 @@ from tests.review_fixtures import approved_state, pending_state
 # REVIEW STATE - BASIC FUNCTIONALITY
 # =============================================================================
 
+
 class TestReviewStateBasics:
     """Tests for ReviewState basic functionality."""
 
@@ -35,7 +36,7 @@ class TestReviewStateBasics:
         assert state.spec_hash == ""
         assert state.review_count == 0
 
-    def test_to_dict(self, approved_state: ReviewState) -> None:
+    def test_to_dict(self, approved_state) -> None:
         """to_dict() returns correct dictionary."""
         d = approved_state.to_dict()
 
@@ -91,6 +92,7 @@ class TestReviewStateBasics:
 # =============================================================================
 # REVIEW STATE - LOAD/SAVE
 # =============================================================================
+
 
 class TestReviewStatePersistence:
     """Tests for ReviewState load and save operations."""

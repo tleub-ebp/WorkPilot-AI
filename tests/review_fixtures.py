@@ -8,7 +8,6 @@ Common fixtures used across review module tests.
 
 import json
 from pathlib import Path
-from typing import Generator
 
 import pytest
 from review.state import ReviewState

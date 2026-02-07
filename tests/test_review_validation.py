@@ -62,7 +62,7 @@ class TestSpecHashValidation:
 
         assert hash_a != hash_b
 
-    def test_compute_spec_hash(self, review_spec_dir: Path) -> None:
+    def test_compute_spec_hash(self, review_spec_dir) -> None:
         """_compute_spec_hash() computes combined hash of spec files."""
         spec_hash = _compute_spec_hash(review_spec_dir)
 
@@ -70,7 +70,7 @@ class TestSpecHashValidation:
         assert len(spec_hash) == 32
         assert all(c in "0123456789abcdef" for c in spec_hash)
 
-    def test_compute_spec_hash_changes_on_spec_edit(self, review_spec_dir: Path) -> None:
+    def test_compute_spec_hash_changes_on_spec_edit(self, review_spec_dir) -> None:
         """_compute_spec_hash() changes when spec.md is modified."""
         hash_before = _compute_spec_hash(review_spec_dir)
 
@@ -82,7 +82,7 @@ class TestSpecHashValidation:
 
         assert hash_before != hash_after
 
-    def test_compute_spec_hash_changes_on_plan_edit(self, review_spec_dir: Path) -> None:
+    def test_compute_spec_hash_changes_on_plan_edit(self, review_spec_dir) -> None:
         """_compute_spec_hash() changes when plan is modified."""
         hash_before = _compute_spec_hash(review_spec_dir)
 
@@ -94,14 +94,14 @@ class TestSpecHashValidation:
 
         assert hash_before != hash_after
 
-    def test_is_approval_valid_with_matching_hash(self, review_spec_dir: Path) -> None:
+    def test_is_approval_valid_with_matching_hash(self, review_spec_dir) -> None:
         """is_approval_valid() returns True when hash matches."""
         state = ReviewState()
         state.approve(review_spec_dir, approved_by="user", auto_save=False)
 
         assert state.is_approval_valid(review_spec_dir) is True
 
-    def test_is_approval_valid_with_changed_spec(self, review_spec_dir: Path) -> None:
+    def test_is_approval_valid_with_changed_spec(self, review_spec_dir) -> None:
         """is_approval_valid() returns False when spec changed."""
         state = ReviewState()
         state.approve(review_spec_dir, approved_by="user", auto_save=False)
@@ -112,13 +112,13 @@ class TestSpecHashValidation:
 
         assert state.is_approval_valid(review_spec_dir) is False
 
-    def test_is_approval_valid_not_approved(self, review_spec_dir: Path) -> None:
+    def test_is_approval_valid_not_approved(self, review_spec_dir) -> None:
         """is_approval_valid() returns False when not approved."""
         state = ReviewState(approved=False)
 
         assert state.is_approval_valid(review_spec_dir) is False
 
-    def test_is_approval_valid_legacy_no_hash(self, review_spec_dir: Path) -> None:
+    def test_is_approval_valid_legacy_no_hash(self, review_spec_dir) -> None:
         """is_approval_valid() returns True for legacy approvals without hash."""
         state = ReviewState(
             approved=True,
@@ -128,7 +128,7 @@ class TestSpecHashValidation:
 
         assert state.is_approval_valid(review_spec_dir) is True
 
-    def test_spec_change_detection_accuracy(self, review_spec_dir: Path) -> None:
+    def test_spec_change_detection_accuracy(self, review_spec_dir) -> None:
         """Test that spec change detection works for various types of changes."""
         # Approve initially
         state = ReviewState()
@@ -148,6 +148,7 @@ class TestSpecHashValidation:
 
         # Test 2: Plan modification should invalidate
         import json
+
         plan_file = review_spec_dir / "implementation_plan.json"
         plan_content = plan_file.read_text()
         plan = json.loads(plan_content)
@@ -159,7 +160,7 @@ class TestSpecHashValidation:
         state.approve(review_spec_dir, approved_by="user", auto_save=False)
         assert state.spec_hash != original_hash
 
-    def test_approval_invalidation_on_change(self, review_spec_dir: Path) -> None:
+    def test_approval_invalidation_on_change(self, review_spec_dir) -> None:
         """Test that spec changes invalidate approval."""
         # 1. Approve initially
         state = ReviewState()

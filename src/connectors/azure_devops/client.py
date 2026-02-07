@@ -16,7 +16,7 @@ Example:
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from azure.devops.connection import Connection
 from msrest.authentication import BasicAuthentication
@@ -67,9 +67,9 @@ class AzureDevOpsClient:
         """
         self._validate_settings(settings)
         self.settings = settings
-        self._connection: Optional[Connection] = None
-        self._git_client: Optional[Any] = None
-        self._wit_client: Optional[Any] = None
+        self._connection: Connection | None = None
+        self._git_client: Any | None = None
+        self._wit_client: Any | None = None
 
     @staticmethod
     def _validate_settings(settings: Settings) -> None:
@@ -255,12 +255,9 @@ class AzureDevOpsClient:
         if self._wit_client is None:
             try:
                 self._wit_client = (
-                    self._connection.clients
-                    .get_work_item_tracking_client()
+                    self._connection.clients.get_work_item_tracking_client()
                 )
-                logger.debug(
-                    "Work Item Tracking client initialized successfully."
-                )
+                logger.debug("Work Item Tracking client initialized successfully.")
             except Exception as exc:
                 raise AuthenticationError(
                     f"Failed to initialize Work Item Tracking client: {exc}. "

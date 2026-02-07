@@ -74,7 +74,7 @@ def test_critique_data_structures():
 
     # Test to_dict
     data = result.to_dict()
-    assert data["passes"] == True
+    assert data["passes"]
     assert len(data["issues"]) == 2
     assert len(data["improvements_made"]) == 2
 
@@ -138,7 +138,7 @@ def test_critique_response_parsing():
 """
 
     result = parse_critique_response(response_pass)
-    assert result.passes == True
+    assert result.passes
     assert len(result.improvements_made) == 2
 
     # Test failed critique
@@ -162,7 +162,7 @@ def test_critique_response_parsing():
 """
 
     result2 = parse_critique_response(response_fail)
-    assert result2.passes == False
+    assert not result2.passes
     assert len(result2.issues) == 2
     assert not should_proceed(result2)
 
@@ -194,12 +194,12 @@ def test_implementation_plan_integration():
     # Test serialization
     chunk_dict = chunk.to_dict()
     assert "critique_result" in chunk_dict
-    assert chunk_dict["critique_result"]["passes"] == True
+    assert chunk_dict["critique_result"]["passes"]
 
     # Test deserialization
     chunk2 = Subtask.from_dict(chunk_dict)
     assert chunk2.critique_result is not None
-    assert chunk2.critique_result["passes"] == True
+    assert chunk2.critique_result["passes"]
     assert len(chunk2.critique_result["improvements_made"]) == 1
 
     print("✓ Implementation plan integration works correctly")
@@ -219,7 +219,9 @@ def test_complete_workflow():
     }
 
     # 2. Generate critique prompt
-    prompt = generate_critique_prompt(chunk, ["app/workflow.py"], chunk["patterns_from"])
+    prompt = generate_critique_prompt(
+        chunk, ["app/workflow.py"], chunk["patterns_from"]
+    )
     assert len(prompt) > 0
 
     # 3. Simulate agent response
@@ -246,7 +248,7 @@ def test_complete_workflow():
 
     # 5. Check if should proceed
     can_proceed = should_proceed(result)
-    assert can_proceed == True
+    assert can_proceed
 
     # 6. Format summary
     summary = format_critique_summary(result)
@@ -264,7 +266,7 @@ def test_complete_workflow():
 
     # 8. Verify storage
     assert chunk_obj.critique_result is not None
-    assert chunk_obj.critique_result["passes"] == True
+    assert chunk_obj.critique_result["passes"]
 
     print("✓ Complete workflow works correctly")
 
@@ -303,9 +305,9 @@ def test_summary_formatting():
 
 def main():
     """Run all tests."""
-    print("="*70)
+    print("=" * 70)
     print("Self-Critique System Integration Tests")
-    print("="*70)
+    print("=" * 70)
 
     try:
         test_critique_data_structures()
@@ -315,9 +317,9 @@ def main():
         test_complete_workflow()
         test_summary_formatting()
 
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("All tests passed! ✓")
-        print("="*70)
+        print("=" * 70)
         print("\nSelf-Critique System is ready for use.")
         print("\nKey components:")
         print("  - critique.py: Core critique logic")
@@ -330,6 +332,7 @@ def main():
     except Exception as e:
         print(f"\n✗ Unexpected error: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

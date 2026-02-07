@@ -18,20 +18,18 @@ import importlib.util
 
 # Load file_lock first (models.py depends on it)
 file_lock_spec = importlib.util.spec_from_file_location(
-    "file_lock",
-    backend_path / "runners" / "github" / "file_lock.py"
+    "file_lock", backend_path / "runners" / "github" / "file_lock.py"
 )
 file_lock_module = importlib.util.module_from_spec(file_lock_spec)
-sys.modules['file_lock'] = file_lock_module  # Make it available for models imports
+sys.modules["file_lock"] = file_lock_module  # Make it available for models imports
 file_lock_spec.loader.exec_module(file_lock_module)
 
 # Load models next
 models_spec = importlib.util.spec_from_file_location(
-    "models",
-    backend_path / "runners" / "github" / "models.py"
+    "models", backend_path / "runners" / "github" / "models.py"
 )
 models_module = importlib.util.module_from_spec(models_spec)
-sys.modules['models'] = models_module  # Make it available for validator imports
+sys.modules["models"] = models_module  # Make it available for validator imports
 models_spec.loader.exec_module(models_module)
 PRReviewFinding = models_module.PRReviewFinding
 ReviewSeverity = models_module.ReviewSeverity
@@ -39,8 +37,7 @@ ReviewCategory = models_module.ReviewCategory
 
 # Now load validator (it will find models in sys.modules)
 validator_spec = importlib.util.spec_from_file_location(
-    "output_validator",
-    backend_path / "runners" / "github" / "output_validator.py"
+    "output_validator", backend_path / "runners" / "github" / "output_validator.py"
 )
 validator_module = importlib.util.module_from_spec(validator_spec)
 validator_spec.loader.exec_module(validator_module)
@@ -222,7 +219,9 @@ class TestLineNumberVerification:
             line=13,
         )
 
-        line_content = "query = f\"SELECT password FROM users WHERE username = '{username}'\""
+        line_content = (
+            "query = f\"SELECT password FROM users WHERE username = '{username}'\""
+        )
         assert validator._is_line_relevant(line_content, finding)
 
 
@@ -429,7 +428,7 @@ class TestValidationStats:
         assert stats["total_findings"] == 3
         assert stats["kept_findings"] == 2  # One filtered
         assert stats["filtered_findings"] == 1
-        assert stats["filter_rate"] == pytest.approx(1/3)
+        assert stats["filter_rate"] == pytest.approx(1 / 3)
         assert stats["severity_distribution"]["critical"] == 1
         assert stats["category_distribution"]["security"] == 1
         assert stats["average_actionability"] > 0

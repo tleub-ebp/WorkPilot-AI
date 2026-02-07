@@ -6,7 +6,7 @@ Manages environment variables and connection settings for Azure DevOps.
 Important: AZURE_DEVOPS_PROJECT should be the Azure DevOps PROJECT name,
 not the repository name. In the URL pattern:
   https://dev.azure.com/{org}/{project}/_git/{repository}
-  
+
 The PROJECT is the second segment, and REPOSITORY is after _git/.
 
 Example:
@@ -50,7 +50,7 @@ class AzureDevOpsConfig:
 
         Returns:
             Project name (unquoted) or None if parsing fails
-            
+
         Example:
             >>> url = "https://dev.azure.com/ebp/MéCa/_git/MeCa%20Web"
             >>> AzureDevOpsConfig.extract_project_from_repo_url(url)
@@ -58,7 +58,9 @@ class AzureDevOpsConfig:
         """
         # Pattern: https://dev.azure.com/{org}/{project}/_git/{repo}
         # or: https://{org}.visualstudio.com/{project}/_git/{repo}
-        pattern = r'https://(?:dev\.azure\.com/[^/]+|[^/]+\.visualstudio\.com)/([^/]+)/_git/'
+        pattern = (
+            r"https://(?:dev\.azure\.com/[^/]+|[^/]+\.visualstudio\.com)/([^/]+)/_git/"
+        )
         match = re.search(pattern, repo_url)
         if match:
             return unquote(match.group(1))

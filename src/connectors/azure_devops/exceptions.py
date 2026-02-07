@@ -78,16 +78,11 @@ class RepositoryNotFoundError(ResourceNotFoundError):
         project: The project in which the repository was searched.
     """
 
-    def __init__(
-        self, repository_id: str, project: str = ""
-    ) -> None:
+    def __init__(self, repository_id: str, project: str = "") -> None:
         self.repository_id = repository_id
         self.project = project
         if project:
-            message = (
-                f"Repository '{repository_id}' not found "
-                f"in project '{project}'."
-            )
+            message = f"Repository '{repository_id}' not found in project '{project}'."
         else:
             message = f"Repository '{repository_id}' not found."
         super().__init__(message, resource_id=repository_id)
@@ -101,16 +96,11 @@ class WorkItemNotFoundError(ResourceNotFoundError):
         project: The project in which the work item was searched.
     """
 
-    def __init__(
-        self, work_item_id: int, project: str = ""
-    ) -> None:
+    def __init__(self, work_item_id: int, project: str = "") -> None:
         self.work_item_id = work_item_id
         self.project = project
         if project:
-            message = (
-                f"Work item {work_item_id} not found "
-                f"in project '{project}'."
-            )
+            message = f"Work item {work_item_id} not found in project '{project}'."
         else:
             message = f"Work item {work_item_id} not found."
         super().__init__(message, resource_id=str(work_item_id))
@@ -127,9 +117,7 @@ class APIError(AzureDevOpsError):
         status_code: The HTTP status code returned by the API, if available.
     """
 
-    def __init__(
-        self, message: str, status_code: int = 0
-    ) -> None:
+    def __init__(self, message: str, status_code: int = 0) -> None:
         self.status_code = status_code
         if status_code:
             full_message = f"API error (HTTP {status_code}): {message}"
@@ -151,14 +139,10 @@ class RateLimitError(AzureDevOpsError):
             as indicated by the Retry-After header.
     """
 
-    def __init__(
-        self, message: str, retry_after: float = 0.0
-    ) -> None:
+    def __init__(self, message: str, retry_after: float = 0.0) -> None:
         self.retry_after = retry_after
         if retry_after > 0:
-            full_message = (
-                f"{message} Retry after {retry_after:.1f} seconds."
-            )
+            full_message = f"{message} Retry after {retry_after:.1f} seconds."
         else:
             full_message = message
         super().__init__(full_message)

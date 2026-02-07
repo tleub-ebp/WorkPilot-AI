@@ -348,6 +348,7 @@ class TestSecurityProfileIntegration:
     def test_profile_detects_python_commands(self, python_project):
         """Profile includes Python commands for Python projects."""
         from project_analyzer import get_or_create_profile
+
         reset_profile_cache()
 
         profile = get_or_create_profile(python_project)
@@ -358,6 +359,7 @@ class TestSecurityProfileIntegration:
     def test_profile_detects_node_commands(self, node_project):
         """Profile includes Node commands for Node projects."""
         from project_analyzer import get_or_create_profile
+
         reset_profile_cache()
 
         profile = get_or_create_profile(node_project)
@@ -368,6 +370,7 @@ class TestSecurityProfileIntegration:
     def test_profile_detects_docker_commands(self, docker_project):
         """Profile includes Docker commands for Docker projects."""
         from project_analyzer import get_or_create_profile
+
         reset_profile_cache()
 
         profile = get_or_create_profile(docker_project)
@@ -379,6 +382,7 @@ class TestSecurityProfileIntegration:
         """Profile is cached after first analysis."""
         from project_analyzer import get_or_create_profile
         from security import get_security_profile, reset_profile_cache
+
         reset_profile_cache()
 
         # First call - analyzes
@@ -424,7 +428,9 @@ class TestGitConfigValidator:
 
     def test_blocks_user_email(self):
         """Blocks git config user.email."""
-        allowed, reason = validate_git_config("git config user.email 'test@example.com'")
+        allowed, reason = validate_git_config(
+            "git config user.email 'test@example.com'"
+        )
         assert allowed is False
         assert "BLOCKED" in reason
 
@@ -436,19 +442,25 @@ class TestGitConfigValidator:
 
     def test_blocks_committer_email(self):
         """Blocks git config committer.email."""
-        allowed, reason = validate_git_config("git config committer.email 'fake@test.com'")
+        allowed, reason = validate_git_config(
+            "git config committer.email 'fake@test.com'"
+        )
         assert allowed is False
         assert "BLOCKED" in reason
 
     def test_blocks_with_global_flag(self):
         """Blocks identity config even with --global flag."""
-        allowed, reason = validate_git_config("git config --global user.name 'Test User'")
+        allowed, reason = validate_git_config(
+            "git config --global user.name 'Test User'"
+        )
         assert allowed is False
         assert "BLOCKED" in reason
 
     def test_blocks_with_local_flag(self):
         """Blocks identity config even with --local flag."""
-        allowed, reason = validate_git_config("git config --local user.email 'test@example.com'")
+        allowed, reason = validate_git_config(
+            "git config --local user.email 'test@example.com'"
+        )
         assert allowed is False
         assert "BLOCKED" in reason
 
@@ -507,7 +519,9 @@ class TestGitIdentityProtection:
 
     def test_blocks_inline_user_email(self):
         """Blocks git -c user.email=... on any command."""
-        allowed, reason = validate_git_commit("git -c user.email=fake@test.com commit -m 'test'")
+        allowed, reason = validate_git_commit(
+            "git -c user.email=fake@test.com commit -m 'test'"
+        )
         assert allowed is False
         assert "BLOCKED" in reason
 
@@ -519,7 +533,9 @@ class TestGitIdentityProtection:
 
     def test_blocks_inline_committer_email(self):
         """Blocks git -c committer.email=... on any command."""
-        allowed, reason = validate_git_commit("git -c committer.email=fake@test.com log")
+        allowed, reason = validate_git_commit(
+            "git -c committer.email=fake@test.com log"
+        )
         assert allowed is False
         assert "BLOCKED" in reason
 
@@ -531,7 +547,9 @@ class TestGitIdentityProtection:
 
     def test_allows_non_identity_config(self):
         """Allows -c with non-blocked config keys."""
-        allowed, reason = validate_git_commit("git -c core.autocrlf=true commit -m 'test'")
+        allowed, reason = validate_git_commit(
+            "git -c core.autocrlf=true commit -m 'test'"
+        )
         assert allowed is True
 
         allowed, reason = validate_git_commit("git -c diff.algorithm=patience diff")
@@ -560,6 +578,7 @@ class TestGitIdentityProtection:
 # =============================================================================
 # DATABASE VALIDATOR TESTS
 # =============================================================================
+
 
 class TestDropdbValidator:
     """Tests for dropdb command validation."""
@@ -619,10 +638,14 @@ class TestDropdbValidator:
 
     def test_handles_flags(self):
         """Correctly parses command with flags."""
-        allowed, reason = validate_dropdb_command("dropdb -h localhost -p 5432 -U admin test_db")
+        allowed, reason = validate_dropdb_command(
+            "dropdb -h localhost -p 5432 -U admin test_db"
+        )
         assert allowed is True
 
-        allowed, reason = validate_dropdb_command("dropdb -h localhost -p 5432 production")
+        allowed, reason = validate_dropdb_command(
+            "dropdb -h localhost -p 5432 production"
+        )
         assert allowed is False
 
 
@@ -658,12 +681,16 @@ class TestPsqlValidator:
 
     def test_allows_insert(self):
         """Allows INSERT queries."""
-        allowed, reason = validate_psql_command("psql -c \"INSERT INTO users (name) VALUES ('test')\"")
+        allowed, reason = validate_psql_command(
+            "psql -c \"INSERT INTO users (name) VALUES ('test')\""
+        )
         assert allowed is True
 
     def test_allows_update_with_where(self):
         """Allows UPDATE with WHERE clause."""
-        allowed, reason = validate_psql_command("psql -c \"UPDATE users SET name='new' WHERE id=1\"")
+        allowed, reason = validate_psql_command(
+            "psql -c \"UPDATE users SET name='new' WHERE id=1\""
+        )
         assert allowed is True
 
     def test_allows_create_table(self):
@@ -768,12 +795,16 @@ class TestRedisCliValidator:
 
     def test_blocks_config(self):
         """Blocks CONFIG commands."""
-        allowed, reason = validate_redis_cli_command("redis-cli CONFIG SET maxmemory 100mb")
+        allowed, reason = validate_redis_cli_command(
+            "redis-cli CONFIG SET maxmemory 100mb"
+        )
         assert allowed is False
 
     def test_handles_connection_flags(self):
         """Correctly handles connection flags."""
-        allowed, reason = validate_redis_cli_command("redis-cli -h localhost -p 6379 GET mykey")
+        allowed, reason = validate_redis_cli_command(
+            "redis-cli -h localhost -p 6379 GET mykey"
+        )
         assert allowed is True
 
         allowed, reason = validate_redis_cli_command("redis-cli -h localhost FLUSHALL")
@@ -790,7 +821,9 @@ class TestMongoshValidator:
 
     def test_allows_insert(self):
         """Allows insert operations."""
-        allowed, reason = validate_mongosh_command("mongosh --eval \"db.users.insertOne({name: 'test'})\"")
+        allowed, reason = validate_mongosh_command(
+            "mongosh --eval \"db.users.insertOne({name: 'test'})\""
+        )
         assert allowed is True
 
     def test_blocks_drop_database(self):
@@ -806,12 +839,16 @@ class TestMongoshValidator:
 
     def test_blocks_delete_all(self):
         """Blocks deleteMany({}) which deletes all documents."""
-        allowed, reason = validate_mongosh_command("mongosh --eval 'db.users.deleteMany({})'")
+        allowed, reason = validate_mongosh_command(
+            "mongosh --eval 'db.users.deleteMany({})'"
+        )
         assert allowed is False
 
     def test_allows_delete_with_filter(self):
         """Allows deleteMany with a filter."""
-        allowed, reason = validate_mongosh_command("mongosh --eval \"db.users.deleteMany({status: 'inactive'})\"")
+        allowed, reason = validate_mongosh_command(
+            "mongosh --eval \"db.users.deleteMany({status: 'inactive'})\""
+        )
         assert allowed is True
 
     def test_allows_interactive_session(self):
@@ -893,6 +930,7 @@ class TestShellCValidator:
 
         # Create a minimal security profile with ls, echo, pwd
         import json
+
         profile_data = {
             "base_commands": ["ls", "echo", "pwd", "cd"],
             "stack_commands": [],
@@ -906,18 +944,18 @@ class TestShellCValidator:
                 "infrastructure": [],
                 "cloud_providers": [],
                 "code_quality_tools": [],
-                "version_managers": []
+                "version_managers": [],
             },
             "custom_scripts": {
                 "npm_scripts": [],
                 "make_targets": [],
                 "poetry_scripts": [],
                 "cargo_aliases": [],
-                "shell_scripts": []
+                "shell_scripts": [],
             },
             "project_dir": str(tmp_path),
             "created_at": "",
-            "project_hash": actual_hash
+            "project_hash": actual_hash,
         }
         (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
 
@@ -941,6 +979,7 @@ class TestShellCValidator:
 
         # Create a minimal security profile WITHOUT npm
         import json
+
         profile_data = {
             "base_commands": ["ls", "echo"],
             "stack_commands": [],
@@ -954,18 +993,18 @@ class TestShellCValidator:
                 "infrastructure": [],
                 "cloud_providers": [],
                 "code_quality_tools": [],
-                "version_managers": []
+                "version_managers": [],
             },
             "custom_scripts": {
                 "npm_scripts": [],
                 "make_targets": [],
                 "poetry_scripts": [],
                 "cargo_aliases": [],
-                "shell_scripts": []
+                "shell_scripts": [],
             },
             "project_dir": str(tmp_path),
             "created_at": "",
-            "project_hash": actual_hash
+            "project_hash": actual_hash,
         }
         (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
 
@@ -987,6 +1026,7 @@ class TestShellCValidator:
         actual_hash = ProjectAnalyzer(tmp_path).compute_project_hash()
 
         import json
+
         profile_data = {
             "base_commands": ["ls"],
             "stack_commands": [],
@@ -1000,18 +1040,18 @@ class TestShellCValidator:
                 "infrastructure": [],
                 "cloud_providers": [],
                 "code_quality_tools": [],
-                "version_managers": []
+                "version_managers": [],
             },
             "custom_scripts": {
                 "npm_scripts": [],
                 "make_targets": [],
                 "poetry_scripts": [],
                 "cargo_aliases": [],
-                "shell_scripts": []
+                "shell_scripts": [],
             },
             "project_dir": str(tmp_path),
             "created_at": "",
-            "project_hash": actual_hash
+            "project_hash": actual_hash,
         }
         (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
 
@@ -1031,6 +1071,7 @@ class TestShellCValidator:
         actual_hash = ProjectAnalyzer(tmp_path).compute_project_hash()
 
         import json
+
         profile_data = {
             "base_commands": ["ls", "grep", "wc"],
             "stack_commands": [],
@@ -1044,25 +1085,27 @@ class TestShellCValidator:
                 "infrastructure": [],
                 "cloud_providers": [],
                 "code_quality_tools": [],
-                "version_managers": []
+                "version_managers": [],
             },
             "custom_scripts": {
                 "npm_scripts": [],
                 "make_targets": [],
                 "poetry_scripts": [],
                 "cargo_aliases": [],
-                "shell_scripts": []
+                "shell_scripts": [],
             },
             "project_dir": str(tmp_path),
             "created_at": "",
-            "project_hash": actual_hash
+            "project_hash": actual_hash,
         }
         (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
 
         reset_profile_cache()
 
         # All commands are allowed
-        allowed, reason = validate_bash_command("bash -c 'ls -la | grep pattern | wc -l'")
+        allowed, reason = validate_bash_command(
+            "bash -c 'ls -la | grep pattern | wc -l'"
+        )
         assert allowed is True
 
         # One command not allowed
@@ -1078,6 +1121,7 @@ class TestShellCValidator:
         actual_hash = ProjectAnalyzer(tmp_path).compute_project_hash()
 
         import json
+
         profile_data = {
             "base_commands": ["ls", "echo"],
             "stack_commands": [],
@@ -1091,18 +1135,18 @@ class TestShellCValidator:
                 "infrastructure": [],
                 "cloud_providers": [],
                 "code_quality_tools": [],
-                "version_managers": []
+                "version_managers": [],
             },
             "custom_scripts": {
                 "npm_scripts": [],
                 "make_targets": [],
                 "poetry_scripts": [],
                 "cargo_aliases": [],
-                "shell_scripts": []
+                "shell_scripts": [],
             },
             "project_dir": str(tmp_path),
             "created_at": "",
-            "project_hash": actual_hash
+            "project_hash": actual_hash,
         }
         (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
 
@@ -1122,6 +1166,7 @@ class TestShellCValidator:
         actual_hash = ProjectAnalyzer(tmp_path).compute_project_hash()
 
         import json
+
         profile_data = {
             "base_commands": ["ls", "echo"],
             "stack_commands": [],
@@ -1135,18 +1180,18 @@ class TestShellCValidator:
                 "infrastructure": [],
                 "cloud_providers": [],
                 "code_quality_tools": [],
-                "version_managers": []
+                "version_managers": [],
             },
             "custom_scripts": {
                 "npm_scripts": [],
                 "make_targets": [],
                 "poetry_scripts": [],
                 "cargo_aliases": [],
-                "shell_scripts": []
+                "shell_scripts": [],
             },
             "project_dir": str(tmp_path),
             "created_at": "",
-            "project_hash": actual_hash
+            "project_hash": actual_hash,
         }
         (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
 
@@ -1166,6 +1211,7 @@ class TestShellCValidator:
         actual_hash = ProjectAnalyzer(tmp_path).compute_project_hash()
 
         import json
+
         profile_data = {
             "base_commands": ["ls", "echo"],
             "stack_commands": [],
@@ -1179,18 +1225,18 @@ class TestShellCValidator:
                 "infrastructure": [],
                 "cloud_providers": [],
                 "code_quality_tools": [],
-                "version_managers": []
+                "version_managers": [],
             },
             "custom_scripts": {
                 "npm_scripts": [],
                 "make_targets": [],
                 "poetry_scripts": [],
                 "cargo_aliases": [],
-                "shell_scripts": []
+                "shell_scripts": [],
             },
             "project_dir": str(tmp_path),
             "created_at": "",
-            "project_hash": actual_hash
+            "project_hash": actual_hash,
         }
         (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
 
@@ -1210,6 +1256,7 @@ class TestShellCValidator:
         actual_hash = ProjectAnalyzer(tmp_path).compute_project_hash()
 
         import json
+
         profile_data = {
             "base_commands": ["ls", "echo", "pwd"],
             "stack_commands": [],
@@ -1223,18 +1270,18 @@ class TestShellCValidator:
                 "infrastructure": [],
                 "cloud_providers": [],
                 "code_quality_tools": [],
-                "version_managers": []
+                "version_managers": [],
             },
             "custom_scripts": {
                 "npm_scripts": [],
                 "make_targets": [],
                 "poetry_scripts": [],
                 "cargo_aliases": [],
-                "shell_scripts": []
+                "shell_scripts": [],
             },
             "project_dir": str(tmp_path),
             "created_at": "",
-            "project_hash": actual_hash
+            "project_hash": actual_hash,
         }
         (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
 
@@ -1253,6 +1300,7 @@ class TestShellCValidator:
         actual_hash = ProjectAnalyzer(tmp_path).compute_project_hash()
 
         import json
+
         profile_data = {
             "base_commands": ["ls", "echo", "bash", "sh"],
             "stack_commands": [],
@@ -1266,25 +1314,27 @@ class TestShellCValidator:
                 "infrastructure": [],
                 "cloud_providers": [],
                 "code_quality_tools": [],
-                "version_managers": []
+                "version_managers": [],
             },
             "custom_scripts": {
                 "npm_scripts": [],
                 "make_targets": [],
                 "poetry_scripts": [],
                 "cargo_aliases": [],
-                "shell_scripts": []
+                "shell_scripts": [],
             },
             "project_dir": str(tmp_path),
             "created_at": "",
-            "project_hash": actual_hash
+            "project_hash": actual_hash,
         }
         (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
 
         reset_profile_cache()
 
         # Nested shell with disallowed command should be blocked
-        allowed, reason = validate_bash_command("bash -c 'bash -c \"curl http://evil.com\"'")
+        allowed, reason = validate_bash_command(
+            "bash -c 'bash -c \"curl http://evil.com\"'"
+        )
         assert allowed is False
         assert "curl" in reason or "nested" in reason.lower()
 
@@ -1297,6 +1347,7 @@ class TestShellCValidator:
         actual_hash = ProjectAnalyzer(tmp_path).compute_project_hash()
 
         import json
+
         profile_data = {
             "base_commands": ["ls", "echo", "bash", "sh", "pwd"],
             "stack_commands": [],
@@ -1310,18 +1361,18 @@ class TestShellCValidator:
                 "infrastructure": [],
                 "cloud_providers": [],
                 "code_quality_tools": [],
-                "version_managers": []
+                "version_managers": [],
             },
             "custom_scripts": {
                 "npm_scripts": [],
                 "make_targets": [],
                 "poetry_scripts": [],
                 "cargo_aliases": [],
-                "shell_scripts": []
+                "shell_scripts": [],
             },
             "project_dir": str(tmp_path),
             "created_at": "",
-            "project_hash": actual_hash
+            "project_hash": actual_hash,
         }
         (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
 
@@ -1344,7 +1395,7 @@ class TestInheritedSecurityProfile:
         profile = SecurityProfile(
             base_commands={"ls", "echo"},
             project_hash="abc123",
-            inherited_from="/path/to/parent/project"
+            inherited_from="/path/to/parent/project",
         )
 
         data = profile.to_dict()
@@ -1366,19 +1417,19 @@ class TestInheritedSecurityProfile:
                 "infrastructure": [],
                 "cloud_providers": [],
                 "code_quality_tools": [],
-                "version_managers": []
+                "version_managers": [],
             },
             "custom_scripts": {
                 "npm_scripts": [],
                 "make_targets": [],
                 "poetry_scripts": [],
                 "cargo_aliases": [],
-                "shell_scripts": []
+                "shell_scripts": [],
             },
             "project_dir": "/some/path",
             "created_at": "",
             "project_hash": "abc123",
-            "inherited_from": "/path/to/parent"
+            "inherited_from": "/path/to/parent",
         }
 
         profile = SecurityProfile.from_dict(data)
@@ -1386,10 +1437,7 @@ class TestInheritedSecurityProfile:
 
     def test_inherited_profile_omits_field_when_empty(self):
         """Tests that inherited_from is not in dict when empty (backward compat)."""
-        profile = SecurityProfile(
-            base_commands={"ls"},
-            project_hash="abc123"
-        )
+        profile = SecurityProfile(base_commands={"ls"}, project_hash="abc123")
 
         data = profile.to_dict()
         assert "inherited_from" not in data
@@ -1420,26 +1468,28 @@ class TestInheritedSecurityProfile:
                 "infrastructure": [],
                 "cloud_providers": [],
                 "code_quality_tools": [],
-                "version_managers": []
+                "version_managers": [],
             },
             "custom_scripts": {
                 "npm_scripts": [],
                 "make_targets": [],
                 "poetry_scripts": [],
                 "cargo_aliases": [],
-                "shell_scripts": []
+                "shell_scripts": [],
             },
             "project_dir": str(parent_dir),
             "created_at": "",
-            "project_hash": "parent_hash"
+            "project_hash": "parent_hash",
         }
-        (parent_dir / ".auto-claude-security.json").write_text(json.dumps(parent_profile_data))
+        (parent_dir / ".auto-claude-security.json").write_text(
+            json.dumps(parent_profile_data)
+        )
 
         # Create a profile with valid inherited_from pointing to actual parent
         profile = SecurityProfile(
             base_commands={"npm", "npx", "node"},
             project_hash="different_hash_that_would_normally_trigger_reanalysis",
-            inherited_from=str(parent_dir)
+            inherited_from=str(parent_dir),
         )
 
         analyzer = ProjectAnalyzer(child_dir)
@@ -1454,8 +1504,7 @@ class TestInheritedSecurityProfile:
 
         # Create a profile WITHOUT inherited_from
         profile = SecurityProfile(
-            base_commands={"ls"},
-            project_hash="old_hash_that_doesnt_match"
+            base_commands={"ls"}, project_hash="old_hash_that_doesnt_match"
         )
 
         analyzer = ProjectAnalyzer(tmp_path)
@@ -1489,26 +1538,28 @@ class TestInheritedSecurityProfile:
                 "infrastructure": [],
                 "cloud_providers": [],
                 "code_quality_tools": [],
-                "version_managers": []
+                "version_managers": [],
             },
             "custom_scripts": {
                 "npm_scripts": [],
                 "make_targets": [],
                 "poetry_scripts": [],
                 "cargo_aliases": [],
-                "shell_scripts": []
+                "shell_scripts": [],
             },
             "project_dir": str(parent_dir),
             "created_at": "",
-            "project_hash": "abc123"
+            "project_hash": "abc123",
         }
-        (parent_dir / ".auto-claude-security.json").write_text(json.dumps(parent_profile_data))
+        (parent_dir / ".auto-claude-security.json").write_text(
+            json.dumps(parent_profile_data)
+        )
 
         # Create a profile with valid inherited_from (child -> parent)
         valid_profile = SecurityProfile(
             base_commands={"ls"},
             project_hash="different_hash",
-            inherited_from=str(parent_dir)
+            inherited_from=str(parent_dir),
         )
 
         analyzer = ProjectAnalyzer(child_dir)
@@ -1524,7 +1575,7 @@ class TestInheritedSecurityProfile:
         invalid_profile = SecurityProfile(
             base_commands={"ls"},
             project_hash="different_hash",
-            inherited_from="/non/existent/path"
+            inherited_from="/non/existent/path",
         )
 
         analyzer = ProjectAnalyzer(tmp_path)
@@ -1558,18 +1609,18 @@ class TestInheritedSecurityProfile:
                 "infrastructure": [],
                 "cloud_providers": [],
                 "code_quality_tools": [],
-                "version_managers": []
+                "version_managers": [],
             },
             "custom_scripts": {
                 "npm_scripts": [],
                 "make_targets": [],
                 "poetry_scripts": [],
                 "cargo_aliases": [],
-                "shell_scripts": []
+                "shell_scripts": [],
             },
             "project_dir": str(dir_a),
             "created_at": "",
-            "project_hash": "abc123"
+            "project_hash": "abc123",
         }
         (dir_a / ".auto-claude-security.json").write_text(json.dumps(profile_data))
 
@@ -1577,7 +1628,7 @@ class TestInheritedSecurityProfile:
         spoofed_profile = SecurityProfile(
             base_commands={"curl", "wget"},  # Dangerous commands
             project_hash="different_hash",
-            inherited_from=str(dir_a)  # dir_a is not an ancestor of dir_b
+            inherited_from=str(dir_a),  # dir_a is not an ancestor of dir_b
         )
 
         analyzer = ProjectAnalyzer(dir_b)

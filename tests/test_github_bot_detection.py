@@ -248,7 +248,10 @@ class TestShouldSkipReview:
         # So commits[-1] is the LATEST commit - which is the bot commit
         commits = [
             {"author": {"login": "alice"}, "oid": "abc123"},  # Oldest commit (by alice)
-            {"author": {"login": "test-bot"}, "oid": "def456"},  # Latest commit (by bot)
+            {
+                "author": {"login": "test-bot"},
+                "oid": "def456",
+            },  # Latest commit (by bot)
         ]
 
         should_skip, reason = mock_bot_detector.should_skip_pr_review(

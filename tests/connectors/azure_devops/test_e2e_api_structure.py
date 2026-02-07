@@ -57,47 +57,47 @@ class TestConnectorMethodsExist:
     def test_connect_method_exists(self):
         """AzureDevOpsConnector has a connect() method."""
         assert hasattr(AzureDevOpsConnector, "connect")
-        assert callable(getattr(AzureDevOpsConnector, "connect"))
+        assert callable(AzureDevOpsConnector.connect)
 
     def test_list_repositories_method_exists(self):
         """AzureDevOpsConnector has a list_repositories() method."""
         assert hasattr(AzureDevOpsConnector, "list_repositories")
-        assert callable(getattr(AzureDevOpsConnector, "list_repositories"))
+        assert callable(AzureDevOpsConnector.list_repositories)
 
     def test_get_file_content_method_exists(self):
         """AzureDevOpsConnector has a get_file_content() method."""
         assert hasattr(AzureDevOpsConnector, "get_file_content")
-        assert callable(getattr(AzureDevOpsConnector, "get_file_content"))
+        assert callable(AzureDevOpsConnector.get_file_content)
 
     def test_query_method_exists(self):
         """AzureDevOpsConnector has a query() method (WIQL query interface)."""
         assert hasattr(AzureDevOpsConnector, "query")
-        assert callable(getattr(AzureDevOpsConnector, "query"))
+        assert callable(AzureDevOpsConnector.query)
 
     def test_get_item_method_exists(self):
         """AzureDevOpsConnector has a get_item() method."""
         assert hasattr(AzureDevOpsConnector, "get_item")
-        assert callable(getattr(AzureDevOpsConnector, "get_item"))
+        assert callable(AzureDevOpsConnector.get_item)
 
     def test_get_repository_method_exists(self):
         """AzureDevOpsConnector has a get_repository() method."""
         assert hasattr(AzureDevOpsConnector, "get_repository")
-        assert callable(getattr(AzureDevOpsConnector, "get_repository"))
+        assert callable(AzureDevOpsConnector.get_repository)
 
     def test_list_files_method_exists(self):
         """AzureDevOpsConnector has a list_files() method."""
         assert hasattr(AzureDevOpsConnector, "list_files")
-        assert callable(getattr(AzureDevOpsConnector, "list_files"))
+        assert callable(AzureDevOpsConnector.list_files)
 
     def test_list_backlog_items_method_exists(self):
         """AzureDevOpsConnector has a list_backlog_items() method."""
         assert hasattr(AzureDevOpsConnector, "list_backlog_items")
-        assert callable(getattr(AzureDevOpsConnector, "list_backlog_items"))
+        assert callable(AzureDevOpsConnector.list_backlog_items)
 
     def test_get_connection_info_method_exists(self):
         """AzureDevOpsConnector has a get_connection_info() method."""
         assert hasattr(AzureDevOpsConnector, "get_connection_info")
-        assert callable(getattr(AzureDevOpsConnector, "get_connection_info"))
+        assert callable(AzureDevOpsConnector.get_connection_info)
 
     def test_is_connected_property_exists(self):
         """AzureDevOpsConnector has an is_connected property."""
@@ -106,17 +106,17 @@ class TestConnectorMethodsExist:
     def test_disconnect_method_exists(self):
         """AzureDevOpsConnector has a disconnect() method."""
         assert hasattr(AzureDevOpsConnector, "disconnect")
-        assert callable(getattr(AzureDevOpsConnector, "disconnect"))
+        assert callable(AzureDevOpsConnector.disconnect)
 
     def test_from_settings_factory_exists(self):
         """AzureDevOpsConnector has a from_settings() classmethod."""
         assert hasattr(AzureDevOpsConnector, "from_settings")
-        assert callable(getattr(AzureDevOpsConnector, "from_settings"))
+        assert callable(AzureDevOpsConnector.from_settings)
 
     def test_from_env_factory_exists(self):
         """AzureDevOpsConnector has a from_env() classmethod."""
         assert hasattr(AzureDevOpsConnector, "from_env")
-        assert callable(getattr(AzureDevOpsConnector, "from_env"))
+        assert callable(AzureDevOpsConnector.from_env)
 
 
 # ── 3. AzureWorkItemsClient query_work_items verification ────────────
@@ -128,17 +128,17 @@ class TestWorkItemsClientMethods:
     def test_query_work_items_method_exists(self):
         """AzureWorkItemsClient has a query_work_items() method."""
         assert hasattr(AzureWorkItemsClient, "query_work_items")
-        assert callable(getattr(AzureWorkItemsClient, "query_work_items"))
+        assert callable(AzureWorkItemsClient.query_work_items)
 
     def test_get_work_item_method_exists(self):
         """AzureWorkItemsClient has a get_work_item() method."""
         assert hasattr(AzureWorkItemsClient, "get_work_item")
-        assert callable(getattr(AzureWorkItemsClient, "get_work_item"))
+        assert callable(AzureWorkItemsClient.get_work_item)
 
     def test_list_backlog_items_method_exists(self):
         """AzureWorkItemsClient has a list_backlog_items() method."""
         assert hasattr(AzureWorkItemsClient, "list_backlog_items")
-        assert callable(getattr(AzureWorkItemsClient, "list_backlog_items"))
+        assert callable(AzureWorkItemsClient.list_backlog_items)
 
 
 # ── 4. Repository model verification ────────────────────────────────
@@ -167,7 +167,7 @@ class TestRepositoryModel:
     def test_repository_from_api_response_exists(self):
         """Repository has a from_api_response classmethod."""
         assert hasattr(Repository, "from_api_response")
-        assert callable(getattr(Repository, "from_api_response"))
+        assert callable(Repository.from_api_response)
 
     def test_repository_can_be_instantiated(self):
         """Repository can be created with required fields."""
@@ -215,7 +215,7 @@ class TestWorkItemModel:
     def test_work_item_from_api_response_exists(self):
         """WorkItem has a from_api_response classmethod."""
         assert hasattr(WorkItem, "from_api_response")
-        assert callable(getattr(WorkItem, "from_api_response"))
+        assert callable(WorkItem.from_api_response)
 
     def test_work_item_can_be_instantiated(self):
         """WorkItem can be created with required fields."""
@@ -253,7 +253,7 @@ class TestFileItemModel:
     def test_file_item_from_api_response_exists(self):
         """FileItem has a from_api_response classmethod."""
         assert hasattr(FileItem, "from_api_response")
-        assert callable(getattr(FileItem, "from_api_response"))
+        assert callable(FileItem.from_api_response)
 
     def test_file_item_can_be_instantiated(self):
         """FileItem can be created with required fields."""
@@ -332,9 +332,7 @@ class TestExceptionHierarchy:
 
     def test_repository_not_found_has_context(self):
         """RepositoryNotFoundError stores repository_id and project."""
-        exc = RepositoryNotFoundError(
-            repository_id="my-repo", project="MyProject"
-        )
+        exc = RepositoryNotFoundError(repository_id="my-repo", project="MyProject")
         assert exc.repository_id == "my-repo"
         assert exc.project == "MyProject"
         assert "my-repo" in str(exc)

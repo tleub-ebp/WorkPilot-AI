@@ -58,10 +58,14 @@ def test_initialization(test_env):
     assert (spec_dir / "memory").exists(), "Memory directory not created"
 
     # Check that attempt history file was created
-    assert (spec_dir / "memory" / "attempt_history.json").exists(), "attempt_history.json not created"
+    assert (spec_dir / "memory" / "attempt_history.json").exists(), (
+        "attempt_history.json not created"
+    )
 
     # Check that build commits file was created
-    assert (spec_dir / "memory" / "build_commits.json").exists(), "build_commits.json not created"
+    assert (spec_dir / "memory" / "build_commits.json").exists(), (
+        "build_commits.json not created"
+    )
 
     # Verify initial structure
     with open(spec_dir / "memory" / "attempt_history.json") as f:
@@ -83,7 +87,7 @@ def test_record_attempt(test_env):
         session=1,
         success=False,
         approach="First approach using async/await",
-        error="Import error - asyncio not found"
+        error="Import error - asyncio not found",
     )
 
     # Verify recorded
@@ -100,7 +104,7 @@ def test_record_attempt(test_env):
         session=2,
         success=True,
         approach="Second approach using callbacks",
-        error=None
+        error=None,
     )
 
     assert manager.get_attempt_count("subtask-1") == 2, "Second attempt not recorded"
@@ -118,17 +122,25 @@ def test_circular_fix_detection(test_env):
     manager = RecoveryManager(spec_dir, project_dir)
 
     # Record similar attempts
-    manager.record_attempt("subtask-1", 1, False, "Using async await pattern", "Error 1")
-    manager.record_attempt("subtask-1", 2, False, "Using async await with different import", "Error 2")
+    manager.record_attempt(
+        "subtask-1", 1, False, "Using async await pattern", "Error 1"
+    )
+    manager.record_attempt(
+        "subtask-1", 2, False, "Using async await with different import", "Error 2"
+    )
     manager.record_attempt("subtask-1", 3, False, "Trying async await again", "Error 3")
 
     # Check if circular fix is detected
-    is_circular = manager.is_circular_fix("subtask-1", "Using async await pattern once more")
+    is_circular = manager.is_circular_fix(
+        "subtask-1", "Using async await pattern once more"
+    )
 
     assert is_circular, "Circular fix not detected"
 
     # Test with different approach
-    is_circular = manager.is_circular_fix("subtask-1", "Using completely different callback-based approach")
+    is_circular = manager.is_circular_fix(
+        "subtask-1", "Using completely different callback-based approach"
+    )
 
     # This might be detected as circular if word overlap is high
     # But "callback-based" is sufficiently different from "async await"
@@ -145,8 +157,12 @@ def test_failure_classification(test_env):
     assert failure == FailureType.BROKEN_BUILD, "Broken build not detected"
 
     # Test verification failed detection
-    failure = manager.classify_failure("Verification failed: expected 200 got 500", "subtask-2")
-    assert failure == FailureType.VERIFICATION_FAILED, "Verification failure not detected"
+    failure = manager.classify_failure(
+        "Verification failed: expected 200 got 500", "subtask-2"
+    )
+    assert failure == FailureType.VERIFICATION_FAILED, (
+        "Verification failure not detected"
+    )
 
     # Test context exhaustion
     failure = manager.classify_failure("Context length exceeded", "subtask-3")
@@ -162,14 +178,18 @@ def test_recovery_action_determination(test_env):
     # Test verification failed with < 3 attempts
     manager.record_attempt("subtask-1", 1, False, "First try", "Error")
 
-    action = manager.determine_recovery_action(FailureType.VERIFICATION_FAILED, "subtask-1")
+    action = manager.determine_recovery_action(
+        FailureType.VERIFICATION_FAILED, "subtask-1"
+    )
     assert action.action == "retry", "Should retry for first verification failure"
 
     # Test verification failed with >= 3 attempts
     manager.record_attempt("subtask-1", 2, False, "Second try", "Error")
     manager.record_attempt("subtask-1", 3, False, "Third try", "Error")
 
-    action = manager.determine_recovery_action(FailureType.VERIFICATION_FAILED, "subtask-1")
+    action = manager.determine_recovery_action(
+        FailureType.VERIFICATION_FAILED, "subtask-1"
+    )
     assert action.action == "skip", "Should skip after 3 attempts"
 
     # Test circular fix
@@ -177,7 +197,9 @@ def test_recovery_action_determination(test_env):
     assert action.action == "skip", "Should skip for circular fix"
 
     # Test context exhausted
-    action = manager.determine_recovery_action(FailureType.CONTEXT_EXHAUSTED, "subtask-2")
+    action = manager.determine_recovery_action(
+        FailureType.CONTEXT_EXHAUSTED, "subtask-2"
+    )
     assert action.action == "continue", "Should continue for context exhaustion"
 
 
@@ -189,10 +211,7 @@ def test_good_commit_tracking(test_env):
 
     # Get current commit hash
     result = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=project_dir,
-        capture_output=True,
-        text=True
+        ["git", "rev-parse", "HEAD"], cwd=project_dir, capture_output=True, text=True
     )
     commit_hash = result.stdout.strip()
 
@@ -207,13 +226,12 @@ def test_good_commit_tracking(test_env):
     test_file = project_dir / "test2.txt"
     test_file.write_text("Second content")
     subprocess.run(["git", "add", "."], cwd=project_dir, capture_output=True)
-    subprocess.run(["git", "commit", "-m", "Second commit"], cwd=project_dir, capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "Second commit"], cwd=project_dir, capture_output=True
+    )
 
     result = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=project_dir,
-        capture_output=True,
-        text=True
+        ["git", "rev-parse", "HEAD"], cwd=project_dir, capture_output=True, text=True
     )
     commit_hash2 = result.stdout.strip()
 
@@ -241,7 +259,9 @@ def test_mark_subtask_stuck(test_env):
     # Verify stuck
     stuck_subtasks = manager.get_stuck_subtasks()
     assert len(stuck_subtasks) == 1, "Stuck subtask not recorded"
-    assert stuck_subtasks[0]["subtask_id"] == "subtask-1", "Wrong subtask marked as stuck"
+    assert stuck_subtasks[0]["subtask_id"] == "subtask-1", (
+        "Wrong subtask marked as stuck"
+    )
     assert "Circular fix" in stuck_subtasks[0]["reason"], "Reason not recorded"
 
     # Check subtask status
@@ -256,8 +276,12 @@ def test_recovery_hints(test_env):
     manager = RecoveryManager(spec_dir, project_dir)
 
     # Record some attempts
-    manager.record_attempt("subtask-1", 1, False, "Async/await approach", "Import error")
-    manager.record_attempt("subtask-1", 2, False, "Threading approach", "Thread safety error")
+    manager.record_attempt(
+        "subtask-1", 1, False, "Async/await approach", "Import error"
+    )
+    manager.record_attempt(
+        "subtask-1", 2, False, "Threading approach", "Thread safety error"
+    )
 
     # Get hints
     hints = manager.get_recovery_hints("subtask-1")
@@ -267,7 +291,9 @@ def test_recovery_hints(test_env):
 
     # Check for warning about different approach
     hint_text = " ".join(hints)
-    assert "DIFFERENT" in hint_text or "different" in hint_text, "Warning about different approach missing"
+    assert "DIFFERENT" in hint_text or "different" in hint_text, (
+        "Warning about different approach missing"
+    )
 
 
 def test_checkpoint_persistence_across_sessions(test_env):
@@ -282,29 +308,37 @@ def test_checkpoint_persistence_across_sessions(test_env):
         session=1,
         success=False,
         approach="First approach using REST API",
-        error="Connection timeout"
+        error="Connection timeout",
     )
     manager1.record_attempt(
         subtask_id="subtask-1",
         session=1,
         success=False,
         approach="Second approach using WebSocket",
-        error="Auth failure"
+        error="Auth failure",
     )
 
     # Verify state in session 1
-    assert manager1.get_attempt_count("subtask-1") == 2, "Session 1: attempts not recorded"
+    assert manager1.get_attempt_count("subtask-1") == 2, (
+        "Session 1: attempts not recorded"
+    )
 
     # Session 2: Create NEW manager instance (simulating session restart)
     manager2 = RecoveryManager(spec_dir, project_dir)
 
     # Verify checkpoint was restored
-    assert manager2.get_attempt_count("subtask-1") == 2, "Session 2: checkpoint not restored"
+    assert manager2.get_attempt_count("subtask-1") == 2, (
+        "Session 2: checkpoint not restored"
+    )
 
     history = manager2.get_subtask_history("subtask-1")
     assert len(history["attempts"]) == 2, "Session 2: attempt history missing"
-    assert history["attempts"][0]["approach"] == "First approach using REST API", "Session 2: first approach lost"
-    assert history["attempts"][1]["approach"] == "Second approach using WebSocket", "Session 2: second approach lost"
+    assert history["attempts"][0]["approach"] == "First approach using REST API", (
+        "Session 2: first approach lost"
+    )
+    assert history["attempts"][1]["approach"] == "Second approach using WebSocket", (
+        "Session 2: second approach lost"
+    )
     assert history["status"] == "failed", "Session 2: status not preserved"
 
 
@@ -321,10 +355,7 @@ def test_restoration_after_failure(test_env):
 
     # Get current commit
     result = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=project_dir,
-        capture_output=True,
-        text=True
+        ["git", "rev-parse", "HEAD"], cwd=project_dir, capture_output=True, text=True
     )
     commit_hash = result.stdout.strip()
     manager1.record_good_commit(commit_hash, "subtask-2")
@@ -333,8 +364,12 @@ def test_restoration_after_failure(test_env):
     manager2 = RecoveryManager(spec_dir, project_dir)
 
     # Verify complete state restored
-    assert manager2.get_attempt_count("subtask-1") == 1, "subtask-1 attempts not restored"
-    assert manager2.get_attempt_count("subtask-2") == 1, "subtask-2 attempts not restored"
+    assert manager2.get_attempt_count("subtask-1") == 1, (
+        "subtask-1 attempts not restored"
+    )
+    assert manager2.get_attempt_count("subtask-2") == 1, (
+        "subtask-2 attempts not restored"
+    )
 
     subtask1_history = manager2.get_subtask_history("subtask-1")
     assert subtask1_history["status"] == "failed", "subtask-1 status not restored"
@@ -411,13 +446,15 @@ def test_restoration_with_build_commits(test_env):
         test_file = project_dir / f"test_file_{i}.txt"
         test_file.write_text(f"Content {i}")
         subprocess.run(["git", "add", "."], cwd=project_dir, capture_output=True)
-        subprocess.run(["git", "commit", "-m", f"Commit {i}"], cwd=project_dir, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", f"Commit {i}"], cwd=project_dir, capture_output=True
+        )
 
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"],
             cwd=project_dir,
             capture_output=True,
-            text=True
+            text=True,
         )
         commit_hash = result.stdout.strip()
         commits.append(commit_hash)
@@ -432,7 +469,9 @@ def test_restoration_with_build_commits(test_env):
     assert last_good == commits[-1], "Last good commit not restored correctly"
 
     # Verify we can continue building from restored state
-    manager2.record_attempt("subtask-3", 1, False, "New work after restore", "New error")
+    manager2.record_attempt(
+        "subtask-3", 1, False, "New work after restore", "New error"
+    )
     assert manager2.get_attempt_count("subtask-3") == 1
 
 
@@ -444,14 +483,18 @@ def test_checkpoint_recovery_hints_restoration(test_env):
 
     # Record detailed attempt history
     manager1.record_attempt(
-        "subtask-1", 1, False,
+        "subtask-1",
+        1,
+        False,
         "Using synchronous database calls",
-        "Database connection pooling exhausted"
+        "Database connection pooling exhausted",
     )
     manager1.record_attempt(
-        "subtask-1", 2, False,
+        "subtask-1",
+        2,
+        False,
         "Using asynchronous database with asyncio",
-        "Event loop already running error"
+        "Event loop already running error",
     )
 
     # New session
@@ -465,10 +508,14 @@ def test_checkpoint_recovery_hints_restoration(test_env):
 
     # Verify attempt details are in hints
     hint_text = " ".join(hints)
-    assert "synchronous" in hint_text.lower() or "FAILED" in hint_text, "Previous approach not reflected in hints"
+    assert "synchronous" in hint_text.lower() or "FAILED" in hint_text, (
+        "Previous approach not reflected in hints"
+    )
 
     # Check circular fix detection with restored data
-    is_circular = manager2.is_circular_fix("subtask-1", "Using async database with asyncio again")
+    is_circular = manager2.is_circular_fix(
+        "subtask-1", "Using async database with asyncio again"
+    )
     # Note: May or may not detect as circular depending on word overlap
 
 
@@ -482,7 +529,9 @@ def test_restoration_stuck_subtasks_list(test_env):
     for i in range(3):
         subtask_id = f"subtask-stuck-{i}"
         for j in range(3):
-            manager1.record_attempt(subtask_id, j + 1, False, f"Try {j + 1}", f"Error {j + 1}")
+            manager1.record_attempt(
+                subtask_id, j + 1, False, f"Try {j + 1}", f"Error {j + 1}"
+            )
         manager1.mark_subtask_stuck(subtask_id, f"Reason {i}: circular fix detected")
 
     # New session
@@ -553,17 +602,25 @@ def run_all_tests():
         ("test_mark_subtask_stuck", test_mark_subtask_stuck),
         ("test_recovery_hints", test_recovery_hints),
         # Session checkpoint and restoration tests
-        ("test_checkpoint_persistence_across_sessions", test_checkpoint_persistence_across_sessions),
+        (
+            "test_checkpoint_persistence_across_sessions",
+            test_checkpoint_persistence_across_sessions,
+        ),
         ("test_restoration_after_failure", test_restoration_after_failure),
         ("test_checkpoint_multiple_subtasks", test_checkpoint_multiple_subtasks),
         ("test_restoration_with_build_commits", test_restoration_with_build_commits),
-        ("test_checkpoint_recovery_hints_restoration", test_checkpoint_recovery_hints_restoration),
+        (
+            "test_checkpoint_recovery_hints_restoration",
+            test_checkpoint_recovery_hints_restoration,
+        ),
         ("test_restoration_stuck_subtasks_list", test_restoration_stuck_subtasks_list),
         ("test_checkpoint_clear_and_reset", test_checkpoint_clear_and_reset),
     ]
 
     print("Note: Running with manual test runner for backwards compatibility.")
-    print("For full pytest integration with fixtures, run: pytest tests/test_recovery.py -v")
+    print(
+        "For full pytest integration with fixtures, run: pytest tests/test_recovery.py -v"
+    )
     print()
     print("Manual test runner cannot use fixtures - please run with pytest.")
     return True
@@ -571,5 +628,6 @@ def run_all_tests():
 
 if __name__ == "__main__":
     import sys
+
     success = run_all_tests()
     sys.exit(0 if success else 1)

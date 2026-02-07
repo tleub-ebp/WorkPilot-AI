@@ -56,7 +56,7 @@ app = FastAPI()
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8050)
-"""
+""",
         }
 
         create_test_project(tmp_path, files)
@@ -64,7 +64,9 @@ if __name__ == "__main__":
         result = analyzer.analyze()
 
         assert result["framework"] == "FastAPI"
-        assert result["default_port"] == 8050, f"Expected 8050, got {result['default_port']}"
+        assert result["default_port"] == 8050, (
+            f"Expected 8050, got {result['default_port']}"
+        )
         print("✓ Python entry point test passed (port=8050)")
 
 
@@ -77,7 +79,7 @@ def test_port_in_env_file():
         files = {
             "requirements.txt": "flask",
             "app.py": "from flask import Flask\napp = Flask(__name__)",
-            ".env": "PORT=5001\nDATABASE_URL=postgresql://localhost/db"
+            ".env": "PORT=5001\nDATABASE_URL=postgresql://localhost/db",
         }
 
         create_test_project(tmp_path, files)
@@ -85,7 +87,9 @@ def test_port_in_env_file():
         result = analyzer.analyze()
 
         assert result["framework"] == "Flask"
-        assert result["default_port"] == 5001, f"Expected 5001, got {result['default_port']}"
+        assert result["default_port"] == 5001, (
+            f"Expected 5001, got {result['default_port']}"
+        )
         print("✓ Environment file test passed (port=5001)")
 
 
@@ -103,16 +107,12 @@ def test_port_in_package_json_script():
 
         # Create a Next.js project with custom port in dev script
         files = {
-            "package.json": json.dumps({
-                "dependencies": {
-                    "next": "^14.0.0",
-                    "react": "^18.0.0"
-                },
-                "scripts": {
-                    "dev": "next dev -p 3001",
-                    "build": "next build"
+            "package.json": json.dumps(
+                {
+                    "dependencies": {"next": "^14.0.0", "react": "^18.0.0"},
+                    "scripts": {"dev": "next dev -p 3001", "build": "next build"},
                 }
-            })
+            )
         }
 
         create_test_project(tmp_path, files)
@@ -120,7 +120,9 @@ def test_port_in_package_json_script():
         result = analyzer.analyze()
 
         assert result["framework"] == "Next.js"
-        assert result["default_port"] == 3001, f"Expected 3001, got {result['default_port']}"
+        assert result["default_port"] == 3001, (
+            f"Expected 3001, got {result['default_port']}"
+        )
         print("✓ Package.json script test passed (port=3001)")
 
 
@@ -131,11 +133,7 @@ def test_port_in_nodejs_entry_point():
 
         # Create an Express project with port in server.js
         files = {
-            "package.json": json.dumps({
-                "dependencies": {
-                    "express": "^4.18.0"
-                }
-            }),
+            "package.json": json.dumps({"dependencies": {"express": "^4.18.0"}}),
             "server.js": """
 const express = require('express');
 const app = express();
@@ -144,7 +142,7 @@ const PORT = 4500;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
-"""
+""",
         }
 
         create_test_project(tmp_path, files)
@@ -152,7 +150,9 @@ app.listen(PORT, () => {
         result = analyzer.analyze()
 
         assert result["framework"] == "Express"
-        assert result["default_port"] == 4500, f"Expected 4500, got {result['default_port']}"
+        assert result["default_port"] == 4500, (
+            f"Expected 4500, got {result['default_port']}"
+        )
         print("✓ Node.js entry point test passed (port=4500)")
 
 
@@ -164,7 +164,7 @@ def test_fallback_to_default():
         # Create a minimal FastAPI project with no custom port
         files = {
             "requirements.txt": "fastapi",
-            "app.py": "from fastapi import FastAPI\napp = FastAPI()"
+            "app.py": "from fastapi import FastAPI\napp = FastAPI()",
         }
 
         create_test_project(tmp_path, files)
@@ -172,7 +172,9 @@ def test_fallback_to_default():
         result = analyzer.analyze()
 
         assert result["framework"] == "FastAPI"
-        assert result["default_port"] == 8000, f"Expected 8000 (default), got {result['default_port']}"
+        assert result["default_port"] == 8000, (
+            f"Expected 8000 (default), got {result['default_port']}"
+        )
         print("✓ Fallback to default test passed (port=8000)")
 
 
@@ -194,7 +196,7 @@ app = FastAPI()
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=9000)
 """,
-            ".env": "PORT=9001"
+            ".env": "PORT=9001",
         }
 
         create_test_project(tmp_path, files)
@@ -202,7 +204,9 @@ if __name__ == "__main__":
         result = analyzer.analyze()
 
         assert result["framework"] == "FastAPI"
-        assert result["default_port"] == 9000, f"Expected 9000 (from app.py), got {result['default_port']}"
+        assert result["default_port"] == 9000, (
+            f"Expected 9000 (from app.py), got {result['default_port']}"
+        )
         print("✓ Port priority test passed (entry point > env file)")
 
 

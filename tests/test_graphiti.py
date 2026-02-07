@@ -1,4 +1,5 @@
 """Tests for Graphiti memory integration."""
+
 import os
 
 # Add auto-claude to path
@@ -38,10 +39,11 @@ class TestIsGraphitiEnabled:
 
     def test_returns_true_when_configured(self):
         """Returns True when properly configured."""
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "OPENAI_API_KEY": "sk-test-key"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {"GRAPHITI_ENABLED": "true", "OPENAI_API_KEY": "sk-test-key"},
+            clear=True,
+        ):
             assert is_graphiti_enabled() is True
 
 
@@ -56,7 +58,9 @@ class TestGetGraphitiStatus:
             assert status["available"] is False
             assert "not set" in status["reason"].lower()
 
-    @pytest.mark.skip(reason="Environment-dependent test - fails when OPENAI_API_KEY is set")
+    @pytest.mark.skip(
+        reason="Environment-dependent test - fails when OPENAI_API_KEY is set"
+    )
     def test_status_when_missing_openai_key(self):
         """Returns correct status when OPENAI_API_KEY missing.
 
@@ -80,16 +84,22 @@ class TestGraphitiConfig:
             config = GraphitiConfig.from_env()
             assert config.enabled is False
             assert config.database == "auto_claude_memory"
-            assert "auto-claude" in config.db_path.lower()  # Default path in ~/.auto-claude/
+            assert (
+                "auto-claude" in config.db_path.lower()
+            )  # Default path in ~/.auto-claude/
 
     def test_from_env_custom_values(self):
         """Config reads custom environment values."""
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "OPENAI_API_KEY": "sk-test",
-            "GRAPHITI_DATABASE": "my_graph",
-            "GRAPHITI_DB_PATH": "/custom/path"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "OPENAI_API_KEY": "sk-test",
+                "GRAPHITI_DATABASE": "my_graph",
+                "GRAPHITI_DB_PATH": "/custom/path",
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             assert config.enabled is True
             assert config.database == "my_graph"
@@ -112,10 +122,11 @@ class TestGraphitiConfig:
             assert config.is_valid() is True
 
         # With embedder configured
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "OPENAI_API_KEY": "sk-test"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {"GRAPHITI_ENABLED": "true", "OPENAI_API_KEY": "sk-test"},
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             assert config.is_valid() is True
 
@@ -132,13 +143,17 @@ class TestMultiProviderConfig:
 
     def test_anthropic_provider_config(self):
         """Anthropic LLM provider can be configured."""
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_LLM_PROVIDER": "anthropic",
-            "ANTHROPIC_API_KEY": "sk-ant-test",
-            "GRAPHITI_EMBEDDER_PROVIDER": "openai",
-            "OPENAI_API_KEY": "sk-test"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "GRAPHITI_LLM_PROVIDER": "anthropic",
+                "ANTHROPIC_API_KEY": "sk-ant-test",
+                "GRAPHITI_EMBEDDER_PROVIDER": "openai",
+                "OPENAI_API_KEY": "sk-test",
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             assert config.llm_provider == "anthropic"
             assert config.anthropic_api_key == "sk-ant-test"
@@ -146,33 +161,44 @@ class TestMultiProviderConfig:
 
     def test_azure_openai_provider_config(self):
         """Azure OpenAI provider can be configured."""
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_LLM_PROVIDER": "azure_openai",
-            "GRAPHITI_EMBEDDER_PROVIDER": "azure_openai",
-            "AZURE_OPENAI_API_KEY": "azure-key",
-            "AZURE_OPENAI_BASE_URL": "https://test.openai.azure.com/openai/v1/",
-            "AZURE_OPENAI_LLM_DEPLOYMENT": "gpt-4o",
-            "AZURE_OPENAI_EMBEDDING_DEPLOYMENT": "text-embedding-3-small"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "GRAPHITI_LLM_PROVIDER": "azure_openai",
+                "GRAPHITI_EMBEDDER_PROVIDER": "azure_openai",
+                "AZURE_OPENAI_API_KEY": "azure-key",
+                "AZURE_OPENAI_BASE_URL": "https://test.openai.azure.com/openai/v1/",
+                "AZURE_OPENAI_LLM_DEPLOYMENT": "gpt-4o",
+                "AZURE_OPENAI_EMBEDDING_DEPLOYMENT": "text-embedding-3-small",
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             assert config.llm_provider == "azure_openai"
             assert config.embedder_provider == "azure_openai"
             assert config.azure_openai_api_key == "azure-key"
-            assert config.azure_openai_base_url == "https://test.openai.azure.com/openai/v1/"
+            assert (
+                config.azure_openai_base_url
+                == "https://test.openai.azure.com/openai/v1/"
+            )
             assert config.is_valid() is True
 
     def test_ollama_provider_config(self):
         """Ollama provider can be configured for local models."""
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_LLM_PROVIDER": "ollama",
-            "GRAPHITI_EMBEDDER_PROVIDER": "ollama",
-            "OLLAMA_LLM_MODEL": "deepseek-r1:7b",
-            "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text",
-            "OLLAMA_EMBEDDING_DIM": "768",
-            "OLLAMA_BASE_URL": "http://localhost:11434"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "GRAPHITI_LLM_PROVIDER": "ollama",
+                "GRAPHITI_EMBEDDER_PROVIDER": "ollama",
+                "OLLAMA_LLM_MODEL": "deepseek-r1:7b",
+                "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text",
+                "OLLAMA_EMBEDDING_DIM": "768",
+                "OLLAMA_BASE_URL": "http://localhost:11434",
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             assert config.llm_provider == "ollama"
             assert config.embedder_provider == "ollama"
@@ -183,14 +209,18 @@ class TestMultiProviderConfig:
 
     def test_voyage_embedder_config(self):
         """Voyage AI embedder can be configured (typically with Anthropic LLM)."""
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_LLM_PROVIDER": "anthropic",
-            "GRAPHITI_EMBEDDER_PROVIDER": "voyage",
-            "ANTHROPIC_API_KEY": "sk-ant-test",
-            "VOYAGE_API_KEY": "pa-test-voyage",
-            "VOYAGE_EMBEDDING_MODEL": "voyage-3"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "GRAPHITI_LLM_PROVIDER": "anthropic",
+                "GRAPHITI_EMBEDDER_PROVIDER": "voyage",
+                "ANTHROPIC_API_KEY": "sk-ant-test",
+                "VOYAGE_API_KEY": "pa-test-voyage",
+                "VOYAGE_EMBEDDING_MODEL": "voyage-3",
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             assert config.llm_provider == "anthropic"
             assert config.embedder_provider == "voyage"
@@ -200,13 +230,17 @@ class TestMultiProviderConfig:
 
     def test_mixed_providers_anthropic_openai(self):
         """Mixed providers: Anthropic LLM + OpenAI embeddings."""
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_LLM_PROVIDER": "anthropic",
-            "GRAPHITI_EMBEDDER_PROVIDER": "openai",
-            "ANTHROPIC_API_KEY": "sk-ant-test",
-            "OPENAI_API_KEY": "sk-test"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "GRAPHITI_LLM_PROVIDER": "anthropic",
+                "GRAPHITI_EMBEDDER_PROVIDER": "openai",
+                "ANTHROPIC_API_KEY": "sk-ant-test",
+                "OPENAI_API_KEY": "sk-test",
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             assert config.llm_provider == "anthropic"
             assert config.embedder_provider == "openai"
@@ -214,30 +248,42 @@ class TestMultiProviderConfig:
 
     def test_ollama_valid_with_model_only(self):
         """Ollama embedder only requires model (dimension auto-detected)."""
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_LLM_PROVIDER": "ollama",
-            "GRAPHITI_EMBEDDER_PROVIDER": "ollama",
-            "OLLAMA_LLM_MODEL": "deepseek-r1:7b",
-            "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text"
-            # OLLAMA_EMBEDDING_DIM is optional - auto-detected for known models
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "GRAPHITI_LLM_PROVIDER": "ollama",
+                "GRAPHITI_EMBEDDER_PROVIDER": "ollama",
+                "OLLAMA_LLM_MODEL": "deepseek-r1:7b",
+                "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text",
+                # OLLAMA_EMBEDDING_DIM is optional - auto-detected for known models
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             # Embedder is valid with just model (dimension auto-detected)
             # Use public API: no embedder-related validation errors means valid
-            embedder_errors = [e for e in config.get_validation_errors() if "embedder" in e.lower() or "ollama" in e.lower()]
+            embedder_errors = [
+                e
+                for e in config.get_validation_errors()
+                if "embedder" in e.lower() or "ollama" in e.lower()
+            ]
             assert len(embedder_errors) == 0
             assert config.is_valid() is True
 
     def test_provider_summary(self):
         """Provider summary returns correct string."""
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_LLM_PROVIDER": "anthropic",
-            "GRAPHITI_EMBEDDER_PROVIDER": "voyage",
-            "ANTHROPIC_API_KEY": "sk-ant-test",
-            "VOYAGE_API_KEY": "pa-test"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "GRAPHITI_LLM_PROVIDER": "anthropic",
+                "GRAPHITI_EMBEDDER_PROVIDER": "voyage",
+                "ANTHROPIC_API_KEY": "sk-ant-test",
+                "VOYAGE_API_KEY": "pa-test",
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             summary = config.get_provider_summary()
             assert "anthropic" in summary
@@ -249,11 +295,15 @@ class TestValidationErrors:
 
     def test_validation_errors_missing_openai_key(self):
         """Validation errors list missing OpenAI key."""
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_LLM_PROVIDER": "openai",
-            "GRAPHITI_EMBEDDER_PROVIDER": "openai"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "GRAPHITI_LLM_PROVIDER": "openai",
+                "GRAPHITI_EMBEDDER_PROVIDER": "openai",
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             errors = config.get_validation_errors()
             assert any("OPENAI_API_KEY" in e for e in errors)
@@ -264,12 +314,16 @@ class TestValidationErrors:
         Setting an LLM provider without credentials should not generate errors,
         as the Claude Agent SDK handles all graph operations.
         """
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_LLM_PROVIDER": "anthropic",
-            "GRAPHITI_EMBEDDER_PROVIDER": "openai",
-            "OPENAI_API_KEY": "sk-test"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "GRAPHITI_LLM_PROVIDER": "anthropic",
+                "GRAPHITI_EMBEDDER_PROVIDER": "openai",
+                "OPENAI_API_KEY": "sk-test",
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             errors = config.get_validation_errors()
             # No LLM validation errors since Claude SDK handles RAG
@@ -277,11 +331,15 @@ class TestValidationErrors:
 
     def test_validation_errors_missing_azure_config(self):
         """Validation errors list missing Azure configuration."""
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_LLM_PROVIDER": "azure_openai",
-            "GRAPHITI_EMBEDDER_PROVIDER": "azure_openai"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "GRAPHITI_LLM_PROVIDER": "azure_openai",
+                "GRAPHITI_EMBEDDER_PROVIDER": "azure_openai",
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             errors = config.get_validation_errors()
             assert any("AZURE_OPENAI_API_KEY" in e for e in errors)
@@ -289,10 +347,14 @@ class TestValidationErrors:
 
     def test_validation_errors_unknown_embedder_provider(self):
         """Validation errors report unknown embedder provider."""
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_EMBEDDER_PROVIDER": "unknown_provider",
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "GRAPHITI_EMBEDDER_PROVIDER": "unknown_provider",
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             errors = config.get_validation_errors()
             # Unknown embedder provider should generate error
@@ -306,9 +368,7 @@ class TestAvailableProviders:
         """Only OpenAI available when only OpenAI key is set."""
         from graphiti_config import get_available_providers
 
-        with patch.dict(os.environ, {
-            "OPENAI_API_KEY": "sk-test"
-        }, clear=True):
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=True):
             providers = get_available_providers()
             assert "openai" in providers["llm_providers"]
             assert "openai" in providers["embedder_providers"]
@@ -319,14 +379,18 @@ class TestAvailableProviders:
         """All providers available when all are configured."""
         from graphiti_config import get_available_providers
 
-        with patch.dict(os.environ, {
-            "OPENAI_API_KEY": "sk-test",
-            "ANTHROPIC_API_KEY": "sk-ant-test",
-            "VOYAGE_API_KEY": "pa-test",
-            "OLLAMA_LLM_MODEL": "deepseek-r1:7b",
-            "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text",
-            "OLLAMA_EMBEDDING_DIM": "768"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENAI_API_KEY": "sk-test",
+                "ANTHROPIC_API_KEY": "sk-ant-test",
+                "VOYAGE_API_KEY": "pa-test",
+                "OLLAMA_LLM_MODEL": "deepseek-r1:7b",
+                "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text",
+                "OLLAMA_EMBEDDING_DIM": "768",
+            },
+            clear=True,
+        ):
             providers = get_available_providers()
             assert "openai" in providers["llm_providers"]
             assert "anthropic" in providers["llm_providers"]
@@ -342,16 +406,18 @@ class TestGraphitiProviders:
     def test_provider_error_import(self):
         """ProviderError and ProviderNotInstalled can be imported."""
         from graphiti_providers import ProviderError, ProviderNotInstalled
+
         assert issubclass(ProviderNotInstalled, ProviderError)
 
     def test_create_llm_client_unknown_provider(self):
         """create_llm_client raises ProviderError for unknown provider."""
         from graphiti_providers import ProviderError, create_llm_client
 
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_LLM_PROVIDER": "invalid_provider"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {"GRAPHITI_ENABLED": "true", "GRAPHITI_LLM_PROVIDER": "invalid_provider"},
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             with pytest.raises(ProviderError, match="Unknown LLM provider"):
                 create_llm_client(config)
@@ -360,10 +426,14 @@ class TestGraphitiProviders:
         """create_embedder raises ProviderError for unknown provider."""
         from graphiti_providers import ProviderError, create_embedder
 
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_EMBEDDER_PROVIDER": "invalid_provider"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "GRAPHITI_EMBEDDER_PROVIDER": "invalid_provider",
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             with pytest.raises(ProviderError, match="Unknown embedder provider"):
                 create_embedder(config)
@@ -376,16 +446,19 @@ class TestGraphitiProviders:
             create_llm_client,
         )
 
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_LLM_PROVIDER": "openai"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {"GRAPHITI_ENABLED": "true", "GRAPHITI_LLM_PROVIDER": "openai"},
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
 
             # Test raises ProviderError for missing API key, or skip if graphiti-core not installed
             try:
                 create_llm_client(config)
-                pytest.fail("Expected ProviderError to be raised for missing OPENAI_API_KEY")
+                pytest.fail(
+                    "Expected ProviderError to be raised for missing OPENAI_API_KEY"
+                )
             except ProviderNotInstalled:
                 pytest.skip("graphiti-core not installed")
             except ProviderError as e:
@@ -399,17 +472,23 @@ class TestGraphitiProviders:
             create_embedder,
         )
 
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_EMBEDDER_PROVIDER": "ollama"
-            # Missing OLLAMA_EMBEDDING_MODEL
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "GRAPHITI_EMBEDDER_PROVIDER": "ollama",
+                # Missing OLLAMA_EMBEDDING_MODEL
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
 
             # Test raises ProviderError for missing model config, or skip if graphiti-core not installed
             try:
                 create_embedder(config)
-                pytest.fail("Expected ProviderError to be raised for missing OLLAMA_EMBEDDING_MODEL")
+                pytest.fail(
+                    "Expected ProviderError to be raised for missing OLLAMA_EMBEDDING_MODEL"
+                )
             except ProviderNotInstalled:
                 pytest.skip("graphiti-core not installed")
             except ProviderError as e:
@@ -434,12 +513,16 @@ class TestGraphitiProviders:
         """validate_embedding_config fails for Ollama without dimension."""
         from graphiti_providers import validate_embedding_config
 
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_EMBEDDER_PROVIDER": "ollama",
-            "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text"
-            # Missing OLLAMA_EMBEDDING_DIM
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "GRAPHITI_EMBEDDER_PROVIDER": "ollama",
+                "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text",
+                # Missing OLLAMA_EMBEDDING_DIM
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             valid, msg = validate_embedding_config(config)
             assert valid is False
@@ -449,11 +532,15 @@ class TestGraphitiProviders:
         """validate_embedding_config succeeds for valid OpenAI config."""
         from graphiti_providers import validate_embedding_config
 
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "GRAPHITI_EMBEDDER_PROVIDER": "openai",
-            "OPENAI_API_KEY": "sk-test"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GRAPHITI_ENABLED": "true",
+                "GRAPHITI_EMBEDDER_PROVIDER": "openai",
+                "OPENAI_API_KEY": "sk-test",
+            },
+            clear=True,
+        ):
             config = GraphitiConfig.from_env()
             valid, msg = validate_embedding_config(config)
             assert valid is True
@@ -464,10 +551,11 @@ class TestGraphitiProviders:
         from graphiti_providers import is_graphiti_enabled as provider_is_enabled
 
         # Both should return same result
-        with patch.dict(os.environ, {
-            "GRAPHITI_ENABLED": "true",
-            "OPENAI_API_KEY": "sk-test"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {"GRAPHITI_ENABLED": "true", "OPENAI_API_KEY": "sk-test"},
+            clear=True,
+        ):
             assert provider_is_enabled() == config_is_enabled()
 
 

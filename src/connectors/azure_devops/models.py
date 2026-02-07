@@ -8,7 +8,7 @@ typed data structures.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -31,8 +31,8 @@ class Repository:
     id: str
     name: str
     project: str
-    default_branch: Optional[str] = None
-    web_url: Optional[str] = None
+    default_branch: str | None = None
+    web_url: str | None = None
 
     @classmethod
     def from_api_response(cls, api_repo: Any) -> "Repository":
@@ -95,14 +95,14 @@ class WorkItem:
     title: str
     state: str
     work_item_type: str
-    assigned_to: Optional[str] = None
-    description: Optional[str] = None
-    tags: List[str] = field(default_factory=list)
-    created_date: Optional[datetime] = None
-    area_path: Optional[str] = None
-    iteration_path: Optional[str] = None
-    priority: Optional[int] = None
-    url: Optional[str] = None
+    assigned_to: str | None = None
+    description: str | None = None
+    tags: list[str] = field(default_factory=list)
+    created_date: datetime | None = None
+    area_path: str | None = None
+    iteration_path: str | None = None
+    priority: int | None = None
+    url: str | None = None
 
     @classmethod
     def from_api_response(cls, api_work_item: Any) -> "WorkItem":
@@ -185,10 +185,10 @@ class FileItem:
     path: str
     name: str
     is_folder: bool
-    size: Optional[int] = None
-    object_id: Optional[str] = None
-    commit_id: Optional[str] = None
-    url: Optional[str] = None
+    size: int | None = None
+    object_id: str | None = None
+    commit_id: str | None = None
+    url: str | None = None
 
     @classmethod
     def from_api_response(cls, api_item: Any) -> "FileItem":

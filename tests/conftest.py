@@ -12,7 +12,6 @@ Provides:
    sample API response objects, and pre-configured connector instances.
 """
 
-import importlib
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -115,7 +114,6 @@ def pytest_collectstart(collector) -> None:
 # ---------------------------------------------------------------------------
 
 import subprocess
-import tempfile
 
 
 @pytest.fixture
@@ -256,9 +254,7 @@ def mock_connection(mock_git_client, mock_wit_client):
     """
     connection = MagicMock()
     connection.clients.get_git_client.return_value = mock_git_client
-    connection.clients.get_work_item_tracking_client.return_value = (
-        mock_wit_client
-    )
+    connection.clients.get_work_item_tracking_client.return_value = mock_wit_client
     return connection
 
 
@@ -351,9 +347,7 @@ def sample_api_work_item():
             "System.IterationPath": f"{TEST_PROJECT}\\Sprint 5",
             "Microsoft.VSTS.Common.Priority": 1,
         },
-        url=(
-            f"{TEST_ORG_URL}/{TEST_PROJECT}/_apis/wit/workItems/42"
-        ),
+        url=(f"{TEST_ORG_URL}/{TEST_PROJECT}/_apis/wit/workItems/42"),
     )
     return work_item
 

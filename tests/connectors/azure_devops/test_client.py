@@ -44,9 +44,7 @@ class TestClientValidation:
             organization_url="",
             project="Project",
         )
-        with pytest.raises(
-            ConfigurationError, match="organization URL is required"
-        ):
+        with pytest.raises(ConfigurationError, match="organization URL is required"):
             AzureDevOpsClient(settings)
 
     def test_non_https_url_raises_configuration_error(self):
@@ -56,9 +54,7 @@ class TestClientValidation:
             organization_url="http://dev.azure.com/org",
             project="Project",
         )
-        with pytest.raises(
-            ConfigurationError, match="must use HTTPS"
-        ):
+        with pytest.raises(ConfigurationError, match="must use HTTPS"):
             AzureDevOpsClient(settings)
 
     def test_valid_settings_accepted(self, sample_settings):
@@ -126,68 +122,67 @@ class TestClientConnection:
 
     def test_connect_401_raises_authentication_error(self, sample_settings):
         """connect() maps 401/unauthorized errors to AuthenticationError."""
-        with patch(
-            "src.connectors.azure_devops.client.Connection",
-            side_effect=Exception("HTTP 401 Unauthorized"),
-        ), patch("src.connectors.azure_devops.client.BasicAuthentication"):
+        with (
+            patch(
+                "src.connectors.azure_devops.client.Connection",
+                side_effect=Exception("HTTP 401 Unauthorized"),
+            ),
+            patch("src.connectors.azure_devops.client.BasicAuthentication"),
+        ):
             client = AzureDevOpsClient(sample_settings)
-            with pytest.raises(
-                AuthenticationError, match="Authentication failed"
-            ):
+            with pytest.raises(AuthenticationError, match="Authentication failed"):
                 client.connect()
 
-    def test_connect_unauthorized_raises_authentication_error(
-        self, sample_settings
-    ):
+    def test_connect_unauthorized_raises_authentication_error(self, sample_settings):
         """connect() maps 'unauthorized' keyword to AuthenticationError."""
-        with patch(
-            "src.connectors.azure_devops.client.Connection",
-            side_effect=Exception("Request unauthorized by server"),
-        ), patch("src.connectors.azure_devops.client.BasicAuthentication"):
+        with (
+            patch(
+                "src.connectors.azure_devops.client.Connection",
+                side_effect=Exception("Request unauthorized by server"),
+            ),
+            patch("src.connectors.azure_devops.client.BasicAuthentication"),
+        ):
             client = AzureDevOpsClient(sample_settings)
-            with pytest.raises(
-                AuthenticationError, match="Authentication failed"
-            ):
+            with pytest.raises(AuthenticationError, match="Authentication failed"):
                 client.connect()
 
     def test_connect_404_raises_configuration_error(self, sample_settings):
         """connect() maps 404/not found errors to ConfigurationError."""
-        with patch(
-            "src.connectors.azure_devops.client.Connection",
-            side_effect=Exception("HTTP 404 Not Found"),
-        ), patch("src.connectors.azure_devops.client.BasicAuthentication"):
+        with (
+            patch(
+                "src.connectors.azure_devops.client.Connection",
+                side_effect=Exception("HTTP 404 Not Found"),
+            ),
+            patch("src.connectors.azure_devops.client.BasicAuthentication"),
+        ):
             client = AzureDevOpsClient(sample_settings)
-            with pytest.raises(
-                ConfigurationError, match="Organization URL not found"
-            ):
+            with pytest.raises(ConfigurationError, match="Organization URL not found"):
                 client.connect()
 
-    def test_connect_not_found_raises_configuration_error(
-        self, sample_settings
-    ):
+    def test_connect_not_found_raises_configuration_error(self, sample_settings):
         """connect() maps 'not found' keyword to ConfigurationError."""
-        with patch(
-            "src.connectors.azure_devops.client.Connection",
-            side_effect=Exception("Resource not found on server"),
-        ), patch("src.connectors.azure_devops.client.BasicAuthentication"):
+        with (
+            patch(
+                "src.connectors.azure_devops.client.Connection",
+                side_effect=Exception("Resource not found on server"),
+            ),
+            patch("src.connectors.azure_devops.client.BasicAuthentication"),
+        ):
             client = AzureDevOpsClient(sample_settings)
-            with pytest.raises(
-                ConfigurationError, match="Organization URL not found"
-            ):
+            with pytest.raises(ConfigurationError, match="Organization URL not found"):
                 client.connect()
 
-    def test_connect_generic_error_raises_authentication_error(
-        self, sample_settings
-    ):
+    def test_connect_generic_error_raises_authentication_error(self, sample_settings):
         """connect() wraps unknown errors as AuthenticationError."""
-        with patch(
-            "src.connectors.azure_devops.client.Connection",
-            side_effect=Exception("Network timeout"),
-        ), patch("src.connectors.azure_devops.client.BasicAuthentication"):
+        with (
+            patch(
+                "src.connectors.azure_devops.client.Connection",
+                side_effect=Exception("Network timeout"),
+            ),
+            patch("src.connectors.azure_devops.client.BasicAuthentication"),
+        ):
             client = AzureDevOpsClient(sample_settings)
-            with pytest.raises(
-                AuthenticationError, match="Failed to connect"
-            ):
+            with pytest.raises(AuthenticationError, match="Failed to connect"):
                 client.connect()
 
     def test_disconnect_clears_state(self, azure_client):
@@ -222,9 +217,7 @@ class TestEnsureConnected:
     def test_raises_when_not_connected(self, sample_settings):
         """_ensure_connected raises ConfigurationError if not connected."""
         client = AzureDevOpsClient(sample_settings)
-        with pytest.raises(
-            ConfigurationError, match="Not connected.*Call connect"
-        ):
+        with pytest.raises(ConfigurationError, match="Not connected.*Call connect"):
             client._ensure_connected()
 
     def test_passes_when_connected(self, azure_client):
@@ -260,8 +253,8 @@ class TestGetGitClient:
 
     def test_client_creation_failure_raises_auth_error(self, azure_client):
         """get_git_client() wraps client creation errors as AuthenticationError."""
-        azure_client._connection.clients.get_git_client.side_effect = (
-            Exception("Token expired")
+        azure_client._connection.clients.get_git_client.side_effect = Exception(
+            "Token expired"
         )
         with pytest.raises(
             AuthenticationError, match="Failed to initialize Git client"
@@ -345,9 +338,7 @@ class TestFactoryMethods:
         assert client.is_connected is True
 
     @patch("src.config.settings.Settings.from_env")
-    def test_from_env_wraps_value_error_as_config_error(
-        self, mock_from_env
-    ):
+    def test_from_env_wraps_value_error_as_config_error(self, mock_from_env):
         """from_env() wraps ValueError from Settings into ConfigurationError."""
         mock_from_env.side_effect = ValueError(
             "Missing required environment variables: AZURE_DEVOPS_PAT"

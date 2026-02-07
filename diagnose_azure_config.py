@@ -1,4 +1,4 @@
-﻿"""
+"""
 Script de diagnostic pour identifier d'où vient 'MeCa Web'.
 Affiche toutes les sources de configuration Azure DevOps.
 """
@@ -15,10 +15,10 @@ print()
 # 1. Variables d'environnement
 print("1. Variables d'environnement du système:")
 print("-" * 70)
-azure_vars = {k: v for k, v in os.environ.items() if 'AZURE' in k.upper()}
+azure_vars = {k: v for k, v in os.environ.items() if "AZURE" in k.upper()}
 if azure_vars:
     for key, value in sorted(azure_vars.items()):
-        if 'PAT' in key or 'TOKEN' in key:
+        if "PAT" in key or "TOKEN" in key:
             value = value[:10] + "..." if len(value) > 10 else "***"
         print(f"   {key} = {value}")
 else:
@@ -30,10 +30,10 @@ print("2. apps/backend/.env:")
 print("-" * 70)
 backend_env = Path(__file__).parent / "apps" / "backend" / ".env"
 if backend_env.exists():
-    with open(backend_env, 'r', encoding='utf-8') as f:
+    with open(backend_env, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
-            if line.startswith('AZURE_DEVOPS_PROJECT'):
+            if line.startswith("AZURE_DEVOPS_PROJECT"):
                 print(f"   {line}")
                 break
         else:
@@ -48,17 +48,17 @@ print("-" * 70)
 try:
     backend_path = Path(__file__).parent / "apps" / "backend"
     sys.path.insert(0, str(backend_path))
-    
+
     from core.git_provider import detect_git_provider, extract_azure_devops_project
-    
+
     provider = detect_git_provider(".")
     print(f"   Provider détecté: {provider}")
-    
+
     if provider == "azure_devops":
         project = extract_azure_devops_project(".")
         print(f"   Projet extrait: {project}")
     else:
-        print(f"   Provider n'est pas Azure DevOps")
+        print("   Provider n'est pas Azure DevOps")
 except Exception as e:
     print(f"   ❌ Erreur: {e}")
 print()
@@ -68,32 +68,33 @@ print("4. URL Git remote:")
 print("-" * 70)
 try:
     import subprocess
+
     result = subprocess.run(
-        ['git', 'remote', 'get-url', 'origin'],
+        ["git", "remote", "get-url", "origin"],
         capture_output=True,
         text=True,
-        timeout=5
+        timeout=5,
     )
     if result.returncode == 0:
         url = result.stdout.strip()
         print(f"   {url}")
-        
+
         # Parse l'URL pour montrer les composants
         import re
         from urllib.parse import unquote
-        
-        match = re.search(r'https://dev\.azure\.com/([^/]+)/([^/]+)/_git/(.+)', url)
+
+        match = re.search(r"https://dev\.azure\.com/([^/]+)/([^/]+)/_git/(.+)", url)
         if match:
             org = match.group(1)
             proj = unquote(match.group(2))
             repo = unquote(match.group(3))
             print()
-            print(f"   Décomposition:")
+            print("   Décomposition:")
             print(f"     Organisation: {org}")
             print(f"     PROJET:       {proj}  ← Devrait être utilisé")
             print(f"     Repository:   {repo}")
     else:
-        print(f"   ❌ Impossible de récupérer le remote")
+        print("   ❌ Impossible de récupérer le remote")
 except Exception as e:
     print(f"   ❌ Erreur: {e}")
 print()

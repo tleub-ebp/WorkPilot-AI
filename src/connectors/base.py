@@ -6,7 +6,7 @@ tracking providers (e.g., Azure DevOps, GitHub, GitLab).
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class BaseConnector(ABC):
@@ -30,7 +30,7 @@ class BaseConnector(ABC):
         """
 
     @abstractmethod
-    def list_repositories(self, project: str) -> List[Any]:
+    def list_repositories(self, project: str) -> list[Any]:
         """List all repositories in a project.
 
         Args:
@@ -64,8 +64,8 @@ class BaseConnector(ABC):
         project: str,
         repository_id: str,
         path: str = "/",
-        branch: Optional[str] = None,
-    ) -> List[Any]:
+        branch: str | None = None,
+    ) -> list[Any]:
         """List files and directories at a given path in a repository.
 
         Args:
@@ -88,7 +88,7 @@ class BaseConnector(ABC):
         project: str,
         repository_id: str,
         file_path: str,
-        branch: Optional[str] = None,
+        branch: str | None = None,
     ) -> str:
         """Get the content of a file from a repository.
 
@@ -122,7 +122,7 @@ class BaseWorkItemTracker(ABC):
         project: str,
         query: str,
         max_items: int = 100,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """Query work items using a provider-specific query language.
 
         Args:
@@ -153,9 +153,9 @@ class BaseWorkItemTracker(ABC):
     def list_backlog_items(
         self,
         project: str,
-        item_types: Optional[List[str]] = None,
+        item_types: list[str] | None = None,
         max_items: int = 100,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """List work items from the project backlog.
 
         Args:
@@ -179,7 +179,7 @@ class BaseIntegratedConnector(BaseConnector, BaseWorkItemTracker):
     """
 
     @abstractmethod
-    def get_connection_info(self) -> Dict[str, str]:
+    def get_connection_info(self) -> dict[str, str]:
         """Get information about the current connection.
 
         Returns:

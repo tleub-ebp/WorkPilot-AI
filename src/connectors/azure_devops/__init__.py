@@ -12,7 +12,7 @@ Example:
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Optional
 
 from src.config.settings import Settings
 from src.connectors.azure_devops.client import AzureDevOpsClient
@@ -137,7 +137,7 @@ class AzureDevOpsConnector(BaseIntegratedConnector):
         """
         self._client.connect()
 
-    def list_repositories(self, project: str) -> List[Repository]:
+    def list_repositories(self, project: str) -> list[Repository]:
         """List all Git repositories in an Azure DevOps project.
 
         Args:
@@ -153,9 +153,7 @@ class AzureDevOpsConnector(BaseIntegratedConnector):
         """
         return self._repos.list_repositories(project)
 
-    def get_repository(
-        self, project: str, repository_id: str
-    ) -> Repository:
+    def get_repository(self, project: str, repository_id: str) -> Repository:
         """Get a single repository by its name or ID.
 
         Args:
@@ -176,8 +174,8 @@ class AzureDevOpsConnector(BaseIntegratedConnector):
         project: str,
         repository_id: str,
         path: str = "/",
-        branch: Optional[str] = None,
-    ) -> List[FileItem]:
+        branch: str | None = None,
+    ) -> list[FileItem]:
         """List files and directories at a given path in a repository.
 
         Args:
@@ -203,7 +201,7 @@ class AzureDevOpsConnector(BaseIntegratedConnector):
         project: str,
         repository_id: str,
         file_path: str,
-        branch: Optional[str] = None,
+        branch: str | None = None,
     ) -> str:
         """Get the content of a file from a repository.
 
@@ -222,9 +220,7 @@ class AzureDevOpsConnector(BaseIntegratedConnector):
             RepositoryNotFoundError: If the repository does not exist.
             APIError: If the API call fails.
         """
-        return self._repos.get_file_content(
-            project, repository_id, file_path, branch
-        )
+        return self._repos.get_file_content(project, repository_id, file_path, branch)
 
     # ── BaseWorkItemTracker interface ────────────────────────────────
 
@@ -233,7 +229,7 @@ class AzureDevOpsConnector(BaseIntegratedConnector):
         project: str,
         query: str,
         max_items: int = 100,
-    ) -> List[WorkItem]:
+    ) -> list[WorkItem]:
         """Query work items using WIQL (Work Item Query Language).
 
         Args:
@@ -268,9 +264,9 @@ class AzureDevOpsConnector(BaseIntegratedConnector):
     def list_backlog_items(
         self,
         project: str,
-        item_types: Optional[List[str]] = None,
+        item_types: list[str] | None = None,
         max_items: int = 100,
-    ) -> List[WorkItem]:
+    ) -> list[WorkItem]:
         """List work items from the project backlog.
 
         Retrieves backlog items filtered by work item type. By default
@@ -290,13 +286,11 @@ class AzureDevOpsConnector(BaseIntegratedConnector):
         Raises:
             APIError: If the API call fails.
         """
-        return self._work_items.list_backlog_items(
-            project, item_types, max_items
-        )
+        return self._work_items.list_backlog_items(project, item_types, max_items)
 
     # ── BaseIntegratedConnector interface ────────────────────────────
 
-    def get_connection_info(self) -> Dict[str, str]:
+    def get_connection_info(self) -> dict[str, str]:
         """Get information about the current connection.
 
         Returns:

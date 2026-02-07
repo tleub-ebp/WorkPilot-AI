@@ -68,12 +68,12 @@ class TestCombineImportsStrategy:
 
     def test_combine_imports_strategy(self, auto_merger):
         """COMBINE_IMPORTS strategy works correctly."""
-        baseline = '''import os
+        baseline = """import os
 import sys
 
 def main():
     pass
-'''
+"""
         snapshot1 = TaskSnapshot(
             task_id="task-001",
             task_intent="Add logging",
@@ -131,11 +131,11 @@ def main():
 
     def test_combine_imports_deduplication(self, auto_merger):
         """COMBINE_IMPORTS deduplicates identical imports."""
-        baseline = '''import os
+        baseline = """import os
 
 def main():
     pass
-'''
+"""
         # Both tasks add the same import
         snapshot1 = TaskSnapshot(
             task_id="task-001",
@@ -198,9 +198,9 @@ class TestAppendFunctionsStrategy:
 
     def test_append_functions_strategy(self, auto_merger):
         """APPEND_FUNCTIONS strategy works correctly."""
-        baseline = '''def existing():
+        baseline = """def existing():
     pass
-'''
+"""
         snapshot1 = TaskSnapshot(
             task_id="task-001",
             task_intent="Add helper",
@@ -283,9 +283,9 @@ class TestErrorHandling:
 
     def test_handles_missing_content(self, auto_merger):
         """Handles snapshots with missing content_after."""
-        baseline = '''def existing():
+        baseline = """def existing():
     pass
-'''
+"""
         snapshot = TaskSnapshot(
             task_id="task-001",
             task_intent="Add function",

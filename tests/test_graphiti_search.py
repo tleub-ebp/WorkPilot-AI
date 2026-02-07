@@ -188,6 +188,7 @@ class TestBugFixACS215:
         returned a non-string, non-dict object, the code would call
         .get() on it and crash with AttributeError.
         """
+
         # Create a non-dict object (simulates buggy Graphiti response)
         class NonDictObject:
             def __str__(self):
@@ -220,6 +221,7 @@ class TestBugFixACS215:
         Tests edge case where a custom object has a __str__ that contains
         EPISODE_TYPE_SESSION_INSIGHT but isn't a dict.
         """
+
         # Create a custom object that pretends to be a session insight
         class FakeSessionInsight:
             def __str__(self):
@@ -435,18 +437,14 @@ class TestEdgeCases:
         ]
 
         # Execute with spec_only=True (default)
-        result = await graphiti_search.get_session_history(
-            limit=5, spec_only=True
-        )
+        result = await graphiti_search.get_session_history(limit=5, spec_only=True)
 
         # Verify: Only matching spec_id should be returned
         assert len(result) == 1
         assert result[0]["spec_id"] == "test_spec_123"
 
     @pytest.mark.asyncio
-    async def test_get_session_history_all_specs(
-        self, graphiti_search, mock_client
-    ):
+    async def test_get_session_history_all_specs(self, graphiti_search, mock_client):
         """Test getting sessions from all specs."""
         insight_1 = _create_valid_session_insight(
             session_number=1, spec_id="test_spec_123"
@@ -461,9 +459,7 @@ class TestEdgeCases:
         ]
 
         # Execute with spec_only=False
-        result = await graphiti_search.get_session_history(
-            limit=5, spec_only=False
-        )
+        result = await graphiti_search.get_session_history(limit=5, spec_only=False)
 
         # Verify: All insights should be returned
         assert len(result) == 2

@@ -20,6 +20,7 @@ from .config import AzureDevOpsConfig
 
 logger = logging.getLogger(__name__)
 
+
 class AzureDevOpsManager:
     """
     Manages Azure DevOps integration for an Auto-Claude project.
@@ -42,7 +43,7 @@ class AzureDevOpsManager:
         self.project_dir = project_dir
         self.config = AzureDevOpsConfig.from_env()
         self._connector: AzureDevOpsConnector | None = None
-        
+
         # Auto-detect project from Git remote if not configured
         if not self.config.project:
             detected_project = extract_azure_devops_project(project_dir)

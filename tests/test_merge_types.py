@@ -265,4 +265,6 @@ class TestTaskSnapshot:
         assert restored.task_intent == original.task_intent
         assert restored.started_at == original.started_at
         assert len(restored.semantic_changes) == len(original.semantic_changes)
-        assert restored.semantic_changes[0].target == original.semantic_changes[0].target
+        assert (
+            restored.semantic_changes[0].target == original.semantic_changes[0].target
+        )
