@@ -11,9 +11,10 @@ gracefully no-op and the application continues with local tracking only.
 import logging
 from pathlib import Path
 
+from src.core.git_provider import extract_azure_devops_project
+
 from src.config.settings import Settings
 from src.connectors.azure_devops import AzureDevOpsConnector
-from src.core.git_provider import extract_azure_devops_project
 
 from .config import AzureDevOpsConfig
 
