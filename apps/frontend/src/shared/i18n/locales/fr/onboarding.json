@@ -5,7 +5,7 @@
     "helpText": "Cet assistant vous aidera à configurer votre environnement en quelques étapes. Vous pouvez configurer votre token OAuth Claude, activer les fonctionnalités de mémoire et créer votre première tâche."
   },
   "welcome": {
-    "title": "Bienvenue sur Auto Claude",
+    "title": "Bienvenue sur Auto Claude EBP",
     "subtitle": "Construisez des logiciels de manière autonome avec des agents IA",
     "getStarted": "Commencer",
     "skip": "Passer la configuration",
@@ -154,7 +154,7 @@
     "done": "Terminé"
   },
   "privacy": {
-    "title": "Aidez à améliorer Auto Claude",
+    "title": "Aidez à améliorer Auto Claude EBP",
     "subtitle": "Les rapports d'erreurs anonymes nous aident à corriger les bugs plus rapidement",
     "whatWeCollect": {
       "title": "Ce que nous collectons",

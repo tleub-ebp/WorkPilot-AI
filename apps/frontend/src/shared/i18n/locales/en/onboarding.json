@@ -5,7 +5,7 @@
     "helpText": "This wizard will help you set up your environment in just a few steps. You can configure your Claude OAuth token, set up memory features, and create your first task."
   },
   "welcome": {
-    "title": "Welcome to Auto Claude",
+    "title": "Welcome to Auto Claude EBP",
     "subtitle": "Build software autonomously with AI-powered agents",
     "getStarted": "Get Started",
     "skip": "Skip Setup",
@@ -164,7 +164,7 @@
     "done": "Done"
   },
   "privacy": {
-    "title": "Help Improve Auto Claude",
+    "title": "Help Improve Auto Claude EBP",
     "subtitle": "Anonymous error reporting helps us fix bugs faster",
     "whatWeCollect": {
       "title": "What we collect",
