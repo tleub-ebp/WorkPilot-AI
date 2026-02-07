@@ -18,7 +18,7 @@ Example:
 import logging
 from typing import Any, List, Optional
 
-from azure.devops.v7_0.work_item_tracking.models import Wiql
+from azure.devops.v7_0.work_item_tracking.models import Wiql, TeamContext
 
 from src.connectors.azure_devops.client import AzureDevOpsClient
 from src.connectors.azure_devops.exceptions import (
@@ -116,14 +116,23 @@ class AzureWorkItemsClient:
         try:
             wit_client = self._get_wit_client()
             wiql = Wiql(query=query)
+            team_context = TeamContext(project=project)
             results = wit_client.query_by_wiql(
                 wiql=wiql,
-                project=project,
+                team_context=team_context,
                 top=max_items,
             )
         except AzureDevOpsError:
             raise
         except Exception as exc:
+            error_msg = str(exc)
+            # Check if the error is about a non-existent project
+            if "does not exist" in error_msg.lower() and "project" in error_msg.lower():
+                raise APIError(
+                    f"Failed to execute WIQL query in project '{project}': {exc}\n"
+                    f"Note: Ensure you are passing the Azure DevOps PROJECT name, "
+                    f"not the repository name. Projects contain repositories."
+                ) from exc
             raise APIError(
                 f"Failed to execute WIQL query in project "
                 f"'{project}': {exc}"
@@ -144,20 +153,26 @@ class AzureWorkItemsClient:
         )
 
         # Step 2: Fetch full work item details by IDs
-        try:
-            # CRITICAL: error_policy='omit' to skip inaccessible items
-            api_work_items = wit_client.get_work_items(
-                ids=ids,
-                project=project,
-                error_policy="omit",
-            )
-        except AzureDevOpsError:
-            raise
-        except Exception as exc:
-            raise APIError(
-                f"Failed to fetch work item details for "
-                f"{len(ids)} items in project '{project}': {exc}"
-            ) from exc
+        # CRITICAL: error_policy='omit' to skip inaccessible items
+        api_work_items: List[Any] = []
+        batch_size = 200
+        for i in range(0, len(ids), batch_size):
+            batch = ids[i : i + batch_size]
+            try:
+                api_work_items.extend(
+                    wit_client.get_work_items(
+                        ids=batch,
+                        project=project,
+                        error_policy="omit",
+                    )
+                )
+            except AzureDevOpsError:
+                raise
+            except Exception as exc:
+                raise APIError(
+                    f"Failed to fetch work item details for "
+                    f"{len(ids)} items in project '{project}': {exc}"
+                ) from exc
 
         # Filter out None entries (omitted due to error_policy)
         work_items = [
@@ -205,7 +220,6 @@ class AzureWorkItemsClient:
             wit_client = self._get_wit_client()
             api_work_item = wit_client.get_work_item(
                 id=work_item_id,
-                project=project,
             )
         except AzureDevOpsError:
             raise

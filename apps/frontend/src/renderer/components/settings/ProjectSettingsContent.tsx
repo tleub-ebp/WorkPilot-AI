@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LinearTaskImportModal } from '../LinearTaskImportModal';
+import { AzureDevOpsImportModal } from '../azure-devops-import';
 import { SettingsSection } from './SettingsSection';
 import { useProjectSettings, UseProjectSettingsReturn } from '../project-settings/hooks/useProjectSettings';
 import { loadTasks } from '../../stores/task-store';
@@ -10,7 +11,7 @@ import { SectionRouter } from './sections/SectionRouter';
 import { createHookProxy } from './utils/hookProxyFactory';
 import type { Project } from '../../../shared/types';
 
-export type ProjectSettingsSection = 'general' | 'linear' | 'github' | 'gitlab' | 'memory';
+export type ProjectSettingsSection = 'general' | 'linear' | 'github' | 'gitlab' | 'azure-devops' | 'memory';
 
 interface ProjectSettingsContentProps {
   project: Project | undefined;
@@ -102,6 +103,12 @@ function ProjectSettingsContentInner({
     setShowLinearImportModal,
     linearConnectionStatus,
     isCheckingLinear,
+    showAzureDevOpsToken,
+    setShowAzureDevOpsToken,
+    showAzureDevOpsImportModal,
+    setShowAzureDevOpsImportModal,
+    azureDevOpsConnectionStatus,
+    isCheckingAzureDevOps,
     handleInitialize,
     error
   } = hook;
@@ -146,8 +153,13 @@ function ProjectSettingsContentInner({
         isCheckingGitLab={isCheckingGitLab}
         linearConnectionStatus={linearConnectionStatus}
         isCheckingLinear={isCheckingLinear}
+        showAzureDevOpsToken={showAzureDevOpsToken}
+        setShowAzureDevOpsToken={setShowAzureDevOpsToken}
+        azureDevOpsConnectionStatus={azureDevOpsConnectionStatus}
+        isCheckingAzureDevOps={isCheckingAzureDevOps}
         handleInitialize={handleInitialize}
         onOpenLinearImport={() => setShowLinearImportModal(true)}
+        onOpenAzureDevOpsImport={() => setShowAzureDevOpsImportModal(true)}
       />
 
       <ErrorDisplay error={error} envError={envError} />
@@ -162,6 +174,17 @@ function ProjectSettingsContentInner({
           if (result.imported > 0) {
             await loadTasks(project.id);
           }
+        }}
+      />
+
+      {/* Azure DevOps Work Item Import Modal */}
+      <AzureDevOpsImportModal
+        projectId={project.id}
+        open={showAzureDevOpsImportModal}
+        onOpenChange={setShowAzureDevOpsImportModal}
+        onImportComplete={() => {
+          // Refresh task list to show imported tasks
+          loadTasks(project.id);
         }}
       />
     </>

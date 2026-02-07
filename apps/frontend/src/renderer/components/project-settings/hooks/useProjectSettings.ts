@@ -13,7 +13,8 @@ import type {
   ProjectEnvConfig,
   LinearSyncStatus,
   GitHubSyncStatus,
-  GitLabSyncStatus
+  GitLabSyncStatus,
+  AzureDevOpsSyncStatus
 } from '../../../../shared/types';
 
 export interface UseProjectSettingsReturn {
@@ -71,6 +72,14 @@ export interface UseProjectSettingsReturn {
   setShowLinearImportModal: React.Dispatch<React.SetStateAction<boolean>>;
   linearConnectionStatus: LinearSyncStatus | null;
   isCheckingLinear: boolean;
+
+  // Azure DevOps state
+  showAzureDevOpsToken: boolean;
+  setShowAzureDevOpsToken: React.Dispatch<React.SetStateAction<boolean>>;
+  showAzureDevOpsImportModal: boolean;
+  setShowAzureDevOpsImportModal: React.Dispatch<React.SetStateAction<boolean>>;
+  azureDevOpsConnectionStatus: AzureDevOpsSyncStatus | null;
+  isCheckingAzureDevOps: boolean;
 
   // Actions
   handleInitialize: () => Promise<void>;
@@ -133,6 +142,12 @@ export function useProjectSettings(
   const [showLinearImportModal, setShowLinearImportModal] = useState(false);
   const [linearConnectionStatus, setLinearConnectionStatus] = useState<LinearSyncStatus | null>(null);
   const [isCheckingLinear, setIsCheckingLinear] = useState(false);
+
+  // Azure DevOps state
+  const [showAzureDevOpsToken, setShowAzureDevOpsToken] = useState(false);
+  const [showAzureDevOpsImportModal, setShowAzureDevOpsImportModal] = useState(false);
+  const [azureDevOpsConnectionStatus, setAzureDevOpsConnectionStatus] = useState<AzureDevOpsSyncStatus | null>(null);
+  const [isCheckingAzureDevOps, setIsCheckingAzureDevOps] = useState(false);
 
   // Reset settings when project changes
   useEffect(() => {
@@ -225,6 +240,32 @@ export function useProjectSettings(
       checkLinearConnection();
     }
   }, [envConfig?.linearEnabled, envConfig?.linearApiKey, project.id]);
+
+  // Check Azure DevOps connection when credentials change
+  useEffect(() => {
+    const checkAzureDevOpsConnection = async () => {
+      if (!envConfig?.azureDevOpsEnabled || !envConfig.azureDevOpsPat || !envConfig.azureDevOpsOrgUrl) {
+        setAzureDevOpsConnectionStatus(null);
+        return;
+      }
+
+      setIsCheckingAzureDevOps(true);
+      try {
+        const result = await window.electronAPI.checkAzureDevOpsConnection(project.id);
+        if (result.success && result.data) {
+          setAzureDevOpsConnectionStatus(result.data);
+        }
+      } catch {
+        setAzureDevOpsConnectionStatus({ connected: false, error: 'Failed to check connection' });
+      } finally {
+        setIsCheckingAzureDevOps(false);
+      }
+    };
+
+    if (envConfig?.azureDevOpsEnabled && envConfig.azureDevOpsPat && envConfig.azureDevOpsOrgUrl) {
+      checkAzureDevOpsConnection();
+    }
+  }, [envConfig?.azureDevOpsEnabled, envConfig?.azureDevOpsPat, envConfig?.azureDevOpsOrgUrl, project.id]);
 
   // Check GitHub connection when token/repo changes
   // Also updates the global GitHub store so other components (like GitHub Issues) see the change
@@ -435,6 +476,12 @@ export function useProjectSettings(
     setShowLinearImportModal,
     linearConnectionStatus,
     isCheckingLinear,
+    showAzureDevOpsToken,
+    setShowAzureDevOpsToken,
+    showAzureDevOpsImportModal,
+    setShowAzureDevOpsImportModal,
+    azureDevOpsConnectionStatus,
+    isCheckingAzureDevOps,
     handleInitialize,
     handleClaudeSetup,
     handleSave

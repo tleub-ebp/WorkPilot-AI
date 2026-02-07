@@ -37,7 +37,7 @@ runs:
           ~/.cache/uv
           ~/AppData/Local/uv/cache
           ~/Library/Caches/uv
-        key: uv-${{ runner.os }}-${{ runner.arch }}-${{ inputs.python-version }}-${{ hashFiles('apps/backend/requirements.txt', 'tests/requirements-test.txt') }}
+        key: uv-${{ runner.os }}-${{ runner.arch }}-${{ inputs.python-version }}-${{ hashFiles('apps/backend/requirements.txt', 'requirements.txt', 'tests/requirements-test.txt') }}
         restore-keys: |
           uv-${{ runner.os }}-${{ runner.arch }}-${{ inputs.python-version }}-
 
@@ -47,6 +47,10 @@ runs:
       run: |
         uv venv
         uv pip install -r requirements.txt
+        # Install root-level connector dependencies (azure-devops, etc.)
+        if [ -f ../../requirements.txt ]; then
+          uv pip install -r ../../requirements.txt
+        fi
         if [ "${{ inputs.install-test-deps }}" == "true" ]; then
           uv pip install -r ../../tests/requirements-test.txt
         fi

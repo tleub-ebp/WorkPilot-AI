@@ -38,6 +38,7 @@ import { Roadmap } from './components/Roadmap';
 import { Context } from './components/Context';
 import { Ideation } from './components/Ideation';
 import { Insights } from './components/Insights';
+import { ErrorBoundary } from './components/ui/error-boundary';
 import { GitHubIssues } from './components/GitHubIssues';
 import { GitLabIssues } from './components/GitLabIssues';
 import { GitHubPRs } from './components/github-prs';
@@ -54,6 +55,8 @@ import { OnboardingWizard } from './components/onboarding';
 import { AppUpdateNotification } from './components/AppUpdateNotification';
 import { ProactiveSwapListener } from './components/ProactiveSwapListener';
 import { GitHubSetupModal } from './components/GitHubSetupModal';
+import { RepositoryProviderModal } from './components/RepositoryProviderModal';
+import { AzureDevOpsSetupModal } from './components/AzureDevOpsSetupModal';
 import { useProjectStore, loadProjects, addProject, initializeProject, removeProject } from './stores/project-store';
 import { useTaskStore, loadTasks } from './stores/task-store';
 import { useSettingsStore, loadSettings, loadProfiles, saveSettings } from './stores/settings-store';
@@ -157,6 +160,13 @@ export function App() {
   // GitHub setup state (shown after Auto Claude init)
   const [showGitHubSetup, setShowGitHubSetup] = useState(false);
   const [gitHubSetupProject, setGitHubSetupProject] = useState<Project | null>(null);
+
+  // Repo provider setup state (GitHub vs Azure DevOps)
+  const [showRepoProviderSetup, setShowRepoProviderSetup] = useState(false);
+  const [repoProviderProject, setRepoProviderProject] = useState<Project | null>(null);
+  const [pendingRepoProvider, setPendingRepoProvider] = useState<'github' | 'azure_devops' | null>(null);
+  const [showAzureDevOpsSetup, setShowAzureDevOpsSetup] = useState(false);
+  const [azureDevOpsSetupProject, setAzureDevOpsSetupProject] = useState<Project | null>(null);
 
   // Remove project confirmation state
   const [showRemoveProjectDialog, setShowRemoveProjectDialog] = useState(false);
@@ -637,13 +647,39 @@ export function App() {
     setShowAddProjectModal(true);
   };
 
-  const handleProjectAdded = (project: Project, needsInit: boolean) => {
+    const inferProviderFromRemote = (provider: 'github' | 'azure_devops' | 'unknown', remoteUrl?: string) => {
+    if (provider !== 'unknown' || !remoteUrl) return provider;
+    if (/github\.com[:/]/i.test(remoteUrl)) return 'github';
+    if (/dev\.azure\.com|visualstudio\.com|ssh\.dev\.azure\.com/i.test(remoteUrl)) return 'azure_devops';
+    return 'unknown';
+  };
+
+const handleProjectAdded = async (project: Project, needsInit: boolean) => {
     openProjectTab(project.id);
     if (needsInit) {
       setPendingProject(project);
       setInitError(null);
       setInitSuccess(false);
       setShowInitDialog(true);
+      return;
+    }
+
+    try {
+      const envResult = await window.electronAPI.getProjectEnv(project.id);
+      const envConfig = envResult.success ? envResult.data : null;
+      const hasProvider = !!(envConfig?.githubEnabled || envConfig?.azureDevOpsEnabled);
+      if (!hasProvider) {
+        setRepoProviderProject(project);
+        setShowRepoProviderSetup(true);
+      }
+    } catch {
+      setShowGitHubSetup(false);
+      setGitHubSetupProject(null);
+      setShowAzureDevOpsSetup(false);
+      setAzureDevOpsSetupProject(null);
+      setPendingRepoProvider(null);
+      setRepoProviderProject(project);
+      setShowRepoProviderSetup(true);
     }
   };
 
@@ -737,10 +773,32 @@ export function App() {
         setShowInitDialog(false);
         setPendingProject(null);
 
-        // Show GitHub setup modal
+        // Show repo provider setup modal
         if (updatedProject) {
-          setGitHubSetupProject(updatedProject);
-          setShowGitHubSetup(true);
+          const detectionResult = await window.electronAPI.detectRepoProvider(updatedProject.path);
+          const rawProvider = detectionResult.success ? detectionResult.data?.provider : 'unknown';
+          const provider = inferProviderFromRemote(rawProvider, detectionResult.data?.remoteUrl);
+
+          setShowGitHubSetup(false);
+          setGitHubSetupProject(null);
+          setShowAzureDevOpsSetup(false);
+          setAzureDevOpsSetupProject(null);
+          setRepoProviderProject(null);
+          setShowRepoProviderSetup(false);
+
+          if (provider === 'github') {
+            setPendingRepoProvider('github');
+            setGitHubSetupProject(updatedProject);
+            setShowGitHubSetup(true);
+          } else if (provider === 'azure_devops') {
+            setPendingRepoProvider('azure_devops');
+            setAzureDevOpsSetupProject(updatedProject);
+            setShowAzureDevOpsSetup(true);
+          } else {
+            setPendingRepoProvider(null);
+            setRepoProviderProject(updatedProject);
+            setShowRepoProviderSetup(true);
+          }
         }
       } else {
         // Initialization failed - show error but keep dialog open
@@ -778,7 +836,8 @@ export function App() {
         githubEnabled: true,
         githubToken: settings.githubToken, // GitHub token for repo access
         githubRepo: settings.githubRepo,
-        githubAuthMethod: settings.githubAuthMethod // Track how user authenticated
+        githubAuthMethod: settings.githubAuthMethod, // Track how user authenticated
+        azureDevOpsEnabled: false
       });
 
       // Update project settings with mainBranch
@@ -794,11 +853,47 @@ export function App() {
 
     setShowGitHubSetup(false);
     setGitHubSetupProject(null);
+    setPendingRepoProvider(null);
   };
 
   const handleGitHubSetupSkip = () => {
     setShowGitHubSetup(false);
     setGitHubSetupProject(null);
+    setPendingRepoProvider(null);
+  };
+
+  const handleRepoProviderSelect = (provider: 'github' | 'azure_devops') => {
+    if (!repoProviderProject) return;
+
+    setShowRepoProviderSetup(false);
+    setPendingRepoProvider(provider);
+    if (provider === 'github') {
+      setGitHubSetupProject(repoProviderProject);
+      setShowGitHubSetup(true);
+    } else {
+      setAzureDevOpsSetupProject(repoProviderProject);
+      setShowAzureDevOpsSetup(true);
+    }
+    setRepoProviderProject(null);
+  };
+
+  const handleRepoProviderSkip = () => {
+    setShowRepoProviderSetup(false);
+    setRepoProviderProject(null);
+    setPendingRepoProvider(null);
+  };
+
+  const handleAzureDevOpsSetupComplete = async () => {
+    setShowAzureDevOpsSetup(false);
+    setAzureDevOpsSetupProject(null);
+    setPendingRepoProvider(null);
+    await loadProjects();
+  };
+
+  const handleAzureDevOpsSetupSkip = () => {
+    setShowAzureDevOpsSetup(false);
+    setAzureDevOpsSetupProject(null);
+    setPendingRepoProvider(null);
   };
 
   const handleSkipInit = () => {
@@ -895,7 +990,9 @@ export function App() {
                   <Roadmap projectId={activeProjectId || selectedProjectId!} onGoToTask={handleGoToTask} />
                 )}
                 {activeView === 'context' && (activeProjectId || selectedProjectId) && (
-                  <Context projectId={activeProjectId || selectedProjectId!} />
+                  <ErrorBoundary>
+                    <Context projectId={activeProjectId || selectedProjectId!} />
+                  </ErrorBoundary>
                 )}
                 {activeView === 'ideation' && (activeProjectId || selectedProjectId) && (
                   <Ideation projectId={activeProjectId || selectedProjectId!} onGoToTask={handleGoToTask} />
@@ -1089,8 +1186,34 @@ export function App() {
           </DialogContent>
         </Dialog>
 
+        {/* Repository Provider Modal - choose GitHub or Azure DevOps */}
+        {repoProviderProject && (
+          <RepositoryProviderModal
+            open={showRepoProviderSetup}
+            onOpenChange={(open) => {
+              setShowRepoProviderSetup(open);
+              if (!open) setRepoProviderProject(null);
+            }}
+            project={repoProviderProject}
+            onSelectGitHub={() => handleRepoProviderSelect('github')}
+            onSelectAzureDevOps={() => handleRepoProviderSelect('azure_devops')}
+            onSkip={handleRepoProviderSkip}
+          />
+        )}
+
+        {/* Azure DevOps Setup Modal - configure Azure DevOps */}
+        {azureDevOpsSetupProject && pendingRepoProvider === 'azure_devops' && (
+          <AzureDevOpsSetupModal
+            open={showAzureDevOpsSetup}
+            onOpenChange={setShowAzureDevOpsSetup}
+            project={azureDevOpsSetupProject}
+            onComplete={handleAzureDevOpsSetupComplete}
+            onSkip={handleAzureDevOpsSetupSkip}
+          />
+        )}
+
         {/* GitHub Setup Modal - shows after Auto Claude init to configure GitHub */}
-        {gitHubSetupProject && (
+        {gitHubSetupProject && pendingRepoProvider === 'github' && !showRepoProviderSetup && !showAzureDevOpsSetup && (
           <GitHubSetupModal
             open={showGitHubSetup}
             onOpenChange={setShowGitHubSetup}

@@ -4,7 +4,6 @@
 
 import type { IPCResult } from './common';
 import type { KanbanPreferences } from './kanban';
-import type { SupportedIDE, SupportedTerminal } from './settings';
 import type {
   Project,
   ProjectSettings,
@@ -22,6 +21,7 @@ import type {
   GraphitiValidationResult,
   GraphitiConnectionTestResult,
   GitStatus,
+  RepoProviderDetectionResult,
   CustomMcpServer,
   McpHealthCheckResult,
   McpTestConnectionResult
@@ -73,8 +73,8 @@ import type {
   AllProfilesUsage,
   TerminalProfileChangedEvent
 } from './agent';
-import type { AppSettings, SourceEnvConfig, SourceEnvCheckResult } from './settings';
-import type { AppUpdateInfo, AppUpdateProgress, AppUpdateAvailableEvent, AppUpdateDownloadedEvent, AppUpdateErrorEvent } from './app-update';
+import type { AppSettings, SourceEnvConfig, SourceEnvCheckResult, SupportedIDE, SupportedTerminal } from './settings';
+import type { AppUpdateInfo, AppUpdateProgress, AppUpdateAvailableEvent, AppUpdateDownloadedEvent } from './app-update';
 import type {
   ChangelogTask,
   TaskSpecContent,
@@ -136,7 +136,11 @@ import type {
   GitLabInvestigationStatus,
   GitLabMRReviewResult,
   GitLabMRReviewProgress,
-  GitLabNewCommitsCheck
+  GitLabNewCommitsCheck,
+  AzureDevOpsProject,
+  AzureDevOpsWorkItem,
+  AzureDevOpsImportResult,
+  AzureDevOpsSyncStatus
 } from './integrations';
 import type { APIProfile, ProfilesFile, TestConnectionResult, DiscoverModelsResult } from './profile';
 
@@ -478,6 +482,17 @@ export interface ElectronAPI {
   getLinearIssues: (projectId: string, teamId?: string, projectId_?: string) => Promise<IPCResult<LinearIssue[]>>;
   importLinearIssues: (projectId: string, issueIds: string[]) => Promise<IPCResult<LinearImportResult>>;
   checkLinearConnection: (projectId: string) => Promise<IPCResult<LinearSyncStatus>>;
+
+  // Azure DevOps integration operations
+  getAzureDevOpsProjects: (projectId: string) => Promise<IPCResult<AzureDevOpsProject[]>>;
+  getAzureDevOpsWorkItems: (
+    projectId: string,
+    azureProject?: string,
+    itemTypes?: string[],
+    maxItems?: number
+  ) => Promise<IPCResult<AzureDevOpsWorkItem[]>>;
+  importAzureDevOpsWorkItems: (projectId: string, workItemIds: number[]) => Promise<IPCResult<AzureDevOpsImportResult>>;
+  checkAzureDevOpsConnection: (projectId: string) => Promise<IPCResult<AzureDevOpsSyncStatus>>;
 
   // GitHub integration operations
   getGitHubRepositories: (projectId: string) => Promise<IPCResult<GitHubRepository[]>>;
@@ -829,6 +844,7 @@ export interface ElectronAPI {
   getCurrentGitBranch: (projectPath: string) => Promise<IPCResult<string | null>>;
   detectMainBranch: (projectPath: string) => Promise<IPCResult<string | null>>;
   checkGitStatus: (projectPath: string) => Promise<IPCResult<GitStatus>>;
+  detectRepoProvider: (projectPath: string) => Promise<IPCResult<RepoProviderDetectionResult>>;
   initializeGit: (projectPath: string) => Promise<IPCResult<InitializationResult>>;
 
   // Ollama model detection operations

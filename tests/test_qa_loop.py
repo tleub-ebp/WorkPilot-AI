@@ -19,33 +19,41 @@ from unittest.mock import MagicMock
 # Store original modules for cleanup
 _original_modules = {}
 _mocked_module_names = [
-    'claude_code_sdk',
-    'claude_code_sdk.types',
-    'claude_agent_sdk',
-    'claude_agent_sdk.types',
+    # External SDKs
+    'claude_code_sdk', 'claude_code_sdk.types',
+    'claude_agent_sdk', 'claude_agent_sdk.types',
+    # Core infrastructure
+    'core', 'core.auth', 'core.client', 'core.simple_client',
+    'core.task_event', 'core.workspace', 'core.workspace.models',
+    'core.file_utils', 'core.plan_normalization', 'core.platform',
+    'client',
+    # Config & phases
+    'phase_config', 'phase_event',
+    # Logging & UI
+    'debug', 'ui', 'ui.capabilities', 'task_logger',
+    'linear_updater', 'progress',
+    # Prompts
+    'prompts_pkg', 'prompts_pkg.project_context',
+    # Security
+    'security', 'security.constants', 'security.tool_input_validator',
+    'security.bash_security_hook',
+    # Agents
+    'agents', 'agents.memory_manager', 'agents.tools_pkg',
+    # Integrations
+    'integrations', 'integrations.linear', 'integrations.linear.updater',
 ]
 
 for name in _mocked_module_names:
     if name in sys.modules:
         _original_modules[name] = sys.modules[name]
 
-# Mock claude_code_sdk and claude_agent_sdk before importing qa_loop
-# The SDKs aren't available in the test environment
-mock_code_sdk = MagicMock()
-mock_code_sdk.ClaudeSDKClient = MagicMock()
-mock_code_sdk.ClaudeCodeOptions = MagicMock()
-mock_code_types = MagicMock()
-mock_code_types.HookMatcher = MagicMock()
-sys.modules['claude_code_sdk'] = mock_code_sdk
-sys.modules['claude_code_sdk.types'] = mock_code_types
+# Mock all external dependencies before importing qa_loop
+# The SDKs and internal modules aren't available in the test environment
+for name in _mocked_module_names:
+    sys.modules[name] = MagicMock()
 
-mock_agent_sdk = MagicMock()
-mock_agent_sdk.ClaudeSDKClient = MagicMock()
-mock_agent_sdk.ClaudeCodeOptions = MagicMock()
-mock_agent_types = MagicMock()
-mock_agent_types.HookMatcher = MagicMock()
-sys.modules['claude_agent_sdk'] = mock_agent_sdk
-sys.modules['claude_agent_sdk.types'] = mock_agent_types
+# Set up specific mock attributes needed by tests
+mock_progress = sys.modules['progress']
 
 from qa_loop import (
     load_implementation_plan,
