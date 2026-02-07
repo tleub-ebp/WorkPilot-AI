@@ -86,7 +86,9 @@ class TestHasUncommittedChanges:
     def test_staged_file_has_changes(self, temp_git_repo: Path):
         """Staged file counts as changes."""
         (temp_git_repo / "README.md").write_text("modified")
-        subprocess.run(["git", "add", "README.md"], cwd=temp_git_repo, capture_output=True)
+        subprocess.run(
+            ["git", "add", "README.md"], cwd=temp_git_repo, capture_output=True
+        )
 
         result = has_uncommitted_changes(temp_git_repo)
         assert result is True
@@ -106,7 +108,8 @@ class TestGetCurrentBranch:
         """Gets feature branch name."""
         subprocess.run(
             ["git", "checkout", "-b", "feature/test-branch"],
-            cwd=temp_git_repo, capture_output=True
+            cwd=temp_git_repo,
+            capture_output=True,
         )
 
         branch = get_current_branch(temp_git_repo)
@@ -240,8 +243,7 @@ class TestWorkspaceIntegration:
         (working_dir / "feature.py").write_text("# New feature\n")
         subprocess.run(["git", "add", "."], cwd=working_dir, capture_output=True)
         subprocess.run(
-            ["git", "commit", "-m", "Add feature"],
-            cwd=working_dir, capture_output=True
+            ["git", "commit", "-m", "Add feature"], cwd=working_dir, capture_output=True
         )
 
         # Merge back using merge_worktree
@@ -252,7 +254,8 @@ class TestWorkspaceIntegration:
         # Check changes are in main
         subprocess.run(
             ["git", "checkout", manager.base_branch],
-            cwd=temp_git_repo, capture_output=True
+            cwd=temp_git_repo,
+            capture_output=True,
         )
         assert (temp_git_repo / "feature.py").exists()
 
@@ -272,8 +275,7 @@ class TestWorkspaceCleanup:
         (working_dir / "test.py").write_text("test")
         subprocess.run(["git", "add", "."], cwd=working_dir, capture_output=True)
         subprocess.run(
-            ["git", "commit", "-m", "Test"],
-            cwd=working_dir, capture_output=True
+            ["git", "commit", "-m", "Test"], cwd=working_dir, capture_output=True
         )
 
         # Merge with cleanup
@@ -294,8 +296,7 @@ class TestWorkspaceCleanup:
         (working_dir / "test.py").write_text("test")
         subprocess.run(["git", "add", "."], cwd=working_dir, capture_output=True)
         subprocess.run(
-            ["git", "commit", "-m", "Test"],
-            cwd=working_dir, capture_output=True
+            ["git", "commit", "-m", "Test"], cwd=working_dir, capture_output=True
         )
 
         # Merge without cleanup
@@ -339,7 +340,7 @@ class TestWorkspaceErrors:
 
     def test_setup_non_git_directory(self, temp_dir: Path):
         """Handles non-git directories gracefully."""
-        with pytest.raises(Exception):
+        with pytest.raises((RuntimeError, ValueError, OSError)):
             # This should fail because temp_dir is not a git repo
             setup_workspace(
                 temp_dir,
@@ -402,9 +403,7 @@ class TestConflictInfoDisplay:
         """print_conflict_info handles string list of file paths (ACS-179)."""
         from core.workspace.display import print_conflict_info
 
-        result = {
-            "conflicts": ["file1.txt", "file2.py", "file3.js"]
-        }
+        result = {"conflicts": ["file1.txt", "file2.py", "file3.js"]}
 
         print_conflict_info(result)
 
@@ -447,7 +446,11 @@ class TestConflictInfoDisplay:
         result = {
             "conflicts": [
                 "simple-file.txt",
-                {"file": "complex-file.py", "reason": "AI merge failed", "severity": "high"},
+                {
+                    "file": "complex-file.py",
+                    "reason": "AI merge failed",
+                    "severity": "high",
+                },
             ]
         }
 
@@ -474,16 +477,22 @@ class TestMergeErrorHandling:
         subprocess.run(["git", "add", "."], cwd=worker_info.path, capture_output=True)
         subprocess.run(
             ["git", "commit", "-m", "Worker commit"],
-            cwd=worker_info.path, capture_output=True
+            cwd=worker_info.path,
+            capture_output=True,
         )
 
         # Create a conflicting change on main
-        subprocess.run(["git", "checkout", manager.base_branch], cwd=temp_git_repo, capture_output=True)
+        subprocess.run(
+            ["git", "checkout", manager.base_branch],
+            cwd=temp_git_repo,
+            capture_output=True,
+        )
         (temp_git_repo / "worker-file.txt").write_text("main content")
         subprocess.run(["git", "add", "."], cwd=temp_git_repo, capture_output=True)
         subprocess.run(
             ["git", "commit", "-m", "Main commit"],
-            cwd=temp_git_repo, capture_output=True
+            cwd=temp_git_repo,
+            capture_output=True,
         )
 
         # Merge should fail (conflict) and return False
@@ -494,16 +503,26 @@ class TestMergeErrorHandling:
         assert result is False
 
         # Verify side effects: base branch content is unchanged
-        subprocess.run(["git", "checkout", manager.base_branch], cwd=temp_git_repo, capture_output=True)
+        subprocess.run(
+            ["git", "checkout", manager.base_branch],
+            cwd=temp_git_repo,
+            capture_output=True,
+        )
         base_content = (temp_git_repo / "worker-file.txt").read_text()
-        assert base_content == "main content", "Base branch should be unchanged after failed merge"
+        assert base_content == "main content", (
+            "Base branch should be unchanged after failed merge"
+        )
 
         # Verify worktree still exists (delete_after=False)
-        assert worker_info.path.exists(), "Worktree should still exist after failed merge"
+        assert worker_info.path.exists(), (
+            "Worktree should still exist after failed merge"
+        )
 
         # Verify worktree content is unchanged
         worktree_content = (worker_info.path / "worker-file.txt").read_text()
-        assert worktree_content == "worker content", "Worktree content should be unchanged"
+        assert worktree_content == "worker content", (
+            "Worktree content should be unchanged"
+        )
 
     def test_merge_success_returns_true(self, temp_git_repo: Path):
         """Successful merge returns True (ACS-163 verification)."""
@@ -516,7 +535,8 @@ class TestMergeErrorHandling:
         subprocess.run(["git", "add", "."], cwd=worker_info.path, capture_output=True)
         subprocess.run(
             ["git", "commit", "-m", "Worker commit"],
-            cwd=worker_info.path, capture_output=True
+            cwd=worker_info.path,
+            capture_output=True,
         )
 
         # Merge should succeed
@@ -525,10 +545,18 @@ class TestMergeErrorHandling:
         assert result is True
 
         # Verify the file was merged into base branch
-        subprocess.run(["git", "checkout", manager.base_branch], cwd=temp_git_repo, capture_output=True)
-        assert (temp_git_repo / "worker-file.txt").exists(), "Merged file should exist in base branch"
+        subprocess.run(
+            ["git", "checkout", manager.base_branch],
+            cwd=temp_git_repo,
+            capture_output=True,
+        )
+        assert (temp_git_repo / "worker-file.txt").exists(), (
+            "Merged file should exist in base branch"
+        )
         merged_content = (temp_git_repo / "worker-file.txt").read_text()
-        assert merged_content == "worker content", "Merged file should have worktree content"
+        assert merged_content == "worker content", (
+            "Merged file should have worktree content"
+        )
 
 
 class TestRebaseDetection:
@@ -574,7 +602,9 @@ class TestRebaseDetection:
 
         assert result is not None
         assert result.get("needs_rebase") is True, "Should detect branch is behind"
-        assert result.get("commits_behind") == 1, "Should count commits behind correctly"
+        assert result.get("commits_behind") == 1, (
+            "Should count commits behind correctly"
+        )
         assert result.get("spec_branch") == spec_branch
 
     def test_check_git_conflicts_no_commits_behind(self, temp_git_repo: Path):
@@ -726,7 +756,9 @@ class TestRebaseSpecBranch:
         ).stdout
         assert "Main commit" in log, "Spec branch should have main commit after rebase"
 
-    def test_rebase_spec_branch_with_conflicts_aborts_cleanly(self, temp_git_repo: Path):
+    def test_rebase_spec_branch_with_conflicts_aborts_cleanly(
+        self, temp_git_repo: Path
+    ):
         """_rebase_spec_branch handles conflicts by aborting and returning False (ACS-224)."""
         from core.workspace import _rebase_spec_branch
 
@@ -842,7 +874,9 @@ class TestRebaseSpecBranch:
         # (branch already up-to-date is a success condition)
         result = _rebase_spec_branch(temp_git_repo, "test-spec", "main")
 
-        assert result is True, "Rebase should return True when branch is already up-to-date"
+        assert result is True, (
+            "Rebase should return True when branch is already up-to-date"
+        )
 
 
 class TestRebaseIntegration:

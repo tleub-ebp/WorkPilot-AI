@@ -220,7 +220,7 @@ class TestBatchValidatorModelResolution:
         assert "from ..phase_config import resolve_model_id" in content
         # Verify fallback to absolute import is present
         assert "except (ImportError, ValueError, SystemError):" in content
-        assert 'from phase_config import resolve_model_id' in content
+        assert "from phase_config import resolve_model_id" in content
         # Verify debug logging is present for error diagnosis
         assert "logger.debug" in content
 
@@ -306,7 +306,9 @@ class TestParallelReviewerImportResolution:
 
             assert model == custom_model
 
-    def test_parallel_reviewers_use_sonnet_fallback(self, orchestrator_file: Path, followup_file: Path):
+    def test_parallel_reviewers_use_sonnet_fallback(
+        self, orchestrator_file: Path, followup_file: Path
+    ):
         """Parallel reviewers use 'sonnet' shorthand as fallback, not hardcoded model IDs."""
         orchestrator_content = orchestrator_file.read_text(encoding="utf-8")
         followup_content = followup_file.read_text(encoding="utf-8")

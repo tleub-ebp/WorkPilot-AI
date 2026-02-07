@@ -58,7 +58,7 @@ class TestReviewStateFeedback:
         assert len(loaded.feedback) == 1
         assert "Saved feedback" in loaded.feedback[0]
 
-    def test_feedback_persistence_across_sessions(self, complete_spec_dir: Path) -> None:
+    def test_feedback_persistence_across_sessions(self, complete_spec_dir) -> None:
         """Test that feedback is preserved across review sessions."""
         # First session - add feedback
         state1 = ReviewState()
@@ -78,7 +78,7 @@ class TestReviewStateFeedback:
         state3 = ReviewState.load(complete_spec_dir)
         assert len(state3.feedback) == 3
 
-    def test_full_approval_flow_with_feedback(self, review_spec_dir: Path) -> None:
+    def test_full_approval_flow_with_feedback(self, review_spec_dir) -> None:
         """Test complete approval flow with feedback."""
         # 1. Initially not approved
         state = ReviewState.load(review_spec_dir)

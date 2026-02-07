@@ -35,17 +35,13 @@ class TestListRepositories:
         self, repos_client, mock_git_client, sample_api_repo_list
     ):
         """list_repositories() maps API responses to Repository models."""
-        mock_git_client.get_repositories.return_value = (
-            sample_api_repo_list
-        )
+        mock_git_client.get_repositories.return_value = sample_api_repo_list
 
         result = repos_client.list_repositories(TEST_PROJECT)
 
         assert len(result) == 2
         assert all(isinstance(repo, Repository) for repo in result)
-        mock_git_client.get_repositories.assert_called_once_with(
-            project=TEST_PROJECT
-        )
+        mock_git_client.get_repositories.assert_called_once_with(project=TEST_PROJECT)
 
     def test_returns_correct_repository_data(
         self, repos_client, mock_git_client, sample_api_repo
@@ -60,9 +56,7 @@ class TestListRepositories:
         assert repo.project == TEST_PROJECT
         assert repo.default_branch == "refs/heads/main"
 
-    def test_returns_empty_list_when_no_repos(
-        self, repos_client, mock_git_client
-    ):
+    def test_returns_empty_list_when_no_repos(self, repos_client, mock_git_client):
         """list_repositories() returns an empty list for an empty project."""
         mock_git_client.get_repositories.return_value = []
 
@@ -70,9 +64,7 @@ class TestListRepositories:
 
         assert result == []
 
-    def test_returns_empty_list_when_none_response(
-        self, repos_client, mock_git_client
-    ):
+    def test_returns_empty_list_when_none_response(self, repos_client, mock_git_client):
         """list_repositories() returns an empty list when the API returns None."""
         mock_git_client.get_repositories.return_value = None
 
@@ -80,9 +72,7 @@ class TestListRepositories:
 
         assert result == []
 
-    def test_api_failure_raises_api_error(
-        self, repos_client, mock_git_client
-    ):
+    def test_api_failure_raises_api_error(self, repos_client, mock_git_client):
         """list_repositories() wraps unexpected errors as APIError."""
         mock_git_client.get_repositories.side_effect = RuntimeError(
             "Connection reset by peer"
@@ -91,12 +81,10 @@ class TestListRepositories:
         with pytest.raises(APIError, match="Failed to list repositories"):
             repos_client.list_repositories(TEST_PROJECT)
 
-    def test_azure_devops_error_passthrough(
-        self, repos_client, mock_git_client
-    ):
+    def test_azure_devops_error_passthrough(self, repos_client, mock_git_client):
         """list_repositories() re-raises AzureDevOpsError subclasses directly."""
-        mock_git_client.get_repositories.side_effect = (
-            AuthenticationError("Token expired")
+        mock_git_client.get_repositories.side_effect = AuthenticationError(
+            "Token expired"
         )
 
         with pytest.raises(AuthenticationError, match="Token expired"):
@@ -109,9 +97,7 @@ class TestListRepositories:
 class TestGetRepository:
     """Tests for AzureReposClient.get_repository()."""
 
-    def test_returns_repository(
-        self, repos_client, mock_git_client, sample_api_repo
-    ):
+    def test_returns_repository(self, repos_client, mock_git_client, sample_api_repo):
         """get_repository() returns a Repository model for a valid repo."""
         mock_git_client.get_repository.return_value = sample_api_repo
 
@@ -125,13 +111,9 @@ class TestGetRepository:
             project=TEST_PROJECT,
         )
 
-    def test_404_raises_repository_not_found(
-        self, repos_client, mock_git_client
-    ):
+    def test_404_raises_repository_not_found(self, repos_client, mock_git_client):
         """get_repository() maps 404 errors to RepositoryNotFoundError."""
-        mock_git_client.get_repository.side_effect = Exception(
-            "HTTP 404 Not Found"
-        )
+        mock_git_client.get_repository.side_effect = Exception("HTTP 404 Not Found")
 
         with pytest.raises(RepositoryNotFoundError) as exc_info:
             repos_client.get_repository(TEST_PROJECT, "nonexistent-repo")
@@ -150,9 +132,7 @@ class TestGetRepository:
         with pytest.raises(RepositoryNotFoundError):
             repos_client.get_repository(TEST_PROJECT, "missing-repo")
 
-    def test_api_failure_raises_api_error(
-        self, repos_client, mock_git_client
-    ):
+    def test_api_failure_raises_api_error(self, repos_client, mock_git_client):
         """get_repository() wraps unexpected errors as APIError."""
         mock_git_client.get_repository.side_effect = RuntimeError(
             "Internal server error"
@@ -161,17 +141,13 @@ class TestGetRepository:
         with pytest.raises(APIError, match="Failed to get repository"):
             repos_client.get_repository(TEST_PROJECT, TEST_REPO_ID)
 
-    def test_azure_devops_error_passthrough(
-        self, repos_client, mock_git_client
-    ):
+    def test_azure_devops_error_passthrough(self, repos_client, mock_git_client):
         """get_repository() re-raises AzureDevOpsError subclasses directly."""
-        mock_git_client.get_repository.side_effect = (
-            AuthenticationError("Invalid credentials")
+        mock_git_client.get_repository.side_effect = AuthenticationError(
+            "Invalid credentials"
         )
 
-        with pytest.raises(
-            AuthenticationError, match="Invalid credentials"
-        ):
+        with pytest.raises(AuthenticationError, match="Invalid credentials"):
             repos_client.get_repository(TEST_PROJECT, TEST_REPO_ID)
 
 
@@ -222,9 +198,7 @@ class TestListFiles:
         assert len(files) == 1
         assert files[0].path == "/src/main.py"
 
-    def test_returns_empty_list_when_no_items(
-        self, repos_client, mock_git_client
-    ):
+    def test_returns_empty_list_when_no_items(self, repos_client, mock_git_client):
         """list_files() returns an empty list for an empty directory."""
         mock_git_client.get_items.return_value = []
 
@@ -232,9 +206,7 @@ class TestListFiles:
 
         assert result == []
 
-    def test_returns_empty_list_when_none_response(
-        self, repos_client, mock_git_client
-    ):
+    def test_returns_empty_list_when_none_response(self, repos_client, mock_git_client):
         """list_files() returns an empty list when the API returns None."""
         mock_git_client.get_items.return_value = None
 
@@ -242,24 +214,18 @@ class TestListFiles:
 
         assert result == []
 
-    def test_passes_branch_as_version_descriptor(
-        self, repos_client, mock_git_client
-    ):
+    def test_passes_branch_as_version_descriptor(self, repos_client, mock_git_client):
         """list_files() passes a GitVersionDescriptor when branch is specified."""
         mock_git_client.get_items.return_value = []
 
-        repos_client.list_files(
-            TEST_PROJECT, TEST_REPO_ID, branch="develop"
-        )
+        repos_client.list_files(TEST_PROJECT, TEST_REPO_ID, branch="develop")
 
         call_kwargs = mock_git_client.get_items.call_args.kwargs
         descriptor = call_kwargs["version_descriptor"]
         assert descriptor.version == "develop"
         assert descriptor.version_type == "branch"
 
-    def test_no_version_descriptor_without_branch(
-        self, repos_client, mock_git_client
-    ):
+    def test_no_version_descriptor_without_branch(self, repos_client, mock_git_client):
         """list_files() passes None version_descriptor when no branch given."""
         mock_git_client.get_items.return_value = []
 
@@ -268,15 +234,11 @@ class TestListFiles:
         call_kwargs = mock_git_client.get_items.call_args.kwargs
         assert call_kwargs["version_descriptor"] is None
 
-    def test_passes_scope_path_and_recursion_level(
-        self, repos_client, mock_git_client
-    ):
+    def test_passes_scope_path_and_recursion_level(self, repos_client, mock_git_client):
         """list_files() passes the correct scope_path and recursion_level."""
         mock_git_client.get_items.return_value = []
 
-        repos_client.list_files(
-            TEST_PROJECT, TEST_REPO_ID, path="/src/components"
-        )
+        repos_client.list_files(TEST_PROJECT, TEST_REPO_ID, path="/src/components")
 
         mock_git_client.get_items.assert_called_once_with(
             repository_id=TEST_REPO_ID,
@@ -286,44 +248,30 @@ class TestListFiles:
             version_descriptor=None,
         )
 
-    def test_404_raises_repository_not_found(
-        self, repos_client, mock_git_client
-    ):
+    def test_404_raises_repository_not_found(self, repos_client, mock_git_client):
         """list_files() maps 404 errors to RepositoryNotFoundError."""
-        mock_git_client.get_items.side_effect = Exception(
-            "HTTP 404 Not Found"
-        )
+        mock_git_client.get_items.side_effect = Exception("HTTP 404 Not Found")
 
         with pytest.raises(RepositoryNotFoundError) as exc_info:
             repos_client.list_files(TEST_PROJECT, TEST_REPO_ID)
 
         assert exc_info.value.repository_id == TEST_REPO_ID
 
-    def test_api_failure_raises_api_error(
-        self, repos_client, mock_git_client
-    ):
+    def test_api_failure_raises_api_error(self, repos_client, mock_git_client):
         """list_files() wraps unexpected errors as APIError."""
-        mock_git_client.get_items.side_effect = RuntimeError(
-            "Timeout exceeded"
-        )
+        mock_git_client.get_items.side_effect = RuntimeError("Timeout exceeded")
 
         with pytest.raises(APIError, match="Failed to list files"):
             repos_client.list_files(TEST_PROJECT, TEST_REPO_ID)
 
-    def test_azure_devops_error_passthrough(
-        self, repos_client, mock_git_client
-    ):
+    def test_azure_devops_error_passthrough(self, repos_client, mock_git_client):
         """list_files() re-raises AzureDevOpsError subclasses directly."""
-        mock_git_client.get_items.side_effect = AuthenticationError(
-            "Session expired"
-        )
+        mock_git_client.get_items.side_effect = AuthenticationError("Session expired")
 
         with pytest.raises(AuthenticationError, match="Session expired"):
             repos_client.list_files(TEST_PROJECT, TEST_REPO_ID)
 
-    def test_custom_scope_path_filters_correctly(
-        self, repos_client, mock_git_client
-    ):
+    def test_custom_scope_path_filters_correctly(self, repos_client, mock_git_client):
         """list_files() filters out the scope path when path is not root."""
         scope_entry = SimpleNamespace(
             path="/src",
@@ -343,9 +291,7 @@ class TestListFiles:
         )
         mock_git_client.get_items.return_value = [scope_entry, child_entry]
 
-        result = repos_client.list_files(
-            TEST_PROJECT, TEST_REPO_ID, path="/src"
-        )
+        result = repos_client.list_files(TEST_PROJECT, TEST_REPO_ID, path="/src")
 
         assert len(result) == 1
         assert result[0].path == "/src/main.py"
@@ -363,9 +309,7 @@ class TestGetFileContent:
         """get_file_content() returns the content string from the API."""
         mock_git_client.get_item.return_value = sample_api_file_content
 
-        result = repos_client.get_file_content(
-            TEST_PROJECT, TEST_REPO_ID, "/README.md"
-        )
+        result = repos_client.get_file_content(TEST_PROJECT, TEST_REPO_ID, "/README.md")
 
         assert result == "# Test Repository\n\nThis is a test README file.\n"
 
@@ -375,9 +319,7 @@ class TestGetFileContent:
         """get_file_content() passes include_content=True to the API."""
         mock_git_client.get_item.return_value = sample_api_file_content
 
-        repos_client.get_file_content(
-            TEST_PROJECT, TEST_REPO_ID, "/README.md"
-        )
+        repos_client.get_file_content(TEST_PROJECT, TEST_REPO_ID, "/README.md")
 
         mock_git_client.get_item.assert_called_once_with(
             repository_id=TEST_REPO_ID,
@@ -408,9 +350,7 @@ class TestGetFileContent:
         """get_file_content() passes None version_descriptor without branch."""
         mock_git_client.get_item.return_value = sample_api_file_content
 
-        repos_client.get_file_content(
-            TEST_PROJECT, TEST_REPO_ID, "/README.md"
-        )
+        repos_client.get_file_content(TEST_PROJECT, TEST_REPO_ID, "/README.md")
 
         call_kwargs = mock_git_client.get_item.call_args.kwargs
         assert call_kwargs["version_descriptor"] is None
@@ -424,9 +364,7 @@ class TestGetFileContent:
         )
 
         with pytest.raises(FileNotFoundError, match="not found"):
-            repos_client.get_file_content(
-                TEST_PROJECT, TEST_REPO_ID, "/nonexistent.py"
-            )
+            repos_client.get_file_content(TEST_PROJECT, TEST_REPO_ID, "/nonexistent.py")
 
     def test_repository_not_found_in_error_raises_repo_error(
         self, repos_client, mock_git_client
@@ -437,9 +375,7 @@ class TestGetFileContent:
         )
 
         with pytest.raises(RepositoryNotFoundError) as exc_info:
-            repos_client.get_file_content(
-                TEST_PROJECT, TEST_REPO_ID, "/file.py"
-            )
+            repos_client.get_file_content(TEST_PROJECT, TEST_REPO_ID, "/file.py")
 
         assert exc_info.value.repository_id == TEST_REPO_ID
 
@@ -458,12 +394,8 @@ class TestGetFileContent:
         )
         mock_git_client.get_item.return_value = item_no_content
 
-        with pytest.raises(
-            FileNotFoundError, match="returned no content"
-        ):
-            repos_client.get_file_content(
-                TEST_PROJECT, TEST_REPO_ID, "/empty.txt"
-            )
+        with pytest.raises(FileNotFoundError, match="returned no content"):
+            repos_client.get_file_content(TEST_PROJECT, TEST_REPO_ID, "/empty.txt")
 
     def test_missing_content_attribute_raises_file_not_found_error(
         self, repos_client, mock_git_client
@@ -472,37 +404,21 @@ class TestGetFileContent:
         item_no_attr = MagicMock(spec=[])  # No attributes
         mock_git_client.get_item.return_value = item_no_attr
 
-        with pytest.raises(
-            FileNotFoundError, match="returned no content"
-        ):
+        with pytest.raises(FileNotFoundError, match="returned no content"):
             repos_client.get_file_content(
                 TEST_PROJECT, TEST_REPO_ID, "/missing-attr.txt"
             )
 
-    def test_api_failure_raises_api_error(
-        self, repos_client, mock_git_client
-    ):
+    def test_api_failure_raises_api_error(self, repos_client, mock_git_client):
         """get_file_content() wraps unexpected errors as APIError."""
-        mock_git_client.get_item.side_effect = RuntimeError(
-            "Connection refused"
-        )
+        mock_git_client.get_item.side_effect = RuntimeError("Connection refused")
 
-        with pytest.raises(
-            APIError, match="Failed to get file content"
-        ):
-            repos_client.get_file_content(
-                TEST_PROJECT, TEST_REPO_ID, "/file.py"
-            )
+        with pytest.raises(APIError, match="Failed to get file content"):
+            repos_client.get_file_content(TEST_PROJECT, TEST_REPO_ID, "/file.py")
 
-    def test_azure_devops_error_passthrough(
-        self, repos_client, mock_git_client
-    ):
+    def test_azure_devops_error_passthrough(self, repos_client, mock_git_client):
         """get_file_content() re-raises AzureDevOpsError subclasses directly."""
-        mock_git_client.get_item.side_effect = AuthenticationError(
-            "Access denied"
-        )
+        mock_git_client.get_item.side_effect = AuthenticationError("Access denied")
 
         with pytest.raises(AuthenticationError, match="Access denied"):
-            repos_client.get_file_content(
-                TEST_PROJECT, TEST_REPO_ID, "/file.py"
-            )
+            repos_client.get_file_content(TEST_PROJECT, TEST_REPO_ID, "/file.py")

@@ -17,7 +17,9 @@ from pathlib import Path
 import pytest
 
 backend_path = Path(__file__).parent.parent / "apps" / "backend"
-module_path = backend_path / "runners" / "github" / "services" / "pr_worktree_manager.py"
+module_path = (
+    backend_path / "runners" / "github" / "services" / "pr_worktree_manager.py"
+)
 
 # Load module directly without importing parent packages
 spec = importlib.util.spec_from_file_location("pr_worktree_manager", module_path)
@@ -71,7 +73,10 @@ def temp_git_repo():
             origin_dir = Path(tmpdir) / "origin.git"
             origin_dir.mkdir()
             subprocess.run(
-                ["git", "init", "--bare"], cwd=origin_dir, check=True, capture_output=True
+                ["git", "init", "--bare"],
+                cwd=origin_dir,
+                check=True,
+                capture_output=True,
             )
 
             # Create the working repo
@@ -134,7 +139,9 @@ def temp_git_repo():
                 capture_output=True,
                 text=True,
             )
-            assert status_result.stdout.strip() == "", f"Git repo not clean: {status_result.stdout}"
+            assert status_result.stdout.strip() == "", (
+                f"Git repo not clean: {status_result.stdout}"
+            )
 
             # Prune any stale worktree references before tests
             subprocess.run(
@@ -211,7 +218,7 @@ def test_cleanup_orphaned_worktrees(temp_git_repo):
     # Cleanup should remove orphaned directory
     stats = manager.cleanup_worktrees()
 
-    assert stats['orphaned'] >= 1
+    assert stats["orphaned"] >= 1
     assert not orphan_path.exists()
 
 
@@ -237,7 +244,7 @@ def test_cleanup_expired_worktrees(temp_git_repo):
         # Cleanup should remove expired worktree
         stats = manager.cleanup_worktrees()
 
-        assert stats['expired'] >= 1
+        assert stats["expired"] >= 1
         assert not worktree_path.exists()
 
     finally:
@@ -262,7 +269,9 @@ def test_cleanup_excess_worktrees(temp_git_repo):
         # Create 4 worktrees (disable auto_cleanup so they all exist initially)
         worktrees = []
         for i in range(4):
-            wt = manager.create_worktree(commit_sha, pr_number=1000 + i, auto_cleanup=False)
+            wt = manager.create_worktree(
+                commit_sha, pr_number=1000 + i, auto_cleanup=False
+            )
             worktrees.append(wt)
             # Add small delay to ensure different timestamps
             time.sleep(0.1)
@@ -274,7 +283,7 @@ def test_cleanup_excess_worktrees(temp_git_repo):
         # Cleanup should remove 2 oldest (excess over limit of 2)
         stats = manager.cleanup_worktrees()
 
-        assert stats['excess'] == 2
+        assert stats["excess"] == 2
 
         # Check that oldest worktrees were removed
         existing = [wt for wt in worktrees if wt.exists()]

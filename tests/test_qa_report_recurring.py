@@ -12,7 +12,6 @@ Tests the recurring issue detection functionality of qa/report.py including:
 
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 import pytest
 
@@ -190,8 +189,8 @@ class TestHasRecurringIssues:
 
     def test_no_history(self) -> None:
         """Test with no history."""
-        current: List[Dict] = [{"title": "Test issue"}]
-        history: List[Dict] = []
+        current: list[dict] = [{"title": "Test issue"}]
+        history: list[dict] = []
 
         has_recurring, recurring = has_recurring_issues(current, history)
 
@@ -200,7 +199,7 @@ class TestHasRecurringIssues:
 
     def test_no_current_issues(self) -> None:
         """Test with no current issues."""
-        current: List[Dict] = []
+        current: list[dict] = []
         history = [{"issues": [{"title": "Old issue"}]}]
 
         has_recurring, recurring = has_recurring_issues(current, history)
@@ -262,8 +261,18 @@ class TestHasRecurringIssues:
             {"title": "Error B", "file": "b.py"},
         ]
         history = [
-            {"issues": [{"title": "Error A", "file": "a.py"}, {"title": "Error B", "file": "b.py"}]},
-            {"issues": [{"title": "Error A", "file": "a.py"}, {"title": "Error B", "file": "b.py"}]},
+            {
+                "issues": [
+                    {"title": "Error A", "file": "a.py"},
+                    {"title": "Error B", "file": "b.py"},
+                ]
+            },
+            {
+                "issues": [
+                    {"title": "Error A", "file": "a.py"},
+                    {"title": "Error B", "file": "b.py"},
+                ]
+            },
         ]
 
         has_recurring, recurring = has_recurring_issues(current, history)
@@ -317,7 +326,10 @@ class TestRecurringIssueSummary:
     def test_summary_counts(self) -> None:
         """Test that summary counts are correct."""
         history = [
-            {"status": "rejected", "issues": [{"title": "Error A"}, {"title": "Error B"}]},
+            {
+                "status": "rejected",
+                "issues": [{"title": "Error A"}, {"title": "Error B"}],
+            },
             {"status": "rejected", "issues": [{"title": "Error A"}]},
             {"status": "approved", "issues": []},
         ]
@@ -346,15 +358,17 @@ class TestRecurringIssueSummary:
     def test_most_common_limited_to_five(self) -> None:
         """Test that most_common is limited to 5 issues."""
         history = [
-            {"issues": [
-                {"title": "Issue 1"},
-                {"title": "Issue 2"},
-                {"title": "Issue 3"},
-                {"title": "Issue 4"},
-                {"title": "Issue 5"},
-                {"title": "Issue 6"},
-                {"title": "Issue 7"},
-            ]},
+            {
+                "issues": [
+                    {"title": "Issue 1"},
+                    {"title": "Issue 2"},
+                    {"title": "Issue 3"},
+                    {"title": "Issue 4"},
+                    {"title": "Issue 5"},
+                    {"title": "Issue 6"},
+                    {"title": "Issue 7"},
+                ]
+            },
         ]
 
         summary = get_recurring_issue_summary(history)

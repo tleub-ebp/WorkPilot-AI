@@ -29,6 +29,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
 # TEST FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def test_env(temp_git_repo: Path):
     """Create a test environment using the shared temp_git_repo fixture.
@@ -57,6 +58,7 @@ def test_env(temp_git_repo: Path):
 # HELPER FUNCTIONS
 # =============================================================================
 
+
 def create_implementation_plan(spec_dir: Path, subtasks: list[dict]) -> Path:
     """Create an implementation_plan.json with the given subtasks."""
     plan = {
@@ -68,9 +70,9 @@ def create_implementation_plan(spec_dir: Path, subtasks: list[dict]) -> Path:
                 "id": "phase-1",
                 "name": "Test Phase",
                 "type": "implementation",
-                "subtasks": subtasks
+                "subtasks": subtasks,
             }
-        ]
+        ],
     }
     plan_file = spec_dir / "implementation_plan.json"
     plan_file.write_text(json.dumps(plan, indent=2))
@@ -80,10 +82,7 @@ def create_implementation_plan(spec_dir: Path, subtasks: list[dict]) -> Path:
 def get_latest_commit(project_dir: Path) -> str:
     """Get the hash of the latest git commit."""
     result = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=project_dir,
-        capture_output=True,
-        text=True
+        ["git", "rev-parse", "HEAD"], cwd=project_dir, capture_output=True, text=True
     )
     return result.stdout.strip() if result.returncode == 0 else ""
 
@@ -91,6 +90,7 @@ def get_latest_commit(project_dir: Path) -> str:
 # =============================================================================
 # PLANNER TO CODER TRANSITION TESTS
 # =============================================================================
+
 
 class TestPlannerToCoderTransition:
     """Tests for the planner→coder state transition logic."""
@@ -105,9 +105,10 @@ class TestPlannerToCoderTransition:
         assert is_first_run(spec_dir) is True, "Empty spec should be first run"
 
         # Create implementation plan - should no longer be first run
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Test task", "status": "pending"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [{"id": "subtask-1", "description": "Test task", "status": "pending"}],
+        )
 
         assert is_first_run(spec_dir) is False, "Spec with plan should not be first run"
 
@@ -118,15 +119,24 @@ class TestPlannerToCoderTransition:
         temp_dir, spec_dir, project_dir = test_env
 
         # Create implementation plan with pending subtask
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Implement feature", "status": "pending"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {
+                    "id": "subtask-1",
+                    "description": "Implement feature",
+                    "status": "pending",
+                }
+            ],
+        )
 
         # After planner creates plan, get_next_subtask should return the first pending subtask
         next_subtask = get_next_subtask(spec_dir)
 
         assert next_subtask is not None, "Should find next subtask after planning"
-        assert next_subtask.get("id") == "subtask-1", "Should return first pending subtask"
+        assert next_subtask.get("id") == "subtask-1", (
+            "Should return first pending subtask"
+        )
         assert next_subtask.get("status") == "pending", "Subtask should be pending"
 
     def test_planner_completion_enables_coder_session(self, test_env):
@@ -136,13 +146,18 @@ class TestPlannerToCoderTransition:
         temp_dir, spec_dir, project_dir = test_env
 
         # Create plan with pending subtasks
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "pending"},
-            {"id": "subtask-2", "description": "Task 2", "status": "pending"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "Task 1", "status": "pending"},
+                {"id": "subtask-2", "description": "Task 2", "status": "pending"},
+            ],
+        )
 
         # Build should not be complete - coder needs to work
-        assert is_build_complete(spec_dir) is False, "Build should not be complete with pending subtasks"
+        assert is_build_complete(spec_dir) is False, (
+            "Build should not be complete with pending subtasks"
+        )
 
         # Should have subtasks to work on
         completed, total = count_subtasks(spec_dir)
@@ -165,8 +180,8 @@ class TestPlannerToCoderTransition:
             "patterns_from": ["tests/test_auth.py"],
             "verification": {
                 "type": "command",
-                "command": "pytest tests/test_auth.py -v"
-            }
+                "command": "pytest tests/test_auth.py -v",
+            },
         }
         create_implementation_plan(spec_dir, [subtask_data])
 
@@ -177,15 +192,24 @@ class TestPlannerToCoderTransition:
         # Verify all data preserved
         assert subtask is not None, "Should find subtask in plan"
         assert subtask["id"] == "subtask-1", "ID should be preserved"
-        assert subtask["description"] == "Implement user authentication", "Description preserved"
-        assert subtask["files_to_modify"] == ["app/auth.py", "app/routes.py"], "Files to modify preserved"
-        assert subtask["files_to_create"] == ["app/services/oauth.py"], "Files to create preserved"
-        assert subtask["verification"]["command"] == "pytest tests/test_auth.py -v", "Verification preserved"
+        assert subtask["description"] == "Implement user authentication", (
+            "Description preserved"
+        )
+        assert subtask["files_to_modify"] == ["app/auth.py", "app/routes.py"], (
+            "Files to modify preserved"
+        )
+        assert subtask["files_to_create"] == ["app/services/oauth.py"], (
+            "Files to create preserved"
+        )
+        assert subtask["verification"]["command"] == "pytest tests/test_auth.py -v", (
+            "Verification preserved"
+        )
 
 
 # =============================================================================
 # POST-SESSION PROCESSING TESTS
 # =============================================================================
+
 
 class TestPostSessionProcessing:
     """Tests for post_session_processing function."""
@@ -198,18 +222,27 @@ class TestPostSessionProcessing:
         temp_dir, spec_dir, project_dir = test_env
 
         # Create plan with completed subtask
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Test task", "status": "completed"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [{"id": "subtask-1", "description": "Test task", "status": "completed"}],
+        )
 
         recovery_manager = RecoveryManager(spec_dir, project_dir)
         commit_before = get_latest_commit(project_dir)
 
         # Mock memory-related functions to avoid side effects
-        with patch("agents.session.extract_session_insights", new_callable=AsyncMock) as mock_insights, \
-             patch("agents.session.save_session_memory", new_callable=AsyncMock) as mock_memory:
-
-            mock_insights.return_value = {"file_insights": [], "patterns_discovered": []}
+        with (
+            patch(
+                "agents.session.extract_session_insights", new_callable=AsyncMock
+            ) as mock_insights,
+            patch(
+                "agents.session.save_session_memory", new_callable=AsyncMock
+            ) as mock_memory,
+        ):
+            mock_insights.return_value = {
+                "file_insights": [],
+                "patterns_discovered": [],
+            }
             mock_memory.return_value = (True, "file")
 
             # Run async function using asyncio.run()
@@ -243,17 +276,26 @@ class TestPostSessionProcessing:
         temp_dir, spec_dir, project_dir = test_env
 
         # Create plan with in_progress subtask
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Test task", "status": "in_progress"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [{"id": "subtask-1", "description": "Test task", "status": "in_progress"}],
+        )
 
         recovery_manager = RecoveryManager(spec_dir, project_dir)
         commit_before = get_latest_commit(project_dir)
 
-        with patch("agents.session.extract_session_insights", new_callable=AsyncMock) as mock_insights, \
-             patch("agents.session.save_session_memory", new_callable=AsyncMock) as mock_memory:
-
-            mock_insights.return_value = {"file_insights": [], "patterns_discovered": []}
+        with (
+            patch(
+                "agents.session.extract_session_insights", new_callable=AsyncMock
+            ) as mock_insights,
+            patch(
+                "agents.session.save_session_memory", new_callable=AsyncMock
+            ) as mock_memory,
+        ):
+            mock_insights.return_value = {
+                "file_insights": [],
+                "patterns_discovered": [],
+            }
             mock_memory.return_value = (True, "file")
 
             # Run async function using asyncio.run()
@@ -276,7 +318,9 @@ class TestPostSessionProcessing:
         # Verify attempt was recorded as failed
         history = recovery_manager.get_subtask_history("subtask-1")
         assert len(history["attempts"]) == 1, "Should have 1 attempt"
-        assert history["attempts"][0]["success"] is False, "Attempt should be unsuccessful"
+        assert history["attempts"][0]["success"] is False, (
+            "Attempt should be unsuccessful"
+        )
 
     def test_pending_subtask_records_failure(self, test_env):
         """Test that pending (no progress) subtask is recorded as failure."""
@@ -286,17 +330,26 @@ class TestPostSessionProcessing:
         temp_dir, spec_dir, project_dir = test_env
 
         # Create plan with pending subtask (no progress made)
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Test task", "status": "pending"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [{"id": "subtask-1", "description": "Test task", "status": "pending"}],
+        )
 
         recovery_manager = RecoveryManager(spec_dir, project_dir)
         commit_before = get_latest_commit(project_dir)
 
-        with patch("agents.session.extract_session_insights", new_callable=AsyncMock) as mock_insights, \
-             patch("agents.session.save_session_memory", new_callable=AsyncMock) as mock_memory:
-
-            mock_insights.return_value = {"file_insights": [], "patterns_discovered": []}
+        with (
+            patch(
+                "agents.session.extract_session_insights", new_callable=AsyncMock
+            ) as mock_insights,
+            patch(
+                "agents.session.save_session_memory", new_callable=AsyncMock
+            ) as mock_memory,
+        ):
+            mock_insights.return_value = {
+                "file_insights": [],
+                "patterns_discovered": [],
+            }
             mock_memory.return_value = (True, "file")
 
             # Run async function using asyncio.run()
@@ -321,6 +374,7 @@ class TestPostSessionProcessing:
 # SUBTASK STATE TRANSITION TESTS
 # =============================================================================
 
+
 class TestSubtaskStateTransitions:
     """Tests for subtask state transition handling."""
 
@@ -330,11 +384,14 @@ class TestSubtaskStateTransitions:
 
         temp_dir, spec_dir, project_dir = test_env
 
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "First task", "status": "completed"},
-            {"id": "subtask-2", "description": "Second task", "status": "pending"},
-            {"id": "subtask-3", "description": "Third task", "status": "pending"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "First task", "status": "completed"},
+                {"id": "subtask-2", "description": "Second task", "status": "pending"},
+                {"id": "subtask-3", "description": "Third task", "status": "pending"},
+            ],
+        )
 
         plan = load_implementation_plan(spec_dir)
 
@@ -368,19 +425,31 @@ class TestSubtaskStateTransitions:
                     "name": "Setup Phase",
                     "type": "setup",
                     "subtasks": [
-                        {"id": "subtask-1-1", "description": "Setup DB", "status": "completed"}
-                    ]
+                        {
+                            "id": "subtask-1-1",
+                            "description": "Setup DB",
+                            "status": "completed",
+                        }
+                    ],
                 },
                 {
                     "id": "phase-2",
                     "name": "Implementation Phase",
                     "type": "implementation",
                     "subtasks": [
-                        {"id": "subtask-2-1", "description": "Implement feature", "status": "pending"},
-                        {"id": "subtask-2-2", "description": "Add tests", "status": "pending"}
-                    ]
-                }
-            ]
+                        {
+                            "id": "subtask-2-1",
+                            "description": "Implement feature",
+                            "status": "pending",
+                        },
+                        {
+                            "id": "subtask-2-2",
+                            "description": "Add tests",
+                            "status": "pending",
+                        },
+                    ],
+                },
+            ],
         }
         plan_file = spec_dir / "implementation_plan.json"
         plan_file.write_text(json.dumps(plan, indent=2))
@@ -395,7 +464,9 @@ class TestSubtaskStateTransitions:
         # Find phase for subtask in second phase
         phase2 = find_phase_for_subtask(loaded_plan, "subtask-2-1")
         assert phase2 is not None, "Should find phase for subtask-2-1"
-        assert phase2["name"] == "Implementation Phase", "Should be implementation phase"
+        assert phase2["name"] == "Implementation Phase", (
+            "Should be implementation phase"
+        )
 
         # Find phase for non-existent subtask
         missing_phase = find_phase_for_subtask(loaded_plan, "subtask-999")
@@ -407,16 +478,25 @@ class TestSubtaskStateTransitions:
 
         temp_dir, spec_dir, project_dir = test_env
 
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "First task", "status": "completed"},
-            {"id": "subtask-2", "description": "Second task", "status": "completed"},
-            {"id": "subtask-3", "description": "Third task", "status": "pending"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "First task", "status": "completed"},
+                {
+                    "id": "subtask-2",
+                    "description": "Second task",
+                    "status": "completed",
+                },
+                {"id": "subtask-3", "description": "Third task", "status": "pending"},
+            ],
+        )
 
         next_subtask = get_next_subtask(spec_dir)
 
         assert next_subtask is not None, "Should find pending subtask"
-        assert next_subtask["id"] == "subtask-3", "Should skip completed and return first pending"
+        assert next_subtask["id"] == "subtask-3", (
+            "Should skip completed and return first pending"
+        )
 
     def test_build_complete_when_all_subtasks_done(self, test_env):
         """Test that build is complete when all subtasks are completed."""
@@ -424,18 +504,28 @@ class TestSubtaskStateTransitions:
 
         temp_dir, spec_dir, project_dir = test_env
 
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "First task", "status": "completed"},
-            {"id": "subtask-2", "description": "Second task", "status": "completed"},
-            {"id": "subtask-3", "description": "Third task", "status": "completed"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "First task", "status": "completed"},
+                {
+                    "id": "subtask-2",
+                    "description": "Second task",
+                    "status": "completed",
+                },
+                {"id": "subtask-3", "description": "Third task", "status": "completed"},
+            ],
+        )
 
-        assert is_build_complete(spec_dir) is True, "Build should be complete when all subtasks done"
+        assert is_build_complete(spec_dir) is True, (
+            "Build should be complete when all subtasks done"
+        )
 
 
 # =============================================================================
 # HANDOFF DATA PRESERVATION TESTS
 # =============================================================================
+
 
 class TestHandoffDataPreservation:
     """Tests for data preservation during agent handoffs."""
@@ -451,12 +541,10 @@ class TestHandoffDataPreservation:
 
         # Create context.json
         context = {
-            "files_to_modify": [
-                {"path": "app/main.py", "reason": "Add feature"}
-            ],
+            "files_to_modify": [{"path": "app/main.py", "reason": "Add feature"}],
             "files_to_reference": [
                 {"path": "app/utils.py", "reason": "Pattern reference"}
-            ]
+            ],
         }
         (spec_dir / "context.json").write_text(json.dumps(context))
 
@@ -464,14 +552,15 @@ class TestHandoffDataPreservation:
             "id": "subtask-1",
             "description": "Implement feature",
             "files_to_modify": ["app/main.py"],
-            "patterns_from": ["app/utils.py"]
+            "patterns_from": ["app/utils.py"],
         }
 
         loaded_context = load_subtask_context(spec_dir, project_dir, subtask)
 
         # Verify context structure
-        assert "patterns" in loaded_context or "files_to_modify" in loaded_context, \
+        assert "patterns" in loaded_context or "files_to_modify" in loaded_context, (
             "Context should have patterns or files"
+        )
 
     def test_recovery_hints_passed_to_coder(self, test_env):
         """Test that recovery hints are available for retry attempts."""
@@ -487,14 +576,16 @@ class TestHandoffDataPreservation:
             session=1,
             success=False,
             approach="First approach using async/await",
-            error="Import error - module not found"
+            error="Import error - module not found",
         )
 
         # Get recovery hints
         hints = recovery_manager.get_recovery_hints("subtask-1")
 
         assert len(hints) > 0, "Should have recovery hints after failure"
-        assert any("Previous attempts: 1" in hint for hint in hints), "Should mention attempt count"
+        assert any("Previous attempts: 1" in hint for hint in hints), (
+            "Should mention attempt count"
+        )
 
     def test_commit_tracking_across_sessions(self, test_env):
         """Test that commit tracking works across sessions."""
@@ -514,7 +605,11 @@ class TestHandoffDataPreservation:
         test_file = project_dir / "new_file.txt"
         test_file.write_text("New content")
         subprocess.run(["git", "add", "."], cwd=project_dir, capture_output=True)
-        subprocess.run(["git", "commit", "-m", "Add new file"], cwd=project_dir, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", "Add new file"],
+            cwd=project_dir,
+            capture_output=True,
+        )
 
         new_commit = get_latest_commit(project_dir)
 
@@ -530,6 +625,7 @@ class TestHandoffDataPreservation:
 # PLAN VALIDATION TESTS (for planner output)
 # =============================================================================
 
+
 class TestPlannerOutputValidation:
     """Tests for validating planner output before transition to coder."""
 
@@ -540,9 +636,10 @@ class TestPlannerOutputValidation:
         temp_dir, spec_dir, project_dir = test_env
 
         # Create plan with only completed subtasks
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Done task", "status": "completed"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [{"id": "subtask-1", "description": "Done task", "status": "completed"}],
+        )
 
         next_subtask = get_next_subtask(spec_dir)
         assert next_subtask is None, "No pending subtasks should return None"
@@ -558,7 +655,7 @@ class TestPlannerOutputValidation:
             "feature": "Test Feature",
             "workflow_type": "feature",
             "status": "in_progress",
-            "phases": []
+            "phases": [],
         }
         plan_file = spec_dir / "implementation_plan.json"
         plan_file.write_text(json.dumps(plan, indent=2))
@@ -581,6 +678,7 @@ class TestPlannerOutputValidation:
 # SUBTASK COMPLETION DETECTION TESTS
 # =============================================================================
 
+
 class TestSubtaskCompletionDetection:
     """Tests for subtask completion detection and status counting."""
 
@@ -590,11 +688,14 @@ class TestSubtaskCompletionDetection:
 
         temp_dir, spec_dir, project_dir = test_env
 
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "completed"},
-            {"id": "subtask-2", "description": "Task 2", "status": "pending"},
-            {"id": "subtask-3", "description": "Task 3", "status": "pending"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "Task 1", "status": "completed"},
+                {"id": "subtask-2", "description": "Task 2", "status": "pending"},
+                {"id": "subtask-3", "description": "Task 3", "status": "pending"},
+            ],
+        )
 
         completed, total = count_subtasks(spec_dir)
 
@@ -618,12 +719,15 @@ class TestSubtaskCompletionDetection:
 
         temp_dir, spec_dir, project_dir = test_env
 
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "completed"},
-            {"id": "subtask-2", "description": "Task 2", "status": "in_progress"},
-            {"id": "subtask-3", "description": "Task 3", "status": "pending"},
-            {"id": "subtask-4", "description": "Task 4", "status": "failed"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "Task 1", "status": "completed"},
+                {"id": "subtask-2", "description": "Task 2", "status": "in_progress"},
+                {"id": "subtask-3", "description": "Task 3", "status": "pending"},
+                {"id": "subtask-4", "description": "Task 4", "status": "failed"},
+            ],
+        )
 
         counts = count_subtasks_detailed(spec_dir)
 
@@ -639,10 +743,17 @@ class TestSubtaskCompletionDetection:
 
         temp_dir, spec_dir, project_dir = test_env
 
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "unknown_status"},
-            {"id": "subtask-2", "description": "Task 2", "status": "completed"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {
+                    "id": "subtask-1",
+                    "description": "Task 1",
+                    "status": "unknown_status",
+                },
+                {"id": "subtask-2", "description": "Task 2", "status": "completed"},
+            ],
+        )
 
         counts = count_subtasks_detailed(spec_dir)
 
@@ -656,10 +767,13 @@ class TestSubtaskCompletionDetection:
 
         temp_dir, spec_dir, project_dir = test_env
 
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "completed"},
-            {"id": "subtask-2", "description": "Task 2", "status": "completed"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "Task 1", "status": "completed"},
+                {"id": "subtask-2", "description": "Task 2", "status": "completed"},
+            ],
+        )
 
         assert is_build_complete(spec_dir) is True, "Build should be complete"
 
@@ -669,12 +783,17 @@ class TestSubtaskCompletionDetection:
 
         temp_dir, spec_dir, project_dir = test_env
 
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "completed"},
-            {"id": "subtask-2", "description": "Task 2", "status": "in_progress"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "Task 1", "status": "completed"},
+                {"id": "subtask-2", "description": "Task 2", "status": "in_progress"},
+            ],
+        )
 
-        assert is_build_complete(spec_dir) is False, "Build should not be complete with in_progress"
+        assert is_build_complete(spec_dir) is False, (
+            "Build should not be complete with in_progress"
+        )
 
     def test_is_build_complete_false_with_failed(self, test_env):
         """Test is_build_complete returns False with failed subtask."""
@@ -682,12 +801,17 @@ class TestSubtaskCompletionDetection:
 
         temp_dir, spec_dir, project_dir = test_env
 
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "completed"},
-            {"id": "subtask-2", "description": "Task 2", "status": "failed"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "Task 1", "status": "completed"},
+                {"id": "subtask-2", "description": "Task 2", "status": "failed"},
+            ],
+        )
 
-        assert is_build_complete(spec_dir) is False, "Build should not be complete with failed task"
+        assert is_build_complete(spec_dir) is False, (
+            "Build should not be complete with failed task"
+        )
 
     def test_is_build_complete_false_with_empty_plan(self, test_env):
         """Test is_build_complete returns False for empty plan."""
@@ -703,11 +827,13 @@ class TestSubtaskCompletionDetection:
             "feature": "Test Feature",
             "workflow_type": "feature",
             "status": "in_progress",
-            "phases": []
+            "phases": [],
         }
         (spec_dir / "implementation_plan.json").write_text(json.dumps(plan))
 
-        assert is_build_complete(spec_dir) is False, "Plan with no subtasks should not be complete"
+        assert is_build_complete(spec_dir) is False, (
+            "Plan with no subtasks should not be complete"
+        )
 
     def test_get_progress_percentage(self, test_env):
         """Test progress percentage calculation."""
@@ -716,10 +842,13 @@ class TestSubtaskCompletionDetection:
         temp_dir, spec_dir, project_dir = test_env
 
         # 50% complete
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "completed"},
-            {"id": "subtask-2", "description": "Task 2", "status": "pending"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "Task 1", "status": "completed"},
+                {"id": "subtask-2", "description": "Task 2", "status": "pending"},
+            ],
+        )
 
         percentage = get_progress_percentage(spec_dir)
         assert percentage == 50.0, "Should be 50% complete"
@@ -742,9 +871,10 @@ class TestSubtaskCompletionDetection:
         temp_dir, spec_dir, project_dir = test_env
 
         # Start with pending subtask
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "pending"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [{"id": "subtask-1", "description": "Task 1", "status": "pending"}],
+        )
 
         plan = load_implementation_plan(spec_dir)
         subtask = find_subtask_in_plan(plan, "subtask-1")
@@ -752,9 +882,10 @@ class TestSubtaskCompletionDetection:
         assert is_build_complete(spec_dir) is False, "Should not be complete"
 
         # Update to completed
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "completed"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [{"id": "subtask-1", "description": "Task 1", "status": "completed"}],
+        )
 
         plan = load_implementation_plan(spec_dir)
         subtask = find_subtask_in_plan(plan, "subtask-1")
@@ -769,27 +900,30 @@ class TestSubtaskCompletionDetection:
         temp_dir, spec_dir, project_dir = test_env
 
         # Start pending
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "pending"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [{"id": "subtask-1", "description": "Task 1", "status": "pending"}],
+        )
 
         counts = count_subtasks_detailed(spec_dir)
         assert counts["pending"] == 1, "Should have 1 pending"
         assert counts["in_progress"] == 0, "Should have 0 in_progress"
 
         # Move to in_progress
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "in_progress"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [{"id": "subtask-1", "description": "Task 1", "status": "in_progress"}],
+        )
 
         counts = count_subtasks_detailed(spec_dir)
         assert counts["pending"] == 0, "Should have 0 pending"
         assert counts["in_progress"] == 1, "Should have 1 in_progress"
 
         # Complete
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "completed"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [{"id": "subtask-1", "description": "Task 1", "status": "completed"}],
+        )
 
         counts = count_subtasks_detailed(spec_dir)
         assert counts["in_progress"] == 0, "Should have 0 in_progress"
@@ -802,44 +936,56 @@ class TestSubtaskCompletionDetection:
         temp_dir, spec_dir, project_dir = test_env
 
         # Start with all pending
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "pending"},
-            {"id": "subtask-2", "description": "Task 2", "status": "pending"},
-            {"id": "subtask-3", "description": "Task 3", "status": "pending"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "Task 1", "status": "pending"},
+                {"id": "subtask-2", "description": "Task 2", "status": "pending"},
+                {"id": "subtask-3", "description": "Task 3", "status": "pending"},
+            ],
+        )
 
         completed, total = count_subtasks(spec_dir)
         assert completed == 0 and total == 3, "Initial: 0/3"
         assert is_build_complete(spec_dir) is False
 
         # Complete first subtask
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "completed"},
-            {"id": "subtask-2", "description": "Task 2", "status": "pending"},
-            {"id": "subtask-3", "description": "Task 3", "status": "pending"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "Task 1", "status": "completed"},
+                {"id": "subtask-2", "description": "Task 2", "status": "pending"},
+                {"id": "subtask-3", "description": "Task 3", "status": "pending"},
+            ],
+        )
 
         completed, total = count_subtasks(spec_dir)
         assert completed == 1 and total == 3, "After first: 1/3"
         assert is_build_complete(spec_dir) is False
 
         # Complete second subtask
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "completed"},
-            {"id": "subtask-2", "description": "Task 2", "status": "completed"},
-            {"id": "subtask-3", "description": "Task 3", "status": "pending"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "Task 1", "status": "completed"},
+                {"id": "subtask-2", "description": "Task 2", "status": "completed"},
+                {"id": "subtask-3", "description": "Task 3", "status": "pending"},
+            ],
+        )
 
         completed, total = count_subtasks(spec_dir)
         assert completed == 2 and total == 3, "After second: 2/3"
         assert is_build_complete(spec_dir) is False
 
         # Complete all subtasks
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "completed"},
-            {"id": "subtask-2", "description": "Task 2", "status": "completed"},
-            {"id": "subtask-3", "description": "Task 3", "status": "completed"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "Task 1", "status": "completed"},
+                {"id": "subtask-2", "description": "Task 2", "status": "completed"},
+                {"id": "subtask-3", "description": "Task 3", "status": "completed"},
+            ],
+        )
 
         completed, total = count_subtasks(spec_dir)
         assert completed == 3 and total == 3, "Final: 3/3"
@@ -852,11 +998,14 @@ class TestSubtaskCompletionDetection:
         temp_dir, spec_dir, project_dir = test_env
 
         # First and second completed, third pending
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "completed"},
-            {"id": "subtask-2", "description": "Task 2", "status": "completed"},
-            {"id": "subtask-3", "description": "Task 3", "status": "pending"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "Task 1", "status": "completed"},
+                {"id": "subtask-2", "description": "Task 2", "status": "completed"},
+                {"id": "subtask-3", "description": "Task 3", "status": "pending"},
+            ],
+        )
 
         next_subtask = get_next_subtask(spec_dir)
         assert next_subtask is not None, "Should find next subtask"
@@ -868,10 +1017,13 @@ class TestSubtaskCompletionDetection:
 
         temp_dir, spec_dir, project_dir = test_env
 
-        create_implementation_plan(spec_dir, [
-            {"id": "subtask-1", "description": "Task 1", "status": "completed"},
-            {"id": "subtask-2", "description": "Task 2", "status": "completed"}
-        ])
+        create_implementation_plan(
+            spec_dir,
+            [
+                {"id": "subtask-1", "description": "Task 1", "status": "completed"},
+                {"id": "subtask-2", "description": "Task 2", "status": "completed"},
+            ],
+        )
 
         next_subtask = get_next_subtask(spec_dir)
         assert next_subtask is None, "Should return None when all complete"
@@ -893,19 +1045,31 @@ class TestSubtaskCompletionDetection:
                     "name": "Setup Phase",
                     "type": "setup",
                     "subtasks": [
-                        {"id": "subtask-1-1", "description": "Setup DB", "status": "completed"}
-                    ]
+                        {
+                            "id": "subtask-1-1",
+                            "description": "Setup DB",
+                            "status": "completed",
+                        }
+                    ],
                 },
                 {
                     "id": "phase-2",
                     "name": "Implementation Phase",
                     "type": "implementation",
                     "subtasks": [
-                        {"id": "subtask-2-1", "description": "Implement feature", "status": "pending"},
-                        {"id": "subtask-2-2", "description": "Add tests", "status": "pending"}
-                    ]
-                }
-            ]
+                        {
+                            "id": "subtask-2-1",
+                            "description": "Implement feature",
+                            "status": "pending",
+                        },
+                        {
+                            "id": "subtask-2-2",
+                            "description": "Add tests",
+                            "status": "pending",
+                        },
+                    ],
+                },
+            ],
         }
         (spec_dir / "implementation_plan.json").write_text(json.dumps(plan))
 
@@ -926,6 +1090,7 @@ class TestSubtaskCompletionDetection:
 # =============================================================================
 # QA LOOP AND FIXER INTERACTION TESTS
 # =============================================================================
+
 
 class TestQALoopStateTransitions:
     """Tests for QA loop state transitions in agent flow context."""
@@ -956,9 +1121,12 @@ class TestQALoopStateTransitions:
 
         # Patch is_build_complete where it's used (qa.criteria) to use real implementation
         # This is needed because test_qa_criteria.py module-level mocks may pollute
-        with patch('qa.criteria.is_build_complete', side_effect=real_is_build_complete):
+        with patch("qa.criteria.is_build_complete", side_effect=real_is_build_complete):
             from qa.criteria import should_run_qa
-            assert should_run_qa(spec_dir) is False, "QA should not run with pending subtasks"
+
+            assert should_run_qa(spec_dir) is False, (
+                "QA should not run with pending subtasks"
+            )
 
     def test_qa_required_when_build_complete(self, test_env):
         """QA should run when build is complete and not yet approved."""
@@ -984,8 +1152,9 @@ class TestQALoopStateTransitions:
         save_implementation_plan(spec_dir, plan)
 
         # Patch is_build_complete where it's used (qa.criteria) to use real implementation
-        with patch('qa.criteria.is_build_complete', side_effect=real_is_build_complete):
+        with patch("qa.criteria.is_build_complete", side_effect=real_is_build_complete):
             from qa.criteria import should_run_qa
+
             assert should_run_qa(spec_dir) is True, "QA should run when build complete"
 
     def test_qa_not_required_when_already_approved(self, test_env):
@@ -1015,9 +1184,12 @@ class TestQALoopStateTransitions:
         save_implementation_plan(spec_dir, plan)
 
         # Patch is_build_complete where it's used (qa.criteria) to use real implementation
-        with patch('qa.criteria.is_build_complete', side_effect=real_is_build_complete):
+        with patch("qa.criteria.is_build_complete", side_effect=real_is_build_complete):
             from qa.criteria import should_run_qa
-            assert should_run_qa(spec_dir) is False, "QA should not run when already approved"
+
+            assert should_run_qa(spec_dir) is False, (
+                "QA should not run when already approved"
+            )
 
 
 class TestQAFixerInteraction:
@@ -1079,7 +1251,9 @@ class TestQAFixerInteraction:
         }
         save_implementation_plan(spec_dir, plan)
 
-        assert should_run_fixes(spec_dir) is False, "Fixer should not run at max iterations"
+        assert should_run_fixes(spec_dir) is False, (
+            "Fixer should not run at max iterations"
+        )
 
     def test_fixer_fixes_applied_state(self, test_env):
         """Test transition to fixes_applied state after fixer runs."""
@@ -1116,7 +1290,9 @@ class TestQAFixerInteraction:
         }
         save_implementation_plan(spec_dir, plan)
 
-        assert is_fixes_applied(spec_dir) is False, "Should not be ready when flag is False"
+        assert is_fixes_applied(spec_dir) is False, (
+            "Should not be ready when flag is False"
+        )
 
 
 class TestQAVerdictHandling:
@@ -1140,7 +1316,9 @@ class TestQAVerdictHandling:
         save_implementation_plan(spec_dir, plan)
 
         assert is_qa_approved(spec_dir) is True, "Should detect approved status"
-        assert is_qa_rejected(spec_dir) is False, "Should not detect rejected when approved"
+        assert is_qa_rejected(spec_dir) is False, (
+            "Should not detect rejected when approved"
+        )
 
     def test_qa_rejected_verdict(self, test_env):
         """Test QA rejected verdict is correctly detected."""
@@ -1160,7 +1338,9 @@ class TestQAVerdictHandling:
         save_implementation_plan(spec_dir, plan)
 
         assert is_qa_rejected(spec_dir) is True, "Should detect rejected status"
-        assert is_qa_approved(spec_dir) is False, "Should not detect approved when rejected"
+        assert is_qa_approved(spec_dir) is False, (
+            "Should not detect approved when rejected"
+        )
 
     def test_qa_no_verdict_yet(self, test_env):
         """Test when no QA verdict has been made yet."""
@@ -1180,8 +1360,12 @@ class TestQAVerdictHandling:
         save_implementation_plan(spec_dir, plan)
 
         assert get_qa_signoff_status(spec_dir) is None, "Should have no signoff status"
-        assert is_qa_approved(spec_dir) is False, "Should not be approved with no verdict"
-        assert is_qa_rejected(spec_dir) is False, "Should not be rejected with no verdict"
+        assert is_qa_approved(spec_dir) is False, (
+            "Should not be approved with no verdict"
+        )
+        assert is_qa_rejected(spec_dir) is False, (
+            "Should not be rejected with no verdict"
+        )
 
     def test_qa_iteration_count_tracking(self, test_env):
         """Test QA iteration count is tracked correctly."""
@@ -1347,13 +1531,19 @@ class TestQALoopWorkflow:
             }
             save_implementation_plan(spec_dir, plan)
 
-            assert is_qa_rejected(spec_dir) is True, f"Should be rejected at iteration {i}"
+            assert is_qa_rejected(spec_dir) is True, (
+                f"Should be rejected at iteration {i}"
+            )
             assert get_qa_iteration_count(spec_dir) == i, f"Should be iteration {i}"
 
             if i < MAX_QA_ITERATIONS:
-                assert should_run_fixes(spec_dir) is True, f"Fixer should run at iteration {i}"
+                assert should_run_fixes(spec_dir) is True, (
+                    f"Fixer should run at iteration {i}"
+                )
             else:
-                assert should_run_fixes(spec_dir) is False, "Fixer should not run at max iterations"
+                assert should_run_fixes(spec_dir) is False, (
+                    "Fixer should not run at max iterations"
+                )
 
 
 class TestQASignoffDataStructure:
@@ -1440,6 +1630,7 @@ class TestQASignoffDataStructure:
 # WORKTREE ISOLATION TESTS
 # =============================================================================
 
+
 class TestWorktreeIsolation:
     """Tests for worktree isolation to verify concurrent agents don't conflict."""
 
@@ -1458,8 +1649,12 @@ class TestWorktreeIsolation:
 
         # Each worktree should have a unique branch
         assert info1.branch != info2.branch, "Worktrees should have different branches"
-        assert info1.branch == "auto-claude/spec-agent-1", f"Expected branch auto-claude/spec-agent-1, got {info1.branch}"
-        assert info2.branch == "auto-claude/spec-agent-2", f"Expected branch auto-claude/spec-agent-2, got {info2.branch}"
+        assert info1.branch == "auto-claude/spec-agent-1", (
+            f"Expected branch auto-claude/spec-agent-1, got {info1.branch}"
+        )
+        assert info2.branch == "auto-claude/spec-agent-2", (
+            f"Expected branch auto-claude/spec-agent-2, got {info2.branch}"
+        )
 
         # Each worktree should have a unique path
         assert info1.path != info2.path, "Worktrees should have different paths"
@@ -1484,8 +1679,7 @@ class TestWorktreeIsolation:
         file1.write_text("Work from agent 1")
         subprocess.run(["git", "add", "."], cwd=info1.path, capture_output=True)
         subprocess.run(
-            ["git", "commit", "-m", "Agent 1 work"],
-            cwd=info1.path, capture_output=True
+            ["git", "commit", "-m", "Agent 1 work"], cwd=info1.path, capture_output=True
         )
 
         # Make different changes in second worktree
@@ -1493,19 +1687,30 @@ class TestWorktreeIsolation:
         file2.write_text("Work from agent 2")
         subprocess.run(["git", "add", "."], cwd=info2.path, capture_output=True)
         subprocess.run(
-            ["git", "commit", "-m", "Agent 2 work"],
-            cwd=info2.path, capture_output=True
+            ["git", "commit", "-m", "Agent 2 work"], cwd=info2.path, capture_output=True
         )
 
         # Verify changes are isolated
-        assert (info1.path / "agent1_work.txt").exists(), "Agent 1 file should exist in worktree 1"
-        assert not (info1.path / "agent2_work.txt").exists(), "Agent 2 file should NOT exist in worktree 1"
-        assert (info2.path / "agent2_work.txt").exists(), "Agent 2 file should exist in worktree 2"
-        assert not (info2.path / "agent1_work.txt").exists(), "Agent 1 file should NOT exist in worktree 2"
+        assert (info1.path / "agent1_work.txt").exists(), (
+            "Agent 1 file should exist in worktree 1"
+        )
+        assert not (info1.path / "agent2_work.txt").exists(), (
+            "Agent 2 file should NOT exist in worktree 1"
+        )
+        assert (info2.path / "agent2_work.txt").exists(), (
+            "Agent 2 file should exist in worktree 2"
+        )
+        assert not (info2.path / "agent1_work.txt").exists(), (
+            "Agent 1 file should NOT exist in worktree 2"
+        )
 
         # Verify main branch is unaffected
-        assert not (project_dir / "agent1_work.txt").exists(), "Agent 1 file should NOT exist in main"
-        assert not (project_dir / "agent2_work.txt").exists(), "Agent 2 file should NOT exist in main"
+        assert not (project_dir / "agent1_work.txt").exists(), (
+            "Agent 1 file should NOT exist in main"
+        )
+        assert not (project_dir / "agent2_work.txt").exists(), (
+            "Agent 2 file should NOT exist in main"
+        )
 
     def test_concurrent_worktree_operations_dont_conflict(self, test_env):
         """Concurrent operations on different worktrees don't cause conflicts."""
@@ -1530,17 +1735,22 @@ class TestWorktreeIsolation:
             subprocess.run(["git", "add", "."], cwd=info.path, capture_output=True)
             subprocess.run(
                 ["git", "commit", "-m", f"Agent {i} modification"],
-                cwd=info.path, capture_output=True
+                cwd=info.path,
+                capture_output=True,
             )
 
         # Verify each worktree has its own version
         for i, info in enumerate(worktrees):
             content = (info.path / "test.txt").read_text()
-            assert content == f"Modified by agent {i}", f"Worktree {i} should have agent {i}'s changes"
+            assert content == f"Modified by agent {i}", (
+                f"Worktree {i} should have agent {i}'s changes"
+            )
 
         # Verify all worktrees still exist and are valid
         all_worktrees = manager.list_all_worktrees()
-        assert len(all_worktrees) == 3, f"Should have 3 worktrees, got {len(all_worktrees)}"
+        assert len(all_worktrees) == 3, (
+            f"Should have 3 worktrees, got {len(all_worktrees)}"
+        )
 
     def test_worktree_isolation_with_spec_directories(self, test_env):
         """Worktrees properly isolate spec-related directories."""
@@ -1567,9 +1777,9 @@ class TestWorktreeIsolation:
                     "name": "Test",
                     "subtasks": [
                         {"id": "subtask-1", "description": "Test", "status": "pending"}
-                    ]
+                    ],
                 }
-            ]
+            ],
         }
         plan_file = worktree_spec_dir / "implementation_plan.json"
         plan_file.write_text(json.dumps(plan, indent=2))
@@ -1580,7 +1790,9 @@ class TestWorktreeIsolation:
         # Main project directory should not have this spec directory
         # (the .auto-claude/specs path may exist but not this specific spec)
         main_spec_dir = project_dir / ".auto-claude" / "specs" / "spec-dir-test"
-        assert not main_spec_dir.exists(), "Worktree spec dir should NOT exist in main project"
+        assert not main_spec_dir.exists(), (
+            "Worktree spec dir should NOT exist in main project"
+        )
 
     def test_worktree_can_be_removed_without_affecting_others(self, test_env):
         """Removing one worktree doesn't affect other worktrees."""
@@ -1598,11 +1810,14 @@ class TestWorktreeIsolation:
 
         # Make some changes in each
         for info in [info1, info2, info3]:
-            (info.path / f"{info.spec_name}.txt").write_text(f"Data for {info.spec_name}")
+            (info.path / f"{info.spec_name}.txt").write_text(
+                f"Data for {info.spec_name}"
+            )
             subprocess.run(["git", "add", "."], cwd=info.path, capture_output=True)
             subprocess.run(
                 ["git", "commit", "-m", f"Commit for {info.spec_name}"],
-                cwd=info.path, capture_output=True
+                cwd=info.path,
+                capture_output=True,
             )
 
         # Remove the middle worktree
@@ -1616,12 +1831,18 @@ class TestWorktreeIsolation:
         assert info3.path.exists(), "Third worktree should still exist"
 
         # Verify other worktrees still have their data
-        assert (info1.path / "removal-test-1.txt").exists(), "First worktree data should be intact"
-        assert (info3.path / "removal-test-3.txt").exists(), "Third worktree data should be intact"
+        assert (info1.path / "removal-test-1.txt").exists(), (
+            "First worktree data should be intact"
+        )
+        assert (info3.path / "removal-test-3.txt").exists(), (
+            "Third worktree data should be intact"
+        )
 
         # Verify the listing is correct
         remaining = manager.list_all_worktrees()
-        assert len(remaining) == 2, f"Should have 2 remaining worktrees, got {len(remaining)}"
+        assert len(remaining) == 2, (
+            f"Should have 2 remaining worktrees, got {len(remaining)}"
+        )
 
     def test_worktree_merge_isolation(self, test_env):
         """Merging one worktree doesn't affect other worktrees."""
@@ -1641,7 +1862,8 @@ class TestWorktreeIsolation:
         subprocess.run(["git", "add", "."], cwd=info1.path, capture_output=True)
         subprocess.run(
             ["git", "commit", "-m", "Add feature 1"],
-            cwd=info1.path, capture_output=True
+            cwd=info1.path,
+            capture_output=True,
         )
 
         # Make changes in second worktree
@@ -1649,7 +1871,8 @@ class TestWorktreeIsolation:
         subprocess.run(["git", "add", "."], cwd=info2.path, capture_output=True)
         subprocess.run(
             ["git", "commit", "-m", "Add feature 2"],
-            cwd=info2.path, capture_output=True
+            cwd=info2.path,
+            capture_output=True,
         )
 
         # Merge first worktree
@@ -1657,14 +1880,20 @@ class TestWorktreeIsolation:
         assert result is True, "Merge should succeed"
 
         # Verify feature 1 is in main
-        assert (project_dir / "feature1.txt").exists(), "Feature 1 should be merged to main"
+        assert (project_dir / "feature1.txt").exists(), (
+            "Feature 1 should be merged to main"
+        )
 
         # Verify feature 2 is NOT in main yet
-        assert not (project_dir / "feature2.txt").exists(), "Feature 2 should NOT be in main yet"
+        assert not (project_dir / "feature2.txt").exists(), (
+            "Feature 2 should NOT be in main yet"
+        )
 
         # Verify second worktree is unaffected
         assert info2.path.exists(), "Second worktree should still exist"
-        assert (info2.path / "feature2.txt").exists(), "Second worktree should still have feature 2"
+        assert (info2.path / "feature2.txt").exists(), (
+            "Second worktree should still have feature 2"
+        )
 
     def test_get_or_create_worktree_returns_existing(self, test_env):
         """get_or_create_worktree returns existing worktree instead of creating new."""
@@ -1681,8 +1910,7 @@ class TestWorktreeIsolation:
         marker_file.write_text("This is a marker")
         subprocess.run(["git", "add", "."], cwd=info1.path, capture_output=True)
         subprocess.run(
-            ["git", "commit", "-m", "Add marker"],
-            cwd=info1.path, capture_output=True
+            ["git", "commit", "-m", "Add marker"], cwd=info1.path, capture_output=True
         )
 
         # get_or_create should return the existing worktree
@@ -1697,6 +1925,7 @@ class TestWorktreeIsolation:
 # =============================================================================
 # MAIN ENTRY POINT
 # =============================================================================
+
 
 def run_all_tests():
     """Run all tests using pytest."""

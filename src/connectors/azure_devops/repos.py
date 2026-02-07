@@ -13,7 +13,7 @@ Example:
 """
 
 import logging
-from typing import Any, List, Optional
+from typing import Any
 
 from azure.devops.v7_0.git.models import GitVersionDescriptor
 
@@ -68,7 +68,7 @@ class AzureReposClient:
         """
         return self._client.get_git_client()
 
-    def list_repositories(self, project: str) -> List[Repository]:
+    def list_repositories(self, project: str) -> list[Repository]:
         """List all Git repositories in an Azure DevOps project.
 
         Args:
@@ -95,14 +95,10 @@ class AzureReposClient:
             ) from exc
 
         if not api_repos:
-            logger.info(
-                "No repositories found in project '%s'.", project
-            )
+            logger.info("No repositories found in project '%s'.", project)
             return []
 
-        repositories = [
-            Repository.from_api_response(repo) for repo in api_repos
-        ]
+        repositories = [Repository.from_api_response(repo) for repo in api_repos]
 
         logger.info(
             "Found %d repositories in project '%s'.",
@@ -111,9 +107,7 @@ class AzureReposClient:
         )
         return repositories
 
-    def get_repository(
-        self, project: str, repository_id: str
-    ) -> Repository:
+    def get_repository(self, project: str, repository_id: str) -> Repository:
         """Get a single repository by its name or ID.
 
         Args:
@@ -160,8 +154,8 @@ class AzureReposClient:
         project: str,
         repository_id: str,
         path: str = "/",
-        branch: Optional[str] = None,
-    ) -> List[FileItem]:
+        branch: str | None = None,
+    ) -> list[FileItem]:
         """List files and directories at a given path in a repository.
 
         Retrieves the tree structure at the specified path, with one level
@@ -217,8 +211,7 @@ class AzureReposClient:
                     repository_id=repository_id, project=project
                 ) from exc
             raise APIError(
-                f"Failed to list files in repository "
-                f"'{repository_id}': {exc}"
+                f"Failed to list files in repository '{repository_id}': {exc}"
             ) from exc
 
         if not api_items:
@@ -251,7 +244,7 @@ class AzureReposClient:
         project: str,
         repository_id: str,
         file_path: str,
-        branch: Optional[str] = None,
+        branch: str | None = None,
     ) -> str:
         """Get the content of a file from a repository.
 

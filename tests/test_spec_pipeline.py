@@ -25,78 +25,78 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
 _original_modules = {}
 _mocked_module_names = [
     # External SDKs
-    'claude_code_sdk',
-    'claude_code_sdk.types',
-    'claude_agent_sdk',
-    'claude_agent_sdk.types',
+    "claude_code_sdk",
+    "claude_code_sdk.types",
+    "claude_agent_sdk",
+    "claude_agent_sdk.types",
     # Core infrastructure
-    'core',
-    'core.auth',
-    'core.client',
-    'core.simple_client',
-    'core.task_event',
-    'core.workspace',
-    'core.workspace.models',
-    'core.file_utils',
-    'core.plan_normalization',
-    'core.platform',
-    'client',
-    'init',
+    "core",
+    "core.auth",
+    "core.client",
+    "core.simple_client",
+    "core.task_event",
+    "core.workspace",
+    "core.workspace.models",
+    "core.file_utils",
+    "core.plan_normalization",
+    "core.platform",
+    "client",
+    "init",
     # Config & phases
-    'phase_config',
-    'phase_event',
+    "phase_config",
+    "phase_event",
     # Logging & UI
-    'debug',
-    'ui',
-    'ui.capabilities',
-    'task_logger',
-    'linear_updater',
-    'progress',
+    "debug",
+    "ui",
+    "ui.capabilities",
+    "task_logger",
+    "linear_updater",
+    "progress",
     # Prompts
-    'prompts_pkg',
-    'prompts_pkg.project_context',
+    "prompts_pkg",
+    "prompts_pkg.project_context",
     # Security
-    'security',
-    'security.constants',
-    'security.tool_input_validator',
+    "security",
+    "security.constants",
+    "security.tool_input_validator",
     # Review system
-    'review',
-    'review.diff_analyzer',
-    'review.formatters',
-    'review.reviewer',
-    'review.state',
+    "review",
+    "review.diff_analyzer",
+    "review.formatters",
+    "review.reviewer",
+    "review.state",
     # Agents
-    'agents',
-    'agents.memory_manager',
-    'agents.tools_pkg',
+    "agents",
+    "agents.memory_manager",
+    "agents.tools_pkg",
     # Analysis
-    'analysis',
-    'analysis.analyzers',
+    "analysis",
+    "analysis.analyzers",
     # Spec submodules (import chain from spec.pipeline)
-    'spec.complexity',
-    'spec.compaction',
-    'spec.context',
-    'spec.discovery',
-    'spec.requirements',
-    'spec.validator',
-    'spec.writer',
-    'spec.phases',
-    'spec.phases.executor',
-    'spec.phases.discovery_phases',
-    'spec.phases.requirements_phases',
-    'spec.phases.spec_phases',
-    'spec.phases.planning_phases',
-    'spec.phases.models',
-    'spec.phases.utils',
-    'spec.validate_pkg',
-    'spec.validate_pkg.spec_validator',
-    'spec.validate_pkg.validators',
+    "spec.complexity",
+    "spec.compaction",
+    "spec.context",
+    "spec.discovery",
+    "spec.requirements",
+    "spec.validator",
+    "spec.writer",
+    "spec.phases",
+    "spec.phases.executor",
+    "spec.phases.discovery_phases",
+    "spec.phases.requirements_phases",
+    "spec.phases.spec_phases",
+    "spec.phases.planning_phases",
+    "spec.phases.models",
+    "spec.phases.utils",
+    "spec.validate_pkg",
+    "spec.validate_pkg.spec_validator",
+    "spec.validate_pkg.validators",
     # Validate spec (legacy)
-    'validate_spec',
+    "validate_spec",
     # Integrations
-    'integrations',
-    'integrations.linear',
-    'integrations.linear.updater',
+    "integrations",
+    "integrations.linear",
+    "integrations.linear.updater",
 ]
 
 for name in _mocked_module_names:
@@ -108,7 +108,7 @@ for name in _mocked_module_names:
     sys.modules[name] = MagicMock()
 
 # Set specific return values needed by module-level code
-sys.modules['init'].init_auto_claude_dir = MagicMock(return_value=(Path("/tmp"), False))
+sys.modules["init"].init_auto_claude_dir = MagicMock(return_value=(Path("/tmp"), False))
 
 # Now import the module under test
 from spec.pipeline import SpecOrchestrator, get_specs_dir
@@ -132,7 +132,7 @@ class TestGetSpecsDir:
 
     def test_returns_specs_path(self, temp_dir: Path):
         """Returns path to specs directory."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
 
             result = get_specs_dir(temp_dir)
@@ -141,19 +141,20 @@ class TestGetSpecsDir:
 
     def test_calls_init_auto_claude_dir(self, temp_dir: Path):
         """Initializes auto-claude directory."""
-        with patch('spec.pipeline.models.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.models.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
 
             get_specs_dir(temp_dir)
 
             mock_init.assert_called_once_with(temp_dir)
 
+
 class TestSpecOrchestratorInit:
     """Tests for SpecOrchestrator initialization."""
 
     def test_init_with_project_dir(self, temp_dir: Path):
         """Initializes with project directory."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -168,7 +169,7 @@ class TestSpecOrchestratorInit:
 
     def test_init_creates_spec_dir(self, temp_dir: Path):
         """Creates spec directory if not exists."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -182,7 +183,7 @@ class TestSpecOrchestratorInit:
 
     def test_init_with_spec_name(self, temp_dir: Path):
         """Uses provided spec name."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -196,7 +197,7 @@ class TestSpecOrchestratorInit:
 
     def test_init_with_spec_dir(self, temp_dir: Path):
         """Uses provided spec directory."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -211,7 +212,7 @@ class TestSpecOrchestratorInit:
 
     def test_init_default_model(self, temp_dir: Path):
         """Uses default model (shorthand)."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -223,7 +224,7 @@ class TestSpecOrchestratorInit:
 
     def test_init_custom_model(self, temp_dir: Path):
         """Uses custom model."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -241,7 +242,7 @@ class TestCreateSpecDir:
 
     def test_creates_numbered_directory(self, temp_dir: Path):
         """Creates numbered spec directory."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -253,7 +254,7 @@ class TestCreateSpecDir:
 
     def test_increments_number(self, temp_dir: Path):
         """Increments directory number."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -268,7 +269,7 @@ class TestCreateSpecDir:
 
     def test_finds_highest_number(self, temp_dir: Path):
         """Finds highest existing number."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -288,7 +289,7 @@ class TestGenerateSpecName:
 
     def test_generates_kebab_case(self, temp_dir: Path):
         """Generates kebab-case name."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -301,7 +302,7 @@ class TestGenerateSpecName:
 
     def test_skips_common_words(self, temp_dir: Path):
         """Skips common words like 'the', 'a', 'add'."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -316,7 +317,7 @@ class TestGenerateSpecName:
 
     def test_limits_to_four_words(self, temp_dir: Path):
         """Limits name to four meaningful words."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -332,14 +333,16 @@ class TestGenerateSpecName:
 
     def test_handles_special_characters(self, temp_dir: Path):
         """Handles special characters in task description."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
 
             orchestrator = SpecOrchestrator(project_dir=temp_dir)
 
-            name = orchestrator._generate_spec_name("Add OAuth2.0 (Google) authentication!")
+            name = orchestrator._generate_spec_name(
+                "Add OAuth2.0 (Google) authentication!"
+            )
 
             assert "-" in name or name == "spec"
             assert "!" not in name
@@ -347,7 +350,7 @@ class TestGenerateSpecName:
 
     def test_returns_spec_for_empty_description(self, temp_dir: Path):
         """Returns 'spec' for empty description."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -364,7 +367,7 @@ class TestCleanupOrphanedPendingFolders:
 
     def test_removes_empty_pending_folder(self, temp_dir: Path):
         """Removes empty pending folders older than 10 minutes."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -380,6 +383,7 @@ class TestCleanupOrphanedPendingFolders:
             # Set modification time to 15 minutes ago
             old_time = time.time() - (15 * 60)
             import os
+
             os.utime(old_pending, (old_time, old_time))
 
             # Creating orchestrator triggers cleanup
@@ -394,7 +398,7 @@ class TestCleanupOrphanedPendingFolders:
 
     def test_keeps_folder_with_requirements(self, temp_dir: Path):
         """Keeps pending folder with requirements.json."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -407,6 +411,7 @@ class TestCleanupOrphanedPendingFolders:
             # Set modification time to 15 minutes ago
             old_time = time.time() - (15 * 60)
             import os
+
             os.utime(pending_with_req, (old_time, old_time))
 
             # Creating orchestrator triggers cleanup (instance not used)
@@ -416,7 +421,7 @@ class TestCleanupOrphanedPendingFolders:
 
     def test_keeps_folder_with_spec(self, temp_dir: Path):
         """Keeps pending folder with spec.md."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -429,6 +434,7 @@ class TestCleanupOrphanedPendingFolders:
             # Set modification time to 15 minutes ago
             old_time = time.time() - (15 * 60)
             import os
+
             os.utime(pending_with_spec, (old_time, old_time))
 
             # Creating orchestrator triggers cleanup (instance not used)
@@ -438,7 +444,7 @@ class TestCleanupOrphanedPendingFolders:
 
     def test_keeps_recent_pending_folder(self, temp_dir: Path):
         """Keeps pending folder younger than 10 minutes."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -461,7 +467,7 @@ class TestRenameSpecDirFromRequirements:
 
     def test_renames_from_task_description(self, temp_dir: Path):
         """Renames spec dir based on requirements task description."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -469,9 +475,7 @@ class TestRenameSpecDirFromRequirements:
             orchestrator = SpecOrchestrator(project_dir=temp_dir)
 
             # Write requirements
-            requirements = {
-                "task_description": "Add user authentication system"
-            }
+            requirements = {"task_description": "Add user authentication system"}
             (orchestrator.spec_dir / "requirements.json").write_text(
                 json.dumps(requirements)
             )
@@ -481,11 +485,14 @@ class TestRenameSpecDirFromRequirements:
 
             assert result is True
             assert "pending" not in orchestrator.spec_dir.name
-            assert "user" in orchestrator.spec_dir.name or "authentication" in orchestrator.spec_dir.name
+            assert (
+                "user" in orchestrator.spec_dir.name
+                or "authentication" in orchestrator.spec_dir.name
+            )
 
     def test_returns_false_no_requirements(self, temp_dir: Path):
         """Returns False when no requirements file."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -498,7 +505,7 @@ class TestRenameSpecDirFromRequirements:
 
     def test_returns_false_empty_task_description(self, temp_dir: Path):
         """Returns False when task description is empty."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -517,7 +524,7 @@ class TestRenameSpecDirFromRequirements:
 
     def test_skips_rename_if_not_pending(self, temp_dir: Path):
         """Skips rename if directory is not a pending folder."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -549,7 +556,7 @@ class TestComplexityOverride:
 
     def test_sets_complexity_override(self, temp_dir: Path):
         """Sets complexity override."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -563,7 +570,7 @@ class TestComplexityOverride:
 
     def test_default_use_ai_assessment(self, temp_dir: Path):
         """Default uses AI assessment."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -574,7 +581,7 @@ class TestComplexityOverride:
 
     def test_disable_ai_assessment(self, temp_dir: Path):
         """Can disable AI assessment."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -592,7 +599,7 @@ class TestSpecOrchestratorValidator:
 
     def test_creates_validator(self, temp_dir: Path):
         """Creates SpecValidator instance."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)
@@ -607,7 +614,7 @@ class TestSpecOrchestratorAssessment:
 
     def test_assessment_initially_none(self, temp_dir: Path):
         """Assessment is None initially."""
-        with patch('spec.pipeline.init_auto_claude_dir') as mock_init:
+        with patch("spec.pipeline.init_auto_claude_dir") as mock_init:
             mock_init.return_value = (temp_dir / ".auto-claude", False)
             specs_dir = temp_dir / ".auto-claude" / "specs"
             specs_dir.mkdir(parents=True, exist_ok=True)

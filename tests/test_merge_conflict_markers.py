@@ -28,7 +28,7 @@ class TestConflictMarkerParsing:
 
     def test_parse_single_conflict(self):
         """Parse a file with a single conflict marker."""
-        content = '''def hello():
+        content = """def hello():
     print("Hello")
 
 <<<<<<< HEAD
@@ -41,17 +41,17 @@ def foo():
 
 def goodbye():
     print("Goodbye")
-'''
+"""
         conflicts, _ = parse_conflict_markers(content)
 
         assert len(conflicts) == 1
-        assert conflicts[0]['id'] == 'CONFLICT_1'
-        assert 'main version' in conflicts[0]['main_lines']
-        assert 'feature version' in conflicts[0]['worktree_lines']
+        assert conflicts[0]["id"] == "CONFLICT_1"
+        assert "main version" in conflicts[0]["main_lines"]
+        assert "feature version" in conflicts[0]["worktree_lines"]
 
     def test_parse_multiple_conflicts(self):
         """Parse a file with multiple conflict markers."""
-        content = '''import os
+        content = """import os
 <<<<<<< HEAD
 import logging
 =======
@@ -68,32 +68,32 @@ def helper1():
 def helper2():
     return 2
 >>>>>>> feature
-'''
+"""
         conflicts, _ = parse_conflict_markers(content)
 
         assert len(conflicts) == 2
-        assert conflicts[0]['id'] == 'CONFLICT_1'
-        assert conflicts[1]['id'] == 'CONFLICT_2'
-        assert 'logging' in conflicts[0]['main_lines']
-        assert 'json' in conflicts[0]['worktree_lines']
-        assert 'helper1' in conflicts[1]['main_lines']
-        assert 'helper2' in conflicts[1]['worktree_lines']
+        assert conflicts[0]["id"] == "CONFLICT_1"
+        assert conflicts[1]["id"] == "CONFLICT_2"
+        assert "logging" in conflicts[0]["main_lines"]
+        assert "json" in conflicts[0]["worktree_lines"]
+        assert "helper1" in conflicts[1]["main_lines"]
+        assert "helper2" in conflicts[1]["worktree_lines"]
 
     def test_parse_no_conflicts(self):
         """Parse a file with no conflicts returns empty list."""
-        content = '''def hello():
+        content = """def hello():
     print("Hello")
 
 def goodbye():
     print("Goodbye")
-'''
+"""
         conflicts, _ = parse_conflict_markers(content)
 
         assert len(conflicts) == 0
 
     def test_parse_conflict_with_context(self):
         """Conflict includes surrounding context."""
-        content = '''line 1
+        content = """line 1
 line 2
 line 3
 <<<<<<< HEAD
@@ -103,18 +103,18 @@ conflict feature
 >>>>>>> feature
 line after 1
 line after 2
-'''
+"""
         conflicts, _ = parse_conflict_markers(content)
 
         assert len(conflicts) == 1
         # Should have context before
-        assert 'line 3' in conflicts[0]['context_before']
+        assert "line 3" in conflicts[0]["context_before"]
         # Should have context after
-        assert 'line after 1' in conflicts[0]['context_after']
+        assert "line after 1" in conflicts[0]["context_after"]
 
     def test_parse_multiline_conflict(self):
         """Parse conflict with multiple lines on each side."""
-        content = '''start
+        content = """start
 <<<<<<< HEAD
 line 1 from main
 line 2 from main
@@ -124,14 +124,14 @@ line 1 from feature
 line 2 from feature
 >>>>>>> feature
 end
-'''
+"""
         conflicts, _ = parse_conflict_markers(content)
 
         assert len(conflicts) == 1
-        assert 'line 1 from main' in conflicts[0]['main_lines']
-        assert 'line 3 from main' in conflicts[0]['main_lines']
-        assert 'line 1 from feature' in conflicts[0]['worktree_lines']
-        assert 'line 2 from feature' in conflicts[0]['worktree_lines']
+        assert "line 1 from main" in conflicts[0]["main_lines"]
+        assert "line 3 from main" in conflicts[0]["main_lines"]
+        assert "line 1 from feature" in conflicts[0]["worktree_lines"]
+        assert "line 2 from feature" in conflicts[0]["worktree_lines"]
 
 
 class TestConflictResolutionExtraction:
@@ -139,7 +139,7 @@ class TestConflictResolutionExtraction:
 
     def test_extract_single_resolution(self):
         """Extract resolution for a single conflict."""
-        response = '''Here's the resolved code:
+        response = """Here's the resolved code:
 
 --- CONFLICT_1 RESOLVED ---
 ```python
@@ -148,16 +148,16 @@ def foo():
 ```
 
 This combines both changes.
-'''
-        conflicts = [{'id': 'CONFLICT_1'}]
-        resolutions = extract_conflict_resolutions(response, conflicts, 'python')
+"""
+        conflicts = [{"id": "CONFLICT_1"}]
+        resolutions = extract_conflict_resolutions(response, conflicts, "python")
 
-        assert 'CONFLICT_1' in resolutions
-        assert 'merged version' in resolutions['CONFLICT_1']
+        assert "CONFLICT_1" in resolutions
+        assert "merged version" in resolutions["CONFLICT_1"]
 
     def test_extract_multiple_resolutions(self):
         """Extract resolutions for multiple conflicts."""
-        response = '''Resolving all conflicts:
+        response = """Resolving all conflicts:
 
 --- CONFLICT_1 RESOLVED ---
 ```python
@@ -172,65 +172,65 @@ def helper():
 ```
 
 Done.
-'''
-        conflicts = [{'id': 'CONFLICT_1'}, {'id': 'CONFLICT_2'}]
-        resolutions = extract_conflict_resolutions(response, conflicts, 'python')
+"""
+        conflicts = [{"id": "CONFLICT_1"}, {"id": "CONFLICT_2"}]
+        resolutions = extract_conflict_resolutions(response, conflicts, "python")
 
-        assert 'CONFLICT_1' in resolutions
-        assert 'CONFLICT_2' in resolutions
-        assert 'logging' in resolutions['CONFLICT_1']
-        assert 'json' in resolutions['CONFLICT_1']
-        assert 'helper' in resolutions['CONFLICT_2']
+        assert "CONFLICT_1" in resolutions
+        assert "CONFLICT_2" in resolutions
+        assert "logging" in resolutions["CONFLICT_1"]
+        assert "json" in resolutions["CONFLICT_1"]
+        assert "helper" in resolutions["CONFLICT_2"]
 
     def test_extract_fallback_single_code_block(self):
         """Fallback: extract single code block for single conflict."""
-        response = '''Here's the merged code:
+        response = """Here's the merged code:
 
 ```python
 def foo():
     return "merged"
 ```
-'''
-        conflicts = [{'id': 'CONFLICT_1'}]
-        resolutions = extract_conflict_resolutions(response, conflicts, 'python')
+"""
+        conflicts = [{"id": "CONFLICT_1"}]
+        resolutions = extract_conflict_resolutions(response, conflicts, "python")
 
-        assert 'CONFLICT_1' in resolutions
-        assert 'merged' in resolutions['CONFLICT_1']
+        assert "CONFLICT_1" in resolutions
+        assert "merged" in resolutions["CONFLICT_1"]
 
     def test_extract_case_insensitive(self):
         """Resolution markers are case-insensitive."""
-        response = '''--- conflict_1 resolved ---
+        response = """--- conflict_1 resolved ---
 ```python
 result = "case insensitive"
 ```
-'''
-        conflicts = [{'id': 'CONFLICT_1'}]
-        resolutions = extract_conflict_resolutions(response, conflicts, 'python')
+"""
+        conflicts = [{"id": "CONFLICT_1"}]
+        resolutions = extract_conflict_resolutions(response, conflicts, "python")
 
-        assert 'CONFLICT_1' in resolutions
+        assert "CONFLICT_1" in resolutions
 
     def test_extract_typescript_resolution(self):
         """Extract TypeScript resolutions correctly."""
-        response = '''--- CONFLICT_1 RESOLVED ---
+        response = """--- CONFLICT_1 RESOLVED ---
 ```typescript
 export const config = {
   merged: true
 };
 ```
-'''
-        conflicts = [{'id': 'CONFLICT_1'}]
-        resolutions = extract_conflict_resolutions(response, conflicts, 'typescript')
+"""
+        conflicts = [{"id": "CONFLICT_1"}]
+        resolutions = extract_conflict_resolutions(response, conflicts, "typescript")
 
-        assert 'CONFLICT_1' in resolutions
-        assert 'merged: true' in resolutions['CONFLICT_1']
+        assert "CONFLICT_1" in resolutions
+        assert "merged: true" in resolutions["CONFLICT_1"]
 
     def test_extract_no_resolutions(self):
         """No resolutions when AI response doesn't match format."""
-        response = '''I couldn't resolve these conflicts automatically.
+        response = """I couldn't resolve these conflicts automatically.
 Please review manually.
-'''
-        conflicts = [{'id': 'CONFLICT_1'}]
-        resolutions = extract_conflict_resolutions(response, conflicts, 'python')
+"""
+        conflicts = [{"id": "CONFLICT_1"}]
+        resolutions = extract_conflict_resolutions(response, conflicts, "python")
 
         assert len(resolutions) == 0
 
@@ -240,56 +240,60 @@ class TestReassemblyWithResolutions:
 
     def test_reassemble_single_conflict(self):
         """Reassemble file with single resolved conflict."""
-        original = '''before
+        original = """before
 <<<<<<< HEAD
 main version
 =======
 feature version
 >>>>>>> feature
 after
-'''
-        conflicts = [{
-            'id': 'CONFLICT_1',
-            'start': original.index('<<<<<<<'),
-            'end': original.index('>>>>>>> feature') + len('>>>>>>> feature\n'),
-            'main_lines': 'main version',
-            'worktree_lines': 'feature version',
-        }]
-        resolutions = {'CONFLICT_1': 'merged version'}
+"""
+        conflicts = [
+            {
+                "id": "CONFLICT_1",
+                "start": original.index("<<<<<<<"),
+                "end": original.index(">>>>>>> feature") + len(">>>>>>> feature\n"),
+                "main_lines": "main version",
+                "worktree_lines": "feature version",
+            }
+        ]
+        resolutions = {"CONFLICT_1": "merged version"}
 
         result = reassemble_with_resolutions(original, conflicts, resolutions)
 
-        assert '<<<<<<' not in result
-        assert '=======' not in result
-        assert '>>>>>>>' not in result
-        assert 'merged version' in result
-        assert 'before' in result
-        assert 'after' in result
+        assert "<<<<<<" not in result
+        assert "=======" not in result
+        assert ">>>>>>>" not in result
+        assert "merged version" in result
+        assert "before" in result
+        assert "after" in result
 
     def test_reassemble_fallback_without_resolution(self):
         """Fallback to worktree version when no resolution provided."""
-        original = '''before
+        original = """before
 <<<<<<< HEAD
 main version
 =======
 feature version
 >>>>>>> feature
 after
-'''
-        conflicts = [{
-            'id': 'CONFLICT_1',
-            'start': original.index('<<<<<<<'),
-            'end': original.index('>>>>>>> feature') + len('>>>>>>> feature\n'),
-            'main_lines': 'main version',
-            'worktree_lines': 'feature version',
-        }]
+"""
+        conflicts = [
+            {
+                "id": "CONFLICT_1",
+                "start": original.index("<<<<<<<"),
+                "end": original.index(">>>>>>> feature") + len(">>>>>>> feature\n"),
+                "main_lines": "main version",
+                "worktree_lines": "feature version",
+            }
+        ]
         resolutions = {}  # No resolution provided
 
         result = reassemble_with_resolutions(original, conflicts, resolutions)
 
         # Should fall back to worktree version
-        assert 'feature version' in result
-        assert '<<<<<<' not in result
+        assert "feature version" in result
+        assert "<<<<<<" not in result
 
 
 class TestBuildConflictOnlyPrompt:
@@ -297,104 +301,110 @@ class TestBuildConflictOnlyPrompt:
 
     def test_build_prompt_single_conflict(self):
         """Build prompt for single conflict."""
-        conflicts = [{
-            'id': 'CONFLICT_1',
-            'main_lines': 'def foo():\n    return "main"',
-            'worktree_lines': 'def foo():\n    return "feature"',
-            'context_before': 'import os',
-            'context_after': 'def bar():',
-        }]
+        conflicts = [
+            {
+                "id": "CONFLICT_1",
+                "main_lines": 'def foo():\n    return "main"',
+                "worktree_lines": 'def foo():\n    return "feature"',
+                "context_before": "import os",
+                "context_after": "def bar():",
+            }
+        ]
 
         prompt = build_conflict_only_prompt(
-            file_path='test.py',
+            file_path="test.py",
             conflicts=conflicts,
-            spec_name='feature-branch',
-            language='python',
+            spec_name="feature-branch",
+            language="python",
         )
 
-        assert 'test.py' in prompt
-        assert 'CONFLICT_1' in prompt
-        assert 'MAIN BRANCH VERSION' in prompt
-        assert 'FEATURE BRANCH VERSION' in prompt
+        assert "test.py" in prompt
+        assert "CONFLICT_1" in prompt
+        assert "MAIN BRANCH VERSION" in prompt
+        assert "FEATURE BRANCH VERSION" in prompt
         assert 'return "main"' in prompt
         assert 'return "feature"' in prompt
-        assert 'CONTEXT BEFORE' in prompt
-        assert 'import os' in prompt
+        assert "CONTEXT BEFORE" in prompt
+        assert "import os" in prompt
 
     def test_build_prompt_multiple_conflicts(self):
         """Build prompt for multiple conflicts."""
         conflicts = [
             {
-                'id': 'CONFLICT_1',
-                'main_lines': 'import logging',
-                'worktree_lines': 'import json',
-                'context_before': '',
-                'context_after': '',
+                "id": "CONFLICT_1",
+                "main_lines": "import logging",
+                "worktree_lines": "import json",
+                "context_before": "",
+                "context_after": "",
             },
             {
-                'id': 'CONFLICT_2',
-                'main_lines': 'helper1()',
-                'worktree_lines': 'helper2()',
-                'context_before': '',
-                'context_after': '',
+                "id": "CONFLICT_2",
+                "main_lines": "helper1()",
+                "worktree_lines": "helper2()",
+                "context_before": "",
+                "context_after": "",
             },
         ]
 
         prompt = build_conflict_only_prompt(
-            file_path='test.py',
+            file_path="test.py",
             conflicts=conflicts,
-            spec_name='feature',
-            language='python',
+            spec_name="feature",
+            language="python",
         )
 
-        assert 'CONFLICT_1' in prompt
-        assert 'CONFLICT_2' in prompt
-        assert '2 conflict(s)' in prompt
+        assert "CONFLICT_1" in prompt
+        assert "CONFLICT_2" in prompt
+        assert "2 conflict(s)" in prompt
 
     def test_build_prompt_includes_task_intent(self):
         """Prompt includes task intent when provided."""
-        conflicts = [{
-            'id': 'CONFLICT_1',
-            'main_lines': 'old code',
-            'worktree_lines': 'new code',
-            'context_before': '',
-            'context_after': '',
-        }]
+        conflicts = [
+            {
+                "id": "CONFLICT_1",
+                "main_lines": "old code",
+                "worktree_lines": "new code",
+                "context_before": "",
+                "context_after": "",
+            }
+        ]
         task_intent = {
-            'title': 'Add user authentication',
-            'description': 'Implement OAuth login flow',
+            "title": "Add user authentication",
+            "description": "Implement OAuth login flow",
         }
 
         prompt = build_conflict_only_prompt(
-            file_path='auth.py',
+            file_path="auth.py",
             conflicts=conflicts,
-            spec_name='auth-feature',
-            language='python',
+            spec_name="auth-feature",
+            language="python",
             task_intent=task_intent,
         )
 
-        assert 'Add user authentication' in prompt
-        assert 'OAuth login flow' in prompt
+        assert "Add user authentication" in prompt
+        assert "OAuth login flow" in prompt
 
     def test_build_prompt_typescript(self):
         """Build prompt for TypeScript file."""
-        conflicts = [{
-            'id': 'CONFLICT_1',
-            'main_lines': 'const x: number = 1;',
-            'worktree_lines': 'const x: string = "1";',
-            'context_before': '',
-            'context_after': '',
-        }]
+        conflicts = [
+            {
+                "id": "CONFLICT_1",
+                "main_lines": "const x: number = 1;",
+                "worktree_lines": 'const x: string = "1";',
+                "context_before": "",
+                "context_after": "",
+            }
+        ]
 
         prompt = build_conflict_only_prompt(
-            file_path='index.ts',
+            file_path="index.ts",
             conflicts=conflicts,
-            spec_name='feature',
-            language='typescript',
+            spec_name="feature",
+            language="typescript",
         )
 
-        assert 'typescript' in prompt.lower()
-        assert '```typescript' in prompt
+        assert "typescript" in prompt.lower()
+        assert "```typescript" in prompt
 
 
 class TestConflictOnlyMergeIntegration:
@@ -403,7 +413,7 @@ class TestConflictOnlyMergeIntegration:
     def test_full_flow_single_conflict(self):
         """Full flow: parse -> extract resolution -> reassemble."""
         # Simulated file with conflict
-        file_with_conflict = '''import os
+        file_with_conflict = """import os
 
 <<<<<<< HEAD
 def foo():
@@ -415,30 +425,30 @@ def foo():
 
 def bar():
     pass
-'''
+"""
         # Step 1: Parse conflicts
         conflicts, _ = parse_conflict_markers(file_with_conflict)
         assert len(conflicts) == 1
 
         # Step 2: Simulate AI response
-        ai_response = '''--- CONFLICT_1 RESOLVED ---
+        ai_response = """--- CONFLICT_1 RESOLVED ---
 ```python
 def foo():
     return "merged: main + feature"
 ```
-'''
+"""
         # Step 3: Extract resolutions
-        resolutions = extract_conflict_resolutions(ai_response, conflicts, 'python')
-        assert 'CONFLICT_1' in resolutions
+        resolutions = extract_conflict_resolutions(ai_response, conflicts, "python")
+        assert "CONFLICT_1" in resolutions
 
         # Step 4: Reassemble
         result = reassemble_with_resolutions(file_with_conflict, conflicts, resolutions)
 
         # Verify result
-        assert '<<<<<<' not in result
-        assert 'merged: main + feature' in result
-        assert 'import os' in result
-        assert 'def bar():' in result
+        assert "<<<<<<" not in result
+        assert "merged: main + feature" in result
+        assert "import os" in result
+        assert "def bar():" in result
 
     def test_full_flow_preserves_structure(self):
         """Full flow preserves file structure outside conflicts."""
@@ -463,22 +473,22 @@ if __name__ == "__main__":
 '''
         conflicts, _ = parse_conflict_markers(file_with_conflict)
 
-        ai_response = '''--- CONFLICT_1 RESOLVED ---
+        ai_response = """--- CONFLICT_1 RESOLVED ---
 ```python
 CONFIG = {"version": "2.0", "new_key": "value", "merged": True}
 ```
-'''
-        resolutions = extract_conflict_resolutions(ai_response, conflicts, 'python')
+"""
+        resolutions = extract_conflict_resolutions(ai_response, conflicts, "python")
         result = reassemble_with_resolutions(file_with_conflict, conflicts, resolutions)
 
         # All original structure preserved
-        assert '# Header comment' in result
+        assert "# Header comment" in result
         assert '"""Module docstring."""' in result
-        assert 'import os' in result
-        assert 'import sys' in result
-        assert 'def main():' in result
+        assert "import os" in result
+        assert "import sys" in result
+        assert "def main():" in result
         assert 'if __name__ == "__main__":' in result
         # Resolution applied
         assert '"merged": True' in result
         # No conflict markers
-        assert '<<<<<<' not in result
+        assert "<<<<<<" not in result

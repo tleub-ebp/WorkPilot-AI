@@ -78,7 +78,7 @@ def spec_with_plan(spec_dir):
         "qa_signoff": {
             "status": "pending",
             "qa_session": 0,
-        }
+        },
     }
     plan_file = spec_dir / "implementation_plan.json"
     with open(plan_file, "w") as f:
@@ -132,8 +132,12 @@ class TestIterationTracking:
 
     def test_record_iteration_updates_stats(self, spec_with_plan):
         """Test that recording updates qa_stats."""
-        record_iteration(spec_with_plan, 1, "rejected", [{"title": "Error", "type": "error"}])
-        record_iteration(spec_with_plan, 2, "rejected", [{"title": "Warning", "type": "warning"}])
+        record_iteration(
+            spec_with_plan, 1, "rejected", [{"title": "Error", "type": "error"}]
+        )
+        record_iteration(
+            spec_with_plan, 2, "rejected", [{"title": "Warning", "type": "warning"}]
+        )
 
         plan = load_implementation_plan(spec_with_plan)
         stats = plan.get("qa_stats", {})
@@ -292,7 +296,10 @@ class TestRecurringIssueSummary:
     def test_summary_counts(self):
         """Test that summary counts are correct."""
         history = [
-            {"status": "rejected", "issues": [{"title": "Error A"}, {"title": "Error B"}]},
+            {
+                "status": "rejected",
+                "issues": [{"title": "Error A"}, {"title": "Error B"}],
+            },
             {"status": "rejected", "issues": [{"title": "Error A"}]},
             {"status": "approved", "issues": []},
         ]
@@ -349,7 +356,7 @@ class TestCheckTestDiscovery:
         """Test reading valid discovery file."""
         discovery = {
             "frameworks": [{"name": "pytest", "type": "unit"}],
-            "test_directories": ["tests/"]
+            "test_directories": ["tests/"],
         }
         discovery_file = spec_dir / "test_discovery.json"
         with open(discovery_file, "w") as f:

@@ -26,11 +26,18 @@ class TestAgentConfigs:
         """Every agent config should have tools, mcp_servers, auto_claude_tools, thinking_default."""
         from agents.tools_pkg.models import AGENT_CONFIGS
 
-        required_fields = ["tools", "mcp_servers", "auto_claude_tools", "thinking_default"]
+        required_fields = [
+            "tools",
+            "mcp_servers",
+            "auto_claude_tools",
+            "thinking_default",
+        ]
 
         for agent_type, config in AGENT_CONFIGS.items():
             for field in required_fields:
-                assert field in config, f"Agent type '{agent_type}' missing field '{field}'"
+                assert field in config, (
+                    f"Agent type '{agent_type}' missing field '{field}'"
+                )
 
     def test_known_agent_types_exist(self):
         """Key agent types from PRD should exist."""
@@ -56,7 +63,9 @@ class TestAgentConfigs:
         ]
 
         for agent_type in expected_types:
-            assert agent_type in AGENT_CONFIGS, f"Expected agent type '{agent_type}' not found"
+            assert agent_type in AGENT_CONFIGS, (
+                f"Expected agent type '{agent_type}' not found"
+            )
 
     def test_thinking_defaults_are_valid(self):
         """All thinking_default values should be valid levels."""
@@ -67,20 +76,24 @@ class TestAgentConfigs:
 
         for agent_type, config in AGENT_CONFIGS.items():
             level = config.get("thinking_default")
-            assert level in valid_levels, f"Agent '{agent_type}' has invalid thinking_default: {level}"
+            assert level in valid_levels, (
+                f"Agent '{agent_type}' has invalid thinking_default: {level}"
+            )
 
     def test_tools_are_lists(self):
         """All tool configurations should be lists."""
         from agents.tools_pkg.models import AGENT_CONFIGS
 
         for agent_type, config in AGENT_CONFIGS.items():
-            assert isinstance(config["tools"], list), f"Agent '{agent_type}' tools should be list"
-            assert isinstance(
-                config["auto_claude_tools"], list
-            ), f"Agent '{agent_type}' auto_claude_tools should be list"
-            assert isinstance(
-                config["mcp_servers"], list
-            ), f"Agent '{agent_type}' mcp_servers should be list"
+            assert isinstance(config["tools"], list), (
+                f"Agent '{agent_type}' tools should be list"
+            )
+            assert isinstance(config["auto_claude_tools"], list), (
+                f"Agent '{agent_type}' auto_claude_tools should be list"
+            )
+            assert isinstance(config["mcp_servers"], list), (
+                f"Agent '{agent_type}' mcp_servers should be list"
+            )
 
 
 class TestGetAgentConfig:

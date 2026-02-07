@@ -79,7 +79,10 @@ class TestOrchestratorInitialization:
         files = [temp_project / "src" / "utils.py"]
         orchestrator.evolution_tracker.capture_baselines("task-001", files)
         orchestrator.evolution_tracker.record_modification(
-            "task-001", "src/utils.py", SAMPLE_PYTHON_MODULE, SAMPLE_PYTHON_WITH_NEW_FUNCTION
+            "task-001",
+            "src/utils.py",
+            SAMPLE_PYTHON_MODULE,
+            SAMPLE_PYTHON_WITH_NEW_FUNCTION,
         )
 
         report = orchestrator.merge_task("task-001")
@@ -101,10 +104,16 @@ class TestMergePreview:
         orchestrator.evolution_tracker.capture_baselines("task-002", files)
 
         orchestrator.evolution_tracker.record_modification(
-            "task-001", "src/utils.py", SAMPLE_PYTHON_MODULE, SAMPLE_PYTHON_WITH_NEW_FUNCTION
+            "task-001",
+            "src/utils.py",
+            SAMPLE_PYTHON_MODULE,
+            SAMPLE_PYTHON_WITH_NEW_FUNCTION,
         )
         orchestrator.evolution_tracker.record_modification(
-            "task-002", "src/utils.py", SAMPLE_PYTHON_MODULE, SAMPLE_PYTHON_WITH_NEW_IMPORT
+            "task-002",
+            "src/utils.py",
+            SAMPLE_PYTHON_MODULE,
+            SAMPLE_PYTHON_WITH_NEW_IMPORT,
         )
 
         preview = orchestrator.preview_merge(["task-001", "task-002"])
@@ -125,14 +134,24 @@ class TestSingleTaskMerge:
 
         # Setup: capture baseline
         files = [temp_project / "src" / "utils.py"]
-        orchestrator.evolution_tracker.capture_baselines("task-001", files, intent="Add new function")
+        orchestrator.evolution_tracker.capture_baselines(
+            "task-001", files, intent="Add new function"
+        )
 
         # Create a task branch with actual git changes (the merge pipeline uses git diff main...HEAD)
-        subprocess.run(["git", "checkout", "-b", "auto-claude/task-001"], cwd=temp_project, capture_output=True)
+        subprocess.run(
+            ["git", "checkout", "-b", "auto-claude/task-001"],
+            cwd=temp_project,
+            capture_output=True,
+        )
         utils_file = temp_project / "src" / "utils.py"
         utils_file.write_text(SAMPLE_PYTHON_WITH_NEW_FUNCTION)
         subprocess.run(["git", "add", "."], cwd=temp_project, capture_output=True)
-        subprocess.run(["git", "commit", "-m", "Add new function"], cwd=temp_project, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", "Add new function"],
+            cwd=temp_project,
+            capture_output=True,
+        )
 
         # Execute merge - provide worktree_path to avoid lookup
         report = orchestrator.merge_task("task-001", worktree_path=temp_project)
@@ -153,8 +172,12 @@ class TestMultiTaskMerge:
 
         # Setup: both tasks modify same file with compatible changes
         files = [temp_project / "src" / "utils.py"]
-        orchestrator.evolution_tracker.capture_baselines("task-001", files, intent="Add logging")
-        orchestrator.evolution_tracker.capture_baselines("task-002", files, intent="Add json")
+        orchestrator.evolution_tracker.capture_baselines(
+            "task-001", files, intent="Add logging"
+        )
+        orchestrator.evolution_tracker.capture_baselines(
+            "task-002", files, intent="Add json"
+        )
 
         # Task 1: adds logging import
         orchestrator.evolution_tracker.record_modification(
@@ -173,10 +196,12 @@ class TestMultiTaskMerge:
         )
 
         # Execute merge
-        report = orchestrator.merge_tasks([
-            TaskMergeRequest(task_id="task-001", worktree_path=temp_project),
-            TaskMergeRequest(task_id="task-002", worktree_path=temp_project),
-        ])
+        report = orchestrator.merge_tasks(
+            [
+                TaskMergeRequest(task_id="task-001", worktree_path=temp_project),
+                TaskMergeRequest(task_id="task-002", worktree_path=temp_project),
+            ]
+        )
 
         # Both tasks should merge successfully
         assert len(report.tasks_merged) == 2
@@ -194,7 +219,10 @@ class TestMergeStats:
         files = [temp_project / "src" / "utils.py"]
         orchestrator.evolution_tracker.capture_baselines("task-001", files)
         orchestrator.evolution_tracker.record_modification(
-            "task-001", "src/utils.py", SAMPLE_PYTHON_MODULE, SAMPLE_PYTHON_WITH_NEW_FUNCTION
+            "task-001",
+            "src/utils.py",
+            SAMPLE_PYTHON_MODULE,
+            SAMPLE_PYTHON_WITH_NEW_FUNCTION,
         )
 
         report = orchestrator.merge_task("task-001")
@@ -209,7 +237,10 @@ class TestMergeStats:
         files = [temp_project / "src" / "utils.py"]
         orchestrator.evolution_tracker.capture_baselines("task-001", files)
         orchestrator.evolution_tracker.record_modification(
-            "task-001", "src/utils.py", SAMPLE_PYTHON_MODULE, SAMPLE_PYTHON_WITH_NEW_FUNCTION
+            "task-001",
+            "src/utils.py",
+            SAMPLE_PYTHON_MODULE,
+            SAMPLE_PYTHON_WITH_NEW_FUNCTION,
         )
 
         # Provide worktree_path to avoid lookup

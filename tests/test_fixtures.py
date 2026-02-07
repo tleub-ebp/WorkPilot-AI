@@ -8,7 +8,7 @@ These are separated from conftest.py to allow direct imports.
 """
 
 # Sample React component code
-SAMPLE_REACT_COMPONENT = '''import React from 'react';
+SAMPLE_REACT_COMPONENT = """import React from 'react';
 import { useState } from 'react';
 
 function App() {
@@ -25,9 +25,9 @@ function App() {
 }
 
 export default App;
-'''
+"""
 
-SAMPLE_REACT_WITH_HOOK = '''import React from 'react';
+SAMPLE_REACT_WITH_HOOK = """import React from 'react';
 import { useState } from 'react';
 import { useAuth } from './hooks/useAuth';
 
@@ -46,7 +46,7 @@ function App() {
 }
 
 export default App;
-'''
+"""
 
 # Sample Python module code
 SAMPLE_PYTHON_MODULE = '''"""Sample Python module."""

@@ -11,7 +11,7 @@ without importing the Claude SDK which is not available in the test environment.
 
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 from unittest.mock import MagicMock
 
 # =============================================================================
@@ -19,14 +19,14 @@ from unittest.mock import MagicMock
 # =============================================================================
 
 # Store original modules for cleanup
-_original_modules: Dict[str, Any] = {}
-_mocked_module_names: List[str] = [
-    'claude_agent_sdk',
-    'ui',
-    'progress',
-    'task_logger',
-    'linear_updater',
-    'client',
+_original_modules: dict[str, Any] = {}
+_mocked_module_names: list[str] = [
+    "claude_agent_sdk",
+    "ui",
+    "progress",
+    "task_logger",
+    "linear_updater",
+    "client",
 ]
 
 
@@ -47,7 +47,7 @@ def setup_qa_report_mocks() -> None:
     mock_sdk.ClaudeSDKClient = MagicMock()
     mock_sdk.ClaudeAgentOptions = MagicMock()
     mock_sdk.ClaudeCodeOptions = MagicMock()
-    sys.modules['claude_agent_sdk'] = mock_sdk
+    sys.modules["claude_agent_sdk"] = mock_sdk
 
     # Mock UI module (used by progress)
     mock_ui = MagicMock()
@@ -70,20 +70,20 @@ def setup_qa_report_mocks() -> None:
     mock_ui.print_status = MagicMock()
     mock_ui.print_phase_status = MagicMock()
     mock_ui.print_key_value = MagicMock()
-    sys.modules['ui'] = mock_ui
+    sys.modules["ui"] = mock_ui
 
     # Mock progress module
     mock_progress = MagicMock()
     mock_progress.count_subtasks = MagicMock(return_value=(3, 3))
     mock_progress.is_build_complete = MagicMock(return_value=True)
-    sys.modules['progress'] = mock_progress
+    sys.modules["progress"] = mock_progress
 
     # Mock task_logger
     mock_task_logger = MagicMock()
     mock_task_logger.LogPhase = MagicMock()
     mock_task_logger.LogEntryType = MagicMock()
     mock_task_logger.get_task_logger = MagicMock(return_value=None)
-    sys.modules['task_logger'] = mock_task_logger
+    sys.modules["task_logger"] = mock_task_logger
 
     # Mock linear_updater
     mock_linear = MagicMock()
@@ -93,12 +93,12 @@ def setup_qa_report_mocks() -> None:
     mock_linear.linear_qa_approved = MagicMock()
     mock_linear.linear_qa_rejected = MagicMock()
     mock_linear.linear_qa_max_iterations = MagicMock()
-    sys.modules['linear_updater'] = mock_linear
+    sys.modules["linear_updater"] = mock_linear
 
     # Mock client module
     mock_client = MagicMock()
     mock_client.create_client = MagicMock()
-    sys.modules['client'] = mock_client
+    sys.modules["client"] = mock_client
 
     # Add auto-claude path for imports
     sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
@@ -113,6 +113,6 @@ def cleanup_qa_report_mocks() -> None:
             del sys.modules[name]
 
 
-def get_mocked_module_names() -> List[str]:
+def get_mocked_module_names() -> list[str]:
     """Return list of module names that are mocked."""
     return _mocked_module_names.copy()

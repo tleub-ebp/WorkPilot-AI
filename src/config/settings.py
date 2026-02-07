@@ -7,7 +7,6 @@ variables from a .env file when available.
 
 import os
 from dataclasses import dataclass, field
-from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -35,10 +34,10 @@ class Settings:
 
     pat: str
     organization_url: str
-    project: Optional[str] = field(default=None)
+    project: str | None = field(default=None)
 
     @classmethod
-    def from_env(cls, env_file: Optional[str] = None) -> "Settings":
+    def from_env(cls, env_file: str | None = None) -> "Settings":
         """Create Settings by loading values from environment variables.
 
         Loads a .env file if present (or from a custom path), then reads
@@ -94,9 +93,7 @@ class Settings:
             ValueError: If any setting value is invalid.
         """
         if not self.pat.strip():
-            raise ValueError(
-                "AZURE_DEVOPS_PAT cannot be empty or whitespace."
-            )
+            raise ValueError("AZURE_DEVOPS_PAT cannot be empty or whitespace.")
 
         if not self.organization_url.startswith("https://"):
             raise ValueError(

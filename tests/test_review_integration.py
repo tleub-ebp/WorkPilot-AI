@@ -22,7 +22,7 @@ from tests.review_fixtures import complete_spec_dir, review_spec_dir
 class TestFullReviewFlow:
     """Integration tests for basic review workflow."""
 
-    def test_full_approval_flow(self, review_spec_dir: Path) -> None:
+    def test_full_approval_flow(self, review_spec_dir) -> None:
         """Test complete approval flow."""
         # 1. Initially not approved
         state = ReviewState.load(review_spec_dir)
@@ -44,7 +44,7 @@ class TestFullReviewFlow:
         assert reloaded.approved_by == "reviewer"
         assert len(reloaded.feedback) == 1
 
-    def test_approval_invalidation_on_change(self, review_spec_dir: Path) -> None:
+    def test_approval_invalidation_on_change(self, review_spec_dir) -> None:
         """Test that spec changes invalidate approval."""
         # 1. Approve initially
         state = ReviewState()
@@ -63,7 +63,7 @@ class TestFullReviewFlow:
         state.approve(review_spec_dir, approved_by="user")
         assert state.is_approval_valid(review_spec_dir)
 
-    def test_rejection_flow(self, review_spec_dir: Path) -> None:
+    def test_rejection_flow(self, review_spec_dir) -> None:
         """Test rejection workflow."""
         # 1. Approve first
         state = ReviewState()
@@ -80,7 +80,7 @@ class TestFullReviewFlow:
         reloaded = ReviewState.load(review_spec_dir)
         assert not reloaded.is_approved()
 
-    def test_auto_approve_flow(self, review_spec_dir: Path) -> None:
+    def test_auto_approve_flow(self, review_spec_dir) -> None:
         """Test auto-approve workflow."""
         state = ReviewState()
         state.approve(review_spec_dir, approved_by="auto")
@@ -89,7 +89,7 @@ class TestFullReviewFlow:
         assert state.approved_by == "auto"
         assert state.is_approval_valid(review_spec_dir)
 
-    def test_multiple_review_sessions(self, review_spec_dir: Path) -> None:
+    def test_multiple_review_sessions(self, review_spec_dir) -> None:
         """Test multiple review sessions increment count correctly."""
         state = ReviewState()
         assert state.review_count == 0
@@ -119,7 +119,7 @@ class TestFullReviewWorkflowIntegration:
     approval, build readiness check, and invalidation scenarios.
     """
 
-    def test_full_review_flow(self, complete_spec_dir: Path) -> None:
+    def test_full_review_flow(self, complete_spec_dir) -> None:
         """
         Test the complete review flow from start to finish.
 
@@ -164,7 +164,9 @@ class TestFullReviewWorkflowIntegration:
         # 6. Modify spec.md (simulating user edit)
         spec_file = complete_spec_dir / "spec.md"
         original_content = spec_file.read_text()
-        spec_file.write_text(original_content + "\n\n## Additional Notes\n\nSome extra information.\n")
+        spec_file.write_text(
+            original_content + "\n\n## Additional Notes\n\nSome extra information.\n"
+        )
 
         # 7. Approval should now be invalid (spec changed)
         assert not reloaded.is_approval_valid(complete_spec_dir)
@@ -179,7 +181,7 @@ class TestFullReviewWorkflowIntegration:
         assert fresh_state.is_approval_valid(complete_spec_dir)
         assert fresh_state.review_count == 2
 
-    def test_run_py_approval_check_simulation(self, complete_spec_dir: Path) -> None:
+    def test_run_py_approval_check_simulation(self, complete_spec_dir) -> None:
         """
         Test the approval check logic as run.py would use it.
 
@@ -206,7 +208,7 @@ class TestFullReviewWorkflowIntegration:
             build_should_proceed = review_state.is_approval_valid(complete_spec_dir)
         assert build_should_proceed, "Force flag should bypass approval check"
 
-    def test_spec_change_detection_accuracy(self, complete_spec_dir: Path) -> None:
+    def test_spec_change_detection_accuracy(self, complete_spec_dir) -> None:
         """Test that spec change detection works for various types of changes."""
         # Approve initially
         state = ReviewState()
@@ -236,7 +238,7 @@ class TestFullReviewWorkflowIntegration:
         state.approve(complete_spec_dir, approved_by="user", auto_save=False)
         assert state.spec_hash != original_hash
 
-    def test_feedback_persistence_across_sessions(self, complete_spec_dir: Path) -> None:
+    def test_feedback_persistence_across_sessions(self, complete_spec_dir) -> None:
         """Test that feedback is preserved across review sessions."""
         # First session - add feedback
         state1 = ReviewState()
@@ -256,7 +258,7 @@ class TestFullReviewWorkflowIntegration:
         state3 = ReviewState.load(complete_spec_dir)
         assert len(state3.feedback) == 3
 
-    def test_auto_approve_workflow(self, complete_spec_dir: Path) -> None:
+    def test_auto_approve_workflow(self, complete_spec_dir) -> None:
         """Test the auto-approve workflow (--auto-approve flag)."""
         # Simulate spec_runner.py with --auto-approve
         state = ReviewState()
@@ -270,7 +272,7 @@ class TestFullReviewWorkflowIntegration:
         loaded = ReviewState.load(complete_spec_dir)
         assert loaded.approved_by == "auto"
 
-    def test_rejection_preserves_history(self, complete_spec_dir: Path) -> None:
+    def test_rejection_preserves_history(self, complete_spec_dir) -> None:
         """Test that rejection properly clears approval but preserves feedback."""
         # Initial approval with feedback
         state = ReviewState()
@@ -291,7 +293,7 @@ class TestFullReviewWorkflowIntegration:
         assert state.feedback == original_feedback  # Preserved
         assert state.review_count == 2  # Incremented
 
-    def test_invalidate_vs_reject_difference(self, complete_spec_dir: Path) -> None:
+    def test_invalidate_vs_reject_difference(self, complete_spec_dir) -> None:
         """
         Test the difference between invalidate() and reject().
 
@@ -308,7 +310,9 @@ class TestFullReviewWorkflowIntegration:
         state_for_invalidate.invalidate(complete_spec_dir, auto_save=False)
 
         assert not state_for_invalidate.approved
-        assert state_for_invalidate.approved_by == "original_approver"  # Kept as history
+        assert (
+            state_for_invalidate.approved_by == "original_approver"
+        )  # Kept as history
         assert state_for_invalidate.approved_at == ""  # Cleared
         assert state_for_invalidate.spec_hash == ""  # Cleared
         assert len(state_for_invalidate.feedback) == 1  # Preserved
@@ -323,7 +327,7 @@ class TestFullReviewWorkflowIntegration:
         assert state_for_reject.spec_hash == ""  # Cleared
         assert len(state_for_reject.feedback) == 1  # Preserved
 
-    def test_status_summary_reflects_current_state(self, complete_spec_dir: Path) -> None:
+    def test_status_summary_reflects_current_state(self, complete_spec_dir) -> None:
         """Test that get_review_status_summary() accurately reflects state."""
         from review import get_review_status_summary
 
@@ -353,7 +357,7 @@ class TestFullReviewWorkflowIntegration:
         assert not summary3["valid"]  # But not valid
         assert summary3["spec_changed"]
 
-    def test_concurrent_access_safety(self, complete_spec_dir: Path) -> None:
+    def test_concurrent_access_safety(self, complete_spec_dir) -> None:
         """
         Test that multiple load/save operations don't corrupt state.
 
@@ -362,7 +366,9 @@ class TestFullReviewWorkflowIntegration:
         """
         # First process loads and starts modifying
         state1 = ReviewState.load(complete_spec_dir)
-        state1.add_feedback("Feedback from process 1", complete_spec_dir, auto_save=False)
+        state1.add_feedback(
+            "Feedback from process 1", complete_spec_dir, auto_save=False
+        )
 
         # Second process loads and modifies
         state2 = ReviewState.load(complete_spec_dir)
@@ -376,7 +382,7 @@ class TestFullReviewWorkflowIntegration:
         assert len(final.feedback) == 1
         assert "process 1" in final.feedback[0]
 
-    def test_review_count_tracks_all_interactions(self, complete_spec_dir: Path) -> None:
+    def test_review_count_tracks_all_interactions(self, complete_spec_dir) -> None:
         """Test that review_count accurately tracks user interactions."""
         state = ReviewState()
         assert state.review_count == 0

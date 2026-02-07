@@ -79,10 +79,12 @@ class TestBasicConflictDetection:
             ],
         )
 
-        conflicts = conflict_detector.detect_conflicts({
-            "task-001": analysis1,
-            "task-002": analysis2,
-        })
+        conflicts = conflict_detector.detect_conflicts(
+            {
+                "task-001": analysis1,
+                "task-002": analysis2,
+            }
+        )
 
         assert len(conflicts) == 0
 
@@ -117,15 +119,19 @@ class TestCompatibleChanges:
             ],
         )
 
-        conflicts = conflict_detector.detect_conflicts({
-            "task-001": analysis1,
-            "task-002": analysis2,
-        })
+        conflicts = conflict_detector.detect_conflicts(
+            {
+                "task-001": analysis1,
+                "task-002": analysis2,
+            }
+        )
 
         # Should have a conflict region but it's auto-mergeable
         if conflicts:
             assert all(c.can_auto_merge for c in conflicts)
-            assert all(c.merge_strategy == MergeStrategy.COMBINE_IMPORTS for c in conflicts)
+            assert all(
+                c.merge_strategy == MergeStrategy.COMBINE_IMPORTS for c in conflicts
+            )
 
     def test_compatible_hook_additions(self, conflict_detector):
         """Multiple hook additions at same location are compatible."""
@@ -154,10 +160,12 @@ class TestCompatibleChanges:
             ],
         )
 
-        conflicts = conflict_detector.detect_conflicts({
-            "task-001": analysis1,
-            "task-002": analysis2,
-        })
+        conflicts = conflict_detector.detect_conflicts(
+            {
+                "task-001": analysis1,
+                "task-002": analysis2,
+            }
+        )
 
         # Hook additions should be compatible
         if conflicts:
@@ -191,10 +199,12 @@ class TestCompatibleChanges:
             ],
         )
 
-        conflicts = conflict_detector.detect_conflicts({
-            "task-001": analysis1,
-            "task-002": analysis2,
-        })
+        conflicts = conflict_detector.detect_conflicts(
+            {
+                "task-001": analysis1,
+                "task-002": analysis2,
+            }
+        )
 
         # Function additions should be auto-mergeable
         if conflicts:
@@ -231,10 +241,12 @@ class TestIncompatibleChanges:
             ],
         )
 
-        conflicts = conflict_detector.detect_conflicts({
-            "task-001": analysis1,
-            "task-002": analysis2,
-        })
+        conflicts = conflict_detector.detect_conflicts(
+            {
+                "task-001": analysis1,
+                "task-002": analysis2,
+            }
+        )
 
         # Should detect a conflict that's not auto-mergeable
         assert len(conflicts) > 0
@@ -267,10 +279,12 @@ class TestIncompatibleChanges:
             ],
         )
 
-        conflicts = conflict_detector.detect_conflicts({
-            "task-001": analysis1,
-            "task-002": analysis2,
-        })
+        conflicts = conflict_detector.detect_conflicts(
+            {
+                "task-001": analysis1,
+                "task-002": analysis2,
+            }
+        )
 
         assert len(conflicts) > 0
         assert any(not c.can_auto_merge for c in conflicts)
@@ -307,14 +321,19 @@ class TestSeverityAssessment:
             ],
         )
 
-        conflicts = conflict_detector.detect_conflicts({
-            "task-001": analysis1,
-            "task-002": analysis2,
-        })
+        conflicts = conflict_detector.detect_conflicts(
+            {
+                "task-001": analysis1,
+                "task-002": analysis2,
+            }
+        )
 
         assert len(conflicts) > 0
         # Should be high or critical severity
-        assert conflicts[0].severity in {ConflictSeverity.HIGH, ConflictSeverity.CRITICAL}
+        assert conflicts[0].severity in {
+            ConflictSeverity.HIGH,
+            ConflictSeverity.CRITICAL,
+        }
 
     def test_low_severity_for_compatible_changes(self, conflict_detector):
         """Compatible changes have low severity."""
@@ -343,13 +362,18 @@ class TestSeverityAssessment:
             ],
         )
 
-        conflicts = conflict_detector.detect_conflicts({
-            "task-001": analysis1,
-            "task-002": analysis2,
-        })
+        conflicts = conflict_detector.detect_conflicts(
+            {
+                "task-001": analysis1,
+                "task-002": analysis2,
+            }
+        )
 
         if conflicts:
-            assert all(c.severity in {ConflictSeverity.NONE, ConflictSeverity.LOW} for c in conflicts)
+            assert all(
+                c.severity in {ConflictSeverity.NONE, ConflictSeverity.LOW}
+                for c in conflicts
+            )
 
 
 class TestConflictExplanation:
@@ -424,15 +448,21 @@ class TestMergeStrategySelection:
             ],
         )
 
-        conflicts = conflict_detector.detect_conflicts({
-            "task-001": analysis1,
-            "task-002": analysis2,
-        })
+        conflicts = conflict_detector.detect_conflicts(
+            {
+                "task-001": analysis1,
+                "task-002": analysis2,
+            }
+        )
 
         if conflicts:
-            import_conflicts = [c for c in conflicts if ChangeType.ADD_IMPORT in c.change_types]
+            import_conflicts = [
+                c for c in conflicts if ChangeType.ADD_IMPORT in c.change_types
+            ]
             if import_conflicts:
-                assert import_conflicts[0].merge_strategy == MergeStrategy.COMBINE_IMPORTS
+                assert (
+                    import_conflicts[0].merge_strategy == MergeStrategy.COMBINE_IMPORTS
+                )
 
     def test_ai_required_strategy(self, conflict_detector):
         """Complex modifications suggest AI_REQUIRED strategy."""
@@ -461,15 +491,17 @@ class TestMergeStrategySelection:
             ],
         )
 
-        conflicts = conflict_detector.detect_conflicts({
-            "task-001": analysis1,
-            "task-002": analysis2,
-        })
+        conflicts = conflict_detector.detect_conflicts(
+            {
+                "task-001": analysis1,
+                "task-002": analysis2,
+            }
+        )
 
         assert len(conflicts) > 0
         complex_conflicts = [c for c in conflicts if not c.can_auto_merge]
         if complex_conflicts:
             assert complex_conflicts[0].merge_strategy in {
                 MergeStrategy.AI_REQUIRED,
-                MergeStrategy.HUMAN_REQUIRED
+                MergeStrategy.HUMAN_REQUIRED,
             }

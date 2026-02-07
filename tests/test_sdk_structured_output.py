@@ -110,12 +110,14 @@ Provide a verdict (PASS or FAIL), reason, and score.
                     tool_name = getattr(block, "name", "")
                     if tool_name == "StructuredOutput":
                         structured_data = getattr(block, "input", None)
-                        print(f"\n  🎯 Found StructuredOutput tool use!")
+                        print("\n  🎯 Found StructuredOutput tool use!")
                         print(f"     Data: {structured_data}")
                         if structured_data:
                             try:
-                                validated = SimpleReviewResponse.model_validate(structured_data)
-                                print(f"\n  ✅ Successfully validated StructuredOutput!")
+                                validated = SimpleReviewResponse.model_validate(
+                                    structured_data
+                                )
+                                print("\n  ✅ Successfully validated StructuredOutput!")
                                 print(f"     verdict: {validated.verdict}")
                                 print(f"     reason: {validated.reason}")
                                 print(f"     score: {validated.score}")
@@ -139,17 +141,18 @@ Provide a verdict (PASS or FAIL), reason, and score.
             # If result is a string, try to parse as JSON
             if isinstance(result, str):
                 import json
+
                 try:
                     parsed = json.loads(result)
                     print(f"  result parsed as JSON: {parsed}")
-                except:
-                    print(f"  result is not JSON")
+                except (json.JSONDecodeError, ValueError):
+                    print("  result is not JSON")
 
             # Try to validate with Pydantic if we got data
             if so:
                 try:
                     validated = SimpleReviewResponse.model_validate(so)
-                    print(f"\n  ✅ Successfully validated structured_output!")
+                    print("\n  ✅ Successfully validated structured_output!")
                     print(f"     verdict: {validated.verdict}")
                     print(f"     reason: {validated.reason}")
                     print(f"     score: {validated.score}")
@@ -160,7 +163,7 @@ Provide a verdict (PASS or FAIL), reason, and score.
                 try:
                     data = result if isinstance(result, dict) else json.loads(result)
                     validated = SimpleReviewResponse.model_validate(data)
-                    print(f"\n  ✅ Successfully validated result as structured output!")
+                    print("\n  ✅ Successfully validated result as structured output!")
                     print(f"     verdict: {validated.verdict}")
                     print(f"     reason: {validated.reason}")
                     print(f"     score: {validated.score}")

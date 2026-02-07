@@ -52,9 +52,7 @@ def classifier():
     return RiskClassifier()
 
 
-def create_assessment_file(
-    spec_dir: Path, assessment_data: dict
-) -> Path:
+def create_assessment_file(spec_dir: Path, assessment_data: dict) -> Path:
     """Helper to create a complexity_assessment.json file."""
     assessment_file = spec_dir / "complexity_assessment.json"
     with open(assessment_file, "w", encoding="utf-8") as f:

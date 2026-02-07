@@ -166,7 +166,11 @@ class TestFollowupReviewResponse:
         """Test valid complete follow-up review response."""
         data = {
             "finding_resolutions": [
-                {"finding_id": "prev-1", "status": "resolved", "resolution_notes": "Fixed"}
+                {
+                    "finding_id": "prev-1",
+                    "status": "resolved",
+                    "resolution_notes": "Fixed",
+                }
             ],
             "new_findings": [
                 {

@@ -93,7 +93,9 @@ class TestDetectWorktreeIsolation:
 
     def test_pr_worktree_windows_path(self):
         """Test detection of PR review worktree location on Windows."""
-        project_dir = Path("E:/projects/auto-claude/.auto-claude/github/pr/worktrees/1528")
+        project_dir = Path(
+            "E:/projects/auto-claude/.auto-claude/github/pr/worktrees/1528"
+        )
 
         is_worktree, forbidden = detect_worktree_isolation(project_dir)
 
@@ -117,7 +119,9 @@ class TestDetectWorktreeIsolation:
 
     def test_deeply_nested_worktree(self):
         """Test worktree detection with deeply nested project directory."""
-        project_dir = Path("/opt/dev/project/.auto-claude/worktrees/tasks/009-very-long-spec-name-for-testing")
+        project_dir = Path(
+            "/opt/dev/project/.auto-claude/worktrees/tasks/009-very-long-spec-name-for-testing"
+        )
 
         is_worktree, forbidden = detect_worktree_isolation(project_dir)
 
@@ -154,7 +158,9 @@ class TestGenerateEnvironmentContext:
 
     def test_context_includes_worktree_warning(self):
         """Test that worktree isolation warning is included when in worktree."""
-        spec_dir = Path("/opt/dev/project/.auto-claude/worktrees/tasks/001-feature/.auto-claude/specs/001-feature")
+        spec_dir = Path(
+            "/opt/dev/project/.auto-claude/worktrees/tasks/001-feature/.auto-claude/specs/001-feature"
+        )
         project_dir = Path("/opt/dev/project/.auto-claude/worktrees/tasks/001-feature")
 
         context = generate_environment_context(project_dir, spec_dir)
@@ -196,9 +202,7 @@ class TestGenerateEnvironmentContext:
             "E:/projects/x/.auto-claude/worktrees/tasks/009-audit"
             "/.auto-claude/specs/009-audit"
         )
-        project_dir = Path(
-            "E:/projects/x/.auto-claude/worktrees/tasks/009-audit"
-        )
+        project_dir = Path("E:/projects/x/.auto-claude/worktrees/tasks/009-audit")
 
         context = generate_environment_context(project_dir, spec_dir)
 
@@ -210,7 +214,9 @@ class TestGenerateEnvironmentContext:
 
     def test_context_forbidden_path_examples(self):
         """Test that forbidden path is shown and rules are included."""
-        spec_dir = Path("/opt/dev/project/.auto-claude/worktrees/tasks/001-feature/.auto-claude/specs/001-feature")
+        spec_dir = Path(
+            "/opt/dev/project/.auto-claude/worktrees/tasks/001-feature/.auto-claude/specs/001-feature"
+        )
         project_dir = Path("/opt/dev/project/.auto-claude/worktrees/tasks/001-feature")
 
         context = generate_environment_context(project_dir, spec_dir)
@@ -226,11 +232,15 @@ class TestGenerateEnvironmentContext:
 
         # Verify Why This Matters section explains consequences
         assert "### Why This Matters:" in context
-        assert "Git commits made in the parent project go to the WRONG branch" in context
+        assert (
+            "Git commits made in the parent project go to the WRONG branch" in context
+        )
 
     def test_context_includes_isolation_mode_indicator(self):
         """Test that Isolation Mode indicator is shown when in worktree."""
-        spec_dir = Path("/opt/dev/project/.auto-claude/worktrees/tasks/001-feature/.auto-claude/specs/001-feature")
+        spec_dir = Path(
+            "/opt/dev/project/.auto-claude/worktrees/tasks/001-feature/.auto-claude/specs/001-feature"
+        )
         project_dir = Path("/opt/dev/project/.auto-claude/worktrees/tasks/001-feature")
 
         context = generate_environment_context(project_dir, spec_dir)

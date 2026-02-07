@@ -28,6 +28,7 @@ from tests.review_fixtures import complete_spec_dir, review_spec_dir
 # TEXT HELPER FUNCTIONS
 # =============================================================================
 
+
 class TestTextHelpers:
     """Tests for text manipulation helper functions."""
 
@@ -111,10 +112,11 @@ Last content.
 # REVIEW STATUS SUMMARY
 # =============================================================================
 
+
 class TestReviewStatusSummary:
     """Tests for get_review_status_summary()."""
 
-    def test_summary_approved_valid(self, review_spec_dir: Path) -> None:
+    def test_summary_approved_valid(self, review_spec_dir) -> None:
         """Summary for approved and valid state."""
         state = ReviewState()
         state.approve(review_spec_dir, approved_by="summary_user")
@@ -126,7 +128,7 @@ class TestReviewStatusSummary:
         assert summary["approved_by"] == "summary_user"
         assert summary["spec_changed"] is False
 
-    def test_summary_approved_stale(self, review_spec_dir: Path) -> None:
+    def test_summary_approved_stale(self, review_spec_dir) -> None:
         """Summary for approved but stale state."""
         state = ReviewState()
         state.approve(review_spec_dir, approved_by="user")
@@ -140,7 +142,7 @@ class TestReviewStatusSummary:
         assert summary["valid"] is False
         assert summary["spec_changed"] is True
 
-    def test_summary_not_approved(self, review_spec_dir: Path) -> None:
+    def test_summary_not_approved(self, review_spec_dir) -> None:
         """Summary for not approved state."""
         summary = get_review_status_summary(review_spec_dir)
 
@@ -148,7 +150,7 @@ class TestReviewStatusSummary:
         assert summary["valid"] is False
         assert summary["approved_by"] == ""
 
-    def test_summary_with_feedback(self, review_spec_dir: Path) -> None:
+    def test_summary_with_feedback(self, review_spec_dir) -> None:
         """Summary includes feedback count."""
         state = ReviewState(feedback=["One", "Two", "Three"])
         state.save(review_spec_dir)
@@ -157,7 +159,7 @@ class TestReviewStatusSummary:
 
         assert summary["feedback_count"] == 3
 
-    def test_status_summary_reflects_current_state(self, complete_spec_dir: Path) -> None:
+    def test_status_summary_reflects_current_state(self, complete_spec_dir) -> None:
         """Test that get_review_status_summary() accurately reflects state."""
         # Not approved
         summary1 = get_review_status_summary(complete_spec_dir)
@@ -189,6 +191,7 @@ class TestReviewStatusSummary:
 # =============================================================================
 # REVIEW MENU OPTIONS
 # =============================================================================
+
 
 class TestReviewMenuOptions:
     """Tests for review menu configuration."""

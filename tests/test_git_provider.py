@@ -236,14 +236,19 @@ class TestDetectGitProviderEdgeCases:
 
     def test_subprocess_exception(self, temp_repo_dir):
         """Test handling of subprocess exceptions."""
-        with patch("core.git_provider.run_git", side_effect=subprocess.SubprocessError("Failed")):
+        with patch(
+            "core.git_provider.run_git",
+            side_effect=subprocess.SubprocessError("Failed"),
+        ):
             provider = detect_git_provider(temp_repo_dir)
 
         assert provider == "unknown"
 
     def test_generic_exception(self, temp_repo_dir):
         """Test handling of generic exceptions."""
-        with patch("core.git_provider.run_git", side_effect=Exception("Unexpected error")):
+        with patch(
+            "core.git_provider.run_git", side_effect=Exception("Unexpected error")
+        ):
             provider = detect_git_provider(temp_repo_dir)
 
         assert provider == "unknown"
@@ -375,7 +380,9 @@ class TestGitCommandIntegration:
         """Test that run_git is called with correct arguments."""
         mock_result = MagicMock(returncode=0, stdout="git@github.com:user/repo.git\n")
 
-        with patch("core.git_provider.run_git", return_value=mock_result) as mock_run_git:
+        with patch(
+            "core.git_provider.run_git", return_value=mock_result
+        ) as mock_run_git:
             detect_git_provider(temp_repo_dir)
 
             # Verify run_git was called with correct parameters
@@ -389,7 +396,9 @@ class TestGitCommandIntegration:
         """Test that the 5-second timeout is used."""
         mock_result = MagicMock(returncode=0, stdout="git@github.com:user/repo.git\n")
 
-        with patch("core.git_provider.run_git", return_value=mock_result) as mock_run_git:
+        with patch(
+            "core.git_provider.run_git", return_value=mock_result
+        ) as mock_run_git:
             detect_git_provider(temp_repo_dir)
 
             # Verify timeout parameter

@@ -125,7 +125,10 @@ class TestTaskModificationRetrieval:
         file_tracker.capture_baselines("task-001", files)
 
         file_tracker.record_modification(
-            "task-001", "src/utils.py", SAMPLE_PYTHON_MODULE, SAMPLE_PYTHON_WITH_NEW_FUNCTION
+            "task-001",
+            "src/utils.py",
+            SAMPLE_PYTHON_MODULE,
+            SAMPLE_PYTHON_WITH_NEW_FUNCTION,
         )
 
         modifications = file_tracker.get_task_modifications("task-001")
@@ -139,10 +142,16 @@ class TestTaskModificationRetrieval:
         file_tracker.capture_baselines("task-002", files)
 
         file_tracker.record_modification(
-            "task-001", "src/utils.py", SAMPLE_PYTHON_MODULE, SAMPLE_PYTHON_WITH_NEW_FUNCTION
+            "task-001",
+            "src/utils.py",
+            SAMPLE_PYTHON_MODULE,
+            SAMPLE_PYTHON_WITH_NEW_FUNCTION,
         )
         file_tracker.record_modification(
-            "task-002", "src/utils.py", SAMPLE_PYTHON_MODULE, SAMPLE_PYTHON_WITH_NEW_IMPORT
+            "task-002",
+            "src/utils.py",
+            SAMPLE_PYTHON_MODULE,
+            SAMPLE_PYTHON_WITH_NEW_IMPORT,
         )
 
         file_tasks = file_tracker.get_files_modified_by_tasks(["task-001", "task-002"])
@@ -162,10 +171,16 @@ class TestConflictDetection:
         file_tracker.capture_baselines("task-002", files)
 
         file_tracker.record_modification(
-            "task-001", "src/utils.py", SAMPLE_PYTHON_MODULE, SAMPLE_PYTHON_WITH_NEW_FUNCTION
+            "task-001",
+            "src/utils.py",
+            SAMPLE_PYTHON_MODULE,
+            SAMPLE_PYTHON_WITH_NEW_FUNCTION,
         )
         file_tracker.record_modification(
-            "task-002", "src/utils.py", SAMPLE_PYTHON_MODULE, SAMPLE_PYTHON_WITH_NEW_IMPORT
+            "task-002",
+            "src/utils.py",
+            SAMPLE_PYTHON_MODULE,
+            SAMPLE_PYTHON_WITH_NEW_IMPORT,
         )
 
         conflicting = file_tracker.get_conflicting_files(["task-001", "task-002"])
@@ -178,7 +193,10 @@ class TestConflictDetection:
         file_tracker.capture_baselines("task-002", [temp_project / "src" / "App.tsx"])
 
         file_tracker.record_modification(
-            "task-001", "src/utils.py", SAMPLE_PYTHON_MODULE, SAMPLE_PYTHON_WITH_NEW_FUNCTION
+            "task-001",
+            "src/utils.py",
+            SAMPLE_PYTHON_MODULE,
+            SAMPLE_PYTHON_WITH_NEW_FUNCTION,
         )
 
         conflicting = file_tracker.get_conflicting_files(["task-001", "task-002"])
@@ -219,7 +237,10 @@ class TestEvolutionSummary:
         files = [temp_project / "src" / "utils.py"]
         file_tracker.capture_baselines("task-001", files)
         file_tracker.record_modification(
-            "task-001", "src/utils.py", SAMPLE_PYTHON_MODULE, SAMPLE_PYTHON_WITH_NEW_FUNCTION
+            "task-001",
+            "src/utils.py",
+            SAMPLE_PYTHON_MODULE,
+            SAMPLE_PYTHON_WITH_NEW_FUNCTION,
         )
 
         summary = file_tracker.get_evolution_summary()
@@ -236,7 +257,10 @@ class TestEvolutionSummary:
         file_tracker.capture_baselines("task-002", files2)
 
         file_tracker.record_modification(
-            "task-001", "src/utils.py", SAMPLE_PYTHON_MODULE, SAMPLE_PYTHON_WITH_NEW_FUNCTION
+            "task-001",
+            "src/utils.py",
+            SAMPLE_PYTHON_MODULE,
+            SAMPLE_PYTHON_WITH_NEW_FUNCTION,
         )
 
         summary = file_tracker.get_evolution_summary()

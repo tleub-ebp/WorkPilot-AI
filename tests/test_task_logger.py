@@ -9,7 +9,7 @@ import os
 import sys
 
 # Add backend to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend"))
 
 from task_logger.ansi import strip_ansi_codes
 from task_logger.capture import StreamingLogCapture
@@ -19,6 +19,7 @@ from task_logger.models import LogEntryType, LogPhase
 # ============================================================================
 # Unit Tests for strip_ansi_codes() Function
 # ============================================================================
+
 
 class TestStripAnsiCodes:
     """Unit tests for the strip_ansi_codes() utility function."""
@@ -82,7 +83,9 @@ class TestStripAnsiCodes:
         # Cursor hide/show
         assert strip_ansi_codes("\x1b[?25lHide\x1b[?25hShow") == "HideShow"
         # Private mode with other chars
-        assert strip_ansi_codes("\x1b[=1hApplication Mode\x1b[=0l") == "Application Mode"
+        assert (
+            strip_ansi_codes("\x1b[=1hApplication Mode\x1b[=0l") == "Application Mode"
+        )
 
     def test_csi_with_parameters(self):
         """CSI sequences with semicolon-separated parameters should be removed."""
@@ -153,6 +156,7 @@ class TestStripAnsiCodes:
 # Integration Tests for TaskLogger
 # ============================================================================
 
+
 class TestTaskLoggerAnsiIntegration:
     """Integration tests for TaskLogger ANSI code sanitization."""
 
@@ -161,9 +165,7 @@ class TestTaskLoggerAnsiIntegration:
         logger = TaskLogger(tmp_path, emit_markers=False)
 
         logger.log(
-            "\x1b[31mError message\x1b[0m",
-            LogEntryType.ERROR,
-            print_to_console=False
+            "\x1b[31mError message\x1b[0m", LogEntryType.ERROR, print_to_console=False
         )
 
         # Load the log file and verify content is sanitized
@@ -183,7 +185,7 @@ class TestTaskLoggerAnsiIntegration:
         logger.log_with_detail(
             content="Reading file",
             detail="\x1b[31mERROR:\x1b[0m File not found",
-            print_to_console=False
+            print_to_console=False,
         )
 
         log_file = tmp_path / "task_logs.json"
@@ -202,7 +204,7 @@ class TestTaskLoggerAnsiIntegration:
         logger.log_with_detail(
             content="\x1b[33mWarning:\x1b[0m Check this",
             detail="Some detail text",
-            print_to_console=False
+            print_to_console=False,
         )
 
         log_file = tmp_path / "task_logs.json"
@@ -223,7 +225,7 @@ class TestTaskLoggerAnsiIntegration:
             "Bash",
             success=True,
             result="Tests completed",
-            detail="\x1b[36m$ npm test\x1b[0m\n\x1b[32mPASS\x1b[0m All tests passed"
+            detail="\x1b[36m$ npm test\x1b[0m\n\x1b[32mPASS\x1b[0m All tests passed",
         )
 
         log_file = tmp_path / "task_logs.json"
@@ -246,7 +248,7 @@ class TestTaskLoggerAnsiIntegration:
             "Bash",
             success=True,
             result="\x1b[32mTests passed\x1b[0m",
-            detail="Some output"
+            detail="Some output",
         )
 
         log_file = tmp_path / "task_logs.json"
@@ -264,6 +266,7 @@ class TestTaskLoggerAnsiIntegration:
 # ============================================================================
 # Integration Tests for StreamingLogCapture
 # ============================================================================
+
 
 class TestStreamingLogCaptureAnsiIntegration:
     """Integration tests for StreamingLogCapture ANSI code sanitization."""
@@ -305,6 +308,7 @@ class TestStreamingLogCaptureAnsiIntegration:
 # ============================================================================
 # Public API Tests
 # ============================================================================
+
 
 class TestTaskLoggerPublicAPI:
     """Tests for the task_logger public API exports."""

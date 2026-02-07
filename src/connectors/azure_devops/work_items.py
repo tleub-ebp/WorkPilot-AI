@@ -16,7 +16,7 @@ Example:
 """
 
 import logging
-from typing import Any, List, Optional
+from typing import Any
 
 from azure.devops.v7_0.work_item_tracking.models import TeamContext, Wiql
 
@@ -81,7 +81,7 @@ class AzureWorkItemsClient:
         project: str,
         query: str,
         max_items: int = 100,
-    ) -> List[WorkItem]:
+    ) -> list[WorkItem]:
         """Query work items using WIQL (Work Item Query Language).
 
         Executes a WIQL query to find matching work items. This follows
@@ -134,8 +134,7 @@ class AzureWorkItemsClient:
                     f"not the repository name. Projects contain repositories."
                 ) from exc
             raise APIError(
-                f"Failed to execute WIQL query in project "
-                f"'{project}': {exc}"
+                f"Failed to execute WIQL query in project '{project}': {exc}"
             ) from exc
 
         if not results.work_items:
@@ -154,7 +153,7 @@ class AzureWorkItemsClient:
 
         # Step 2: Fetch full work item details by IDs
         # CRITICAL: error_policy='omit' to skip inaccessible items
-        api_work_items: List[Any] = []
+        api_work_items: list[Any] = []
         batch_size = 200
         for i in range(0, len(ids), batch_size):
             batch = ids[i : i + batch_size]
@@ -230,14 +229,11 @@ class AzureWorkItemsClient:
                     work_item_id=work_item_id, project=project
                 ) from exc
             raise APIError(
-                f"Failed to get work item {work_item_id} "
-                f"in project '{project}': {exc}"
+                f"Failed to get work item {work_item_id} in project '{project}': {exc}"
             ) from exc
 
         if api_work_item is None:
-            raise WorkItemNotFoundError(
-                work_item_id=work_item_id, project=project
-            )
+            raise WorkItemNotFoundError(work_item_id=work_item_id, project=project)
 
         work_item = WorkItem.from_api_response(api_work_item)
 
@@ -252,9 +248,9 @@ class AzureWorkItemsClient:
     def list_backlog_items(
         self,
         project: str,
-        item_types: Optional[List[str]] = None,
+        item_types: list[str] | None = None,
         max_items: int = 100,
-    ) -> List[WorkItem]:
+    ) -> list[WorkItem]:
         """List work items from the project backlog.
 
         Retrieves backlog items filtered by work item type. By default,
@@ -278,17 +274,14 @@ class AzureWorkItemsClient:
         types = item_types or DEFAULT_BACKLOG_TYPES
 
         logger.info(
-            "Listing backlog items in project '%s' "
-            "(types=%s, max_items=%d).",
+            "Listing backlog items in project '%s' (types=%s, max_items=%d).",
             project,
             types,
             max_items,
         )
 
         # Build WIQL query for backlog items
-        type_conditions = " OR ".join(
-            f"[System.WorkItemType] = '{wt}'" for wt in types
-        )
+        type_conditions = " OR ".join(f"[System.WorkItemType] = '{wt}'" for wt in types)
         wiql_query = (
             "SELECT [System.Id] FROM WorkItems "
             f"WHERE [System.TeamProject] = '{project}' "
