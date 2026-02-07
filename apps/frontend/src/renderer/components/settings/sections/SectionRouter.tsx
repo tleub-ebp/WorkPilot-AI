@@ -192,6 +192,7 @@ export function SectionRouter({
             description="Enable Azure DevOps integration to sync work items with your backlog"
           >
             <AzureDevOpsIntegration
+              projectId={project.id}
               envConfig={envConfig}
               updateEnvConfig={updateEnvConfig}
               showAzureDevOpsPat={showAzureDevOpsToken}

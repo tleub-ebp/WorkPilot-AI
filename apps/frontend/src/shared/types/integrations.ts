@@ -96,6 +96,14 @@ export interface AzureDevOpsImportResult {
   tasks?: import('./task').Task[];
 }
 
+export interface AzureDevOpsRepository {
+  id: string;
+  name: string;
+  project: string;
+  defaultBranch?: string;
+  webUrl?: string;
+}
+
 export interface AzureDevOpsSyncStatus {
   connected: boolean;
   organizationUrl?: string;

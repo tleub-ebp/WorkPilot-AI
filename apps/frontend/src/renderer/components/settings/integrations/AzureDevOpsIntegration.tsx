@@ -1,12 +1,20 @@
-﻿import { useTranslation } from 'react-i18next';
+﻿import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Radio, Import, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Radio, Import, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Switch } from '../../ui/switch';
 import { Separator } from '../../ui/separator';
-import type { ProjectEnvConfig, AzureDevOpsSyncStatus } from '../../../../shared/types';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../ui/select';
+import type { ProjectEnvConfig, AzureDevOpsSyncStatus, AzureDevOpsRepository } from '../../../../shared/types';
 
 interface AzureDevOpsIntegrationProps {
   envConfig: ProjectEnvConfig | null;
@@ -16,11 +24,124 @@ interface AzureDevOpsIntegrationProps {
   azureDevOpsConnectionStatus: AzureDevOpsSyncStatus | null;
   isCheckingAzureDevOps: boolean;
   onOpenAzureDevOpsImport: () => void;
+  projectId: string;
+}
+
+interface RepositorySelectProps {
+  projectId: string;
+  value: string | undefined;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  t: TFunction;
+}
+
+function RepositorySelect({
+  projectId,
+  value,
+  onChange,
+  disabled,
+  t,
+}: RepositorySelectProps) {
+  const [repositories, setRepositories] = useState<AzureDevOpsRepository[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchRepositories = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await window.electronAPI.listAzureDevOpsRepositories(projectId);
+      if (result.success && result.data) {
+        setRepositories(result.data);
+      } else {
+        setError(result.error || t('azureDevOps.repositoryError'));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('azureDevOps.repositoryError'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRepositories();
+  }, [projectId]);
+
+  // Auto-detect and select repository on first load
+  useEffect(() => {
+    const autoDetectRepository = async () => {
+      if (value) {
+        console.log('[AzureDevOps] Repository already set:', value);
+        return;
+      }
+      
+      console.log('[AzureDevOps] Auto-detecting repository...');
+      try {
+        const result = await window.electronAPI.detectAzureDevOpsRepository(projectId);
+        console.log('[AzureDevOps] Detection result:', result);
+        
+        if (result.success && result.data?.repository) {
+          console.log('[AzureDevOps] Auto-selecting repository:', result.data.repository);
+          onChange(result.data.repository);
+        } else {
+          console.log('[AzureDevOps] No repository detected');
+        }
+      } catch (err) {
+        console.warn('[AzureDevOps] Detection failed:', err);
+      }
+    };
+
+    autoDetectRepository();
+  }, [projectId, value, onChange]);
+
+  if (error) {
+    return (
+      <div className="space-y-2">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+          <p className="text-xs text-destructive">{error}</p>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={fetchRepositories}
+          disabled={isLoading}
+          className="gap-2"
+        >
+          <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
+          {t('azureDevOps.repositoryRefresh')}
+        </Button>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        {t('azureDevOps.repositoryLoading')}
+      </div>
+    );
+  }
+
+  return (
+    <Select value={value || ''} onValueChange={onChange} disabled={disabled}>
+      <SelectTrigger>
+        <SelectValue placeholder={t('azureDevOps.repositoryPlaceholder')} />
+      </SelectTrigger>
+      <SelectContent>
+        {repositories.map((repo) => (
+          <SelectItem key={repo.id} value={repo.name}>
+            {repo.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
 
 /**
  * Azure DevOps integration settings component.
- * Manages Azure DevOps PAT, organization URL, project configuration,
+ * Manages Azure DevOps PAT, organization URL, repository configuration,
  * connection status, and import functionality.
  */
 export function AzureDevOpsIntegration({
@@ -31,6 +152,7 @@ export function AzureDevOpsIntegration({
   azureDevOpsConnectionStatus,
   isCheckingAzureDevOps,
   onOpenAzureDevOpsImport,
+  projectId,
 }: AzureDevOpsIntegrationProps) {
   const { t } = useTranslation('settings');
 
@@ -41,10 +163,10 @@ export function AzureDevOpsIntegration({
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
           <Label className="font-normal text-foreground">
-            {t('settings:azureDevOps.enableSyncLabel')}
+            {t('azureDevOps.enableSyncLabel')}
           </Label>
           <p className="text-xs text-muted-foreground">
-            {t('settings:azureDevOps.enableSyncDescription')}
+            {t('azureDevOps.enableSyncDescription')}
           </p>
         </div>
         <Switch
@@ -60,14 +182,14 @@ export function AzureDevOpsIntegration({
           {/* Organization URL */}
           <div className="space-y-2">
             <Label className="text-sm font-medium text-foreground">
-              {t('settings:azureDevOps.orgUrlLabel')}
+              {t('azureDevOps.orgUrlLabel')}
             </Label>
             <p className="text-xs text-muted-foreground">
-              {t('settings:azureDevOps.orgUrlDescription')}
+              {t('azureDevOps.orgUrlDescription')}
             </p>
             <Input
               type="url"
-              placeholder={t('settings:azureDevOps.orgUrlPlaceholder')}
+              placeholder={t('azureDevOps.orgUrlPlaceholder')}
               value={envConfig.azureDevOpsOrgUrl || ''}
               onChange={(e) =>
                 updateEnvConfig({ azureDevOpsOrgUrl: e.target.value })
@@ -78,24 +200,24 @@ export function AzureDevOpsIntegration({
           {/* Personal Access Token */}
           <div className="space-y-2">
             <Label className="text-sm font-medium text-foreground">
-              {t('settings:azureDevOps.patLabel')}
+              {t('azureDevOps.patLabel')}
             </Label>
             <p className="text-xs text-muted-foreground">
-              {t('settings:azureDevOps.patDescriptionPrefix')}{' '}
+              {t('azureDevOps.patDescriptionPrefix')}{' '}
               <a
                 href="https://dev.azure.com/_usersettings/tokens"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-info hover:underline"
               >
-                {t('settings:azureDevOps.patLinkLabel')}
+                {t('azureDevOps.patLinkLabel')}
               </a>
-              . {t('settings:azureDevOps.patDescriptionSuffix')}
+              . {t('azureDevOps.patDescriptionSuffix')}
             </p>
             <div className="relative">
               <Input
                 type={showAzureDevOpsPat ? 'text' : 'password'}
-                placeholder={t('settings:azureDevOps.patPlaceholder')}
+                placeholder={t('azureDevOps.patPlaceholder')}
                 value={envConfig.azureDevOpsPat || ''}
                 onChange={(e) =>
                   updateEnvConfig({ azureDevOpsPat: e.target.value })
@@ -118,21 +240,21 @@ export function AzureDevOpsIntegration({
             </div>
           </div>
 
-          {/* Default Project */}
+          {/* Repository */}
           <div className="space-y-2">
             <Label className="text-sm font-medium text-foreground">
-              {t('settings:azureDevOps.defaultProjectLabel')}
+              {t('azureDevOps.repositoryLabel')}
             </Label>
             <p className="text-xs text-muted-foreground">
-              {t('settings:azureDevOps.defaultProjectDescription')}
+              {t('azureDevOps.repositoryDescription')}
             </p>
-            <Input
-              type="text"
-              placeholder={t('settings:azureDevOps.defaultProjectPlaceholder')}
-              value={envConfig.azureDevOpsProject || ''}
-              onChange={(e) =>
-                updateEnvConfig({ azureDevOpsProject: e.target.value })
+            <RepositorySelect
+              projectId={projectId}
+              value={envConfig.azureDevOpsProject}
+              onChange={(value) =>
+                updateEnvConfig({ azureDevOpsProject: value })
               }
+              t={t}
             />
           </div>
 
@@ -183,21 +305,21 @@ function ConnectionStatus({
   t,
 }: ConnectionStatusProps) {
   const statusText = isChecking
-    ? t('settings:azureDevOps.connectionChecking')
+    ? t('azureDevOps.connectionChecking')
     : connectionStatus?.connected
       ? connectionStatus.projectName
-        ? t('settings:azureDevOps.connectionConnectedProject', {
+        ? t('azureDevOps.connectionConnectedProject', {
             projectName: connectionStatus.projectName,
           })
-        : t('settings:azureDevOps.connectionConnected')
-      : connectionStatus?.error || t('settings:azureDevOps.connectionNotConnected');
+        : t('azureDevOps.connectionConnected')
+      : connectionStatus?.error || t('azureDevOps.connectionNotConnected');
 
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-3">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-foreground">
-            {t('settings:azureDevOps.connectionStatusTitle')}
+            {t('azureDevOps.connectionStatusTitle')}
           </p>
           <p className="text-xs text-muted-foreground">
             {statusText}
@@ -205,7 +327,7 @@ function ConnectionStatus({
           {connectionStatus?.connected &&
             connectionStatus.workItemCount !== undefined && (
               <p className="text-xs text-muted-foreground mt-1">
-                {t('settings:azureDevOps.connectionWorkItemCount', {
+                {t('azureDevOps.connectionWorkItemCount', {
                   count: connectionStatus.workItemCount,
                 })}
               </p>
@@ -235,10 +357,10 @@ function ImportTasksPrompt({ onOpenAzureDevOpsImport, t }: ImportTasksPromptProp
         <Radio className="h-4 w-4 text-info mt-1 flex-shrink-0" />
         <div className="flex-1">
           <p className="text-sm font-medium text-foreground mb-2">
-            {t('settings:azureDevOps.importPromptTitle')}
+            {t('azureDevOps.importPromptTitle')}
           </p>
           <p className="text-xs text-muted-foreground mb-3">
-            {t('settings:azureDevOps.importPromptDescription')}
+            {t('azureDevOps.importPromptDescription')}
           </p>
           <Button
             size="sm"
@@ -247,7 +369,7 @@ function ImportTasksPrompt({ onOpenAzureDevOpsImport, t }: ImportTasksPromptProp
             className="gap-2"
           >
             <Import className="h-4 w-4" />
-            {t('settings:azureDevOps.importPromptButton')}
+            {t('azureDevOps.importPromptButton')}
           </Button>
         </div>
       </div>
@@ -266,10 +388,10 @@ function AutoSyncToggle({ enabled, onToggle, t }: AutoSyncToggleProps) {
     <div className="flex items-center justify-between">
       <div className="space-y-0.5">
         <Label className="font-normal text-foreground">
-          {t('settings:azureDevOps.autoSyncLabel')}
+          {t('azureDevOps.autoSyncLabel')}
         </Label>
         <p className="text-xs text-muted-foreground">
-          {t('settings:azureDevOps.autoSyncDescription')}
+          {t('azureDevOps.autoSyncDescription')}
         </p>
       </div>
       <Switch checked={enabled} onCheckedChange={onToggle} />
@@ -281,8 +403,8 @@ function AutoSyncInfo({ t }: { t: TFunction }) {
   return (
     <div className="rounded-lg border border-warning/30 bg-warning/5 p-3">
       <p className="text-xs text-muted-foreground">
-        <strong className="text-warning">{t('settings:azureDevOps.autoSyncNoteLabel')}</strong>{' '}
-        {t('settings:azureDevOps.autoSyncNoteDescription')}
+        <strong className="text-warning">{t('azureDevOps.autoSyncNoteLabel')}</strong>{' '}
+        {t('azureDevOps.autoSyncNoteDescription')}
       </p>
     </div>
   );

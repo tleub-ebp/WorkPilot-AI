@@ -63,7 +63,8 @@
     "saving": "Enregistrement...",
     "skip": "Ignorer pour le moment",
     "orgUrlRequired": "L'URL d'organisation est requise",
-    "patRequired": "Le jeton d'acc?s personnel est requis"
+    "patRequired": "Le jeton d'acc?s personnel est requis",
+    "repositoryNote": "Vous pourrez sélectionner le repository dans les paramètres du projet après cette étape."
   },
   "worktrees": {
     "title": "Worktrees",
