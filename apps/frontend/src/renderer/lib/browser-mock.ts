@@ -361,7 +361,31 @@ const browserMockAPI: ElectronAPI = {
   openLogsFolder: async () => ({ success: false, error: 'Not available in browser mode' }),
   copyDebugInfo: async () => ({ success: false, error: 'Not available in browser mode' }),
   getRecentErrors: async () => [],
-  listLogFiles: async () => []
+  listLogFiles: async () => [],
+
+  // Azure DevOps Operations
+  getAzureDevOpsProjects: async () => ({
+    success: true,
+    data: []
+  }),
+  getAzureDevOpsWorkItems: async () => ({
+    success: true,
+    data: []
+  }),
+  importAzureDevOpsWorkItems: async () => ({
+    success: true,
+    data: { success: true, imported: 0, failed: 0, errors: [] }
+  }),
+  checkAzureDevOpsConnection: async () => ({
+    success: true,
+    data: { connected: false, organization: null, project: null, error: undefined }
+  }),
+
+  // Repository Provider Detection
+  detectRepoProvider: async () => ({
+    success: true,
+    data: { provider: 'unknown' as const, remoteName: 'origin', remoteUrl: undefined }
+  })
 };
 
 /**

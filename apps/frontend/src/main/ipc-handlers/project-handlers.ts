@@ -282,7 +282,15 @@ function detectRepoProvider(projectPath: string): RepoProviderDetectionResult {
       };
     }
 
-    const [firstName, firstUrls] = remotes.entries().next().value;
+    const firstEntry = remotes.entries().next().value;
+    if (!firstEntry) {
+      return {
+        provider: 'unknown',
+        remoteName: 'origin',
+        remoteUrl: undefined
+      };
+    }
+    const [firstName, firstUrls] = firstEntry;
     return {
       provider: 'unknown',
       remoteName: firstName,

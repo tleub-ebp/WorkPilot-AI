@@ -776,7 +776,7 @@ const handleProjectAdded = async (project: Project, needsInit: boolean) => {
         // Show repo provider setup modal
         if (updatedProject) {
           const detectionResult = await window.electronAPI.detectRepoProvider(updatedProject.path);
-          const rawProvider = detectionResult.success ? detectionResult.data?.provider : 'unknown';
+          const rawProvider = detectionResult.success ? (detectionResult.data?.provider ?? 'unknown') : 'unknown';
           const provider = inferProviderFromRemote(rawProvider, detectionResult.data?.remoteUrl);
 
           setShowGitHubSetup(false);
