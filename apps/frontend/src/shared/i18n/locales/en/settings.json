@@ -1,4 +1,4 @@
-﻿{
+﻿ {
   "title": "Settings",
   "tabs": {
     "app": "App Settings",
@@ -907,9 +907,13 @@
     "patDescriptionSuffix": "Requires scope: Work Items (Read & Write).",
     "patLinkLabel": "Azure DevOps User Settings",
     "patPlaceholder": "Enter your PAT",
-    "defaultProjectLabel": "Default Project (Optional)",
-    "defaultProjectDescription": "Leave empty to specify during import, or set a default project name",
-    "defaultProjectPlaceholder": "MyProject",
+    "repositoryLabel": "Repository",
+    "repositoryDescription": "Select the Azure DevOps repository to use for this project",
+    "repositoryPlaceholder": "Select a repository...",
+    "repositoryLoading": "Loading repositories...",
+    "repositoryError": "Error loading repositories",
+    "repositorySelectManual": "Enter manually",
+    "repositoryRefresh": "Refresh list",
     "connectionStatusTitle": "Connection Status",
     "connectionChecking": "Checking...",
     "connectionConnected": "Connected",

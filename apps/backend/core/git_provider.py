@@ -187,3 +187,65 @@ def extract_azure_devops_project(project_dir: str | Path, remote_name: str | Non
     except Exception:
         return None
 
+
+def extract_azure_devops_repository(project_dir: str | Path, remote_name: str | None = None) -> str | None:
+    """Extract the Azure DevOps repository name from the git remote URL.
+    
+    Args:
+        project_dir: Path to the git repository
+        remote_name: Name of the remote to check (defaults to "origin")
+    
+    Returns:
+        The repository name (URL-decoded) if Azure DevOps remote detected, None otherwise
+    
+    Examples:
+        >>> extract_azure_devops_repository('/path/to/repo')
+        'MeCa Web'  # for https://dev.azure.com/org/MéCa/_git/MeCa%20Web
+        'myrepo'  # for ssh://git@ssh.dev.azure.com/v3/org/MyProject/myrepo
+        None  # for non-Azure DevOps remotes
+    """
+    try:
+        # Get the remote URL
+        remote = remote_name if remote_name else "origin"
+        result = run_git(
+            ["remote", "get-url", remote],
+            cwd=project_dir,
+            timeout=5,
+        )
+        
+        if result.returncode != 0 or not result.stdout.strip():
+            return None
+        
+        remote_url = result.stdout.strip()
+        
+        # Pattern for HTTPS: https://dev.azure.com/{org}/{project}/_git/{repo}
+        # Pattern for old format: https://{org}.visualstudio.com/{project}/_git/{repo}
+        https_patterns = [
+            r"^https?://dev\.azure\.com/[^/]+/[^/]+/_git/([^/\s]+)",
+            r"^https?://[^/]+\.visualstudio\.com/[^/]+/_git/([^/\s]+)",
+        ]
+        
+        for pattern in https_patterns:
+            match = re.search(pattern, remote_url)
+            if match:
+                # URL decode the repository name (e.g., MeCa%20Web -> MeCa Web)
+                from urllib.parse import unquote
+                return unquote(match.group(1))
+        
+        # Pattern for SSH: ssh://git@ssh.dev.azure.com/v3/{org}/{project}/{repo}
+        ssh_match = re.search(r"^ssh://[^@]+@ssh\.dev\.azure\.com/v3/[^/]+/[^/]+/([^/\s]+)", remote_url)
+        if ssh_match:
+            from urllib.parse import unquote
+            return unquote(ssh_match.group(1))
+        
+        # Pattern for git@ format: git@ssh.dev.azure.com:v3/{org}/{project}/{repo}
+        scp_match = re.search(r"^git@ssh\.dev\.azure\.com:v3/[^/]+/[^/]+/([^/\s]+)", remote_url)
+        if scp_match:
+            from urllib.parse import unquote
+            return unquote(scp_match.group(1))
+        
+        return None
+        
+    except Exception:
+        return None
+

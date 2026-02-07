@@ -31,9 +31,7 @@ export function AzureDevOpsSetupModal({
 }: AzureDevOpsSetupModalProps) {
   const { t } = useTranslation(['dialogs', 'settings']);
   const [orgUrl, setOrgUrl] = useState('');
-  const [pat, setPat] = useState('');
-  const [projectName, setProjectName] = useState('');
-  const [showPat, setShowPat] = useState(false);
+  const [pat, setPat] = useState('');  const [showPat, setShowPat] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +48,6 @@ export function AzureDevOpsSetupModal({
 
         setOrgUrl(config?.azureDevOpsOrgUrl || '');
         setPat(config?.azureDevOpsPat || '');
-        setProjectName(config?.azureDevOpsProject || '');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load Azure DevOps settings');
       } finally {
@@ -64,7 +61,6 @@ export function AzureDevOpsSetupModal({
   const handleSave = async () => {
     const trimmedOrgUrl = orgUrl.trim();
     const trimmedPat = pat.trim();
-    const trimmedProject = projectName.trim();
 
     if (!trimmedOrgUrl) {
       setError(t('azureDevOpsSetup.orgUrlRequired'));
@@ -83,7 +79,6 @@ export function AzureDevOpsSetupModal({
         azureDevOpsEnabled: true,
         azureDevOpsOrgUrl: trimmedOrgUrl,
         azureDevOpsPat: trimmedPat,
-        azureDevOpsProject: trimmedProject || undefined,
         githubEnabled: false
       });
       onComplete();
@@ -153,18 +148,9 @@ export function AzureDevOpsSetupModal({
                     {showPat ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-foreground">
-                  {t('settings:azureDevOps.defaultProjectLabel')}
-                </Label>
-                <Input
-                  type="text"
-                  placeholder={t('settings:azureDevOps.defaultProjectPlaceholder')}
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                />
+                <p className="text-xs text-muted-foreground">
+                  {t('azureDevOpsSetup.repositoryNote')}
+                </p>
               </div>
             </>
           )}

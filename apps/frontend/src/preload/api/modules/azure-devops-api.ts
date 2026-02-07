@@ -1,6 +1,7 @@
 ﻿import { IPC_CHANNELS } from '../../../shared/constants';
 import type {
   AzureDevOpsProject,
+  AzureDevOpsRepository,
   AzureDevOpsWorkItem,
   AzureDevOpsImportResult,
   AzureDevOpsSyncStatus,
@@ -13,6 +14,8 @@ import { invokeIpc } from './ipc-utils';
  */
 export interface AzureDevOpsAPI {
   getAzureDevOpsProjects: (projectId: string) => Promise<IPCResult<AzureDevOpsProject[]>>;
+  listAzureDevOpsRepositories: (projectId: string) => Promise<IPCResult<AzureDevOpsRepository[]>>;
+  detectAzureDevOpsRepository: (projectId: string) => Promise<IPCResult<{ repository: string | null }>>;
   getAzureDevOpsWorkItems: (
     projectId: string,
     azureProject?: string,
@@ -29,6 +32,12 @@ export interface AzureDevOpsAPI {
 export const createAzureDevOpsAPI = (): AzureDevOpsAPI => ({
   getAzureDevOpsProjects: (projectId: string): Promise<IPCResult<AzureDevOpsProject[]>> =>
     invokeIpc(IPC_CHANNELS.AZURE_DEVOPS_GET_PROJECTS, projectId),
+
+  listAzureDevOpsRepositories: (projectId: string): Promise<IPCResult<AzureDevOpsRepository[]>> =>
+    invokeIpc(IPC_CHANNELS.AZURE_DEVOPS_LIST_REPOSITORIES, projectId),
+
+  detectAzureDevOpsRepository: (projectId: string): Promise<IPCResult<{ repository: string | null }>> =>
+    invokeIpc(IPC_CHANNELS.AZURE_DEVOPS_DETECT_REPOSITORY, projectId),
 
   getAzureDevOpsWorkItems: (
     projectId: string,

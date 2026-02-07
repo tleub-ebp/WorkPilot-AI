@@ -148,6 +148,10 @@ export function registerEnvHandlers(
     // Azure DevOps Integration
     if (config.azureDevOpsEnabled !== undefined) {
       existingVars[AZURE_DEVOPS_ENV_KEYS.ENABLED] = config.azureDevOpsEnabled ? 'true' : 'false';
+      // Enable auto-sync by default when Azure DevOps is enabled
+      if (config.azureDevOpsEnabled && config.azureDevOpsAutoSync === undefined) {
+        existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC] = 'true';
+      }
     }
     if (config.azureDevOpsPat !== undefined) {
       existingVars[AZURE_DEVOPS_ENV_KEYS.PAT] = config.azureDevOpsPat;
@@ -485,13 +489,12 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
         config.gitlabAutoSync = true;
       }
 
-
       // Azure DevOps config
-      const azureEnabledFlag = vars[AZURE_DEVOPS_ENV_KEYS.ENABLED]?.toLowerCase();
       if (vars[AZURE_DEVOPS_ENV_KEYS.PAT]) {
         config.azureDevOpsPat = vars[AZURE_DEVOPS_ENV_KEYS.PAT];
-        config.azureDevOpsEnabled = azureEnabledFlag !== 'false';
-      } else if (azureEnabledFlag === 'true') {
+      }
+      // Azure DevOps integration
+      if (vars[AZURE_DEVOPS_ENV_KEYS.ENABLED]?.toLowerCase() === 'true') {
         config.azureDevOpsEnabled = true;
       }
       if (vars[AZURE_DEVOPS_ENV_KEYS.ORG_URL]) {
@@ -500,7 +503,10 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
       if (vars[AZURE_DEVOPS_ENV_KEYS.PROJECT]) {
         config.azureDevOpsProject = vars[AZURE_DEVOPS_ENV_KEYS.PROJECT];
       }
-      if (vars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC]?.toLowerCase() === 'true') {
+      // Auto-sync defaults to true if Azure DevOps is enabled and not explicitly set
+      if (vars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC] !== undefined) {
+        config.azureDevOpsAutoSync = vars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC]?.toLowerCase() === 'true';
+      } else if (config.azureDevOpsEnabled) {
         config.azureDevOpsAutoSync = true;
       }
 

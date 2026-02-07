@@ -166,6 +166,21 @@ try:
         } for item in items]
         print(json.dumps({'data': result}))
     
+    elif operation == 'list_repositories':
+        project_name = params.get('project') or project
+        if not project_name:
+            print(json.dumps({'error': 'Project name is required to list repositories'}))
+            sys.exit(1)
+        repos = connector.list_repositories(project_name)
+        result = [{
+            'id': repo.id,
+            'name': repo.name,
+            'project': repo.project,
+            'defaultBranch': repo.default_branch,
+            'webUrl': repo.web_url,
+        } for repo in repos]
+        print(json.dumps({'data': result}))
+    
     elif operation == 'test_connection':
         # Just connecting is enough to test
         info = connector.get_connection_info()
@@ -272,6 +287,133 @@ except Exception as e:
             error: errorMessage,
           },
         };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.AZURE_DEVOPS_LIST_REPOSITORIES,
+    async (_, projectId: string): Promise<IPCResult<import('../../shared/types').AzureDevOpsRepository[]>> => {
+      const project = projectStore.getProject(projectId);
+      if (!project) {
+        return { success: false, error: 'Project not found' };
+      }
+
+      const config = getAzureDevOpsConfig(project);
+      const envOverrides: Record<string, string> = {};
+      if (config.pat) envOverrides.AZURE_DEVOPS_PAT = config.pat;
+      if (config.orgUrl) envOverrides.AZURE_DEVOPS_ORG_URL = config.orgUrl;
+      envOverrides.AZURE_DEVOPS_PROJECT = fixProjectName(config.projectName);
+
+      if (!config.pat || !config.orgUrl) {
+        return {
+          success: false,
+          error: 'Azure DevOps not configured for this project',
+        };
+      }
+
+      if (!config.projectName) {
+        return {
+          success: false,
+          error: 'Azure DevOps project name not configured',
+        };
+      }
+
+      try {
+        const projectPath = path.join(project.path, project.autoBuildPath || '');
+        const repos = (await callAzureDevOpsPython(
+          projectPath,
+          'list_repositories',
+          { project: fixProjectName(config.projectName) },
+          envOverrides
+        )) as import('../../shared/types').AzureDevOpsRepository[];
+
+        return { success: true, data: repos };
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        return { success: false, error: errorMessage };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.AZURE_DEVOPS_DETECT_REPOSITORY,
+    async (_, projectId: string): Promise<IPCResult<{ repository: string | null }>> => {
+      const project = projectStore.getProject(projectId);
+      if (!project) {
+        return { success: false, error: 'Project not found' };
+      }
+
+      try {
+        const projectPath = path.join(project.path, project.autoBuildPath || '');
+        
+        // Call Python to detect repository from git remote
+        const pythonScript = `
+import sys
+import json
+from pathlib import Path
+
+sys.path.insert(0, str(Path('${connectorSrcPath.replace(/\\/g, '\\\\')}').parent))
+sys.path.insert(0, str(Path('${backendPath.replace(/\\/g, '\\\\')}')))
+
+try:
+    from core.git_provider import extract_azure_devops_repository
+    
+    project_dir = Path('${projectPath.replace(/\\/g, '\\\\')}')
+    repository = extract_azure_devops_repository(project_dir)
+    
+    print(json.dumps({'data': {'repository': repository}}))
+except Exception as e:
+    print(json.dumps({'error': str(e)}))
+    sys.exit(1)
+`;
+
+        const proc = spawn('python', ['-c', pythonScript], {
+          cwd: projectPath,
+        });
+
+        let stdout = '';
+        let stderr = '';
+
+        proc.stdout?.on('data', (data) => {
+          stdout += data.toString();
+        });
+
+        proc.stderr?.on('data', (data) => {
+          stderr += data.toString();
+        });
+
+        const result = await new Promise<{ repository: string | null }>((resolve, reject) => {
+          proc.on('close', (code) => {
+            if (code !== 0) {
+              const errorOutput = [stderr.trim(), stdout.trim()].filter(Boolean).join('\n');
+              reject(new Error(errorOutput || `Process exited with code ${code}`));
+              return;
+            }
+
+            try {
+              const parsed = JSON.parse(stdout);
+              if (parsed.error) {
+                reject(new Error(parsed.error));
+              } else {
+                resolve(parsed.data);
+              }
+            } catch (e) {
+              reject(new Error(`Failed to parse response: ${stdout}`));
+            }
+          });
+
+          proc.on('error', (error) => {
+            reject(error);
+          });
+        });
+
+        return { success: true, data: result };
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        return { success: false, error: errorMessage };
       }
     }
   );

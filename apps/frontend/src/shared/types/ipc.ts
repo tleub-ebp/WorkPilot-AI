@@ -140,7 +140,7 @@ import type {
   AzureDevOpsProject,
   AzureDevOpsWorkItem,
   AzureDevOpsImportResult,
-  AzureDevOpsSyncStatus
+  AzureDevOpsSyncStatus, AzureDevOpsRepository
 } from './integrations';
 import type { APIProfile, ProfilesFile, TestConnectionResult, DiscoverModelsResult } from './profile';
 
@@ -485,6 +485,8 @@ export interface ElectronAPI {
 
   // Azure DevOps integration operations
   getAzureDevOpsProjects: (projectId: string) => Promise<IPCResult<AzureDevOpsProject[]>>;
+  listAzureDevOpsRepositories: (projectId: string) => Promise<IPCResult<AzureDevOpsRepository[]>>;
+  detectAzureDevOpsRepository: (projectId: string) => Promise<IPCResult<{ repository: string | null }>>;
   getAzureDevOpsWorkItems: (
     projectId: string,
     azureProject?: string,

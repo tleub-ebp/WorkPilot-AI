@@ -325,6 +325,7 @@ export interface ProjectEnvConfig {
   azureDevOpsPat?: string; // Personal Access Token
   azureDevOpsOrgUrl?: string; // Organization URL (e.g., https://dev.azure.com/your-org)
   azureDevOpsProject?: string; // Default project name
+  azureDevOpsRepository?: string; // Repository name
   azureDevOpsAutoSync?: boolean; // Auto-sync work items on project load
 
   // Git/Worktree Settings

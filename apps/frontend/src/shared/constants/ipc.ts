@@ -243,6 +243,8 @@ export const IPC_CHANNELS = {
   AZURE_DEVOPS_GET_WORK_ITEMS: 'azureDevOps:getWorkItems',
   AZURE_DEVOPS_IMPORT_WORK_ITEMS: 'azureDevOps:importWorkItems',
   AZURE_DEVOPS_CHECK_CONNECTION: 'azureDevOps:checkConnection',
+  AZURE_DEVOPS_LIST_REPOSITORIES: 'azureDevOps:listRepositories',
+  AZURE_DEVOPS_DETECT_REPOSITORY: 'azureDevOps:detectRepository',
 
   // GitHub integration
   GITHUB_GET_REPOSITORIES: 'github:getRepositories',

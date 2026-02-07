@@ -63,7 +63,8 @@
     "saving": "Saving...",
     "skip": "Skip for now",
     "orgUrlRequired": "Organization URL is required",
-    "patRequired": "Personal Access Token is required"
+    "patRequired": "Personal Access Token is required",
+    "repositoryNote": "You can select the repository in the project settings after this step."
   },
   "worktrees": {
     "title": "Worktrees",
