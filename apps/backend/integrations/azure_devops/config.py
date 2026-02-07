@@ -43,11 +43,11 @@ class AzureDevOpsConfig:
     def extract_project_from_repo_url(repo_url: str) -> str | None:
         """
         Extract the project name from an Azure DevOps repository URL.
-        
+
         Args:
-            repo_url: Repository URL like 
+            repo_url: Repository URL like
                 https://dev.azure.com/{org}/{project}/_git/{repo}
-        
+
         Returns:
             Project name (unquoted) or None if parsing fails
             
