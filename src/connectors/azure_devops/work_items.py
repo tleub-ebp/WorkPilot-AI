@@ -18,7 +18,7 @@ Example:
 import logging
 from typing import Any, List, Optional
 
-from azure.devops.v7_0.work_item_tracking.models import Wiql, TeamContext
+from azure.devops.v7_0.work_item_tracking.models import TeamContext, Wiql
 
 from src.connectors.azure_devops.client import AzureDevOpsClient
 from src.connectors.azure_devops.exceptions import (

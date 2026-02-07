@@ -182,7 +182,6 @@ from src.connectors.azure_devops.client import AzureDevOpsClient
 from src.connectors.azure_devops.repos import AzureReposClient
 from src.connectors.azure_devops.work_items import AzureWorkItemsClient
 
-
 # ── Constants for test data ──────────────────────────────────────────
 
 TEST_PAT = "test-pat-token-value"

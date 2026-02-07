@@ -22,8 +22,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-# ── 1. Top-level imports ─────────────────────────────────────────────
+from src.config.settings import Settings
 
+# ── 1. Top-level imports ─────────────────────────────────────────────
 from src.connectors.azure_devops import (
     APIError,
     AuthenticationError,
@@ -41,13 +42,11 @@ from src.connectors.azure_devops import (
     WorkItem,
     WorkItemNotFoundError,
 )
-from src.config.settings import Settings
 from src.connectors.base import (
     BaseConnector,
     BaseIntegratedConnector,
     BaseWorkItemTracker,
 )
-
 
 # ── 2. AzureDevOpsConnector method verification ─────────────────────
 

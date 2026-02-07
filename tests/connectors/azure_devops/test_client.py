@@ -21,7 +21,6 @@ from src.connectors.azure_devops.exceptions import (
     ConfigurationError,
 )
 
-
 # ── Configuration validation tests ─────────────────────────────────
 
 

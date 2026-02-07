@@ -9,10 +9,10 @@ Tests the context gathering logic, specifically:
 """
 
 import sys
+import tempfile
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
-import tempfile
 
 import pytest
 
@@ -71,7 +71,7 @@ _fl.locked_json_write = MagicMock()
 # Now safe to import
 # ---------------------------------------------------------------------------
 from context_gatherer import AI_BOT_PATTERNS, FollowupContextGatherer
-from models import PRReviewResult, FollowupReviewContext
+from models import FollowupReviewContext, PRReviewResult
 
 
 class TestAIReviewsInclusion:
