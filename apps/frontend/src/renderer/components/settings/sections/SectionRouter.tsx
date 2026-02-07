@@ -1,11 +1,12 @@
 import { useTranslation } from 'react-i18next';
-import type { Project, ProjectSettings as ProjectSettingsType, AutoBuildVersionInfo, ProjectEnvConfig, LinearSyncStatus, GitHubSyncStatus, GitLabSyncStatus } from '../../../../shared/types';
+import type { Project, ProjectSettings as ProjectSettingsType, AutoBuildVersionInfo, ProjectEnvConfig, LinearSyncStatus, GitHubSyncStatus, GitLabSyncStatus, AzureDevOpsSyncStatus } from '../../../../shared/types';
 import { SettingsSection } from '../SettingsSection';
 import { GeneralSettings } from '../../project-settings/GeneralSettings';
 import { SecuritySettings } from '../../project-settings/SecuritySettings';
 import { LinearIntegration } from '../integrations/LinearIntegration';
 import { GitHubIntegration } from '../integrations/GitHubIntegration';
 import { GitLabIntegration } from '../integrations/GitLabIntegration';
+import { AzureDevOpsIntegration } from '../integrations/AzureDevOpsIntegration';
 import { InitializationGuard } from '../common/InitializationGuard';
 import type { ProjectSettingsSection } from '../ProjectSettingsContent';
 
@@ -35,8 +36,13 @@ interface SectionRouterProps {
   isCheckingGitLab: boolean;
   linearConnectionStatus: LinearSyncStatus | null;
   isCheckingLinear: boolean;
+  showAzureDevOpsToken: boolean;
+  setShowAzureDevOpsToken: React.Dispatch<React.SetStateAction<boolean>>;
+  azureDevOpsConnectionStatus: AzureDevOpsSyncStatus | null;
+  isCheckingAzureDevOps: boolean;
   handleInitialize: () => Promise<void>;
   onOpenLinearImport: () => void;
+  onOpenAzureDevOpsImport: () => void;
 }
 
 /**
@@ -69,8 +75,13 @@ export function SectionRouter({
   isCheckingGitLab,
   linearConnectionStatus,
   isCheckingLinear,
+  showAzureDevOpsToken,
+  setShowAzureDevOpsToken,
+  azureDevOpsConnectionStatus,
+  isCheckingAzureDevOps,
   handleInitialize,
-  onOpenLinearImport
+  onOpenLinearImport,
+  onOpenAzureDevOpsImport
 }: SectionRouterProps) {
   const { t } = useTranslation('settings');
 
@@ -164,6 +175,30 @@ export function SectionRouter({
               projectPath={project.path}
               settings={settings}
               setSettings={setSettings}
+            />
+          </InitializationGuard>
+        </SettingsSection>
+      );
+
+    case 'azure-devops':
+      return (
+        <SettingsSection
+          title="Azure DevOps Integration"
+          description="Configure and manage Azure DevOps work item synchronization"
+        >
+          <InitializationGuard
+            initialized={!!project.autoBuildPath}
+            title="Azure DevOps Integration"
+            description="Enable Azure DevOps integration to sync work items with your backlog"
+          >
+            <AzureDevOpsIntegration
+              envConfig={envConfig}
+              updateEnvConfig={updateEnvConfig}
+              showAzureDevOpsPat={showAzureDevOpsToken}
+              setShowAzureDevOpsPat={setShowAzureDevOpsToken}
+              azureDevOpsConnectionStatus={azureDevOpsConnectionStatus}
+              isCheckingAzureDevOps={isCheckingAzureDevOps}
+              onOpenAzureDevOpsImport={onOpenAzureDevOpsImport}
             />
           </InitializationGuard>
         </SettingsSection>

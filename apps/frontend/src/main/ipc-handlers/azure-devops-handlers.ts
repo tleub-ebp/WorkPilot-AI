@@ -1,0 +1,525 @@
+﻿import { ipcMain } from 'electron';
+import type { BrowserWindow } from 'electron';
+import { IPC_CHANNELS, AUTO_BUILD_PATHS, getSpecsDir } from '../../shared/constants';
+import type {
+  IPCResult,
+  AzureDevOpsWorkItem,
+  AzureDevOpsProject,
+  AzureDevOpsImportResult,
+  AzureDevOpsSyncStatus,
+  Project,
+  TaskMetadata,
+} from '../../shared/types';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import {
+  existsSync,
+  readFileSync,
+  mkdirSync,
+  writeFileSync,
+  readdirSync,
+} from 'fs';
+import { projectStore } from '../project-store';
+import { parseEnvFile } from './utils';
+import { sanitizeText, sanitizeUrl } from './shared/sanitize';
+import { AgentManager } from '../agent';
+import { spawn } from 'child_process';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const connectorSrcPath = path.resolve(__dirname, '..', '..', '..', '..', 'src');
+const backendPath = path.resolve(__dirname, '..', '..', '..', 'backend');
+
+/**
+ * Register all Azure DevOps-related IPC handlers
+ */
+export function registerAzureDevOpsHandlers(
+  agentManager: AgentManager,
+  _getMainWindow: () => BrowserWindow | null
+): void {
+  // ============================================
+  // Azure DevOps Integration Operations
+  // ============================================
+
+  /**
+   * Helper to get Azure DevOps credentials from project env
+   */
+  const getAzureDevOpsConfig = (
+    project: Project
+  ): {
+    pat: string | null;
+    orgUrl: string | null;
+    projectName: string | null;
+  } => {
+    if (!project.autoBuildPath) {
+      return { pat: null, orgUrl: null, projectName: null };
+    }
+    const envPath = path.join(project.path, project.autoBuildPath, '.env');
+    if (!existsSync(envPath)) {
+      return { pat: null, orgUrl: null, projectName: null };
+    }
+
+    try {
+      const content = readFileSync(envPath, 'utf-8');
+      const vars = parseEnvFile(content);
+      return {
+        pat: vars['AZURE_DEVOPS_PAT'] || null,
+        orgUrl: vars['AZURE_DEVOPS_ORG_URL'] || null,
+        projectName: vars['AZURE_DEVOPS_PROJECT'] || null,
+      };
+    } catch {
+      return { pat: null, orgUrl: null, projectName: null };
+    }
+  };
+
+  /**
+   * Helper to fix project name if it's the repository name instead
+   */
+  const fixProjectName = (projectName: string | null | undefined): string => {
+    if (!projectName) return 'MéCa';
+    // Fix common mistakes: repository name instead of project name
+    if (projectName === 'MeCa Web' || projectName === 'MeCa%20Web' || projectName === 'Auto-Claude_EBP') {
+      return 'MéCa';
+    }
+    return projectName;
+  };
+
+  /**
+   * Call Python Azure DevOps connector
+   */
+  const callAzureDevOpsPython = async (
+    projectPath: string,
+    operation: string,
+    params: Record<string, unknown> = {},
+    envOverrides: Record<string, string> = {}
+  ): Promise<unknown> => {
+    return new Promise((resolve, reject) => {
+      const pythonScript = `
+import sys
+import json
+import os
+from pathlib import Path
+
+# Add connector src paths for both app repo and project
+sys.path.insert(0, str(Path('${connectorSrcPath.replace(/\\/g, '\\\\')}').parent))
+sys.path.insert(0, str(Path('${connectorSrcPath.replace(/\\/g, '\\\\')}')))
+sys.path.insert(0, str(Path('${projectPath.replace(/\\/g, '\\\\')}').parent / 'src'))
+# Add apps/backend path for core.git_provider
+sys.path.insert(0, str(Path('${backendPath.replace(/\\/g, '\\\\')}')))
+
+from connectors.azure_devops import AzureDevOpsConnector
+from config.settings import Settings
+
+try:
+    # Try to import git_provider for auto-detection
+    try:
+        from core.git_provider import extract_azure_devops_project
+        has_git_provider = True
+    except ImportError:
+        has_git_provider = False
+    
+    # Get credentials from environment
+    pat = os.getenv('AZURE_DEVOPS_PAT')
+    org_url = os.getenv('AZURE_DEVOPS_ORG_URL')
+    # FORCE MéCa to prevent using incorrect system env var
+    project = 'MéCa'
+    
+    if not pat or not org_url:
+        print(json.dumps({'error': 'Azure DevOps not configured'}))
+        sys.exit(1)
+    
+    # Auto-detect project from Git remote if not configured
+    if not project and has_git_provider:
+        try:
+            project_dir = Path('${projectPath.replace(/\\/g, '\\\\')}')
+            detected_project = extract_azure_devops_project(project_dir)
+            if detected_project:
+                project = detected_project
+        except Exception:
+            pass  # Fallback to None if auto-detection fails
+    
+    settings = Settings(pat=pat, organization_url=org_url, project=project)
+    connector = AzureDevOpsConnector(settings)
+    connector.connect()
+    
+    operation = '${operation}'
+    params = ${JSON.stringify(params)}
+    
+    if operation == 'list_work_items':
+        project_name = params.get('project') or project
+        item_types = params.get('item_types')
+        max_items = params.get('max_items', 100)
+        items = connector.list_backlog_items(project_name, item_types, max_items)
+        result = [{
+            'id': item.id,
+            'title': item.title,
+            'description': item.description,
+            'state': item.state,
+            'workItemType': item.work_item_type,
+            'assignedTo': item.assigned_to,
+            'tags': item.tags,
+            'priority': item.priority,
+            'createdDate': item.created_date.isoformat() if hasattr(item.created_date, 'isoformat') else item.created_date,
+            'areaPath': item.area_path,
+            'iterationPath': item.iteration_path,
+            'url': item.url,
+        } for item in items]
+        print(json.dumps({'data': result}))
+    
+    elif operation == 'test_connection':
+        # Just connecting is enough to test
+        info = connector.get_connection_info()
+        print(json.dumps({'data': info}))
+    
+    else:
+        print(json.dumps({'error': f'Unknown operation: {operation}'}))
+        sys.exit(1)
+        
+except Exception as e:
+    print(json.dumps({'error': str(e)}))
+    sys.exit(1)
+`;
+
+      const proc = spawn('python', ['-c', pythonScript], {
+        cwd: projectPath,
+        env: { ...process.env, ...envOverrides },
+      });
+
+      let stdout = '';
+      let stderr = '';
+
+      proc.stdout?.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      proc.stderr?.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      proc.on('close', (code) => {
+        if (code !== 0) {
+          const errorOutput = [stderr.trim(), stdout.trim()].filter(Boolean).join('\n');
+          reject(new Error(errorOutput || `Process exited with code ${code}`));
+          return;
+        }
+
+        try {
+          const result = JSON.parse(stdout);
+          if (result.error) {
+            reject(new Error(result.error));
+          } else {
+            resolve(result.data);
+          }
+        } catch (e) {
+          reject(new Error(`Failed to parse response: ${stdout}`));
+        }
+      });
+
+      proc.on('error', (error) => {
+        reject(error);
+      });
+    });
+  };
+
+  ipcMain.handle(
+    IPC_CHANNELS.AZURE_DEVOPS_CHECK_CONNECTION,
+    async (_, projectId: string): Promise<IPCResult<AzureDevOpsSyncStatus>> => {
+      const project = projectStore.getProject(projectId);
+      if (!project) {
+        return { success: false, error: 'Project not found' };
+      }
+
+      const config = getAzureDevOpsConfig(project);
+      const envOverrides: Record<string, string> = {};
+      if (config.pat) envOverrides.AZURE_DEVOPS_PAT = config.pat;
+      if (config.orgUrl) envOverrides.AZURE_DEVOPS_ORG_URL = config.orgUrl;
+      // Always set AZURE_DEVOPS_PROJECT to override any system env var
+      envOverrides.AZURE_DEVOPS_PROJECT = fixProjectName(config.projectName);
+      if (!config.pat || !config.orgUrl) {
+        return {
+          success: true,
+          data: {
+            connected: false,
+            error: 'Azure DevOps not configured',
+          },
+        };
+      }
+
+      try {
+        const projectPath = path.join(project.path, project.autoBuildPath || '');
+        const info = (await callAzureDevOpsPython(
+          projectPath,
+          'test_connection',
+          {},
+          envOverrides
+        )) as Record<string, string>;
+
+        return {
+          success: true,
+          data: {
+            connected: true,
+            organizationUrl: config.orgUrl,
+            projectName: config.projectName || undefined,
+          },
+        };
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        return {
+          success: true,
+          data: {
+            connected: false,
+            error: errorMessage,
+          },
+        };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.AZURE_DEVOPS_GET_WORK_ITEMS,
+    async (
+      _,
+      projectId: string,
+      azureProject?: string,
+      itemTypes?: string[],
+      maxItems?: number
+    ): Promise<IPCResult<AzureDevOpsWorkItem[]>> => {
+      const project = projectStore.getProject(projectId);
+      if (!project) {
+        return { success: false, error: 'Project not found' };
+      }
+
+      const config = getAzureDevOpsConfig(project);
+      const envOverrides: Record<string, string> = {};
+      if (config.pat) envOverrides.AZURE_DEVOPS_PAT = config.pat;
+      if (config.orgUrl) envOverrides.AZURE_DEVOPS_ORG_URL = config.orgUrl;
+      // Always set AZURE_DEVOPS_PROJECT to override any system env var
+      envOverrides.AZURE_DEVOPS_PROJECT = fixProjectName(config.projectName);
+      if (!config.pat || !config.orgUrl) {
+        return {
+          success: false,
+          error: 'Azure DevOps not configured for this project',
+        };
+      }
+
+      try {
+        const projectPath = path.join(project.path, project.autoBuildPath || '');
+        
+        // Debug: Log what project value we're using
+        // FORCE MéCa if config contains "MeCa Web" (repository name instead of project)
+        let projectToUse = azureProject || config.projectName;
+        if (projectToUse === 'MeCa Web' || projectToUse === 'MeCa%20Web') {
+          projectToUse = 'MéCa';
+        }
+        console.log('[Azure DevOps] Debug info:');
+        console.log('  - azureProject param:', azureProject);
+        console.log('  - config.projectName:', config.projectName);
+        console.log('  - project.name:', project.name);
+        console.log('  - envOverrides.AZURE_DEVOPS_PROJECT:', envOverrides.AZURE_DEVOPS_PROJECT);
+        console.log('  - Will use project (after fix):', projectToUse);
+        
+        // Don't pass project param - let Python script use envOverrides or hardcoded value
+        const items = (await callAzureDevOpsPython(projectPath, 'list_work_items', {
+          project: projectToUse,
+          item_types: itemTypes,
+          max_items: maxItems || 100,
+        }, envOverrides)) as AzureDevOpsWorkItem[];
+
+        return { success: true, data: items };
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        return { success: false, error: errorMessage };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.AZURE_DEVOPS_IMPORT_WORK_ITEMS,
+    async (
+      _,
+      projectId: string,
+      workItemIds: number[]
+    ): Promise<IPCResult<AzureDevOpsImportResult>> => {
+      const project = projectStore.getProject(projectId);
+      if (!project || !project.autoBuildPath) {
+        return { success: false, error: 'Project not found or not initialized' };
+      }
+
+      const config = getAzureDevOpsConfig(project);
+      const envOverrides: Record<string, string> = {};
+      if (config.pat) envOverrides.AZURE_DEVOPS_PAT = config.pat;
+      if (config.orgUrl) envOverrides.AZURE_DEVOPS_ORG_URL = config.orgUrl;
+      // Always set AZURE_DEVOPS_PROJECT to override any system env var
+      envOverrides.AZURE_DEVOPS_PROJECT = fixProjectName(config.projectName);
+      if (!config.pat || !config.orgUrl) {
+        return { success: false, error: 'Azure DevOps not configured' };
+      }
+
+      try {
+        const projectPath = path.join(project.path, project.autoBuildPath || '');
+
+        // Get work items details
+        const items = (await callAzureDevOpsPython(projectPath, 'list_work_items', {
+          project: fixProjectName(config.projectName),
+          max_items: 1000,
+        }, envOverrides)) as AzureDevOpsWorkItem[];
+
+        const selectedItems = items.filter((item) =>
+          workItemIds.includes(item.id)
+        );
+
+        if (selectedItems.length === 0) {
+          return {
+            success: false,
+            error: 'No matching work items found',
+          };
+        }
+
+        // Create tasks from work items
+        const specsBaseDir = getSpecsDir(project.autoBuildPath);
+        const specsDir = path.join(project.path, specsBaseDir);
+        if (!existsSync(specsDir)) {
+          mkdirSync(specsDir, { recursive: true });
+        }
+
+        let specNumber = 1;
+        const existingDirs = readdirSync(specsDir, { withFileTypes: true })
+          .filter((dir) => dir.isDirectory())
+          .map((dir) => dir.name);
+        const existingNumbers = existingDirs
+          .map((name) => {
+            const match = name.match(/^(\d+)/);
+            return match ? parseInt(match[1], 10) : 0;
+          })
+          .filter((num) => num > 0);
+        if (existingNumbers.length > 0) {
+          specNumber = Math.max(...existingNumbers) + 1;
+        }
+
+        const importedTasks: import('../../shared/types').Task[] = [];
+        const errors: string[] = [];
+
+        for (const item of selectedItems) {
+          try {
+            // Sanitize inputs
+            const safeTitle = sanitizeText(item.title, 200);
+            const safeDescription = item.description
+              ? sanitizeText(item.description, 5000)
+              : '';
+            const safeIdentifier = sanitizeText(`ADO-${item.id}`, 100);
+            const safeUrl = item.url ? sanitizeUrl(item.url) : '';
+
+            const slugifiedTitle = safeTitle
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-|-$/g, '')
+              .substring(0, 50) || 'task';
+            const specId = `${String(specNumber).padStart(3, '0')}-${slugifiedTitle}`;
+            specNumber += 1;
+
+            const specDir = path.join(specsDir, specId);
+            mkdirSync(specDir, { recursive: true });
+
+            // Map work item type to task category
+            let category: string;
+            switch (item.workItemType.toLowerCase()) {
+              case 'bug':
+                category = 'bug';
+                break;
+              case 'task':
+                category = 'task';
+                break;
+              case 'user story':
+              case 'feature':
+                category = 'feature';
+                break;
+              default:
+                category = 'task';
+            }
+
+            // Map priority (Azure DevOps: 1=highest, 4=lowest -> Auto-Claude: high/medium/low)
+            let priority = 'medium';
+            if (item.priority) {
+              if (item.priority <= 1) priority = 'high';
+              else if (item.priority >= 3) priority = 'low';
+            }
+
+            const metadata: TaskMetadata = {
+              sourceType: 'imported',
+              category: category as import('../../shared/types').TaskCategory,
+              priority: priority as import('../../shared/types').TaskPriority,
+              azureDevOpsIdentifier: safeIdentifier,
+              azureDevOpsUrl: safeUrl,
+              azureDevOpsState: item.state,
+              azureDevOpsType: item.workItemType,
+            };
+
+            const now = new Date().toISOString();
+            const implementationPlan = {
+              feature: safeTitle,
+              description: safeDescription,
+              created_at: now,
+              updated_at: now,
+              status: 'pending',
+              phases: []
+            };
+
+            const planPath = path.join(specDir, AUTO_BUILD_PATHS.IMPLEMENTATION_PLAN);
+            writeFileSync(planPath, JSON.stringify(implementationPlan, null, 2), 'utf-8');
+
+            const requirements = {
+              task_description: safeDescription,
+              workflow_type: category
+            };
+            const requirementsPath = path.join(specDir, AUTO_BUILD_PATHS.REQUIREMENTS);
+            writeFileSync(requirementsPath, JSON.stringify(requirements, null, 2), 'utf-8');
+
+            const metadataPath = path.join(specDir, 'task_metadata.json');
+            writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), 'utf-8');
+
+            const task: import('../../shared/types').Task = {
+              id: specId,
+              specId,
+              projectId: project.id,
+              title: safeTitle,
+              description: safeDescription,
+              status: 'backlog',
+              subtasks: [],
+              logs: [],
+              metadata,
+              createdAt: new Date(now),
+              updatedAt: new Date(now)
+            };
+
+            importedTasks.push(task);
+          } catch (error: unknown) {
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            errors.push(
+              `Failed to import work item ${item.id}: ${errorMessage}`
+            );
+          }
+        }
+
+        projectStore.invalidateTasksCache(project.id);
+
+        return {
+          success: true,
+          data: {
+            success: true,
+            imported: importedTasks.length,
+            failed: errors.length,
+            errors: errors.length > 0 ? errors : undefined,
+            tasks: importedTasks,
+          },
+        };
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        return { success: false, error: errorMessage };
+      }
+    }
+  );
+}

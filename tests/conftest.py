@@ -1,15 +1,181 @@
-"""Shared pytest fixtures for the Azure DevOps connector test suite.
+"""Shared pytest fixtures and collection-time MagicMock cleanup.
 
-Provides reusable fixtures for creating mock API clients, sample
-API response objects, and pre-configured connector instances. All
-fixtures use ``unittest.mock`` to avoid real Azure DevOps API calls.
+Provides:
+1. A ``pytest_collectstart`` hook that removes MagicMock entries from
+   ``sys.modules`` before each test module is collected.  Several test
+   files set ``sys.modules["core"] = MagicMock()`` (and similar) at
+   module level so they can import backend code without all transitive
+   dependencies.  This pollutes the module cache and causes *other*
+   test files to fail with "'core' is not a package" errors.
+
+2. Reusable fixtures for creating mock Azure DevOps API clients,
+   sample API response objects, and pre-configured connector instances.
 """
 
+import importlib
+import sys
 from datetime import datetime
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
+
+# ---------------------------------------------------------------------------
+# Backend packages that are frequently polluted by MagicMock in test files.
+# Before each test file is collected we remove any MagicMock entries so
+# Python's import machinery can resolve real sub-modules.
+# ---------------------------------------------------------------------------
+
+_BACKEND = str(Path(__file__).parent.parent / "apps" / "backend")
+if _BACKEND not in sys.path:
+    sys.path.insert(0, _BACKEND)
+
+# Packages that get polluted by test files setting sys.modules[name] = MagicMock().
+# This list must cover EVERY top-level package name that any test file mocks via
+# sys.modules so the cleanup hook can restore real imports between test files.
+_PROTECTED_PACKAGES = [
+    # Core infrastructure
+    "core",
+    "client",
+    "init",
+    "debug",
+    # SDKs
+    "claude_code_sdk",
+    "claude_agent_sdk",
+    # Agents & tools
+    "agents",
+    "runners",
+    "context",
+    # Spec system
+    "spec",
+    "validate_spec",
+    "implementation_plan",
+    # Security
+    "security",
+    # Prompts
+    "prompts",
+    "prompts_pkg",
+    "prompt_generator",
+    # Config & phases
+    "phase_config",
+    "phase_event",
+    # Logging & UI
+    "task_logger",
+    "progress",
+    "ui",
+    "linear_updater",
+    # Memory & graph
+    "memory",
+    "graphiti_config",
+    "graphiti_providers",
+    # Recovery & analysis
+    "recovery",
+    "insight_extractor",
+    "review",
+    "analysis",
+    # Integrations
+    "integrations",
+    # Utilities
+    "rate_limiter",
+    "file_lock",
+]
+
+
+def _clean_mock_modules() -> None:
+    """Remove any MagicMock entries from sys.modules for protected packages.
+
+    This allows subsequent imports to find the real packages on disk
+    instead of hitting a MagicMock that cannot resolve sub-modules.
+    """
+    keys_to_remove = []
+    for key, mod in list(sys.modules.items()):
+        if not isinstance(mod, MagicMock):
+            continue
+        # Check if this key belongs to a protected package
+        for pkg in _PROTECTED_PACKAGES:
+            if key == pkg or key.startswith(pkg + "."):
+                keys_to_remove.append(key)
+                break
+    for key in keys_to_remove:
+        del sys.modules[key]
+
+
+def pytest_collectstart(collector) -> None:
+    """Remove MagicMock pollution from sys.modules before collecting each file.
+
+    This hook fires before each collector (test file) is imported, giving
+    us a chance to clean up mocks left by previously-collected files.
+    """
+    _clean_mock_modules()
+
+
+# ---------------------------------------------------------------------------
+# Git repository fixture used by multiple test files
+# ---------------------------------------------------------------------------
+
+import subprocess
+import tempfile
+
+
+@pytest.fixture
+def temp_git_repo(tmp_path):
+    """Create a temporary directory with an initialised git repository.
+
+    Yields the ``Path`` to the repository root.  The fixture isolates the
+    git environment so that the host user's global git config does not
+    interfere with tests (e.g. hooks, signing, templates).
+    """
+    repo = tmp_path / "repo"
+    repo.mkdir()
+
+    env = {
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "HOME": str(tmp_path),
+        "GIT_AUTHOR_NAME": "Test",
+        "GIT_AUTHOR_EMAIL": "test@test.com",
+        "GIT_COMMITTER_NAME": "Test",
+        "GIT_COMMITTER_EMAIL": "test@test.com",
+    }
+
+    subprocess.run(
+        ["git", "init", "--initial-branch=main"],
+        cwd=repo,
+        env={**subprocess.os.environ, **env},
+        capture_output=True,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "test@test.com"],
+        cwd=repo,
+        capture_output=True,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test"],
+        cwd=repo,
+        capture_output=True,
+        check=True,
+    )
+
+    # Create an initial commit so HEAD exists
+    readme = repo / "README.md"
+    readme.write_text("# Test repo\n")
+    subprocess.run(["git", "add", "."], cwd=repo, capture_output=True, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "Initial commit"],
+        cwd=repo,
+        env={**subprocess.os.environ, **env},
+        capture_output=True,
+        check=True,
+    )
+
+    yield repo
+
+
+# ---------------------------------------------------------------------------
+# Azure DevOps connector imports and fixtures
+# ---------------------------------------------------------------------------
 
 from src.config.settings import Settings
 from src.connectors.azure_devops.client import AzureDevOpsClient

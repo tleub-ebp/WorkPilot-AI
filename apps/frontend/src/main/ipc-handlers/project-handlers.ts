@@ -10,7 +10,8 @@ import type {
   InitializationResult,
   AutoBuildVersionInfo,
   GitStatus,
-  GitBranchDetail
+  GitBranchDetail,
+  RepoProviderDetectionResult
 } from '../../shared/types';
 import { projectStore } from '../project-store';
 import {
@@ -199,6 +200,99 @@ function getCurrentGitBranch(projectPath: string): string | null {
  * Detect the main branch for a git repository
  * Checks for common main branch names in order of preference
  */
+function detectRepoProvider(projectPath: string): RepoProviderDetectionResult {
+  try {
+    const result = execFileSync(getToolPath('git'), ['remote', '-v'], {
+      cwd: projectPath,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+
+    const remotes = new Map<string, { fetch?: string; push?: string }>();
+    for (const line of result.trim().split('\n')) {
+      const match = line.trim().match(/^(\S+)\s+(\S+)\s+\((fetch|push)\)$/);
+      if (!match) continue;
+      const name = match[1];
+      const url = match[2];
+      const type = match[3] as 'fetch' | 'push';
+      const entry = remotes.get(name) || {};
+      entry[type] = url;
+      remotes.set(name, entry);
+    }
+
+    const isGitHub = (url: string) => /github\.com[:/]/i.test(url);
+    const isAzure = (url: string) => /dev\.azure\.com|visualstudio\.com|ssh\.dev\.azure\.com/i.test(url);
+
+    const pickProvider = (url?: string): 'github' | 'azure_devops' | 'unknown' => {
+      if (!url) return 'unknown';
+      if (isGitHub(url)) return 'github';
+      if (isAzure(url)) return 'azure_devops';
+      return 'unknown';
+    };
+
+    if (remotes.size === 0) {
+      try {
+        const originUrl = execFileSync(getToolPath('git'), ['config', '--get', 'remote.origin.url'], {
+          cwd: projectPath,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe']
+        }).trim();
+
+        if (originUrl) {
+          return {
+            provider: pickProvider(originUrl),
+            remoteName: 'origin',
+            remoteUrl: originUrl
+          };
+        }
+      } catch {
+        // Ignore and fall through to unknown
+      }
+
+      return { provider: 'unknown' };
+    }
+
+    const origin = remotes.get('origin');
+    if (origin) {
+      const url = origin.fetch || origin.push;
+      const provider = pickProvider(url);
+      if (provider !== 'unknown') {
+        return {
+          provider,
+          remoteName: 'origin',
+          remoteUrl: url
+        };
+      }
+    }
+
+    for (const [name, urls] of remotes.entries()) {
+      const url = urls.fetch || urls.push;
+      const provider = pickProvider(url);
+      if (provider !== 'unknown') {
+        return { provider, remoteName: name, remoteUrl: url };
+      }
+    }
+
+    if (origin) {
+      const url = origin.fetch || origin.push;
+      return {
+        provider: 'unknown',
+        remoteName: 'origin',
+        remoteUrl: url
+      };
+    }
+
+    const [firstName, firstUrls] = remotes.entries().next().value;
+    return {
+      provider: 'unknown',
+      remoteName: firstName,
+      remoteUrl: firstUrls.fetch || firstUrls.push
+    };
+  } catch {
+    return { provider: 'unknown' };
+  }
+}
+
 function detectMainBranch(projectPath: string): string | null {
   const branches = getGitBranches(projectPath);
   if (branches.length === 0) return null;
@@ -623,6 +717,25 @@ export function registerProjectHandlers(
         }
         const gitStatus = checkGitStatus(projectPath);
         return { success: true, data: gitStatus };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    }
+  );
+
+  // Detect repository provider from git remote
+  ipcMain.handle(
+    IPC_CHANNELS.GIT_DETECT_PROVIDER,
+    async (_, projectPath: string): Promise<IPCResult<RepoProviderDetectionResult>> => {
+      try {
+        if (!existsSync(projectPath)) {
+          return { success: false, error: 'Directory does not exist' };
+        }
+        const result = detectRepoProvider(projectPath);
+        return { success: true, data: result };
       } catch (error) {
         return {
           success: false,

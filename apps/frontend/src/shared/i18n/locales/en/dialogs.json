@@ -46,6 +46,25 @@
     "selectOrgAriaLabel": "Select {{org}} as repository owner",
     "selectVisibilityAriaLabel": "Set repository visibility to {{visibility}}"
   },
+  "repoProvider": {
+    "title": "Repository Provider",
+    "description": "Choose where {{projectName}} should connect for issue tracking.",
+    "githubTitle": "GitHub Repository",
+    "githubDescription": "Use GitHub for issues, PRs, and branch tracking.",
+    "azureTitle": "Azure DevOps",
+    "azureDescription": "Use Azure DevOps Boards for work items.",
+    "skip": "Skip for now"
+  },
+  "azureDevOpsSetup": {
+    "title": "Connect to Azure DevOps",
+    "description": "Add your Azure DevOps credentials to import and sync work items.",
+    "loading": "Loading settings...",
+    "save": "Save Settings",
+    "saving": "Saving...",
+    "skip": "Skip for now",
+    "orgUrlRequired": "Organization URL is required",
+    "patRequired": "Personal Access Token is required"
+  },
   "worktrees": {
     "title": "Worktrees",
     "description": "Manage isolated workspaces for your Auto Claude tasks",

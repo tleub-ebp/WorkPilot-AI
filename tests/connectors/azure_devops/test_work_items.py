@@ -115,7 +115,7 @@ class TestQueryWorkItems:
         mock_wit_client,
         sample_wiql_result_empty,
     ):
-        """query_work_items() passes correct project and top to query_by_wiql."""
+        """query_work_items() passes correct team_context and top to query_by_wiql."""
         mock_wit_client.query_by_wiql.return_value = (
             sample_wiql_result_empty
         )
@@ -126,7 +126,7 @@ class TestQueryWorkItems:
         )
 
         call_kwargs = mock_wit_client.query_by_wiql.call_args.kwargs
-        assert call_kwargs["project"] == TEST_PROJECT
+        assert call_kwargs["team_context"].project == TEST_PROJECT
         assert call_kwargs["top"] == 50
 
     def test_passes_work_item_ids_to_get_work_items(
@@ -305,14 +305,13 @@ class TestGetWorkItem:
         mock_wit_client,
         sample_api_work_item,
     ):
-        """get_work_item() passes the correct ID and project to the API."""
+        """get_work_item() passes the correct ID to the API."""
         mock_wit_client.get_work_item.return_value = sample_api_work_item
 
         work_items_client.get_work_item(TEST_PROJECT, 42)
 
         mock_wit_client.get_work_item.assert_called_once_with(
             id=42,
-            project=TEST_PROJECT,
         )
 
     def test_404_raises_work_item_not_found(
