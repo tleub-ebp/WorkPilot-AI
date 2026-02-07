@@ -109,7 +109,8 @@ export const AUTO_BUILD_PATHS = {
   IDEATION_FILE: 'ideation.json',
   IDEATION_CONTEXT: 'ideation_context.json',
   PROJECT_INDEX: '.auto-claude/project_index.json',
-  GRAPHITI_STATE: '.graphiti_state.json'
+  GRAPHITI_STATE: '.graphiti_state.json',
+  TASKS: '.auto-claude/tasks',
 } as const;
 
 /**

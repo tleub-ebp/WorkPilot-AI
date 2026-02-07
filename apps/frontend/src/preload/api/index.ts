@@ -27,6 +27,7 @@ export interface ElectronAPI extends
   InsightsAPI,
   AppUpdateAPI,
   GitLabAPI,
+  // AzureDevOpsAPI, // TODO: Add when module fully integrated
   DebugAPI,
   ClaudeCodeAPI,
   McpAPI,
@@ -43,7 +44,7 @@ export const createElectronAPI = (): ElectronAPI => ({
   ...createTaskAPI(),
   ...createSettingsAPI(),
   ...createFileAPI(),
-  ...createAgentAPI(),  // Includes: Roadmap, Ideation, Insights, Changelog, Linear, GitHub, GitLab, Shell
+  ...createAgentAPI(),  // Includes: Roadmap, Ideation, Insights, Changelog, Linear, GitHub, GitLab, Azure DevOps, Shell
   ...createAppUpdateAPI(),
   ...createDebugAPI(),
   ...createClaudeCodeAPI(),
@@ -86,6 +87,7 @@ export type {
   ProfileAPI,
   GitHubAPI,
   GitLabAPI,
+  // AzureDevOpsAPI, // TODO: Add when module fully integrated
   DebugAPI,
   ClaudeCodeAPI,
   McpAPI,

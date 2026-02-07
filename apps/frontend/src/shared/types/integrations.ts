@@ -62,6 +62,50 @@ export interface LinearSyncStatus {
 }
 
 // ============================================
+// Azure DevOps Integration Types
+// ============================================
+
+export interface AzureDevOpsWorkItem {
+  id: number;
+  title: string;
+  description?: string;
+  state: string; // e.g., 'New', 'Active', 'Resolved', 'Closed'
+  workItemType: string; // e.g., 'Bug', 'Task', 'User Story', 'Epic'
+  assignedTo?: string;
+  tags: string[];
+  priority?: number; // 1-4
+  createdDate?: string;
+  areaPath?: string;
+  iterationPath?: string;
+  url?: string;
+}
+
+export interface AzureDevOpsProject {
+  id: string;
+  name: string;
+  description?: string;
+  state: string; // e.g., 'wellFormed', 'createPending'
+  url?: string;
+}
+
+export interface AzureDevOpsImportResult {
+  success: boolean;
+  imported: number;
+  failed: number;
+  errors?: string[];
+  tasks?: import('./task').Task[];
+}
+
+export interface AzureDevOpsSyncStatus {
+  connected: boolean;
+  organizationUrl?: string;
+  projectName?: string;
+  workItemCount?: number;
+  lastSyncedAt?: string;
+  error?: string;
+}
+
+// ============================================
 // GitHub Integration Types
 // ============================================
 

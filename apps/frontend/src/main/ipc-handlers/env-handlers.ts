@@ -21,6 +21,16 @@ const GITLAB_ENV_KEYS = {
   AUTO_SYNC: 'GITLAB_AUTO_SYNC'
 } as const;
 
+
+// Azure DevOps environment variable keys
+const AZURE_DEVOPS_ENV_KEYS = {
+  ENABLED: 'AZURE_DEVOPS_ENABLED',
+  PAT: 'AZURE_DEVOPS_PAT',
+  ORG_URL: 'AZURE_DEVOPS_ORG_URL',
+  PROJECT: 'AZURE_DEVOPS_PROJECT',
+  AUTO_SYNC: 'AZURE_DEVOPS_AUTO_SYNC'
+} as const;
+
 /**
  * Helper to generate .env line (DRY)
  */
@@ -133,6 +143,23 @@ export function registerEnvHandlers(
     }
     if (config.gitlabAutoSync !== undefined) {
       existingVars[GITLAB_ENV_KEYS.AUTO_SYNC] = config.gitlabAutoSync ? 'true' : 'false';
+    }
+
+    // Azure DevOps Integration
+    if (config.azureDevOpsEnabled !== undefined) {
+      existingVars[AZURE_DEVOPS_ENV_KEYS.ENABLED] = config.azureDevOpsEnabled ? 'true' : 'false';
+    }
+    if (config.azureDevOpsPat !== undefined) {
+      existingVars[AZURE_DEVOPS_ENV_KEYS.PAT] = config.azureDevOpsPat;
+    }
+    if (config.azureDevOpsOrgUrl !== undefined) {
+      existingVars[AZURE_DEVOPS_ENV_KEYS.ORG_URL] = config.azureDevOpsOrgUrl;
+    }
+    if (config.azureDevOpsProject !== undefined) {
+      existingVars[AZURE_DEVOPS_ENV_KEYS.PROJECT] = config.azureDevOpsProject;
+    }
+    if (config.azureDevOpsAutoSync !== undefined) {
+      existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC] = config.azureDevOpsAutoSync ? 'true' : 'false';
     }
     // Git/Worktree Settings
     if (config.defaultBranch !== undefined) {
@@ -261,6 +288,16 @@ ${envLine(existingVars, GITLAB_ENV_KEYS.TOKEN)}
 ${envLine(existingVars, GITLAB_ENV_KEYS.PROJECT, 'group/project')}
 ${envLine(existingVars, GITLAB_ENV_KEYS.AUTO_SYNC, 'false')}
 
+
+# =============================================================================
+# AZURE DEVOPS INTEGRATION (OPTIONAL)
+# =============================================================================
+${existingVars[AZURE_DEVOPS_ENV_KEYS.ENABLED] !== undefined ? `${AZURE_DEVOPS_ENV_KEYS.ENABLED}=${existingVars[AZURE_DEVOPS_ENV_KEYS.ENABLED]}` : `# ${AZURE_DEVOPS_ENV_KEYS.ENABLED}=true`}
+${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.ORG_URL, 'https://dev.azure.com/your-org')}
+${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.PAT)}
+${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.PROJECT, 'MyProject')}
+${existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC] !== undefined ? `${AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC}=${existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC]}` : `# ${AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC}=false`}
+
 # =============================================================================
 # GIT/WORKTREE SETTINGS (OPTIONAL)
 # =============================================================================
@@ -373,6 +410,7 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
         linearEnabled: false,
         githubEnabled: false,
         gitlabEnabled: false,
+        azureDevOpsEnabled: false,
         graphitiEnabled: false,
         enableFancyUi: true,
         claudeTokenIsGlobal: false,
@@ -445,6 +483,25 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
       }
       if (vars[GITLAB_ENV_KEYS.AUTO_SYNC]?.toLowerCase() === 'true') {
         config.gitlabAutoSync = true;
+      }
+
+
+      // Azure DevOps config
+      const azureEnabledFlag = vars[AZURE_DEVOPS_ENV_KEYS.ENABLED]?.toLowerCase();
+      if (vars[AZURE_DEVOPS_ENV_KEYS.PAT]) {
+        config.azureDevOpsPat = vars[AZURE_DEVOPS_ENV_KEYS.PAT];
+        config.azureDevOpsEnabled = azureEnabledFlag !== 'false';
+      } else if (azureEnabledFlag === 'true') {
+        config.azureDevOpsEnabled = true;
+      }
+      if (vars[AZURE_DEVOPS_ENV_KEYS.ORG_URL]) {
+        config.azureDevOpsOrgUrl = vars[AZURE_DEVOPS_ENV_KEYS.ORG_URL];
+      }
+      if (vars[AZURE_DEVOPS_ENV_KEYS.PROJECT]) {
+        config.azureDevOpsProject = vars[AZURE_DEVOPS_ENV_KEYS.PROJECT];
+      }
+      if (vars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC]?.toLowerCase() === 'true') {
+        config.azureDevOpsAutoSync = true;
       }
 
       // Git/Worktree config
