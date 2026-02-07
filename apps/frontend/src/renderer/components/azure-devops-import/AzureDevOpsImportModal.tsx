@@ -1,11 +1,11 @@
-﻿/**
+﻿﻿/**
  * Azure DevOps Work Item Import Modal
  * Main modal component for importing work items from Azure DevOps
  */
 
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download, Loader2, Search, Filter, CheckSquare, Square, RefreshCw } from 'lucide-react';
+import { Download, Loader2, Search, RefreshCw } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -74,9 +74,9 @@ export function AzureDevOpsImportModal({
     try {
       const result = await window.electronAPI.checkAzureDevOpsConnection(projectId);
       if (result.success) {
-        setSyncStatus(result.data);
-        if (!result.data.connected) {
-          setError(result.data.error || t('settings:azureDevOpsImport.errorNotConfigured'));
+        setSyncStatus(result.data ?? null);
+        if (!result.data?.connected) {
+          setError(result.data?.error || t('settings:azureDevOpsImport.errorNotConfigured'));
         }
       } else {
         setError(result.error || t('settings:azureDevOpsImport.errorCheckConnectionFailed'));
@@ -133,8 +133,8 @@ export function AzureDevOpsImportModal({
       );
 
       if (result.success) {
-        setImportResult(result.data);
-        if (result.data.success && onImportComplete) {
+        setImportResult(result.data ?? null);
+        if (result.data?.success && onImportComplete) {
           setTimeout(() => {
             onImportComplete();
           }, 1500);

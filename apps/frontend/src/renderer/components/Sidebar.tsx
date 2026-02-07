@@ -265,7 +265,7 @@ export function Sidebar({
       const hasProvider = !!(envConfig?.githubEnabled || envConfig?.azureDevOpsEnabled);
       if (!hasProvider) {
         const detectionResult = await window.electronAPI.detectRepoProvider(project.path);
-        const rawProvider = detectionResult.success ? detectionResult.data?.provider : 'unknown';
+        const rawProvider = detectionResult.success ? (detectionResult.data?.provider ?? 'unknown') : 'unknown';
         const provider = inferProviderFromRemote(rawProvider, detectionResult.data?.remoteUrl);
 
         setShowGitHubSetup(false);
@@ -320,7 +320,7 @@ export function Sidebar({
 
         if (updatedProject) {
           const detectionResult = await window.electronAPI.detectRepoProvider(updatedProject.path);
-          const rawProvider = detectionResult.success ? detectionResult.data?.provider : 'unknown';
+          const rawProvider = detectionResult.success ? (detectionResult.data?.provider ?? 'unknown') : 'unknown';
           const provider = inferProviderFromRemote(rawProvider, detectionResult.data?.remoteUrl);
 
           setShowGitHubSetup(false);
