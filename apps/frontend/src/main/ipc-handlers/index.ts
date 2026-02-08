@@ -36,6 +36,7 @@ import { registerProfileHandlers } from './profile-handlers';
 import { registerScreenshotHandlers } from './screenshot-handlers';
 import { registerTerminalWorktreeIpcHandlers } from './terminal';
 import { notificationService } from '../notification-service';
+import { setupQualityHandlers } from './quality-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -125,6 +126,9 @@ export function setupIpcHandlers(
 
   // Screenshot capture handlers
   registerScreenshotHandlers();
+
+  // Quality Scorer handlers (AI Code Review)
+  setupQualityHandlers();
 
   console.warn('[IPC] All handler modules registered successfully');
 }

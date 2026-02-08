@@ -32,6 +32,8 @@ import { ReviewStatusTree } from './ReviewStatusTree';
 import { PRHeader } from './PRHeader';
 import { ReviewFindings } from './ReviewFindings';
 import { PRLogs } from './PRLogs';
+import { QualityScorePanel } from '../../QualityScorePanel';
+import { useQualityScore } from '../../../hooks/use-quality-score';
 
 import type { PRData, PRReviewResult, PRReviewProgress } from '../hooks/useGitHubPRs';
 import type { NewCommitsCheck, MergeReadiness, PRLogs as PRLogsType, WorkflowsAwaitingApprovalResult } from '../../../../preload/api/modules/github-api';
@@ -93,6 +95,10 @@ export function PRDetail({
   onMarkReviewPosted,
 }: PRDetailProps) {
   const { t } = useTranslation('common');
+  
+  // Quality Score hook
+  const qualityScore = useQualityScore();
+  
   // Selection state for findings
   const [selectedFindingIds, setSelectedFindingIds] = useState<Set<string>>(new Set());
   const [postedFindingIds, setPostedFindingIds] = useState<Set<string>>(new Set());
@@ -249,6 +255,16 @@ export function PRDetail({
       setLogsExpanded(true);
     }
   }, [isReviewing]);
+
+  // Analyze code quality after review completes
+  useEffect(() => {
+    if (reviewResult?.success && pr.changed_files && pr.changed_files.length > 0) {
+      const fileNames = pr.changed_files.map(f => f.filename);
+      qualityScore.analyzePR(pr.number, fileNames, projectId).catch(err => {
+        console.error('Failed to analyze quality:', err);
+      });
+    }
+  }, [reviewResult?.success, pr.number, pr.changed_files, projectId, qualityScore]);
 
   // Load logs when logs section is expanded or when reviewing (for live logs)
   useEffect(() => {
@@ -884,6 +900,16 @@ ${t('prReview.blockedStatusMessageFooter')}`;
         {branchUpdateError && (
           <div className="text-xs text-destructive animate-in fade-in duration-200">
             {branchUpdateError}
+          </div>
+        )}
+
+        {/* Code Quality Score - show after review completes */}
+        {qualityScore.score && reviewResult?.success && (
+          <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+            <QualityScorePanel 
+              score={qualityScore.score} 
+              isLoading={qualityScore.isLoading}
+            />
           </div>
         )}
 

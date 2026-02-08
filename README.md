@@ -83,10 +83,12 @@
 | **Memory Layer** | Agents retain insights across sessions for smarter builds |
 | **GitHub/GitLab Integration** | Import issues, investigate with AI, create merge requests |
 | **Linear Integration** | Sync tasks with Linear for team progress tracking |
+| **🧠 Quality Scorer** | **NEW!** AI code review - 0-100 scoring, 7 languages, auto-fix ([Guide](docs/QUALITY_SCORER.md)) |
 | **Cross-Platform** | Native desktop apps for Windows, macOS, and Linux |
 | **Auto-Updates** | App updates automatically when new versions are released |
 
 ---
+
 
 ## Interface
 
