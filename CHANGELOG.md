@@ -1,3 +1,17 @@
+## [Unreleased]
+
+### ✨ New Features
+
+- **Automatic PR Creation**: When a task is moved to "done" status in the Kanban board, a Pull Request is automatically created for human validation
+  - New Python service `TaskCompletionService` handles branch pushing and PR creation
+  - PR includes a standardized template with verification checklist
+  - Task status automatically transitions to "pr_created" after successful PR creation
+  - PR URL is stored in the task for easy access
+  - Human validation is always required - no automatic merging
+  - Robust error handling for push failures, PR creation failures, and existing PRs
+  - Configurable target branch (task-level, project-level, or default to "develop")
+  - See `docs/AUTO_PR_CREATION.md` for complete documentation
+
 ## 2.7.5 - Security & Platform Improvements
 
 ### ✨ New Features

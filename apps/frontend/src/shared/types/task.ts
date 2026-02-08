@@ -179,7 +179,7 @@ export interface TaskMetadata {
   // Origin tracking
   sourceType?: 'ideation' | 'manual' | 'imported' | 'insights' | 'roadmap' | 'linear' | 'github' | 'gitlab';
   ideationType?: string;  // e.g., 'code_improvements', 'security_hardening'
-  ideaId?: string;  // Reference to original idea if converted
+  ideaId?: string;  // Reference to the original idea if converted
   featureId?: string;  // Reference to roadmap feature if from roadmap
   linearIssueId?: string;  // Reference to Linear issue if from Linear
   linearIdentifier?: string;  // Linear issue identifier (e.g., 'ABC-123')
@@ -266,6 +266,7 @@ export interface Task {
   stagedAt?: string;  // ISO timestamp when changes were staged
   location?: 'main' | 'worktree';  // Where task was loaded from (main project or worktree)
   specsPath?: string;  // Full path to specs directory for this task
+  prUrl?: string;  // URL of the PR created automatically when task is completed
   createdAt: Date;
   updatedAt: Date;
 }
