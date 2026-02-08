@@ -57,6 +57,35 @@ from .state import (
     get_review_status_summary,
 )
 
+# Quality Scoring
+try:
+    from .quality_badge import QualityBadgeFormatter
+    from .quality_integration import (
+        QualityReviewIntegration,
+        display_quality_report,
+        review_current_pr,
+    )
+    from .quality_scorer import (
+        CategoryScore,
+        IssueSeverity,
+        QualityCategory,
+        QualityIssue,
+        QualityScore,
+        QualityScorer,
+    )
+except ImportError:
+    # Quality scoring modules not yet created - will be available after installation
+    QualityScorer = None
+    QualityScore = None
+    QualityIssue = None
+    QualityCategory = None
+    IssueSeverity = None
+    CategoryScore = None
+    QualityBadgeFormatter = None
+    QualityReviewIntegration = None
+    review_current_pr = None
+    display_quality_report = None
+
 # Aliases for underscore-prefixed names used in tests
 _extract_section = extract_section
 _truncate_text = truncate_text
@@ -87,4 +116,15 @@ __all__ = [
     # Aliases for tests
     "_extract_section",
     "_truncate_text",
+    # Quality scoring exports
+    "QualityScorer",
+    "QualityScore",
+    "QualityIssue",
+    "QualityCategory",
+    "IssueSeverity",
+    "CategoryScore",
+    "QualityBadgeFormatter",
+    "QualityReviewIntegration",
+    "review_current_pr",
+    "display_quality_report",
 ]
