@@ -57,34 +57,68 @@ from .state import (
     get_review_status_summary,
 )
 
-# Quality Scoring
+# Quality Scoring - Tier 1 Killing Feature
 try:
-    from .quality_badge import QualityBadgeFormatter
-    from .quality_integration import (
-        QualityReviewIntegration,
-        display_quality_report,
-        review_current_pr,
-    )
     from .quality_scorer import (
-        CategoryScore,
         IssueSeverity,
         QualityCategory,
         QualityIssue,
         QualityScore,
         QualityScorer,
     )
+    from .quality_badge import QualityBadgeFormatter
+    from .quality_integration import (
+        QualityReviewIntegration,
+        review_current_pr,
+        display_quality_report,
+    )
+    # Phase 3 - Advanced Features
+    from .quality_extended import ExtendedQualityScorer, create_extended_scorer
+    from .quality_autofix import AutoFixEngine, AutoFix
+    from .quality_multilang import (
+        JavaAnalyzer,
+        KotlinAnalyzer,
+        CSharpAnalyzer,
+        GoAnalyzer,
+        RustAnalyzer,
+        get_analyzer,
+    )
+    # Phase 4 - Future Features
+    from .quality_similarity import CodeSimilarityDetector, CodeClone, detect_clones_in_project
+    from .quality_custom_rules import CustomRuleEngine, CustomRule, load_project_rules
+    from .quality_performance import PerformanceAnalyzer, analyze_project_performance
+    # Phase 5 - Advanced ML & Coverage
+    from .quality_ml import MLPatternDetector, LearnedPattern, learn_and_detect
+    from .quality_coverage import TestCoverageAnalyzer, analyze_project_coverage
 except ImportError:
-    # Quality scoring modules not yet created - will be available after installation
+    # Quality scoring module not yet available
     QualityScorer = None
     QualityScore = None
     QualityIssue = None
     QualityCategory = None
     IssueSeverity = None
-    CategoryScore = None
     QualityBadgeFormatter = None
     QualityReviewIntegration = None
     review_current_pr = None
     display_quality_report = None
+    ExtendedQualityScorer = None
+    create_extended_scorer = None
+    AutoFixEngine = None
+    AutoFix = None
+    JavaAnalyzer = None
+    KotlinAnalyzer = None
+    CSharpAnalyzer = None
+    GoAnalyzer = None
+    RustAnalyzer = None
+    get_analyzer = None
+    CodeSimilarityDetector = None
+    CodeClone = None
+    detect_clones_in_project = None
+    CustomRuleEngine = None
+    CustomRule = None
+    load_project_rules = None
+    PerformanceAnalyzer = None
+    analyze_project_performance = None
 
 # Aliases for underscore-prefixed names used in tests
 _extract_section = extract_section
@@ -122,9 +156,32 @@ __all__ = [
     "QualityIssue",
     "QualityCategory",
     "IssueSeverity",
-    "CategoryScore",
     "QualityBadgeFormatter",
     "QualityReviewIntegration",
     "review_current_pr",
     "display_quality_report",
+    "ExtendedQualityScorer",
+    "create_extended_scorer",
+    "AutoFixEngine",
+    "AutoFix",
+    "JavaAnalyzer",
+    "KotlinAnalyzer",
+    "CSharpAnalyzer",
+    "GoAnalyzer",
+    "RustAnalyzer",
+    # Phase 4 - Future Features
+    "CodeSimilarityDetector",
+    "CodeClone",
+    "detect_clones_in_project",
+    "CustomRuleEngine",
+    "CustomRule",
+    "load_project_rules",
+    "PerformanceAnalyzer",
+    "analyze_project_performance",
+    # Phase 5 - Advanced ML & Coverage
+    "MLPatternDetector",
+    "LearnedPattern",
+    "learn_and_detect",
+    "TestCoverageAnalyzer",
+    "analyze_project_coverage",
 ]
