@@ -19,6 +19,7 @@ import {
 import { findTaskWorktree } from '../../worktree-paths';
 import { projectStore } from '../../project-store';
 import { getIsolatedGitEnv, detectWorktreeBranch } from '../../utils/git-isolation';
+import { pythonEnvManager } from '../../python-env-manager';
 
 /**
  * Atomic file write to prevent TOCTOU race conditions.
@@ -31,7 +32,7 @@ function atomicWriteFileSync(filePath: string, content: string): void {
     writeFileSync(tempPath, content, 'utf-8');
     renameSync(tempPath, filePath);
   } catch (error) {
-    // Clean up temp file if rename failed
+    // Clean up the temp file if rename failed
     try {
       unlinkSync(tempPath);
     } catch {
@@ -43,7 +44,7 @@ function atomicWriteFileSync(filePath: string, content: string): void {
 
 /**
  * Safe file read that handles missing files without TOCTOU issues.
- * Returns null if file doesn't exist or can't be read.
+ * Returns null if a file doesn't exist or can't be read.
  */
 function safeReadFileSync(filePath: string): string | null {
   try {
@@ -533,75 +534,125 @@ export function registerTaskExecutionHandlers(
         return { success: false, error: 'Task not found' };
       }
 
-      // Validate status transition - 'done' can only be set through merge handler
-      // UNLESS there's no worktree (limbo state - already merged/discarded or failed)
-      // OR forceCleanup is requested (user confirmed they want to delete the worktree)
+      // Validate status transition - 'done' creates a PR for human review
+      // A worktree must exist with uncommitted or unpushed changes
       if (status === 'done') {
         // Check if worktree exists (task.specId matches worktree folder name)
         const worktreePath = findTaskWorktree(project.path, task.specId);
         const hasWorktree = worktreePath !== null;
 
         if (hasWorktree) {
-          if (options?.forceCleanup) {
-            // User confirmed cleanup - delete worktree and branch
-            console.warn(`[TASK_UPDATE_STATUS] Cleaning up worktree for task ${taskId} (user confirmed)`);
-            try {
-              // Get the branch name before removing the worktree
-              // Use shared utility to validate detected branch matches expected pattern
-              // This prevents deleting wrong branch when worktree is corrupted/orphaned
-              const { branch, usingFallback: usingFallbackBranch } = detectWorktreeBranch(
-                worktreePath,
-                task.specId,
-                { timeout: 30000, logPrefix: '[TASK_UPDATE_STATUS]' }
-              );
-
-              // Remove the worktree
-              execFileSync(getToolPath('git'), ['worktree', 'remove', '--force', worktreePath], {
-                cwd: project.path,
-                encoding: 'utf-8',
-                timeout: 30000,
-                env: getIsolatedGitEnv()
-              });
-              console.warn(`[TASK_UPDATE_STATUS] Worktree removed: ${worktreePath}`);
-
-              // Delete the branch (ignore errors if branch doesn't exist)
-              try {
-                execFileSync(getToolPath('git'), ['branch', '-D', branch], {
-                  cwd: project.path,
-                  encoding: 'utf-8',
-                  timeout: 30000,
-                  env: getIsolatedGitEnv()
-                });
-                console.warn(`[TASK_UPDATE_STATUS] Branch deleted: ${branch}`);
-              } catch (branchDeleteError) {
-                // Branch may not exist or may be the current branch
-                if (usingFallbackBranch) {
-                  // More concerning - fallback pattern didn't match actual branch
-                  console.warn(`[TASK_UPDATE_STATUS] Could not delete branch ${branch} using fallback pattern. Actual branch may still exist and need manual cleanup.`, branchDeleteError);
-                } else {
-                  console.warn(
-                    `[TASK_UPDATE_STATUS] Could not delete branch ${branch} (may not exist or be checked out elsewhere)`,
-                    branchDeleteError
-                  );
-                }
-              }
-
-              console.warn(`[TASK_UPDATE_STATUS] Worktree cleanup completed successfully`);
-            } catch (cleanupError) {
-              console.error(`[TASK_UPDATE_STATUS] Failed to cleanup worktree:`, cleanupError);
+          // Worktree exists - create PR for human validation
+          console.warn(`[TASK_UPDATE_STATUS] Creating PR for task ${taskId} (status: done)`);
+          
+          try {
+            // Call Python service to create PR
+            const pythonExecutable = pythonEnvManager.getPythonPath();
+            if (!pythonExecutable) {
+              console.error(`[TASK_UPDATE_STATUS] Python not configured`);
               return {
                 success: false,
-                error: `Failed to cleanup worktree: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`
+                error: 'Python environment not configured'
               };
             }
-          } else {
-            // Worktree exists but no forceCleanup - return special response for UI to show confirmation
-            console.warn(`[TASK_UPDATE_STATUS] Worktree exists for task ${taskId}. Requesting user confirmation.`);
+            
+            const backendPath = path.join(__dirname, '..', '..', '..', 'backend');
+            
+            // Prepare the script to call the task completion service
+            const scriptContent = `
+import sys
+import json
+from pathlib import Path
+
+# Add backend to path
+sys.path.insert(0, '${backendPath.replace(/\\/g, '\\\\')}')
+
+from services.task_completion_service import create_task_completion_service
+
+# Get project path and task info from command line
+project_path = sys.argv[1]
+spec_id = sys.argv[2]
+task_title = sys.argv[3]
+task_description = sys.argv[4] if len(sys.argv) > 4 else None
+base_branch = sys.argv[5] if len(sys.argv) > 5 else "develop"
+
+# Create service and complete task
+service = create_task_completion_service(project_path, base_branch)
+result = service.complete_task(spec_id, task_title, task_description)
+
+# Output result as JSON
+print(json.dumps(result))
+`;
+
+            // Write temporary script
+            const tmpScriptPath = path.join(project.path, '.auto-claude', 'tmp_create_pr.py');
+            const tmpDir = path.dirname(tmpScriptPath);
+            if (!existsSync(tmpDir)) {
+              mkdirSync(tmpDir, { recursive: true });
+            }
+            writeFileSync(tmpScriptPath, scriptContent, 'utf-8');
+
+            // Get base branch from task metadata or project settings
+            const baseBranch = task.metadata?.baseBranch || project.settings?.mainBranch || 'develop';
+
+            // Execute Python script to create PR
+            const result = execFileSync(
+              pythonExecutable,
+              [
+                tmpScriptPath,
+                project.path,
+                task.specId,
+                task.title,
+                task.description || '',
+                baseBranch
+              ],
+              {
+                cwd: project.path,
+                encoding: 'utf-8',
+                timeout: 60000, // 60 seconds timeout for PR creation
+                env: { ...process.env }
+              }
+            );
+
+            // Clean up temporary script
+            try {
+              unlinkSync(tmpScriptPath);
+            } catch {
+              // Ignore cleanup errors
+            }
+
+            // Parse result
+            const prResult = JSON.parse(result.trim());
+
+            if (prResult.success) {
+              console.warn(`[TASK_UPDATE_STATUS] PR created successfully: ${prResult.pr_url}`);
+              
+              // Update task with PR URL
+              const mainWindow = getMainWindow();
+              if (mainWindow && prResult.pr_url) {
+                mainWindow.webContents.send(
+                  IPC_CHANNELS.TASK_UPDATE,
+                  taskId,
+                  { prUrl: prResult.pr_url },
+                  project.id
+                );
+              }
+
+              // Transition to pr_created status
+              status = 'pr_created';
+            } else {
+              console.error(`[TASK_UPDATE_STATUS] Failed to create PR: ${prResult.error}`);
+              return {
+                success: false,
+                error: `Failed to create PR: ${prResult.error}`
+              };
+            }
+
+          } catch (prError) {
+            console.error(`[TASK_UPDATE_STATUS] Error creating PR:`, prError);
             return {
               success: false,
-              worktreeExists: true,
-              worktreePath: worktreePath,
-              error: "A worktree still exists for this task. Would you like to delete it and mark the task as complete?"
+              error: `Error creating PR: ${prError instanceof Error ? prError.message : String(prError)}`
             };
           }
         } else {
