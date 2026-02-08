@@ -161,15 +161,14 @@ playwright/.cache/
 *.temp
 
 # Development
+/docs
 dev/
 _bmad/
 _bmad-output/
 .claude/
-/docs
-OPUS_ANALYSIS_AND_IDEAS.md
 /.github/agents
 
-# Auto Claude generated files
+# Auto Claude EBP generated files
 .security-key
 /shared_docs
 logs/security/
