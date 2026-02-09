@@ -120,7 +120,7 @@ class StreamingAgentWrapper:
             test_command=test_command,
         )
         
-    async def emit_test_result(self, success: bool, details: Optional[str] = None):
+    async def emit_test_result(self, success: bool, details: str | None = None):
         """Emit test result event."""
         if not self._is_active:
             return
@@ -135,7 +135,7 @@ class StreamingAgentWrapper:
         self,
         progress: float,
         status: str,
-        current_step: Optional[str] = None,
+        current_step: str | None = None,
     ):
         """Emit progress update event."""
         if not self._is_active:

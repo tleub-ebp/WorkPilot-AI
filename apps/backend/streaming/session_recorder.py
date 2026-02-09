@@ -43,7 +43,7 @@ class SessionRecording:
         }
         
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SessionRecording":
+    def from_dict(cls, data: dict[str, Any]) -> "SessionRecording":
         """Create from dictionary."""
         events = [
             StreamingEvent(

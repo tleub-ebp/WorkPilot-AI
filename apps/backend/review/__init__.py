@@ -24,7 +24,6 @@ Usage:
         state = run_review_checkpoint(spec_dir)
 """
 
-# Core state management and diff analysis utilities
 from .diff_analyzer import (
     extract_checkboxes,
     extract_section,

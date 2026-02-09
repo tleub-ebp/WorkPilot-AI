@@ -129,7 +129,7 @@ class LinearProjectState:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
-    def load(cls, spec_dir: Path) -> Optional["LinearProjectState"]:
+    def load(cls, spec_dir: Path) -> "LinearProjectState" | None:
         """Load state from the spec directory."""
         marker_file = spec_dir / LINEAR_PROJECT_MARKER
         if not marker_file.exists():
