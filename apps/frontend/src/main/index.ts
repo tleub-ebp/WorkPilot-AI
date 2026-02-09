@@ -335,10 +335,10 @@ function createWindow(): void {
 }
 
 // Set app name before ready (for dock tooltip on macOS in dev mode)
-app.setName('Auto Claude - EBP');
+app.setName('WorkPilot AI');
 if (isMacOS()) {
   // Force the name to appear in dock on macOS
-  app.name = 'Auto Claude - EBP';
+  app.name = 'WorkPilot AI';
 }
 
 // Fix Windows GPU cache permission errors (0x5 Access Denied)

@@ -3,12 +3,15 @@ QA loop module facade.
 
 Provides QA validation loop functionality.
 Re-exports from qa package for clean imports.
+Includes auto-fix loop for intelligent test fixing.
 """
 
 from qa import (
     ISSUE_SIMILARITY_THRESHOLD,
     MAX_QA_ITERATIONS,
     RECURRING_ISSUE_THRESHOLD,
+    DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
+    AutoFixLoop,
     _issue_similarity,
     _normalize_issue_key,
     check_test_discovery,
@@ -27,6 +30,7 @@ from qa import (
     load_qa_fixer_prompt,
     print_qa_status,
     record_iteration,
+    run_auto_fix_loop,
     run_qa_agent_session,
     run_qa_fixer_session,
     run_qa_validation_loop,
@@ -39,7 +43,10 @@ __all__ = [
     "MAX_QA_ITERATIONS",
     "RECURRING_ISSUE_THRESHOLD",
     "ISSUE_SIMILARITY_THRESHOLD",
+    "DEFAULT_MAX_AUTO_FIX_ATTEMPTS",
     "run_qa_validation_loop",
+    "run_auto_fix_loop",
+    "AutoFixLoop",
     "load_implementation_plan",
     "save_implementation_plan",
     "get_qa_signoff_status",

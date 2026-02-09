@@ -2,6 +2,19 @@
 
 ### ✨ New Features
 
+- **Auto-Fix Loops Intelligents**: Intelligent test-fix-test automation that automatically detects and fixes test failures
+  - Automatic test execution using project's test framework (pytest, jest, vitest, etc.)
+  - Intelligent failure analysis with error pattern recognition (assertion, timeout, import, type errors, etc.)
+  - Configurable retry limits (default: 5 attempts, customizable via `--auto-fix-max-attempts` or `AUTO_FIX_MAX_ATTEMPTS` env var)
+  - Learning system integrated with Graphiti memory to learn from common errors and successful fixes
+  - Comprehensive metrics tracking: success rates, average attempts, failure patterns stored in `implementation_plan.json`
+  - Dashboard-ready metrics API for frontend visualization
+  - Human escalation with detailed `AUTO_FIX_ESCALATION.md` report after max attempts
+  - Event emission for UI integration: `AUTO_FIX_STARTED`, `AUTO_FIX_ATTEMPT`, `AUTO_FIX_SUCCESS`, `AUTO_FIX_FAILED`, `AUTO_FIX_ESCALATED`
+  - CLI command: `python auto-claude/run.py --spec 001 --auto-fix [--auto-fix-max-attempts N]`
+  - Programmatic API: `from qa import run_auto_fix_loop, AutoFixLoop`
+  - See `docs/features/auto-fix-loops.md` for complete documentation
+
 - **Automatic PR Creation**: When a task is moved to "done" status in the Kanban board, a Pull Request is automatically created for human validation
   - New Python service `TaskCompletionService` handles branch pushing and PR creation
   - PR includes a standardized template with verification checklist
