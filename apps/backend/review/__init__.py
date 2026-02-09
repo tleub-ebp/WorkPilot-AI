@@ -24,8 +24,7 @@ Usage:
         state = run_review_checkpoint(spec_dir)
 """
 
-# Core state management
-# Diff analysis utilities (internal, but available if needed)
+# Core state management and diff analysis utilities
 from .diff_analyzer import (
     extract_checkboxes,
     extract_section,
@@ -33,15 +32,11 @@ from .diff_analyzer import (
     extract_title,
     truncate_text,
 )
-
-# Display formatters
 from .formatters import (
     display_plan_summary,
     display_review_status,
     display_spec_summary,
 )
-
-# Review orchestration
 from .reviewer import (
     ReviewChoice,
     get_review_menu_options,

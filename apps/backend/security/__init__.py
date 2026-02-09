@@ -61,49 +61,11 @@ Validators:
 # Auto-initialize security features (runs on import)
 # This ensures security is ALWAYS active and properly configured
 from . import auto_integration  # noqa: F401
-
-# Core hooks
-# Re-export from project_analyzer for convenience
 from project_analyzer import (
     BASE_COMMANDS,
     SecurityProfile,
     is_command_allowed,
     needs_validation,
-)
-
-from .hooks import bash_security_hook, validate_command
-
-# Command parsing utilities
-from .parser import (
-    extract_commands,
-    get_command_for_validation,
-    split_command_segments,
-)
-
-# Profile management
-from .profile import (
-    get_security_profile,
-    reset_profile_cache,
-)
-
-# Tool input validation
-from .tool_input_validator import (
-    get_safe_tool_input,
-    validate_tool_input,
-)
-
-# Feature 8: Security-First Features
-from .security_orchestrator import (
-    SecurityOrchestrator,
-    SecurityScanConfig,
-    SecurityScanResult,
-)
-from .vulnerability_scanner import (
-    VulnerabilityScanner,
-    Vulnerability,
-    ScanResult,
-    Severity,
-    VulnerabilitySource,
 )
 from .compliance_analyzer import (
     ComplianceAnalyzer,
@@ -112,10 +74,34 @@ from .compliance_analyzer import (
     ComplianceReport,
     ComplianceSeverity,
 )
-from .security_report_generator import SecurityReportGenerator
 from .git_hooks import GitHookManager
-
-# Validators (for advanced usage)
+from .hooks import bash_security_hook, validate_command
+from .parser import (
+    extract_commands,
+    get_command_for_validation,
+    split_command_segments,
+)
+from .profile import (
+    get_security_profile,
+    reset_profile_cache,
+)
+from .security_orchestrator import (
+    SecurityOrchestrator,
+    SecurityScanConfig,
+    SecurityScanResult,
+)
+from .security_report_generator import SecurityReportGenerator
+from .tool_input_validator import (
+    get_safe_tool_input,
+    validate_tool_input,
+)
+from .vulnerability_scanner import (
+    VulnerabilityScanner,
+    Vulnerability,
+    ScanResult,
+    Severity,
+    VulnerabilitySource,
+)
 from .validator import (
     VALIDATORS,
     validate_bash_command,

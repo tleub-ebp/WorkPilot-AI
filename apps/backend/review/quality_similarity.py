@@ -1,4 +1,4 @@
-﻿"""
+﻿﻿﻿﻿"""
 Code Similarity Detection
 =========================
 
@@ -138,8 +138,8 @@ class CodeSimilarityDetector:
             block2 = lines2[j:j+size]
             
             # Filtrer les lignes vides
-            block1_clean = [l for l in block1 if l]
-            block2_clean = [l for l in block2 if l]
+            block1_clean = [line for line in block1 if line]
+            block2_clean = [line for line in block2 if line]
             
             if not block1_clean or not block2_clean:
                 continue
@@ -205,7 +205,7 @@ class CodeSimilarityDetector:
         if not clones:
             return "## 🎉 No Code Clones Detected\n\nGreat job keeping your code DRY!"
         
-        report = f"## 🔍 Code Clone Detection Report\n\n"
+        report = "## 🔍 Code Clone Detection Report\n\n"
         report += f"**Total clones found**: {len(clones)}\n\n"
         
         # Grouper par taille
@@ -253,11 +253,15 @@ class CodeSimilarityDetector:
 
 def detect_clones_in_project(
     project_dir: Path,
-    file_patterns: list[str] = ['**/*.py', '**/*.js', '**/*.ts', '**/*.java'],
+    file_patterns: list[str] | None = None,
     min_lines: int = 6,
     min_similarity: float = 0.85,
 ) -> tuple[list[CodeClone], list[QualityIssue]]:
     """
+    Détecte les clones de code dans un projet.
+    """
+    if file_patterns is None:
+        file_patterns = ['**/*.py', '**/*.js', '**/*.ts', '**/*.java']
     Détecte les clones dans un projet.
     
     Args:

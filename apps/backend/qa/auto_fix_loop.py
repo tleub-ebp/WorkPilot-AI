@@ -1,4 +1,4 @@
-﻿"""
+﻿﻿"""
 Auto-Fix Loop Module
 ====================
 
@@ -24,7 +24,6 @@ import json
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 try:
     from agents.memory_manager import get_graphiti_context, save_session_memory
