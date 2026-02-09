@@ -5,6 +5,7 @@ This module provides detailed explanations of AI actions, decisions,
 and code generation to help developers learn and understand.
 """
 
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -106,9 +107,9 @@ class LearningMode:
             self.explanations.append(explanation)
         
         return explanation
-    
+
     def _explain_tool_beginner(
-        self, tool_name: str, tool_input: Dict[str, Any], reason: str, expected_outcome: str
+        self, tool_name: str, tool_input: dict[str, Any], reason: str, expected_outcome: str
     ) -> LearningExplanation:
         """Beginner-level tool explanation"""
         tool_descriptions = {
@@ -116,7 +117,7 @@ class LearningMode:
             "Glob": "The Glob tool helps me search for files using patterns. For example, '*.py' finds all Python files. It's like using the search function in your file explorer.",
             "Grep": "The Grep tool searches for specific text within files. It's like using Ctrl+F (Find) across multiple files at once.",
         }
-        
+
         base_desc = tool_descriptions.get(tool_name, f"The {tool_name} tool")
         
         explanation_text = f"""{base_desc}
@@ -146,9 +147,9 @@ class LearningMode:
                 "https://en.wikipedia.org/wiki/Glob_(programming)" if tool_name == "Glob" else None,
             ]
         )
-    
+
     def _explain_tool_intermediate(
-        self, tool_name: str, tool_input: Dict[str, Any], reason: str, expected_outcome: str
+        self, tool_name: str, tool_input: dict[str, Any], reason: str, expected_outcome: str
     ) -> LearningExplanation:
         """Intermediate-level tool explanation"""
         explanation_text = f"""I'm using the **{tool_name}** tool to gather information from your codebase.
@@ -159,7 +160,7 @@ class LearningMode:
 
 **Parameters:** `{json.dumps(tool_input, indent=2)}`
 """
-        
+
         return LearningExplanation(
             timestamp=datetime.now(),
             category="tool_use",
@@ -167,16 +168,16 @@ class LearningMode:
             explanation=explanation_text,
             difficulty=ExplanationLevel.INTERMEDIATE,
         )
-    
+
     def _explain_tool_advanced(
-        self, tool_name: str, tool_input: Dict[str, Any], reason: str, expected_outcome: str
+        self, tool_name: str, tool_input: dict[str, Any], reason: str, expected_outcome: str
     ) -> LearningExplanation:
         """Advanced-level tool explanation"""
         explanation_text = f"""**{tool_name}** → {reason}
 
 Target: `{tool_input}`
 """
-        
+
         return LearningExplanation(
             timestamp=datetime.now(),
             category="tool_use",
@@ -184,9 +185,9 @@ Target: `{tool_input}`
             explanation=explanation_text,
             difficulty=ExplanationLevel.ADVANCED,
         )
-    
+
     def _explain_tool_expert(
-        self, tool_name: str, tool_input: Dict[str, Any], reason: str, expected_outcome: str
+        self, tool_name: str, tool_input: dict[str, Any], reason: str, expected_outcome: str
     ) -> LearningExplanation:
         """Expert-level tool explanation (minimal)"""
         return LearningExplanation(
@@ -196,23 +197,22 @@ Target: `{tool_input}`
             explanation=reason,
             difficulty=ExplanationLevel.EXPERT,
         )
-    
     def explain_decision(
         self,
         decision: str,
         reasoning: str,
-        alternatives_considered: Optional[List[Dict[str, str]]] = None
-    ) -> Optional[LearningExplanation]:
+        alternatives_considered: list[dict[str, str]] | None = None
+    ) -> LearningExplanation | None:
         """Explain a decision made during code generation"""
         if not self.config.enabled or not self.config.explain_decisions:
             return None
-        
+
         explanation_text = f"""**Decision:** {decision}
 
 **Reasoning:**
 {reasoning}
 """
-        
+
         if alternatives_considered and self.config.prefer_comparisons:
             explanation_text += "\n**Alternatives considered:**\n"
             for i, alt in enumerate(alternatives_considered, 1):
@@ -220,7 +220,7 @@ Target: `{tool_input}`
                 explanation_text += f"   - Pros: {alt.get('pros', 'N/A')}\n"
                 explanation_text += f"   - Cons: {alt.get('cons', 'N/A')}\n"
                 explanation_text += f"   - Why not chosen: {alt.get('reason_rejected', 'N/A')}\n"
-        
+
         explanation = LearningExplanation(
             timestamp=datetime.now(),
             category="decision",
@@ -229,22 +229,22 @@ Target: `{tool_input}`
             alternative_approaches=alternatives_considered or [],
             difficulty=self.config.explanation_level,
         )
-        
+
         self.explanations.append(explanation)
         return explanation
-    
+
     def explain_code(
         self,
         code: str,
         purpose: str,
-        key_concepts: List[str],
-        pattern: Optional[str] = None,
-        best_practices: Optional[List[str]] = None
-    ) -> Optional[LearningExplanation]:
+        key_concepts: list[str],
+        pattern: str | None = None,
+        best_practices: list[str] | None = None
+    ) -> LearningExplanation | None:
         """Explain code being generated"""
         if not self.config.enabled or not self.config.explain_code:
             return None
-        
+
         explanation_text = f"""**Purpose:** {purpose}
 
 **Key concepts used:**
@@ -305,7 +305,7 @@ Target: `{tool_input}`
         self.explanations.append(explanation)
         return explanation
     
-    def generate_session_summary(self) -> Dict[str, Any]:
+    def generate_session_summary(self) -> dict[str, Any]:
         """Generate a summary of the learning session"""
         if not self.config.enabled or not self.config.generate_summary:
             return {}
