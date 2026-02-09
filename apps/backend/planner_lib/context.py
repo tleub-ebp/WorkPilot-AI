@@ -84,13 +84,14 @@ class ContextLoader:
         )
 
     def _determine_workflow_type(self, spec_content: str) -> WorkflowType:
-        """Determine workflow type from multiple sources.
+        """Determine a workflow type from multiple sources.
 
         Priority order (highest to lowest):
         1. requirements.json - User's explicit intent
         2. complexity_assessment.json - AI's assessment
-        3. spec.md explicit declaration - Spec writer's declaration
-        4. Keyword-based detection - Last resort fallback
+        3. LLM Intent Recognition - Semantic understanding (NEW!)
+        4. spec.md explicit declaration - Spec writer's declaration
+        5. Keyword-based detection - Last resort fallback
         """
 
         # 1. Check requirements.json (user's explicit intent)
@@ -121,7 +122,43 @@ class ContextLoader:
             except (json.JSONDecodeError, KeyError):
                 pass
 
-        # 3. & 4. Fall back to spec content detection
+        # 3. NEW: Use LLM intent recognition for semantic understanding
+        if self.use_llm_intent and self.intent_recognizer:
+            try:
+                intent_file = self.spec_dir / "intent_analysis.json"
+                
+                # Check if we have cached intent analysis
+                if intent_file.exists():
+                    with open(intent_file, encoding="utf-8") as f:
+                        from intent import IntentAnalysis
+                        intent_data = json.load(f)
+                        analysis = IntentAnalysis.from_dict(intent_data)
+                        logger.info(
+                            f"Using cached intent analysis: {analysis.primary_intent.category.value} "
+                            f"-> {analysis.primary_intent.workflow_type.value}"
+                        )
+                        return analysis.primary_intent.workflow_type
+                else:
+                    # Perform fresh intent analysis
+                    logger.info("Performing LLM intent recognition...")
+                    analysis = self.intent_recognizer.analyze_from_spec_dir(self.spec_dir)
+                    
+                    # Cache the result
+                    with open(intent_file, "w", encoding="utf-8") as f:
+                        json.dump(analysis.to_dict(), f, indent=2)
+                    
+                    logger.info(
+                        f"Intent detected: {analysis.primary_intent.category.value} "
+                        f"(confidence: {analysis.primary_intent.confidence_score:.2f}) "
+                        f"-> workflow: {analysis.primary_intent.workflow_type.value}"
+                    )
+                    
+                    return analysis.primary_intent.workflow_type
+                    
+            except Exception as e:
+                logger.warning(f"LLM intent recognition failed, falling back to keywords: {e}")
+
+        # 4. & 5. Fall back to spec content detection
         return self._detect_workflow_type_from_spec(spec_content)
 
     def _detect_workflow_type_from_spec(self, spec_content: str) -> WorkflowType:

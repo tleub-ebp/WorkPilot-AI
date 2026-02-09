@@ -4,8 +4,9 @@
 
 import { useState } from 'react';
 import { Film } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogContent } from '../ui/dialog';
 import { StreamingSession } from './StreamingSession';
 
 interface StreamingSessionButtonProps {
@@ -15,6 +16,7 @@ interface StreamingSessionButtonProps {
 
 export function StreamingSessionButton({ taskId, projectPath }: StreamingSessionButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation(['tasks']);
 
   return (
     <>
@@ -25,7 +27,7 @@ export function StreamingSessionButton({ taskId, projectPath }: StreamingSession
         className="gap-2"
       >
         <Film className="w-4 h-4" />
-        Watch Live
+        {t('tasks:modal.actions.watchLive')}
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

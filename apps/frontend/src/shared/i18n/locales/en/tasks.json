@@ -178,7 +178,9 @@
     "severity": "severity",
     "pullRequest": "Pull Request",
     "showMore": "Show more",
-    "showLess": "Show less"
+    "showLess": "Show less",
+    "created": "Created",
+    "updated": "Updated"
   },
   "images": {
     "removeImageAriaLabel": "Remove image {{filename}}",
@@ -333,5 +335,54 @@
   "referenceImages": {
     "title": "Reference Images (optional)",
     "description": "Add visual references like screenshots or designs to help the AI understand your requirements."
+  },
+  "modal": {
+    "tabs": {
+      "overview": "Overview",
+      "subtasks": "Subtasks ({{count}})",
+      "logs": "Logs"
+    },
+    "actions": {
+      "recovering": "Recovering...",
+      "recoverTask": "Recover Task",
+      "loadingPlan": "Loading Plan...",
+      "resumeTask": "Resume Task",
+      "stopTask": "Stop Task",
+      "startTask": "Start Task",
+      "deleteTask": "Delete Task",
+      "close": "Close",
+      "watchLive": "Watch Live"
+    },
+    "badges": {
+      "stuck": "Stuck",
+      "incomplete": "Incomplete",
+      "completed": "Completed",
+      "hasErrors": "Has Errors",
+      "approvePlan": "Approve Plan",
+      "stopped": "Stopped",
+      "qaIssues": "QA Issues"
+    },
+    "progress": {
+      "subtasks": "{{completed}}/{{total}} subtasks"
+    },
+    "notifications": {
+      "backgroundTaskTitle": "Task running in background",
+      "backgroundTaskDescription": "The task will continue executing. You can check its progress anytime.",
+      "cannotResumeTitle": "Cannot Resume Task",
+      "cannotResumeDescription": "Failed to load implementation plan. Please try again or check the task files."
+    },
+    "errors": {
+      "failedToDelete": "Failed to delete task",
+      "failedToMerge": "Failed to merge changes",
+      "failedToDiscard": "Failed to discard changes"
+    },
+    "delete": {
+      "title": "Delete Task",
+      "confirmMessage": "Are you sure you want to delete <strong>\"{{title}}\"</strong>?",
+      "warningMessage": "This action cannot be undone. All task files, including the spec, implementation plan, and any generated code will be permanently deleted from the project.",
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "deletePermanently": "Delete Permanently"
+    }
   }
 }

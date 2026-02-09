@@ -118,12 +118,6 @@
     "deleteSelected": "Delete Selected",
     "selectedOfTotal": "{{selected}} of {{total}} selected"
   },
-  "time": {
-    "justNow": "Just now",
-    "minutesAgo": "{{count}}m ago",
-    "hoursAgo": "{{count}}h ago",
-    "daysAgo": "{{count}}d ago"
-  },
   "errors": {
     "generic": "An error occurred",
     "unknownError": "An unknown error occurred",
@@ -687,5 +681,17 @@
     "progress": "Progress",
     "lastActivityPrefix": "last activity",
     "lastProgressUpdateTooltip": "Last progress update received"
+  },
+  "time": {
+    "justNow": "just now",
+    "minutesAgo": "{{count}}m ago",
+    "minutesAgo_one": "{{count}}m ago",
+    "minutesAgo_other": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "hoursAgo_one": "{{count}}h ago",
+    "hoursAgo_other": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago",
+    "daysAgo_one": "{{count}}d ago",
+    "daysAgo_other": "{{count}}d ago"
   }
 }

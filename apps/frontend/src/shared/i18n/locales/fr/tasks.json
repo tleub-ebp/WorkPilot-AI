@@ -177,7 +177,9 @@
     "severity": "sévérité",
     "pullRequest": "Pull Request",
     "showMore": "Afficher plus",
-    "showLess": "Afficher moins"
+    "showLess": "Afficher moins",
+    "created": "Créé",
+    "updated": "Mis à jour"
   },
   "images": {
     "removeImageAriaLabel": "Supprimer l'image {{filename}}",
@@ -332,5 +334,54 @@
   "referenceImages": {
     "title": "Images de référence (facultatif)",
     "description": "Ajoutez des références visuelles comme des captures d'écran ou des conceptions pour aider l'IA à comprendre vos exigences."
+  },
+  "modal": {
+    "tabs": {
+      "overview": "Vue d'ensemble",
+      "subtasks": "Sous-tâches ({{count}})",
+      "logs": "Logs"
+    },
+    "actions": {
+      "recovering": "Récupération...",
+      "recoverTask": "Récupérer la tâche",
+      "loadingPlan": "Chargement du plan...",
+      "resumeTask": "Reprendre la tâche",
+      "stopTask": "Arrêter la tâche",
+      "startTask": "Démarrer la tâche",
+      "deleteTask": "Supprimer la tâche",
+      "close": "Fermer",
+      "watchLive": "Regarder en direct"
+    },
+    "badges": {
+      "stuck": "Bloqué",
+      "incomplete": "Incomplet",
+      "completed": "Terminé",
+      "hasErrors": "Contient des erreurs",
+      "approvePlan": "Approuver le plan",
+      "stopped": "Arrêté",
+      "qaIssues": "Problèmes QA"
+    },
+    "progress": {
+      "subtasks": "{{completed}}/{{total}} sous-tâches"
+    },
+    "notifications": {
+      "backgroundTaskTitle": "Tâche en cours d'exécution en arrière-plan",
+      "backgroundTaskDescription": "La tâche continuera de s'exécuter. Vous pouvez vérifier sa progression à tout moment.",
+      "cannotResumeTitle": "Impossible de reprendre la tâche",
+      "cannotResumeDescription": "Échec du chargement du plan d'implémentation. Veuillez réessayer ou vérifier les fichiers de la tâche."
+    },
+    "errors": {
+      "failedToDelete": "Échec de la suppression de la tâche",
+      "failedToMerge": "Échec de la fusion des modifications",
+      "failedToDiscard": "Échec de l'abandon des modifications"
+    },
+    "delete": {
+      "title": "Supprimer la tâche",
+      "confirmMessage": "Êtes-vous sûr de vouloir supprimer <strong>\"{{title}}\"</strong> ?",
+      "warningMessage": "Cette action ne peut pas être annulée. Tous les fichiers de la tâche, y compris la spécification, le plan d'implémentation et tout code généré seront supprimés définitivement du projet.",
+      "cancel": "Annuler",
+      "deleting": "Suppression...",
+      "deletePermanently": "Supprimer définitivement"
+    }
   }
 }

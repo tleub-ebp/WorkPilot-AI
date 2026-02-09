@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
-import { cn, formatRelativeTime, sanitizeMarkdownForDisplay } from '../lib/utils';
+import {cn, formatRelativeTime, sanitizeMarkdownForDisplay} from '../lib/utils';
 import { PhaseProgressIndicator } from './PhaseProgressIndicator';
 import { StreamingSessionButton } from './streaming/StreamingSessionButton';
 import {
@@ -35,6 +35,7 @@ import {
 import { startTask, stopTask, checkTaskRunning, recoverStuckTask, isIncompleteHumanReview, archiveTasks, hasRecentActivity } from '../stores/task-store';
 import { useProjectStore } from '../stores/project-store';
 import type { Task, TaskCategory, ReviewReason, TaskStatus } from '../../shared/types';
+import {useFormatRelativeTime} from "@/hooks/useFormatRelativeTime";
 
 // Category icon mapping
 const CategoryIcon: Record<TaskCategory, typeof Zap> = {
@@ -134,6 +135,7 @@ export const TaskCard = memo(function TaskCard({
   onToggleSelect
 }: TaskCardProps) {
   const { t } = useTranslation(['tasks', 'errors']);
+  const formatRelativeTime = useFormatRelativeTime();
   const [isStuck, setIsStuck] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
   const stuckIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -175,7 +177,7 @@ export const TaskCard = memo(function TaskCard({
   // Memoize relative time (recalculates only when updatedAt changes)
   const relativeTime = useMemo(
     () => formatRelativeTime(task.updatedAt),
-    [task.updatedAt]
+    [task.updatedAt, formatRelativeTime]
   );
 
   // Memoize status menu items to avoid recreating on every render

@@ -23,7 +23,7 @@ import remarkGfm from 'remark-gfm';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
-import { cn, formatRelativeTime } from '../../lib/utils';
+import { cn } from '../../lib/utils';
 import {
   TASK_CATEGORY_LABELS,
   TASK_CATEGORY_COLORS,
@@ -37,6 +37,7 @@ import {
   JSON_ERROR_PREFIX
 } from '../../../shared/constants';
 import type { Task, TaskCategory } from '../../../shared/types';
+import {useFormatRelativeTime} from "@/hooks/useFormatRelativeTime";
 
 // Category icon mapping
 const CategoryIcon: Record<TaskCategory, typeof Target> = {
@@ -60,6 +61,7 @@ const COLLAPSED_HEIGHT = 200;
 
 export function TaskMetadata({ task }: TaskMetadataProps) {
   const { t } = useTranslation(['tasks', 'errors']);
+  const formatRelativeTime = useFormatRelativeTime();
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasOverflow, setHasOverflow] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -169,10 +171,10 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <Clock className="h-3 w-3" />
-            Created {formatRelativeTime(task.createdAt)}
+            {t('tasks:metadata.created')} {formatRelativeTime(task.createdAt)}
           </span>
           <span className="text-border">•</span>
-          <span>Updated {formatRelativeTime(task.updatedAt)}</span>
+          <span>{t('tasks:metadata.updated')} {formatRelativeTime(task.updatedAt)}</span>
         </div>
       </div>
 
