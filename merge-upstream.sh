@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+﻿﻿#!/bin/bash
 
 #
 # Merge upstream changes from Auto-Claude into your fork
@@ -13,8 +13,6 @@
 #   ./merge-upstream.sh develop --skip-push
 #
 # Note: Make this script executable: chmod +x merge-upstream.sh
-
-set -e
 
 # Colors
 GREEN='\033[32m'

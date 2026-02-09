@@ -18,7 +18,7 @@ const path = require('path');
 const fs = require('fs');
 
 const isWindows = os.platform() === 'win32';
-const scriptDir = __dirname;
+const rootDir = path.resolve(__dirname, '..');
 
 console.log('\n🚀 Auto-Claude Upstream Merge Tool\n');
 
@@ -34,7 +34,7 @@ if (isWindows) {
             encoding: 'utf-8'
         });
         
-        scriptPath = path.join(scriptDir, 'merge-upstream.ps1');
+        scriptPath = path.join(rootDir, 'merge-upstream.ps1');
         // Build PowerShell command with proper argument handling
         const args = process.argv.slice(2);
         let psArgs = '';
@@ -51,12 +51,12 @@ if (isWindows) {
         command = `powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}"${psArgs}`;
     } catch (e) {
         // Fall back to batch
-        scriptPath = path.join(scriptDir, 'merge-upstream.bat');
+        scriptPath = path.join(rootDir, 'merge-upstream.bat');
         command = `"${scriptPath}"`;
     }
 } else {
     // Unix-like systems
-    scriptPath = path.join(scriptDir, 'merge-upstream.sh');
+    scriptPath = path.join(rootDir, 'merge-upstream.sh');
     const args = process.argv.slice(2).join(' ');
     command = `bash "${scriptPath}" ${args}`;
 }
