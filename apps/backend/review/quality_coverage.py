@@ -25,15 +25,21 @@ class TestCoverageAnalyzer:
 
     def analyze_coverage(
         self,
-        source_patterns: list[str] = ['**/*.py'],
-        exclude_patterns: list[str] = ['test*.py', '*_test.py', 'setup.py'],
+        source_patterns: list[str] | None = None,
+        exclude_patterns: list[str] | None = None,
     ) -> dict[str, Any]:
         """
         Analyse la couverture de tests de manière statique.
-        
+
         Returns:
             Dict avec statistiques de couverture
         """
+      # Set defaults
+        if source_patterns is None:
+            source_patterns = ['**/*.py']
+        if exclude_patterns is None:
+            exclude_patterns = ['test*.py', '*_test.py', 'setup.py']
+
         # Collecter fichiers source
         source_files = []
         for pattern in source_patterns:

@@ -8,10 +8,11 @@ Permet de définir des règles personnalisées par projet.
 from __future__ import annotations
 
 import re
-import yaml
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+import yaml
 
 from .quality_scorer import IssueSeverity, QualityCategory, QualityIssue
 
@@ -50,12 +51,12 @@ class CustomRuleEngine:
     def load_rules(self, config_path: Path) -> None:
         """Charge les règles depuis un fichier YAML."""
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(config_path, encoding='utf-8') as f:
                 config = yaml.safe_load(f)
-            
+
             if not config or 'rules' not in config:
                 return
-            
+
             for rule_data in config['rules']:
                 rule = self._parse_rule(rule_data)
                 if rule:

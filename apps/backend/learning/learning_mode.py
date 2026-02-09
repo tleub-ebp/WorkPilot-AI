@@ -277,9 +277,9 @@ Target: `{tool_input}`
         pattern_name: str,
         description: str,
         when_to_use: str,
-        example_code: Optional[str] = None,
-        diagram: Optional[str] = None
-    ) -> Optional[LearningExplanation]:
+        example_code: str | None = None,
+        diagram: str | None = None
+    ) -> LearningExplanation | None:
         """Explain a design pattern being used"""
         if not self.config.enabled or not self.config.explain_patterns:
             return None

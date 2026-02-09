@@ -11,12 +11,12 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .quality_scorer import QualityIssue, IssueSeverity
+from .quality_scorer import QualityIssue
 
 
 class AutoFix:
     """Représente un fix automatique."""
-    
+
     def __init__(
         self,
         issue: QualityIssue,
