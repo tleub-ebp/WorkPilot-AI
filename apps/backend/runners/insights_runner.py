@@ -48,6 +48,7 @@ from debug import (
     debug_success,
 )
 from phase_config import get_thinking_budget, resolve_model_id
+from learning import LearningMode, LearningModeConfig, ExplanationLevel
 
 
 def load_project_context(project_dir: str) -> str:
@@ -143,6 +144,8 @@ async def run_with_sdk(
     history: list,
     model: str = "sonnet",  # Shorthand - resolved via API Profile if configured
     thinking_level: str = "medium",
+    learning_mode_enabled: bool = False,
+    explanation_level: str = "intermediate",
 ) -> None:
     """Run the chat using Claude SDK with streaming."""
     if not SDK_AVAILABLE:
@@ -160,6 +163,25 @@ async def run_with_sdk(
 
     # Ensure SDK can find the token
     ensure_claude_code_oauth_token()
+
+    # Initialize Learning Mode if enabled
+    learning_mode = None
+    if learning_mode_enabled:
+        try:
+            level_map = {
+                "beginner": ExplanationLevel.BEGINNER,
+                "intermediate": ExplanationLevel.INTERMEDIATE,
+                "advanced": ExplanationLevel.ADVANCED,
+                "expert": ExplanationLevel.EXPERT,
+            }
+            config = LearningModeConfig(
+                enabled=True,
+                explanation_level=level_map.get(explanation_level, ExplanationLevel.INTERMEDIATE)
+            )
+            learning_mode = LearningMode(config)
+            debug("insights_runner", "Learning Mode enabled", level=explanation_level)
+        except Exception as e:
+            debug_error("insights_runner", f"Failed to initialize Learning Mode: {e}")
 
     system_prompt = build_system_prompt(project_dir)
     project_path = Path(project_dir).resolve()
@@ -258,6 +280,28 @@ Current question: {message}"""
                                 f"__TOOL_START__:{json.dumps({'name': tool_name, 'input': tool_input})}",
                                 flush=True,
                             )
+                            
+                            # Learning Mode: Explain tool usage
+                            if learning_mode:
+                                try:
+                                    explanation = learning_mode.explain_tool_use(
+                                        tool_name=tool_name,
+                                        tool_input={"input": tool_input} if tool_input else {},
+                                        reason=f"Exploring codebase to answer user question",
+                                        expected_outcome=f"Find relevant information"
+                                    )
+                                    if explanation:
+                                        print(
+                                            f"__EXPLANATION__:{json.dumps({
+                                                'category': explanation.category,
+                                                'title': explanation.title,
+                                                'explanation': explanation.explanation,
+                                                'difficulty': explanation.difficulty.value
+                                            })}",
+                                            flush=True
+                                        )
+                                except Exception as e:
+                                    debug_error("insights_runner", f"Learning Mode explanation error: {e}")
 
                 elif msg_type == "ToolResult":
                     # Tool finished executing
@@ -359,6 +403,17 @@ def main():
         choices=["none", "low", "medium", "high", "ultrathink"],
         help="Thinking level for extended reasoning (default: medium)",
     )
+    parser.add_argument(
+        "--learning-mode",
+        action="store_true",
+        help="Enable Learning Mode to get detailed explanations of AI actions",
+    )
+    parser.add_argument(
+        "--explanation-level",
+        default="intermediate",
+        choices=["beginner", "intermediate", "advanced", "expert"],
+        help="Level of detail for Learning Mode explanations (default: intermediate)",
+    )
     args = parser.parse_args()
 
     debug_section("insights_runner", "Starting Insights Chat")
@@ -367,6 +422,8 @@ def main():
     user_message = args.message
     model = args.model
     thinking_level = args.thinking_level
+    learning_mode_enabled = args.learning_mode
+    explanation_level = args.explanation_level
 
     debug(
         "insights_runner",
@@ -375,6 +432,8 @@ def main():
         message_length=len(user_message),
         model=model,
         thinking_level=thinking_level,
+        learning_mode=learning_mode_enabled,
+        explanation_level=explanation_level,
     )
 
     # Load history from file if provided, otherwise parse inline JSON
@@ -401,7 +460,15 @@ def main():
 
     # Run the async SDK function
     debug("insights_runner", "Running SDK query")
-    asyncio.run(run_with_sdk(project_dir, user_message, history, model, thinking_level))
+    asyncio.run(run_with_sdk(
+        project_dir, 
+        user_message, 
+        history, 
+        model, 
+        thinking_level,
+        learning_mode_enabled,
+        explanation_level
+    ))
     debug_success("insights_runner", "Query completed")
 
 

@@ -128,7 +128,7 @@ export class InsightsService extends EventEmitter {
       return;
     }
 
-    // Load or create session
+    // Load or create a session
     let session = this.sessionManager.loadSession(projectId, projectPath);
     if (!session) {
       session = this.sessionManager.createNewSession(projectId, projectPath);
@@ -160,13 +160,20 @@ export class InsightsService extends EventEmitter {
     const configToUse = modelConfig || session.modelConfig;
 
     try {
+      // Prepare Learning Mode config if enabled
+      const learningMode = session.learningModeConfig?.enabled ? {
+        enabled: true,
+        level: session.learningModeConfig.explanationLevel
+      } : undefined;
+      
       // Execute insights query
       const result = await this.executor.execute(
         projectId,
         projectPath,
         message,
         conversationHistory,
-        configToUse
+        configToUse,
+        learningMode
       );
 
       // Add assistant message to session

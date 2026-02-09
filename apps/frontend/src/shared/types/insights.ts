@@ -196,6 +196,8 @@ export interface InsightsSession {
   title?: string; // Auto-generated from first message or user-set
   messages: InsightsChatMessage[];
   modelConfig?: InsightsModelConfig; // Per-session model configuration
+  learningModeConfig?: LearningModeConfig; // Learning Mode configuration
+  explanations?: LearningExplanation[]; // Collected explanations during session
   createdAt: Date;
   updatedAt: Date;
 }
@@ -218,7 +220,7 @@ export interface InsightsChatStatus {
 }
 
 export interface InsightsStreamChunk {
-  type: 'text' | 'task_suggestion' | 'tool_start' | 'tool_end' | 'done' | 'error';
+  type: 'text' | 'task_suggestion' | 'tool_start' | 'tool_end' | 'explanation' | 'done' | 'error';
   content?: string;
   suggestedTask?: {
     title: string;
@@ -229,5 +231,46 @@ export interface InsightsStreamChunk {
     name: string;
     input?: string;  // Brief description of what's being searched/read
   };
+  explanation?: LearningExplanation;
   error?: string;
 }
+
+// ============================================
+// Learning Mode Types
+// ============================================
+
+export type ExplanationLevel = 'beginner' | 'intermediate' | 'advanced' | 'expert';
+
+export type ExplanationCategory = 'tool_use' | 'decision' | 'code' | 'pattern' | 'best_practice';
+
+export interface LearningExplanation {
+  category: ExplanationCategory;
+  title: string;
+  explanation: string;
+  code_snippet?: string;
+  diagram?: string;  // Mermaid diagram
+  alternative_approaches?: Array<{
+    name: string;
+    description?: string;
+    pros?: string;
+    cons?: string;
+    reason_rejected?: string;
+  }>;
+  references?: string[];
+  difficulty: ExplanationLevel;
+  timestamp: string;
+}
+
+export interface LearningModeConfig {
+  enabled: boolean;
+  explanationLevel: ExplanationLevel;
+  explainTools: boolean;
+  explainDecisions: boolean;
+  explainCode: boolean;
+  explainPatterns: boolean;
+  explainBestPractices: boolean;
+  preferVisualDiagrams: boolean;
+  preferExamples: boolean;
+  preferComparisons: boolean;
+}
+

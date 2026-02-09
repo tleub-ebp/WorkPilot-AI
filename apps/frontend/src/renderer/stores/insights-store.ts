@@ -7,6 +7,8 @@ import type {
   InsightsStreamChunk,
   InsightsToolUsage,
   InsightsModelConfig,
+  LearningModeConfig,
+  LearningExplanation,
   TaskMetadata,
   Task
 } from '../../shared/types';
@@ -26,6 +28,10 @@ interface InsightsState {
   currentTool: ToolUsage | null; // Currently executing tool
   toolsUsed: InsightsToolUsage[]; // Tools used during current response
   isLoadingSessions: boolean;
+  
+  // Learning Mode
+  currentExplanation: LearningExplanation | null; // Currently streaming explanation
+  learningModeEnabled: boolean;
 
   // Actions
   setSession: (session: InsightsSession | null) => void;
@@ -42,6 +48,11 @@ interface InsightsState {
   finalizeStreamingMessage: (suggestedTask?: InsightsChatMessage['suggestedTask']) => void;
   clearSession: () => void;
   setLoadingSessions: (loading: boolean) => void;
+  
+  // Learning Mode actions
+  setCurrentExplanation: (explanation: LearningExplanation | null) => void;
+  setLearningModeEnabled: (enabled: boolean) => void;
+  addExplanation: (explanation: LearningExplanation) => void;
 }
 
 const initialStatus: InsightsChatStatus = {
@@ -59,6 +70,8 @@ export const useInsightsStore = create<InsightsState>((set, _get) => ({
   currentTool: null,
   toolsUsed: [],
   isLoadingSessions: false,
+  currentExplanation: null,
+  learningModeEnabled: false,
 
   // Actions
   setSession: (session) => set({ session }),
@@ -189,7 +202,28 @@ export const useInsightsStore = create<InsightsState>((set, _get) => ({
       pendingMessage: '',
       streamingContent: '',
       currentTool: null,
-      toolsUsed: []
+      toolsUsed: [],
+      currentExplanation: null
+    }),
+  
+  // Learning Mode actions
+  setCurrentExplanation: (explanation) => set({ currentExplanation: explanation }),
+  
+  setLearningModeEnabled: (enabled) => set({ learningModeEnabled: enabled }),
+  
+  addExplanation: (explanation) =>
+    set((state) => {
+      if (!state.session) return state;
+      
+      const explanations = state.session.explanations || [];
+      
+      return {
+        session: {
+          ...state.session,
+          explanations: [...explanations, explanation],
+          updatedAt: new Date()
+        }
+      };
     })
 }));
 
@@ -376,6 +410,13 @@ export function setupInsightsListeners(): () => void {
           break;
         case 'tool_end':
           store().setCurrentTool(null);
+          break;
+        case 'explanation':
+          // Learning Mode explanation received
+          if (chunk.explanation) {
+            store().setCurrentExplanation(chunk.explanation);
+            store().addExplanation(chunk.explanation);
+          }
           break;
         case 'task_suggestion':
           // Finalize the message with task suggestion
