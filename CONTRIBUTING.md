@@ -511,6 +511,27 @@ git remote add upstream https://github.com/AndyMik90/Auto-Claude.git
 
 #### Keeping Your Fork Updated
 
+You can sync with upstream using automated scripts or manual commands.
+
+**Option 1: Automated Scripts (Recommended)**
+
+```powershell
+# Windows PowerShell
+.\merge-upstream.ps1
+
+# Optional: Skip push to review changes first
+.\merge-upstream.ps1 -SkipPush
+```
+
+```bash
+# Windows CMD
+merge-upstream.bat
+```
+
+See [MERGE_UPSTREAM.md](MERGE_UPSTREAM.md) for detailed documentation and troubleshooting.
+
+**Option 2: Manual Git Commands**
+
 ```bash
 # Fetch latest changes from upstream
 git fetch upstream

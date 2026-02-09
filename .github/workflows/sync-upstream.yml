@@ -1,0 +1,65 @@
+﻿name: Sync with Upstream
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub UI
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-upstream:
+    runs-on: ubuntu-latest
+    name: Sync upstream develop into develop
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: develop
+
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/AndyMik90/Auto-Claude.git || true
+          git remote -v
+
+      - name: Fetch upstream
+        run: git fetch upstream develop
+
+      - name: Check for differences
+        id: check
+        run: |
+          if git log --oneline upstream/develop..develop | grep -q .; then
+            echo "behind=true" >> $GITHUB_OUTPUT
+          else
+            echo "behind=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Merge upstream
+        if: steps.check.outputs.behind == 'true'
+        run: |
+          git merge upstream/develop -m "chore: sync with upstream Auto-Claude"
+
+      - name: Push changes
+        if: steps.check.outputs.behind == 'true'
+        run: |
+          git push origin develop
+
+      - name: Report status
+        if: always()
+        run: |
+          echo "Sync Status:"
+          echo "- Upstream URL: $(git remote get-url upstream)"
+          echo "- Current branch: $(git rev-parse --abbrev-ref HEAD)"
+          echo "- Latest commit: $(git log -1 --oneline)"
+          echo "- Commits behind upstream: $(git log --oneline upstream/develop..develop | wc -l)"
