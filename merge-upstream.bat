@@ -1,4 +1,4 @@
-﻿@echo off
+﻿﻿@echo off
 REM Merge upstream changes from Auto-Claude into your fork
 REM This is a wrapper script that calls the PowerShell version
 REM 
@@ -37,7 +37,7 @@ REM Get the script directory
 set "SCRIPT_DIR=%~dp0"
 
 REM Execute PowerShell script
-powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%merge-upstream.ps1" -Branch %BRANCH% %SKIP_PUSH%
+powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%merge-upstream.ps1" -Branch "%BRANCH%" %SKIP_PUSH%
 if %ERRORLEVEL% neq 0 (
     exit /b %ERRORLEVEL%
 )
