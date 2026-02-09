@@ -1,4 +1,4 @@
-﻿"""
+﻿﻿"""
 Self-Healing Monitor
 ====================
 
@@ -22,10 +22,10 @@ except ImportError:
     def debug_error(module: str, message: str, **kwargs): pass
 
 from .alert_manager import Alert, AlertLevel, AlertManager
-from .config import HealingConfig, HealingMode, HealingPriority
+from .config import HealingConfig, HealingMode
 from .debt_tracker import DebtCategory, DebtItem, TechnicalDebtTracker
 from .health_checker import HealthChecker, HealthReport
-from .refactoring_engine import RefactoringEngine, RefactoringPlan
+from .refactoring_engine import RefactoringEngine
 
 
 class SelfHealingMonitor:

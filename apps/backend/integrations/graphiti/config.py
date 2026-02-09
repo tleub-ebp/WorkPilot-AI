@@ -510,7 +510,7 @@ class GraphitiState:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
-    def load(cls, spec_dir: Path) -> Optional["GraphitiState"]:
+    def load(cls, spec_dir: Path) -> "GraphitiState" | None:
         """Load state from the spec directory."""
         marker_file = spec_dir / GRAPHITI_STATE_MARKER
         if not marker_file.exists():

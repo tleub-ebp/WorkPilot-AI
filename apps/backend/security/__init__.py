@@ -61,18 +61,12 @@ Validators:
 # Auto-initialize security features (runs on import)
 # This ensures security is ALWAYS active and properly configured
 from . import auto_integration  # noqa: F401
-from project_analyzer import (
-    BASE_COMMANDS,
-    SecurityProfile,
-    is_command_allowed,
-    needs_validation,
-)
 from .compliance_analyzer import (
     ComplianceAnalyzer,
     ComplianceFramework,
-    ComplianceViolation,
     ComplianceReport,
     ComplianceSeverity,
+    ComplianceViolation,
 )
 from .git_hooks import GitHookManager
 from .hooks import bash_security_hook, validate_command
@@ -124,6 +118,14 @@ from .validator import (
     validate_sh_command,
     validate_shell_c_command,
     validate_zsh_command,
+)
+
+# Import from parent modules
+from project_analyzer import (
+    BASE_COMMANDS,
+    SecurityProfile,
+    is_command_allowed,
+    needs_validation,
 )
 
 __all__ = [

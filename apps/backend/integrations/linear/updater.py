@@ -84,7 +84,7 @@ class LinearTaskState:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
-    def load(cls, spec_dir: Path) -> Optional["LinearTaskState"]:
+    def load(cls, spec_dir: Path) -> "LinearTaskState" | None:
         """Load state from the spec directory."""
         state_file = spec_dir / LINEAR_TASK_FILE
         if not state_file.exists():
