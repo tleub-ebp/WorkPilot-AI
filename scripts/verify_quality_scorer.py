@@ -4,7 +4,7 @@
 from pathlib import Path
 import sys
 
-target = Path("apps/backend/review/quality_scorer.py")
+target = Path(__file__).parent.parent / "apps" / "backend" / "review" / "quality_scorer.py"
 
 if not target.exists():
     print(f"✗ File not found: {target}")
@@ -23,16 +23,14 @@ try:
     compile(content, str(target), 'exec')
     
     # Try to import it
-    sys.path.insert(0, str(Path("apps/backend")))
+    sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
     from review.quality_scorer import QualityScorer, QualityScore, QualityIssue, QualityCategory, IssueSeverity
     
     print("✓ File is valid Python!")
     print(f"✓ QualityScorer class: {QualityScorer}")
-    print(f"✓ QualityScore class: {QualityScore}")
+    print(f"✓ All imports successful")
+    sys.exit(0)
     
-except SyntaxError as e:
-    print(f"✗ Syntax error: {e}")
-    sys.exit(1)
 except Exception as e:
     print(f"✗ Error: {e}")
     import traceback

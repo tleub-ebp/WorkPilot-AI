@@ -1,18 +1,23 @@
 ﻿"""
 Syntax checker for auto-fix loop files
 """
-import py_compile
 import sys
 from pathlib import Path
 
 def check_syntax(filepath):
     """Check Python file for syntax errors."""
     try:
-        py_compile.compile(str(filepath), doraise=True)
-        print(f"✓ {filepath.name}")
+        # Use utf-8-sig to automatically handle and strip BOM
+        with open(filepath, 'r', encoding='utf-8-sig') as f:
+            source_code = f.read()
+        compile(source_code, str(filepath), 'exec')
+        print(f"✓ {filepath.name} - syntaxe OK")
         return True
-    except py_compile.PyCompileError as e:
+    except (SyntaxError, UnicodeDecodeError) as e:
         print(f"✗ {filepath.name}: {e}")
+        return False
+    except Exception as e:
+        print(f"✗ {filepath.name}: Erreur {type(e).__name__}: {e}")
         return False
 
 def main():

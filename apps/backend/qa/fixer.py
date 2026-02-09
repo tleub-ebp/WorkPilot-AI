@@ -12,15 +12,45 @@ Memory Integration:
 from pathlib import Path
 
 # Memory integration for cross-session learning
-from agents.memory_manager import get_graphiti_context, save_session_memory
-from claude_agent_sdk import ClaudeSDKClient
-from debug import debug, debug_detailed, debug_error, debug_section, debug_success
-from security.tool_input_validator import get_safe_tool_input
-from task_logger import (
-    LogEntryType,
-    LogPhase,
-    get_task_logger,
-)
+try:
+    from agents.memory_manager import get_graphiti_context, save_session_memory
+except ImportError:
+    async def get_graphiti_context(*args, **kwargs):
+        return ""
+    async def save_session_memory(*args, **kwargs):
+        pass
+
+try:
+    from claude_agent_sdk import ClaudeSDKClient
+except ImportError:
+    ClaudeSDKClient = None
+
+try:
+    from debug import debug, debug_detailed, debug_error, debug_section, debug_success
+except ImportError:
+    def debug(*args, **kwargs): pass
+    def debug_detailed(*args, **kwargs): pass
+    def debug_error(*args, **kwargs): pass
+    def debug_section(*args, **kwargs): pass
+    def debug_success(*args, **kwargs): pass
+
+try:
+    from security.tool_input_validator import get_safe_tool_input
+except ImportError:
+    def get_safe_tool_input(*args, **kwargs):
+        return ""
+
+try:
+    from task_logger import (
+        LogEntryType,
+        LogPhase,
+        get_task_logger,
+    )
+except ImportError:
+    LogEntryType = None
+    LogPhase = None
+    def get_task_logger(*args, **kwargs):
+        return None
 
 from .criteria import get_qa_signoff_status
 

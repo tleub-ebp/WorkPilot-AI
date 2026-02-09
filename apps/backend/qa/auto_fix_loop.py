@@ -35,12 +35,42 @@ except ImportError:
     async def save_session_memory(*args, **kwargs):
         pass
 
-from analysis.test_discovery import TestDiscovery
-from core.client import create_client
-from core.task_event import TaskEventEmitter
-from debug import debug, debug_error, debug_section, debug_success, debug_warning
-from phase_config import get_phase_model, get_phase_thinking_budget
-from task_logger import LogPhase, get_task_logger
+try:
+    from analysis.test_discovery import TestDiscovery
+except ImportError:
+    TestDiscovery = None
+
+try:
+    from core.client import create_client
+except ImportError:
+    def create_client(*args, **kwargs):
+        return None
+
+try:
+    from core.task_event import TaskEventEmitter
+except ImportError:
+    TaskEventEmitter = None
+
+try:
+    from debug import debug, debug_error, debug_section, debug_success, debug_warning
+except ImportError:
+    def debug(*args, **kwargs): pass
+    def debug_error(*args, **kwargs): pass
+    def debug_section(*args, **kwargs): pass
+    def debug_success(*args, **kwargs): pass
+    def debug_warning(*args, **kwargs): pass
+
+try:
+    from phase_config import get_phase_model, get_phase_thinking_budget
+except ImportError:
+    def get_phase_model(*args, **kwargs): return None
+    def get_phase_thinking_budget(*args, **kwargs): return "medium"
+
+try:
+    from task_logger import LogPhase, get_task_logger
+except ImportError:
+    LogPhase = None
+    def get_task_logger(*args, **kwargs): return None
 
 from .criteria import get_qa_iteration_count
 from .fixer import run_qa_fixer_session

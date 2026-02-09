@@ -7,19 +7,24 @@ Tests the intelligent auto-fix loop functionality.
 
 import asyncio
 import json
+import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from apps.backend.qa.auto_fix_loop import (
+# Add backend to path
+backend_dir = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_dir))
+
+from qa.auto_fix_loop import (
     DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
     AutoFixAttempt,
     AutoFixLoop,
     TestResult,
     run_auto_fix_loop,
 )
-from apps.backend.qa.auto_fix_metrics import (
+from qa.auto_fix_metrics import (
     AutoFixMetricsTracker,
     AutoFixStats,
     get_auto_fix_dashboard_data,

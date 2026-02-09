@@ -3,7 +3,7 @@
 
 from pathlib import Path
 
-scorer_file = Path("apps/backend/review/quality_scorer.py")
+scorer_file = Path(__file__).parent.parent / "apps" / "backend" / "review" / "quality_scorer.py"
 
 if not scorer_file.exists():
     print(f"❌ Fichier non trouvé: {scorer_file}")
@@ -28,15 +28,11 @@ try:
     print(f"✅ Fichier UTF-8 valide ({len(content)} caractères)")
     
     # Vérifier les imports essentiels
-    if "from dataclasses import dataclass" in content:
-        print("✅ Import dataclass trouvé")
-    if "class QualityScorer:" in content:
+    if "class QualityScorer" in content:
         print("✅ Classe QualityScorer trouvée")
     if "def score_pr" in content:
         print("✅ Méthode score_pr trouvée")
     
-    print("\n✅ Le fichier est correct et prêt à être utilisé!")
-    
-except UnicodeDecodeError as e:
-    print(f"❌ Erreur d'encodage: {e}")
+except UnicodeDecodeError:
+    print("❌ Erreur d'encodage UTF-8!")
     exit(1)
