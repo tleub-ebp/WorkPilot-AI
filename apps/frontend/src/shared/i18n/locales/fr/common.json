@@ -118,12 +118,6 @@
     "deleteSelected": "Supprimer la sélection",
     "selectedOfTotal": "{{selected}} sur {{total}} sélectionné(s)"
   },
-  "time": {
-    "justNow": "À l'instant",
-    "minutesAgo": "Il y a {{count}} min",
-    "hoursAgo": "Il y a {{count}}h",
-    "daysAgo": "Il y a {{count}}j"
-  },
   "errors": {
     "generic": "Une erreur s'est produite",
     "unknownError": "Une erreur inconnue s'est produite",
@@ -687,5 +681,17 @@
     "progress": "Progression",
     "lastActivityPrefix": "dernière activité",
     "lastProgressUpdateTooltip": "Dernière mise à jour de progression reçue"
+  },
+  "time": {
+    "justNow": "à l'instant",
+    "minutesAgo": "il y a {{count}}min",
+    "minutesAgo_one": "il y a {{count}}min",
+    "minutesAgo_other": "il y a {{count}}min",
+    "hoursAgo": "il y a {{count}}h",
+    "hoursAgo_one": "il y a {{count}}h",
+    "hoursAgo_other": "il y a {{count}}h",
+    "daysAgo": "il y a {{count}}j",
+    "daysAgo_one": "il y a {{count}}j",
+    "daysAgo_other": "il y a {{count}}j"
   }
 }

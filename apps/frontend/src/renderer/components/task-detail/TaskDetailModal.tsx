@@ -293,12 +293,12 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
             {state.isRunning ? (
               <>
                 <Square className="mr-2 h-4 w-4" />
-                Stop Task
+                {t('tasks:modal.actions.stopTask')}
               </>
             ) : (
               <>
                 <Play className="mr-2 h-4 w-4" />
-                Start Task
+                {t('tasks:modal.actions.startTask')}
               </>
             )}
           </Button>
@@ -406,10 +406,10 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
                               variant={task.reviewReason === 'completed' ? 'success' : task.reviewReason === 'errors' ? 'destructive' : 'warning'}
                               className="text-xs"
                             >
-                              {task.reviewReason === 'completed' ? 'Completed' :
-                               task.reviewReason === 'errors' ? 'Has Errors' :
-                               task.reviewReason === 'plan_review' ? 'Approve Plan' :
-                               task.reviewReason === 'stopped' ? 'Stopped' : 'QA Issues'}
+                              {task.reviewReason === 'completed' ? t('tasks:modal.badges.completed') :
+                               task.reviewReason === 'errors' ? t('tasks:modal.badges.hasErrors') :
+                               task.reviewReason === 'plan_review' ? t('tasks:modal.badges.approvePlan') :
+                               task.reviewReason === 'stopped' ? t('tasks:modal.badges.stopped') : t('tasks:modal.badges.qaIssues')}
                             </Badge>
                           )}
                         </>
@@ -417,7 +417,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
                       {/* Compact progress indicator */}
                       {totalSubtasks > 0 && (
                         <span className="text-xs text-muted-foreground ml-1">
-                          {completedSubtasks}/{totalSubtasks} subtasks
+                          {t('tasks:modal.progress.subtasks', { completed: completedSubtasks, total: totalSubtasks })}
                         </span>
                       )}
                     </div>
@@ -490,13 +490,13 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
                     value="subtasks"
                     className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm"
                   >
-                    Subtasks ({task.subtasks.length})
+                    {t('tasks:modal.tabs.subtasks', { count: task.subtasks.length })}
                   </TabsTrigger>
                   <TabsTrigger
                     value="logs"
                     className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm"
                   >
-                    Logs
+                    {t('tasks:modal.tabs.logs')}
                   </TabsTrigger>
                   {showFilesTab && (
                     <TabsTrigger
@@ -603,12 +603,12 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
                 disabled={state.isRunning && !state.isStuck}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete Task
+                {t('tasks:modal.actions.deleteTask')}
               </Button>
               <div className="flex-1" />
               {renderPrimaryAction()}
               <Button variant="outline" onClick={handleClose}>
-                Close
+                {t('tasks:modal.actions.close')}
               </Button>
             </div>
           </DialogPrimitive.Content>
@@ -628,15 +628,13 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              Delete Task
+              {t('tasks:modal.delete.title')}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="text-sm text-muted-foreground space-y-3">
-                <p>
-                  Are you sure you want to delete <strong className="text-foreground">"{task.title}"</strong>?
-                </p>
+                <p dangerouslySetInnerHTML={{ __html: t('tasks:modal.delete.confirmMessage', { title: task.title }) }} />
                 <p className="text-destructive">
-                  This action cannot be undone. All task files, including the spec, implementation plan, and any generated code will be permanently deleted from the project.
+                  {t('tasks:modal.delete.warningMessage')}
                 </p>
                 {state.deleteError && (
                   <p className="text-destructive bg-destructive/10 px-3 py-2 rounded-lg text-sm">
@@ -647,7 +645,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={state.isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={state.isDeleting}>{t('tasks:modal.delete.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
@@ -659,12 +657,12 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
               {state.isDeleting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
+                  {t('tasks:modal.delete.deleting')}
                 </>
               ) : (
                 <>
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Permanently
+                  {t('tasks:modal.delete.deletePermanently')}
                 </>
               )}
             </AlertDialogAction>
