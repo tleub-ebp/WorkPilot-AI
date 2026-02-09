@@ -1,4 +1,4 @@
-﻿"""
+﻿﻿"""
 Performance Profiling & Analysis
 =================================
 
@@ -8,9 +8,7 @@ Analyse statique pour détecter les problèmes de performance potentiels.
 from __future__ import annotations
 
 import ast
-import re
 from pathlib import Path
-from typing import Any
 
 from .quality_scorer import IssueSeverity, QualityCategory, QualityIssue
 
@@ -243,7 +241,7 @@ class PerformanceAnalyzer:
 
 def analyze_project_performance(
     project_dir: Path,
-    file_patterns: list[str] = ['**/*.py', '**/*.js', '**/*.ts'],
+    file_patterns: list[str] | None = None,
 ) -> list[QualityIssue]:
     """
     Analyse la performance d'un projet.
@@ -251,6 +249,8 @@ def analyze_project_performance(
     Returns:
         Liste d'issues de performance détectées
     """
+    if file_patterns is None:
+        file_patterns = ['**/*.py', '**/*.js', '**/*.ts']
     analyzer = PerformanceAnalyzer()
     all_issues = []
     

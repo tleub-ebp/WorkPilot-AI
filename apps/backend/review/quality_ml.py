@@ -1,4 +1,4 @@
-﻿"""
+﻿﻿﻿"""
 ML-Based Pattern Detection
 ===========================
 
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import re
-from collections import Counter, defaultdict
+from collections import defaultdict
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -42,7 +42,7 @@ class MLPatternDetector:
 
     def learn_from_codebase(
         self,
-        file_patterns: list[str] = ['**/*.py', '**/*.js', '**/*.ts', '**/*.java'],
+        file_patterns: list[str] | None = None,
     ) -> dict[str, Any]:
         """
         Apprend les patterns d'un projet.
@@ -50,6 +50,9 @@ class MLPatternDetector:
         Returns:
             Dict avec statistiques d'apprentissage
         """
+        if file_patterns is None:
+            file_patterns = ['**/*.py', '**/*.js', '**/*.ts', '**/*.java']
+        
         print("🧠 Learning patterns from codebase...")
         
         # Collecter les fichiers
@@ -351,7 +354,7 @@ class MLPatternDetector:
             return
         
         try:
-            with open(data_file, 'r', encoding='utf-8') as f:
+            with open(data_file, encoding='utf-8') as f:
                 data = json.load(f)
             
             self.learned_data = data.get('learned_data', {})
