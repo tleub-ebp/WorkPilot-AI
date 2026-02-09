@@ -107,7 +107,8 @@
     "required": "Requis",
     "dismiss": "Ignorer",
     "important": "Important",
-    "orphaned": "(orphelin)"
+    "orphaned": "(orphelin)",
+    "overview": "Vue d'ensemble"
   },
   "selection": {
     "select": "Sélectionner",

@@ -484,7 +484,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
                     value="overview"
                     className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm"
                   >
-                    Overview
+                    {t('tasks:modal.tabs.overview')}
                   </TabsTrigger>
                   <TabsTrigger
                     value="subtasks"
