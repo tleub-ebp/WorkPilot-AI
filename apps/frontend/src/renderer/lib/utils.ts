@@ -39,45 +39,82 @@ export function formatRelativeTime(date: Date): string {
 }
 
 /**
- * Sanitize and extract plain text from markdown content.
- * Strips markdown formatting and collapses whitespace for clean display in UI.
- * @param text The text that might contain markdown
+ * Extract plain text from HTML content.
+ * Removes all HTML tags and entities, keeping only the text content.
+ * @param html The HTML content
+ * @returns Plain text extracted from HTML
+ */
+export function extractTextFromHtml(html: string): string {
+  if (!html) return '';
+  
+  // Create a temporary DOM element to parse HTML safely
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+  
+  // Get text content (automatically strips tags and decodes entities)
+  let text = tempDiv.textContent || tempDiv.innerText || '';
+  
+  // Clean up whitespace
+  text = text
+    // Collapse multiple newlines and spaces
+    .replace(/\s+/g, ' ')
+    // Remove leading/trailing whitespace
+    .trim();
+  
+  return text;
+}
+
+/**
+ * Sanitize and extract plain text from markdown or HTML content.
+ * Strips markdown/HTML formatting and collapses whitespace for clean display in UI.
+ * @param text The text that might contain markdown or HTML
  * @param maxLength Maximum length before truncation (default: 200)
  * @returns Plain text suitable for display
  */
 export function sanitizeMarkdownForDisplay(text: string, maxLength: number = 200): string {
   if (!text) return '';
 
-  let sanitized = text
-    // Remove markdown headers (# ## ### etc)
-    .replace(/^#{1,6}\s+/gm, '')
-    // Remove bold/italic markers
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/\*([^*]+)\*/g, '$1')
-    .replace(/__([^_]+)__/g, '$1')
-    .replace(/_([^_]+)_/g, '$1')
-    // Remove inline code
-    .replace(/`([^`]+)`/g, '$1')
-    // Remove code blocks
-    .replace(/```[\s\S]*?```/g, '')
-    // Remove links but keep text
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    // Remove images
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
-    // Remove horizontal rules
-    .replace(/^[-*_]{3,}$/gm, '')
-    // Remove blockquotes
-    .replace(/^>\s*/gm, '')
-    // Remove list markers
-    .replace(/^[\s]*[-*+]\s+/gm, '')
-    .replace(/^[\s]*\d+\.\s+/gm, '')
-    // Remove checkbox markers
-    .replace(/\[[ x]\]\s*/gi, '')
-    // Collapse multiple newlines to single space
-    .replace(/\n+/g, ' ')
-    // Collapse multiple spaces to single space
-    .replace(/\s+/g, ' ')
-    .trim();
+  // Check if content is HTML (starts with < tag)
+  const isHtml = text.trim().startsWith('<');
+  
+  let sanitized: string;
+  
+  if (isHtml) {
+    // Extract text from HTML
+    sanitized = extractTextFromHtml(text);
+  } else {
+    // Process as markdown
+    sanitized = text
+      // Remove markdown headers (# ## ### etc)
+      .replace(/^#{1,6}\s+/gm, '')
+      // Remove bold/italic markers
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/__([^_]+)__/g, '$1')
+      .replace(/_([^_]+)_/g, '$1')
+      // Remove inline code
+      .replace(/`([^`]+)`/g, '$1')
+      // Remove code blocks
+      .replace(/```[\s\S]*?```/g, '')
+      // Remove links but keep text
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      // Remove images
+      .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+      // Remove horizontal rules
+      .replace(/^[-*_]{3,}$/gm, '')
+      // Remove blockquotes
+      .replace(/^>\s*/gm, '')
+      // Remove list markers
+      .replace(/^[\s]*[-*+]\s+/gm, '')
+      .replace(/^[\s]*\d+\.\s+/gm, '')
+      // Remove checkbox markers
+      .replace(/\[[ x]\]\s*/gi, '')
+      // Collapse multiple newlines to single space
+      .replace(/\n+/g, ' ')
+      // Collapse multiple spaces to single space
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
 
   // Truncate if needed (0 means no truncation)
   if (maxLength > 0 && sanitized.length > maxLength) {

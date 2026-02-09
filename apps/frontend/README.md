@@ -52,18 +52,18 @@ npm --version   # Should output: 11.x.x or higher
 cd apps/frontend
 
 # Install dependencies (includes native module rebuild)
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm run dev
 ```
 
 ## Security
 
-This project maintains **0 vulnerabilities**. Run `npm audit` to verify.
+This project maintains **0 vulnerabilities**. Run `pnpm audit` to verify.
 
 ```bash
-npm audit
+pnpm audit
 # Expected output: found 0 vulnerabilities
 ```
 
@@ -181,7 +181,7 @@ If `npm` command is not recognized after installing Node.js:
 If you get errors about native modules (node-pty, etc.):
 
 ```bash
-npm run rebuild
+pnpm run rebuild
 ```
 
 ### Windows build tools required
@@ -190,7 +190,7 @@ If electron-rebuild fails on Windows, install Visual Studio Build Tools:
 
 1. Download from https://visualstudio.microsoft.com/visual-cpp-build-tools/
 2. Select "Desktop development with C++" workload
-3. Restart terminal and run `npm install` again
+3. Restart terminal and run `pnpm install` again
 
 ## Git Hooks
 

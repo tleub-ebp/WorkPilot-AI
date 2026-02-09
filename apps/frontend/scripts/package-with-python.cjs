@@ -212,7 +212,7 @@ function stageRuntimePackages(frontendDir, platform, arch) {
 
     const rootDirPath = resolvePackageDir(rootDir, pkgName);
     if (!fs.existsSync(rootDirPath)) {
-      throw new Error(`Missing ${pkgName} in workspace. Run npm install before packaging.`);
+      throw new Error(`Missing ${pkgName} in workspace. Run pnpm install before packaging.`);
     }
 
     const localDir = path.join(outModulesDir, ...pkgName.split('/'));

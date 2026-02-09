@@ -23,7 +23,7 @@ export function ProjectIndexTab({
   indexError,
   onRefresh
 }: ProjectIndexTabProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['context', 'common']);
   
   return (
     <ScrollArea className="h-full">
@@ -31,9 +31,9 @@ export function ProjectIndexTab({
         {/* Header with refresh */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">Project Structure</h2>
+            <h2 className="text-lg font-semibold text-foreground">{t('context:projectIndex.title')}</h2>
             <p className="text-sm text-muted-foreground">
-              AI-discovered knowledge about your codebase
+              {t('context:projectIndex.description')}
             </p>
           </div>
           <Tooltip>
@@ -45,10 +45,10 @@ export function ProjectIndexTab({
                 disabled={indexLoading}
               >
                 <RefreshCw className={cn('h-4 w-4 mr-2', indexLoading && 'animate-spin')} />
-                Refresh
+                {t('context:projectIndex.refresh')}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Re-analyze project structure</TooltipContent>
+            <TooltipContent>{t('context:projectIndex.refreshTooltip')}</TooltipContent>
           </Tooltip>
         </div>
 
@@ -57,7 +57,7 @@ export function ProjectIndexTab({
           <div className="flex items-center gap-3 p-4 rounded-lg bg-destructive/10 text-destructive">
             <AlertCircle className="h-5 w-5 shrink-0" />
             <div>
-              <p className="font-medium">Failed to load project index</p>
+              <p className="font-medium">{t('context:projectIndex.errorTitle')}</p>
               <p className="text-sm opacity-80">{indexError}</p>
             </div>
           </div>
@@ -74,13 +74,13 @@ export function ProjectIndexTab({
         {!indexLoading && !projectIndex && !indexError && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <FolderTree className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium text-foreground">No Project Index Found</h3>
+            <h3 className="text-lg font-medium text-foreground">{t('context:projectIndex.noIndexTitle')}</h3>
             <p className="text-sm text-muted-foreground mt-2 max-w-sm">
-              Click the Refresh button to analyze your project structure and create an index.
+              {t('context:projectIndex.noIndexDescription')}
             </p>
             <Button onClick={onRefresh} className="mt-4">
               <RefreshCw className="h-4 w-4 mr-2" />
-              Analyze Project
+              {t('context:projectIndex.analyzeProject')}
             </Button>
           </div>
         )}
@@ -172,19 +172,19 @@ export function ProjectIndexTab({
                   <CardContent className="pt-6">
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       {projectIndex.conventions.python_linting && (
-                        <InfoItem label="Python Linting" value={projectIndex.conventions.python_linting} />
+                        <InfoItem label={t('context:conventions.pythonLinting')} value={projectIndex.conventions.python_linting} />
                       )}
                       {projectIndex.conventions.js_linting && (
-                        <InfoItem label="JS Linting" value={projectIndex.conventions.js_linting} />
+                        <InfoItem label={t('context:conventions.jsLinting')} value={projectIndex.conventions.js_linting} />
                       )}
                       {projectIndex.conventions.formatting && (
-                        <InfoItem label="Formatting" value={projectIndex.conventions.formatting} />
+                        <InfoItem label={t('context:conventions.formatting')} value={projectIndex.conventions.formatting} />
                       )}
                       {projectIndex.conventions.git_hooks && (
-                        <InfoItem label="Git Hooks" value={projectIndex.conventions.git_hooks} />
+                        <InfoItem label={t('context:conventions.gitHooks')} value={projectIndex.conventions.git_hooks} />
                       )}
                       {projectIndex.conventions.typescript && (
-                        <InfoItem label="TypeScript" value="Enabled" />
+                        <InfoItem label={t('context:conventions.typescript')} value={t('context:conventions.enabled')} />
                       )}
                     </div>
                   </CardContent>

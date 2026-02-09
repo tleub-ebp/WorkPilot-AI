@@ -1,5 +1,6 @@
 import { useState, useRef, useLayoutEffect, useId } from 'react';
 import { useTranslation } from 'react-i18next';
+import DOMPurify from 'dompurify';
 import {
   Target,
   Bug,
@@ -21,8 +22,46 @@ import {
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { Badge } from '../ui/badge';
+
+// Schéma de sanitization personnalisé permettant les styles inline
+const customSanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    '*': [
+      ...(defaultSchema.attributes?.['*'] || []),
+      'style',
+      'className',
+      'class',
+      'dir'
+    ],
+    a: [
+      ...(defaultSchema.attributes?.a || []),
+      'href',
+      'target',
+      'rel'
+    ],
+    span: ['style', 'className', 'class'],
+    div: ['style', 'className', 'class'],
+    p: ['style', 'className', 'class', 'dir'],
+    b: ['style', 'className', 'class'],
+    strong: ['style', 'className', 'class'],
+    em: ['style', 'className', 'class'],
+    i: ['style', 'className', 'class'],
+    u: ['style', 'className', 'class'],
+    code: ['style', 'className', 'class'],
+    pre: ['style', 'className', 'class'],
+  },
+  tagNames: [
+    ...(defaultSchema.tagNames || []),
+    'span',
+    'div',
+    'br',
+    'hr',
+  ],
+};
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '../../lib/utils';
@@ -78,6 +117,97 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
     }
     return task.description;
   })();
+
+  // Détecter si le contenu est du HTML pur (commence par une balise HTML)
+  const isHtmlContent = displayDescription?.trim().startsWith('<') || false;
+
+  // Transformer le HTML pour appliquer les styles du thème
+  const transformHtmlStyles = (html: string): string => {
+    if (!html) return '';
+    
+    // Utiliser DOMParser pour manipuler le HTML de manière sécurisée
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    // Fonction récursive pour traiter tous les éléments
+    const processElement = (element: Element) => {
+      // Conserver le style pour certaines propriétés mais adapter les couleurs
+      const style = element.getAttribute('style');
+      if (style) {
+        let newStyle = style;
+        
+        // Remplacer les couleurs noires par la couleur du texte du thème
+        newStyle = newStyle.replace(/color:\s*#000000?/gi, 'color: hsl(var(--foreground))');
+        newStyle = newStyle.replace(/color:\s*rgb\(0,\s*0,\s*0\)/gi, 'color: hsl(var(--foreground))');
+        newStyle = newStyle.replace(/color:\s*black/gi, 'color: hsl(var(--foreground))');
+        
+        // Remplacer les backgrounds blancs par transparent ou muted
+        newStyle = newStyle.replace(/background-color:\s*#ffffff?/gi, 'background-color: transparent');
+        newStyle = newStyle.replace(/background-color:\s*rgb\(255,\s*255,\s*255\)/gi, 'background-color: transparent');
+        newStyle = newStyle.replace(/background-color:\s*white/gi, 'background-color: transparent');
+        
+        // Simplifier les margins et paddings excessifs
+        newStyle = newStyle.replace(/margin-top:\s*\d+pt/gi, 'margin-top: 0.75rem');
+        newStyle = newStyle.replace(/margin-bottom:\s*\d+pt/gi, 'margin-bottom: 0.75rem');
+        
+        element.setAttribute('style', newStyle);
+      }
+      
+      // Ajouter des classes CSS pour améliorer le rendu
+      const tagName = element.tagName.toLowerCase();
+      const existingClass = element.getAttribute('class') || '';
+      
+      switch (tagName) {
+        case 'p':
+          element.setAttribute('class', `${existingClass} my-2 leading-relaxed text-foreground`.trim());
+          break;
+        case 'b':
+        case 'strong':
+          element.setAttribute('class', `${existingClass} font-semibold text-foreground`.trim());
+          break;
+        case 'em':
+        case 'i':
+          element.setAttribute('class', `${existingClass} italic text-foreground/90`.trim());
+          break;
+        case 'u':
+          element.setAttribute('class', `${existingClass} underline decoration-foreground/50`.trim());
+          break;
+        case 'span':
+          // Conserver les spans avec style inline mais ajouter classe pour couleur par défaut
+          if (!style || !style.includes('color')) {
+            element.setAttribute('class', `${existingClass} text-foreground`.trim());
+          }
+          break;
+        case 'a':
+          element.setAttribute('class', `${existingClass} text-info hover:text-info/80 underline transition-colors`.trim());
+          break;
+        case 'ul':
+        case 'ol':
+          element.setAttribute('class', `${existingClass} my-3 pl-6 space-y-1 list-disc`.trim());
+          break;
+        case 'li':
+          element.setAttribute('class', `${existingClass} text-foreground leading-relaxed ml-2`.trim());
+          break;
+        case 'div':
+          // Éviter d'ajouter trop de marges aux divs
+          if (!existingClass && !style) {
+            element.setAttribute('class', 'my-1');
+          }
+          break;
+        case 'br':
+          // Conserver les breaks mais sans style particulier
+          break;
+      }
+      
+      // Traiter les enfants récursivement
+      Array.from(element.children).forEach(child => processElement(child));
+    };
+    
+    // Traiter tous les éléments du body
+    Array.from(doc.body.children).forEach(child => processElement(child));
+    
+    return doc.body.innerHTML;
+  };
 
   // Detect if content overflows the collapsed height
   // Re-check when description changes (content height depends on rendered description)
@@ -189,14 +319,112 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
               ref={contentRef}
               id={contentId}
               className={cn(
-                'prose prose-sm dark:prose-invert max-w-none overflow-hidden prose-p:text-foreground/90 prose-p:leading-relaxed prose-headings:text-foreground prose-strong:text-foreground prose-li:text-foreground/90 prose-ul:my-2 prose-li:my-0.5 prose-a:break-all prose-pre:overflow-x-auto prose-img:max-w-full [&_img]:!max-w-full [&_img]:h-auto [&_code]:break-all [&_code]:whitespace-pre-wrap [&_*]:max-w-full',
+                'prose prose-sm dark:prose-invert max-w-none overflow-hidden',
+                // Texte et paragraphes
+                'prose-p:text-foreground/90 prose-p:leading-relaxed prose-p:my-3',
+                // En-têtes
+                'prose-headings:text-foreground prose-headings:font-semibold prose-headings:tracking-tight',
+                'prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-h4:text-sm',
+                'prose-h1:mb-4 prose-h2:mb-3 prose-h3:mb-2 prose-h4:mb-2',
+                // Texte fort et emphase
+                'prose-strong:text-foreground prose-strong:font-semibold',
+                'prose-em:text-foreground/90 prose-em:italic',
+                // Listes avec meilleure indentation
+                'prose-ul:my-3 prose-ul:pl-6 prose-ul:space-y-1',
+                'prose-ol:my-3 prose-ol:pl-6 prose-ol:space-y-1',
+                'prose-li:text-foreground/90 prose-li:my-1 prose-li:leading-relaxed',
+                'prose-li:pl-2',
+                // Listes imbriquées
+                '[&_ul_ul]:my-1 [&_ol_ol]:my-1 [&_ul_ol]:my-1 [&_ol_ul]:my-1',
+                '[&_ul_ul]:pl-4 [&_ol_ol]:pl-4 [&_ul_ol]:pl-4 [&_ol_ul]:pl-4',
+                // Liens
+                'prose-a:text-info prose-a:underline prose-a:break-words',
+                'hover:prose-a:text-info/80',
+                // Blocs de code
+                'prose-pre:bg-muted/50 prose-pre:border prose-pre:border-border',
+                'prose-pre:rounded-md prose-pre:p-4 prose-pre:my-4',
+                'prose-pre:overflow-x-auto prose-pre:text-sm',
+                'prose-code:text-foreground prose-code:bg-muted/50',
+                'prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded',
+                'prose-code:text-sm prose-code:font-mono',
+                'prose-code:before:content-none prose-code:after:content-none',
+                // Tableaux
+                'prose-table:w-full prose-table:my-4',
+                'prose-table:border-collapse prose-table:border prose-table:border-border',
+                'prose-th:bg-muted/50 prose-th:p-2 prose-th:text-left prose-th:font-semibold',
+                'prose-th:border prose-th:border-border',
+                'prose-td:p-2 prose-td:border prose-td:border-border',
+                // Citations
+                'prose-blockquote:border-l-4 prose-blockquote:border-muted-foreground/30',
+                'prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-foreground/80',
+                'prose-blockquote:my-4',
+                // Images
+                'prose-img:max-w-full prose-img:h-auto prose-img:rounded-md',
+                'prose-img:border prose-img:border-border prose-img:my-4',
+                // Règles horizontales
+                'prose-hr:border-border prose-hr:my-6',
+                // Limite de largeur et gestion du débordement
+                '[&_*]:max-w-full [&_*]:overflow-x-auto',
                 !isExpanded && hasOverflow && 'max-h-[200px]'
               )}
               style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
             >
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {displayDescription}
-              </ReactMarkdown>
+              {isHtmlContent ? (
+                // Rendu HTML pur avec DOMPurify et transformation des styles
+                <div
+                  className="html-content"
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(
+                      transformHtmlStyles(displayDescription || ''),
+                      {
+                        ADD_TAGS: ['span', 'div', 'br', 'hr', 'p', 'b', 'strong', 'em', 'i', 'u', 'a', 'ul', 'ol', 'li'],
+                        ADD_ATTR: ['style', 'class', 'dir', 'href', 'target', 'rel'],
+                        ALLOW_DATA_ATTR: false,
+                      }
+                    ),
+                  }}
+                />
+              ) : (
+                // Rendu Markdown avec ReactMarkdown
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw, [rehypeSanitize, customSanitizeSchema]]}
+                  components={{
+                    // Personnaliser le rendu des blocs de code
+                    code: (props) => {
+                      const { children, className, node, ...rest } = props as any;
+                      const match = /language-(\w+)/.exec(className || '');
+                      const isInline = !match;
+                      
+                      if (isInline) {
+                        return (
+                          <code className={className} {...rest}>
+                            {children}
+                          </code>
+                        );
+                      }
+                      return (
+                        <pre className="overflow-x-auto">
+                          <code className={className} {...rest}>
+                            {children}
+                          </code>
+                        </pre>
+                      );
+                    },
+                    // Améliorer le rendu des tableaux
+                    table: (props) => {
+                      const { children, ...rest } = props;
+                      return (
+                        <div className="overflow-x-auto my-4">
+                          <table {...rest}>{children}</table>
+                        </div>
+                      );
+                    },
+                  }}
+                >
+                  {displayDescription}
+                </ReactMarkdown>
+              )}
             </div>
 
             {/* Gradient overlay when collapsed and has overflow */}

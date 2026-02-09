@@ -176,17 +176,17 @@ All releases are:
 
 | Command | Description |
 |---------|-------------|
-| `npm run install:all` | Install backend and frontend dependencies |
-| `npm start` | Build and run the desktop app |
-| `npm run dev` | Run in development mode with hot reload |
-| `npm run package` | Package for current platform |
-| `npm run package:mac` | Package for macOS |
-| `npm run package:win` | Package for Windows |
-| `npm run package:linux` | Package for Linux |
-| `npm run package:flatpak` | Package as Flatpak (see [guides/linux.md](guides/linux.md)) |
-| `npm run lint` | Run linter |
-| `npm test` | Run frontend tests |
-| `npm run test:backend` | Run backend tests |
+| `pnpm run install:all` | Install backend and frontend dependencies |
+| `pnpm start` | Build and run the desktop app |
+| `pnpm run dev` | Run in development mode with hot reload |
+| `pnpm run package` | Package for current platform |
+| `pnpm run package:mac` | Package for macOS |
+| `pnpm run package:win` | Package for Windows |
+| `pnpm run package:linux` | Package for Linux |
+| `pnpm run package:flatpak` | Package as Flatpak (see [guides/linux.md](guides/linux.md)) |
+| `pnpm run lint` | Run linter |
+| `pnpm test` | Run frontend tests |
+| `pnpm run test:backend` | Run backend tests |
 
 ---
 

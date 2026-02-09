@@ -1,6 +1,6 @@
-# Contributing to Auto Claude
+# Contributing to WorkPilot AI
 
-Thank you for your interest in contributing to Auto Claude! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to WorkPilot AI! This document provides guidelines and instructions for contributing to the project.
 
 ## How to Contribute
 

@@ -37,7 +37,7 @@ To install:
   3. In "Individual Components", also select:
      - "MSVC v143 - VS 2022 C++ x64/x86 Spectre-mitigated libs"
 
-  4. Restart your terminal and run: npm install
+  4. Restart your terminal and run: pnpm install
 
 ================================================================================
 `;
