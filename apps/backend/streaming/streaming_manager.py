@@ -6,13 +6,10 @@ Think Twitch, but for AI coding sessions.
 """
 
 import asyncio
-import json
 import time
-from dataclasses import dataclass, asdict
-from datetime import datetime
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
-from pathlib import Path
+from typing import Any
 
 
 class EventType(str, Enum):
@@ -41,10 +38,10 @@ class StreamingEvent:
     """A single streaming event."""
     event_type: EventType
     timestamp: float
-    data: Dict[str, Any]
+    data: dict[str, Any]
     session_id: str
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "event_type": self.event_type.value,
@@ -57,21 +54,21 @@ class StreamingEvent:
 class StreamingManager:
     """
     Manages streaming sessions and broadcasts events to connected clients.
-    
+
     Features:
     - Real-time WebSocket broadcasting
     - Session recording for replay
     - Chat integration for live interaction
     - Intervention support (pause/hijack sessions)
     """
-    
+
     def __init__(self):
-        self._active_sessions: Dict[str, Dict[str, Any]] = {}
-        self._subscribers: Dict[str, Set[Any]] = {}  # session_id -> set of websocket connections
+        self._active_sessions: dict[str, dict[str, Any]] = {}
+        self._subscribers: dict[str, set[Any]] = {}  # session_id -> set of websocket connections
         self._event_queue: asyncio.Queue = asyncio.Queue()
         self._is_broadcasting = False
-        
-    async def start_session(self, session_id: str, metadata: Dict[str, Any]) -> None:
+
+    async def start_session(self, session_id: str, metadata: dict[str, Any]) -> None:
         """Start a new streaming session."""
         self._active_sessions[session_id] = {
             "start_time": time.time(),
@@ -388,7 +385,7 @@ class StreamingManager:
         )
         await self._broadcast_event(event)
         
-    def get_active_sessions(self) -> List[Dict[str, Any]]:
+    def get_active_sessions(self) -> list[dict[str, Any]]:
         """Get list of active streaming sessions."""
         return [
             {
@@ -399,12 +396,12 @@ class StreamingManager:
             for sid, session_data in self._active_sessions.items()
             if session_data["status"] == "active"
         ]
-        
-    def get_session_info(self, session_id: str) -> Optional[Dict[str, Any]]:
+
+    def get_session_info(self, session_id: str) -> dict[str, Any] | None:
         """Get info about a specific session."""
         if session_id not in self._active_sessions:
             return None
-        
+
         return {
             "session_id": session_id,
             **self._active_sessions[session_id],
@@ -413,7 +410,7 @@ class StreamingManager:
 
 
 # Global instance
-_streaming_manager: Optional[StreamingManager] = None
+_streaming_manager: StreamingManager | None = None
 
 
 def get_streaming_manager() -> StreamingManager:

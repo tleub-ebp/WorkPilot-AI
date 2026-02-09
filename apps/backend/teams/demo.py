@@ -157,14 +157,13 @@ async def demo_collaborative_mode():
                     print(f"  - {file.relative_to(spec_dir)}")
         else:
             print(f"❌ Team rejected: {result.get('reason', 'Unknown')}")
-        
         print()
         print("=" * 70)
 
 
 async def demo_veto_scenario():
     """Demonstrate security veto blocking a bad decision."""
-    
+
     print()
     print("=" * 70)
     print(" CLAUDE TEAMS - VETO DEMO")
@@ -172,32 +171,32 @@ async def demo_veto_scenario():
     print()
     print("This demo shows Security Engineer using veto rights.")
     print()
-    
+
     with TemporaryDirectory() as tmpdir:
-        from teams.voting import Vote, VoteChoice, VotingSystem
         from teams.config import DebateStrategy
-        
+        from teams.voting import Vote, VoteChoice, VotingSystem
+
         voting = VotingSystem(Path(tmpdir))
-        
+
         # Simulate a bad security decision
         print("Scenario: Team voting on storing passwords in localStorage")
         print()
-        
+
         votes = [
-            Vote("architect", VoteChoice.APPROVE, 
+            Vote("architect", VoteChoice.APPROVE,
                  "Convenient for users", weight=5, can_veto=True),
-            Vote("developer", VoteChoice.APPROVE, 
+            Vote("developer", VoteChoice.APPROVE,
                  "Easy to implement", weight=3, can_veto=False),
-            Vote("security", VoteChoice.VETO, 
+            Vote("security", VoteChoice.VETO,
                  "CRITICAL SECURITY VIOLATION: localStorage is vulnerable to XSS attacks. "
                  "Passwords must NEVER be stored in localStorage. Use httpOnly cookies instead.",
                  weight=5, can_veto=True),
-            Vote("qa", VoteChoice.APPROVE, 
+            Vote("qa", VoteChoice.APPROVE,
                  "Testable approach", weight=3, can_veto=False),
         ]
-        
+
         result = voting.conduct_vote(votes, DebateStrategy.WEIGHTED_VOTE, "localStorage passwords")
-        
+
         print("Votes:")
         for vote in votes:
             icon = "🛑" if vote.vote_choice == VoteChoice.VETO else "✓" if vote.vote_choice == VoteChoice.APPROVE else "✗"
@@ -205,23 +204,23 @@ async def demo_veto_scenario():
             print(f"  {icon} {vote.agent_role.upper()}{veto_badge}: {vote.vote_choice.value}")
             print(f"     Reasoning: {vote.reasoning[:80]}...")
             print()
-        
+
         print(f"Decision: {result.decision.upper()}")
         print(f"Reasoning: {result.reasoning}")
         print()
-        
+
         if result.vetoes:
             print("🛑 VETO EXERCISED BY:")
             for veto in result.vetoes:
                 print(f"   - {veto.agent_role.upper()}")
-        
+
         print()
         print("=" * 70)
 
 
 async def demo_weighted_voting():
     """Demonstrate weighted voting without veto."""
-    
+
     print()
     print("=" * 70)
     print(" CLAUDE TEAMS - WEIGHTED VOTING DEMO")
@@ -229,27 +228,27 @@ async def demo_weighted_voting():
     print()
     print("This demo shows how role weights affect decisions.")
     print()
-    
+
     with TemporaryDirectory() as tmpdir:
-        from teams.voting import Vote, VoteChoice, VotingSystem
         from teams.config import DebateStrategy
-        
+        from teams.voting import Vote, VoteChoice, VotingSystem
+
         voting = VotingSystem(Path(tmpdir))
-        
+
         print("Scenario: Technical approach decision")
         print()
-        
+
         votes = [
-            Vote("architect", VoteChoice.APPROVE, 
+            Vote("architect", VoteChoice.APPROVE,
                  "Solid architecture", weight=5, can_veto=False),
-            Vote("developer", VoteChoice.REJECT, 
+            Vote("developer", VoteChoice.REJECT,
                  "Too complex to implement", weight=3, can_veto=False),
-            Vote("security", VoteChoice.APPROVE, 
+            Vote("security", VoteChoice.APPROVE,
                  "Secure design", weight=5, can_veto=False),
-            Vote("qa", VoteChoice.REJECT, 
+            Vote("qa", VoteChoice.REJECT,
                  "Hard to test", weight=3, can_veto=False),
         ]
-        
+
         result = voting.conduct_vote(votes, DebateStrategy.WEIGHTED_VOTE, "approach")
         
         print("Votes (with weights):")

@@ -5,17 +5,16 @@ This module provides detailed explanations of AI actions, decisions,
 and code generation to help developers learn and understand.
 """
 
-import json
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-from datetime import datetime
+from typing import Any
 
 
 class ExplanationLevel(str, Enum):
     """Level of detail for explanations"""
-    
+
     BEGINNER = "beginner"  # Very detailed, assumes no prior knowledge
     INTERMEDIATE = "intermediate"  # Moderate detail, assumes basic knowledge
     ADVANCED = "advanced"  # Concise, focuses on "why" not "what"
@@ -25,11 +24,11 @@ class ExplanationLevel(str, Enum):
 @dataclass
 class LearningModeConfig:
     """Configuration for Learning Mode"""
-    
+
     enabled: bool = True
     explanation_level: ExplanationLevel = ExplanationLevel.INTERMEDIATE
     explain_tools: bool = True  # Explain tool usage (Read, Glob, Grep)
-    explain_decisions: bool = True  # Explain decision-making process
+    explain_decisions: bool = True  # Explain the decision-making process
     explain_code: bool = True  # Explain code being generated
     explain_patterns: bool = True  # Explain design patterns used
     explain_best_practices: bool = True  # Explain best practices applied
@@ -37,7 +36,7 @@ class LearningModeConfig:
     generate_summary: bool = True  # Generate session summary
     interactive_questions: bool = False  # Pause for user questions (interactive mode)
     save_learnings: bool = True  # Save explanations for later review
-    
+
     # Learning preferences
     prefer_visual_diagrams: bool = False  # Generate mermaid diagrams when helpful
     prefer_examples: bool = True  # Include code examples in explanations
@@ -47,18 +46,18 @@ class LearningModeConfig:
 @dataclass
 class LearningExplanation:
     """A single explanation in Learning Mode"""
-    
+
     timestamp: datetime
     category: str  # "tool_use", "decision", "code", "pattern", "best_practice"
     title: str
     explanation: str
-    code_snippet: Optional[str] = None
-    diagram: Optional[str] = None  # Mermaid diagram
-    alternative_approaches: List[Dict[str, str]] = field(default_factory=list)
-    references: List[str] = field(default_factory=list)  # URLs to learn more
+    code_snippet: str | None = None
+    diagram: str | None = None  # Mermaid diagram
+    alternative_approaches: list[dict[str, str]] = field(default_factory=list)
+    references: list[str] = field(default_factory=list)  # URLs to learn more
     difficulty: ExplanationLevel = ExplanationLevel.INTERMEDIATE
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "timestamp": self.timestamp.isoformat(),
@@ -75,19 +74,19 @@ class LearningExplanation:
 
 class LearningMode:
     """Learning Mode - Educational explanations of AI actions"""
-    
-    def __init__(self, config: Optional[LearningModeConfig] = None):
+
+    def __init__(self, config: LearningModeConfig | None = None):
         self.config = config or LearningModeConfig()
-        self.explanations: List[LearningExplanation] = []
+        self.explanations: list[LearningExplanation] = []
         self.session_start = datetime.now()
-    
+
     def explain_tool_use(
         self,
         tool_name: str,
-        tool_input: Dict[str, Any],
+        tool_input: dict[str, Any],
         reason: str,
         expected_outcome: str
-    ) -> Optional[LearningExplanation]:
+    ) -> LearningExplanation | None:
         """Explain why a tool is being used"""
         if not self.config.enabled or not self.config.explain_tools:
             return None

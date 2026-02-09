@@ -119,28 +119,28 @@ class SessionRecorder:
         timestamp = datetime.fromtimestamp(recording.start_time).strftime("%Y%m%d_%H%M%S")
         filename = f"{timestamp}_{recording.session_id}.json"
         filepath = self._recordings_dir / filename
-        
+
         with open(filepath, "w") as f:
             json.dump(recording.to_dict(), f, indent=2)
-            
+
         return filepath
-        
+
     def load_recording(self, filepath: Path) -> SessionRecording:
         """Load a recording from disk."""
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             data = json.load(f)
-            
+
         return SessionRecording.from_dict(data)
-        
-    def list_recordings(self) -> List[Dict[str, Any]]:
+
+    def list_recordings(self) -> list[dict[str, Any]]:
         """List all available recordings."""
         recordings = []
-        
+
         for filepath in self._recordings_dir.glob("*.json"):
             try:
-                with open(filepath, "r") as f:
+                with open(filepath) as f:
                     data = json.load(f)
-                    
+
                 recordings.append({
                     "filepath": str(filepath),
                     "session_id": data["session_id"],
@@ -151,9 +151,9 @@ class SessionRecorder:
                 })
             except Exception as e:
                 print(f"Failed to load recording {filepath}: {e}")
-                
+
         return sorted(recordings, key=lambda x: x["start_time"], reverse=True)
-        
+
     def delete_recording(self, filepath: Path) -> bool:
         """Delete a recording."""
         try:
@@ -162,50 +162,50 @@ class SessionRecorder:
         except Exception as e:
             print(f"Failed to delete recording {filepath}: {e}")
             return False
-            
+
     async def replay_session(
         self,
         recording: SessionRecording,
         speed: float = 1.0,
-        callback: Optional[Any] = None,
+        callback: Any | None = None,
     ) -> None:
         """
         Replay a recorded session.
-        
+
         Args:
             recording: The recording to replay
             speed: Playback speed (1.0 = real-time, 2.0 = 2x speed, etc.)
             callback: Optional callback function to call for each event
         """
         import asyncio
-        
+
         if not recording.events:
             return
-            
+
         start_time = recording.events[0].timestamp
-        
+
         for event in recording.events:
             # Calculate delay to maintain timing
             relative_time = event.timestamp - start_time
             await asyncio.sleep(relative_time / speed)
-            
+
             if callback:
                 await callback(event)
-                
-    def get_session_stats(self, recording: SessionRecording) -> Dict[str, Any]:
+
+    def get_session_stats(self, recording: SessionRecording) -> dict[str, Any]:
         """Get statistics about a recorded session."""
         event_types = {}
         file_changes = 0
         commands_run = 0
-        
+
         for event in recording.events:
             event_types[event.event_type.value] = event_types.get(event.event_type.value, 0) + 1
-            
+
             if event.event_type in [EventType.FILE_CREATE, EventType.FILE_UPDATE, EventType.FILE_DELETE]:
                 file_changes += 1
             elif event.event_type == EventType.COMMAND_RUN:
                 commands_run += 1
-                
+
         return {
             "duration": recording.duration(),
             "event_count": len(recording.events),
@@ -216,7 +216,7 @@ class SessionRecorder:
 
 
 # Global instance
-_session_recorder: Optional[SessionRecorder] = None
+_session_recorder: SessionRecorder | None = None
 
 
 def get_session_recorder() -> SessionRecorder:
