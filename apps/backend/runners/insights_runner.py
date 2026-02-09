@@ -18,12 +18,20 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Validate platform-specific dependencies BEFORE any imports that might
 # trigger graphiti_core -> real_ladybug -> pywintypes import chain (ACS-253)
 from core.dependency_validator import validate_platform_dependencies
+from cli.utils import import_dotenv
+from core.auth import ensure_claude_code_oauth_token, get_auth_token
+from debug import (
+    debug,
+    debug_detailed,
+    debug_error,
+    debug_section,
+    debug_success,
+)
+from phase_config import get_thinking_budget, resolve_model_id
 
 validate_platform_dependencies()
 
 # Load .env file with centralized error handling
-from cli.utils import import_dotenv
-
 load_dotenv = import_dotenv()
 
 env_file = Path(__file__).parent.parent / ".env"
@@ -38,16 +46,6 @@ except ImportError:
     SDK_AVAILABLE = False
     ClaudeAgentOptions = None
     ClaudeSDKClient = None
-
-from core.auth import ensure_claude_code_oauth_token, get_auth_token
-from debug import (
-    debug,
-    debug_detailed,
-    debug_error,
-    debug_section,
-    debug_success,
-)
-from phase_config import get_thinking_budget, resolve_model_id
 from learning import LearningMode, LearningModeConfig, ExplanationLevel
 
 
@@ -287,8 +285,8 @@ Current question: {message}"""
                                     explanation = learning_mode.explain_tool_use(
                                         tool_name=tool_name,
                                         tool_input={"input": tool_input} if tool_input else {},
-                                        reason=f"Exploring codebase to answer user question",
-                                        expected_outcome=f"Find relevant information"
+                                        reason="Exploring codebase to answer user question",
+                                        expected_outcome="Find relevant information"
                                     )
                                     if explanation:
                                         print(
@@ -461,10 +459,10 @@ def main():
     # Run the async SDK function
     debug("insights_runner", "Running SDK query")
     asyncio.run(run_with_sdk(
-        project_dir, 
-        user_message, 
-        history, 
-        model, 
+        project_dir,
+        user_message,
+        history,
+        model,
         thinking_level,
         learning_mode_enabled,
         explanation_level
