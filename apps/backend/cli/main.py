@@ -24,6 +24,7 @@ from .batch_commands import (
 from .build_commands import handle_build_command
 from .followup_commands import handle_followup_command
 from .qa_commands import (
+    handle_auto_fix_command,
     handle_qa_command,
     handle_qa_status_command,
     handle_review_status_command,
@@ -206,6 +207,18 @@ Environment Variables:
         "--skip-qa",
         action="store_true",
         help="Skip automatic QA validation after build completes",
+    )
+    parser.add_argument(
+        "--auto-fix",
+        action="store_true",
+        help="Run intelligent auto-fix loop (automatically fix test failures)",
+    )
+    parser.add_argument(
+        "--auto-fix-max-attempts",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Maximum auto-fix attempts (default: 5, or AUTO_FIX_MAX_ATTEMPTS env var)",
     )
 
     # Follow-up options
@@ -450,6 +463,16 @@ def _run_cli() -> None:
             project_dir=project_dir,
             spec_dir=spec_dir,
             model=model,
+            verbose=args.verbose,
+        )
+        return
+
+    if args.auto_fix:
+        handle_auto_fix_command(
+            project_dir=project_dir,
+            spec_dir=spec_dir,
+            model=model,
+            max_attempts=args.auto_fix_max_attempts,
             verbose=args.verbose,
         )
         return

@@ -8,9 +8,11 @@ Modular QA validation system with:
 - Recurring issue detection
 - QA reviewer and fixer agents
 - Main orchestration loop
+- Auto-fix loops for intelligent test fixing
 
 Usage:
     from qa import run_qa_validation_loop, should_run_qa, is_qa_approved
+    from qa import run_auto_fix_loop  # For auto-fix mode
 
 Module structure:
     - loop.py: Main QA orchestration loop
@@ -18,7 +20,15 @@ Module structure:
     - fixer.py: QA fixer agent session
     - report.py: Issue tracking, reporting, escalation
     - criteria.py: Acceptance criteria and status management
+    - auto_fix_loop.py: Intelligent auto-fix loops
 """
+
+# Auto-fix loop
+from .auto_fix_loop import (
+    DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
+    AutoFixLoop,
+    run_auto_fix_loop,
+)
 
 # Configuration constants
 # Criteria & status
@@ -68,8 +78,12 @@ __all__ = [
     "MAX_QA_ITERATIONS",
     "RECURRING_ISSUE_THRESHOLD",
     "ISSUE_SIMILARITY_THRESHOLD",
+    "DEFAULT_MAX_AUTO_FIX_ATTEMPTS",
     # Main loop
     "run_qa_validation_loop",
+    # Auto-fix loop
+    "run_auto_fix_loop",
+    "AutoFixLoop",
     # Criteria & status
     "load_implementation_plan",
     "save_implementation_plan",

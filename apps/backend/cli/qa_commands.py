@@ -16,8 +16,10 @@ if str(_PARENT_DIR) not in sys.path:
 
 from progress import count_subtasks
 from qa_loop import (
+    DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
     is_qa_approved,
     print_qa_status,
+    run_auto_fix_loop,
     run_qa_validation_loop,
     should_run_qa,
 )
@@ -125,3 +127,57 @@ def handle_qa_command(
     except KeyboardInterrupt:
         print("\n\nQA validation paused.")
         print(f"Resume with: python auto-claude/run.py --spec {spec_dir.name} --qa")
+
+
+def handle_auto_fix_command(
+    project_dir: Path,
+    spec_dir: Path,
+    model: str,
+    max_attempts: int | None = None,
+    verbose: bool = False,
+) -> None:
+    """
+    Handle the --auto-fix command (run intelligent auto-fix loop).
+
+    Args:
+        project_dir: Project root directory
+        spec_dir: Spec directory path
+        model: Model to use for auto-fix
+        max_attempts: Maximum fix attempts (default: 5)
+        verbose: Enable verbose output
+    """
+    print_banner()
+    print(f"\nRunning auto-fix loop for: {spec_dir.name}")
+    
+    if not validate_environment(spec_dir):
+        sys.exit(1)
+
+    # Use default or environment variable if not specified
+    if max_attempts is None:
+        import os
+        max_attempts = int(
+            os.environ.get("AUTO_FIX_MAX_ATTEMPTS", DEFAULT_MAX_AUTO_FIX_ATTEMPTS)
+        )
+
+    print(f"Max attempts: {max_attempts}")
+
+    try:
+        success = asyncio.run(
+            run_auto_fix_loop(
+                project_dir=project_dir,
+                spec_dir=spec_dir,
+                model=model,
+                max_attempts=max_attempts,
+                verbose=verbose,
+            )
+        )
+        if success:
+            print("\n✅ Auto-fix successful. All tests passed.")
+        else:
+            print("\n❌ Auto-fix failed. Manual intervention required.")
+            sys.exit(1)
+    except KeyboardInterrupt:
+        print("\n\nAuto-fix interrupted.")
+        print(
+            f"Resume with: python auto-claude/run.py --spec {spec_dir.name} --auto-fix"
+        )
