@@ -10,8 +10,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-# Add backend to path
-backend_dir = Path(__file__).parent / "apps" / "backend"
+# Add backend to path (from tests/ folder to backend)
+backend_dir = Path(__file__).parent.parent / "apps" / "backend"
 sys.path.insert(0, str(backend_dir))
 
 print("=" * 70)
