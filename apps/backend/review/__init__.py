@@ -52,7 +52,6 @@ from .state import (
 )
 
 try:
-    # Quality Scoring - Tier 1 Killing Feature
     from .quality_autofix import AutoFixEngine, AutoFix
     from .quality_badge import QualityBadgeFormatter
     from .quality_coverage import TestCoverageAnalyzer, analyze_project_coverage
