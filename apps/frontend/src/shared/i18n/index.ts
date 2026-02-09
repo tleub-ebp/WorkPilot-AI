@@ -14,6 +14,7 @@ import enTaskReview from './locales/en/taskReview.json';
 import enTerminal from './locales/en/terminal.json';
 import enErrors from './locales/en/errors.json';
 import enContext from './locales/en/context.json';
+import enChangeLog from './locales/en/changelog.json';
 
 // Import French translation resources
 import frCommon from './locales/fr/common.json';
@@ -28,6 +29,7 @@ import frTaskReview from './locales/fr/taskReview.json';
 import frTerminal from './locales/fr/terminal.json';
 import frErrors from './locales/fr/errors.json';
 import frContext from './locales/fr/context.json';
+import frChangeLog from './locales/fr/changelog.json';
 
 export const defaultNS = 'common';
 
@@ -44,7 +46,8 @@ export const resources = {
     taskReview: enTaskReview,
     terminal: enTerminal,
     errors: enErrors,
-    context: enContext
+    context: enContext,
+    changelog: enChangeLog
   },
   fr: {
     common: frCommon,
@@ -58,7 +61,8 @@ export const resources = {
     taskReview: frTaskReview,
     terminal: frTerminal,
     errors: frErrors,
-    context: frContext
+    context: frContext,
+    changelog: frChangeLog
   }
 } as const;
 
@@ -69,7 +73,7 @@ i18n
     lng: 'en', // Default language (will be overridden by settings)
     fallbackLng: 'en',
     defaultNS,
-    ns: ['common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'gitlab', 'taskReview', 'terminal', 'errors', 'context'],
+    ns: ['common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'gitlab', 'taskReview', 'terminal', 'errors', 'context', 'changelog'],
     interpolation: {
       escapeValue: false // React already escapes values
     },

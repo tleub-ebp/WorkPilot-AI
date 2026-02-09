@@ -5,5 +5,9 @@
       "titleSuffix": "(Erreur JSON)",
       "description": "⚠️ Erreur d'analyse JSON : {{error}}\n\nLe fichier implementation_plan.json est malformé. Exécutez la correction automatique du backend ou réparez le fichier manuellement."
     }
-  }
+  },
+  "noTasks": "Aucune tâche terminée",
+  "noTasksDescription": "Terminez d'abord quelques tâches pour générer un journal à partir de celles-ci.",
+  "noCommitsGitHistory": "Aucun commit trouvé dans la plage de temps spécifiée. Essayez d'ajuster vos filtres.",
+  "noCommitsBranchDiff": "Aucun commit trouvé entre les branches sélectionnées. Les branches sont peut-être synchronisées."
 }
