@@ -1,4 +1,10 @@
-"""
+﻿"""Script to recreate quality_scorer.py with proper UTF-8 encoding."""
+import os
+from pathlib import Path
+
+target_file = Path(__file__).parent / "apps" / "backend" / "review" / "quality_scorer.py"
+
+content = '''"""
 AI Code Review - Quality Scorer
 =======================================================
 
@@ -192,7 +198,7 @@ class QualityScorer:
 
     def _analyze_javascript_file(self, content: str, file_path: str) -> None:
         """Analyse un fichier JavaScript/TypeScript."""
-        if re.search(r"\bconsole\.log\b", content):
+        if re.search(r"\\bconsole\\.log\\b", content):
             self.issues.append(
                 QualityIssue(
                     category=QualityCategory.MAINTAINABILITY,
@@ -231,3 +237,14 @@ class QualityScorer:
             return "D"
         else:
             return "F"
+'''
+
+# Remove the file if it exists (to clear corruption)
+if target_file.exists():
+    os.remove(target_file)
+
+# Write with explicit UTF-8 encoding
+with open(target_file, 'w', encoding='utf-8', newline='\n') as f:
+    f.write(content)
+
+print(f"File recreated successfully at {target_file}")

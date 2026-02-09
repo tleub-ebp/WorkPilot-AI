@@ -23,16 +23,11 @@ from .qa_commands import (
     handle_qa_status_command,
     handle_review_status_command,
 )
-
-# Ensure parent directory is in path for imports (before other imports)
-_PARENT_DIR = Path(__file__).parent.parent
-if str(_PARENT_DIR) not in sys.path:
-    sys.path.insert(0, str(_PARENT_DIR))
 from .spec_commands import print_specs_list
 from .streaming_commands import (
-    handle_streaming_server_command,
     handle_list_recordings_command,
     handle_replay_recording_command,
+    handle_streaming_server_command,
 )
 from .utils import (
     DEFAULT_MODEL,
@@ -49,6 +44,11 @@ from .workspace_commands import (
     handle_merge_command,
     handle_review_command,
 )
+
+# Ensure parent directory is in path for imports
+_PARENT_DIR = Path(__file__).parent.parent
+if str(_PARENT_DIR) not in sys.path:
+    sys.path.insert(0, str(_PARENT_DIR))
 
 
 def parse_args() -> argparse.Namespace:
