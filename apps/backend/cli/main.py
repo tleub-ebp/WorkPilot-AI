@@ -30,6 +30,11 @@ from .qa_commands import (
     handle_review_status_command,
 )
 from .spec_commands import print_specs_list
+from .streaming_commands import (
+    handle_streaming_server_command,
+    handle_list_recordings_command,
+    handle_replay_recording_command,
+)
 from .utils import (
     DEFAULT_MODEL,
     find_spec,
@@ -293,6 +298,41 @@ Environment Variables:
         help="Actually delete files in cleanup (not just preview)",
     )
 
+    # Streaming Development Mode
+    parser.add_argument(
+        "--streaming-server",
+        action="store_true",
+        help="Start the streaming development WebSocket server",
+    )
+    parser.add_argument(
+        "--streaming-port",
+        type=int,
+        default=8765,
+        help="Port for streaming WebSocket server (default: 8765)",
+    )
+    parser.add_argument(
+        "--list-recordings",
+        action="store_true",
+        help="List all streaming session recordings",
+    )
+    parser.add_argument(
+        "--replay-recording",
+        type=str,
+        metavar="FILE",
+        help="Replay a streaming session recording",
+    )
+    parser.add_argument(
+        "--speed",
+        type=float,
+        default=1.0,
+        help="Playback speed for recording replay (default: 1.0 = real-time)",
+    )
+    parser.add_argument(
+        "--enable-streaming",
+        action="store_true",
+        help="Enable streaming mode for this build (broadcasts events in real-time)",
+    )
+
     return parser.parse_args()
 
 
@@ -344,6 +384,19 @@ def _run_cli() -> None:
     if args.list:
         print_banner()
         print_specs_list(project_dir)
+        return
+
+    # Handle streaming commands
+    if args.streaming_server:
+        handle_streaming_server_command(args)
+        return
+
+    if args.list_recordings:
+        handle_list_recordings_command(args)
+        return
+
+    if args.replay_recording:
+        handle_replay_recording_command(args)
         return
 
     # Handle --list-worktrees command

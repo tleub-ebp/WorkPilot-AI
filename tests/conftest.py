@@ -478,3 +478,16 @@ def sample_api_file_content():
         content="# Test Repository\n\nThis is a test README file.\n",
     )
     return item
+
+
+# ============================================================================
+# pytest-asyncio configuration for async tests
+# ============================================================================
+
+# Import asyncio event loop plugin
+pytest_plugins = ('pytest_asyncio',)
+
+# Configure asyncio mode for pytest
+def pytest_configure(config):
+    """Configure pytest-asyncio"""
+    config.option.asyncio_mode = "auto"
