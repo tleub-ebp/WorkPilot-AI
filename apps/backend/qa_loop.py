@@ -7,10 +7,10 @@ Includes auto-fix loop for intelligent test fixing.
 """
 
 from qa import (
+    DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
     ISSUE_SIMILARITY_THRESHOLD,
     MAX_QA_ITERATIONS,
     RECURRING_ISSUE_THRESHOLD,
-    DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
     AutoFixLoop,
     _issue_similarity,
     _normalize_issue_key,
