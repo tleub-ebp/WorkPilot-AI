@@ -15,6 +15,7 @@ import {
 } from './ui/dropdown-menu';
 import { cn, formatRelativeTime, sanitizeMarkdownForDisplay } from '../lib/utils';
 import { PhaseProgressIndicator } from './PhaseProgressIndicator';
+import { StreamingSessionButton } from './streaming/StreamingSessionButton';
 import {
   TASK_CATEGORY_LABELS,
   TASK_CATEGORY_COLORS,
@@ -32,6 +33,7 @@ import {
   JSON_ERROR_TITLE_SUFFIX
 } from '../../shared/constants';
 import { startTask, stopTask, checkTaskRunning, recoverStuckTask, isIncompleteHumanReview, archiveTasks, hasRecentActivity } from '../stores/task-store';
+import { useProjectStore } from '../stores/project-store';
 import type { Task, TaskCategory, ReviewReason, TaskStatus } from '../../shared/types';
 
 // Category icon mapping
@@ -135,6 +137,10 @@ export const TaskCard = memo(function TaskCard({
   const [isStuck, setIsStuck] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
   const stuckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Get project details from store to access projectPath
+  const projects = useProjectStore((state) => state.projects);
+  const currentProject = projects.find((p) => p.id === task.projectId);
 
   const isRunning = task.status === 'in_progress';
   const executionPhase = task.executionProgress?.phase;
@@ -571,24 +577,33 @@ export const TaskCard = memo(function TaskCard({
                 {t('actions.archive')}
               </Button>
             ) : (task.status === 'backlog' || task.status === 'in_progress') && (
-              <Button
-                variant={isRunning ? 'destructive' : 'default'}
-                size="sm"
-                className="h-7 px-2.5"
-                onClick={handleStartStop}
-              >
-                {isRunning ? (
-                  <>
-                    <Square className="mr-1.5 h-3 w-3" />
-                    {t('actions.stop')}
-                  </>
-                ) : (
-                  <>
-                    <Play className="mr-1.5 h-3 w-3" />
-                    {t('actions.start')}
-                  </>
+              <>
+                {/* Streaming button - only show when task is running and project path is available */}
+                {isRunning && !isStuck && currentProject?.path && (
+                  <StreamingSessionButton
+                    taskId={task.id}
+                    projectPath={currentProject.path}
+                  />
                 )}
-              </Button>
+                <Button
+                  variant={isRunning ? 'destructive' : 'default'}
+                  size="sm"
+                  className="h-7 px-2.5"
+                  onClick={handleStartStop}
+                >
+                  {isRunning ? (
+                    <>
+                      <Square className="mr-1.5 h-3 w-3" />
+                      {t('actions.stop')}
+                    </>
+                  ) : (
+                    <>
+                      <Play className="mr-1.5 h-3 w-3" />
+                      {t('actions.start')}
+                    </>
+                  )}
+                </Button>
+              </>
             )}
 
             {/* Move to menu for keyboard accessibility */}

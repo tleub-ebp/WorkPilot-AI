@@ -43,6 +43,7 @@ import { TaskSubtasks } from './TaskSubtasks';
 import { TaskLogs } from './TaskLogs';
 import { TaskFiles } from './TaskFiles';
 import { TaskReview } from './TaskReview';
+import { StreamingSessionButton } from '../streaming/StreamingSessionButton';
 import type { Task, WorktreeCreatePROptions } from '../../../shared/types';
 
 interface TaskDetailModalProps {
@@ -276,22 +277,32 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
 
     if (task.status === 'backlog' || task.status === 'in_progress') {
       return (
-        <Button
-          variant={state.isRunning ? 'destructive' : 'default'}
-          onClick={handleStartStop}
-        >
-          {state.isRunning ? (
-            <>
-              <Square className="mr-2 h-4 w-4" />
-              Stop Task
-            </>
-          ) : (
-            <>
-              <Play className="mr-2 h-4 w-4" />
-              Start Task
-            </>
+        <div className="flex items-center gap-2">
+          {/* Watch Live button - show when project path is available */}
+          {activeProject?.path && (
+            <StreamingSessionButton
+              taskId={task.id}
+              projectPath={activeProject.path}
+            />
           )}
-        </Button>
+          
+          <Button
+            variant={state.isRunning ? 'destructive' : 'default'}
+            onClick={handleStartStop}
+          >
+            {state.isRunning ? (
+              <>
+                <Square className="mr-2 h-4 w-4" />
+                Stop Task
+              </>
+            ) : (
+              <>
+                <Play className="mr-2 h-4 w-4" />
+                Start Task
+              </>
+            )}
+          </Button>
+        </div>
       );
     }
 
