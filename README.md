@@ -53,6 +53,24 @@
 
 ---
 
+## 🔄 Syncing with Upstream
+
+This repository is a fork of [Auto-Claude](https://github.com/AndyMik90/Auto-Claude). Keep your fork in sync with the latest upstream changes:
+
+### Quick Sync
+```bash
+pnpm merge-upstream
+```
+
+Validate setup:
+```bash
+pnpm validate:upstream
+```
+
+📚 **Learn more:** [MERGE_UPSTREAM.md](MERGE_UPSTREAM.md)
+
+---
+
 ## Requirements
 
 - **Claude Pro/Max subscription** - [Get one here](https://claude.ai/upgrade)
