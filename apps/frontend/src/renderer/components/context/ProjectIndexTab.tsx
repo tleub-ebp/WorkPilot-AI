@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { RefreshCw, AlertCircle, FolderTree } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -22,6 +23,8 @@ export function ProjectIndexTab({
   indexError,
   onRefresh
 }: ProjectIndexTabProps) {
+  const { t } = useTranslation();
+  
   return (
     <ScrollArea className="h-full">
       <div className="p-6 space-y-6">
@@ -88,7 +91,7 @@ export function ProjectIndexTab({
             {/* Project Overview */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Overview</CardTitle>
+                <CardTitle className="text-base">{t('common:labels.overview')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center gap-2">
