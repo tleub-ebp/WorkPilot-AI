@@ -114,8 +114,8 @@ class StreamingManager:
         session_id: str,
         file_path: str,
         change_type: str,
-        content: Optional[str] = None,
-        diff: Optional[str] = None,
+        content: str | None = None,
+        diff: str | None = None,
     ) -> None:
         """Emit a code change event."""
         event = StreamingEvent(

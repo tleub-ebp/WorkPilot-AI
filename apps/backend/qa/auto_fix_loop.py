@@ -72,9 +72,7 @@ except ImportError:
     LogPhase = None
     def get_task_logger(*args, **kwargs): return None
 
-from .criteria import get_qa_iteration_count
 from .fixer import run_qa_fixer_session
-from .report import escalate_to_human
 
 # Configuration
 DEFAULT_MAX_AUTO_FIX_ATTEMPTS = 5

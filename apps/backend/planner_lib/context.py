@@ -3,12 +3,15 @@ Context loading and workflow detection for implementation planner.
 """
 
 import json
+import logging
 import re
 from pathlib import Path
 
 from implementation_plan import WorkflowType
 
 from .models import PlannerContext
+
+logger = logging.getLogger(__name__)
 
 
 def _normalize_workflow_type(value: str) -> str:

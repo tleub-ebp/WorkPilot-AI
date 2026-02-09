@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 def handle_streaming_server_command(args):
     """Handle streaming server command."""
-    from streaming import start_streaming_server
 
     print("\n" + "="*70)
     print("🎥 Starting Streaming Development Server")
@@ -32,7 +31,11 @@ def handle_streaming_server_command(args):
 
 async def _run_streaming_server(args):
     """Run the streaming server asynchronously."""
-    from streaming import get_websocket_server, start_streaming_server, stop_streaming_server
+    from streaming import (
+        get_websocket_server,
+        start_streaming_server,
+        stop_streaming_server,
+    )
 
     # Start server
     await start_streaming_server()

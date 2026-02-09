@@ -16,15 +16,17 @@ backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
 # Mock Claude SDK for demo
-from unittest.mock import AsyncMock, MagicMock, Mock
+from unittest.mock import MagicMock, Mock
+
 
 class MockResponse:
     def __init__(self, text):
         self.text = text
 
+
 # Mock the client module
 mock_client_module = MagicMock()
-mock_create_client = Mock()
+
 
 class MockClient:
     async def __aenter__(self):
@@ -34,7 +36,7 @@ class MockClient:
         pass
     
     async def run_turn(self, prompt):
-        # Simulate agent responses based on role
+        # Simulate agent responses based on a role
         if "Architect" in prompt:
             return MockResponse(
                 "I propose using a microservices architecture with REST APIs. "
