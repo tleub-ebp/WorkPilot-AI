@@ -1,4 +1,4 @@
-﻿﻿"""
+﻿"""
 Tutorial Generator - Create personalized tutorials
 
 This module generates step-by-step tutorials based on the code being created.

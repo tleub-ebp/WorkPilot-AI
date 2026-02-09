@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from .quality_multilang import get_analyzer
-from .quality_scorer import QualityIssue, QualityScore, QualityScorer
+from .quality_scorer import QualityScorer
 
 
 class ExtendedQualityScorer(QualityScorer):
