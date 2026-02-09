@@ -2,16 +2,30 @@
 Security Module for Auto-Build Framework
 =========================================
 
-Provides security validation for bash commands using dynamic allowlists
-based on project analysis.
+Provides comprehensive security features for the Auto-Claude framework:
 
-The security system has three layers:
-1. Base commands - Always allowed (core shell utilities)
-2. Stack commands - Detected from project structure (frameworks, languages)
-3. Custom commands - User-defined allowlist
+1. Command Validation - Dynamic allowlists for bash commands
+2. Vulnerability Scanning - Multi-tool security scanning (Bandit, Semgrep, etc.)
+3. Secret Detection - Automatic detection of hardcoded credentials
+4. Compliance Analysis - GDPR, SOC2, HIPAA, PCI-DSS compliance checking
+5. Security Reports - Multiple formats (JSON, HTML, Markdown, SARIF)
+6. Git Integration - Automatic scanning via Git hooks
+7. CI/CD Integration - Security gates for deployment pipelines
 
-Public API
-----------
+Feature 8: Security-First Features
+-----------------------------------
+⚠️ IMPORTANT: This feature is INCLUDED and NON-OPTIONAL.
+Security scanning is a core safety feature that cannot be disabled.
+
+This module implements the complete Feature 8 roadmap:
+- Automatic vulnerability scanning on every commit
+- Detection of secrets/credentials in code
+- Compliance analysis (GDPR, SOC2, HIPAA, PCI-DSS, ISO 27001, CCPA)
+- Automatic generation of security reports
+- Integration with Snyk, Dependabot, Bandit, Semgrep, etc.
+
+Public API - Command Validation
+--------------------------------
 Main functions:
 - bash_security_hook: Pre-tool-use hook for command validation
 - validate_command: Standalone validation function for testing
@@ -22,9 +36,31 @@ Command parsing:
 - extract_commands: Extract command names from shell strings
 - split_command_segments: Split compound commands into segments
 
+Public API - Security Scanning
+------------------------------
+Main classes:
+- SecurityOrchestrator: Main entry point for security scanning
+- VulnerabilityScanner: Multi-tool vulnerability scanner
+- ComplianceAnalyzer: Compliance framework analyzer
+- SecurityReportGenerator: Multi-format report generator
+- GitHookManager: Git hooks for automatic scanning
+
+Quick Start:
+    from security import SecurityOrchestrator
+    
+    orchestrator = SecurityOrchestrator(project_path)
+    result = orchestrator.run_full_scan()
+    
+    if result.should_block:
+        print("Security issues found!")
+
 Validators:
 - All validators are available via the VALIDATORS dict
 """
+
+# Auto-initialize security features (runs on import)
+# This ensures security is ALWAYS active and properly configured
+from . import auto_integration  # noqa: F401
 
 # Core hooks
 # Re-export from project_analyzer for convenience
@@ -55,6 +91,29 @@ from .tool_input_validator import (
     get_safe_tool_input,
     validate_tool_input,
 )
+
+# Feature 8: Security-First Features
+from .security_orchestrator import (
+    SecurityOrchestrator,
+    SecurityScanConfig,
+    SecurityScanResult,
+)
+from .vulnerability_scanner import (
+    VulnerabilityScanner,
+    Vulnerability,
+    ScanResult,
+    Severity,
+    VulnerabilitySource,
+)
+from .compliance_analyzer import (
+    ComplianceAnalyzer,
+    ComplianceFramework,
+    ComplianceViolation,
+    ComplianceReport,
+    ComplianceSeverity,
+)
+from .security_report_generator import SecurityReportGenerator
+from .git_hooks import GitHookManager
 
 # Validators (for advanced usage)
 from .validator import (
@@ -91,6 +150,22 @@ __all__ = [
     "extract_commands",
     "split_command_segments",
     "get_command_for_validation",
+    # Security-First
+    "SecurityOrchestrator",
+    "SecurityScanConfig",
+    "SecurityScanResult",
+    "VulnerabilityScanner",
+    "Vulnerability",
+    "ScanResult",
+    "Severity",
+    "VulnerabilitySource",
+    "ComplianceAnalyzer",
+    "ComplianceFramework",
+    "ComplianceViolation",
+    "ComplianceReport",
+    "ComplianceSeverity",
+    "SecurityReportGenerator",
+    "GitHookManager",
     # Validators
     "VALIDATORS",
     "validate_pkill_command",
