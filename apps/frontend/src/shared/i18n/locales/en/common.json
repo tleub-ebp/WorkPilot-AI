@@ -87,7 +87,8 @@
     "save": "Save",
     "apply": "Apply",
     "delete": "Delete",
-    "settings": "Settings"
+    "settings": "Settings",
+    "next": "Next"
   },
   "os": {
     "windows": "Windows",

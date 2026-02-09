@@ -1,0 +1,162 @@
+﻿{
+  "title": "Générateur de journal des modifications",
+  "steps": {
+    "step1": "Étape 1 : Sélectionner les tâches terminées à inclure",
+    "step2": "Étape 2 : Configurer et générer le journal",
+    "step3": "Étape 3 : Publication et archivage des tâches"
+  },
+  "stepLabels": {
+    "select": "Sélectionner",
+    "generate": "Générer",
+    "release": "Publier"
+  },
+  "actions": {
+    "refresh": "Actualiser",
+    "back": "Retour",
+    "next": "Suivant",
+    "generate": "Générer le journal",
+    "save": "Enregistrer dans un fichier",
+    "copy": "Copier dans le presse-papiers",
+    "done": "Terminé",
+    "cancel": "Annuler",
+    "loadPreview": "Charger l'aperçu",
+    "selectAll": "Tout sélectionner",
+    "clear": "Effacer"
+  },
+  "source": {
+    "title": "Source du journal",
+    "tasks": {
+      "label": "Tâches terminées",
+      "description": "Générer à partir des tâches spécifiées terminées"
+    },
+    "gitHistory": {
+      "label": "Historique Git",
+      "description": "Générer à partir des commits récents ou d'une plage de tags"
+    },
+    "branchDiff": {
+      "label": "Comparaison de branches",
+      "description": "Générer à partir des commits entre deux branches"
+    }
+  },
+  "gitHistory": {
+    "title": "Options d'historique Git",
+    "typeLabel": "Type d'historique",
+    "types": {
+      "recent": "Commits récents",
+      "sinceDate": "Depuis une date",
+      "tagRange": "Entre deux tags",
+      "sinceVersion": "Depuis une version"
+    },
+    "countLabel": "Nombre de commits",
+    "dateLabel": "Depuis la date",
+    "fromTagLabel": "Depuis le tag",
+    "toTagLabel": "Jusqu'au tag (optionnel)",
+    "toHead": "HEAD (dernier)",
+    "versionLabel": "Depuis la version",
+    "sinceVersionDescription": "Tous les commits depuis cette version seront inclus",
+    "includeMergeCommits": "Inclure les commits de fusion",
+    "loadingBranches": "Chargement des branches...",
+    "loadingTags": "Chargement des tags...",
+    "loadingCommits": "Chargement des commits...",
+    "noCommits": "Aucun commit trouvé",
+    "commitsFound": "{{count}} commit trouvé",
+    "commitsFound_plural": "{{count}} commits trouvés"
+  },
+  "branchDiff": {
+    "title": "Options de comparaison de branches",
+    "baseBranchLabel": "Branche de base",
+    "compareBranchLabel": "Branche à comparer",
+    "selectBranch": "Sélectionner une branche...",
+    "baseBranchDescription": "La branche dans laquelle vous fusionnez",
+    "compareBranchDescription": "La branche avec vos changements",
+    "branchesMustBeDifferent": "Les branches doivent être différentes",
+    "defaultBadge": "par défaut",
+    "currentBadge": "actuelle"
+  },
+  "configuration": {
+    "title": "Configuration",
+    "summary": "Résumé",
+    "summaryTasks": "{{count}} tâche sélectionnée",
+    "summaryTasks_plural": "{{count}} tâches sélectionnées",
+    "summaryCommits": "{{count}} commit sélectionné",
+    "summaryCommits_plural": "{{count}} commits sélectionnés",
+    "tasksSelectedCount": "{{selected}} sur {{total}} tâches sélectionnées",
+    "versionLabel": "Version",
+    "versionPlaceholder": "ex. 1.0.0",
+    "dateLabel": "Date de publication",
+    "formatLabel": "Format",
+    "formats": {
+      "keepAChangelog": "Keep a Changelog",
+      "keepAChangelogDesc": "Format structuré avec sections Ajouté/Modifié/Corrigé/Supprimé",
+      "simpleList": "Liste simple",
+      "simpleListDesc": "Liste à puces claire avec catégories",
+      "githubRelease": "GitHub Release",
+      "githubReleaseDesc": "Notes de version style GitHub"
+    },
+    "audienceLabel": "Audience",
+    "audiences": {
+      "technical": "Technique",
+      "technicalDesc": "Changements techniques détaillés pour les développeurs",
+      "userFacing": "Utilisateur final",
+      "userFacingDesc": "Descriptions claires et non techniques pour les utilisateurs finaux",
+      "marketing": "Marketing",
+      "marketingDesc": "Contenu axé sur la valeur et les avantages"
+    },
+    "emojiLabel": "Niveau d'emojis",
+    "emojiLevels": {
+      "none": "Aucun",
+      "noneDesc": "Pas d'emojis",
+      "little": "Titres uniquement",
+      "littleDesc": "Emojis uniquement sur les titres de section",
+      "medium": "Titres + Points clés",
+      "mediumDesc": "Emojis sur les titres et les éléments clés",
+      "high": "Partout",
+      "highDesc": "Emojis sur les titres et chaque ligne"
+    },
+    "customInstructionsLabel": "Instructions personnalisées (optionnel)",
+    "customInstructionsPlaceholder": "Ajoutez des instructions spécifiques pour la génération du journal...",
+    "showAdvanced": "Afficher les options avancées",
+    "hideAdvanced": "Masquer les options avancées"
+  },
+  "preview": {
+    "title": "Aperçu",
+    "placeholder": "Le journal généré apparaîtra ici...",
+    "generating": "Génération du journal...",
+    "saveSuccess": "Enregistré avec succès !",
+    "copySuccess": "Copié dans le presse-papiers !",
+    "pasteImageHint": "Collez ou glissez des images ici",
+    "imageError": "Échec du téléchargement de l'image"
+  },
+  "generation": {
+    "stages": {
+      "loadingSpecs": "Chargement des fichiers de spécifications...",
+      "loadingCommits": "Chargement des commits...",
+      "generating": "Génération du journal...",
+      "formatting": "Formatage de la sortie...",
+      "complete": "Terminé",
+      "error": "Erreur"
+    },
+    "progress": "{{progress}}%"
+  },
+  "release": {
+    "title": "Publication terminée",
+    "success": "Votre journal des modifications a été généré et enregistré !",
+    "archiveTitle": "Archiver les tâches terminées",
+    "archiveDescription": "Souhaitez-vous archiver la {{count}} tâche terminée utilisée dans ce journal ?",
+    "archiveDescription_plural": "Souhaitez-vous archiver les {{count}} tâches terminées utilisées dans ce journal ?",
+    "archiveNote": "Les tâches archivées seront déplacées vers la version {{version}} et n'apparaîtront pas dans les futures sélections de journal.",
+    "archiveYes": "Oui, archiver les tâches",
+    "archiveNo": "Non, conserver les tâches",
+    "viewChangelog": "Voir CHANGELOG.md"
+  },
+  "errors": {
+    "noTasks": "Aucune tâche terminée disponible",
+    "noTasksSelected": "Veuillez sélectionner au moins une tâche",
+    "noCommits": "Aucun commit trouvé",
+    "versionRequired": "La version est requise",
+    "dateRequired": "La date est requise",
+    "generationFailed": "Échec de la génération du journal",
+    "saveFailed": "Échec de l'enregistrement du journal",
+    "loadFailed": "Échec du chargement des données"
+  }
+}

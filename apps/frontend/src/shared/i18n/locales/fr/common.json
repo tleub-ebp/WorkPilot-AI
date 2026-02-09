@@ -87,7 +87,8 @@
     "save": "Enregistrer",
     "apply": "Appliquer",
     "delete": "Supprimer",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "next": "Suivant"
   },
   "os": {
     "windows": "Windows",
@@ -126,10 +127,10 @@
     "networkError": "Erreur réseau",
     "notFound": "Non trouvé",
     "unauthorized": "Non autorisé",
-    "bulkDeletePartialFailure": "Certains worktrees n'ont pas pu être supprimés :",
-    "taskNotFoundForWorktree": "Tâche introuvable pour le worktree : {{specName}}",
-    "failedToDeleteTaskWorktree": "Échec de la suppression du worktree de tâche : {{specName}}",
-    "terminalWorktreeNotFound": "Worktree terminal introuvable : {{name}}",
+    "bulkDeletePartialFailure": "Certains arbres de travail n'ont pas pu être supprimés :",
+    "taskNotFoundForWorktree": "Tâche introuvable pour l'arbre de travail : {{specName}}",
+    "failedToDeleteTaskWorktree": "Échec de la suppression de l'arbre de travail de tâche : {{specName}}",
+    "terminalWorktreeNotFound": "Arbre de travail terminal introuvable : {{name}}",
     "failedToDeleteTerminalWorktree": "Échec de la suppression de l'arbre de travail terminal : {{name}}"
   },
   "worktrees": {
@@ -172,7 +173,7 @@
     "upgradeDescription": "Mettez à niveau votre abonnement Claude pour des limites d'utilisation plus élevées.",
     "upgradeSubscription": "Mettre à niveau l'abonnement",
     "sources": {
-      "changelog": "Changelog",
+      "changelog": "Journal des modifications",
       "task": "Tâche",
       "roadmap": "Feuille de route",
       "ideation": "Idéation",

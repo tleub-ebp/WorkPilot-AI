@@ -1,0 +1,162 @@
+﻿{
+  "title": "Changelog Generator",
+  "steps": {
+    "step1": "Step 1: Select completed tasks to include",
+    "step2": "Step 2: Configure and generate changelog",
+    "step3": "Step 3: Release and archive tasks"
+  },
+  "stepLabels": {
+    "select": "Select",
+    "generate": "Generate",
+    "release": "Release"
+  },
+  "actions": {
+    "refresh": "Refresh",
+    "back": "Back",
+    "next": "Next",
+    "generate": "Generate Changelog",
+    "save": "Save to File",
+    "copy": "Copy to Clipboard",
+    "done": "Done",
+    "cancel": "Cancel",
+    "loadPreview": "Load Preview",
+    "selectAll": "Select All",
+    "clear": "Clear"
+  },
+  "source": {
+    "title": "Changelog Source",
+    "tasks": {
+      "label": "Completed Tasks",
+      "description": "Generate from completed spec tasks"
+    },
+    "gitHistory": {
+      "label": "Git History",
+      "description": "Generate from recent commits or tag range"
+    },
+    "branchDiff": {
+      "label": "Branch Comparison",
+      "description": "Generate from commits between two branches"
+    }
+  },
+  "gitHistory": {
+    "title": "Git History Options",
+    "typeLabel": "History Type",
+    "types": {
+      "recent": "Recent Commits",
+      "sinceDate": "Since Date",
+      "tagRange": "Between Tags",
+      "sinceVersion": "Since Version"
+    },
+    "countLabel": "Number of commits",
+    "dateLabel": "Since date",
+    "fromTagLabel": "From tag",
+    "toTagLabel": "To tag (optional)",
+    "toHead": "HEAD (latest)",
+    "versionLabel": "Since version",
+    "sinceVersionDescription": "All commits since this version will be included",
+    "includeMergeCommits": "Include merge commits",
+    "loadingBranches": "Loading branches...",
+    "loadingTags": "Loading tags...",
+    "loadingCommits": "Loading commits...",
+    "noCommits": "No commits found",
+    "commitsFound": "{{count}} commit found",
+    "commitsFound_plural": "{{count}} commits found"
+  },
+  "branchDiff": {
+    "title": "Branch Comparison Options",
+    "baseBranchLabel": "Base branch",
+    "compareBranchLabel": "Compare branch",
+    "selectBranch": "Select a branch...",
+    "baseBranchDescription": "The branch you're merging into",
+    "compareBranchDescription": "The branch with your changes",
+    "branchesMustBeDifferent": "Branches must be different",
+    "defaultBadge": "default",
+    "currentBadge": "current"
+  },
+  "configuration": {
+    "title": "Configuration",
+    "summary": "Summary",
+    "summaryTasks": "{{count}} task selected",
+    "summaryTasks_plural": "{{count}} tasks selected",
+    "summaryCommits": "{{count}} commit selected",
+    "summaryCommits_plural": "{{count}} commits selected",
+    "tasksSelectedCount": "{{selected}} of {{total}} tasks selected",
+    "versionLabel": "Version",
+    "versionPlaceholder": "e.g., 1.0.0",
+    "dateLabel": "Release Date",
+    "formatLabel": "Format",
+    "formats": {
+      "keepAChangelog": "Keep a Changelog",
+      "keepAChangelogDesc": "Structured format with Added/Changed/Fixed/Removed sections",
+      "simpleList": "Simple List",
+      "simpleListDesc": "Clean bulleted list with categories",
+      "githubRelease": "GitHub Release",
+      "githubReleaseDesc": "GitHub-style release notes"
+    },
+    "audienceLabel": "Audience",
+    "audiences": {
+      "technical": "Technical",
+      "technicalDesc": "Detailed technical changes for developers",
+      "userFacing": "User-Facing",
+      "userFacingDesc": "Clear, non-technical descriptions for end users",
+      "marketing": "Marketing",
+      "marketingDesc": "Value-focused copy emphasizing benefits"
+    },
+    "emojiLabel": "Emoji Level",
+    "emojiLevels": {
+      "none": "None",
+      "noneDesc": "No emojis",
+      "little": "Headings Only",
+      "littleDesc": "Emojis on section headings only",
+      "medium": "Headings + Highlights",
+      "mediumDesc": "Emojis on headings and key items",
+      "high": "Everything",
+      "highDesc": "Emojis on headings and every line"
+    },
+    "customInstructionsLabel": "Custom Instructions (optional)",
+    "customInstructionsPlaceholder": "Add any specific instructions for changelog generation...",
+    "showAdvanced": "Show Advanced Options",
+    "hideAdvanced": "Hide Advanced Options"
+  },
+  "preview": {
+    "title": "Preview",
+    "placeholder": "Generated changelog will appear here...",
+    "generating": "Generating changelog...",
+    "saveSuccess": "Saved successfully!",
+    "copySuccess": "Copied to clipboard!",
+    "pasteImageHint": "Paste or drag images here",
+    "imageError": "Failed to upload image"
+  },
+  "generation": {
+    "stages": {
+      "loadingSpecs": "Loading spec files...",
+      "loadingCommits": "Loading commits...",
+      "generating": "Generating changelog...",
+      "formatting": "Formatting output...",
+      "complete": "Complete",
+      "error": "Error"
+    },
+    "progress": "{{progress}}%"
+  },
+  "release": {
+    "title": "Release Complete",
+    "success": "Your changelog has been generated and saved!",
+    "archiveTitle": "Archive Completed Tasks",
+    "archiveDescription": "Would you like to archive the {{count}} completed task used in this changelog?",
+    "archiveDescription_plural": "Would you like to archive the {{count}} completed tasks used in this changelog?",
+    "archiveNote": "Archived tasks will be moved to version {{version}} and won't appear in future changelog selections.",
+    "archiveYes": "Yes, Archive Tasks",
+    "archiveNo": "No, Keep Tasks",
+    "viewChangelog": "View CHANGELOG.md"
+  },
+  "errors": {
+    "noTasks": "No completed tasks available",
+    "noTasksSelected": "Please select at least one task",
+    "noCommits": "No commits found",
+    "versionRequired": "Version is required",
+    "dateRequired": "Date is required",
+    "generationFailed": "Failed to generate changelog",
+    "saveFailed": "Failed to save changelog",
+    "loadFailed": "Failed to load data"
+  }
+}
