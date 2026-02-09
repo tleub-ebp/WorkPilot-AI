@@ -1,0 +1,146 @@
+﻿{
+  "_metadata": {
+    "feature_name": "Feature 8: Security-First Features",
+    "version": "1.0.0",
+    "status": "INCLUDED - NON-OPTIONAL",
+    "implemented_date": "2026-02-09",
+    "description": "Comprehensive security scanning and compliance checking integrated into Auto-Claude core"
+  },
+  
+  "inclusion_status": {
+    "is_optional": false,
+    "is_included": true,
+    "can_be_disabled": false,
+    "reason": "Security is a core safety feature that must always be active to protect users and projects"
+  },
+  
+  "core_features": {
+    "secret_scanning": {
+      "status": "ALWAYS_ACTIVE",
+      "implementation": "Built-in pattern-based detection",
+      "patterns_count": 40,
+      "can_disable": false
+    },
+    "vulnerability_scanning": {
+      "status": "ALWAYS_ACTIVE",
+      "implementation": "Multi-tool integration (Bandit, Semgrep, pip-audit, etc.)",
+      "can_disable": false,
+      "note": "External tools enhance but aren't required"
+    },
+    "compliance_analysis": {
+      "status": "ACTIVE_BY_DEFAULT",
+      "frameworks": ["GDPR", "SOC2", "HIPAA", "PCI-DSS", "ISO-27001", "CCPA"],
+      "can_configure": true
+    },
+    "security_reports": {
+      "status": "ALWAYS_ACTIVE",
+      "formats": ["json", "markdown", "html", "sarif"],
+      "can_configure": true
+    },
+    "git_hooks": {
+      "status": "RECOMMENDED",
+      "auto_install": true,
+      "can_bypass": true,
+      "note": "Can be bypassed with git commit/push --no-verify"
+    }
+  },
+  
+  "auto_initialization": {
+    "enabled": true,
+    "description": "Security features initialize automatically when security module is imported",
+    "initialization_file": "security/auto_integration.py",
+    "triggers": [
+      "Import of security module",
+      "Application startup",
+      "Git operations (via hooks)"
+    ]
+  },
+  
+  "dependencies": {
+    "required": [
+      {
+        "name": "rich",
+        "version": ">=13.0.0",
+        "purpose": "Console reports and formatting",
+        "in_requirements": true
+      },
+      {
+        "name": "bandit",
+        "version": ">=1.7.0",
+        "purpose": "Python SAST scanning",
+        "in_requirements": true
+      }
+    ],
+    "recommended": [
+      {
+        "name": "semgrep",
+        "purpose": "Advanced SAST scanning",
+        "install": "pip install semgrep"
+      },
+      {
+        "name": "pip-audit",
+        "purpose": "Dependency vulnerability scanning",
+        "install": "pip install pip-audit"
+      },
+      {
+        "name": "snyk",
+        "purpose": "Comprehensive security scanning",
+        "install": "npm install -g snyk"
+      }
+    ]
+  },
+  
+  "integration_points": {
+    "core_agent": {
+      "integrated": true,
+      "location": "core/client.py",
+      "hook": "bash_security_hook"
+    },
+    "qa_agent": {
+      "integrated": true,
+      "checks": ["secrets", "vulnerabilities", "compliance"]
+    },
+    "git_workflow": {
+      "integrated": true,
+      "hooks": ["pre-commit", "pre-push"]
+    },
+    "ci_cd": {
+      "integrated": true,
+      "command": "python -m security.git_hooks ci-scan"
+    }
+  },
+  
+  "blocking_policy": {
+    "always_block_on": [
+      "Hardcoded secrets",
+      "Critical vulnerabilities (CVSS >= 9.0)"
+    ],
+    "warn_on": [
+      "High severity vulnerabilities (CVSS 7.0-8.9)",
+      "Compliance violations"
+    ],
+    "configurable": true,
+    "override_allowed": false,
+    "note": "Core blocking cannot be disabled, but thresholds can be configured"
+  },
+  
+  "usage": {
+    "cli_full_scan": "python -m security.security_orchestrator",
+    "cli_quick_scan": "python -m security.security_orchestrator --quick",
+    "cli_install_hooks": "python -m security.git_hooks install",
+    "cli_ci_scan": "python -m security.git_hooks ci-scan",
+    "python_api": "from security import SecurityOrchestrator; orchestrator = SecurityOrchestrator(project_path); result = orchestrator.run_full_scan()"
+  },
+  
+  "documentation": {
+    "main_readme": "docs/features/SECURITY_FIRST_FEATURES.md",
+    "api_reference": "See SECURITY_FIRST_FEATURES.md#api-reference",
+    "examples": "See SECURITY_FIRST_FEATURES.md#examples"
+  },
+  
+  "verification": {
+    "check_status": "python -c \"from security.auto_integration import print_security_status; print_security_status()\"",
+    "check_tools": "python -c \"from security.auto_integration import SECURITY_TOOLS_AVAILABLE; print(SECURITY_TOOLS_AVAILABLE)\"",
+    "run_test_scan": "python -m security.security_orchestrator --quick --no-block"
+  }
+}
