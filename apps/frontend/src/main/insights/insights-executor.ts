@@ -63,7 +63,8 @@ export class InsightsExecutor extends EventEmitter {
     projectPath: string,
     message: string,
     conversationHistory: Array<{ role: string; content: string }>,
-    modelConfig?: InsightsModelConfig
+    modelConfig?: InsightsModelConfig,
+    learningMode?: { enabled: boolean; level: string }
   ): Promise<ProcessorResult> {
     // Cancel any existing session
     this.cancelSession(projectId);
@@ -116,6 +117,12 @@ export class InsightsExecutor extends EventEmitter {
       args.push('--model', modelId);
       args.push('--thinking-level', modelConfig.thinkingLevel);
     }
+    
+    // Add Learning Mode parameters if enabled
+    if (learningMode?.enabled) {
+      args.push('--learning-mode');
+      args.push('--explanation-level', learningMode.level || 'intermediate');
+    }
 
     // Spawn Python process
     const proc = spawn(this.config.getPythonPath(), args, {
@@ -148,6 +155,8 @@ export class InsightsExecutor extends EventEmitter {
             this.handleToolStart(projectId, line, toolsUsed);
           } else if (line.startsWith('__TOOL_END__:')) {
             this.handleToolEnd(projectId, line);
+          } else if (line.startsWith('__EXPLANATION__:')) {
+            this.handleExplanation(projectId, line);
           } else if (line.trim()) {
             fullResponse += line + '\n';
             this.emit('stream-chunk', projectId, {
@@ -296,6 +305,23 @@ export class InsightsExecutor extends EventEmitter {
       } as InsightsStreamChunk);
     } catch {
       // Ignore parse errors for tool markers
+    }
+  }
+
+  /**
+   * Handle Learning Mode explanation marker
+   */
+  private handleExplanation(projectId: string, line: string): void {
+    try {
+      const explanationJson = line.substring('__EXPLANATION__:'.length);
+      const explanation = JSON.parse(explanationJson);
+      this.emit('stream-chunk', projectId, {
+        type: 'explanation',
+        explanation
+      } as InsightsStreamChunk);
+    } catch (err) {
+      console.error('[Insights] Failed to parse explanation:', err);
+      // Ignore parse errors for explanation markers
     }
   }
 

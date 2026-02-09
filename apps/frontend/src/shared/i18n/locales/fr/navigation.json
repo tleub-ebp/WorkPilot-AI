@@ -6,7 +6,7 @@
   "items": {
     "kanban": "Tableau Kanban",
     "terminals": "Terminaux Agent",
-    "insights": "Insights",
+    "insights": "Analyses",
     "roadmap": "Feuille de route",
     "ideation": "Idéation",
     "changelog": "Journal des modifications",
@@ -15,7 +15,7 @@
     "githubPRs": "PRs GitHub",
     "gitlabIssues": "Issues GitLab",
     "gitlabMRs": "MRs GitLab",
-    "worktrees": "Worktrees",
+    "worktrees": "Arbres de travail",
     "agentTools": "Aperçu MCP"
   },
   "actions": {

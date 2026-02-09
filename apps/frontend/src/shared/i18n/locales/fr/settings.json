@@ -372,7 +372,7 @@
     "aiTerminalNaming": "Nommage IA des terminaux",
     "aiTerminalNamingDescription": "Nommer automatiquement les terminaux en fonction des commandes (utilise Haiku)",
     "featureModelSettings": "Paramètres du modèle de fonctionnalité",
-    "featureModelSettingsDescription": "Modèle et niveau de réflexion pour Insights, Idéation et Roadmap",
+    "featureModelSettingsDescription": "Modèle et niveau de réflexion pour Analyses, Idéation et Roadmap",
     "model": "Modèle",
     "thinkingLevel": "Niveau de réflexion",
     "paths": "Chemins",
@@ -429,7 +429,7 @@
     "tabTerminalFonts": "Polices de terminal",
     "ide": {
       "label": "IDE préféré",
-      "description": "Auto Claude ouvrira les worktrees dans cet éditeur",
+      "description": "Auto Claude ouvrira les arbres de travail dans cet éditeur",
       "placeholder": "Sélectionner un IDE...",
       "customPath": "Chemin IDE personnalisé",
       "customPathPlaceholder": "/chemin/vers/votre/ide"
@@ -584,12 +584,13 @@
       "syncDescription": "Synchroniser avec GitHub Issues",
       "defaultBranch": {
         "label": "Branche par défaut",
-        "description": "Branche de base pour créer les worktrees de tâches",
+        "description": "Branche de base pour créer les arbres de travail de tâches",
         "autoDetect": "Détection automatique (main/master)",
         "searchPlaceholder": "Rechercher des branches...",
         "noBranchesFound": "Aucune branche trouvée",
         "selectedBranchHelp": "Toutes les nouvelles tâches partiront de {{branch}}"
-,
+      }
+    },
   "azureDevOps": {
     "enableSyncLabel": "Activer la synchronisation Azure DevOps",
     "enableSyncDescription": "Gérer automatiquement les éléments de travail du backlog Azure DevOps",
@@ -644,10 +645,8 @@
     "importing": "Import en cours...",
     "importButton": "Importer {{count}} élément",
     "importButton_plural": "Importer {{count}} éléments"
-  }
-}
-    },
-    "gitlab": {
+  },
+  "gitlab": {
       "title": "GitLab",
       "description": "Synchronisation issues GitLab",
       "integrationTitle": "Intégration GitLab",

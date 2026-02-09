@@ -92,7 +92,7 @@
     "issuesAvailable": "Issues disponibles",
     "issuesAvailableDescription": "Accédez aux issues GitLab depuis la barre latérale pour les consulter, investiguer et créer des tâches.",
     "defaultBranch": "Branche par défaut",
-    "defaultBranchDescription": "Branche de base pour créer les worktrees de tâches",
+    "defaultBranchDescription": "Branche de base pour créer les arbres de travail de tâches",
     "loadingBranches": "Chargement des branches...",
     "autoDetect": "Auto-détection (main/master)",
     "searchBranches": "Rechercher des branches...",

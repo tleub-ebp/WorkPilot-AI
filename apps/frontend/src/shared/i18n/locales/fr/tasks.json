@@ -85,11 +85,11 @@
     "closeTaskDetailsAriaLabel": "Fermer les détails de la tâche",
     "editTask": "Modifier la tâche",
     "cannotEditWhileRunning": "Impossible de modifier pendant l'exécution",
-    "worktreeCleanupTitle": "Nettoyage du Worktree",
-    "worktreeCleanupStaged": "Cette tâche a été préparée et possède un worktree. Voulez-vous nettoyer le worktree ?",
-    "worktreeCleanupNotStaged": "Cette tâche possède un worktree avec des changements non fusionnés. Supprimez le worktree pour marquer comme terminé, ou annulez pour réviser les changements d'abord.",
-    "keepWorktree": "Garder le Worktree",
-    "deleteWorktree": "Supprimer le Worktree & Marquer Terminé",
+    "worktreeCleanupTitle": "Nettoyage de l'arbre de travail",
+    "worktreeCleanupStaged": "Cette tâche a été préparée et possède un arbre de travail. Voulez-vous nettoyer l'arbre de travail ?",
+    "worktreeCleanupNotStaged": "Cette tâche possède un arbre de travail avec des changements non fusionnés. Supprimez l'arbre de travail pour marquer comme terminé, ou annulez pour réviser les changements d'abord.",
+    "keepWorktree": "Garder l'arbre de travail",
+    "deleteWorktree": "Supprimer l'arbre de travail & Marquer Terminé",
     "refreshTasks": "Actualiser les tâches",
     "queueSettings": "Paramètres de la file d'attente",
     "orderSaveFailedTitle": "Réorganisation non enregistrée",
@@ -208,7 +208,7 @@
     "createTask": "Créer la tâche",
     "worktreeNotice": {
       "title": "Espace de travail isolé",
-      "description": "Cette tâche s'exécute dans un worktree git isolé. Votre branche principale reste protégée jusqu'à ce que vous choisissiez de fusionner."
+      "description": "Cette tâche s'exécute dans un arbre de travail git isolé. Votre branche principale reste protégée jusqu'à ce que vous choisissiez de fusionner."
     },
     "gitOptions": {
       "title": "Options Git (optionnel)",
@@ -217,9 +217,9 @@
       "useProjectDefaultWithBranch": "Utiliser la branche par défaut du projet ({{branch}})",
       "searchBranches": "Rechercher des branches...",
       "noBranchesFound": "Aucune branche trouvée",
-      "helpText": "Remplacez la branche à partir de laquelle le worktree de cette tâche sera créé. Laissez vide pour utiliser la branche par défaut configurée du projet.",
+      "helpText": "Remplacez la branche à partir de laquelle l'arbre de travail de cette tâche sera créé. Laissez vide pour utiliser la branche par défaut configurée du projet.",
       "useWorktreeLabel": "Utiliser un espace de travail isolé (recommandé)",
-      "useWorktreeDescription": "Crée les changements dans un worktree git séparé pour une révision sécurisée avant la fusion. Désactivez pour travailler directement dans votre projet (plus rapide mais risqué)."
+      "useWorktreeDescription": "Crée les changements dans un arbre de travail git séparé pour une révision sécurisée avant la fusion. Désactivez pour travailler directement dans votre projet (plus rapide mais risqué)."
     },
     "errors": {
       "createFailed": "Échec de la création de la tâche. Veuillez réessayer."
@@ -234,7 +234,7 @@
     "processingError": "Échec du traitement de l'image"
   },
   "review": {
-    "mergeTooltip": "Fusionne les changements de la branche worktree de la tâche vers votre branche de base. L'IA résoudra les conflits éventuels. Vous pourrez ensuite choisir de conserver ou de supprimer le worktree."
+    "mergeTooltip": "Fusionne les changements de la branche d'arbre de travail de la tâche vers votre branche de base. L'IA résoudra les conflits éventuels. Vous pourrez ensuite choisir de conserver ou de supprimer l'arbre de travail."
   },
   "edit": {
     "title": "Modifier la tâche",

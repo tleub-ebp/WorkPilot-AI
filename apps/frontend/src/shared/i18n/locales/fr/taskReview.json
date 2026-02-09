@@ -7,8 +7,8 @@
   "merge": {
     "branchHasNewCommits": "La branche {{branch}} a {{count}} nouveau commit.",
     "branchHasNewCommits_other": "La branche {{branch}} a {{count}} nouveaux commits.",
-    "branchHasNewCommitsSinceWorktree": "La branche {{branch}} a {{count}} nouveau commit depuis la création de ce worktree.",
-    "branchHasNewCommitsSinceWorktree_other": "La branche {{branch}} a {{count}} nouveaux commits depuis la création de ce worktree.",
+    "branchHasNewCommitsSinceWorktree": "La branche {{branch}} a {{count}} nouveau commit depuis la création de cet arbre de travail.",
+    "branchHasNewCommitsSinceWorktree_other": "La branche {{branch}} a {{count}} nouveaux commits depuis la création de cet arbre de travail.",
     "filesNeedMerging": "{{count}} fichier nécessite une fusion.",
     "filesNeedMerging_other": "{{count}} fichiers nécessitent une fusion.",
     "filesNeedIntelligentMerging": "{{count}} fichier nécessitera une fusion intelligente :",
@@ -29,7 +29,7 @@
     "supersededTitle": "Modifications remplacées",
     "supersededDescription": "Votre branche actuelle a une version plus récente de ces modifications. Envisagez de supprimer cette tâche ou de voir la comparaison.",
     "supersededCompareTooltip": "Voir une comparaison détaillée pour voir comment la branche actuelle diffère des modifications de cette tâche.",
-    "supersededDiscardTooltip": "Supprimer le worktree de cette tâche puisque les modifications ne sont plus nécessaires.",
+    "supersededDiscardTooltip": "Supprimer l'arbre de travail de cette tâche puisque les modifications ne sont plus nécessaires.",
     "status": {
       "branchDiverged": "Branche divergée",
       "aiWillResolve": "L'IA résoudra",
@@ -130,7 +130,7 @@
     "failed": "échouées",
     "skipped": "ignorées",
     "alreadyExisted": "existait déjà",
-    "noWorktree": "Aucun worktree trouvé pour cette tâche",
+    "noWorktree": "Aucun arbre de travail trouvé pour cette tâche",
     "resultsDescriptionWithSkipped": "{{success}} réussies, {{skipped}} ignorées, {{failed}} échouées"
   }
 }

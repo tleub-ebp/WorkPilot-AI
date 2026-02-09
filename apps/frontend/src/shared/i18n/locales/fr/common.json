@@ -130,12 +130,12 @@
     "taskNotFoundForWorktree": "Tâche introuvable pour le worktree : {{specName}}",
     "failedToDeleteTaskWorktree": "Échec de la suppression du worktree de tâche : {{specName}}",
     "terminalWorktreeNotFound": "Worktree terminal introuvable : {{name}}",
-    "failedToDeleteTerminalWorktree": "Échec de la suppression du worktree terminal : {{name}}"
+    "failedToDeleteTerminalWorktree": "Échec de la suppression de l'arbre de travail terminal : {{name}}"
   },
   "worktrees": {
-    "deleteSuccess": "Worktree '{{branch}}' supprimé avec succès",
-    "bulkDeleteSuccess": "{{count}} worktree supprimé avec succès",
-    "bulkDeleteSuccess_plural": "{{count}} worktrees supprimés avec succès"
+    "deleteSuccess": "Arbre de travail '{{branch}}' supprimé avec succès",
+    "bulkDeleteSuccess": "{{count}} arbre de travail supprimé avec succès",
+    "bulkDeleteSuccess_plural": "{{count}} arbres de travail supprimés avec succès"
   },
   "notification": {
     "accountSwitched": "Compte changé",

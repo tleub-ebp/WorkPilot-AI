@@ -2,6 +2,23 @@
 
 ### ✨ New Features
 
+- **Learning Mode & Onboarding AI**: Mode apprentissage qui explique TOUT ce que Claude fait en temps réel
+  - 4 niveaux d'explication : Débutant, Intermédiaire, Avancé, Expert
+  - Explications en temps réel pendant l'utilisation des outils (Read, Glob, Grep)
+  - Explication des décisions avec comparaison d'alternatives
+  - Explication du code généré avec patterns et best practices
+  - Interface UI intégrée dans l'onglet Insights avec cartes colorées par catégorie
+  - Toggle simple pour activer/désactiver le mode
+  - Génération automatique de documentation (README, API, Architecture, CHANGELOG, CONTRIBUTING)
+  - Génération de tutoriels personnalisés basés sur le code
+  - Assistant d'onboarding pour nouveaux développeurs avec checklist et tracking
+  - Sessions sauvegardées automatiquement pour créer une base de connaissances
+  - Rapports markdown exportables
+  - Support CLI : `--learning-mode --explanation-level [beginner|intermediate|advanced|expert]`
+  - Modules Python complets : `learning_mode.py`, `documentation_generator.py`, `tutorial_generator.py`, `onboarding_assistant.py`
+  - Tests unitaires complets
+  - See `docs/features/LEARNING_MODE.md` for complete documentation
+
 - **Auto-Fix Loops Intelligents**: Intelligent test-fix-test automation that automatically detects and fixes test failures
   - Automatic test execution using project's test framework (pytest, jest, vitest, etc.)
   - Intelligent failure analysis with error pattern recognition (assertion, timeout, import, type errors, etc.)

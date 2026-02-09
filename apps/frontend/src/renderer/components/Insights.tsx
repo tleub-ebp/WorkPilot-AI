@@ -39,6 +39,8 @@ import {
 import { loadTasks } from '../stores/task-store';
 import { ChatHistorySidebar } from './ChatHistorySidebar';
 import { InsightsModelSelector } from './InsightsModelSelector';
+import { LearningModeToggle } from './LearningModeToggle';
+import { LearningExplanationCard } from './LearningExplanationCard';
 import type { InsightsChatMessage, InsightsModelConfig } from '../../shared/types';
 import {
   TASK_CATEGORY_LABELS,
@@ -95,6 +97,9 @@ export function Insights({ projectId }: InsightsProps) {
   const streamingContent = useInsightsStore((state) => state.streamingContent);
   const currentTool = useInsightsStore((state) => state.currentTool);
   const isLoadingSessions = useInsightsStore((state) => state.isLoadingSessions);
+  const currentExplanation = useInsightsStore((state) => state.currentExplanation);
+  const learningModeEnabled = useInsightsStore((state) => state.learningModeEnabled);
+  const setLearningModeEnabled = useInsightsStore((state) => state.setLearningModeEnabled);
 
   // Create markdown components with translated accessibility text
   const markdownComponents = useMemo(() => ({
@@ -274,6 +279,18 @@ export function Insights({ projectId }: InsightsProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <LearningModeToggle
+              config={session?.learningModeConfig}
+              onConfigChange={async (config) => {
+                setLearningModeEnabled(config.enabled);
+                // Save to session if exists
+                if (session?.id) {
+                  // Update session with new learning mode config
+                  // This will be handled by the backend when sending messages
+                }
+              }}
+              disabled={isLoading}
+            />
             <InsightsModelSelector
               currentConfig={session?.modelConfig}
               onConfigChange={handleModelConfigChange}
@@ -343,12 +360,12 @@ export function Insights({ projectId }: InsightsProps) {
             ))}
 
             {/* Streaming message */}
-            {(streamingContent || currentTool) && (
+            {(streamingContent || currentTool || currentExplanation) && (
               <div className="flex gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
                   <Bot className="h-4 w-4 text-primary" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 space-y-3">
                   <div className="mb-1 text-sm font-medium text-foreground">
                     Assistant
                   </div>
@@ -362,6 +379,13 @@ export function Insights({ projectId }: InsightsProps) {
                   {/* Tool usage indicator */}
                   {currentTool && (
                     <ToolIndicator name={currentTool.name} input={currentTool.input} />
+                  )}
+                  {/* Learning Mode explanation */}
+                  {currentExplanation && learningModeEnabled && (
+                    <LearningExplanationCard
+                      explanation={currentExplanation}
+                      defaultExpanded={true}
+                    />
                   )}
                 </div>
               </div>
