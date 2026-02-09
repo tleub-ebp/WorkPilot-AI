@@ -168,7 +168,7 @@ _bmad-output/
 .claude/
 /.github/agents
 
-# Auto Claude EBP generated files
+# WorkPilot AI generated files
 .security-key
 /shared_docs
 logs/security/
