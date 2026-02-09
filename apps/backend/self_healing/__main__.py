@@ -18,14 +18,12 @@ from pathlib import Path
 
 try:
     from rich.console import Console
-    from rich.table import Table
-    from rich.panel import Panel
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
     Console = None
 
-from .config import HealingConfig, get_preset_config
+from .config import get_preset_config
 from .monitor import SelfHealingMonitor
 from .scheduler import HealthCheckScheduler
 
@@ -181,11 +179,11 @@ async def cmd_debt(args) -> int:
         print("\n" + report)
     else:
         stats = tracker.get_statistics()
-        print(f"\n📊 Technical Debt Statistics")
+        print("\n📊 Technical Debt Statistics")
         print(f"Active Items: {stats['total_active']}")
         print(f"Resolved Items: {stats['total_resolved']}")
         print(f"Auto-fixable: {stats['auto_fixable']}")
-        print(f"\nBy Severity:")
+        print("\nBy Severity:")
         for severity, count in stats['by_severity'].items():
             print(f"  {severity}: {count}")
     

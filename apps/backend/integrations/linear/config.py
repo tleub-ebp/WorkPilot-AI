@@ -11,7 +11,6 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 # Linear Status Constants (map to Linear workflow states)
 STATUS_TODO = "Todo"

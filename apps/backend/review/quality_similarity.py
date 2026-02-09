@@ -1,4 +1,4 @@
-﻿﻿﻿﻿"""
+﻿"""
 Code Similarity Detection
 =========================
 
@@ -259,10 +259,6 @@ def detect_clones_in_project(
 ) -> tuple[list[CodeClone], list[QualityIssue]]:
     """
     Détecte les clones de code dans un projet.
-    """
-    if file_patterns is None:
-        file_patterns = ['**/*.py', '**/*.js', '**/*.ts', '**/*.java']
-    Détecte les clones dans un projet.
     
     Args:
         project_dir: Répertoire du projet
@@ -273,6 +269,9 @@ def detect_clones_in_project(
     Returns:
         Tuple (clones, issues)
     """
+    if file_patterns is None:
+        file_patterns = ['**/*.py', '**/*.js', '**/*.ts', '**/*.java']
+    
     # Collecter les fichiers
     files = []
     for pattern in file_patterns:

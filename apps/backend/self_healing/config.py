@@ -7,7 +7,6 @@ Configuration classes and enums for the self-healing system.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
 from typing import Any
 
 

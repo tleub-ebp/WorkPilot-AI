@@ -7,7 +7,6 @@ Generates and applies automated refactoring plans.
 
 from __future__ import annotations
 
-import asyncio
 import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -23,7 +22,7 @@ except ImportError:
     def get_phase_thinking_budget(*args, **kwargs): return "medium"
 
 try:
-    from debug import debug, debug_section, debug_success, debug_error
+    from debug import debug, debug_error, debug_section, debug_success
 except ImportError:
     def debug(module: str, message: str, **kwargs): pass
     def debug_section(module: str, message: str): pass

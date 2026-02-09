@@ -17,9 +17,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Validate platform-specific dependencies BEFORE any imports that might
 # trigger graphiti_core -> real_ladybug -> pywintypes import chain (ACS-253)
-from core.dependency_validator import validate_platform_dependencies
 from cli.utils import import_dotenv
 from core.auth import ensure_claude_code_oauth_token, get_auth_token
+from core.dependency_validator import validate_platform_dependencies
 from debug import (
     debug,
     debug_detailed,
@@ -27,16 +27,8 @@ from debug import (
     debug_section,
     debug_success,
 )
+from learning import ExplanationLevel, LearningMode, LearningModeConfig
 from phase_config import get_thinking_budget, resolve_model_id
-
-validate_platform_dependencies()
-
-# Load .env file with centralized error handling
-load_dotenv = import_dotenv()
-
-env_file = Path(__file__).parent.parent / ".env"
-if env_file.exists():
-    load_dotenv(env_file)
 
 try:
     from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
@@ -46,7 +38,15 @@ except ImportError:
     SDK_AVAILABLE = False
     ClaudeAgentOptions = None
     ClaudeSDKClient = None
-from learning import LearningMode, LearningModeConfig, ExplanationLevel
+
+validate_platform_dependencies()
+
+# Load .env file with centralized error handling
+load_dotenv = import_dotenv()
+
+env_file = Path(__file__).parent.parent / ".env"
+if env_file.exists():
+    load_dotenv(env_file)
 
 
 def load_project_context(project_dir: str) -> str:

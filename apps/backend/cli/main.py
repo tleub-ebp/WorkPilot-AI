@@ -15,6 +15,14 @@ _PARENT_DIR = Path(__file__).parent.parent
 if str(_PARENT_DIR) not in sys.path:
     sys.path.insert(0, str(_PARENT_DIR))
 
+from . import batch_commands
+from . import build_commands
+from . import followup_commands
+from . import qa_commands
+from . import spec_commands
+from . import streaming_commands
+from . import utils
+from . import workspace_commands
 from .batch_commands import (
     handle_batch_cleanup_command,
     handle_batch_create_command,

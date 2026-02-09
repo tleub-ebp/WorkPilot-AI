@@ -1,4 +1,4 @@
-﻿﻿﻿"""
+﻿"""
 ML-Based Pattern Detection
 ===========================
 

@@ -10,9 +10,9 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from .streaming_manager import StreamingEvent, EventType
+from .streaming_manager import EventType, StreamingEvent
 
 
 @dataclass
@@ -20,9 +20,9 @@ class SessionRecording:
     """A recorded streaming session."""
     session_id: str
     start_time: float
-    end_time: Optional[float]
-    metadata: Dict[str, Any]
-    events: List[StreamingEvent]
+    end_time: float | None
+    metadata: dict[str, Any]
+    events: list[StreamingEvent]
     
     def duration(self) -> float:
         """Get session duration in seconds."""
@@ -30,7 +30,7 @@ class SessionRecording:
             return self.end_time - self.start_time
         return time.time() - self.start_time
         
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "session_id": self.session_id,
@@ -75,13 +75,13 @@ class SessionRecorder:
     - Export to video format (future enhancement)
     """
     
-    def __init__(self, recordings_dir: Optional[Path] = None):
+    def __init__(self, recordings_dir: Path | None = None):
         self._recordings_dir = recordings_dir or Path.home() / ".auto-claude" / "recordings"
         self._recordings_dir.mkdir(parents=True, exist_ok=True)
         
-        self._active_recordings: Dict[str, SessionRecording] = {}
+        self._active_recordings: dict[str, SessionRecording] = {}
         
-    def start_recording(self, session_id: str, metadata: Dict[str, Any]) -> None:
+    def start_recording(self, session_id: str, metadata: dict[str, Any]) -> None:
         """Start recording a session."""
         recording = SessionRecording(
             session_id=session_id,
@@ -98,7 +98,7 @@ class SessionRecorder:
         if session_id in self._active_recordings:
             self._active_recordings[session_id].events.append(event)
             
-    def stop_recording(self, session_id: str) -> Optional[SessionRecording]:
+    def stop_recording(self, session_id: str) -> SessionRecording | None:
         """Stop recording a session and return the recording."""
         if session_id not in self._active_recordings:
             return None

@@ -54,30 +54,27 @@ from .state import (
 
 # Quality Scoring - Tier 1 Killing Feature
 try:
+    from .quality_autofix import AutoFixEngine, AutoFix
     from .quality_badge import QualityBadgeFormatter
+    from .quality_coverage import TestCoverageAnalyzer, analyze_project_coverage
+    from .quality_custom_rules import CustomRuleEngine, CustomRule, load_project_rules
+    from .quality_extended import ExtendedQualityScorer, create_extended_scorer
     from .quality_integration import (
         QualityReviewIntegration,
-        review_current_pr,
         display_quality_report,
+        review_current_pr,
     )
-    # Phase 3 - Advanced Features
-    from .quality_extended import ExtendedQualityScorer, create_extended_scorer
-    from .quality_autofix import AutoFixEngine, AutoFix
+    from .quality_ml import MLPatternDetector, LearnedPattern, learn_and_detect
     from .quality_multilang import (
-        JavaAnalyzer,
-        KotlinAnalyzer,
         CSharpAnalyzer,
         GoAnalyzer,
+        JavaAnalyzer,
+        KotlinAnalyzer,
         RustAnalyzer,
         get_analyzer,
     )
-    # Phase 4 - Future Features
-    from .quality_similarity import CodeSimilarityDetector, CodeClone, detect_clones_in_project
-    from .quality_custom_rules import CustomRuleEngine, CustomRule, load_project_rules
     from .quality_performance import PerformanceAnalyzer, analyze_project_performance
-    # Phase 5 - Advanced ML & Coverage
-    from .quality_ml import MLPatternDetector, LearnedPattern, learn_and_detect
-    from .quality_coverage import TestCoverageAnalyzer, analyze_project_coverage
+    from .quality_similarity import CodeClone, CodeSimilarityDetector, detect_clones_in_project
 except ImportError:
     # Quality scoring module not yet available
     QualityScorer = None

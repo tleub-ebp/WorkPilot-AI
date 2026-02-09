@@ -135,7 +135,7 @@ async def demo_streaming_session():
                 success=step["test_result"],
                 details="All tests passed successfully",
             )
-            print(f"   ✅ Tests: PASSED")
+            print("   ✅ Tests: PASSED")
         
         # Agent response
         if "response" in step:
@@ -163,8 +163,8 @@ async def demo_streaming_session():
     print("\n✅ Demo completed!")
     print("\n📼 Recording saved to: ~/.auto-claude/recordings/")
     print("\n💡 You can replay it with:")
-    print(f"   python apps/backend/run.py --list-recordings")
-    print(f"   python apps/backend/run.py --replay-recording <file>\n")
+    print("   python apps/backend/run.py --list-recordings")
+    print("   python apps/backend/run.py --replay-recording <file>\n")
     
     # Keep server running for a bit
     print("⏳ Server will keep running for 30 seconds...")

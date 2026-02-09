@@ -10,13 +10,11 @@ import asyncio
 import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import MagicMock
 
 # Add backend to a path
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
-
-# Mock Claude SDK for demo
-from unittest.mock import MagicMock, Mock
 
 
 class MockResponse:

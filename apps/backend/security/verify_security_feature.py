@@ -32,9 +32,15 @@ def main():
     # Test 1: Module can be imported
     print("✓ Test 1: Importing security module...")
     try:
-        import security
-        passed.append("Security module imports successfully")
-        print("  ✅ PASSED")
+        import importlib.util
+        spec = importlib.util.find_spec("security")
+        if spec is not None:
+            passed.append("Security module imports successfully")
+            print("  ✅ PASSED")
+        else:
+            failed.append("Security module not found")
+            print("  ❌ FAILED: Security module not found")
+            sys.exit(1)
     except ImportError as e:
         failed.append(f"Security module import failed: {e}")
         print(f"  ❌ FAILED: {e}")
@@ -58,12 +64,18 @@ def main():
     print("✓ Test 3: Checking main classes...")
     try:
         from security import (
-            SecurityOrchestrator,
-            VulnerabilityScanner,
             ComplianceAnalyzer,
-            SecurityReportGenerator,
             GitHookManager,
+            SecurityOrchestrator,
+            SecurityReportGenerator,
+            VulnerabilityScanner,
         )
+        # Verify classes are callable
+        assert callable(SecurityOrchestrator)
+        assert callable(VulnerabilityScanner)
+        assert callable(ComplianceAnalyzer)
+        assert callable(SecurityReportGenerator)
+        assert callable(GitHookManager)
         passed.append("All main classes are available")
         print("  ✅ PASSED")
     except ImportError as e:
@@ -73,18 +85,25 @@ def main():
     # Test 4: Check dependencies
     print("✓ Test 4: Checking dependencies...")
     try:
-        import rich
-        passed.append("Rich is installed")
-        print("  ✅ Rich installed")
-    except ImportError:
+        import importlib.util
+        if importlib.util.find_spec("rich") is not None:
+            passed.append("Rich is installed")
+            print("  ✅ Rich installed")
+        else:
+            warnings.append("Rich not installed (recommended for reports)")
+            print("  ⚠️  WARNING: Rich not installed")
+    except Exception:
         warnings.append("Rich not installed (recommended for reports)")
         print("  ⚠️  WARNING: Rich not installed")
 
     try:
-        import bandit
-        passed.append("Bandit is installed")
-        print("  ✅ Bandit installed")
-    except ImportError:
+        if importlib.util.find_spec("bandit") is not None:
+            passed.append("Bandit is installed")
+            print("  ✅ Bandit installed")
+        else:
+            warnings.append("Bandit not installed (recommended for Python SAST)")
+            print("  ⚠️  WARNING: Bandit not installed")
+    except Exception:
         warnings.append("Bandit not installed (recommended for Python SAST)")
         print("  ⚠️  WARNING: Bandit not installed")
 

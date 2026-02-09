@@ -7,10 +7,8 @@ Manages alerts for health degradation and critical issues.
 
 from __future__ import annotations
 
-import smtplib
 from dataclasses import dataclass, field
 from datetime import datetime
-from email.mime.text import MIMEText
 from enum import Enum
 from pathlib import Path
 from typing import Any
