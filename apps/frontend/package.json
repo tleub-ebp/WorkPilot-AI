@@ -15,8 +15,8 @@
   },
   "license": "AGPL-3.0",
   "engines": {
-    "node": ">=24.0.0",
-    "npm": ">=10.0.0"
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
   },
   "scripts": {
     "postinstall": "node scripts/postinstall.cjs",
@@ -75,6 +75,7 @@
     "@sentry/electron": "^7.5.0",
     "@tailwindcss/typography": "^0.5.19",
     "@tanstack/react-virtual": "^3.13.13",
+    "@types/dompurify": "^3.0.5",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/addon-serialize": "^0.14.0",
     "@xterm/addon-web-links": "^0.12.0",
@@ -83,6 +84,7 @@
     "chokidar": "^5.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dompurify": "^3.3.1",
     "dotenv": "^17.2.3",
     "electron-log": "^5.4.3",
     "electron-updater": "^6.6.2",

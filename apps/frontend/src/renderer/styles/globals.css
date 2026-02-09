@@ -1727,3 +1727,99 @@ body {
 [data-ui-scale="190"] { font-size: 30.4px; }
 [data-ui-scale="195"] { font-size: 31.2px; }
 [data-ui-scale="200"] { font-size: 32px; }
+
+/* Styles pour le contenu HTML dynamique dans les tâches */
+.html-content {
+  /* Reset des styles par défaut du HTML */
+  line-height: 1.6;
+  
+  /* Tous les éléments héritent des couleurs du thème */
+  & * {
+    color: inherit;
+  }
+  
+  /* Paragraphes */
+  & p {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+    color: hsl(var(--foreground));
+  }
+  
+  /* Gras et strong */
+  & b,
+  & strong {
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+  
+  /* Italique */
+  & em,
+  & i {
+    font-style: italic;
+    color: hsl(var(--foreground) / 0.9);
+  }
+  
+  /* Souligné */
+  & u {
+    text-decoration: underline;
+    text-decoration-color: hsl(var(--foreground) / 0.5);
+  }
+  
+  /* Liens */
+  & a {
+    color: hsl(var(--info));
+    text-decoration: underline;
+    transition: color 0.2s;
+  }
+  
+  & a:hover {
+    color: hsl(var(--info) / 0.8);
+  }
+  
+  /* Listes */
+  & ul,
+  & ol {
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding-left: 1.5rem;
+  }
+  
+  & li {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+    color: hsl(var(--foreground));
+    line-height: 1.6;
+  }
+  
+  /* Divs et spans */
+  & div {
+    color: hsl(var(--foreground));
+  }
+  
+  & span {
+    color: inherit;
+  }
+  
+  /* Breaks */
+  & br {
+    display: block;
+    content: "";
+    margin-top: 0.25rem;
+  }
+  
+  /* Supprimer les backgrounds blancs forcés */
+  & * {
+    background-color: transparent !important;
+  }
+  
+  /* Override des styles inline qui définissent des couleurs noires */
+  & [style*="color: #000"],
+  & [style*="color:#000"],
+  & [style*="color: rgb(0, 0, 0)"],
+  & [style*="color:rgb(0,0,0)"],
+  & [style*="color: black"] {
+    color: hsl(var(--foreground)) !important;
+  }
+}
+

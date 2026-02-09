@@ -23,7 +23,7 @@ const pytestPath = isWindows
 // Check if venv exists
 if (!fs.existsSync(venvDir)) {
   console.error('Error: Virtual environment not found.');
-  console.error('Run "npm run install:backend" first.');
+  console.error('Run "pnpm run install:backend" first.');
   process.exit(1);
 }
 

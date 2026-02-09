@@ -92,10 +92,10 @@ autonomous-coding/
 
 ### Setup
 ```bash
-npm run install:all              # Install all dependencies from root
+pnpm run install:all              # Install all dependencies from root
 # Or separately:
 cd apps/backend && uv venv && uv pip install -r requirements.txt
-cd apps/frontend && npm install
+cd apps/frontend && pnpm install
 ```
 
 ### Backend
