@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+﻿﻿﻿﻿﻿#!/usr/bin/env python3
 """
 Compliance Analyzer Module
 ===========================
@@ -258,13 +258,13 @@ class ComplianceAnalyzer:
                 if re.search(pattern, line, re.IGNORECASE):
                     # Check if there's consent or purpose limitation
                     has_consent = any(
-                        re.search(r"\b(?:consent|permission|agree)\b", l, re.IGNORECASE)
-                        for l in lines[max(0, line_num - 5) : line_num + 5]
+                        re.search(r"\b(?:consent|permission|agree)\b", line, re.IGNORECASE)
+                        for line in lines[max(0, line_num - 5) : line_num + 5]
                     )
 
                     has_encryption = any(
-                        re.search(r"\b(?:encrypt|hash|secure)\b", l, re.IGNORECASE)
-                        for l in lines[max(0, line_num - 5) : line_num + 5]
+                        re.search(r"\b(?:encrypt|hash|secure)\b", line, re.IGNORECASE)
+                        for line in lines[max(0, line_num - 5) : line_num + 5]
                     )
 
                     if not has_consent:
@@ -309,17 +309,17 @@ class ComplianceAnalyzer:
                 if re.search(pattern, line, re.IGNORECASE):
                     # HIPAA requires encryption and access controls
                     has_encryption = any(
-                        re.search(r"\b(?:encrypt|aes|rsa)\b", l, re.IGNORECASE)
-                        for l in lines[max(0, line_num - 5) : line_num + 5]
+                        re.search(r"\b(?:encrypt|aes|rsa)\b", line, re.IGNORECASE)
+                        for line in lines[max(0, line_num - 5) : line_num + 5]
                     )
 
                     has_access_control = any(
                         re.search(
                             r"\b(?:auth|permission|access.control|rbac)\b",
-                            l,
+                            line,
                             re.IGNORECASE,
                         )
-                        for l in lines[max(0, line_num - 5) : line_num + 5]
+                        for line in lines[max(0, line_num - 5) : line_num + 5]
                     )
 
                     if not has_encryption:
@@ -345,8 +345,8 @@ class ComplianceAnalyzer:
                                 framework=ComplianceFramework.HIPAA,
                                 rule_id="HIPAA-164.308",
                                 severity=ComplianceSeverity.HIGH,
-                                title=f"Missing access controls for PHI: {description}",
-                                description=f"Protected Health Information requires role-based access controls",
+                                title="Missing access controls for PHI",
+                                description="Protected Health Information requires role-based access controls",
                                 file=str(file_path.relative_to(self.project_path)),
                                 line=line_num,
                                 remediation="Implement role-based access control (RBAC) for PHI access",
@@ -383,8 +383,8 @@ class ComplianceAnalyzer:
 
                     # Check for encryption
                     has_encryption = any(
-                        re.search(r"\b(?:encrypt|tokenize|vault)\b", l, re.IGNORECASE)
-                        for l in lines[max(0, line_num - 5) : line_num + 5]
+                        re.search(r"\b(?:encrypt|tokenize|vault)\b", line, re.IGNORECASE)
+                        for line in lines[max(0, line_num - 5) : line_num + 5]
                     )
 
                     if not has_encryption:

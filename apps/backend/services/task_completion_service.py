@@ -80,7 +80,7 @@ class TaskCompletionService:
         target = target_branch or self.base_branch
 
         # Étape 1: Push de la branche vers origin
-        logger.info(f"[TaskCompletionService] Push de la branche vers origin...")
+        logger.info("[TaskCompletionService] Push de la branche vers origin...")
         push_result = self.worktree_manager.push_branch(spec_id, force=False)
 
         if not push_result["success"]:

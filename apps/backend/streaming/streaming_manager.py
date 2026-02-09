@@ -6,6 +6,7 @@ Think Twitch, but for AI coding sessions.
 """
 
 import asyncio
+import json
 import time
 from dataclasses import dataclass
 from enum import Enum
@@ -136,7 +137,7 @@ class StreamingManager:
         session_id: str,
         operation: str,
         file_path: str,
-        content: Optional[str] = None,
+        content: str | None = None,
     ) -> None:
         """Emit a file operation event (create/update/delete)."""
         event_type_map = {
@@ -160,7 +161,7 @@ class StreamingManager:
         self,
         session_id: str,
         command: str,
-        cwd: Optional[str] = None,
+        cwd: str | None = None,
     ) -> None:
         """Emit a command execution event."""
         event = StreamingEvent(
@@ -212,7 +213,7 @@ class StreamingManager:
         self,
         session_id: str,
         response: str,
-        tokens_used: Optional[int] = None,
+        tokens_used: int | None = None,
     ) -> None:
         """Emit agent response event."""
         event = StreamingEvent(
@@ -246,7 +247,7 @@ class StreamingManager:
         self,
         session_id: str,
         success: bool,
-        details: Optional[str] = None,
+        details: str | None = None,
     ) -> None:
         """Emit test result event."""
         event = StreamingEvent(
@@ -285,7 +286,7 @@ class StreamingManager:
         session_id: str,
         progress: float,
         status: str,
-        current_step: Optional[str] = None,
+        current_step: str | None = None,
     ) -> None:
         """Emit a progress update event."""
         event = StreamingEvent(

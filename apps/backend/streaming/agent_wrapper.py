@@ -4,13 +4,11 @@ Agent Wrapper for Streaming Mode.
 Wraps the agent execution to emit streaming events in real-time.
 """
 
-import asyncio
 import logging
-from typing import Optional, Dict, Any
-from pathlib import Path
+from typing import Any
 
-from .streaming_manager import get_streaming_manager
 from .session_recorder import SessionRecorder
+from .streaming_manager import get_streaming_manager
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +28,7 @@ class StreamingAgentWrapper:
         self.recorder = SessionRecorder() if enable_recording else None
         self._is_active = False
         
-    async def start_session(self, metadata: Dict[str, Any]):
+    async def start_session(self, metadata: dict[str, Any]):
         """Start a streaming session."""
         self._is_active = True
         await self.streaming_manager.start_session(self.session_id, metadata)
@@ -56,7 +54,7 @@ class StreamingAgentWrapper:
         self,
         file_path: str,
         operation: str = "update",
-        content: Optional[str] = None,
+        content: str | None = None,
     ):
         """Emit a file change event."""
         if not self._is_active:
@@ -69,7 +67,7 @@ class StreamingAgentWrapper:
             content=content,
         )
         
-    async def emit_command(self, command: str, cwd: Optional[str] = None):
+    async def emit_command(self, command: str, cwd: str | None = None):
         """Emit a command execution event."""
         if not self._is_active:
             return
@@ -101,7 +99,7 @@ class StreamingAgentWrapper:
             thinking=thinking,
         )
         
-    async def emit_agent_response(self, response: str, tokens_used: Optional[int] = None):
+    async def emit_agent_response(self, response: str, tokens_used: int | None = None):
         """Emit agent response event."""
         if not self._is_active:
             return

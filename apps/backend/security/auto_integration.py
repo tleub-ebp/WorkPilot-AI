@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+﻿﻿﻿#!/usr/bin/env python3
 """
 Security Auto-Integration
 =========================
@@ -204,7 +204,7 @@ def auto_install_git_hooks() -> bool:
         manager = GitHookManager(Path.cwd())
         return manager.install_hooks()
     except Exception as e:
-        warnings.warn(f"Failed to auto-install Git hooks: {e}")
+        warnings.warn(f"Failed to auto-install Git hooks: {e}", stacklevel=2)
         return False
 
 
@@ -251,7 +251,7 @@ def run_quick_security_check() -> bool:
 
         return not result.should_block
     except Exception as e:
-        warnings.warn(f"Quick security check failed: {e}")
+        warnings.warn(f"Quick security check failed: {e}", stacklevel=2)
         return True  # Don't block on errors
 
 

@@ -4,7 +4,7 @@ Project Analysis Module
 
 Smart project analyzer for dynamic security profiles.
 
-This module analyzes project structure to automatically determine which
+This module analyzes the project structure to automatically determine which
 commands should be allowed for safe autonomous development.
 
 Public API:
@@ -45,7 +45,6 @@ __all__ = [
 
 import os
 from pathlib import Path
-from typing import Optional
 
 
 def get_or_create_profile(

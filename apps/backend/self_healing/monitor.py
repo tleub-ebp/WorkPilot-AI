@@ -2,20 +2,19 @@
 Self-Healing Monitor
 ====================
 
-Main orchestrator for self-healing system.
+Main orchestrator for a self-healing system.
 Coordinates health checks, debt tracking, refactoring, and alerts.
 """
 
 from __future__ import annotations
 
-import asyncio
 import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 try:
-    from debug import debug, debug_section, debug_success, debug_error
+    from debug import debug, debug_error, debug_section, debug_success
 except ImportError:
     def debug(module: str, message: str, **kwargs): pass
     def debug_section(module: str, message: str): pass
