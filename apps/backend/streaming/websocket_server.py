@@ -6,7 +6,7 @@ Provides real-time event broadcasting to frontend clients.
 
 import json
 import logging
-from typing import Dict, Set, Optional
+from typing import Any
 
 try:
     import websockets
@@ -16,8 +16,8 @@ except ImportError:
     WEBSOCKETS_AVAILABLE = False
     WebSocketServerProtocol = None
 
-from .streaming_manager import get_streaming_manager
 from .session_recorder import SessionRecorder
+from .streaming_manager import get_streaming_manager
 
 logger = logging.getLogger(__name__)
 
@@ -25,17 +25,17 @@ logger = logging.getLogger(__name__)
 class StreamingWebSocketServer:
     """
     WebSocket server for streaming development sessions.
-    
+
     Handles client connections and message routing for the streaming mode.
     """
-    
+
     def __init__(self, host: str = "localhost", port: int = 8765):
         self.host = host
         self.port = port
         self.streaming_manager = get_streaming_manager()
         self.session_recorder = SessionRecorder()
         self._server = None
-        self._clients: Dict[str, Set[WebSocketServerProtocol]] = {}
+        self._clients: dict[str, set[Any]] = {}
         
     async def start(self):
         """Start the WebSocket server."""
@@ -147,14 +147,13 @@ class StreamingWebSocketServer:
             # Stop the session
             await self.streaming_manager.end_session(session_id)
             logger.info(f"Stop requested for session {session_id}")
-            
     def get_active_sessions(self):
         """Get list of active streaming sessions."""
         return self.streaming_manager.get_active_sessions()
 
 
 # Global server instance
-_websocket_server: Optional[StreamingWebSocketServer] = None
+_websocket_server: StreamingWebSocketServer | None = None
 
 
 def get_websocket_server() -> StreamingWebSocketServer:
@@ -169,7 +168,7 @@ async def start_streaming_server():
     """Start the streaming WebSocket server."""
     server = get_websocket_server()
     await server.start()
-    
+
 
 async def stop_streaming_server():
     """Stop the streaming WebSocket server."""

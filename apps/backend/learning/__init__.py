@@ -5,10 +5,10 @@ This module provides educational features to help developers learn from
 the codebase and understand what Auto-Claude is doing.
 """
 
-from .learning_mode import LearningMode, LearningModeConfig, ExplanationLevel
-from .documentation_generator import DocumentationGenerator, DocType
-from .tutorial_generator import TutorialGenerator, TutorialTopic
+from .documentation_generator import DocType, DocumentationGenerator
+from .learning_mode import ExplanationLevel, LearningMode, LearningModeConfig
 from .onboarding_assistant import OnboardingAssistant, OnboardingStep
+from .tutorial_generator import TutorialGenerator, TutorialTopic
 
 __all__ = [
     "LearningMode",

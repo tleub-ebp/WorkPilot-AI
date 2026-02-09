@@ -11,12 +11,12 @@ logger = logging.getLogger(__name__)
 
 def handle_streaming_server_command(args):
     """Handle streaming server command."""
-    from streaming import start_streaming_server, get_websocket_server
-    
+    from streaming import start_streaming_server
+
     print("\n" + "="*70)
     print("🎥 Starting Streaming Development Server")
     print("="*70 + "\n")
-    
+
     # Start the WebSocket server
     try:
         asyncio.run(_run_streaming_server(args))
@@ -26,27 +26,27 @@ def handle_streaming_server_command(args):
         logger.error(f"Error running streaming server: {e}")
         print(f"\n❌ Failed to start streaming server: {e}")
         return 1
-    
+
     return 0
 
 
 async def _run_streaming_server(args):
     """Run the streaming server asynchronously."""
-    from streaming import start_streaming_server, stop_streaming_server, get_websocket_server
-    
+    from streaming import get_websocket_server, start_streaming_server, stop_streaming_server
+
     # Start server
     await start_streaming_server()
-    
+
     server = get_websocket_server()
     print(f"✅ Streaming server running on ws://{server.host}:{server.port}")
-    print(f"\n📺 Open the frontend and click 'Watch Live' on any task to start streaming")
-    print(f"\n💡 Press Ctrl+C to stop the server\n")
-    
+    print("\n📺 Open the frontend and click 'Watch Live' on any task to start streaming")
+    print("\n💡 Press Ctrl+C to stop the server\n")
+
     # Keep running until interrupted
     try:
         while True:
             await asyncio.sleep(1)
-            
+
             # Print active sessions periodically
             active_sessions = server.get_active_sessions()
             if active_sessions:
@@ -59,41 +59,40 @@ async def _run_streaming_server(args):
 def handle_list_recordings_command(args):
     """Handle list recordings command."""
     from streaming import SessionRecorder
-    
+
     recorder = SessionRecorder()
     recordings = recorder.list_recordings()
-    
+
     if not recordings:
         print("\n📼 No recordings found\n")
         return 0
-    
+
     print("\n" + "="*70)
     print(f"📼 Streaming Session Recordings ({len(recordings)})")
     print("="*70 + "\n")
-    
+
     for i, recording in enumerate(recordings, 1):
         duration_mins = recording["duration"] / 60
         event_count = recording["event_count"]
         session_id = recording["session_id"]
-        
+
         print(f"{i}. Session: {session_id}")
         print(f"   Duration: {duration_mins:.1f} minutes")
         print(f"   Events: {event_count}")
         print(f"   File: {recording['filepath']}")
         print()
-    
+
     return 0
 
 
 def handle_replay_recording_command(args):
     """Handle replay recording command."""
     from streaming import SessionRecorder
-    import json
-    
+
     if not args.recording_file:
         print("\n❌ Please specify a recording file with --recording-file")
         return 1
-    
+
     recorder = SessionRecorder()
     
     try:

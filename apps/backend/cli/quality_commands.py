@@ -9,12 +9,13 @@ import json
 import sys
 from pathlib import Path
 
+from review.quality_scorer import QualityScorer
+
 # Ajouter le backend au path si nécessaire
 backend_dir = Path(__file__).parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from review.quality_scorer import QualityScorer
 
 def handle_quality_score_command(args):
     """
