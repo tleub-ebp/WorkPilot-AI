@@ -17,7 +17,8 @@
     "gitlabMRs": "MRs GitLab",
     "worktrees": "Arbres de travail",
     "agentTools": "Aperçu MCP",
-    "migration": "Assistant de migration"
+    "migration": "Assistant de migration",
+    "visualProgramming": "Programmation visuelle"
   },
   "actions": {
     "settings": "Paramètres",

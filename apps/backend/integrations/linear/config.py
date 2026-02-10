@@ -11,6 +11,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 # Linear Status Constants (map to Linear workflow states)
 STATUS_TODO = "Todo"
@@ -129,7 +130,7 @@ class LinearProjectState:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
-    def load(cls, spec_dir: Path) -> "LinearProjectState" | None:
+    def load(cls, spec_dir: Path) -> Optional["LinearProjectState"]:
         """Load state from the spec directory."""
         marker_file = spec_dir / LINEAR_PROJECT_MARKER
         if not marker_file.exists():

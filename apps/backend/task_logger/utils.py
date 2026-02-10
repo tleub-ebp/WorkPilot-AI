@@ -3,7 +3,7 @@ Utility functions for task logging.
 """
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 # ANSI functions are in separate ansi.py module to avoid cyclic imports
 
@@ -12,12 +12,12 @@ if TYPE_CHECKING:
 
 
 # Global logger instance for easy access
-_current_logger: "TaskLogger | None" = None
+_current_logger: Optional["TaskLogger"] = None
 
 
 def get_task_logger(
-    spec_dir: Path | None = None, emit_markers: bool = True
-) -> "TaskLogger | None":
+    spec_dir: Optional[Path] = None, emit_markers: bool = True
+) -> Optional["TaskLogger"]:
     """
     Get or create a task logger for the given spec directory.
 

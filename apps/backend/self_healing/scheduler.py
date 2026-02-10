@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, time
 from pathlib import Path
+from typing import Optional
 
 try:
     from debug import debug, debug_section, debug_success
@@ -28,14 +29,14 @@ class HealthCheckScheduler:
     def __init__(
         self,
         project_dir: str | Path,
-        config: HealingConfig | None = None,
+        config: Optional[HealingConfig] = None,
     ):
         self.project_dir = Path(project_dir)
         self.config = config or HealingConfig()
         self.monitor = SelfHealingMonitor(project_dir, config)
         
         self.running = False
-        self._task: asyncio.Task | None = None
+        self._task: Optional[asyncio.Task] = None
     
     async def start_monitoring(self) -> None:
         """Start periodic monitoring."""

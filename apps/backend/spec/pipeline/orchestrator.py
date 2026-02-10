@@ -8,6 +8,7 @@ Main orchestration logic for spec creation with dynamic complexity adaptation.
 import json
 from collections.abc import Callable
 from pathlib import Path
+from typing import Optional
 
 from analysis.analyzers import analyze_project
 from core.task_event import TaskEventEmitter
@@ -54,13 +55,12 @@ class SpecOrchestrator:
     def __init__(
         self,
         project_dir: Path,
-        task_description: str | None = None,
-        spec_name: str | None = None,
-        spec_dir: Path
-        | None = None,  # Use existing spec directory (for UI integration)
+        task_description: Optional[str] = None,
+        spec_name: Optional[str] = None,
+        spec_dir: Optional[Path] = None,  # Use existing spec directory (for UI integration)
         model: str = "sonnet",  # Shorthand - resolved via API Profile if configured
         thinking_level: str = "medium",  # Thinking level for extended thinking
-        complexity_override: str | None = None,  # Force a specific complexity
+        complexity_override: Optional[str] = None,  # Force a specific complexity
         use_ai_assessment: bool = True,  # Use AI for complexity assessment (vs heuristics)
     ):
         """Initialize the spec orchestrator.
@@ -89,7 +89,7 @@ class SpecOrchestrator:
         cleanup_orphaned_pending_folders(self.specs_dir)
 
         # Complexity assessment (populated during run)
-        self.assessment: complexity.ComplexityAssessment | None = None
+        self.assessment: Optional[complexity.ComplexityAssessment] = None
 
         # Create/use spec directory
         if spec_dir:
@@ -108,7 +108,7 @@ class SpecOrchestrator:
         self.validator = SpecValidator(self.spec_dir)
 
         # Agent runner (initialized when needed)
-        self._agent_runner: AgentRunner | None = None
+        self._agent_runner: Optional[AgentRunner] = None
 
         # Phase summaries for conversation compaction
         # Stores summaries from completed phases to provide context to subsequent phases
@@ -132,7 +132,7 @@ class SpecOrchestrator:
         prompt_file: str,
         additional_context: str = "",
         interactive: bool = False,
-        phase_name: str | None = None,
+        phase_name: Optional[str] = None,
     ) -> tuple[bool, str]:
         """Run an agent with the given prompt.
 
@@ -564,7 +564,7 @@ class SpecOrchestrator:
             return self._heuristic_assessment()
 
     def _print_assessment_info(
-        self, assessment: complexity.ComplexityAssessment | None = None
+        self, assessment: Optional[complexity.ComplexityAssessment] = None
     ) -> None:
         """Print complexity assessment information.
 

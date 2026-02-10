@@ -12,6 +12,7 @@ import subprocess
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 
 def open_editor_for_input(field_name: str) -> str:
@@ -174,7 +175,7 @@ def save_requirements(spec_dir: Path, requirements: dict) -> Path:
     return requirements_file
 
 
-def load_requirements(spec_dir: Path) -> dict | None:
+def load_requirements(spec_dir: Path) -> Optional[dict]:
     """Load requirements from file if it exists."""
     requirements_file = spec_dir / "requirements.json"
     if not requirements_file.exists():

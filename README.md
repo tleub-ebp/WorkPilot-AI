@@ -241,3 +241,13 @@ Commercial licensing available for closed-source use cases.
 [![GitHub Repo stars](https://img.shields.io/github/stars/AndyMik90/Auto-Claude?style=social)](https://github.com/AndyMik90/Auto-Claude/stargazers)
 
 [![Star History Chart](https://api.star-history.com/svg?repos=AndyMik90/Auto-Claude&type=Date)](https://star-history.com/#AndyMik90/Auto-Claude&Date)
+
+## 🚑 Réparation automatique d'Electron (Windows)
+
+Si le frontend Electron ne démarre pas (erreur Electron uninstall), lance simplement :
+
+    pnpm --filter ./apps/frontend run fix:electron
+
+Ce script télécharge et installe automatiquement le binaire Electron si besoin.
+
+La réparation est aussi lancée automatiquement après chaque installation de dépendances (postinstall).

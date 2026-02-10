@@ -4,6 +4,7 @@ Main TaskLogger class for logging task execution.
 
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Optional
 
 from core.debug import debug, debug_error, debug_info, debug_success, is_debug_enabled
 
@@ -43,9 +44,9 @@ class TaskLogger:
         self.spec_dir = Path(spec_dir)
         self.log_file = self.spec_dir / self.LOG_FILE
         self.emit_markers = emit_markers
-        self.current_phase: LogPhase | None = None
-        self.current_session: int | None = None
-        self.current_subtask: str | None = None
+        self.current_phase: Optional[LogPhase] = None
+        self.current_session: Optional[int] = None
+        self.current_subtask: Optional[str] = None
         self.storage = LogStorage(spec_dir)
 
     @property
@@ -69,8 +70,8 @@ class TaskLogger:
         self,
         content: str,
         entry_type: LogEntryType = LogEntryType.TEXT,
-        phase: str | None = None,
-        tool_name: str | None = None,
+        phase: Optional[str] = None,
+        tool_name: Optional[str] = None,
         **kwargs,
     ) -> None:
         """
@@ -116,11 +117,11 @@ class TaskLogger:
         """Set the current session number."""
         self.current_session = session
 
-    def set_subtask(self, subtask_id: str | None) -> None:
+    def set_subtask(self, subtask_id: Optional[str]) -> None:
         """Set the current subtask being processed."""
         self.current_subtask = subtask_id
 
-    def start_phase(self, phase: LogPhase, message: str | None = None) -> None:
+    def start_phase(self, phase: LogPhase, message: Optional[str] = None) -> None:
         """
         Start a new phase, auto-closing any stale active phases.
 
@@ -178,7 +179,7 @@ class TaskLogger:
         print(phase_message, flush=True)
 
     def end_phase(
-        self, phase: LogPhase, success: bool = True, message: str | None = None
+        self, phase: LogPhase, success: bool = True, message: Optional[str] = None
     ) -> None:
         """
         End a phase.
@@ -278,15 +279,15 @@ class TaskLogger:
         if print_to_console:
             print(content, flush=True)
 
-    def log_error(self, content: str, phase: LogPhase | None = None) -> None:
+    def log_error(self, content: str, phase: Optional[LogPhase] = None) -> None:
         """Log an error message."""
         self.log(content, LogEntryType.ERROR, phase)
 
-    def log_success(self, content: str, phase: LogPhase | None = None) -> None:
+    def log_success(self, content: str, phase: Optional[LogPhase] = None) -> None:
         """Log a success message."""
         self.log(content, LogEntryType.SUCCESS, phase)
 
-    def log_info(self, content: str, phase: LogPhase | None = None) -> None:
+    def log_info(self, content: str, phase: Optional[LogPhase] = None) -> None:
         """Log an info message."""
         self.log(content, LogEntryType.INFO, phase)
 
@@ -296,7 +297,7 @@ class TaskLogger:
         detail: str,
         entry_type: LogEntryType = LogEntryType.TEXT,
         phase: LogPhase | None = None,
-        subphase: str | None = None,
+        subphase: Optional[str] = None,
         collapsed: bool = True,
         print_to_console: bool = True,
     ) -> None:
@@ -409,7 +410,7 @@ class TaskLogger:
     def tool_start(
         self,
         tool_name: str,
-        tool_input: str | None = None,
+        tool_input: Optional[str] = None,
         phase: LogPhase | None = None,
         print_to_console: bool = True,
     ) -> None:
@@ -466,8 +467,8 @@ class TaskLogger:
         self,
         tool_name: str,
         success: bool = True,
-        result: str | None = None,
-        detail: str | None = None,
+        result: Optional[str] = None,
+        detail: Optional[str] = None,
         phase: LogPhase | None = None,
         print_to_console: bool = False,
     ) -> None:

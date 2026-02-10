@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from typing import Optional
 
 from .colors import warning
 
@@ -113,7 +114,7 @@ class StatusManager:
         self.status_file = self.project_dir / ".auto-claude-status"
         self._status = BuildStatus()
         self._write_pending = False
-        self._write_timer: threading.Timer | None = None
+        self._write_timer: Optional[threading.Timer] = None
         self._write_lock = threading.Lock()  # Protects _write_pending and _write_timer
 
     def read(self) -> BuildStatus:
@@ -182,7 +183,7 @@ class StatusManager:
                 f"[StatusManager] Scheduled batched write in {self._WRITE_DEBOUNCE_MS}ms"
             )
 
-    def write(self, status: BuildStatus | None = None, immediate: bool = False) -> None:
+    def write(self, status: Optional[BuildStatus] = None, immediate: bool = False) -> None:
         """Write status to file.
 
         Args:

@@ -6,6 +6,7 @@ This file demonstrates how to integrate streaming mode into your agent execution
 
 import asyncio
 from pathlib import Path
+from typing import Optional
 
 from streaming import create_streaming_wrapper
 
@@ -140,12 +141,12 @@ class StreamingEnabledAgent:
         if self.streaming_wrapper:
             await self.streaming_wrapper.emit_agent_thinking(thinking)
     
-    async def _emit_response(self, response: str, tokens_used: int | None = None):
+    async def _emit_response(self, response: str, tokens_used: Optional[int] = None):
         """Emit agent response."""
         if self.streaming_wrapper:
             await self.streaming_wrapper.emit_agent_response(response, tokens_used)
     
-    async def _emit_file_change(self, file_path: str, operation: str, content: str | None = None):
+    async def _emit_file_change(self, file_path: str, operation: str, content: Optional[str] = None):
         """Emit file change."""
         if self.streaming_wrapper:
             await self.streaming_wrapper.emit_file_change(file_path, operation, content)
@@ -160,7 +161,7 @@ class StreamingEnabledAgent:
         if self.streaming_wrapper:
             await self.streaming_wrapper.emit_command_output(output, is_error)
     
-    async def _emit_test_result(self, success: bool, details: str | None = None):
+    async def _emit_test_result(self, success: bool, details: Optional[str] = None):
         """Emit test result."""
         if self.streaming_wrapper:
             await self.streaming_wrapper.emit_test_result(success, details)

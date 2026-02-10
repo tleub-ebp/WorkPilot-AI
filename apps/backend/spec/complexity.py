@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from typing import Optional
 
 
 class Complexity(Enum):
@@ -150,11 +151,11 @@ class ComplexityAnalyzer:
         "proxy",
     ]
 
-    def __init__(self, project_index: dict | None = None):
+    def __init__(self, project_index: Optional[dict] = None):
         self.project_index = project_index or {}
 
     def analyze(
-        self, task_description: str, requirements: dict | None = None
+        self, task_description: str, requirements: Optional[dict] = None
     ) -> ComplexityAssessment:
         """Analyze task and return complexity assessment."""
         task_lower = task_description.lower()
@@ -251,7 +252,7 @@ class ComplexityAnalyzer:
                 return True
         return False
 
-    def _estimate_files(self, task_lower: str, requirements: dict | None) -> int:
+    def _estimate_files(self, task_lower: str, requirements: Optional[dict]) -> int:
         """Estimate number of files to be modified."""
         # Base estimate from task description
         if any(
@@ -277,7 +278,7 @@ class ComplexityAnalyzer:
 
         return 5  # Default estimate
 
-    def _estimate_services(self, task_lower: str, requirements: dict | None) -> int:
+    def _estimate_services(self, task_lower: str, requirements: Optional[dict]) -> int:
         """Estimate number of services involved."""
         service_count = sum(1 for kw in self.MULTI_SERVICE_KEYWORDS if kw in task_lower)
 
@@ -345,7 +346,7 @@ async def run_ai_complexity_assessment(
     spec_dir: Path,
     task_description: str,
     run_agent_fn,
-) -> ComplexityAssessment | None:
+) -> Optional[ComplexityAssessment]:
     """Run AI agent to assess complexity. Returns None if it fails.
 
     Args:

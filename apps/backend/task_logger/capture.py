@@ -2,6 +2,8 @@
 Streaming log capture for agent sessions.
 """
 
+from typing import Optional
+
 from .ansi import strip_ansi_codes
 from .logger import TaskLogger
 from .models import LogPhase
@@ -18,10 +20,10 @@ class StreamingLogCapture:
                 capture.process_message(msg)
     """
 
-    def __init__(self, logger: TaskLogger, phase: LogPhase | None = None):
+    def __init__(self, logger: TaskLogger, phase: Optional[LogPhase] = None):
         self.logger = logger
         self.phase = phase
-        self.current_tool: str | None = None
+        self.current_tool: Optional[str] = None
 
     def __enter__(self):
         return self
@@ -42,7 +44,7 @@ class StreamingLogCapture:
         if sanitized_text.strip():
             self.logger.log(sanitized_text, phase=self.phase)
 
-    def process_tool_start(self, tool_name: str, tool_input: str | None = None) -> None:
+    def process_tool_start(self, tool_name: str, tool_input: Optional[str] = None) -> None:
         """Process tool start."""
         # End previous tool if any
         if self.current_tool:
@@ -55,8 +57,8 @@ class StreamingLogCapture:
         self,
         tool_name: str,
         success: bool = True,
-        result: str | None = None,
-        detail: str | None = None,
+        result: Optional[str] = None,
+        detail: Optional[str] = None,
     ) -> None:
         """Process tool end."""
         self.logger.tool_end(

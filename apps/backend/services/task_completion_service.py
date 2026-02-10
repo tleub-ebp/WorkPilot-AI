@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TypedDict
+from typing import Optional, TypedDict
 
 from core.worktree import WorktreeManager
 
@@ -27,9 +27,9 @@ class TaskCompletionResult(TypedDict):
     """Résultat de la complétion d'une tâche"""
 
     success: bool
-    pr_url: str | None
+    pr_url: Optional[str]
     pr_already_exists: bool
-    error: str | None
+    error: Optional[str]
 
 
 @dataclass
@@ -49,8 +49,8 @@ class TaskCompletionService:
         self,
         spec_id: str,
         task_title: str,
-        task_description: str | None = None,
-        target_branch: str | None = None,
+        task_description: Optional[str] = None,
+        target_branch: Optional[str] = None,
     ) -> TaskCompletionResult:
         """
         Complète une tâche en créant une PR pour validation humaine.
@@ -141,7 +141,7 @@ class TaskCompletionService:
         )
 
     def _build_pr_body(
-        self, task_title: str, task_description: str | None
+        self, task_title: str, task_description: Optional[str]
     ) -> str:
         """
         Construit le corps de la PR avec checklist de vérification humaine.
@@ -198,4 +198,3 @@ def create_task_completion_service(
     return TaskCompletionService(
         project_path=Path(project_path), base_branch=base_branch
     )
-

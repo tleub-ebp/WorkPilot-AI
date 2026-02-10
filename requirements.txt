@@ -2,3 +2,6 @@ azure-devops>=7.1.0b4
 msrest>=0.7.1
 python-dotenv>=1.0.0
 PyYAML>=6.0
+# Utiliser le nom correct du package (tiret) pour l'installation via pip
+claude-agent-sdk>=0.1.25
+grepai

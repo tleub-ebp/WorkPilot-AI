@@ -6,6 +6,7 @@ Handles the execution of AI agents for the spec creation pipeline.
 """
 
 from pathlib import Path
+from typing import Optional
 
 # Configure safe encoding before any output (fixes Windows encoding errors)
 from ui.capabilities import configure_safe_encoding
@@ -33,7 +34,7 @@ class AgentRunner:
         project_dir: Path,
         spec_dir: Path,
         model: str,
-        task_logger: TaskLogger | None = None,
+        task_logger: Optional[TaskLogger] = None,
     ):
         """Initialize the agent runner.
 
@@ -53,8 +54,8 @@ class AgentRunner:
         prompt_file: str,
         additional_context: str = "",
         interactive: bool = False,
-        thinking_budget: int | None = None,
-        prior_phase_summaries: str | None = None,
+        thinking_budget: Optional[int] = None,
+        prior_phase_summaries: Optional[str] = None,
     ) -> tuple[bool, str]:
         """Run an agent with the given prompt.
 
@@ -243,7 +244,7 @@ class AgentRunner:
             return False, str(e)
 
     @staticmethod
-    def _extract_tool_input_display(inp: dict) -> str | None:
+    def _extract_tool_input_display(inp: dict) -> Optional[str]:
         """Extract meaningful tool input for display.
 
         Args:
@@ -273,7 +274,7 @@ class AgentRunner:
         return None
 
     @staticmethod
-    def _get_tool_detail_content(tool_name: str, result_content: str) -> str | None:
+    def _get_tool_detail_content(tool_name: str, result_content: str) -> Optional[str]:
         """Get detail content for specific tools.
 
         Args:
