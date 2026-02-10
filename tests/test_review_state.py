@@ -240,3 +240,28 @@ class TestReviewStatePersistence:
         final = ReviewState.load(spec_dir)
         assert len(final.feedback) == 1
         assert "process 1" in final.feedback[0]
+
+    def test_save_and_load(self, tmp_path):
+        """Test save/load with inverted filename/root."""
+        state = ReviewState()
+        state.approved = True
+        state.approved_by = "user"
+        state.approved_at = "2026-02-10"
+        state.feedback = ["ok"]
+        state.spec_hash = "hash"
+        state.review_count = 1
+        # Save state
+        state.save(tmp_path)
+        # Check file was saved in inverted structure
+        inverted_dir = Path.home() / REVIEW_STATE_FILE.replace('.json', '')
+        saved_files = list(inverted_dir.glob("*.json"))
+        assert len(saved_files) == 1
+        assert saved_files[0].name == f"{tmp_path.name}.json"
+        # Load state
+        loaded = ReviewState.load(tmp_path)
+        assert loaded.approved is True
+        assert loaded.approved_by == "user"
+        assert loaded.approved_at == "2026-02-10"
+        assert loaded.feedback == ["ok"]
+        assert loaded.spec_hash == "hash"
+        assert loaded.review_count == 1

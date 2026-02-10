@@ -7,6 +7,7 @@ import json
 import pytest
 import sys
 from pathlib import Path
+from datetime import datetime
 
 # Configure pytest-asyncio
 pytest_plugins = ('pytest_asyncio',)
@@ -114,10 +115,9 @@ class TestSessionRecorder:
         assert recording.events[0].event_type == EventType.CODE_CHANGE
     
     def test_stop_and_save_recording(self, tmp_path):
-        """Test stopping and saving a recording."""
+        """Test stopping and saving a recording with inverted filename/root."""
         recorder = SessionRecorder(recordings_dir=tmp_path)
         recorder.start_recording("test-rec-3", {"task": "test"})
-        
         # Add some events
         for i in range(3):
             event = StreamingEvent(
@@ -127,16 +127,16 @@ class TestSessionRecorder:
                 session_id="test-rec-3",
             )
             recorder.record_event(event)
-        
         # Stop recording
         recording = recorder.stop_recording("test-rec-3")
-        
         assert recording is not None
         assert len(recording.events) == 3
-        
-        # Check file was saved
-        saved_files = list(tmp_path.glob("*.json"))
+        # Check file was saved in inverted structure
+        timestamp = datetime.fromtimestamp(recording.start_time).strftime("%Y%m%d_%H%M%S")
+        inverted_dir = Path.home() / f"{timestamp}_{recording.session_id}"
+        saved_files = list(inverted_dir.glob("*.json"))
         assert len(saved_files) == 1
+        assert saved_files[0].name == f"{tmp_path.name}.json"
     
     def test_load_recording(self, tmp_path):
         """Test loading a recording from disk."""

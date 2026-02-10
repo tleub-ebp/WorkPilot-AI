@@ -6,6 +6,7 @@ export interface FileAPI {
   // File Explorer Operations
   listDirectory: (dirPath: string) => Promise<IPCResult<import('../../shared/types').FileNode[]>>;
   readFile: (filePath: string) => Promise<IPCResult<string>>;
+  saveJsonFile: (dirPath: string, fileName: string, data: any) => Promise<IPCResult<boolean>>;
 }
 
 export const createFileAPI = (): FileAPI => ({
@@ -13,5 +14,7 @@ export const createFileAPI = (): FileAPI => ({
   listDirectory: (dirPath: string): Promise<IPCResult<import('../../shared/types').FileNode[]>> =>
     ipcRenderer.invoke(IPC_CHANNELS.FILE_EXPLORER_LIST, dirPath),
   readFile: (filePath: string): Promise<IPCResult<string>> =>
-    ipcRenderer.invoke(IPC_CHANNELS.FILE_EXPLORER_READ, filePath)
+    ipcRenderer.invoke(IPC_CHANNELS.FILE_EXPLORER_READ, filePath),
+  saveJsonFile: (dirPath: string, fileName: string, data: any): Promise<IPCResult<boolean>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.FILE_EXPLORER_SAVE, dirPath, fileName, data)
 });

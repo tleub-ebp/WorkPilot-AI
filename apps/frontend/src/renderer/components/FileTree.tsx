@@ -14,7 +14,7 @@ const ITEM_HEIGHT = 28;
 // Number of items to render outside the visible area for smoother scrolling
 const OVERSCAN = 10;
 
-export function FileTree({ rootPath }: FileTreeProps) {
+export function FileTree({ rootPath, onSelectFolder, selectedFolder }: FileTreeProps & { onSelectFolder?: (path: string) => void, selectedFolder?: string }) {
   const parentRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -61,6 +61,59 @@ export function FileTree({ rootPath }: FileTreeProps) {
     [flattenedNodes, handleToggle]
   );
 
+  // Ajout d'un bouton pour naviguer vers le dossier parent
+  if (rootPath !== "C:\\" && rootPath !== "/") {
+    return (
+      <div>
+        <button className="mb-2 px-2 py-1 border rounded bg-muted" onClick={() => {
+          // Navigue vers le parent
+          const parent = rootPath.replace(/\\$/, "");
+          const parentPath = parent.substring(0, parent.lastIndexOf("\\")) || "C:\\";
+          onSelectFolder && onSelectFolder(parentPath);
+        }}>⬆ Parent</button>
+        {/* The large inner element to hold all of the items */}
+        <div
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {/* Only the visible items in the virtualizer */}
+          {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+            const item = flattenedNodes[virtualItem.index];
+            if (!item) return null;
+
+            return (
+              <div
+                key={item.key}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: `${virtualItem.size}px`,
+                  transform: `translateY(${virtualItem.start}px)`,
+                }}
+              >
+                {/* Passe selectedFolder à FileTreeItem pour le highlight */}
+                <FileTreeItem
+                  node={item.node}
+                  depth={item.depth}
+                  isExpanded={item.isExpanded}
+                  isLoading={item.isLoading}
+                  onToggle={createToggleHandler(virtualItem.index)}
+                  onSelectFolder={onSelectFolder}
+                  selectedFolder={selectedFolder}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   if (isRootLoading && !hasRootFiles) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -78,11 +131,16 @@ export function FileTree({ rootPath }: FileTreeProps) {
     );
   }
 
+  // Ajout d'un feedback d'erreur explicite dans FileTree si aucun dossier n'est trouvé ou si l'API échoue
   if (!hasRootFiles || count === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
         <FolderOpen className="h-6 w-6 text-muted-foreground mb-2" />
-        <p className="text-xs text-muted-foreground">No files found</p>
+        <p className="text-xs text-muted-foreground">
+          Aucun dossier trouvé.<br />
+          Vérifiez le chemin ou vos droits d'accès.<br />
+          Racine actuelle : {rootPath}
+        </p>
       </div>
     );
   }
@@ -91,6 +149,7 @@ export function FileTree({ rootPath }: FileTreeProps) {
     <div
       ref={parentRef}
       className="h-full overflow-auto py-1"
+      style={{ maxHeight: '100vh', overflowY: 'auto' }}
     >
       {/* The large inner element to hold all of the items */}
       <div
@@ -117,12 +176,15 @@ export function FileTree({ rootPath }: FileTreeProps) {
                 transform: `translateY(${virtualItem.start}px)`,
               }}
             >
+              {/* Passe selectedFolder à FileTreeItem pour le highlight */}
               <FileTreeItem
                 node={item.node}
                 depth={item.depth}
                 isExpanded={item.isExpanded}
                 isLoading={item.isLoading}
                 onToggle={createToggleHandler(virtualItem.index)}
+                onSelectFolder={onSelectFolder}
+                selectedFolder={selectedFolder}
               />
             </div>
           );
