@@ -1,4 +1,4 @@
-﻿# 🔄 Auto-Migration Engine
+﻿﻿# 🔄 Auto-Migration Engine
 
 The Auto-Migration Engine enables **automatic technology stack migration** while preserving business logic. It can migrate between frameworks (React ↔ Vue), databases (MySQL ↔ PostgreSQL), languages (Python 2 → 3), and APIs (REST → GraphQL).
 
@@ -9,9 +9,12 @@ The Auto-Migration Engine enables **automatic technology stack migration** while
 - **Automatic Stack Detection**: Detects current framework, language, dependencies
 - **Migration Planning**: Generates step-by-step migration plans with risk assessment
 - **Code Transformation**: Automatically transforms code between stacks
+- **🤖 LLM Enhancement**: Uses Claude to improve transformation quality and handle complex patterns
+- **⚡ Performance Optimized**: Caching, parallel processing, and incremental migrations
 - **Validation**: Runs tests and validates transformations
 - **Rollback Support**: Full rollback to any checkpoint
 - **Comprehensive Reporting**: Detailed migration reports with metrics
+- **Auto-Fix Integration**: Automatically fixes failing tests after migration
 
 ### 🎯 Supported Migrations (MVP)
 

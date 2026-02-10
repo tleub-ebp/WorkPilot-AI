@@ -16,7 +16,8 @@
     "gitlabIssues": "Issues GitLab",
     "gitlabMRs": "MRs GitLab",
     "worktrees": "Arbres de travail",
-    "agentTools": "Aperçu MCP"
+    "agentTools": "Aperçu MCP",
+    "migration": "Assistant de migration"
   },
   "actions": {
     "settings": "Paramètres",

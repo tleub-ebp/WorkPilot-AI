@@ -13,3 +13,4 @@ export * from './WelcomeScreen';
 export * from './EnvConfigModal';
 export * from './AddProjectModal';
 export * from './streaming';
+export * from './MigrationWizard';
