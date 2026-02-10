@@ -37,7 +37,7 @@ interface MigrationConfig {
 }
 
 export const MigrationWizard: React.FC = () => {
-  const { t } = useTranslation('migration-wizard');
+  const { t } = useTranslation('migrationWizard');
   const selectedProject = useProjectStore((state) => state.getSelectedProject?.());
   const defaultProjectPath = selectedProject?.path || t('defaultProjectPath', { defaultValue: './' });
   const [currentStep, setCurrentStep] = useState(0);
