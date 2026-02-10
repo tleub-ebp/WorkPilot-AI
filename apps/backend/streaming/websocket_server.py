@@ -6,7 +6,7 @@ Provides real-time event broadcasting to frontend clients.
 
 import json
 import logging
-from typing import Any
+from typing import Any, Optional
 
 try:
     import websockets
@@ -153,7 +153,7 @@ class StreamingWebSocketServer:
 
 
 # Global server instance
-_websocket_server: StreamingWebSocketServer | None = None
+_websocket_server: Optional[StreamingWebSocketServer] = None
 
 
 def get_websocket_server() -> StreamingWebSocketServer:

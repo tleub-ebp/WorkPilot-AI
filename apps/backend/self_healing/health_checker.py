@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 try:
     from debug import debug, debug_section, debug_warning
@@ -61,9 +61,9 @@ class HealthIssue:
     title: str
     description: str
     file: str
-    line: int | None = None
-    suggestion: str | None = None
-    impact: str | None = None
+    line: Optional[int] = None
+    suggestion: Optional[str] = None
+    impact: Optional[str] = None
     effort: str = "medium"  # low, medium, high
     
     def to_dict(self) -> dict[str, Any]:
@@ -117,7 +117,7 @@ class HealthReport:
     changed_files: int = 0
     
     # Comparison with previous
-    score_change: float | None = None
+    score_change: Optional[float] = None
     is_degrading: bool = False
     
     def get_critical_issues(self) -> list[HealthIssue]:

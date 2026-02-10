@@ -5,7 +5,7 @@ Wraps the agent execution to emit streaming events in real-time.
 """
 
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from .session_recorder import SessionRecorder
 from .streaming_manager import get_streaming_manager
@@ -54,7 +54,7 @@ class StreamingAgentWrapper:
         self,
         file_path: str,
         operation: str = "update",
-        content: str | None = None,
+        content: Optional[str] = None,
     ):
         """Emit a file change event."""
         if not self._is_active:
@@ -67,7 +67,7 @@ class StreamingAgentWrapper:
             content=content,
         )
         
-    async def emit_command(self, command: str, cwd: str | None = None):
+    async def emit_command(self, command: str, cwd: Optional[str] = None):
         """Emit a command execution event."""
         if not self._is_active:
             return
@@ -99,7 +99,7 @@ class StreamingAgentWrapper:
             thinking=thinking,
         )
         
-    async def emit_agent_response(self, response: str, tokens_used: int | None = None):
+    async def emit_agent_response(self, response: str, tokens_used: Optional[int] = None):
         """Emit agent response event."""
         if not self._is_active:
             return
@@ -120,7 +120,7 @@ class StreamingAgentWrapper:
             test_command=test_command,
         )
         
-    async def emit_test_result(self, success: bool, details: str | None = None):
+    async def emit_test_result(self, success: bool, details: Optional[str] = None):
         """Emit test result event."""
         if not self._is_active:
             return
@@ -135,7 +135,7 @@ class StreamingAgentWrapper:
         self,
         progress: float,
         status: str,
-        current_step: str | None = None,
+        current_step: Optional[str] = None,
     ):
         """Emit progress update event."""
         if not self._is_active:

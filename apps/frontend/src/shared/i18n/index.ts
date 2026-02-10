@@ -16,6 +16,7 @@ import enErrors from './locales/en/errors.json';
 import enContext from './locales/en/context.json';
 import enChangeLog from './locales/en/changelog.json';
 import enMigrationWizard from './locales/en/migration-wizard.json';
+import enVisualProgramming from './locales/en/visualProgramming.json';
 
 // Import French translation resources
 import frCommon from './locales/fr/common.json';
@@ -32,6 +33,7 @@ import frErrors from './locales/fr/errors.json';
 import frContext from './locales/fr/context.json';
 import frChangeLog from './locales/fr/changelog.json';
 import frMigrationWizard from './locales/fr/migration-wizard.json';
+import frVisualProgramming from './locales/fr/visualProgramming.json';
 
 export const defaultNS = 'common';
 
@@ -50,7 +52,8 @@ export const resources = {
     errors: enErrors,
     context: enContext,
     changelog: enChangeLog,
-    'migration-wizard': enMigrationWizard
+    migrationWizard: enMigrationWizard,
+    visualProgramming: enVisualProgramming
   },
   fr: {
     common: frCommon,
@@ -66,7 +69,8 @@ export const resources = {
     errors: frErrors,
     context: frContext,
     changelog: frChangeLog,
-    'migration-wizard': frMigrationWizard
+    migrationWizard: frMigrationWizard,
+    visualProgramming: frVisualProgramming
   }
 } as const;
 
@@ -78,7 +82,7 @@ i18n
     fallbackLng: 'en',
     defaultNS,
     ns: [
-      'common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'gitlab', 'taskReview', 'terminal', 'errors', 'context', 'changelog', 'migration-wizard'
+      'common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'gitlab', 'taskReview', 'terminal', 'errors', 'context', 'changelog', 'migrationWizard', 'visualProgramming'
     ],
     interpolation: {
       escapeValue: false // React already escapes values

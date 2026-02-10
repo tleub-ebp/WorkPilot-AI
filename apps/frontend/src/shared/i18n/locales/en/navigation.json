@@ -17,7 +17,8 @@
     "gitlabMRs": "GitLab MRs",
     "worktrees": "Worktrees",
     "agentTools": "MCP Overview",
-    "migration": "Migration Wizard"
+    "migration": "Migration Wizard",
+    "visualProgramming": "visualProgramming"
   },
   "actions": {
     "settings": "Settings",

@@ -23,7 +23,7 @@ Usage:
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from risk_classifier import RiskClassifier
 
@@ -218,7 +218,7 @@ class ValidationStrategyBuilder:
         self,
         project_dir: Path,
         spec_dir: Path,
-        risk_level: str | None = None,
+        risk_level: Optional[str] = None,
     ) -> ValidationStrategy:
         """
         Build a validation strategy for the given project and spec.
@@ -954,7 +954,7 @@ class ValidationStrategyBuilder:
 def build_validation_strategy(
     project_dir: Path,
     spec_dir: Path,
-    risk_level: str | None = None,
+    risk_level: Optional[str] = None,
 ) -> ValidationStrategy:
     """
     Convenience function to build a validation strategy.
@@ -974,7 +974,7 @@ def build_validation_strategy(
 def get_strategy_as_dict(
     project_dir: Path,
     spec_dir: Path,
-    risk_level: str | None = None,
+    risk_level: Optional[str] = None,
 ) -> dict[str, Any]:
     """
     Get validation strategy as a dictionary.

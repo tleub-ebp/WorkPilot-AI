@@ -11,7 +11,7 @@ import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 try:
     from core.client import create_client
@@ -39,13 +39,13 @@ class RefactoringAction:
     type: str  # rename, extract, inline, move, etc.
     description: str
     file: str
-    line_start: int | None = None
-    line_end: int | None = None
-    old_code: str | None = None
-    new_code: str | None = None
+    line_start: Optional[int] = None
+    line_end: Optional[int] = None
+    old_code: Optional[str] = None
+    new_code: Optional[str] = None
     applied: bool = False
     success: bool = False
-    error: str | None = None
+    error: Optional[str] = None
 
 
 @dataclass
@@ -61,8 +61,8 @@ class RefactoringPlan:
     
     # Execution tracking
     created_at: datetime = field(default_factory=datetime.now)
-    started_at: datetime | None = None
-    completed_at: datetime | None = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
     success: bool = False
     
     def to_dict(self) -> dict[str, Any]:
@@ -84,7 +84,7 @@ class RefactoringPlan:
 class RefactoringEngine:
     """Generates and applies refactoring plans."""
     
-    def __init__(self, project_dir: str | Path, model: str | None = None):
+    def __init__(self, project_dir: str | Path, model: Optional[str] = None):
         self.project_dir = Path(project_dir)
         self.model = model or get_phase_model("refactoring")
     

@@ -13,7 +13,7 @@
     "install:frontend": "cd apps/frontend && pnpm install",
     "install:all": "pnpm run install:backend && pnpm run install:frontend",
     "start": "cd apps/frontend && pnpm run build && pnpm run start",
-    "dev": "cd apps/frontend && pnpm run dev",
+    "dev": "concurrently \"pnpm --filter ./apps/backend dev\" \"pnpm --filter ./apps/frontend dev\"",
     "dev:debug": "cd apps/frontend && pnpm run dev:debug",
     "dev:mcp": "cd apps/frontend && pnpm run dev:mcp",
     "build": "cd apps/frontend && pnpm run build",
@@ -44,7 +44,8 @@
     "electron"
   ],
   "devDependencies": {
-    "jsdom": "^27.4.0"
+    "jsdom": "^27.4.0",
+    "concurrently": "^8.2.2"
   },
   "dependencies": {
     "lucide-react": "^0.562.0"

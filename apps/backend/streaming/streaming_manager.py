@@ -10,7 +10,7 @@ import json
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 
 class EventType(str, Enum):
@@ -115,8 +115,8 @@ class StreamingManager:
         session_id: str,
         file_path: str,
         change_type: str,
-        content: str | None = None,
-        diff: str | None = None,
+        content: Optional[str] = None,
+        diff: Optional[str] = None,
     ) -> None:
         """Emit a code change event."""
         event = StreamingEvent(
@@ -137,7 +137,7 @@ class StreamingManager:
         session_id: str,
         operation: str,
         file_path: str,
-        content: str | None = None,
+        content: Optional[str] = None,
     ) -> None:
         """Emit a file operation event (create/update/delete)."""
         event_type_map = {
@@ -161,7 +161,7 @@ class StreamingManager:
         self,
         session_id: str,
         command: str,
-        cwd: str | None = None,
+        cwd: Optional[str] = None,
     ) -> None:
         """Emit a command execution event."""
         event = StreamingEvent(
@@ -213,7 +213,7 @@ class StreamingManager:
         self,
         session_id: str,
         response: str,
-        tokens_used: int | None = None,
+        tokens_used: Optional[int] = None,
     ) -> None:
         """Emit agent response event."""
         event = StreamingEvent(
@@ -247,7 +247,7 @@ class StreamingManager:
         self,
         session_id: str,
         success: bool,
-        details: str | None = None,
+        details: Optional[str] = None,
     ) -> None:
         """Emit test result event."""
         event = StreamingEvent(
@@ -286,7 +286,7 @@ class StreamingManager:
         session_id: str,
         progress: float,
         status: str,
-        current_step: str | None = None,
+        current_step: Optional[str] = None,
     ) -> None:
         """Emit a progress update event."""
         event = StreamingEvent(
@@ -398,7 +398,7 @@ class StreamingManager:
             if session_data["status"] == "active"
         ]
 
-    def get_session_info(self, session_id: str) -> dict[str, Any] | None:
+    def get_session_info(self, session_id: str) -> Optional[dict[str, Any]]:
         """Get info about a specific session."""
         if session_id not in self._active_sessions:
             return None
@@ -411,7 +411,7 @@ class StreamingManager:
 
 
 # Global instance
-_streaming_manager: StreamingManager | None = None
+_streaming_manager: Optional[StreamingManager] = None
 
 
 def get_streaming_manager() -> StreamingManager:

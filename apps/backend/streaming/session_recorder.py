@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from .streaming_manager import EventType, StreamingEvent
 
@@ -20,7 +20,7 @@ class SessionRecording:
     """A recorded streaming session."""
     session_id: str
     start_time: float
-    end_time: float | None
+    end_time: Optional[float]
     metadata: dict[str, Any]
     events: list[StreamingEvent]
     
@@ -75,7 +75,7 @@ class SessionRecorder:
     - Export to video format (future enhancement)
     """
     
-    def __init__(self, recordings_dir: Path | None = None):
+    def __init__(self, recordings_dir: Optional[Path] = None):
         self._recordings_dir = recordings_dir or Path.home() / ".auto-claude" / "recordings"
         self._recordings_dir.mkdir(parents=True, exist_ok=True)
         
@@ -98,7 +98,7 @@ class SessionRecorder:
         if session_id in self._active_recordings:
             self._active_recordings[session_id].events.append(event)
             
-    def stop_recording(self, session_id: str) -> SessionRecording | None:
+    def stop_recording(self, session_id: str) -> Optional[SessionRecording]:
         """Stop recording a session and return the recording."""
         if session_id not in self._active_recordings:
             return None
@@ -167,7 +167,7 @@ class SessionRecorder:
         self,
         recording: SessionRecording,
         speed: float = 1.0,
-        callback: Any | None = None,
+        callback: Optional[Any] = None,
     ) -> None:
         """
         Replay a recorded session.
@@ -216,7 +216,7 @@ class SessionRecorder:
 
 
 # Global instance
-_session_recorder: SessionRecorder | None = None
+_session_recorder: Optional[SessionRecorder] = None
 
 
 def get_session_recorder() -> SessionRecorder:
@@ -225,4 +225,3 @@ def get_session_recorder() -> SessionRecorder:
     if _session_recorder is None:
         _session_recorder = SessionRecorder()
     return _session_recorder
-

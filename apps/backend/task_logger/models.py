@@ -4,6 +4,7 @@ Data models for task logging.
 
 from dataclasses import asdict, dataclass
 from enum import Enum
+from typing import Optional
 
 
 class LogPhase(str, Enum):
@@ -35,18 +36,16 @@ class LogEntry:
     type: str
     content: str
     phase: str
-    tool_name: str | None = None
-    tool_input: str | None = None
-    subtask_id: str | None = None
-    session: int | None = None
+    tool_name: Optional[str] = None
+    tool_input: Optional[str] = None
+    subtask_id: Optional[str] = None
+    session: Optional[int] = None
     # New fields for expandable detail view
-    detail: str | None = (
+    detail: Optional[str] = (
         None  # Full content that can be expanded (e.g., file contents, command output)
     )
-    subphase: str | None = (
-        None  # Subphase grouping (e.g., "PROJECT DISCOVERY", "CONTEXT GATHERING")
-    )
-    collapsed: bool | None = None  # Whether to show collapsed by default in UI
+    subphase: Optional[str] = None  # Subphase grouping (e.g., "PROJECT DISCOVERY", "CONTEXT GATHERING")
+    collapsed: Optional[bool] = None  # Whether to show collapsed by default in UI
 
     def to_dict(self) -> dict:
         """Convert to dictionary, excluding None values."""
@@ -59,8 +58,8 @@ class PhaseLog:
 
     phase: str
     status: str  # "pending", "active", "completed", "failed"
-    started_at: str | None = None
-    completed_at: str | None = None
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
     entries: list = None
 
     def __post_init__(self):

@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 try:
     from debug import debug, debug_section
@@ -45,16 +45,16 @@ class DebtItem:
     severity: str  # critical, high, medium, low
     effort: str  # low, medium, high
     created_at: datetime
-    resolved_at: datetime | None = None
+    resolved_at: Optional[datetime] = None
     age_days: int = 0
     priority_score: float = 0.0
     
     # Context
-    line: int | None = None
-    code_snippet: str | None = None
+    line: Optional[int] = None
+    code_snippet: Optional[str] = None
     
     # Resolution
-    suggested_fix: str | None = None
+    suggested_fix: Optional[str] = None
     auto_fixable: bool = False
     
     def calculate_age(self) -> int:

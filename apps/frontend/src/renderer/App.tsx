@@ -74,6 +74,7 @@ import { ProjectTabBar } from './components/ProjectTabBar';
 import { AddProjectModal } from './components/AddProjectModal';
 import { ViewStateProvider } from './contexts/ViewStateContext';
 import { MigrationWizard } from './components/MigrationWizard';
+import { VisualProgrammingInterface } from './components/VisualProgrammingInterface';
 
 // Version constant for version-specific warnings (e.g., reauthentication notices)
 const VERSION_WARNING_275 = '2.7.5';
@@ -1049,6 +1050,9 @@ const handleProjectAdded = async (project: Project, needsInit: boolean) => {
                 {activeView === 'agent-tools' && <AgentTools />}
                 {activeView === 'migration' && (
                   <MigrationWizard />
+                )}
+                {activeView === 'visual-programming' && (activeProjectId || selectedProjectId) && (
+                  <VisualProgrammingInterface projectId={activeProjectId || selectedProjectId!} />
                 )}
               </>
             ) : (

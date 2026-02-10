@@ -10,7 +10,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 
 class MessageType(str, Enum):
@@ -60,9 +60,9 @@ class DebateThread:
     topic: str
     messages: list[AgentMessage] = field(default_factory=list)
     status: str = "active"  # active, resolved, deadlock
-    resolution: str | None = None
+    resolution: Optional[str] = None
     started_at: float = field(default_factory=time.time)
-    resolved_at: float | None = None
+    resolved_at: Optional[float] = None
 
     def add_message(self, message: AgentMessage):
         """Add a message to the thread."""
@@ -119,8 +119,8 @@ class CommunicationBus:
         agent_name: str,
         message_type: MessageType,
         content: str,
-        references: list[str] | None = None,
-        metadata: dict | None = None,
+        references: Optional[list[str]] = None,
+        metadata: Optional[dict] = None,
     ) -> AgentMessage:
         """Post a message to a thread."""
         self.message_counter += 1
@@ -141,7 +141,7 @@ class CommunicationBus:
 
         return message
 
-    def get_thread(self, thread_id: str) -> DebateThread | None:
+    def get_thread(self, thread_id: str) -> Optional[DebateThread]:
         """Get a debate thread by ID."""
         return self.threads.get(thread_id)
 
@@ -222,4 +222,3 @@ class CommunicationBus:
         }
         with open(summary_path, "w", encoding="utf-8") as f:
             json.dump(summary, f, indent=2)
-

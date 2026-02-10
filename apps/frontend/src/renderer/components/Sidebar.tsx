@@ -149,15 +149,13 @@ export function Sidebar({
   // Compute visible nav items based on GitHub/GitLab enabled state from store
   const visibleNavItems = useMemo(() => {
     const items = [...baseNavItems];
-
+    items.push({ id: 'visual-programming', labelKey: 'navigation:items.visualProgramming', icon: Sparkles, shortcut: 'V' });
     if (githubEnabled) {
       items.push(...githubNavItems);
     }
-
     if (gitlabEnabled) {
       items.push(...gitlabNavItems);
     }
-
     return items;
   }, [githubEnabled, gitlabEnabled]);
 
@@ -517,7 +515,7 @@ export function Sidebar({
           isCollapsed ? "justify-center px-2" : "px-4"
         )}>
           {!isCollapsed && (
-            <span className="electron-no-drag text-lg font-bold text-primary">W</span>
+            <span className="electron-no-drag text-lg font-bold text-primary">WorkPilot AI</span>
           )}
         </div>
 

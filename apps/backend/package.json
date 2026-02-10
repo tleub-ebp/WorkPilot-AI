@@ -1,0 +1,9 @@
+{
+  "name": "auto-claude-backend",
+  "version": "1.0.0",
+  "description": "Backend for Auto Claude",
+  "main": "run.py",
+  "scripts": {
+    "dev": "python run.py --list"
+  }
+}

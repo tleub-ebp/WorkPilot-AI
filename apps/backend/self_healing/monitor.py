@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 try:
     from debug import debug, debug_error, debug_section, debug_success
@@ -42,7 +42,7 @@ class SelfHealingMonitor:
     def __init__(
         self,
         project_dir: str | Path,
-        config: HealingConfig | None = None,
+        config: Optional[HealingConfig] = None,
     ):
         self.project_dir = Path(project_dir)
         self.config = config or HealingConfig()
@@ -57,7 +57,7 @@ class SelfHealingMonitor:
         self.alert_manager = AlertManager(project_dir)
         
         # State
-        self.last_report: HealthReport | None = None
+        self.last_report: Optional[HealthReport] = None
         self.history_file = self.project_dir / ".auto-claude" / "health-history.json"
         self.history: list[dict[str, Any]] = []
         
@@ -204,7 +204,7 @@ class SelfHealingMonitor:
             )
             await self.alert_manager.send_alert(alert, self.config.alert_channels)
     
-    async def auto_heal(self, max_fixes: int | None = None) -> dict[str, Any]:
+    async def auto_heal(self, max_fixes: Optional[int] = None) -> dict[str, Any]:
         """
         Run automatic healing.
         

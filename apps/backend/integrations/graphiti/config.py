@@ -61,6 +61,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from typing import Optional
 
 # Default configuration values
 DEFAULT_DATABASE = "auto_claude_memory"
@@ -510,7 +511,7 @@ class GraphitiState:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
-    def load(cls, spec_dir: Path) -> "GraphitiState" | None:
+    def load(cls, spec_dir: Path) -> Optional["GraphitiState"]:
         """Load state from the spec directory."""
         marker_file = spec_dir / GRAPHITI_STATE_MARKER
         if not marker_file.exists():
