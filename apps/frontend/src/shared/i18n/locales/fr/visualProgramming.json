@@ -70,5 +70,8 @@
   "notificationDesc": "Envoi d'emails, SMS, push, etc.",
   "customBlock": "Bloc personnalisé",
   "customBlockDesc": "Bloc libre pour tout usage spécifique",
-  "customBlockPrompt": "Nom du bloc personnalisé ?"
+  "customBlockPrompt": "Nom du bloc personnalisé ?",
+  "explorerRoot": "Racine de l'explorateur :",
+  "selectFolder": "Sélectionner",
+  "fileNameLabel": "Nom du fichier :"
 }

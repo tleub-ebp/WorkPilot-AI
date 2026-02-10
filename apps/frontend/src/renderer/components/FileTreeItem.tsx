@@ -10,6 +10,7 @@ interface FileTreeItemProps {
   isExpanded: boolean;
   isLoading: boolean;
   onToggle: () => void;
+  onSelectFolder?: (path: string) => void; // Ajout de onSelectFolder en tant que prop facultative
 }
 
 // Get appropriate icon based on file extension
@@ -70,7 +71,9 @@ export function FileTreeItem({
   isExpanded,
   isLoading,
   onToggle,
-}: FileTreeItemProps) {
+  onSelectFolder, // Ajout de onSelectFolder dans les props
+  selectedFolder
+}: FileTreeItemProps & { onSelectFolder?: (path: string) => void, selectedFolder?: string }) {
   const { t } = useTranslation('common');
   const [isDragging, setIsDragging] = useState(false);
   const dragImageRef = useRef<HTMLDivElement | null>(null);
@@ -90,6 +93,7 @@ export function FileTreeItem({
     e.stopPropagation();
     if (node.isDirectory) {
       onToggle();
+      if (onSelectFolder) onSelectFolder(node.path);
     }
   };
 
@@ -157,6 +161,16 @@ export function FileTreeItem({
     }
   };
 
+  const handleSelectFolder = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (node.isDirectory) {
+      onSelectFolder?.(node.path); // Appelle onSelectFolder avec le chemin du dossier si défini
+    }
+  };
+
+  // Ajoute un effet visuel sur le dossier sélectionné
+  const isSelected = selectedFolder === node.path;
+
   return (
     <div
       role={node.isDirectory ? 'button' : undefined}
@@ -166,10 +180,11 @@ export function FileTreeItem({
       onDragEnd={handleDragEnd}
       onKeyDown={node.isDirectory ? handleKeyDown : undefined}
       className={cn(
-        'flex items-center gap-1 py-1 px-2 rounded cursor-grab select-none',
+        'flex items-center gap-1 py-1 px-2 rounded cursor-pointer select-none',
         'hover:bg-accent/50 transition-colors',
         node.isDirectory && 'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
-        isDragging && 'opacity-50 bg-accent ring-2 ring-primary'
+        isDragging && 'opacity-50 bg-accent ring-2 ring-primary',
+        isSelected && 'bg-primary text-white' // Highlight si sélectionné
       )}
       style={{ paddingLeft: `${depth * 12 + 8}px` }}
       onClick={handleClick}

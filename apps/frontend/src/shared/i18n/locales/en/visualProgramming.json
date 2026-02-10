@@ -70,5 +70,8 @@
   "notificationDesc": "Send emails, SMS, push, etc.",
   "customBlock": "Custom block",
   "customBlockDesc": "Free block for any specific use",
-  "customBlockPrompt": "Custom block name?"
+  "customBlockPrompt": "Custom block name?",
+  "explorerRoot": "Explorer root:",
+  "selectFolder": "Select",
+  "fileNameLabel": "File name:"
 }

@@ -121,4 +121,28 @@ export function registerFileHandlers(): void {
       }
     }
   );
+
+  ipcMain.handle(
+    IPC_CHANNELS.FILE_EXPLORER_SAVE,
+    async (_, dirPath: string, fileName: string, data: any): Promise<IPCResult<boolean>> => {
+      try {
+        // Validate and normalize path
+        const validation = validatePath(dirPath);
+        if (!validation.valid) {
+          return { success: false, error: validation.error };
+        }
+        const safeDir = validation.path;
+        const safeFile = path.join(safeDir, fileName);
+        // Write JSON file
+        const fs = await import('fs/promises');
+        await fs.writeFile(safeFile, JSON.stringify(data, null, 2), 'utf-8');
+        return { success: true, data: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to save file'
+        };
+      }
+    }
+  );
 }
