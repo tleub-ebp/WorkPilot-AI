@@ -11,6 +11,7 @@ from pathlib import Path
 
 from .quality_multilang import get_analyzer
 from .quality_scorer import QualityScorer
+from src.connectors.base import GrepaiConnector
 
 
 class ExtendedQualityScorer(QualityScorer):
@@ -62,9 +63,19 @@ class ExtendedQualityScorer(QualityScorer):
             if analyzer:
                 multi_lang_issues = analyzer.analyze(path, content)
                 self.issues.extend(multi_lang_issues)
+        
+        # Injection Grepai : analyse contextuelle
+        grepai = GrepaiConnector()
+        grepai_result = grepai.search_code(f"file:{file_path} content:{content[:200]}")
+        if grepai_result and 'error' not in grepai_result:
+            self._process_grepai_result(file_path, grepai_result)
+
+    def _process_grepai_result(self, file_path: str, result: dict) -> None:
+        """Traite les résultats Grepai pour enrichir l'analyse."""
+        # Exemple : log, enrichissement, suggestions
+        print(f"[Grepai] Analyse enrichie pour {file_path} : {result}")
 
 
 def create_extended_scorer(project_dir: Path) -> ExtendedQualityScorer:
     """Factory pour créer un scorer étendu."""
     return ExtendedQualityScorer(project_dir)
-

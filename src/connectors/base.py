@@ -186,3 +186,21 @@ class BaseIntegratedConnector(BaseConnector, BaseWorkItemTracker):
             A dictionary with connection details such as organization URL,
             authenticated user, and service version.
         """
+
+
+class GrepaiConnector:
+    """Connector pour effectuer des recherches avancées via Grepai."""
+    def __init__(self, base_url="http://localhost:8000"):
+        from src.connectors.grepai.client import GrepaiClient
+        self.client = GrepaiClient(base_url=base_url)
+
+    def search_code(self, query, top_k=5):
+        """Recherche du code ou des fonctions via Grepai."""
+        return self.client.search(query=query, top_k=top_k)
+
+    def enrich_item(self, item: Any) -> Any:
+        """Enrichit un item (repository, fichier, etc.) via Grepai."""
+        result = self.search_code(f"item:{str(item)}")
+        if result and 'error' not in result:
+            item['grepai'] = result
+        return item

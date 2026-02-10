@@ -251,3 +251,75 @@ Si le frontend Electron ne démarre pas (erreur Electron uninstall), lance simpl
 Ce script télécharge et installe automatiquement le binaire Electron si besoin.
 
 La réparation est aussi lancée automatiquement après chaque installation de dépendances (postinstall).
+
+---
+
+## Installation et lancement de Grepai sur Windows
+
+1. Téléchargez l'exécutable CLI de Grepai depuis : https://yoanbernabeu.github.io/grepai/installation/
+2. Placez grepai.exe dans le dossier src/connectors/grepai/
+3. Lancez Grepai avec le script :
+
+    .\src\connectors\grepai\grepai_start.bat
+
+Grepai sera accessible sur http://localhost:8000.
+
+### Documentation officielle
+- Toutes les instructions: https://yoanbernabeu.github.io/grepai/installation/
+
+> Grepai doit être lancé comme agent/service externe. Configurez votre projet pour communiquer avec lui selon la documentation.
+
+---
+
+## Intégration de Grepai (agent externe)
+
+Grepai est intégré comme agent externe dans le projet.
+
+### Lancer Grepai
+- Utilisez le script Windows : `src/connectors/grepai/grepai_start.bat` pour lancer Grepai via Docker.
+- Grepai sera accessible sur http://localhost:8000.
+
+### Communiquer avec Grepai
+- Utilisez le module Python : `src/connectors/grepai/client.py` pour interagir avec l'API Grepai.
+- Exemple :
+
+```python
+from src.connectors.grepai.client import GrepaiClient
+client = GrepaiClient()
+print(client.health())
+```
+
+### Documentation officielle
+- https://yoanbernabeu.github.io/grepai/installation/
+
+> Grepai doit être lancé comme agent/service externe. Configurez votre projet pour communiquer avec lui selon la documentation.
+
+## Utilisation de Grepai dans l'application
+
+- Grepai est intégré dans le CLI (quality_cli.py) via la commande `grepai-search`.
+- Utilisez le connecteur Grepai (src/connectors/base.py) pour effectuer des recherches avancées dans le code.
+
+### Exemple CLI
+
+    python scripts/quality_cli.py grepai-search --query "def my_function"
+
+### Exemple Python
+
+    from src/connectors.base import GrepaiConnector
+    connector = GrepaiConnector()
+    result = connector.search_code("def my_function")
+    print(result)
+
+---
+
+## Automatisation de Grepai
+
+- Grepai est lancé et configuré automatiquement à chaque démarrage du CLI (quality_cli.py).
+- Le script src/connectors/grepai/grepai_launcher.py vérifie la présence de grepai.exe, génère grepai.yaml si besoin, lance grepai et vérifie sa disponibilité.
+- Aucun prérequis manuel : tout est automatisé.
+
+### Exemple
+
+    python scripts/quality_cli.py grepai-search --query "def my_function"
+
+> Grepai sera lancé et utilisable sans intervention.

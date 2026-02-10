@@ -14,11 +14,13 @@ Usage:
     python quality_cli.py clones --project-dir . --min-lines 6
     python quality_cli.py performance --project-dir .
     python quality_cli.py rules --generate-template
+    python quality_cli.py grepai --query "votre requête"
 """
 
 import argparse
 import sys
 from pathlib import Path
+import subprocess
 
 # Ajouter le backend au path
 sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
@@ -26,10 +28,47 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
 from cli.quality_commands import handle_quality_score_command
 
 
+def ensure_grepai():
+    """Automatise le lancement et la vérification de grepai."""
+    subprocess.run([
+        'python', 'src/connectors/grepai/grepai_launcher.py'
+    ], check=True)
+
+
+def handle_quality_score_command(args):
+    """Gère la commande de score qualité."""
+    from review.quality_scorer import QualityScorer
+    from src.connectors.base import GrepaiConnector
+    
+    project_dir = Path(args.project_dir or '.')
+    
+    # Initialiser le Grepai Connector
+    grepai = GrepaiConnector()
+    
+    # Lancer l'analyse de qualité
+    scorer = QualityScorer(project_dir)
+    score = scorer.score_files(args.files)
+    
+    # Afficher les résultats
+    print(f"\n✅ Quality Analysis Results")
+    print("=" * 50)
+    print(f"Files analyzed: {len(args.files)}")
+    print(f"Total issues found: {score.total_issues}")
+    
+    # Rechercher des informations supplémentaires avec Grepai
+    for file in args.files:
+        result = grepai.search_code(f"score file:{file}")
+        if result and 'error' not in result:
+            print(f"[Grepai] Résultats pour {file} : {result}")
+    
+    return 0
+
+
 def handle_autofix_command(args):
     """Applique des fixes automatiques."""
     from review.quality_extended import ExtendedQualityScorer
     from review.quality_autofix import AutoFixEngine
+    from src.connectors.base import GrepaiConnector
     
     project_dir = Path(args.project_dir or '.')
     
@@ -74,12 +113,20 @@ def handle_autofix_command(args):
     print(f"  Errors: {result['errors']}")
     print(f"  Files modified: {result['files_modified']}")
     
+    # Recherche Grepai pour des suggestions supplémentaires
+    grepai = GrepaiConnector()
+    for file in args.files:
+        result = grepai.search_code(f"autofix file:{file}")
+        if result and 'error' not in result:
+            print(f"[Grepai] Suggestions autofix pour {file} : {result}")
+    
     return 0
 
 
 def handle_clones_command(args):
     """Détecte les clones de code."""
     from review.quality_similarity import detect_clones_in_project, CodeSimilarityDetector
+    from src.connectors.base import GrepaiConnector
     
     project_dir = Path(args.project_dir or '.')
     
@@ -98,6 +145,13 @@ def handle_clones_command(args):
     
     print(f"Clones found: {len(clones)}")
     print(f"Issues generated: {len(issues)}")
+    
+    # Recherche Grepai pour des informations sur les clones
+    grepai = GrepaiConnector()
+    for file in args.files:
+        result = grepai.search_code(f"clones file:{file}")
+        if result and 'error' not in result:
+            print(f"[Grepai] Recherche de clones pour {file} : {result}")
     
     if args.format == 'markdown':
         detector = CodeSimilarityDetector()
@@ -124,6 +178,7 @@ def handle_clones_command(args):
 def handle_performance_command(args):
     """Analyse les problèmes de performance."""
     from review.quality_performance import analyze_project_performance
+    from src.connectors.base import GrepaiConnector
     
     project_dir = Path(args.project_dir or '.')
     
@@ -155,6 +210,13 @@ def handle_performance_command(args):
                         print(f"    💡 {issue.suggestion}")
     else:
         print("\n✅ No performance issues detected!")
+    
+    # Recherche Grepai pour des analyses de performance
+    grepai = GrepaiConnector()
+    for file in args.files:
+        result = grepai.search_code(f"performance file:{file}")
+        if result and 'error' not in result:
+            print(f"[Grepai] Analyse performance pour {file} : {result}")
     
     return 0
 
@@ -321,8 +383,21 @@ def handle_history_command(args):
     return 0
 
 
+def handle_grepai_search_command(args):
+    """Effectue une recherche via Grepai et affiche les résultats."""
+    from src.connectors.grepai.client import GrepaiClient
+    client = GrepaiClient()
+    query = args.query
+    print(f"Recherche Grepai pour : {query}")
+    result = client.search(query=query)
+    if 'error' in result:
+        print("Erreur Grepai :", result['error'])
+    else:
+        print("Résultats Grepai :", result)
+
+
 def main():
-    """Point d'entrée principal."""
+    ensure_grepai()  # Vérifie et lance grepai automatiquement
     parser = argparse.ArgumentParser(
         description="🧠 AI Code Review Quality Scorer",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -338,6 +413,7 @@ Exemples:
   %(prog)s clones --project-dir . --min-lines 10
   %(prog)s performance --project-dir .
   %(prog)s rules --generate-template
+  %(prog)s grepai --query "votre requête"
         """
     )
     
@@ -547,33 +623,31 @@ Exemples:
         help='Fichier de sortie pour markdown'
     )
     
+    # Commande: grepai (NOUVEAU)
+    grepai_parser = subparsers.add_parser(
+        'grepai',
+        help='Effectuer une recherche via Grepai'
+    )
+    grepai_parser.add_argument(
+        '--query',
+        required=True,
+        help='La requête de recherche'
+    )
+    
+    # Commande: grepai-search (NOUVEAU)
+    grepai_parser = subparsers.add_parser("grepai-search", help="Recherche avancée via Grepai")
+    grepai_parser.add_argument("--query", required=True, help="Texte à rechercher avec Grepai")
+    grepai_parser.set_defaults(func=handle_grepai_search_command)
+    
     args = parser.parse_args()
-    
-    if not args.command:
+    if hasattr(args, "func"):
+        args.func(args)
+    else:
         parser.print_help()
-        return 0
-    
-    if args.command == 'score':
-        return handle_quality_score_command(args)
-    elif args.command == 'trends':
-        return handle_trends_command(args)
-    elif args.command == 'history':
-        return handle_history_command(args)
-    elif args.command == 'autofix':
-        return handle_autofix_command(args)
-    elif args.command == 'clones':
-        return handle_clones_command(args)
-    elif args.command == 'performance':
-        return handle_performance_command(args)
-    elif args.command == 'rules':
-        return handle_rules_command(args)
-    elif args.command == 'ml':
-        return handle_ml_command(args)
-    elif args.command == 'coverage':
-        return handle_coverage_command(args)
     
     return 0
 
 
 if __name__ == '__main__':
+    ensure_grepai()
     sys.exit(main())
