@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from .quality_scorer import QualityIssue
+from src.connectors.base import GrepaiConnector
 
 
 class AutoFix:
@@ -50,8 +51,21 @@ class AutoFixEngine:
             if fix:
                 fixes.append(fix)
         
+        # Injection Grepai : suggestions de fixes
+        grepai = GrepaiConnector()
+        for issue in issues:
+            if issue.line is None:
+                continue
+            grepai_result = grepai.search_code(f"issue:{issue.description} file:{issue.file} line:{issue.line}")
+            if grepai_result and 'error' not in grepai_result:
+                self._process_grepai_fix_suggestion(issue, grepai_result)
+        
         self.fixes = fixes
         return fixes
+
+    def _process_grepai_fix_suggestion(self, issue: QualityIssue, result: dict) -> None:
+        """Traite les suggestions de fixes Grepai pour enrichir les auto-fixes."""
+        print(f"[Grepai] Suggestion de fix pour {issue.file}:{issue.line} : {result}")
 
     def _generate_fix_for_issue(self, issue: QualityIssue) -> AutoFix | None:
         """Génère un fix pour une issue spécifique."""
@@ -210,4 +224,3 @@ class AutoFixEngine:
             preview += f"- **After**:\n```\n{fix.fixed_line}\n```\n\n"
         
         return preview
-
