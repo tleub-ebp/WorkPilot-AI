@@ -15,6 +15,7 @@ import enTerminal from './locales/en/terminal.json';
 import enErrors from './locales/en/errors.json';
 import enContext from './locales/en/context.json';
 import enChangeLog from './locales/en/changelog.json';
+import enMigrationWizard from './locales/en/migration-wizard.json';
 
 // Import French translation resources
 import frCommon from './locales/fr/common.json';
@@ -30,6 +31,7 @@ import frTerminal from './locales/fr/terminal.json';
 import frErrors from './locales/fr/errors.json';
 import frContext from './locales/fr/context.json';
 import frChangeLog from './locales/fr/changelog.json';
+import frMigrationWizard from './locales/fr/migration-wizard.json';
 
 export const defaultNS = 'common';
 
@@ -47,7 +49,8 @@ export const resources = {
     terminal: enTerminal,
     errors: enErrors,
     context: enContext,
-    changelog: enChangeLog
+    changelog: enChangeLog,
+    'migration-wizard': enMigrationWizard
   },
   fr: {
     common: frCommon,
@@ -62,7 +65,8 @@ export const resources = {
     terminal: frTerminal,
     errors: frErrors,
     context: frContext,
-    changelog: frChangeLog
+    changelog: frChangeLog,
+    'migration-wizard': frMigrationWizard
   }
 } as const;
 
@@ -73,7 +77,9 @@ i18n
     lng: 'en', // Default language (will be overridden by settings)
     fallbackLng: 'en',
     defaultNS,
-    ns: ['common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'gitlab', 'taskReview', 'terminal', 'errors', 'context', 'changelog'],
+    ns: [
+      'common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'gitlab', 'taskReview', 'terminal', 'errors', 'context', 'changelog', 'migration-wizard'
+    ],
     interpolation: {
       escapeValue: false // React already escapes values
     },

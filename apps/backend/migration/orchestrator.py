@@ -20,17 +20,23 @@ from .models import (
 )
 from .analyzer import StackAnalyzer
 from .planner import MigrationPlanner
+from .transformer import TransformationEngine
+from .llm_transformer import LLMTransformer
+from .validator import MigrationValidator
+from .reporter import MigrationReporter
 
 
 class MigrationOrchestrator:
-    """Main orchestrator for migration pipeline."""
+    """Main orchestrator for the migration pipeline."""
 
-    def __init__(self, project_dir: str):
+    def __init__(self, project_dir: str, enable_llm: bool = True):
         self.project_dir = Path(project_dir)
         self.state_dir = self.project_dir / ".auto-claude" / "migration"
         self.state_dir.mkdir(parents=True, exist_ok=True)
         self.context: Optional[MigrationContext] = None
         self.checkpoints: Dict[str, RollbackCheckpoint] = {}
+        self.enable_llm = enable_llm
+        self.llm_transformer = LLMTransformer(str(self.project_dir)) if enable_llm else None
 
     def start_migration(self, target_framework: str, target_language: str) -> MigrationContext:
         """Start a new migration process."""
@@ -152,6 +158,49 @@ class MigrationOrchestrator:
             "transformations": [],
         }
 
+        # Initialize transformation engine
+        transformer = TransformationEngine(
+            str(self.project_dir),
+            self.context.source_stack.framework,
+            self.context.target_stack.framework,
+        )
+
+        # Execute transformations
+        print(f"Starting transformation from {self.context.source_stack.framework} to {self.context.target_stack.framework}...")
+        transformation_results = transformer.transform_code()
+        
+        # Enhance with LLM if enabled
+        if self.enable_llm and self.llm_transformer and transformation_results:
+            print(f"Enhancing {len(transformation_results)} transformations with LLM...")
+            import asyncio
+            
+            # Determine prompt template
+            prompt_template = f"{self.context.source_stack.framework}_to_{self.context.target_stack.framework}.md"
+            
+            # Run async enhancement
+            enhanced_results = asyncio.run(
+                self.llm_transformer.enhance_transformations_batch(
+                    transformation_results,
+                    self.context.source_stack.framework,
+                    self.context.target_stack.framework,
+                    prompt_template,
+                )
+            )
+            transformation_results = enhanced_results
+
+        # Store results
+        self.context.transformations = transformation_results
+        results["transformations"] = [
+            {
+                "file": t.file_path,
+                "type": t.transformation_type,
+                "confidence": t.confidence,
+                "changes": t.changes_count,
+                "llm_enhanced": getattr(t, "llm_enhanced", False),
+            }
+            for t in transformation_results
+        ]
+
         # Execute each transformation phase
         for phase in self.context.plan.phases:
             if phase.id in ["analysis", "planning", "backup"]:
@@ -160,7 +209,6 @@ class MigrationOrchestrator:
             phase.status = "in_progress"
             phase.started_at = datetime.now()
 
-            # Placeholder: Actual transformations would be applied here
             phase.status = "completed"
             phase.completed_at = datetime.now()
             results["phases_completed"] += 1

@@ -6,6 +6,7 @@ from typing import List, Dict, Optional
 from pathlib import Path
 
 from .models import TransformationResult
+from .performance import MigrationCache, ParallelTransformer, IncrementalMigration, ProgressTracker
 from .transformers import (
     ReactToVueTransformer,
     ReactToAngularTransformer,
@@ -22,11 +23,36 @@ from .transformers import (
 class TransformationEngine:
     """Main transformation orchestrator."""
 
-    def __init__(self, project_dir: str, source_framework: str, target_framework: str):
+    def __init__(
+        self,
+        project_dir: str,
+        source_framework: str,
+        target_framework: str,
+        enable_cache: bool = True,
+        enable_parallel: bool = True,
+        max_workers: int = 4,
+    ):
         self.project_dir = Path(project_dir)
         self.source_framework = source_framework
         self.target_framework = target_framework
         self.transformations: List[TransformationResult] = []
+        
+        # Performance optimizations
+        self.enable_cache = enable_cache
+        self.enable_parallel = enable_parallel
+        
+        # Initialize cache
+        cache_dir = self.project_dir / ".auto-claude" / "migration" / "cache"
+        self.cache = MigrationCache(str(cache_dir)) if enable_cache else None
+        
+        # Initialize parallel processor
+        self.parallel = ParallelTransformer(max_workers=max_workers) if enable_parallel else None
+        
+        # Initialize incremental migration
+        self.incremental = IncrementalMigration(str(self.project_dir))
+        
+        # Initialize progress tracker
+        self.progress = ProgressTracker()
 
     def transform_code(self, file_paths: Optional[List[str]] = None) -> List[TransformationResult]:
         """Execute code transformations."""

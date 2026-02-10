@@ -73,6 +73,7 @@ import type { Task, Project, ColorTheme } from '../shared/types';
 import { ProjectTabBar } from './components/ProjectTabBar';
 import { AddProjectModal } from './components/AddProjectModal';
 import { ViewStateProvider } from './contexts/ViewStateContext';
+import { MigrationWizard } from './components/MigrationWizard';
 
 // Version constant for version-specific warnings (e.g., reauthentication notices)
 const VERSION_WARNING_275 = '2.7.5';
@@ -1046,6 +1047,9 @@ const handleProjectAdded = async (project: Project, needsInit: boolean) => {
                   <Worktrees projectId={activeProjectId || selectedProjectId!} />
                 )}
                 {activeView === 'agent-tools' && <AgentTools />}
+                {activeView === 'migration' && (
+                  <MigrationWizard />
+                )}
               </>
             ) : (
               <WelcomeScreen

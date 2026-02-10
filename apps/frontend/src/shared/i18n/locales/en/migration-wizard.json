@@ -1,0 +1,60 @@
+{
+  "title": "Migration Wizard",
+  "steps": {
+    "configure": "Configuration",
+    "analyze": "Analysis",
+    "transform": "Transformation",
+    "validate": "Validation"
+  },
+  "descriptions": {
+    "configure": "Select source and target frameworks",
+    "analyze": "Analyze project structure",
+    "transform": "Apply code transformations",
+    "validate": "Run tests and validation"
+  },
+  "fields": {
+    "projectPath": "Project path",
+    "selectMigrationType": "Migration type",
+    "search": "Search migrations...",
+    "category": "Category"
+  },
+  "categories": {
+    "all": "All migrations",
+    "frontend": "Frontend",
+    "backend": "Backend",
+    "database": "Database",
+    "language": "Language",
+    "api": "API",
+    "build": "Build tools",
+    "testing": "Testing",
+    "mobile": "Mobile",
+    "package": "Package management"
+  },
+  "complexity": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "very_high": "Very high"
+  },
+  "noMigrations": "No migrations found for \"{{search}}\".",
+  "defaultProjectPath": "./",
+  "options": {
+    "llmEnhancement": {
+      "title": "🤖 LLM Enhancement",
+      "description": "Enable AI assistance to improve migration and provide smart suggestions."
+    },
+    "autoFixLoop": {
+      "title": "🔧 Auto-fix Loop",
+      "description": "Automatically attempts to fix detected errors during migration until a satisfactory result is achieved."
+    },
+    "createBackup": {
+      "title": "💾 Create Backup",
+      "description": "Creates a full backup of the project before applying any transformation."
+    }
+  },
+  "actions": {
+    "start": "Start migration",
+    "next": "Next",
+    "back": "Back"
+  }
+}
