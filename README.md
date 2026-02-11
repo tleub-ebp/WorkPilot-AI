@@ -254,24 +254,22 @@ La réparation est aussi lancée automatiquement après chaque installation de d
 
 ---
 
-## Installation et lancement de Grepai sur Windows
+## Quickstart Grepai (méthode officielle)
 
-1. Téléchargez l'exécutable CLI de Grepai depuis : https://yoanbernabeu.github.io/grepai/installation/
-2. Placez grepai.exe dans le dossier src/connectors/grepai/
-3. Lancez Grepai avec le script :
+1. Clonez le dépôt Grepai dans src/connectors/grepai/grepai :
+   git clone https://github.com/yoanbernabeu/grepai.git src/connectors/grepai/grepai
+2. Installez les dépendances :
+   pip install -r src/connectors/grepai/grepai/requirements.txt
+3. (Optionnel) Modifiez grepai.yaml pour configurer index_path, port, etc.
+4. Lancez grepai automatiquement via le CLI ou le script d'automatisation :
+   python scripts/quality_cli.py grepai-search --query "def my_function"
+   (grepai sera lancé et utilisé automatiquement)
 
-    .\src\connectors\grepai\grepai_start.bat
-
-Grepai sera accessible sur http://localhost:8000.
-
-### Documentation officielle
-- Toutes les instructions: https://yoanbernabeu.github.io/grepai/installation/
-
-> Grepai doit être lancé comme agent/service externe. Configurez votre projet pour communiquer avec lui selon la documentation.
+Grepai sera accessible sur http://localhost:8000 et utilisable dans tous les modules du projet.
 
 ---
 
-## Intégration de Grepai (agent externe)
+## Integration de Grepai (agent externe)
 
 Grepai est intégré comme agent externe dans le projet.
 

@@ -5,9 +5,12 @@ import yaml
 import requests
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'grepai.yaml')
-EXE_PATH = os.path.join(os.path.dirname(__file__), 'grepai.exe')
+GREPAI_DIR = os.path.join(os.path.dirname(__file__), 'grepai')
+PYTHON_PATH = 'python'
 PORT = 8000
 INDEX_PATH = '../../apps/backend'
+GIT_URL = 'https://github.com/yoanbernabeu/grepai.git'
+REQUIREMENTS_PATH = os.path.join(GREPAI_DIR, 'requirements.txt')
 
 DEFAULT_CONFIG = {
     'index_path': INDEX_PATH,
@@ -15,6 +18,9 @@ DEFAULT_CONFIG = {
     'log_level': 'info',
     'max_results': 10
 }
+
+BINARY_PATH = os.path.join(GREPAI_DIR, 'grepai.exe')
+GO_BUILD_CMD = ['go', 'build', '-o', BINARY_PATH, './cmd/grepai']
 
 
 def ensure_config():
@@ -26,11 +32,30 @@ def ensure_config():
         print(f"Fichier de configuration déjà présent : {CONFIG_PATH}")
 
 
+def ensure_grepai_installed():
+    if not os.path.exists(GREPAI_DIR):
+        print("Clonage du dépôt grepai...")
+        subprocess.run(['git', 'clone', GIT_URL, GREPAI_DIR], check=True)
+    else:
+        print("Dossier grepai déjà présent.")
+    if os.path.exists(REQUIREMENTS_PATH):
+        print("Installation des dépendances grepai...")
+        subprocess.run([PYTHON_PATH, '-m', 'pip', 'install', '-r', REQUIREMENTS_PATH], check=True)
+    else:
+        print("requirements.txt introuvable dans grepai.")
+
+
+def ensure_grepai_built():
+    if not os.path.exists(BINARY_PATH):
+        print("Compilation du binaire grepai...")
+        subprocess.run(GO_BUILD_CMD, cwd=GREPAI_DIR, check=True)
+    else:
+        print("Binaire grepai déjà présent.")
+
+
 def launch_grepai():
-    if not os.path.exists(EXE_PATH):
-        raise FileNotFoundError(f"grepai.exe introuvable dans {EXE_PATH}. Téléchargez-le depuis https://yoanbernabeu.github.io/grepai/installation/")
     print("Lancement de grepai...")
-    subprocess.Popen([EXE_PATH, 'serve'], cwd=os.path.dirname(EXE_PATH))
+    subprocess.Popen([BINARY_PATH, 'serve'], cwd=GREPAI_DIR)
     time.sleep(2)  # Laisse le temps à grepai de démarrer
 
 
@@ -44,6 +69,8 @@ def check_grepai_health():
 
 def main():
     ensure_config()
+    ensure_grepai_installed()
+    ensure_grepai_built()
     if not check_grepai_health():
         launch_grepai()
         time.sleep(2)
