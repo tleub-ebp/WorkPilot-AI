@@ -1,6 +1,5 @@
 @echo off
-REM Lance grepai via l'exécutable CLI
-
-REM Assurez-vous que grepai.exe est téléchargé et placé dans ce dossier
-
-grepai.exe serve
+REM Lance grepai via Python (build local)
+REM Assurez-vous d'avoir cloné le dépôt grepai dans ce dossier
+REM Installez les dépendances avec : pip install -r grepai/requirements.txt
+python grepai/grepai.py serve

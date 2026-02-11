@@ -1,0 +1,4 @@
+index_path: ../../apps/backend
+log_level: info
+max_results: 10
+port: 8000
