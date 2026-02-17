@@ -1431,17 +1431,18 @@ export function registerClaudeCodeHandlers(): void {
     }
   );
 
-  // Get usage for a specific provider
+  // Get usage for a specific provider (or active profile if no provider specified)
   ipcMain.handle('usage:get', async (_event, providerName?: string) => {
     const usageMonitor = getUsageMonitor();
-    // Ici, il faut adapter pour retourner l'usage du provider demandé
-    // (exemple simplifié, à adapter selon la logique réelle)
-    if (!providerName) {
-      return { success: false, error: 'Provider manquant' };
-    }
     try {
-      const usage = await usageMonitor.getUsageForProvider(providerName);
-      return { success: true, data: usage };
+      if (providerName) {
+        // Fetch usage for the specified provider
+        const usage = await usageMonitor.getUsageForProvider(providerName);
+        return { success: true, data: usage };
+      }
+      // No provider specified — return current active profile usage (backward compat)
+      const currentUsage = usageMonitor.getCurrentUsage();
+      return { success: true, data: currentUsage ?? null };
     } catch (e) {
       return { success: false, error: String(e) };
     }

@@ -1,17 +1,3 @@
-import React, { useState, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
-import ReactFlow, { MiniMap, Controls, Background, addEdge, useNodesState, useEdgesState, Connection, Edge } from 'reactflow';
-import 'reactflow/dist/style.css';
-import { VisualProgrammingPalette } from './VisualProgrammingPalette';
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
-import { Select, SelectItem, SelectTrigger, SelectContent } from './ui/select';
-import { nodeTypes, edgeTypes } from './reactflowTypes';
-import { toast } from "../hooks/use-toast";
-import { FileTree } from './FileTree';
-import { useSettingsStore } from '../stores/settings-store';
-
 /**
  * VisualProgrammingInterface
  * No-code/Low-code visual programming interface for non-devs.
@@ -20,13 +6,27 @@ import { useSettingsStore } from '../stores/settings-store';
  * - Mockup → Frontend code
  * - Reverse: Code → Visual representation
  */
+
+import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Card } from './ui/card';
+import { Button } from './ui/button';
+import ReactFlow, { MiniMap, Controls, Background, addEdge, useNodesState, useEdgesState, Connection, Edge } from 'reactflow';
+import 'reactflow/dist/style.css';
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
+import { Select, SelectItem, SelectTrigger, SelectContent } from './ui/select';
+import { nodeTypes, edgeTypes } from './reactflowTypes';
+import { toast } from "@/hooks/use-toast";
+import { FileTree } from './FileTree';
+import {saveAs} from "file-saver";
+
 export const VisualProgrammingInterface: React.FC = () => {
   const { t } = useTranslation('visualProgramming');
   const [nodes, setNodes, onNodesChange] = useNodesState([
     { id: '1', position: { x: 250, y: 5 }, data: { label: t('newFlowchart') }, type: 'editable' }
   ]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [diagramType, setDiagramType] = useState<'flowchart' | 'architecture' | 'mockup'>('flowchart');
+  const [diagramType, setDiagramType] = useState<DiagramType>('flowchart');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loadInputRef = useRef<HTMLInputElement>(null);
   const [showFrameworkModal, setShowFrameworkModal] = useState(false);
@@ -37,8 +37,6 @@ export const VisualProgrammingInterface: React.FC = () => {
   const [selectedFolder, setSelectedFolder] = useState<string>("");
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
   const [saveAsFileName, setSaveAsFileName] = useState("");
-  const projectRoot = window.electronAPI?.getProjectRoot?.() || "";
-  const theme = useSettingsStore((state) => state.settings.theme);
 
   // Frameworks par type
   const FRAMEWORKS: Record<string, { value: string; labelKey: string }[]> = {
@@ -123,13 +121,6 @@ export const VisualProgrammingInterface: React.FC = () => {
     setEdges(importedEdges);
   };
 
-  // Persistance locale (sauvegarde/chargement)
-  const handleSave = () => {
-    // Propose une modale avec le nom par défaut (timestamp)
-    setSaveAsFileName(getDefaultFileName());
-    setShowSaveAsDialog(true);
-  };
-
   // Génère le nom par défaut avec timestamp
   const getDefaultFileName = () => {
     const now = new Date();
@@ -148,23 +139,28 @@ export const VisualProgrammingInterface: React.FC = () => {
     const fileName = saveAsFileName;
     const folderPath = selectedFolder;
     try {
-      const result = await window.electronAPI.saveJsonFile(folderPath, fileName, exportData);
-      if (result?.success) {
-        setIsJsonSaved(true);
-        setShowSaveAsDialog(false);
-        toast({
-          title: t('saveSuccess', 'Sauvegarde réussie'),
-          description: `${t('fileSavedIn', 'Fichier sauvegardé dans')} ${folderPath}`,
-          variant: 'success',
-        });
-        // Suppression de l'appel direct à handleNewDiagram(nextDiagramType)
+      if (window.electronAPI?.saveJsonFile) {
+        const result = await window.electronAPI.saveJsonFile(folderPath, fileName, exportData);
+        if (result?.success) {
+          setIsJsonSaved(true);
+          setShowSaveAsDialog(false);
+          toast({
+            title: t('saveSuccess', 'Sauvegarde réussie'),
+            description: `${t('fileSavedIn', 'Fichier sauvegardé dans')} ${folderPath}`
+          });
+        } else {
+          toast({
+            title: t('saveError', 'Erreur lors de la sauvegarde'),
+            description: result?.error || 'Erreur inconnue',
+          });
+        }
       } else {
         toast({
-          title: t('saveError', 'Erreur lors de la sauvegarde'),
-          description: result?.error || 'Erreur inconnue',
+          title: t('saveError', 'Electron API non disponible'),
+          description: 'Impossible de sauvegarder le fichier côté client.',
         });
       }
-    } catch (e) {
+    } catch (e: any) {
       toast({ title: t('saveError', 'Erreur lors de la sauvegarde'), description: e.message });
     }
   };
@@ -206,7 +202,7 @@ export const VisualProgrammingInterface: React.FC = () => {
     const mouseY = event.clientY - bounds.top;
     // Conversion en coordonnées diagramme
     let position = { x: mouseX, y: mouseY };
-    if (reactFlowInstance && reactFlowInstance.project) {
+    if (reactFlowInstance?.project) {
       position = reactFlowInstance.project({ x: mouseX, y: mouseY });
     }
     if (!FRAMEWORKS[type]) {
@@ -236,7 +232,7 @@ export const VisualProgrammingInterface: React.FC = () => {
     const pascalType = pendingNode.type.charAt(0).toUpperCase() + pendingNode.type.slice(1);
     let label = `${framework} (${pascalType})`;
     if (pendingNode.type === 'custom') {
-      const customName = window.prompt(t('customBlockPrompt', 'Nom du bloc personnalisé ?'));
+      const customName = window.prompt(t('customBlockPrompt', 'Nom du bloc personnalisé?'));
       if (customName) label = customName;
     }
     setNodes((nds) => [
@@ -280,7 +276,13 @@ export const VisualProgrammingInterface: React.FC = () => {
     }
     setDiagramType(type);
     setNodes([
-      { id: '1', position: { x: 250, y: 5 }, data: { label: getNodeLabel(type), onRename: handleRenameNode }, type: 'editable', selected: false }
+      {
+        id: '1',
+        position: { x: 250, y: 5 },
+        data: { label: getNodeLabel ? getNodeLabel(type) : '' },
+        type: 'editable',
+        selected: false,
+      },
     ]);
     setEdges([]);
     setShowFrameworkModal(false);
@@ -339,19 +341,6 @@ export const VisualProgrammingInterface: React.FC = () => {
     setShowSaveAsDialog(true);
   };
 
-  // Handler pour confirmation sauvegarde puis changement de diagramme
-  const handleSaveAndChangeDiagram = () => {
-    setNextDiagramType(nextDiagramType);
-    setSaveAsFileName(getDefaultFileName());
-    setShowSaveAsDialog(true);
-  };
-
-  // Handler pour changer sans enregistrer
-  const handleChangeDiagramWithoutSave = () => {
-    setNextDiagramType(nextDiagramType);
-    setShowSaveAsDialog(false);
-  };
-
   const handleNodesChange = (changes: any) => {
     setIsJsonSaved(false);
     onNodesChange(changes);
@@ -363,8 +352,10 @@ export const VisualProgrammingInterface: React.FC = () => {
 
   // Correction : fallback dynamique pour explorerRoot si getUserHome échoue
   const getDefaultExplorerRoot = () => {
-    const home = window.electronAPI?.getUserHome?.();
-    if (home && typeof home === 'string' && home.length > 0) return home;
+    if (window.electronAPI?.getUserHome) {
+      const home = window.electronAPI.getUserHome();
+      if (home && home.length > 0) return home;
+    }
     // Fallback Windows
     if (window.process?.platform === 'win32') return 'C:\\';
     // Fallback Unix
@@ -381,17 +372,6 @@ export const VisualProgrammingInterface: React.FC = () => {
     }
   }, [showSaveAsDialog]);
 
-  // Validation assouplie pour Windows et Unix
-  const isValidPath = (path: string) => {
-    if (!path || typeof path !== 'string') return false;
-    // Windows : accepte tout chemin commençant par une lettre suivie de :\ ou \\ (UNC)
-    if (window.process?.platform === 'win32') {
-      return /^[A-Za-z]:\\/.test(path) || /^\\\\/.test(path);
-    }
-    // Unix : accepte tout chemin commençant par /
-    return path.startsWith('/');
-  };
-
   return (
     <Card className="p-6 flex flex-col gap-4 h-full flex-1 relative">
       <h2 className="text-2xl font-bold mb-2">🎨 {t('title')}</h2>
@@ -399,17 +379,23 @@ export const VisualProgrammingInterface: React.FC = () => {
       {/* Zone principale avec boutons de programmation visuelle */}
       <div className="flex flex-col h-full">
         <div className="flex gap-2 mb-2">
-          {(['flowchart', 'architecture', 'mockup'] as const).map((type) => (
-            <Button
-              key={type}
-              variant="outline"
-              onClick={() => requestDiagramChange(type)}
-              className={diagramType === type ? 'bg-primary/80 text-primary-foreground hover:bg-primary/90' : ''}
-              style={diagramType === type ? { boxShadow: '0 2px 8px 0 rgba(80,80,255,0.10)' } : {}}
-            >
-              {t(type === 'flowchart' ? 'newFlowchart' : type === 'architecture' ? 'newArchitectureDiagram' : 'newMockup')}
-            </Button>
-          ))}
+          {(['flowchart', 'architecture', 'mockup'] as const).map((type) => {
+            let buttonLabel = '';
+            if (type === 'flowchart') buttonLabel = t('newFlowchart');
+            else if (type === 'architecture') buttonLabel = t('newArchitectureDiagram');
+            else buttonLabel = t('newMockup');
+            return (
+              <Button
+                key={type}
+                variant="outline"
+                onClick={() => requestDiagramChange(type)}
+                className={diagramType === type ? 'bg-primary/80 text-primary-foreground hover:bg-primary/90' : ''}
+                style={diagramType === type ? { boxShadow: '0 2px 8px 0 rgba(80,80,255,0.10)' } : {}}
+              >
+                {buttonLabel}
+              </Button>
+            );
+          })}
           <Button variant="outline" onClick={handleAddNode}>{t('addBlock', 'Ajouter un bloc')}</Button>
           <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".js,.ts,.txt" onChange={handleImportCode} />
           <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>{t('reverse')}</Button>
@@ -418,7 +404,7 @@ export const VisualProgrammingInterface: React.FC = () => {
           <input type="file" ref={loadInputRef} style={{ display: 'none' }} accept=".json" onChange={handleLoad} />
           <Button variant="outline" onClick={() => loadInputRef.current?.click()}>{t('load')}</Button>
         </div>
-        <div className="flex-1 min-h-[400px] border rounded bg-muted/30 text-muted-foreground overflow-hidden relative">
+        <div className="flex-1 min-h-100 border rounded bg-muted/30 text-muted-foreground overflow-hidden relative">
           <ReactFlow
             ref={reactFlowRef}
             key={diagramType}
@@ -427,7 +413,7 @@ export const VisualProgrammingInterface: React.FC = () => {
             onNodesChange={handleNodesChange}
             onEdgesChange={handleEdgesChange}
             onConnect={onConnect}
-            fitView={diagramType}
+            fitView={true}
             edgeTypes={edgeTypes}
             nodeTypes={nodeTypes}
             {...reactFlowProps}
@@ -509,3 +495,6 @@ export const VisualProgrammingInterface: React.FC = () => {
     </Card>
   );
 };
+
+// Type alias pour le type de diagramme
+export type DiagramType = 'flowchart' | 'architecture' | 'mockup';

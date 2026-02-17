@@ -119,7 +119,7 @@ export interface TerminalAPI {
   retryWithProfile: (request: import('../../shared/types').RetryWithProfileRequest) => Promise<IPCResult>;
 
   // Usage Monitoring (Proactive Account Switching)
-  requestUsageUpdate: () => Promise<IPCResult<import('../../shared/types').ClaudeUsageSnapshot | null>>;
+  requestUsageUpdate: (providerName?: string) => Promise<IPCResult<import('../../shared/types').ClaudeUsageSnapshot | null>>;
   requestAllProfilesUsage: (forceRefresh?: boolean) => Promise<IPCResult<import('../../shared/types').AllProfilesUsage | null>>;
   onUsageUpdated: (callback: (usage: import('../../shared/types').ClaudeUsageSnapshot) => void) => () => void;
   onAllProfilesUsageUpdated: (callback: (allProfilesUsage: import('../../shared/types').AllProfilesUsage) => void) => () => void;
@@ -515,8 +515,8 @@ export const createTerminalAPI = (): TerminalAPI => ({
     ipcRenderer.invoke(IPC_CHANNELS.CLAUDE_RETRY_WITH_PROFILE, request),
 
   // Usage Monitoring (Proactive Account Switching)
-  requestUsageUpdate: (): Promise<IPCResult<import('../../shared/types').ClaudeUsageSnapshot | null>> =>
-    ipcRenderer.invoke(IPC_CHANNELS.USAGE_REQUEST),
+  requestUsageUpdate: (providerName?: string): Promise<IPCResult<import('../../shared/types').ClaudeUsageSnapshot | null>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.USAGE_REQUEST, providerName),
 
   requestAllProfilesUsage: (forceRefresh?: boolean): Promise<IPCResult<import('../../shared/types').AllProfilesUsage | null>> =>
     ipcRenderer.invoke(IPC_CHANNELS.ALL_PROFILES_USAGE_REQUEST, forceRefresh ?? false),

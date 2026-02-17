@@ -22,13 +22,13 @@ import {
 import { useTranslation } from 'react-i18next';
 import { formatTimeRemaining, localizeUsageWindowLabel, hasHardcodedText } from '@shared/utils/format-time';
 import type { ClaudeUsageSnapshot, ProfileUsageSummary } from '@shared/types';
-import type { AppSection } from '@/components/settings';
 import { useProviderContext } from './ProviderContext';
+import {AppSection} from "@/components/settings/AppSettings";
 
 /**
  * Usage threshold constants for color coding
  */
-const THRESHOLD_CRITICAL = 95;  // Red: At or near limit
+const THRESHOLD_CRITICAL = 95;  // Red: At or near the limit
 const THRESHOLD_WARNING = 91;   // Orange: Very high usage
 const THRESHOLD_ELEVATED = 71;  // Yellow: Moderate usage
 // Below 71 is considered normal (green)
@@ -159,7 +159,7 @@ export function UsageIndicator() {
     }
 
     // Optimistic update: immediately swap profiles in the UI
-    // 1. Convert current active profile to a ProfileUsageSummary for the "other" list
+    // 1. Convert a current active profile to a ProfileUsageSummary for the "other" list
     const currentActiveAsSummary: ProfileUsageSummary = {
       profileId: usage?.profileId || '',
       profileName: usage?.profileName || '',

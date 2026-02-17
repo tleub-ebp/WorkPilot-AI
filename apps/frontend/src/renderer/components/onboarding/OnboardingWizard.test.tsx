@@ -40,7 +40,7 @@ vi.mock('react-i18next', () => ({
         'authChoice.oauthDesc': 'OAuth authentication',
         'authChoice.apiKeyTitle': 'Use Custom API Key',
         'authChoice.apiKeyDesc': 'Enter your own API key',
-        'authChoice.skip': 'Skip for now',
+        'authChoice.skip': 'Skip for nowA',
         // Common translations
         'common:actions.close': 'Close'
       };

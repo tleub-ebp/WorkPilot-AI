@@ -30,7 +30,7 @@ import { Sidebar, type SidebarView } from '@/components';
 import { KanbanBoard } from '@/components';
 import { TaskDetailModal } from '@/components/task-detail';
 import { TaskCreationWizard } from '@/components';
-import { AppSettingsDialog, type AppSection } from '@/components';
+import { AppSettingsDialog, type AppSection } from './components/settings/AppSettings';
 import type { ProjectSettingsSection } from './components/settings/ProjectSettingsContent';
 import { TerminalGrid } from './components/TerminalGrid';
 import { Roadmap } from './components/Roadmap';
@@ -45,7 +45,6 @@ import { GitLabMergeRequests } from './components/gitlab-merge-requests';
 import { VersionWarningModal } from './components/VersionWarningModal';
 import { OnboardingWizard } from './components/onboarding';
 import { GitHubSetupModal } from './components/GitHubSetupModal';
-import { RepositoryProviderModal } from './components/RepositoryProviderModal';
 import { AzureDevOpsSetupModal } from './components/AzureDevOpsSetupModal';
 import { useProjectStore, loadProjects, addProject, initializeProject, removeProject } from './stores/project-store';
 import { useTaskStore, loadTasks } from './stores/task-store';
@@ -63,6 +62,8 @@ import { ProjectTabBar } from './components/ProjectTabBar';
 import { ViewStateProvider } from './contexts/ViewStateContext';
 import { ProviderSelector } from './components/ProviderSelector';
 import { ProviderContextProvider } from './components/ProviderContext';
+import { AddProjectModal } from '@/components';
+import { AlertCircle } from 'lucide-react';
 
 // Version constant for version-specific warnings (e.g., reauthentication notices)
 const VERSION_WARNING_275 = '2.7.5';
@@ -127,17 +128,6 @@ export function App() {
   // Claude Profile state (OAuth)
   const claudeProfiles = useClaudeProfileStore((state) => state.profiles);
 
-  // UI State
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
-  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
-  const [settingsInitialSection, setSettingsInitialSection] = useState<AppSection | undefined>(undefined);
-  const [settingsInitialProjectSection, setSettingsInitialProjectSection] = useState<ProjectSettingsSection | undefined>(undefined);
-  const [activeView, setActiveView] = useState<SidebarView>('kanban');
-  const [isOnboardingWizardOpen, setIsOnboardingWizardOpen] = useState(false);
-  const [isVersionWarningModalOpen, setIsVersionWarningModalOpen] = useState(false);
-  const [isRefreshingTasks, setIsRefreshingTasks] = useState(false);
-
   // Initialize dialog state
   const [showInitDialog, setShowInitDialog] = useState(false);
   const [pendingProject, setPendingProject] = useState<Project | null>(null);
@@ -157,6 +147,17 @@ export function App() {
   const [pendingRepoProvider, setPendingRepoProvider] = useState<'github' | 'azure_devops' | null>(null);
   const [showAzureDevOpsSetup, setShowAzureDevOpsSetup] = useState(false);
   const [azureDevOpsSetupProject, setAzureDevOpsSetupProject] = useState<Project | null>(null);
+
+  // UI State
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
+  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
+  const [settingsInitialSection, setSettingsInitialSection] = useState<AppSection | undefined>(undefined);
+  const [settingsInitialProjectSection, setSettingsInitialProjectSection] = useState<ProjectSettingsSection | undefined>(undefined);
+  const [activeView, setActiveView] = useState<SidebarView>('kanban');
+  const [isOnboardingWizardOpen, setIsOnboardingWizardOpen] = useState(false);
+  const [isVersionWarningModalOpen, setIsVersionWarningModalOpen] = useState(false);
+  const [isRefreshingTasks, setIsRefreshingTasks] = useState(false);
 
   // Remove project confirmation state
   const [showRemoveProjectDialog, setShowRemoveProjectDialog] = useState(false);
@@ -314,7 +315,7 @@ export function App() {
   };
 
   // Sync i18n language with settings
-  const { t, i18n } = useTranslation('dialogs');
+  const { t, i18n } = useTranslation(['dialogs', 'common']);
   useEffect(() => {
     if (settings.language && settings.language !== i18n.language) {
       i18n.changeLanguage(settings.language);
@@ -385,14 +386,10 @@ export function App() {
     // (project update with autoBuildPath may not have propagated yet)
     if (initSuccess) return;
 
-    if (selectedProject && !selectedProject.autoBuildPath && skippedInitProjectId !== selectedProject.id) {
+    if (selectedProject && !selectedProject.autoBuildPath) {
       // Project exists but isn't initialized - show init dialog
-      setPendingProject(selectedProject);
-      setInitError(null); // Clear any previous errors
-      setInitSuccess(false); // Reset success flag
-      setShowInitDialog(true);
     }
-  }, [selectedProject, skippedInitProjectId, isInitializing, initSuccess]);
+  }, [selectedProject, isInitializing, initSuccess]);
 
   // Global keyboard shortcut: Cmd/Ctrl+T to add project (when not on terminals view)
   useEffect(() => {
@@ -652,14 +649,15 @@ export function App() {
 
   const handleProjectAdded = async (project: Project, needsInit: boolean) => {
     openProjectTab(project.id);
-    if (needsInit) {
+    // Si le projet a déjà une description et un provider, il est déjà initialisé
+    const alreadyInitialized = !!(project.settings?.description && project.settings?.provider);
+    if (needsInit && !alreadyInitialized) {
       setPendingProject(project);
       setInitError(null);
       setInitSuccess(false);
       setShowInitDialog(true);
       return;
     }
-
     try {
       const envResult = await window.electronAPI.getProjectEnv(project.id);
       const envConfig = envResult.success ? envResult.data : null;
@@ -684,7 +682,7 @@ export function App() {
   };
 
   const handleProjectTabClose = (projectId: string) => {
-    // Show confirmation dialog before removing the project
+    // Show the confirmation dialog before removing the project
     const project = projects.find(p => p.id === projectId);
     if (project) {
       setProjectToRemove(project);
@@ -692,11 +690,13 @@ export function App() {
     }
   };
 
-  // Fonction pour fermer uniquement l'onglet (tab) d'un projet
-  const handleProjectTabCloseSimple = (projectId: string) => {
+  // Fonction pour fermer l'onglet ET supprimer le projet du store global
+  const handleProjectTabCloseAndRemove = async (projectId: string) => {
     useProjectStore.getState().closeProjectTab(projectId);
+    await removeProject(projectId); // suppression globale
   };
 
+  // Handle confirm remove project
   const handleConfirmRemoveProject = () => {
     if (projectToRemove) {
       try {
@@ -752,67 +752,29 @@ export function App() {
     if (!pendingProject) return;
 
     const projectId = pendingProject.id;
-    console.warn('[InitDialog] Starting initialization for project:', projectId);
     setIsInitializing(true);
     setInitSuccess(false);
-    setInitError(null); // Clear any previous errors
+    setInitError(null);
+
     try {
       const result = await initializeProject(projectId);
-      console.warn('[InitDialog] Initialization result:', result);
-
       if (result?.success) {
-        console.warn('[InitDialog] Initialization successful, closing dialog');
-        // Get the updated project from store
-        const updatedProject = useProjectStore.getState().projects.find(p => p.id === projectId);
-        console.warn('[InitDialog] Updated project:', updatedProject);
-
-        // Mark as successful to prevent onOpenChange from treating this as a skip
         setInitSuccess(true);
         setIsInitializing(false);
-
-        // Now close the dialog
         setShowInitDialog(false);
         setPendingProject(null);
 
         // Show repo provider setup modal
-        if (updatedProject) {
-          const detectionResult = await window.electronAPI.detectRepoProvider(updatedProject.path);
-          const rawProvider = detectionResult.success ? (detectionResult.data?.provider ?? 'unknown') : 'unknown';
-          const provider = inferProviderFromRemote(rawProvider, detectionResult.data?.remoteUrl);
-
-          setShowGitHubSetup(false);
-          setGitHubSetupProject(null);
-          setShowAzureDevOpsSetup(false);
-          setAzureDevOpsSetupProject(null);
-          setRepoProviderProject(null);
-          setShowRepoProviderSetup(false);
-
-          if (provider === 'github') {
-            setPendingRepoProvider('github');
-            setGitHubSetupProject(updatedProject);
-            setShowGitHubSetup(true);
-          } else if (provider === 'azure_devops') {
-            setPendingRepoProvider('azure_devops');
-            setAzureDevOpsSetupProject(updatedProject);
-            setShowAzureDevOpsSetup(true);
-          } else {
-            setPendingRepoProvider(null);
-            setRepoProviderProject(updatedProject);
-            setShowRepoProviderSetup(true);
-          }
+        if (result.success && pendingProject) {
+          setRepoProviderProject(pendingProject);
+          setShowRepoProviderSetup(true);
         }
       } else {
-        // Initialization failed - show error but keep dialog open
-        console.warn('[InitDialog] Initialization failed, showing error');
-        const errorMessage = result?.error || 'Failed to initialize Auto Claude. Please try again.';
-        setInitError(errorMessage);
+        setInitError(result?.error || t('common:errors.unknownError'));
         setIsInitializing(false);
       }
-    } catch (error) {
-      // Unexpected error occurred
-      console.error('[InitDialog] Unexpected error during initialization:', error);
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-      setInitError(errorMessage);
+    } catch (err) {
+      setInitError(err instanceof Error ? err.message : t('common:errors.unknownError'));
       setIsInitializing(false);
     }
   };
@@ -863,18 +825,23 @@ export function App() {
     setPendingRepoProvider(null);
   };
 
-  const handleRepoProviderSelect = (provider: 'github' | 'azure_devops') => {
+  const handleRepoProviderSelectGitHub = () => {
     if (!repoProviderProject) return;
 
     setShowRepoProviderSetup(false);
-    setPendingRepoProvider(provider);
-    if (provider === 'github') {
-      setGitHubSetupProject(repoProviderProject);
-      setShowGitHubSetup(true);
-    } else {
-      setAzureDevOpsSetupProject(repoProviderProject);
-      setShowAzureDevOpsSetup(true);
-    }
+    setPendingRepoProvider('github');
+    setGitHubSetupProject(repoProviderProject);
+    setShowGitHubSetup(true);
+    setRepoProviderProject(null);
+  };
+
+  const handleRepoProviderSelectAzureDevOps = () => {
+    if (!repoProviderProject) return;
+
+    setShowRepoProviderSetup(false);
+    setPendingRepoProvider('azure_devops');
+    setAzureDevOpsSetupProject(repoProviderProject);
+    setShowAzureDevOpsSetup(true);
     setRepoProviderProject(null);
   };
 
@@ -896,18 +863,6 @@ export function App() {
     setAzureDevOpsSetupProject(null);
     setPendingRepoProvider(null);
   };
-
-  const handleSkipInit = () => {
-    console.warn('[InitDialog] User skipped initialization');
-    if (pendingProject) {
-      setSkippedInitProjectId(pendingProject.id);
-    }
-    setShowInitDialog(false);
-    setPendingProject(null);
-    setInitError(null); // Clear any error when skipping
-    setInitSuccess(false); // Reset success flag
-  };
-
   const handleGoToTask = (taskId: string) => {
     // Switch to the kanban view
     setActiveView('kanban');
@@ -952,8 +907,6 @@ export function App() {
         });
   }, [selectedProvider]);
 
-  const { error: projectError } = useProjectStore();
-
   return (
       <ProviderContextProvider>
         <ViewStateProvider>
@@ -975,7 +928,7 @@ export function App() {
                     <div className="flex items-center flex-1 min-w-0">
                       {/* Espace réservé pour alignement, ou autre contenu si besoin */}
                     </div>
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                       <ProviderSelector
                           selected={selectedProvider}
                           setSelected={setSelectedProvider}
@@ -1000,7 +953,7 @@ export function App() {
                               projects={projectTabs}
                               activeProjectId={activeProjectId}
                               onProjectSelect={handleProjectTabSelect}
-                              onProjectClose={handleProjectTabCloseSimple}
+                              onProjectClose={handleProjectTabClose}
                               onAddProject={handleAddProject}
                               onSettingsClick={() => setIsSettingsDialogOpen(true)}
                           />
@@ -1009,7 +962,7 @@ export function App() {
                         {/* Drag overlay - shows what's being dragged */}
                         <DragOverlay>
                           {activeDragProject && (
-                              <div className="flex items-center gap-2 bg-card border border-border rounded-md px-4 py-2.5 shadow-lg max-w-[200px]">
+                              <div className="flex items-center gap-2 bg-card border border-border rounded-md px-4 py-2.5 shadow-lg max-w-50">
                                 <div className="w-1 h-4 bg-muted-foreground rounded-full" />
                                 <span className="truncate font-medium text-sm">
                           {activeDragProject.name}
@@ -1073,7 +1026,7 @@ export function App() {
                                   onNavigateToTask={handleGoToTask}
                               />
                           )}
-                          {/* GitHubPRs is always mounted but hidden when not active to preserve review state */}
+                          {/* GitHubPRs is always mounted but hidden when not active to preserve the review state */}
                           {(activeProjectId || selectedProjectId) && (
                               <div className={activeView === 'github-prs' ? 'h-full' : 'hidden'}>
                                 <GitHubPRs
@@ -1087,11 +1040,11 @@ export function App() {
                           )}
                           {activeView === 'gitlab-merge-requests' && (activeProjectId || selectedProjectId) && (
                               <GitLabMergeRequests
+                                  projectId={activeProjectId || selectedProjectId!}
                                   onOpenSettings={() => {
                                     setSettingsInitialProjectSection('gitlab');
                                     setIsSettingsDialogOpen(true);
                                   }}
-                                  onNavigate toTask={handleGoToTask}
                               />
                           )}
                         </>
@@ -1106,21 +1059,43 @@ export function App() {
 
               {/* Modals */}
               <TaskDetailModal
+                  open={!!selectedTask}
                   task={selectedTask}
-                  onClose={handleCloseTaskDetail}
+                  onOpenChange={(open) => !open && handleCloseTaskDetail()}
+                  onSwitchToTerminals={() => setActiveView('terminals')}
                   onOpenInbuiltTerminal={handleOpenInbuiltTerminal}
               />
-              <TaskCreationWizard
-                  isOpen={isNewTaskDialogOpen}
-                  onClose={() => setIsNewTaskDialogOpen(false)}
-                  onProjectSelected={openProjectTab}
-              />
+
+              {(activeProjectId || selectedProjectId) && (
+                  <TaskCreationWizard
+                      projectId={activeProjectId || selectedProjectId!}
+                      open={isNewTaskDialogOpen}
+                      onOpenChange={setIsNewTaskDialogOpen}
+                  />
+              )}
+
               <AppSettingsDialog
-                  isOpen={isSettingsDialogOpen}
-                  onClose={() => setIsSettingsDialogOpen(false)}
+                  open={isSettingsDialogOpen}
+                  onOpenChange={(open) => {
+                    setIsSettingsDialogOpen(open);
+                    if (!open) {
+                      // Reset initial sections when the dialog closes
+                      setSettingsInitialSection(undefined);
+                      setSettingsInitialProjectSection(undefined);
+                    }
+                  }}
                   initialSection={settingsInitialSection}
                   initialProjectSection={settingsInitialProjectSection}
+                  onRerunWizard={() => {
+                    // Reset the onboarding state to trigger wizard
+                    useSettingsStore.getState().updateSettings({ onboardingCompleted: false });
+                    // Close settings dialog
+                    setIsSettingsDialogOpen(false);
+                    // Open onboarding wizard
+                    setIsOnboardingWizardOpen(true);
+                  }}
               />
+
               <Toaster />
               {/* Global download progress indicator - shows overall progress of all downloads */}
               <GlobalDownloadIndicator />
@@ -1128,8 +1103,16 @@ export function App() {
 
             {/* Onboarding wizard - shown only once at app start */}
             <OnboardingWizard
-                isOpen={isOnboardingWizardOpen}
-                onClose={() => setIsOnboardingWizardOpen(false)}
+                open={isOnboardingWizardOpen}
+                onOpenChange={setIsOnboardingWizardOpen}
+                onOpenTaskCreator={() => {
+                  setIsOnboardingWizardOpen(false);
+                  setIsNewTaskDialogOpen(true);
+                }}
+                onOpenSettings={() => {
+                  setIsOnboardingWizardOpen(false);
+                  setIsSettingsDialogOpen(true);
+                }}
             />
 
             {/* Version warning modal - shown once for reauthentication notice */}
@@ -1138,136 +1121,61 @@ export function App() {
                 onClose={handleVersionWarningClose}
             />
 
-            {/* Initialization dialog - shows when a project needs to be initialized */}
-            <Dialog
-                open={showInitDialog}
-                onOpenChange={(open) => {
-                  setShowInitDialog(open);
-                  // Auto-close after successful initialization
-                  if (open === false && initSuccess) {
-                    setPendingProject(null);
-                  }
-                }}
-                modal
-            >
-              <DialogContent className="sm:max-w-[425px]">
+            {/* Modals spécifiques à GitHub et Azure DevOps */}
+            {gitHubSetupProject && (
+                <GitHubSetupModal
+                    open={showGitHubSetup}
+                    onOpenChange={setShowGitHubSetup}
+                    onComplete={handleGitHubSetupComplete}
+                    onSkip={handleGitHubSetupSkip}
+                    project={gitHubSetupProject}
+                />
+            )}
+
+            {/* Azure DevOps Setup Modal - configure Azure DevOps */}
+            {azureDevOpsSetupProject && (
+                <AzureDevOpsSetupModal
+                    open={showAzureDevOpsSetup}
+                    onOpenChange={setShowAzureDevOpsSetup}
+                    onComplete={handleAzureDevOpsSetupComplete}
+                    onSkip={handleAzureDevOpsSetupSkip}
+                    project={azureDevOpsSetupProject}
+                />
+            )}
+
+            <AddProjectModal
+                open={showAddProjectModal}
+                onOpenChange={setShowAddProjectModal}
+                onProjectAdded={handleProjectAdded}
+            />
+
+            {/* Remove Project Confirmation Dialog */}
+            <Dialog open={showRemoveProjectDialog} onOpenChange={(open) => {
+              if (!open) handleCancelRemoveProject();
+            }}>
+              <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>
-                    {t('initDialog:title')}
-                  </DialogTitle>
+                  <DialogTitle>{t('removeProject.title')}</DialogTitle>
+                  <DialogDescription>
+                    {t('removeProject.description', { projectName: projectToRemove?.name || '' })}
+                  </DialogDescription>
                 </DialogHeader>
-
-                <DialogDescription className="space-y-4">
-                  {/* Étape 1 : Sélection du modèle Claude AI */}
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {t('initDialog:step1.description')}
-                    </p>
-                    <div className="flex gap-2">
-                      {/* Boutons pour les modèles prédéfinis (ex: "Claude 1.1", "Claude 2") */}
-                      <Button
-                          variant={selectedProvider === 'claude' ? 'default' : 'outline'}
-                          className="flex-1"
-                          onClick={() => setSelectedProvider('claude')}
-                      >
-                        Claude
-                      </Button>
-                      {/* Ajoutez d'autres boutons de modèle ici si nécessaire */}
+                {removeProjectError && (
+                    <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+                      <AlertCircle className="h-4 w-4 shrink-0" />
+                      <span>{removeProjectError}</span>
                     </div>
-                  </div>
-
-                  {/* Étape 2 : Configuration du modèle sélectionné */}
-                  {selectedProvider === 'claude' && (
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {t('initDialog:step2.description')}
-                        </p>
-                        <div className="flex flex-col gap-2">
-                          {/* Champs de configuration spécifiques à Claude AI */}
-                          <input
-                              type="text"
-                              placeholder={t('initDialog:step2.placeholder')}
-                              className="input"
-                              value={pendingProject?.id || ''}
-                              onChange={(e) => {
-                                if (pendingProject) {
-                                  setPendingProject({
-                                    ...pendingProject,
-                                    id: e.target.value
-                                  });
-                                }
-                              }}
-                          />
-                        </div>
-                      </div>
-                  )}
-
-                  {/* Étape 3 : Résumé et création du projet */}
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {t('initDialog:step3.description')}
-                    </p>
-                    <div className="flex flex-col gap-2">
-                      {/* Résumé des choix de l'utilisateur */}
-                      <div className="p-4 bg-muted rounded-md">
-                        <p className="text-sm">
-                          <strong>{t('initDialog:projectName')}:</strong> {pendingProject?.id}
-                        </p>
-                        <p className="text-sm">
-                          <strong>{t('initDialog:selectedModel')}:</strong> Claude
-                        </p>
-                      </div>
-
-                      <Button
-                          onClick={handleInitialize}
-                          isLoading={isInitializing}
-                          className="w-full"
-                      >
-                        {t('initDialog:actions.createProject')}
-                      </Button>
-                    </div>
-                  </div>
-                </DialogDescription>
-
+                )}
                 <DialogFooter>
-                  <Button
-                      variant="outline"
-                      onClick={() => setShowInitDialog(false)}
-                  >
-                    {t('common:cancel')}
+                  <Button variant="outline" onClick={handleCancelRemoveProject}>
+                    {t('removeProject.cancel')}
+                  </Button>
+                  <Button variant="destructive" onClick={handleConfirmRemoveProject}>
+                    {t('removeProject.remove')}
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-
-            {/* Modals spécifiques à GitHub et Azure DevOps */}
-            <GitHubSetupModal
-                isOpen={showGitHubSetup}
-                onClose={() => setShowGitHubSetup(false)}
-                onComplete={handleGitHubSetupComplete}
-                onSkip={handleGitHubSetupSkip}
-                project={gitHubSetupProject}
-            />
-            {/* Azure DevOps Setup Modal - configure Azure DevOps */}
-            {azureDevOpsSetupProject && (
-              <AzureDevOpsSetupModal
-                isOpen={showAzureDevOpsSetup}
-                onClose={() => setShowAzureDevOpsSetup(false)}
-                onComplete={handleAzureDevOpsSetupComplete}
-                onSkip={handleAzureDevOpsSetupSkip}
-                project={azureDevOpsSetupProject}
-              />
-            )}
-            {/* Repository Provider Modal - choose GitHub or Azure DevOps */}
-            {repoProviderProject && (
-              <RepositoryProviderModal
-                isOpen={showRepoProviderSetup}
-                onClose={() => setRepoProviderSetup(false)}
-                onSelect={handleRepoProviderSelect}
-                onSkip={handleRepoProviderSkip}
-                project={repoProviderProject}
-              />
-            )}
           </>
         </ViewStateProvider>
       </ProviderContextProvider>

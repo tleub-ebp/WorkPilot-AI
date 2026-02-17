@@ -52,13 +52,8 @@ export const API_PROVIDER_PRESETS: readonly ApiProviderPreset[] = [
     labelKey: 'settings:apiProfiles.presets.groq'
   },
   {
-    id: 'zai-global',
-    baseUrl: 'https://api.z.ai/api/anthropic',
-    labelKey: 'settings:apiProfiles.presets.zaiGlobal'
-  },
-  {
-    id: 'zai-cn',
-    baseUrl: 'https://open.bigmodel.cn/api/anthropic',
-    labelKey: 'settings:apiProfiles.presets.zaiChina'
+    id: 'ollama',
+    baseUrl: 'http://localhost:11434/v1',
+    labelKey: 'settings:apiProfiles.presets.ollama'
   }
 ];

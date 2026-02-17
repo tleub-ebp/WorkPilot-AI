@@ -6,7 +6,6 @@ import {
   Key,
   Loader2,
   CheckCircle2,
-  AlertCircle,
   ChevronRight,
   Sparkles,
   Plus,
@@ -36,7 +35,7 @@ import {
 } from './ui/select';
 import { GitHubOAuthFlow } from './project-settings/GitHubOAuthFlow';
 import { ClaudeOAuthFlow } from './project-settings/ClaudeOAuthFlow';
-import type { Project, ProjectSettings } from '../../shared/types';
+import type { Project} from '@shared/types';
 
 interface GitHubSetupModalProps {
   open: boolean;
@@ -55,7 +54,7 @@ type SetupStep = 'github-auth' | 'claude-auth' | 'repo-confirm' | 'repo' | 'bran
  * 1. Authenticate with GitHub (via gh CLI OAuth) - for repo operations
  * 2. Authenticate with Claude (via claude CLI OAuth) - for AI features
  * 3. Detect/confirm repository
- * 4. Select base branch for tasks (with recommended default)
+ * 4. Select a base branch for tasks (with recommended default)
  */
 export function GitHubSetupModal({
   open,

@@ -11,7 +11,7 @@
  * API Provider type for usage monitoring
  * Determines which usage endpoint to query and how to normalize responses
  */
-export type ApiProvider = 'anthropic' | 'zai' | 'zhipu' | 'openai' | 'unknown';
+export type ApiProvider = 'anthropic' | 'openai' | 'ollama' | 'ollama_local' | 'unknown';
 
 /**
  * Provider detection patterns
@@ -32,12 +32,12 @@ const PROVIDER_PATTERNS: readonly ProviderPattern[] = [
     domainPatterns: ['api.openai.com']
   },
   {
-    provider: 'zai',
-    domainPatterns: ['api.z.ai', 'z.ai']
+    provider: 'ollama',
+    domainPatterns: ['ollama.ai', 'api.ollama.ai']
   },
   {
-    provider: 'zhipu',
-    domainPatterns: ['open.bigmodel.cn', 'dev.bigmodel.cn', 'bigmodel.cn']
+    provider: 'ollama_local',
+    domainPatterns: ['localhost', '127.0.0.1']
   }
 ] as const;
 
@@ -45,13 +45,13 @@ const PROVIDER_PATTERNS: readonly ProviderPattern[] = [
  * Detect API provider from baseUrl
  * Extracts domain and matches against known provider patterns
  *
- * @param baseUrl - The API base URL (e.g., 'https://api.z.ai/api/anthropic')
- * @returns The detected provider type ('anthropic' | 'zai' | 'zhipu' | 'unknown')
+ * @param baseUrl - The API base URL (e.g., 'https://api.anthropic.com')
+ * @returns The detected provider type ('anthropic' | 'openai' | 'ollama' | 'ollama_local' | 'unknown')
  *
  * @example
  * detectProvider('https://api.anthropic.com') // returns 'anthropic'
- * detectProvider('https://api.z.ai/api/anthropic') // returns 'zai'
- * detectProvider('https://open.bigmodel.cn/api/anthropic') // returns 'zhipu'
+ * detectProvider('https://api.openai.com') // returns 'openai'
+ * detectProvider('http://localhost:11434') // returns 'ollama_local'
  * detectProvider('https://unknown.com/api') // returns 'unknown'
  */
 export function detectProvider(baseUrl: string): ApiProvider {
@@ -89,10 +89,10 @@ export function getProviderLabel(provider: ApiProvider): string {
       return 'Anthropic';
     case 'openai':
       return 'OpenAI';
-    case 'zai':
-      return 'z.ai';
-    case 'zhipu':
-      return 'ZHIPU AI';
+    case 'ollama':
+      return 'Ollama';
+    case 'ollama_local':
+      return 'Ollama (Local)';
     case 'unknown':
       return 'Unknown';
   }
@@ -110,10 +110,10 @@ export function getProviderBadgeColor(provider: ApiProvider): string {
       return 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/15';
     case 'openai':
       return 'bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/15';
-    case 'zai':
-      return 'bg-blue-500/10 text-blue-500 border-blue-500/20 hover:bg-blue-500/15';
-    case 'zhipu':
-      return 'bg-purple-500/10 text-purple-500 border-purple-500/20 hover:bg-purple-500/15';
+    case 'ollama':
+      return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/15';
+    case 'ollama_local':
+      return 'bg-teal-500/10 text-teal-500 border-teal-500/20 hover:bg-teal-500/15';
     case 'unknown':
       return 'bg-gray-500/10 text-gray-500 border-gray-500/20 hover:bg-gray-500/15';
   }

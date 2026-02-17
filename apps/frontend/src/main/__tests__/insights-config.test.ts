@@ -40,7 +40,7 @@ describe('InsightsConfig', () => {
   beforeEach(() => {
     process.env = { ...originalEnv, TEST_ENV: 'ok' };
     mockGetApiProfileEnv.mockResolvedValue({
-      ANTHROPIC_BASE_URL: 'https://api.z.ai',
+      ANTHROPIC_BASE_URL: 'https://api.anthropic.com',
       ANTHROPIC_AUTH_TOKEN: 'key'
     });
     mockGetPythonEnv.mockReturnValue({ PYTHONPATH: '/site-packages' });
@@ -62,7 +62,7 @@ describe('InsightsConfig', () => {
     expect(env.TEST_ENV).toBe('ok');
     expect(env.CUSTOM_ENV).toBe('1');
     expect(env.CLAUDE_CODE_OAUTH_TOKEN).toBe('oauth-token');
-    expect(env.ANTHROPIC_BASE_URL).toBe('https://api.z.ai');
+    expect(env.ANTHROPIC_BASE_URL).toBe('https://api.anthropic.com');
     expect(env.ANTHROPIC_AUTH_TOKEN).toBe('key');
     expect(env.PYTHONPATH).toBe(
       [path.resolve('/site-packages'), path.resolve('/backend')].join(path.delimiter)

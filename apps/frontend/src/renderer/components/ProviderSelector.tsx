@@ -1,23 +1,33 @@
-// ProviderSelector gère désormais lui-même la récupération des providers et des modèles associés
 import React, { useEffect, useState } from "react";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from './ui/select';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { useTranslation } from 'react-i18next';
-import { getProviders, CanonicalProvider } from '../../shared/utils/providers';
-import { useProviderRefreshStore } from '../stores/provider-refresh-store';
+import { getProviders, CanonicalProvider } from '@shared/utils/providers';
+import { useProviderRefreshStore } from '@/stores/provider-refresh-store';
 import { useProviderContext } from './ProviderContext';
-import { useSettingsStore } from '../stores/settings-store';
-import { detectProvider } from '../../shared/utils/provider-detection';
+import { useSettingsStore } from '@/stores/settings-store';
+import { detectProvider } from '@shared/utils/provider-detection';
 
-// SVG pictograms for providers
-const providerIcons: Record<string, JSX.Element> = {
+// Récupération robuste de l'URL backend compatible Vite/Webpack/Node
+const API_BASE =
+  (typeof process !== 'undefined' && process.env?.VITE_BACKEND_URL)
+    ? process.env.VITE_BACKEND_URL
+    : '';
+
+const providerIcons: Record<string, React.ReactNode> = {
   claude: (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="10" cy="10" r="9" stroke="#6C63FF" strokeWidth="2" fill="#F3F3FF" />
       <text x="50%" y="55%" textAnchor="middle" fontSize="10" fill="#6C63FF" fontWeight="bold" dy=".3em">C</text>
     </svg>
   ),
+  openai: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+       <rect x="2" y="2" width="16" height="16" rx="4" fill="#F0F4FF" stroke="#0077FF" strokeWidth="2" />
+       <text x="50%" y="55%" textAnchor="middle" fontSize="10" fill="#0077FF" fontWeight="bold" dy=".3em">A</text>
+    </svg>
+  ),  
   ollama: (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="2" y="2" width="16" height="16" rx="4" fill="#F5F5F5" stroke="#4CAF50" strokeWidth="2" />
@@ -30,21 +40,8 @@ const providerIcons: Record<string, JSX.Element> = {
       <text x="50%" y="55%" textAnchor="middle" fontSize="10" fill="#388E3C" fontWeight="bold" dy=".3em">LLM</text>
     </svg>
   ),
-  openai: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="16" height="16" rx="4" fill="#F0F4FF" stroke="#0077FF" strokeWidth="2" />
-      <text x="50%" y="55%" textAnchor="middle" fontSize="10" fill="#0077FF" fontWeight="bold" dy=".3em">A</text>
-    </svg>
-  ),
   // Add more pictograms for other providers as needed
 };
-
-const API_BASE =
-  typeof import.meta !== "undefined" &&
-  import.meta.env &&
-  import.meta.env.VITE_BACKEND_URL
-    ? import.meta.env.VITE_BACKEND_URL
-    : "";
 
 function capitalize(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
@@ -71,7 +68,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
   const setSelected = (provider: string) => {
     setSelectedProvider(provider); // Toujours mettre à jour le contexte global
     console.debug('[ProviderSelector] setSelected (context)', provider);
-    if (setSelectedProp !== (() => {})) {
+    if (typeof setSelectedProp === 'function') {
       setSelectedProp(provider);
     }
   };
@@ -89,8 +86,10 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
         setError("");
         if (!selected && sortedProviders.some((p: CanonicalProvider) => p.name === "anthropic")) {
           setSelected("anthropic");
+          if (typeof setSelectedProp === 'function') setSelectedProp("anthropic");
         } else if (!selected && sortedProviders.length > 0) {
           setSelected(sortedProviders[0].name);
+          if (typeof setSelectedProp === 'function') setSelectedProp(sortedProviders[0].name);
         }
         // Log debug pour vérifier la sélection initiale
         console.debug('[ProviderSelector] setSelected', selected, sortedProviders);
@@ -174,19 +173,19 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
       // Si aucun profil n'existe pour ce provider, désactive le profil actif
       setActiveProfile(null);
     }
-    fetch(`${API_BASE}/providers/select?provider=${value}`, {
+    /*fetch(`${API_BASE}/providers/select?provider=${value}`, {
       method: "POST",
-    });
+    });*/
     console.debug('[ProviderSelector] handleSelect', value, profiles);
   };
 
   return (
     <div className="flex items-center gap-4">
       <Label htmlFor="provider-select" className="whitespace-nowrap">
-        {t('providerSelector.label', 'Providers LLM')}
+        {t('providerSelector.label', "Fournisseur de modèle IA")}
       </Label>
       <Select value={selected} onValueChange={handleSelect}>
-        <SelectTrigger id="provider-select" className="w-[320px]">
+        <SelectTrigger id="provider-select" className="w-full">
           <SelectValue placeholder={t('providerSelector.placeholder', '-- Choisir un provider --')} />
         </SelectTrigger>
         <SelectContent>

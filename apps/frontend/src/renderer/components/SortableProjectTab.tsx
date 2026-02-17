@@ -159,7 +159,10 @@ export function SortableProjectTab({
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                 isActive && 'opacity-100'
               )}
-              onClick={onClose}
+              onClick={e => {
+                console.log('[DEBUG] SortableProjectTab onClose clicked for project:', project.id);
+                onClose(e);
+              }}
               aria-label={t('projectTab.closeTabAriaLabel')}
             >
               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">

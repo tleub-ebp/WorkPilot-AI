@@ -24,32 +24,34 @@ describe('provider-detection', () => {
       });
     });
 
-    describe('z.ai provider', () => {
-      it('should detect z.ai from api.z.ai', () => {
-        const result = detectProvider('https://api.z.ai/api/anthropic');
-        expect(result).toBe('zai');
-      });
-
-      it('should detect z.ai from z.ai domain', () => {
-        const result = detectProvider('https://z.ai/api/anthropic');
-        expect(result).toBe('zai');
+    describe('OpenAI provider', () => {
+      it('should detect OpenAI from api.openai.com', () => {
+        const result = detectProvider('https://api.openai.com/v1');
+        expect(result).toBe('openai');
       });
     });
 
-    describe('ZHIPU provider', () => {
-      it('should detect ZHIPU from open.bigmodel.cn', () => {
-        const result = detectProvider('https://open.bigmodel.cn/api/anthropic');
-        expect(result).toBe('zhipu');
+    describe('Ollama provider', () => {
+      it('should detect Ollama from ollama.ai', () => {
+        const result = detectProvider('https://ollama.ai/api');
+        expect(result).toBe('ollama');
       });
 
-      it('should detect ZHIPU from dev.bigmodel.cn', () => {
-        const result = detectProvider('https://dev.bigmodel.cn/api/paas/v4');
-        expect(result).toBe('zhipu');
+      it('should detect Ollama from api.ollama.ai', () => {
+        const result = detectProvider('https://api.ollama.ai/v1');
+        expect(result).toBe('ollama');
+      });
+    });
+
+    describe('Ollama Local provider', () => {
+      it('should detect Ollama Local from localhost', () => {
+        const result = detectProvider('http://localhost:11434/v1');
+        expect(result).toBe('ollama_local');
       });
 
-      it('should detect ZHIPU from bigmodel.cn', () => {
-        const result = detectProvider('https://bigmodel.cn/api/paas/v4');
-        expect(result).toBe('zhipu');
+      it('should detect Ollama Local from 127.0.0.1', () => {
+        const result = detectProvider('http://127.0.0.1:11434/v1');
+        expect(result).toBe('ollama_local');
       });
     });
 
@@ -71,12 +73,16 @@ describe('provider-detection', () => {
       expect(getProviderLabel('anthropic')).toBe('Anthropic');
     });
 
-    it('should return correct label for z.ai', () => {
-      expect(getProviderLabel('zai')).toBe('z.ai');
+    it('should return correct label for OpenAI', () => {
+      expect(getProviderLabel('openai')).toBe('OpenAI');
     });
 
-    it('should return correct label for ZHIPU', () => {
-      expect(getProviderLabel('zhipu')).toBe('ZHIPU AI');
+    it('should return correct label for Ollama', () => {
+      expect(getProviderLabel('ollama')).toBe('Ollama');
+    });
+
+    it('should return correct label for Ollama Local', () => {
+      expect(getProviderLabel('ollama_local')).toBe('Ollama (Local)');
     });
 
     it('should return Unknown for unknown provider', () => {
@@ -93,20 +99,28 @@ describe('provider-detection', () => {
       expect(color).toContain('border-orange-500/20');
     });
 
-    it('should return blue colors for z.ai', () => {
-      const color = getProviderBadgeColor('zai');
-      expect(color).toContain('blue');
-      expect(color).toContain('bg-blue-500/10');
-      expect(color).toContain('text-blue-500');
-      expect(color).toContain('border-blue-500/20');
+    it('should return green colors for OpenAI', () => {
+      const color = getProviderBadgeColor('openai');
+      expect(color).toContain('green');
+      expect(color).toContain('bg-green-500/10');
+      expect(color).toContain('text-green-500');
+      expect(color).toContain('border-green-500/20');
     });
 
-    it('should return purple colors for ZHIPU', () => {
-      const color = getProviderBadgeColor('zhipu');
-      expect(color).toContain('purple');
-      expect(color).toContain('bg-purple-500/10');
-      expect(color).toContain('text-purple-500');
-      expect(color).toContain('border-purple-500/20');
+    it('should return emerald colors for Ollama', () => {
+      const color = getProviderBadgeColor('ollama');
+      expect(color).toContain('emerald');
+      expect(color).toContain('bg-emerald-500/10');
+      expect(color).toContain('text-emerald-500');
+      expect(color).toContain('border-emerald-500/20');
+    });
+
+    it('should return teal colors for Ollama Local', () => {
+      const color = getProviderBadgeColor('ollama_local');
+      expect(color).toContain('teal');
+      expect(color).toContain('bg-teal-500/10');
+      expect(color).toContain('text-teal-500');
+      expect(color).toContain('border-teal-500/20');
     });
 
     it('should return gray colors for unknown', () => {

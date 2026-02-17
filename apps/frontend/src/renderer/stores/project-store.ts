@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Project, ProjectSettings, AutoBuildVersionInfo, InitializationResult } from '../../shared/types';
+import type { Project, ProjectSettings } from '@shared/types';
 
 // localStorage keys for persisting project state (legacy - now using IPC)
 const LAST_SELECTED_PROJECT_KEY = 'lastSelectedProjectId';
@@ -22,7 +22,7 @@ interface ProjectState {
   setProjects: (projects: Project[]) => void;
   addProject: (project: Project) => void;
   removeProject: (projectId: string) => void;
-  updateProject: (projectId: string, updates: Partial<Project>) => void;
+  updateProject: (projectId: string, updates: Partial<ProjectSettings>) => void;
   selectProject: (projectId: string | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -96,11 +96,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   // Tab management actions
   openProjectTab: (projectId) => {
     const state = get();
-    console.log('[ProjectStore] openProjectTab called:', {
-      projectId,
-      currentOpenProjectIds: state.openProjectIds,
-      currentTabOrder: state.tabOrder
-    });
+
     if (!state.openProjectIds.includes(projectId)) {
       const newOpenProjectIds = [...state.openProjectIds, projectId];
       const newTabOrder = state.tabOrder.includes(projectId)
@@ -362,8 +358,7 @@ export async function updateProjectSettings(
  */
 export async function initializeProject(projectId: string) {
   try {
-    const result = await window.electronAPI.initializeProject(projectId);
-    return result;
+    return await window.electronAPI.initializeProject(projectId);
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
@@ -374,8 +369,7 @@ export async function initializeProject(projectId: string) {
  */
 export async function checkProjectVersion(projectId: string) {
   try {
-    const result = await window.electronAPI.checkProjectVersion(projectId);
-    return result;
+    return await window.electronAPI.checkProjectVersion(projectId);
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }

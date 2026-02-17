@@ -88,7 +88,8 @@
     "apply": "Appliquer",
     "delete": "Supprimer",
     "settings": "Paramètres",
-    "next": "Suivant"
+    "next": "Suivant",
+    "createProject": "Créer le projet"
   },
   "os": {
     "windows": "Windows",
@@ -449,9 +450,9 @@
     "subscription": "Abonnement",
     "provider": "Fournisseur",
     "providerAnthropic": "Anthropic",
-    "providerZai": "z.ai",
-    "providerZhipu": "ZHIPU AI",
     "providerOpenAI": "OpenAI",
+    "providerOllama": "Ollama",
+    "providerOllamaLocal": "Ollama (Local)",
     "providerUnknown": "Inconnu",
     "profile": "Profil",
     "id": "ID",
@@ -520,7 +521,7 @@
     "credentialsSaved": "Vos identifiants Claude ont été sauvegardés",
     "canUseFeatures": "Vous pouvez maintenant utiliser toutes les fonctionnalités IA d'Auto Claude",
     "authFailed": "Échec de l'authentification",
-    "skipForNow": "Passer pour l'instant",
+    "skipForNow": "Passer pour le moment",
     "manualTokenEntry": "Saisie manuelle du jeton",
     "tokenCommandHint": "Exécutez <code>claude setup-token</code> pour obtenir votre jeton",
     "emailOptionalPlaceholder": "Email (optionnel, pour affichage)",
@@ -697,5 +698,13 @@
     "daysAgo": "il y a {{count}}j",
     "daysAgo_one": "il y a {{count}}j",
     "daysAgo_other": "il y a {{count}}j"
+  },
+  "Claude": "Claude",
+  "selectedModel": "Modèle sélectionné",
+  "step1": {
+    "description": "Décrivez ce que vous voulez construire."
+  },
+  "step3": {
+    "description": "Vérifiez et confirmez la configuration de votre projet."
   }
 }

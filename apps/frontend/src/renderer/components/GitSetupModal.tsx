@@ -10,7 +10,8 @@ import {
   DialogHeader,
   DialogTitle
 } from './ui/dialog';
-import type { Project, GitStatus } from '../../shared/types';
+import type { Project, GitStatus } from '@shared/types';
+import { useToast } from '@/hooks/use-toast';
 
 interface GitSetupModalProps {
   open: boolean;
@@ -30,12 +31,11 @@ export function GitSetupModal({
   onSkip
 }: GitSetupModalProps) {
   const { t } = useTranslation('dialogs');
+  const { toast } = useToast();
   const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<'info' | 'initializing' | 'success'>('info');
-
   const needsGitInit = gitStatus && !gitStatus.isGitRepo;
-  const _needsCommit = gitStatus?.isGitRepo && !gitStatus.hasCommits;
 
   const handleInitializeGit = async () => {
     if (!project) return;
@@ -50,18 +50,33 @@ export function GitSetupModal({
 
       if (result.success) {
         setStep('success');
-        // Wait a moment to show success, then trigger callback
+        // Wait un peu pour UX, puis toast et fermeture
         setTimeout(() => {
+          toast({
+            title: t('gitSetup.successTitle', 'Dépôt Git initialisé'),
+            description: t('gitSetup.successDesc', 'Le dépôt Git a bien été initialisé.'),
+            variant: 'default',
+          });
           onGitInitialized();
           onOpenChange(false);
           setStep('info');
-        }, 1500);
+        }, 1000);
       } else {
         setError(result.error || 'Failed to initialize git');
+        toast({
+          title: t('gitSetup.errorTitle', 'Erreur lors de l\'initialisation'),
+          description: result.error || t('gitSetup.errorDesc', 'Impossible d\'initialiser le dépôt Git.'),
+          variant: 'destructive',
+        });
         setStep('info');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to initialize git');
+      toast({
+        title: t('gitSetup.errorTitle', 'Erreur lors de l\'initialisation'),
+        description: err instanceof Error ? err.message : t('gitSetup.errorDesc', 'Impossible d\'initialiser le dépôt Git.'),
+        variant: 'destructive',
+      });
       setStep('info');
     } finally {
       setIsInitializing(false);
@@ -69,6 +84,11 @@ export function GitSetupModal({
   };
 
   const handleSkip = () => {
+    toast({
+      title: t('gitSetup.skipTitle', 'Dépôt Git ignoré'),
+      description: t('gitSetup.skipDesc', 'Vous pourrez initialiser Git plus tard.'),
+      variant: 'default',
+    });
     onSkip?.();
     onOpenChange(false);
   };
@@ -128,10 +148,10 @@ export function GitSetupModal({
             {t('gitSetup.manual')}
           </summary>
           <div className="mt-3 rounded-lg bg-muted/50 p-3 font-mono text-xs space-y-1">
-            <p className="text-muted-foreground">Open a terminal in your project folder and run:</p>
+            <p className="text-muted-foreground">{t('gitSetup.manualTerminal')}</p>
             {needsGitInit && <p>git init</p>}
             <p>git add .</p>
-            <p>git commit -m "Initial commit"</p>
+            <p>git commit -m "{t('gitSetup.initialCommitMessage')}"</p>
           </div>
         </details>
 
@@ -144,11 +164,11 @@ export function GitSetupModal({
 
       <DialogFooter>
         <Button variant="outline" onClick={handleSkip}>
-          Skip for now
+          {t('gitSetup.skip')}
         </Button>
         <Button onClick={handleInitializeGit} disabled={isInitializing}>
           <GitBranch className="mr-2 h-4 w-4" />
-          Initialize Git
+          {t('gitSetup.initializeGit')}
         </Button>
       </DialogFooter>
     </>

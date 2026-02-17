@@ -3,12 +3,12 @@
  *
  * Shows the active authentication method and provider:
  * - OAuth: Shows "OAuth Anthropic" with Lock icon
- * - API Profile: Shows provider name (z.ai, ZHIPU AI) with Key icon and provider-specific colors
+ * - API Profile: Shows provider name (Anthropic, OpenAI, Ollama) with Key icon and provider-specific colors
  *
  * Provider detection is based on the profile's baseUrl:
  * - api.anthropic.com → Anthropic
- * - api.z.ai → z.ai
- * - open.bigmodel.cn, dev.bigmodel.cn → ZHIPU AI
+ * - api.openai.com → OpenAI
+ * - localhost/127.0.0.1 → Ollama (Local)
  *
  * Usage warning badge: Shows to the left of provider badge when usage exceeds 90%
  */
@@ -34,8 +34,8 @@ import { useProviderContext } from './ProviderContext';
 const PROVIDER_TRANSLATION_KEYS: Readonly<Record<ApiProvider, string>> = {
   anthropic: 'common:usage.providerAnthropic',
   openai: 'common:usage.providerOpenAI',
-  zai: 'common:usage.providerZai',
-  zhipu: 'common:usage.providerZhipu',
+  ollama: 'common:usage.providerOllama',
+  ollama_local: 'common:usage.providerOllamaLocal',
   unknown: 'common:usage.providerUnknown'
 } as const;
 

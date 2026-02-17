@@ -282,11 +282,11 @@ describe('ProfileEditDialog - Create Mode', () => {
     const presetTrigger = screen.getByLabelText(/preset/i);
     fireEvent.keyDown(presetTrigger, { key: 'ArrowDown', code: 'ArrowDown' });
 
-    const zaiGlobalOption = await screen.findByRole('option', { name: 'z.AI (Global)' });
-    fireEvent.click(zaiGlobalOption);
+    const ollamaOption = await screen.findByRole('option', { name: 'Ollama' });
+    fireEvent.click(ollamaOption);
 
-    expect(screen.getByLabelText(/base url/i)).toHaveValue('https://api.z.ai/api/anthropic');
-    expect(screen.getByLabelText(/name/i)).toHaveValue('z.AI (Global)');
+    expect(screen.getByLabelText(/base url/i)).toHaveValue('http://localhost:11434/v1');
+    expect(screen.getByLabelText(/name/i)).toHaveValue('Ollama');
   });
 
   it('should not overwrite name when applying a preset', async () => {

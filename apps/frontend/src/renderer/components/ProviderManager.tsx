@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
-const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_URL) ? import.meta.env.VITE_BACKEND_URL : '';
+const API_BASE = typeof import.meta.env?.VITE_BACKEND_URL ? import.meta.env.VITE_BACKEND_URL : '';
 
 // Squelette de gestion des providers LLM
 export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) => {
+  const { t } = useTranslation(['providers', 'common']);
+
   const [providers, setProviders] = useState<string[]>([]);
   const [status, setStatus] = useState<Record<string, boolean>>({});
   const [configs, setConfigs] = useState<string[]>([]);
@@ -19,6 +22,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
   const [activeClaudeProfile, setActiveClaudeProfile] = useState<any>(null);
   const [claudeModels, setClaudeModels] = useState<string[]>([]);
   const [claudeAuthChecked, setClaudeAuthChecked] = useState(false);
+
   // Ajout d'un état pour l'erreur
   const [claudeModelsError, setClaudeModelsError] = useState<string>("");
   const [providersError, setProvidersError] = useState<string>("");
@@ -71,9 +75,9 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
 
   // Détection dynamique des profils Claude Code (comme UsageIndicator)
   useEffect(() => {
-    if (window.electronAPI && window.electronAPI.requestAllProfilesUsage) {
+    if (window.electronAPI?.requestAllProfilesUsage) {
       window.electronAPI.requestAllProfilesUsage().then((result: any) => {
-        if (result && result.success && result.data) {
+        if (result?.success && result.data) {
           setClaudeProfiles(result.data.allProfiles || []);
           setActiveClaudeProfile(result.data.allProfiles.find((p: any) => p.isActive) || null);
         }
@@ -100,7 +104,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
           setClaudeModels([]);
           setClaudeModelsError(data.error);
         } else {
-          setClaudeModelsError((data.models && data.models.length === 0) ? `Aucun modèle disponible pour le provider «${selected}».` : "");
+          setClaudeModelsError((data.models?.length === 0) ? `Aucun modèle disponible pour le provider «${selected}».` : "");
         }
       })
       .catch(() => {
@@ -147,27 +151,27 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
 
   return (
     <div>
-      <h2>Gestion des providers LLM</h2>
+      <h2>{t('providers:title', 'Gestion des providers LLM')}</h2>
       {/* Affichage état Claude Code comme UsageIndicator */}
       {claudeAuthChecked && (
         <div style={{ marginBottom: 12 }}>
-          <b>État Claude Code&nbsp;:</b>
+          <b>{t('providers:claudeCodeState', 'État Claude Code')}&nbsp;:</b>
           {activeClaudeProfile?.isAuthenticated ? (
             <span style={{ color: 'green', marginLeft: 8 }}>
-              Authentifié ({activeClaudeProfile.profileName || activeClaudeProfile.profileEmail})
+              {t('providers:authenticated', 'Authentifié')} ({activeClaudeProfile.profileName || activeClaudeProfile.profileEmail})
             </span>
           ) : (
             <span style={{ color: 'orange', marginLeft: 8 }}>
-              Non authentifié
+              {t('providers:notAuthenticated', 'Non authentifié')}
             </span>
           )}
         </div>
       )}
       {selected && (
         <div style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}>
-          <h4>Modèles disponibles pour «{selected}»</h4>
+          <h4>{t('providers:availableModels', 'Modèles disponibles pour «' + selected + '»', { provider: selected })}</h4>
           {claudeModelsError ? (
-            <span style={{ color: 'red' }}>{claudeModelsError}</span>
+            <span style={{ color: 'red' }}>{t('providers:modelError', claudeModelsError, { error: claudeModelsError })}</span>
           ) : claudeModels.length > 0 ? (
             <ul>
               {claudeModels.map((m) => (
@@ -175,14 +179,12 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
               ))}
             </ul>
           ) : (
-            <span style={{ color: 'orange' }}>
-              Aucun modèle détecté ou chargement...
-            </span>
+            <span style={{ color: 'orange' }}>{t('providers:noModels', 'Aucun modèle détecté ou chargement...')}</span>
           )}
         </div>
       )}
       <div>
-        <h3>Configurations enregistrées :</h3>
+        <h3>{t('providers:savedConfigs', 'Configurations enregistrées :')}</h3>
         <ul>
           {configs.map((c) => (
             <li key={c}>{c}</li>
@@ -191,7 +193,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
       </div>
       {selected && capabilities && (
         <div>
-          <h3>Capacités du provider «{selected}» :</h3>
+          <h3>{t('providers:providerCapabilities', 'Capacités du provider «' + selected + '» :', { provider: selected })}</h3>
           <pre
             style={{
               background: "#f5f5f5",
@@ -204,10 +206,10 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
       )}
       {selected && schema && (
         <div style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}>
-          <h4>Configurer «{selected}»</h4>
+          <h4>{t('providers:configureProvider', 'Configurer «' + selected + '»', { provider: selected })}</h4>
           {Object.entries(schema).map(([k, v]) => (
             <div key={k} style={{ marginBottom: 8 }}>
-              <label>{k} ({v})</label>
+              <label>{t(`providers:configField_${k}`, k, { field: k })} ({String(v)})</label>
               <input
                 type="text"
                 value={configForm[k] || ""}
@@ -216,23 +218,23 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
               />
             </div>
           ))}
-          <button onClick={saveConfig}>Enregistrer</button>
-          <button onClick={deleteConfig} style={{ marginLeft: 8 }}>Supprimer</button>
-          <button onClick={testProvider} style={{ marginLeft: 8 }}>Tester</button>
+          <button onClick={saveConfig}>{t('common:save', 'Enregistrer')}</button>
+          <button onClick={deleteConfig} style={{ marginLeft: 8 }}>{t('common:delete', 'Supprimer')}</button>
+          <button onClick={testProvider} style={{ marginLeft: 8 }}>{t('common:test', 'Tester')}</button>
           {testResult && <span style={{ marginLeft: 8 }}>{testResult}</span>}
         </div>
       )}
       {selected && (
         <div style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}>
-          <h4>Générer avec «{selected}»</h4>
+          <h4>{t('providers:generateWithProvider', 'Générer avec «' + selected + '»', { provider: selected })}</h4>
           <input
             type="text"
             value={prompt}
             onChange={handlePrompt}
-            placeholder="Prompt..."
+            placeholder={t('providers:promptPlaceholder', 'Prompt...')}
             style={{ width: 300 }}
           />
-          <button onClick={generate} style={{ marginLeft: 8 }}>Générer</button>
+          <button onClick={generate} style={{ marginLeft: 8 }}>{t('common:generate', 'Générer')}</button>
           {generation && <pre style={{ background: "#f5f5f5", padding: 8 }}>{generation}</pre>}
         </div>
       )}
@@ -240,5 +242,3 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
     </div>
   );
 };
-
-export default ProviderManager;
