@@ -153,7 +153,6 @@ export const VisualProgrammingInterface: React.FC = () => {
         setIsJsonSaved(true);
         setShowSaveAsDialog(false);
         toast({
-          variant: theme || 'default',
           title: t('saveSuccess', 'Sauvegarde réussie'),
           description: `${t('fileSavedIn', 'Fichier sauvegardé dans')} ${folderPath}`,
           variant: 'success',

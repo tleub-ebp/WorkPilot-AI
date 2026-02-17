@@ -17,8 +17,7 @@ tomli>=2.0.0; python_version < "3.11"
 secretstorage>=3.3.3; sys_platform == "linux"
 
 # Memory Integration - LadybugDB (embedded graph database)
-# Requires Python 3.12+ (no Docker required)
-real_ladybug>=0.13.0; python_version >= "3.12"
+#real_ladybug>=0.14.1; python_version >= "3.13"
 graphiti-core>=0.5.0; python_version >= "3.12"
 # pandas is required by real_ladybug for get_as_df() method
 # pandas 2.2.0+ required for pre-built wheels on Python 3.12
@@ -49,3 +48,9 @@ bandit>=1.7.0
 # Install separately: pip install semgrep
 # pip-audit for dependency vulnerability scanning (optional but recommended)
 # Install separately: pip install pip-audit
+
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+
+# Ajout d'une note pour l'installation automatique de uvicorn si absent
+# Pour garantir l'automatisation, il est recommandé d'ajouter uvicorn dans requirements.txt racine ou de documenter l'installation automatique.

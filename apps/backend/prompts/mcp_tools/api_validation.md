@@ -11,7 +11,7 @@ Check that new/modified endpoints are properly registered:
 **FastAPI:**
 ```bash
 # Start server and check /docs or /openapi.json
-curl http://localhost:8000/openapi.json | jq '.paths | keys'
+curl http://localhost:9000/openapi.json | jq '.paths | keys'
 ```
 
 **Express/Node:**
@@ -31,21 +31,21 @@ For each new/modified endpoint, verify:
 
 **Success case:**
 ```bash
-curl -X GET http://localhost:8000/api/resource \
+curl -X GET http://localhost:9000/api/resource \
   -H "Content-Type: application/json" \
   | jq .
 ```
 
 **With authentication (if required):**
 ```bash
-curl -X GET http://localhost:8000/api/resource \
+curl -X GET http://localhost:9000/api/resource \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json"
 ```
 
 **POST with body:**
 ```bash
-curl -X POST http://localhost:8000/api/resource \
+curl -X POST http://localhost:9000/api/resource \
   -H "Content-Type: application/json" \
   -d '{"field": "value"}'
 ```
@@ -56,7 +56,7 @@ Test error cases return appropriate status codes:
 
 **400 - Bad Request (validation error):**
 ```bash
-curl -X POST http://localhost:8000/api/resource \
+curl -X POST http://localhost:9000/api/resource \
   -H "Content-Type: application/json" \
   -d '{"invalid": "data"}'
 # Should return 400 with error details
@@ -64,13 +64,13 @@ curl -X POST http://localhost:8000/api/resource \
 
 **401 - Unauthorized (missing auth):**
 ```bash
-curl -X GET http://localhost:8000/api/protected-resource
+curl -X GET http://localhost:9000/api/protected-resource
 # Should return 401
 ```
 
 **404 - Not Found:**
 ```bash
-curl -X GET http://localhost:8000/api/resource/nonexistent-id
+curl -X GET http://localhost:9000/api/resource/nonexistent-id
 # Should return 404
 ```
 
@@ -80,10 +80,10 @@ Check that responses match expected schema:
 
 ```bash
 # Verify JSON structure
-curl http://localhost:8000/api/resource | jq 'keys'
+curl http://localhost:9000/api/resource | jq 'keys'
 
 # Check specific fields exist
-curl http://localhost:8000/api/resource | jq '.data | has("id", "name")'
+curl http://localhost:9000/api/resource | jq '.data | has("id", "name")'
 ```
 
 ### Document Findings

@@ -11,7 +11,7 @@
  * API Provider type for usage monitoring
  * Determines which usage endpoint to query and how to normalize responses
  */
-export type ApiProvider = 'anthropic' | 'zai' | 'zhipu' | 'unknown';
+export type ApiProvider = 'anthropic' | 'zai' | 'zhipu' | 'openai' | 'unknown';
 
 /**
  * Provider detection patterns
@@ -26,6 +26,10 @@ const PROVIDER_PATTERNS: readonly ProviderPattern[] = [
   {
     provider: 'anthropic',
     domainPatterns: ['api.anthropic.com']
+  },
+  {
+    provider: 'openai',
+    domainPatterns: ['api.openai.com']
   },
   {
     provider: 'zai',
@@ -83,6 +87,8 @@ export function getProviderLabel(provider: ApiProvider): string {
   switch (provider) {
     case 'anthropic':
       return 'Anthropic';
+    case 'openai':
+      return 'OpenAI';
     case 'zai':
       return 'z.ai';
     case 'zhipu':
@@ -102,6 +108,8 @@ export function getProviderBadgeColor(provider: ApiProvider): string {
   switch (provider) {
     case 'anthropic':
       return 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/15';
+    case 'openai':
+      return 'bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/15';
     case 'zai':
       return 'bg-blue-500/10 text-blue-500 border-blue-500/20 hover:bg-blue-500/15';
     case 'zhipu':

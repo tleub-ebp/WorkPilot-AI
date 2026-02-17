@@ -25,6 +25,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
 
@@ -52,11 +53,11 @@ LINEAR_TOOLS = [
 class LinearTaskState:
     """State of a Linear task for an auto-claude spec."""
 
-    task_id: str | None = None
-    task_title: str | None = None
-    team_id: str | None = None
+    task_id: Optional[str] = None
+    task_title: Optional[str] = None
+    team_id: Optional[str] = None
     status: str = STATUS_TODO
-    created_at: str | None = None
+    created_at: Optional[str] = None
 
     def to_dict(self) -> dict:
         return {
@@ -84,7 +85,7 @@ class LinearTaskState:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
-    def load(cls, spec_dir: Path) -> "LinearTaskState" | None:
+    def load(cls, spec_dir: Path) -> Optional["LinearTaskState"]:
         """Load state from the spec directory."""
         state_file = spec_dir / LINEAR_TASK_FILE
         if not state_file.exists():
@@ -146,7 +147,7 @@ def _create_linear_client() -> ClaudeSDKClient:
     )
 
 
-async def _run_linear_agent(prompt: str) -> str | None:
+async def _run_linear_agent(prompt: str) -> Optional[str]:
     """
     Run a focused mini-agent for a Linear operation.
 
@@ -181,8 +182,8 @@ async def _run_linear_agent(prompt: str) -> str | None:
 async def create_linear_task(
     spec_dir: Path,
     title: str,
-    description: str | None = None,
-) -> LinearTaskState | None:
+    description: Optional[str] = None,
+) -> Optional[LinearTaskState]:
     """
     Create a new Linear task for a spec.
 

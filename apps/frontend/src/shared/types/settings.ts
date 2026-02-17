@@ -237,6 +237,9 @@ export interface AppSettings {
   globalGoogleApiKey?: string;
   globalGroqApiKey?: string;
   globalOpenRouterApiKey?: string;
+  globalMistralApiKey?: string;
+  globalDeepSeekApiKey?: string;
+  globalMetaLlamaApiKey?: string;
   // Graphiti LLM provider settings (legacy)
   graphitiLlmProvider?: 'openai' | 'anthropic' | 'google' | 'groq' | 'ollama';
   ollamaBaseUrl?: string;

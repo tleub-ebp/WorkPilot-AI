@@ -11,7 +11,7 @@ This document covers terminal-only usage of Auto Claude. **For most users, we re
 ## Prerequisites
 
 - Python 3.9+
-- Claude Code CLI (`npm install -g @anthropic-ai/claude-code`)
+- Claude Code CLI (`pnpm install -g @anthropic-ai/claude-code`)
 
 ### Installing Python
 

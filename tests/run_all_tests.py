@@ -52,6 +52,8 @@ def main():
         ("Validation Imports", "test_validation.py"),
         ("Tests Fonctionnels", "run_functional_tests.py"),
         ("Tests CLI", "test_cli.py"),
+        ("Tests Multi-Provider LLM", "test_llm_provider.py"),
+        ("Tests Providers Concrets LLM", "test_llm_providers_concrets.py"),
     ]
     
     results = []

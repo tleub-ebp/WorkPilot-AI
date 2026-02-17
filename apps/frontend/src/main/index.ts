@@ -57,6 +57,8 @@ import { isProfileAuthenticated } from './claude-profile/profile-utils';
 import { isMacOS, isWindows } from './platform';
 import { ptyDaemonClient } from './terminal/pty-daemon-client';
 import type { AppSettings, AuthFailureInfo } from '../shared/types';
+import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
+import http from 'http';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Window sizing constants
@@ -142,6 +144,7 @@ function getIconPath(): string {
 let mainWindow: BrowserWindow | null = null;
 let agentManager: AgentManager | null = null;
 let terminalManager: TerminalManager | null = null;
+let backendProcess: ChildProcessWithoutNullStreams | null = null;
 
 // Re-entrancy guard for before-quit handler.
 // The first before-quit call pauses quit for async cleanup, then calls app.quit() again.
@@ -348,8 +351,90 @@ if (isWindows()) {
   console.log('[main] Applied Windows GPU cache fixes');
 }
 
+// Fonction pour attendre que le backend soit prêt
+async function waitForBackendReady(url: string, timeoutMs = 10000) {
+  const start = Date.now();
+  return new Promise<void>((resolve, reject) => {
+    function check() {
+      http.get(url, res => {
+        if (res.statusCode && res.statusCode < 500) {
+          resolve();
+        } else {
+          retry();
+        }
+      }).on('error', retry);
+    }
+    function retry() {
+      if (Date.now() - start > timeoutMs) {
+        reject(new Error('Backend API non disponible après attente.'));
+      } else {
+        setTimeout(check, 400);
+      }
+    }
+    check();
+  });
+}
+
+// Fonction pour lancer le backend si nécessaire
+async function launchBackendIfNeeded() {
+  // Vérifie si le backend répond déjà
+  try {
+    await waitForBackendReady('http://127.0.0.1:9000/providers', 1500);
+    console.log('[main] Backend LLM déjà démarré.');
+    return;
+  } catch {}
+  // Détermine le chemin Python dynamique via pythonEnvManager
+  const backendDir = resolve(__dirname, '../../../backend');
+  const pythonPath = pythonEnvManager.getPythonPath();
+  if (!pythonPath || !existsSync(pythonPath)) {
+    throw new Error(`[main] Python introuvable pour le backend : ${pythonPath || 'inconnu'}\nVérifiez que le venv est bien créé et initialisé.`);
+  }
+  const providerApiModule = 'provider_api:app';
+  backendProcess = spawn(pythonPath, ['-m', 'uvicorn', providerApiModule, '--host', '127.0.0.1', '--port', '9000', '--reload'], {
+    cwd: backendDir,
+    stdio: 'ignore',
+    detached: false,
+    env: { ...process.env, UVICORN_CMD: '1' }
+  });
+  console.log('[main] Backend LLM lancé via python -m uvicorn:', pythonPath, providerApiModule);
+  // Attend qu'il soit prêt
+  await waitForBackendReady('http://127.0.0.1:9000/providers', 10000);
+}
+
+async function ensureBackendLaunched() {
+  if (pythonEnvManager.isEnvReady()) {
+    try {
+      await launchBackendIfNeeded();
+    } catch (err) {
+      const { dialog } = require('electron');
+      dialog.showErrorBox('Erreur lancement backend LLM',
+        'Impossible de démarrer le backend LLM (FastAPI) automatiquement.\n' +
+        (err?.message ? err.message : String(err)));
+    }
+  } else {
+    pythonEnvManager.once('ready', async () => {
+      try {
+        await launchBackendIfNeeded();
+      } catch (err) {
+        const { dialog } = require('electron');
+        dialog.showErrorBox('Erreur lancement backend LLM',
+          'Impossible de démarrer le backend LLM (FastAPI) automatiquement.\n' +
+          (err?.message ? err.message : String(err)));
+      }
+    });
+  }
+}
+
+// Initialisation explicite du PythonEnvManager avec le chemin du backend (corrigé)
+const backendSourcePath = resolve(__dirname, '../../../backend');
+pythonEnvManager.initialize(backendSourcePath).then((status) => {
+  console.warn('[main] PythonEnvManager status:', status);
+}).catch((err) => {
+  console.error('[main] Erreur lors de l\'initialisation du PythonEnvManager:', err);
+});
+
 // Initialize the application
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Set app user model id for Windows
   electronApp.setAppUserModelId('com.autoclaude.ui');
 
@@ -591,6 +676,27 @@ app.whenReady().then(() => {
       createWindow();
     }
   });
+
+  try {
+    await ensureBackendLaunched();
+  } catch (err) {
+    const { dialog } = require('electron');
+    dialog.showErrorBox('Erreur lancement backend LLM',
+      'Impossible de démarrer le backend LLM (FastAPI) automatiquement.\n' +
+      (err?.message ? err.message : String(err)) +
+      '\nVérifiez que le venv Python et les dépendances sont bien installés.');
+    // On continue, mais le frontend affichera une erreur si l’API n’est pas disponible
+  }
+});
+
+// Arrêt propre du backend à la fermeture de l'app
+app.on('will-quit', () => {
+  if (backendProcess) {
+    try {
+      backendProcess.kill();
+    } catch {}
+    backendProcess = null;
+  }
 });
 
 // Quit when all windows are closed (except on macOS)

@@ -84,7 +84,7 @@ export const DEFAULT_PROJECT_SETTINGS = {
   },
   // Graphiti MCP server for agent-accessible knowledge graph (enabled by default)
   graphitiMcpEnabled: true,
-  graphitiMcpUrl: 'http://localhost:8000/mcp/',
+  graphitiMcpUrl: 'http://localhost:9000/mcp/',
   // Include CLAUDE.md instructions in agent context (enabled by default)
   useClaudeMd: true
 };

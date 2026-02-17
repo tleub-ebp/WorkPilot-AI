@@ -332,7 +332,69 @@ Environment Variables:
         help="Enable streaming mode for this build (broadcasts events in real-time)",
     )
 
+    # Provider management commands
+    provider_group = parser.add_argument_group("Provider management")
+    provider_group.add_argument(
+        "--provider-action",
+        type=str,
+        choices=["list", "select", "add", "delete", "test"],
+        help="Action to perform on LLM providers",
+    )
+    provider_group.add_argument(
+        "--provider",
+        type=str,
+        help="Name of the provider",
+    )
+    provider_group.add_argument(
+        "--config",
+        type=str,
+        help="JSON config for adding a new provider",
+    )
+
     return parser.parse_args()
+
+
+def handle_provider_command(args):
+    from src.connectors.llm_config import (
+        save_provider_config, load_provider_config, delete_provider_config, list_provider_configs
+    )
+    from src.connectors.llm_discovery import discover_llm_providers
+    import json
+    if args.action == "list":
+        print("Providers disponibles:")
+        for cls in discover_llm_providers():
+            print(f"- {cls().get_name()}")
+        print("Configurations enregistrées:")
+        for name in list_provider_configs():
+            print(f"- {name}")
+    elif args.action == "select":
+        # TODO: Persister le provider sélectionné
+        print(f"Provider sélectionné: {args.provider}")
+    elif args.action == "add":
+        config = json.loads(args.config)
+        save_provider_config(args.provider, config)
+        print(f"Config enregistrée pour {args.provider}")
+    elif args.action == "delete":
+        delete_provider_config(args.provider)
+        print(f"Config supprimée pour {args.provider}")
+    elif args.action == "test":
+        config = load_provider_config(args.provider)
+        if not config:
+            print("Aucune config trouvée pour ce provider.")
+            return
+        for cls in discover_llm_providers():
+            if cls().get_name() == args.provider:
+                try:
+                    instance = cls(**config)
+                    instance.connect()
+                    if not instance.validate():
+                        print("Validation échouée.")
+                        return
+                    print("Provider OK.")
+                except Exception as e:
+                    print(f"Erreur: {e}")
+                return
+        print("Provider non trouvé.")
 
 
 def main() -> None:

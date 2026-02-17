@@ -7,7 +7,7 @@ import requests
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'grepai.yaml')
 GREPAI_DIR = os.path.join(os.path.dirname(__file__), 'grepai')
 PYTHON_PATH = 'python'
-PORT = 8000
+PORT = 9000
 INDEX_PATH = '../../apps/backend'
 GIT_URL = 'https://github.com/yoanbernabeu/grepai.git'
 REQUIREMENTS_PATH = os.path.join(GREPAI_DIR, 'requirements.txt')

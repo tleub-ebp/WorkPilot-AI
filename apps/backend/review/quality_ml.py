@@ -13,7 +13,7 @@ import re
 from collections import defaultdict
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from .quality_scorer import IssueSeverity, QualityCategory, QualityIssue
 
@@ -42,7 +42,7 @@ class MLPatternDetector:
 
     def learn_from_codebase(
         self,
-        file_patterns: list[str] | None = None,
+        file_patterns: Optional[list[str]] = None,
     ) -> dict[str, Any]:
         """
         Apprend les patterns d'un projet.
@@ -407,4 +407,3 @@ def learn_and_detect(
             all_issues.extend(issues)
     
     return stats, all_issues
-

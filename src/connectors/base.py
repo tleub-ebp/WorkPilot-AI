@@ -190,7 +190,7 @@ class BaseIntegratedConnector(BaseConnector, BaseWorkItemTracker):
 
 class GrepaiConnector:
     """Connector pour effectuer des recherches avancées via Grepai."""
-    def __init__(self, base_url="http://localhost:8000"):
+    def __init__(self, base_url="http://localhost:9000"):
         from src.connectors.grepai.client import GrepaiClient
         self.client = GrepaiClient(base_url=base_url)
 

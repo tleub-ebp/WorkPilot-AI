@@ -13,6 +13,7 @@ import { type ProfileAPI, createProfileAPI } from './profile-api';
 import { type ScreenshotAPI, createScreenshotAPI } from './screenshot-api';
 import { type QueueAPI, createQueueAPI } from './queue-api';
 import { type QualityAPI, createQualityAPI } from './modules/quality-api';
+import { invokeIpc } from './modules/ipc-utils';
 
 export interface ElectronAPI extends
   ProjectAPI,
@@ -36,6 +37,7 @@ export interface ElectronAPI extends
   queue: QueueAPI;
   /** Code quality analysis API */
   quality: QualityAPI;
+  createClaudeProfileDirectory: (profileName: string) => Promise<{ success: boolean; data?: string; error?: string }>;
 }
 
 export const createElectronAPI = (): ElectronAPI => ({
@@ -53,7 +55,8 @@ export const createElectronAPI = (): ElectronAPI => ({
   ...createScreenshotAPI(),
   github: createGitHubAPI(),
   queue: createQueueAPI(),  // Queue routing for rate limit recovery
-  quality: createQualityAPI()  // Code quality analysis
+  quality: createQualityAPI(),  // Code quality analysis
+  createClaudeProfileDirectory: (profileName: string) => invokeIpc('claude:profileCreateDir', profileName),
 });
 
 // Export individual API creators for potential use in tests or specialized contexts

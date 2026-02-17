@@ -7,8 +7,12 @@ variables from a .env file when available.
 
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from dotenv import load_dotenv
+
+# Charge le .env unique à la racine du projet
+load_dotenv(dotenv_path=Path(__file__).parent.parent.parent / '.env')
 
 
 @dataclass

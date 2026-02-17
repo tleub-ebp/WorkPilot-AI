@@ -21,10 +21,10 @@ import {
   HelpCircle,
   Wrench,
   PanelLeft,
-  PanelLeftClose
+  PanelLeftClose,
 } from 'lucide-react';
 import { Button } from './ui/button';
-import { ScrollArea } from './ui/scroll-area';
+import { ScrollArea } from '@/components/ui';
 import { Separator } from './ui/separator';
 import {
   Tooltip,
@@ -40,18 +40,18 @@ import {
   DialogHeader,
   DialogTitle
 } from './ui/dialog';
-import { cn } from '../lib/utils';
+import { cn } from '@/lib/utils';
 import {
   useProjectStore,
   removeProject,
   initializeProject
-} from '../stores/project-store';
-import { useSettingsStore, saveSettings } from '../stores/settings-store';
+} from '@/stores/project-store';
+import { useSettingsStore, saveSettings } from '@/stores/settings-store';
 import {
   useProjectEnvStore,
   loadProjectEnvConfig,
   clearProjectEnvConfig
-} from '../stores/project-env-store';
+} from '@/stores/project-env-store';
 import { AddProjectModal } from './AddProjectModal';
 import { GitSetupModal } from './GitSetupModal';
 import { RepositoryProviderModal } from './RepositoryProviderModal';
@@ -60,9 +60,9 @@ import { GitHubSetupModal } from './GitHubSetupModal';
 import { RateLimitIndicator } from './RateLimitIndicator';
 import { ClaudeCodeStatusBadge } from './ClaudeCodeStatusBadge';
 import { UpdateBanner } from './UpdateBanner';
-import type { Project, GitStatus } from '../../shared/types';
+import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming';
 
 interface SidebarProps {
   onSettingsClick: () => void;
@@ -577,7 +577,7 @@ export function Sidebar({
 
         {/* Bottom section with Settings, Help, and New Task */}
         <div className={cn("space-y-3 transition-all duration-300", isCollapsed ? "p-2" : "p-4")}>
-          {/* Claude Code Status Badge */}
+          {/* Claude Code Status Badge (ProviderSelector déplacé dans le popover) */}
           {!isCollapsed && <ClaudeCodeStatusBadge />}
 
           {/* Settings and Help row */}
@@ -604,7 +604,7 @@ export function Sidebar({
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => window.open('https://github.com/AndyMik90/Auto-Claude/issues', '_blank')}
+                  onClick={() => window.open('https://github.com/thomas-leub/Auto-Claude_EBP/issues', '_blank')}
                   aria-label={t('tooltips.help')}
                 >
                   <HelpCircle className="h-4 w-4" />

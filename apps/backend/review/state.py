@@ -11,6 +11,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 # State file name
 REVIEW_STATE_FILE = "review_state.json"
@@ -173,7 +174,7 @@ class ReviewState:
     def add_feedback(
         self,
         feedback: str,
-        spec_dir: Path | None = None,
+        spec_dir: Optional[Path] = None,
         auto_save: bool = True,
     ) -> None:
         """

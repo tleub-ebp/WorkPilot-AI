@@ -22,16 +22,6 @@ import {
   Users,
   Cloud
 } from 'lucide-react';
-
-// GitLab icon component (lucide-react doesn't have one)
-function GitLabIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" role="img" aria-labelledby="gitlab-icon-title">
-      <title id="gitlab-icon-title">GitLab</title>
-      <path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 4.82 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0 1 18.6 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.51L23 13.45a.84.84 0 0 1-.35.94z"/>
-    </svg>
-  );
-}
 import {
   FullScreenDialog,
   FullScreenDialogContent,
@@ -42,8 +32,8 @@ import {
   FullScreenDialogDescription
 } from '../ui/full-screen-dialog';
 import { Button } from '../ui/button';
-import { ScrollArea } from '../ui/scroll-area';
-import { cn } from '../../lib/utils';
+import { ScrollArea } from '@/components/ui';
+import { cn } from '@/lib/utils';
 import { useSettings } from './hooks/useSettings';
 import { ThemeSettings } from './ThemeSettings';
 import { DisplaySettings } from './DisplaySettings';
@@ -52,12 +42,24 @@ import { GeneralSettings } from './GeneralSettings';
 import { AdvancedSettings } from './AdvancedSettings';
 import { DevToolsSettings } from './DevToolsSettings';
 import { DebugSettings } from './DebugSettings';
-import { TerminalFontSettings } from './terminal-font-settings/TerminalFontSettings';
-import { AccountSettings } from './AccountSettings';
+import { TerminalFontSettings } from '@/components/settings/terminal-font-settings';
 import { ProjectSelector } from './ProjectSelector';
 import { ProjectSettingsContent, ProjectSettingsSection } from './ProjectSettingsContent';
-import { useProjectStore } from '../../stores/project-store';
-import type { UseProjectSettingsReturn } from '../project-settings/hooks/useProjectSettings';
+import { useProjectStore } from '@/stores/project-store';
+import type { UseProjectSettingsReturn } from '@/components/project-settings';
+import { AccountSettings } from './AccountSettings';
+import { getAllConnectors } from './multiconnector/utils';
+import { SettingsSection } from './SettingsSection';
+
+// GitLab icon component (lucide-react doesn't have one)
+function GitLabIcon({ className }: { className?: string }) {
+  return (
+      <svg className={className} viewBox="0 0 24 24" fill="currentColor" role="img" aria-labelledby="gitlab-icon-title">
+        <title id="gitlab-icon-title">GitLab</title>
+        <path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 4.82 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0 1 18.6 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.51L23 13.45a.84.84 0 0 1-.35.94z"/>
+      </svg>
+  );
+}
 
 interface AppSettingsDialogProps {
   open: boolean;
@@ -112,7 +114,7 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
   const [appSection, setAppSection] = useState<AppSection>(initialSection || 'appearance');
   const [projectSection, setProjectSection] = useState<ProjectSettingsSection>('general');
 
-  // Navigate to initial section when dialog opens with a specific section
+  // Navigate to the initial section when dialog opens with a specific section
   useEffect(() => {
     if (open) {
       if (initialProjectSection) {
@@ -197,7 +199,29 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
       case 'paths':
         return <GeneralSettings settings={settings} onSettingsChange={setSettings} section="paths" />;
       case 'accounts':
-        return <AccountSettings settings={settings} onSettingsChange={setSettings} isOpen={open} />;
+        // Affiche le header général une seule fois, puis la liste d'AccountSettings (un par connecteur)
+        return (
+          <SettingsSection
+            title={t('accounts.title')}
+            description={t('accounts.description')}
+          >
+            <div className="mb-6">
+              <div className="text-base font-semibold mb-2">Gestion multi-connecteur</div>
+              <div className="text-sm text-muted-foreground mb-4">
+                Vous pouvez connecter et gérer plusieurs fournisseurs IA (Claude, OpenAI, Mistral, etc.).
+              </div>
+            </div>
+            {getAllConnectors().map((connector) => (
+              <AccountSettings
+                key={connector.id}
+                settings={settings}
+                onSettingsChange={setSettings}
+                isOpen={open}
+                connector={connector}
+              />
+            ))}
+          </SettingsSection>
+        );
       case 'updates':
         return <AdvancedSettings settings={settings} onSettingsChange={setSettings} section="updates" version={version} />;
       case 'notifications':

@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { formatTimeRemaining, localizeUsageWindowLabel, hasHardcodedText } from '../../shared/utils/format-time';
 import type { ClaudeUsageSnapshot, ProfileUsageSummary } from '../../shared/types/agent';
 import type { AppSection } from './settings/AppSettings';
+import { useProviderContext } from './ProviderContext';
 
 /**
  * Usage threshold constants for color coding
@@ -82,6 +83,7 @@ export function UsageIndicator() {
   const [isOpen, setIsOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { selectedProvider } = useProviderContext();
 
   /**
    * Helper function to get initials from a profile name
@@ -187,9 +189,9 @@ export function UsageIndicator() {
 
     // 3. Update the other profiles list: remove target, add current active
     const newOtherProfiles = otherProfiles
-      .filter(p => p.profileId !== profileId)
-      .concat(usage ? [currentActiveAsSummary] : [])
-      .sort((a, b) => b.availabilityScore - a.availabilityScore);
+        .filter(p => p.profileId !== profileId)
+        .concat(usage ? [currentActiveAsSummary] : [])
+        .sort((a, b) => b.availabilityScore - a.availabilityScore);
 
     // Apply optimistic update immediately
     setUsage(newActiveUsage);
@@ -301,17 +303,19 @@ export function UsageIndicator() {
 
   // Get formatted reset times (calculated dynamically from timestamps)
   const sessionResetTime = usage?.sessionResetTimestamp
-    ? (formatTimeRemaining(usage.sessionResetTimestamp, t) ??
-      (hasHardcodedText(usage?.sessionResetTime) ? undefined : usage?.sessionResetTime))
-    : (hasHardcodedText(usage?.sessionResetTime) ? undefined : usage?.sessionResetTime);
+      ? (formatTimeRemaining(usage.sessionResetTimestamp, t) ??
+          (hasHardcodedText(usage?.sessionResetTime) ? undefined : usage?.sessionResetTime))
+      : (hasHardcodedText(usage?.sessionResetTime) ? undefined : usage?.sessionResetTime);
   const weeklyResetTime = usage?.weeklyResetTimestamp
-    ? (formatTimeRemaining(usage.weeklyResetTimestamp, t) ??
-      (hasHardcodedText(usage?.weeklyResetTime) ? undefined : usage?.weeklyResetTime))
-    : (hasHardcodedText(usage?.weeklyResetTime) ? undefined : usage?.weeklyResetTime);
+      ? (formatTimeRemaining(usage.weeklyResetTimestamp, t) ??
+          (hasHardcodedText(usage?.weeklyResetTime) ? undefined : usage?.weeklyResetTime))
+      : (hasHardcodedText(usage?.weeklyResetTime) ? undefined : usage?.weeklyResetTime);
 
   useEffect(() => {
     // Listen for usage updates from main process
     const unsubscribe = window.electronAPI.onUsageUpdated((snapshot: ClaudeUsageSnapshot) => {
+      // Si le provider du snapshot ne correspond pas au provider sélectionné, ignorer
+      if (selectedProvider && snapshot.providerName && snapshot.providerName !== selectedProvider) return;
       setUsage(snapshot);
       setIsAvailable(true);
       setIsLoading(false);
@@ -327,10 +331,11 @@ export function UsageIndicator() {
       setActiveProfileNeedsReauth(activeProfile?.needsReauthentication ?? false);
     });
 
-    // Request initial usage on mount
+    // Request initial usage on mount for the selected provider
     window.electronAPI.requestUsageUpdate().then((result) => {
       setIsLoading(false);
       if (result.success && result.data) {
+        if (selectedProvider && result.data.providerName && result.data.providerName !== selectedProvider) return;
         setUsage(result.data);
         setIsAvailable(true);
       } else {
@@ -361,15 +366,15 @@ export function UsageIndicator() {
       unsubscribe();
       unsubscribeAllProfiles?.();
     };
-  }, []);
+  }, [selectedProvider]);
 
   // Show loading state
   if (isLoading) {
     return (
-      <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground">
-        <Activity className="h-3.5 w-3.5 motion-safe:animate-pulse" />
-        <span className="text-xs font-semibold">{t('common:usage.loading')}</span>
-      </div>
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground">
+          <Activity className="h-3.5 w-3.5 motion-safe:animate-pulse" />
+          <span className="text-xs font-semibold">{t('common:usage.loading')}</span>
+        </div>
     );
   }
 
@@ -379,57 +384,57 @@ export function UsageIndicator() {
     const needsReauth = activeProfileNeedsReauth;
 
     return (
-      <TooltipProvider delayDuration={200}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border cursor-help ${
-                needsReauth
-                  ? 'bg-red-500/10 border-red-500/20 text-red-500'
-                  : 'bg-muted/50 text-muted-foreground'
-              }`}
-              aria-label={needsReauth ? t('common:usage.reauthRequired') : t('common:usage.dataUnavailable')}
-            >
-              {needsReauth ? (
-                <>
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  <span className="text-xs font-semibold">!</span>
-                </>
-              ) : (
-                <>
-                  <Activity className="h-3.5 w-3.5" />
-                  <span className="text-xs font-semibold">{t('common:usage.notAvailable')}</span>
-                </>
-              )}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs w-64">
-            <div className="space-y-1">
-              {needsReauth ? (
-                <>
-                  <p className="font-medium text-red-500">{t('common:usage.reauthRequired')}</p>
-                  <p className="text-muted-foreground text-[10px]">
-                    {t('common:usage.reauthRequiredDescription')}
-                  </p>
-                  <button
-                    onClick={handleOpenAccounts}
-                    className="text-[10px] text-primary mt-1 font-medium underline hover:text-primary/80 cursor-pointer"
-                  >
-                    {t('common:usage.clickToOpenSettings')}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p className="font-medium">{t('common:usage.dataUnavailable')}</p>
-                  <p className="text-muted-foreground text-[10px]">
-                    {t('common:usage.dataUnavailableDescription')}
-                  </p>
-                </>
-              )}
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border cursor-help ${
+                      needsReauth
+                          ? 'bg-red-500/10 border-red-500/20 text-red-500'
+                          : 'bg-muted/50 text-muted-foreground'
+                  }`}
+                  aria-label={needsReauth ? t('common:usage.reauthRequired') : t('common:usage.dataUnavailable')}
+              >
+                {needsReauth ? (
+                    <>
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      <span className="text-xs font-semibold">!</span>
+                    </>
+                ) : (
+                    <>
+                      <Activity className="h-3.5 w-3.5" />
+                      <span className="text-xs font-semibold">{t('common:usage.notAvailable')}</span>
+                    </>
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs w-64">
+              <div className="space-y-1">
+                {needsReauth ? (
+                    <>
+                      <p className="font-medium text-red-500">{t('common:usage.reauthRequired')}</p>
+                      <p className="text-muted-foreground text-[10px]">
+                        {t('common:usage.reauthRequiredDescription')}
+                      </p>
+                      <button
+                          onClick={handleOpenAccounts}
+                          className="text-[10px] text-primary mt-1 font-medium underline hover:text-primary/80 cursor-pointer"
+                      >
+                        {t('common:usage.clickToOpenSettings')}
+                      </button>
+                    </>
+                ) : (
+                    <>
+                      <p className="font-medium">{t('common:usage.dataUnavailable')}</p>
+                      <p className="text-muted-foreground text-[10px]">
+                        {t('common:usage.dataUnavailableDescription')}
+                      </p>
+                    </>
+                )}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
     );
   }
 
@@ -441,326 +446,326 @@ export function UsageIndicator() {
   // Badge color based on the limiting (higher) percentage
   // Override to red/destructive when re-auth is needed
   const badgeColorClasses = usage.needsReauthentication
-    ? 'text-red-500 bg-red-500/10 border-red-500/20'
-    : getBadgeColorClasses(limitingPercent);
+      ? 'text-red-500 bg-red-500/10 border-red-500/20'
+      : getBadgeColorClasses(limitingPercent);
 
   // Individual colors for session and weekly in the badge
   const sessionColorClass = getColorClass(sessionPercent);
   const weeklyColorClass = getColorClass(weeklyPercent);
 
   const sessionLabel = localizeUsageWindowLabel(
-    usage?.usageWindows?.sessionWindowLabel,
-    t,
-    'common:usage.sessionDefault'
+      usage?.usageWindows?.sessionWindowLabel,
+      t,
+      'common:usage.sessionDefault'
   );
   const weeklyLabel = localizeUsageWindowLabel(
-    usage?.usageWindows?.weeklyWindowLabel,
-    t,
-    'common:usage.weeklyDefault'
+      usage?.usageWindows?.weeklyWindowLabel,
+      t,
+      'common:usage.weeklyDefault'
   );
 
   const maxUsage = Math.max(usage.sessionPercent, usage.weeklyPercent);
   // Show AlertCircle when re-auth needed or high usage
   const Icon = usage.needsReauthentication ? AlertCircle :
-    maxUsage >= THRESHOLD_WARNING ? AlertCircle :
-    maxUsage >= THRESHOLD_ELEVATED ? TrendingUp :
-    Activity;
+      maxUsage >= THRESHOLD_WARNING ? AlertCircle :
+          maxUsage >= THRESHOLD_ELEVATED ? TrendingUp :
+              Activity;
 
   return (
-    <Popover open={isOpen} onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild>
-        <button
-          className={`flex items-center gap-1 px-2 py-1.5 rounded-md border transition-all hover:opacity-80 ${badgeColorClasses}`}
-          aria-label={t('common:usage.usageStatusAriaLabel')}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          onClick={handleTriggerClick}
-        >
-          <Icon className="h-3.5 w-3.5 flex-shrink-0" />
-          {/* Show "!" when re-auth needed, otherwise dual usage display */}
-          {usage.needsReauthentication ? (
-            <span className="text-xs font-semibold text-red-500" title={t('common:usage.needsReauth')}>
+      <Popover open={isOpen} onOpenChange={handleOpenChange}>
+        <PopoverTrigger asChild>
+          <button
+              className={`flex items-center gap-1 px-2 py-1.5 rounded-md border transition-all hover:opacity-80 ${badgeColorClasses}`}
+              aria-label={t('common:usage.usageStatusAriaLabel')}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              onClick={handleTriggerClick}
+          >
+            <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+            {/* Show "!" when re-auth needed, otherwise dual usage display */}
+            {usage.needsReauthentication ? (
+                <span className="text-xs font-semibold text-red-500" title={t('common:usage.needsReauth')}>
               !
             </span>
-          ) : (
-            <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
+            ) : (
+                <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
               <span className={sessionColorClass} title={t('common:usage.sessionShort')}>
                 {Math.round(sessionPercent)}
               </span>
-              <span className="text-muted-foreground/50">│</span>
-              <span className={weeklyColorClass} title={t('common:usage.weeklyShort')}>
+                  <span className="text-muted-foreground/50">│</span>
+                  <span className={weeklyColorClass} title={t('common:usage.weeklyShort')}>
                 {Math.round(weeklyPercent)}
               </span>
-            </div>
-          )}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        side="bottom"
-        align="end"
-        className="text-xs w-72 p-0"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        <div className="p-3 space-y-3">
-          {/* Header with overall status */}
-          <div className="flex items-center gap-1.5 pb-2 border-b">
-            <Icon className="h-3.5 w-3.5" />
-            <span className="font-semibold text-xs">{t('common:usage.usageBreakdown')}</span>
-          </div>
-
-          {/* Re-auth required prompt - shown when active profile needs re-authentication */}
-          {usage.needsReauthentication ? (
-            <div className="py-2 space-y-3">
-              <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-destructive/10 border border-destructive/20">
-                <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-destructive">
-                    {t('common:usage.reauthRequired')}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground leading-relaxed">
-                    {t('common:usage.reauthRequiredDescription')}
-                  </p>
                 </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleOpenAccounts}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors text-xs font-medium"
-              >
-                <LogIn className="h-3.5 w-3.5" />
-                {t('common:usage.reauthButton')}
-              </button>
+            )}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+            side="bottom"
+            align="end"
+            className="text-xs w-72 p-0"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+        >
+          <div className="p-3 space-y-3">
+            {/* Header with overall status */}
+            <div className="flex items-center gap-1.5 pb-2 border-b">
+              <Icon className="h-3.5 w-3.5" />
+              <span className="font-semibold text-xs">{t('common:usage.usageBreakdown')}</span>
             </div>
-          ) : (
-            <>
-              {/* Session/5-hour usage */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
+
+            {/* Re-auth required prompt - shown when active profile needs re-authentication */}
+            {usage.needsReauthentication ? (
+                <div className="py-2 space-y-3">
+                  <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-destructive/10 border border-destructive/20">
+                    <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-destructive">
+                        {t('common:usage.reauthRequired')}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        {t('common:usage.reauthRequiredDescription')}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                      type="button"
+                      onClick={handleOpenAccounts}
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors text-xs font-medium"
+                  >
+                    <LogIn className="h-3.5 w-3.5" />
+                    {t('common:usage.reauthButton')}
+                  </button>
+                </div>
+            ) : (
+                <>
+                  {/* Session/5-hour usage */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
                   <span className="text-muted-foreground font-medium text-[11px] flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     {sessionLabel}
                   </span>
-                  <span className={`font-semibold tabular-nums text-xs ${getColorClass(usage.sessionPercent).replace('500', '600')}`}>
+                      <span className={`font-semibold tabular-nums text-xs ${getColorClass(usage.sessionPercent).replace('500', '600')}`}>
                     {Math.round(usage.sessionPercent)}%
                   </span>
-                </div>
-                {sessionResetTime && (
-                  <div className="text-[10px] text-muted-foreground pl-4 flex items-center gap-1">
-                    <Info className="h-2.5 w-2.5" />
-                    {sessionResetTime}
-                  </div>
-                )}
-                <div className="h-2 bg-muted rounded-full overflow-hidden shadow-inner">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden ${getGradientClass(usage.sessionPercent)}`}
-                    style={{ width: `${Math.min(usage.sessionPercent, 100)}%` }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent motion-safe:animate-pulse" />
-                  </div>
-                </div>
-                {usage.sessionUsageValue != null && usage.sessionUsageLimit != null && (
-                  <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-muted-foreground">{t('common:usage.used')}</span>
-                    <span className="font-medium tabular-nums">
+                    </div>
+                    {sessionResetTime && (
+                        <div className="text-[10px] text-muted-foreground pl-4 flex items-center gap-1">
+                          <Info className="h-2.5 w-2.5" />
+                          {sessionResetTime}
+                        </div>
+                    )}
+                    <div className="h-2 bg-muted rounded-full overflow-hidden shadow-inner">
+                      <div
+                          className={`h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden ${getGradientClass(usage.sessionPercent)}`}
+                          style={{ width: `${Math.min(usage.sessionPercent, 100)}%` }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent motion-safe:animate-pulse" />
+                      </div>
+                    </div>
+                    {usage.sessionUsageValue != null && usage.sessionUsageLimit != null && (
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="text-muted-foreground">{t('common:usage.used')}</span>
+                          <span className="font-medium tabular-nums">
                       {formatUsageValue(usage.sessionUsageValue)} <span className="text-muted-foreground mx-1">/</span> {formatUsageValue(usage.sessionUsageLimit)}
                     </span>
+                        </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {/* Weekly/Monthly usage */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
+                  {/* Weekly/Monthly usage */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
                   <span className="text-muted-foreground font-medium text-[11px] flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" />
                     {weeklyLabel}
                   </span>
-                  <span className={`font-semibold tabular-nums text-xs ${getColorClass(usage.weeklyPercent).replace('500', '600')}`}>
+                      <span className={`font-semibold tabular-nums text-xs ${getColorClass(usage.weeklyPercent).replace('500', '600')}`}>
                     {Math.round(usage.weeklyPercent)}%
                   </span>
-                </div>
-                {weeklyResetTime && (
-                  <div className="text-[10px] text-muted-foreground pl-4 flex items-center gap-1">
-                    <Info className="h-2.5 w-2.5" />
-                    {weeklyResetTime}
-                  </div>
-                )}
-                <div className="h-2 bg-muted rounded-full overflow-hidden shadow-inner">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden ${getGradientClass(usage.weeklyPercent)}`}
-                    style={{ width: `${Math.min(usage.weeklyPercent, 100)}%` }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent motion-safe:animate-pulse" />
-                  </div>
-                </div>
-                {usage.weeklyUsageValue != null && usage.weeklyUsageLimit != null && (
-                  <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-muted-foreground">{t('common:usage.used')}</span>
-                    <span className="font-medium tabular-nums">
+                    </div>
+                    {weeklyResetTime && (
+                        <div className="text-[10px] text-muted-foreground pl-4 flex items-center gap-1">
+                          <Info className="h-2.5 w-2.5" />
+                          {weeklyResetTime}
+                        </div>
+                    )}
+                    <div className="h-2 bg-muted rounded-full overflow-hidden shadow-inner">
+                      <div
+                          className={`h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden ${getGradientClass(usage.weeklyPercent)}`}
+                          style={{ width: `${Math.min(usage.weeklyPercent, 100)}%` }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent motion-safe:animate-pulse" />
+                      </div>
+                    </div>
+                    {usage.weeklyUsageValue != null && usage.weeklyUsageLimit != null && (
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="text-muted-foreground">{t('common:usage.used')}</span>
+                          <span className="font-medium tabular-nums">
                       {formatUsageValue(usage.weeklyUsageValue)} <span className="text-muted-foreground mx-1">/</span> {formatUsageValue(usage.weeklyUsageLimit)}
                     </span>
+                        </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </>
-          )}
+                </>
+            )}
 
-          {/* Active account footer - clickable to go to settings */}
-          <button
-            type="button"
-            onClick={handleOpenAccounts}
-            className={`w-full pt-3 border-t flex items-center gap-2.5 hover:bg-muted/50 -mx-3 px-3 ${otherProfiles.length === 0 ? '-mb-3 pb-3 rounded-b-md' : 'pb-2'} transition-colors cursor-pointer group`}
-          >
-            {/* Initials Avatar with warning indicator for re-auth needed */}
-            <div className="relative">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                usage.needsReauthentication ? 'bg-red-500/10' : 'bg-primary/10'
-              }`}>
+            {/* Active account footer - clickable to go to settings */}
+            <button
+                type="button"
+                onClick={handleOpenAccounts}
+                className={`w-full pt-3 border-t flex items-center gap-2.5 hover:bg-muted/50 -mx-3 px-3 ${otherProfiles.length === 0 ? '-mb-3 pb-3 rounded-b-md' : 'pb-2'} transition-colors cursor-pointer group`}
+            >
+              {/* Initials Avatar with warning indicator for re-auth needed */}
+              <div className="relative">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    usage.needsReauthentication ? 'bg-red-500/10' : 'bg-primary/10'
+                }`}>
                 <span className={`text-xs font-semibold ${
-                  usage.needsReauthentication ? 'text-red-500' : 'text-primary'
+                    usage.needsReauthentication ? 'text-red-500' : 'text-primary'
                 }`}>
                   {getInitials(usage.profileName)}
                 </span>
+                </div>
+                {/* Status dot for re-auth needed */}
+                {usage.needsReauthentication && (
+                    <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background" />
+                )}
               </div>
-              {/* Status dot for re-auth needed */}
-              {usage.needsReauthentication && (
-                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background" />
-              )}
-            </div>
 
-            {/* Account Info */}
-            <div className="flex-1 min-w-0 text-left">
-              <div className="flex items-center gap-1.5">
+              {/* Account Info */}
+              <div className="flex-1 min-w-0 text-left">
+                <div className="flex items-center gap-1.5">
                 <span className="text-[10px] text-muted-foreground font-medium">
                   {t('common:usage.activeAccount')}
                 </span>
-                {usage.needsReauthentication && (
-                  <span className="text-[9px] px-1.5 py-0.5 bg-red-500/10 text-destructive rounded font-semibold">
+                  {usage.needsReauthentication && (
+                      <span className="text-[9px] px-1.5 py-0.5 bg-red-500/10 text-destructive rounded font-semibold">
                     {t('common:usage.needsReauth')}
                   </span>
-                )}
+                  )}
+                </div>
+                <div className={`font-medium text-xs truncate ${
+                    usage.needsReauthentication ? 'text-destructive' : 'text-primary'
+                }`}>
+                  {usage.profileEmail || usage.profileName}
+                </div>
               </div>
-              <div className={`font-medium text-xs truncate ${
-                usage.needsReauthentication ? 'text-destructive' : 'text-primary'
-              }`}>
-                {usage.profileEmail || usage.profileName}
-              </div>
-            </div>
 
-            {/* Chevron */}
-            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
-          </button>
+              {/* Chevron */}
+              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
+            </button>
 
-          {/* Other profiles section - sorted by availability */}
-          {otherProfiles.length > 0 && (
-            <div className="pt-2 -mx-3 px-3 -mb-3 pb-3 space-y-1">
-              <div className="text-[10px] text-muted-foreground font-medium mb-1.5">
-                {t('common:usage.otherAccounts')}
-              </div>
-              {otherProfiles.map((profile, index) => (
-                <div
-                  key={profile.profileId}
-                  className="flex items-center gap-2 py-1.5 px-1 rounded hover:bg-muted/30 transition-colors"
-                >
-                  {/* Initials Avatar with status indicator */}
-                  <div className="relative">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      profile.isRateLimited || profile.needsReauthentication
-                        ? 'bg-red-500/10'
-                        : !profile.isAuthenticated
-                          ? 'bg-muted'
-                          : 'bg-muted/80'
-                    }`}>
+            {/* Other profiles section - sorted by availability */}
+            {otherProfiles.length > 0 && (
+                <div className="pt-2 -mx-3 px-3 -mb-3 pb-3 space-y-1">
+                  <div className="text-[10px] text-muted-foreground font-medium mb-1.5">
+                    {t('common:usage.otherAccounts')}
+                  </div>
+                  {otherProfiles.map((profile, index) => (
+                      <div
+                          key={profile.profileId}
+                          className="flex items-center gap-2 py-1.5 px-1 rounded hover:bg-muted/30 transition-colors"
+                      >
+                        {/* Initials Avatar with status indicator */}
+                        <div className="relative">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                              profile.isRateLimited || profile.needsReauthentication
+                                  ? 'bg-red-500/10'
+                                  : !profile.isAuthenticated
+                                      ? 'bg-muted'
+                                      : 'bg-muted/80'
+                          }`}>
                       <span className={`text-[10px] font-semibold ${
-                        profile.isRateLimited || profile.needsReauthentication
-                          ? 'text-red-500'
-                          : !profile.isAuthenticated
-                            ? 'text-muted-foreground'
-                            : 'text-foreground/70'
+                          profile.isRateLimited || profile.needsReauthentication
+                              ? 'text-red-500'
+                              : !profile.isAuthenticated
+                                  ? 'text-muted-foreground'
+                                  : 'text-foreground/70'
                       }`}>
                         {getInitials(profile.profileName)}
                       </span>
-                    </div>
-                    {/* Status dot */}
-                    {(profile.isRateLimited || profile.needsReauthentication) && (
-                      <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background" />
-                    )}
-                  </div>
+                          </div>
+                          {/* Status dot */}
+                          {(profile.isRateLimited || profile.needsReauthentication) && (
+                              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background" />
+                          )}
+                        </div>
 
-                  {/* Profile Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
+                        {/* Profile Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
                       <span className="text-[11px] font-medium truncate">
                         {profile.profileEmail || profile.profileName}
                       </span>
-                      {index === 0 && !profile.isRateLimited && profile.isAuthenticated && (
-                        <span className="text-[9px] px-1.5 py-0.5 bg-primary/10 text-primary rounded font-semibold">
+                            {index === 0 && !profile.isRateLimited && profile.isAuthenticated && (
+                                <span className="text-[9px] px-1.5 py-0.5 bg-primary/10 text-primary rounded font-semibold">
                           {t('common:usage.next')}
                         </span>
-                      )}
-                      {/* Swap button - only show for authenticated profiles */}
-                      {profile.isAuthenticated && (
-                        <button
-                          onClick={(e) => handleSwapProfile(e, profile.profileId)}
-                          className="text-[9px] px-1.5 py-0.5 bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground rounded transition-colors ml-auto"
-                        >
-                          {t('common:usage.swap')}
-                        </button>
-                      )}
-                    </div>
-                    {/* Usage bars or status - show both session and weekly */}
-                    {profile.isRateLimited ? (
-                      <span className="text-[9px] text-red-500">
+                            )}
+                            {/* Swap button - only show for authenticated profiles */}
+                            {profile.isAuthenticated && (
+                                <button
+                                    onClick={(e) => handleSwapProfile(e, profile.profileId)}
+                                    className="text-[9px] px-1.5 py-0.5 bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground rounded transition-colors ml-auto"
+                                >
+                                  {t('common:usage.swap')}
+                                </button>
+                            )}
+                          </div>
+                          {/* Usage bars or status - show both session and weekly */}
+                          {profile.isRateLimited ? (
+                              <span className="text-[9px] text-red-500">
                         {profile.rateLimitType === 'weekly'
-                          ? t('common:usage.weeklyLimitReached')
-                          : t('common:usage.sessionLimitReached')}
+                            ? t('common:usage.weeklyLimitReached')
+                            : t('common:usage.sessionLimitReached')}
                       </span>
-                    ) : profile.needsReauthentication ? (
-                      <span className="text-[9px] text-destructive">
+                          ) : profile.needsReauthentication ? (
+                              <span className="text-[9px] text-destructive">
                         {t('common:usage.needsReauth')}
                       </span>
-                    ) : !profile.isAuthenticated ? (
-                      <span className="text-[9px] text-muted-foreground">
+                          ) : !profile.isAuthenticated ? (
+                              <span className="text-[9px] text-muted-foreground">
                         {t('common:usage.notAuthenticated')}
                       </span>
-                    ) : (
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {/* Session usage (short-term) */}
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-2.5 w-2.5 text-muted-foreground/70" />
-                          <div className="w-10 h-1 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${getBarColorClass(profile.sessionPercent)}`}
-                              style={{ width: `${Math.min(profile.sessionPercent, 100)}%` }}
-                            />
-                          </div>
-                          <span className={`text-[9px] tabular-nums w-6 ${getColorClass(profile.sessionPercent).replace('text-green-500', 'text-muted-foreground').replace('500', '600')}`}>
+                          ) : (
+                              <div className="flex items-center gap-2 mt-0.5">
+                                {/* Session usage (short-term) */}
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-2.5 w-2.5 text-muted-foreground/70" />
+                                  <div className="w-10 h-1 bg-muted rounded-full overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full ${getBarColorClass(profile.sessionPercent)}`}
+                                        style={{ width: `${Math.min(profile.sessionPercent, 100)}%` }}
+                                    />
+                                  </div>
+                                  <span className={`text-[9px] tabular-nums w-6 ${getColorClass(profile.sessionPercent).replace('text-green-500', 'text-muted-foreground').replace('500', '600')}`}>
                             {Math.round(profile.sessionPercent)}%
                           </span>
-                        </div>
-                        {/* Weekly usage (long-term) */}
-                        <div className="flex items-center gap-1">
-                          <TrendingUp className="h-2.5 w-2.5 text-muted-foreground/70" />
-                          <div className="w-10 h-1 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${getBarColorClass(profile.weeklyPercent)}`}
-                              style={{ width: `${Math.min(profile.weeklyPercent, 100)}%` }}
-                            />
-                          </div>
-                          <span className={`text-[9px] tabular-nums w-6 ${getColorClass(profile.weeklyPercent).replace('text-green-500', 'text-muted-foreground').replace('500', '600')}`}>
+                                </div>
+                                {/* Weekly usage (long-term) */}
+                                <div className="flex items-center gap-1">
+                                  <TrendingUp className="h-2.5 w-2.5 text-muted-foreground/70" />
+                                  <div className="w-10 h-1 bg-muted rounded-full overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full ${getBarColorClass(profile.weeklyPercent)}`}
+                                        style={{ width: `${Math.min(profile.weeklyPercent, 100)}%` }}
+                                    />
+                                  </div>
+                                  <span className={`text-[9px] tabular-nums w-6 ${getColorClass(profile.weeklyPercent).replace('text-green-500', 'text-muted-foreground').replace('500', '600')}`}>
                             {Math.round(profile.weeklyPercent)}%
                           </span>
+                                </div>
+                              </div>
+                          )}
                         </div>
                       </div>
-                    )}
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
   );
 }

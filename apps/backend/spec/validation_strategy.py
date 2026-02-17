@@ -287,15 +287,15 @@ class ValidationStrategyBuilder:
         steps = [
             ValidationStep(
                 name="Start HTTP Server",
-                command="python -m http.server 8000 &",
-                expected_outcome="Server running on port 8000",
+                command="python -m http.server 9000 &",
+                expected_outcome="Server running on port 9000",
                 step_type="setup",
                 required=True,
                 blocking=True,
             ),
             ValidationStep(
                 name="Visual Verification",
-                command="npx playwright screenshot http://localhost:8000 screenshot.png",
+                command="npx playwright screenshot http://localhost:9000 screenshot.png",
                 expected_outcome="Screenshot captured without errors",
                 step_type="visual",
                 required=True,
@@ -316,7 +316,7 @@ class ValidationStrategyBuilder:
             steps.append(
                 ValidationStep(
                     name="Lighthouse Audit",
-                    command="npx lighthouse http://localhost:8000 --output=json --output-path=lighthouse.json",
+                    command="npx lighthouse http://localhost:9000 --output=json --output-path=lighthouse.json",
                     expected_outcome="Performance > 90, Accessibility > 90",
                     step_type="visual",
                     required=True,

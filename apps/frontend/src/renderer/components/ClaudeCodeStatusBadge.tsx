@@ -31,8 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { cn } from "../lib/utils";
-import type { ClaudeCodeVersionInfo, ClaudeInstallationInfo } from "../../shared/types/cli";
+import { cn } from "@/lib/utils";
+import type { ClaudeCodeVersionInfo, ClaudeInstallationInfo } from "@shared/types";
+import { ProviderSelector } from "./ProviderSelector";
 
 interface ClaudeCodeStatusBadgeProps {
   className?: string;
@@ -403,21 +404,26 @@ export function ClaudeCodeStatusBadge({ className }: ClaudeCodeStatusBadgeProps)
 
       <PopoverContent side="right" align="end" className="w-72">
         <div className="space-y-3">
-          {/* Header */}
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Terminal className="h-4 w-4 text-primary" />
+          {/* Header avec ProviderSelector */}
+          <div className="flex items-center gap-2 justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                <Terminal className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium">Claude Code CLI</h4>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  {getStatusIcon()}
+                  {status === "installed" && t("navigation:claudeCode.installed", "Installed")}
+                  {status === "outdated" && t("navigation:claudeCode.outdated", "Update available")}
+                  {status === "not-found" && t("navigation:claudeCode.missing", "Not installed")}
+                  {status === "loading" && t("navigation:claudeCode.checking", "Checking...")}
+                  {status === "error" && t("navigation:claudeCode.error", "Error")}
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="text-sm font-medium">Claude Code CLI</h4>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                {getStatusIcon()}
-                {status === "installed" && t("navigation:claudeCode.installed", "Installed")}
-                {status === "outdated" && t("navigation:claudeCode.outdated", "Update available")}
-                {status === "not-found" && t("navigation:claudeCode.missing", "Not installed")}
-                {status === "loading" && t("navigation:claudeCode.checking", "Checking...")}
-                {status === "error" && t("navigation:claudeCode.error", "Error")}
-              </p>
+            <div className="flex-shrink-0">
+              <ProviderSelector />
             </div>
           </div>
 
