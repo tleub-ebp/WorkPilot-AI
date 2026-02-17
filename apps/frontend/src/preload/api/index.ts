@@ -38,6 +38,7 @@ export interface ElectronAPI extends
   /** Code quality analysis API */
   quality: QualityAPI;
   createClaudeProfileDirectory: (profileName: string) => Promise<{ success: boolean; data?: string; error?: string }>;
+  requestUsageUpdate: (providerName?: string) => invokeIpc('usage:get', providerName);
 }
 
 export const createElectronAPI = (): ElectronAPI => ({
@@ -57,6 +58,7 @@ export const createElectronAPI = (): ElectronAPI => ({
   queue: createQueueAPI(),  // Queue routing for rate limit recovery
   quality: createQualityAPI(),  // Code quality analysis
   createClaudeProfileDirectory: (profileName: string) => invokeIpc('claude:profileCreateDir', profileName),
+  requestUsageUpdate: (providerName?: string) => invokeIpc('usage:get', providerName),
 });
 
 // Export individual API creators for potential use in tests or specialized contexts

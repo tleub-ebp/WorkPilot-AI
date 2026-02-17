@@ -155,6 +155,11 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
       });
   }, [selectedProvider, profiles]);
 
+  useEffect(() => {
+    // Log pour vérifier la propagation du provider sélectionné
+    console.debug('[ProviderSelector] Render with selectedProvider:', selectedProvider, 'selectedProp:', selectedProp);
+  }, [selectedProvider, selectedProp]);
+
   const handleSelect = (value: string) => {
     if (!status[value]) {
       onOpenAccountsSettings();

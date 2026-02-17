@@ -7,7 +7,7 @@ export function getAllConnectors() {
   const connectors = [
     { id: 'anthropic', label: 'Anthropic (Claude)' },
     { id: 'openai', label: 'OpenAI (Chat GPT' },
-    { id: 'google', label: 'Google (Gemini)' },
+    { id: 'google', label: 'Google DeepMind (Gemini)' },
     { id: 'meta', label: 'Meta (Facebook/Meta AI)' },
     { id: 'mistral', label: 'Mistral AI' },
     { id: 'deepseek', label: 'DeepSeek AI' },

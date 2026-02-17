@@ -84,6 +84,7 @@ export function UsageIndicator() {
   const [isPinned, setIsPinned] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { selectedProvider } = useProviderContext();
+  console.debug('[UsageIndicator] Render with selectedProvider:', selectedProvider);
 
   /**
    * Helper function to get initials from a profile name
@@ -332,7 +333,7 @@ export function UsageIndicator() {
     });
 
     // Request initial usage on mount for the selected provider
-    window.electronAPI.requestUsageUpdate().then((result) => {
+    window.electronAPI.requestUsageUpdate(selectedProvider).then((result) => {
       setIsLoading(false);
       if (result.success && result.data) {
         if (selectedProvider && result.data.providerName && result.data.providerName !== selectedProvider) return;

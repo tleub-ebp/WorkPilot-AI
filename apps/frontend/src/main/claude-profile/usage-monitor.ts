@@ -69,6 +69,14 @@ const PROVIDER_USAGE_ENDPOINTS: readonly ProviderUsageEndpoint[] = [
   {
     provider: 'zhipu',
     usagePath: '/api/monitor/usage/quota/limit'
+  },
+  {
+    provider: 'openai',
+    usagePath: '/v1/organization/usage'
+  },
+  {
+    provider: 'openai-costs',
+    usagePath: '/v1/organization/costs'
   }
 ] as const;
 
@@ -732,7 +740,7 @@ export class UsageMonitor extends EventEmitter {
   ): number {
     let score = 100;
 
-    // Penalize rate-limited profiles heavily
+    // Penalize rate-limited profiles
     if (isRateLimited) {
       if (rateLimitType === 'weekly') {
         score -= 1000; // Weekly limit is worse (takes longer to reset)
@@ -1203,10 +1211,6 @@ export class UsageMonitor extends EventEmitter {
     activeProfile?: ActiveProfileResult
   ): Promise<ClaudeUsageSnapshot | null> {
     // Get profile name and email - prefer activeProfile since it's already determined
-    let profileName: string | undefined;
-    let profileEmail: string | undefined;
-
-    // Use activeProfile data if available (already fetched and validated)
     // This fixes the bug where API profile names were incorrectly shown for OAuth profiles
     if (activeProfile?.profileName) {
       profileName = activeProfile.profileName;
@@ -2051,6 +2055,71 @@ export class UsageMonitor extends EventEmitter {
 
     // Note: Don't immediately check new profile - let normal interval handle it
     // This prevents cascading swaps if multiple profiles are near limits
+  }
+
+  /**
+   * Get usage for a given provider name (ex: 'anthropic', 'zai', ...)
+   */
+  async getUsageForProvider(providerName: string): Promise<any> {
+    const profileManager = getClaudeProfileManager();
+    // Cherche le profil correspondant au provider demandé
+    const profile = profileManager.getProfilesSortedByAvailability().find(p => {
+      const detected = sharedDetectProvider(p.baseUrl);
+      return detected === providerName;
+    });
+    if (!profile) {
+      throw new Error(`Aucun profil trouvé pour le provider: ${providerName}`);
+    }
+    // Cas OpenAI
+    if (providerName === 'openai') {
+      const apiKey = profile.apiKey || profile.token || profile.openaiApiKey;
+      if (!apiKey) throw new Error('Clé API OpenAI manquante dans le profil');
+      // Calcul dynamique de la période de facturation
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const startDate = `${year}-${month}-01`;
+      const endDate = `${year}-${month}-${day}`;
+      // Endpoint usage analytics
+      const usageUrl = `https://api.openai.com/v1/organization/usage?start_date=${startDate}&end_date=${endDate}`;
+      const costsUrl = `https://api.openai.com/v1/organization/costs?start_date=${startDate}&end_date=${endDate}`;
+      // Appels en parallèle
+      const [usageResp, costsResp] = await Promise.all([
+        fetch(usageUrl, {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch(costsUrl, {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          }
+        })
+      ]);
+      if (!usageResp.ok) throw new Error('Erreur lors de la récupération de l\'usage OpenAI');
+      if (!costsResp.ok) throw new Error('Erreur lors de la récupération des coûts OpenAI');
+      const usageData = await usageResp.json();
+      const costsData = await costsResp.json();
+      // Structure de retour enrichie
+      return {
+        providerName: 'openai',
+        startDate,
+        endDate,
+        usageBreakdown: usageData.data, // Array: breakdown par modèle, tokens, coût, etc.
+        totalCost: Array.isArray(costsData.data) ? costsData.data.reduce((sum, d) => sum + (d.cost || 0), 0) : 0,
+        costsBreakdown: costsData.data // Array: breakdown par modèle, date, etc.
+      };
+    }
+    // ...logique existante pour les autres providers...
+    if (typeof this.getUsageForProfileId === 'function') {
+      return this.getUsageForProfileId(profile.id);
+    }
+    const cached = this.allProfilesUsageCache.get(profile.id);
+    if (cached) return cached.usage;
+    throw new Error(`Impossible de récupérer l'usage pour le provider: ${providerName}`);
   }
 }
 
