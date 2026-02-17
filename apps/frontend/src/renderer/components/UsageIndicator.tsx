@@ -20,9 +20,9 @@ import {
   TooltipTrigger,
 } from './ui/tooltip';
 import { useTranslation } from 'react-i18next';
-import { formatTimeRemaining, localizeUsageWindowLabel, hasHardcodedText } from '../../shared/utils/format-time';
-import type { ClaudeUsageSnapshot, ProfileUsageSummary } from '../../shared/types/agent';
-import type { AppSection } from './settings/AppSettings';
+import { formatTimeRemaining, localizeUsageWindowLabel, hasHardcodedText } from '@shared/utils/format-time';
+import type { ClaudeUsageSnapshot, ProfileUsageSummary } from '@shared/types';
+import type { AppSection } from '@/components/settings';
 import { useProviderContext } from './ProviderContext';
 
 /**

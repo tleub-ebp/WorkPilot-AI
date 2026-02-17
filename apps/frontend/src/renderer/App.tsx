@@ -1132,7 +1132,9 @@ export function App() {
             <TaskDetailModal
                 open={!!selectedTask}
                 task={selectedTask}
-                onClose={handleCloseTaskDetail}
+                onOpenChange={open => {
+                  if (!open) setSelectedTask(null);
+                }}
                 onOpenInbuiltTerminal={handleOpenInbuiltTerminal}
             />
             <TaskCreationWizard

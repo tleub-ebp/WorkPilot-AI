@@ -56,9 +56,11 @@ interface TaskEditDialogProps {
   onOpenChange: (open: boolean) => void;
   /** Optional callback when task is successfully saved */
   onSaved?: () => void;
+  /** Callback pour fermeture explicite de la tâche courante (remonte jusqu'à App.tsx) */
+  onCloseTask?: () => void;
 }
 
-export function TaskEditDialog({ task, open, onOpenChange, onSaved }: TaskEditDialogProps) {
+export function TaskEditDialog({ task, open, onOpenChange, onSaved, onCloseTask }: TaskEditDialogProps) {
   const { t } = useTranslation(['tasks', 'common']);
   // Get selected agent profile from settings for defaults
   const { settings } = useSettingsStore();
@@ -258,6 +260,7 @@ export function TaskEditDialog({ task, open, onOpenChange, onSaved }: TaskEditDi
       title={t('tasks:edit.title')}
       description={t('tasks:edit.description')}
       disabled={isSaving}
+      onClose={onCloseTask}
       footer={
         <div className="flex items-center justify-end gap-3">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>

@@ -35,6 +35,8 @@ interface TaskModalLayoutProps {
   sidebarOpen?: boolean;
   /** Whether the modal is in a loading/disabled state */
   disabled?: boolean;
+  /** Custom callback for closing (e.g., reset current task) */
+  onClose?: () => void;
 }
 
 export function TaskModalLayout({
@@ -46,13 +48,18 @@ export function TaskModalLayout({
   footer,
   sidebar,
   sidebarOpen = false,
-  disabled = false
+  disabled = false,
+  onClose
 }: TaskModalLayoutProps) {
   const { t } = useTranslation('common');
 
   const handleClose = () => {
     if (!disabled) {
-      onOpenChange(false);
+      if (onClose) {
+        onClose();
+      } else {
+        onOpenChange(false);
+      }
     }
   };
 
@@ -104,6 +111,7 @@ export function TaskModalLayout({
                       size="icon"
                       className="hover:bg-muted transition-colors shrink-0"
                       disabled={disabled}
+                      onClick={handleClose}
                     >
                       <X className="h-5 w-5" />
                       <span className="sr-only">{t('buttons.close')}</span>
