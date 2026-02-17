@@ -13,6 +13,13 @@ export default defineConfig({
     proxy: {
       '/providers': backendUrl,
       '/providers/': backendUrl,
+      '/api': backendUrl,
+      '/api/': backendUrl,
+      '/projects': backendUrl,
+      '/projects/': backendUrl,
+      '/tasks': backendUrl,
+      '/tasks/': backendUrl,
+      // Ajoutez ici d'autres routes API nécessaires
     },
   },
 });
