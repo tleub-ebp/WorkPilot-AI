@@ -265,7 +265,7 @@ La réparation est aussi lancée automatiquement après chaque installation de d
    python scripts/quality_cli.py grepai-search --query "def my_function"
    (grepai sera lancé et utilisé automatiquement)
 
-Grepai sera accessible sur http://localhost:8000 et utilisable dans tous les modules du projet.
+Grepai sera accessible sur http://localhost:9000 et utilisable dans tous les modules du projet.
 
 ---
 
@@ -275,7 +275,7 @@ Grepai est intégré comme agent externe dans le projet.
 
 ### Lancer Grepai
 - Utilisez le script Windows : `src/connectors/grepai/grepai_start.bat` pour lancer Grepai via Docker.
-- Grepai sera accessible sur http://localhost:8000.
+- Grepai sera accessible sur http://localhost:9000.
 
 ### Communiquer avec Grepai
 - Utilisez le module Python : `src/connectors/grepai/client.py` pour interagir avec l'API Grepai.
@@ -321,3 +321,128 @@ print(client.health())
     python scripts/quality_cli.py grepai-search --query "def my_function"
 
 > Grepai sera lancé et utilisable sans intervention.
+
+---
+
+## Lancement automatisé (backend + frontend)
+
+Pour lancer toute l’application (API providers + UI) automatiquement :
+
+### Sous Windows
+
+```cmd
+cd apps\backend
+start_backend_and_frontend.cmd
+```
+
+### Sous Linux/Mac
+
+```sh
+cd apps/backend
+chmod +x start_backend_and_frontend.sh
+./start_backend_and_frontend.sh
+```
+
+- Le backend FastAPI (provider_api.py) sera lancé automatiquement sur le port 9000.
+- Le frontend Electron attendra que l’API soit disponible.
+- Si besoin, adapte les variables d’environnement dans `.env` ou via le shell.
+
+---
+
+## Démarrage backend LLM (FastAPI)
+
+Le backend LLM (FastAPI) se lance automatiquement via `apps/backend/provider_api.py` :
+
+- Pour un lancement manuel (rarement nécessaire) :
+  ```cmd
+  python apps/backend/provider_api.py
+  ```
+- Le script `start_provider_api.py` est obsolète mais reste compatible (il appelle simplement `provider_api.py`).
+
+En cas de problème, consulte la console pour le message d’erreur détaillé.
+
+---
+
+**Astuce:**
+- Pour ajouter d’autres providers, édite `apps/backend/services/provider_registry.py`.
+- Pour changer le port, modifie le script et la CSP dans `index.html`.
+
+## Dépannage: Provider LLM / API non disponible
+
+Si le ProviderSelector affiche:
+
+```
+Impossible de charger la liste des providers. Vérifiez que l'application est bien lancée avec le backend (voir README).
+```
+
+- Vérifiez que le backend FastAPI est bien démarré (voir section "Lancement automatisé").
+- Si besoin, ouvrez un terminal dans `apps/backend` et lancez :
+  - Sous Windows : `start_backend_and_frontend.cmd`
+  - Sous Linux/Mac : `./start_backend_and_frontend.sh`
+- Si une erreur s’affiche (venv ou uvicorn manquant), suivez les instructions à l’écran.
+- Vérifiez que http://localhost:9000/providers répond dans un navigateur ou avec `curl`.
+- Si le port 9000 est déjà utilisé, modifiez-le dans le script et dans la CSP du frontend.
+
+---
+
+## Multi-Provider LLM (OpenAI, Claude, Mistral, etc.)
+
+Auto-Claude supporte désormais la gestion avancée de multiples connecteurs LLM via une architecture modulaire :
+
+- **Détection dynamique** des providers disponibles (OpenAI, Claude, Mistral, Ollama, etc.)
+- **Configuration sécurisée** des clés API et paramètres (voir `src/connectors/llm_config.py`)
+- **Sélection et test** du provider actif via l’UI, l’API REST ou la CLI
+- **Extensible** : ajoutez facilement de nouveaux connecteurs (voir `src/connectors/llm_base.py` et `src/connectors/llm_discovery.py`)
+
+Pour plus de détails, consultez la documentation : [docs/features/multi_provider_llm.md](docs/features/multi_provider_llm.md)
+
+### Commandes CLI
+
+```bash
+python apps/backend/cli/main.py provider list
+python apps/backend/cli/main.py provider select --provider openai
+python apps/backend/cli/main.py provider add --provider openai --config '{"api_key": "sk-..."}'
+python apps/backend/cli/main.py provider test --provider openai
+```
+
+### Tests
+
+Des tests unitaires multi-provider (incluant un provider mock pour tests offline/CI) sont disponibles dans `tests/test_llm_provider.py`.
+
+---
+
+## Dépannage backend LLM (FastAPI)
+
+Si la popup "Erreur lancement backend LLM" apparaît ou si l’API http://localhost:9000/providers n’est pas disponible :
+
+1. Ouvre un terminal dans `apps/backend`.
+2. Lance manuellement :
+   ```cmd
+   python start_provider_api.py
+   ```
+3. Vérifie la sortie console : toute erreur de démarrage sera affichée.
+4. Si le serveur démarre, recharge l’UI ou relance la fonctionnalité.
+5. Si une erreur persiste, vérifiez que les dépendances sont installées :
+   ```cmd
+   pip install fastapi uvicorn
+   ```
+
+En cas de problème, consulte la console pour le message d’erreur détaillé.
+
+---
+
+## 🚀 Quickstart (2026)
+
+Just run at the project root:
+
+```sh
+pnpm install
+pnpm run dev
+```
+
+This will:
+- Automatically create the Python virtual environment for the backend if missing
+- Install all backend Python dependencies
+- Start the FastAPI backend (Uvicorn) and Electron frontend in dev mode
+
+No manual Python or pip commands needed!

@@ -53,13 +53,13 @@ class TestServiceConfig:
         """Test creating a service config."""
         config = ServiceConfig(
             name="api",
-            port=8000,
+            port=9000,
             type="docker",
-            health_check_url="http://localhost:8000/health",
+            health_check_url="http://localhost:9000/health",
         )
 
         assert config.name == "api"
-        assert config.port == 8000
+        assert config.port == 9000
         assert config.type == "docker"
 
     def test_config_defaults(self):

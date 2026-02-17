@@ -31,6 +31,7 @@ except ImportError:
     ClaudeSDKClient = None
 
 from core.auth import ensure_claude_code_oauth_token, get_auth_token
+from core.runtimes import create_agent_runtime
 
 # Default model for insight extraction (fast and cheap)
 # Note: Using Haiku 4.5 for fast, cheap extraction. Haiku does not support
@@ -368,135 +369,26 @@ async def run_insight_extraction(
     cwd = str(project_dir.resolve()) if project_dir else os.getcwd()
 
     try:
-        # Use simple_client for insight extraction
-        from pathlib import Path
-
-        from core.simple_client import create_simple_client
-
-        client = create_simple_client(
-            agent_type="insights",
-            model=model,
-            system_prompt=(
-                "You are an expert code analyst. You extract structured insights from coding sessions. "
-                "Always respond with valid JSON only, no markdown formatting or explanations."
-            ),
-            cwd=Path(cwd) if cwd else None,
+        # Migration vers runtime provider-agnostique
+        phase_model = get_extraction_model()
+        phase_thinking_budget = None  # À adapter si besoin
+        config = None
+        runtime = create_agent_runtime(
+            spec_dir=None,  # À adapter selon le contexte réel
+            phase="insight_extraction",
+            project_dir=project_dir,
+            agent_type="insight_extractor",
+            cli_provider=None,
+            cli_model=phase_model,
+            cli_thinking=phase_thinking_budget,
+            config=config,
         )
 
-        # Use async context manager
-        async with client:
-            await client.query(prompt)
-
-            # Collect the response
-            response_text = ""
-            message_count = 0
-            text_blocks_found = 0
-
-            async for msg in client.receive_response():
-                msg_type = type(msg).__name__
-                message_count += 1
-
-                if msg_type == "AssistantMessage" and hasattr(msg, "content"):
-                    for block in msg.content:
-                        # Must check block type - only TextBlock has .text attribute
-                        block_type = type(block).__name__
-                        if block_type == "TextBlock" and hasattr(block, "text"):
-                            text_blocks_found += 1
-                            if block.text:  # Only add non-empty text
-                                response_text += block.text
-                            else:
-                                logger.debug(
-                                    f"Found empty TextBlock in response (block #{text_blocks_found})"
-                                )
-
-            # Log response collection summary
-            logger.debug(
-                f"Insight extraction response: {message_count} messages, "
-                f"{text_blocks_found} text blocks, {len(response_text)} chars collected"
-            )
-
-            # Validate we received content before parsing
-            if not response_text.strip():
-                logger.warning(
-                    f"Insight extraction returned empty response. "
-                    f"Messages received: {message_count}, TextBlocks found: {text_blocks_found}. "
-                    f"This may indicate the AI model did not respond with text content."
-                )
-                return None
-
-        # Parse JSON from response
-        return parse_insights(response_text)
+        # Utilisation : await runtime.run_session(prompt)
+        await runtime.run_session(prompt)
 
     except Exception as e:
         logger.warning(f"Insight extraction failed: {e}")
-        return None
-
-
-def parse_insights(response_text: str) -> dict | None:
-    """
-    Parse the LLM response into structured insights.
-
-    Args:
-        response_text: Raw LLM response
-
-    Returns:
-        Parsed insights dict or None if parsing failed
-    """
-    # Try to extract JSON from the response
-    text = response_text.strip()
-
-    # Early validation - check for empty response
-    if not text:
-        logger.warning("Cannot parse insights: response text is empty")
-        return None
-
-    # Handle markdown code blocks
-    if text.startswith("```"):
-        # Remove code block markers
-        lines = text.split("\n")
-        # Remove first line (```json or ```)
-        if lines[0].startswith("```"):
-            lines = lines[1:]
-        # Remove last line if it's ```
-        if lines and lines[-1].strip() == "```":
-            lines = lines[:-1]
-        text = "\n".join(lines).strip()
-
-        # Check again after removing code blocks
-        if not text:
-            logger.warning(
-                "Cannot parse insights: response contained only markdown code block markers with no content"
-            )
-            return None
-
-    try:
-        insights = json.loads(text)
-
-        # Validate structure
-        if not isinstance(insights, dict):
-            logger.warning(
-                f"Insights is not a dict, got type: {type(insights).__name__}"
-            )
-            return None
-
-        # Ensure required keys exist with defaults
-        insights.setdefault("file_insights", [])
-        insights.setdefault("patterns_discovered", [])
-        insights.setdefault("gotchas_discovered", [])
-        insights.setdefault("approach_outcome", {})
-        insights.setdefault("recommendations", [])
-
-        return insights
-
-    except json.JSONDecodeError as e:
-        logger.warning(f"Failed to parse insights JSON: {e}")
-        # Show more context in the error message
-        preview_length = min(500, len(text))
-        logger.warning(
-            f"Response text preview (first {preview_length} chars): {text[:preview_length]}"
-        )
-        if len(text) > preview_length:
-            logger.warning(f"... (total length: {len(text)} chars)")
         return None
 
 

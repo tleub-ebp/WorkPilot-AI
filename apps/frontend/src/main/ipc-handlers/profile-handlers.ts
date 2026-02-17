@@ -25,6 +25,7 @@ import {
   testConnection,
   discoverModels
 } from '../services/profile';
+import { createProfileDirectory as createProfileDirectoryImpl } from '../claude-profile/profile-utils';
 
 // Track active test connection requests for cancellation
 const activeTestConnections = new Map<number, AbortController>();
@@ -354,4 +355,19 @@ export function registerProfileHandlers(): void {
       }
     }
   );
+
+  /**
+   * Create Claude profile directory
+   * - Creates a directory for Claude profile files
+   * - Returns the created directory path or an error
+   */
+  ipcMain.handle('claude:profileCreateDir', async (_event, profileName: string) => {
+    console.log('[main] IPC claude:profileCreateDir called with:', profileName);
+    try {
+      const dir = await createProfileDirectoryImpl(profileName);
+      return { success: true, data: dir };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to create profile directory' };
+    }
+  });
 }

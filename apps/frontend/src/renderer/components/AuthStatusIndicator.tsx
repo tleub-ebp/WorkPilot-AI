@@ -26,12 +26,14 @@ import { useSettingsStore } from '../stores/settings-store';
 import { detectProvider, getProviderLabel, getProviderBadgeColor, type ApiProvider } from '../../shared/utils/provider-detection';
 import { formatTimeRemaining, localizeUsageWindowLabel, hasHardcodedText } from '../../shared/utils/format-time';
 import type { ClaudeUsageSnapshot } from '../../shared/types/agent';
+import { useProviderContext } from './ProviderContext';
 
 /**
  * Type-safe mapping from ApiProvider to translation keys
  */
 const PROVIDER_TRANSLATION_KEYS: Readonly<Record<ApiProvider, string>> = {
   anthropic: 'common:usage.providerAnthropic',
+  openai: 'common:usage.providerOpenAI',
   zai: 'common:usage.providerZai',
   zhipu: 'common:usage.providerZhipu',
   unknown: 'common:usage.providerUnknown'
@@ -52,6 +54,7 @@ export function AuthStatusIndicator() {
   // Subscribe to profile state from settings store
   const { profiles, activeProfileId } = useSettingsStore();
   const { t } = useTranslation(['common']);
+  const { selectedProvider } = useProviderContext();
 
   // Track usage data for warning badge
   const [usage, setUsage] = useState<ClaudeUsageSnapshot | null>(null);
@@ -60,6 +63,8 @@ export function AuthStatusIndicator() {
   // Listen for usage updates
   useEffect(() => {
     const unsubscribe = window.electronAPI.onUsageUpdated((snapshot: ClaudeUsageSnapshot) => {
+      // Si le provider du snapshot ne correspond pas au provider sélectionné, ignorer
+      if (selectedProvider && snapshot.providerName && snapshot.providerName !== selectedProvider) return;
       setUsage(snapshot);
       setIsLoadingUsage(false);
     });
@@ -68,6 +73,8 @@ export function AuthStatusIndicator() {
     window.electronAPI.requestUsageUpdate()
       .then((result) => {
         if (result.success && result.data) {
+          // Si le provider du snapshot ne correspond pas au provider sélectionné, ignorer
+          if (selectedProvider && result.data.providerName && result.data.providerName !== selectedProvider) return;
           setUsage(result.data);
         }
       })
@@ -81,7 +88,42 @@ export function AuthStatusIndicator() {
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [selectedProvider]);
+
+  // Rafraîchit l'usage à chaque changement de provider sélectionné ou de profil actif
+  useEffect(() => {
+    console.debug('[AuthStatusIndicator] useEffect triggered', { selectedProvider, activeProfileId });
+    setIsLoadingUsage(true);
+    setUsage(null);
+    // Requête usage pour le provider sélectionné
+    window.electronAPI.requestUsageUpdate()
+      .then((result) => {
+        if (result.success && result.data && (!selectedProvider || result.data.providerName === selectedProvider)) {
+          setUsage(result.data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setIsLoadingUsage(false);
+      });
+  }, [selectedProvider, activeProfileId]);
+
+  // Rafraîchit l'usage et l'authentification à chaque changement de provider
+  useEffect(() => {
+    setIsLoadingUsage(true);
+    setUsage(null);
+    // Requête usage pour le provider sélectionné
+    window.electronAPI.requestUsageUpdate()
+      .then((result) => {
+        if (result.success && result.data) {
+          setUsage(result.data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setIsLoadingUsage(false);
+      });
+  }, [selectedProvider]);
 
   // Determine if usage warning badge should be shown
   const shouldShowUsageWarning = usage && !isLoadingUsage && (
@@ -94,22 +136,49 @@ export function AuthStatusIndicator() {
     : 0;
 
   // Get formatted reset times (calculated dynamically from timestamps)
-  // Only fall back to sessionResetTime if it doesn't contain placeholder/hardcoded text
-  const sessionResetTime = usage?.sessionResetTimestamp
-    ? (formatTimeRemaining(usage.sessionResetTimestamp, t) ??
-      (hasHardcodedText(usage?.sessionResetTime) ? undefined : usage?.sessionResetTime))
-    : (hasHardcodedText(usage?.sessionResetTime) ? undefined : usage?.sessionResetTime);
+  let sessionResetTime: string | undefined;
+  if (usage?.sessionResetTimestamp) {
+    const formatted = formatTimeRemaining(usage.sessionResetTimestamp, t);
+    sessionResetTime = formatted !== undefined
+      ? formatted
+      : (!hasHardcodedText(usage?.sessionResetTime) ? usage?.sessionResetTime : undefined);
+  } else {
+    sessionResetTime = !hasHardcodedText(usage?.sessionResetTime) ? usage?.sessionResetTime : undefined;
+  }
 
-  // Compute auth status and provider detection using useMemo to avoid unnecessary re-renders
+  // Calcul dynamique du provider et du profil
   const authStatus = useMemo(() => {
+    if (selectedProvider) {
+      const providerProfile = profiles.find(p => detectProvider(p.baseUrl) === selectedProvider);
+      const provider = selectedProvider as ApiProvider;
+      const providerLabel = getProviderLabel(provider);
+      if (providerProfile) {
+        return {
+          type: 'profile',
+          name: providerProfile.name,
+          id: providerProfile.id,
+          baseUrl: providerProfile.baseUrl,
+          createdAt: providerProfile.createdAt,
+          provider,
+          providerLabel,
+          badgeColor: getProviderBadgeColor(provider)
+        };
+      }
+      return {
+        type: 'provider',
+        name: providerLabel,
+        provider,
+        providerLabel,
+        badgeColor: getProviderBadgeColor(provider)
+      };
+    }
     if (activeProfileId) {
       const activeProfile = profiles.find(p => p.id === activeProfileId);
       if (activeProfile) {
-        // Detect provider from profile's baseUrl
         const provider = detectProvider(activeProfile.baseUrl);
         const providerLabel = getProviderLabel(provider);
         return {
-          type: 'profile' as const,
+          type: 'profile',
           name: activeProfile.name,
           id: activeProfile.id,
           baseUrl: activeProfile.baseUrl,
@@ -119,15 +188,17 @@ export function AuthStatusIndicator() {
           badgeColor: getProviderBadgeColor(provider)
         };
       }
-      // Profile ID set but profile not found - fallback to OAuth
       return OAUTH_FALLBACK;
     }
-    // No active profile - using OAuth
     return OAUTH_FALLBACK;
-  }, [activeProfileId, profiles]);
+  }, [selectedProvider, profiles, activeProfileId]);
+
+  // Log debug pour vérifier propagation
+  console.debug('[AuthStatusIndicator] selectedProvider:', selectedProvider, 'authStatus:', authStatus);
 
   // Helper function to truncate ID for display
-  const truncateId = (id: string): string => {
+  const truncateId = (id: string | undefined): string => {
+    if (!id) return '';
     return id.slice(0, 8);
   };
 
@@ -153,8 +224,8 @@ export function AuthStatusIndicator() {
   const Icon = isOAuth ? Lock : Key;
   // Compute once and reuse for aria-label and displayed text
   const localizedProviderLabel = getLocalizedProviderLabel(authStatus.provider);
-  // Badge label: "Claude Code" for OAuth, "API Key" for API profiles
-  const badgeLabel = isOAuth ? t('common:usage.claudeCode') : t('common:usage.apiKey');
+  // Badge label: nom du provider sélectionné
+  const badgeLabel = getProviderLabel(authStatus.provider);
 
   return (
     <div className="flex items-center gap-2">
@@ -183,7 +254,7 @@ export function AuthStatusIndicator() {
         </TooltipProvider>
       )}
 
-      {/* Provider Badge */}
+      {/* Provider Badge + Popin */}
       <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -221,7 +292,7 @@ export function AuthStatusIndicator() {
                   <Server className="h-3.5 w-3.5" />
                   <span className="font-medium text-[11px]">{t('common:usage.provider')}</span>
                 </div>
-                <span className="font-semibold text-xs">{localizedProviderLabel}</span>
+                <span className="font-semibold text-xs">{badgeLabel}</span>
               </div>
 
               {/* Claude Code subscription label for OAuth */}
@@ -236,41 +307,50 @@ export function AuthStatusIndicator() {
               )}
 
               {/* Profile details for API profiles */}
-              {!isOAuth && (
+              {authStatus.type === 'profile' ? (
                 <div className="pt-2 border-t space-y-2">
-                    {/* Profile name with icon */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Key className="h-3 w-3" />
-                        <span className="text-[10px]">{t('common:usage.profile')}</span>
-                      </div>
-                      <span className="font-medium text-[10px]">{authStatus.name}</span>
+                  {/* Profile name with icon */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Key className="h-3 w-3" />
+                      <span className="text-[10px]">{t('common:usage.profile')}</span>
                     </div>
-
-                    {/* Profile ID with icon */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Fingerprint className="h-3 w-3" />
-                        <span className="text-[10px]">{t('common:usage.id')}</span>
-                      </div>
-                      <span className="font-mono text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                        {truncateId(authStatus.id)}
-                      </span>
+                    <span className="font-medium text-[10px]">{authStatus.name}</span>
+                  </div>
+                  {/* Profile ID with icon */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Fingerprint className="h-3 w-3" />
+                      <span className="text-[10px]">{t('common:usage.id')}</span>
                     </div>
-
-                    {/* API Endpoint with better styling */}
-                    {authStatus.baseUrl && (
-                      <div className="pt-1">
-                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-1">
-                          <ExternalLink className="h-3 w-3" />
-                          <span>{t('common:usage.apiEndpoint')}</span>
-                        </div>
-                        <div className="text-[10px] font-mono bg-muted px-2 py-1.5 rounded break-all border">
-                          {authStatus.baseUrl}
-                        </div>
-                      </div>
+                    {authStatus.id && (
+                      <span className="text-xs text-muted-foreground">{truncateId(authStatus.id)}</span>
                     )}
                   </div>
+                  {/* API Endpoint with better styling */}
+                  {authStatus.baseUrl && (
+                    <div className="pt-1">
+                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-1">
+                        <ExternalLink className="h-3 w-3" />
+                        <span>{t('common:usage.apiEndpoint')}</span>
+                      </div>
+                      <div className="text-[10px] font-mono bg-muted px-2 py-1.5 rounded break-all border">
+                        {authStatus.baseUrl}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Affichage du fallback si aucune donnée d'usage n'est disponible pour le provider sélectionné
+                !usage && selectedProvider ? (
+                  <div className="pt-2 border-t text-[10px] text-muted-foreground">
+                    {t('common:usage.noProfileForProvider', { provider: selectedProvider })}
+                  </div>
+                ) : (
+                  <div className="pt-2 border-t text-[10px] text-muted-foreground">
+                    {t('common:usage.noProfileForProvider', { provider: badgeLabel }) || `Aucun profil configuré pour le provider ${badgeLabel}`}
+                  </div>
+                )
               )}
             </div>
           </TooltipContent>

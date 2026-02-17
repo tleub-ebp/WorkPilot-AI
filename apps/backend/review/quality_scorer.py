@@ -15,7 +15,7 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 
 class QualityCategory(str, Enum):
@@ -45,8 +45,8 @@ class QualityIssue:
     title: str
     description: str
     file: str
-    line: int | None = None
-    suggestion: str | None = None
+    line: Optional[int] = None
+    suggestion: Optional[str] = None
 
     def to_dict(self) -> dict[str, Any]:
         return {

@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from client import create_client
 from phase_config import get_thinking_budget, resolve_model_id
 from ui import print_status
+from core.runtimes import create_agent_runtime
 
 # Ideation types
 IDEATION_TYPES = [
@@ -90,38 +91,25 @@ class IdeationGenerator:
         if additional_context:
             prompt += f"\n{additional_context}\n"
 
-        # Create client with thinking budget
-        # Use agent_type="ideation" to avoid loading unnecessary MCP servers
-        # which can cause 60-second timeout delays
-        client = create_client(
-            self.project_dir,
-            self.output_dir,
-            resolve_model_id(self.model),
-            max_thinking_tokens=self.thinking_budget,
+        # Migration vers runtime provider-agnostique
+        phase_model = self.model
+        phase_thinking_budget = self.thinking_budget
+        config = None
+        runtime = create_agent_runtime(
+            spec_dir=None,  # À adapter selon le contexte réel
+            phase="ideation",
+            project_dir=self.project_dir,
             agent_type="ideation",
+            cli_provider=None,
+            cli_model=phase_model,
+            cli_thinking=phase_thinking_budget,
+            config=config,
         )
 
+        # Utilisation : await runtime.run_session(prompt)
+
         try:
-            async with client:
-                await client.query(prompt)
-
-                response_text = ""
-                async for msg in client.receive_response():
-                    msg_type = type(msg).__name__
-
-                    if msg_type == "AssistantMessage" and hasattr(msg, "content"):
-                        for block in msg.content:
-                            block_type = type(block).__name__
-                            if block_type == "TextBlock" and hasattr(block, "text"):
-                                response_text += block.text
-                                print(block.text, end="", flush=True)
-                            elif block_type == "ToolUseBlock" and hasattr(
-                                block, "name"
-                            ):
-                                print(f"\n[Tool: {block.name}]", flush=True)
-
-                print()
-                return True, response_text
+            await runtime.run_session(prompt)
 
         except Exception as e:
             return False, str(e)

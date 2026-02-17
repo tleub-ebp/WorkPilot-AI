@@ -14,11 +14,16 @@ import shutil
 import subprocess
 from typing import TYPE_CHECKING
 
-from core.platform import (
-    is_linux,
-    is_macos,
-    is_windows,
-)
+from apps.backend.core.platform import OS, get_current_os
+
+def is_linux():
+    return get_current_os() == OS.LINUX
+
+def is_macos():
+    return get_current_os() == OS.MACOS
+
+def is_windows():
+    return get_current_os() == OS.WINDOWS
 
 logger = logging.getLogger(__name__)
 

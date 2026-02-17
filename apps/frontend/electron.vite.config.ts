@@ -3,8 +3,7 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { config as dotenvConfig } from 'dotenv';
 
-// Load .env file for build-time constants (Sentry DSN, etc.)
-dotenvConfig({ path: resolve(__dirname, '.env') });
+dotenvConfig({ path: resolve(__dirname, '../../.env') });
 
 /**
  * Sentry configuration embedded at build time.

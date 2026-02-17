@@ -281,6 +281,14 @@ if sys.version_info >= (3, 12):
       this.emit('error', errorMsg);
       return false;
     }
+    // Vérification d'existence du binaire Python
+    const { existsSync } = require('fs');
+    if (!existsSync(systemPython)) {
+      const errorMsg = `Le binaire Python détecté n'existe pas : ${systemPython}\nCorrigez votre installation Python ou votre PATH système.`;
+      this.emit('error', errorMsg);
+      console.error('[PythonEnvManager] ERREUR :', errorMsg);
+      return false;
+    }
 
     this.emit('status', 'Creating Python virtual environment...');
     const venvPath = this.getVenvBasePath()!;

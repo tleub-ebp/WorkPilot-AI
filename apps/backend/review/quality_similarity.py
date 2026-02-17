@@ -10,6 +10,7 @@ from __future__ import annotations
 import difflib
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 from .quality_scorer import IssueSeverity, QualityCategory, QualityIssue
 
@@ -253,7 +254,7 @@ class CodeSimilarityDetector:
 
 def detect_clones_in_project(
     project_dir: Path,
-    file_patterns: list[str] | None = None,
+    file_patterns: Optional[list[str]] = None,
     min_lines: int = 6,
     min_similarity: float = 0.85,
 ) -> tuple[list[CodeClone], list[QualityIssue]]:
@@ -283,4 +284,3 @@ def detect_clones_in_project(
     issues = detector.generate_issues(clones)
     
     return clones, issues
-

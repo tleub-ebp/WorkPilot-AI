@@ -13,7 +13,7 @@ import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from core.client import create_client
+from core.runtimes import create_agent_runtime
 from linear_updater import (
     LinearTaskState,
     is_linear_enabled,
@@ -580,17 +580,21 @@ async def run_autonomous_agent(
         current_phase = "planning" if first_run else "coding"
         phase_model = get_phase_model(spec_dir, current_phase, model)
         phase_thinking_budget = get_phase_thinking_budget(spec_dir, current_phase)
+        config = None  # Peut être enrichi par CLI/env/metadata
+        runtime = create_agent_runtime(
+            spec_dir=spec_dir,
+            phase=current_phase,
+            project_dir=project_dir,
+            agent_type="coder",
+            cli_provider=None,
+            cli_model=phase_model,
+            cli_thinking=phase_thinking_budget,
+            config=config,
+        )
 
         # Generate appropriate prompt
         if first_run:
             # Create client for planning phase
-            client = create_client(
-                project_dir,
-                spec_dir,
-                phase_model,
-                agent_type="planner",
-                max_thinking_tokens=phase_thinking_budget,
-            )
             prompt = generate_planner_prompt(spec_dir, project_dir)
             if planning_retry_context:
                 prompt += "\n\n" + planning_retry_context
@@ -722,13 +726,13 @@ async def run_autonomous_agent(
                 continue  # Skip to next iteration
 
             # Create client for coding phase (after file validation passes)
-            client = create_client(
-                project_dir,
-                spec_dir,
-                phase_model,
-                agent_type="coder",
-                max_thinking_tokens=phase_thinking_budget,
-            )
+            # client = create_client(
+            #     project_dir,
+            #     spec_dir,
+            #     phase_model,
+            #     agent_type="coder",
+            #     max_thinking_tokens=phase_thinking_budget,
+            # )
 
             # Get attempt count for recovery context
             attempt_count = recovery_manager.get_attempt_count(subtask_id)
@@ -786,10 +790,11 @@ async def run_autonomous_agent(
             task_logger.set_session(iteration)
 
         # Run session with async context manager
-        async with client:
-            status, response, error_info = await run_agent_session(
-                client, prompt, spec_dir, verbose, phase=current_log_phase
-            )
+        async with runtime:
+            session_result = await runtime.run_session(prompt)
+            status = session_result.status
+            response = session_result.response
+            error_info = session_result.error_info
 
         plan_validated = False
         if is_planning_phase and status != "error":

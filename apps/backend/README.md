@@ -117,6 +117,22 @@ from workspace import setup_workspace
 2. Export API in `__init__.py`
 3. Add facade module at root if commonly imported
 
+## Multi-Provider LLM Support
+
+Le backend supporte désormais la sélection dynamique du LLM (Claude Opus, Sonnet, Haiku, local, etc.) via la variable d'environnement `LLM_PROVIDER`.
+
+Pour ajouter un nouveau provider :
+1. Créez une classe héritant de `LLMProvider` dans `services/llm_provider.py`.
+2. Ajoutez le mapping dans la fonction `get_llm_provider()`.
+3. Configurez `LLM_PROVIDER` dans `.env` ou `.env.example`.
+
+Exemple :
+```
+LLM_PROVIDER=claude_opus  # Options: claude_opus, claude_sonnet, local
+```
+
+Tous les appels LLM doivent passer par la factory `get_llm_provider()` pour garantir la modularité et le switch à chaud.
+
 ## License
 
 AGPL-3.0

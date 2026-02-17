@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
+from typing import Optional
 
 from .quality_scorer import IssueSeverity, QualityCategory, QualityIssue
 
@@ -241,7 +242,7 @@ class PerformanceAnalyzer:
 
 def analyze_project_performance(
     project_dir: Path,
-    file_patterns: list[str] | None = None,
+    file_patterns: Optional[list[str]] = None,
 ) -> list[QualityIssue]:
     """
     Analyse la performance d'un projet.
@@ -260,4 +261,3 @@ def analyze_project_performance(
             all_issues.extend(issues)
     
     return all_issues
-

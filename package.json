@@ -48,7 +48,8 @@
     "concurrently": "^8.2.2"
   },
   "dependencies": {
-    "lucide-react": "^0.562.0"
+    "lucide-react": "^0.562.0",
+    "unzipper": "^0.10.11"
   },
   "overrides": {
     "@electron/rebuild": "4.0.2"

@@ -451,6 +451,7 @@
     "providerAnthropic": "Anthropic",
     "providerZai": "z.ai",
     "providerZhipu": "ZHIPU AI",
+    "providerOpenAI": "OpenAI",
     "providerUnknown": "Inconnu",
     "profile": "Profil",
     "id": "ID",
@@ -482,7 +483,8 @@
     "clickToOpenSettings": "Cliquez pour ouvrir les Paramètres →",
     "sessionShort": "Utilisation session 5 heures",
     "weeklyShort": "Utilisation hebdomadaire 7 jours",
-    "swap": "Changer"
+    "swap": "Changer",
+    "noProfileForProvider": "Aucun profil configuré pour le fournisseur {{provider}}."
   },
   "oauth": {
     "enterCode": "Saisie manuelle du code (secours)",

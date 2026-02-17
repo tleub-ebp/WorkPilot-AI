@@ -1,0 +1,10 @@
+{
+  "assistantLabel": "AI Assistant",
+  "assistantPlaceholder": "Select an AI assistant…",
+  "ok": "(OK)",
+  "notConfigured": "(Not configured)",
+  "loading": "Loading...",
+  "errorTitle": "AI Assistant Error",
+  "errorDescription": "Unable to load the list of AI assistants. Please ensure the backend is running (see README).",
+  "errorApiUnavailable": "API unavailable"
+}

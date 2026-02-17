@@ -29,6 +29,15 @@ Prerequisites:
 """
 
 import sys
+import subprocess
+import socket
+import io
+import os
+import importlib.util
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement à partir du fichier .env
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # Python version check - must be before any imports using 3.10+ syntax
 if sys.version_info < (3, 10):  # noqa: UP036
@@ -38,8 +47,6 @@ if sys.version_info < (3, 10):  # noqa: UP036
         f"\n"
         f"Please upgrade Python: https://www.python.org/downloads/"
     )
-
-import io
 
 # Configure safe encoding on Windows BEFORE any imports that might print
 # This handles both TTY and piped output (e.g., from Electron)
@@ -77,6 +84,36 @@ from core.dependency_validator import validate_platform_dependencies
 validate_platform_dependencies()
 
 from cli import main
+from services.llm_provider import get_llm_provider
+
+# Example usage of dynamic LLM provider (for integration in CLI/services)
+llm_provider = get_llm_provider()
+# Example: response = llm_provider.generate("Hello, world!")
+
+def is_uvicorn_running(host="127.0.0.1", port=9000):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(1)
+        try:
+            sock.connect((host, port))
+            return True
+        except (ConnectionRefusedError, OSError):
+            return False
+
+def is_uvicorn_installed():
+    return importlib.util.find_spec("uvicorn") is not None
+
+if not is_uvicorn_running():
+    if is_uvicorn_installed():
+        try:
+            subprocess.Popen([
+                sys.executable, '-m', 'uvicorn', 'provider_api:app',
+                '--host', '127.0.0.1', '--port', '9000', '--reload'
+            ], cwd=os.path.dirname(__file__), env=os.environ.copy())
+            print("[INFO] Lancement automatique du backend FastAPI (uvicorn)...")
+        except Exception as e:
+            print(f"[ERREUR] Impossible de lancer uvicorn automatiquement: {e}")
+    else:
+        print("[ERREUR] uvicorn n'est pas installé dans l'environnement Python courant. Veuillez exécuter 'pip install -r requirements.txt' dans apps/backend ou activer le bon venv.")
 
 if __name__ == "__main__":
     main()

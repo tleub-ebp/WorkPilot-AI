@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Terminal, Loader2, Check, AlertTriangle, X, RefreshCw, Download, Info, ExternalLink } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
-import type { ClaudeCodeVersionInfo } from '../../../shared/types/cli';
+import type { ClaudeCodeVersionInfo } from '@shared/types';
 
 interface ClaudeCodeStepProps {
   onNext: () => void;

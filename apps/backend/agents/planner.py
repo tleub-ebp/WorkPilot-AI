@@ -8,7 +8,7 @@ Handles follow-up planner sessions for adding new subtasks to completed specs.
 import logging
 from pathlib import Path
 
-from core.client import create_client
+from core.runtimes import create_agent_runtime
 from phase_config import get_phase_model, get_phase_thinking_budget
 from phase_event import ExecutionPhase, emit_phase
 from task_logger import (
@@ -91,15 +91,19 @@ async def run_followup_planner(
         task_logger.start_phase(LogPhase.PLANNING, "Starting follow-up planning...")
         task_logger.set_session(1)
 
-    # Create client with phase-specific model and thinking budget
-    # Respects task_metadata.json configuration when no CLI override
-    planning_model = get_phase_model(spec_dir, "planning", model)
-    planning_thinking_budget = get_phase_thinking_budget(spec_dir, "planning")
-    client = create_client(
-        project_dir,
-        spec_dir,
-        planning_model,
-        max_thinking_tokens=planning_thinking_budget,
+    # Migration vers runtime provider-agnostique
+    phase_model = get_phase_model(spec_dir, "planning", model)
+    phase_thinking_budget = get_phase_thinking_budget(spec_dir, "planning")
+    config = None
+    runtime = create_agent_runtime(
+        spec_dir=spec_dir,
+        phase="planning",
+        project_dir=project_dir,
+        agent_type="planner",
+        cli_provider=None,
+        cli_model=phase_model,
+        cli_thinking=phase_thinking_budget,
+        config=config,
     )
 
     # Generate follow-up planner prompt
@@ -110,9 +114,9 @@ async def run_followup_planner(
 
     try:
         # Run single planning session
-        async with client:
+        async with runtime:
             status, response, error_info = await run_agent_session(
-                client, prompt, spec_dir, verbose, phase=LogPhase.PLANNING
+                runtime, prompt, spec_dir, verbose, phase=LogPhase.PLANNING
             )
 
         # End planning phase in task logger

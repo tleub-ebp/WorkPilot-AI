@@ -4,6 +4,8 @@ import { createElectronAPI } from './api';
 // Create the unified API by combining all domain-specific APIs
 const electronAPI = createElectronAPI();
 
+console.log('[preload] electronAPI.createClaudeProfileDirectory:', typeof electronAPI.createClaudeProfileDirectory);
+
 // Expose to renderer via contextBridge
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);
 
