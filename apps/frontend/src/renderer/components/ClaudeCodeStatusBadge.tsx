@@ -33,7 +33,6 @@ import {
 } from "./ui/select";
 import { cn } from "@/lib/utils";
 import type { ClaudeCodeVersionInfo, ClaudeInstallationInfo } from "@shared/types";
-import { ProviderSelector } from "./ProviderSelector";
 
 interface ClaudeCodeStatusBadgeProps {
   className?: string;

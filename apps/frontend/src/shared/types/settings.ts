@@ -296,6 +296,7 @@ export interface AppSettings {
   seenVersionWarnings?: string[];
   // Sidebar collapsed state (icons only when true)
   sidebarCollapsed?: boolean;
+  providerPriorityOrder?: import('../../renderer/components/settings/multiconnector/types').LLMProvider[];
 }
 
 // Auto-Claude Source Environment Configuration (for auto-claude repo .env)

@@ -1,3 +1,7 @@
+# IMPORTANT : La liste des providers LLM doit être centralisée dans configured_providers.json à la racine du projet.
+# Ce fichier est la source unique de vérité pour le frontend ET le backend.
+# Toute modification doit être faite dans ce fichier uniquement.
+
 import logging
 import sys
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
