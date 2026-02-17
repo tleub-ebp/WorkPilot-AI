@@ -1,0 +1,13 @@
+{
+  "title": "Initialisation du projet {{projectName}}",
+  "description": "Décrivez ce que vous voulez construire.",
+  "projectDescriptionLabel": "Description du projet",
+  "projectDescriptionPlaceholder": "Décrivez votre projet...",
+  "providerLabel": "Fournisseur de modèle IA",
+  "verifyConfig": "Vérifiez et confirmez la configuration de votre projet.",
+  "projectNameLabel": "Nom du projet",
+  "selectedModelLabel": "Modèle sélectionné",
+  "none": "Aucun",
+  "cancel": "Annuler",
+  "createProjectButton": "Créer le projet {{projectName}}"
+}

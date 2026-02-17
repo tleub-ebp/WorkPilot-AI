@@ -1,0 +1,13 @@
+{
+  "title": "Project initialization {{projectName}}",
+  "description": "Describe what you want to build.",
+  "projectDescriptionLabel": "Project description",
+  "projectDescriptionPlaceholder": "Describe your project...",
+  "providerLabel": "AI model provider",
+  "verifyConfig": "Check and confirm your project configuration.",
+  "projectNameLabel": "Project name",
+  "selectedModelLabel": "Selected model",
+  "none": "None",
+  "cancel": "Cancel",
+  "createProjectButton": "Create project {{projectName}}"
+}

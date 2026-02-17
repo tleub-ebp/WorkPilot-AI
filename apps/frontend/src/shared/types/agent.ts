@@ -31,7 +31,7 @@ export interface ClaudeUsageData {
 export interface ClaudeUsageSnapshot {
   /** Session usage percentage (0-100) - represents 5-hour window for most providers */
   sessionPercent: number;
-  /** Weekly usage percentage (0-100) - represents 7-day window for Anthropic, monthly for z.ai */
+  /** Weekly usage percentage (0-100) - represents 7-day window for Anthropic */
   weeklyPercent: number;
   /**
    * When the session limit resets (human-readable or ISO)
@@ -79,6 +79,8 @@ export interface ClaudeUsageSnapshot {
   weeklyUsageLimit?: number;
   /** True if profile has invalid refresh token and needs re-authentication */
   needsReauthentication?: boolean;
+  /** Provider name this snapshot belongs to (e.g., 'anthropic', 'openai', 'ollama', 'ollama_local') */
+  providerName?: string;
 }
 
 /**

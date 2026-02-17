@@ -17,7 +17,6 @@ Nommez les fichiers ainsi :
 - mistral.svg
 - openrouter.svg
 - groq.svg
-- zai-global.svg
-- zai-china.svg
+- ollama.svg
 
 Utilisez le format SVG de préférence pour une qualité optimale.

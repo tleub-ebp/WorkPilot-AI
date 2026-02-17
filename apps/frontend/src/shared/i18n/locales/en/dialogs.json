@@ -22,10 +22,14 @@
     "initRepo": "Initialize a new git repository",
     "createCommit": "Create an initial commit with your current files",
     "manual": "Prefer to do it manually?",
+    "manualTerminal": "Or run these commands in your terminal:",
     "settingUp": "Setting up Git",
     "initializingRepo": "Initializing git repository and creating initial commit...",
     "success": "Git Initialized",
-    "readyToUse": "Your project is now ready to use with Auto Claude!"
+    "readyToUse": "Your project is now ready to use with Auto Claude!",
+    "skip": "Skip for now",
+    "initializeGit": "Initialize Git",
+    "initialCommitMessage": "Initial commit"
   },
   "githubSetup": {
     "connectTitle": "Connect to GitHub",

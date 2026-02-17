@@ -38,7 +38,6 @@ export interface ElectronAPI extends
   /** Code quality analysis API */
   quality: QualityAPI;
   createClaudeProfileDirectory: (profileName: string) => Promise<{ success: boolean; data?: string; error?: string }>;
-  requestUsageUpdate: (providerName?: string) => invokeIpc('usage:get', providerName);
 }
 
 export const createElectronAPI = (): ElectronAPI => ({

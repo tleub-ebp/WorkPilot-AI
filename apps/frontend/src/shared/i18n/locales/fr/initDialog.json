@@ -1,0 +1,19 @@
+{
+  "title": "Initialisation du projet",
+  "step1": {
+    "description": "Décrivez ce que vous voulez construire."
+  },
+  "step2": {
+    "description": "Configurez les paramètres de base du projet.",
+    "placeholder": "Nom du projet..."
+  },
+  "step3": {
+    "description": "Vérifiez et confirmez la configuration de votre projet."
+  },
+  "projectName": "Nom du projet",
+  "selectedModel": "Modèle sélectionné",
+  "actions": {
+    "creating": "Création en cours...",
+    "createProject": "Créer le projet"
+  }
+}

@@ -1,5 +1,5 @@
 // Types unifiés pour la gestion multi-connecteur
-export type LLMProvider = 'claude' | 'openai' | 'mistral' | 'grok' | 'gemini' | 'cohere' | 'openrouter' | 'groq' | 'zai-global' | 'zai-cn' | string;
+export type LLMProvider = 'claude' | 'openai' | 'mistral' | 'grok' | 'gemini' | 'cohere' | 'openrouter' | 'groq' | 'ollama' | string;
 
 export interface MultiConnectorAccount {
   id: string;

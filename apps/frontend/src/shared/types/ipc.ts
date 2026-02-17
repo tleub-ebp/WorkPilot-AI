@@ -173,7 +173,7 @@ export interface GitBranchDetail {
 // ============================================
 
 // Electron API exposed via contextBridge
-// Tab state interface (persisted in main process)
+// Tab state interface (persisted in the main process)
 export interface TabState {
   openProjectIds: string[];
   activeProjectId: string | null;
@@ -181,6 +181,7 @@ export interface TabState {
 }
 
 export interface ElectronAPI {
+  [x: string]: any;
   // Project operations
   addProject: (projectPath: string) => Promise<IPCResult<Project>>;
   removeProject: (projectId: string) => Promise<IPCResult>;
@@ -189,7 +190,7 @@ export interface ElectronAPI {
   initializeProject: (projectId: string) => Promise<IPCResult<InitializationResult>>;
   checkProjectVersion: (projectId: string) => Promise<IPCResult<AutoBuildVersionInfo>>;
 
-  // Tab State (persisted in main process for reliability)
+  // Tab State (persisted in the main process for reliability)
   getTabState: () => Promise<IPCResult<TabState>>;
   saveTabState: (tabState: TabState) => Promise<IPCResult>;
 
@@ -356,7 +357,7 @@ export interface ElectronAPI {
 
   // Usage Monitoring (Proactive Account Switching)
   /** Request current usage snapshot */
-  requestUsageUpdate: () => Promise<IPCResult<ClaudeUsageSnapshot | null>>;
+  requestUsageUpdate: (providerName?: string) => Promise<IPCResult<ClaudeUsageSnapshot | null>>;
   /** Request all profiles usage immediately (for startup/refresh)
    * @param forceRefresh - If true, bypasses cache to get fresh data for all profiles
    */
@@ -939,6 +940,21 @@ export interface ElectronAPI {
 
   // Queue Routing API (rate limit recovery)
   queue: import('../../preload/api/queue-api').QueueAPI;
+
+  /**
+   * Sauvegarde un fichier JSON dans le dossier et nom spécifiés.
+   * @param folderPath Chemin du dossier de destination
+   * @param fileName Nom du fichier
+   * @param data Données à sauvegarder (objet JSON)
+   * @returns { success: boolean, error?: string }
+   */
+  saveJsonFile: (folderPath: string, fileName: string, data: any) => Promise<{ success: boolean; error?: string }>;
+
+  /**
+   * Retourne le chemin du dossier utilisateur (home directory)
+   * @returns Le chemin du home directory (ex: C:\Users\user ou /home/user)
+   */
+  getUserHome: () => string;
 }
 
 /** Platform information exposed via contextBridge for platform-specific behavior */

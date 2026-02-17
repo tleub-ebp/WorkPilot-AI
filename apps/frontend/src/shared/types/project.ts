@@ -28,6 +28,10 @@ export interface ProjectSettings {
   useClaudeMd?: boolean;
   /** Maximum parallel tasks allowed (default: 3) */
   maxParallelTasks?: number;
+  /** Description utilisateur du projet (optionnel) */
+  description?: string;
+  /** Provider IA sélectionné (optionnel) */
+  provider?: string;
 }
 
 export interface NotificationSettings {

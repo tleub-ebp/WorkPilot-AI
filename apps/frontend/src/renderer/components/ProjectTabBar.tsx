@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { SortableProjectTab } from './SortableProjectTab';
 import { UsageIndicator } from './UsageIndicator';
 import { AuthStatusIndicator } from './AuthStatusIndicator';
-import type { Project } from '../../shared/types';
+import type { Project } from '@shared/types';
 
 interface ProjectTabBarProps {
   projects: Project[];
@@ -15,7 +15,7 @@ interface ProjectTabBarProps {
   onProjectClose: (projectId: string) => void;
   onAddProject: () => void;
   className?: string;
-  // Control props for active tab
+  // Control props for the active tab
   onSettingsClick?: () => void;
 }
 
@@ -48,7 +48,7 @@ export function ProjectTabBar({
       // Cmd/Ctrl + 1-9: Switch to tab N
       if (e.key >= '1' && e.key <= '9') {
         e.preventDefault();
-        const index = parseInt(e.key, 10) - 1;
+        const index = Number.parseInt(e.key, 10) - 1;
         if (index < projects.length) {
           onProjectSelect(projects[index].id);
         }
@@ -103,18 +103,17 @@ export function ProjectTabBar({
               onSelect={() => onProjectSelect(project.id)}
               onClose={(e) => {
                 e.stopPropagation();
+                console.log('[DEBUG] ProjectTabBar onClose called for project:', project.id);
                 onProjectClose(project.id);
               }}
-              // Pass control props only for active tab
+              // Pass control props only for the active tab
               onSettingsClick={isActiveTab ? onSettingsClick : undefined}
             />
           );
         })}
       </div>
 
-      <div className="flex items-center gap-2 px-2 py-1">
-        <AuthStatusIndicator />
-        <UsageIndicator />
+      <div className="flex items-center gap-2 px-4 py-1">
         <Button
           variant="ghost"
           size="icon"
@@ -124,6 +123,8 @@ export function ProjectTabBar({
         >
           <Plus className="h-4 w-4" />
         </Button>
+        <AuthStatusIndicator />
+        <UsageIndicator />
       </div>
     </div>
   );

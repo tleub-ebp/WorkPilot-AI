@@ -6,4 +6,5 @@
  * New code should import from './settings' instead.
  */
 
-export { AppSettingsDialog, type AppSection } from './settings';
+// Suppression de l'export legacy
+// export { AppSettingsDialog, type AppSection } from './settings';

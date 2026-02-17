@@ -9,20 +9,17 @@
  * 2. Fallback: CLI /usage command parsing
  */
 
-import { EventEmitter } from 'events';
-import { homedir } from 'os';
+import { EventEmitter } from 'node:events';
+import { homedir } from 'node:os';
 import { getClaudeProfileManager } from '../claude-profile-manager';
-import { ClaudeUsageSnapshot, ProfileUsageSummary, AllProfilesUsage } from '../../shared/types/agent';
-import { loadProfilesFile } from '../services/profile/profile-manager';
-import type { APIProfile } from '../../shared/types/profile';
+import { ClaudeUsageSnapshot, ProfileUsageSummary, AllProfilesUsage } from '@shared/types';
+import { loadProfilesFile } from '../services/profile';
+import type { APIProfile } from '@shared/types/profile';
 import { detectProvider as sharedDetectProvider, type ApiProvider } from '../../shared/utils/provider-detection';
 import { getCredentialsFromKeychain, clearKeychainCache } from './credential-utils';
 import { reactiveTokenRefresh, ensureValidToken } from './token-refresh';
 import { isProfileRateLimited } from './rate-limit-manager';
 import { getOperationRegistry } from './operation-registry';
-
-// Re-export for backward compatibility
-export type { ApiProvider };
 
 /**
  * Create a safe fingerprint of a credential for debug logging.
@@ -42,10 +39,9 @@ function getCredentialFingerprint(credential: string | null | undefined): string
  * Allowed domains for usage API requests.
  * Only these domains are permitted for outbound usage monitoring requests.
  */
-const ALLOWED_USAGE_API_DOMAINS = new Set([
+const ALLOWED_USAGE_API_DOMAINS: ReadonlySet<string> = new Set([
   'api.anthropic.com',
-  'api.z.ai',
-  'open.bigmodel.cn',
+  'api.openai.com',
 ]);
 
 /**
@@ -60,23 +56,11 @@ interface ProviderUsageEndpoint {
 const PROVIDER_USAGE_ENDPOINTS: readonly ProviderUsageEndpoint[] = [
   {
     provider: 'anthropic',
-    usagePath: '/api/oauth/usage'
-  },
-  {
-    provider: 'zai',
-    usagePath: '/api/monitor/usage/quota/limit'
-  },
-  {
-    provider: 'zhipu',
-    usagePath: '/api/monitor/usage/quota/limit'
+    usagePath: '/api/oauth/usage',
   },
   {
     provider: 'openai',
-    usagePath: '/v1/organization/usage'
-  },
-  {
-    provider: 'openai-costs',
-    usagePath: '/v1/organization/costs'
+    usagePath: '/v1/organization/usage',
   }
 ] as const;
 
@@ -85,14 +69,14 @@ const PROVIDER_USAGE_ENDPOINTS: readonly ProviderUsageEndpoint[] = [
  * Constructs full usage endpoint URL from provider baseUrl and usage path
  *
  * @param provider - The provider type
- * @param baseUrl - The API base URL (e.g., 'https://api.z.ai/api/anthropic')
+ * @param baseUrl - The API base URL (e.g., 'https://api.anthropic.com')
  * @returns Full usage endpoint URL or null if provider unknown
  *
  * @example
  * getUsageEndpoint('anthropic', 'https://api.anthropic.com')
  * // returns 'https://api.anthropic.com/api/oauth/usage'
- * getUsageEndpoint('zai', 'https://api.z.ai/api/anthropic')
- * // returns 'https://api.z.ai/api/monitor/usage/quota/limit'
+ * getUsageEndpoint('openai', 'https://api.openai.com')
+ * // returns 'https://api.openai.com/v1/organization/usage'
  * getUsageEndpoint('unknown', 'https://example.com')
  * // returns null
  */
@@ -161,13 +145,13 @@ export function getUsageEndpoint(provider: ApiProvider, baseUrl: string): string
  * Detect API provider from baseUrl
  * Extracts domain and matches against known provider patterns
  *
- * @param baseUrl - The API base URL (e.g., 'https://api.z.ai/api/anthropic')
- * @returns The detected provider type ('anthropic' | 'zai' | 'zhipu' | 'unknown')
+ * @param baseUrl - The API base URL (e.g., 'https://api.anthropic.com')
+ * @returns The detected provider type ('anthropic' | 'openai' | 'ollama' | 'ollama_local' | 'unknown')
  *
  * @example
  * detectProvider('https://api.anthropic.com') // returns 'anthropic'
- * detectProvider('https://api.z.ai/api/anthropic') // returns 'zai'
- * detectProvider('https://open.bigmodel.cn/api/anthropic') // returns 'zhipu'
+ * detectProvider('https://api.openai.com') // returns 'openai'
+ * detectProvider('http://localhost:11434') // returns 'ollama_local'
  * detectProvider('https://unknown.com/api') // returns 'unknown'
  */
 export function detectProvider(baseUrl: string): ApiProvider {
@@ -385,8 +369,8 @@ export class UsageMonitor extends EventEmitter {
       for (const profile of settings.profiles) {
         if (profile.configDir) {
           const expandedConfigDir = profile.configDir.startsWith('~')
-            ? profile.configDir.replace(/^~/, homedir())
-            : profile.configDir;
+              ? profile.configDir.replace(/^~/, homedir())
+              : profile.configDir;
           const creds = getCredentialsFromKeychain(expandedConfigDir);
           if (!creds.token) {
             // Credentials are missing - mark for re-auth
@@ -450,12 +434,12 @@ export class UsageMonitor extends EventEmitter {
       if (profile.id === activeProfileId && this.currentUsage) {
         const summary = this.buildProfileUsageSummary(profile, this.currentUsage);
         profileResults[i] = summary;
-        this.allProfilesUsageCache.set(profile.id, { usage: summary, fetchedAt: now });
+        this.allProfilesUsageCache.set(profile.id, {usage: summary, fetchedAt: now});
         continue;
       }
 
       // Mark for parallel fetch
-      profilesToFetch.push({ profile, index: i });
+      profilesToFetch.push({profile, index: i});
     }
 
     // Parallel fetch for all inactive profiles that need fresh data
@@ -463,7 +447,7 @@ export class UsageMonitor extends EventEmitter {
       // Collect usage updates for batch save (avoids race condition with concurrent saves)
       const usageUpdates: Array<{ profileId: string; sessionPercent: number; weeklyPercent: number }> = [];
 
-      const fetchPromises = profilesToFetch.map(async ({ profile, index }) => {
+      const fetchPromises = profilesToFetch.map(async ({profile, index}) => {
         const inactiveUsage = await this.fetchUsageForInactiveProfile(profile);
         const rateLimitStatus = isProfileRateLimited(profile);
 
@@ -476,7 +460,7 @@ export class UsageMonitor extends EventEmitter {
           // Collect update for batch save (don't save here to avoid race condition)
           return {
             index,
-            update: { profileId: profile.id, sessionPercent, weeklyPercent },
+            update: {profileId: profile.id, sessionPercent, weeklyPercent},
             profile,
             inactiveUsage,
             rateLimitStatus
@@ -502,7 +486,7 @@ export class UsageMonitor extends EventEmitter {
 
       // Collect all updates and build summaries
       for (const result of fetchResults) {
-        const { index, update, profile, inactiveUsage, rateLimitStatus } = result;
+        const {index, update, profile, inactiveUsage, rateLimitStatus} = result;
 
         // Get percentages from either the update or the fallback values
         const sessionPercent = update?.sessionPercent ?? result.sessionPercent ?? 0;
@@ -522,18 +506,18 @@ export class UsageMonitor extends EventEmitter {
           isRateLimited: rateLimitStatus.limited,
           rateLimitType: rateLimitStatus.type,
           availabilityScore: this.calculateAvailabilityScore(
-            sessionPercent,
-            weeklyPercent,
-            rateLimitStatus.limited,
-            rateLimitStatus.type,
-            profile.isAuthenticated ?? false
+              sessionPercent,
+              weeklyPercent,
+              rateLimitStatus.limited,
+              rateLimitStatus.type,
+              profile.isAuthenticated ?? false
           ),
           isActive: profile.id === activeProfileId,
           lastFetchedAt: inactiveUsage?.fetchedAt?.toISOString() ?? profile.usage?.lastUpdated?.toISOString(),
           needsReauthentication: this.needsReauthProfiles.has(profile.id)
         };
 
-        this.allProfilesUsageCache.set(profile.id, { usage: summary, fetchedAt: now });
+        this.allProfilesUsageCache.set(profile.id, {usage: summary, fetchedAt: now});
         profileResults[index] = summary;
       }
 
@@ -568,7 +552,7 @@ export class UsageMonitor extends EventEmitter {
    * preventing 401 errors for inactive profiles whose tokens may have expired.
    */
   private async fetchUsageForInactiveProfile(
-    profile: { id: string; name: string; email?: string; configDir?: string; isAuthenticated?: boolean }
+      profile: { id: string; name: string; email?: string; configDir?: string; isAuthenticated?: boolean }
   ): Promise<ClaudeUsageSnapshot | null> {
     // Only fetch for authenticated profiles with a configDir
     if (!profile.isAuthenticated || !profile.configDir) {
@@ -584,8 +568,8 @@ export class UsageMonitor extends EventEmitter {
     try {
       // Get credentials from keychain for this profile's configDir
       const expandedConfigDir = profile.configDir.startsWith('~')
-        ? profile.configDir.replace(/^~/, homedir())
-        : profile.configDir;
+          ? profile.configDir.replace(/^~/, homedir())
+          : profile.configDir;
 
       // Use ensureValidToken to proactively refresh the token if near expiry
       // This is critical for inactive profiles whose tokens may have expired
@@ -605,7 +589,7 @@ export class UsageMonitor extends EventEmitter {
           // The token works for this session but will be lost on restart
           if (tokenResult.persistenceFailed) {
             console.warn('[UsageMonitor] Token refreshed but persistence failed for profile: ' + profile.name +
-              ' - user should re-authenticate to avoid auth errors on next restart');
+                ' - user should re-authenticate to avoid auth errors on next restart');
             this.needsReauthProfiles.add(profile.id);
           } else {
             // Token was refreshed and persisted successfully - clear from needsReauth if present
@@ -658,17 +642,17 @@ export class UsageMonitor extends EventEmitter {
 
       // Fetch usage via API - OAuth profiles always use Anthropic
       const usage = await this.fetchUsageViaAPI(
-        token,
-        profile.id,
-        profile.name,
-        profile.email,
-        {
-          profileId: profile.id,
-          profileName: profile.name,
-          profileEmail: profile.email,
-          isAPIProfile: false,
-          baseUrl: 'https://api.anthropic.com'
-        }
+          token,
+          profile.id,
+          profile.name,
+          profile.email,
+          {
+            profileId: profile.id,
+            profileName: profile.name,
+            profileEmail: profile.email,
+            isAPIProfile: false,
+            baseUrl: 'https://api.anthropic.com'
+          }
       );
 
       if (usage) {
@@ -690,12 +674,12 @@ export class UsageMonitor extends EventEmitter {
    * Build a ProfileUsageSummary from a ClaudeUsageSnapshot
    */
   private buildProfileUsageSummary(
-    profile: { id: string; name: string; email?: string; isAuthenticated?: boolean },
-    usage: ClaudeUsageSnapshot
+      profile: { id: string; name: string; email?: string; isAuthenticated?: boolean },
+      usage: ClaudeUsageSnapshot
   ): ProfileUsageSummary {
     const profileManager = getClaudeProfileManager();
     const fullProfile = profileManager.getProfile(profile.id);
-    const rateLimitStatus = fullProfile ? isProfileRateLimited(fullProfile) : { limited: false };
+    const rateLimitStatus = fullProfile ? isProfileRateLimited(fullProfile) : {limited: false};
 
     return {
       profileId: profile.id,
@@ -709,11 +693,11 @@ export class UsageMonitor extends EventEmitter {
       isRateLimited: rateLimitStatus.limited,
       rateLimitType: rateLimitStatus.type,
       availabilityScore: this.calculateAvailabilityScore(
-        usage.sessionPercent,
-        usage.weeklyPercent,
-        rateLimitStatus.limited,
-        rateLimitStatus.type,
-        profile.isAuthenticated ?? true
+          usage.sessionPercent,
+          usage.weeklyPercent,
+          rateLimitStatus.limited,
+          rateLimitStatus.type,
+          profile.isAuthenticated ?? true
       ),
       isActive: usage.profileId === profileManager.getActiveProfile()?.id,
       lastFetchedAt: usage.fetchedAt?.toISOString(),
@@ -732,11 +716,11 @@ export class UsageMonitor extends EventEmitter {
    * - Session usage penalty: -(sessionPercent * 0.2)
    */
   private calculateAvailabilityScore(
-    sessionPercent: number,
-    weeklyPercent: number,
-    isRateLimited: boolean,
-    rateLimitType?: 'session' | 'weekly',
-    isAuthenticated: boolean = true
+      sessionPercent: number,
+      weeklyPercent: number,
+      isRateLimited: boolean,
+      rateLimitType?: 'session' | 'weekly',
+      isAuthenticated: boolean = true
   ): number {
     let score = 100;
 
@@ -782,7 +766,7 @@ export class UsageMonitor extends EventEmitter {
       const profilesFile = await loadProfilesFile();
       if (profilesFile.activeProfileId) {
         const activeProfile = profilesFile.profiles.find(
-          (p) => p.id === profilesFile.activeProfileId
+            (p) => p.id === profilesFile.activeProfileId
         );
         if (activeProfile?.apiKey) {
           this.debugLog('[UsageMonitor:TRACE] Using API profile credential: ' + activeProfile.name);
@@ -812,7 +796,7 @@ export class UsageMonitor extends EventEmitter {
           // The token works for this session but will be lost on restart
           if (tokenResult.persistenceFailed) {
             console.warn('[UsageMonitor] Token refreshed but persistence failed for profile: ' + activeProfile.name +
-              ' - user should re-authenticate to avoid auth errors on next restart');
+                ' - user should re-authenticate to avoid auth errors on next restart');
             this.needsReauthProfiles.add(activeProfile.id);
           } else {
             // Token was refreshed and persisted successfully - clear from needsReauth if present
@@ -864,7 +848,7 @@ export class UsageMonitor extends EventEmitter {
         this.debugLog('[UsageMonitor] Keychain access failed:', keychainCreds.error);
       } else {
         this.debugLog('[UsageMonitor:TRACE] No token in Keychain for profile: ' + activeProfile.name +
-          ' - user may need to re-authenticate with claude /login');
+            ' - user may need to re-authenticate with claude /login');
       }
 
       // Mark profile as needing re-authentication since credentials are missing
@@ -959,8 +943,8 @@ export class UsageMonitor extends EventEmitter {
 
           // Attempt proactive swap
           await this.performProactiveSwap(
-            profileId,
-            thresholds.sessionExceeded ? 'session' : 'weekly'
+              profileId,
+              thresholds.sessionExceeded ? 'session' : 'weekly'
           );
         } else {
           this.debugLog('[UsageMonitor:TRACE] Usage OK', {
@@ -1014,7 +998,7 @@ export class UsageMonitor extends EventEmitter {
       const profilesFile = await loadProfilesFile();
       if (profilesFile.activeProfileId) {
         const activeAPIProfile = profilesFile.profiles.find(
-          (p) => p.id === profilesFile.activeProfileId
+            (p) => p.id === profilesFile.activeProfileId
         );
         if (activeAPIProfile?.apiKey) {
           // API profile is active and has an apiKey
@@ -1088,8 +1072,8 @@ export class UsageMonitor extends EventEmitter {
    * @returns Object indicating which thresholds are exceeded
    */
   private checkThresholdsExceeded(
-    usage: ClaudeUsageSnapshot,
-    settings: { sessionThreshold?: number; weeklyThreshold?: number }
+      usage: ClaudeUsageSnapshot,
+      settings: { sessionThreshold?: number; weeklyThreshold?: number }
   ): { sessionExceeded: boolean; weeklyExceeded: boolean; anyExceeded: boolean } {
     const sessionExceeded = usage.sessionPercent >= (settings.sessionThreshold ?? 95);
     const weeklyExceeded = usage.weeklyPercent >= (settings.weeklyThreshold ?? 99);
@@ -1129,7 +1113,7 @@ export class UsageMonitor extends EventEmitter {
             // The token works for this session but will be lost on restart
             if (refreshResult.persistenceFailed) {
               console.warn('[UsageMonitor] Token refreshed but persistence failed for profile: ' + profileId +
-                ' - user should re-authenticate to avoid auth errors on next restart');
+                  ' - user should re-authenticate to avoid auth errors on next restart');
               this.needsReauthProfiles.add(profileId);
             } else {
               // Token was refreshed and persisted successfully - clear from needsReauth if present
@@ -1185,9 +1169,9 @@ export class UsageMonitor extends EventEmitter {
       const excludeProfiles = Array.from(this.authFailedProfiles.keys());
       this.debugLog('[UsageMonitor] Attempting proactive swap (excluding failed profiles):', excludeProfiles);
       await this.performProactiveSwap(
-        profileId,
-        'session', // Treat auth failure as session limit for immediate swap
-        excludeProfiles
+          profileId,
+          'session', // Treat auth failure as session limit for immediate swap
+          excludeProfiles
       );
     } catch (swapError) {
       console.error('[UsageMonitor] Failed to perform auth-failure swap:', swapError);
@@ -1198,7 +1182,7 @@ export class UsageMonitor extends EventEmitter {
    * Fetch usage - HYBRID APPROACH
    * Tries API first, falls back to CLI if API fails
    *
-   * Enhanced to support multiple providers (Anthropic, z.ai, ZHIPU)
+   * Enhanced to support multiple providers (Anthropic, OpenAI, Ollama)
    * Detects provider from active profile's baseUrl and routes to appropriate endpoint
    *
    * @param profileId - Profile identifier
@@ -1206,12 +1190,14 @@ export class UsageMonitor extends EventEmitter {
    * @param activeProfile - Optional active profile info to avoid race conditions
    */
   private async fetchUsage(
-    profileId: string,
-    credential?: string,
-    activeProfile?: ActiveProfileResult
+      profileId: string,
+      credential?: string,
+      activeProfile?: ActiveProfileResult
   ): Promise<ClaudeUsageSnapshot | null> {
     // Get profile name and email - prefer activeProfile since it's already determined
     // This fixes the bug where API profile names were incorrectly shown for OAuth profiles
+    let profileName: string | undefined;
+    let profileEmail: string | undefined;
     if (activeProfile?.profileName) {
       profileName = activeProfile.profileName;
       profileEmail = activeProfile.profileEmail;
@@ -1305,8 +1291,7 @@ export class UsageMonitor extends EventEmitter {
    *
    * Supports multiple providers with automatic detection:
    * - Anthropic OAuth: https://api.anthropic.com/api/oauth/usage
-   * - z.ai: https://api.z.ai/api/monitor/usage/model-usage
-   * - ZHIPU: https://open.bigmodel.cn/api/monitor/usage/model-usage
+   * - OpenAI: https://api.openai.com/v1/usage
    *
    * Detects provider from active profile's baseUrl and routes to appropriate endpoint.
    * Normalizes all provider responses to common ClaudeUsageSnapshot format.
@@ -1319,11 +1304,11 @@ export class UsageMonitor extends EventEmitter {
    * @returns Normalized usage snapshot or null on failure
    */
   private async fetchUsageViaAPI(
-    credential: string,
-    profileId: string,
-    profileName: string,
-    profileEmail?: string,
-    activeProfile?: ActiveProfileResult
+      credential: string,
+      profileId: string,
+      profileName: string,
+      profileEmail?: string,
+      activeProfile?: ActiveProfileResult
   ): Promise<ClaudeUsageSnapshot | null> {
     this.debugLog('[UsageMonitor:API_FETCH] Starting API fetch for usage:', {
       profileId,
@@ -1511,25 +1496,7 @@ export class UsageMonitor extends EventEmitter {
 
       this.debugLog('[UsageMonitor:PROVIDER] Raw response from ' + provider + ':', JSON.stringify(rawData, null, 2));
 
-      // Step 6: Extract data wrapper for z.ai and ZHIPU responses
-      // These providers wrap the actual usage data in a 'data' field
-      let responseData = rawData;
-      if (provider === 'zai' || provider === 'zhipu') {
-        if (rawData.data) {
-          responseData = rawData.data;
-          this.debugLog('[UsageMonitor:PROVIDER] Extracted data field from response:', {
-            provider,
-            extractedData: JSON.stringify(responseData, null, 2)
-          });
-        } else {
-          this.debugLog('[UsageMonitor:PROVIDER] No data field found in response, using raw response:', {
-            provider,
-            responseKeys: Object.keys(rawData)
-          });
-        }
-      }
-
-      // Step 7: Normalize response based on provider type
+      // Step 6: Normalize response based on provider type
       let normalizedUsage: ClaudeUsageSnapshot | null = null;
 
       this.debugLog('[UsageMonitor:NORMALIZATION] Selecting normalization method:', {
@@ -1540,12 +1507,6 @@ export class UsageMonitor extends EventEmitter {
       switch (provider) {
         case 'anthropic':
           normalizedUsage = this.normalizeAnthropicResponse(rawData, profileId, profileName, profileEmail);
-          break;
-        case 'zai':
-          normalizedUsage = this.normalizeZAIResponse(responseData, profileId, profileName, profileEmail);
-          break;
-        case 'zhipu':
-          normalizedUsage = this.normalizeZhipuResponse(responseData, profileId, profileName, profileEmail);
           break;
         default:
           this.debugLog('[UsageMonitor] Unsupported provider for usage normalization: ' + provider);
@@ -1558,6 +1519,9 @@ export class UsageMonitor extends EventEmitter {
         this.apiFailureTimestamps.set(profileId, Date.now());
         return null;
       }
+
+      // Populate providerName so the renderer can filter snapshots by provider
+      normalizedUsage.providerName = provider;
 
       this.debugLog('[UsageMonitor:API_FETCH] Fetch completed - usage:', {
         profileId,
@@ -1601,10 +1565,10 @@ export class UsageMonitor extends EventEmitter {
    * }
    */
   private normalizeAnthropicResponse(
-    data: any,
-    profileId: string,
-    profileName: string,
-    profileEmail?: string
+      data: any,
+      profileId: string,
+      profileName: string,
+      profileEmail?: string
   ): ClaudeUsageSnapshot {
     // Support both new nested format and legacy flat format for backward compatibility
     //
@@ -1655,205 +1619,14 @@ export class UsageMonitor extends EventEmitter {
   }
 
   /**
-   * Normalize quota/limit response for z.ai and ZHIPU providers
-   *
-   * Both providers use the same response format with a limits array containing
-   * TOKENS_LIMIT (5-hour usage) and TIME_LIMIT (monthly usage) items.
-   *
-   * @param data - Raw response data with limits array
-   * @param profileId - Profile identifier
-   * @param profileName - Profile display name
-   * @param profileEmail - Optional email associated with the profile
-   * @param providerName - Provider name for logging ('zai' or 'zhipu')
-   * @returns Normalized usage snapshot or null on parse failure
-   */
-  private normalizeQuotaLimitResponse(
-    data: any,
-    profileId: string,
-    profileName: string,
-    profileEmail: string | undefined,
-    providerName: 'zai' | 'zhipu'
-  ): ClaudeUsageSnapshot | null {
-    const logPrefix = providerName.toUpperCase();
-
-    if (this.isDebug) {
-      console.warn(`[UsageMonitor:${logPrefix}_NORMALIZATION] Starting normalization:`, {
-        profileId,
-        profileName,
-        responseKeys: Object.keys(data),
-        hasLimits: !!data.limits,
-        limitsCount: data.limits?.length || 0
-      });
-    }
-
-    try {
-      // Check if response has limits array
-      if (!data || !Array.isArray(data.limits)) {
-        console.warn(`[UsageMonitor:${logPrefix}] Invalid response format - missing limits array:`, {
-          hasData: !!data,
-          hasLimits: !!data?.limits,
-          limitsType: typeof data?.limits
-        });
-        return null;
-      }
-
-      // Find TOKENS_LIMIT (5-hour usage) and TIME_LIMIT (monthly usage)
-      const tokensLimit = data.limits.find((item: any) => item.type === 'TOKENS_LIMIT');
-      const timeLimit = data.limits.find((item: any) => item.type === 'TIME_LIMIT');
-
-      if (this.isDebug) {
-        console.warn(`[UsageMonitor:${logPrefix}_NORMALIZATION] Found limit types:`, {
-          hasTokensLimit: !!tokensLimit,
-          hasTimeLimit: !!timeLimit,
-          tokensLimit: tokensLimit ? {
-            type: tokensLimit.type,
-            unit: tokensLimit.unit,
-            number: tokensLimit.number,
-            usage: tokensLimit.usage,
-            currentValue: tokensLimit.currentValue,
-            remaining: tokensLimit.remaining,
-            percentage: tokensLimit.percentage,
-            nextResetTime: tokensLimit.nextResetTime,
-            nextResetDate: tokensLimit.nextResetTime ? new Date(tokensLimit.nextResetTime).toISOString() : undefined
-          } : null,
-          timeLimit: timeLimit ? {
-            type: timeLimit.type,
-            percentage: timeLimit.percentage,
-            currentValue: timeLimit.currentValue,
-            remaining: timeLimit.remaining
-          } : null
-        });
-      }
-
-      // Extract percentages
-      const sessionPercent = tokensLimit?.percentage !== undefined
-        ? Math.round(tokensLimit.percentage)
-        : 0;
-
-      const weeklyPercent = timeLimit?.percentage !== undefined
-        ? Math.round(timeLimit.percentage)
-        : 0;
-
-      if (this.isDebug) {
-        console.warn(`[UsageMonitor:${logPrefix}_NORMALIZATION] Extracted usage:`, {
-          sessionPercent,
-          weeklyPercent,
-          limitType: weeklyPercent > sessionPercent ? 'weekly' : 'session'
-        });
-      }
-
-      // Extract reset time from API response
-      // The API provides nextResetTime as a Unix timestamp (milliseconds) for TOKENS_LIMIT
-      const now = new Date();
-      let sessionResetTimestamp: string;
-
-      if (tokensLimit?.nextResetTime && typeof tokensLimit.nextResetTime === 'number') {
-        // Use the reset time from the API response (Unix timestamp in ms)
-        sessionResetTimestamp = new Date(tokensLimit.nextResetTime).toISOString();
-      } else {
-        // Fallback: calculate as 5 hours from now
-        sessionResetTimestamp = new Date(now.getTime() + 5 * 60 * 60 * 1000).toISOString();
-      }
-
-      // Calculate monthly reset time (1st of next month at midnight UTC)
-      const nextMonth = new Date(now);
-      nextMonth.setUTCMonth(now.getUTCMonth() + 1, 1);
-      nextMonth.setUTCHours(0, 0, 0, 0);
-      const weeklyResetTimestamp = nextMonth.toISOString();
-
-      return {
-        sessionPercent,
-        weeklyPercent,
-        // Omit sessionResetTime/weeklyResetTime - renderer uses timestamps with formatTimeRemaining
-        sessionResetTime: undefined,
-        weeklyResetTime: undefined,
-        sessionResetTimestamp,
-        weeklyResetTimestamp,
-        profileId,
-        profileName,
-        profileEmail,
-        fetchedAt: new Date(),
-        limitType: weeklyPercent > sessionPercent ? 'weekly' : 'session',
-        usageWindows: {
-          sessionWindowLabel: 'common:usage.window5HoursQuota',
-          weeklyWindowLabel: 'common:usage.windowMonthlyToolsQuota'
-        },
-        // Extract raw usage values for display in tooltip
-        sessionUsageValue: tokensLimit?.currentValue,
-        sessionUsageLimit: tokensLimit?.usage,
-        weeklyUsageValue: timeLimit?.currentValue,
-        weeklyUsageLimit: timeLimit?.usage
-      };
-    } catch (error) {
-      console.error(`[UsageMonitor:${logPrefix}] Failed to parse quota/limit response:`, error, 'Raw data:', data);
-      return null;
-    }
-  }
-
-  /**
-   * Normalize z.ai API response to ClaudeUsageSnapshot
-   *
-   * Expected endpoint: https://api.z.ai/api/monitor/usage/quota/limit
-   *
-   * Response format (from empirical testing):
-   * {
-   *   "data": {
-   *     "limits": [
-   *       {
-   *         "type": "TOKENS_LIMIT",
-   *         "percentage": 75.5
-   *       },
-   *       {
-   *         "type": "TIME_LIMIT",
-   *         "percentage": 45.2,
-   *         "currentValue": 12345,
-   *         "usage": 50000,
-   *         "usageDetails": {...}
-   *       }
-   *     ]
-   *   }
-   * }
-   *
-   * Maps TOKENS_LIMIT → session usage (5-hour window)
-   * Maps TIME_LIMIT → monthly usage (displayed as weekly in UI)
-   */
-  private normalizeZAIResponse(
-    data: any,
-    profileId: string,
-    profileName: string,
-    profileEmail?: string
-  ): ClaudeUsageSnapshot | null {
-    // Delegate to shared quota/limit response normalization
-    return this.normalizeQuotaLimitResponse(data, profileId, profileName, profileEmail, 'zai');
-  }
-
-  /**
-   * Normalize ZHIPU AI response to ClaudeUsageSnapshot
-   *
-   * Expected endpoint: https://open.bigmodel.cn/api/monitor/usage/quota/limit
-   *
-   * Uses the same response format as z.ai with limits array containing
-   * TOKENS_LIMIT and TIME_LIMIT items.
-   */
-  private normalizeZhipuResponse(
-    data: any,
-    profileId: string,
-    profileName: string,
-    profileEmail?: string
-  ): ClaudeUsageSnapshot | null {
-    // Delegate to shared quota/limit response normalization
-    return this.normalizeQuotaLimitResponse(data, profileId, profileName, profileEmail, 'zhipu');
-  }
-
-  /**
    * Fetch usage via CLI /usage command (fallback)
    * Note: This is a fallback method. The API method is preferred.
    * CLI-based fetching would require spawning a Claude process and parsing output,
    * which is complex. For now, we rely on the API method.
    */
   private async fetchUsageViaCLI(
-    _profileId: string,
-    _profileName: string
+      _profileId: string,
+      _profileName: string
   ): Promise<ClaudeUsageSnapshot | null> {
     // CLI-based usage fetching is not implemented yet.
     // The API method should handle most cases. If we need CLI fallback,
@@ -1869,9 +1642,9 @@ export class UsageMonitor extends EventEmitter {
    * @param additionalExclusions - Additional profile IDs to exclude (e.g., auth-failed profiles)
    */
   private async performProactiveSwap(
-    currentProfileId: string,
-    limitType: 'session' | 'weekly',
-    additionalExclusions: string[] = []
+      currentProfileId: string,
+      limitType: 'session' | 'weekly',
+      additionalExclusions: string[] = []
   ): Promise<void> {
     const profileManager = getClaudeProfileManager();
     const excludeIds = new Set([currentProfileId, ...additionalExclusions]);
@@ -1971,7 +1744,7 @@ export class UsageMonitor extends EventEmitter {
     } else {
       // Switch API profile via profile-manager service
       try {
-        const { setActiveAPIProfile } = await import('../services/profile/profile-manager');
+        const {setActiveAPIProfile} = await import('../services/profile/profile-manager');
         await setActiveAPIProfile(bestAccount.id);
       } catch (error) {
         console.error('[UsageMonitor] Failed to set active API profile:', error);
@@ -1999,8 +1772,8 @@ export class UsageMonitor extends EventEmitter {
 
     // Emit swap event
     this.emit('proactive-swap-completed', {
-      fromProfile: { id: currentProfileId, name: fromProfileName },
-      toProfile: { id: bestAccount.id, name: bestAccount.name },
+      fromProfile: {id: currentProfileId, name: fromProfileName},
+      toProfile: {id: bestAccount.id, name: bestAccount.name},
       limitType,
       timestamp: new Date()
     });
@@ -2035,15 +1808,15 @@ export class UsageMonitor extends EventEmitter {
 
       // Restart all operations on the old profile with the new profile
       const restartedCount = await operationRegistry.restartOperationsOnProfile(
-        currentProfileId,
-        bestAccount.id,
-        bestAccount.name
+          currentProfileId,
+          bestAccount.id,
+          bestAccount.name
       );
 
       // Emit event for tracking/logging
       this.emit('proactive-operations-restarted', {
-        fromProfile: { id: currentProfileId, name: fromProfileName },
-        toProfile: { id: bestAccount.id, name: bestAccount.name },
+        fromProfile: {id: currentProfileId, name: fromProfileName},
+        toProfile: {id: bestAccount.id, name: bestAccount.name},
         operationIds: operationIdsOnOldProfile,
         restartedCount,
         limitType,
@@ -2058,69 +1831,165 @@ export class UsageMonitor extends EventEmitter {
   }
 
   /**
-   * Get usage for a given provider name (ex: 'anthropic', 'zai', ...)
+   * Get usage for a given provider name (ex: 'anthropic', 'openai', 'ollama', ...)
+   *
+   * Searches both API profiles (profiles.json) and OAuth profiles (ClaudeProfileManager)
+   * to find a profile matching the requested provider, then fetches fresh usage data.
    */
-  async getUsageForProvider(providerName: string): Promise<any> {
-    const profileManager = getClaudeProfileManager();
-    // Cherche le profil correspondant au provider demandé
-    const profile = profileManager.getProfilesSortedByAvailability().find(p => {
-      const detected = sharedDetectProvider(p.baseUrl);
-      return detected === providerName;
-    });
-    if (!profile) {
-      throw new Error(`Aucun profil trouvé pour le provider: ${providerName}`);
+  async getUsageForProvider(providerName: string): Promise<ClaudeUsageSnapshot | null> {
+    this.debugLog('[UsageMonitor:getUsageForProvider] Fetching usage for provider:', providerName);
+
+    // Step 1: Search API profiles first (profiles.json) — these cover anthropic, openai, ollama API key profiles
+    try {
+      const profilesFile = await loadProfilesFile();
+      const apiProfile = profilesFile.profiles.find(p => {
+        const detected = detectProvider(p.baseUrl);
+        return detected === providerName;
+      });
+
+      if (apiProfile?.apiKey) {
+        this.debugLog('[UsageMonitor:getUsageForProvider] Found API profile for provider:', {
+          providerName,
+          profileId: apiProfile.id,
+          profileName: apiProfile.name
+        });
+
+        // OpenAI special case — usage API has a different format
+        if (providerName === 'openai') {
+          return this.fetchOpenAIUsage(apiProfile);
+        }
+
+        // Build ActiveProfileResult to use with fetchUsageViaAPI
+        const activeProfileResult: ActiveProfileResult = {
+          profileId: apiProfile.id,
+          profileName: apiProfile.name,
+          profileEmail: undefined,
+          isAPIProfile: true,
+          baseUrl: apiProfile.baseUrl,
+          credential: apiProfile.apiKey
+        };
+
+        const snapshot = await this.fetchUsageViaAPI(
+            apiProfile.apiKey,
+            apiProfile.id,
+            apiProfile.name,
+            undefined,
+            activeProfileResult
+        );
+
+        return snapshot;
+      }
+    } catch (error) {
+      this.debugLog('[UsageMonitor:getUsageForProvider] Failed to search API profiles:', error);
     }
-    // Cas OpenAI
-    if (providerName === 'openai') {
-      const apiKey = profile.apiKey || profile.token || profile.openaiApiKey;
-      if (!apiKey) throw new Error('Clé API OpenAI manquante dans le profil');
-      // Calcul dynamique de la période de facturation
+
+    // Step 2: Search OAuth profiles (ClaudeProfileManager) — these are always 'anthropic'
+    if (providerName === 'anthropic') {
+      const profileManager = getClaudeProfileManager();
+      const oauthProfile = profileManager.getProfilesSortedByAvailability()?.[0];
+
+      if (oauthProfile) {
+        this.debugLog('[UsageMonitor:getUsageForProvider] Found OAuth profile for anthropic:', {
+          profileId: oauthProfile.id,
+          profileName: oauthProfile.name
+        });
+
+        // Get credential for OAuth profile
+        const credential = await this.getCredential();
+        if (credential) {
+          const activeProfileResult: ActiveProfileResult = {
+            profileId: oauthProfile.id,
+            profileName: oauthProfile.name,
+            profileEmail: oauthProfile.email,
+            isAPIProfile: false,
+            baseUrl: 'https://api.anthropic.com',
+            credential
+          };
+
+          const snapshot = await this.fetchUsageViaAPI(
+              credential,
+              oauthProfile.id,
+              oauthProfile.name,
+              oauthProfile.email,
+              activeProfileResult
+          );
+
+          return snapshot;
+        }
+      }
+    }
+
+    // Step 3: Check if currentUsage matches the requested provider
+    if (this.currentUsage?.providerName === providerName) {
+      this.debugLog('[UsageMonitor:getUsageForProvider] Returning currentUsage for provider:', providerName);
+      return this.currentUsage;
+    }
+
+    this.debugLog('[UsageMonitor:getUsageForProvider] No profile found for provider:', providerName);
+    return null;
+  }
+
+  /**
+   * Fetch OpenAI usage data (special case — different API format)
+   */
+  private async fetchOpenAIUsage(apiProfile: {
+    id: string;
+    name: string;
+    apiKey: string;
+    baseUrl: string
+  }): Promise<ClaudeUsageSnapshot | null> {
+    const apiKey = apiProfile.apiKey;
+    if (!apiKey) return null;
+
+    try {
       const now = new Date();
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const day = String(now.getDate()).padStart(2, '0');
       const startDate = `${year}-${month}-01`;
       const endDate = `${year}-${month}-${day}`;
-      // Endpoint usage analytics
-      const usageUrl = `https://api.openai.com/v1/organization/usage?start_date=${startDate}&end_date=${endDate}`;
+
       const costsUrl = `https://api.openai.com/v1/organization/costs?start_date=${startDate}&end_date=${endDate}`;
-      // Appels en parallèle
-      const [usageResp, costsResp] = await Promise.all([
-        fetch(usageUrl, {
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
-          }
-        }),
-        fetch(costsUrl, {
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
-          }
-        })
-      ]);
-      if (!usageResp.ok) throw new Error('Erreur lors de la récupération de l\'usage OpenAI');
-      if (!costsResp.ok) throw new Error('Erreur lors de la récupération des coûts OpenAI');
-      const usageData = await usageResp.json();
+
+      const costsResp = await fetch(costsUrl, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!costsResp.ok) {
+        this.debugLog('[UsageMonitor:OpenAI] Failed to fetch costs:', costsResp.status);
+        return null;
+      }
+
       const costsData = await costsResp.json();
-      // Structure de retour enrichie
+      const totalCost = Array.isArray(costsData.data)
+          ? costsData.data.reduce((sum: number, d: any) => sum + (d.cost || 0), 0)
+          : 0;
+
+      // Normalize to ClaudeUsageSnapshot format
+      // OpenAI doesn't have session/weekly limits like Anthropic, so we show cost info
       return {
+        sessionPercent: 0,
+        weeklyPercent: 0,
+        profileId: apiProfile.id,
+        profileName: apiProfile.name,
+        fetchedAt: new Date(),
         providerName: 'openai',
-        startDate,
-        endDate,
-        usageBreakdown: usageData.data, // Array: breakdown par modèle, tokens, coût, etc.
-        totalCost: Array.isArray(costsData.data) ? costsData.data.reduce((sum, d) => sum + (d.cost || 0), 0) : 0,
-        costsBreakdown: costsData.data // Array: breakdown par modèle, date, etc.
+        usageWindows: {
+          sessionWindowLabel: 'common:usage.windowMonthly',
+          weeklyWindowLabel: 'common:usage.windowMonthly'
+        },
+        weeklyUsageValue: Math.round(totalCost * 100) / 100, // Total cost in dollars
       };
+    } catch (error) {
+      this.debugLog('[UsageMonitor:OpenAI] Error fetching usage:', error);
+      return null;
     }
-    // ...logique existante pour les autres providers...
-    if (typeof this.getUsageForProfileId === 'function') {
-      return this.getUsageForProfileId(profile.id);
-    }
-    const cached = this.allProfilesUsageCache.get(profile.id);
-    if (cached) return cached.usage;
-    throw new Error(`Impossible de récupérer l'usage pour le provider: ${providerName}`);
   }
+
+  public override emit: EventEmitter['emit'] = super.emit;
 }
 
 /**
@@ -2129,3 +1998,6 @@ export class UsageMonitor extends EventEmitter {
 export function getUsageMonitor(): UsageMonitor {
   return UsageMonitor.getInstance();
 }
+
+declare const process: { env: { [key: string]: string | undefined } };
+export {type ApiProvider} from '../../shared/utils/provider-detection';

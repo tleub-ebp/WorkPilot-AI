@@ -19,7 +19,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
-import { Plus, Inbox, Loader2, Eye, CheckCircle2, Archive, RefreshCw, GitPullRequest, X, Settings, ListPlus, ChevronLeft, ChevronRight, ChevronsRight, Lock, Unlock, Trash2 } from 'lucide-react';
+import { Plus, Inbox, Loader2, Eye, CheckCircle2, Archive, RefreshCw, GitPullRequest, X, Settings, ListPlus, ChevronLeft, ChevronRight, ChevronsRight, Lock, Unlock, Trash2, Settings2 } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
@@ -45,6 +45,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from './ui/alert-dialog';
+import { AppSettingsDialog } from './settings/AppSettings';
 import type { Task, TaskStatus, TaskOrderState } from '../../shared/types';
 
 // Type guard for valid drop column targets - preserves literal type from TASK_STATUS_COLUMNS
@@ -643,6 +644,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
 
   // Project store for queue settings
   const projects = useProjectStore((state) => state.projects);
+  const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
 
   // Kanban settings store for column preferences (collapse state, width, lock state)
   const columnPreferences = useKanbanSettingsStore((state) => state.columnPreferences);
@@ -1370,7 +1372,6 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
 
           if (!activeInOrder || !overInOrder) {
             // Sync the current visual order to the stored order
-            // This ensures existing tasks can be reordered
             const visualOrder = tasksByStatus[taskVisualColumn].map(t => t.id);
             setTaskOrder({
               ...taskOrder,
@@ -1437,41 +1438,59 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     }
   };
 
+  // Ajout ou correction de la déclaration de l'état pour la boîte de dialogue de paramètres projet
+  // Ajout d'un compteur pour forcer le remount d'AppSettingsDialog
+  const [settingsDialogKey, setSettingsDialogKey] = useState(0);
+  const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
+  const [settingsDialogProjectId, setSettingsDialogProjectId] = useState<string | undefined>(undefined);
+  const handleOpenProjectSettings = () => {
+    setSettingsDialogKey((k) => k + 1);
+    const projectIdToUse = project?.id || selectedProjectId;
+    if (!projectIdToUse) {
+      alert('Aucun projet sélectionné. Impossible d’ouvrir les paramètres.');
+      return;
+    }
+    setSettingsDialogProjectId(projectIdToUse);
+    setIsProjectSettingsOpen(true);
+    setTimeout(() => {
+    }, 100);
+  };
+  useEffect(() => {
+  }, [isProjectSettingsOpen]);
+
   return (
     <div className="flex h-full flex-col">
-      {/* Kanban header with refresh button and expand all */}
-      {(onRefresh || collapsedColumnCount >= 3) && (
-        <div className="flex items-center justify-between px-6 pt-4 pb-2">
-          <div className="flex items-center gap-2">
-            {/* Expand All button - appears when 3+ columns are collapsed */}
-            {collapsedColumnCount >= 3 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExpandAll}
-                className="gap-2 text-muted-foreground hover:text-foreground"
-              >
-                <ChevronsRight className="h-4 w-4" />
-                {t('tasks:kanban.expandAll')}
-              </Button>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {onRefresh && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onRefresh}
-                disabled={isRefreshing}
-                className="gap-2 text-muted-foreground hover:text-foreground"
-              >
-                <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
-                {isRefreshing ? t('common:buttons.refreshing') : t('tasks:refreshTasks')}
-              </Button>
-            )}
-          </div>
+      {/* Kanban header avec bouton paramètres projet */}
+      <div className="flex items-center justify-between px-2 pt-4 pb-2">
+        <div className="flex items-center gap-2">
+          {/* Expand All button - appears when 3+ columns are collapsed */}
+          {collapsedColumnCount >= 3 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExpandAll}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <ChevronsRight className="h-4 w-4" />
+              {t('tasks:kanban.expandAll')}
+            </Button>
+          )}
         </div>
-      )}
+        <div className="flex items-center gap-2">
+          {onRefresh && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+              {isRefreshing ? t('common:buttons.refreshing') : t('tasks:refreshTasks')}
+            </Button>
+          )}
+        </div>
+      </div>
       {/* Kanban columns */}
       <DndContext
         sensors={sensors}
@@ -1480,7 +1499,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex flex-1 gap-4 overflow-x-auto p-6">
+        <div className="flex flex-1 gap-3 overflow-x-auto p-2">
           {TASK_STATUS_COLUMNS.map((status) => (
             <DroppableColumn
               key={status}
@@ -1662,6 +1681,18 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         onOpenChange={setBulkPRDialogOpen}
         onComplete={handleBulkPRComplete}
       />
+
+      {/* Boîte de dialogue paramètres projet (AppSettingsDialog) */}
+      {project && settingsDialogProjectId && (
+        <AppSettingsDialog
+          key={settingsDialogKey + settingsDialogProjectId}
+          open={!!isProjectSettingsOpen}
+          onOpenChange={setIsProjectSettingsOpen}
+          initialProjectSection="general"
+          initialProjectId={settingsDialogProjectId}
+          debugOpen={!!isProjectSettingsOpen}
+        />
+      )}
     </div>
   );
 }

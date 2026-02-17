@@ -9,8 +9,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 import { AuthStatusIndicator } from './AuthStatusIndicator';
+import { ProviderContextProvider } from './ProviderContext';
 import { useSettingsStore } from '../stores/settings-store';
 import type { APIProfile } from '../../shared/types/profile';
+import type { ReactNode } from 'react';
+
+/** Wraps component in required context providers */
+function renderWithProviders(ui: ReactNode) {
+  return render(<ProviderContextProvider>{ui}</ProviderContextProvider>);
+}
 
 // Mock the settings store
 vi.mock('../stores/settings-store', () => ({
@@ -28,8 +35,9 @@ vi.mock('react-i18next', () => ({
         'common:usage.apiProfile': 'API Profile',
         'common:usage.provider': 'Provider',
         'common:usage.providerAnthropic': 'Anthropic',
-        'common:usage.providerZai': 'z.ai',
-        'common:usage.providerZhipu': 'ZHIPU AI',
+        'common:usage.providerOpenAI': 'OpenAI',
+        'common:usage.providerOllama': 'Ollama',
+        'common:usage.providerOllamaLocal': 'Ollama (Local)',
         'common:usage.authenticationAriaLabel': 'Authentication: {{provider}}',
         'common:usage.profile': 'Profile',
         'common:usage.id': 'ID',
@@ -101,18 +109,18 @@ const testProfiles: APIProfile[] = [
   },
   {
     id: 'profile-3',
-    name: 'z.ai Global',
-    baseUrl: 'https://api.z.ai/api/anthropic',
-    apiKey: 'sk-zai-key-1234',
+    name: 'Ollama Remote',
+    baseUrl: 'https://ollama.ai/api',
+    apiKey: 'sk-ollama-key-1234',
     models: undefined,
     createdAt: Date.now(),
     updatedAt: Date.now()
   },
   {
     id: 'profile-4',
-    name: 'ZHIPU China',
-    baseUrl: 'https://open.bigmodel.cn/api/anthropic',
-    apiKey: 'zhipu-key-5678',
+    name: 'Ollama Local',
+    baseUrl: 'http://localhost:11434/v1',
+    apiKey: 'ollama-local-key-5678',
     models: undefined,
     createdAt: Date.now(),
     updatedAt: Date.now()
@@ -137,14 +145,14 @@ describe('AuthStatusIndicator', () => {
     });
 
     it('should display Claude Code badge with Lock icon for OAuth', () => {
-      render(<AuthStatusIndicator />);
+      renderWithProviders(<AuthStatusIndicator />);
 
       expect(screen.getByText('Claude Code')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /authentication: claude code/i })).toBeInTheDocument();
     });
 
     it('should have correct aria-label for OAuth', () => {
-      render(<AuthStatusIndicator />);
+      renderWithProviders(<AuthStatusIndicator />);
 
       expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Authentication: Claude Code');
     });
@@ -158,14 +166,14 @@ describe('AuthStatusIndicator', () => {
     });
 
     it('should display API Key badge with Key icon for API profile', () => {
-      render(<AuthStatusIndicator />);
+      renderWithProviders(<AuthStatusIndicator />);
 
       expect(screen.getByText('API Key')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /authentication: api key/i })).toBeInTheDocument();
     });
 
     it('should have correct aria-label for profile', () => {
-      render(<AuthStatusIndicator />);
+      renderWithProviders(<AuthStatusIndicator />);
 
       expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Authentication: API Key');
     });
@@ -179,30 +187,30 @@ describe('AuthStatusIndicator', () => {
     });
 
     it('should fallback to OAuth (Claude Code) when profile not found', () => {
-      render(<AuthStatusIndicator />);
+      renderWithProviders(<AuthStatusIndicator />);
 
       expect(screen.getByText('Claude Code')).toBeInTheDocument();
     });
   });
 
   describe('provider detection for different API profiles', () => {
-    it('should display API Key badge for z.ai profile', () => {
+    it('should display API Key badge for Ollama profile', () => {
       vi.mocked(useSettingsStore).mockReturnValue(
         createUseSettingsStoreMock({ activeProfileId: 'profile-3' })
       );
 
-      render(<AuthStatusIndicator />);
+      renderWithProviders(<AuthStatusIndicator />);
 
       expect(screen.getByText('API Key')).toBeInTheDocument();
       expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Authentication: API Key');
     });
 
-    it('should display API Key badge for ZHIPU profile', () => {
+    it('should display API Key badge for Ollama Local profile', () => {
       vi.mocked(useSettingsStore).mockReturnValue(
         createUseSettingsStoreMock({ activeProfileId: 'profile-4' })
       );
 
-      render(<AuthStatusIndicator />);
+      renderWithProviders(<AuthStatusIndicator />);
 
       expect(screen.getByText('API Key')).toBeInTheDocument();
       expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Authentication: API Key');
@@ -214,27 +222,27 @@ describe('AuthStatusIndicator', () => {
         createUseSettingsStoreMock({ activeProfileId: 'profile-1' })
       );
 
-      const { rerender } = render(<AuthStatusIndicator />);
+      const { rerender } = renderWithProviders(<AuthStatusIndicator />);
       const anthropicButton = screen.getByRole('button');
       expect(anthropicButton.className).toContain('text-orange-500');
 
-      // Test z.ai (blue)
+      // Test Ollama (emerald)
       vi.mocked(useSettingsStore).mockReturnValue(
         createUseSettingsStoreMock({ activeProfileId: 'profile-3' })
       );
 
-      rerender(<AuthStatusIndicator />);
-      const zaiButton = screen.getByRole('button');
-      expect(zaiButton.className).toContain('text-blue-500');
+      rerender(<ProviderContextProvider><AuthStatusIndicator /></ProviderContextProvider>);
+      const ollamaButton = screen.getByRole('button');
+      expect(ollamaButton.className).toContain('text-emerald-500');
 
-      // Test ZHIPU (purple)
+      // Test Ollama Local (teal)
       vi.mocked(useSettingsStore).mockReturnValue(
         createUseSettingsStoreMock({ activeProfileId: 'profile-4' })
       );
 
-      rerender(<AuthStatusIndicator />);
-      const zhipuButton = screen.getByRole('button');
-      expect(zhipuButton.className).toContain('text-purple-500');
+      rerender(<ProviderContextProvider><AuthStatusIndicator /></ProviderContextProvider>);
+      const ollamaLocalButton = screen.getByRole('button');
+      expect(ollamaLocalButton.className).toContain('text-teal-500');
     });
   });
 
@@ -246,7 +254,7 @@ describe('AuthStatusIndicator', () => {
     });
 
     it('should be a valid React component', () => {
-      expect(() => render(<AuthStatusIndicator />)).not.toThrow();
+      expect(() => renderWithProviders(<AuthStatusIndicator />)).not.toThrow();
     });
   });
 });

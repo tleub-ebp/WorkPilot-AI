@@ -66,6 +66,7 @@ interface AppSettingsDialogProps {
   onOpenChange: (open: boolean) => void;
   initialSection?: AppSection;
   initialProjectSection?: ProjectSettingsSection;
+  initialProjectId?: string; // <-- Ajouté
   onRerunWizard?: () => void;
 }
 
@@ -104,10 +105,16 @@ const projectNavItemsConfig: NavItemConfig<ProjectSettingsSection>[] = [
  * Main application settings dialog container
  * Coordinates app and project settings sections
  */
-export function AppSettingsDialog({ open, onOpenChange, initialSection, initialProjectSection, onRerunWizard }: AppSettingsDialogProps) {
+export function AppSettingsDialog({ open, onOpenChange, initialSection, initialProjectSection, initialProjectId, onRerunWizard, debugOpen }: AppSettingsDialogProps & { debugOpen?: boolean }) {
   const { t } = useTranslation('settings');
   const { settings, setSettings, isSaving, error, saveSettings, revertTheme, commitTheme } = useSettings();
   const [version, setVersion] = useState<string>('');
+
+  // Project state (déclaré avant tout usage)
+  const projects = useProjectStore((state) => state.projects);
+  const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
+  const selectProject = useProjectStore((state) => state.selectProject);
+  const selectedProject = projects.find((p) => p.id === selectedProjectId);
 
   // Track which top-level section is active
   const [activeTopLevel, setActiveTopLevel] = useState<'app' | 'project'>('app');
@@ -127,11 +134,20 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
     }
   }, [open, initialSection, initialProjectSection]);
 
-  // Project state
-  const projects = useProjectStore((state) => state.projects);
-  const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
-  const selectProject = useProjectStore((state) => state.selectProject);
-  const selectedProject = projects.find((p) => p.id === selectedProjectId);
+  // Synchronise la section projet dès qu'un projet est sélectionné et que le dialog s'ouvre
+  useEffect(() => {
+    if (open && selectedProject && initialProjectSection) {
+      setActiveTopLevel('project');
+      setProjectSection(initialProjectSection);
+    }
+  }, [open, selectedProject, initialProjectSection]);
+
+  // Synchronisation du projet sélectionné avec initialProjectId
+  useEffect(() => {
+    if (initialProjectId && initialProjectId !== selectedProjectId) {
+      selectProject(initialProjectId);
+    }
+  }, [initialProjectId, selectedProjectId, selectProject]);
 
   // Project settings hook state (lifted from child)
   const [projectSettingsHook, setProjectSettingsHook] = useState<UseProjectSettingsReturn | null>(null);
@@ -236,6 +252,9 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
     if (activeTopLevel === 'app') {
       return renderAppSection();
     }
+    if (!selectedProject) {
+      return <div style={{color:'red',padding:'1em'}}>Projet non trouvé: {selectedProjectId}</div>;
+    }
     return (
       <ProjectSettingsContent
         project={selectedProject}
@@ -249,11 +268,12 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
   // Determine if project nav items should be disabled
   const projectNavDisabled = !selectedProjectId;
 
+  // Correction : on force le dialog à s'ouvrir si forceDialogOpen est true
+  const dialogOpen = typeof open === 'boolean' ? open : false;
+
   return (
-    <FullScreenDialog open={open} onOpenChange={(newOpen) => {
+    <FullScreenDialog open={dialogOpen} onOpenChange={(newOpen) => {
       if (!newOpen) {
-        // Dialog is being closed (via X, escape, or overlay click)
-        // Revert any unsaved theme changes
         revertTheme();
       }
       onOpenChange(newOpen);
@@ -268,7 +288,6 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
             {t('tabs.app')} & {t('tabs.project')}
           </FullScreenDialogDescription>
         </FullScreenDialogHeader>
-
         <FullScreenDialogBody>
           <div className="flex h-full">
             {/* Navigation sidebar */}

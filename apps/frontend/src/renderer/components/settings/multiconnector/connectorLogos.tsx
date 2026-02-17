@@ -6,8 +6,6 @@ import GrokLogo from '../../../assets/logos/grok.svg';
 import CohereLogo from '../../../assets/logos/cohere.svg';
 import OpenRouterLogo from '../../../assets/logos/openrouter.svg';
 import GroqLogo from '../../../assets/logos/groq.svg';
-import ZaiGlobalLogo from '../../../assets/logos/zai-global.svg';
-import ZaiChinaLogo from '../../../assets/logos/zai-china.svg';
 import React from 'react';
 
 export const connectorLogos: Record<string, React.ReactNode> = {
@@ -19,6 +17,5 @@ export const connectorLogos: Record<string, React.ReactNode> = {
   'cohere': <img src={CohereLogo} alt="Cohere" className="h-8 w-8" />,
   'openrouter': <img src={OpenRouterLogo} alt="OpenRouter" className="h-8 w-8" />,
   'groq': <img src={GroqLogo} alt="Groq" className="h-8 w-8" />,
-  'zai-global': <img src={ZaiGlobalLogo} alt="Zhipu AI (Global)" className="h-8 w-8" />,
-  'zai-cn': <img src={ZaiChinaLogo} alt="Zhipu AI (Chine)" className="h-8 w-8" />,
+  'ollama': <span className="h-8 w-8 flex items-center justify-center text-lg font-bold">🦙</span>,
 };
