@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download, RefreshCw, AlertCircle } from 'lucide-react';
 import { debugLog } from '@shared/utils/debug-logger';
 import {
   DndContext,
@@ -43,17 +42,8 @@ import { GitHubIssues } from '@/components';
 import { GitLabIssues } from './components/GitLabIssues';
 import { GitHubPRs } from './components/github-prs';
 import { GitLabMergeRequests } from './components/gitlab-merge-requests';
-import { Changelog } from '@/components';
-import { Worktrees } from './components/Worktrees';
-import { AgentTools } from './components/AgentTools';
-import { WelcomeScreen } from '@/components';
-import { RateLimitModal } from './components/RateLimitModal';
-import { SDKRateLimitModal } from './components/SDKRateLimitModal';
-import { AuthFailureModal } from './components/AuthFailureModal';
 import { VersionWarningModal } from './components/VersionWarningModal';
 import { OnboardingWizard } from './components/onboarding';
-import { AppUpdateNotification } from './components/AppUpdateNotification';
-import { ProactiveSwapListener } from './components/ProactiveSwapListener';
 import { GitHubSetupModal } from './components/GitHubSetupModal';
 import { RepositoryProviderModal } from './components/RepositoryProviderModal';
 import { AzureDevOpsSetupModal } from './components/AzureDevOpsSetupModal';
@@ -65,18 +55,13 @@ import { useTerminalStore, restoreTerminalSessions } from './stores/terminal-sto
 import { initializeGitHubListeners } from './stores/github';
 import { initDownloadProgressListener } from './stores/download-store';
 import { GlobalDownloadIndicator } from './components/GlobalDownloadIndicator';
-import { useIpcListeners } from '@/hooks';
+import { useIpcListeners, useTerminalProfileChange } from '@/hooks';
 import { useGlobalTerminalListeners } from './hooks/useGlobalTerminalListeners';
-import { useTerminalProfileChange } from '@/hooks';
 import { COLOR_THEMES, UI_SCALE_MIN, UI_SCALE_MAX, UI_SCALE_DEFAULT } from '@shared/constants';
 import type { Task, Project, ColorTheme } from '@shared/types';
 import { ProjectTabBar } from './components/ProjectTabBar';
-import { AddProjectModal } from '@/components';
 import { ViewStateProvider } from './contexts/ViewStateContext';
-import { MigrationWizard } from '@/components';
-import { VisualProgrammingInterface } from '@/components';
 import { ProviderSelector } from './components/ProviderSelector';
-import { ProviderManager } from './components/ProviderManager';
 import { ProviderContextProvider } from './components/ProviderContext';
 
 // Version constant for version-specific warnings (e.g., reauthentication notices)
@@ -707,6 +692,11 @@ export function App() {
     }
   };
 
+  // Fonction pour fermer uniquement l'onglet (tab) d'un projet
+  const handleProjectTabCloseSimple = (projectId: string) => {
+    useProjectStore.getState().closeProjectTab(projectId);
+  };
+
   const handleConfirmRemoveProject = () => {
     if (projectToRemove) {
       try {
@@ -962,6 +952,8 @@ export function App() {
         });
   }, [selectedProvider]);
 
+  const { error: projectError } = useProjectStore();
+
   return (
       <ProviderContextProvider>
         <ViewStateProvider>
@@ -1008,7 +1000,7 @@ export function App() {
                               projects={projectTabs}
                               activeProjectId={activeProjectId}
                               onProjectSelect={handleProjectTabSelect}
-                              onProjectClose={handleProjectTabClose}
+                              onProjectClose={handleProjectTabCloseSimple}
                               onAddProject={handleAddProject}
                               onSettingsClick={() => setIsSettingsDialogOpen(true)}
                           />
@@ -1102,161 +1094,182 @@ export function App() {
                                   onNavigate toTask={handleGoToTask}
                               />
                           )}
-                          {activeView === 'changelog' && (activeProjectId || selectedProjectId) && (
-                              <Changelog projectId={activeProjectId || selectedProjectId!} />
-                          )}
-                          {activeView === 'worktrees' && (activeProjectId || selectedProjectId) && (
-                              <Worktrees projectId={activeProjectId || selectedProjectId!} />
-                          )}
-                          {activeView === 'agent-tools' && (activeProjectId || selectedProjectId) && (
-                              <AgentTools projectId={activeProjectId || selectedProjectId!} />
-                          )}
-                          {/* Contenu par défaut si aucune vue active ne correspond */}
-                          {activeView !== 'terminals' && activeView !== 'kanban' && (
-                              <div className="flex items-center justify-center h-full text-muted">
-                                Vue non disponible
-                              </div>
-                          )}
                         </>
                     ) : (
                         <div className="flex items-center justify-center h-full text-muted">
-                          Aucun projet sélectionné
+                          {t('common:noProjectSelected')}
                         </div>
                     )}
                   </main>
                 </div>
               </div>
+
+              {/* Modals */}
+              <TaskDetailModal
+                  task={selectedTask}
+                  onClose={handleCloseTaskDetail}
+                  onOpenInbuiltTerminal={handleOpenInbuiltTerminal}
+              />
+              <TaskCreationWizard
+                  isOpen={isNewTaskDialogOpen}
+                  onClose={() => setIsNewTaskDialogOpen(false)}
+                  onProjectSelected={openProjectTab}
+              />
+              <AppSettingsDialog
+                  isOpen={isSettingsDialogOpen}
+                  onClose={() => setIsSettingsDialogOpen(false)}
+                  initialSection={settingsInitialSection}
+                  initialProjectSection={settingsInitialProjectSection}
+              />
+              <Toaster />
+              {/* Global download progress indicator - shows overall progress of all downloads */}
+              <GlobalDownloadIndicator />
             </TooltipProvider>
 
-            {/* Modals et dialogs globaux */}
-            <TaskDetailModal
-                open={!!selectedTask}
-                task={selectedTask}
-                onOpenChange={open => {
-                  if (!open) setSelectedTask(null);
-                }}
-                onOpenInbuiltTerminal={handleOpenInbuiltTerminal}
-            />
-            <TaskCreationWizard
-                open={isNewTaskDialogOpen}
-                onClose={() => setIsNewTaskDialogOpen(false)}
-                onProjectAdded={handleProjectAdded}
-            />
-            <AppSettingsDialog
-                open={isSettingsDialogOpen}
-                onOpenChange={setIsSettingsDialogOpen}
-                initialSection={settingsInitialSection}
-                projectSection={settingsInitialProjectSection}
-            />
-            <Toaster />
-            {/* Global download indicator - shows progress of all active downloads */}
-            <GlobalDownloadIndicator />
-            {/* Onboarding wizard - shown only once at first run */}
+            {/* Onboarding wizard - shown only once at app start */}
             <OnboardingWizard
-                open={isOnboardingWizardOpen}
+                isOpen={isOnboardingWizardOpen}
                 onClose={() => setIsOnboardingWizardOpen(false)}
             />
-            {/* Version warning modal - shown once for version-specific notices */}
+
+            {/* Version warning modal - shown once for reauthentication notice */}
             <VersionWarningModal
-                open={isVersionWarningModalOpen}
+                isOpen={isVersionWarningModalOpen}
                 onClose={handleVersionWarningClose}
             />
-            {/* Initialization dialog - shown when a project needs to be initialized */}
-            {showInitDialog && pendingProject && (
-                <Dialog open={showInitDialog} onOpenChange={setShowInitDialog}>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle>Configurer le projet</DialogTitle>
-                      <DialogDescription>
-                        Le projet doit être configuré avant de pouvoir l'utiliser.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="font-medium">
-                          ID du projet:
-                        </div>
-                        <div>
-                          {pendingProject.id}
-                        </div>
-                        <div className="font-medium">
-                          Chemin du projet:
-                        </div>
-                        <div>
-                          {pendingProject.path}
-                        </div>
-                        <div className="font-medium">
-                          État de l'initialisation:
-                        </div>
-                        <div>
-                          {initSuccess && (
-                              <span className="text-green-500">
-                        Initialisation réussie
-                      </span>
-                          )}
-                          {initError && (
-                              <span className="text-red-500">
-                        Erreur: {initError}
-                      </span>
-                          )}
-                          {!initSuccess && !initError && (
-                              <span className="text-yellow-500">
-                        En attente d'initialisation
-                      </span>
-                          )}
+
+            {/* Initialization dialog - shows when a project needs to be initialized */}
+            <Dialog
+                open={showInitDialog}
+                onOpenChange={(open) => {
+                  setShowInitDialog(open);
+                  // Auto-close after successful initialization
+                  if (open === false && initSuccess) {
+                    setPendingProject(null);
+                  }
+                }}
+                modal
+            >
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>
+                    {t('initDialog:title')}
+                  </DialogTitle>
+                </DialogHeader>
+
+                <DialogDescription className="space-y-4">
+                  {/* Étape 1 : Sélection du modèle Claude AI */}
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      {t('initDialog:step1.description')}
+                    </p>
+                    <div className="flex gap-2">
+                      {/* Boutons pour les modèles prédéfinis (ex: "Claude 1.1", "Claude 2") */}
+                      <Button
+                          variant={selectedProvider === 'claude' ? 'default' : 'outline'}
+                          className="flex-1"
+                          onClick={() => setSelectedProvider('claude')}
+                      >
+                        Claude
+                      </Button>
+                      {/* Ajoutez d'autres boutons de modèle ici si nécessaire */}
+                    </div>
+                  </div>
+
+                  {/* Étape 2 : Configuration du modèle sélectionné */}
+                  {selectedProvider === 'claude' && (
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {t('initDialog:step2.description')}
+                        </p>
+                        <div className="flex flex-col gap-2">
+                          {/* Champs de configuration spécifiques à Claude AI */}
+                          <input
+                              type="text"
+                              placeholder={t('initDialog:step2.placeholder')}
+                              className="input"
+                              value={pendingProject?.id || ''}
+                              onChange={(e) => {
+                                if (pendingProject) {
+                                  setPendingProject({
+                                    ...pendingProject,
+                                    id: e.target.value
+                                  });
+                                }
+                              }}
+                          />
                         </div>
                       </div>
-                    </div>
-                    <DialogFooter>
-                      <Button
-                          variant="outline"
-                          onClick={() => setShowInitDialog(false)}
-                          className="w-full sm:w-auto"
-                      >
-                        Annuler
-                      </Button>
+                  )}
+
+                  {/* Étape 3 : Résumé et création du projet */}
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      {t('initDialog:step3.description')}
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {/* Résumé des choix de l'utilisateur */}
+                      <div className="p-4 bg-muted rounded-md">
+                        <p className="text-sm">
+                          <strong>{t('initDialog:projectName')}:</strong> {pendingProject?.id}
+                        </p>
+                        <p className="text-sm">
+                          <strong>{t('initDialog:selectedModel')}:</strong> Claude
+                        </p>
+                      </div>
+
                       <Button
                           onClick={handleInitialize}
-                          className="w-full sm:w-auto"
                           isLoading={isInitializing}
+                          className="w-full"
                       >
-                        {isInitializing ? 'Initialisation...' : 'Initialiser le projet'}
+                        {t('initDialog:actions.createProject')}
                       </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                    </div>
+                  </div>
+                </DialogDescription>
+
+                <DialogFooter>
+                  <Button
+                      variant="outline"
+                      onClick={() => setShowInitDialog(false)}
+                  >
+                    {t('common:cancel')}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Modals spécifiques à GitHub et Azure DevOps */}
+            <GitHubSetupModal
+                isOpen={showGitHubSetup}
+                onClose={() => setShowGitHubSetup(false)}
+                onComplete={handleGitHubSetupComplete}
+                onSkip={handleGitHubSetupSkip}
+                project={gitHubSetupProject}
+            />
+            {/* Azure DevOps Setup Modal - configure Azure DevOps */}
+            {azureDevOpsSetupProject && (
+              <AzureDevOpsSetupModal
+                isOpen={showAzureDevOpsSetup}
+                onClose={() => setShowAzureDevOpsSetup(false)}
+                onComplete={handleAzureDevOpsSetupComplete}
+                onSkip={handleAzureDevOpsSetupSkip}
+                project={azureDevOpsSetupProject}
+              />
             )}
-            {/* GitHub setup modal - shown after project initialization if GitHub integration is needed */}
-            {showGitHubSetup && gitHubSetupProject && (
-                <GitHubSetupModal
-                    open={showGitHubSetup}
-                    onClose={() => setShowGitHubSetup(false)}
-                    project={gitHubSetupProject}
-                    onComplete={handleGitHubSetupComplete}
-                    onSkip={handleGitHubSetupSkip}
-                />
-            )}
-            {/* Repository provider setup modal - shown after project initialization if no provider was detected */}
-            {showRepoProviderSetup && repoProviderProject && (
-                <RepositoryProviderModal
-                    open={showRepoProviderSetup}
-                    onClose={() => setShowRepoProviderSetup(false)}
-                    project={repoProviderProject}
-                    onSelect={handleRepoProviderSelect}
-                    onSkip={handleRepoProviderSkip}
-                />
-            )}
-            {/* Azure DevOps setup modal - shown if user chooses to configure Azure DevOps */}
-            {showAzureDevOpsSetup && azureDevOpsSetupProject && (
-                <AzureDevOpsSetupModal
-                    open={showAzureDevOpsSetup}
-                    onClose={() => setShowAzureDevOpsSetup(false)}
-                    project={azureDevOpsSetupProject}
-                    onComplete={handleAzureDevOpsSetupComplete}
-                    onSkip={handleAzureDevOpsSetupSkip}
-                />
+            {/* Repository Provider Modal - choose GitHub or Azure DevOps */}
+            {repoProviderProject && (
+              <RepositoryProviderModal
+                isOpen={showRepoProviderSetup}
+                onClose={() => setRepoProviderSetup(false)}
+                onSelect={handleRepoProviderSelect}
+                onSkip={handleRepoProviderSkip}
+                project={repoProviderProject}
+              />
             )}
           </>
         </ViewStateProvider>
-      </ProviderContextProvider>)
+      </ProviderContextProvider>
+  );
 }

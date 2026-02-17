@@ -242,8 +242,9 @@ export async function loadProjects(): Promise<void> {
   try {
     // First, load tab state from main process (reliable persistence)
     const tabStateResult = await window.electronAPI.getTabState();
-    console.log('[ProjectStore] Loaded tab state from main process:', tabStateResult.data);
-
+    if (typeof tabStateResult !== 'object' || tabStateResult === null || !('success' in tabStateResult)) {
+      throw new Error('Réponse inattendue du backend (non-JSON). Vérifiez que le backend est bien lancé.');
+    }
     if (tabStateResult.success && tabStateResult.data) {
       useProjectStore.setState({
         openProjectIds: tabStateResult.data.openProjectIds || [],
@@ -251,78 +252,32 @@ export async function loadProjects(): Promise<void> {
         tabOrder: tabStateResult.data.tabOrder || []
       });
     }
-
     // Then load projects
     const result = await window.electronAPI.getProjects();
-    console.log('[ProjectStore] getProjects result:', {
-      success: result.success,
-      projectCount: result.data?.length,
-      projectIds: result.data?.map(p => p.id)
-    });
-
+    if (typeof result !== 'object' || result === null || !('success' in result)) {
+      throw new Error('Réponse inattendue du backend (non-JSON). Vérifiez que le backend est bien lancé.');
+    }
     if (result.success && result.data) {
       store.setProjects(result.data);
-
-      // Get current tab state (may have been loaded from IPC)
-      const currentState = useProjectStore.getState();
-
-      // Clean up tab state - remove any project IDs that no longer exist
-      const validOpenProjectIds = currentState.openProjectIds.filter(id =>
-        result.data?.some((p) => p.id === id) ?? false
-      );
-      const validTabOrder = currentState.tabOrder.filter(id =>
-        result.data?.some((p) => p.id === id) ?? false
-      );
-      const validActiveProjectId = currentState.activeProjectId &&
-        result.data?.some((p) => p.id === currentState.activeProjectId)
-        ? currentState.activeProjectId
-        : null;
-
-      console.log('[ProjectStore] Tab state cleanup:', {
-        originalOpenProjectIds: currentState.openProjectIds,
-        validOpenProjectIds,
-        originalTabOrder: currentState.tabOrder,
-        validTabOrder,
-        originalActiveProjectId: currentState.activeProjectId,
-        validActiveProjectId
-      });
-
-      // Update store with cleaned tab state if needed
-      if (validOpenProjectIds.length !== currentState.openProjectIds.length ||
-          validTabOrder.length !== currentState.tabOrder.length ||
-          validActiveProjectId !== currentState.activeProjectId) {
-        console.log('[ProjectStore] Updating cleaned tab state');
-        useProjectStore.setState({
-          openProjectIds: validOpenProjectIds,
-          tabOrder: validTabOrder,
-          activeProjectId: validActiveProjectId
-        });
-        // Save cleaned state back to main process
-        saveTabStateToMain();
-      } else {
-        console.log('[ProjectStore] Tab state is valid, no cleanup needed');
-      }
-
-      // Restore last selected project from localStorage for backward compatibility,
-      // or fall back to active project, or first project
-      const updatedState = useProjectStore.getState();
-      if (!updatedState.selectedProjectId && result.data.length > 0) {
-        const lastSelectedId = localStorage.getItem(LAST_SELECTED_PROJECT_KEY);
-        const projectExists = lastSelectedId && result.data.some((p) => p.id === lastSelectedId);
-
-        if (projectExists) {
-          store.selectProject(lastSelectedId);
-        } else if (updatedState.activeProjectId) {
-          store.selectProject(updatedState.activeProjectId);
-        } else {
-          store.selectProject(result.data[0].id);
+      // Restore selected project from localStorage if available
+      const lastSelectedProjectId = localStorage.getItem(LAST_SELECTED_PROJECT_KEY);
+      if (lastSelectedProjectId) {
+        const lastSelectedProject = result.data.find((p) => p.id === lastSelectedProjectId);
+        if (lastSelectedProject) {
+          store.selectProject(lastSelectedProjectId);
         }
       }
-    } else {
-      store.setError(result.error || 'Failed to load projects');
+    } else if (!result.success) {
+      store.setError(result.error || 'Erreur lors du chargement des projets.');
     }
-  } catch (error) {
-    store.setError(error instanceof Error ? error.message : 'Unknown error');
+  } catch (err: any) {
+    // Gestion d'erreur améliorée pour les réponses HTML ou backend injoignable
+    const message =
+      typeof err?.message === 'string' && err.message.includes('Unexpected token <')
+        ? 'Le backend ne répond pas ou retourne du HTML au lieu du JSON. Vérifiez que le backend est bien lancé.'
+        : err?.message || 'Erreur inconnue lors du chargement des projets.';
+    store.setError(message);
+    console.error('[ProjectStore] loadProjects error:', err);
   } finally {
     store.setLoading(false);
   }
@@ -391,67 +346,37 @@ export async function updateProjectSettings(
     if (result.success) {
       const project = store.projects.find((p) => p.id === projectId);
       if (project) {
-        // Merge settings properly, handling the case where project.settings might be undefined
-        const currentSettings = project.settings || {};
-        store.updateProject(projectId, {
-          settings: { ...currentSettings, ...settings }
-        });
+        store.updateProject(projectId, settings);
       }
       return true;
     }
     return false;
-  } catch {
+  } catch (error) {
+    store.setError(error instanceof Error ? error.message : 'Unknown error');
     return false;
   }
 }
 
 /**
- * Check auto-claude version status for a project
+ * Initialize a project (appel IPC)
  */
-export async function checkProjectVersion(
-  projectId: string
-): Promise<AutoBuildVersionInfo | null> {
+export async function initializeProject(projectId: string) {
   try {
-    const result = await window.electronAPI.checkProjectVersion(projectId);
-    if (result.success && result.data) {
-      return result.data;
-    }
-    return null;
-  } catch {
-    return null;
+    const result = await window.electronAPI.initializeProject(projectId);
+    return result;
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 
 /**
- * Initialize auto-claude in a project
+ * Check project version (appel IPC)
  */
-export async function initializeProject(
-  projectId: string
-): Promise<InitializationResult | null> {
-  const store = useProjectStore.getState();
-
+export async function checkProjectVersion(projectId: string) {
   try {
-    console.log('[ProjectStore] initializeProject called for:', projectId);
-    const result = await window.electronAPI.initializeProject(projectId);
-    console.log('[ProjectStore] IPC result:', result);
-
-    if (result.success && result.data) {
-      console.log('[ProjectStore] IPC succeeded, result.data:', result.data);
-      // Update the project's autoBuildPath in local state
-      if (result.data.success) {
-        console.log('[ProjectStore] Updating project autoBuildPath to .auto-claude');
-        store.updateProject(projectId, { autoBuildPath: '.auto-claude' });
-      } else {
-        console.log('[ProjectStore] result.data.success is false, not updating project');
-      }
-      return result.data;
-    }
-    console.log('[ProjectStore] IPC failed or no data, setting error');
-    store.setError(result.error || 'Failed to initialize project');
-    return null;
+    const result = await window.electronAPI.checkProjectVersion(projectId);
+    return result;
   } catch (error) {
-    console.error('[ProjectStore] Exception during initializeProject:', error);
-    store.setError(error instanceof Error ? error.message : 'Unknown error');
-    return null;
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
