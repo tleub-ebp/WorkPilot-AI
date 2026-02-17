@@ -199,7 +199,6 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
       case 'paths':
         return <GeneralSettings settings={settings} onSettingsChange={setSettings} section="paths" />;
       case 'accounts':
-        // Affiche le header général une seule fois, puis la liste d'AccountSettings (un par connecteur)
         return (
           <SettingsSection
             title={t('accounts.title')}
@@ -211,7 +210,7 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
                 Vous pouvez connecter et gérer plusieurs fournisseurs IA (Claude, OpenAI, Mistral, etc.).
               </div>
             </div>
-            {getAllConnectors().map((connector) => (
+            {connectors.map((connector) => (
               <AccountSettings
                 key={connector.id}
                 settings={settings}

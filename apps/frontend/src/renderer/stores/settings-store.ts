@@ -41,9 +41,10 @@ interface SettingsState {
   setActiveProfile: (profileId: string | null) => Promise<boolean>;
   testConnection: (baseUrl: string, apiKey: string, signal?: AbortSignal) => Promise<TestConnectionResult | null>;
   discoverModels: (baseUrl: string, apiKey: string, signal?: AbortSignal) => Promise<ModelInfo[] | null>;
+  setProviderPriorityOrder: (order: import('../../shared/types').LLMProvider[]) => void;
 }
 
-export const useSettingsStore = create<SettingsState>((set) => ({
+export const useSettingsStore = create<SettingsState>((set, get) => ({
   settings: DEFAULT_APP_SETTINGS as AppSettings,
   isLoading: true,  // Start as true since we load settings on app init
   error: null,
@@ -292,7 +293,15 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       });
       return null;
     }
-  }
+  },
+
+  setProviderPriorityOrder: (order) => {
+    set((state) => ({
+      settings: { ...state.settings, providerPriorityOrder: order }
+    }));
+    // Persiste côté main process
+    window.electronAPI.saveSettings({ providerPriorityOrder: order });
+  },
 }));
 
 /**

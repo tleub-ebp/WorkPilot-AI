@@ -1,4 +1,4 @@
-﻿ {
+﻿{
   "title": "Settings",
   "tabs": {
     "app": "App Settings",
@@ -55,11 +55,11 @@
     "description": "Configure custom Anthropic-compatible API endpoints",
     "addButton": "Add Profile",
     "presets": {
-      "anthropic": "Anthropic",
-      "openrouter": "OpenRouter",
-      "groq": "Groq",
-      "zaiGlobal": "z.AI (Global)",
-      "zaiChina": "z.AI (China)"
+      "anthropic": "Anthropic (Claude)",
+      "openai": "OpenAI",
+      "mistral": "Mistral AI",
+      "grok": "Grok (xAI)",
+      "gemini": "Gemini (Google)"
     },
     "fields": {
       "name": "Name",
@@ -614,6 +614,11 @@
         "rateLimited": "Rate limited"
       }
     },
+    "priorityOrder": {
+      "title": "Provider priority order",
+      "up": "Move up",
+      "down": "Move down"
+    },
     "toast": {
       "loadProfilesFailed": "Failed to Load Profiles",
       "addProfileFailed": "Failed to Add Profile",
@@ -630,6 +635,20 @@
       "profileCreatedAuthFailed": "Profile created but failed to prepare authentication: {{error}}",
       "authPrepareFailed": "Failed to prepare authentication: {{error}}",
       "authStartFailedMessage": "Failed to start authentication. Please try again."
+    },
+    "form": {
+      "addAccount": "Add a {{provider}} account",
+      "name": "Account name",
+      "namePlaceholder": "Account name",
+      "apiKey": "API Key",
+      "apiKeyPlaceholder": "sk-...",
+      "oauthToken": "OAuth Token",
+      "oauthTokenPlaceholder": "OAuth token (if required)",
+      "baseUrl": "Base URL (optional)",
+      "baseUrlPlaceholder": "https://api.example.com",
+      "chooseModel": "-- Choose a model --",
+      "save": "Save",
+      "cancel": "Cancel"
     }
   },
   "debug": {
