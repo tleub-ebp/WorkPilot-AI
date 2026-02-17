@@ -152,7 +152,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
       {claudeAuthChecked && (
         <div style={{ marginBottom: 12 }}>
           <b>État Claude Code&nbsp;:</b>
-          {activeClaudeProfile && activeClaudeProfile.isAuthenticated ? (
+          {activeClaudeProfile?.isAuthenticated ? (
             <span style={{ color: 'green', marginLeft: 8 }}>
               Authentifié ({activeClaudeProfile.profileName || activeClaudeProfile.profileEmail})
             </span>

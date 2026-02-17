@@ -67,6 +67,7 @@ export function TaskDetailModal({ open, task, onOpenChange, onSwitchToTerminals,
       onOpenChange={onOpenChange}
       onSwitchToTerminals={onSwitchToTerminals}
       onOpenInbuiltTerminal={onOpenInbuiltTerminal}
+      onCloseTask={() => onOpenChange(false)}
     />
   );
 }
@@ -78,7 +79,7 @@ const isFilesTabEnabled = () => {
 };
 
 // Separate component to use hooks only when task exists
-function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals, onOpenInbuiltTerminal }: { open: boolean; task: Task; onOpenChange: (open: boolean) => void; onSwitchToTerminals?: () => void; onOpenInbuiltTerminal?: (id: string, cwd: string) => void }) {
+function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals, onOpenInbuiltTerminal, onCloseTask }: { open: boolean; task: Task; onOpenChange: (open: boolean) => void; onSwitchToTerminals?: () => void; onOpenInbuiltTerminal?: (id: string, cwd: string) => void; onCloseTask?: () => void }) {
   const { t } = useTranslation(['tasks']);
   const { toast } = useToast();
   const state = useTaskDetail({ task });
@@ -620,6 +621,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
         task={task}
         open={state.isEditDialogOpen}
         onOpenChange={state.setIsEditDialogOpen}
+        onCloseTask={onCloseTask}
       />
 
       {/* Delete Confirmation Dialog */}
