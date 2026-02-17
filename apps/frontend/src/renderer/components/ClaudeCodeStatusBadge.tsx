@@ -422,9 +422,6 @@ export function ClaudeCodeStatusBadge({ className }: ClaudeCodeStatusBadgeProps)
                 </p>
               </div>
             </div>
-            <div className="flex-shrink-0">
-              <ProviderSelector />
-            </div>
           </div>
 
           {/* Version info */}

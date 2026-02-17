@@ -71,9 +71,9 @@ export const claudeProfileMock = {
   retryWithProfile: async () => ({ success: true }),
 
   // Usage Monitoring (Proactive Account Switching)
-  requestUsageUpdate: async () => ({
+  requestUsageUpdate: async (providerName?: string) => ({
     success: true,
-    data: null
+    data: null // Simuler la réponse selon le provider si besoin
   }),
 
   requestAllProfilesUsage: async (_forceRefresh?: boolean) => ({
