@@ -6,7 +6,114 @@
 import type { AgentProfile, PhaseModelConfig, FeatureModelConfig, FeatureThinkingConfig } from '../types/settings';
 
 // ============================================
-// Available Models
+// Provider Model Catalog
+// ============================================
+
+export interface ProviderModel {
+  value: string;       // Model ID as sent to the API
+  label: string;       // Human-readable label
+  tier: 'flagship' | 'standard' | 'fast' | 'local'; // Capability tier
+  supportsThinking?: boolean; // Extended thinking / reasoning support
+}
+
+/** Models grouped by provider. Keys match provider names used in ProviderContext / provider_api.py */
+export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
+  // ---- Anthropic (Claude) ----
+  anthropic: [
+    { value: 'claude-opus-4-6',           label: 'Claude Opus 4.6',        tier: 'flagship', supportsThinking: true },
+    { value: 'claude-opus-4-5-20251101',  label: 'Claude Opus 4.5',        tier: 'flagship', supportsThinking: true },
+    { value: 'claude-sonnet-4-5-20250929',label: 'Claude Sonnet 4.5',      tier: 'standard', supportsThinking: true },
+    { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5',       tier: 'fast',     supportsThinking: false },
+  ],
+
+  // ---- OpenAI ----
+  openai: [
+    { value: 'gpt-5.2',       label: 'GPT-5.2',           tier: 'flagship' },
+    { value: 'gpt-5',         label: 'GPT-5',              tier: 'flagship' },
+    { value: 'o3',            label: 'o3',                  tier: 'flagship', supportsThinking: true },
+    { value: 'gpt-4o',        label: 'GPT-4o',             tier: 'standard' },
+    { value: 'o3-mini',       label: 'o3-mini',            tier: 'standard', supportsThinking: true },
+    { value: 'gpt-4o-mini',   label: 'GPT-4o mini',        tier: 'fast' },
+    { value: 'gpt-4-turbo',   label: 'GPT-4 Turbo',        tier: 'standard' },
+  ],
+
+  // ---- Google Gemini ----
+  google: [
+    { value: 'gemini-2.5-pro',        label: 'Gemini 2.5 Pro',         tier: 'flagship', supportsThinking: true },
+    { value: 'gemini-2.0-flash',      label: 'Gemini 2.0 Flash',       tier: 'fast' },
+    { value: 'gemini-2.0-flash-thinking', label: 'Gemini 2.0 Flash Thinking', tier: 'standard', supportsThinking: true },
+    { value: 'gemini-1.5-pro',        label: 'Gemini 1.5 Pro',         tier: 'standard' },
+    { value: 'gemini-1.5-flash',      label: 'Gemini 1.5 Flash',       tier: 'fast' },
+  ],
+
+  // ---- Mistral AI ----
+  mistral: [
+    { value: 'mistral-large-2',   label: 'Mistral Large 2',     tier: 'flagship' },
+    { value: 'mistral-medium-3',  label: 'Mistral Medium 3',    tier: 'standard' },
+    { value: 'mistral-small-3',   label: 'Mistral Small 3',     tier: 'fast' },
+    { value: 'codestral',         label: 'Codestral',           tier: 'standard' },
+    { value: 'mistral-7b',        label: 'Mistral 7B',          tier: 'fast' },
+  ],
+
+  // ---- DeepSeek ----
+  deepseek: [
+    { value: 'deepseek-r2',            label: 'DeepSeek R2',            tier: 'flagship', supportsThinking: true },
+    { value: 'deepseek-v3',            label: 'DeepSeek V3',            tier: 'standard' },
+    { value: 'deepseek-r1',            label: 'DeepSeek R1',            tier: 'standard', supportsThinking: true },
+    { value: 'deepseek-coder-v2',      label: 'DeepSeek Coder V2',      tier: 'standard' },
+  ],
+
+  // ---- Meta (LLaMA) ----
+  meta: [
+    { value: 'meta-llama/llama-4-scout',  label: 'Llama 4 Scout',      tier: 'flagship' },
+    { value: 'meta-llama/llama-3.3-70b',  label: 'Llama 3.3 70B',      tier: 'standard' },
+    { value: 'meta-llama/llama-3.1-70b',  label: 'Llama 3.1 70B',      tier: 'standard' },
+    { value: 'meta-llama/llama-3.1-8b',   label: 'Llama 3.1 8B',       tier: 'fast' },
+  ],
+
+  // ---- AWS Bedrock ----
+  aws: [
+    { value: 'anthropic.claude-opus-4-6-v1',    label: 'Claude Opus 4.6 (Bedrock)',   tier: 'flagship', supportsThinking: true },
+    { value: 'anthropic.claude-sonnet-4-5-v1',  label: 'Claude Sonnet 4.5 (Bedrock)', tier: 'standard', supportsThinking: true },
+    { value: 'amazon.titan-text-premier-v1',    label: 'Amazon Titan Premier',         tier: 'standard' },
+    { value: 'meta.llama3-70b-instruct-v1',     label: 'Llama 3 70B (Bedrock)',        tier: 'standard' },
+  ],
+
+  // ---- Ollama / LLM local ----
+  ollama: [
+    { value: 'llama3.3',         label: 'Llama 3.3',          tier: 'local' },
+    { value: 'llama3.2',         label: 'Llama 3.2',          tier: 'local' },
+    { value: 'mistral',          label: 'Mistral',            tier: 'local' },
+    { value: 'deepseek-r1',      label: 'DeepSeek R1',        tier: 'local', supportsThinking: true },
+    { value: 'qwen2.5-coder',    label: 'Qwen 2.5 Coder',     tier: 'local' },
+    { value: 'phi4',             label: 'Phi-4',              tier: 'local' },
+    { value: 'gemma3',           label: 'Gemma 3',            tier: 'local' },
+    { value: 'custom',           label: 'Autre (saisie libre)', tier: 'local' },
+  ],
+};
+
+// Alias for legacy providers listed in provider_api.py
+PROVIDER_MODELS_MAP['claude'] = PROVIDER_MODELS_MAP['anthropic'];
+
+/** Returns models for the currently selected provider, falling back to anthropic */
+export function getModelsForProvider(provider: string): ProviderModel[] {
+  return PROVIDER_MODELS_MAP[provider] ?? PROVIDER_MODELS_MAP['anthropic'];
+}
+
+/** Returns the default (flagship) model ID for a given provider */
+export function getDefaultModelForProvider(provider: string): string {
+  const models = getModelsForProvider(provider);
+  const flagship = models.find(m => m.tier === 'flagship') ?? models[0];
+  return flagship?.value ?? '';
+}
+
+/** Returns whether the selected provider supports extended thinking */
+export function providerSupportsThinking(provider: string): boolean {
+  return ['anthropic', 'claude', 'openai', 'google', 'deepseek'].includes(provider);
+}
+
+// ============================================
+// Available Models (legacy – Claude only, kept for backward compatibility)
 // ============================================
 
 export const AVAILABLE_MODELS = [

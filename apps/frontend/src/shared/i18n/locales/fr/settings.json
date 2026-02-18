@@ -457,5 +457,53 @@
       "label": "Remplisseur de modèle PR",
       "description": "Remplit intelligemment les modèles de PR GitHub à partir des changements de code"
     }
+  },
+  "agentProfile": {
+    "label": "Profil d'agent",
+    "title": "Profil d'agent par défaut",
+    "sectionDescription": "Sélectionnez une configuration prédéfinie pour le modèle et le niveau de réflexion",
+    "profilesInfo": "Les profils d'agent fournissent des configurations prédéfinies pour le modèle Claude et le niveau de réflexion. Lors de la création d'une nouvelle tâche, ces paramètres seront utilisés par défaut. Vous pouvez toujours les remplacer dans l'assistant de création de tâche.",
+    "profilesInfoProvider": "Configurez le modèle utilisé pour chaque phase du pipeline. Les paramètres sont enregistrés par fournisseur et seront restaurés lors du changement de fournisseur.",
+    "activeProvider": "Fournisseur actif : {{provider}}",
+    "flagshipModel": "Modèle phare : {{model}}",
+    "tierFlagship": "Phare",
+    "supportsThinking": "Réflexion",
+    "resetToProviderDefaults": "Réinitialiser aux valeurs du fournisseur",
+    "phaseConfigNoteProvider": "Ces paramètres de modèle s'appliquent au fournisseur {{provider}}. Ils sont enregistrés indépendamment et restaurés lors du retour sur ce fournisseur.",
+    "customModelPlaceholder": "Entrez le nom du modèle (ex : llama3.3:latest)",
+    "custom": "Personnalisé",
+    "customConfiguration": "Configuration personnalisée",
+    "customDescription": "Choisir le modèle et le niveau de réflexion",
+    "phaseConfiguration": "Configuration des phases",
+    "phaseConfigurationDescription": "Personnaliser le modèle et le niveau de réflexion pour chaque phase",
+    "clickToCustomize": "Cliquer pour personnaliser",
+    "model": "Modèle",
+    "thinking": "Réflexion",
+    "thinkingLevel": "Niveau de réflexion",
+    "selectModel": "Sélectionner un modèle",
+    "selectThinkingLevel": "Sélectionner le niveau de réflexion",
+    "perPhaseOptimization": "(optimisation par phase)",
+    "resetToDefaults": "Réinitialiser les valeurs par défaut",
+    "resetToProfileDefaults": "Réinitialiser aux valeurs de {{profile}}",
+    "customized": "Personnalisé",
+    "phaseConfigNote": "Ces paramètres seront utilisés par défaut lors de la création de nouvelles tâches avec ce profil. Vous pouvez les remplacer par tâche dans l'assistant de création de tâche.",
+    "phases": {
+      "spec": {
+        "label": "Création de spec",
+        "description": "Découverte, exigences, collecte de contexte"
+      },
+      "planning": {
+        "label": "Planification",
+        "description": "Planification et architecture de l'implémentation"
+      },
+      "coding": {
+        "label": "Codage",
+        "description": "Implémentation du code"
+      },
+      "qa": {
+        "label": "Revue QA",
+        "description": "Assurance qualité et validation"
+      }
+    }
   }
 }

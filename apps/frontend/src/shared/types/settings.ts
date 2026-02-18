@@ -160,8 +160,9 @@ export interface ColorThemeDefinition {
 // Thinking level for Claude model (budget token allocation)
 export type ThinkingLevel = 'none' | 'low' | 'medium' | 'high' | 'ultrathink';
 
-// Model type shorthand
-export type ModelTypeShort = 'haiku' | 'sonnet' | 'opus';
+// Model type shorthand – now accepts any model ID string for multi-provider support.
+// The legacy Claude shorthand values ('haiku', 'sonnet', 'opus') are still valid.
+export type ModelTypeShort = string;
 
 // Phase-based model configuration for Auto profile
 // Each phase can use a different model optimized for that task type
@@ -260,6 +261,10 @@ export interface AppSettings {
   onboardingCompleted?: boolean;
   // Selected agent profile for preset model/thinking configurations
   selectedAgentProfile?: string;
+  // Active LLM provider (e.g. 'anthropic', 'openai', 'google', 'ollama', ...)
+  selectedProvider?: string;
+  // Per-phase model config per provider (keyed by provider name)
+  providerPhaseModels?: Record<string, PhaseModelConfig>;
   // Custom phase configuration for Auto profile (overrides defaults)
   customPhaseModels?: PhaseModelConfig;
   customPhaseThinking?: PhaseThinkingConfig;
