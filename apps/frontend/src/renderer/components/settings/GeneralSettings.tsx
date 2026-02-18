@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Switch } from '../ui/switch';
 import { SettingsSection } from './SettingsSection';
 import { AgentProfileSettings } from './AgentProfileSettings';
+import { CustomProviderConfig } from './CustomProviderConfig';
 import { ProviderSelector } from '../ProviderSelector';
 import { useProviderContext } from '../ProviderContext';
 import {
@@ -141,6 +142,9 @@ export function GeneralSettings({ settings, onSettingsChange, section }: General
 
         {/* Agent Profile Selection */}
         <AgentProfileSettings />
+
+        {/* Custom Provider Configuration */}
+        <CustomProviderConfig />
 
         {/* Other Agent Settings */}
         <SettingsSection

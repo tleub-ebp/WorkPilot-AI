@@ -81,14 +81,33 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
 
   // ---- Ollama / LLM local ----
   ollama: [
-    { value: 'llama3.3',         label: 'Llama 3.3',          tier: 'local' },
-    { value: 'llama3.2',         label: 'Llama 3.2',          tier: 'local' },
-    { value: 'mistral',          label: 'Mistral',            tier: 'local' },
-    { value: 'deepseek-r1',      label: 'DeepSeek R1',        tier: 'local', supportsThinking: true },
-    { value: 'qwen2.5-coder',    label: 'Qwen 2.5 Coder',     tier: 'local' },
-    { value: 'phi4',             label: 'Phi-4',              tier: 'local' },
-    { value: 'gemma3',           label: 'Gemma 3',            tier: 'local' },
+    { value: 'llama3.3',         label: 'Llama 3.3',            tier: 'local' },
+    { value: 'llama3.2',         label: 'Llama 3.2',            tier: 'local' },
+    { value: 'llama3.1',         label: 'Llama 3.1',            tier: 'local' },
+    { value: 'mistral',          label: 'Mistral',              tier: 'local' },
+    { value: 'mistral-large',    label: 'Mistral Large',        tier: 'local' },
+    { value: 'deepseek-r1',      label: 'DeepSeek R1',          tier: 'local', supportsThinking: true },
+    { value: 'deepseek-coder-v2', label: 'DeepSeek Coder V2',   tier: 'local' },
+    { value: 'qwen2.5-coder',    label: 'Qwen 2.5 Coder',       tier: 'local' },
+    { value: 'qwen2.5',          label: 'Qwen 2.5',             tier: 'local' },
+    { value: 'phi4',             label: 'Phi-4',                tier: 'local' },
+    { value: 'gemma3',           label: 'Gemma 3',              tier: 'local' },
+    { value: 'gemma2',           label: 'Gemma 2',              tier: 'local' },
+    { value: 'codellama',        label: 'CodeLlama',            tier: 'local' },
+    { value: 'yi',               label: 'Yi',                   tier: 'local' },
+    { value: 'mixtral',          label: 'Mixtral',              tier: 'local' },
+    { value: 'vicuna',           label: 'Vicuna',               tier: 'local' },
+    { value: 'wizardlm',         label: 'WizardLM',             tier: 'local' },
+    { value: 'solar',            label: 'Solar Pro',            tier: 'local' },
     { value: 'custom',           label: 'Autre (saisie libre)', tier: 'local' },
+  ],
+
+  // ---- Custom/Enterprise API ----
+  custom: [
+    { value: 'custom-model-1', label: 'Custom Model 1', tier: 'flagship', supportsThinking: true },
+    { value: 'custom-model-2', label: 'Custom Model 2', tier: 'standard', supportsThinking: true },
+    { value: 'custom-model-3', label: 'Custom Model 3', tier: 'fast' },
+    { value: 'custom', label: 'Autre (saisie libre)', tier: 'local', supportsThinking: true },
   ],
 };
 
@@ -109,7 +128,7 @@ export function getDefaultModelForProvider(provider: string): string {
 
 /** Returns whether the selected provider supports extended thinking */
 export function providerSupportsThinking(provider: string): boolean {
-  return ['anthropic', 'claude', 'openai', 'google', 'deepseek'].includes(provider);
+  return ['anthropic', 'openai', 'google', 'deepseek', 'mistral', 'ollama', 'custom'].includes(provider);
 }
 
 // ============================================

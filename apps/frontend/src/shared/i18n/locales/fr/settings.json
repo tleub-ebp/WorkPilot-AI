@@ -507,5 +507,40 @@
         "description": "Assurance qualité et validation"
       }
     }
+  },
+  "customProvider": {
+    "title": "Configuration du fournisseur personnalisé",
+    "description": "Configurez votre API d'entreprise ou serveur de modèles local",
+    "apiConfig": "Configuration API",
+    "apiUrl": "URL de l'API",
+    "apiKey": "Clé API",
+    "discoverModels": "Découvrir les modèles",
+    "discovering": "Découverte en cours...",
+    "discoveryFailed": "Échec de la découverte",
+    "discoveryFailedDesc": "Impossible de se connecter à l'API. Vérifiez l'URL et la clé API.",
+    "modelsDiscovered": "Modèles découverts",
+    "modelsDiscoveredDesc": "{{count}} modèles ont été découverts et ajoutés automatiquement.",
+    "noModelsFound": "Aucun modèle trouvé",
+    "noModelsFoundDesc": "L'API n'a retourné aucun modèle. Vérifiez le format de réponse.",
+    "urlRequired": "URL requise",
+    "urlRequiredDesc": "Veuillez entrer l'URL de votre API avant de découvrir les modèles.",
+    "manualModels": "Gestion manuelle des modèles",
+    "modelName": "Nom du modèle",
+    "modelId": "ID du modèle",
+    "modelTier": "Niveau",
+    "tierFlagship": "Phare",
+    "tierStandard": "Standard",
+    "tierFast": "Rapide",
+    "supportsThinking": "Supporte la réflexion",
+    "addModel": "Ajouter",
+    "availableModels": "Modèles disponibles",
+    "noModelsConfigured": "Aucun modèle configuré",
+    "addModelsDesc": "Ajoutez manuellement des modèles ou utilisez la découverte automatique",
+    "modelInfoRequired": "Informations requises",
+    "modelInfoRequiredDesc": "Veuillez entrer le nom et l'ID du modèle.",
+    "modelAdded": "Modèle ajouté",
+    "modelAddedDesc": "{{name}} a été ajouté à la liste des modèles disponibles.",
+    "modelRemoved": "Modèle supprimé",
+    "modelRemovedDesc": "Le modèle a été supprimé de la liste."
   }
 }
