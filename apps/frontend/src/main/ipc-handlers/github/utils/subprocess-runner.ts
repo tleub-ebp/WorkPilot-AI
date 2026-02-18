@@ -389,14 +389,6 @@ export function runPythonSubprocess<T = unknown>(
         getOperationRegistry().unregisterOperation(options.operationRegistration.operationId);
       }
 
-      // Debug logging only in development mode
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[DEBUG] Process exited with code:', exitCode, '(raw:', code, ')');
-        console.log('[DEBUG] Raw stdout length:', stdout.length);
-        console.log('[DEBUG] Raw stdout (first 1000 chars):', stdout.substring(0, 1000));
-        console.log('[DEBUG] Raw stderr (first 500 chars):', stderr.substring(0, 500));
-      }
-
       // Note: Auth failure detection now happens in real-time during stdout/stderr processing
       // (see checkAuthFailure helper above). This ensures the modal appears immediately,
       // not just when the process exits.
@@ -712,12 +704,9 @@ export function parseJSONFromOutput<T>(stdout: string): T {
 
     try {
       // Debug: log the exact string we're trying to parse
-      console.log('[DEBUG] Attempting to parse JSON:', jsonStr.substring(0, 200) + '...');
       return JSON.parse(jsonStr);
     } catch (parseError) {
       // Provide a more helpful error message with details
-      console.error('[DEBUG] JSON parse failed:', parseError);
-      console.error('[DEBUG] JSON string (first 500 chars):', jsonStr.substring(0, 500));
       throw new Error('Failed to parse JSON response from backend. The analysis completed but the response format was invalid.');
     }
   }

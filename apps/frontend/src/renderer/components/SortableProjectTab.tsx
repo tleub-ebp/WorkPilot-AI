@@ -94,7 +94,7 @@ export function SortableProjectTab({
                 'hidden sm:block',
                 'opacity-0 group-hover:opacity-60 transition-opacity',
                 'cursor-grab active:cursor-grabbing',
-                'w-1 h-4 bg-muted-foreground rounded-full flex-shrink-0'
+                'w-1 h-4 bg-muted-foreground rounded-full shrink-0'
               )}
             />
             <span className="truncate font-medium">
@@ -114,7 +114,7 @@ export function SortableProjectTab({
 
       {/* Active tab controls - settings and archive, always accessible */}
       {isActive && (
-        <div className="flex items-center gap-0.5 mr-0.5 sm:mr-1 flex-shrink-0">
+        <div className="flex items-center gap-0.5 mr-0.5 sm:mr-1 shrink-0">
           {/* Settings icon - responsive sizing */}
           {onSettingsClick && (
             <Tooltip delayDuration={200}>
@@ -153,14 +153,13 @@ export function SortableProjectTab({
               className={cn(
                 'h-5 w-5 sm:h-6 sm:w-6 p-0 mr-0.5 sm:mr-1',
                 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
-                'transition-opacity duration-200 rounded flex-shrink-0',
+                'transition-opacity duration-200 rounded shrink-0',
                 'hover:bg-destructive hover:text-destructive-foreground',
                 'flex items-center justify-center',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                 isActive && 'opacity-100'
               )}
               onClick={e => {
-                console.log('[DEBUG] SortableProjectTab onClose clicked for project:', project.id);
                 onClose(e);
               }}
               aria-label={t('projectTab.closeTabAriaLabel')}

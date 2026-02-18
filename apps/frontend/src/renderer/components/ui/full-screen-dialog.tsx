@@ -3,7 +3,12 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-const FullScreenDialog = DialogPrimitive.Root;
+// Use modal={false} to prevent Radix Dialog from setting aria-hidden / pointer-events:none
+// on document.body, which would block Select / Popover portals rendered outside the dialog tree.
+// The overlay div in FullScreenDialogOverlay provides the visual backdrop and focus trapping manually.
+const FullScreenDialog = (props: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>) => (
+  <DialogPrimitive.Root modal={false} {...props} />
+);
 
 const FullScreenDialogTrigger = DialogPrimitive.Trigger;
 
@@ -18,7 +23,10 @@ const FullScreenDialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      'fixed inset-0 z-50 bg-background/95 backdrop-blur-sm',
+      // pointer-events-all ensures clicks on the backdrop don't reach elements behind the dialog.
+      // This is necessary because we use modal={false} (to allow Select portals to work inside
+      // a Radix Dialog), so the default Radix pointer-events blocking is disabled.
+      'fixed inset-0 z-50 bg-background/95 backdrop-blur-sm pointer-events-auto',
       'data-[state=open]:animate-in data-[state=closed]:animate-out',
       'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
       className
@@ -31,7 +39,7 @@ FullScreenDialogOverlay.displayName = 'FullScreenDialogOverlay';
 const FullScreenDialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, onPointerDownOutside, onInteractOutside, ...props }, ref) => (
   <FullScreenDialogPortal>
     <FullScreenDialogOverlay />
     <DialogPrimitive.Content
@@ -46,6 +54,28 @@ const FullScreenDialogContent = React.forwardRef<
         'duration-200',
         className
       )}
+      // Prevent the dialog from closing when interacting with portaled elements
+      // (e.g. Select/Popover dropdowns that render outside the dialog tree via Portal).
+      // With modal={false}, Radix Dialog fires onPointerDownOutside for any click
+      // outside the dialog content — including clicks on Select option lists in portals.
+      onPointerDownOutside={(e) => {
+        // Ignore clicks that originated on a Radix portal (data-radix-popper-content-wrapper)
+        // or any element with a Radix select/popover context attribute.
+        const target = e.target as Element | null;
+        if (target?.closest('[data-radix-popper-content-wrapper]')) {
+          e.preventDefault();
+          return;
+        }
+        onPointerDownOutside?.(e);
+      }}
+      onInteractOutside={(e) => {
+        const target = e.target as Element | null;
+        if (target?.closest('[data-radix-popper-content-wrapper]')) {
+          e.preventDefault();
+          return;
+        }
+        onInteractOutside?.(e);
+      }}
       {...props}
     >
       {children}

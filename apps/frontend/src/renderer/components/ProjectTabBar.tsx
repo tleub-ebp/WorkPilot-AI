@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { SortableProjectTab } from './SortableProjectTab';
 import { UsageIndicator } from './UsageIndicator';
 import { AuthStatusIndicator } from './AuthStatusIndicator';
@@ -103,7 +104,6 @@ export function ProjectTabBar({
               onSelect={() => onProjectSelect(project.id)}
               onClose={(e) => {
                 e.stopPropagation();
-                console.log('[DEBUG] ProjectTabBar onClose called for project:', project.id);
                 onProjectClose(project.id);
               }}
               // Pass control props only for the active tab
@@ -114,15 +114,22 @@ export function ProjectTabBar({
       </div>
 
       <div className="flex items-center gap-2 px-4 py-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={onAddProject}
-          aria-label={t('projectTab.addProjectAriaLabel')}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={onAddProject}
+              aria-label={t('projectTab.addProjectAriaLabel')}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{t('projectTab.addProjectTooltip')}</p>
+          </TooltipContent>
+        </Tooltip>
         <AuthStatusIndicator />
         <UsageIndicator />
       </div>

@@ -265,6 +265,8 @@ export interface AppSettings {
   selectedProvider?: string;
   // Per-phase model config per provider (keyed by provider name)
   providerPhaseModels?: Record<string, PhaseModelConfig>;
+  // Per-phase thinking config per provider (keyed by provider name)
+  providerPhaseThinking?: Record<string, PhaseThinkingConfig>;
   // Custom phase configuration for Auto profile (overrides defaults)
   customPhaseModels?: PhaseModelConfig;
   customPhaseThinking?: PhaseThinkingConfig;

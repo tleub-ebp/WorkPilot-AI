@@ -228,14 +228,15 @@ export const DEFAULT_PHASE_THINKING: import('../types/settings').PhaseThinkingCo
 // Feature Settings (Non-Pipeline Features)
 // ============================================
 
-// Default feature model configuration (for insights, ideation, roadmap, github, utility)
+// Default feature model configuration (for insights, ideation, roadmap, github, utility).
+// Values must match the `value` field of entries in PROVIDER_MODELS_MAP['anthropic'].
 export const DEFAULT_FEATURE_MODELS: FeatureModelConfig = {
-  insights: 'sonnet',     // Fast, responsive chat
-  ideation: 'opus',       // Creative ideation benefits from Opus
-  roadmap: 'opus',        // Strategic planning benefits from Opus
-  githubIssues: 'opus',   // Issue triage and analysis benefits from Opus
-  githubPrs: 'opus',      // PR review benefits from thorough Opus analysis
-  utility: 'haiku'        // Fast utility operations (commit messages, merge resolution)
+  insights: 'claude-sonnet-4-5-20250929',   // Fast, responsive chat
+  ideation: 'claude-opus-4-6',              // Creative ideation benefits from Opus
+  roadmap: 'claude-opus-4-6',              // Strategic planning benefits from Opus
+  githubIssues: 'claude-opus-4-6',         // Issue triage and analysis benefits from Opus
+  githubPrs: 'claude-opus-4-6',            // PR review benefits from thorough Opus analysis
+  utility: 'claude-haiku-4-5-20251001'     // Fast utility operations (commit messages, merge resolution)
 };
 
 // Default feature thinking configuration
