@@ -493,7 +493,17 @@
     "openaiHelp": {
       "text": "Vérifiez que votre clé API OpenAI est liée à une organisation avec facturation.",
       "link": "Voir le dashboard OpenAI"
-    }
+    },
+    "debugProfiles": "Profils détectés (debug) :",
+    "noProfileDetected": "Aucun profil détecté",
+    "selectedProvider": "Fournisseur sélectionné : {{provider}}",
+    "openaiError": "Erreur OpenAI :",
+    "openaiDetailTitle": "Détail OpenAI",
+    "completionsLabel": "Completions (tokens par modèle) :",
+    "costByModelLabel": "Coût par modèle :",
+    "embeddingsLabel": "Embeddings (tokens) :",
+    "moderationsLabel": "Moderations (tokens) :",
+    "noData": "Aucune donnée"
   },
   "oauth": {
     "enterCode": "Saisie manuelle du code (secours)",

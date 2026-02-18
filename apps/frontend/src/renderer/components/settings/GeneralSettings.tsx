@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Switch } from '../ui/switch';
 import { SettingsSection } from './SettingsSection';
 import { AgentProfileSettings } from './AgentProfileSettings';
+import { ProviderSelector } from '../ProviderSelector';
 import {
   AVAILABLE_MODELS,
   THINKING_LEVELS,
@@ -123,6 +124,14 @@ export function GeneralSettings({ settings, onSettingsChange, section }: General
   if (section === 'agent') {
     return (
       <div className="space-y-8">
+        {/* Provider Selection */}
+        <SettingsSection
+          title={t('general.providerSection')}
+          description={t('general.providerSectionDescription')}
+        >
+          <ProviderSelector />
+        </SettingsSection>
+
         {/* Agent Profile Selection */}
         <AgentProfileSettings />
 
@@ -132,21 +141,6 @@ export function GeneralSettings({ settings, onSettingsChange, section }: General
           description={t('general.otherAgentSettingsDescription')}
         >
           <div className="space-y-6">
-            <div className="space-y-3">
-              <Label htmlFor="agentFramework" className="text-sm font-medium text-foreground">{t('general.agentFramework')}</Label>
-              <p className="text-sm text-muted-foreground">{t('general.agentFrameworkDescription')}</p>
-              <Select
-                value={settings.agentFramework}
-                onValueChange={(value) => onSettingsChange({ ...settings, agentFramework: value })}
-              >
-                <SelectTrigger id="agentFramework" className="w-full max-w-md">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="auto-claude">{t('general.agentFrameworkAutoClaude')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <div className="space-y-3">
               <div className="flex items-center justify-between max-w-md">
                 <div className="space-y-1">

@@ -73,7 +73,10 @@ export function AgentProfileSettings() {
 
   const selectedProfileId = settings.selectedAgentProfile || 'auto';
   const [showPhaseConfig, setShowPhaseConfig] = useState(true);
-  const [customOllamaModel, setCustomOllamaModel] = useState('');
+  // Per-phase custom model text (used for Ollama free-text input)
+  const [customModelPerPhase, setCustomModelPerPhase] = useState<Record<keyof PhaseModelConfig, string>>({
+    spec: '', planning: '', coding: '', qa: '',
+  });
 
   // Models available for the current provider
   const providerModels: ProviderModel[] = useMemo(() => getModelsForProvider(provider), [provider]);
@@ -98,8 +101,10 @@ export function AgentProfileSettings() {
   const currentPhaseModels: PhaseModelConfig = savedProviderModels || (isClaude ? settings.customPhaseModels : undefined) || profilePhaseModels;
   const currentPhaseThinking: PhaseThinkingConfig = (isClaude ? settings.customPhaseThinking : undefined) || profilePhaseThinking;
 
-  // Reset custom model field when provider changes
-  useEffect(() => { setCustomOllamaModel(''); }, [provider]);
+  // Reset per-phase custom model fields when provider changes
+  useEffect(() => {
+    setCustomModelPerPhase({ spec: '', planning: '', coding: '', qa: '' });
+  }, [provider]);
 
   /**
    * Check if current config differs from profile defaults (Claude only)
@@ -333,7 +338,7 @@ export function AgentProfileSettings() {
                             onValueChange={(value) => {
                               if (value === 'custom') {
                                 // keep the field open; user types the model ID
-                                handlePhaseModelChange(phase, customOllamaModel || 'custom');
+                                handlePhaseModelChange(phase, customModelPerPhase[phase] || 'custom');
                               } else {
                                 handlePhaseModelChange(phase, value as ModelTypeShort);
                               }
@@ -364,14 +369,14 @@ export function AgentProfileSettings() {
                           </Select>
                         )}
 
-                        {/* Free-text input for Ollama custom model */}
+                        {/* Free-text input for Ollama custom model (per-phase) */}
                         {!isClaude && provider === 'ollama' && currentPhaseModels[phase] === 'custom' && (
                           <Input
                             className="h-8 mt-1 text-xs"
                             placeholder={t('agentProfile.customModelPlaceholder')}
-                            value={customOllamaModel}
+                            value={customModelPerPhase[phase]}
                             onChange={(e) => {
-                              setCustomOllamaModel(e.target.value);
+                              setCustomModelPerPhase(prev => ({ ...prev, [phase]: e.target.value }));
                               handlePhaseModelChange(phase, e.target.value);
                             }}
                           />

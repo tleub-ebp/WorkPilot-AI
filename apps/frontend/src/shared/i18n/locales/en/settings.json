@@ -192,6 +192,8 @@
     "reverseChronological": "Reverse-chronological (newest first)"
   },
   "general": {
+    "providerSection": "AI Provider",
+    "providerSectionDescription": "Choose the AI provider to use for autonomous tasks. The model list below updates automatically.",
     "otherAgentSettings": "Other Agent Settings",
     "otherAgentSettingsDescription": "Additional agent configuration options",
     "agentFramework": "Agent Framework",

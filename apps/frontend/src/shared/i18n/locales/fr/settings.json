@@ -266,6 +266,8 @@
     "reverseChronological": "Chronologique inverse (plus récent en premier)"
   },
   "general": {
+    "providerSection": "Fournisseur IA",
+    "providerSectionDescription": "Choisissez le fournisseur IA utilisé pour les tâches autonomes. La liste des modèles ci-dessous se met à jour automatiquement.",
     "otherAgentSettings": "Autres paramètres de l'agent",
     "otherAgentSettingsDescription": "Options de configuration supplémentaires de l'agent",
     "agentFramework": "Framework de l'agent",

@@ -135,6 +135,14 @@ export function registerSettingsHandlers(
         needsSave = true;
       }
 
+      // Migration: Normalize agentFramework to 'auto-claude' (replaces legacy 'claude-code' value)
+      // The UI section has been removed since only one framework is supported; ensure the stored
+      // value matches the sole valid option so downstream code is not confused by stale data.
+      if (settings.agentFramework && settings.agentFramework !== 'auto-claude') {
+        settings.agentFramework = 'auto-claude';
+        needsSave = true;
+      }
+
       // Migration: Clear CLI tool paths that are from a different platform
       // Fixes issue where Windows paths persisted on macOS (and vice versa)
       // when settings were synced/transferred between platforms
