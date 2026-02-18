@@ -1600,7 +1600,7 @@
 
 ### ✨ New Features
 
-- Required GitHub setup flow after Auto Claude initialization to ensure proper configuration
+- Required GitHub setup flow after WorkPilot AI initialization to ensure proper configuration
 - Atomic log saving mechanism to prevent log file corruption during concurrent operations
 - Per-session model and thinking level selection in insights management
 - Multi-auth token support and ANTHROPIC_BASE_URL passthrough for flexible authentication

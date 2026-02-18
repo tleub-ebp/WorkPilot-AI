@@ -1,6 +1,6 @@
-# Auto Claude Guides
+# WorkPilot AI Guides
 
-Detailed documentation for Auto Claude setup and usage.
+Detailed documentation for WorkPilot AI setup and usage.
 
 ## Available Guides
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Auto Claude Framework
+WorkPilot AI Framework
 =====================
 
 A multi-session autonomous coding framework for building features and applications.
@@ -42,7 +42,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 # Python version check - must be before any imports using 3.10+ syntax
 if sys.version_info < (3, 10):  # noqa: UP036
     sys.exit(
-        f"Error: Auto Claude requires Python 3.10 or higher.\n"
+        f"Error: WorkPilot AI requires Python 3.10 or higher.\n"
         f"You are running Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}\n"
         f"\n"
         f"Please upgrade Python: https://www.python.org/downloads/"

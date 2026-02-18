@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ###############################################################################
-# Auto Claude - Version Branch Cleanup Script
+# WorkPilot AI - Version Branch Cleanup Script
 ###############################################################################
 #
 # PURPOSE:
@@ -9,7 +9,7 @@
 # that collide with release tags, which causes HTTP 300 errors in the
 # auto-updater.
 #
-# ISSUE: https://github.com/AndyMik90/Auto-Claude/issues/89
+# ISSUE: https://github.com/krovomi/WorkPilotAI/issues/18
 #
 # BACKGROUND:
 # When both a branch and tag share the same name (e.g., "v2.6.5"), GitHub's
@@ -36,7 +36,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║          Auto Claude - Version Branch Cleanup Tool            ║${NC}"
+echo -e "${BLUE}║          WorkPilot AI - Version Branch Cleanup Tool            ║${NC}"
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
 echo ""
 

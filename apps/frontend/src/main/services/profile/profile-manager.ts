@@ -18,6 +18,7 @@ import type { APIProfile, ProfilesFile } from '@shared/types/profile';
  */
 export function getProfilesFilePath(): string {
   const userDataPath = app.getPath('userData');
+  console.warn('[DEBUG] Electron userDataPath utilisé :', userDataPath);
   return path.join(userDataPath, 'auto-claude', 'profiles.json');
 }
 
@@ -90,13 +91,18 @@ function getDefaultProfilesFile(): ProfilesFile {
  */
 export async function loadProfilesFile(): Promise<ProfilesFile> {
   const filePath = getProfilesFilePath();
-
+  // Ajout debug : log du chemin utilisé
+  console.warn('[DEBUG] Chemin profiles.json utilisé :', filePath);
   try {
     const content = await fs.readFile(filePath, 'utf-8');
+    console.warn('[DEBUG] Contenu brut profiles.json :', content);
     const data = JSON.parse(content);
+    console.warn('[DEBUG] Objet profiles.json après parsing :', JSON.stringify(data));
 
     // Validate parsed data structure
-    if (isValidProfilesFile(data)) {
+    const isValid = isValidProfilesFile(data);
+    console.warn('[DEBUG] Résultat isValidProfilesFile :', isValid);
+    if (isValid) {
       return data;
     }
 

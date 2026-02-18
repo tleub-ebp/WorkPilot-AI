@@ -147,7 +147,7 @@ export function registerTaskExecutionHandlers(
         return;
       }
 
-      // Check git status - Auto Claude requires git for worktree-based builds
+      // Check git status - WorkPilot AI requires git for worktree-based builds
       const gitStatus = checkGitStatus(project.path);
       if (!gitStatus.isGitRepo) {
         console.warn('[TASK_START] Project is not a git repository:', project.path);

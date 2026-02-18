@@ -2,16 +2,16 @@
   "name": "auto-claude-ui",
   "version": "2.7.6-beta.2",
   "type": "module",
-  "description": "Desktop UI for Auto Claude autonomous coding framework",
-  "homepage": "https://github.com/AndyMik90/Auto-Claude",
+  "description": "Desktop UI for WorkPilot AI autonomous coding framework",
+  "homepage": "https://github.com/krovomi/WorkPilotAI",
   "repository": {
     "type": "git",
-    "url": "https://github.com/AndyMik90/Auto-Claude.git"
+    "url": "https://github.com/krovomi/WorkPilotAI.git"
   },
   "main": "./out/main/index.js",
   "author": {
-    "name": "Auto Claude Team",
-    "email": "119136210+AndyMik90@users.noreply.github.com"
+    "name": "WorkPilot AI Team",
+    "email": "krovomi0@users.noreply.github.com"
   },
   "license": "AGPL-3.0",
   "engines": {

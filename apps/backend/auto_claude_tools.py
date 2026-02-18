@@ -1,5 +1,5 @@
 """
-Auto Claude tools module facade.
+WorkPilot AI tools module facade.
 
 Provides MCP tools for agent operations.
 Re-exports from agents.tools_pkg for clean imports.

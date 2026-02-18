@@ -1,7 +1,7 @@
 # Windows Development Guide
 
 This guide covers Windows-specific considerations when developing
-Auto Claude.
+WorkPilot AI.
 
 ## File Encoding
 

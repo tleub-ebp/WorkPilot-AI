@@ -438,7 +438,7 @@ export function registerMRReviewHandlers(
           debugLog('Posting findings', { total: result.findings.length, selected: findings.length });
 
           // Build note body
-          let body = `## Auto Claude MR Review\n\n${result.summary}\n\n`;
+          let body = `## WorkPilot AI MR Review\n\n${result.summary}\n\n`;
 
           if (findings.length > 0) {
             const countText = selectedSet

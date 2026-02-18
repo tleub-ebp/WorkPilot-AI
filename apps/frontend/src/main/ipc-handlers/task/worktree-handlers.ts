@@ -1633,7 +1633,7 @@ async function initializePythonEnvForPR(
 
   const autoBuildSource = getEffectiveSourcePath();
   if (!autoBuildSource) {
-    return 'Python environment not ready and Auto Claude source not found';
+    return 'Python environment not ready and WorkPilot AI source not found';
   }
 
   const status = await pythonEnvManager.initialize(autoBuildSource);
