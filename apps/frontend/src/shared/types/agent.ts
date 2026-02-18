@@ -81,6 +81,17 @@ export interface ClaudeUsageSnapshot {
   needsReauthentication?: boolean;
   /** Provider name this snapshot belongs to (e.g., 'anthropic', 'openai', 'ollama', 'ollama_local') */
   providerName?: string;
+
+  /**
+   * Détails OpenAI Usage (completions, cost, embeddings, moderations)
+   * Présent uniquement si providerName === 'openai'
+   */
+  openaiUsageDetails?: {
+    completions?: any;
+    cost?: any;
+    embeddings?: any;
+    moderations?: any;
+  };
 }
 
 /**

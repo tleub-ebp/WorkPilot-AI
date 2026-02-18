@@ -1,5 +1,5 @@
 /**
- * Usage Indicator - Real-time Claude usage display in header
+ * Usage Indicator - Real-time Claude usage display in the header
  *
  * Displays current session/weekly usage as a badge with color-coded status.
  * - Hover to show breakdown popup (auto-closes on mouse leave)
@@ -641,6 +641,66 @@ export function UsageIndicator() {
                     </div>
                   </div>
                 </div>
+                {/* Section détaillée OpenAI Usage */}
+                {usage.openaiUsageDetails && (
+                  <div className="bg-muted/30 rounded p-2 text-[11px]">
+                    <div className="font-semibold mb-1">Détail OpenAI</div>
+                    {usage.openaiUsageDetails.completions && (
+                      <div className="mb-1">
+                        <div className="font-medium">Completions (tokens par modèle):</div>
+                        <ul>
+                          {usage.openaiUsageDetails.completions.data && usage.openaiUsageDetails.completions.data.length > 0 ? (
+                            usage.openaiUsageDetails.completions.data.map((item: any, idx: number) => (
+                              <li key={idx}>
+                                {item.model}: {item.n_input_tokens_total || 0} in, {item.n_output_tokens_total || 0} out
+                              </li>
+                            ))
+                          ) : (
+                            <li>Aucune donnée</li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                    {usage.openaiUsageDetails.cost && (
+                      <div className="mb-1">
+                        <div className="font-medium">Coût par modèle:</div>
+                        <ul>
+                          {usage.openaiUsageDetails.cost.data && usage.openaiUsageDetails.cost.data.length > 0 ? (
+                            usage.openaiUsageDetails.cost.data.map((item: any, idx: number) => (
+                              <li key={idx}>
+                                {item.model}: ${item.cost_usd ? (Math.round(item.cost_usd * 100) / 100).toFixed(2) : '0.00'}
+                              </li>
+                            ))
+                          ) : (
+                            <li>Aucune donnée</li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                    {usage.openaiUsageDetails.embeddings && (
+                      <div className="mb-1">
+                        <div className="font-medium">Embeddings (tokens):</div>
+                        <ul>
+                          {usage.openaiUsageDetails.embeddings.data && usage.openaiUsageDetails.embeddings.data.length > 0 ? (
+                            usage.openaiUsageDetails.embeddings.data.map((item: any, idx: number) => (
+                              <li key={idx}>
+                                {item.model}: {item.n_input_tokens_total || 0}
+                              </li>
+                            ))
+                          ) : (
+                            <li>Aucune donnée</li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                    {usage.openaiUsageDetails.moderations && (
+                      <div className="mb-1">
+                        <div className="font-medium">Moderations (tokens):</div>
+                        <pre className="whitespace-pre-wrap text-[10px]">{JSON.stringify(usage.openaiUsageDetails.moderations, null, 2)}</pre>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
                 <>

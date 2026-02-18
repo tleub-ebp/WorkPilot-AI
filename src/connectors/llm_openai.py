@@ -20,7 +20,6 @@ class OpenAIProvider(BaseLLMProvider):
     def validate(self) -> bool:
         try:
             self.connect()
-            # Test a simple API call
             models = self._client.Model.list()
             return any(m.id == self.model for m in models.data)
         except Exception:
@@ -28,12 +27,15 @@ class OpenAIProvider(BaseLLMProvider):
 
     def generate(self, prompt: str, **kwargs) -> str:
         self.connect()
-        response = self._client.ChatCompletion.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            **kwargs
-        )
-        return response.choices[0].message["content"]
+        try:
+            response = self._client.ChatCompletion.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                **kwargs
+            )
+            return response.choices[0].message["content"]
+        except Exception:
+            raise
 
     def get_capabilities(self) -> Dict[str, Any]:
         return {"models": [self.model], "provider": "openai"}

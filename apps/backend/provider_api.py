@@ -112,12 +112,8 @@ def get_providers():
                     break
             is_valid = False
             if api_key:
-                # print(f"[DEBUG] provider={name} api_key (masked)={api_key[:6]}...{api_key[-4:]}")
                 is_valid = is_validated(name, api_key)
-            # print(f"DEBUG: provider={name} provider_configs={provider_configs}")
-            # print(f"DEBUG: provider={name} has_valid_key={has_valid_key} is_validated={is_valid} env_key={env_key}")
             status[name] = is_valid or (env_key is not None and env_key.strip() != "")
-            # print(f"DEBUG: provider={name} status final={status[name]}")
     return {"providers": providers, "status": status}
 
 @app.get("/providers/configs")
@@ -172,9 +168,6 @@ def test_provider(provider: str):
 def test_provider_api_key(provider: str, payload: dict):
     api_key = payload.get("api_key")
     base_url = payload.get("base_url")
-    print(f"[TEST] provider={provider} api_key (masked)={api_key[:6]}...{api_key[-4:]}", flush=True)
-    from validated_keys_db import hash_key
-    print(f"[TEST] hash_key: {hash_key(api_key)}", flush=True)
     if provider == "openai":
         try:
             import requests
@@ -183,14 +176,11 @@ def test_provider_api_key(provider: str, payload: dict):
             resp = requests.get(url, headers=headers, timeout=10)
             if resp.status_code == 200:
                 set_validated(provider, api_key, True)
-                print(f"[TEST] set_validated: provider={provider}, api_key (masked)={api_key[:6]}...{api_key[-4:]}, validated=True", flush=True)
                 return {"success": True}
             set_validated(provider, api_key, False)
-            print(f"[TEST] set_validated: provider={provider}, api_key (masked)={api_key[:6]}...{api_key[-4:]}, validated=False", flush=True)
             return {"success": False, "error": resp.text}
         except Exception as e:
             set_validated(provider, api_key, False)
-            print(f"[TEST] set_validated: provider={provider}, api_key (masked)={api_key[:6]}...{api_key[-4:]}, validated=False, error={e}", flush=True)
             return {"success": False, "error": str(e)}
     # Ajoute ici d’autres providers si besoin
     return {"success": False, "error": "Provider non supporté pour le test"}
@@ -252,7 +242,6 @@ def ping():
 
 @app.get("/providers/models/{provider}")
 def get_provider_models(provider: str = Path(..., description="Nom du provider LLM (ex: claude, anthropic, openai, etc.)")):
-    print(f"DEBUG: /providers/models/{provider} called", flush=True)
     if provider == "openai":
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
@@ -305,6 +294,25 @@ def db_health():
         return {"db_up": True}
     except Exception as e:
         return {"db_up": False, "error": str(e)}
+
+@app.get("/providers/usage/{provider}")
+def get_provider_usage(provider: str):
+    """
+    Récupère l'usage et le crédit restant pour le provider OpenAI (ou autre si implémenté).
+    """
+    if provider != "openai":
+        return {"error": "Usage non supporté pour ce provider"}
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return {"error": "Clé API OpenAI manquante."}
+    try:
+        headers = {"Authorization": f"Bearer {api_key}"}
+        resp = requests.get("https://api.openai.com/v1/dashboard/billing/credit_grants", headers=headers, timeout=10)
+        if resp.status_code == 200:
+            return resp.json()
+        return {"error": resp.text, "status_code": resp.status_code}
+    except Exception as e:
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
