@@ -582,6 +582,24 @@ export function registerSettingsHandlers(
     }
   );
 
+  ipcMain.handle(
+    IPC_CHANNELS.SHELL_OPEN_TERMINAL_WITH_COMMAND,
+    async (_, command: string): Promise<IPCResult<void>> => {
+      try {
+        // Import the function from claude-code-handlers
+        const { openTerminalWithCommand } = await import('./claude-code-handlers');
+        await openTerminalWithCommand(command);
+        return { success: true };
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        return {
+          success: false,
+          error: `Failed to open terminal with command: ${errorMsg}`
+        };
+      }
+    }
+  );
+
   // ============================================
   // Auto-Build Source Environment Operations
   // ============================================

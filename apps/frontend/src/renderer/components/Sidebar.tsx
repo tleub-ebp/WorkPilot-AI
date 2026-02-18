@@ -457,8 +457,6 @@ export function Sidebar({
           )}
         </div>
 
-        <Separator className="mt-2" />
-
         {/* Toggle button */}
         <div className={cn(
           "flex py-2 transition-all duration-300",
@@ -516,7 +514,7 @@ export function Sidebar({
         {/* Bottom section with Settings, Help, and New Task */}
         <div className={cn("space-y-3 transition-all duration-300", isCollapsed ? "p-2" : "p-4")}>
           {/* Claude Code Status Badge (ProviderSelector déplacé dans le popover) */}
-          {!isCollapsed && <ClaudeCodeStatusBadge />}
+          {!isCollapsed && <ClaudeCodeStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />}
 
           {/* Settings and Help row */}
           <div className={cn(

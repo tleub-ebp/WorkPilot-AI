@@ -20,7 +20,8 @@ import {
   Bug,
   Terminal,
   Users,
-  Cloud
+  Cloud,
+  RefreshCw
 } from 'lucide-react';
 import {
   FullScreenDialog,
@@ -48,6 +49,7 @@ import { ProjectSettingsContent, ProjectSettingsSection } from './ProjectSetting
 import { useProjectStore } from '@/stores/project-store';
 import type { UseProjectSettingsReturn } from '@/components/project-settings';
 import { AccountSettings } from './AccountSettings';
+import { GlobalAutoSwitching } from './GlobalAutoSwitching';
 import { getAllConnectors } from './multiconnector/utils';
 import { SettingsSection } from './SettingsSection';
 
@@ -121,6 +123,12 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
   const [activeTopLevel, setActiveTopLevel] = useState<'app' | 'project'>('app');
   const [appSection, setAppSection] = useState<AppSection>(initialSection || 'appearance');
   const [projectSection, setProjectSection] = useState<ProjectSettingsSection>('general');
+
+  // Function to navigate to accounts section
+  const handleOpenAccountsSettings = () => {
+    setActiveTopLevel('app');
+    setAppSection('accounts');
+  };
 
   // Navigate to the initial section when dialog opens with a specific section
   useEffect(() => {
@@ -217,30 +225,63 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
       case 'terminal-fonts':
         return <TerminalFontSettings />;
       case 'agent':
-        return <GeneralSettings settings={settings} onSettingsChange={setSettings} section="agent" />;
+        return <GeneralSettings settings={settings} onSettingsChange={setSettings} section="agent" onOpenAccountsSettings={handleOpenAccountsSettings} />;
       case 'paths':
-        return <GeneralSettings settings={settings} onSettingsChange={setSettings} section="paths" />;
+        return <GeneralSettings settings={settings} onSettingsChange={setSettings} section="paths" onOpenAccountsSettings={handleOpenAccountsSettings} />;
       case 'accounts':
         return (
           <SettingsSection
             title={t('accounts.title')}
             description={t('accounts.description')}
           >
-            <div className="mb-6">
-              <div className="text-base font-semibold mb-2">Gestion multi-connecteur</div>
-              <div className="text-sm text-muted-foreground mb-4">
-                Vous pouvez connecter et gérer plusieurs fournisseurs IA (Claude, OpenAI, Mistral, etc.).
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Colonne principale : Tous les providers */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="mb-6">
+                  <div className="text-base font-semibold mb-2">Gestion multi-connecteur</div>
+                  <div className="text-sm text-muted-foreground mb-4">
+                    Vous pouvez connecter et gérer plusieurs fournisseurs IA (Claude, OpenAI, Mistral, etc.).
+                  </div>
+                </div>
+                
+                {/* Liste de tous les providers */}
+                {connectors.map((connector) => (
+                  <AccountSettings
+                    key={connector.id}
+                    settings={settings}
+                    onSettingsChange={setSettings}
+                    isOpen={open}
+                    connector={connector}
+                    showAutoSwitching={false} // Masquer l'auto-switching individuel
+                  />
+                ))}
+              </div>
+
+              {/* Colonne latérale : Automatic Account Switching global */}
+              <div className="lg:col-span-1">
+                <div className="sticky top-6">
+                  <div className="rounded-lg bg-muted/30 border border-border p-4 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                      <h3 className="text-sm font-semibold text-foreground">
+                        {t('accounts.autoSwitching.globalTitle', 'Automatic Account Switching')}
+                      </h3>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      {t('accounts.autoSwitching.globalDescription', 'Basculez automatiquement entre vos comptes selon l\'utilisation et les limites de taux.')}
+                    </p>
+
+                    {/* Ici viendra le composant GlobalAutoSwitching */}
+                    <GlobalAutoSwitching 
+                      settings={settings}
+                      onSettingsChange={setSettings}
+                      isOpen={open}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-            {connectors.map((connector) => (
-              <AccountSettings
-                key={connector.id}
-                settings={settings}
-                onSettingsChange={setSettings}
-                isOpen={open}
-                connector={connector}
-              />
-            ))}
           </SettingsSection>
         );
       case 'updates':
@@ -417,7 +458,9 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
             {/* Main content */}
             <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">
-                <div className={appSection === 'terminal-fonts' ? 'p-8' : 'p-8 max-w-2xl'}>
+                <div className={cn(
+              appSection === 'accounts' ? 'p-8' : 'p-8 max-w-2xl'
+            )}>
                   {renderContent()}
                 </div>
               </ScrollArea>

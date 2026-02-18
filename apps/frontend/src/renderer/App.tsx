@@ -924,7 +924,7 @@ export function App() {
                 {/* Main content */}
                 <div className="flex flex-1 flex-col overflow-hidden">
                   {/* Ligne sticky avec ProviderSelector et bouton "Claude Code" placée juste sous les tabs projets */}
-                  <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border bg-background sticky top-0 z-30">
+                  <div className="flex items-center justify-between gap-3 px-2.5 py-2 border-b border-border bg-background sticky top-0 z-30">
                     <div className="flex items-center flex-1 min-w-0">
                       {/* Espace réservé pour alignement, ou autre contenu si besoin */}
                     </div>
