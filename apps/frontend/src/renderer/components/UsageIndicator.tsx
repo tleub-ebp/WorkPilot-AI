@@ -23,7 +23,13 @@ import { useTranslation } from 'react-i18next';
 import { formatTimeRemaining, localizeUsageWindowLabel, hasHardcodedText } from '@shared/utils/format-time';
 import type { ClaudeUsageSnapshot, ProfileUsageSummary } from '@shared/types';
 import { useProviderContext } from './ProviderContext';
+import { PROVIDER_MODELS_MAP } from '@shared/constants/models';
 import {AppSection} from "@/components/settings/AppSettings";
+
+// All provider keys from the canonical map (excluding the 'claude' alias for anthropic)
+const KNOWN_PROVIDERS = new Set(
+  Object.keys(PROVIDER_MODELS_MAP).filter(k => k !== 'claude')
+);
 
 /**
  * Usage threshold constants for color coding
@@ -84,7 +90,6 @@ export function UsageIndicator() {
   const [isPinned, setIsPinned] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { selectedProvider } = useProviderContext();
-  console.debug('[UsageIndicator] Render with selectedProvider:', selectedProvider);
 
   /**
    * Helper function to get initials from a profile name
@@ -429,7 +434,7 @@ export function UsageIndicator() {
                       <li key={i}>{p.name} | {p.baseUrl} | provider: {p.detectedProvider}</li>
                     )) : <li>{t('common:usage.noProfileDetected')}</li>}
                   </ul>
-                  <div dangerouslySetInnerHTML={{ __html: t('common:usage.selectedProvider', {provider: selectedProvider}) }} />
+                  <div>{t('common:usage.selectedProvider', { provider: selectedProvider })}</div>
                 </div>
               </div>
             </TooltipContent>
@@ -438,8 +443,8 @@ export function UsageIndicator() {
       );
     }
 
-    // Provider non supporté
-    if (selectedProvider && !['anthropic', 'claude', 'openai'].includes(selectedProvider.toLowerCase())) {
+    // Provider non reconnu (absent de PROVIDER_MODELS_MAP)
+    if (selectedProvider && !KNOWN_PROVIDERS.has(selectedProvider.toLowerCase()) && selectedProvider.toLowerCase() !== 'claude') {
       return (
         <TooltipProvider delayDuration={200}>
           <Tooltip>
@@ -644,10 +649,10 @@ export function UsageIndicator() {
                 {/* Section détaillée OpenAI Usage */}
                 {usage.openaiUsageDetails && (
                   <div className="bg-muted/30 rounded p-2 text-[11px]">
-                    <div className="font-semibold mb-1">Détail OpenAI</div>
+                    <div className="font-semibold mb-1">{t('common:usage.openaiDetailTitle')}</div>
                     {usage.openaiUsageDetails.completions && (
                       <div className="mb-1">
-                        <div className="font-medium">Completions (tokens par modèle):</div>
+                        <div className="font-medium">{t('common:usage.completionsLabel')}</div>
                         <ul>
                           {usage.openaiUsageDetails.completions.data && usage.openaiUsageDetails.completions.data.length > 0 ? (
                             usage.openaiUsageDetails.completions.data.map((item: any, idx: number) => (
@@ -656,14 +661,14 @@ export function UsageIndicator() {
                               </li>
                             ))
                           ) : (
-                            <li>Aucune donnée</li>
+                            <li>{t('common:usage.noData')}</li>
                           )}
                         </ul>
                       </div>
                     )}
                     {usage.openaiUsageDetails.cost && (
                       <div className="mb-1">
-                        <div className="font-medium">Coût par modèle:</div>
+                        <div className="font-medium">{t('common:usage.costByModelLabel')}</div>
                         <ul>
                           {usage.openaiUsageDetails.cost.data && usage.openaiUsageDetails.cost.data.length > 0 ? (
                             usage.openaiUsageDetails.cost.data.map((item: any, idx: number) => (
@@ -672,14 +677,14 @@ export function UsageIndicator() {
                               </li>
                             ))
                           ) : (
-                            <li>Aucune donnée</li>
+                            <li>{t('common:usage.noData')}</li>
                           )}
                         </ul>
                       </div>
                     )}
                     {usage.openaiUsageDetails.embeddings && (
                       <div className="mb-1">
-                        <div className="font-medium">Embeddings (tokens):</div>
+                        <div className="font-medium">{t('common:usage.embeddingsLabel')}</div>
                         <ul>
                           {usage.openaiUsageDetails.embeddings.data && usage.openaiUsageDetails.embeddings.data.length > 0 ? (
                             usage.openaiUsageDetails.embeddings.data.map((item: any, idx: number) => (
@@ -688,14 +693,14 @@ export function UsageIndicator() {
                               </li>
                             ))
                           ) : (
-                            <li>Aucune donnée</li>
+                            <li>{t('common:usage.noData')}</li>
                           )}
                         </ul>
                       </div>
                     )}
                     {usage.openaiUsageDetails.moderations && (
                       <div className="mb-1">
-                        <div className="font-medium">Moderations (tokens):</div>
+                        <div className="font-medium">{t('common:usage.moderationsLabel')}</div>
                         <pre className="whitespace-pre-wrap text-[10px]">{JSON.stringify(usage.openaiUsageDetails.moderations, null, 2)}</pre>
                       </div>
                     )}

@@ -60,20 +60,22 @@ export function AuthStatusIndicator() {
   const [usage, setUsage] = useState<ClaudeUsageSnapshot | null>(null);
   const [isLoadingUsage, setIsLoadingUsage] = useState(true);
 
-  // Listen for usage updates
+  // Single effect: subscribe to live updates + refresh on provider/profile change
   useEffect(() => {
+    setIsLoadingUsage(true);
+    setUsage(null);
+
+    // Subscribe to live usage push events
     const unsubscribe = window.electronAPI.onUsageUpdated((snapshot: ClaudeUsageSnapshot) => {
-      // Si le provider du snapshot ne correspond pas au provider sélectionné, ignorer
       if (selectedProvider && snapshot.providerName && snapshot.providerName !== selectedProvider) return;
       setUsage(snapshot);
       setIsLoadingUsage(false);
     });
 
-    // Request initial usage
+    // Request current usage immediately
     window.electronAPI.requestUsageUpdate()
       .then((result) => {
         if (result.success && result.data) {
-          // Si le provider du snapshot ne correspond pas au provider sélectionné, ignorer
           if (selectedProvider && result.data.providerName && result.data.providerName !== selectedProvider) return;
           setUsage(result.data);
         }
@@ -88,42 +90,7 @@ export function AuthStatusIndicator() {
     return () => {
       unsubscribe();
     };
-  }, [selectedProvider]);
-
-  // Rafraîchit l'usage à chaque changement de provider sélectionné ou de profil actif
-  useEffect(() => {
-    console.debug('[AuthStatusIndicator] useEffect triggered', { selectedProvider, activeProfileId });
-    setIsLoadingUsage(true);
-    setUsage(null);
-    // Requête usage pour le provider sélectionné
-    window.electronAPI.requestUsageUpdate()
-      .then((result) => {
-        if (result.success && result.data && (!selectedProvider || result.data.providerName === selectedProvider)) {
-          setUsage(result.data);
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        setIsLoadingUsage(false);
-      });
   }, [selectedProvider, activeProfileId]);
-
-  // Rafraîchit l'usage et l'authentification à chaque changement de provider
-  useEffect(() => {
-    setIsLoadingUsage(true);
-    setUsage(null);
-    // Requête usage pour le provider sélectionné
-    window.electronAPI.requestUsageUpdate()
-      .then((result) => {
-        if (result.success && result.data) {
-          setUsage(result.data);
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        setIsLoadingUsage(false);
-      });
-  }, [selectedProvider]);
 
   // Determine if usage warning badge should be shown
   const shouldShowUsageWarning = usage && !isLoadingUsage && (
@@ -192,9 +159,6 @@ export function AuthStatusIndicator() {
     }
     return OAUTH_FALLBACK;
   }, [selectedProvider, profiles, activeProfileId]);
-
-  // Log debug pour vérifier propagation
-  console.debug('[AuthStatusIndicator] selectedProvider:', selectedProvider, 'authStatus:', authStatus);
 
   // Helper function to truncate ID for display
   const truncateId = (id: string | undefined): string => {

@@ -496,8 +496,14 @@
     },
     "debugProfiles": "Debug detected profiles:",
     "noProfileDetected": "No profile detected",
-    "selectedProvider": "Selected provider: <b>{{provider}}</b>",
-    "openaiError": "OpenAI Error:"
+    "selectedProvider": "Selected provider: {{provider}}",
+    "openaiError": "OpenAI Error:",
+    "openaiDetailTitle": "OpenAI Detail",
+    "completionsLabel": "Completions (tokens by model):",
+    "costByModelLabel": "Cost by model:",
+    "embeddingsLabel": "Embeddings (tokens):",
+    "moderationsLabel": "Moderations (tokens):",
+    "noData": "No data"
   },
   "oauth": {
     "enterCode": "Manual Code Entry (Fallback)",
