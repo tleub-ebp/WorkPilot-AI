@@ -1879,9 +1879,25 @@ export class UsageMonitor extends EventEmitter {
           profileName: apiProfile.name
         });
 
-        // OpenAI special case — usage API has a different format
+        // OpenAI special case — usage API a different format
         if (providerName === 'openai') {
-          return this.fetchOpenAIUsage(apiProfile);
+          try {
+            const resp = await fetch('http://localhost:9000/providers/usage/openai');
+            if (!resp.ok) {
+              return null;
+            }
+            const usageData = await resp.json();
+            return {
+              sessionPercent: 0,
+              weeklyPercent: 0,
+              profileId: apiProfile.id,
+              profileName: apiProfile.name,
+              providerName: 'openai',
+              usage: usageData,
+            };
+          } catch (e) {
+            return null;
+          }
         }
 
         // Build ActiveProfileResult to use with fetchUsageViaAPI
@@ -1973,31 +1989,76 @@ export class UsageMonitor extends EventEmitter {
       const day = String(now.getDate()).padStart(2, '0');
       const startDate = `${year}-${month}-01`;
       const endDate = `${year}-${month}-${day}`;
+      // 1. Récupérer le coût total (historique)
       const usageUrl = `https://api.openai.com/v1/dashboard/billing/usage?start_date=${startDate}&end_date=${endDate}`;
-
       const usageResp = await fetch(usageUrl, {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         }
       });
-
       if (!usageResp.ok) {
         this.debugLog('[UsageMonitor:OpenAI] Failed to fetch usage - STATUS:', usageResp.status);
         this.debugLog('[UsageMonitor:OpenAI] Failed to fetch usage - TEXT:', await usageResp.text());
-        // Ajout d'un champ d'erreur pour l'UI
         (globalThis as any).lastOpenAIUsageError = `HTTP ${usageResp.status}: ${(await usageResp.text())}`;
         return null;
       }
-
       const usageData = await usageResp.json();
-      if (typeof usageData.total_usage !== 'number') {
-        this.debugLog('[UsageMonitor:OpenAI] API response missing total_usage:', JSON.stringify(usageData));
-        (globalThis as any).lastOpenAIUsageError = 'La réponse OpenAI ne contient pas de total_usage. Vérifiez que votre clé API est liée à une organisation avec facturation.';
-        return null;
-      }
-      const totalCost = usageData.total_usage / 100;
+      const totalCost = typeof usageData.total_usage === 'number' ? usageData.total_usage / 100 : 0;
 
+      // 2. Récupérer les métriques détaillées (tokens, par modèle, etc.)
+      // Utilise l’API Usage Completions
+      const unixStart = Math.floor(new Date(`${startDate}T00:00:00Z`).getTime() / 1000);
+      const unixEnd = Math.floor(now.getTime() / 1000);
+      const completionsUrl = `https://api.openai.com/v1/organization/usage/completions?start_time=${unixStart}&end_time=${unixEnd}&group_by=model`;
+      const completionsResp = await fetch(completionsUrl, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      let completionsData = null;
+      if (completionsResp.ok) {
+        completionsData = await completionsResp.json();
+      }
+      // 3. Récupérer le breakdown des coûts
+      const costUrl = `https://api.openai.com/v1/organization/usage/cost?start_time=${unixStart}&end_time=${unixEnd}&group_by=model`;
+      const costResp = await fetch(costUrl, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      let costData = null;
+      if (costResp.ok) {
+        costData = await costResp.json();
+      }
+      // 4. Embeddings (optionnel)
+      const embeddingsUrl = `https://api.openai.com/v1/organization/usage/embeddings?start_time=${unixStart}&end_time=${unixEnd}&group_by=model`;
+      const embeddingsResp = await fetch(embeddingsUrl, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      let embeddingsData = null;
+      if (embeddingsResp.ok) {
+        embeddingsData = await embeddingsResp.json();
+      }
+      // 5. Moderations (optionnel)
+      const moderationsUrl = `https://api.openai.com/v1/organization/usage/moderations?start_time=${unixStart}&end_time=${unixEnd}`;
+      const moderationsResp = await fetch(moderationsUrl, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      let moderationsData = null;
+      if (moderationsResp.ok) {
+        moderationsData = await moderationsResp.json();
+      }
+
+      // 6. Construction du snapshot enrichi
       return {
         sessionPercent: 0,
         weeklyPercent: 0,
@@ -2010,6 +2071,12 @@ export class UsageMonitor extends EventEmitter {
           weeklyWindowLabel: 'common:usage.windowMonthly'
         },
         weeklyUsageValue: Math.round(totalCost * 100) / 100, // Total cost in dollars
+        openaiUsageDetails: {
+          completions: completionsData,
+          cost: costData,
+          embeddings: embeddingsData,
+          moderations: moderationsData
+        }
       };
     } catch (error) {
       this.debugLog('[UsageMonitor:OpenAI] Error fetching usage:', error);
