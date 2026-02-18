@@ -7,7 +7,8 @@
     "hideArchivedTasks": "Hide archived tasks",
     "closeTab": "Close tab",
     "closeTabAriaLabel": "Close tab (removes project from app)",
-    "addProjectAriaLabel": "Add project"
+    "addProjectAriaLabel": "Add project",
+    "addProjectTooltip": "Add new project"
   },
   "accessibility": {
     "deleteFeatureAriaLabel": "Delete feature",

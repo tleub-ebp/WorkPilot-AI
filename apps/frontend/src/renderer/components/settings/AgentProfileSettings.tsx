@@ -94,12 +94,13 @@ export function AgentProfileSettings() {
     : buildDefaultPhaseModelsForProvider(provider);
   const profilePhaseThinking = isClaude
     ? (selectedProfile.phaseThinking || DEFAULT_PHASE_THINKING)
-    : { spec: 'none' as ThinkingLevel, planning: 'none' as ThinkingLevel, coding: 'none' as ThinkingLevel, qa: 'none' as ThinkingLevel };
+    : (supportsThinking ? DEFAULT_PHASE_THINKING : { spec: 'none' as ThinkingLevel, planning: 'none' as ThinkingLevel, coding: 'none' as ThinkingLevel, qa: 'none' as ThinkingLevel });
 
   // Get current phase config from settings (custom) or fall back to provider/profile defaults
   const savedProviderModels = settings.providerPhaseModels?.[provider];
+  const savedProviderThinking = settings.providerPhaseThinking?.[provider];
   const currentPhaseModels: PhaseModelConfig = savedProviderModels || (isClaude ? settings.customPhaseModels : undefined) || profilePhaseModels;
-  const currentPhaseThinking: PhaseThinkingConfig = (isClaude ? settings.customPhaseThinking : undefined) || profilePhaseThinking;
+  const currentPhaseThinking: PhaseThinkingConfig = (isClaude ? settings.customPhaseThinking : savedProviderThinking) || profilePhaseThinking;
 
   // Reset per-phase custom model fields when provider changes
   useEffect(() => {
@@ -110,14 +111,14 @@ export function AgentProfileSettings() {
    * Check if current config differs from profile defaults (Claude only)
    */
   const hasCustomConfig = useMemo((): boolean => {
-    if (!isClaude) return !!savedProviderModels;
+    if (!isClaude) return !!(savedProviderModels || savedProviderThinking);
     if (!settings.customPhaseModels && !settings.customPhaseThinking) return false;
     return PHASE_KEYS.some(
       phase =>
         currentPhaseModels[phase] !== profilePhaseModels[phase] ||
         currentPhaseThinking[phase] !== profilePhaseThinking[phase]
     );
-  }, [isClaude, savedProviderModels, settings.customPhaseModels, settings.customPhaseThinking, currentPhaseModels, currentPhaseThinking, profilePhaseModels, profilePhaseThinking]);
+  }, [isClaude, savedProviderModels, savedProviderThinking, settings.customPhaseModels, settings.customPhaseThinking, currentPhaseModels, currentPhaseThinking, profilePhaseModels, profilePhaseThinking]);
 
   const handleSelectProfile = async (profileId: string) => {
     const profile = DEFAULT_AGENT_PROFILES.find(p => p.id === profileId);
@@ -141,7 +142,12 @@ export function AgentProfileSettings() {
 
   const handlePhaseThinkingChange = async (phase: keyof PhaseThinkingConfig, value: ThinkingLevel) => {
     const newPhaseThinking = { ...currentPhaseThinking, [phase]: value };
-    await saveSettings({ customPhaseThinking: newPhaseThinking });
+    if (isClaude) {
+      await saveSettings({ customPhaseThinking: newPhaseThinking });
+    } else {
+      const updatedProviderThinking = { ...(settings.providerPhaseThinking || {}), [provider]: newPhaseThinking };
+      await saveSettings({ providerPhaseThinking: updatedProviderThinking });
+    }
   };
 
   const handleResetToProfileDefaults = async () => {
@@ -150,7 +156,12 @@ export function AgentProfileSettings() {
     } else {
       const updatedProviderModels = { ...(settings.providerPhaseModels || {}) };
       delete updatedProviderModels[provider];
-      await saveSettings({ providerPhaseModels: updatedProviderModels });
+      const updatedProviderThinking = { ...(settings.providerPhaseThinking || {}) };
+      delete updatedProviderThinking[provider];
+      await saveSettings({ 
+        providerPhaseModels: updatedProviderModels,
+        providerPhaseThinking: updatedProviderThinking 
+      });
     }
   };
 

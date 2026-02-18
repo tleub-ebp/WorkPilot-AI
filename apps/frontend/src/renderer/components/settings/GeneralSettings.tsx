@@ -7,17 +7,18 @@ import { Switch } from '../ui/switch';
 import { SettingsSection } from './SettingsSection';
 import { AgentProfileSettings } from './AgentProfileSettings';
 import { ProviderSelector } from '../ProviderSelector';
+import { useProviderContext } from '../ProviderContext';
 import {
-  AVAILABLE_MODELS,
   THINKING_LEVELS,
   DEFAULT_FEATURE_MODELS,
   DEFAULT_FEATURE_THINKING,
-  FEATURE_LABELS
+  FEATURE_LABELS,
+  getModelsForProvider,
+  providerSupportsThinking
 } from '../../../shared/constants';
 import type {
   AppSettings,
   FeatureModelConfig,
-  ModelTypeShort,
   ThinkingLevel,
   ToolDetectionResult
 } from '../../../shared/types';
@@ -121,6 +122,12 @@ export function GeneralSettings({ settings, onSettingsChange, section }: General
     }
   }, [section]);
 
+  // Lit le provider actif depuis le contexte pour filtrer les modèles disponibles
+  const { selectedProvider } = useProviderContext();
+  const activeProvider = selectedProvider || 'anthropic';
+  const providerModels = getModelsForProvider(activeProvider);
+  const supportsThinking = providerSupportsThinking(activeProvider);
+
   if (section === 'agent') {
     return (
       <div className="space-y-8">
@@ -172,6 +179,15 @@ export function GeneralSettings({ settings, onSettingsChange, section }: General
                 const featureModels = settings.featureModels || DEFAULT_FEATURE_MODELS;
                 const featureThinking = settings.featureThinking || DEFAULT_FEATURE_THINKING;
 
+                // Valeur du modèle : si la valeur sauvegardée n'existe plus dans la liste du provider actif,
+                // on utilise le premier modèle disponible comme fallback
+                const currentModelValue = featureModels[feature];
+                const modelExists = providerModels.some(m => m.value === currentModelValue);
+                const effectiveModelValue = modelExists ? currentModelValue : (providerModels[0]?.value ?? '');
+
+                // Valeur du niveau de réflexion avec fallback explicite
+                const currentThinkingValue: ThinkingLevel = featureThinking[feature] ?? 'medium';
+
                 return (
                   <div key={feature} className="space-y-2">
                     <div className="flex items-center justify-between">
@@ -182,14 +198,14 @@ export function GeneralSettings({ settings, onSettingsChange, section }: General
                         {FEATURE_LABELS[feature].description}
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 max-w-md">
-                      {/* Model Select */}
+                    <div className={`grid gap-3 max-w-md ${supportsThinking ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                      {/* Model Select — filtré selon le provider actif */}
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">{t('general.model')}</Label>
                         <Select
-                          value={featureModels[feature]}
+                          value={effectiveModelValue}
                           onValueChange={(value) => {
-                            const newFeatureModels = { ...featureModels, [feature]: value as ModelTypeShort };
+                            const newFeatureModels = { ...featureModels, [feature]: value };
                             onSettingsChange({ ...settings, featureModels: newFeatureModels });
                           }}
                         >
@@ -197,7 +213,7 @@ export function GeneralSettings({ settings, onSettingsChange, section }: General
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {AVAILABLE_MODELS.map((m) => (
+                            {providerModels.map((m) => (
                               <SelectItem key={m.value} value={m.value}>
                                 {m.label}
                               </SelectItem>
@@ -205,28 +221,30 @@ export function GeneralSettings({ settings, onSettingsChange, section }: General
                           </SelectContent>
                         </Select>
                       </div>
-                      {/* Thinking Level Select */}
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">{t('general.thinkingLevel')}</Label>
-                        <Select
-                          value={featureThinking[feature]}
-                          onValueChange={(value) => {
-                            const newFeatureThinking = { ...featureThinking, [feature]: value as ThinkingLevel };
-                            onSettingsChange({ ...settings, featureThinking: newFeatureThinking });
-                          }}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {THINKING_LEVELS.map((level) => (
-                              <SelectItem key={level.value} value={level.value}>
-                                {level.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      {/* Thinking Level Select — masqué si le provider ne supporte pas le thinking */}
+                      {supportsThinking && (
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">{t('general.thinkingLevel')}</Label>
+                          <Select
+                            value={currentThinkingValue}
+                            onValueChange={(value) => {
+                              const newFeatureThinking = { ...featureThinking, [feature]: value as ThinkingLevel };
+                              onSettingsChange({ ...settings, featureThinking: newFeatureThinking });
+                            }}
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {THINKING_LEVELS.map((level) => (
+                                <SelectItem key={level.value} value={level.value}>
+                                  {level.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

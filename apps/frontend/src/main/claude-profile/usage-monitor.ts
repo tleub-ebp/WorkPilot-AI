@@ -1221,7 +1221,6 @@ export class UsageMonitor extends EventEmitter {
         const profilesFile = await loadProfilesFile();
         const apiProfile = profilesFile.profiles.find(p => {
           const detected = detectProvider(p.baseUrl);
-          console.warn('[DEBUG] Provider detection:', { baseUrl: p.baseUrl, detected, providerName });
           return detected === providerName;
         });
         if (apiProfile) {
@@ -1231,8 +1230,6 @@ export class UsageMonitor extends EventEmitter {
             profileName,
             baseUrl: apiProfile.baseUrl
           });
-        } else {
-          console.warn('[DEBUG] Aucun profil trouvé pour le provider recherché:', providerName);
         }
       } catch (error) {
         // Failed to load API profiles, continue to OAuth check
@@ -1868,7 +1865,6 @@ export class UsageMonitor extends EventEmitter {
       const profilesFile = await loadProfilesFile();
       const apiProfile = profilesFile.profiles.find(p => {
         const detected = detectProvider(p.baseUrl);
-        console.warn('[DEBUG] Provider detection:', { baseUrl: p.baseUrl, detected, providerName });
         return detected === providerName;
       });
 
@@ -1893,7 +1889,8 @@ export class UsageMonitor extends EventEmitter {
               profileId: apiProfile.id,
               profileName: apiProfile.name,
               providerName: 'openai',
-              usage: usageData,
+              openaiUsageDetails: usageData,
+              fetchedAt: new Date(),
             };
           } catch (e) {
             return null;

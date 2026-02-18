@@ -98,7 +98,6 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
     fetch(`${API_BASE}/providers/models/${selected}`)
       .then((res) => res.json())
       .then((data) => {
-        console.log('[DEBUG] Réponse modèles provider:', data); // LOG TEMPORAIRE
         setClaudeModels(data.models || []);
         if (data.error) {
           setClaudeModels([]);
