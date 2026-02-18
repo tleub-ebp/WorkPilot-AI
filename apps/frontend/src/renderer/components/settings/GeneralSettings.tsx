@@ -28,6 +28,7 @@ interface GeneralSettingsProps {
   settings: AppSettings;
   onSettingsChange: (settings: AppSettings) => void;
   section: 'agent' | 'paths';
+  onOpenAccountsSettings?: () => void;
 }
 
 /**
@@ -92,7 +93,7 @@ function ToolDetectionDisplay({ info, isLoading, t }: ToolDetectionDisplayProps)
 /**
  * General settings component for agent configuration and paths
  */
-export function GeneralSettings({ settings, onSettingsChange, section }: GeneralSettingsProps) {
+export function GeneralSettings({ settings, onSettingsChange, section, onOpenAccountsSettings }: GeneralSettingsProps) {
   const { t } = useTranslation('settings');
   const [toolsInfo, setToolsInfo] = useState<{
     python: ToolDetectionResult;
@@ -137,7 +138,7 @@ export function GeneralSettings({ settings, onSettingsChange, section }: General
           title={t('general.providerSection')}
           description={t('general.providerSectionDescription')}
         >
-          <ProviderSelector />
+          <ProviderSelector onOpenAccountsSettings={onOpenAccountsSettings} />
         </SettingsSection>
 
         {/* Agent Profile Selection */}

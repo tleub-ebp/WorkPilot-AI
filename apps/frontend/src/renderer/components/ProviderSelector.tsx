@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from './ui/select';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
@@ -8,6 +8,18 @@ import { getStaticProviders } from '@shared/utils/providers';
 import { useProviderContext } from './ProviderContext';
 import { useSettingsStore } from '@/stores/settings-store';
 import { detectProvider } from '@shared/utils/provider-detection';
+import { useToast } from '@/hooks/use-toast';
+import { AlertCircle, ExternalLink } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 
 const providerIcons: Record<string, React.ReactNode> = {
   // Anthropic — logo officiel (lettre A stylisée)
@@ -119,6 +131,9 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
   const { t } = useTranslation();
   const { selectedProvider, setSelectedProvider } = useProviderContext();
   const { profiles, setActiveProfile } = useSettingsStore();
+  const { toast } = useToast();
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [pendingProvider, setPendingProvider] = useState<string>('');
 
   // Utilise le contexte si pas de props
   const selected = selectedProp || selectedProvider;
@@ -159,7 +174,10 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
 
   const handleSelect = (value: string) => {
     if (!status[value]) {
-      onOpenAccountsSettings();
+      // Trouver le provider pour afficher son nom dans le dialog
+      const provider = providers.find(p => p.name === value);
+      setPendingProvider(provider?.label || value);
+      setShowAuthDialog(true);
       return;
     }
     setSelected(value);
@@ -172,38 +190,77 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
     }
   };
 
+  const handleConfirmAuthRedirect = () => {
+    setShowAuthDialog(false);
+    onOpenAccountsSettings();
+    
+    // Afficher un toast pour informer l'utilisateur
+    toast({
+      title: t('providerSelector.authRedirect.title', 'Redirection vers les comptes'),
+      description: t('providerSelector.authRedirect.description', `Configuration de ${pendingProvider} requise`),
+      duration: 3000,
+    });
+  };
+
   return (
-    <div className="flex items-center gap-4">
-      <Label htmlFor="provider-select" className="whitespace-nowrap">
-        {t('providerSelector.label', "Fournisseur de modèle IA")}
-      </Label>
-      <Select value={selected} onValueChange={handleSelect}>
-        <SelectTrigger id="provider-select" className="w-full">
-          <SelectValue placeholder={t('providerSelector.placeholder', '-- Choisir un provider --')} />
-        </SelectTrigger>
-        <SelectContent>
-          {providers.map((p: CanonicalProvider) => (
-            <SelectItem key={p.name} value={p.name} title={p.description}>
-              <span className="flex items-center gap-2 truncate">
-                {providerIcons[p.name] || (
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label={p.label}>
-                    <title>{p.label}</title>
-                    <circle cx="10" cy="10" r="9" stroke="#BDBDBD" strokeWidth="2" fill="#F5F5F5" />
-                    <text x="50%" y="55%" textAnchor="middle" fontSize="10" fill="#BDBDBD" fontWeight="bold" dy=".3em">{capitalize(p.label.charAt(0))}</text>
-                  </svg>
-                )}
-                <span className="truncate">{p.label}</span>
-                {status[p.name] ? (
-                  <Badge variant="success">{t('providerSelector.status.ok', 'OK')}</Badge>
-                ) : (
-                  <Badge variant="warning">{t('providerSelector.status.notAuthenticated', 'Non authentifié')}</Badge>
-                )}
-              </span>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <>
+      <div className="flex items-center gap-4">
+        <Label htmlFor="provider-select" className="whitespace-nowrap">
+          {t('providerSelector.label', "Fournisseur de modèle IA")}
+        </Label>
+        <Select value={selected} onValueChange={handleSelect}>
+          <SelectTrigger id="provider-select" className="w-full">
+            <SelectValue placeholder={t('providerSelector.placeholder', '-- Choisir un provider --')} />
+          </SelectTrigger>
+          <SelectContent>
+            {providers.map((p: CanonicalProvider) => (
+              <SelectItem key={p.name} value={p.name} title={p.description}>
+                <span className="flex items-center gap-2 truncate">
+                  {providerIcons[p.name] || (
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label={p.label}>
+                      <title>{p.label}</title>
+                      <circle cx="10" cy="10" r="9" stroke="#BDBDBD" strokeWidth="2" fill="#F5F5F5" />
+                      <text x="50%" y="55%" textAnchor="middle" fontSize="10" fill="#BDBDBD" fontWeight="bold" dy=".3em">{capitalize(p.label.charAt(0))}</text>
+                    </svg>
+                  )}
+                  <span className="truncate">{p.label}</span>
+                  {status[p.name] ? (
+                    <Badge variant="success">{t('providerSelector.status.ok', 'OK')}</Badge>
+                  ) : (
+                    <Badge variant="warning">{t('providerSelector.status.notAuthenticated', 'Non authentifié')}</Badge>
+                  )}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Dialog de confirmation pour la redirection vers les comptes */}
+      <AlertDialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-amber-500" />
+              {t('providerSelector.authDialog.title', 'Authentification requise')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('providerSelector.authDialog.description', `Le fournisseur "${pendingProvider}" n'est pas encore configuré.`)}{' '}
+              {t('providerSelector.authDialog.subDescription', 'Pour utiliser ce provider, vous devez d\'abord ajouter vos clés d\'API dans la section "Comptes".')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {t('providerSelector.authDialog.cancel', 'Annuler')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmAuthRedirect} className="flex items-center gap-2">
+              <ExternalLink className="h-4 w-4" />
+              {t('providerSelector.authDialog.confirm', 'Aller aux comptes')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

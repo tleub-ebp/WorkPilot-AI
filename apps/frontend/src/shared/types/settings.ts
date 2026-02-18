@@ -308,6 +308,12 @@ export interface AppSettings {
   customProviderUrl?: string;
   customProviderApiKey?: string;
   customProviderModels?: import('../constants/models').ProviderModel[];
+  // Auto-switching settings
+  autoSwitchEnabled?: boolean;
+  proactiveEnabled?: boolean;
+  sessionThreshold?: number;
+  rateLimitEnabled?: boolean;
+  authFailureEnabled?: boolean;
 }
 
 // Auto-Claude Source Environment Configuration (for auto-claude repo .env)

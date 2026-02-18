@@ -46,6 +46,10 @@
         "save": "Enregistrer",
         "cancel": "Annuler"
       },
+      "autoSwitching": {
+        "globalTitle": "Basculement automatique des comptes",
+        "globalDescription": "Basculez automatiquement entre vos comptes selon l'utilisation et les limites de taux."
+      },
       "priorityOrder": {
         "title": "Ordre de priorité des fournisseurs",
         "up": "Monter",
@@ -542,5 +546,33 @@
     "modelAddedDesc": "{{name}} a été ajouté à la liste des modèles disponibles.",
     "modelRemoved": "Modèle supprimé",
     "modelRemovedDesc": "Le modèle a été supprimé de la liste."
+  },
+  "autoSwitching": {
+    "title": "Auto-switching",
+    "enableLabel": "Activer l'auto-switching",
+    "enableDescription": "Basculez automatiquement entre les comptes selon l'utilisation",
+    "enabled": "Auto-switching activé",
+    "disabled": "Auto-switching désactivé",
+    "enabledDescription": "Les comptes basculeront automatiquement",
+    "disabledDescription": "Les comptes ne basculeront plus automatiquement",
+    "proactiveMonitoring": "Surveillance proactive",
+    "proactiveDescription": "Bascule avant d'atteindre les limites",
+    "sessionThreshold": "Seuil de session",
+    "sessionThresholdDescription": "Bascule quand l'utilisation atteint ce pourcentage",
+    "rateLimitSwitching": "Bascule sur limite de taux",
+    "rateLimitDescription": "Changez de compte en cas de limite atteinte",
+    "authFailureSwitching": "Bascule sur échec d'auth",
+    "authFailureDescription": "Changez de compte si l'authentification échoue",
+    "priorityOrder": {
+      "title": "Ordre de priorité des comptes",
+      "description": "Définissez l'ordre dans lequel les comptes seront utilisés pour l'auto-switching"
+    },
+    "debug": {
+      "accountsFound": "Debug: {{count}} compte(s) trouvé(s)"
+    },
+    "toast": {
+      "error": "Erreur",
+      "errorDescription": "Impossible de mettre à jour les paramètres"
+    }
   }
 }

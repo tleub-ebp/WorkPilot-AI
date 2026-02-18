@@ -33,14 +33,16 @@ import {
 } from "./ui/select";
 import { cn } from "@/lib/utils";
 import type { ClaudeCodeVersionInfo, ClaudeInstallationInfo } from "@shared/types";
+import { useProjectStore } from "@/stores/project-store";
 
 interface ClaudeCodeStatusBadgeProps {
   className?: string;
+  onNavigateToTerminals?: () => void; // Ajout de la prop pour la navigation
 }
 
 type StatusType = "loading" | "installed" | "outdated" | "not-found" | "error";
 
-// Check every 24 hours
+// Check interval for version updates
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
 // Delay before re-checking version after install/update
 const VERSION_RECHECK_DELAY_MS = 5000;
@@ -49,8 +51,12 @@ const VERSION_RECHECK_DELAY_MS = 5000;
  * Claude Code CLI status badge for the sidebar.
  * Shows installation status and provides quick access to install/update.
  */
-export function ClaudeCodeStatusBadge({ className }: ClaudeCodeStatusBadgeProps) {
+export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: ClaudeCodeStatusBadgeProps) {
   const { t } = useTranslation(["common", "navigation"]);
+  const projects = useProjectStore((state) => state.projects);
+  const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
+  const currentProject = projects.find((p) => p.id === selectedProjectId);
+  const projectPath = currentProject?.path || ".";
   const [status, setStatus] = useState<StatusType>("loading");
   const [versionInfo, setVersionInfo] = useState<ClaudeCodeVersionInfo | null>(null);
   const [isInstalling, setIsInstalling] = useState(false);
@@ -189,6 +195,47 @@ export function ClaudeCodeStatusBadge({ className }: ClaudeCodeStatusBadgeProps)
         return;
       }
 
+      // Create a terminal in the app
+      if (window.electronAPI?.createTerminal) {
+        const terminalId = `claude-code-update-${Date.now()}`;
+        const terminalResult = await window.electronAPI.createTerminal({
+          id: terminalId,
+          cwd: projectPath,
+          cols: 80,
+          rows: 25,
+          projectPath: projectPath,
+        });
+        
+        if (terminalResult.success) {
+          // Small delay to let terminal initialize
+          setTimeout(() => {
+            // Send commands immediately after terminal creation
+            if (window.electronAPI?.sendTerminalInput) {
+              // Send commands with small delays to ensure proper order
+              window.electronAPI.sendTerminalInput(terminalId, "clear\n");
+              
+              setTimeout(() => {
+                window.electronAPI.sendTerminalInput(terminalId, "echo 'Starting Claude Code installation...'\n");
+                
+                setTimeout(() => {
+                  window.electronAPI.sendTerminalInput(terminalId, "claude-code install\n");
+                }, 50);
+              }, 50);
+            }
+            
+            // Navigate to terminals page after a short delay
+            setTimeout(() => {
+              setIsOpen(false);
+              if (onNavigateToTerminals) {
+                onNavigateToTerminals();
+              }
+            }, 200);
+          }, 100); // Very short delay
+        } else {
+          console.error("Failed to create terminal:", terminalResult.error);
+        }
+      }
+
       const result = await window.electronAPI.installClaudeCode();
 
       if (result.success) {
@@ -219,6 +266,47 @@ export function ClaudeCodeStatusBadge({ className }: ClaudeCodeStatusBadgeProps)
       if (!window.electronAPI?.installClaudeCodeVersion) {
         setInstallError("Version switching not available");
         return;
+      }
+
+      // Create a terminal in the app for version switch
+      if (window.electronAPI?.createTerminal) {
+        const terminalId = `claude-code-switch-${Date.now()}`;
+        const terminalResult = await window.electronAPI.createTerminal({
+          id: terminalId,
+          cwd: projectPath,
+          cols: 80,
+          rows: 25,
+          projectPath: projectPath,
+        });
+        
+        if (terminalResult.success) {
+          // Small delay to let terminal initialize
+          setTimeout(() => {
+            // Send version switch commands immediately after terminal creation
+            if (window.electronAPI?.sendTerminalInput) {
+              // Send commands with small delays to ensure proper order
+              window.electronAPI.sendTerminalInput(terminalId, "clear\n");
+              
+              setTimeout(() => {
+                window.electronAPI.sendTerminalInput(terminalId, `echo 'Switching to Claude Code version ${selectedVersion}...'\n`);
+                
+                setTimeout(() => {
+                  window.electronAPI.sendTerminalInput(terminalId, `claude-code install --version ${selectedVersion}\n`);
+                }, 50);
+              }, 50);
+            }
+            
+            // Navigate to terminals page after a short delay
+            setTimeout(() => {
+              setIsOpen(false);
+              if (onNavigateToTerminals) {
+                onNavigateToTerminals();
+              }
+            }, 200);
+          }, 100); // Very short delay
+        } else {
+          console.error("Failed to create terminal:", terminalResult.error);
+        }
       }
 
       const result = await window.electronAPI.installClaudeCodeVersion(selectedVersion);

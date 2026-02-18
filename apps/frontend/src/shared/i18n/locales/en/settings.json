@@ -1018,5 +1018,33 @@
     "modelAddedDesc": "{{name}} has been added to available models.",
     "modelRemoved": "Model Removed",
     "modelRemovedDesc": "Model has been removed from the list."
+  },
+  "autoSwitching": {
+    "title": "Auto-switching",
+    "enableLabel": "Enable auto-switching",
+    "enableDescription": "Automatically switch between accounts based on usage",
+    "enabled": "Auto-switching enabled",
+    "disabled": "Auto-switching disabled",
+    "enabledDescription": "Accounts will switch automatically",
+    "disabledDescription": "Accounts will no longer switch automatically",
+    "proactiveMonitoring": "Proactive Monitoring",
+    "proactiveDescription": "Switch before reaching limits",
+    "sessionThreshold": "Session Threshold",
+    "sessionThresholdDescription": "Switch when usage reaches this percentage",
+    "rateLimitSwitching": "Switch on Rate Limit",
+    "rateLimitDescription": "Change account when rate limit is reached",
+    "authFailureSwitching": "Switch on Auth Failure",
+    "authFailureDescription": "Change account if authentication fails",
+    "priorityOrder": {
+      "title": "Account Priority Order",
+      "description": "Define the order in which accounts will be used for auto-switching"
+    },
+    "debug": {
+      "accountsFound": "Debug: {{count}} account(s) found"
+    },
+    "toast": {
+      "error": "Error",
+      "errorDescription": "Unable to update settings"
+    }
   }
 }

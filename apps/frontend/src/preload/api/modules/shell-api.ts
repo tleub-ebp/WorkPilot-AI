@@ -8,6 +8,7 @@ import type { IPCResult } from '../../../shared/types';
 export interface ShellAPI {
   openExternal: (url: string) => Promise<void>;
   openTerminal: (dirPath: string) => Promise<IPCResult<void>>;
+  openTerminalWithCommand: (command: string) => Promise<void>;
 }
 
 /**
@@ -17,5 +18,7 @@ export const createShellAPI = (): ShellAPI => ({
   openExternal: (url: string): Promise<void> =>
     invokeIpc(IPC_CHANNELS.SHELL_OPEN_EXTERNAL, url),
   openTerminal: (dirPath: string): Promise<IPCResult<void>> =>
-    invokeIpc(IPC_CHANNELS.SHELL_OPEN_TERMINAL, dirPath)
+    invokeIpc(IPC_CHANNELS.SHELL_OPEN_TERMINAL, dirPath),
+  openTerminalWithCommand: (command: string): Promise<void> =>
+    invokeIpc(IPC_CHANNELS.SHELL_OPEN_TERMINAL_WITH_COMMAND, command)
 });

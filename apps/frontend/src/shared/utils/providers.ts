@@ -26,12 +26,12 @@ export interface ProvidersResponse {
 /** Human-readable label for each canonical provider */
 const PROVIDER_LABELS: Record<string, string> = {
   anthropic: 'Anthropic (Claude)',
-  openai: 'OpenAI',
-  google: 'Google Gemini',
+  openai: 'OpenAI (ChatGPT)',
+  google: 'Google (Gemini)',
   mistral: 'Mistral AI',
   deepseek: 'DeepSeek',
   meta: 'Meta (LLaMA)',
-  aws: 'AWS Bedrock',
+  aws: 'AWS (Bedrock)',
   ollama: 'Ollama (Local)',
 };
 
@@ -77,10 +77,16 @@ export function getStaticProviders(profiles: APIProfile[] = []): ProvidersRespon
     status[name] = name === 'anthropic' || hasProfile;
   }
 
-  // Sort: anthropic first, then rest alphabetically
+  // Sort: authenticated providers first (OK), then non-authenticated, both groups alphabetically
   providers.sort((a, b) => {
-    if (a.name === 'anthropic') return -1;
-    if (b.name === 'anthropic') return 1;
+    const aAuthenticated = status[a.name];
+    const bAuthenticated = status[b.name];
+    
+    // First sort by authentication status (authenticated first)
+    if (aAuthenticated && !bAuthenticated) return -1;
+    if (!aAuthenticated && bAuthenticated) return 1;
+    
+    // Then sort alphabetically within each group
     return a.label.localeCompare(b.label);
   });
 

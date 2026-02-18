@@ -70,12 +70,13 @@ interface AccountSettingsProps {
     id: string;
     label: string;
   };
+  showAutoSwitching?: boolean;
 }
 
 /**
  * Unified account settings with tabs for Claude Code and Custom Endpoints
  */
-export function AccountSettings({ settings, onSettingsChange, isOpen, connector }: AccountSettingsProps) {
+export function AccountSettings({ settings, onSettingsChange, isOpen, connector, showAutoSwitching = true }: AccountSettingsProps) {
   const { t } = useTranslation('settings');
   const { t: tCommon } = useTranslation('common');
   const { toast } = useToast();
@@ -163,7 +164,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector 
       case 'deepseek': return 'globalDeepSeekApiKey';
       case 'grok': return null;
       case 'ollama': return null;
-      case 'azure-openai': return 'globalAzureOpenAIApiKey';
+      case 'azure-openai': return 'globalOpenAIApiKey'; // Utiliser la même clé que OpenAI pour Azure
       default: return undefined;
     }
   };
@@ -819,7 +820,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector 
   useEffect(() => {
     if (isOpen) {
       getProviders()
-          .then(setProviders)
+          .then((response) => setProviders(response.providers || []))
           .catch((err) => {
             setProviders([]);
             setProvidersError(`Erreur lors de la récupération des providers: ${err.message}`);
@@ -1579,14 +1580,15 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector 
                             </div>
                           </div>
 
-                          {/* Account Priority Order */}
-                          <div className="pt-4 border-t border-border/50">
-                            <AccountPriorityList
+                          {showAutoSwitching && (
+                            <div className="pt-4 border-t border-border/50">
+                              <AccountPriorityList
                                 accounts={unifiedAccounts}
                                 onReorder={handlePriorityReorder}
                                 isLoading={isSavingPriority}
-                            />
-                          </div>
+                              />
+                            </div>
+                          )}
                         </>
                     )}
                   </div>
