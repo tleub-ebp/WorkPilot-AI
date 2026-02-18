@@ -107,6 +107,27 @@ export function AgentProfileSettings() {
     setCustomModelPerPhase({ spec: '', planning: '', coding: '', qa: '' });
   }, [provider]);
 
+  // Auto-initialize provider defaults when switching to a new provider
+  useEffect(() => {
+    if (!isClaude && !savedProviderModels && provider) {
+      // Initialize with default models for the new provider
+      const defaultModels = buildDefaultPhaseModelsForProvider(provider);
+      const defaultThinking = supportsThinking ? DEFAULT_PHASE_THINKING : 
+        { spec: 'none' as ThinkingLevel, planning: 'none' as ThinkingLevel, coding: 'none' as ThinkingLevel, qa: 'none' as ThinkingLevel };
+      
+      // Auto-save defaults for the new provider
+      const updates: any = {
+        providerPhaseModels: { ...(settings.providerPhaseModels || {}), [provider]: defaultModels }
+      };
+      
+      if (supportsThinking) {
+        updates.providerPhaseThinking = { ...(settings.providerPhaseThinking || {}), [provider]: defaultThinking };
+      }
+      
+      saveSettings(updates);
+    }
+  }, [provider, isClaude, supportsThinking, savedProviderModels]);
+
   /**
    * Check if current config differs from profile defaults (Claude only)
    */

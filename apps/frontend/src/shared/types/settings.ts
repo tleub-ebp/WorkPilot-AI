@@ -304,6 +304,10 @@ export interface AppSettings {
   // Sidebar collapsed state (icons only when true)
   sidebarCollapsed?: boolean;
   providerPriorityOrder?: import('../../renderer/components/settings/multiconnector/types').LLMProvider[];
+  // Configuration pour providers custom/enterprise
+  customProviderUrl?: string;
+  customProviderApiKey?: string;
+  customProviderModels?: import('../constants/models').ProviderModel[];
 }
 
 // Auto-Claude Source Environment Configuration (for auto-claude repo .env)
