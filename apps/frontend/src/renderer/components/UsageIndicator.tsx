@@ -472,6 +472,9 @@ export function UsageIndicator() {
           maxUsage >= THRESHOLD_ELEVATED ? TrendingUp :
               Activity;
 
+  // Après la récupération des labels et des valeurs d'usage
+  const isOpenAI = usage.providerName === 'openai';
+
   return (
       <Popover open={isOpen} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
@@ -488,6 +491,12 @@ export function UsageIndicator() {
                 <span className="text-xs font-semibold text-red-500" title={t('common:usage.needsReauth')}>
               !
             </span>
+            ) : isOpenAI ? (
+              <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
+                <span className="text-green-500" title="OpenAI Cost">
+                  ${formatUsageValue(usage.weeklyUsageValue)}
+                </span>
+              </div>
             ) : (
                 <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
               <span className={sessionColorClass} title={t('common:usage.sessionShort')}>
@@ -538,6 +547,24 @@ export function UsageIndicator() {
                     {t('common:usage.reauthButton')}
                   </button>
                 </div>
+            ) : isOpenAI ? (
+              <div className="py-2 space-y-3">
+                <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-primary/10 border border-primary/20">
+                  <TrendingUp className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-primary">
+                      {t('common:usage.openaiCostLabel', 'Coût OpenAI (mois en cours)')}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      {t('common:usage.openaiCostDescription', 'Le coût affiché correspond à la consommation OpenAI du mois en cours (estimation).')}<br />
+                      <a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer" className="underline text-primary">{t('common:usage.openaiDashboard', 'Voir le dashboard OpenAI')}</a>
+                    </p>
+                    <div className="mt-2 text-lg font-bold text-primary">
+                      ${formatUsageValue(usage.weeklyUsageValue)}
+                    </div>
+                  </div>
+                </div>
+              </div>
             ) : (
                 <>
                   {/* Session/5-hour usage */}

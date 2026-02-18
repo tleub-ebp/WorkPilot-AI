@@ -144,17 +144,17 @@ describe('AuthStatusIndicator', () => {
       );
     });
 
-    it('should display Claude Code badge with Lock icon for OAuth', () => {
+    it('should display Anthropic badge with Lock icon for OAuth', () => {
       renderWithProviders(<AuthStatusIndicator />);
 
-      expect(screen.getByText('Claude Code')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /authentication: claude code/i })).toBeInTheDocument();
+      expect(screen.getByText('Anthropic')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /authentication: anthropic/i })).toBeInTheDocument();
     });
 
     it('should have correct aria-label for OAuth', () => {
       renderWithProviders(<AuthStatusIndicator />);
 
-      expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Authentication: Claude Code');
+      expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Authentication: Anthropic');
     });
   });
 
@@ -165,17 +165,18 @@ describe('AuthStatusIndicator', () => {
       );
     });
 
-    it('should display API Key badge with Key icon for API profile', () => {
+    it('should display provider name badge with Key icon for API profile', () => {
       renderWithProviders(<AuthStatusIndicator />);
 
-      expect(screen.getByText('API Key')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /authentication: api key/i })).toBeInTheDocument();
+      // Badge shows the provider name detected from baseUrl, not "API Key"
+      expect(screen.getByText('Anthropic')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /authentication: anthropic/i })).toBeInTheDocument();
     });
 
     it('should have correct aria-label for profile', () => {
       renderWithProviders(<AuthStatusIndicator />);
 
-      expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Authentication: API Key');
+      expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Authentication: Anthropic');
     });
   });
 
@@ -186,34 +187,35 @@ describe('AuthStatusIndicator', () => {
       );
     });
 
-    it('should fallback to OAuth (Claude Code) when profile not found', () => {
+    it('should fallback to OAuth (Anthropic) when profile not found', () => {
       renderWithProviders(<AuthStatusIndicator />);
 
-      expect(screen.getByText('Claude Code')).toBeInTheDocument();
+      // Falls back to Anthropic provider label
+      expect(screen.getByText('Anthropic')).toBeInTheDocument();
     });
   });
 
   describe('provider detection for different API profiles', () => {
-    it('should display API Key badge for Ollama profile', () => {
+    it('should display Ollama badge for Ollama profile', () => {
       vi.mocked(useSettingsStore).mockReturnValue(
         createUseSettingsStoreMock({ activeProfileId: 'profile-3' })
       );
 
       renderWithProviders(<AuthStatusIndicator />);
 
-      expect(screen.getByText('API Key')).toBeInTheDocument();
-      expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Authentication: API Key');
+      expect(screen.getByText('Ollama')).toBeInTheDocument();
+      expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Authentication: Ollama');
     });
 
-    it('should display API Key badge for Ollama Local profile', () => {
+    it('should display Ollama (Local) badge for Ollama Local profile', () => {
       vi.mocked(useSettingsStore).mockReturnValue(
         createUseSettingsStoreMock({ activeProfileId: 'profile-4' })
       );
 
       renderWithProviders(<AuthStatusIndicator />);
 
-      expect(screen.getByText('API Key')).toBeInTheDocument();
-      expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Authentication: API Key');
+      expect(screen.getByText('Ollama (Local)')).toBeInTheDocument();
+      expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Authentication: Ollama (Local)');
     });
 
     it('should apply correct color classes for each provider', () => {
