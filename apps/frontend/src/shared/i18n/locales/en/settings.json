@@ -406,6 +406,14 @@
     "resetToProfileDefaults": "Reset to {{profile}} defaults",
     "customized": "Customized",
     "phaseConfigNote": "These settings will be used as defaults when creating new tasks with this profile. You can override them per-task in the task creation wizard.",
+    "profilesInfoProvider": "Configure the model used for each pipeline phase. Settings are saved per provider and will be restored when you switch back.",
+    "activeProvider": "Active provider: {{provider}}",
+    "flagshipModel": "Flagship model: {{model}}",
+    "tierFlagship": "Flagship",
+    "supportsThinking": "Thinking",
+    "resetToProviderDefaults": "Reset to provider defaults",
+    "phaseConfigNoteProvider": "These model settings apply to the {{provider}} provider. They are saved independently and restored when you switch back to this provider.",
+    "customModelPlaceholder": "Enter model name (e.g. llama3.3:latest)",
     "phases": {
       "spec": {
         "label": "Spec Creation",
