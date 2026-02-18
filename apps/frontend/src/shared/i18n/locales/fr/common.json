@@ -485,7 +485,10 @@
     "sessionShort": "Utilisation session 5 heures",
     "weeklyShort": "Utilisation hebdomadaire 7 jours",
     "swap": "Changer",
-    "noProfileForProvider": "Aucun profil configuré pour le fournisseur {{provider}}."
+    "noProfileForProvider": "Aucun profil configuré pour le fournisseur {{provider}}.",
+    "openaiCostLabel": "Coût OpenAI (mois en cours)",
+    "openaiCostDescription": "Le coût affiché correspond à la consommation OpenAI du mois en cours (estimation).",
+    "openaiDashboard": "Voir le dashboard OpenAI"
   },
   "oauth": {
     "enterCode": "Saisie manuelle du code (secours)",

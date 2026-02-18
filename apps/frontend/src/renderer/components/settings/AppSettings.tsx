@@ -109,6 +109,7 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
   const { t } = useTranslation('settings');
   const { settings, setSettings, isSaving, error, saveSettings, revertTheme, commitTheme } = useSettings();
   const [version, setVersion] = useState<string>('');
+  const [connectors, setConnectors] = useState<Array<{ id: string, label: string }>>([]);
 
   // Project state (déclaré avant tout usage)
   const projects = useProjectStore((state) => state.projects);
@@ -166,6 +167,11 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
     } else {
       setProjectError(null);
     }
+  }, []);
+
+  // Load connectors on mount
+  useEffect(() => {
+    getAllConnectors().then(setConnectors);
   }, []);
 
   const handleSave = async () => {

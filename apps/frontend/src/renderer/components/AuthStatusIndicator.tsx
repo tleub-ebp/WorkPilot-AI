@@ -1,5 +1,5 @@
 /**
- * AuthStatusIndicator - Display current authentication method in header
+ * AuthStatusIndicator - Display a current authentication method in header
  *
  * Shows the active authentication method and provider:
  * - OAuth: Shows "OAuth Anthropic" with Lock icon
@@ -22,10 +22,10 @@ import {
   TooltipTrigger,
 } from './ui/tooltip';
 import { useTranslation } from 'react-i18next';
-import { useSettingsStore } from '../stores/settings-store';
-import { detectProvider, getProviderLabel, getProviderBadgeColor, type ApiProvider } from '../../shared/utils/provider-detection';
-import { formatTimeRemaining, localizeUsageWindowLabel, hasHardcodedText } from '../../shared/utils/format-time';
-import type { ClaudeUsageSnapshot } from '../../shared/types/agent';
+import { useSettingsStore } from '@/stores/settings-store';
+import { detectProvider, getProviderLabel, getProviderBadgeColor, type ApiProvider } from '@shared/utils/provider-detection';
+import { formatTimeRemaining, localizeUsageWindowLabel, hasHardcodedText } from '@shared/utils/format-time';
+import type { ClaudeUsageSnapshot } from '@shared/types';
 import { useProviderContext } from './ProviderContext';
 
 /**
