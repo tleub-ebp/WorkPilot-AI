@@ -488,7 +488,12 @@
     "noProfileForProvider": "Aucun profil configuré pour le fournisseur {{provider}}.",
     "openaiCostLabel": "Coût OpenAI (mois en cours)",
     "openaiCostDescription": "Le coût affiché correspond à la consommation OpenAI du mois en cours (estimation).",
-    "openaiDashboard": "Voir le dashboard OpenAI"
+    "openaiDashboard": "Voir le dashboard OpenAI",
+    "providerNotSupported": "Ce fournisseur ne propose pas d’API de suivi de consommation ou n’est pas encore supporté.",
+    "openaiHelp": {
+      "text": "Vérifiez que votre clé API OpenAI est liée à une organisation avec facturation.",
+      "link": "Voir le dashboard OpenAI"
+    }
   },
   "oauth": {
     "enterCode": "Saisie manuelle du code (secours)",

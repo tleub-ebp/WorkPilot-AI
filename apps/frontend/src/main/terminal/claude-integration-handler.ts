@@ -1176,7 +1176,7 @@ export function invokeClaude(
  *
  * Uses `claude --continue` which resumes the most recent conversation in the
  * current directory. This is simpler and more reliable than tracking session IDs,
- * since Auto Claude already restores terminals to their correct cwd/projectPath.
+ * since WorkPilot AI already restores terminals to their correct cwd/projectPath.
  *
  * Note: The sessionId parameter is kept for backwards compatibility but is ignored.
  * Claude Code's --resume flag expects user-named sessions (set via /rename), not

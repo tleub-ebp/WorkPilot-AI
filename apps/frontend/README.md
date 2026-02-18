@@ -1,6 +1,6 @@
-# Auto Claude UI - Frontend
+# WorkPilot AI UI - Frontend
 
-A modern Electron + React desktop application for the Auto Claude autonomous coding framework.
+A modern Electron + React desktop application for the WorkPilot AI autonomous coding framework.
 
 ## Prerequisites
 

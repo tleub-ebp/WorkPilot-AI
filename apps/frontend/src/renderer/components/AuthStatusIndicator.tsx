@@ -51,7 +51,7 @@ const OAUTH_FALLBACK = {
 } as const;
 
 export function AuthStatusIndicator() {
-  // Subscribe to profile state from settings store
+  // Subscribe to a profile state from the settings store
   const { profiles, activeProfileId } = useSettingsStore();
   const { t } = useTranslation(['common']);
   const { selectedProvider } = useProviderContext();

@@ -1140,7 +1140,7 @@ async def run_autonomous_agent(
                 print("=" * 70)
                 print()
                 print("OAuth token is invalid or expired.")
-                print("Please re-authenticate in the Auto Claude settings.")
+                print("Please re-authenticate in the WorkPilot AI settings.")
                 print()
                 print("The task will automatically resume once you re-authenticate.")
                 print()

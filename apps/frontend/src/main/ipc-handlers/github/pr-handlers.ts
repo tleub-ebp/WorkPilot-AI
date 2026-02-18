@@ -1808,7 +1808,7 @@ export function registerPRHandlers(getMainWindow: () => BrowserWindow | null): v
 
           if (options?.forceApprove) {
             // Auto-approve format: clean approval message with optional suggestions
-            body = `## ✅ Auto Claude Review - APPROVED\n\n`;
+            body = `## ✅ WorkPilot AI Review - APPROVED\n\n`;
             body += `**Status:** Ready to Merge\n\n`;
             body += `**Summary:** ${result.summary}\n\n`;
 

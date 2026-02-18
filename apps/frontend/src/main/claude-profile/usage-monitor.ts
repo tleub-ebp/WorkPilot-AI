@@ -430,9 +430,14 @@ export class UsageMonitor extends EventEmitter {
         continue;
       }
 
-      // For active profile, use the current detailed usage (always fresh from last poll)
+      // For active profile, use the current detailed usage (always fresh from the last poll)
       if (profile.id === activeProfileId && this.currentUsage) {
-        const summary = this.buildProfileUsageSummary(profile, this.currentUsage);
+        const summary = this.buildProfileUsageSummary({
+          id: profile.id,
+          name: profile.name,
+          email: profile.email || '',
+          isAuthenticated: profile.isAuthenticated
+        }, this.currentUsage);
         profileResults[i] = summary;
         this.allProfilesUsageCache.set(profile.id, {usage: summary, fetchedAt: now});
         continue;
@@ -674,7 +679,7 @@ export class UsageMonitor extends EventEmitter {
    * Build a ProfileUsageSummary from a ClaudeUsageSnapshot
    */
   private buildProfileUsageSummary(
-      profile: { id: string; name: string; email?: string; isAuthenticated?: boolean },
+      profile: { id: string; name: string; email: string; isAuthenticated?: boolean },
       usage: ClaudeUsageSnapshot
   ): ProfileUsageSummary {
     const profileManager = getClaudeProfileManager();
@@ -889,7 +894,7 @@ export class UsageMonitor extends EventEmitter {
 
       // Step 2: Fetch current usage (pass activeProfile for consistency)
       const credential = await this.getCredential();
-      const usage = await this.fetchUsage(profileId, credential, activeProfile);
+      const usage = await this.fetchUsage(profileId, credential, activeProfile, isAPIProfile ? undefined : activeProfile.baseUrl);
       if (!usage) {
         this.debugLog('[UsageMonitor] Failed to fetch usage');
         return;
@@ -1192,7 +1197,8 @@ export class UsageMonitor extends EventEmitter {
   private async fetchUsage(
       profileId: string,
       credential?: string,
-      activeProfile?: ActiveProfileResult
+      activeProfile?: ActiveProfileResult,
+      providerName?: string
   ): Promise<ClaudeUsageSnapshot | null> {
     // Get profile name and email - prefer activeProfile since it's already determined
     // This fixes the bug where API profile names were incorrectly shown for OAuth profiles
@@ -1213,7 +1219,11 @@ export class UsageMonitor extends EventEmitter {
     if (!profileName) {
       try {
         const profilesFile = await loadProfilesFile();
-        const apiProfile = profilesFile.profiles.find(p => p.id === profileId);
+        const apiProfile = profilesFile.profiles.find(p => {
+          const detected = detectProvider(p.baseUrl);
+          console.warn('[DEBUG] Provider detection:', { baseUrl: p.baseUrl, detected, providerName });
+          return detected === providerName;
+        });
         if (apiProfile) {
           profileName = apiProfile.name;
           this.debugLog('[UsageMonitor:FETCH] Found API profile:', {
@@ -1221,6 +1231,8 @@ export class UsageMonitor extends EventEmitter {
             profileName,
             baseUrl: apiProfile.baseUrl
           });
+        } else {
+          console.warn('[DEBUG] Aucun profil trouvé pour le provider recherché:', providerName);
         }
       } catch (error) {
         // Failed to load API profiles, continue to OAuth check
@@ -1839,11 +1851,24 @@ export class UsageMonitor extends EventEmitter {
   async getUsageForProvider(providerName: string): Promise<ClaudeUsageSnapshot | null> {
     this.debugLog('[UsageMonitor:getUsageForProvider] Fetching usage for provider:', providerName);
 
+    // DEBUG: Exporter la liste des profils détectés et leur provider pour la popin
+    try {
+      const profilesFile = await loadProfilesFile();
+      if (typeof window !== 'undefined') {
+        (window as any).debugProfiles = profilesFile.profiles.map((p: any) => ({
+          name: p.name,
+          baseUrl: p.baseUrl,
+          detectedProvider: detectProvider(p.baseUrl)
+        }));
+      }
+    } catch {}
+
     // Step 1: Search API profiles first (profiles.json) — these cover anthropic, openai, ollama API key profiles
     try {
       const profilesFile = await loadProfilesFile();
       const apiProfile = profilesFile.profiles.find(p => {
         const detected = detectProvider(p.baseUrl);
+        console.warn('[DEBUG] Provider detection:', { baseUrl: p.baseUrl, detected, providerName });
         return detected === providerName;
       });
 
@@ -1948,28 +1973,31 @@ export class UsageMonitor extends EventEmitter {
       const day = String(now.getDate()).padStart(2, '0');
       const startDate = `${year}-${month}-01`;
       const endDate = `${year}-${month}-${day}`;
+      const usageUrl = `https://api.openai.com/v1/dashboard/billing/usage?start_date=${startDate}&end_date=${endDate}`;
 
-      const costsUrl = `https://api.openai.com/v1/organization/costs?start_date=${startDate}&end_date=${endDate}`;
-
-      const costsResp = await fetch(costsUrl, {
+      const usageResp = await fetch(usageUrl, {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         }
       });
 
-      if (!costsResp.ok) {
-        this.debugLog('[UsageMonitor:OpenAI] Failed to fetch costs:', costsResp.status);
+      if (!usageResp.ok) {
+        this.debugLog('[UsageMonitor:OpenAI] Failed to fetch usage - STATUS:', usageResp.status);
+        this.debugLog('[UsageMonitor:OpenAI] Failed to fetch usage - TEXT:', await usageResp.text());
+        // Ajout d'un champ d'erreur pour l'UI
+        (globalThis as any).lastOpenAIUsageError = `HTTP ${usageResp.status}: ${(await usageResp.text())}`;
         return null;
       }
 
-      const costsData = await costsResp.json();
-      const totalCost = Array.isArray(costsData.data)
-          ? costsData.data.reduce((sum: number, d: any) => sum + (d.cost || 0), 0)
-          : 0;
+      const usageData = await usageResp.json();
+      if (typeof usageData.total_usage !== 'number') {
+        this.debugLog('[UsageMonitor:OpenAI] API response missing total_usage:', JSON.stringify(usageData));
+        (globalThis as any).lastOpenAIUsageError = 'La réponse OpenAI ne contient pas de total_usage. Vérifiez que votre clé API est liée à une organisation avec facturation.';
+        return null;
+      }
+      const totalCost = usageData.total_usage / 100;
 
-      // Normalize to ClaudeUsageSnapshot format
-      // OpenAI doesn't have session/weekly limits like Anthropic, so we show cost info
       return {
         sessionPercent: 0,
         weeklyPercent: 0,
@@ -1985,6 +2013,7 @@ export class UsageMonitor extends EventEmitter {
       };
     } catch (error) {
       this.debugLog('[UsageMonitor:OpenAI] Error fetching usage:', error);
+      (globalThis as any).lastOpenAIUsageError = String(error);
       return null;
     }
   }

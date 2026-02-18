@@ -53,7 +53,7 @@ lerna-debug.log*
 .worktrees/
 
 # ===========================
-# Auto Claude Generated
+# WorkPilot AI Generated
 # ===========================
 .auto-claude/
 .planning/

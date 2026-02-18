@@ -1,8 +1,8 @@
 """
-Auto Claude CLI - Main Entry Point
+WorkPilot AI CLI - Main Entry Point
 ===================================
 
-Command-line interface for the Auto Claude autonomous coding framework.
+Command-line interface for the WorkPilot AI autonomous coding framework.
 """
 
 import argparse
@@ -54,7 +54,7 @@ if str(_PARENT_DIR) not in sys.path:
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Auto Claude Framework - Autonomous multi-session coding agent",
+        description="WorkPilot AI Framework - Autonomous multi-session coding agent",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

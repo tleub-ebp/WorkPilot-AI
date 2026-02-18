@@ -1,50 +1,50 @@
 # Release Process
 
-This document describes how releases are created for Auto Claude.
+This document describes how releases are created for WorkPilot AI.
 
 ## Overview
 
-Auto Claude uses an automated release pipeline that ensures releases are only published after all builds succeed. This prevents version mismatches between documentation and actual releases.
+WorkPilot AI uses an automated release pipeline that ensures releases are only published after all builds succeed. This prevents version mismatches between documentation and actual releases.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           RELEASE FLOW                                       │
+│                           RELEASE FLOW                                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│   develop branch                    main branch                              │
-│   ──────────────                    ───────────                              │
-│        │                                 │                                   │
-│        │  1. bump-version.js             │                                   │
-│        │     (creates commit)            │                                   │
-│        │                                 │                                   │
-│        ▼                                 │                                   │
-│   ┌─────────┐                           │                                   │
-│   │ v2.8.0  │  2. Create PR             │                                   │
-│   │ commit  │ ────────────────────►     │                                   │
-│   └─────────┘                           │                                   │
-│                                          │                                   │
-│                           3. Merge PR    ▼                                   │
-│                                    ┌──────────┐                              │
-│                                    │ v2.8.0   │                              │
-│                                    │ on main  │                              │
-│                                    └────┬─────┘                              │
-│                                         │                                    │
+│                                                                             │
+│   develop branch                    main branch                             │
+│   ──────────────                    ───────────                             │
+│        │                                 │                                  │
+│        │  1. bump-version.js             │                                  │
+│        │     (creates commit)            │                                  │
+│        │                                 │                                  │
+│        ▼                                 │                                  │
+│   ┌─────────┐                            │                                  │
+│   │ v2.8.0  │  2. Create PR              │                                  │
+│   │ commit  │ ────────────────────►      │                                  │
+│   └─────────┘                            │                                  │
+│                                          │                                  │
+│                           3. Merge PR    ▼                                  │
+│                                    ┌──────────┐                             │
+│                                    │ v2.8.0   │                             │
+│                                    │ on main  │                             │
+│                                    └────┬─────┘                             │
+│                                         │                                   │
 │                     ┌───────────────────┴───────────────────┐               │
-│                     │     GitHub Actions (automatic)         │               │
+│                     │     GitHub Actions (automatic)        │               │
 │                     ├───────────────────────────────────────┤               │
-│                     │ 4. prepare-release.yml                 │               │
-│                     │    - Detects version > latest tag      │               │
-│                     │    - Creates tag v2.8.0                │               │
-│                     │                                        │               │
-│                     │ 5. release.yml (triggered by tag)      │               │
-│                     │    - Builds macOS (Intel + ARM)        │               │
-│                     │    - Builds Windows                    │               │
-│                     │    - Builds Linux                      │               │
-│                     │    - Generates changelog               │               │
-│                     │    - Creates GitHub release            │               │
-│                     │    - Updates README                    │               │
+│                     │ 4. prepare-release.yml                │               │
+│                     │    - Detects version > latest tag     │               │
+│                     │    - Creates tag v2.8.0               │               │
+│                     │                                       │               │
+│                     │ 5. release.yml (triggered by tag)     │               │
+│                     │    - Builds macOS (Intel + ARM)       │               │
+│                     │    - Builds Windows                   │               │
+│                     │    - Builds Linux                     │               │
+│                     │    - Generates changelog              │               │
+│                     │    - Creates GitHub release           │               │
+│                     │    - Updates README                   │               │
 │                     └───────────────────────────────────────┘               │
-│                                                                              │
+│                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 

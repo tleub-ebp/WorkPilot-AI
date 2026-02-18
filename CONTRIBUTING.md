@@ -56,7 +56,7 @@ All contributors must sign our Contributor License Agreement (CLA) before contri
 
 ### Why We Require a CLA
 
-Auto Claude is currently licensed under AGPL-3.0. The CLA ensures the project has proper licensing flexibility should we introduce additional licensing options (such as commercial/enterprise licenses) in the future.
+WorkPilot AI is currently licensed under AGPL-3.0. The CLA ensures the project has proper licensing flexibility should we introduce additional licensing options (such as commercial/enterprise licenses) in the future.
 
 You retain full copyright ownership of your contributions.
 
@@ -210,7 +210,7 @@ npm run test:backend   # Run Python tests
 <details>
 <summary><b>Windows users:</b> If installation fails with node-gyp errors, click here</summary>
 
-Auto Claude automatically downloads prebuilt binaries for Windows. If prebuilts aren't available for your Electron version yet, you'll need Visual Studio Build Tools:
+WorkPilot AI automatically downloads prebuilt binaries for Windows. If prebuilts aren't available for your Electron version yet, you'll need Visual Studio Build Tools:
 
 1. Download [Visual Studio Build Tools 2022](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
 2. Select "Desktop development with C++" workload
@@ -488,7 +488,7 @@ We use a **Git Flow** branching strategy to manage releases and parallel develop
 
 ### Working with Forks
 
-When contributing to Auto Claude, you'll typically fork the repository first. Proper fork configuration is essential to avoid sync issues.
+When contributing to WorkPilot AI, you'll typically fork the repository first. Proper fork configuration is essential to avoid sync issues.
 
 #### Initial Fork Setup
 
@@ -874,7 +874,7 @@ When reporting a bug, include:
    - OS and version
    - Python version
    - Node.js version (for UI issues)
-   - Auto Claude version
+   - WorkPilot AI version
 3. **Steps to reproduce** the issue
 4. **Expected behavior** vs **actual behavior**
 5. **Error messages** or logs (if applicable)
@@ -891,7 +891,7 @@ When requesting a feature:
 
 ## Architecture Overview
 
-Auto Claude consists of two main parts:
+WorkPilot AI consists of two main parts:
 
 ### Python Backend (`apps/backend/`)
 
@@ -922,4 +922,4 @@ If you have questions about contributing, feel free to:
 1. Open a GitHub issue with the `question` label
 2. Review existing issues and discussions
 
-Thank you for contributing to Auto Claude!
+Thank you for contributing to WorkPilot AI!

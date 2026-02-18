@@ -380,7 +380,7 @@ async def test_ollama_embeddings() -> bool:
         print("  Generating test embedding...")
 
         test_text = (
-            "This is a test embedding for Auto Claude memory system using LadybugDB."
+            "This is a test embedding for WorkPilot AI memory system using LadybugDB."
         )
 
         resp = requests.post(

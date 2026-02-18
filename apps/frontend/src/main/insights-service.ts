@@ -121,10 +121,10 @@ export class InsightsService extends EventEmitter {
     // Cancel any existing session
     this.executor.cancelSession(projectId);
 
-    // Validate auto-claude source
+    // Validate WorkPilot AI source
     const autoBuildSource = this.config.getAutoBuildSourcePath();
     if (!autoBuildSource) {
-      this.emit('error', projectId, 'Auto Claude source not found');
+      this.emit('error', projectId, 'WorkPilot AI source not found');
       return;
     }
 

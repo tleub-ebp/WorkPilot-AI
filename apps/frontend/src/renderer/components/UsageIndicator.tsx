@@ -203,7 +203,7 @@ export function UsageIndicator() {
       const result = await window.electronAPI.setActiveClaudeProfile(profileId);
       if (result.success) {
         // Fetch fresh data in the background (will update via event listeners)
-        window.electronAPI.requestUsageUpdate();
+        await window.electronAPI.requestUsageUpdate();
         window.electronAPI.requestAllProfilesUsage?.();
 
         // If the profile needs re-authentication, open Settings > Accounts
@@ -381,61 +381,138 @@ export function UsageIndicator() {
 
   // Show unavailable state - with better messaging based on cause
   if (!isAvailable || !usage) {
-    // Check if it's a re-auth issue (better UX than generic "not supported")
     const needsReauth = activeProfileNeedsReauth;
-
-    return (
+    // Debug OpenAI
+    if (selectedProvider?.toLowerCase() === 'openai') {
+      let debugProfiles = [];
+      if (typeof window !== 'undefined' && (window as any).debugProfiles) {
+        debugProfiles = (window as any).debugProfiles;
+      }
+      const openaiError = typeof window !== 'undefined' ? (window as any).lastOpenAIUsageError : undefined;
+      return (
         <TooltipProvider delayDuration={200}>
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border cursor-help ${
-                      needsReauth
-                          ? 'bg-red-500/10 border-red-500/20 text-red-500'
-                          : 'bg-muted/50 text-muted-foreground'
-                  }`}
-                  aria-label={needsReauth ? t('common:usage.reauthRequired') : t('common:usage.dataUnavailable')}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground"
+                aria-label={t('common:usage.dataUnavailable')}
               >
-                {needsReauth ? (
-                    <>
-                      <AlertCircle className="h-3.5 w-3.5" />
-                      <span className="text-xs font-semibold">!</span>
-                    </>
-                ) : (
-                    <>
-                      <Activity className="h-3.5 w-3.5" />
-                      <span className="text-xs font-semibold">{t('common:usage.notAvailable')}</span>
-                    </>
-                )}
+                <Activity className="h-3.5 w-3.5" />
+                <span className="text-xs font-semibold">{t('common:usage.dataUnavailable')}</span>
               </button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs w-64">
+            <TooltipContent side="bottom" className="text-xs w-80">
               <div className="space-y-1">
-                {needsReauth ? (
-                    <>
-                      <p className="font-medium text-red-500">{t('common:usage.reauthRequired')}</p>
-                      <p className="text-muted-foreground text-[10px]">
-                        {t('common:usage.reauthRequiredDescription')}
-                      </p>
-                      <button
-                          onClick={handleOpenAccounts}
-                          className="text-[10px] text-primary mt-1 font-medium underline hover:text-primary/80 cursor-pointer"
-                      >
-                        {t('common:usage.clickToOpenSettings')}
-                      </button>
-                    </>
-                ) : (
-                    <>
-                      <p className="font-medium">{t('common:usage.dataUnavailable')}</p>
-                      <p className="text-muted-foreground text-[10px]">
-                        {t('common:usage.dataUnavailableDescription')}
-                      </p>
-                    </>
+                <p className="font-medium">{t('common:usage.dataUnavailable')}</p>
+                <p className="text-muted-foreground text-[10px]">
+                  <span>
+                    {t('common:usage.openaiHelp.text')}{' '}
+                    <a
+                      href="https://platform.openai.com/usage"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-bold"
+                    >
+                      {t('common:usage.openaiHelp.link')}
+                    </a>
+                  </span>
+                </p>
+                {openaiError && (
+                  <div className="mt-2 p-1 bg-red-50 border border-red-200 rounded text-[10px] text-red-700">
+                    <b>{t('common:usage.openaiError')}</b> {openaiError}
+                  </div>
                 )}
+                <div className="mt-2 p-1 bg-muted/30 rounded text-[10px]">
+                  <b>{t('common:usage.debugProfiles')}</b>
+                  <ul>
+                    {debugProfiles.length > 0 ? debugProfiles.map((p: any, i: number) => (
+                      <li key={i}>{p.name} | {p.baseUrl} | provider: {p.detectedProvider}</li>
+                    )) : <li>{t('common:usage.noProfileDetected')}</li>}
+                  </ul>
+                  <div dangerouslySetInnerHTML={{ __html: t('common:usage.selectedProvider', {provider: selectedProvider}) }} />
+                </div>
               </div>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+      );
+    }
+
+    // Provider non supporté
+    if (selectedProvider && !['anthropic', 'claude', 'openai'].includes(selectedProvider.toLowerCase())) {
+      return (
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground"
+                aria-label={t('common:usage.dataUnavailable')}
+              >
+                <Activity className="h-3.5 w-3.5" />
+                <span className="text-xs font-semibold">{t('common:usage.notAvailable')}</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs w-64">
+              <div className="space-y-1">
+                <p className="font-medium">{t('common:usage.dataUnavailable')}</p>
+                <p className="text-muted-foreground text-[10px]">
+                  {t('common:usage.providerNotSupported', 'Ce fournisseur ne propose pas d’API de suivi de consommation ou n’est pas encore supporté.')}
+                </p>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    // Re-authentification nécessaire
+    if (needsReauth) {
+      return (
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground">
+                <AlertCircle className="h-3.5 w-3.5" />
+                <span className="text-xs font-semibold">!</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs w-64">
+              <div className="space-y-1">
+                <p className="font-medium text-red-500">{t('common:usage.reauthRequired')}</p>
+                <p className="text-muted-foreground text-[10px]">
+                  {t('common:usage.reauthRequiredDescription')}
+                </p>
+                <button
+                  onClick={handleOpenAccounts}
+                  className="text-[10px] text-primary mt-1 font-medium underline hover:text-primary/80 cursor-pointer"
+                >
+                  {t('common:usage.clickToOpenSettings')}
+                </button>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    // Fallback générique
+    return (
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground">
+              <Activity className="h-3.5 w-3.5" />
+              <span className="text-xs font-semibold">{t('common:usage.notAvailable')}</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs w-64">
+            <div className="space-y-1">
+              <p className="font-medium">{t('common:usage.dataUnavailable')}</p>
+              <p className="text-muted-foreground text-[10px]">
+                {t('common:usage.dataUnavailableDescription')}
+              </p>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
 
