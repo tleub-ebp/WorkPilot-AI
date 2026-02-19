@@ -9,8 +9,15 @@ memory updates, recovery tracking, and Linear integration.
 import logging
 import re
 from pathlib import Path
+from typing import Any, Union
 
-from claude_agent_sdk import ClaudeSDKClient
+# Make claude_agent_sdk optional for testing and provider-agnostic mode
+try:
+    from claude_agent_sdk import ClaudeSDKClient
+except ImportError:
+    ClaudeSDKClient = None  # type: ignore[assignment,misc]
+
+from core.agent_client import AgentClient, ClaudeAgentClient, ContentBlockType
 from debug import debug, debug_detailed, debug_error, debug_section, debug_success
 from insight_extractor import extract_session_insights
 from linear_updater import (
@@ -423,17 +430,22 @@ async def post_session_processing(
 
 
 async def run_agent_session(
-    client: ClaudeSDKClient,
+    client: Union["ClaudeSDKClient", AgentClient, Any],
     message: str,
     spec_dir: Path,
     verbose: bool = False,
     phase: LogPhase = LogPhase.CODING,
 ) -> tuple[str, str, dict]:
     """
-    Run a single agent session using Claude Agent SDK.
+    Run a single agent session using Claude Agent SDK or any AgentClient provider.
+
+    This function accepts both raw ClaudeSDKClient instances (backward compatible)
+    and wrapped AgentClient instances (provider-agnostic). If an AgentClient is
+    passed, the normalized AgentMessage stream is used; otherwise the raw SDK
+    message stream is consumed directly.
 
     Args:
-        client: Claude SDK client
+        client: Claude SDK client or AgentClient instance
         message: The prompt to send
         spec_dir: Spec directory path
         verbose: Whether to show detailed output
@@ -448,6 +460,10 @@ async def run_agent_session(
             - "message": Error message string
             - "exception_type": Exception class name string
     """
+    # If client is an AgentClient, delegate to the provider-agnostic session runner
+    if isinstance(client, AgentClient):
+        return await _run_agent_client_session(client, message, spec_dir, verbose, phase)
+
     debug_section("session", f"Agent Session - {phase.value}")
     debug(
         "session",
@@ -695,6 +711,255 @@ async def run_agent_session(
         elif is_auth:
             print("\n⚠️  Authentication error")
             print("   OAuth token may be invalid or expired")
+            print(f"   Error: {sanitized_error[:200]}\n")
+        else:
+            print(f"Error during agent session: {sanitized_error}")
+
+        if task_logger:
+            task_logger.log_error(f"Session error: {sanitized_error}", phase)
+
+        error_info = {
+            "type": error_type,
+            "message": sanitized_error,
+            "exception_type": type(e).__name__,
+        }
+        return "error", sanitized_error, error_info
+
+
+# =============================================================================
+# Provider-Agnostic Session Runner
+# =============================================================================
+
+
+async def _run_agent_client_session(
+    client: AgentClient,
+    message: str,
+    spec_dir: Path,
+    verbose: bool = False,
+    phase: LogPhase = LogPhase.CODING,
+) -> tuple[str, str, dict]:
+    """
+    Run a single agent session using any AgentClient provider.
+
+    This is the provider-agnostic equivalent of run_agent_session().
+    It processes normalized AgentMessage objects instead of raw SDK messages.
+
+    Args:
+        client: AgentClient instance (ClaudeAgentClient or CopilotAgentClient)
+        message: The prompt to send
+        spec_dir: Spec directory path
+        verbose: Whether to show detailed output
+        phase: Current execution phase for logging
+
+    Returns:
+        (status, response_text, error_info) — same contract as run_agent_session()
+    """
+    provider = client.provider_name()
+    debug_section("session", f"Agent Session [{provider}] - {phase.value}")
+    debug(
+        "session",
+        f"Starting {provider} agent session",
+        spec_dir=str(spec_dir),
+        phase=phase.value,
+        prompt_length=len(message),
+        prompt_preview=message[:200] + "..." if len(message) > 200 else message,
+    )
+    print(f"Sending prompt to {provider} agent...\n")
+
+    task_logger = get_task_logger(spec_dir)
+    current_tool = None
+    message_count = 0
+    tool_count = 0
+
+    try:
+        debug("session", f"Sending query to {provider}...")
+        await client.query(message)
+        debug_success("session", "Query sent successfully")
+
+        response_text = ""
+        debug("session", "Starting to receive response stream...")
+
+        async for agent_msg in client.receive_response():
+            message_count += 1
+            debug_detailed(
+                "session",
+                f"Received message #{message_count}",
+                msg_type=agent_msg.type_name,
+            )
+
+            for block in agent_msg.content:
+                if block.type == ContentBlockType.TEXT and block.text:
+                    response_text += block.text
+                    print(block.text, end="", flush=True)
+                    if task_logger and block.text.strip():
+                        task_logger.log(
+                            block.text,
+                            LogEntryType.TEXT,
+                            phase,
+                            print_to_console=False,
+                        )
+
+                elif block.type == ContentBlockType.TOOL_USE:
+                    tool_name = block.tool_name or ""
+                    tool_count += 1
+                    tool_input_display = None
+                    inp = block.tool_input or {}
+
+                    if inp:
+                        if "pattern" in inp:
+                            tool_input_display = f"pattern: {inp['pattern']}"
+                        elif "file_path" in inp:
+                            fp = inp["file_path"]
+                            if len(fp) > 50:
+                                fp = "..." + fp[-47:]
+                            tool_input_display = fp
+                        elif "command" in inp:
+                            cmd = inp["command"]
+                            if len(cmd) > 50:
+                                cmd = cmd[:47] + "..."
+                            tool_input_display = cmd
+                        elif "path" in inp:
+                            tool_input_display = inp["path"]
+
+                    debug(
+                        "session",
+                        f"Tool call #{tool_count}: {tool_name}",
+                        tool_input=tool_input_display,
+                    )
+
+                    if task_logger:
+                        task_logger.tool_start(
+                            tool_name,
+                            tool_input_display,
+                            phase,
+                            print_to_console=True,
+                        )
+                    else:
+                        print(f"\n[Tool: {tool_name}]", flush=True)
+
+                    if verbose and inp:
+                        input_str = str(inp)
+                        if len(input_str) > 300:
+                            print(f"   Input: {input_str[:300]}...", flush=True)
+                        else:
+                            print(f"   Input: {input_str}", flush=True)
+                    current_tool = tool_name
+
+                elif block.type == ContentBlockType.TOOL_RESULT:
+                    is_error = block.is_error
+                    result_content = block.result_content or ""
+
+                    if is_error and "blocked" in str(result_content).lower():
+                        debug_error(
+                            "session",
+                            f"Tool BLOCKED: {current_tool}",
+                            result=str(result_content)[:300],
+                        )
+                        print(f"   [BLOCKED] {result_content}", flush=True)
+                        if task_logger and current_tool:
+                            task_logger.tool_end(
+                                current_tool,
+                                success=False,
+                                result="BLOCKED",
+                                detail=str(result_content),
+                                phase=phase,
+                            )
+                    elif is_error:
+                        error_str = str(result_content)[:500]
+                        debug_error(
+                            "session",
+                            f"Tool error: {current_tool}",
+                            error=error_str[:200],
+                        )
+                        print(f"   [Error] {error_str}", flush=True)
+                        if task_logger and current_tool:
+                            task_logger.tool_end(
+                                current_tool,
+                                success=False,
+                                result=error_str[:100],
+                                detail=str(result_content),
+                                phase=phase,
+                            )
+                    else:
+                        debug_detailed(
+                            "session",
+                            f"Tool success: {current_tool}",
+                            result_length=len(str(result_content)),
+                        )
+                        if verbose:
+                            result_str = str(result_content)[:200]
+                            print(f"   [Done] {result_str}", flush=True)
+                        else:
+                            print("   [Done]", flush=True)
+                        if task_logger and current_tool:
+                            detail_content = None
+                            if current_tool in ("Read", "Grep", "Bash", "Edit", "Write"):
+                                result_str = str(result_content)
+                                if len(result_str) < 50000:
+                                    detail_content = result_str
+                            task_logger.tool_end(
+                                current_tool,
+                                success=True,
+                                detail=detail_content,
+                                phase=phase,
+                            )
+
+                    current_tool = None
+
+        print("\n" + "-" * 70 + "\n")
+
+        if is_build_complete(spec_dir):
+            debug_success(
+                "session",
+                "Session completed - build is complete",
+                message_count=message_count,
+                tool_count=tool_count,
+                response_length=len(response_text),
+            )
+            return "complete", response_text, {}
+
+        debug_success(
+            "session",
+            "Session completed - continuing",
+            message_count=message_count,
+            tool_count=tool_count,
+            response_length=len(response_text),
+        )
+        return "continue", response_text, {}
+
+    except Exception as e:
+        is_concurrency = is_tool_concurrency_error(e)
+        is_rate_limit_err = is_rate_limit_error(e)
+        is_auth = is_authentication_error(e)
+
+        if is_concurrency:
+            error_type = "tool_concurrency"
+        elif is_rate_limit_err:
+            error_type = "rate_limit"
+        elif is_auth:
+            error_type = "authentication"
+        else:
+            error_type = "other"
+
+        debug_error(
+            "session",
+            f"Session error: {e}",
+            exception_type=type(e).__name__,
+            error_category=error_type,
+            message_count=message_count,
+            tool_count=tool_count,
+        )
+
+        sanitized_error = sanitize_error_message(str(e))
+
+        if is_concurrency:
+            print("\n⚠️  Tool concurrency limit reached (400 error)")
+            print(f"   Error: {sanitized_error[:200]}\n")
+        elif is_rate_limit_err:
+            print("\n⚠️  Rate limit reached")
+            print(f"   Error: {sanitized_error[:200]}\n")
+        elif is_auth:
+            print("\n⚠️  Authentication error")
             print(f"   Error: {sanitized_error[:200]}\n")
         else:
             print(f"Error during agent session: {sanitized_error}")

@@ -59,8 +59,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '../ui/alert-dialog';
-import { getProviders, CanonicalProvider, API_BASE } from '../../../shared/utils/providers';
+import { getStaticProviders, CanonicalProvider, API_BASE } from '../../../shared/utils/providers';
 import { useProviderRefreshStore } from '../../stores/provider-refresh-store';
+import { ProviderService } from '../../../shared/services/providerService';
 
 interface AccountSettingsProps {
   settings: AppSettings;
@@ -155,24 +156,23 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
   const [authMessage, setAuthMessage] = useState<string>("");
   const [showRevokeDialog, setShowRevokeDialog] = useState(false);
 
-  const getApiKeyField = () => {
-    switch (connector.id) {
-      case 'openai': return 'globalOpenAIApiKey';
-      case 'gemini': return 'globalGoogleApiKey';
-      case 'meta-llama': return 'globalMetaLlamaApiKey';
-      case 'mistral': return 'globalMistralApiKey';
-      case 'deepseek': return 'globalDeepSeekApiKey';
-      case 'grok': return null;
-      case 'ollama': return null;
-      case 'azure-openai': return 'globalOpenAIApiKey'; // Utiliser la même clé que OpenAI pour Azure
-      default: return undefined;
-    }
-  };
-  const apiKeyField = getApiKeyField();
-  const apiKeyValue = apiKeyField ? settings[apiKeyField] || '' : '';
+  const [apiKeyField, setApiKeyField] = useState<string | null>(null);
+  const [apiKeyValue, setApiKeyValue] = useState('');
+
+  // Charge le champ API key depuis le service centralisé
+  useEffect(() => {
+    const loadApiKeyField = async () => {
+      const field = await ProviderService.getApiKeyField(connector.id);
+      setApiKeyField(field);
+      setApiKeyValue(field ? String(settings[field as keyof AppSettings] || '') : '');
+    };
+    loadApiKeyField();
+  }, [connector.id, settings]);
+
   const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (apiKeyField) {
       onSettingsChange({ ...settings, [apiKeyField]: e.target.value });
+      setApiKeyValue(e.target.value);
       setAuthStatus('idle');
       setAuthMessage('');
     }
@@ -265,11 +265,65 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
             setAuthMessage('Clé invalide ou permissions insuffisantes.');
           }
           break;
+        case 'grok':
+          response = await fetch('https://api.x.ai/v1/models', {
+            headers: { 'Authorization': `Bearer ${apiKeyValue}` }
+          });
+          if (response.ok) {
+            setAuthStatus('success');
+            setAuthMessage('Clé xAI valide !');
+            await validateApiKeyBackend('grok', apiKeyValue);
+            triggerRefresh();
+          } else {
+            setAuthStatus('error');
+            setAuthMessage('Clé xAI invalide ou permissions insuffisantes.');
+          }
+          break;
         case 'azure-openai':
           setAuthStatus('success');
           setAuthMessage('Clé enregistrée (test complet via Azure Portal).');
           await validateApiKeyBackend('azure-openai', apiKeyValue);
           triggerRefresh();
+          break;
+        case 'google':
+          response = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${apiKeyValue}`);
+          if (response.ok) {
+            setAuthStatus('success');
+            setAuthMessage('Clé Google DeepMind valide !');
+            await validateApiKeyBackend('google', apiKeyValue);
+            triggerRefresh();
+          } else {
+            setAuthStatus('error');
+            setAuthMessage('Clé Google DeepMind invalide ou permissions insuffisantes.');
+          }
+          break;
+        case 'meta':
+          response = await fetch('https://api.meta.ai/v1/models', {
+            headers: { 'Authorization': `Bearer ${apiKeyValue}` }
+          });
+          if (response.ok) {
+            setAuthStatus('success');
+            setAuthMessage('Clé Meta valide !');
+            await validateApiKeyBackend('meta', apiKeyValue);
+            triggerRefresh();
+          } else {
+            setAuthStatus('error');
+            setAuthMessage('Clé Meta invalide ou permissions insuffisantes.');
+          }
+          break;
+        case 'aws':
+          response = await fetch('https://bedrock-runtime.amazonaws.com/models', {
+            headers: { 'Authorization': `AWS4-HMAC-SHA256 Credential=${apiKeyValue}` }
+          });
+          if (response.ok) {
+            setAuthStatus('success');
+            setAuthMessage('Clé AWS valide !');
+            await validateApiKeyBackend('aws', apiKeyValue);
+            triggerRefresh();
+          } else {
+            setAuthStatus('error');
+            setAuthMessage('Clé AWS invalide ou permissions insuffisantes.');
+          }
           break;
         default:
           setAuthStatus('idle');
@@ -283,12 +337,19 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
 
   const validateApiKeyBackend = async (provider: string, apiKey: string) => {
     try {
-      await fetch(`${API_BASE}/providers/validate/${provider}`, {
+      const res = await fetch(`${API_BASE}/providers/validate/${provider}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ api_key: apiKey })
       });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      
+      await res.json();
     } catch (e) {
+      console.error('Failed to validate API key:', e);
       // Optionnel : afficher une erreur toast
     }
   };
@@ -819,12 +880,8 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
   // Load providers on open
   useEffect(() => {
     if (isOpen) {
-      getProviders()
-          .then((response) => setProviders(response.providers || []))
-          .catch((err) => {
-            setProviders([]);
-            setProvidersError(`Erreur lors de la récupération des providers: ${err.message}`);
-          });
+      const response = getStaticProviders();
+      setProviders(response.providers || []);
     }
   }, [isOpen]);
 
@@ -1443,157 +1500,6 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
                 </TabsContent>
               </Tabs>
 
-              {/* Auto-Switch Settings Section - Persistent below tabs */}
-              {totalAccounts > 1 && (
-                  <div className="space-y-4 pt-6 border-t border-border">
-                    <div className="flex items-center gap-2">
-                      <RefreshCw className="h-4 w-4 text-muted-foreground" />
-                      <h4 className="text-sm font-semibold text-foreground">{t('accounts.autoSwitching.title')}</h4>
-                    </div>
-
-                    <div className="rounded-lg bg-muted/30 border border-border p-4 space-y-4">
-                      <p className="text-sm text-muted-foreground">
-                        {t('accounts.autoSwitching.description')}
-                      </p>
-
-                      {/* Master toggle */}
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label className="text-sm font-medium">{t('accounts.autoSwitching.enableAutoSwitching')}</Label>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {t('accounts.autoSwitching.masterSwitch')}
-                          </p>
-                        </div>
-                        <Switch
-                            checked={autoSwitchSettings?.enabled ?? false}
-                            onCheckedChange={(enabled) => handleUpdateAutoSwitch({ enabled })}
-                            disabled={isLoadingAutoSwitch}
-                        />
-                      </div>
-
-                      {autoSwitchSettings?.enabled && (
-                          <>
-                            {/* Proactive Monitoring Section */}
-                            <div className="pl-6 space-y-4 pt-2 border-l-2 border-primary/20">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <Label className="text-sm font-medium flex items-center gap-2">
-                                    <Activity className="h-3.5 w-3.5" />
-                                    {t('accounts.autoSwitching.proactiveMonitoring')}
-                                  </Label>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {t('accounts.autoSwitching.proactiveDescription')}
-                                  </p>
-                                </div>
-                                <Switch
-                                    checked={autoSwitchSettings?.proactiveSwapEnabled ?? true}
-                                    onCheckedChange={(value) => handleUpdateAutoSwitch({ proactiveSwapEnabled: value })}
-                                    disabled={isLoadingAutoSwitch}
-                                />
-                            </div>
-
-                            {autoSwitchSettings?.proactiveSwapEnabled && (
-                                <>
-                                  {/* Session threshold */}
-                                  <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                      <Label htmlFor="session-threshold" className="text-sm">{t('accounts.autoSwitching.sessionThreshold')}</Label>
-                                      <span className="text-sm font-mono">{autoSwitchSettings?.sessionThreshold ?? 95}%</span>
-                                    </div>
-                                    <input
-                                        id="session-threshold"
-                                        type="range"
-                                        min="0"
-                                        max="99"
-                                        step="1"
-                                        value={autoSwitchSettings?.sessionThreshold ?? 95}
-                                        onChange={(e) => handleUpdateAutoSwitch({ sessionThreshold: parseInt(e.target.value, 10) })}
-                                        disabled={isLoadingAutoSwitch}
-                                        className="w-full"
-                                        aria-describedby="session-threshold-description"
-                                    />
-                                    <p id="session-threshold-description" className="text-xs text-muted-foreground">
-                                      {t('accounts.autoSwitching.sessionThresholdDescription')}
-                                    </p>
-                                  </div>
-
-                                  {/* Weekly threshold */}
-                                  <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                      <Label htmlFor="weekly-threshold" className="text-sm">{t('accounts.autoSwitching.weeklyThreshold')}</Label>
-                                      <span className="text-sm font-mono">{autoSwitchSettings?.weeklyThreshold ?? 99}%</span>
-                                    </div>
-                                    <input
-                                        id="weekly-threshold"
-                                        type="range"
-                                        min="0"
-                                        max="99"
-                                        step="1"
-                                        value={autoSwitchSettings?.weeklyThreshold ?? 99}
-                                        onChange={(e) => handleUpdateAutoSwitch({ weeklyThreshold: parseInt(e.target.value, 10) })}
-                                        disabled={isLoadingAutoSwitch}
-                                        className="w-full"
-                                        aria-describedby="weekly-threshold-description"
-                                    />
-                                    <p id="weekly-threshold-description" className="text-xs text-muted-foreground">
-                                      {t('accounts.autoSwitching.weeklyThresholdDescription')}
-                                    </p>
-                                  </div>
-                                </>
-                            )}
-                          </div>
-
-                          {/* Reactive Recovery Section */}
-                          <div className="pl-6 space-y-4 pt-2 border-l-2 border-orange-500/20">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <Label className="text-sm font-medium flex items-center gap-2">
-                                  <AlertCircle className="h-3.5 w-3.5" />
-                                  {t('accounts.autoSwitching.reactiveRecovery')}
-                                </Label>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {t('accounts.autoSwitching.reactiveDescription')}
-                                </p>
-                              </div>
-                              <Switch
-                                  checked={autoSwitchSettings?.autoSwitchOnRateLimit ?? false}
-                                  onCheckedChange={(value) => handleUpdateAutoSwitch({ autoSwitchOnRateLimit: value })}
-                                  disabled={isLoadingAutoSwitch}
-                              />
-                            </div>
-
-                            {/* Auto-switch on auth failure */}
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <Label className="text-sm font-medium">
-                                  {t('accounts.autoSwitching.autoSwitchOnAuthFailure')}
-                                </Label>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {t('accounts.autoSwitching.autoSwitchOnAuthFailureDescription')}
-                                </p>
-                              </div>
-                              <Switch
-                                  checked={autoSwitchSettings?.autoSwitchOnAuthFailure ?? false}
-                                  onCheckedChange={(value) => handleUpdateAutoSwitch({ autoSwitchOnAuthFailure: value })}
-                                  disabled={isLoadingAutoSwitch}
-                              />
-                            </div>
-                          </div>
-
-                          {showAutoSwitching && (
-                            <div className="pt-4 border-t border-border/50">
-                              <AccountPriorityList
-                                accounts={unifiedAccounts}
-                                onReorder={handlePriorityReorder}
-                                isLoading={isSavingPriority}
-                              />
-                            </div>
-                          )}
-                        </>
-                    )}
-                  </div>
-                </div>
-            )}
           </div>
         </SettingsSection>
       ) : apiKeyField ? (
@@ -1636,8 +1542,23 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
               {connector.id === 'deepseek' && (
                   <>Générez une clé sur <a href="https://platform.deepseek.com/" target="_blank" rel="noopener noreferrer" className="underline">DeepSeek</a></>)
               }
+              {connector.id === 'grok' && (
+                  <>Générez une clé sur <a href="https://console.x.ai/" target="_blank" rel="noopener noreferrer" className="underline">xAI Console</a></>)
+              }
+              {connector.id === 'google' && (
+                  <>Générez une clé sur <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline">Google AI Studio</a></>)
+              }
+              {connector.id === 'meta' && (
+                  <>Générez une clé sur <a href="https://developers.meta.com/" target="_blank" rel="noopener noreferrer" className="underline">Meta for Developers</a></>)
+              }
+              {connector.id === 'aws' && (
+                  <>Configurez AWS Bedrock (voir <a href="https://docs.aws.amazon.com/bedrock/" target="_blank" rel="noopener noreferrer" className="underline">AWS Bedrock docs</a>)</>)
+              }
               {connector.id === 'azure-openai' && (
                   <>Utilisez une clé API Azure OpenAI (voir <a href="https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource" target="_blank" rel="noopener noreferrer" className="underline">docs Azure</a>)</>)
+              }
+              {connector.id === 'copilot' && (
+                  <>Installez GitHub CLI et authentifiez-vous avec <code>gh auth login</code> et <code>gh copilot login</code></>)
               }
             </div>
             <AlertDialog open={showRevokeDialog} onOpenChange={setShowRevokeDialog}>
@@ -1655,14 +1576,20 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
               </AlertDialogContent>
             </AlertDialog>
           </div>
-      ) : connector.id === 'ollama' ? (
+      ) : (connector.id === 'ollama' || connector.id === 'copilot' || connector.id === 'azure-openai') ? (
+        connector.id === 'ollama' ? (
           <div className="rounded-lg border border-dashed border-border p-4 text-center mb-4 text-muted-foreground">
-            <p>Connexion locale via <b>Ollama</b> (aucune authentification requise).<br />Assurez-vous qu’Ollama tourne sur <code>http://localhost:11434</code>.</p>
+            <p><b>LLM local (Ollama, LM Studio, etc.)</b><br />Connexion locale via Ollama (aucune authentification requise).<br />Assurez-vous qu'Ollama tourne sur <code>http://localhost:11434</code>.</p>
           </div>
-      ) : connector.id === 'grok' ? (
+        ) : connector.id === 'copilot' ? (
           <div className="rounded-lg border border-dashed border-border p-4 text-center mb-4 text-muted-foreground">
-            <p>Connexion à <b>Grok (xAI)</b> non disponible (API privée ou restreinte).</p>
+            <p>Connexion via <b>GitHub Copilot CLI</b> (authentification GitHub requise).<br />Installez et authentifiez-vous avec <code>gh auth login</code> et <code>gh copilot login</code>.</p>
           </div>
+        ) : connector.id === 'azure-openai' ? (
+          <div className="rounded-lg border border-dashed border-border p-4 text-center mb-4 text-muted-foreground">
+            <p>Connexion via <b>Azure OpenAI</b> (authentification Azure requise).<br />Utilisez une clé API Azure OpenAI (voir <a href="https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource" target="_blank" rel="noopener noreferrer" className="underline">docs Azure</a>).</p>
+          </div>
+        ) : null
       ) : null}
       </div>
     </TooltipProvider>

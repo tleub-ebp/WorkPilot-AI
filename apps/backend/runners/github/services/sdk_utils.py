@@ -563,3 +563,223 @@ async def process_sdk_stream(
         "subagent_tool_ids": subagent_tool_ids,
         "error": stream_error,
     }
+
+
+# =============================================================================
+# Provider-Agnostic Stream Processor
+# =============================================================================
+
+
+async def process_agent_stream(
+    client: Any,
+    on_thinking: Callable[[str], None] | None = None,
+    on_tool_use: Callable[[str, str, dict[str, Any]], None] | None = None,
+    on_tool_result: Callable[[str, bool, Any], None] | None = None,
+    on_text: Callable[[str], None] | None = None,
+    on_structured_output: Callable[[dict[str, Any]], None] | None = None,
+    context_name: str = "Agent",
+    model: str | None = None,
+    max_messages: int | None = None,
+) -> dict[str, Any]:
+    """
+    Process an AgentClient response stream with customizable callbacks.
+
+    This is the provider-agnostic equivalent of process_sdk_stream().
+    It works with any AgentClient implementation (ClaudeAgentClient,
+    CopilotAgentClient) by consuming normalized AgentMessage objects.
+
+    For backward compatibility, if the client is a ClaudeAgentClient,
+    you can also access raw SDK messages via msg.raw on each AgentMessage.
+
+    Args:
+        client: An AgentClient instance with receive_response() method
+        on_thinking: Callback for thinking blocks - receives thinking text
+        on_tool_use: Callback for tool invocations - receives (tool_name, tool_id, tool_input)
+        on_tool_result: Callback for tool results - receives (tool_id, is_error, result_content)
+        on_text: Callback for text output - receives text string
+        on_structured_output: Callback for structured output - receives dict
+        context_name: Name for logging (e.g., "ParallelOrchestrator")
+        model: Model name for logging
+        max_messages: Optional override for max message count circuit breaker
+
+    Returns:
+        Same dict structure as process_sdk_stream():
+        - result_text: Accumulated text output
+        - structured_output: Final structured output (if any)
+        - agents_invoked: List of agent names invoked via Task tool
+        - msg_count: Total message count
+        - subagent_tool_ids: Mapping of tool_id -> agent_name
+        - error: Error message if stream processing failed (None on success)
+    """
+    # Import here to avoid circular imports
+    from core.agent_client import AgentClient, ContentBlockType
+
+    # If client is a raw ClaudeSDKClient (not wrapped), delegate to process_sdk_stream
+    if not isinstance(client, AgentClient):
+        return await process_sdk_stream(
+            client=client,
+            on_thinking=on_thinking,
+            on_tool_use=on_tool_use,
+            on_tool_result=on_tool_result,
+            on_text=on_text,
+            on_structured_output=on_structured_output,
+            context_name=context_name,
+            model=model,
+            max_messages=max_messages,
+        )
+
+    result_text = ""
+    structured_output = None
+    agents_invoked = []
+    msg_count = 0
+    stream_error = None
+    subagent_tool_ids: dict[str, str] = {}
+    completed_agent_tool_ids: set[str] = set()
+    detected_concurrency_error = False
+
+    message_limit = max_messages if max_messages is not None else MAX_MESSAGE_COUNT
+
+    safe_print(f"[{context_name}] Processing agent stream (provider: {client.provider_name()})...")
+
+    last_progress_log = 0
+    PROGRESS_LOG_INTERVAL = 10
+
+    try:
+        async for agent_msg in client.receive_response():
+            try:
+                msg_count += 1
+
+                if msg_count > message_limit:
+                    stream_error = (
+                        f"Circuit breaker triggered: message count ({msg_count}) "
+                        f"exceeded limit ({message_limit})."
+                    )
+                    logger.error(f"[{context_name}] {stream_error}")
+                    safe_print(f"[{context_name}] ERROR: {stream_error}")
+                    break
+
+                # Log progress periodically
+                if msg_count - last_progress_log >= PROGRESS_LOG_INTERVAL:
+                    pending = len(subagent_tool_ids) - len(completed_agent_tool_ids)
+                    if pending > 0:
+                        safe_print(
+                            f"[{context_name}] Processing... ({msg_count} messages, {pending} agent{'s' if pending > 1 else ''} working)"
+                        )
+                    else:
+                        safe_print(f"[{context_name}] Processing... ({msg_count} messages)")
+                    last_progress_log = msg_count
+
+                # Process each content block in the normalized message
+                for block in agent_msg.content:
+                    if block.type == ContentBlockType.THINKING:
+                        if block.text:
+                            safe_print(f"[{context_name}] AI thinking: {len(block.text)} chars")
+                            if on_thinking:
+                                on_thinking(block.text)
+
+                    elif block.type == ContentBlockType.TOOL_USE:
+                        tool_name = block.tool_name or ""
+                        tool_id = block.tool_id or "unknown"
+                        tool_input = block.tool_input or {}
+
+                        if tool_name == "Task":
+                            agent_name = tool_input.get("subagent_type", "unknown")
+                            agents_invoked.append(agent_name)
+                            subagent_tool_ids[tool_id] = agent_name
+                            model_info = f" [{_short_model_name(model)}]" if model else ""
+                            safe_print(f"[{context_name}] Invoking agent: {agent_name}{model_info}")
+                        elif tool_name != "StructuredOutput":
+                            tool_detail = _get_tool_detail(tool_name, tool_input)
+                            safe_print(f"[{context_name}] {tool_detail}")
+
+                        if on_tool_use:
+                            on_tool_use(tool_name, tool_id, tool_input)
+
+                    elif block.type == ContentBlockType.TOOL_RESULT:
+                        tool_id = block.tool_use_id or "unknown"
+                        is_error = block.is_error
+                        result_content = block.result_content or ""
+
+                        if isinstance(result_content, list):
+                            result_content = " ".join(
+                                str(getattr(c, "text", c)) for c in result_content
+                            )
+
+                        if tool_id in subagent_tool_ids:
+                            agent_name = subagent_tool_ids[tool_id]
+                            completed_agent_tool_ids.add(tool_id)
+                            status = "ERROR" if is_error else "complete"
+                            result_preview = str(result_content)[:600].replace("\n", " ").strip()
+                            safe_print(
+                                f"[Agent:{agent_name}] {status}: {result_preview}{'...' if len(str(result_content)) > 600 else ''}"
+                            )
+                        else:
+                            status = "ERROR" if is_error else "done"
+                            result_preview = str(result_content)[:100].replace("\n", " ").strip()
+                            if result_preview:
+                                safe_print(
+                                    f"[{context_name}] Tool result [{status}]: {result_preview}{'...' if len(str(result_content)) > 100 else ''}"
+                                )
+
+                        if on_tool_result:
+                            on_tool_result(tool_id, is_error, result_content)
+
+                    elif block.type == ContentBlockType.TEXT:
+                        if block.text:
+                            result_text += block.text
+                            if _is_tool_concurrency_error(block.text):
+                                detected_concurrency_error = True
+                                logger.warning(f"[{context_name}] Detected tool concurrency error")
+                                safe_print(f"[{context_name}] WARNING: Tool concurrency error detected")
+                            text_preview = block.text[:500].replace("\n", " ").strip()
+                            if text_preview:
+                                safe_print(
+                                    f"[{context_name}] AI response: {text_preview}{'...' if len(block.text) > 500 else ''}"
+                                )
+                                if on_text:
+                                    on_text(block.text)
+
+                    elif block.type == ContentBlockType.STRUCTURED_OUTPUT:
+                        if block.structured_output and structured_output is None:
+                            structured_output = block.structured_output
+                            safe_print(f"[{context_name}] Received structured output")
+                            if on_structured_output:
+                                on_structured_output(block.structured_output)
+
+                    elif block.type == ContentBlockType.RESULT:
+                        if block.subtype == "error_max_structured_output_retries":
+                            logger.warning(
+                                f"[{context_name}] Structured output validation failed after retries"
+                            )
+                            if not stream_error:
+                                stream_error = "structured_output_validation_failed"
+                        if block.structured_output and structured_output is None:
+                            structured_output = block.structured_output
+                            safe_print(f"[{context_name}] Received structured output")
+                            if on_structured_output:
+                                on_structured_output(block.structured_output)
+
+            except (AttributeError, TypeError, KeyError) as msg_error:
+                logger.warning(f"[{context_name}] Error processing message #{msg_count}: {msg_error}")
+
+    except BrokenPipeError:
+        stream_error = "Output pipe closed"
+        logger.debug(f"[{context_name}] Output pipe closed by parent process")
+    except Exception as e:
+        stream_error = str(e)
+        logger.error(f"[{context_name}] Agent stream processing failed: {e}")
+        safe_print(f"[{context_name}] ERROR: Stream processing failed: {e}")
+
+    safe_print(f"[{context_name}] Session ended. Total messages: {msg_count}")
+
+    if detected_concurrency_error and not stream_error:
+        stream_error = "tool_use_concurrency_error"
+
+    return {
+        "result_text": result_text,
+        "structured_output": structured_output,
+        "agents_invoked": agents_invoked,
+        "msg_count": msg_count,
+        "subagent_tool_ids": subagent_tool_ids,
+        "error": stream_error,
+    }

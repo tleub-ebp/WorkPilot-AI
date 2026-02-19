@@ -8,6 +8,7 @@ import { type AppUpdateAPI, createAppUpdateAPI } from './app-update-api';
 import { type GitHubAPI, createGitHubAPI } from './modules/github-api';
 import { type DebugAPI, createDebugAPI } from './modules/debug-api';
 import { type ClaudeCodeAPI, createClaudeCodeAPI } from './modules/claude-code-api';
+import { type CopilotCliAPI, createCopilotCliAPI } from './modules/copilot-cli-api';
 import { type McpAPI, createMcpAPI } from './modules/mcp-api';
 import { type ProfileAPI, createProfileAPI } from './profile-api';
 import { type ScreenshotAPI, createScreenshotAPI } from './screenshot-api';
@@ -29,6 +30,7 @@ export interface ElectronAPI extends
   AzureDevOpsAPI,
   DebugAPI,
   ClaudeCodeAPI,
+  CopilotCliAPI,
   McpAPI,
   ProfileAPI,
   ScreenshotAPI {
@@ -50,6 +52,7 @@ export const createElectronAPI = (): ElectronAPI => ({
   ...createAppUpdateAPI(),
   ...createDebugAPI(),
   ...createClaudeCodeAPI(),
+  ...createCopilotCliAPI(),
   ...createMcpAPI(),
   ...createProfileAPI(),
   ...createScreenshotAPI(),
@@ -73,6 +76,7 @@ export { createProfileAPI } from './profile-api';
 export { createGitHubAPI } from './modules/github-api';
 export { createDebugAPI } from './modules/debug-api';
 export { createClaudeCodeAPI } from './modules/claude-code-api';
+export { createCopilotCliAPI } from './modules/copilot-cli-api';
 export { createMcpAPI } from './modules/mcp-api';
 export { createScreenshotAPI } from './screenshot-api';
 export { createQueueAPI } from './queue-api';
@@ -89,6 +93,7 @@ export type { ProfileAPI } from './profile-api';
 export type { GitHubAPI } from './modules/github-api';
 export type { DebugAPI } from './modules/debug-api';
 export type { ClaudeCodeAPI } from './modules/claude-code-api';
+export type { CopilotCliAPI } from './modules/copilot-cli-api';
 export type { McpAPI } from './modules/mcp-api';
 export type { ScreenshotAPI } from './screenshot-api';
 export type { QueueAPI } from './queue-api';

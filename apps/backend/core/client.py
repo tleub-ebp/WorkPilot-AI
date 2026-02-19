@@ -1,14 +1,21 @@
 """
-Claude SDK Client Configuration
-===============================
+Agent Client Configuration
+===========================
 
-Functions for creating and configuring the Claude Agent SDK client.
+Factory functions for creating provider-agnostic agent clients.
 
-All AI interactions should use `create_client()` to ensure consistent OAuth authentication
-and proper tool/MCP configuration. For simple message calls without full agent sessions,
-use `create_simple_client()` from `core.simple_client`.
+The primary entry point is `create_agent_client()` which returns an `AgentClient`
+instance (either `ClaudeAgentClient` or `CopilotAgentClient`) based on the
+`provider` parameter.
 
-The client factory now uses AGENT_CONFIGS from agents/tools_pkg/models.py as the
+For backward compatibility, `create_client()` still returns a raw `ClaudeSDKClient`.
+
+All AI interactions should use `create_agent_client()` (preferred) or `create_client()`
+to ensure consistent authentication and proper tool/MCP configuration.
+For simple message calls without full agent sessions, use `create_simple_client()`
+from `core.simple_client`.
+
+The client factory uses AGENT_CONFIGS from agents/tools_pkg/models.py as the
 single source of truth for phase-aware tool and MCP server configuration.
 """
 
@@ -850,3 +857,169 @@ def create_client(
         options_kwargs["agents"] = agents
 
     return ClaudeSDKClient(options=ClaudeAgentOptions(**options_kwargs))
+
+
+# =============================================================================
+# Provider-Agnostic Agent Client Factory
+# =============================================================================
+
+
+def _get_active_provider(spec_dir: Path | None = None) -> str:
+    """
+    Determine the active AI provider from environment or project settings.
+
+    Resolution order:
+    1. AUTO_CLAUDE_PROVIDER environment variable
+    2. Project-level .auto-claude/.env → AI_PROVIDER key
+    3. Default: "claude"
+
+    Args:
+        spec_dir: Optional spec directory to check for project-level settings.
+
+    Returns:
+        Provider identifier string: "claude" or "copilot"
+    """
+    # 1. Environment variable override
+    env_provider = os.environ.get("AUTO_CLAUDE_PROVIDER", "").lower().strip()
+    if env_provider in ("claude", "copilot"):
+        return env_provider
+
+    # 2. Project-level setting from spec's parent project
+    if spec_dir:
+        env_path = spec_dir / ".auto-claude" / ".env"
+        if not env_path.exists():
+            # Try parent directories (spec_dir might be inside .auto-claude/)
+            for parent in spec_dir.parents:
+                candidate = parent / ".auto-claude" / ".env"
+                if candidate.exists():
+                    env_path = candidate
+                    break
+
+        if env_path.exists():
+            try:
+                with open(env_path, encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line.startswith("AI_PROVIDER="):
+                            value = line.split("=", 1)[1].strip().strip("\"'").lower()
+                            if value in ("claude", "copilot"):
+                                return value
+            except Exception:
+                pass
+
+    # 3. Default
+    return "claude"
+
+
+def create_agent_client(
+    project_dir: Path,
+    spec_dir: Path,
+    model: str,
+    agent_type: str = "coder",
+    max_thinking_tokens: int | None = None,
+    output_format: dict | None = None,
+    agents: dict | None = None,
+    provider: str | None = None,
+) -> "AgentClient":
+    """
+    Create a provider-agnostic agent client for Kanban task execution.
+
+    This is the **preferred entry point** for creating agent clients.
+    It returns an `AgentClient` instance that abstracts the underlying
+    provider (Claude SDK or GitHub Copilot).
+
+    Args:
+        project_dir: Root directory for the project (working directory)
+        spec_dir: Directory containing the spec (for settings file)
+        model: Model identifier (e.g., "claude-sonnet-4-5-20250929" or "gpt-4o")
+        agent_type: Agent type from AGENT_CONFIGS
+        max_thinking_tokens: Token budget for extended thinking
+        output_format: Optional structured output format
+        agents: Optional dict of subagent definitions.
+               For Claude: passed as claude_agent_sdk.AgentDefinition objects
+               For Copilot: converted to SubagentDefinition for parallel API calls
+        provider: Provider override ("claude" or "copilot").
+                 If None, auto-detected from env/project settings.
+
+    Returns:
+        AgentClient instance (ClaudeAgentClient or CopilotAgentClient)
+
+    Raises:
+        ValueError: If agent_type is unknown or provider is unsupported
+    """
+    from core.agent_client import (
+        AgentClient,
+        ClaudeAgentClient,
+        CopilotAgentClient,
+        SubagentDefinition,
+    )
+
+    # Resolve provider
+    if provider is None:
+        provider = _get_active_provider(spec_dir)
+
+    logger.info(f"Creating agent client: provider={provider}, agent_type={agent_type}, model={model}")
+
+    if provider == "copilot":
+        # Build system prompt (reuse logic from create_client)
+        base_prompt = (
+            f"You are an expert full-stack developer building production-quality software. "
+            f"Your working directory is: {project_dir.resolve()}\n"
+            f"Your filesystem access is RESTRICTED to this directory only. "
+            f"Use relative paths (starting with ./) for all file operations. "
+            f"Never use absolute paths or try to access files outside your working directory.\n\n"
+            f"You follow existing code patterns, write clean maintainable code, and verify "
+            f"your work through thorough testing. You communicate progress through Git commits "
+            f"and build-progress.txt updates."
+        )
+
+        # Convert agents dict to SubagentDefinition if provided
+        copilot_agents: dict[str, SubagentDefinition] | None = None
+        if agents:
+            copilot_agents = {}
+            for name, defn in agents.items():
+                # Handle both AgentDefinition (Claude SDK) and dict formats
+                if hasattr(defn, "description"):
+                    copilot_agents[name] = SubagentDefinition(
+                        description=getattr(defn, "description", ""),
+                        prompt=getattr(defn, "prompt", ""),
+                        tools=getattr(defn, "tools", []),
+                        model=getattr(defn, "model", "inherit"),
+                    )
+                elif isinstance(defn, dict):
+                    copilot_agents[name] = SubagentDefinition(**defn)
+
+        # Get allowed tools for the agent type
+        project_index, project_capabilities = _get_cached_project_data(project_dir)
+        from linear_updater import is_linear_enabled as _is_linear_enabled
+
+        mcp_config = load_project_mcp_config(project_dir)
+        allowed_tools_list = get_allowed_tools(
+            agent_type, project_capabilities, _is_linear_enabled(), mcp_config
+        )
+
+        return CopilotAgentClient(
+            model=model,
+            system_prompt=base_prompt,
+            allowed_tools=allowed_tools_list,
+            agents=copilot_agents,
+            cwd=str(project_dir.resolve()),
+        )
+
+    elif provider == "claude":
+        # Default: use existing create_client() and wrap in ClaudeAgentClient
+        sdk_client = create_client(
+            project_dir=project_dir,
+            spec_dir=spec_dir,
+            model=model,
+            agent_type=agent_type,
+            max_thinking_tokens=max_thinking_tokens,
+            output_format=output_format,
+            agents=agents,
+        )
+        return ClaudeAgentClient(sdk_client)
+
+    else:
+        raise ValueError(
+            f"Unsupported provider: '{provider}'. Supported: 'claude', 'copilot'"
+        )

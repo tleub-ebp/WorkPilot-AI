@@ -562,6 +562,14 @@ export const IPC_CHANNELS = {
   CLAUDE_CODE_GET_INSTALLATIONS: 'claudeCode:getInstallations',
   CLAUDE_CODE_SET_ACTIVE_PATH: 'claudeCode:setActivePath',
 
+  // Copilot CLI operations (mirrors Claude Code CLI pattern)
+  COPILOT_CLI_CHECK_VERSION: 'copilotCli:checkVersion',
+  COPILOT_CLI_INSTALL: 'copilotCli:install',
+  COPILOT_CLI_GET_INSTALLATIONS: 'copilotCli:getInstallations',
+  COPILOT_CLI_SET_ACTIVE_PATH: 'copilotCli:setActivePath',
+  COPILOT_CLI_CHECK_AUTH: 'copilotCli:checkAuth',
+  COPILOT_CLI_START_AUTH: 'copilotCli:startAuth',
+
   // MCP Server health checks
   MCP_CHECK_HEALTH: 'mcp:checkHealth',           // Quick connectivity check
   MCP_TEST_CONNECTION: 'mcp:testConnection',     // Full MCP protocol test

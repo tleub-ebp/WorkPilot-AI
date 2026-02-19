@@ -31,6 +31,10 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
     fetch(`${API_BASE}/providers`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Response is not JSON');
+        }
         return res.json();
       })
       .then((data) => {
@@ -39,20 +43,47 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
         setProvidersError("");
       })
       .catch((err) => {
+        if (err.message === 'Response is not JSON') {
+          console.info('[ProviderManager] Backend providers API not available');
+        } else {
+          console.error('Failed to fetch providers:', err);
+        }
         setProviders([]);
         setStatus({});
         setProvidersError(`Erreur lors de la récupération des providers: ${err.message}`);
       });
     fetch(`${API_BASE}/providers/configs`)
-      .then((res) => res.json())
-      .then((data) => setConfigs(data.configs || []));
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Response is not JSON');
+        }
+        return res.json();
+      })
+      .then((data) => setConfigs(data.configs || []))
+      .catch((err) => {
+        console.error('Failed to fetch provider configs:', err);
+        setConfigs([]);
+      });
   }, []);
 
   useEffect(() => {
     if (selected) {
       fetch(`${API_BASE}/providers/capabilities/${selected}`)
-        .then((res) => res.json())
-        .then((data) => setCapabilities(data));
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const contentType = res.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Response is not JSON');
+          }
+          return res.json();
+        })
+        .then((data) => setCapabilities(data))
+        .catch((err) => {
+          console.error('Failed to fetch provider capabilities:', err);
+          setCapabilities(null);
+        });
     } else {
       setCapabilities(null);
     }
@@ -62,11 +93,33 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
   useEffect(() => {
     if (selected) {
       fetch(`${API_BASE}/providers/schema/${selected}`)
-        .then((res) => res.json())
-        .then((data) => setSchema(data));
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const contentType = res.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Response is not JSON');
+          }
+          return res.json();
+        })
+        .then((data) => setSchema(data))
+        .catch((err) => {
+          console.error('Failed to fetch provider schema:', err);
+          setSchema(null);
+        });
       fetch(`${API_BASE}/providers/config/${selected}`)
-        .then((res) => res.json())
-        .then((data) => setConfigForm(data || {}));
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const contentType = res.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Response is not JSON');
+          }
+          return res.json();
+        })
+        .then((data) => setConfigForm(data || {}))
+        .catch((err) => {
+          console.error('Failed to fetch provider config:', err);
+          setConfigForm({});
+        });
     } else {
       setSchema(null);
       setConfigForm({});
@@ -96,19 +149,26 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
       return;
     }
     fetch(`${API_BASE}/providers/models/${selected}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Response is not JSON');
+        }
+        return res.json();
+      })
       .then((data) => {
         setClaudeModels(data.models || []);
         if (data.error) {
-          setClaudeModels([]);
           setClaudeModelsError(data.error);
         } else {
           setClaudeModelsError((data.models?.length === 0) ? `Aucun modèle disponible pour le provider «${selected}».` : "");
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Failed to fetch provider models:', err);
         setClaudeModels([]);
-        setClaudeModelsError(`Erreur lors de la récupération des modèles pour le provider «${selected}».`);
+        setClaudeModelsError(`Failed to fetch models: ${err.message}`);
       });
   }, [selected]);
 
@@ -122,18 +182,51 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(configForm),
     })
-      .then((res) => res.json())
-      .then(() => window.location.reload());
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Response is not JSON');
+        }
+        return res.json();
+      })
+      .then(() => window.location.reload())
+      .catch((err) => {
+        console.error('Failed to save provider config:', err);
+        setTestResult(`Failed to save config: ${err.message}`);
+      });
   }, [selected, configForm]);
   const deleteConfig = useCallback(() => {
     fetch(`${API_BASE}/providers/config/${selected}`, { method: "DELETE" })
-      .then((res) => res.json())
-      .then(() => window.location.reload());
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Response is not JSON');
+        }
+        return res.json();
+      })
+      .then(() => window.location.reload())
+      .catch((err) => {
+        console.error('Failed to delete provider config:', err);
+        setTestResult(`Failed to delete config: ${err.message}`);
+      });
   }, [selected]);
   const testProvider = useCallback(() => {
     fetch(`${API_BASE}/providers/test/${selected}`, { method: "POST" })
-      .then((res) => res.json())
-      .then((data) => setTestResult(data.status || data.detail || JSON.stringify(data)));
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Response is not JSON');
+        }
+        return res.json();
+      })
+      .then((data) => setTestResult(data.status || data.detail || JSON.stringify(data)))
+      .catch((err) => {
+        console.error('Failed to test provider:', err);
+        setTestResult(`Failed to test: ${err.message}`);
+      });
   }, [selected]);
   const handlePrompt = (e: React.ChangeEvent<HTMLInputElement>) => setPrompt(e.target.value);
   const generate = useCallback(() => {
@@ -142,8 +235,19 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt }),
     })
-      .then((res) => res.json())
-      .then((data) => setGeneration(data.result || data.detail || JSON.stringify(data)));
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Response is not JSON');
+        }
+        return res.json();
+      })
+      .then((data) => setGeneration(data.result || data.detail || JSON.stringify(data)))
+      .catch((err) => {
+        console.error('Failed to generate text:', err);
+        setGeneration(`Failed to generate: ${err.message}`);
+      });
   }, [selected, prompt]);
 
   console.log('[DEBUG ProviderManager] selected:', selected, 'claudeModels:', claudeModels);

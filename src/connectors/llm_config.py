@@ -45,7 +45,6 @@ def list_provider_configs() -> list[str]:
 def get_claude_token_from_system() -> str | None:
     """Récupère le token Claude Code depuis le keychain/credential manager (via core.auth)."""
     token = get_auth_token()
-    print(f"DEBUG: get_claude_token_from_system token={token}")
     if token and token.startswith("sk-"):
         return token
     return None

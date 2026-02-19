@@ -875,8 +875,19 @@ export function App() {
 
   // Récupère la liste des providers au chargement
   useEffect(() => {
-    fetch("/providers")
-        .then((res) => res.json())
+    const backendUrl = import.meta.env?.VITE_BACKEND_URL || '';
+    fetch(`${backendUrl}/providers`)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          // Check if response is actually JSON
+          const contentType = res.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Response is not JSON');
+          }
+          return res.json();
+        })
         .then((data) => {
           setProviders(data.providers || []);
           // Sélectionne automatiquement 'claude' si présent
@@ -885,6 +896,15 @@ export function App() {
           } else if (!selectedProvider && data.providers?.length > 0) {
             setSelectedProvider(data.providers[0]);
           }
+        })
+        .catch((err) => {
+          // Don't log loudly if backend is not available - this is expected in some setups
+          if (err.message === 'Response is not JSON') {
+            console.info('[App] Backend providers API not available - running without provider management');
+          } else {
+            console.error('Failed to fetch providers:', err);
+          }
+          setProviders([]);
         });
   }, []);
 
@@ -895,13 +915,30 @@ export function App() {
       setProviderModelsError("");
       return;
     }
-    fetch(`/providers/models/${selectedProvider}`)
-        .then((res) => res.json())
+    const backendUrl = import.meta.env?.VITE_BACKEND_URL || '';
+    fetch(`${backendUrl}/providers/models/${selectedProvider}`)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          // Check if response is actually JSON
+          const contentType = res.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Response is not JSON');
+          }
+          return res.json();
+        })
         .then((data) => {
           setProviderModels(data.models || []);
           setProviderModelsError(data.error || "");
         })
-        .catch(() => {
+        .catch((err) => {
+          // Don't log loudly if backend is not available - this is expected in some setups
+          if (err.message === 'Response is not JSON') {
+            console.info('[App] Backend providers API not available - running without provider models');
+          } else {
+            console.error(`Failed to fetch models for provider ${selectedProvider}:`, err);
+          }
           setProviderModels([]);
           setProviderModelsError(`Erreur lors de la récupération des modèles pour le provider «${selectedProvider}».`);
         });
