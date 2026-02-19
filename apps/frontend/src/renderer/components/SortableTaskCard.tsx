@@ -9,6 +9,7 @@ interface SortableTaskCardProps {
   task: Task;
   onClick: () => void;
   onStatusChange?: (newStatus: TaskStatus) => unknown;
+  onDelete?: () => void;
   // Optional selection props for multi-selection in Human Review column
   isSelectable?: boolean;
   isSelected?: boolean;
@@ -28,11 +29,12 @@ function sortableTaskCardPropsAreEqual(
     prevProps.onStatusChange === nextProps.onStatusChange &&
     prevProps.isSelectable === nextProps.isSelectable &&
     prevProps.isSelected === nextProps.isSelected &&
-    prevProps.onToggleSelect === nextProps.onToggleSelect
+    prevProps.onToggleSelect === nextProps.onToggleSelect &&
+    prevProps.onDelete === nextProps.onDelete
   );
 }
 
-export const SortableTaskCard = memo(function SortableTaskCard({ task, onClick, onStatusChange, isSelectable, isSelected, onToggleSelect }: SortableTaskCardProps) {
+export const SortableTaskCard = memo(function SortableTaskCard({ task, onClick, onStatusChange, isSelectable, isSelected, onToggleSelect, onDelete }: SortableTaskCardProps) {
   const {
     attributes,
     listeners,
@@ -74,6 +76,7 @@ export const SortableTaskCard = memo(function SortableTaskCard({ task, onClick, 
         isSelectable={isSelectable}
         isSelected={isSelected}
         onToggleSelect={onToggleSelect}
+        onDelete={onDelete}
       />
     </div>
   );
