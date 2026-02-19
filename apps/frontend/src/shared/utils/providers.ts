@@ -90,12 +90,20 @@ export function getStaticProviders(profiles: APIProfile[] = []): ProvidersRespon
     }
   }
 
-  // Sort: authenticated providers first (OK), then non-authenticated, both groups alphabetically
+  // Sort with custom order: anthropic first, copilot second, then others by authentication status and alphabetically
   providers.sort((a, b) => {
+    // Special order: anthropic first
+    if (a.name === 'anthropic' && b.name !== 'anthropic') return -1;
+    if (b.name === 'anthropic' && a.name !== 'anthropic') return 1;
+    
+    // copilot second (but after anthropic)
+    if (a.name === 'copilot' && b.name !== 'copilot') return -1;
+    if (b.name === 'copilot' && a.name !== 'copilot') return 1;
+    
+    // For remaining providers, sort by authentication status (authenticated first)
     const aAuthenticated = status[a.name];
     const bAuthenticated = status[b.name];
     
-    // First sort by authentication status (authenticated first)
     if (aAuthenticated && !bAuthenticated) return -1;
     if (!aAuthenticated && bAuthenticated) return 1;
     

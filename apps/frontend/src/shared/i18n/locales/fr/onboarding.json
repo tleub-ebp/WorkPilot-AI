@@ -180,7 +180,7 @@
     "detecting": "Vérification de l'installation de Claude Code...",
     "info": {
       "title": "Qu'est-ce que Claude Code ?",
-      "description": "Claude Code est le CLI officiel d'Anthropic qui alimente les fonctionnalités IA d'Auto Claude. Il fournit une authentification sécurisée et un accès direct aux modèles Claude."
+      "description": "Claude Code est le CLI officiel d'Anthropic qui alimente les fonctionnalités IA d'WorkPilot AI. Il fournit une authentification sécurisée et un accès direct aux modèles Claude."
     },
     "status": {
       "installed": "Installé",
@@ -202,7 +202,7 @@
   },
   "devtools": {
     "title": "Outils de développement",
-    "description": "Choisissez votre IDE et terminal préférés pour travailler avec les worktrees Auto Claude",
+    "description": "Choisissez votre IDE et terminal préférés pour travailler avec les worktrees WorkPilot AI",
     "detecting": "Détection des outils installés...",
     "detectAgain": "Détecter à nouveau",
     "whyConfigure": "Pourquoi configurer ceci ?",

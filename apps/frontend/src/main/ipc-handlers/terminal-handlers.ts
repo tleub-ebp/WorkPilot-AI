@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron';
 import type { BrowserWindow, IpcMainInvokeEvent } from 'electron';
 import { IPC_CHANNELS } from '../../shared/constants';
-import type { IPCResult, TerminalCreateOptions, ClaudeProfile, ClaudeProfileSettings, ClaudeUsageSnapshot, AllProfilesUsage } from '../../shared/types';
+import type { IPCResult, TerminalCreateOptions, ClaudeProfile, ClaudeProfileSettings, UsageSnapshot, AllProfilesUsage } from '../../shared/types';
 import { getClaudeProfileManager } from '../claude-profile-manager';
 import { getUsageMonitor } from '../claude-profile/usage-monitor';
 import { TerminalManager } from '../terminal-manager';
@@ -524,11 +524,11 @@ export function registerTerminalHandlers(
   // Request current usage snapshot
   ipcMain.handle(
     IPC_CHANNELS.USAGE_REQUEST,
-    async (event: IpcMainInvokeEvent, providerName?: string): Promise<IPCResult<import('../../shared/types').ClaudeUsageSnapshot | null>> => {
+    async (event: IpcMainInvokeEvent, providerName?: string): Promise<IPCResult<import('../../shared/types').UsageSnapshot | null>> => {
       try {
         const monitor = getUsageMonitor();
         
-        let usage: ClaudeUsageSnapshot | null;
+        let usage: UsageSnapshot | null;
         
         if (providerName) {
           // Use getUsageForProvider for specific provider requests
@@ -741,7 +741,7 @@ export function initializeUsageMonitorForwarding(mainWindow: BrowserWindow): voi
   const monitor = getUsageMonitor();
 
   // Forward usage updates to renderer
-  monitor.on('usage-updated', (usage: ClaudeUsageSnapshot) => {
+  monitor.on('usage-updated', (usage: UsageSnapshot) => {
     mainWindow.webContents.send(IPC_CHANNELS.USAGE_UPDATED, usage);
   });
 

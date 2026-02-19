@@ -26,6 +26,20 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
     { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5',       tier: 'fast',     supportsThinking: false },
   ],
 
+  // ---- GitHub Copilot ----
+  copilot: [
+    { value: 'gpt-5.2',              label: 'GPT-5.2 (Copilot)',            tier: 'flagship' },
+    { value: 'gpt-5',                label: 'GPT-5 (Copilot)',              tier: 'flagship' },
+    { value: 'o3',                   label: 'o3 (Copilot)',                 tier: 'flagship', supportsThinking: true },
+    { value: 'claude-opus-4-6',      label: 'Claude Opus 4.6 (Copilot)',    tier: 'flagship', supportsThinking: true },
+    { value: 'claude-sonnet-4-5',    label: 'Claude Sonnet 4.5 (Copilot)',  tier: 'standard', supportsThinking: true },
+    { value: 'gpt-4o',               label: 'GPT-4o (Copilot)',             tier: 'standard' },
+    { value: 'o3-mini',              label: 'o3-mini (Copilot)',            tier: 'standard', supportsThinking: true },
+    { value: 'claude-3.5-sonnet',    label: 'Claude 3.5 Sonnet (Copilot)',  tier: 'standard', supportsThinking: true },
+    { value: 'gpt-4o-mini',          label: 'GPT-4o mini (Copilot)',        tier: 'fast' },
+    { value: 'gpt-4o-mini',          label: 'GPT-4o mini (Copilot)',        tier: 'fast' },
+  ],
+
   // ---- OpenAI ----
   openai: [
     { value: 'gpt-5.2',       label: 'GPT-5.2',           tier: 'flagship' },
@@ -107,20 +121,6 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
     { value: 'wizardlm',         label: 'WizardLM',             tier: 'local' },
     { value: 'solar',            label: 'Solar Pro',            tier: 'local' },
     { value: 'custom',           label: 'Autre (saisie libre)', tier: 'local' },
-  ],
-
-  // ---- GitHub Copilot ----
-  copilot: [
-    { value: 'gpt-5.2',              label: 'GPT-5.2 (Copilot)',            tier: 'flagship' },
-    { value: 'gpt-5',                label: 'GPT-5 (Copilot)',              tier: 'flagship' },
-    { value: 'o3',                   label: 'o3 (Copilot)',                 tier: 'flagship', supportsThinking: true },
-    { value: 'claude-opus-4-6',      label: 'Claude Opus 4.6 (Copilot)',    tier: 'flagship', supportsThinking: true },
-    { value: 'claude-sonnet-4-5',    label: 'Claude Sonnet 4.5 (Copilot)',  tier: 'standard', supportsThinking: true },
-    { value: 'gpt-4o',               label: 'GPT-4o (Copilot)',             tier: 'standard' },
-    { value: 'o3-mini',              label: 'o3-mini (Copilot)',            tier: 'standard', supportsThinking: true },
-    { value: 'claude-3.5-sonnet',    label: 'Claude 3.5 Sonnet (Copilot)',  tier: 'standard', supportsThinking: true },
-    { value: 'gpt-4o-mini',          label: 'GPT-4o mini (Copilot)',        tier: 'fast' },
-    { value: 'gpt-4o-mini',          label: 'GPT-4o mini (Copilot)',        tier: 'fast' },
   ],
 
   // ---- Custom/Enterprise API ----

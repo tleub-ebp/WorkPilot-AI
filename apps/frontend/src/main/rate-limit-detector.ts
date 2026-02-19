@@ -537,7 +537,7 @@ export function getBestAvailableProfileEnv(): BestProfileEnvResult {
             // This ensures UsageIndicator.usage state also updates to show the new active account
             const newActiveProfile = allProfilesUsage.allProfiles.find(p => p.isActive);
             if (newActiveProfile) {
-              // Construct a ClaudeUsageSnapshot for the new active profile
+              // Construct a UsageSnapshot for the new active profile
               const newActiveUsage = {
                 profileId: newActiveProfile.profileId,
                 profileName: newActiveProfile.profileName,

@@ -163,7 +163,7 @@ export function formatTimeRemaining(
  *
  * NOTE: This function returns hardcoded English strings ('Unknown', 'Expired')
  * because i18n is not available in the main process. These sentinel values
- * flow into ClaudeUsageSnapshot and should be replaced with localized text
+ * flow into UsageSnapshot and should be replaced with localized text
  * in the renderer process before displaying to users.
  *
  * FUTURE: Consider returning structured data (e.g., { status: 'unknown' })

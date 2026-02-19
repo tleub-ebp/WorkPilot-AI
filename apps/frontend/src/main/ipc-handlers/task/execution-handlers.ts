@@ -154,7 +154,7 @@ export function registerTaskExecutionHandlers(
         mainWindow.webContents.send(
           IPC_CHANNELS.TASK_ERROR,
           taskId,
-          'Git repository required. Please run "git init" in your project directory. Auto Claude uses git worktrees for isolated builds.'
+          'Git repository required. Please run "git init" in your project directory. WorkPilot AI uses git worktrees for isolated builds.'
         );
         return;
       }

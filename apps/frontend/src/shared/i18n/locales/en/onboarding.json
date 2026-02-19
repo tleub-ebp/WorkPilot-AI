@@ -190,7 +190,7 @@
     "detecting": "Checking Claude Code installation...",
     "info": {
       "title": "What is Claude Code?",
-      "description": "Claude Code is Anthropic's official CLI that powers Auto Claude's AI features. It provides secure authentication and direct access to Claude models."
+      "description": "Claude Code is Anthropic's official CLI that powers WorkPilot AI's AI features. It provides secure authentication and direct access to Claude models."
     },
     "status": {
       "installed": "Installed",

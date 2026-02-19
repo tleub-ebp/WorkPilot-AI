@@ -1178,6 +1178,191 @@ class WorktreeManager:
             error=f"Failed to push branch: {last_error}",
         )
 
+    def create_azure_pull_request(
+        self,
+        spec_name: str,
+        target_branch: str | None = None,
+        title: str | None = None,
+        draft: bool = False,
+    ) -> PullRequestResult:
+        """
+        Create an Azure DevOps pull request for a spec's branch using Azure DevOps SDK.
+
+        Args:
+            spec_name: The spec folder name
+            target_branch: Target branch for PR (defaults to base_branch)
+            title: PR title (defaults to spec name)
+            draft: Whether to create as draft PR (Azure DevOps calls this 'WIP')
+
+        Returns:
+            PullRequestResult with keys:
+                - success: bool
+                - pr_url: str (if created)
+                - already_exists: bool (if PR already exists)
+                - error: str (if failed)
+        """
+        info = self.get_worktree_info(spec_name)
+        if not info:
+            return PullRequestResult(
+                success=False,
+                error=f"No worktree found for spec: {spec_name}",
+            )
+
+        target = target_branch or self.base_branch
+        pr_title = title or f"auto-claude: {spec_name}"
+
+        # Try AI-powered PR body from project's PR template, fall back to spec summary
+        pr_body: str | None = None
+        try:
+            diff_summary, commit_log = self._gather_pr_context(spec_name, target)
+            pr_body = self._try_ai_pr_body(
+                spec_name=spec_name,
+                target_branch=target,
+                branch_name=info.branch,
+                diff_summary=diff_summary,
+                commit_log=commit_log,
+            )
+        except Exception as e:
+            logger.warning(f"AI PR body generation encountered an error: {e}")
+
+        if not pr_body:
+            pr_body = self._extract_spec_summary(spec_name)
+
+        # Import Azure DevOps components
+        try:
+            from src.config.settings import Settings
+            from src.connectors.azure_devops.client import AzureDevOpsClient
+            from src.connectors.azure_devops.exceptions import (
+                APIError,
+                AuthenticationError,
+                ConfigurationError,
+            )
+            from azure.devops.v7_0.git.models import GitPullRequest
+        except ImportError as e:
+            return PullRequestResult(
+                success=False,
+                error=f"Azure DevOps components not available: {e}",
+            )
+
+        def is_pr_retryable(stderr: str) -> bool:
+            """Check if PR creation error is retryable (network or HTTP 5xx)."""
+            return _is_retryable_network_error(stderr) or _is_retryable_http_error(
+                stderr
+            )
+
+        def do_create_pr() -> tuple[bool, PullRequestResult | None, str]:
+            """Execute PR creation for retry wrapper."""
+            try:
+                # Load Azure DevOps settings from environment
+                settings = Settings.from_env()
+                client = AzureDevOpsClient(settings)
+                client.connect()
+
+                # Get Git client
+                git_client = client.get_git_client()
+
+                # Extract project and repository from git remote
+                project = extract_azure_devops_project(self.project_dir)
+                repository = extract_azure_devops_repository(self.project_dir)
+
+                if not project:
+                    return (False, None, "Could not extract Azure DevOps project from git remote")
+                if not repository:
+                    return (False, None, "Could not extract Azure DevOps repository from git remote")
+
+                # Check if PR already exists
+                try:
+                    existing_prs = git_client.get_pull_requests(
+                        project=project,
+                        repository_id=repository,
+                        search_criteria={
+                            "sourceRefName": f"refs/heads/{info.branch}",
+                            "targetRefName": f"refs/heads/{target}",
+                        }
+                    )
+                    if existing_prs:
+                        pr_url = existing_prs[0]._links.web.href
+                        return (True, PullRequestResult(
+                            success=True,
+                            pr_url=pr_url,
+                            already_exists=True,
+                        ), "")
+                except Exception:
+                    # Continue with creation if check fails
+                    pass
+
+                # Create pull request object
+                pull_request = GitPullRequest(
+                    source_ref_name=f"refs/heads/{info.branch}",
+                    target_ref_name=f"refs/heads/{target}",
+                    title=pr_title,
+                    description=pr_body,
+                )
+
+                # Set as WIP (Work In Progress) if draft is requested
+                if draft:
+                    pull_request.is_draft = True
+
+                # Create the pull request
+                created_pr = git_client.create_pull_request(
+                    git_pull_request_to_create=pull_request,
+                    project=project,
+                    repository_id=repository,
+                )
+
+                if created_pr and created_pr._links and created_pr._links.web:
+                    pr_url = created_pr._links.web.href
+                    return (True, PullRequestResult(
+                        success=True,
+                        pr_url=pr_url,
+                        already_exists=False,
+                    ), "")
+                else:
+                    return (False, None, "Pull request created but could not extract URL")
+
+            except (AuthenticationError, ConfigurationError) as e:
+                return (False, None, f"Azure DevOps authentication/configuration error: {e}")
+            except APIError as e:
+                return (False, None, f"Azure DevOps API error: {e}")
+            except Exception as e:
+                error_msg = str(e)
+                if "already exists" in error_msg.lower():
+                    # Try to get existing PR URL
+                    try:
+                        existing_prs = git_client.get_pull_requests(
+                            project=project,
+                            repository_id=repository,
+                            search_criteria={
+                                "sourceRefName": f"refs/heads/{info.branch}",
+                                "targetRefName": f"refs/heads/{target}",
+                            }
+                        )
+                        if existing_prs and existing_prs[0]._links:
+                            pr_url = existing_prs[0]._links.web.href
+                            return (True, PullRequestResult(
+                                success=True,
+                                pr_url=pr_url,
+                                already_exists=True,
+                            ), "")
+                    except Exception:
+                        pass
+                return (False, None, f"Failed to create Azure DevOps pull request: {e}")
+
+        # Execute with retry logic
+        result, last_error = _with_retry(
+            operation=do_create_pr,
+            max_retries=3,
+            is_retryable=is_pr_retryable,
+        )
+
+        if result is None:
+            return PullRequestResult(
+                success=False,
+                error=last_error or "Unknown error creating Azure DevOps pull request",
+            )
+
+        return result
+
     def create_pull_request(
         self,
         spec_name: str,
@@ -1856,7 +2041,14 @@ class WorktreeManager:
         )
 
         # Step 3: Create the PR/MR based on provider
-        if provider == "github":
+        if provider == "azure_devops":
+            pr_result = self.create_azure_pull_request(
+                spec_name=spec_name,
+                target_branch=target_branch,
+                title=title,
+                draft=draft
+            )
+        elif provider == "github":
             pr_result = self.create_pull_request(
                 spec_name=spec_name,
                 target_branch=target_branch,

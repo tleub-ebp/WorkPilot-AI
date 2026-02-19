@@ -69,7 +69,7 @@ import type {
   ClaudeProfile,
   ClaudeAutoSwitchSettings,
   ClaudeAuthResult,
-  ClaudeUsageSnapshot,
+  UsageSnapshot,
   AllProfilesUsage,
   TerminalProfileChangedEvent
 } from './agent';
@@ -357,19 +357,19 @@ export interface ElectronAPI {
 
   // Usage Monitoring (Proactive Account Switching)
   /** Request current usage snapshot */
-  requestUsageUpdate: (providerName?: string) => Promise<IPCResult<ClaudeUsageSnapshot | null>>;
+  requestUsageUpdate: (providerName?: string) => Promise<IPCResult<UsageSnapshot | null>>;
   /** Request all profiles usage immediately (for startup/refresh)
    * @param forceRefresh - If true, bypasses cache to get fresh data for all profiles
    */
   requestAllProfilesUsage: (forceRefresh?: boolean) => Promise<IPCResult<AllProfilesUsage | null>>;
   /** Listen for usage data updates */
-  onUsageUpdated: (callback: (usage: ClaudeUsageSnapshot) => void) => () => void;
+  onUsageUpdated: (callback: (usage: UsageSnapshot) => void) => () => void;
   /** Listen for proactive swap notifications */
   onProactiveSwapNotification: (callback: (notification: {
     fromProfile: { id: string; name: string };
     toProfile: { id: string; name: string };
     reason: string;
-    usageSnapshot: ClaudeUsageSnapshot;
+    usageSnapshot: UsageSnapshot;
   }) => void) => () => void;
   /** Listen for all profiles usage updates (for multi-profile display) */
   onAllProfilesUsageUpdated?: (callback: (allProfilesUsage: AllProfilesUsage) => void) => () => void;
@@ -739,7 +739,7 @@ export interface ElectronAPI {
   openExternal: (url: string) => Promise<void>;
   openTerminal: (dirPath: string) => Promise<IPCResult<void>>;
 
-  // Auto Claude source environment operations
+  // WorkPilot AI source environment operations
   getSourceEnv: () => Promise<IPCResult<SourceEnvConfig>>;
   updateSourceEnv: (config: { claudeOAuthToken?: string }) => Promise<IPCResult>;
   checkSourceToken: () => Promise<IPCResult<SourceEnvCheckResult>>;

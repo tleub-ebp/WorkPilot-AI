@@ -463,7 +463,7 @@ export const IPC_CHANNELS = {
   OLLAMA_PULL_MODEL: 'ollama:pullModel',
   OLLAMA_PULL_PROGRESS: 'ollama:pullProgress',
 
-  // Auto Claude source environment configuration
+  // WorkPilot AI source environment configuration
   AUTOBUILD_SOURCE_ENV_GET: 'autobuild:source:env:get',
   AUTOBUILD_SOURCE_ENV_UPDATE: 'autobuild:source:env:update',
   AUTOBUILD_SOURCE_ENV_CHECK_TOKEN: 'autobuild:source:env:checkToken',
@@ -570,6 +570,12 @@ export const IPC_CHANNELS = {
   COPILOT_CLI_CHECK_AUTH: 'copilotCli:checkAuth',
   COPILOT_CLI_START_AUTH: 'copilotCli:startAuth',
   COPILOT_CLI_GET_STATUS: 'copilotCli:getStatus',  // Get GitHub CLI status for AuthStatusIndicator
+
+  // Copilot OAuth operations (web-based authentication)
+  COPILOT_OAUTH_START: 'copilotOAuth:start',
+  COPILOT_OAUTH_CALLBACK: 'copilotOAuth:callback',
+  COPILOT_OAUTH_STATUS: 'copilotOAuth:status',
+  COPILOT_OAUTH_REVOKE: 'copilotOAuth:revoke',
 
   // MCP Server health checks
   MCP_CHECK_HEALTH: 'mcp:checkHealth',           // Quick connectivity check
