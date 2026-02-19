@@ -1,0 +1,561 @@
+/**
+ * Azure DevOps Side Panel Component
+ * Provides a sliding panel for importing Azure DevOps work items with drag & drop
+ */
+
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Download, Search, RefreshCw, X, ChevronRight, GripVertical, ChevronLeft } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Badge } from '../ui/badge';
+import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
+import { ScrollArea } from '../ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import { cn } from '@/lib/utils';
+import type { AzureDevOpsWorkItem, AzureDevOpsSyncStatus } from '../../../shared/types/integrations';
+import type { TaskStatus } from '../../../shared/types';
+
+interface AzureDevOpsSidePanelProps {
+  projectId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onWorkItemsImported?: (workItems: AzureDevOpsWorkItem[], targetStatus: TaskStatus) => void;
+}
+
+interface AzureDevOpsFilters {
+  workItemType: string;
+  state: string;
+  assignedTo: string;
+}
+
+export function AzureDevOpsSidePanel({ 
+  projectId, 
+  open, 
+  onOpenChange, 
+  onWorkItemsImported 
+}: AzureDevOpsSidePanelProps) {
+  const { t } = useTranslation('settings');
+  const [workItems, setWorkItems] = useState<AzureDevOpsWorkItem[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<AzureDevOpsFilters>({
+    workItemType: 'all',
+    state: 'all',
+    assignedTo: 'all',
+  });
+
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = useState<AzureDevOpsSyncStatus | null>(null);
+  const [draggedIds, setDraggedIds] = useState<Set<number>>(new Set());
+  const [panelWidth, setPanelWidth] = useState(384); // w-96 = 384px
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStartX = useRef(0);
+  const resizeStartWidth = useRef(0);
+
+  // Load connection status
+  useEffect(() => {
+    if (open) {
+      loadConnectionStatus();
+    }
+  }, [open, projectId]);
+
+  // Load work items when panel opens
+  useEffect(() => {
+    if (open && syncStatus?.connected) {
+      loadWorkItems();
+    }
+  }, [open, syncStatus?.connected]);
+
+  const loadConnectionStatus = async () => {
+    try {
+      const result = await window.electronAPI.checkAzureDevOpsConnection(projectId);
+      if (result.success) {
+        setSyncStatus(result.data ?? null);
+        if (!result.data?.connected) {
+          setError(result.data?.error || t('azureDevOpsImport.errorNotConfigured'));
+        }
+      } else {
+        setError(result.error || t('azureDevOpsImport.errorCheckConnectionFailed'));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('azureDevOpsImport.errorUnknown'));
+    }
+  };
+
+  const loadWorkItems = async () => {
+    setIsLoadingItems(true);
+    setError(null);
+    try {
+      const result = await window.electronAPI.getAzureDevOpsWorkItems(
+        projectId,
+        undefined, // Use default project from config
+        undefined, // Use default item types (Bug, Task, User Story)
+        1000 // Max items
+      );
+
+      if (result.success) {
+        setWorkItems(result.data || []);
+      } else {
+        setError(result.error || t('azureDevOpsImport.errorLoadWorkItemsFailed'));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('azureDevOpsImport.errorUnknown'));
+    } finally {
+      setIsLoadingItems(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    setSelectedIds(new Set());
+    setSearchQuery('');
+    setFilters({
+      workItemType: 'all',
+      state: 'all',
+      assignedTo: 'all',
+    });
+    loadWorkItems();
+  };
+
+  // Filter work items
+  const filteredItems = useMemo(() => {
+    return workItems.filter((item) => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch =
+          item.title.toLowerCase().includes(query) ||
+          item.id.toString().includes(query) ||
+          (item.description && item.description.toLowerCase().includes(query));
+        if (!matchesSearch) return false;
+      }
+
+      // Work item type filter
+      if (filters.workItemType !== 'all' && item.workItemType !== filters.workItemType) {
+        return false;
+      }
+
+      // State filter
+      if (filters.state !== 'all' && item.state !== filters.state) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [workItems, searchQuery, filters]);
+
+  // Get unique values for filters
+  const uniqueTypes = useMemo(() => {
+    return Array.from(new Set(workItems.map((item) => item.workItemType))).sort();
+  }, [workItems]);
+
+  const uniqueStates = useMemo(() => {
+    return Array.from(new Set(workItems.map((item) => item.state))).sort();
+  }, [workItems]);
+
+  // Selection handlers
+  const toggleItem = useCallback((id: number) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  }, [selectedIds]);
+
+  const selectAll = useCallback(() => {
+    setSelectedIds(new Set(filteredItems.map((item) => item.id)));
+  }, [filteredItems]);
+
+  const deselectAll = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const isAllSelected = filteredItems.length > 0 && selectedIds.size === filteredItems.length;
+  const isSomeSelected = selectedIds.size > 0 && selectedIds.size < filteredItems.length;
+
+  // Resize handlers
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    setIsResizing(true);
+    resizeStartX.current = e.clientX;
+    resizeStartWidth.current = panelWidth;
+  }, [panelWidth]);
+
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (!isResizing) return;
+    
+    const deltaX = resizeStartX.current - e.clientX;
+    const newWidth = Math.min(Math.max(resizeStartWidth.current + deltaX, 320), 800); // Min 320px, Max 800px
+    setPanelWidth(newWidth);
+  }, [isResizing]);
+
+  const handleResizeEnd = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  // Add global mouse event listeners for resize
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleResizeMove);
+      document.addEventListener('mouseup', handleResizeEnd);
+      return () => {
+        document.removeEventListener('mousemove', handleResizeMove);
+        document.removeEventListener('mouseup', handleResizeEnd);
+      };
+    }
+  }, [isResizing, handleResizeMove, handleResizeEnd]);
+
+  // Drag handlers
+  const handleDragStart = useCallback((e: React.DragEvent, workItemIds: number[]) => {
+    console.log('[AzureDevOps] Drag start:', workItemIds);
+    const itemsToDrag = workItemIds
+      .map(id => workItems.find(item => item.id === id))
+      .filter((item): item is AzureDevOpsWorkItem => item !== undefined);
+    
+    const dragData = {
+      type: 'azure-devops-workitems',
+      workItems: itemsToDrag
+    };
+    
+    console.log('[AzureDevOps] Drag data:', dragData);
+    e.dataTransfer.setData('application/json', JSON.stringify(dragData));
+    e.dataTransfer.effectAllowed = 'copy';
+    setDraggedIds(new Set(workItemIds));
+    
+    // Also dispatch custom event for better compatibility
+    const customEvent = new CustomEvent('azure-devops-drag-start', {
+      detail: dragData,
+      bubbles: true,
+      cancelable: true
+    });
+    document.dispatchEvent(customEvent);
+  }, [workItems]);
+
+  const handleDragEnd = useCallback(() => {
+    console.log('[AzureDevOps] Drag end');
+    setDraggedIds(new Set());
+  }, []);
+
+  // Handle work items drop from Kanban columns
+  const handleWorkItemsDrop = useCallback((workItems: AzureDevOpsWorkItem[], targetStatus: TaskStatus) => {
+    if (onWorkItemsImported) {
+      onWorkItemsImported(workItems, targetStatus);
+    }
+  }, [onWorkItemsImported]);
+
+  // Get color for work item type badge
+  const getTypeColor = (type: string): string => {
+    switch (type.toLowerCase()) {
+      case 'bug':
+        return 'bg-red-500/10 text-red-500 border-red-500/20';
+      case 'task':
+        return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+      case 'user story':
+        return 'bg-green-500/10 text-green-500 border-green-500/20';
+      case 'feature':
+        return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+      case 'epic':
+        return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+      default:
+        return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+    }
+  };
+
+  const selectedWorkItems = workItems.filter(item => selectedIds.has(item.id));
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-300 flex">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/20"
+        onClick={() => onOpenChange(false)}
+      />
+      
+      {/* Panel */}
+      <div 
+        className="absolute right-0 top-0 h-full bg-background border-l border-border shadow-2xl flex flex-col"
+        style={{ width: `${panelWidth}px` }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Download className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold">{t('azureDevOpsImport.title')}</h2>
+          </div>
+          <div className="flex items-center gap-1">
+            {/* Collapse button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setPanelWidth(320)}
+              className="h-7 w-7"
+              title="Réduire"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Connection Info */}
+        {syncStatus?.projectName && (
+          <div className="px-4 py-2 bg-muted/50 border-b border-border">
+            <p className="text-sm text-foreground/70">
+              <strong>{t('azureDevOpsImport.projectLabel')}</strong>{' '}
+              {syncStatus.projectName}
+            </p>
+          </div>
+        )}
+
+        {/* Error Banner */}
+        {error && (
+          <div className="mx-4 mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-md">
+            <p className="text-sm text-red-500">{error}</p>
+          </div>
+        )}
+
+        {/* Search and Filters */}
+        {syncStatus?.connected && (
+          <div className="p-4 space-y-4 border-b border-border">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t('azureDevOpsImport.searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Filters */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-foreground/70 mb-1 block">
+                  {t('azureDevOpsImport.filterTypeLabel')}
+                </Label>
+                <Select
+                  value={filters.workItemType}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, workItemType: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      {t('azureDevOpsImport.filterTypeAll')}
+                    </SelectItem>
+                    {uniqueTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-xs text-foreground/70 mb-1 block">
+                  {t('azureDevOpsImport.filterStateLabel')}
+                </Label>
+                <Select
+                  value={filters.state}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, state: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      {t('azureDevOpsImport.filterStateAll')}
+                    </SelectItem>
+                    {uniqueStates.map((state) => (
+                      <SelectItem key={state} value={state}>
+                        {state}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Selection Controls */}
+            {filteredItems.length > 0 && (
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={() => {
+                      if (isAllSelected) {
+                        deselectAll();
+                      } else {
+                        selectAll();
+                      }
+                    }}
+                    className={isSomeSelected ? 'data-[state=checked]:bg-primary/50' : ''}
+                  />
+                  <span className="text-sm text-foreground/70">
+                    {t('azureDevOpsImport.selectionCount', {
+                      selected: selectedIds.size,
+                      total: filteredItems.length,
+                    })}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRefresh}
+                  disabled={isLoadingItems}
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoadingItems ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Work Items List */}
+        <ScrollArea className="flex-1">
+          {isLoadingItems ? (
+            <div className="flex items-center justify-center py-12">
+              <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground px-4">
+              <p>{t('azureDevOpsImport.emptyTitle')}</p>
+              {(searchQuery || filters.workItemType !== 'all' || filters.state !== 'all') && (
+                <p className="text-sm mt-2">{t('azureDevOpsImport.emptySubtitle')}</p>
+              )}
+            </div>
+          ) : (
+            <div className="p-4 space-y-2">
+              {filteredItems.map((item) => (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "flex items-start gap-3 p-3 rounded-md border transition-all cursor-pointer",
+                    "hover:bg-muted/50",
+                    selectedIds.has(item.id) && "bg-primary/10 border-primary/30 cursor-grab",
+                    draggedIds.has(item.id) && "cursor-grabbing opacity-50"
+                  )}
+                  onClick={() => toggleItem(item.id)}
+                  draggable={selectedIds.has(item.id)}
+                  onDragStart={(e) => {
+                    console.log('[AzureDevOps] Drag start triggered for item:', item.id);
+                    if (selectedIds.has(item.id)) {
+                      handleDragStart(e, Array.from(selectedIds));
+                    } else {
+                      e.preventDefault();
+                    }
+                  }}
+                  onDragEnd={handleDragEnd}
+                >
+                  <Checkbox
+                    checked={selectedIds.has(item.id)}
+                    onCheckedChange={() => toggleItem(item.id)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  
+                  {selectedIds.has(item.id) && (
+                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
+                  )}
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-mono text-xs text-muted-foreground">
+                        #{item.id}
+                      </span>
+                      <Badge variant="outline" className={getTypeColor(item.workItemType)}>
+                        {item.workItemType}
+                      </Badge>
+                      <Badge variant="outline">{item.state}</Badge>
+                      {item.priority !== undefined && (
+                        <Badge variant="outline">P{item.priority}</Badge>
+                      )}
+                    </div>
+                    <h4 className="font-medium text-sm mb-1 truncate">{item.title}</h4>
+                    {item.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {item.description}
+                      </p>
+                    )}
+                    {item.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {item.tags.slice(0, 3).map((tag, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                        {item.tags.length > 3 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{item.tags.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
+
+        {/* Footer */}
+        {selectedWorkItems.length > 0 && (
+          <div className="p-4 border-t border-border space-y-3">
+            <div className="flex items-center gap-2 text-sm text-foreground/70">
+              <Download className="h-4 w-4" />
+              <span>{t('azureDevOpsImport.dragInstructions')}</span>
+            </div>
+            
+            <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+              {t('azureDevOpsImport.selectedItems', { count: selectedWorkItems.length })}
+              <div className="mt-1 space-y-1">
+                {selectedWorkItems.slice(0, 3).map((item) => (
+                  <div key={item.id} className="flex items-center gap-2">
+                    <span className="font-mono">#{item.id}</span>
+                    <span className="truncate">{item.title}</span>
+                  </div>
+                ))}
+                {selectedWorkItems.length > 3 && (
+                  <div>+{selectedWorkItems.length - 3} {t('azureDevOpsImport.moreItems')}</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Resize handle */}
+        <div
+          className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/20 transition-colors"
+          onMouseDown={handleResizeStart}
+          title="Redimensionner"
+        >
+          {/* Wider invisible hit area for easier grabbing */}
+          <div className="absolute inset-y-0 -left-2 -right-2" />
+        </div>
+      </div>
+    </div>
+  );
+}
