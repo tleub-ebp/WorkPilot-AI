@@ -569,6 +569,7 @@ export const IPC_CHANNELS = {
   COPILOT_CLI_SET_ACTIVE_PATH: 'copilotCli:setActivePath',
   COPILOT_CLI_CHECK_AUTH: 'copilotCli:checkAuth',
   COPILOT_CLI_START_AUTH: 'copilotCli:startAuth',
+  COPILOT_CLI_GET_STATUS: 'copilotCli:getStatus',  // Get GitHub CLI status for AuthStatusIndicator
 
   // MCP Server health checks
   MCP_CHECK_HEALTH: 'mcp:checkHealth',           // Quick connectivity check

@@ -556,6 +556,7 @@ export function UsageIndicator() {
 
   // Après la récupération des labels et des valeurs d'usage
   const isOpenAI = usage.providerName === 'openai';
+  const isCopilot = usage.providerName === 'copilot';
 
   return (
       <Popover open={isOpen} onOpenChange={handleOpenChange}>
@@ -579,16 +580,22 @@ export function UsageIndicator() {
                   ${formatUsageValue(usage.weeklyUsageValue)}
                 </span>
               </div>
+            ) : isCopilot ? (
+              <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
+                <span className="text-blue-500" title="Copilot Cost">
+                  {formatUsageValue(usage.copilotUsageDetails?.totalTokens)}T
+                </span>
+              </div>
             ) : (
-                <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
-              <span className={sessionColorClass} title={t('common:usage.sessionShort')}>
-                {Math.round(sessionPercent)}
-              </span>
-                  <span className="text-muted-foreground/50">│</span>
-                  <span className={weeklyColorClass} title={t('common:usage.weeklyShort')}>
-                {Math.round(weeklyPercent)}
-              </span>
-                </div>
+              <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
+                <span className={sessionColorClass} title={t('common:usage.sessionShort')}>
+                  {Math.round(sessionPercent)}
+                </span>
+                <span className="text-muted-foreground/50">│</span>
+                <span className={weeklyColorClass} title={t('common:usage.weeklyShort')}>
+                  {Math.round(weeklyPercent)}
+                </span>
+              </div>
             )}
           </button>
         </PopoverTrigger>
@@ -704,6 +711,82 @@ export function UsageIndicator() {
                         <pre className="whitespace-pre-wrap text-[10px]">{JSON.stringify(usage.openaiUsageDetails.moderations, null, 2)}</pre>
                       </div>
                     )}
+                  </div>
+                )}
+              </div>
+            ) : isCopilot ? (
+              <div className="py-2 space-y-3">
+                {(usage as any).error === 'INSUFFICIENT_PERMISSIONS' ? (
+                  <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                    <AlertCircle className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-orange-500">
+                        Permissions insuffisantes
+                      </p>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        {(usage as any).errorMessage || 'Permissions insuffisantes pour accéder aux métriques Copilot.'}
+                      </p>
+                      <div className="text-[10px] text-muted-foreground">
+                        <strong>Suggestions:</strong>
+                        <ul className="list-disc list-inside space-y-0.5 mt-1">
+                          <li>Exécutez: <code className="bg-muted px-1 rounded">gh auth refresh -h github.com -s admin:org</code></li>
+                          <li>Assurez-vous d'être administrateur de l'organisation Copilot</li>
+                          <li>Contactez votre administrateur GitHub pour obtenir les permissions nécessaires</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                ) : (usage as any).error === 'BACKEND_UNAVAILABLE' ? (
+                  <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                    <AlertCircle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-yellow-500">
+                        Backend non disponible
+                      </p>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        Le backend FastAPI n'est pas démarré. Veuillez démarrer le backend pour voir les métriques Copilot.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <TrendingUp className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-blue-500">
+                        Métriques GitHub Copilot
+                      </p>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        Données d'utilisation GitHub Copilot pour les 28 derniers jours.
+                      </p>
+                      {usage.copilotUsageDetails && (
+                        <div className="mt-2 space-y-1">
+                          {usage.copilotUsageDetails.suggestionsCount !== undefined && (
+                            <div className="flex justify-between text-[10px]">
+                              <span>Suggestions:</span>
+                              <span className="font-mono">{usage.copilotUsageDetails.suggestionsCount}</span>
+                            </div>
+                          )}
+                          {usage.copilotUsageDetails.acceptancesCount !== undefined && (
+                            <div className="flex justify-between text-[10px]">
+                              <span>Acceptations:</span>
+                              <span className="font-mono">{usage.copilotUsageDetails.acceptancesCount}</span>
+                            </div>
+                          )}
+                          {usage.copilotUsageDetails.acceptanceRate !== undefined && (
+                            <div className="flex justify-between text-[10px]">
+                              <span>Taux d'acceptation:</span>
+                              <span className="font-mono">{usage.copilotUsageDetails.acceptanceRate.toFixed(1)}%</span>
+                            </div>
+                          )}
+                          {usage.copilotUsageDetails.totalTokens !== undefined && usage.copilotUsageDetails.totalTokens > 0 && (
+                            <div className="flex justify-between text-[10px]">
+                              <span>Tokens utilisés:</span>
+                              <span className="font-mono">{usage.copilotUsageDetails.totalTokens}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

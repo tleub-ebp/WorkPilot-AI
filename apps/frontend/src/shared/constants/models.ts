@@ -111,10 +111,16 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
 
   // ---- GitHub Copilot ----
   copilot: [
-    { value: 'gpt-4o',              label: 'GPT-4o (Copilot)',           tier: 'flagship' },
-    { value: 'claude-3.5-sonnet',   label: 'Claude 3.5 Sonnet (Copilot)', tier: 'standard' },
-    { value: 'o3-mini',             label: 'o3-mini (Copilot)',          tier: 'standard', supportsThinking: true },
-    { value: 'gpt-4o-mini',         label: 'GPT-4o mini (Copilot)',     tier: 'fast' },
+    { value: 'gpt-5.2',              label: 'GPT-5.2 (Copilot)',            tier: 'flagship' },
+    { value: 'gpt-5',                label: 'GPT-5 (Copilot)',              tier: 'flagship' },
+    { value: 'o3',                   label: 'o3 (Copilot)',                 tier: 'flagship', supportsThinking: true },
+    { value: 'claude-opus-4-6',      label: 'Claude Opus 4.6 (Copilot)',    tier: 'flagship', supportsThinking: true },
+    { value: 'claude-sonnet-4-5',    label: 'Claude Sonnet 4.5 (Copilot)',  tier: 'standard', supportsThinking: true },
+    { value: 'gpt-4o',               label: 'GPT-4o (Copilot)',             tier: 'standard' },
+    { value: 'o3-mini',              label: 'o3-mini (Copilot)',            tier: 'standard', supportsThinking: true },
+    { value: 'claude-3.5-sonnet',    label: 'Claude 3.5 Sonnet (Copilot)',  tier: 'standard', supportsThinking: true },
+    { value: 'gpt-4o-mini',          label: 'GPT-4o mini (Copilot)',        tier: 'fast' },
+    { value: 'gpt-4o-mini',          label: 'GPT-4o mini (Copilot)',        tier: 'fast' },
   ],
 
   // ---- Custom/Enterprise API ----

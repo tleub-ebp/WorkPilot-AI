@@ -1,0 +1,42 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check Provider Selection</title>
+</head>
+<body>
+    <h1>Provider Selection Check</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Check current provider
+        const currentProvider = localStorage.getItem('selectedProvider');
+        const result = document.getElementById('result');
+        
+        if (currentProvider) {
+            result.innerHTML = `
+                <p><strong>Current selectedProvider:</strong> ${currentProvider}</p>
+                <p><strong>Is Copilot?</strong> ${currentProvider === 'copilot' ? '✅ YES' : '❌ NO'}</p>
+            `;
+            
+            // If not copilot, offer to set it
+            if (currentProvider !== 'copilot') {
+                result.innerHTML += `
+                    <button onclick="setCopilot()">Set to Copilot</button>
+                `;
+            }
+        } else {
+            result.innerHTML = `
+                <p><strong>No provider selected in localStorage</strong></p>
+                <button onclick="setCopilot()">Set to Copilot</button>
+            `;
+        }
+        
+        function setCopilot() {
+            localStorage.setItem('selectedProvider', 'copilot');
+            location.reload();
+        }
+    </script>
+</body>
+</html>
+    

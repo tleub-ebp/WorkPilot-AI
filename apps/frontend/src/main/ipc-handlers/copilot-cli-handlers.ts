@@ -617,5 +617,39 @@ export function registerCopilotCliHandlers(): void {
     }
   );
 
+  // Get GitHub CLI status for AuthStatusIndicator
+  ipcMain.handle(
+    IPC_CHANNELS.COPILOT_CLI_GET_STATUS,
+    async (): Promise<IPCResult<{ available: boolean; isAuth?: boolean; username?: string }>> => {
+      try {
+        const ghPath = getToolPath('gh');
+        if (!ghPath) {
+          return {
+            success: true,
+            data: { available: false }
+          };
+        }
+
+        const result = await checkCopilotAuth(ghPath);
+        
+        return {
+          success: true,
+          data: {
+            available: true,
+            isAuth: result.authenticated,
+            username: result.username
+          }
+        };
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        console.error('[Copilot CLI] Status check failed:', errorMsg, error);
+        return {
+          success: true, // Return success with available: false instead of error
+          data: { available: false }
+        };
+      }
+    }
+  );
+
   console.warn('[IPC] Copilot CLI handlers registered');
 }

@@ -341,21 +341,69 @@ def db_health():
 @app.get("/providers/usage/{provider}")
 def get_provider_usage(provider: str):
     """
-    Récupère l'usage et le crédit restant pour le provider OpenAI (ou autre si implémenté).
+    Récupère l'usage et le crédit restant pour le provider OpenAI, Copilot ou autre si implémenté.
     """
-    if provider != "openai":
-        return {"error": "Usage non supporté pour ce provider"}
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        return {"error": "Clé API OpenAI manquante."}
-    try:
-        headers = {"Authorization": f"Bearer {api_key}"}
-        resp = requests.get("https://api.openai.com/v1/dashboard/billing/credit_grants", headers=headers, timeout=10)
-        if resp.status_code == 200:
-            return resp.json()
-        return {"error": resp.text, "status_code": resp.status_code}
-    except Exception as e:
-        return {"error": str(e)}
+    if provider == "openai":
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            return {"error": "Clé API OpenAI manquante."}
+        try:
+            headers = {"Authorization": f"Bearer {api_key}"}
+            # Use the usage endpoint for token usage instead of billing credits
+            resp = requests.get("https://api.openai.com/v1/usage", headers=headers, timeout=10)
+            if resp.status_code == 200:
+                data = resp.json()
+                # Format the response to include token usage information
+                return {
+                    "provider": "openai",
+                    "usage": data,
+                    "fetched_at": "now"
+                }
+            return {"error": resp.text, "status_code": resp.status_code}
+        except Exception as e:
+            return {"error": str(e)}
+    elif provider == "copilot":
+        try:
+            # Importer le connecteur Copilot
+            sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+            from connectors.llm_copilot import get_copilot_usage_metrics
+            
+            usage_data = get_copilot_usage_metrics()
+            
+            # Formater les données pour le frontend
+            if "error" in usage_data:
+                return usage_data
+            
+            return {
+                "provider": "copilot",
+                "available": True,
+                "usage": {
+                    "total_suggestions": usage_data.get("total_suggestions", 0),
+                    "total_acceptances": usage_data.get("total_acceptances", 0),
+                    "total_lines_suggested": usage_data.get("total_lines_suggested", 0),
+                    "total_lines_accepted": usage_data.get("total_lines_accepted", 0),
+                    "acceptance_rate_percent": usage_data.get("acceptance_rate_percent", 0),
+                    "line_acceptance_rate_percent": usage_data.get("line_acceptance_rate_percent", 0),
+                    "total_tokens": usage_data.get("total_tokens", 0),
+                    "organization": usage_data.get("organization"),
+                    "level": usage_data.get("level", "organization")
+                },
+                "fetched_at": usage_data.get("fetched_at"),
+                "copilotUsageDetails": {
+                    "suggestions": usage_data.get("total_suggestions", 0),
+                    "acceptances": usage_data.get("total_acceptances", 0),
+                    "acceptanceRate": usage_data.get("acceptance_rate_percent", 0),
+                    "linesSuggested": usage_data.get("total_lines_suggested", 0),
+                    "linesAccepted": usage_data.get("total_lines_accepted", 0),
+                    "lineAcceptanceRate": usage_data.get("line_acceptance_rate_percent", 0)
+                }
+            }
+        except ImportError as e:
+            return {"error": f"Module Copilot non disponible: {e}"}
+        except Exception as e:
+            return {"error": f"Erreur lors de la récupération des métriques Copilot: {e}"}
+    else:
+        return {"error": f"Usage non supporté pour le provider '{provider}'"}
 
 if __name__ == "__main__":
     import uvicorn

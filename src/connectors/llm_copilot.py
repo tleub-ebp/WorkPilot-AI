@@ -1,0 +1,426 @@
+"""
+GitHub Copilot Usage Connector
+
+Fournit l'accès aux métriques d'utilisation de GitHub Copilot via l'API REST GitHub.
+Nécessite une authentification via GitHub CLI (gh) ou token GitHub avec les permissions appropriées.
+"""
+
+import json
+import logging
+import subprocess
+from typing import Dict, Any, Optional
+from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
+
+
+class CopilotUsageConnector:
+    """
+    Connecteur pour récupérer les métriques d'utilisation GitHub Copilot.
+    
+    Ce connecteur utilise l'API REST GitHub pour récupérer les données d'utilisation
+    Copilot au niveau de l'organisation ou de l'entreprise.
+    """
+
+    def __init__(self, gh_token: Optional[str] = None):
+        """
+        Initialise le connecteur Copilot.
+        
+        Args:
+            gh_token: Token GitHub d'authentification (optionnel, utilise gh CLI si non fourni)
+        """
+        self.gh_token = gh_token
+        self.gh_executable = self._find_gh_executable()
+
+    def _find_gh_executable(self) -> str:
+        """Trouve l'exécutable GitHub CLI."""
+        try:
+            result = subprocess.run(
+                ["which", "gh"], 
+                capture_output=True, 
+                text=True, 
+                timeout=5
+            )
+            if result.returncode == 0:
+                return result.stdout.strip()
+        except:
+            pass
+        
+        # Fallback sur "gh" (doit être dans le PATH)
+        return "gh"
+
+    def _run_gh_command(self, args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
+        """
+        Exécute une commande gh CLI avec authentification.
+        
+        Args:
+            args: Arguments de la commande gh
+            timeout: Timeout en secondes
+            
+        Returns:
+            Résultat de la commande subprocess
+            
+        Raises:
+            RuntimeError: Si la commande échoue
+        """
+        cmd = [self.gh_executable] + args
+        
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=True
+            )
+            return result
+        except subprocess.CalledProcessError as e:
+            error_msg = f"Command failed: {' '.join(cmd)}\n"
+            error_msg += f"Exit code: {e.returncode}\n"
+            error_msg += f"stderr: {e.stderr}\n"
+            error_msg += f"stdout: {e.stdout}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
+        except subprocess.TimeoutError as e:
+            error_msg = f"Command timed out after {timeout}s: {' '.join(cmd)}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
+        except FileNotFoundError as e:
+            error_msg = f"GitHub CLI (gh) not found. Install from https://cli.github.com/"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
+
+    def _get_authenticated_user(self) -> str:
+        """
+        Récupère le nom d'utilisateur GitHub authentifié.
+        
+        Returns:
+            Nom d'utilisateur GitHub
+            
+        Raises:
+            RuntimeError: Si non authentifié
+        """
+        try:
+            result = self._run_gh_command(["api", "user", "--jq", ".login"])
+            return result.stdout.strip()
+        except RuntimeError as e:
+            if "not logged in" in str(e).lower():
+                raise RuntimeError("GitHub CLI not authenticated. Run 'gh auth login'")
+            raise
+
+    def get_copilot_enterprise_usage(self, days: int = 28) -> Dict[str, Any]:
+        """
+        Récupère les métriques d'utilisation Copilot au niveau de l'entreprise.
+        
+        Args:
+            days: Nombre de jours de données à récupérer (28 par défaut)
+            
+        Returns:
+            Dictionnaire contenant les métriques d'utilisation
+            
+        Raises:
+            RuntimeError: Si la récupération échoue
+        """
+        try:
+            # Vérifier l'authentification
+            username = self._get_authenticated_user()
+            logger.info(f"Authenticated as GitHub user: {username}")
+
+            # Récupérer les entreprises de l'utilisateur
+            enterprises_result = self._run_gh_command([
+                "api", 
+                "user/enterprises",
+                "--jq", ".[].slug"
+            ])
+            
+            if enterprises_result.returncode != 0:
+                raise RuntimeError("Failed to fetch user enterprises")
+                
+            enterprises = [line.strip() for line in enterprises_result.stdout.strip().split('\n') if line.strip()]
+            
+            if not enterprises:
+                raise RuntimeError("No enterprises found for user")
+            
+            # Pour chaque entreprise, essayer de récupérer les métriques du jour précédent
+            from datetime import date, timedelta
+            yesterday = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+            
+            for enterprise in enterprises:
+                try:
+                    # Utiliser le bon endpoint pour les métriques d'entreprise
+                    usage_result = self._run_gh_command([
+                        "api", 
+                        f"/enterprises/{enterprise}/copilot/metrics/reports/enterprise-1-day",
+                        "--method", "GET",
+                        "-f", f"day={yesterday}"
+                    ])
+                    
+                    if usage_result.returncode == 0 and usage_result.stdout.strip():
+                        usage_data = json.loads(usage_result.stdout)
+                        
+                        # Les données retournées contiennent des liens de téléchargement
+                        if "download_links" in usage_data and usage_data["download_links"]:
+                            # Télécharger le premier rapport
+                            report_url = usage_data["download_links"][0]
+                            report_data = self._download_report(report_url)
+                            return self._format_usage_data(report_data, "enterprise", enterprise)
+                        else:
+                            logger.warning(f"No download links found for enterprise {enterprise}")
+                            continue
+                        
+                except RuntimeError as e:
+                    logger.debug(f"No Copilot data for enterprise {enterprise}: {e}")
+                    continue
+            
+            raise RuntimeError("No Copilot usage data found for any enterprise")
+            
+        except RuntimeError as e:
+            logger.warning(f"Failed to get enterprise usage: {e}")
+            # Fallback sur les métriques d'organisation
+            return self.get_copilot_organization_usage(days)
+
+    def _download_report(self, report_url: str) -> Dict[str, Any]:
+        """
+        Télécharge et analyse un rapport Copilot depuis une URL signée.
+        
+        Args:
+            report_url: URL signée pour télécharger le rapport
+            
+        Returns:
+            Données du rapport analysées
+            
+        Raises:
+            RuntimeError: Si le téléchargement échoue
+        """
+        try:
+            import requests
+            response = requests.get(report_url, timeout=30)
+            response.raise_for_status()
+            
+            # Le rapport est généralement un fichier JSON
+            if report_url.endswith('.json'):
+                return response.json()
+            else:
+                # Pour les autres formats, essayer de parser comme JSON
+                return json.loads(response.text)
+                
+        except Exception as e:
+            logger.error(f"Failed to download report from {report_url}: {e}")
+            raise RuntimeError(f"Failed to download report: {e}")
+
+    def get_copilot_organization_usage(self, days: int = 28) -> Dict[str, Any]:
+        """
+        Récupère les métriques d'utilisation Copilot au niveau de l'organisation.
+        
+        Args:
+            days: Nombre de jours de données à récupérer (28 par défaut)
+            
+        Returns:
+            Dictionnaire contenant les métriques d'utilisation
+            
+        Raises:
+            RuntimeError: Si la récupération échoue
+        """
+        try:
+            # Récupérer les organisations de l'utilisateur
+            orgs_result = self._run_gh_command([
+                "api", 
+                "user/orgs",
+                "--jq", ".[].login"
+            ])
+            
+            if orgs_result.returncode != 0:
+                raise RuntimeError("Failed to fetch user organizations")
+                
+            organizations = [line.strip() for line in orgs_result.stdout.strip().split('\n') if line.strip()]
+            
+            if not organizations:
+                raise RuntimeError("No organizations found for user")
+            
+            # Pour chaque organisation, essayer de récupérer les métriques du jour précédent
+            from datetime import date, timedelta
+            yesterday = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+            
+            permission_errors = []
+            not_found_errors = []
+            
+            for org in organizations:
+                try:
+                    # Utiliser le bon endpoint pour les métriques d'organisation
+                    usage_result = self._run_gh_command([
+                        "api", 
+                        f"/orgs/{org}/copilot/metrics/reports/organization-1-day",
+                        "--method", "GET",
+                        "-f", f"day={yesterday}"
+                    ])
+                    
+                    if usage_result.returncode == 0 and usage_result.stdout.strip():
+                        usage_data = json.loads(usage_result.stdout)
+                        
+                        # Les données retournées contiennent des liens de téléchargement
+                        if "download_links" in usage_data and usage_data["download_links"]:
+                            # Télécharger le premier rapport
+                            report_url = usage_data["download_links"][0]
+                            report_data = self._download_report(report_url)
+                            formatted_data = self._format_usage_data(report_data, "organization", org)
+                            logger.info(f"Successfully retrieved Copilot usage for organization: {org}")
+                            return formatted_data
+                        else:
+                            logger.warning(f"No download links found for organization {org}")
+                            continue
+                        
+                except RuntimeError as e:
+                    error_msg = str(e).lower()
+                    if "insufficient permissions" in error_msg or "admin:org" in error_msg:
+                        permission_errors.append(str(e))
+                    elif "not found" in error_msg or "404" in error_msg:
+                        not_found_errors.append(str(e))
+                    else:
+                        logger.debug(f"No Copilot data for organization {org}: {e}")
+                    continue
+            
+            # Prioriser les erreurs de permissions
+            if permission_errors:
+                raise RuntimeError(f"Insufficient permissions: {permission_errors[0]}")
+            elif not_found_errors:
+                raise RuntimeError(f"No Copilot usage data found for any organization")
+            else:
+                raise RuntimeError("No Copilot usage data found for any organization")
+            
+        except RuntimeError as e:
+            logger.error(f"Failed to get organization usage: {e}")
+            raise
+
+    def get_copilot_usage_summary(self) -> Dict[str, Any]:
+        """
+        Récupère un résumé des métriques d'utilisation Copilot.
+        
+        Cette méthode essaie d'abord les métriques d'entreprise, puis d'organisation,
+        et retourne les premières données disponibles.
+        
+        Returns:
+            Dictionnaire contenant le résumé des métriques
+        """
+        enterprise_error = None
+        organization_error = None
+        
+        try:
+            # Essayer les métriques d'entreprise d'abord
+            return self.get_copilot_enterprise_usage()
+        except RuntimeError as e:
+            enterprise_error = e
+            
+        try:
+            # Fallback sur les métriques d'organisation
+            return self.get_copilot_organization_usage()
+        except RuntimeError as e:
+            organization_error = e
+        
+        # Si tout échoue, vérifier si c'est un problème de permissions
+        all_errors = [str(enterprise_error or ""), str(organization_error or "")]
+        combined_error_msg = " ".join(all_errors).lower()
+        
+        if ("insufficient permissions" in combined_error_msg or "admin:org" in combined_error_msg):
+            return {
+                "error": "INSUFFICIENT_PERMISSIONS",
+                "message": "Permissions insuffisantes pour accéder aux métriques Copilot. Cette fonctionnalité nécessite des permissions d'administrateur d'organisation ou d'entreprise.",
+                "suggestions": [
+                    "Exécutez: gh auth refresh -h github.com -s admin:org",
+                    "Assurez-vous d'être administrateur de l'organisation Copilot",
+                    "Contactez votre administrateur GitHub pour obtenir les permissions nécessaires"
+                ],
+                "provider": "copilot",
+                "available": False,
+                "permission_required": "admin:org"
+            }
+        else:
+            return {
+                "error": str(organization_error or enterprise_error),
+                "message": "Unable to retrieve Copilot usage metrics. Please ensure you have the necessary permissions and Copilot is enabled for your organization/enterprise.",
+                "suggestions": [
+                    "Verify GitHub CLI authentication: gh auth status",
+                    "Ensure Copilot is enabled for your organization",
+                    "Check you have 'View Enterprise Copilot Metrics' permission",
+                    "For enterprise metrics: ensure you're an enterprise owner or billing manager"
+                ],
+                "provider": "copilot",
+                "available": False
+            }
+
+    def _format_usage_data(self, raw_data: Dict[str, Any], level: str, org_name: str = None) -> Dict[str, Any]:
+        """
+        Formate les données brutes d'utilisation en un format standardisé.
+        
+        Args:
+            raw_data: Données brutes de l'API GitHub
+            level: Niveau des données ("enterprise" ou "organization")
+            org_name: Nom de l'organisation (si applicable)
+            
+        Returns:
+            Données formatées
+        """
+        # Extraire les métriques clés
+        total_suggestions = 0
+        total_acceptances = 0
+        total_lines_suggested = 0
+        total_lines_accepted = 0
+        
+        # Les données peuvent venir dans différents formats selon l'endpoint
+        if "usage" in raw_data:
+            usage_metrics = raw_data["usage"]
+        elif "data" in raw_data:
+            usage_metrics = raw_data["data"]
+        else:
+            usage_metrics = raw_data
+        
+        # Agréger les métriques
+        if isinstance(usage_metrics, list):
+            for metric in usage_metrics:
+                if isinstance(metric, dict):
+                    total_suggestions += metric.get("total_suggestions", 0)
+                    total_acceptances += metric.get("total_acceptances", 0)
+                    total_lines_suggested += metric.get("total_lines_suggested", 0)
+                    total_lines_accepted += metric.get("total_lines_accepted", 0)
+        elif isinstance(usage_metrics, dict):
+            total_suggestions = usage_metrics.get("total_suggestions", 0)
+            total_acceptances = usage_metrics.get("total_acceptances", 0)
+            total_lines_suggested = usage_metrics.get("total_lines_suggested", 0)
+            total_lines_accepted = usage_metrics.get("total_lines_accepted", 0)
+        
+        # Calculer les taux d'acceptation
+        acceptance_rate = (total_acceptances / total_suggestions * 100) if total_suggestions > 0 else 0
+        line_acceptance_rate = (total_lines_accepted / total_lines_suggested * 100) if total_lines_suggested > 0 else 0
+        
+        return {
+            "provider": "copilot",
+            "level": level,
+            "organization": org_name,
+            "total_suggestions": total_suggestions,
+            "total_acceptances": total_acceptances,
+            "total_lines_suggested": total_lines_suggested,
+            "total_lines_accepted": total_lines_accepted,
+            "acceptance_rate_percent": round(acceptance_rate, 2),
+            "line_acceptance_rate_percent": round(line_acceptance_rate, 2),
+            "total_tokens": total_suggestions + total_acceptances,  # Approximation
+            "fetched_at": datetime.utcnow().isoformat(),
+            "raw_data": raw_data  # Conserver les données brutes pour le débogage
+        }
+
+
+def get_copilot_usage_metrics() -> Dict[str, Any]:
+    """
+    Point d'entrée principal pour récupérer les métriques d'utilisation Copilot.
+    
+    Returns:
+        Métriques d'utilisation Copilot formatées
+    """
+    try:
+        connector = CopilotUsageConnector()
+        return connector.get_copilot_usage_summary()
+    except Exception as e:
+        logger.error(f"Failed to get Copilot usage metrics: {e}")
+        return {
+            "error": str(e),
+            "provider": "copilot",
+            "available": False
+        }

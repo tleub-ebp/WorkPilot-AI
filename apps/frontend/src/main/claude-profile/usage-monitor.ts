@@ -61,6 +61,10 @@ const PROVIDER_USAGE_ENDPOINTS: readonly ProviderUsageEndpoint[] = [
   {
     provider: 'openai',
     usagePath: '/v1/organization/usage',
+  },
+  {
+    provider: 'copilot',
+    usagePath: '/cli/info'  // Special endpoint for CLI-based providers
   }
 ] as const;
 
@@ -894,7 +898,8 @@ export class UsageMonitor extends EventEmitter {
 
       // Step 2: Fetch current usage (pass activeProfile for consistency)
       const credential = await this.getCredential();
-      const usage = await this.fetchUsage(profileId, credential, activeProfile, isAPIProfile ? undefined : activeProfile.baseUrl);
+      const provider = detectProvider(activeProfile.baseUrl);
+      const usage = await this.fetchUsage(profileId, credential, activeProfile, provider);
       if (!usage) {
         this.debugLog('[UsageMonitor] Failed to fetch usage');
         return;
@@ -1034,8 +1039,38 @@ export class UsageMonitor extends EventEmitter {
       this.debugLog('[UsageMonitor:TRACE] Failed to load API profiles, falling back to OAuth:', error);
     }
 
-    // If no API profile is active, check OAuth profiles
+    // Check if the selected provider is Copilot (CLI-based provider)
     const profileManager = getClaudeProfileManager();
+    const settings = profileManager.getSettings();
+    
+    // Check if Copilot is configured as a provider
+    if (settings.activeProfileId) {
+      try {
+        const currentProfilesFile = await loadProfilesFile();
+        const activeProfile = currentProfilesFile.profiles.find((p: any) => p.id === settings.activeProfileId);
+        if (activeProfile) {
+          const provider = detectProvider(activeProfile.baseUrl);
+          if (provider === 'copilot') {
+            this.debugLog('[UsageMonitor:TRACE] Active provider is Copilot (CLI-based)', {
+              profileId: activeProfile.id,
+              profileName: activeProfile.name,
+              baseUrl: activeProfile.baseUrl
+            });
+            return {
+              profileId: activeProfile.id,
+              profileName: activeProfile.name,
+              profileEmail: undefined, // API profiles don't have email
+              isAPIProfile: false,
+              baseUrl: activeProfile.baseUrl
+            };
+          }
+        }
+      } catch (error) {
+        this.debugLog('[UsageMonitor] Failed to check Copilot provider status:', error);
+      }
+    }
+
+    // If no API profile is active, check OAuth profiles
     const activeOAuthProfile = profileManager.getActiveProfile();
 
     if (!activeOAuthProfile) {
@@ -1200,19 +1235,87 @@ export class UsageMonitor extends EventEmitter {
       activeProfile?: ActiveProfileResult,
       providerName?: string
   ): Promise<ClaudeUsageSnapshot | null> {
+    this.debugLog('[UsageMonitor:fetchUsage] Called with:', {
+      profileId,
+      hasCredential: !!credential,
+      hasActiveProfile: !!activeProfile,
+      providerName
+    });
+    
     // Get profile name and email - prefer activeProfile since it's already determined
     // This fixes the bug where API profile names were incorrectly shown for OAuth profiles
     let profileName: string | undefined;
     let profileEmail: string | undefined;
-    if (activeProfile?.profileName) {
-      profileName = activeProfile.profileName;
-      profileEmail = activeProfile.profileEmail;
-      this.debugLog('[UsageMonitor:FETCH] Using activeProfile data:', {
-        profileId,
-        profileName,
-        profileEmail,
-        isAPIProfile: activeProfile.isAPIProfile
-      });
+
+    // Special handling for CLI-based providers like Copilot
+    if (providerName === 'copilot') {
+      this.debugLog('[UsageMonitor:Copilot] ENTERING Copilot branch - providerName is copilot');
+      
+      // Get profile name and email from activeProfile for Copilot
+      if (activeProfile?.profileName) {
+        profileName = activeProfile.profileName;
+        profileEmail = activeProfile.profileEmail;
+        this.debugLog('[UsageMonitor:Copilot] Using activeProfile data:', {
+          profileName,
+          profileEmail
+        });
+      }
+      
+      this.debugLog('[UsageMonitor:Copilot] Using FastAPI backend for Copilot usage');
+      
+      try {
+        // Call our FastAPI backend endpoint
+        const backendUrl = 'http://localhost:9000/providers/usage/copilot';
+        const response = await fetch(backendUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          signal: AbortSignal.timeout(10000) // 10 second timeout
+        });
+        
+        if (!response.ok) {
+          this.debugLog('[UsageMonitor:Copilot] Backend returned error:', {
+            status: response.status,
+            statusText: response.statusText
+          });
+          return null;
+        }
+        
+        const usageData = await response.json();
+        this.debugLog('[UsageMonitor:Copilot] Backend response received:', usageData);
+        
+        // Normalize the backend response to match ClaudeUsageSnapshot format
+        const result = this.normalizeCopilotResponse(usageData, profileId, profileName || 'GitHub Copilot', profileEmail);
+        this.debugLog('[UsageMonitor:Copilot] Returning result from normalizeCopilotResponse:', {
+          hasProviderName: !!result.providerName,
+          providerName: result.providerName,
+          hasError: !!(result as any).error,
+          error: (result as any).error
+        });
+        return result;
+        
+      } catch (error) {
+        this.debugLog('[UsageMonitor:Copilot] Failed to fetch from backend:', error);
+        
+        // Check if it's a timeout or connection error
+        if (error instanceof Error) {
+          if (error.name === 'AbortError') {
+            this.debugLog('[UsageMonitor:Copilot] Request timeout');
+          } else if (error.message.includes('ECONNREFUSED')) {
+            this.debugLog('[UsageMonitor:Copilot] Backend not running - starting placeholder response');
+            // Backend not running, return placeholder
+            return this.normalizeCopilotResponse({
+              error: 'BACKEND_UNAVAILABLE',
+              message: 'Backend FastAPI non démarré',
+              provider: 'copilot',
+              available: false
+            }, profileId, profileName || 'GitHub Copilot', profileEmail);
+          }
+        }
+        
+        return null;
+      }
     }
 
     // Only search API profiles if not already set from activeProfile
@@ -1366,7 +1469,59 @@ export class UsageMonitor extends EventEmitter {
         profileId
       });
 
-      // Step 3: Get provider-specific usage endpoint
+      // Step 3: Handle CLI-based providers (like Copilot) via our FastAPI backend
+      if (provider === 'copilot') {
+        this.debugLog('[UsageMonitor:Copilot] Using FastAPI backend for Copilot usage');
+        
+        try {
+          // Call our FastAPI backend endpoint
+          const backendUrl = 'http://localhost:9000/providers/usage/copilot';
+          const response = await fetch(backendUrl, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            signal: AbortSignal.timeout(10000) // 10 second timeout
+          });
+          
+          if (!response.ok) {
+            this.debugLog('[UsageMonitor:Copilot] Backend returned error:', {
+              status: response.status,
+              statusText: response.statusText
+            });
+            return null;
+          }
+          
+          const usageData = await response.json();
+          this.debugLog('[UsageMonitor:Copilot] Backend response received:', usageData);
+          
+          // Normalize the backend response to match ClaudeUsageSnapshot format
+          return this.normalizeCopilotResponse(usageData, profileId, profileName, profileEmail);
+          
+        } catch (error) {
+          this.debugLog('[UsageMonitor:Copilot] Failed to fetch from backend:', error);
+          
+          // Check if it's a timeout or connection error
+          if (error instanceof Error) {
+            if (error.name === 'AbortError') {
+              this.debugLog('[UsageMonitor:Copilot] Request timeout');
+            } else if (error.message.includes('ECONNREFUSED')) {
+              this.debugLog('[UsageMonitor:Copilot] Backend not running - starting placeholder response');
+              // Backend not running, return placeholder
+              return this.normalizeCopilotResponse({
+                error: 'BACKEND_UNAVAILABLE',
+                message: 'Backend FastAPI non démarré',
+                provider: 'copilot',
+                available: false
+              }, profileId, profileName, profileEmail);
+            }
+          }
+          
+          return null;
+        }
+      }
+
+      // Step 4: Get provider-specific usage endpoint for API-based providers
       const usageEndpoint = getUsageEndpoint(provider, baseUrl);
       if (!usageEndpoint) {
         this.debugLog('[UsageMonitor] Unknown provider - no usage endpoint configured:', {
@@ -1389,7 +1544,7 @@ export class UsageMonitor extends EventEmitter {
         hasCredential: !!credential
       });
 
-      // Step 4: Validate endpoint domain before making request
+      // Step 6: Validate endpoint domain before making request (API providers only)
       // Security: Only allow requests to known provider domains
       let endpointHostname: string;
       try {
@@ -1407,11 +1562,11 @@ export class UsageMonitor extends EventEmitter {
         return null;
       }
 
-      // Step 5: Fetch usage from provider endpoint
+      // Step 7: Fetch usage from provider endpoint
       // All providers use Bearer token authentication (RFC 6750)
       const authHeader = `Bearer ${credential}`;
 
-      // Build headers based on provider
+      // Step 8: Build headers based on provider
       // Anthropic OAuth requires the 'anthropic-beta: oauth-2025-04-20' header
       // See: https://codelynx.dev/posts/claude-code-usage-limits-statusline
       const headers: Record<string, string> = {
@@ -1513,11 +1668,17 @@ export class UsageMonitor extends EventEmitter {
         method: `normalize${provider.charAt(0).toUpperCase() + provider.slice(1)}Response`
       });
 
-      switch (provider) {
+      switch (provider as ApiProvider) {
         case 'anthropic':
           normalizedUsage = this.normalizeAnthropicResponse(rawData, profileId, profileName, profileEmail);
           break;
-        default:
+        case 'copilot':
+          normalizedUsage = this.normalizeCopilotResponse(rawData, profileId, profileName, profileEmail);
+          break;
+        case 'openai':
+        case 'ollama':
+        case 'ollama_local':
+        case 'unknown':
           this.debugLog('[UsageMonitor] Unsupported provider for usage normalization: ' + provider);
           return null;
       }
@@ -1625,6 +1786,242 @@ export class UsageMonitor extends EventEmitter {
         weeklyWindowLabel: 'common:usage.window7Day'
       }
     };
+  }
+
+  /**
+   * Check GitHub Copilot CLI status
+   * Returns whether the CLI is available and authenticated
+   */
+  private async checkCopilotCliStatus(): Promise<{ available: boolean; isAuth?: boolean; username?: string }> {
+    try {
+      // Check if gh CLI is available
+      const { spawn } = await import('child_process');
+      
+      const result = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+        const process = spawn('gh', ['auth', 'status'], {
+          shell: true,
+          stdio: ['pipe', 'pipe', 'pipe']
+        });
+        
+        let stdout = '';
+        let stderr = '';
+        
+        process.stdout.on('data', (data) => {
+          stdout += data.toString();
+        });
+        
+        process.stderr.on('data', (data) => {
+          stderr += data.toString();
+        });
+        
+        process.on('close', (code) => {
+          if (code === 0) {
+            resolve({ stdout, stderr });
+          } else {
+            reject(new Error(`gh auth status failed with code ${code}`));
+          }
+        });
+      });
+      
+      const output = result.stdout + result.stderr;
+      this.debugLog('[UsageMonitor:Copilot] gh auth status output:', output);
+      
+      const isAuth = output.includes('Logged in to github.com');
+      
+      // Extract username if authenticated
+      let username: string | undefined;
+      if (isAuth) {
+        const match = output.match(/Logged in to github\.com as ([^\s]+)/);
+        username = match ? match[1] : undefined;
+      }
+      
+      // Even if not fully authenticated, if gh CLI is available, we consider it available
+      // The placeholder response will still be created
+      return {
+        available: true, // gh CLI exists and can be run
+        isAuth,
+        username
+      };
+    } catch (error) {
+      this.debugLog('[UsageMonitor:Copilot] Failed to check Copilot CLI status:', error);
+      // Even if gh auth status fails, if gh CLI exists, we should still return available
+      // Let's try a simpler check
+      try {
+        const { spawn } = await import('child_process');
+        await new Promise<void>((resolve, reject) => {
+          const process = spawn('gh', ['--version'], {
+            shell: true,
+            stdio: ['pipe', 'pipe', 'pipe']
+          });
+          
+          process.on('close', (code) => {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject(new Error('gh CLI not found'));
+            }
+          });
+        });
+        
+        this.debugLog('[UsageMonitor:Copilot] gh CLI is available but auth status check failed');
+        return { available: true };
+      } catch (versionError) {
+        this.debugLog('[UsageMonitor:Copilot] gh CLI not available:', versionError);
+        return { available: false };
+      }
+    }
+  }
+
+  /**
+   * Normalize GitHub Copilot CLI response to ClaudeUsageSnapshot
+   *
+   * GitHub Copilot doesn't have a public usage API, so we create a placeholder
+   * response that indicates the provider is available but usage data is not available.
+   *
+   * This allows the UI to show that Copilot is configured and working,
+   * even though we can't track token usage.
+   */
+  private normalizeCopilotResponse(
+      data: any,
+      profileId: string,
+      profileName: string,
+      profileEmail?: string
+  ): ClaudeUsageSnapshot {
+    this.debugLog('[UsageMonitor:Copilot] Normalizing Copilot response:', data);
+    
+    // Handle error responses from backend
+    if (data.error) {
+      this.debugLog('[UsageMonitor:Copilot] Backend returned error:', data.error);
+      
+      // Create a response that indicates the error but still shows the provider is configured
+      return {
+        sessionPercent: 0,
+        weeklyPercent: 0,
+        sessionResetTime: undefined,
+        weeklyResetTime: undefined,
+        sessionResetTimestamp: undefined,
+        weeklyResetTimestamp: undefined,
+        profileId,
+        profileName,
+        profileEmail,
+        fetchedAt: new Date(),
+        limitType: 'session' as const,
+        usageWindows: {
+          sessionWindowLabel: 'common:usage.window5Hour',
+          weeklyWindowLabel: 'common:usage.window7Day'
+        },
+        providerName: 'copilot',
+        // Put error information in copilotUsageDetails
+        copilotUsageDetails: {
+          lastUpdated: new Date().toISOString(),
+          periodDays: 28,
+          // Custom error properties (using existing fields creatively)
+          totalTokens: 0,
+          suggestionsCount: 0,
+          acceptancesCount: 0,
+          acceptanceRate: 0,
+          estimatedCost: 0
+        },
+        // Add error metadata as additional properties (will be ignored by TypeScript but accessible at runtime)
+        ...(data.error && { error: data.error }),
+        ...(data.message && { errorMessage: data.message }),
+        ...(data.permission_required && { permissionRequired: data.permission_required })
+      } as ClaudeUsageSnapshot & { error?: string; errorMessage?: string; permissionRequired?: string };
+    }
+    
+    // Handle successful response with usage data
+    if (data.available && data.usage) {
+      const usage = data.usage;
+      const copilotDetails = data.copilotUsageDetails || {};
+      
+      // Calculate percentages based on suggestions (assuming 1000 as a reasonable limit)
+      // This is a placeholder - in a real implementation, you'd get actual limits from GitHub
+      const suggestions = usage.total_suggestions || copilotDetails.suggestions || 0;
+      const sessionPercent = Math.min((suggestions / 1000) * 100, 100);
+      const weeklyPercent = sessionPercent; // Use same for weekly since we don't have separate data
+      
+      this.debugLog('[UsageMonitor:Copilot] Creating usage response with data:', {
+        suggestions,
+        acceptances: usage.total_acceptances || copilotDetails.acceptances,
+        acceptanceRate: usage.acceptance_rate_percent || copilotDetails.acceptanceRate,
+        sessionPercent,
+        weeklyPercent
+      });
+      
+      return {
+        sessionPercent,
+        weeklyPercent,
+        sessionResetTime: undefined,
+        weeklyResetTime: undefined,
+        sessionResetTimestamp: undefined,
+        weeklyResetTimestamp: undefined,
+        profileId,
+        profileName,
+        profileEmail,
+        fetchedAt: new Date(data.fetched_at || Date.now()),
+        limitType: 'session' as const,
+        usageWindows: {
+          sessionWindowLabel: 'common:usage.window5Hour',
+          weeklyWindowLabel: 'common:usage.window7Day'
+        },
+        providerName: 'copilot',
+        // Include Copilot-specific data for UI
+        copilotUsageDetails: {
+          totalTokens: usage.total_tokens || 0,
+          suggestionsCount: suggestions,
+          acceptancesCount: usage.total_acceptances || copilotDetails.acceptances || 0,
+          acceptanceRate: usage.acceptance_rate_percent || copilotDetails.acceptanceRate || 0,
+          estimatedCost: 0, // GitHub Copilot doesn't provide cost data
+          periodDays: 28,
+          lastUpdated: data.fetched_at || new Date().toISOString()
+        },
+        // Add additional metadata for extended usage details
+        ...(usage.total_lines_suggested !== undefined && { linesSuggested: usage.total_lines_suggested }),
+        ...(usage.total_lines_accepted !== undefined && { linesAccepted: usage.total_lines_accepted }),
+        ...(usage.line_acceptance_rate_percent !== undefined && { lineAcceptanceRate: usage.line_acceptance_rate_percent }),
+        ...(usage.organization && { organization: usage.organization }),
+        ...(usage.level && { level: usage.level })
+      } as ClaudeUsageSnapshot & { 
+        linesSuggested?: number; 
+        linesAccepted?: number; 
+        lineAcceptanceRate?: number; 
+        organization?: string; 
+        level?: string;
+        available?: boolean;
+      };
+    }
+    
+    // Fallback: Create a placeholder response for when no specific data is available
+    this.debugLog('[UsageMonitor:Copilot] Creating placeholder response (no specific data)');
+    
+    return {
+      sessionPercent: 0,
+      weeklyPercent: 0,
+      sessionResetTime: undefined,
+      weeklyResetTime: undefined,
+      sessionResetTimestamp: undefined,
+      weeklyResetTimestamp: undefined,
+      profileId,
+      profileName,
+      profileEmail,
+      fetchedAt: new Date(),
+      limitType: 'session' as const,
+      usageWindows: {
+        sessionWindowLabel: 'common:usage.window5Hour',
+        weeklyWindowLabel: 'common:usage.window7Day'
+      },
+      providerName: 'copilot',
+      copilotUsageDetails: {
+        lastUpdated: new Date().toISOString(),
+        periodDays: 28,
+        totalTokens: 0,
+        suggestionsCount: 0,
+        acceptancesCount: 0,
+        acceptanceRate: 0,
+        estimatedCost: 0
+      },
+      errorMessage: 'No usage data available'
+    } as ClaudeUsageSnapshot & { errorMessage?: string };
   }
 
   /**
@@ -1860,6 +2257,42 @@ export class UsageMonitor extends EventEmitter {
       }
     } catch {}
 
+    // Copilot special case — uses gh CLI, not a traditional API profile in profiles.json
+    // Fetch directly from our FastAPI backend without requiring a matching profile
+    if (providerName === 'copilot') {
+      this.debugLog('[UsageMonitor:getUsageForProvider] Copilot provider — fetching directly from backend');
+      try {
+        const resp = await fetch('http://localhost:9000/providers/usage/copilot', {
+          signal: AbortSignal.timeout(10000)
+        });
+        if (!resp.ok) {
+          this.debugLog('[UsageMonitor:getUsageForProvider] Copilot backend returned error:', {
+            status: resp.status,
+            statusText: resp.statusText
+          });
+          return this.normalizeCopilotResponse({
+            error: 'BACKEND_ERROR',
+            message: `Backend returned ${resp.status}: ${resp.statusText}`,
+            provider: 'copilot',
+            available: false
+          }, 'copilot', 'GitHub Copilot', undefined);
+        }
+        const usageData = await resp.json();
+        return this.normalizeCopilotResponse(usageData, 'copilot', 'GitHub Copilot', undefined);
+      } catch (e) {
+        this.debugLog('[UsageMonitor:getUsageForProvider] Copilot backend fetch failed:', e);
+        if (e instanceof Error && e.message.includes('ECONNREFUSED')) {
+          return this.normalizeCopilotResponse({
+            error: 'BACKEND_UNAVAILABLE',
+            message: 'Backend FastAPI non démarré',
+            provider: 'copilot',
+            available: false
+          }, 'copilot', 'GitHub Copilot', undefined);
+        }
+        return null;
+      }
+    }
+
     // Step 1: Search API profiles first (profiles.json) — these cover anthropic, openai, ollama API key profiles
     try {
       const profilesFile = await loadProfilesFile();
@@ -1868,7 +2301,7 @@ export class UsageMonitor extends EventEmitter {
         return detected === providerName;
       });
 
-      if (apiProfile?.apiKey) {
+      if (apiProfile && apiProfile.apiKey) {
         this.debugLog('[UsageMonitor:getUsageForProvider] Found API profile for provider:', {
           providerName,
           profileId: apiProfile.id,
