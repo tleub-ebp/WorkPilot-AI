@@ -19,7 +19,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
-import { Plus, Inbox, Loader2, Eye, CheckCircle2, Archive, RefreshCw, GitPullRequest, X, Settings, ListPlus, ChevronLeft, ChevronRight, ChevronsRight, Lock, Unlock, Trash2, Settings2 } from 'lucide-react';
+import { Plus, Inbox, Loader2, Eye, CheckCircle2, Archive, RefreshCw, GitPullRequest, X, Settings, ListPlus, ChevronLeft, ChevronRight, ChevronsRight, Lock, Unlock, Trash2, Settings2, Download } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
@@ -46,7 +46,9 @@ import {
   AlertDialogTitle,
 } from './ui/alert-dialog';
 import { AppSettingsDialog } from './settings/AppSettings';
+import { AzureDevOpsSidePanel } from './azure-devops-import/AzureDevOpsSidePanel';
 import type { Task, TaskStatus, TaskOrderState } from '../../shared/types';
+import type { AzureDevOpsWorkItem } from '../../shared/types/integrations';
 
 // Type guard for valid drop column targets - preserves literal type from TASK_STATUS_COLUMNS
 const VALID_DROP_COLUMNS = new Set<string>(TASK_STATUS_COLUMNS);
@@ -72,6 +74,7 @@ interface KanbanBoardProps {
   onNewTaskClick?: () => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  onWorkItemsImported?: (workItems: AzureDevOpsWorkItem[], targetStatus: TaskStatus) => void;
 }
 
 interface DroppableColumnProps {
@@ -340,6 +343,7 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
           isOver && 'drop-zone-highlight'
         )}
         style={{ width: COLLAPSED_COLUMN_WIDTH, minWidth: COLLAPSED_COLUMN_WIDTH, maxWidth: COLLAPSED_COLUMN_WIDTH }}
+        data-column-status={status}
       >
         {/* Expand button at top */}
         <div className="flex justify-center p-2 border-b border-white/5">
@@ -388,11 +392,12 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
         ref={setNodeRef}
         className={cn(
           'flex flex-1 flex-col rounded-xl border border-white/5 bg-linear-to-b from-secondary/30 to-transparent backdrop-blur-sm transition-all duration-200',
-          !columnWidth && 'min-w-80 max-w-[30rem]',
+          !columnWidth && 'min-w-80 max-w-120',
           getColumnBorderColor(),
           'border-t-2',
           isOver && 'drop-zone-highlight'
         )}
+        data-column-status={status}
       >
         {/* Column header - enhanced styling */}
         <div className="flex items-center justify-between p-4 border-b border-white/5">
@@ -635,7 +640,7 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
   );
 }, droppableColumnPropsAreEqual);
 
-export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isRefreshing }: KanbanBoardProps) {
+export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isRefreshing, onWorkItemsImported }: KanbanBoardProps) {
   const { t } = useTranslation(['tasks', 'dialogs', 'common']);
   const { toast } = useToast();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -702,11 +707,12 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     error: undefined
   });
 
-  // Calculate archived count for Done column button
-  const archivedCount = useMemo(() =>
-    tasks.filter(t => t.metadata?.archivedAt).length,
-    [tasks]
-  );
+  // Azure DevOps import panel state
+  const [azureDevOpsPanelOpen, setAzureDevOpsPanelOpen] = useState(false);
+
+  // Azure DevOps drag state
+  const [isDraggingAzureDevOps, setIsDraggingAzureDevOps] = useState(false);
+  const [draggedAzureDevOpsItems, setDraggedAzureDevOpsItems] = useState<AzureDevOpsWorkItem[]>([]);
 
   // Calculate collapsed column count for "Expand All" button
   const collapsedColumnCount = useMemo(() => {
@@ -723,6 +729,12 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     }
     return tasks.filter((t) => !t.metadata?.archivedAt);
   }, [tasks, showArchived]);
+
+  // Calculate archived count for Done column button
+  const archivedCount = useMemo(() =>
+    tasks.filter(t => t.metadata?.archivedAt).length,
+    [tasks]
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -916,6 +928,13 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
+    
+    // Check if this is an Azure DevOps work item drag
+    if (active.id.toString().startsWith('azure-devops-')) {
+      // This is handled by native drag events, not dnd-kit
+      return;
+    }
+    
     const task = tasks.find((t) => t.id === active.id);
     if (task) {
       setActiveTask(task);
@@ -1124,6 +1143,193 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       isProcessingQueueRef.current = false;
     }
   }, [maxParallelTasks]);
+
+  // Azure DevOps drag detection using native drag events
+  useEffect(() => {
+    const handleDragOver = (event: DragEvent) => {
+      event.preventDefault();
+      
+      // Check if dragging Azure DevOps work items
+      const data = event.dataTransfer?.getData('application/json');
+      console.log('[AzureDevOps] Global dragover event, data:', data);
+      
+      if (data) {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.type === 'azure-devops-workitems') {
+            console.log('[AzureDevOps] Detected Azure DevOps drag over');
+            setIsDraggingAzureDevOps(true);
+            setDraggedAzureDevOpsItems(parsed.workItems || []);
+            
+            // Find the column we're over
+            const target = event.target as HTMLElement;
+            const columnElement = target.closest('[data-column-status]');
+            console.log('[AzureDevOps] Target element:', target, 'Column element:', columnElement);
+            
+            if (columnElement) {
+              const columnStatus = columnElement.getAttribute('data-column-status');
+              console.log('[AzureDevOps] Column status:', columnStatus);
+              if (columnStatus && isValidDropColumn(columnStatus)) {
+                setOverColumnId(columnStatus);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('[AzureDevOps] Error parsing drag data:', error);
+        }
+      }
+    };
+
+    const handleDrop = async (event: DragEvent) => {
+      console.log('[AzureDevOps] Global drop event triggered');
+      event.preventDefault();
+      event.stopPropagation();
+      
+      const data = event.dataTransfer?.getData('application/json');
+      console.log('[AzureDevOps] Drop data:', data);
+      
+      if (!data) return;
+      
+      try {
+        const parsed = JSON.parse(data);
+        console.log('[AzureDevOps] Parsed drop data:', parsed);
+        
+        if (parsed.type === 'azure-devops-workitems' && parsed.workItems?.length > 0) {
+          console.log('[AzureDevOps] Processing Azure DevOps work items drop');
+          
+          // Find the target column - look more broadly for the column element
+          const target = event.target as HTMLElement;
+          console.log('[AzureDevOps] Drop target element:', target);
+          
+          // Try multiple approaches to find the column element
+          let columnElement = target.closest('[data-column-status]');
+          
+          // If not found, try to find the column by traversing up through parent elements
+          if (!columnElement) {
+            let currentElement = target.parentElement;
+            while (currentElement) {
+              if (currentElement.hasAttribute('data-column-status')) {
+                columnElement = currentElement;
+                break;
+              }
+              currentElement = currentElement.parentElement;
+            }
+          }
+          
+          // If still not found, try to find any element with data-column-status in the document
+          if (!columnElement) {
+            const allColumns = document.querySelectorAll('[data-column-status]');
+            // Find the column that is under the mouse position
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+            
+            for (const column of allColumns) {
+              const rect = column.getBoundingClientRect();
+              if (mouseX >= rect.left && mouseX <= rect.right && 
+                  mouseY >= rect.top && mouseY <= rect.bottom) {
+                columnElement = column as HTMLElement;
+                break;
+              }
+            }
+          }
+          
+          console.log('[AzureDevOps] Column element found:', columnElement);
+          
+          if (columnElement) {
+            const columnStatus = columnElement.getAttribute('data-column-status');
+            console.log('[AzureDevOps] Drop column status:', columnStatus);
+            
+            if (columnStatus && isValidDropColumn(columnStatus)) {
+              console.log('[AzureDevOps] Dropping items:', parsed.workItems, 'to column:', columnStatus);
+              
+              // Create tasks from Azure DevOps work items
+              const { addTask } = useTaskStore.getState();
+              
+              for (const workItem of parsed.workItems) {
+                try {
+                  // Create a task from the Azure DevOps work item
+                  const newTask: Task = {
+                    id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    specId: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    projectId: projectId || '',
+                    title: workItem.title,
+                    description: workItem.description || '',
+                    status: columnStatus,
+                    subtasks: [],
+                    logs: [`[Azure DevOps] Imported from work item #${workItem.id}`],
+                    metadata: {
+                      sourceType: 'imported',
+                      azureDevOpsIdentifier: workItem.id.toString(),
+                      azureDevOpsUrl: workItem.url,
+                      azureDevOpsState: workItem.state,
+                      azureDevOpsType: workItem.workItemType,
+                      // Map Azure DevOps priority to task priority
+                      priority: workItem.priority === 1 ? 'urgent' : 
+                               workItem.priority === 2 ? 'high' : 
+                               workItem.priority === 3 ? 'medium' : 'low',
+                      // Map work item type to category
+                      category: workItem.workItemType === 'Bug' ? 'bug_fix' :
+                               workItem.workItemType === 'User Story' ? 'feature' :
+                               workItem.workItemType === 'Task' ? 'feature' : 'documentation'
+                    },
+                    createdAt: workItem.createdDate ? new Date(workItem.createdDate) : new Date(),
+                    updatedAt: new Date()
+                  };
+                  
+                  addTask(newTask);
+                  console.log('[AzureDevOps] Created task from work item:', newTask.id);
+                } catch (error) {
+                  console.error('[AzureDevOps] Failed to create task from work item:', workItem.id, error);
+                }
+              }
+              
+              toast({
+                title: t('settings:azureDevOpsImport.importSuccess', { 
+                  count: parsed.workItems.length 
+                }),
+                variant: 'default'
+              });
+            } else {
+              console.log('[AzureDevOps] Invalid column status:', columnStatus);
+            }
+          } else {
+            console.log('[AzureDevOps] No column element found');
+          }
+        } else {
+          console.log('[AzureDevOps] Not Azure DevOps work items or empty array');
+        }
+      } catch (error) {
+        console.error('[AzureDevOps] Failed to handle drop:', error);
+        toast({
+          title: t('settings:azureDevOpsImport.importError'),
+          description: error instanceof Error ? error.message : t('common:errors.unknownError'),
+          variant: 'destructive'
+        });
+      } finally {
+        setIsDraggingAzureDevOps(false);
+        setDraggedAzureDevOpsItems([]);
+        setOverColumnId(null);
+      }
+    };
+
+    const handleDragEnd = () => {
+      console.log('[AzureDevOps] Global drag end event');
+      setIsDraggingAzureDevOps(false);
+      setDraggedAzureDevOpsItems([]);
+      setOverColumnId(null);
+    };
+
+    // Add global event listeners
+    document.addEventListener('dragover', handleDragOver);
+    document.addEventListener('drop', handleDrop);
+    document.addEventListener('dragend', handleDragEnd);
+
+    return () => {
+      document.removeEventListener('dragover', handleDragOver);
+      document.removeEventListener('drop', handleDrop);
+      document.removeEventListener('dragend', handleDragEnd);
+    };
+  }, [onWorkItemsImported, toast, t]);
 
   // Register task status change listener for queue auto-promotion
   // This ensures processQueue() is called whenever a task leaves in_progress
@@ -1477,6 +1683,18 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           )}
         </div>
         <div className="flex items-center gap-2">
+          {projectId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setAzureDevOpsPanelOpen(true)}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+              title={t('settings:azureDevOpsImport.importButton')}
+            >
+              <Download className="h-4 w-4" />
+              {t('settings:azureDevOpsImport.importButton')}
+            </Button>
+          )}
           {onRefresh && (
             <Button
               variant="ghost"
@@ -1691,6 +1909,66 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           initialProjectSection="general"
           initialProjectId={settingsDialogProjectId}
           debugOpen={!!isProjectSettingsOpen}
+        />
+      )}
+
+      {/* Azure DevOps Import Panel */}
+      {projectId && (
+        <AzureDevOpsSidePanel
+          open={azureDevOpsPanelOpen}
+          onOpenChange={setAzureDevOpsPanelOpen}
+          projectId={projectId}
+          onWorkItemsImported={async (workItems, targetStatus) => {
+            console.log('Imported work items:', workItems, 'to status:', targetStatus);
+            
+            // Import Azure DevOps work items as tasks
+            const { addTask } = useTaskStore.getState();
+            
+            for (const workItem of workItems) {
+              try {
+                // Create a task from the Azure DevOps work item
+                const newTask: Task = {
+                  id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  specId: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  projectId: projectId || '',
+                  title: workItem.title,
+                  description: workItem.description || '',
+                  status: targetStatus,
+                  subtasks: [],
+                  logs: [`[Azure DevOps] Imported from work item #${workItem.id}`],
+                  metadata: {
+                    sourceType: 'imported',
+                    azureDevOpsIdentifier: workItem.id.toString(),
+                    azureDevOpsUrl: workItem.url,
+                    azureDevOpsState: workItem.state,
+                    azureDevOpsType: workItem.workItemType,
+                    // Map Azure DevOps priority to task priority
+                    priority: workItem.priority === 1 ? 'urgent' : 
+                             workItem.priority === 2 ? 'high' : 
+                             workItem.priority === 3 ? 'medium' : 'low',
+                    // Map work item type to category
+                    category: workItem.workItemType === 'Bug' ? 'bug_fix' :
+                             workItem.workItemType === 'User Story' ? 'feature' :
+                             workItem.workItemType === 'Task' ? 'feature' : 'documentation'
+                  },
+                  createdAt: workItem.createdDate ? new Date(workItem.createdDate) : new Date(),
+                  updatedAt: new Date()
+                };
+                
+                addTask(newTask);
+                console.log('[AzureDevOps] Created task from work item:', newTask.id);
+              } catch (error) {
+                console.error('[AzureDevOps] Failed to create task from work item:', workItem.id, error);
+              }
+            }
+            
+            toast({
+              title: t('settings:azureDevOpsImport.importSuccess', { 
+                count: workItems.length 
+              }),
+              variant: 'default'
+            });
+          }}
         />
       )}
     </div>
