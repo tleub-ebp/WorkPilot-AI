@@ -524,10 +524,21 @@ export function registerTerminalHandlers(
   // Request current usage snapshot
   ipcMain.handle(
     IPC_CHANNELS.USAGE_REQUEST,
-    async (): Promise<IPCResult<import('../../shared/types').ClaudeUsageSnapshot | null>> => {
+    async (event: IpcMainInvokeEvent, providerName?: string): Promise<IPCResult<import('../../shared/types').ClaudeUsageSnapshot | null>> => {
       try {
         const monitor = getUsageMonitor();
-        const usage = monitor.getCurrentUsage();
+        
+        let usage: ClaudeUsageSnapshot | null;
+        
+        if (providerName) {
+          // Use getUsageForProvider for specific provider requests
+          console.log(`[IPC:USAGE_REQUEST] Getting usage for provider: ${providerName}`);
+          usage = await monitor.getUsageForProvider(providerName);
+        } else {
+          // Use getCurrentUsage for general requests (backward compatibility)
+          usage = monitor.getCurrentUsage();
+        }
+        
         return { success: true, data: usage };
       } catch (error) {
         return {

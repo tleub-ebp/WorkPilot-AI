@@ -36,6 +36,7 @@ const PROVIDER_TRANSLATION_KEYS: Readonly<Record<ApiProvider, string>> = {
   openai: 'common:usage.providerOpenAI',
   ollama: 'common:usage.providerOllama',
   ollama_local: 'common:usage.providerOllamaLocal',
+  copilot: 'common:usage.providerCopilot',
   unknown: 'common:usage.providerUnknown'
 } as const;
 
@@ -59,6 +60,10 @@ export function AuthStatusIndicator() {
   // Track usage data for warning badge
   const [usage, setUsage] = useState<ClaudeUsageSnapshot | null>(null);
   const [isLoadingUsage, setIsLoadingUsage] = useState(true);
+
+  // Track GitHub CLI status for Copilot provider
+  const [githubStatus, setGithubStatus] = useState<{ available: boolean; isAuth?: boolean; username?: string } | null>(null);
+  const [isLoadingGithubStatus, setIsLoadingGithubStatus] = useState(false);
 
   // Single effect: subscribe to live updates + refresh on provider/profile change
   useEffect(() => {
@@ -91,6 +96,34 @@ export function AuthStatusIndicator() {
       unsubscribe();
     };
   }, [selectedProvider, activeProfileId]);
+
+  // Effect to fetch GitHub CLI status when Copilot provider is selected
+  useEffect(() => {
+    if (selectedProvider === 'copilot') {
+      setIsLoadingGithubStatus(true);
+      
+      // Request GitHub CLI status from main process
+      window.electronAPI.getGithubCliStatus?.()
+        .then((result: { success: boolean; data: { available: boolean; isAuth?: boolean; username?: string } }) => {
+          if (result.success && result.data) {
+            setGithubStatus(result.data);
+          } else {
+            setGithubStatus({ available: false });
+          }
+        })
+        .catch((error: Error) => {
+          console.warn('[AuthStatusIndicator] Failed to fetch GitHub CLI status:', error);
+          setGithubStatus({ available: false });
+        })
+        .finally(() => {
+          setIsLoadingGithubStatus(false);
+        });
+    } else {
+      // Clear GitHub status when not using Copilot
+      setGithubStatus(null);
+      setIsLoadingGithubStatus(false);
+    }
+  }, [selectedProvider]);
 
   // Determine if usage warning badge should be shown
   const shouldShowUsageWarning = usage && !isLoadingUsage && (
@@ -305,15 +338,77 @@ export function AuthStatusIndicator() {
                   )}
                 </div>
               ) : (
-                // Affichage du fallback si aucune donnée d'usage n'est disponible pour le provider sélectionné
-                !usage && selectedProvider ? (
-                  <div className="pt-2 border-t text-[10px] text-muted-foreground">
-                    {t('common:usage.noProfileForProvider', { provider: selectedProvider })}
+                // Affichage spécial pour Copilot avec informations GitHub CLI réelles
+                selectedProvider === 'copilot' ? (
+                  <div className="pt-2 border-t space-y-2">
+                    <div className="text-[10px] text-muted-foreground">
+                      {t('common:usage.copilotAuthNote', { provider: 'GitHub Copilot' }) || 'GitHub Copilot utilise l\'authentification GitHub CLI (gh auth login)'}
+                    </div>
+                    
+                    {/* GitHub CLI Status */}
+                    {isLoadingGithubStatus ? (
+                      <div className="text-[10px] text-muted-foreground italic">
+                        Vérification du statut GitHub...
+                      </div>
+                    ) : githubStatus ? (
+                      githubStatus.available ? (
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
+                              <Shield className="h-3 w-3" />
+                              <span className="text-[10px]">Statut GitHub</span>
+                            </div>
+                            <span className={`text-[10px] font-medium ${githubStatus.isAuth ? 'text-green-500' : 'text-red-500'}`}>
+                              {githubStatus.isAuth ? 'Connecté' : 'Non connecté'}
+                            </span>
+                          </div>
+                          {githubStatus.username && (
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5 text-muted-foreground">
+                                <Key className="h-3 w-3" />
+                                <span className="text-[10px]">Compte actif</span>
+                              </div>
+                              <span className="text-[10px] font-medium text-blue-500">
+                                @{githubStatus.username}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-[10px] text-red-500">
+                          GitHub CLI non disponible. Installez GitHub CLI et exécutez <code className="bg-muted px-1 rounded">gh auth login</code>
+                        </div>
+                      )
+                    ) : (
+                      <div className="text-[10px] text-muted-foreground italic">
+                        Impossible de vérifier le statut GitHub CLI
+                      </div>
+                    )}
+                    
+                    {/* Note sur l'absence de données d'utilisation */}
+                    <div className="pt-1 border-t">
+                      <div className="text-[10px] text-muted-foreground italic">
+                        {t('common:usage.dataUnavailable')}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground italic">
+                        {t('common:usage.dataUnavailableDescription')}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-1">
+                        Consultez le <a href="https://github.com/settings/copilot" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">dashboard GitHub Copilot</a> pour suivre votre utilisation
+                      </div>
+                    </div>
                   </div>
                 ) : (
-                  <div className="pt-2 border-t text-[10px] text-muted-foreground">
-                    {t('common:usage.noProfileForProvider', { provider: badgeLabel }) || `Aucun profil configuré pour le provider ${badgeLabel}`}
-                  </div>
+                  // Affichage du fallback si aucune donnée d'usage n'est disponible pour le provider sélectionné
+                  !usage && selectedProvider ? (
+                    <div className="pt-2 border-t text-[10px] text-muted-foreground">
+                      {t('common:usage.noProfileForProvider', { provider: selectedProvider })}
+                    </div>
+                  ) : (
+                    <div className="pt-2 border-t text-[10px] text-muted-foreground">
+                      {t('common:usage.noProfileForProvider', { provider: badgeLabel }) || `Aucun profil configuré pour le provider ${badgeLabel}`}
+                    </div>
+                  )
                 )
               )}
             </div>

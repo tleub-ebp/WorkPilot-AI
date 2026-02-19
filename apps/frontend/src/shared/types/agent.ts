@@ -92,6 +92,27 @@ export interface ClaudeUsageSnapshot {
     embeddings?: any;
     moderations?: any;
   };
+
+  /**
+   * Détails GitHub Copilot Usage (tokens, suggestions, acceptances)
+   * Présent uniquement si providerName === 'copilot'
+   */
+  copilotUsageDetails?: {
+    /** Total tokens utilisés dans la période courante */
+    totalTokens?: number;
+    /** Nombre de suggestions générées */
+    suggestionsCount?: number;
+    /** Nombre de suggestions acceptées */
+    acceptancesCount?: number;
+    /** Pourcentage d'acceptation */
+    acceptanceRate?: number;
+    /** Coût estimé en USD */
+    estimatedCost?: number;
+    /** Période de mesure (28 jours) */
+    periodDays?: number;
+    /** Dernière mise à jour */
+    lastUpdated?: string;
+  };
 }
 
 /**

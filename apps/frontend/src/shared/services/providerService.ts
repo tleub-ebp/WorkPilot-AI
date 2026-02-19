@@ -70,28 +70,13 @@ class ProviderServiceClass {
    */
   private async loadProvidersFromFile(): Promise<Provider[]> {
     try {
-      // Essayer de charger depuis le endpoint HTTP
-      let response;
-      try {
-        response = await fetch('/configured_providers.json');
-        if (!response.ok) throw new Error('HTTP error');
-        const data = await response.json();
-        return data.providers || [];
-      } catch {
-        // Fallback: charger directement depuis le fichier local (uniquement en développement)
-        try {
-          const fs = await import('node:fs/promises');
-          const path = await import('node:path');
-          // Utiliser import.meta.url pour obtenir le chemin du fichier en frontend
-          const currentDir = new URL('.', import.meta.url).pathname;
-          const configPath = path.join(currentDir, '../../../../../configured_providers.json');
-          const data = await fs.readFile(configPath, 'utf-8');
-          return JSON.parse(data).providers || [];
-        } catch {
-          // Si tout échoue, utiliser le fallback
-          throw new Error('Cannot load providers file');
-        }
+      // Charger depuis le fichier statique servi par Vite
+      const response = await fetch('/configured_providers.json');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
+      const data = await response.json();
+      return data.providers || [];
     } catch (error) {
       console.warn('[ProviderService] Failed to load providers from file, using fallback:', error);
       return this.getFallbackProviders();
