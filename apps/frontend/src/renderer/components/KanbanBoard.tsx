@@ -29,7 +29,7 @@ import { SortableTaskCard } from './SortableTaskCard';
 import { QueueSettingsModal } from './QueueSettingsModal';
 import { TASK_STATUS_COLUMNS, TASK_STATUS_LABELS } from '../../shared/constants';
 import { cn } from '../lib/utils';
-import { persistTaskStatus, forceCompleteTask, archiveTasks, deleteTasks, useTaskStore } from '../stores/task-store';
+import { persistTaskStatus, forceCompleteTask, archiveTasks, deleteTasks, useTaskStore, createTask } from '../stores/task-store';
 import { updateProjectSettings, useProjectStore } from '../stores/project-store';
 import { useProjectEnvStore, loadProjectEnvConfig } from '../stores/project-env-store';
 import { useKanbanSettingsStore, COLLAPSED_COLUMN_WIDTH, DEFAULT_COLUMN_WIDTH, MIN_COLUMN_WIDTH, MAX_COLUMN_WIDTH } from '../stores/kanban-settings-store';
@@ -97,6 +97,7 @@ interface DroppableColumnProps {
   onSelectAll?: () => void;
   onDeselectAll?: () => void;
   onToggleSelect?: (taskId: string) => void;
+  onDeleteTask?: (taskId: string) => void;
   // Collapse props
   isCollapsed?: boolean;
   onToggleCollapsed?: () => void;
@@ -235,7 +236,7 @@ const getEmptyStateContent = (status: TaskStatus, t: (key: string) => string): {
   }
 };
 
-const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskClick, onStatusChange, isOver, onAddClick, onArchiveAll, onQueueSettings, onQueueAll, maxParallelTasks, archivedCount, showArchived, onToggleArchived, selectedTaskIds, onSelectAll, onDeselectAll, onToggleSelect, isCollapsed, onToggleCollapsed, columnWidth, isResizing, onResizeStart, onResizeEnd, isLocked, onToggleLocked }: DroppableColumnProps) {
+const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskClick, onStatusChange, isOver, onAddClick, onArchiveAll, onQueueSettings, onQueueAll, maxParallelTasks, archivedCount, showArchived, onToggleArchived, selectedTaskIds, onSelectAll, onDeselectAll, onToggleSelect, onDeleteTask, isCollapsed, onToggleCollapsed, columnWidth, isResizing, onResizeStart, onResizeEnd, isLocked, onToggleLocked }: DroppableColumnProps) {
   const { t } = useTranslation(['tasks', 'common']);
   const { setNodeRef } = useDroppable({
     id: status
@@ -294,6 +295,15 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
     return handlers;
   }, [tasks, onToggleSelect]);
 
+  // Create stable onDelete handlers for each task
+  const onDeleteHandlers = useMemo(() => {
+    const handlers = new Map<string, () => void>();
+    tasks.forEach((task) => {
+      handlers.set(task.id, () => onDeleteTask!(task.id));
+    });
+    return handlers;
+  }, [tasks, onDeleteTask]);
+
   // Memoize task card elements to prevent recreation on every render
   const taskCards = useMemo(() => {
     if (tasks.length === 0) return null;
@@ -307,9 +317,10 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
         isSelectable={isSelectable}
         isSelected={isSelectable ? selectedTaskIds?.has(task.id) : undefined}
         onToggleSelect={onToggleSelectHandlers?.get(task.id)}
+        onDelete={onDeleteHandlers.get(task.id)}
       />
     ));
-  }, [tasks, onClickHandlers, onStatusChangeHandlers, onToggleSelectHandlers, selectedTaskIds]);
+  }, [tasks, onClickHandlers, onStatusChangeHandlers, onToggleSelectHandlers, onDeleteHandlers, selectedTaskIds]);
 
   const getColumnBorderColor = (): string => {
     switch (status) {
@@ -937,6 +948,25 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     }
   };
 
+  const handleDeleteTask = async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const result = await deleteTasks([taskId]);
+    if (result.success) {
+      toast({
+        title: t('kanban.deleteSuccess', { count: 1 }),
+        variant: 'default'
+      });
+    } else {
+      toast({
+        title: t('kanban.deleteError'),
+        description: result.error,
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     
@@ -1208,39 +1238,51 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         if (parsed.type === 'azure-devops-workitems' && parsed.workItems?.length > 0) {
           console.log('[AzureDevOps] Processing Azure DevOps work items drop');
           
-          // Find the target column - look more broadly for the column element
+          // Find the target column - use coordinate-based detection first as it's most reliable
           const target = event.target as HTMLElement;
           console.log('[AzureDevOps] Drop target element:', target);
           
-          // Try multiple approaches to find the column element
-          let columnElement = target.closest('[data-column-status]');
+          let columnElement: HTMLElement | null = null;
+          const mouseX = event.clientX;
+          const mouseY = event.clientY;
           
-          // If not found, try to find the column by traversing up through parent elements
-          if (!columnElement) {
-            let currentElement = target.parentElement;
-            while (currentElement) {
-              if (currentElement.hasAttribute('data-column-status')) {
-                columnElement = currentElement;
-                break;
-              }
-              currentElement = currentElement.parentElement;
+          // Method 1: Coordinate-based detection (most reliable for drag & drop)
+          const allColumns = document.querySelectorAll('[data-column-status]');
+          console.log('[AzureDevOps] Found columns:', allColumns.length, 'Mouse position:', mouseX, mouseY);
+          
+          for (const column of allColumns) {
+            const rect = column.getBoundingClientRect();
+            console.log('[AzureDevOps] Column rect:', rect, 'for column:', column.getAttribute('data-column-status'));
+            
+            // Add a small buffer (5px) to make detection more forgiving
+            const buffer = 5;
+            if (mouseX >= rect.left - buffer && mouseX <= rect.right + buffer && 
+                mouseY >= rect.top - buffer && mouseY <= rect.bottom + buffer) {
+              columnElement = column as HTMLElement;
+              console.log('[AzureDevOps] Found column by coordinates:', columnElement.getAttribute('data-column-status'));
+              break;
             }
           }
           
-          // If still not found, try to find any element with data-column-status in the document
+          // Method 2: Fallback to DOM traversal if coordinate detection fails
           if (!columnElement) {
-            const allColumns = document.querySelectorAll('[data-column-status]');
-            // Find the column that is under the mouse position
-            const mouseX = event.clientX;
-            const mouseY = event.clientY;
+            console.log('[AzureDevOps] Coordinate detection failed, trying DOM traversal');
+            columnElement = target.closest('[data-column-status]');
             
-            for (const column of allColumns) {
-              const rect = column.getBoundingClientRect();
-              if (mouseX >= rect.left && mouseX <= rect.right && 
-                  mouseY >= rect.top && mouseY <= rect.bottom) {
-                columnElement = column as HTMLElement;
-                break;
+            // If not found, try to find the column by traversing up through parent elements
+            if (!columnElement) {
+              let currentElement = target.parentElement;
+              while (currentElement) {
+                if (currentElement.hasAttribute('data-column-status')) {
+                  columnElement = currentElement;
+                  break;
+                }
+                currentElement = currentElement.parentElement;
               }
+            }
+            
+            if (columnElement) {
+              console.log('[AzureDevOps] Found column by DOM traversal:', columnElement.getAttribute('data-column-status'));
             }
           }
           
@@ -1254,7 +1296,8 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
               console.log('[AzureDevOps] Dropping items:', parsed.workItems, 'to column:', columnStatus);
               
               // Create tasks from Azure DevOps work items
-              const { addTask } = useTaskStore.getState();
+              let successCount = 0;
+              let errorCount = 0;
               
               for (const workItem of parsed.workItems) {
                 try {
@@ -1287,19 +1330,73 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
                     updatedAt: new Date()
                   };
                   
-                  addTask(newTask);
-                  console.log('[AzureDevOps] Created task from work item:', newTask.id);
+                  // Persist the task to backend using createTask API
+                  const result = await createTask(
+                    projectId || '',
+                    newTask.title,
+                    newTask.description,
+                    newTask.metadata
+                  );
+                  
+                  if (result) {
+                    successCount++;
+                    console.log('[AzureDevOps] Created and persisted task from work item:', result.id);
+                    
+                    // Now update the task status to the target column
+                    console.log('[AzureDevOps] Updating task status to:', columnStatus);
+                    const statusResult = await persistTaskStatus(result.id, columnStatus);
+                    
+                    if (!statusResult.success) {
+                      console.error('[AzureDevOps] Task created but status update failed:', result.id, statusResult.error);
+                    }
+                  } else {
+                    errorCount++;
+                    console.error('[AzureDevOps] Failed to persist task from work item:', workItem.id);
+                  }
                 } catch (error) {
+                  errorCount++;
                   console.error('[AzureDevOps] Failed to create task from work item:', workItem.id, error);
                 }
               }
               
-              toast({
-                title: t('settings:azureDevOpsImport.importSuccess', { 
-                  count: parsed.workItems.length 
-                }),
-                variant: 'default'
-              });
+              // Refresh tasks to show newly imported ones
+              if (projectId && successCount > 0) {
+                console.log('[AzureDevOps] Refreshing tasks after import...');
+                try {
+                  if (onRefresh) {
+                    await onRefresh();
+                    console.log('[AzureDevOps] Tasks refreshed successfully via onRefresh');
+                  } else {
+                    // Fallback to direct API call if onRefresh not available
+                    await window.electronAPI.getTasks(projectId, { forceRefresh: true });
+                    console.log('[AzureDevOps] Tasks refreshed successfully via direct API');
+                  }
+                } catch (error) {
+                  console.error('[AzureDevOps] Failed to refresh tasks after import:', error);
+                }
+              }
+              
+              // Show appropriate toast based on results
+              if (successCount > 0 && errorCount === 0) {
+                toast({
+                  title: t('settings:azureDevOpsImport.importSuccess', { 
+                    count: successCount 
+                  }),
+                  variant: 'default'
+                });
+              } else if (successCount > 0 && errorCount > 0) {
+                toast({
+                  title: `Importation partielle`,
+                  description: `${successCount} tâches importées avec succès, ${errorCount} échecs`,
+                  variant: 'default'
+                });
+              } else {
+                toast({
+                  title: t('settings:azureDevOpsImport.importError'),
+                  description: `${errorCount} tâches n'ont pas pu être importées`,
+                  variant: 'destructive'
+                });
+              }
             } else {
               console.log('[AzureDevOps] Invalid column status:', columnStatus);
             }
@@ -1340,7 +1437,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       document.removeEventListener('drop', handleDrop);
       document.removeEventListener('dragend', handleDragEnd);
     };
-  }, [onWorkItemsImported, toast, t]);
+  }, [onWorkItemsImported, toast, t, onRefresh, projectId]);
 
   // Register task status change listener for queue auto-promotion
   // This ensures processQueue() is called whenever a task leaves in_progress
@@ -1645,10 +1742,24 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     // Persist status change to file and update local state
     // Use handleStatusChange to properly handle worktree cleanup dialog
     await handleStatusChange(activeTaskId, newStatus, task);
+    
+    // Update task order for the new column - add task to top of new column
+    const oldVisualColumn = getVisualColumn(oldStatus);
+    const newVisualColumn = getVisualColumn(newStatus);
+    
+    if (oldVisualColumn !== newVisualColumn) {
+      console.log(`[Kanban] Moving task ${activeTaskId} from ${oldVisualColumn} to ${newVisualColumn}`);
+      moveTaskToColumnTop(activeTaskId, newVisualColumn, oldVisualColumn);
+      
+      // Persist task order
+      if (projectId) {
+        saveTaskOrder(projectId);
+      }
+    }
 
-    // ============================================
+    // ================================================
     // QUEUE SYSTEM: Auto-process queue when slot opens
-    // ============================================
+    // ================================================
     if (oldStatus === 'in_progress' && newStatus !== 'in_progress') {
       // A task left In Progress - check if we can promote from queue
       await processQueue();
@@ -1660,18 +1771,6 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   const [settingsDialogKey, setSettingsDialogKey] = useState(0);
   const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
   const [settingsDialogProjectId, setSettingsDialogProjectId] = useState<string | undefined>(undefined);
-  const handleOpenProjectSettings = () => {
-    setSettingsDialogKey((k) => k + 1);
-    const projectIdToUse = project?.id || selectedProjectId;
-    if (!projectIdToUse) {
-      alert('Aucun projet sélectionné. Impossible d’ouvrir les paramètres.');
-      return;
-    }
-    setSettingsDialogProjectId(projectIdToUse);
-    setIsProjectSettingsOpen(true);
-    setTimeout(() => {
-    }, 100);
-  };
   useEffect(() => {
   }, [isProjectSettingsOpen]);
 
@@ -1754,6 +1853,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
               onSelectAll={() => selectAllTasks(status)}
               onDeselectAll={deselectAllTasks}
               onToggleSelect={toggleTaskSelection}
+              onDeleteTask={handleDeleteTask}
               isCollapsed={columnPreferences?.[status]?.isCollapsed}
               onToggleCollapsed={() => handleToggleColumnCollapsed(status)}
               columnWidth={columnPreferences?.[status]?.width}

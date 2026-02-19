@@ -58,8 +58,44 @@ export function AzureDevOpsSidePanel({
   const [draggedIds, setDraggedIds] = useState<Set<number>>(new Set());
   const [panelWidth, setPanelWidth] = useState(384); // w-96 = 384px
   const [isResizing, setIsResizing] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [lastCacheTime, setLastCacheTime] = useState<number>(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const resizeStartX = useRef(0);
   const resizeStartWidth = useRef(0);
+
+  // Load saved panel width on component mount
+  useEffect(() => {
+    const loadSavedPanelWidth = () => {
+      try {
+        const savedWidth = localStorage.getItem(`azure-devops-panel-width-${projectId}`);
+        if (savedWidth) {
+          const width = parseInt(savedWidth, 10);
+          if (!isNaN(width) && width >= 320 && width <= 800) {
+            setPanelWidth(width);
+            setIsCollapsed(width <= 320);
+          }
+        }
+      } catch (error) {
+        console.debug('[AzureDevOps] Failed to load saved panel width:', error);
+      }
+    };
+
+    if (projectId) {
+      loadSavedPanelWidth();
+    }
+  }, [projectId]);
+
+  // Save panel width when it changes (but not when collapsed)
+  useEffect(() => {
+    if (projectId && !isCollapsed) {
+      try {
+        localStorage.setItem(`azure-devops-panel-width-${projectId}`, panelWidth.toString());
+      } catch (error) {
+        console.debug('[AzureDevOps] Failed to save panel width:', error);
+      }
+    }
+  }, [panelWidth, projectId, isCollapsed]);
 
   // Load connection status
   useEffect(() => {
@@ -68,12 +104,54 @@ export function AzureDevOpsSidePanel({
     }
   }, [open, projectId]);
 
-  // Load work items when panel opens
+  // Load cached work items on component mount
+  useEffect(() => {
+    const loadCachedWorkItems = () => {
+      try {
+        const cacheKey = `azure-devops-workitems-cache-${projectId}`;
+        const cacheTimeKey = `azure-devops-workitems-cache-time-${projectId}`;
+        
+        const cachedData = localStorage.getItem(cacheKey);
+        const cachedTime = localStorage.getItem(cacheTimeKey);
+        
+        if (cachedData && cachedTime) {
+          const cacheTime = parseInt(cachedTime, 10);
+          const now = Date.now();
+          const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+          
+          // Use cache if it's less than 5 minutes old
+          if (now - cacheTime < CACHE_DURATION) {
+            const workItems = JSON.parse(cachedData);
+            setWorkItems(workItems);
+            setLastCacheTime(cacheTime);
+            console.debug('[AzureDevOps] Using cached work items');
+            return;
+          }
+        }
+      } catch (error) {
+        console.debug('[AzureDevOps] Failed to load cached work items:', error);
+      }
+    };
+
+    if (projectId) {
+      loadCachedWorkItems();
+    }
+  }, [projectId]);
+
+  // Load work items when panel opens (with cache logic)
   useEffect(() => {
     if (open && syncStatus?.connected) {
-      loadWorkItems();
+      const now = Date.now();
+      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+      
+      // Only refresh if cache is older than 5 minutes or doesn't exist
+      if (!lastCacheTime || now - lastCacheTime > CACHE_DURATION) {
+        loadWorkItems();
+      } else {
+        console.debug('[AzureDevOps] Using recent cache, skipping refresh');
+      }
     }
-  }, [open, syncStatus?.connected]);
+  }, [open, syncStatus?.connected, lastCacheTime]);
 
   const loadConnectionStatus = async () => {
     try {
@@ -91,7 +169,17 @@ export function AzureDevOpsSidePanel({
     }
   };
 
-  const loadWorkItems = async () => {
+  const loadWorkItems = async (forceRefresh = false) => {
+    // Don't load if not forcing refresh and we have recent cache
+    if (!forceRefresh && lastCacheTime) {
+      const now = Date.now();
+      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+      if (now - lastCacheTime < CACHE_DURATION) {
+        console.debug('[AzureDevOps] Using recent cache, skipping load');
+        return;
+      }
+    }
+
     setIsLoadingItems(true);
     setError(null);
     try {
@@ -103,7 +191,23 @@ export function AzureDevOpsSidePanel({
       );
 
       if (result.success) {
-        setWorkItems(result.data || []);
+        const workItems = result.data || [];
+        setWorkItems(workItems);
+        
+        // Save to cache
+        try {
+          const cacheKey = `azure-devops-workitems-cache-${projectId}`;
+          const cacheTimeKey = `azure-devops-workitems-cache-time-${projectId}`;
+          const now = Date.now();
+          
+          localStorage.setItem(cacheKey, JSON.stringify(workItems));
+          localStorage.setItem(cacheTimeKey, now.toString());
+          setLastCacheTime(now);
+          
+          console.debug('[AzureDevOps] Work items cached successfully');
+        } catch (cacheError) {
+          console.debug('[AzureDevOps] Failed to cache work items:', cacheError);
+        }
       } else {
         setError(result.error || t('azureDevOpsImport.errorLoadWorkItemsFailed'));
       }
@@ -122,7 +226,12 @@ export function AzureDevOpsSidePanel({
       state: 'all',
       assignedTo: 'all',
     });
-    loadWorkItems();
+    
+    // Force refresh bypassing cache
+    setIsRefreshing(true);
+    loadWorkItems(true).finally(() => {
+      setIsRefreshing(false);
+    });
   };
 
   // Filter work items
@@ -196,11 +305,46 @@ export function AzureDevOpsSidePanel({
     const deltaX = resizeStartX.current - e.clientX;
     const newWidth = Math.min(Math.max(resizeStartWidth.current + deltaX, 320), 800); // Min 320px, Max 800px
     setPanelWidth(newWidth);
+    
+    // Update collapsed state based on width
+    setIsCollapsed(newWidth <= 320);
   }, [isResizing]);
 
   const handleResizeEnd = useCallback(() => {
     setIsResizing(false);
   }, []);
+
+  // Toggle collapse function
+  const toggleCollapse = useCallback(() => {
+    if (isCollapsed) {
+      // Restore saved width or default to 384px
+      let restoredWidth = 384; // default width
+      try {
+        const savedWidth = localStorage.getItem(`azure-devops-panel-width-${projectId}`);
+        if (savedWidth) {
+          const width = parseInt(savedWidth, 10);
+          if (!isNaN(width) && width >= 320 && width <= 800) {
+            restoredWidth = width;
+          }
+        }
+      } catch (error) {
+        console.debug('[AzureDevOps] Failed to load saved panel width for restore:', error);
+      }
+      
+      setPanelWidth(restoredWidth);
+      setIsCollapsed(false);
+    } else {
+      // Save current width before collapsing
+      try {
+        localStorage.setItem(`azure-devops-panel-width-${projectId}`, panelWidth.toString());
+      } catch (error) {
+        console.debug('[AzureDevOps] Failed to save panel width before collapse:', error);
+      }
+      
+      setPanelWidth(320); // Collapse to minimum width
+      setIsCollapsed(true);
+    }
+  }, [isCollapsed, projectId, panelWidth]);
 
   // Add global mouse event listeners for resize
   useEffect(() => {
@@ -298,11 +442,11 @@ export function AzureDevOpsSidePanel({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setPanelWidth(320)}
+              onClick={toggleCollapse}
               className="h-7 w-7"
-              title="Réduire"
+              title={isCollapsed ? "Agrandir" : "Réduire"}
             >
-              <ChevronLeft className="h-4 w-4" />
+              {isCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </Button>
             <Button
               variant="ghost"
@@ -426,9 +570,10 @@ export function AzureDevOpsSidePanel({
                   variant="ghost"
                   size="sm"
                   onClick={handleRefresh}
-                  disabled={isLoadingItems}
+                  disabled={isLoadingItems || isRefreshing}
+                  title={isRefreshing ? "Rafraîchissement forcé..." : "Rafraîchir (contourne le cache)"}
                 >
-                  <RefreshCw className={`h-4 w-4 ${isLoadingItems ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin text-primary' : isLoadingItems ? 'animate-spin' : ''}`} />
                 </Button>
               </div>
             )}

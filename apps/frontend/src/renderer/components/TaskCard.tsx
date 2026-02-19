@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play, Square, Clock, Zap, Target, Shield, Gauge, Palette, FileCode, Bug, Wrench, Loader2, AlertTriangle, RotateCcw, Archive, GitPullRequest, MoreVertical } from 'lucide-react';
+import { Play, Square, Clock, Zap, Target, Shield, Gauge, Palette, FileCode, Bug, Wrench, Loader2, AlertTriangle, RotateCcw, Archive, GitPullRequest, MoreVertical, X } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -32,7 +32,7 @@ import {
   JSON_ERROR_PREFIX,
   JSON_ERROR_TITLE_SUFFIX
 } from '../../shared/constants';
-import { startTask, stopTask, checkTaskRunning, recoverStuckTask, isIncompleteHumanReview, archiveTasks, hasRecentActivity } from '../stores/task-store';
+import { startTask, stopTask, checkTaskRunning, recoverStuckTask, isIncompleteHumanReview, archiveTasks, hasRecentActivity, deleteTasks } from '../stores/task-store';
 import { useProjectStore } from '../stores/project-store';
 import type { Task, TaskCategory, ReviewReason, TaskStatus } from '../../shared/types';
 import {useFormatRelativeTime} from "@/hooks/useFormatRelativeTime";
@@ -64,6 +64,8 @@ interface TaskCardProps {
   isSelectable?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
+  // Optional delete handler
+  onDelete?: () => void;
 }
 
 // Custom comparator for React.memo - only re-render when relevant task data changes
@@ -78,7 +80,8 @@ function taskCardPropsAreEqual(prevProps: TaskCardProps, nextProps: TaskCardProp
     prevProps.onStatusChange === nextProps.onStatusChange &&
     prevProps.isSelectable === nextProps.isSelectable &&
     prevProps.isSelected === nextProps.isSelected &&
-    prevProps.onToggleSelect === nextProps.onToggleSelect
+    prevProps.onToggleSelect === nextProps.onToggleSelect &&
+    prevProps.onDelete === nextProps.onDelete
   ) {
     return true;
   }
@@ -132,7 +135,8 @@ export const TaskCard = memo(function TaskCard({
   onStatusChange,
   isSelectable,
   isSelected,
-  onToggleSelect
+  onToggleSelect,
+  onDelete
 }: TaskCardProps) {
   const { t } = useTranslation(['tasks', 'errors']);
   const formatRelativeTime = useFormatRelativeTime();
@@ -259,6 +263,13 @@ export const TaskCard = memo(function TaskCard({
     }
   };
 
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete();
+    }
+  };
+
   const handleViewPR = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (task.metadata?.prUrl && window.electronAPI?.openExternal) {
@@ -321,23 +332,45 @@ export const TaskCard = memo(function TaskCard({
   const reviewReasonInfo = task.status === 'human_review' ? getReviewReasonLabel(effectiveReviewReason) : null;
 
   const isArchived = !!task.metadata?.archivedAt;
+  
+  // Check if task was imported from Azure DevOps
+  const isFromAzureDevOps = !!(task.metadata?.azureDevOpsIdentifier || task.metadata?.azureDevOpsUrl);
+  
+  // Debug: log to console to check detection
+  if (isFromAzureDevOps && window.DEBUG) {
+    console.log('[TaskCard] Azure DevOps task detected:', task.id, task.metadata);
+  }
 
   return (
     <Card
       className={cn(
-        'card-surface task-card-enhanced cursor-pointer',
+        'card-surface task-card-enhanced cursor-pointer relative group',
         isRunning && !isStuck && 'ring-2 ring-primary border-primary task-running-pulse',
         isStuck && 'ring-2 ring-warning border-warning task-stuck-pulse',
         isArchived && 'opacity-60 hover:opacity-80',
-        isSelectable && isSelected && 'ring-2 ring-ring border-ring bg-accent/10'
+        isSelectable && isSelected && 'ring-2 ring-ring border-ring bg-accent/10',
+        // Azure DevOps imported tasks - custom CSS class for negative styling
+        isFromAzureDevOps && 'azure-devops-task'
       )}
       onClick={onClick}
     >
+      {/* Delete button - top right corner */}
+      {onDelete && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+          onClick={handleDelete}
+          title={t('actions.delete')}
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      )}
       <CardContent className="p-4">
         <div className={isSelectable ? 'flex gap-3' : undefined}>
           {/* Checkbox for selectable mode - stops event propagation */}
           {isSelectable && (
-            <div className="flex-shrink-0 pt-0.5">
+            <div className="shrink-0 pt-0.5">
               <Checkbox
                 checked={isSelected}
                 onCheckedChange={onToggleSelect}
