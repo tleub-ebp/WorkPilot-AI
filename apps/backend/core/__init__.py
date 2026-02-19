@@ -14,6 +14,8 @@ __all__ = [
     "WorkspaceManager",
     "WorktreeManager",
     "ProgressTracker",
+    "create_agent_client",
+    "AgentClient",
 ]
 
 
@@ -39,4 +41,12 @@ def __getattr__(name):
         from . import client as _client
 
         return getattr(_client, name)
+    elif name == "create_agent_client":
+        from .client import create_agent_client
+
+        return create_agent_client
+    elif name == "AgentClient":
+        from .agent_client import AgentClient
+
+        return AgentClient
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

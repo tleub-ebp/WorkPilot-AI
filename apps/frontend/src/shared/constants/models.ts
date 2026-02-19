@@ -63,6 +63,13 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
     { value: 'deepseek-coder-v2',      label: 'DeepSeek Coder V2',      tier: 'standard' },
   ],
 
+  // ---- Grok (xAI) ----
+  grok: [
+    { value: 'grok-2',            label: 'Grok 2',              tier: 'flagship', supportsThinking: true },
+    { value: 'grok-2-mini',       label: 'Grok 2 Mini',         tier: 'standard' },
+    { value: 'grok-beta',         label: 'Grok Beta',           tier: 'standard' },
+  ],
+
   // ---- Meta (LLaMA) ----
   meta: [
     { value: 'meta-llama/llama-4-scout',  label: 'Llama 4 Scout',      tier: 'flagship' },
@@ -102,6 +109,14 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
     { value: 'custom',           label: 'Autre (saisie libre)', tier: 'local' },
   ],
 
+  // ---- GitHub Copilot ----
+  copilot: [
+    { value: 'gpt-4o',              label: 'GPT-4o (Copilot)',           tier: 'flagship' },
+    { value: 'claude-3.5-sonnet',   label: 'Claude 3.5 Sonnet (Copilot)', tier: 'standard' },
+    { value: 'o3-mini',             label: 'o3-mini (Copilot)',          tier: 'standard', supportsThinking: true },
+    { value: 'gpt-4o-mini',         label: 'GPT-4o mini (Copilot)',     tier: 'fast' },
+  ],
+
   // ---- Custom/Enterprise API ----
   custom: [
     { value: 'custom-model-1', label: 'Custom Model 1', tier: 'flagship', supportsThinking: true },
@@ -128,7 +143,7 @@ export function getDefaultModelForProvider(provider: string): string {
 
 /** Returns whether the selected provider supports extended thinking */
 export function providerSupportsThinking(provider: string): boolean {
-  return ['anthropic', 'openai', 'google', 'deepseek', 'mistral', 'ollama', 'custom'].includes(provider);
+  return ['anthropic', 'openai', 'google', 'deepseek', 'mistral', 'ollama', 'copilot', 'custom', 'grok'].includes(provider);
 }
 
 // ============================================

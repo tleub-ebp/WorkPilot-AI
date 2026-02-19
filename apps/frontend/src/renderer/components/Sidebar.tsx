@@ -56,6 +56,7 @@ import { AzureDevOpsSetupModal } from './AzureDevOpsSetupModal';
 import { GitHubSetupModal } from './GitHubSetupModal';
 import { RateLimitIndicator } from './RateLimitIndicator';
 import { ClaudeCodeStatusBadge } from './ClaudeCodeStatusBadge';
+import { CopilotCliStatusBadge } from './CopilotCliStatusBadge';
 import { UpdateBanner } from './UpdateBanner';
 import type { Project, GitStatus } from '@shared/types';
 
@@ -515,6 +516,9 @@ export function Sidebar({
         <div className={cn("space-y-3 transition-all duration-300", isCollapsed ? "p-2" : "p-4")}>
           {/* Claude Code Status Badge (ProviderSelector déplacé dans le popover) */}
           {!isCollapsed && <ClaudeCodeStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />}
+
+          {/* Copilot CLI Status Badge */}
+          {!isCollapsed && <CopilotCliStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />}
 
           {/* Settings and Help row */}
           <div className={cn(

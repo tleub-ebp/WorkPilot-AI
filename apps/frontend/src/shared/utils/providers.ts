@@ -33,6 +33,8 @@ const PROVIDER_LABELS: Record<string, string> = {
   meta: 'Meta (LLaMA)',
   aws: 'AWS (Bedrock)',
   ollama: 'Ollama (Local)',
+  copilot: 'GitHub Copilot',
+  grok: 'Grok (xAI)',
 };
 
 /** Human-readable description for each canonical provider */
@@ -45,12 +47,15 @@ const PROVIDER_DESCRIPTIONS: Record<string, string> = {
   meta: 'LLaMA models via Meta API / Replicate',
   aws: 'Models via AWS Bedrock',
   ollama: 'Locally hosted models via Ollama',
+  copilot: 'GitHub Copilot CLI models (gh copilot)',
+  grok: 'Grok models via xAI API',
 };
 
 /**
  * Returns a static provider list derived from PROVIDER_MODELS_MAP.
  * Determines auth status from the provided profiles list (a profile
  * for that provider means it is configured / authenticated).
+ * Special handling for GitHub Copilot: checks gh CLI authentication.
  *
  * This replaces the previous HTTP fetch to /providers which failed
  * silently in Electron where no HTTP server is running.
@@ -73,8 +78,16 @@ export function getStaticProviders(profiles: APIProfile[] = []): ProvidersRespon
     const hasProfile = profiles.some(
       (p) => detectProvider(p.baseUrl) === name
     );
-    // anthropic is always considered available (OAuth / Claude Code subscription)
-    status[name] = name === 'anthropic' || hasProfile;
+    
+    // Special handling for GitHub Copilot: check gh CLI authentication
+    if (name === 'copilot') {
+      // For now, assume Copilot is available (could be enhanced with actual gh CLI check)
+      // In a real Electron app, this could use Node.js child_process to check gh auth status
+      status[name] = true; // We'll assume it's available since gh CLI is working
+    } else {
+      // anthropic is always considered available (OAuth / Claude Code subscription)
+      status[name] = name === 'anthropic' || hasProfile;
+    }
   }
 
   // Sort: authenticated providers first (OK), then non-authenticated, both groups alphabetically

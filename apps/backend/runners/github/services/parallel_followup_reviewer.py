@@ -27,10 +27,14 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..models import FollowupReviewContext
 
-from claude_agent_sdk import AgentDefinition
+# Make AgentDefinition optional — not required when running with Copilot provider
+try:
+    from claude_agent_sdk import AgentDefinition
+except ImportError:
+    AgentDefinition = None  # type: ignore[assignment,misc]
 
 try:
-    from ...core.client import create_client
+    from ...core.client import create_agent_client, create_client
     from ...phase_config import get_thinking_budget, resolve_model_id
     from ..context_gatherer import _validate_git_ref
     from ..gh_client import GHClient
@@ -48,10 +52,10 @@ try:
     from .io_utils import safe_print
     from .pr_worktree_manager import PRWorktreeManager
     from .pydantic_models import ParallelFollowupResponse
-    from .sdk_utils import process_sdk_stream
+    from .sdk_utils import process_agent_stream, process_sdk_stream
 except (ImportError, ValueError, SystemError):
     from context_gatherer import _validate_git_ref
-    from core.client import create_client
+    from core.client import create_agent_client, create_client
     from gh_client import GHClient
     from models import (
         BRANCH_BEHIND_BLOCKER_MSG,
@@ -68,7 +72,7 @@ except (ImportError, ValueError, SystemError):
     from services.io_utils import safe_print
     from services.pr_worktree_manager import PRWorktreeManager
     from services.pydantic_models import ParallelFollowupResponse
-    from services.sdk_utils import process_sdk_stream
+    from services.sdk_utils import process_agent_stream, process_sdk_stream
 
 
 logger = logging.getLogger(__name__)
@@ -525,8 +529,8 @@ The SDK will run invoked agents in parallel automatically.
                 f"thinking_level={thinking_level}, thinking_budget={thinking_budget}"
             )
 
-            # Create client with subagents defined (using worktree path)
-            client = create_client(
+            # Create provider-agnostic client with subagents defined (using worktree path)
+            client = create_agent_client(
                 project_dir=project_root,
                 spec_dir=self.github_dir,
                 model=model,
@@ -555,13 +559,11 @@ The SDK will run invoked agents in parallel automatically.
                     flush=True,
                 )
 
-                # Process SDK stream with shared utility
-                stream_result = await process_sdk_stream(
+                # Process agent stream (provider-agnostic)
+                stream_result = await process_agent_stream(
                     client=client,
                     context_name="ParallelFollowup",
                     model=model,
-                    system_prompt=prompt,
-                    agent_definitions=agent_defs,
                 )
 
                 # Check for stream processing errors

@@ -17,13 +17,11 @@ def get_db():
 
 def hash_key(api_key: str) -> str:
     h = hashlib.sha256(api_key.encode('utf-8')).hexdigest()
-    print(f"[VALIDATION] hash_key: {api_key[:6]}... -> {h}")
     return h
 
 def set_validated(provider: str, api_key: str, validated: bool):
     conn = get_db()
     h = hash_key(api_key)
-    print(f"[VALIDATION] set_validated: provider={provider}, hash={h}, validated={validated}")
     conn.execute('''INSERT OR REPLACE INTO validated_keys (provider, api_key_hash, validated, validated_at)
                     VALUES (?, ?, ?, ?)''',
                  (provider, h, int(validated), datetime.utcnow().isoformat()))
@@ -35,6 +33,5 @@ def is_validated(provider: str, api_key: str) -> bool:
     h = hash_key(api_key)
     cur = conn.execute('SELECT validated FROM validated_keys WHERE provider=? AND api_key_hash=?', (provider, h))
     row = cur.fetchone()
-    print(f"[VALIDATION] is_validated: provider={provider}, hash={h}, result={row}")
     conn.close()
     return bool(row and row[0])

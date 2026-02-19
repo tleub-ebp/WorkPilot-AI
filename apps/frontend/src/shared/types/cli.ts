@@ -74,3 +74,50 @@ export interface ClaudeInstallationList {
   /** Path to the currently active installation (from settings or auto-detected) */
   activePath: string | null;
 }
+
+// ============================================
+// Copilot CLI Types (mirrors Claude Code CLI)
+// ============================================
+
+/**
+ * Copilot CLI version information
+ * Copilot CLI is a GitHub CLI extension (`gh copilot`), not a standalone executable.
+ */
+export interface CopilotCliVersionInfo {
+  /** Currently installed extension version, null if not installed */
+  installed: string | null;
+  /** GitHub CLI (gh) version — prerequisite for Copilot */
+  ghVersion: string | null;
+  /** True if installed version is older than latest */
+  isOutdated: boolean;
+  /** Path to the `gh` CLI binary (Copilot is invoked via `gh copilot ...`) */
+  path?: string;
+  /** Full detection result with source information */
+  detectionResult: ToolDetectionResult;
+}
+
+/**
+ * Information about a detected Copilot CLI installation
+ */
+export interface CopilotInstallationInfo {
+  /** Full path to the `gh` CLI executable */
+  path: string;
+  /** Version of the gh-copilot extension, null if validation failed */
+  version: string | null;
+  /** Version of the gh CLI host */
+  ghVersion: string | null;
+  /** Source of detection (user-config, system-path, etc.) */
+  source: ToolDetectionResult['source'];
+  /** Whether this is the currently active/configured installation */
+  isActive: boolean;
+}
+
+/**
+ * List of all detected Copilot CLI installations
+ */
+export interface CopilotInstallationList {
+  /** All detected Copilot CLI installations (each backed by a `gh` binary) */
+  installations: CopilotInstallationInfo[];
+  /** Path to the currently active `gh` installation (from settings or auto-detected) */
+  activePath: string | null;
+}

@@ -55,7 +55,7 @@ import {
 /**
  * Supported CLI tools managed by this system
  */
-export type CLITool = 'python' | 'git' | 'gh' | 'glab' | 'claude';
+export type CLITool = 'python' | 'git' | 'gh' | 'glab' | 'claude' | 'copilot';
 
 /**
  * User configuration for CLI tool paths
@@ -67,6 +67,7 @@ export interface ToolConfig {
   githubCLIPath?: string;
   gitlabCLIPath?: string;
   claudePath?: string;
+  copilotPath?: string;
 }
 
 /**
@@ -376,6 +377,8 @@ class CLIToolManager {
         return this.detectGitLabCLI();
       case 'claude':
         return this.detectClaude();
+      case 'copilot':
+        return this.detectCopilot();
       default:
         return {
           found: false,
@@ -927,6 +930,63 @@ class CLIToolManager {
   }
 
   /**
+   * Detect Copilot CLI (GitHub CLI extension `gh copilot`)
+   *
+   * Copilot CLI is not a standalone executable — it's invoked via `gh copilot ...`.
+   * Detection strategy:
+   * 1. User configuration (copilotPath → path to gh binary)
+   * 2. Reuse detected `gh` path and check if gh-copilot extension is installed
+   * 3. Validate with `gh copilot --version`
+   *
+   * @returns Detection result — the path is the `gh` binary path
+   */
+  private detectCopilot(): ToolDetectionResult {
+    // 1. User configuration
+    if (this.userConfig.copilotPath) {
+      if (isWrongPlatformPath(this.userConfig.copilotPath)) {
+        console.warn(
+          `[Copilot CLI] User-configured path is from different platform, ignoring: ${this.userConfig.copilotPath}`
+        );
+      } else {
+        const validation = this.validateCopilot(this.userConfig.copilotPath);
+        if (validation.valid) {
+          return {
+            found: true,
+            path: this.userConfig.copilotPath,
+            version: validation.version,
+            source: 'user-config',
+            message: `Using user-configured Copilot CLI (gh): ${this.userConfig.copilotPath}`,
+          };
+        }
+        console.warn(`[Copilot CLI] User-configured path invalid: ${validation.message}`);
+      }
+    }
+
+    // 2. Detect via existing gh CLI detection
+    const ghResult = this.detectGitHubCLI();
+    if (ghResult.found && ghResult.path) {
+      const validation = this.validateCopilot(ghResult.path);
+      if (validation.valid) {
+        return {
+          found: true,
+          path: ghResult.path,
+          version: validation.version,
+          source: ghResult.source,
+          message: `Using Copilot CLI via gh: ${ghResult.path}`,
+        };
+      }
+      console.warn(`[Copilot CLI] gh found but copilot extension not available: ${validation.message}`);
+    }
+
+    // 3. Not found
+    return {
+      found: false,
+      source: 'fallback',
+      message: 'Copilot CLI not found. Requires GitHub CLI (gh) with copilot extension: gh extension install github/gh-copilot',
+    };
+  }
+
+  /**
    * Validate Python version and availability
    *
    * Checks that Python executable exists and meets minimum version requirement
@@ -1154,6 +1214,44 @@ class CLIToolManager {
     }
   }
 
+  /**
+   * Validate Copilot CLI availability via gh copilot --version
+   *
+   * Copilot CLI is a GitHub CLI extension invoked as `gh copilot`.
+   * This validates that the extension is installed and functional.
+   *
+   * @param ghCmd - Path to the `gh` CLI executable
+   * @returns Validation result with copilot extension version
+   */
+  private validateCopilot(ghCmd: string): ToolValidation {
+    try {
+      const env = getAugmentedEnv();
+      const output = normalizeExecOutput(
+        execFileSync(ghCmd, ['copilot', '--version'], {
+          encoding: 'utf-8',
+          timeout: 10000,
+          windowsHide: true,
+          env,
+        })
+      ).trim();
+
+      // gh copilot version output varies: "gh copilot version X.Y.Z" or similar
+      const match = output.match(/(\d+\.\d+\.\d+)/);
+      const versionStr = match ? match[1] : output.split('\n')[0];
+
+      return {
+        valid: true,
+        version: versionStr,
+        message: `Copilot CLI ${versionStr} is available`,
+      };
+    } catch (error) {
+      return {
+        valid: false,
+        message: `Failed to validate Copilot CLI: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+  }
+
   // ============================================================================
   // ASYNC METHODS - Non-blocking alternatives for Electron main process
   // ============================================================================
@@ -1229,14 +1327,16 @@ class CLIToolManager {
     switch (tool) {
       case 'claude':
         return this.detectClaudeAsync();
-      case 'python':
-        return this.detectPythonAsync();
+      case 'copilot':
+        return this.detectCopilotAsync();
       case 'git':
         return this.detectGitAsync();
       case 'gh':
         return this.detectGitHubCLIAsync();
       case 'glab':
         return this.detectGitLabCLIAsync();
+      case 'python':
+        return this.detectPythonAsync();
       default:
         return {
           found: false,
@@ -1572,6 +1672,93 @@ class CLIToolManager {
       found: false,
       source: 'fallback',
       message: 'Claude CLI not found. Install from https://claude.ai/download',
+    };
+  }
+
+  /**
+   * Validate Copilot CLI asynchronously (non-blocking)
+   *
+   * @param ghCmd - Path to the `gh` CLI executable
+   * @returns Promise resolving to validation result with copilot extension version
+   */
+  private async validateCopilotAsync(ghCmd: string): Promise<ToolValidation> {
+    try {
+      const env = await getAugmentedEnvAsync();
+      const { stdout } = await execFileAsync(ghCmd, ['copilot', '--version'], {
+        encoding: 'utf-8',
+        timeout: 10000,
+        windowsHide: true,
+        env,
+      });
+
+      const output = normalizeExecOutput(stdout).trim();
+      const match = output.match(/(\d+\.\d+\.\d+)/);
+      const versionStr = match ? match[1] : output.split('\n')[0];
+
+      return {
+        valid: true,
+        version: versionStr,
+        message: `Copilot CLI ${versionStr} is available`,
+      };
+    } catch (error) {
+      return {
+        valid: false,
+        message: `Failed to validate Copilot CLI: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+  }
+
+  /**
+   * Detect Copilot CLI asynchronously (non-blocking)
+   *
+   * Same logic as detectCopilot() but uses async validation.
+   * Copilot CLI is a gh extension, so detection depends on gh being found.
+   *
+   * @returns Promise resolving to detection result
+   */
+  private async detectCopilotAsync(): Promise<ToolDetectionResult> {
+    // 1. User configuration
+    if (this.userConfig.copilotPath) {
+      if (isWrongPlatformPath(this.userConfig.copilotPath)) {
+        console.warn(
+          `[Copilot CLI] User-configured path is from different platform, ignoring: ${this.userConfig.copilotPath}`
+        );
+      } else {
+        const validation = await this.validateCopilotAsync(this.userConfig.copilotPath);
+        if (validation.valid) {
+          return {
+            found: true,
+            path: this.userConfig.copilotPath,
+            version: validation.version,
+            source: 'user-config',
+            message: `Using user-configured Copilot CLI (gh): ${this.userConfig.copilotPath}`,
+          };
+        }
+        console.warn(`[Copilot CLI] User-configured path invalid: ${validation.message}`);
+      }
+    }
+
+    // 2. Detect via existing async gh CLI detection
+    const ghResult = await this.detectGitHubCLIAsync();
+    if (ghResult.found && ghResult.path) {
+      const validation = await this.validateCopilotAsync(ghResult.path);
+      if (validation.valid) {
+        return {
+          found: true,
+          path: ghResult.path,
+          version: validation.version,
+          source: ghResult.source,
+          message: `Using Copilot CLI via gh: ${ghResult.path}`,
+        };
+      }
+      console.warn(`[Copilot CLI] gh found but copilot extension not available: ${validation.message}`);
+    }
+
+    // 3. Not found
+    return {
+      found: false,
+      source: 'fallback',
+      message: 'Copilot CLI not found. Requires GitHub CLI (gh) with copilot extension: gh extension install github/gh-copilot',
     };
   }
 

@@ -567,7 +567,7 @@ export function UsageIndicator() {
               onMouseLeave={handleMouseLeave}
               onClick={handleTriggerClick}
           >
-            <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+            <Icon className="h-3.5 w-3.5 shrink-0" />
             {/* Show "!" when re-auth needed, otherwise dual usage display */}
             {usage.needsReauthentication ? (
                 <span className="text-xs font-semibold text-red-500" title={t('common:usage.needsReauth')}>
@@ -610,7 +610,7 @@ export function UsageIndicator() {
             {usage.needsReauthentication ? (
                 <div className="py-2 space-y-3">
                   <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-destructive/10 border border-destructive/20">
-                    <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+                    <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
                     <div className="space-y-1">
                       <p className="text-xs font-medium text-destructive">
                         {t('common:usage.reauthRequired')}
@@ -632,7 +632,7 @@ export function UsageIndicator() {
             ) : isOpenAI ? (
               <div className="py-2 space-y-3">
                 <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-primary/10 border border-primary/20">
-                  <TrendingUp className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <TrendingUp className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                   <div className="space-y-1">
                     <p className="text-xs font-medium text-primary">
                       {t('common:usage.openaiCostLabel', 'Coût OpenAI (mois en cours)')}
@@ -731,7 +731,7 @@ export function UsageIndicator() {
                           className={`h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden ${getGradientClass(usage.sessionPercent)}`}
                           style={{ width: `${Math.min(usage.sessionPercent, 100)}%` }}
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent motion-safe:animate-pulse" />
+                        <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent motion-safe:animate-pulse" />
                       </div>
                     </div>
                     {usage.sessionUsageValue != null && usage.sessionUsageLimit != null && (
@@ -766,7 +766,7 @@ export function UsageIndicator() {
                           className={`h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden ${getGradientClass(usage.weeklyPercent)}`}
                           style={{ width: `${Math.min(usage.weeklyPercent, 100)}%` }}
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent motion-safe:animate-pulse" />
+                        <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent motion-safe:animate-pulse" />
                       </div>
                     </div>
                     {usage.weeklyUsageValue != null && usage.weeklyUsageLimit != null && (
@@ -789,7 +789,7 @@ export function UsageIndicator() {
             >
               {/* Initials Avatar with warning indicator for re-auth needed */}
               <div className="relative">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                     usage.needsReauthentication ? 'bg-red-500/10' : 'bg-primary/10'
                 }`}>
                 <span className={`text-xs font-semibold ${
@@ -824,7 +824,7 @@ export function UsageIndicator() {
               </div>
 
               {/* Chevron */}
-              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
             </button>
 
             {/* Other profiles section - sorted by availability */}
@@ -840,7 +840,7 @@ export function UsageIndicator() {
                       >
                         {/* Initials Avatar with status indicator */}
                         <div className="relative">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
                               profile.isRateLimited || profile.needsReauthentication
                                   ? 'bg-red-500/10'
                                   : !profile.isAuthenticated

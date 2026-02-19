@@ -112,11 +112,6 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen }: Glob
   };
 
   const unifiedAccounts = buildUnifiedAccounts();
-  
-  // Debug: Vérifier si les comptes sont bien récupérés
-  console.log('[GlobalAutoSwitching] unifiedAccounts:', unifiedAccounts);
-  console.log('[GlobalAutoSwitching] apiProfiles:', apiProfiles);
-  console.log('[GlobalAutoSwitching] activeApiProfileId:', activeApiProfileId);
 
   // Load priority order from settings
   const loadPriorityOrder = async () => {

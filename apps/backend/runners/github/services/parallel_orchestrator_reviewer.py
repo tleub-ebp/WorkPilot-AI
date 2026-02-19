@@ -26,13 +26,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-# Note: AgentDefinition import kept for backwards compatibility but no longer used
-# The Task tool's custom subagent_type feature is broken in Claude Code CLI
-# See: https://github.com/anthropics/claude-code/issues/8697
-from claude_agent_sdk import AgentDefinition  # noqa: F401
+# Make AgentDefinition optional — used for Claude SDK subagent definitions
+# but not required when running with Copilot provider
+try:
+    from claude_agent_sdk import AgentDefinition  # noqa: F401
+except ImportError:
+    AgentDefinition = None  # type: ignore[assignment,misc]
 
 try:
-    from ...core.client import create_client
+    from ...core.client import create_agent_client, create_client
     from ...phase_config import get_thinking_budget, resolve_model_id
     from ..context_gatherer import PRContext, _validate_git_ref
     from ..gh_client import GHClient
@@ -55,10 +57,10 @@ try:
         ParallelOrchestratorResponse,
         SpecialistResponse,
     )
-    from .sdk_utils import process_sdk_stream
+    from .sdk_utils import process_agent_stream, process_sdk_stream
 except (ImportError, ValueError, SystemError):
     from context_gatherer import PRContext, _validate_git_ref
-    from core.client import create_client
+    from core.client import create_agent_client, create_client
     from gh_client import GHClient
     from models import (
         BRANCH_BEHIND_BLOCKER_MSG,
@@ -80,7 +82,7 @@ except (ImportError, ValueError, SystemError):
         ParallelOrchestratorResponse,
         SpecialistResponse,
     )
-    from services.sdk_utils import process_sdk_stream
+    from services.sdk_utils import process_agent_stream, process_sdk_stream
 
 
 # =============================================================================
@@ -472,8 +474,11 @@ Report findings with specific file paths, line numbers, and code evidence.
         project_root: Path,
         model: str,
         thinking_budget: int | None,
+        provider: str | None = None,
     ) -> tuple[str, list[PRReviewFinding]]:
-        """Run a single specialist as its own SDK session.
+        """Run a single specialist as its own agent session.
+
+        Supports both Claude SDK and Copilot providers via create_agent_client().
 
         Args:
             config: Specialist configuration
@@ -481,6 +486,7 @@ Report findings with specific file paths, line numbers, and code evidence.
             project_root: Working directory
             model: Model to use
             thinking_budget: Max thinking tokens
+            provider: Provider override ("claude" or "copilot"). None = auto-detect.
 
         Returns:
             Tuple of (specialist_name, findings)
@@ -494,11 +500,11 @@ Report findings with specific file paths, line numbers, and code evidence.
         prompt = self._build_specialist_prompt(config, context, project_root)
 
         try:
-            # Create SDK client for this specialist
+            # Create provider-agnostic agent client for this specialist
             # Note: Agent type uses the generic "pr_reviewer" since individual
             # specialist types aren't registered in AGENT_CONFIGS. The specialist-specific
             # system prompt handles differentiation.
-            client = create_client(
+            client = create_agent_client(
                 project_dir=project_root,
                 spec_dir=self.github_dir,
                 model=model,
@@ -508,24 +514,23 @@ Report findings with specific file paths, line numbers, and code evidence.
                     "type": "json_schema",
                     "schema": SpecialistResponse.model_json_schema(),
                 },
+                provider=provider,
             )
 
             async with client:
                 await client.query(prompt)
 
-                # Process SDK stream
-                stream_result = await process_sdk_stream(
+                # Process agent stream (provider-agnostic)
+                stream_result = await process_agent_stream(
                     client=client,
                     context_name=f"Specialist:{config.name}",
                     model=model,
-                    system_prompt=prompt,
-                    agent_definitions={},  # No subagents for specialists
                 )
 
                 error = stream_result.get("error")
                 if error:
                     logger.error(
-                        f"[Specialist:{config.name}] SDK stream failed: {error}"
+                        f"[Specialist:{config.name}] Stream failed: {error}"
                     )
                     safe_print(
                         f"[Specialist:{config.name}] Analysis failed: {error}",
@@ -781,19 +786,25 @@ The SDK will run invoked agents in parallel automatically.
         return base_prompt + pr_context
 
     def _create_sdk_client(
-        self, project_root: Path, model: str, thinking_budget: int | None
+        self, project_root: Path, model: str, thinking_budget: int | None,
+        provider: str | None = None,
     ):
-        """Create SDK client with subagents and configuration.
+        """Create agent client with subagents and configuration.
+
+        Supports both Claude SDK and Copilot providers via create_agent_client().
+        Falls back to create_client() for raw SDK access when provider is None/claude
+        and AgentDefinition is available (backward compatible path).
 
         Args:
             project_root: Root directory of the project
             model: Model to use for orchestrator
             thinking_budget: Max thinking tokens budget
+            provider: Provider override ("claude" or "copilot"). None = auto-detect.
 
         Returns:
-            Configured SDK client instance
+            Configured agent client instance (AgentClient or ClaudeSDKClient)
         """
-        return create_client(
+        return create_agent_client(
             project_dir=project_root,
             spec_dir=self.github_dir,
             model=model,
@@ -804,6 +815,7 @@ The SDK will run invoked agents in parallel automatically.
                 "type": "json_schema",
                 "schema": ParallelOrchestratorResponse.model_json_schema(),
             },
+            provider=provider,
         )
 
     def _extract_structured_output(

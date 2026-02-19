@@ -48,6 +48,21 @@ def get_env_provider_config(name: str) -> dict | None:
         return {"model": "llama3", "base_url": os.getenv("OLLAMA_BASE_URL")}
     if name == "google" and os.getenv("GOOGLE_API_KEY"):
         return {"api_key": os.getenv("GOOGLE_API_KEY"), "model": "gemini-3.0"}
+    if name == "grok" and os.getenv("GROK_API_KEY"):
+        return {"api_key": os.getenv("GROK_API_KEY"), "model": "grok-2"}
+    if name == "copilot":
+        # Pour Copilot, on vérifie juste l'authentification via gh CLI
+        try:
+            import subprocess
+            result = subprocess.run(["gh", "auth", "status"], capture_output=True, text=True, timeout=10)
+            output = result.stdout + result.stderr
+            if "Logged in to github.com" in output:
+                copilot_check = subprocess.run(["gh", "copilot", "--version"], capture_output=True, text=True, timeout=5)
+                if copilot_check.returncode == 0:
+                    return {"authenticated": True, "model": "copilot"}
+            return None
+        except:
+            return None
     return None
 
 # Correction de la détection dynamique : n'afficher que les providers réellement implémentés
@@ -113,7 +128,21 @@ def get_providers():
             is_valid = False
             if api_key:
                 is_valid = is_validated(name, api_key)
-            status[name] = is_valid or (env_key is not None and env_key.strip() != "")
+            # Cas spécial pour Copilot : vérifier l'authentification gh CLI
+            if name == "copilot":
+                try:
+                    import subprocess
+                    result = subprocess.run(["gh", "auth", "status"], capture_output=True, text=True, timeout=10)
+                    output = result.stdout + result.stderr
+                    if "Logged in to github.com" in output:
+                        copilot_check = subprocess.run(["gh", "copilot", "--version"], capture_output=True, text=True, timeout=5)
+                        status[name] = copilot_check.returncode == 0
+                    else:
+                        status[name] = False
+                except:
+                    status[name] = False
+            else:
+                status[name] = is_valid or (env_key is not None and env_key.strip() != "")
     return {"providers": providers, "status": status}
 
 @app.get("/providers/configs")
@@ -182,7 +211,21 @@ def test_provider_api_key(provider: str, payload: dict):
         except Exception as e:
             set_validated(provider, api_key, False)
             return {"success": False, "error": str(e)}
-    # Ajoute ici d’autres providers si besoin
+    elif provider == "grok":
+        try:
+            import requests
+            url = "https://api.x.ai/v1/models"
+            headers = {"Authorization": f"Bearer {api_key}"}
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code == 200:
+                set_validated(provider, api_key, True)
+                return {"success": True}
+            set_validated(provider, api_key, False)
+            return {"success": False, "error": resp.text}
+        except Exception as e:
+            set_validated(provider, api_key, False)
+            return {"success": False, "error": str(e)}
+    # Ajoute ici d'autres providers si besoin
     return {"success": False, "error": "Provider non supporté pour le test"}
 
 @app.get("/providers/capabilities/{provider}")

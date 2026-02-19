@@ -21,6 +21,11 @@ const AccountConnectorCard: React.FC<Props> = ({ provider }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ api_key: apiKey, base_url: baseUrl })
       });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      
       const data = await res.json();
       if (data.success) {
         // Met à jour la config avec validated:true
@@ -118,7 +123,7 @@ const AccountConnectorCard: React.FC<Props> = ({ provider }) => {
                 </div>
                 <div className="flex items-center gap-1">
                   <Button variant="outline" size="sm" className="gap-1 h-7 text-xs">Activer</Button>
-                  <Button variant="outline" size="sm" className="gap-1 h-7 text-xs" onClick={() => testApiKey(provider.provider, account.apiKey, account.baseUrl)}>Tester</Button>
+                  <Button variant="outline" size="sm" className="gap-1 h-7 text-xs" onClick={() => testApiKey(provider.provider, account.apiKey || '', account.baseUrl)}>Tester</Button>
                   {account.apiKey && (
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"><Trash2 className="h-3 w-3" /></Button>
                   )}

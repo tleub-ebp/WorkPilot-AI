@@ -43,8 +43,15 @@ const AccountForm: React.FC<Props> = ({ provider, onSave, onCancel }) => {
 
   useEffect(() => {
     fetch(`/providers/models/${provider}`)
-      .then(res => res.json())
-      .then(data => setModels(data.models || []));
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(data => setModels(data.models || []))
+      .catch((err) => {
+        console.error('Failed to fetch provider models:', err);
+        setModels([]);
+      });
     setFormState({}); // reset form on provider change
   }, [provider]);
 
