@@ -28,7 +28,7 @@ export interface ClaudeUsageData {
  * Real-time usage snapshot for proactive monitoring
  * Returned from API or CLI usage check
  */
-export interface ClaudeUsageSnapshot {
+export interface UsageSnapshot {
   /** Session usage percentage (0-100) - represents 5-hour window for most providers */
   sessionPercent: number;
   /** Weekly usage percentage (0-100) - represents 7-day window for Anthropic */
@@ -158,7 +158,7 @@ export interface ProfileUsageSummary {
  */
 export interface AllProfilesUsage {
   /** Detailed snapshot for the active profile */
-  activeProfile: ClaudeUsageSnapshot;
+  activeProfile: UsageSnapshot;
   /** Summary usage data for all profiles (sorted by availability, best first) */
   allProfiles: ProfileUsageSummary[];
   /** When this data was collected */

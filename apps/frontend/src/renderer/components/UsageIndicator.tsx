@@ -21,7 +21,7 @@ import {
 } from './ui/tooltip';
 import { useTranslation } from 'react-i18next';
 import { formatTimeRemaining, localizeUsageWindowLabel, hasHardcodedText } from '@shared/utils/format-time';
-import type { ClaudeUsageSnapshot, ProfileUsageSummary } from '@shared/types';
+import type { UsageSnapshot, ProfileUsageSummary } from '@shared/types';
 import { useProviderContext } from './ProviderContext';
 import { PROVIDER_MODELS_MAP } from '@shared/constants/models';
 import {AppSection} from "@/components/settings/AppSettings";
@@ -81,7 +81,7 @@ const getBarColorClass = (percent: number): string => {
 
 export function UsageIndicator() {
   const { t, i18n } = useTranslation(['common']);
-  const [usage, setUsage] = useState<ClaudeUsageSnapshot | null>(null);
+  const [usage, setUsage] = useState<UsageSnapshot | null>(null);
   const [otherProfiles, setOtherProfiles] = useState<ProfileUsageSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAvailable, setIsAvailable] = useState(false);
@@ -180,8 +180,8 @@ export function UsageIndicator() {
       needsReauthentication: usage?.needsReauthentication,
     };
 
-    // 2. Convert target profile to a ClaudeUsageSnapshot for the active display
-    const newActiveUsage: ClaudeUsageSnapshot = {
+    // 2. Convert target profile to a UsageSnapshot for the active display
+    const newActiveUsage: UsageSnapshot = {
       profileId: targetProfile.profileId,
       profileName: targetProfile.profileName,
       profileEmail: targetProfile.profileEmail,
@@ -319,7 +319,7 @@ export function UsageIndicator() {
 
   useEffect(() => {
     // Listen for usage updates from main process
-    const unsubscribe = window.electronAPI.onUsageUpdated((snapshot: ClaudeUsageSnapshot) => {
+    const unsubscribe = window.electronAPI.onUsageUpdated((snapshot: UsageSnapshot) => {
       // Si le provider du snapshot ne correspond pas au provider sélectionné, ignorer
       if (selectedProvider && snapshot.providerName && snapshot.providerName !== selectedProvider) return;
       setUsage(snapshot);

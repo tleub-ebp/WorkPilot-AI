@@ -307,7 +307,7 @@ async function checkCopilotAuth(ghPath: string): Promise<{ authenticated: boolea
     // Now check if Copilot CLI is accessible and authenticated
     // Try to run a simple copilot command to verify authentication
     try {
-      const { stdout: copilotVersionOutput } = await execFileAsync(ghPath, ['copilot', '--', 'version'], {
+      const { stdout: copilotVersionOutput } = await execFileAsync(ghPath, ['copilot', '--version'], {
         encoding: 'utf-8',
         timeout: 15000,
         windowsHide: true,
@@ -352,7 +352,7 @@ async function checkCopilotAuth(ghPath: string): Promise<{ authenticated: boolea
       // Now check Copilot CLI
       try {
         const env = getAugmentedEnv();
-        const { stdout: copilotVersionOutput } = await execFileAsync(ghPath, ['copilot', '--', 'version'], {
+        const { stdout: copilotVersionOutput } = await execFileAsync(ghPath, ['copilot', '--version'], {
           encoding: 'utf-8',
           timeout: 15000,
           windowsHide: true,

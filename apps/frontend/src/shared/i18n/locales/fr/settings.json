@@ -7,7 +7,7 @@
   "sections": {
     "appearance": {
       "title": "Apparence",
-      "description": "Personnalisez l'apparence de Auto Claude"
+      "description": "Personnalisez l'apparence de WorkPilot AI"
     },
     "display": {
       "title": "Affichage",
@@ -54,11 +54,44 @@
         "title": "Ordre de priorité des fournisseurs",
         "up": "Monter",
         "down": "Descendre"
+      },
+      "priority": {
+        "title": "Ordre de priorité des comptes",
+        "description": "Glissez pour réordonner. Le système utilisera le prochain compte disponible dans l'ordre.",
+        "noAccounts": "Aucun compte configuré. Ajoutez des comptes ci-dessus pour définir la priorité.",
+        "noEmail": "Pas d'email",
+        "active": "Actif",
+        "inUse": "En cours d'utilisation",
+        "next": "Suivant",
+        "unlimited": "Illimité",
+        "unavailable": "Indisponible",
+        "typeOAuth": "OAuth",
+        "typeAPI": "API",
+        "payPerUse": "Paiement à l'usage",
+        "needsAuth": "Non authentifié",
+        "duplicateUsage": "Utilisation dupliquée détectée",
+        "duplicateUsageHint": "Ce profil a une utilisation identique à un autre profil, ce qui suggère qu'ils pourraient être authentifiés sur le même compte Anthropic. Réauthentifiez-vous avec un compte différent.",
+        "needsReauth": "Réauthentification requise",
+        "needsReauthHint": "Le jeton d'actualisation de ce profil est invalide. Cliquez pour vous réauthentifier.",
+        "sessionUsage": "Utilisation de session (fenêtre de 5 heures)",
+        "weeklyUsage": "Utilisation hebdomadaire (fenêtre de 7 jours)",
+        "oauthSection": "Comptes Claude (utilisés en priorité)",
+        "apiSection": "Endpoints de secours (quand tous les comptes sont épuisés)",
+        "tipTitle": "Comment fonctionne la priorité",
+        "tipDescription": "Les comptes Claude sont inclus dans votre abonnement et seront utilisés en priorité. Les endpoints API facturent par requête et servent de secours quand tous les comptes Claude atteignent leurs limites.",
+        "providerAuth": "Authentifié via clé API",
+        "status": {
+          "healthy": "Sain",
+          "moderate": "Modéré",
+          "highUsage": "Utilisation élevée",
+          "nearLimit": "Proche de la limite",
+          "rateLimited": "Limite atteinte"
+        }
       }
     },
     "updates": {
       "title": "Mises à jour",
-      "description": "Mises à jour Auto Claude"
+      "description": "Mises à jour WorkPilot AI"
     },
     "notifications": {
       "title": "Notifications",
@@ -79,6 +112,7 @@
     "addButton": "Ajouter un profil",
     "presets": {
       "anthropic": "Anthropic (Claude)",
+      "copilot": "GitHub Copilot",
       "openai": "OpenAI",
       "mistral": "Mistral AI",
       "grok": "Grok (xAI)",
@@ -288,7 +322,7 @@
     "otherAgentSettingsDescription": "Options de configuration supplémentaires de l'agent",
     "agentFramework": "Framework de l'agent",
     "agentFrameworkDescription": "Le framework de codage utilisé pour les tâches autonomes",
-    "agentFrameworkAutoClaude": "Auto Claude",
+    "agentFrameworkAutoClaude": "WorkPilot AI",
     "aiTerminalNaming": "Nommage IA des terminaux",
     "aiTerminalNamingDescription": "Nommer automatiquement les terminaux en fonction des commandes",
     "featureModelSettings": "Paramètres du modèle de fonctionnalité",
@@ -323,7 +357,7 @@
     "sourceBundled": "Intégré",
     "sourceFallback": "Valeur par défaut",
     "notDetected": "Non détecté",
-    "autoClaudePath": "Chemin Auto Claude",
+    "autoClaudePath": "Chemin WorkPilot AI",
     "autoClaudePathDescription": "Chemin relatif vers le répertoire auto-claude dans les projets",
     "autoClaudePathPlaceholder": "auto-claude (par défaut)",
     "autoNameTerminals": "Nommer automatiquement les terminaux",
@@ -331,7 +365,7 @@
   },
   "theme": {
     "title": "Apparence",
-    "description": "Personnalisez l'apparence de Auto Claude",
+    "description": "Personnalisez l'apparence de WorkPilot AI",
     "mode": "Mode",
     "modeDescription": "Choisir entre les thèmes clair et sombre",
     "light": "Clair",
@@ -349,14 +383,14 @@
     "tabTerminalFonts": "Polices de terminal",
     "ide": {
       "label": "IDE préféré",
-      "description": "Auto Claude ouvrira les arbres de travail dans cet éditeur",
+      "description": "WorkPilot AI ouvrira les arbres de travail dans cet éditeur",
       "placeholder": "Sélectionner un IDE...",
       "customPath": "Chemin IDE personnalisé",
       "customPathPlaceholder": "/chemin/vers/votre/ide"
     },
     "terminal": {
       "label": "Terminal préféré",
-      "description": "Auto Claude ouvrira les sessions terminal ici",
+      "description": "WorkPilot AI ouvrira les sessions terminal ici",
       "placeholder": "Sélectionner un terminal...",
       "customPath": "Chemin terminal personnalisé",
       "customPathPlaceholder": "/chemin/vers/votre/terminal"
@@ -377,7 +411,7 @@
   },
   "updates": {
     "title": "Mises à jour",
-    "description": "Gérer les mises à jour de Auto Claude",
+    "description": "Gérer les mises à jour de WorkPilot AI",
     "appUpdateReady": "Mise à jour de l'app prête",
     "newVersion": "Nouvelle version",
     "released": "Publiée le",
@@ -394,7 +428,7 @@
     "unableToCheck": "Impossible de vérifier les mises à jour",
     "checkForUpdates": "Vérifier les mises à jour",
     "autoUpdateProjects": "Mise à jour automatique des projets",
-    "autoUpdateProjectsDescription": "Mettre à jour automatiquement Auto Claude dans les projets quand une nouvelle version est disponible",
+    "autoUpdateProjectsDescription": "Mettre à jour automatiquement WorkPilot AI dans les projets quand une nouvelle version est disponible",
     "betaUpdates": "Mises à jour bêta",
     "betaUpdatesDescription": "Recevoir les versions bêta pré-release avec de nouvelles fonctionnalités (peut être moins stable)",
     "stableDowngradeAvailable": "Version stable disponible",
@@ -402,7 +436,7 @@
     "stableVersion": "Version stable",
     "downloadStableVersion": "Télécharger la version stable",
     "readOnlyVolumeTitle": "Impossible d'installer depuis l'image disque",
-    "readOnlyVolumeDescription": "Auto Claude s'exécute depuis une image disque en lecture seule (DMG). Veuillez glisser l'application dans votre dossier Applications et la relancer depuis cet emplacement pour installer les mises à jour.",
+    "readOnlyVolumeDescription": "WorkPilot AI s'exécute depuis une image disque en lecture seule (DMG). Veuillez glisser l'application dans votre dossier Applications et la relancer depuis cet emplacement pour installer les mises à jour.",
     "downloadError": "Échec du téléchargement de la mise à jour"
   },
   "notifications": {
@@ -585,6 +619,36 @@
     "toast": {
       "error": "Erreur",
       "errorDescription": "Impossible de mettre à jour les paramètres"
+    }
+  },
+  "copilotOAuth": {
+    "title": "Authentification GitHub Copilot",
+    "description": "Authentification web via GitHub OAuth",
+    "descriptionNoCli": "Authentification web via GitHub OAuth (aucun CLI requis)",
+    "checkingStatus": "Vérification du statut d'authentification...",
+    "authenticated": "Authentifié",
+    "notAuthenticated": "Non authentifié",
+    "defaultUser": "Utilisateur GitHub",
+    "serverUnavailable": "Serveur OAuth indisponible",
+    "serverUnavailableHint": "Veuillez redémarrer l'application ou vérifier votre connexion réseau",
+    "authenticatedProfiles": "Profils authentifiés",
+    "addedDate": "Ajouté le {{date}}",
+    "readyToUse": "Prêt à utiliser GitHub Copilot",
+    "addProfile": "Ajouter un profil",
+    "noAuthFound": "Aucune authentification trouvée",
+    "noAuthFoundDesc": "Connectez-vous à GitHub Copilot via l'authentification OAuth",
+    "openingBrowser": "Ouverture du navigateur...",
+    "authenticating": "Authentification en cours...",
+    "authenticateButton": "S'authentifier avec GitHub",
+    "toast": {
+      "oauthStarted": "OAuth démarré",
+      "oauthStartedDesc": "Veuillez terminer l'authentification dans votre navigateur",
+      "authSuccess": "Authentification réussie",
+      "authSuccessDesc": "Authentifié avec succès en tant que {{username}}",
+      "authFailed": "Échec de l'authentification",
+      "authRevoked": "Authentification révoquée",
+      "authRevokedDesc": "Authentification révoquée avec succès pour {{username}}",
+      "revokeFailed": "Échec de la révocation"
     }
   }
 }

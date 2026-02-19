@@ -1,5 +1,5 @@
 // Types unifiés pour la gestion multi-connecteur
-export type LLMProvider = 'claude' | 'openai' | 'mistral' | 'grok' | 'gemini' | 'cohere' | 'openrouter' | 'groq' | 'ollama' | string;
+export type LLMProvider = 'claude' | 'copilot' | 'openai' | 'mistral' | 'grok' | 'gemini' | 'ollama' | 'AWS' | string;
 
 export interface MultiConnectorAccount {
   id: string;
@@ -12,7 +12,6 @@ export interface MultiConnectorAccount {
   isActive: boolean;
   createdAt?: number;
   updatedAt?: number;
-  // Ajoutez d'autres champs spécifiques si besoin
 }
 
 export interface MultiConnectorProvider {

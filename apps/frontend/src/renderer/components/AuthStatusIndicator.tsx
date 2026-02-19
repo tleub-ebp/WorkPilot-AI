@@ -3,10 +3,11 @@
  *
  * Shows the active authentication method and provider:
  * - OAuth: Shows "OAuth Anthropic" with Lock icon
- * - API Profile: Shows provider name (Anthropic, OpenAI, Ollama) with Key icon and provider-specific colors
+ * - API Profile: Shows provider name (Anthropic, OpenAI, Ollama, Copilot) with Key icon and provider-specific colors
  *
  * Provider detection is based on the profile's baseUrl:
  * - api.anthropic.com → Anthropic
+ * - github.com/api.github.com → GitHub Copilot
  * - api.openai.com → OpenAI
  * - localhost/127.0.0.1 → Ollama (Local)
  *
@@ -25,7 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '@/stores/settings-store';
 import { detectProvider, getProviderLabel, getProviderBadgeColor, type ApiProvider } from '@shared/utils/provider-detection';
 import { formatTimeRemaining, localizeUsageWindowLabel, hasHardcodedText } from '@shared/utils/format-time';
-import type { ClaudeUsageSnapshot } from '@shared/types';
+import type { UsageSnapshot } from '@shared/types';
 import { useProviderContext } from './ProviderContext';
 
 /**
@@ -58,7 +59,7 @@ export function AuthStatusIndicator() {
   const { selectedProvider } = useProviderContext();
 
   // Track usage data for warning badge
-  const [usage, setUsage] = useState<ClaudeUsageSnapshot | null>(null);
+  const [usage, setUsage] = useState<UsageSnapshot | null>(null);
   const [isLoadingUsage, setIsLoadingUsage] = useState(true);
 
   // Track GitHub CLI status for Copilot provider
@@ -71,7 +72,7 @@ export function AuthStatusIndicator() {
     setUsage(null);
 
     // Subscribe to live usage push events
-    const unsubscribe = window.electronAPI.onUsageUpdated((snapshot: ClaudeUsageSnapshot) => {
+    const unsubscribe = window.electronAPI.onUsageUpdated((snapshot: UsageSnapshot) => {
       if (selectedProvider && snapshot.providerName && snapshot.providerName !== selectedProvider) return;
       setUsage(snapshot);
       setIsLoadingUsage(false);

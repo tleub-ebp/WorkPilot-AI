@@ -32,6 +32,7 @@ import { registerAppUpdateHandlers } from './app-update-handlers';
 import { registerDebugHandlers } from './debug-handlers';
 import { registerClaudeCodeHandlers } from './claude-code-handlers';
 import { registerCopilotCliHandlers } from './copilot-cli-handlers';
+import { registerCopilotOAuthHandlers } from './copilot-oauth-handlers';
 import { registerMcpHandlers } from './mcp-handlers';
 import { registerProfileHandlers } from './profile-handlers';
 import { registerScreenshotHandlers } from './screenshot-handlers';
@@ -121,6 +122,9 @@ export function setupIpcHandlers(
 
   // Copilot CLI handlers (version checking, installation, auth)
   registerCopilotCliHandlers();
+
+  // Copilot OAuth handlers (web-based authentication)
+  registerCopilotOAuthHandlers();
 
   // MCP server health check handlers
   registerMcpHandlers();

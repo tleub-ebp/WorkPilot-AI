@@ -10,6 +10,15 @@ import { useSettingsStore, saveSettings } from '../../stores/settings-store';
 import { useClaudeProfileStore, loadClaudeProfiles as loadGlobalClaudeProfiles } from '../../stores/claude-profile-store';
 import type { AppSettings } from '../../../shared/types';
 
+/** Authenticated provider entry for the priority list */
+interface AuthenticatedProvider {
+  id: string;
+  name: string;
+  label: string;
+  isAuthenticated: boolean;
+  username?: string;
+}
+
 interface GlobalAutoSwitchingProps {
   settings: AppSettings;
   onSettingsChange: (settings: AppSettings) => void;
@@ -27,6 +36,9 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen }: Glob
   const [priorityOrder, setPriorityOrder] = useState<string[]>([]);
   const [isSavingPriority, setIsSavingPriority] = useState(false);
   const [profileUsageData, setProfileUsageData] = useState<Map<string, any>>(new Map());
+
+  // Authenticated providers (Copilot, OpenAI, etc.)
+  const [authenticatedProviders, setAuthenticatedProviders] = useState<AuthenticatedProvider[]>([]);
   
   // Auto-switching state - initialize from settings
   const [autoSwitchEnabled, setAutoSwitchEnabled] = useState(settings.autoSwitchEnabled ?? false);
@@ -39,6 +51,57 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen }: Glob
   useEffect(() => {
     loadGlobalClaudeProfiles();
   }, []);
+
+  // Detect authenticated providers on mount and when settings change
+  useEffect(() => {
+    const detectAuthenticatedProviders = async () => {
+      const providers: AuthenticatedProvider[] = [];
+
+      // Check Copilot via GitHub CLI
+      try {
+        const copilotResult = await window.electronAPI.checkCopilotAuth();
+        if (copilotResult.success && copilotResult.data?.authenticated) {
+          providers.push({
+            id: 'provider-copilot',
+            name: 'copilot',
+            label: 'GitHub Copilot',
+            isAuthenticated: true,
+            username: copilotResult.data.username,
+          });
+        }
+      } catch (err) {
+        console.warn('[GlobalAutoSwitching] Failed to check Copilot auth:', err);
+      }
+
+      // Check API-key based providers from settings
+      const apiKeyProviders: Array<{ name: string; label: string; key: keyof AppSettings }> = [
+        { name: 'openai', label: 'OpenAI', key: 'globalOpenAIApiKey' },
+        { name: 'google', label: 'Google (Gemini)', key: 'globalGoogleDeepMindApiKey' },
+        { name: 'mistral', label: 'Mistral AI', key: 'globalMistralApiKey' },
+        { name: 'grok', label: 'Grok (xAI)', key: 'globalGrokApiKey' },
+        { name: 'deepseek', label: 'DeepSeek', key: 'globalDeepSeekApiKey' },
+        { name: 'aws', label: 'AWS (Bedrock)', key: 'globalAWSApiKey' },
+      ];
+
+      for (const prov of apiKeyProviders) {
+        const apiKey = settings[prov.key];
+        if (apiKey && typeof apiKey === 'string' && apiKey.trim().length > 0) {
+          providers.push({
+            id: `provider-${prov.name}`,
+            name: prov.name,
+            label: prov.label,
+            isAuthenticated: true,
+          });
+        }
+      }
+
+      setAuthenticatedProviders(providers);
+    };
+
+    if (isOpen) {
+      detectAuthenticatedProviders();
+    }
+  }, [isOpen, settings]);
 
   // Sync autoSwitchEnabled with settings
   useEffect(() => {
@@ -65,7 +128,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen }: Glob
         name: profile.name,
         type: 'oauth',
         displayName: profile.name,
-        identifier: profile.email || 'No email',
+        identifier: profile.email || t('accounts.priority.noEmail'),
         isActive: profile.id === activeClaudeProfileId && !activeApiProfileId,
         isNext: false,
         isAvailable: profile.isAuthenticated ?? false,
@@ -95,6 +158,28 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen }: Glob
         sessionPercent: undefined,
         weeklyPercent: undefined,
       });
+    });
+
+    // Add authenticated providers (Copilot, OpenAI, etc.)
+    authenticatedProviders.forEach((prov) => {
+      // Skip if already represented by an API profile
+      const alreadyInList = unifiedList.some((a) => a.name === prov.name || a.id === prov.id);
+      if (!alreadyInList) {
+        unifiedList.push({
+          id: prov.id,
+          name: prov.name,
+          type: 'api',
+          displayName: prov.label,
+          identifier: prov.username ? `@${prov.username}` : t('accounts.priority.providerAuth'),
+          isActive: false,
+          isNext: false,
+          isAvailable: true,
+          hasUnlimitedUsage: prov.name !== 'copilot',
+          sessionPercent: undefined,
+          weeklyPercent: undefined,
+          isAuthenticated: true,
+        });
+      }
     });
 
     // Sort by priority order if available
@@ -135,8 +220,8 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen }: Glob
       console.warn('[GlobalAutoSwitching] Failed to save priority order:', err);
       toast({
         variant: 'destructive',
-        title: 'Erreur',
-        description: 'Impossible de sauvegarder l\'ordre des priorités',
+        title: t('autoSwitching.toast.error'),
+        description: t('autoSwitching.toast.errorDescription'),
       });
     } finally {
       setIsSavingPriority(false);

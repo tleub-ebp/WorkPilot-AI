@@ -72,9 +72,9 @@
   },
   "worktrees": {
     "title": "Arbres de travail",
-    "description": "Gérez les espaces de travail isolés pour vos tâches Auto Claude",
+    "description": "Gérez les espaces de travail isolés pour vos tâches WorkPilot AI",
     "empty": "Aucun arbre de travail",
-    "emptyDescription": "Les arbres de travail sont créés automatiquement quand Auto Claude construit des fonctionnalités. Ils fournissent des espaces de travail isolés pour chaque tâche.",
+    "emptyDescription": "Les arbres de travail sont créés automatiquement quand WorkPilot AI construit des fonctionnalités. Ils fournissent des espaces de travail isolés pour chaque tâche.",
     "merge": "Fusionner l'arbre de travail",
     "mergeDescription": "Fusionner les modifications de cet arbre de travail dans la branche de base.",
     "delete": "Supprimer l'arbre de travail ?",
@@ -96,7 +96,7 @@
     "errorDescription": "Échec du nettoyage de l'arbre de travail. Veuillez réessayer."
   },
   "update": {
-    "title": "Auto Claude",
+    "title": "WorkPilot AI",
     "projectInitialized": "Le projet est initialisé."
   },
   "addFeature": {
@@ -175,7 +175,7 @@
   },
   "appUpdate": {
     "title": "Mise à jour de l'application disponible",
-    "description": "Une nouvelle version d'Auto Claude est prête à être téléchargée",
+    "description": "Une nouvelle version d'WorkPilot AI est prête à être téléchargée",
     "newVersion": "Nouvelle version",
     "released": "Publiée",
     "downloading": "Téléchargement...",
@@ -188,7 +188,7 @@
     "claudeCodeChangelog": "Voir le journal des modifications Claude Code",
     "claudeCodeChangelogAriaLabel": "Voir le journal des modifications Claude Code (s'ouvre dans une nouvelle fenêtre)",
     "readOnlyVolumeTitle": "Impossible d'installer depuis une image disque",
-    "readOnlyVolumeDescription": "Veuillez déplacer Auto Claude dans votre dossier Applications avant de mettre à jour."
+    "readOnlyVolumeDescription": "Veuillez déplacer WorkPilot AI dans votre dossier Applications avant de mettre à jour."
   },
   "versionWarning": {
     "title": "Action requise",

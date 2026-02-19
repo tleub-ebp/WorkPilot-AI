@@ -1929,7 +1929,7 @@ export function registerWorktreeHandlers(
               return { success: false, error: `Python environment not ready: ${status.error || 'Unknown error'}` };
             }
           } else {
-            return { success: false, error: 'Python environment not ready and Auto Claude source not found' };
+            return { success: false, error: 'Python environment not ready and WorkPilot AI source not found' };
           }
         }
 
@@ -1950,7 +1950,7 @@ export function registerWorktreeHandlers(
         // Use run.py --merge to handle the merge
         const sourcePath = getEffectiveSourcePath();
         if (!sourcePath) {
-          return { success: false, error: 'Auto Claude source not found' };
+          return { success: false, error: 'WorkPilot AI source not found' };
         }
 
         const runScript = path.join(sourcePath, 'run.py');
@@ -2544,8 +2544,8 @@ export function registerWorktreeHandlers(
               return { success: false, error: `Python environment not ready: ${status.error || 'Unknown error'}` };
             }
           } else {
-            console.error('[IPC] Auto Claude source not found');
-            return { success: false, error: 'Python environment not ready and Auto Claude source not found' };
+            console.error('[IPC] WorkPilot AI source not found');
+            return { success: false, error: 'Python environment not ready and WorkPilot AI source not found' };
           }
         }
 
@@ -2588,8 +2588,8 @@ export function registerWorktreeHandlers(
 
         const sourcePath = getEffectiveSourcePath();
         if (!sourcePath) {
-          console.error('[IPC] Auto Claude source not found');
-          return { success: false, error: 'Auto Claude source not found' };
+          console.error('[IPC] WorkPilot AI source not found');
+          return { success: false, error: 'WorkPilot AI source not found' };
         }
 
         const runScript = path.join(sourcePath, 'run.py');
@@ -3219,7 +3219,7 @@ export function registerWorktreeHandlers(
         // Use run.py --create-pr to handle the PR creation
         const sourcePath = getEffectiveSourcePath();
         if (!sourcePath) {
-          return { success: false, error: 'Auto Claude source not found' };
+          return { success: false, error: 'WorkPilot AI source not found' };
         }
 
         const runScript = path.join(sourcePath, 'run.py');

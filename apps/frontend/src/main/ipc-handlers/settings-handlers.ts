@@ -741,8 +741,8 @@ export function registerSettingsHandlers(
 
         // Generate content
         const lines: string[] = [
-          '# Auto Claude Framework Environment Variables',
-          '# Managed by Auto Claude UI',
+          '# WorkPilot AI Framework Environment Variables',
+          '# Managed by WorkPilot AI UI',
           '',
           '# Claude Code OAuth Token (REQUIRED)',
           `CLAUDE_CODE_OAUTH_TOKEN=${existingVars['CLAUDE_CODE_OAUTH_TOKEN'] || ''}`,

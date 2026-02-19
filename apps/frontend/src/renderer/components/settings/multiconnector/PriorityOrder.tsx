@@ -4,7 +4,7 @@ import { useSettingsStore } from '@/stores/settings-store';
 import { useTranslation } from 'react-i18next';
 
 const initialOrder: LLMProvider[] = [
-  'claude', 'openai', 'mistral', 'gemini', 'grok', 'cohere', 'openrouter', 'groq', 'ollama'
+  'claude', 'copilot', 'openai', 'gemini', 'meta', 'mistral', 'deepseek', 'AWS', 'grok', 'ollama'
 ];
 
 const PriorityOrder: React.FC = () => {

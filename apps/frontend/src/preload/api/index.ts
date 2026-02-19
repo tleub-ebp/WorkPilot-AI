@@ -9,12 +9,14 @@ import { type GitHubAPI, createGitHubAPI } from './modules/github-api';
 import { type DebugAPI, createDebugAPI } from './modules/debug-api';
 import { type ClaudeCodeAPI, createClaudeCodeAPI } from './modules/claude-code-api';
 import { type CopilotCliAPI, createCopilotCliAPI } from './modules/copilot-cli-api';
+import { type CopilotOAuthAPI, createCopilotOAuthAPI } from './modules/copilot-oauth-api';
 import { type McpAPI, createMcpAPI } from './modules/mcp-api';
 import { type ProfileAPI, createProfileAPI } from './profile-api';
 import { type ScreenshotAPI, createScreenshotAPI } from './screenshot-api';
 import { type QueueAPI, createQueueAPI } from './queue-api';
 import { type QualityAPI, createQualityAPI } from './modules/quality-api';
 import { invokeIpc } from './modules/ipc-utils';
+import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
 export interface ElectronAPI extends
   ProjectAPI,
@@ -31,6 +33,7 @@ export interface ElectronAPI extends
   DebugAPI,
   ClaudeCodeAPI,
   CopilotCliAPI,
+  CopilotOAuthAPI,
   McpAPI,
   ProfileAPI,
   ScreenshotAPI {
@@ -40,6 +43,9 @@ export interface ElectronAPI extends
   /** Code quality analysis API */
   quality: QualityAPI;
   createClaudeProfileDirectory: (profileName: string) => Promise<{ success: boolean; data?: string; error?: string }>;
+  requestUsageUpdate: (providerName?: string) => Promise<IPCResult<UsageSnapshot | null>>;
+  /** Get GitHub CLI status for Copilot authentication */
+  getGithubCliStatus: () => Promise<IPCResult<{ available: boolean; isAuth?: boolean; username?: string }>>;
 }
 
 export const createElectronAPI = (): ElectronAPI => ({
@@ -53,6 +59,7 @@ export const createElectronAPI = (): ElectronAPI => ({
   ...createDebugAPI(),
   ...createClaudeCodeAPI(),
   ...createCopilotCliAPI(),
+  ...createCopilotOAuthAPI(),
   ...createMcpAPI(),
   ...createProfileAPI(),
   ...createScreenshotAPI(),
@@ -60,7 +67,8 @@ export const createElectronAPI = (): ElectronAPI => ({
   queue: createQueueAPI(),  // Queue routing for rate limit recovery
   quality: createQualityAPI(),  // Code quality analysis
   createClaudeProfileDirectory: (profileName: string) => invokeIpc('claude:profileCreateDir', profileName),
-  requestUsageUpdate: (providerName?: string) => invokeIpc('usage:get', providerName),
+  requestUsageUpdate: (providerName?: string) => invokeIpc<IPCResult<UsageSnapshot | null>>('claude:usageRequest', providerName),
+  getGithubCliStatus: () => invokeIpc<IPCResult<{ available: boolean; isAuth?: boolean; username?: string }>>('copilotCli:getStatus'),
 });
 
 // Export individual API creators for potential use in tests or specialized contexts
@@ -81,6 +89,7 @@ export { createMcpAPI } from './modules/mcp-api';
 export { createScreenshotAPI } from './screenshot-api';
 export { createQueueAPI } from './queue-api';
 export { createQualityAPI } from './modules/quality-api';
+export { createCopilotOAuthAPI } from './modules/copilot-oauth-api';
 
 export type { ProjectAPI } from './project-api';
 export type { TerminalAPI } from './terminal-api';

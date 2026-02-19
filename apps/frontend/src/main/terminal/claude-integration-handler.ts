@@ -1199,7 +1199,7 @@ export function resumeClaude(
     const pathPrefix = buildPathPrefix(claudeEnv.PATH || '');
 
     // Always use --continue which resumes the most recent session in the current directory.
-    // This is more reliable than --resume with session IDs since Auto Claude already restores
+    // This is more reliable than --resume with session IDs since WorkPilot AI already restores
     // terminals to their correct cwd/projectPath.
     //
     // Note: We clear claudeSessionId because --continue doesn't track specific sessions,
@@ -1412,7 +1412,7 @@ export async function resumeClaudeAsync(
     const pathPrefix = buildPathPrefix(claudeEnv.PATH || '');
 
     // Always use --continue which resumes the most recent session in the current directory.
-    // This is more reliable than --resume with session IDs since Auto Claude already restores
+    // This is more reliable than --resume with session IDs since WorkPilot AI already restores
     // terminals to their correct cwd/projectPath.
     //
     // Note: We clear claudeSessionId because --continue doesn't track specific sessions,

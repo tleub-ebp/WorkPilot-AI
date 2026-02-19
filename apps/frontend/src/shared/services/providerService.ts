@@ -89,6 +89,7 @@ class ProviderServiceClass {
   private getFallbackProviders(): Provider[] {
     return [
       { name: 'anthropic', label: 'Anthropic (Claude)', description: 'Claude, focalisé sur la sécurité et l\'IA d\'entreprise.' },
+      { name: 'copilot', label: 'GitHub Copilot', description: 'Assistant de code IA par GitHub, basé sur les modèles OpenAI et Claude.' },
       { name: 'openai', label: 'OpenAI', description: 'Créateur de la série GPT (ChatGPT, GPT-4/4o/5).' },
       { name: 'google', label: 'Google / Google DeepMind', description: 'Modèles Gemini.' },
       { name: 'meta', label: 'Meta (Facebook/Meta AI)', description: 'Modèles LLaMA et variantes open source.' },
@@ -97,7 +98,6 @@ class ProviderServiceClass {
       { name: 'aws', label: 'Amazon Web Services (AWS)', description: 'Offre des API LLM intégrées à ses services cloud.' },
       { name: 'grok', label: 'Grok (xAI)', description: 'Modèles Grok via xAI, la société d\'Elon Musk.' },
       { name: 'ollama', label: 'LLM local (Ollama, LM Studio, etc.)', description: 'Exécutez un modèle LLM localement sur votre machine (Ollama, LM Studio, etc.).' },
-      { name: 'copilot', label: 'GitHub Copilot', description: 'Assistant de code IA par GitHub, basé sur les modèles OpenAI et Claude.' }
     ];
   }
 

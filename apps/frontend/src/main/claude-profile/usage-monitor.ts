@@ -12,7 +12,7 @@
 import { EventEmitter } from 'node:events';
 import { homedir } from 'node:os';
 import { getClaudeProfileManager } from '../claude-profile-manager';
-import { ClaudeUsageSnapshot, ProfileUsageSummary, AllProfilesUsage } from '@shared/types';
+import { UsageSnapshot, ProfileUsageSummary, AllProfilesUsage } from '@shared/types';
 import { loadProfilesFile } from '../services/profile';
 import type { APIProfile } from '@shared/types/profile';
 import { detectProvider as sharedDetectProvider, type ApiProvider } from '../../shared/utils/provider-detection';
@@ -60,7 +60,7 @@ const PROVIDER_USAGE_ENDPOINTS: readonly ProviderUsageEndpoint[] = [
   },
   {
     provider: 'openai',
-    usagePath: '/v1/organization/usage',
+    usagePath: '/v1/organization/usage',  // Official OpenAI usage endpoint
   },
   {
     provider: 'copilot',
@@ -198,7 +198,7 @@ function isHttpError(error: unknown): error is Error & { statusCode?: number } {
 export class UsageMonitor extends EventEmitter {
   private static instance: UsageMonitor;
   private intervalId: NodeJS.Timeout | null = null;
-  private currentUsage: ClaudeUsageSnapshot | null = null;
+  private currentUsage: UsageSnapshot | null = null;
   private currentUsageProfileId: string | null = null; // Track which profile's usage is in currentUsage
   private isChecking = false;
 
@@ -268,12 +268,12 @@ export class UsageMonitor extends EventEmitter {
 
     this.debugLog('[UsageMonitor] Starting with interval: ' + interval + ' ms (30-second updates for accurate usage stats)');
 
-    // Check immediately
-    this.checkUsageAndSwap();
+    // Check immediately but suppress errors during startup
+    this.checkUsageAndSwap(true); // true = suppressErrors
 
     // Then check periodically
     this.intervalId = setInterval(() => {
-      this.checkUsageAndSwap();
+      this.checkUsageAndSwap(false); // false = don't suppress errors
     }, interval);
   }
 
@@ -291,7 +291,7 @@ export class UsageMonitor extends EventEmitter {
   /**
    * Get current usage snapshot (for UI indicator)
    */
-  getCurrentUsage(): ClaudeUsageSnapshot | null {
+  getCurrentUsage(): UsageSnapshot | null {
     return this.currentUsage;
   }
 
@@ -562,7 +562,7 @@ export class UsageMonitor extends EventEmitter {
    */
   private async fetchUsageForInactiveProfile(
       profile: { id: string; name: string; email?: string; configDir?: string; isAuthenticated?: boolean }
-  ): Promise<ClaudeUsageSnapshot | null> {
+  ): Promise<UsageSnapshot | null> {
     // Only fetch for authenticated profiles with a configDir
     if (!profile.isAuthenticated || !profile.configDir) {
       this.debugLog('[UsageMonitor] Skipping inactive profile fetch - not authenticated or no configDir:', {
@@ -680,11 +680,11 @@ export class UsageMonitor extends EventEmitter {
   }
 
   /**
-   * Build a ProfileUsageSummary from a ClaudeUsageSnapshot
+   * Build a ProfileUsageSummary from a UsageSnapshot
    */
   private buildProfileUsageSummary(
       profile: { id: string; name: string; email: string; isAuthenticated?: boolean },
-      usage: ClaudeUsageSnapshot
+      usage: UsageSnapshot
   ): ProfileUsageSummary {
     const profileManager = getClaudeProfileManager();
     const fullProfile = profileManager.getProfile(profile.id);
@@ -876,8 +876,10 @@ export class UsageMonitor extends EventEmitter {
    * - determineActiveProfile(): Detects API vs OAuth profile
    * - checkThresholdsExceeded(): Evaluates usage against thresholds
    * - handleAuthFailure(): Manages auth failure recovery
+   *
+   * @param suppressErrors - If true, suppresses error logging (used during startup)
    */
-  private async checkUsageAndSwap(): Promise<void> {
+  private async checkUsageAndSwap(suppressErrors: boolean = false): Promise<void> {
     if (this.isChecking) {
       return; // Prevent concurrent checks
     }
@@ -899,7 +901,7 @@ export class UsageMonitor extends EventEmitter {
       // Step 2: Fetch current usage (pass activeProfile for consistency)
       const credential = await this.getCredential();
       const provider = detectProvider(activeProfile.baseUrl);
-      const usage = await this.fetchUsage(profileId, credential, activeProfile, provider);
+      const usage = await this.fetchUsage(profileId, credential, activeProfile, provider, suppressErrors);
       if (!usage) {
         this.debugLog('[UsageMonitor] Failed to fetch usage');
         return;
@@ -1112,7 +1114,7 @@ export class UsageMonitor extends EventEmitter {
    * @returns Object indicating which thresholds are exceeded
    */
   private checkThresholdsExceeded(
-      usage: ClaudeUsageSnapshot,
+      usage: UsageSnapshot,
       settings: { sessionThreshold?: number; weeklyThreshold?: number }
   ): { sessionExceeded: boolean; weeklyExceeded: boolean; anyExceeded: boolean } {
     const sessionExceeded = usage.sessionPercent >= (settings.sessionThreshold ?? 95);
@@ -1228,13 +1230,16 @@ export class UsageMonitor extends EventEmitter {
    * @param profileId - Profile identifier
    * @param credential - OAuth token or API key
    * @param activeProfile - Optional active profile info to avoid race conditions
+   * @param providerName - Optional provider name for endpoint detection
+   * @param suppressErrors - If true, suppresses error logging (used during startup)
    */
   private async fetchUsage(
       profileId: string,
       credential?: string,
       activeProfile?: ActiveProfileResult,
-      providerName?: string
-  ): Promise<ClaudeUsageSnapshot | null> {
+      providerName?: string,
+      suppressErrors?: boolean
+  ): Promise<UsageSnapshot | null> {
     this.debugLog('[UsageMonitor:fetchUsage] Called with:', {
       profileId,
       hasCredential: !!credential,
@@ -1285,7 +1290,7 @@ export class UsageMonitor extends EventEmitter {
         const usageData = await response.json();
         this.debugLog('[UsageMonitor:Copilot] Backend response received:', usageData);
         
-        // Normalize the backend response to match ClaudeUsageSnapshot format
+        // Normalize the backend response to match UsageSnapshot format
         const result = this.normalizeCopilotResponse(usageData, profileId, profileName || 'GitHub Copilot', profileEmail);
         this.debugLog('[UsageMonitor:Copilot] Returning result from normalizeCopilotResponse:', {
           hasProviderName: !!result.providerName,
@@ -1375,7 +1380,7 @@ export class UsageMonitor extends EventEmitter {
     // Per-profile tracking: if API fails for one profile, it only affects that profile
     if (this.shouldUseApiMethod(profileId) && credential) {
       this.debugLog('[UsageMonitor:FETCH] Attempting API fetch method');
-      const apiUsage = await this.fetchUsageViaAPI(credential, profileId, profileName, profileEmail, activeProfile);
+      const apiUsage = await this.fetchUsageViaAPI(credential, profileId, profileName, profileEmail, activeProfile, suppressErrors);
       if (apiUsage) {
         this.debugLog('[UsageMonitor] Successfully fetched via API');
         this.debugLog('[UsageMonitor:FETCH] API fetch successful:', {
@@ -1406,13 +1411,14 @@ export class UsageMonitor extends EventEmitter {
    * - OpenAI: https://api.openai.com/v1/usage
    *
    * Detects provider from active profile's baseUrl and routes to appropriate endpoint.
-   * Normalizes all provider responses to common ClaudeUsageSnapshot format.
+   * Normalizes all provider responses to common UsageSnapshot format.
    *
    * @param credential - OAuth token or API key
    * @param profileId - Profile identifier
    * @param profileName - Profile display name
    * @param profileEmail - Optional email associated with the profile
    * @param activeProfile - Optional pre-determined active profile info to avoid race conditions
+   * @param suppressErrors - If true, suppresses error logging (used during startup)
    * @returns Normalized usage snapshot or null on failure
    */
   private async fetchUsageViaAPI(
@@ -1420,8 +1426,9 @@ export class UsageMonitor extends EventEmitter {
       profileId: string,
       profileName: string,
       profileEmail?: string,
-      activeProfile?: ActiveProfileResult
-  ): Promise<ClaudeUsageSnapshot | null> {
+      activeProfile?: ActiveProfileResult,
+      suppressErrors?: boolean
+  ): Promise<UsageSnapshot | null> {
     this.debugLog('[UsageMonitor:API_FETCH] Starting API fetch for usage:', {
       profileId,
       profileName,
@@ -1495,7 +1502,7 @@ export class UsageMonitor extends EventEmitter {
           const usageData = await response.json();
           this.debugLog('[UsageMonitor:Copilot] Backend response received:', usageData);
           
-          // Normalize the backend response to match ClaudeUsageSnapshot format
+          // Normalize the backend response to match UsageSnapshot format
           return this.normalizeCopilotResponse(usageData, profileId, profileName, profileEmail);
           
         } catch (error) {
@@ -1579,6 +1586,7 @@ export class UsageMonitor extends EventEmitter {
         headers['anthropic-beta'] = 'oauth-2025-04-20';
         headers['anthropic-version'] = '2023-06-01';
       }
+      // OpenAI uses standard Authorization header - no special headers needed for usage endpoint
 
       const response = await fetch(usageEndpoint, {
         method: 'GET',
@@ -1586,7 +1594,8 @@ export class UsageMonitor extends EventEmitter {
       });
 
       if (!response.ok) {
-        console.error('[UsageMonitor] API error:', response.status, response.statusText, {
+        const logMethod = suppressErrors ? this.debugLog.bind(this) : console.error;
+        logMethod('[UsageMonitor] API error:', response.status, response.statusText, {
           provider,
           endpoint: usageEndpoint
         });
@@ -1661,7 +1670,7 @@ export class UsageMonitor extends EventEmitter {
       this.debugLog('[UsageMonitor:PROVIDER] Raw response from ' + provider + ':', JSON.stringify(rawData, null, 2));
 
       // Step 6: Normalize response based on provider type
-      let normalizedUsage: ClaudeUsageSnapshot | null = null;
+      let normalizedUsage: UsageSnapshot | null = null;
 
       this.debugLog('[UsageMonitor:NORMALIZATION] Selecting normalization method:', {
         provider,
@@ -1720,7 +1729,7 @@ export class UsageMonitor extends EventEmitter {
   }
 
   /**
-   * Normalize Anthropic API response to ClaudeUsageSnapshot
+   * Normalize Anthropic API response to UsageSnapshot
    *
    * Actual Anthropic OAuth usage API response format:
    * {
@@ -1739,7 +1748,7 @@ export class UsageMonitor extends EventEmitter {
       profileId: string,
       profileName: string,
       profileEmail?: string
-  ): ClaudeUsageSnapshot {
+  ): UsageSnapshot {
     // Support both new nested format and legacy flat format for backward compatibility
     //
     // NEW format (current API): { five_hour: { utilization: 72, resets_at: "..." } }
@@ -1873,7 +1882,7 @@ export class UsageMonitor extends EventEmitter {
   }
 
   /**
-   * Normalize GitHub Copilot CLI response to ClaudeUsageSnapshot
+   * Normalize GitHub Copilot CLI response to UsageSnapshot
    *
    * GitHub Copilot doesn't have a public usage API, so we create a placeholder
    * response that indicates the provider is available but usage data is not available.
@@ -1886,7 +1895,7 @@ export class UsageMonitor extends EventEmitter {
       profileId: string,
       profileName: string,
       profileEmail?: string
-  ): ClaudeUsageSnapshot {
+  ): UsageSnapshot {
     this.debugLog('[UsageMonitor:Copilot] Normalizing Copilot response:', data);
     
     // Handle error responses from backend
@@ -1926,7 +1935,7 @@ export class UsageMonitor extends EventEmitter {
         ...(data.error && { error: data.error }),
         ...(data.message && { errorMessage: data.message }),
         ...(data.permission_required && { permissionRequired: data.permission_required })
-      } as ClaudeUsageSnapshot & { error?: string; errorMessage?: string; permissionRequired?: string };
+      } as UsageSnapshot & { error?: string; errorMessage?: string; permissionRequired?: string };
     }
     
     // Handle successful response with usage data
@@ -1981,7 +1990,7 @@ export class UsageMonitor extends EventEmitter {
         ...(usage.line_acceptance_rate_percent !== undefined && { lineAcceptanceRate: usage.line_acceptance_rate_percent }),
         ...(usage.organization && { organization: usage.organization }),
         ...(usage.level && { level: usage.level })
-      } as ClaudeUsageSnapshot & { 
+      } as UsageSnapshot & { 
         linesSuggested?: number; 
         linesAccepted?: number; 
         lineAcceptanceRate?: number; 
@@ -2021,7 +2030,7 @@ export class UsageMonitor extends EventEmitter {
         estimatedCost: 0
       },
       errorMessage: 'No usage data available'
-    } as ClaudeUsageSnapshot & { errorMessage?: string };
+    } as UsageSnapshot & { errorMessage?: string };
   }
 
   /**
@@ -2033,7 +2042,7 @@ export class UsageMonitor extends EventEmitter {
   private async fetchUsageViaCLI(
       _profileId: string,
       _profileName: string
-  ): Promise<ClaudeUsageSnapshot | null> {
+  ): Promise<UsageSnapshot | null> {
     // CLI-based usage fetching is not implemented yet.
     // The API method should handle most cases. If we need CLI fallback,
     // we would need to spawn a Claude process with /usage command and parse the output.
@@ -2242,7 +2251,7 @@ export class UsageMonitor extends EventEmitter {
    * Searches both API profiles (profiles.json) and OAuth profiles (ClaudeProfileManager)
    * to find a profile matching the requested provider, then fetches fresh usage data.
    */
-  async getUsageForProvider(providerName: string): Promise<ClaudeUsageSnapshot | null> {
+  async getUsageForProvider(providerName: string): Promise<UsageSnapshot | null> {
     this.debugLog('[UsageMonitor:getUsageForProvider] Fetching usage for provider:', providerName);
 
     // DEBUG: Exporter la liste des profils détectés et leur provider pour la popin
@@ -2408,7 +2417,7 @@ export class UsageMonitor extends EventEmitter {
     name: string;
     apiKey: string;
     baseUrl: string
-  }): Promise<ClaudeUsageSnapshot | null> {
+  }): Promise<UsageSnapshot | null> {
     const apiKey = apiProfile.apiKey;
     if (!apiKey) return null;
 

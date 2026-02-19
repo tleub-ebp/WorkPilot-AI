@@ -40,6 +40,7 @@ import { join } from 'path';
 import { accessSync, readFileSync, writeFileSync, rmSync } from 'fs';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 import { setupIpcHandlers } from './ipc-setup';
+import { ensureOAuthServerRunning } from './oauth-server';
 import { AgentManager } from './agent';
 import { TerminalManager } from './terminal-manager';
 import { pythonEnvManager } from './python-env-manager';
@@ -392,7 +393,7 @@ async function launchBackendIfNeeded() {
   const providerApiModule = 'provider_api:app';
   backendProcess = spawn(pythonPath, ['-m', 'uvicorn', providerApiModule, '--host', '127.0.0.1', '--port', '9000', '--reload'], {
     cwd: backendDir,
-    stdio: 'ignore',
+    stdio: 'pipe',
     detached: false,
     env: { ...process.env, UVICORN_CMD: '1' }
   });
@@ -405,21 +406,23 @@ async function ensureBackendLaunched() {
   if (pythonEnvManager.isEnvReady()) {
     try {
       await launchBackendIfNeeded();
-    } catch (err) {
+    } catch (err: unknown) {
       const { dialog } = require('electron');
+      const errorMessage = err instanceof Error ? err.message : String(err);
       dialog.showErrorBox('Erreur lancement backend LLM',
         'Impossible de démarrer le backend LLM (FastAPI) automatiquement.\n' +
-        (err?.message ? err.message : String(err)));
+        errorMessage);
     }
   } else {
     pythonEnvManager.once('ready', async () => {
       try {
         await launchBackendIfNeeded();
-      } catch (err) {
+      } catch (err: unknown) {
         const { dialog } = require('electron');
+        const errorMessage = err instanceof Error ? err.message : String(err);
         dialog.showErrorBox('Erreur lancement backend LLM',
           'Impossible de démarrer le backend LLM (FastAPI) automatiquement.\n' +
-          (err?.message ? err.message : String(err)));
+          errorMessage);
       }
     });
   }
@@ -559,6 +562,11 @@ app.whenReady().then(async () => {
   // Create window
   createWindow();
 
+  // Start OAuth server for Copilot authentication
+  ensureOAuthServerRunning().catch((error) => {
+    console.warn('[main] Failed to start OAuth server:', error);
+  });
+
   // Pre-warm CLI tool cache in background (non-blocking)
   // This ensures CLI detection is done before user needs it
   // Include all commonly used tools to prevent sync blocking on first use
@@ -679,13 +687,14 @@ app.whenReady().then(async () => {
 
   try {
     await ensureBackendLaunched();
-  } catch (err) {
+  } catch (err: unknown) {
     const { dialog } = require('electron');
+    const errorMessage = err instanceof Error ? err.message : String(err);
     dialog.showErrorBox('Erreur lancement backend LLM',
       'Impossible de démarrer le backend LLM (FastAPI) automatiquement.\n' +
-      (err?.message ? err.message : String(err)) +
+      errorMessage +
       '\nVérifiez que le venv Python et les dépendances sont bien installés.');
-    // On continue, mais le frontend affichera une erreur si l’API n’est pas disponible
+    // On continue, mais le frontend affichera une erreur si l'API n'est pas disponible
   }
 });
 

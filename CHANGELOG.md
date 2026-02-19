@@ -1649,7 +1649,7 @@
 - feat: enhance stage-only merge handling with verification checks by @AndyMik90 in 7153558
 - feat: introduce phase configuration module and enhance agent profiles by @AndyMik90 in 2672528
 - fix: preserve roadmap generation state when switching projects by @AndyMik90 in 569e921
-- feat: add required GitHub setup flow after Auto Claude initialization by @AndyMik90 in 03ccce5
+- feat: add required GitHub setup flow after WorkPilot AI initialization by @AndyMik90 in 03ccce5
 - chore: remove redundant auto-claude/specs directory by @AndyMik90 in 64d5170
 - chore: untrack .auto-claude directory (should be gitignored) by @AndyMik90 in 0710c13
 - fix: prevent dialog skip during project initialization by @AndyMik90 in 56cedec
@@ -1881,7 +1881,7 @@
 
 - Enhanced onboarding wizard completion logic and step progression
 
-- Updated README to clarify Auto Claude's role as an AI coding companion
+- Updated README to clarify WorkPilot AI's role as an AI coding companion
 
 ### 🐛 Bug Fixes
 
@@ -1954,7 +1954,7 @@
 - chore: merge orcehstrator logic by @AndyMik90 in e8b6669
 - chore: Electron UI fix for merge orcehstrator by @AndyMik90 in e08ab62
 - chore: Frontend lints by @AndyMik90 in 488bbfa
-- docs: Revise README.md to enhance clarity and focus on Auto Claude's capabilities by @AndyMik90 in f9ef7ea
+- docs: Revise README.md to enhance clarity and focus on WorkPilot AI's capabilities by @AndyMik90 in f9ef7ea
 - qa: Sign off - all verification passed by @AndyMik90 in b3f4803
 - qa: Rejected - fixes required by @AndyMik90 in 5e56890
 - qa: subtask-6-2 - Run existing tests to verify no regressions by @AndyMik90 in 5f989a4

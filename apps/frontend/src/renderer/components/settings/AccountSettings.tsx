@@ -43,6 +43,7 @@ import { SettingsSection } from './SettingsSection';
 import { AuthTerminal } from './AuthTerminal';
 import { ProfileEditDialog } from './ProfileEditDialog';
 import { AccountPriorityList, type UnifiedAccount } from './AccountPriorityList';
+import { CopilotOAuthAuth } from './CopilotOAuthAuth';
 import { maskApiKey } from '../../lib/profile-utils';
 import { loadClaudeProfiles as loadGlobalClaudeProfiles } from '../../stores/claude-profile-store';
 import { useSettingsStore } from '../../stores/settings-store';
@@ -146,6 +147,11 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
   // ============================================
   const [profileUsageData, setProfileUsageData] = useState<Map<string, ProfileUsageSummary>>(new Map());
 
+  // Authenticated providers (Copilot, OpenAI, etc.) for priority list
+  const [authenticatedProviders, setAuthenticatedProviders] = useState<Array<{
+    id: string; name: string; label: string; isAuthenticated: boolean; username?: string;
+  }>>([]);
+
   // Providers LLM state
   const [providers, setProviders] = useState<CanonicalProvider[]>([]);
   const [providersError, setProvidersError] = useState<string>("");
@@ -168,6 +174,43 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
     };
     loadApiKeyField();
   }, [connector.id, settings]);
+
+  // Detect authenticated providers for the priority list
+  useEffect(() => {
+    const detectAuthenticatedProviders = async () => {
+      const provs: Array<{ id: string; name: string; label: string; isAuthenticated: boolean; username?: string }> = [];
+
+      // Check Copilot via GitHub CLI
+      try {
+        const copilotResult = await window.electronAPI.checkCopilotAuth();
+        if (copilotResult.success && copilotResult.data?.authenticated) {
+          provs.push({ id: 'provider-copilot', name: 'copilot', label: 'GitHub Copilot', isAuthenticated: true, username: copilotResult.data.username });
+        }
+      } catch { /* ignore */ }
+
+      // Check API-key based providers from settings
+      const apiKeyProviders: Array<{ name: string; label: string; key: keyof AppSettings }> = [
+        { name: 'openai', label: 'OpenAI', key: 'globalOpenAIApiKey' },
+        { name: 'google', label: 'Google (Gemini)', key: 'globalGoogleDeepMindApiKey' },
+        { name: 'mistral', label: 'Mistral AI', key: 'globalMistralApiKey' },
+        { name: 'grok', label: 'Grok (xAI)', key: 'globalGrokApiKey' },
+        { name: 'deepseek', label: 'DeepSeek', key: 'globalDeepSeekApiKey' },
+        { name: 'aws', label: 'AWS (Bedrock)', key: 'globalAWSApiKey' },
+      ];
+      for (const p of apiKeyProviders) {
+        const val = settings[p.key];
+        if (val && typeof val === 'string' && val.trim().length > 0) {
+          provs.push({ id: `provider-${p.name}`, name: p.name, label: p.label, isAuthenticated: true });
+        }
+      }
+
+      setAuthenticatedProviders(provs);
+    };
+
+    if (isOpen) {
+      detectAuthenticatedProviders();
+    }
+  }, [isOpen, settings]);
 
   const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (apiKeyField) {
@@ -415,6 +458,27 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
       });
     });
 
+    // Add authenticated providers (Copilot, OpenAI, etc.)
+    authenticatedProviders.forEach((prov) => {
+      const alreadyInList = unifiedList.some((a) => a.name === prov.name || a.id === prov.id);
+      if (!alreadyInList) {
+        unifiedList.push({
+          id: prov.id,
+          name: prov.name,
+          type: 'api',
+          displayName: prov.label,
+          identifier: prov.username ? `@${prov.username}` : t('accounts.priority.providerAuth'),
+          isActive: false,
+          isNext: false,
+          isAvailable: true,
+          hasUnlimitedUsage: prov.name !== 'copilot',
+          sessionPercent: undefined,
+          weeklyPercent: undefined,
+          isAuthenticated: true,
+        });
+      }
+    });
+
     // Sort by priority order if available
     if (priorityOrder.length > 0) {
       unifiedList.sort((a, b) => {
@@ -428,7 +492,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
     }
 
     return unifiedList;
-  }, [claudeProfiles, apiProfiles, activeClaudeProfileId, activeApiProfileId, priorityOrder, profileUsageData, t]);
+  }, [claudeProfiles, apiProfiles, activeClaudeProfileId, activeApiProfileId, priorityOrder, profileUsageData, authenticatedProviders, t]);
 
   const unifiedAccounts = buildUnifiedAccounts();
 
@@ -1582,9 +1646,21 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
             <p><b>LLM local (Ollama, LM Studio, etc.)</b><br />Connexion locale via Ollama (aucune authentification requise).<br />Assurez-vous qu'Ollama tourne sur <code>http://localhost:11434</code>.</p>
           </div>
         ) : connector.id === 'copilot' ? (
-          <div className="rounded-lg border border-dashed border-border p-4 text-center mb-4 text-muted-foreground">
-            <p>Connexion via <b>GitHub Copilot CLI</b> (authentification GitHub requise).<br />Installez et authentifiez-vous avec <code>gh auth login</code> et <code>gh copilot login</code>.</p>
-          </div>
+          <CopilotOAuthAuth 
+            onAuthSuccess={(username, profileName) => {
+              toast({
+                title: 'GitHub Copilot Connected',
+                description: `Successfully authenticated as ${username}`,
+              });
+            }}
+            onAuthError={(error) => {
+              toast({
+                title: 'Authentication Failed',
+                description: error,
+                variant: 'destructive',
+              });
+            }}
+          />
         ) : connector.id === 'azure-openai' ? (
           <div className="rounded-lg border border-dashed border-border p-4 text-center mb-4 text-muted-foreground">
             <p>Connexion via <b>Azure OpenAI</b> (authentification Azure requise).<br />Utilisez une clé API Azure OpenAI (voir <a href="https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource" target="_blank" rel="noopener noreferrer" className="underline">docs Azure</a>).</p>
