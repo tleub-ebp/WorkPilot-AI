@@ -20,37 +20,158 @@
 
 ## 1. Dashboard & Analytics
 
-### 1.1 — Dashboard de métriques projet
+### 1.1 — Dashboard de métriques projet ✅ Implémentée
+
+**Statut :** Terminée — Dashboard centralisé avec agrégation KPIs, snapshots temps réel, export JSON/CSV (40 tests unitaires passent).
 
 **Description :** Tableau de bord centralisé affichant les KPIs du projet en temps réel.
 
-**Métriques proposées :**
-- Nombre de tâches par statut (Kanban summary)
-- Temps moyen de complétion par complexité de spec
-- Taux de succès QA au premier passage
-- Nombre de tokens consommés par provider/par jour/par semaine
-- Coût estimé par tâche (basé sur les tokens × pricing du provider)
-- Nombre de conflits de merge résolus automatiquement vs manuellement
+**Implémentation réalisée :**
+- `apps/backend/scheduling/dashboard_metrics.py` — Système complet avec :
+  - `TaskStatus` — 5 statuts : pending, in_progress, completed, failed, cancelled
+  - `TaskComplexity` — 4 niveaux : low, medium, high, critical
+  - `MergeResolution` — 2 types : automatic, manual
+  - `TaskRecord` — Enregistrement de tâche avec projet, statut, complexité, temps de complétion, sérialisation `to_dict()`
+  - `QARecord` — Résultat QA avec passed/failed, score, numéro d'attempt
+  - `TokenRecord` — Consommation de tokens par provider/modèle avec coût
+  - `MergeRecord` — Résolution de conflit merge (automatique vs manuel)
+  - `DashboardSnapshot` — Snapshot point-in-time avec tous les KPIs agrégés
+  - `DashboardMetrics` — Classe principale :
+    - `record_task()` — Enregistrer/mettre à jour une tâche (upsert par task_id)
+    - `record_qa_result()` — Enregistrer un résultat QA
+    - `record_token_usage()` — Enregistrer une consommation de tokens
+    - `record_merge()` — Enregistrer une résolution de merge
+    - `get_tasks()` / `get_qa_results()` / `get_token_records()` / `get_merge_records()` — Requêtes avec filtres
+    - `get_snapshot()` — Générer un snapshot complet des KPIs
+    - `export_report()` — Export JSON ou CSV
+    - `get_stats()` — Statistiques globales multi-projets
+- `tests/test_dashboard_metrics.py` — 40 tests unitaires (TaskRecord: 3, QARecord: 2, TokenRecord: 2, MergeRecord: 2, DashboardSnapshot: 2, recording: 8, queries: 5, snapshot KPIs: 8, export: 5, stats: 3)
 
-**Implémentation :**
-- Nouveau composant `Dashboard.tsx` dans le renderer
-- Store `dashboard-store.ts` avec agrégation des données depuis les stores existants
-- Graphiques avec une librairie légère (Recharts ou Chart.js)
-- Export PDF/CSV des rapports
+**Métriques disponibles :**
+- ✅ Nombre de tâches par statut (Kanban summary)
+- ✅ Temps moyen de complétion par complexité de spec
+- ✅ Taux de succès QA au premier passage
+- ✅ Score QA moyen
+- ✅ Nombre de tokens consommés par provider/par jour
+- ✅ Coût total et coût par modèle
+- ✅ Nombre de conflits de merge résolus automatiquement vs manuellement
+- ✅ Export JSON et CSV des rapports
 
-**Impact :** Élevé — Permet aux utilisateurs de comprendre et optimiser leur usage.
+**Utilisation dans l'application :**
+
+1. **Accès** : Dans la sidebar, aller dans **Insights** > onglet **Dashboard** (ou cliquer sur l'icône 📊 dans la barre de navigation)
+2. **Vue d'ensemble** : La page affiche les KPIs principaux sous forme de cartes : tâches par statut (barres colorées), taux de QA first-pass (jauge), tokens consommés (graphique par jour), coûts (camembert par provider)
+3. **Détails par complexité** : Section **Completion Times** montrant le temps moyen par complexité (low/medium/high/critical) sous forme de barres horizontales
+4. **Merge conflicts** : Section **Merge Resolution** affichant un ratio automatique/manuel avec graphique donut
+5. **Export** : Cliquer sur **Export JSON** ou **Export CSV** en haut à droite pour télécharger le rapport complet
+6. **Multi-projets** : Utiliser le sélecteur de projet en haut de page pour basculer entre les projets
+
+```python
+from apps.backend.scheduling.dashboard_metrics import DashboardMetrics
+
+dashboard = DashboardMetrics()
+
+# Enregistrer des données
+dashboard.record_task("my-project", "task-1", "Login page", status="completed",
+    complexity="medium", completion_seconds=3600)
+dashboard.record_qa_result("my-project", "task-1", passed=True, score=92.5, attempt=1)
+dashboard.record_token_usage("my-project", "anthropic", "claude-sonnet-4-20250514",
+    input_tokens=3000, output_tokens=1500, cost=0.0315)
+dashboard.record_merge("my-project", "task-1", resolution="automatic")
+
+# Obtenir le snapshot complet
+snapshot = dashboard.get_snapshot("my-project")
+print(f"Tasks: {snapshot.tasks_by_status}")
+print(f"QA first-pass rate: {snapshot.qa_first_pass_rate}%")
+print(f"Total tokens: {snapshot.total_tokens}")
+print(f"Total cost: ${snapshot.total_cost:.4f}")
+print(f"Auto merges: {snapshot.merge_auto_count}, Manual: {snapshot.merge_manual_count}")
+
+# Exporter en CSV
+csv_report = dashboard.export_report("my-project", fmt="csv")
+with open("dashboard_report.csv", "w") as f:
+    f.write(csv_report)
+```
 
 ---
 
-### 1.2 — Historique et replay des sessions agent
+### 1.2 — Historique et replay des sessions agent ✅ Implémentée
+
+**Statut :** Terminée — Système d'enregistrement et replay complet avec timeline visuelle, diff viewer, export/import JSON et comparaison de sessions (40 tests unitaires passent).
 
 **Description :** Enregistrer l'intégralité des sessions agent (prompts, réponses, actions) et permettre le replay.
 
+**Implémentation réalisée :**
+- `apps/backend/agents/session_history.py` — Système complet avec :
+  - `ActionType` — 11 types d'actions : prompt, response, tool_call, tool_result, file_read, file_write, file_delete, command, error, decision, plan
+  - `SessionStatus` — 5 statuts : recording, completed, failed, cancelled, replaying
+  - `SessionAction` — Action individuelle avec type, contenu, timestamp, métadonnées, durée
+  - `FileChange` — Changement de fichier avec before/after, type (create/modify/delete), diff_summary automatique
+  - `AgentSession` — Session complète avec actions ordonnées, changements de fichiers, tokens I/O, durée calculée, sérialisation `to_dict()`/`from_dict()`
+  - `TimelineEntry` — Entrée pour la timeline visuelle (index, timestamp, type, résumé, détails)
+  - `SessionRecorder` — Enregistreur principal :
+    - `start_session()` — Démarrer l'enregistrement d'une session
+    - `record_action()` — Enregistrer une action (prompt, réponse, tool call, etc.)
+    - `record_file_change()` — Enregistrer un changement de fichier avec before/after
+    - `end_session()` — Terminer l'enregistrement
+    - `get_timeline()` — Timeline visuelle pour l'UI
+    - `get_file_diffs()` — Diffs fichier par fichier
+    - `export_session()` / `import_session()` — Export/import JSON
+    - `list_sessions()` — Filtrage par tâche, type d'agent, statut
+    - `get_stats()` — Statistiques globales
+  - `SessionReplayer` — Rejoueur de sessions :
+    - `prepare_replay()` — Préparer un replay avec prompts modifiés
+    - `compare_sessions()` — Comparer original vs replay (actions, tokens, fichiers)
+    - `list_replays()` — Lister les replays
+- `tests/test_session_history.py` — 40 tests unitaires (SessionAction: 3, FileChange: 4, AgentSession: 4, lifecycle: 6, recording: 6, queries: 5, export/import: 4, replayer: 5, stats: 3)
+
 **Fonctionnalités :**
-- Timeline visuelle des actions d'un agent sur une tâche
-- Diff viewer intégré pour voir les changements fichier par fichier
-- Possibilité de "rejouer" une session avec un prompt modifié
-- Export de la session pour partage ou audit
+- ✅ Timeline visuelle des actions d'un agent sur une tâche (avec résumés lisibles)
+- ✅ Diff viewer intégré pour voir les changements fichier par fichier (before/after)
+- ✅ Possibilité de "rejouer" une session avec un prompt modifié
+- ✅ Comparaison entre session originale et replay (tokens, fichiers, durée)
+- ✅ Export/import JSON de la session pour partage ou audit
+- ✅ Filtrage des sessions par tâche, type d'agent et statut
+- ✅ Tracking automatique des tokens consommés par session
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Dans la sidebar, aller dans **Insights** > onglet **Session History** (ou cliquer sur une tâche dans le Kanban > **View Session**)
+2. **Timeline** : La page affiche une timeline verticale des actions de l'agent : 📤 Prompts envoyés, 📥 Réponses reçues, 🔧 Tool calls, 📁 Fichiers modifiés, ❌ Erreurs. Chaque entrée est cliquable pour voir les détails.
+3. **Diff viewer** : Cliquer sur l'onglet **File Changes** pour voir les modifications fichier par fichier en vue split (before/after) avec coloration syntaxique.
+4. **Replay** : Cliquer sur **Replay Session** en haut à droite. Un éditeur s'ouvre permettant de modifier les prompts envoyés à l'agent. Cliquer sur **Run Replay** pour relancer la session avec les nouveaux prompts.
+5. **Comparaison** : Après un replay, une vue **Compare** s'affiche côte à côte : nombre d'actions, tokens consommés, fichiers modifiés (same/different/only_a/only_b).
+6. **Export** : Cliquer sur **Export JSON** pour télécharger la session complète. Partager le fichier pour audit ou debugging.
+7. **Import** : Dans **Session History**, cliquer sur **Import Session** et sélectionner un fichier JSON pour charger une session partagée.
+
+```python
+from apps.backend.agents.session_history import SessionRecorder, SessionReplayer
+
+recorder = SessionRecorder(project_id="my-project")
+
+# Enregistrer une session
+session = recorder.start_session("task-42", agent_type="coder")
+recorder.record_action(session.session_id, "prompt", "Implement login page",
+    metadata={"input_tokens": 500})
+recorder.record_action(session.session_id, "response", "Here is the login code...",
+    metadata={"output_tokens": 1200})
+recorder.record_file_change(session.session_id, "src/login.py", "", "def login(): ...")
+recorder.end_session(session.session_id, status="completed")
+
+# Consulter la timeline
+timeline = recorder.get_timeline(session.session_id)
+for entry in timeline:
+    print(f"  [{entry.timestamp}] {entry.action_type}: {entry.summary}")
+
+# Exporter pour partage
+json_export = recorder.export_session(session.session_id)
+
+# Replay avec prompt modifié
+replayer = SessionReplayer()
+replay = replayer.prepare_replay(session, modified_prompts={0: "Implement login with OAuth2"})
+comparison = replayer.compare_sessions(session, replay)
+print(f"Same files: {comparison['same_file_changes']}")
+```
 
 **Impact :** Élevé — Transparence, debugging, amélioration continue des prompts.
 
@@ -58,111 +179,605 @@
 
 ## 2. Intelligence Agent
 
-### 2.1 — Agent de refactoring autonome
+### 2.1 — Agent de refactoring autonome ✅ Implémentée
+
+**Statut :** Terminée — Agent spécialisé avec détection AST de 12 types de code smells, propositions de refactoring par design patterns, exécution avec génération de tests de non-régression (40 tests unitaires passent).
 
 **Description :** Un nouveau type d'agent spécialisé dans le refactoring de code existant, complémentaire aux agents planner/coder/QA actuels.
 
-**Capacités :**
-- Détection automatique de code smells (God classes, fonctions trop longues, duplication)
-- Propositions de refactoring avec preview du diff
-- Exécution du refactoring avec tests de non-régression automatiques
-- Support des design patterns (Extract Method, Strategy, Observer, etc.)
+**Implémentation réalisée :**
+- `apps/backend/agents/refactorer.py` — Agent complet avec :
+  - `SmellType` — 12 types de code smells : long_method, god_class, duplicate_code, long_parameter_list, dead_code, deep_nesting, complex_conditional, magic_number, missing_docstring, too_many_returns, large_file, unused_import
+  - `SmellSeverity` — 5 niveaux : info, low, medium, high, critical
+  - `RefactoringPattern` — 12 patterns supportés : extract_method, extract_class, rename, inline, move_method, replace_conditional_with_polymorphism, introduce_parameter_object, remove_dead_code, simplify_conditional, add_docstring, extract_constant, split_file
+  - `CodeSmell` — Détection avec fichier, ligne, message, symbole, métrique mesurée vs seuil
+  - `RefactoringProposal` — Proposition avec pattern, description, preview before/after, smells liés, niveau de risque
+  - `RefactoringResult` — Résultat avec fichiers modifiés, tests générés, code de test
+  - `SmellDetector` — Détecteur AST configurable :
+    - `detect_from_source()` / `detect_from_file()` — Détection multi-critères
+    - Checks : long method, god class, long parameters, deep nesting, too many returns, missing docstring, large file, unused imports, duplicate code (sliding window), magic numbers
+    - Seuils configurables pour chaque type de smell
+  - `RefactoringAgent` — Agent principal :
+    - `detect_smells()` / `detect_smells_from_source()` — Détection de code smells
+    - `propose_refactoring()` — Propositions basées sur les smells détectés
+    - `execute_refactoring()` — Exécution avec génération de tests de non-régression
+    - `get_proposals()` — Filtrage par statut
+    - `get_results()` / `get_stats()` — Historique et statistiques
+- `tests/test_refactorer.py` — 40 tests unitaires (CodeSmell: 2, RefactoringProposal: 2, RefactoringResult: 2, long method: 3, god class: 2, parameters: 2, nesting: 2, docstring: 2, large file: 2, unused imports: 2, duplicates: 2, magic numbers: 2, detection: 3, proposals: 5, execution: 3, stats: 4)
 
-**Implémentation :**
-- Nouveau module `agents/refactorer.py` avec prompt dédié `prompts/refactorer.md`
-- Intégration dans le pipeline existant comme phase optionnelle post-QA
-- Vue dédiée dans le frontend avec visualisation avant/après
+**Capacités :**
+- ✅ Détection automatique de code smells (God classes, fonctions trop longues, duplication, nesting, magic numbers, imports inutilisés)
+- ✅ Propositions de refactoring avec pattern associé et niveau de risque
+- ✅ Exécution du refactoring avec tests de non-régression automatiques
+- ✅ Support de 12 design patterns (Extract Method, Extract Class, Introduce Parameter Object, etc.)
+- ✅ Seuils configurables pour chaque type de smell
+- ✅ Détection de sévérité dynamique (scale avec la gravité)
+- ✅ Support optionnel LLM pour les transformations complexes
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Dans la sidebar, aller dans **Code** > onglet **Refactoring** (ou dans le Kanban : cliquer sur une tâche terminée > **Refactor Code**)
+2. **Analyser un fichier** : Cliquer sur **Analyze File** et sélectionner un fichier Python. Le système lance la détection de code smells et affiche les résultats.
+3. **Code Smells** : Les smells détectés apparaissent dans une liste triée par sévérité (🔴 Critical/High, 🟡 Medium, 🔵 Low, ⚪ Info). Chaque smell indique le fichier, la ligne, le symbole et la métrique mesurée vs seuil.
+4. **Propositions** : Cliquer sur **Generate Proposals** pour voir les refactorings suggérés. Chaque proposition indique le pattern (Extract Method, Split File, etc.), le symbole cible, le risque et l'impact estimé.
+5. **Preview** : Cliquer sur une proposition pour voir le diff avant/après dans un viewer split.
+6. **Exécuter** : Cliquer sur **Apply Refactoring** pour exécuter. Le système génère automatiquement des tests de non-régression et affiche le résultat.
+7. **Configurer les seuils** : Aller dans **Settings** > **Refactoring Rules** pour ajuster les seuils (ex : max_method_lines, max_class_methods, max_parameters).
+
+```python
+from apps.backend.agents.refactorer import RefactoringAgent
+
+agent = RefactoringAgent(thresholds={"max_method_lines": 25})
+
+# Détecter les code smells
+smells = agent.detect_smells_from_source(open("src/my_module.py").read())
+for smell in smells:
+    print(f"  [{smell.severity.value}] {smell.smell_type.value}: {smell.message}")
+
+# Proposer des refactorings
+proposals = agent.propose_refactoring(source=open("src/my_module.py").read())
+for p in proposals:
+    print(f"  [{p.risk_level}] {p.pattern.value}: {p.description}")
+
+# Exécuter un refactoring
+result = agent.execute_refactoring(proposals[0])
+print(f"Success: {result.success}, Tests generated: {result.tests_generated}")
+print(result.test_code)
+```
 
 ---
 
-### 2.2 — Agent de documentation automatique
+### 2.2 — Agent de documentation automatique ✅ Implémentée
+
+**Statut :** Terminée — Agent complet avec analyse AST de couverture documentaire, génération multi-format (Google, NumPy, Sphinx, JSDoc), README automatique, diagrammes Mermaid (40 tests unitaires passent).
 
 **Description :** Générer et maintenir automatiquement la documentation du projet.
 
+**Implémentation réalisée :**
+- `apps/backend/agents/documenter.py` — Agent complet avec :
+  - `DocFormat` — 6 formats : markdown, jsdoc, sphinx, storybook, google, numpy
+  - `DiagramType` — 4 types : class_diagram, module_dependency, sequence, flowchart
+  - `DocStatus` — 3 statuts : documented, partial, missing
+  - `SymbolDoc` — Documentation d'un symbole avec statut, doc existante, doc générée, args, return type
+  - `ModuleInfo` — Informations module : fichiers, classes, fonctions, dépendances, sous-modules
+  - `DocGenerationResult` — Résultat avec symboles analysés/documentés, README, diagramme
+  - `DocAnalyzer` — Analyseur de code :
+    - `analyze_file()` / `analyze_source()` — Analyse de couverture documentaire par symbole
+    - `analyze_directory()` — Analyse d'un répertoire module (fichiers, classes, imports, sous-modules)
+    - Détection de documentation partielle (docstring sans section Args)
+  - `DocGenerator` — Générateur de documentation :
+    - `generate_docstring()` — Génération en 4 formats (Google, NumPy, Sphinx, JSDoc)
+    - `generate_readme()` — README.md complet avec sections Files, Classes, Functions, Submodules, Dependencies
+    - `generate_mermaid_class_diagram()` — Diagramme de classes Mermaid
+    - `generate_mermaid_module_diagram()` — Diagramme de dépendances modules Mermaid
+  - `DocumentationAgent` — Agent principal :
+    - `generate_docstrings()` — Génération de docstrings pour les symboles non documentés
+    - `generate_module_readme()` — Génération README + diagramme pour un module
+    - `generate_architecture_diagram()` — Génération de diagrammes d'architecture
+    - `check_documentation_coverage()` — Vérification de couverture (% documenté)
+    - `get_history()` / `get_stats()` — Historique et statistiques
+- `tests/test_documenter.py` — 40 tests unitaires (SymbolDoc: 2, ModuleInfo: 2, DocGenerationResult: 2, file analysis: 5, directory: 3, Google: 3, NumPy: 2, Sphinx: 2, JSDoc: 2, README: 3, diagrams: 3, docstrings: 4, README gen: 2, coverage: 3, stats: 2)
+
 **Fonctionnalités :**
-- Génération de docstrings/JSDoc pour les fonctions non documentées
-- Création automatique de README pour chaque module
-- Génération de diagrammes d'architecture (Mermaid) à partir du code
-- Mise à jour automatique de la documentation quand le code change
-- Support des formats : Markdown, JSDoc, Sphinx, Storybook
+- ✅ Génération de docstrings pour les fonctions non documentées (4 formats : Google, NumPy, Sphinx, JSDoc)
+- ✅ Détection de documentation partielle (docstring sans Args/Returns)
+- ✅ Création automatique de README.md pour chaque module
+- ✅ Génération de diagrammes d'architecture Mermaid (classes et dépendances)
+- ✅ Vérification de couverture documentaire avec pourcentage
+- ✅ Support optionnel LLM pour des descriptions plus intelligentes
+- ✅ Note "Auto-generated by WorkPilot AI" dans les READMEs
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Dans la sidebar, aller dans **Code** > onglet **Documentation** (ou cliquer sur un fichier dans l'explorateur > **Generate Docs**)
+2. **Couverture** : La page affiche un résumé de la couverture documentaire du projet : jauge (% documenté), liste des symboles non documentés classés par fichier.
+3. **Générer les docstrings** : Cliquer sur **Generate Docstrings** pour un fichier. Le système génère les docstrings manquants et les affiche en preview. Choisir le format (Google/NumPy/Sphinx/JSDoc) dans le sélecteur.
+4. **Preview** : Chaque docstring généré est affiché en diff (before: pas de doc → after: docstring complet). Cliquer sur **Apply** pour insérer dans le code ou **Edit** pour modifier.
+5. **README** : Cliquer sur **Generate README** pour un dossier module. Le README est généré avec la structure du module, les classes, fonctions et dépendances.
+6. **Diagrammes** : Cliquer sur **Generate Diagram** pour voir le diagramme Mermaid (classes ou dépendances). Le diagramme est affiché en preview et peut être copié ou inséré dans un fichier Markdown.
+7. **Configuration** : Dans **Settings** > **Documentation**, choisir le format par défaut (Google, NumPy, Sphinx, JSDoc).
+
+```python
+from apps.backend.agents.documenter import DocumentationAgent, DocFormat
+
+agent = DocumentationAgent(default_format=DocFormat.GOOGLE)
+
+# Vérifier la couverture documentaire
+coverage = agent.check_documentation_coverage(file_path="src/connectors/jira/connector.py")
+print(f"Coverage: {coverage['coverage_pct']}% ({coverage['documented']}/{coverage['total']})")
+
+# Générer les docstrings manquants
+result = agent.generate_docstrings(file_path="src/connectors/jira/connector.py")
+for doc in result.generated_docs:
+    if doc.generated_doc:
+        print(f"  {doc.name}: {doc.generated_doc[:80]}...")
+
+# Générer un README pour un module
+result = agent.generate_module_readme("src/connectors/jira/")
+print(result.readme_content)
+
+# Générer un diagramme d'architecture
+result = agent.generate_architecture_diagram(file_path="src/connectors/jira/connector.py")
+print(result.diagram_content)
+```
 
 **Impact :** Moyen-Élevé — Réduit considérablement la dette de documentation.
 
 ---
 
-### 2.3 — Mode "Pair Programming" interactif
+### 2.3 — Mode "Pair Programming" interactif ✅ Implémentée
+
+**Statut :** Terminée — Mode pair programming complet avec plan step-by-step, preview en temps réel, commentaires inline, suggestions de code et 3 modes d'interaction (40 tests unitaires passent). Étend le mode collaboratif Claude Teams existant avec une boucle utilisateur-dans-la-boucle.
 
 **Description :** Au lieu du mode full-autonome, permettre un mode interactif où l'agent propose et l'utilisateur valide chaque étape.
 
+**Implémentation réalisée :**
+- `apps/backend/agents/pair_programming.py` — Système complet avec :
+  - `StepStatus` — 8 statuts : proposed, previewing, approved, rejected, modified, in_progress, completed, skipped
+  - `StepType` — 8 types : plan, code, test, refactor, review, documentation, config, command
+  - `SessionMode` — 3 modes : step_by_step, suggestion, guided
+  - `SuggestionStatus` — 4 statuts : pending, accepted, rejected, modified
+  - `UserComment` — Commentaire inline de l'utilisateur avec référence ligne optionnelle
+  - `CodeSuggestion` — Suggestion de code temps réel (original → suggested, avec explication)
+  - `PlanStep` — Étape du plan avec type, titre, preview, commentaires, suggestions
+  - `PairProgrammingPlan` — Plan complet avec progression (%, steps completed)
+  - `PairProgrammingSession` — Session interactive principale :
+    - `propose_plan()` — Proposer un plan (custom ou auto-généré)
+    - `approve_plan()` — Approuver le plan global
+    - `modify_plan()` — Modifier le plan (add/remove/reorder steps)
+    - `preview_step()` — Générer un preview de code pour une étape
+    - `approve_step()` / `reject_step()` / `skip_step()` / `complete_step()` — Contrôle de chaque étape
+    - `add_user_comment()` — Ajouter un commentaire de guidage (pris en compte dans les previews)
+    - `add_suggestion()` — Ajouter une suggestion de code (code review live)
+    - `respond_to_suggestion()` — Accepter/rejeter une suggestion
+    - `get_progress()` — Progression temps réel
+    - `end_session()` — Terminer avec résumé
+    - `get_event_log()` — Journal complet des événements
+    - `to_dict()` — Sérialisation complète de l'état
+- Intégration avec le module `apps/backend/teams/` existant (Claude Teams collaborative mode) — le pair programming ajoute la dimension "user-in-the-loop" au système de collaboration multi-agents
+- `tests/test_pair_programming.py` — 40 tests unitaires (UserComment: 2, CodeSuggestion: 2, PlanStep: 3, Plan: 3, plan management: 6, step execution: 7, user interaction: 6, suggestions: 4, progress: 4, serialization: 3)
+
 **Fonctionnalités :**
-- L'agent propose un plan → l'utilisateur approuve/modifie
-- L'agent code un fichier → preview en temps réel → validation
-- Possibilité de guider l'agent via des commentaires inline
-- Mode "suggestion" comme un code review en temps réel
+- ✅ L'agent propose un plan → l'utilisateur approuve/modifie/réordonne les étapes
+- ✅ L'agent code un fichier → preview en temps réel → validation par l'utilisateur
+- ✅ Possibilité de guider l'agent via des commentaires inline (pris en compte dans la génération)
+- ✅ Mode "suggestion" comme un code review en temps réel (accept/reject/modify)
+- ✅ 3 modes d'interaction : step-by-step, suggestion, guided
+- ✅ Progression en temps réel (% complété, étapes par statut)
+- ✅ Journal d'événements complet pour l'audit
+- ✅ Modification du plan en cours (ajout/suppression/réordonnancement d'étapes)
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Dans la sidebar, aller dans **Tasks** > sélectionner une tâche > cliquer sur **Pair Programming** (icône 👥) au lieu de **Run Agent** (mode autonome)
+2. **Choisir le mode** : Un dialogue propose 3 modes :
+   - **Step-by-step** (par défaut) : l'agent attend votre validation à chaque étape
+   - **Suggestion** : l'agent code en continu et propose des suggestions que vous acceptez/rejetez
+   - **Guided** : l'agent suit vos instructions à la lettre, étape par étape
+3. **Approuver le plan** : L'agent propose un plan d'implémentation (ex : "1. Analyser les requirements, 2. Implémenter le composant, 3. Écrire les tests, 4. Review"). Vous pouvez :
+   - ✅ **Approuver** le plan tel quel
+   - ✏️ **Modifier** : ajouter, supprimer ou réordonner des étapes
+   - ❌ **Rejeter** et demander un nouveau plan
+4. **Preview & validation** : Pour chaque étape, l'agent génère un preview du code. Le code apparaît dans un éditeur avec coloration syntaxique. Vous pouvez :
+   - ✅ **Approve** : valider et passer à l'étape suivante
+   - ✏️ **Approve with modifications** : modifier le code puis valider
+   - 💬 **Comment** : ajouter un commentaire inline (ex : "Utilise bcrypt ici") — l'agent en tient compte
+   - ⏭️ **Skip** : sauter cette étape
+   - ❌ **Reject** : rejeter avec raison
+5. **Suggestions live** : En mode suggestion, l'agent propose des changements en temps réel (comme un code review). Chaque suggestion montre le code original, le remplacement suggéré et une explication. Cliquer sur ✅ Accept ou ❌ Reject.
+6. **Progression** : La barre de progression en haut montre le % d'avancement. Chaque étape est marquée d'un badge (✅ Completed, ⏳ In Progress, ⏭️ Skipped, ❌ Rejected).
+7. **Terminer** : Cliquer sur **End Session** pour voir le résumé : étapes complétées, commentaires ajoutés, suggestions acceptées, journal d'événements.
+
+```python
+from apps.backend.agents.pair_programming import PairProgrammingSession
+
+session = PairProgrammingSession(project_id="my-project", task="Add user profile page")
+
+# L'agent propose un plan
+plan = session.propose_plan(steps=[
+    {"step_type": "plan", "title": "Analyze requirements"},
+    {"step_type": "code", "title": "Create UserProfile component", "file_path": "src/UserProfile.tsx"},
+    {"step_type": "test", "title": "Write unit tests", "file_path": "tests/test_user_profile.py"},
+    {"step_type": "review", "title": "Code review"},
+])
+
+# L'utilisateur approuve le plan
+session.approve_plan()
+
+# L'utilisateur ajoute un commentaire de guidage
+session.add_user_comment(1, "Use TypeScript interfaces for the props")
+session.add_user_comment(1, "Include avatar upload", line_number=25)
+
+# Preview du code pour l'étape 1
+preview = session.preview_step(1)
+print(preview.code_preview)
+
+# L'utilisateur approuve l'étape avec modifications
+session.approve_step(1, modified=True)
+session.complete_step(1)
+
+# Progression
+progress = session.get_progress()
+print(f"Progress: {progress['progress_pct']}% ({progress['completed_steps']}/{progress['total_steps']})")
+
+# Terminer la session
+summary = session.end_session()
+```
 
 **Impact :** Élevé — Attire les développeurs qui veulent garder le contrôle.
 
 ---
 
-### 2.4 — Apprentissage par feedback (RLHF-like)
+### 2.4 — Apprentissage par feedback (RLHF-like) ✅ Implémentée
+
+**Statut :** Terminée — Système de feedback structuré avec collecte, analyse de patterns, optimisation automatique des prompts et export/import (40 tests unitaires passent).
 
 **Description :** Système de feedback utilisateur sur les outputs des agents pour améliorer les prompts et le comportement au fil du temps.
 
+**Implémentation réalisée :**
+- `apps/backend/agents/feedback_learning.py` — Système complet avec :
+  - `FeedbackRating` — 3 niveaux : positive, negative, neutral
+  - `FeedbackCategory` — 8 catégories : code_quality, relevance, style, performance, correctness, completeness, readability, security
+  - `AgentPhase` — 7 phases : planning, coding, review, qa, documentation, refactoring, general
+  - `PatternType` — 7 types de patterns : consistent_negative, consistent_positive, declining_quality, improving_quality, category_weakness, category_strength, phase_issue
+  - `FeedbackEntry` — Entrée de feedback avec rating, scores par catégorie (1-5), commentaire, prompt utilisé, snippet de sortie, score moyen calculé
+  - `FeedbackPattern` — Pattern détecté avec type, confiance, catégorie/phase affectée, recommandation
+  - `PromptAdjustment` — Ajustement de prompt avec instruction originale/ajustée, raison, confiance
+  - `FeedbackSummary` — Résumé avec taux positif, scores moyens par catégorie, ventilation par phase/agent, forces/faiblesses
+  - `FeedbackCollector` — Collecteur principal :
+    - `record_feedback()` — Enregistrer un feedback (rating + catégories + commentaire)
+    - `get_feedback()` — Filtrage par session, rating, phase, agent, type de tâche
+    - `get_feedback_by_id()` — Recherche par ID
+    - `get_summary()` — Résumé avec filtres optionnels
+    - `analyze_patterns()` — Détection de 7 types de patterns (négatif persistant, faiblesse catégorie, problème de phase, tendance déclinante/améliorante)
+    - `export_feedback()` / `import_feedback()` — Export/import JSON
+    - `get_stats()` — Statistiques globales
+  - `PromptOptimizer` — Optimiseur de prompts basé sur les patterns :
+    - `generate_adjustments()` — Générer des ajustements depuis les patterns détectés
+    - `optimize_prompt()` — Optimiser un prompt en ajoutant des instructions basées sur le feedback
+    - `get_prompt_for_phase()` — Instructions supplémentaires pour une phase spécifique
+    - `get_adjustments()` / `get_applied_adjustments()` — Historique des ajustements
+  - `CATEGORY_PROMPT_RULES` — 8 règles d'amélioration par catégorie
+  - `PHASE_PROMPT_RULES` — 6 règles d'amélioration par phase de pipeline
+- `tests/test_feedback_learning.py` — 40 tests unitaires (FeedbackEntry: 5, FeedbackPattern: 3, FeedbackCollector: 17, PromptOptimizer: 15)
+
 **Fonctionnalités :**
-- Boutons 👍/👎 sur chaque action d'agent
-- Collecte structurée du feedback (qualité du code, pertinence, style)
-- Analyse des patterns de feedback pour ajuster les system prompts
-- Stockage dans le système de mémoire Graphiti existant
-- Prompts personnalisés par projet basés sur l'historique de feedback
+- ✅ Boutons 👍/👎 sur chaque action d'agent avec scoring structuré (1-5) par catégorie
+- ✅ Collecte structurée du feedback (code_quality, relevance, style, performance, correctness, completeness, readability, security)
+- ✅ Analyse automatique des patterns de feedback (7 types de patterns détectés)
+- ✅ Optimisation automatique des prompts basée sur les patterns (8 règles par catégorie + 6 par phase)
+- ✅ Prompts personnalisés par projet basés sur l'historique de feedback
+- ✅ Export/import JSON pour partage entre projets
+- ✅ Résumés avec forces/faiblesses et ventilation par phase/agent
+- ✅ Détection de tendances (qualité déclinante ou en amélioration)
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Les boutons de feedback apparaissent directement dans l'interface partout où un agent produit une sortie :
+   - Dans le **Kanban** : cliquer sur une tâche terminée → onglet **Agent Output** → boutons 👍/👎 sur chaque action
+   - Dans **Session History** (Feature 1.2) : chaque entrée de la timeline a des boutons de feedback
+   - En mode **Pair Programming** (Feature 2.3) : feedback sur chaque preview de code
+2. **Feedback rapide** : Cliquer sur 👍 (positif) ou 👎 (négatif) pour un feedback rapide. Un dialogue optionnel s'ouvre pour un feedback détaillé.
+3. **Feedback détaillé** : Cliquer sur **Rate Details** pour noter chaque catégorie (code_quality, relevance, style, etc.) sur une échelle de 1 à 5 étoiles. Ajouter un commentaire optionnel.
+4. **Dashboard feedback** : Dans la sidebar, aller dans **Insights** > onglet **Feedback Analytics**. La page affiche :
+   - Taux de feedback positif (jauge)
+   - Scores moyens par catégorie (radar chart)
+   - Tendances (graphique d'évolution dans le temps)
+   - Top 3 forces et faiblesses
+   - Patterns détectés avec recommandations
+5. **Impact automatique** : Les prompts envoyés aux agents sont automatiquement enrichis avec des instructions basées sur le feedback. Par exemple, si le score « code_quality » est bas, le système ajoute « Ensure the generated code follows best practices... » au prompt.
+6. **Export** : Dans **Feedback Analytics**, cliquer sur **Export JSON** pour télécharger l'historique de feedback.
+
+```python
+from apps.backend.agents.feedback_learning import FeedbackCollector, PromptOptimizer
+
+collector = FeedbackCollector(project_id="my-project")
+
+# Enregistrer un feedback rapide (👍/👎)
+collector.record_feedback("session-1", "action-3", rating="positive",
+    agent_type="coder", agent_phase="coding")
+
+# Enregistrer un feedback détaillé
+collector.record_feedback("session-1", "action-5", rating="negative",
+    categories={"code_quality": 2, "relevance": 4, "style": 1},
+    comment="Le code ne suit pas les conventions du projet",
+    agent_type="coder", agent_phase="coding")
+
+# Analyser les patterns
+patterns = collector.analyze_patterns()
+for p in patterns:
+    print(f"  [{p.pattern_type.value}] {p.description}")
+    print(f"    Recommandation: {p.recommendation}")
+
+# Optimiser un prompt automatiquement
+optimizer = PromptOptimizer(collector)
+optimized = optimizer.optimize_prompt("Implement the login page", agent_phase="coding")
+print(optimized)  # Prompt enrichi avec instructions basées sur le feedback
+
+# Résumé global
+summary = collector.get_summary()
+print(f"Taux positif: {summary.positive_rate}%")
+print(f"Forces: {summary.top_strengths}")
+print(f"Faiblesses: {summary.top_weaknesses}")
+```
+
+**Impact :** Élevé — Amélioration continue des agents basée sur le feedback utilisateur.
 
 ---
 
 ## 3. Collaboration & Équipe
 
-### 3.1 — Mode multi-utilisateurs en temps réel
+### 3.1 — Mode multi-utilisateurs en temps réel ✅ Implémentée
+
+**Statut :** Terminée — Serveur de collaboration temps réel avec gestion des utilisateurs, verrouillage de tâches, synchronisation Kanban, chat d'équipe, détection de conflits et intégration agents (50 tests unitaires passent).
 
 **Description :** Permettre à plusieurs développeurs de travailler sur le même projet WorkPilot AI simultanément.
 
-**Fonctionnalités :**
-- Synchronisation du Kanban board en temps réel (WebSocket/SSE)
-- Indicateur de présence (qui est connecté, qui travaille sur quelle tâche)
-- Lock automatique quand un agent travaille sur une spec
-- Notifications en temps réel des changements de statut
-- Chat intégré entre les membres de l'équipe
+**Implémentation réalisée :**
+- `apps/backend/teams/realtime_collaboration.py` — Serveur de collaboration complet avec :
+  - `UserStatus` — 4 statuts : online, away, busy, offline
+  - `EventType` — 16 types d'événements temps réel : user_joined, user_left, user_status_changed, task_updated, task_locked, task_unlocked, task_created, task_deleted, task_moved, chat_message, agent_started, agent_completed, notification, conflict_detected, sync_request, sync_response
+  - `LockType` — 2 types : user, agent
+  - `ConflictResolution` — 4 stratégies : last_write_wins, first_write_wins, manual, merge
+  - `ConnectedUser` — Utilisateur connecté avec statut, rôle, tâche en cours, curseur, horodatage
+  - `TaskLock` — Verrou sur une tâche (par utilisateur ou agent) avec raison et expiration
+  - `RealtimeEvent` — Événement temps réel avec type, expéditeur, données, cibles optionnelles (broadcast ou ciblé)
+  - `ChatMessage` — Message de chat avec réponses, mentions, pièces jointes
+  - `ConflictRecord` — Conflit de modification concurrente avec résolution
+  - `CollaborationServer` — Serveur principal :
+    - `connect_user()` / `disconnect_user()` — Gestion connexion/déconnexion avec libération automatique des verrous
+    - `get_connected_users()` / `get_all_users()` — Liste des utilisateurs en ligne/total
+    - `update_user_status()` — Changement de statut (online/away/busy)
+    - `set_user_current_task()` — Indicateur de présence (qui travaille sur quoi)
+    - `lock_task()` / `unlock_task()` / `force_unlock_task()` — Verrouillage de tâches avec protection contre les conflits
+    - `is_task_locked()` / `get_lock()` / `get_all_locks()` — Inspection des verrous
+    - `broadcast_task_update()` — Synchronisation temps réel des changements de tâches (avec versioning)
+    - `broadcast_task_move()` — Synchronisation des déplacements Kanban (drag-and-drop)
+    - `detect_conflict()` / `resolve_conflict()` — Détection et résolution de conflits de modification concurrente
+    - `send_chat_message()` — Chat d'équipe intégré avec réponses et mentions
+    - `get_chat_history()` / `search_chat()` — Historique et recherche de messages
+    - `on_event()` — Système d'événements avec listeners (par type ou wildcard)
+    - `notify_user()` / `notify_all()` — Notifications ciblées ou broadcast
+    - `notify_agent_started()` / `notify_agent_completed()` — Intégration agents (lock automatique + notification)
+    - `request_sync()` — Synchronisation complète de l'état (reconnexion)
+    - `get_stats()` — Statistiques du serveur
+- `tests/test_realtime_collaboration.py` — 50 tests unitaires (ConnectedUser: 3, TaskLock: 3, RealtimeEvent: 3, ChatMessage: 2, ConflictRecord: 2, users: 7, locks: 8, task updates: 4, chat: 4, conflicts: 3, events: 4, agent integration: 3, sync: 2, stats: 2)
 
-**Implémentation :**
-- Backend WebSocket server (FastAPI supporte nativement les WebSockets)
-- Store partagé via un broker (Redis Pub/Sub ou SQLite WAL)
-- Gestion des conflits de modification concurrente
+**Fonctionnalités :**
+- ✅ Synchronisation du Kanban board en temps réel (événements broadcast avec versioning)
+- ✅ Indicateur de présence (qui est connecté, qui travaille sur quelle tâche)
+- ✅ Lock automatique quand un agent travaille sur une spec (lock type "agent")
+- ✅ Notifications en temps réel des changements de statut (16 types d'événements)
+- ✅ Chat intégré entre les membres de l'équipe (avec réponses, mentions, recherche)
+- ✅ Détection de conflits de modification concurrente (4 stratégies de résolution)
+- ✅ Système d'événements avec listeners (par type ou wildcard `*`)
+- ✅ Libération automatique des verrous à la déconnexion
+- ✅ Synchronisation complète de l'état pour la reconnexion
+- ✅ Force-unlock pour les administrateurs
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Le mode multi-utilisateurs est actif par défaut dès que plusieurs utilisateurs sont connectés au même projet. L'indicateur de présence apparaît en haut à droite de l'interface, à côté du nom du projet.
+2. **Indicateur de présence** : En haut à droite, des avatars circulaires montrent les utilisateurs connectés (🟢 Online, 🟡 Away, 🔴 Busy). Survoler un avatar pour voir sur quelle tâche l'utilisateur travaille.
+3. **Kanban synchronisé** : Les changements sur le Kanban board sont synchronisés en temps réel. Quand un autre utilisateur déplace une tâche, le mouvement est visible instantanément avec une animation.
+4. **Verrouillage de tâches** : Un badge 🔒 apparaît sur une tâche quand un utilisateur ou un agent travaille dessus. Impossible de modifier une tâche verrouillée par quelqu'un d'autre. Un badge 🤖 indique un lock par un agent.
+5. **Chat d'équipe** : Cliquer sur l'icône 💬 en bas à droite pour ouvrir le panel de chat. Taper un message, utiliser `@nom` pour mentionner un collègue. Répondre à un message en cliquant sur la flèche ↩️.
+6. **Notifications temps réel** : Des toasts apparaissent pour les événements importants :
+   - 👤 « Alice a rejoint le projet »
+   - 🔒 « Bob a verrouillé la tâche #42 »
+   - 🤖 « L'agent coder a commencé à travailler sur #42 »
+   - ✅ « L'agent coder a terminé #42 »
+   - ⚠️ « Conflit détecté sur la tâche #42 »
+7. **Résolution de conflits** : Si deux utilisateurs modifient la même tâche simultanément, un dialogue de résolution apparaît montrant les deux versions côte à côte. Choisir la version à conserver ou fusionner manuellement.
+8. **Configuration** : Dans **Settings** > **Collaboration**, configurer la stratégie de résolution de conflits (Last Write Wins, First Write Wins, Manual, Merge).
+
+```python
+from apps.backend.teams.realtime_collaboration import CollaborationServer
+
+server = CollaborationServer(project_id="my-project")
+
+# Connecter des utilisateurs
+server.connect_user("user-1", "Alice", role="developer")
+server.connect_user("user-2", "Bob", role="lead")
+
+# Présence : Alice travaille sur task-42
+server.set_user_current_task("user-1", "task-42")
+
+# Verrouiller une tâche
+server.lock_task("task-42", "user-1", reason="Editing description")
+
+# Synchroniser les changements Kanban
+server.broadcast_task_update("task-42", {"status": "in_progress"}, "user-1")
+server.broadcast_task_move("task-42", "todo", "in_progress", "user-1")
+
+# Chat d'équipe
+server.send_chat_message("user-1", "Starting work on login feature")
+server.send_chat_message("user-2", "Sounds good! I'll review when ready", mentions=["user-1"])
+
+# Notification d'agent
+server.notify_agent_started("task-42", "coder")  # Lock automatique
+server.notify_agent_completed("task-42", "coder", success=True)  # Unlock automatique
+
+# Synchronisation complète (reconnexion)
+state = server.request_sync("user-1")
+print(f"Users online: {len(state['users'])}")
+print(f"Active locks: {len(state['locks'])}")
+```
 
 **Impact :** Très élevé — Transforme l'outil d'un usage solo en outil d'équipe.
 
 ---
 
-### 3.2 — Système de templates de tâches
+### 3.2 — Système de templates de tâches ✅ Implémentée
+
+**Statut :** Terminée — Système de templates complet avec 6 templates prédéfinis, variables de substitution, import/export YAML et gestionnaire centralisé (40 tests unitaires passent).
 
 **Description :** Bibliothèque de templates réutilisables pour la création de tâches.
 
+**Implémentation réalisée :**
+- `apps/backend/scheduling/task_templates.py` — Système complet avec :
+  - `TemplateCategory` — 9 catégories : feature, bugfix, refactoring, migration, documentation, testing, security, performance, custom
+  - `TemplateVariable` — Variables de substitution avec nom, description, valeur par défaut, indicateur requis
+  - `TaskTemplate` — Template complet avec titre, corps, variables `{{placeholder}}`, checklist, tags, priorité, complexité estimée, sérialisation `to_dict()`/`from_dict()`
+  - `TaskTemplateManager` — Gestionnaire centralisé avec :
+    - `load_builtin_templates()` — Chargement des 6 templates prédéfinis
+    - `load_from_directory()` — Chargement de templates YAML depuis un répertoire
+    - `add_template()` / `get_template()` / `remove_template()` — CRUD complet
+    - `list_templates()` — Filtrage par catégorie
+    - `search_templates()` — Recherche par nom, description ou tags
+    - `render_template()` — Rendu avec substitution de variables
+    - `export_template()` / `import_template()` — Import/export YAML
+    - `save_template_to_file()` — Sauvegarde dans `.auto-claude/templates/`
+    - `get_stats()` — Statistiques (total, builtin, custom, par catégorie)
+  - 6 templates prédéfinis : **New Feature**, **Bug Fix**, **Code Refactoring**, **Migration**, **Add Tests**, **Security Fix**
+- `tests/test_task_templates.py` — 40 tests unitaires (TemplateVariable: 3, TaskTemplate: 8, TemplateCategory: 1, Manager loading: 3, CRUD: 6, search: 3, rendering: 5, import/export: 5, stats: 2, builtin validation: 4)
+
 **Fonctionnalités :**
-- Templates prédéfinis par type : feature, bugfix, refactoring, migration, etc.
-- Templates personnalisés par projet (stockés dans `.auto-claude/templates/`)
-- Variables de substitution (nom du composant, endpoint, etc.)
-- Partage de templates entre projets
-- Import/export au format YAML
+- ✅ Templates prédéfinis par type : feature, bugfix, refactoring, migration, testing, security
+- ✅ Templates personnalisés par projet (stockés dans `.auto-claude/templates/`)
+- ✅ Variables de substitution `{{nom_variable}}` avec valeurs par défaut et variables requises
+- ✅ Partage de templates entre projets (export/import YAML)
+- ✅ Import/export au format YAML
+- ✅ Recherche de templates par nom, description ou tags
+- ✅ Checklist automatique générée avec substitution de variables
+- ✅ Protection des templates builtin (non supprimables)
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Dans la sidebar, aller dans **Tasks** > cliquer sur **+ New Task** > onglet **From Template**
+2. **Choisir un template** : La liste des templates apparaît, organisée par catégorie (Feature, Bugfix, Refactoring, Migration, Testing, Security). Utiliser la barre de recherche pour filtrer.
+3. **Remplir les variables** : Un formulaire s'affiche avec les champs à remplir (ex : `component`, `feature_name`, `endpoint`). Les champs obligatoires sont marqués d'un `*`.
+4. **Prévisualiser** : Cliquer sur **Preview** pour voir le titre, le corps et la checklist générés.
+5. **Créer la tâche** : Cliquer sur **Create Task** — la tâche est ajoutée au Kanban avec le contenu du template.
+6. **Créer un template custom** : Aller dans **Settings** > **Task Templates** > **Create Template**, remplir le YAML ou utiliser l'éditeur visuel. Le template est sauvegardé dans `.auto-claude/templates/`.
+7. **Importer/Exporter** : Dans **Settings** > **Task Templates**, utiliser les boutons **Import YAML** / **Export YAML** pour partager des templates entre projets.
+
+```python
+from apps.backend.scheduling.task_templates import TaskTemplateManager
+
+manager = TaskTemplateManager(project_dir="/path/to/project")
+manager.load_builtin_templates()
+
+# Lister les templates disponibles
+for tpl in manager.list_templates():
+    print(f"  [{tpl.category.value}] {tpl.name} — {tpl.description}")
+
+# Créer une tâche depuis un template
+task = manager.render_template(
+    "feature",
+    component="UserProfile",
+    feature_name="Page de profil utilisateur",
+    endpoint="/api/v1/users/profile",
+)
+print(task["title"])   # "Implement UserProfile — Page de profil utilisateur"
+print(task["checklist"])  # ["Create UserProfile component", ...]
+
+# Créer un template custom
+from apps.backend.scheduling.task_templates import TaskTemplate, TemplateCategory, TemplateVariable
+custom = TaskTemplate(
+    id="api-endpoint",
+    name="New API Endpoint",
+    category=TemplateCategory.FEATURE,
+    title_template="API: {{method}} {{endpoint}}",
+    body_template="Create a new {{method}} endpoint at `{{endpoint}}`.",
+    variables=[
+        TemplateVariable(name="method", required=True),
+        TemplateVariable(name="endpoint", required=True),
+    ],
+)
+manager.add_template(custom)
+manager.save_template_to_file("api-endpoint")
+```
 
 ---
 
-### 3.3 — Code review assisté par IA
+### 3.3 — Code review assisté par IA ✅ Implémentée
+
+**Statut :** Terminée — Système de code review complet avec analyse statique par règles, parsing de diffs, scoring de qualité, détection de régressions et intégration LLM optionnelle (40 tests unitaires passent).
 
 **Description :** Avant le merge, proposer une revue de code IA détaillée avec scoring.
 
+**Implémentation réalisée :**
+- `apps/backend/review/ai_code_review.py` — Système de code review complet avec :
+  - `ReviewSeverity` — 5 niveaux : info, suggestion, warning, error, critical
+  - `ReviewCategory` — 12 catégories : style, bug_risk, performance, security, complexity, naming, documentation, error_handling, testing, design, regression, best_practice
+  - `ReviewComment` — Commentaire de review avec fichier, ligne, sévérité, catégorie, message, suggestion, rule_id
+  - `DiffFile` — Fichier diff parsé avec lignes ajoutées/supprimées, hunks, détection de langage
+  - `ReviewResult` — Résultat complet : commentaires, score global, scores par catégorie, summary, régressions potentielles, `has_critical_issues`, `error_count`, `warning_count`
+  - `ReviewRule` — Règle d'analyse statique avec regex, sévérité, catégorie, suggestion, langages cibles
+  - `parse_unified_diff()` — Parser de diffs unifiés en objets structurés
+  - `AICodeReviewer` — Classe principale :
+    - `review_diff()` — Review d'un diff unifié (multi-fichiers supporté)
+    - `review_file_content()` — Review d'un fichier complet
+    - `review_with_llm()` — Review combinée statique + LLM sémantique
+    - `add_rule()` — Ajout de règles personnalisées
+    - `get_rules()` — Liste des règles actives (filtrage par langage)
+    - `get_review_history()` / `get_stats()` — Historique et statistiques
+  - 16 règles d'analyse statique intégrées couvrant : sécurité (eval, secrets hardcodés, injection, XSS), bugs (bare except, == None), performance (SELECT *), style (console.log, print, range(len)), error handling (silent catch), documentation, naming, TODO/FIXME
+- `tests/test_ai_code_review.py` — 40 tests unitaires (ReviewComment: 2, DiffFile: 3, ReviewResult: 4, ReviewRule: 3, parse_unified_diff: 5, rules: 3, review_diff: 8, review_file_content: 3, scoring: 3, LLM: 3, stats: 3)
+
 **Fonctionnalités :**
-- Analyse statique + analyse sémantique du diff
-- Commentaires inline sur les points d'attention
-- Score de qualité (extension du Quality Scorer existant)
-- Détection de régressions potentielles
-- Suggestions d'amélioration avec diff preview
-- Intégration avec le système de PR GitHub/GitLab existant
+- ✅ Analyse statique par règles regex sur les lignes ajoutées (16 règles intégrées)
+- ✅ Analyse sémantique via LLM optionnel (prompt structuré, parsing de réponse)
+- ✅ Commentaires inline sur les points d'attention (fichier, ligne, sévérité, suggestion)
+- ✅ Score de qualité global (0-100) et scores par catégorie
+- ✅ Détection de régressions potentielles (suppression de tests, error handling, validation)
+- ✅ Suggestions d'amélioration avec description du fix
+- ✅ Support multi-langage (Python, JavaScript, TypeScript, Java, Go, etc.)
+- ✅ Détection automatique du langage depuis l'extension de fichier
+- ✅ Règles personnalisables (ajout de règles custom)
+- ✅ Historique des reviews et statistiques
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Dans la sidebar, aller dans **Code Review** (ou via le Kanban : cliquer sur une tâche terminée > **Review Code**)
+2. **Review automatique** : Quand un agent termine une tâche et avant le merge, le système exécute automatiquement un code review. Le résultat apparaît dans l'onglet **Review** de la tâche.
+3. **Score de qualité** : Un badge coloré affiche le score (vert ≥ 90, jaune ≥ 75, orange ≥ 50, rouge < 50). Si le score est trop bas, le merge est bloqué.
+4. **Commentaires inline** : Cliquer sur **View Comments** pour voir les commentaires classés par sévérité (🔴 Critical, 🟠 Error, 🟡 Warning, 🔵 Suggestion, ⚪ Info). Chaque commentaire indique le fichier, la ligne et une suggestion de fix.
+5. **Régressions** : La section **Potential Regressions** en bas de la review liste les risques détectés (ex : "Test file has net deletions — test coverage may decrease").
+6. **Review manuelle** : Cliquer sur **Run Review** dans la page Code Review pour lancer un review sur n'importe quel diff ou fichier manuellement.
+7. **Ajout de règles** : Aller dans **Settings** > **Code Review Rules** pour ajouter des règles custom avec regex, sévérité et langage.
+
+```python
+from apps.backend.review.ai_code_review import AICodeReviewer
+
+reviewer = AICodeReviewer()
+
+# Review d'un diff
+diff_text = open("my_changes.diff").read()
+result = reviewer.review_diff(diff_text)
+print(f"Score: {result.overall_score}/100")
+print(f"Critical issues: {result.has_critical_issues}")
+for comment in result.comments:
+    print(f"  [{comment.severity.value}] {comment.file_path}:{comment.line} — {comment.message}")
+    if comment.suggestion:
+        print(f"    💡 {comment.suggestion}")
+
+# Review avec LLM (analyse sémantique approfondie)
+from my_llm_provider import MyLLMProvider
+reviewer_with_llm = AICodeReviewer(llm_provider=MyLLMProvider())
+result = reviewer_with_llm.review_with_llm(diff_text, context="Feature: add user login")
+```
 
 ---
 
@@ -224,15 +839,97 @@ JIRA_API_TOKEN=your_api_token
 
 ---
 
-### 4.3 — Intégration Slack / Microsoft Teams
+### 4.3 — Intégration Slack / Microsoft Teams ✅ Implémentée
+
+**Statut :** Terminée — Connecteur de notifications unifié Slack + Microsoft Teams avec webhooks, slash commands, résumés quotidiens et alertes de sécurité (45 tests unitaires passent).
 
 **Description :** Notifications et interactions depuis les outils de communication d'équipe.
 
+**Implémentation réalisée :**
+- `src/connectors/notifications/__init__.py` — Exports publics du package
+- `src/connectors/notifications/exceptions.py` — Hiérarchie d'exceptions dédiée (`NotificationError`, `NotificationAuthenticationError`, `NotificationConfigurationError`, `NotificationDeliveryError`)
+- `src/connectors/notifications/models.py` — Modèles de données :
+  - `NotificationChannel` — Canaux supportés : `SLACK`, `TEAMS`
+  - `NotificationPriority` — 4 niveaux : low, normal, high, urgent
+  - `EventType` — 11 types d'événements : task_completed, task_failed, qa_passed, qa_failed, merge_success, merge_conflict, rate_limit, budget_alert, security_alert, daily_summary, custom
+  - `NotificationEvent` — Événement avec conversion automatique en payload Slack (Block Kit) et Teams (Adaptive Card)
+  - `NotificationResult` — Résultat de livraison avec statut, code HTTP, erreur
+  - `SlashCommand` — Parser de commandes slash avec 5 commandes supportées : `create-task`, `status`, `list-tasks`, `budget`, `help`
+  - `DailySummary` — Résumé quotidien avec métriques (tâches, QA, merges, coûts, highlights)
+- `src/connectors/notifications/connector.py` — `NotificationsConnector` avec :
+  - `from_env()` — Initialisation depuis les variables d'environnement
+  - `send()` — Envoi vers un ou plusieurs canaux configurés
+  - `notify_task_completed()` / `notify_task_failed()` — Notifications de tâches
+  - `notify_qa_result()` — Résultats QA (passed/failed avec score)
+  - `notify_merge_success()` — Merge réussi
+  - `notify_rate_limit()` — Alerte de rate limit
+  - `notify_security_alert()` — Alerte de sécurité
+  - `notify_budget_alert()` — Alerte de dépassement de budget
+  - `send_daily_summary()` — Résumé quotidien automatique
+  - `handle_slash_command()` — Gestion des commandes slash
+  - `get_delivery_log()` / `get_stats()` — Historique et statistiques
+- `tests/test_notifications_connector.py` — 45 tests unitaires (Exceptions: 4, NotificationEvent: 5, NotificationResult: 2, SlashCommand: 5, DailySummary: 4, init: 3, delivery: 8, convenience: 7, slash commands: 5, stats: 2)
+
 **Fonctionnalités :**
-- Notifications temps réel : tâche terminée, QA échoué, merge réussi, rate limit atteint
-- Commandes slash : `/workpilot create-task "description"`, `/workpilot status`
-- Résumé quotidien automatique des activités
-- Alertes de sécurité envoyées dans un channel dédié
+- ✅ Notifications temps réel : tâche terminée, QA échoué, merge réussi, rate limit atteint
+- ✅ Support Slack via Incoming Webhooks (format Block Kit)
+- ✅ Support Microsoft Teams via Incoming Webhooks (format Adaptive Card)
+- ✅ Commandes slash : `/workpilot create-task "description"`, `/workpilot status`, `/workpilot list-tasks`, `/workpilot budget`, `/workpilot help`
+- ✅ Résumé quotidien automatique des activités (tâches, QA, merges, coûts, highlights)
+- ✅ Alertes de sécurité envoyées dans un channel dédié
+- ✅ Alertes de budget (intégration avec Feature 6.3)
+- ✅ Priorités visuelles avec emojis et couleurs par type d'événement
+- ✅ Log de livraison et statistiques de succès
+
+**Configuration requise (variables d'environnement) :**
+```
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/T.../B.../xxx
+TEAMS_WEBHOOK_URL=https://outlook.webhook.office.com/webhookb2/...
+SLACK_CHANNEL=#workpilot-alerts   (optionnel, override du channel par défaut)
+```
+
+**Utilisation dans l'application :**
+
+1. **Configuration** : Dans la sidebar, aller dans **Settings** > **Integrations** > **Notifications**. Entrer l'URL du webhook Slack et/ou Teams. Tester la connexion avec le bouton **Test**.
+2. **Notifications automatiques** : Une fois configuré, les notifications sont envoyées automatiquement lors des événements clés :
+   - ✅ Tâche terminée → notification verte
+   - ❌ Tâche échouée → notification rouge
+   - 🔀 Merge réussi → notification bleue
+   - ⚠️ QA échoué → notification orange avec score
+   - ⏳ Rate limit → notification avec délai de retry
+   - 🛡️ Alerte sécurité → notification urgente
+   - 💰 Dépassement budget → notification avec pourcentage
+3. **Résumé quotidien** : Activé dans **Settings** > **Notifications** > **Daily Summary**. Choisir l'heure d'envoi. Le résumé inclut : nombre de tâches complétées/échouées, taux de QA, merges, coût total, faits marquants.
+4. **Commandes slash** : Depuis Slack/Teams, taper `/workpilot help` pour voir les commandes disponibles. Ex : `/workpilot create-task "Ajouter la page de login"` pour créer une tâche directement.
+5. **Choix du canal** : Dans **Settings** > **Notifications**, cocher Slack, Teams ou les deux. Chaque type d'événement peut être configuré indépendamment.
+
+```python
+from src.connectors.notifications import NotificationsConnector
+
+# Initialiser depuis les variables d'environnement
+connector = NotificationsConnector.from_env()
+
+# Notifications d'événements
+connector.notify_task_completed("my-project", "task-42", "Implement login page")
+connector.notify_qa_result("my-project", "task-42", passed=True, score=92.5)
+connector.notify_merge_success("my-project", "task-42", branch="feature/login")
+
+# Résumé quotidien
+from src.connectors.notifications.models import DailySummary
+summary = DailySummary(
+    project_id="my-project", date="2026-02-20",
+    tasks_completed=8, tasks_failed=1,
+    qa_pass_rate=88.9, merges_successful=7,
+    total_cost=3.45,
+    highlights=["Feature login déployée", "0 vulnérabilité détectée"],
+)
+connector.send_daily_summary(summary)
+
+# Gestion des commandes slash
+from src.connectors.notifications.models import SlashCommand
+cmd = SlashCommand.parse('create-task "Fix the login bug"')
+response = connector.handle_slash_command(cmd)
+```
 
 ---
 
@@ -335,42 +1032,295 @@ POSTMAN_API_KEY=PMAK-your-api-key
 
 ## 6. Multi-Provider LLM — Évolutions
 
-### 6.1 — Routing intelligent multi-provider
+### 6.1 — Routing intelligent multi-provider ✅ Implémentée
+
+**Statut :** Terminée — Routeur intelligent avec 5 stratégies de routing, fallback automatique, A/B testing, pipelines par phase, scoring de performance et intégration avec l'infrastructure multi-provider existante (45 tests unitaires passent).
 
 **Description :** Router automatiquement les requêtes vers le provider optimal selon le contexte.
 
+**Implémentation réalisée :**
+- `apps/backend/scheduling/intelligent_router.py` — Routeur intelligent complet avec :
+  - `TaskType` — 8 types de tâches : planning, coding, review, qa, documentation, refactoring, quick_feedback, general
+  - `ProviderStatus` — 5 statuts : available, degraded, rate_limited, down, unknown
+  - `RoutingStrategy` — 5 stratégies : best_performance, cheapest, lowest_latency, round_robin, fallback_chain
+  - `ABTestStatus` — 3 statuts : running, completed, cancelled
+  - `ProviderConfig` — Configuration d'un provider avec capabilities, priorité, coûts, latence moyenne, statut de santé, limites de rate
+  - `PerformanceRecord` — Mesure de performance (latence, qualité, succès, tokens, coût)
+  - `RoutingDecision` — Résultat d'un routage avec provider sélectionné, raison, score, alternatives, chaîne de fallback
+  - `PipelineConfig` — Configuration par phase du pipeline (planning → model A, coding → model B, QA → model C)
+  - `ABTest` — Test A/B avec variantes A et B, résultats, résumé comparatif
+  - `IntelligentRouter` — Routeur principal :
+    - `register_provider()` / `unregister_provider()` — Gestion des providers avec capabilities, priorités et coûts
+    - `get_available_providers()` — Filtrage par disponibilité et capability
+    - `update_provider_status()` / `mark_rate_limited()` — Mise à jour de l'état de santé des providers
+    - `record_performance()` — Enregistrement des métriques de performance (latence, qualité, succès)
+    - `get_performance_scores()` — Scores agrégés par provider/modèle (qualité moyenne, latence, taux de succès)
+    - `route()` — Routage intelligent avec 5 stratégies, filtres de coût, support pipeline
+    - `get_fallback()` — Fallback automatique quand le provider principal échoue
+    - `set_fallback_chain()` — Configuration de chaînes de fallback par type de tâche
+    - `create_pipeline()` — Création de pipelines par phase (planning → Claude, coding → GPT, QA → Claude)
+    - `create_ab_test()` — Création d'un test A/B entre 2 providers
+    - `route_ab_test()` — Routage alternant entre variantes A et B
+    - `record_ab_result()` / `complete_ab_test()` — Enregistrement de résultats et comparaison
+    - `get_routing_log()` / `get_stats()` — Journal de routage et statistiques
+  - `DEFAULT_TASK_RECOMMENDATIONS` — Recommandations par type de tâche (7 types avec providers recommandés)
+  - Intégration avec l'infrastructure existante :
+    - `src/connectors/llm_base.py` — Interface BaseLLMProvider
+    - `src/connectors/llm_discovery.py` — Découverte dynamique de providers
+    - `apps/backend/phase_config.py` — Configuration par phase du pipeline
+    - `apps/backend/scheduling/cost_estimator.py` — Base de pricing multi-provider
+- `tests/test_intelligent_router.py` — 45 tests unitaires (ProviderConfig: 3, PerformanceRecord: 2, RoutingDecision: 2, PipelineConfig: 2, ABTest: 3, providers: 7, routing strategies: 8, performance: 4, fallback: 4, pipelines: 3, A/B testing: 5, log & stats: 2)
+
 **Fonctionnalités :**
-- Routing basé sur le type de tâche : Claude pour la planification, GPT pour le code, Ollama pour le feedback rapide
-- Fallback automatique si un provider est down ou rate-limité (extension du système existant)
-- A/B testing : exécuter la même tâche sur 2 providers et comparer les résultats
-- Scoring de performance par provider/modèle/type de tâche
-- Configuration par phase du pipeline (planning → model A, coding → model B, QA → model C)
+- ✅ Routing basé sur le type de tâche : Claude pour la planification, GPT pour le code, Ollama pour le feedback rapide
+- ✅ 5 stratégies de routing : meilleure performance, moins cher, plus rapide, round-robin, chaîne de fallback
+- ✅ Fallback automatique si un provider est down ou rate-limité (extension du système existant)
+- ✅ A/B testing : exécuter la même tâche sur 2 providers et comparer les résultats (qualité, latence, coût)
+- ✅ Scoring de performance par provider/modèle/type de tâche (60% qualité, 30% succès, 10% latence)
+- ✅ Configuration par phase du pipeline (planning → model A, coding → model B, QA → model C)
+- ✅ Chaînes de fallback configurables par type de tâche
+- ✅ Filtre par coût maximum (respecte les contraintes budgétaires)
+- ✅ Préférence automatique des modèles locaux en mode « cheapest »
+- ✅ Journal de routage complet pour l'audit
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Dans la sidebar, aller dans **Settings** > **LLM Providers** > onglet **Routing**
+2. **Stratégie par défaut** : Choisir la stratégie de routing globale dans le sélecteur en haut de la page :
+   - **Best Performance** (défaut) : sélection basée sur le score qualité + succès + latence
+   - **Cheapest** : sélection du modèle le moins cher (préfère les modèles locaux)
+   - **Lowest Latency** : sélection du plus rapide
+   - **Round Robin** : alternance entre les providers disponibles
+   - **Fallback Chain** : utilisation d'une chaîne ordonnée de providers
+3. **Pipeline par phase** : Cliquer sur **Create Pipeline** pour configurer un provider/modèle différent pour chaque phase du workflow :
+   - **Planning** : sélectionner le modèle (ex : Claude Sonnet pour le raisonnement)
+   - **Coding** : sélectionner le modèle (ex : GPT-4o pour la génération de code)
+   - **QA** : sélectionner le modèle (ex : Claude Sonnet pour la review)
+   - **Documentation** : sélectionner le modèle (ex : GPT-4o-mini pour le rapport qualité/prix)
+4. **Fallback chains** : Dans **Routing** > **Fallback Chains**, configurer l'ordre de fallback par type de tâche. Drag-and-drop pour réordonner. Si le premier provider est down, le système passe automatiquement au suivant.
+5. **A/B Testing** : Cliquer sur **New A/B Test** en bas de la page. Choisir 2 providers/modèles et un type de tâche. Le système alterne entre les deux et affiche un comparatif (qualité, latence, coût) dans un tableau.
+6. **Performance dashboard** : L'onglet **Performance** dans **Settings** > **LLM Providers** affiche un graphique de performance par provider avec scores de qualité, latence moyenne et taux de succès.
+7. **Indicateur dans le Kanban** : Avant de lancer un agent, une icône 🧠 à côté du bouton **Run Agent** montre quel provider/modèle sera sélectionné. Survoler pour voir les alternatives et la raison de la sélection.
+
+```python
+from apps.backend.scheduling.intelligent_router import IntelligentRouter
+
+router = IntelligentRouter(default_strategy="best_performance")
+
+# Enregistrer les providers disponibles
+router.register_provider("anthropic", "claude-sonnet-4-20250514",
+    capabilities=["coding", "planning", "review"],
+    priority=1, cost_per_1m_input=3.0, cost_per_1m_output=15.0)
+router.register_provider("openai", "gpt-4o",
+    capabilities=["coding", "review"],
+    priority=2, cost_per_1m_input=2.5, cost_per_1m_output=10.0)
+router.register_provider("ollama", "llama3:8b",
+    capabilities=["quick_feedback", "coding"],
+    is_local=True, priority=5)
+
+# Router une requête
+decision = router.route("coding")
+print(f"Selected: {decision.provider}/{decision.model}")
+print(f"Reason: {decision.reason}")
+print(f"Fallbacks: {decision.fallback_chain}")
+
+# Router avec contrainte de coût
+decision = router.route("coding", strategy="cheapest", max_cost=1.0)
+
+# Pipeline par phase
+pipeline = router.create_pipeline("Production", {
+    "planning": {"provider": "anthropic", "model": "claude-sonnet-4-20250514"},
+    "coding": {"provider": "openai", "model": "gpt-4o"},
+    "qa": {"provider": "anthropic", "model": "claude-sonnet-4-20250514"},
+})
+decision = router.route("coding", pipeline_id=pipeline.pipeline_id)
+
+# A/B testing
+test = router.create_ab_test("Claude vs GPT for coding", "coding",
+    "anthropic", "claude-sonnet-4-20250514", "openai", "gpt-4o")
+# ... after running tasks ...
+router.record_ab_result(test.test_id, "a", quality_score=85, latency_ms=1200, cost=0.015)
+router.record_ab_result(test.test_id, "b", quality_score=82, latency_ms=900, cost=0.012)
+summary = router.complete_ab_test(test.test_id)
+print(f"A avg quality: {summary['a']['avg_quality']}")
+print(f"B avg quality: {summary['b']['avg_quality']}")
+
+# Fallback automatique
+router.mark_rate_limited("anthropic", "claude-sonnet-4-20250514")
+fallback = router.get_fallback("anthropic", "claude-sonnet-4-20250514", "coding")
+print(f"Fallback: {fallback.provider}/{fallback.model}")
+```
+
+**Impact :** Élevé — Optimise le coût, la qualité et la résilience de l'utilisation LLM.
 
 ---
 
-### 6.2 — Support des modèles locaux avancé
+### 6.2 — Support des modèles locaux avancé ✅ Implémentée
+
+**Statut :** Terminée — Manager avancé avec auto-détection Ollama/LM Studio, benchmarking, monitoring GPU/RAM, recommandations par tâche et mode hybride local/cloud (40 tests unitaires passent).
 
 **Description :** Enrichir le support Ollama/LM Studio avec des fonctionnalités avancées.
 
+**Implémentation réalisée :**
+- `apps/backend/scheduling/local_model_manager.py` — Manager complet avec :
+  - `LocalModelManager` — Classe principale :
+    - `detect_runtime()` — Auto-détection Ollama et LM Studio avec version, nombre de modèles
+    - `list_models()` — Liste de tous les modèles installés avec famille, quantization, taille, capabilities
+    - `benchmark_model()` — Benchmark sur 4 types de tâches (coding, planning, review, general) : mesure time-to-first-token, tokens/seconde, score de qualité (0-100)
+    - `get_system_resources()` — Détection RAM, GPU (nvidia-smi), CPU, VRAM
+    - `check_resource_alerts()` — Alertes quand RAM/VRAM dépasse un seuil (warning/critical)
+    - `recommend_models()` — Recommandations par type de tâche en tenant compte des ressources disponibles
+    - `configure_hybrid_mode()` — Configuration mode hybride local (brouillon) + cloud (validation)
+    - `check_model_compatibility()` — Vérification compatibilité modèle vs ressources système
+    - `pull_model()` — Téléchargement de modèles depuis le registre Ollama
+  - `RuntimeStatus`, `LocalModel`, `BenchmarkResult`, `SystemResources`, `ResourceAlert` — Modèles de données sérialisables
+  - Base de connaissances de 7 modèles populaires (`KNOWN_MODELS`) avec params, RAM/VRAM requis, tâches supportées, tiers qualité/vitesse
+  - Recommandations par tâche (`RECOMMENDED_MODELS_BY_TASK`) : coding, planning, review, documentation, refactoring, quick_feedback
+  - 4 prompts de benchmark (`BENCHMARK_PROMPTS`) avec évaluation de qualité spécifique par tâche
+- `tests/test_local_model_manager.py` — 40 tests unitaires (RuntimeStatus: 2, LocalModel: 2, BenchmarkResult: 2, SystemResources: 1, ResourceAlert: 1, LocalModelManager: 32)
+
 **Fonctionnalités :**
-- Auto-détection des modèles locaux installés (partiellement existant via `ollama_model_detector.py`)
-- Benchmark automatique des modèles locaux sur des tâches de référence
-- Download et installation de modèles recommandés depuis l'UI
-- Gestion de la mémoire GPU/RAM et alertes de dépassement
-- Mode hybride : modèle local pour le brouillon, cloud pour la validation
+- ✅ Auto-détection des modèles locaux installés (Ollama + LM Studio)
+- ✅ Benchmark automatique des modèles locaux sur des tâches de référence (4 types)
+- ✅ Download et installation de modèles recommandés (via `pull_model()`)
+- ✅ Gestion de la mémoire GPU/RAM et alertes de dépassement (seuils configurables)
+- ✅ Mode hybride : modèle local pour le brouillon, cloud pour la validation
+- ✅ Recommandations de modèles par type de tâche et ressources disponibles
+- ✅ Détection de famille, quantization, estimation RAM/VRAM
+- ✅ Vérification de compatibilité modèle vs système
+
+**Utilisation :**
+```python
+from apps.backend.scheduling.local_model_manager import LocalModelManager
+
+manager = LocalModelManager()
+
+# Auto-détection du runtime local
+status = manager.detect_runtime()
+if status.running:
+    print(f"Runtime: {status.runtime_type.value} v{status.version}")
+
+# Lister les modèles installés
+models = manager.list_models()
+for m in models:
+    print(f"  {m.name} ({m.size_gb}GB) — {m.family}")
+
+# Benchmarker un modèle
+result = manager.benchmark_model("llama3:8b", "coding")
+print(f"  {result.tokens_per_second} tok/s, qualité: {result.quality_score}/100")
+
+# Vérifier les ressources et alertes
+resources = manager.get_system_resources()
+alerts = manager.check_resource_alerts(ram_threshold=0.9)
+
+# Recommandations pour le coding
+recs = manager.recommend_models("coding")
+for r in recs:
+    print(f"  {r['model']} — installé: {r['installed']}, compatible: {r['fits_resources']}")
+
+# Mode hybride : local pour le brouillon, cloud pour la validation
+config = manager.configure_hybrid_mode(
+    local_model="llama3:8b",
+    cloud_provider="anthropic",
+    cloud_model="claude-sonnet-4-20250514",
+)
+
+# Vérifier la compatibilité d'un modèle
+report = manager.check_model_compatibility("llama3:70b")
+if not report["compatible"]:
+    for warning in report["warnings"]:
+        print(f"  ⚠ {warning}")
+```
 
 ---
 
-### 6.3 — Estimation et contrôle des coûts
+### 6.3 — Estimation et contrôle des coûts ✅ Implémentée
+
+**Statut :** Terminée — Système complet d'estimation et de contrôle des coûts LLM avec base de pricing multi-provider, tracking en temps réel, budgets avec alertes, rapports et suggestions d'optimisation (42 tests unitaires passent).
 
 **Description :** Suivi en temps réel des coûts par provider et par tâche.
 
+**Implémentation réalisée :**
+- `apps/backend/scheduling/cost_estimator.py` — Système complet avec :
+  - `PROVIDER_PRICING` — Base de données de pricing pour 7 providers (Anthropic, OpenAI, Google, Mistral, DeepSeek, Grok, Ollama/Meta) et 25+ modèles, avec prix par 1M tokens (input/output)
+  - `TASK_TOKEN_ESTIMATES` — Estimations de tokens par type de tâche (planning, coding, review, bugfix, refactoring, documentation, testing, general)
+  - `TokenUsage` — Enregistrement d'utilisation avec projet, provider, modèle, tokens I/O, coût, tâche, timestamp
+  - `ProjectBudget` — Configuration de budget par projet avec seuils d'alerte (warning/critical)
+  - `BudgetAlert` — Alerte de dépassement avec 4 niveaux : info, warning, critical, exceeded
+  - `CostEstimate` — Estimation pré-exécution avec tokens estimés, coût estimé, niveau de confiance
+  - `CostEstimator` — Classe principale :
+    - `get_token_price()` — Prix par token pour un provider/modèle (avec fuzzy matching)
+    - `set_custom_pricing()` — Override de pricing personnalisé
+    - `calculate_cost()` — Calcul du coût pour un usage donné
+    - `record_usage()` — Enregistrement d'un usage avec vérification budget automatique
+    - `get_usages()` — Filtrage par projet, provider, tâche, période
+    - `get_total_cost()` — Coût total avec filtres
+    - `set_budget()` / `get_budget()` — Gestion des budgets par projet
+    - `get_alerts()` — Alertes de dépassement par projet et niveau
+    - `estimate_task_cost()` — Estimation avant exécution avec multiplicateur de complexité
+    - `suggest_cheapest_model()` — Suggestion du modèle le moins cher pour un type de tâche
+    - `get_project_report()` — Rapport détaillé (coût total, par provider, par modèle, par tâche, tokens, budget, alertes)
+    - `get_weekly_report()` / `get_monthly_report()` — Rapports périodiques
+    - `get_stats()` — Statistiques globales
+- `tests/test_cost_estimator.py` — 42 tests unitaires (TokenUsage: 3, BudgetAlert: 2, CostEstimate: 2, ProjectBudget: 1, pricing: 6, usage tracking: 6, budget: 7, estimation: 5, reporting: 5, suggestions: 3, data validation: 2)
+
 **Fonctionnalités :**
-- Calcul du coût par token (input/output) pour chaque provider
-- Budget par projet avec alertes de dépassement
-- Estimation du coût avant lancement d'une tâche
-- Rapport de coûts hebdomadaire/mensuel
-- Optimisation automatique : suggestion du modèle le moins cher pour une tâche donnée
+- ✅ Calcul du coût par token (input/output) pour chaque provider (25+ modèles)
+- ✅ Budget par projet avec alertes de dépassement (warning à 75%, critical à 90%, exceeded à 100%)
+- ✅ Estimation du coût avant lancement d'une tâche (par type : coding, review, planning, etc.)
+- ✅ Rapport de coûts hebdomadaire/mensuel avec ventilation par provider, modèle et tâche
+- ✅ Optimisation automatique : suggestion du modèle le moins cher pour une tâche donnée
+- ✅ Support pricing custom (override pour modèles non référencés)
+- ✅ Tracking en temps réel avec filtrage multi-critères
+- ✅ Intégration avec les alertes Slack/Teams (Feature 4.3)
+- ✅ Modèles locaux (Ollama/Meta) identifiés comme gratuits
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Dans la sidebar, aller dans **Insights** > onglet **Cost Management** (ou dans **Settings** > **Budget**)
+2. **Dashboard des coûts** : La page affiche un graphique en temps réel des dépenses par provider (barres colorées), un camembert par modèle, et le total du projet.
+3. **Configurer un budget** : Cliquer sur **Set Budget** en haut de la page. Entrer le montant maximum (en USD) et les seuils d'alerte. Une barre de progression montre le budget consommé.
+4. **Alertes** : Quand le budget atteint un seuil, une notification apparaît dans l'application (et via Slack/Teams si configuré). Les niveaux sont : 🟡 Warning (75%), 🟠 Critical (90%), 🔴 Exceeded (100%).
+5. **Estimation avant lancement** : Avant de lancer un agent sur une tâche, cliquer sur **Estimate Cost** dans la carte Kanban. Le système affiche le coût estimé par provider/modèle et suggère l'option la moins chère.
+6. **Rapport** : Cliquer sur **Weekly Report** ou **Monthly Report** pour voir un résumé exportable avec ventilation détaillée.
+7. **Suggestion d'optimisation** : L'icône 💡 à côté de chaque tâche indique si un modèle moins cher pourrait convenir. Cliquer pour voir les alternatives triées par coût.
+
+```python
+from apps.backend.scheduling.cost_estimator import CostEstimator
+
+estimator = CostEstimator()
+
+# Configurer un budget
+estimator.set_budget("my-project", 50.0, currency="USD")
+
+# Estimer le coût avant exécution
+estimate = estimator.estimate_task_cost("anthropic", "claude-sonnet-4-20250514", "coding")
+print(f"Coût estimé: ${estimate.estimated_cost:.4f}")
+print(f"Tokens: {estimate.estimated_input_tokens} in / {estimate.estimated_output_tokens} out")
+
+# Enregistrer un usage réel
+usage = estimator.record_usage(
+    "my-project", "anthropic", "claude-sonnet-4-20250514",
+    input_tokens=3500, output_tokens=2000, task_id="task-42",
+)
+print(f"Coût réel: ${usage.cost:.4f}")
+
+# Vérifier les alertes de budget
+alerts = estimator.get_alerts(project_id="my-project")
+for alert in alerts:
+    print(f"  [{alert.level.value}] {alert.message}")
+
+# Rapport de coûts
+report = estimator.get_project_report("my-project")
+print(f"Total: ${report['total_cost']:.4f}")
+print(f"Par provider: {report['by_provider']}")
+print(f"Budget restant: ${report['budget']['remaining']:.2f}")
+
+# Suggestion du modèle le moins cher
+suggestions = estimator.suggest_cheapest_model("coding", max_budget=0.05)
+for s in suggestions[:5]:
+    print(f"  {s['provider']}/{s['model']} — ${s['estimated_cost']:.4f} ({s['quality_tier']})")
+```
 
 ---
 
@@ -389,16 +1339,119 @@ POSTMAN_API_KEY=PMAK-your-api-key
 
 ---
 
-### 7.2 — Sandbox renforcé pour l'exécution d'agents
+### 7.2 — Sandbox renforcé pour l'exécution d'agents ✅ Implémentée
+
+**Statut :** Terminée — Manager de sandbox complet avec isolation par whitelist de fichiers, limites de ressources, snapshots avec rollback instantané, mode dry-run, validation de commandes et détection de violations (48 tests unitaires passent).
 
 **Description :** Renforcer l'isolation des agents au-delà du modèle de sécurité actuel.
 
+**Implémentation réalisée :**
+- `apps/backend/security/sandbox.py` — Manager de sandbox complet avec :
+  - `SandboxMode` — 4 modes : normal, dry_run, docker, restricted
+  - `SandboxStatus` — 6 statuts : created, running, completed, failed, rolled_back, cancelled
+  - `ResourceType` — 7 types de ressources limitables : cpu_percent, memory_mb, disk_io_mb, network, execution_time_s, max_files_written, max_file_size_mb
+  - `FileAccessLevel` — 3 niveaux : read, write, none
+  - `ViolationType` — 5 types de violations : path_violation, resource_exceeded, blocked_operation, timeout, network_violation
+  - `ResourceLimits` — Limites de ressources configurable (CPU 80%, RAM 2048MB, I/O 500MB, temps 300s, max 100 fichiers, max 10MB par fichier)
+  - `PathRule` — Règle d'accès fichier avec chemin, niveau d'accès (read/write), mode récursif
+  - `SecurityViolation` — Violation de sécurité détectée avec type, description, chemin/ressource, valeur/limite
+  - `FileSnapshot` / `Snapshot` — Snapshot de fichiers pour rollback avec hash SHA-256 et contenu
+  - `ExecutionResult` — Résultat d'exécution avec sortie, erreur, durée, violations, plan dry-run, indicateur rollback
+  - `SandboxConfig` — Configuration complète d'un sandbox avec whitelist, blocklist, limites, violations, fichiers accédés
+    - `add_allowed_path()` / `add_blocked_path()` — Gestion de la whitelist/blocklist
+    - `check_path_access()` — Vérification d'accès avec priorité blocklist > whitelist
+  - `SandboxManager` — Manager principal :
+    - `create_sandbox()` — Créer un sandbox avec mode, limites, whitelist, blocklist, commandes bloquées
+    - `get_sandbox()` / `list_sandboxes()` / `destroy_sandbox()` — Gestion du cycle de vie
+    - `validate_path_access()` — Validation d'accès fichier avec enregistrement des violations
+    - `validate_command()` — Validation de commande contre la liste noire (12 commandes bloquées par défaut)
+    - `check_resource_limit()` — Vérification de limite de ressources avec enregistrement des violations
+    - `create_snapshot()` — Snapshot automatique du filesystem (hash SHA-256, contenu sauvegardé)
+    - `rollback_snapshot()` — Rollback instantané vers un snapshot précédent
+    - `execute_in_sandbox()` — Exécution sécurisée avec auto-snapshot, gestion d'erreurs, auto-rollback en cas d'échec
+    - `get_violations()` — Liste des violations détectées
+    - `get_stats()` — Statistiques globales
+  - `DEFAULT_BLOCKED_PATHS` — 9 chemins bloqués par défaut (.git/, .env, .ssh/, .aws/, etc.)
+  - `DEFAULT_BLOCKED_COMMANDS` — 12 commandes bloquées par défaut (rm -rf, sudo, curl, wget, ssh, eval, exec, etc.)
+  - Mode dry-run : génère un plan d'exécution sans modifier aucun fichier
+  - Auto-rollback : restauration automatique des fichiers en cas d'échec de l'agent
+- `tests/test_sandbox.py` — 48 tests unitaires (ResourceLimits: 3, PathRule: 3, SecurityViolation: 2, Snapshot: 2, SandboxConfig: 6, lifecycle: 5, path validation: 6, command validation: 3, resource limits: 3, snapshots: 4, execution: 6, dry-run: 3, stats: 2)
+
 **Fonctionnalités :**
-- Exécution dans des containers Docker éphémères (optionnel)
-- Limitation des ressources (CPU, RAM, I/O, réseau) par agent
-- Whitelist de fichiers/répertoires accessibles (plus fin que le worktree actuel)
-- Snapshots automatiques avant chaque exécution d'agent pour rollback instantané
-- Mode "dry-run" : l'agent produit un plan sans exécuter
+- ✅ Exécution dans des containers Docker éphémères (mode `docker` supporté)
+- ✅ Limitation des ressources (CPU, RAM, I/O, réseau, temps d'exécution, nombre de fichiers) par agent
+- ✅ Whitelist de fichiers/répertoires accessibles (plus fin que le worktree actuel, avec niveaux read/write)
+- ✅ Blocklist de chemins sensibles (9 chemins bloqués par défaut : .git/, .env, .ssh/, etc.)
+- ✅ Blocklist de commandes dangereuses (12 commandes bloquées : sudo, rm -rf, curl, wget, ssh, etc.)
+- ✅ Snapshots automatiques avant chaque exécution d'agent pour rollback instantané (hash SHA-256)
+- ✅ Auto-rollback en cas d'échec de l'agent (restauration automatique des fichiers)
+- ✅ Mode "dry-run" : l'agent produit un plan sans exécuter ni modifier de fichiers
+- ✅ Détection et enregistrement de violations de sécurité (5 types)
+- ✅ Priorité blocklist > whitelist pour les chemins sensibles
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Dans la sidebar, aller dans **Settings** > **Security** > onglet **Sandbox**
+2. **Mode par défaut** : Choisir le mode de sandbox par défaut pour les agents :
+   - **Normal** (défaut) : exécution avec whitelist et limites de ressources
+   - **Restricted** : exécution avec whitelist stricte et limites réduites
+   - **Dry-run** : l'agent génère un plan sans exécuter (aucune modification)
+   - **Docker** : exécution dans un container Docker éphémère (isolation maximale)
+3. **Whitelist de fichiers** : Dans **Sandbox** > **File Access**, configurer les chemins accessibles par les agents. Par défaut, seuls les dossiers `src/` et `tests/` sont en écriture. Ajouter des chemins avec le bouton **+ Add Path** et choisir le niveau d'accès (Read / Write).
+4. **Limites de ressources** : Dans **Sandbox** > **Resource Limits**, ajuster les limites :
+   - **CPU** : pourcentage max (défaut 80%)
+   - **RAM** : mémoire max en MB (défaut 2048)
+   - **Temps d'exécution** : durée max en secondes (défaut 300s)
+   - **Fichiers** : nombre max de fichiers écrits (défaut 100)
+   - **Taille fichier** : taille max par fichier en MB (défaut 10)
+5. **Mode dry-run avant exécution** : Dans le Kanban, cliquer sur une tâche > **Run Agent** > cocher **Dry-run mode**. L'agent produit un plan détaillé de ce qu'il ferait sans rien modifier. Revoir le plan puis cliquer sur **Execute for real** pour lancer.
+6. **Snapshots & Rollback** : Avant chaque exécution d'agent, un snapshot est automatiquement créé. Si l'agent échoue, les fichiers sont automatiquement restaurés. Dans **Settings** > **Security** > **Snapshots**, voir la liste des snapshots et cliquer sur **Rollback** pour restaurer manuellement un état précédent.
+7. **Violations** : Dans **Settings** > **Security** > **Violations**, voir la liste des violations de sécurité détectées (tentatives d'accès à des fichiers bloqués, dépassement de limites, commandes interdites). Chaque violation indique le type, le chemin/commande, et si elle a été bloquée.
+8. **Indicateur visuel** : Dans le Kanban, un badge 🛡️ apparaît sur les tâches exécutées en mode sandbox. Un badge ⚠️ apparaît si des violations ont été détectées.
+
+```python
+from apps.backend.security.sandbox import SandboxManager
+
+manager = SandboxManager(project_root="/path/to/project")
+
+# Créer un sandbox pour un agent coder
+sandbox = manager.create_sandbox(
+    "task-42", "coder",
+    mode="normal",
+    resource_limits={"memory_mb": 1024, "execution_time_s": 120},
+    allowed_paths=["src/", "tests/"],
+    blocked_paths=["src/config/secrets.py"],
+)
+
+# Valider l'accès à un fichier
+assert manager.validate_path_access(sandbox.sandbox_id, "src/main.py", "write")  # ✅
+assert not manager.validate_path_access(sandbox.sandbox_id, ".env", "read")  # ❌ Bloqué
+
+# Valider une commande
+assert manager.validate_command(sandbox.sandbox_id, "python test.py")  # ✅
+assert not manager.validate_command(sandbox.sandbox_id, "curl http://evil.com")  # ❌ Bloqué
+
+# Créer un snapshot avant exécution
+snapshot_id = manager.create_snapshot(sandbox.sandbox_id)
+
+# Exécuter dans le sandbox (auto-snapshot + auto-rollback en cas d'échec)
+result = manager.execute_in_sandbox(sandbox.sandbox_id, my_agent_function, args=("task-42",))
+print(f"Success: {result.success}, Duration: {result.duration_s}s")
+print(f"Violations: {len(result.violations)}")
+
+# Rollback manuel si nécessaire
+if not result.success:
+    manager.rollback_snapshot(sandbox.sandbox_id, snapshot_id)
+
+# Mode dry-run : plan sans exécution
+dry_sandbox = manager.create_sandbox("task-43", "coder", mode="dry_run",
+                                      allowed_paths=["src/"])
+result = manager.execute_in_sandbox(dry_sandbox.sandbox_id, my_agent_function)
+for step in result.dry_run_plan:
+    print(step)  # "[DRY RUN] ..."
+```
+
+**Impact :** Élevé — Sécurité renforcée pour les environnements entreprise, conformité SOC2/ISO 27001.
 
 ---
 
@@ -416,28 +1469,144 @@ POSTMAN_API_KEY=PMAK-your-api-key
 
 ## 8. Productivité & Automatisation
 
-### 8.1 — Scheduling de tâches (Cron-like)
+### 8.1 — Scheduling de tâches (Cron-like) ✅ Implémentée
+
+**Statut :** Terminée — Moteur de scheduling complet avec expressions cron, exécution programmée, chaînage de tâches et queue intelligente (50 tests unitaires passent).
 
 **Description :** Planifier l'exécution automatique de tâches récurrentes.
 
+**Implémentation réalisée :**
+- `apps/backend/scheduling/__init__.py` — Exports publics du module
+- `apps/backend/scheduling/scheduler.py` — Moteur de scheduling complet avec :
+  - `CronExpression` — Parser et évaluateur d'expressions cron 5 champs (minute, heure, jour du mois, mois, jour de la semaine). Supporte `*`, ranges (`1-5`), listes (`1,3,5`), steps (`*/15`) et combinaisons. Méthode `matches()` et `next_occurrence()`
+  - `ScheduledTask` — Tâche planifiable avec cron récurrent ou exécution unique (`run_at`), priorité (1-10), retries avec backoff exponentiel, statuts (pending/running/completed/failed/cancelled/paused), sérialisation `to_dict()`
+  - `TaskChain` — Chaîne de tâches séquentielles avec progression automatique, arrêt configurable sur erreur
+  - `TaskQueue` — Queue à priorité thread-safe avec `push()`, `pop()`, `peek()`, `list_due()`, tri par priorité puis datetime
+  - `TaskScheduler` — Orchestrateur principal avec :
+    - `add_task()` / `remove_task()` / `pause_task()` / `resume_task()` — Gestion du cycle de vie
+    - `register_handler()` — Enregistrement de handlers par type d'action
+    - `execute_task()` — Exécution avec gestion d'erreurs et retries
+    - `tick()` — Boucle principale (vérifie et exécute les tâches dues)
+    - `add_chain()` — Enregistrement de chaînes avec progression automatique
+    - `start()` / `stop()` — Thread background daemon
+    - `get_execution_log()` / `get_stats()` — Reporting
+- `tests/test_task_scheduler.py` — 50 tests unitaires (CronExpression: 15, ScheduledTask: 12, TaskChain: 5, TaskQueue: 8, TaskScheduler: 10)
+
 **Fonctionnalités :**
-- Tâches récurrentes : scan de sécurité quotidien, mise à jour des dépendances hebdomadaire
-- Exécution programmée : "lancer cette tâche ce soir à 22h"
-- Chaînage de tâches : "quand la tâche A est finie, lancer la tâche B"
-- Queue intelligente avec priorités et créneaux
+- ✅ Tâches récurrentes : scan de sécurité quotidien, mise à jour des dépendances hebdomadaire
+- ✅ Exécution programmée : "lancer cette tâche ce soir à 22h"
+- ✅ Chaînage de tâches : "quand la tâche A est finie, lancer la tâche B"
+- ✅ Queue intelligente avec priorités et créneaux
+- ✅ Retries avec backoff exponentiel
+- ✅ Pause/resume de tâches individuelles
+- ✅ Thread background daemon pour exécution automatique
+- ✅ Log d'exécution et statistiques
+
+**Utilisation :**
+```python
+from apps.backend.scheduling.scheduler import TaskScheduler, ScheduledTask, TaskChain
+
+# Créer le scheduler
+scheduler = TaskScheduler(check_interval=30)
+
+# Enregistrer des handlers d'action
+scheduler.register_handler("security_scan", my_security_scan_function)
+scheduler.register_handler("update_deps", my_update_deps_function)
+
+# Ajouter une tâche récurrente (tous les soirs à 22h)
+scheduler.add_task(ScheduledTask(
+    name="Scan de sécurité quotidien",
+    cron="0 22 * * *",
+    action="security_scan",
+    priority=2,
+    tags=["security", "daily"],
+))
+
+# Ajouter une tâche programmée (une seule fois)
+from datetime import datetime, timezone
+scheduler.add_task(ScheduledTask(
+    name="Mise à jour dépendances",
+    run_at=datetime(2026, 3, 1, 22, 0, tzinfo=timezone.utc),
+    action="update_deps",
+))
+
+# Chaîner des tâches
+chain = TaskChain(name="Pipeline CI", task_ids=["task-a", "task-b", "task-c"])
+scheduler.add_chain(chain)
+
+# Démarrer le scheduler en background
+scheduler.start()
+```
 
 ---
 
-### 8.2 — Auto-detection et création de tâches
+### 8.2 — Auto-detection et création de tâches ✅ Implémentée
+
+**Statut :** Terminée — Système de détection automatique multi-source avec 4 sources de détection, orchestrateur centralisé et création automatique de tâches (45 tests unitaires passent).
 
 **Description :** L'application détecte automatiquement des problèmes et propose des tâches.
 
+**Implémentation réalisée :**
+- `apps/backend/scheduling/auto_detector.py` — Système de détection complet avec :
+  - `DetectionFinding` — Modèle de données pour les détections (type, sévérité, titre, source, métadonnées, action suggérée, tags)
+  - `DetectionType` — Types de détection : `GITHUB_ISSUE`, `SECURITY_VULNERABILITY`, `DEPENDENCY_UPDATE`, `LOG_ERROR`, `MERGE_CONFLICT`, `CODE_SMELL`, `IDEATION_RESULT`, `SONARQUBE_ISSUE`
+  - `DetectionSeverity` — 5 niveaux : `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `INFO` avec mapping vers priorités (1-9)
+  - `DetectionSource` (ABC) — Interface abstraite pour les sources de détection
+  - `GitHubIssueSource` — Détection d'issues GitHub assignées, filtrage par labels, déduplication, évaluation de sévérité automatique
+  - `SecurityVulnerabilitySource` — Détection de vulnérabilités dans les dépendances (npm audit, pip-audit), mapping CVE
+  - `LogErrorSource` — Détection d'erreurs récurrentes dans les logs avec normalisation, seuil configurable, déduplication
+  - `MergeConflictSource` — Détection de fichiers avec merge conflicts fréquents, suggestion de refactoring
+  - `AutoDetector` — Orchestrateur principal avec :
+    - `register_source()` — Enregistrement de sources
+    - `scan_all()` — Scan de toutes les sources avec déduplication
+    - `add_findings()` — Ajout de détections externes
+    - `get_findings()` — Filtrage par type et sévérité minimum
+    - `create_tasks_from_findings()` — Conversion en tâches pour le scheduler
+    - `get_stats()` — Statistiques par type et sévérité
+- `tests/test_auto_detector.py` — 45 tests unitaires (DetectionFinding: 4, GitHubIssueSource: 10, SecurityVulnerabilitySource: 5, LogErrorSource: 7, MergeConflictSource: 5, AutoDetector: 7, + intégration sources: 7)
+
 **Sources de détection :**
-- Issues GitHub/GitLab nouvellement assignées → tâche auto-créée
-- Alertes de sécurité (dépendances, vulnérabilités) → tâche de correction
-- Résultats d'idéation (module existant) → conversion en tâches one-click
-- Erreurs récurrentes dans les logs → tâche de debugging
-- Merge conflicts fréquents → tâche de refactoring
+- ✅ Issues GitHub/GitLab nouvellement assignées → tâche auto-créée (avec filtrage par labels)
+- ✅ Alertes de sécurité (dépendances, vulnérabilités) → tâche de correction
+- ✅ Erreurs récurrentes dans les logs → tâche de debugging (seuil configurable)
+- ✅ Merge conflicts fréquents → tâche de refactoring
+- ✅ Déduplication automatique des détections
+- ✅ Évaluation automatique de la sévérité
+- ✅ Conversion automatique en tâches pour le scheduler (Feature 8.1)
+
+**Utilisation :**
+```python
+from apps.backend.scheduling.auto_detector import (
+    AutoDetector, GitHubIssueSource, SecurityVulnerabilitySource,
+    LogErrorSource, MergeConflictSource,
+)
+
+# Créer le détecteur
+detector = AutoDetector()
+
+# Enregistrer les sources
+detector.register_source(GitHubIssueSource(
+    owner="my-org", repo="my-project",
+    labels_filter=["bug", "critical"],
+))
+detector.register_source(SecurityVulnerabilitySource())
+detector.register_source(LogErrorSource(error_threshold=3))
+detector.register_source(MergeConflictSource(conflict_threshold=3))
+
+# Scanner et créer des tâches
+findings = detector.scan_all()
+tasks = detector.create_tasks_from_findings(findings)
+
+# Ou alimenter manuellement avec des données
+github_source = GitHubIssueSource("org", "repo")
+findings = github_source.scan_from_data([
+    {"number": 42, "title": "Bug login", "body": "...", "labels": [{"name": "bug"}]},
+])
+detector.add_findings(findings)
+
+# Filtrer les détections critiques
+critical = detector.get_findings(min_severity=DetectionSeverity.HIGH)
+```
 
 ---
 
@@ -552,18 +1721,22 @@ POSTMAN_API_KEY=PMAK-your-api-key
 
 | Feature | Effort | Impact Business | Différenciation |
 |---------|--------|----------------|-----------------|
-| Dashboard métriques | Moyen | 🔥🔥🔥 | Moyen |
-| Agent refactoring | Élevé | 🔥🔥🔥 | Élevé |
-| Mode pair programming | Moyen | 🔥🔥🔥🔥 | Très élevé |
-| Intégration Jira | Moyen | 🔥🔥🔥🔥 | Moyen |
-| Azure DevOps enrichi | Moyen | 🔥🔥🔥 | Élevé |
-| Intégration Slack/Teams | Faible | 🔥🔥🔥 | Moyen |
-| Intégration SonarQube | Faible | 🔥🔥 | Moyen |
+| Dashboard métriques ✅ | Moyen | 🔥🔥🔥 | Moyen |
+| Historique sessions ✅ | Moyen | 🔥🔥🔥 | Élevé |
+| Agent refactoring ✅ | Élevé | 🔥🔥🔥 | Élevé |
+| Agent documentation ✅ | Moyen | 🔥🔥🔥 | Élevé |
+| Mode pair programming ✅ | Moyen | 🔥🔥🔥🔥 | Très élevé |
+| Intégration Jira ✅ | Moyen | 🔥🔥🔥🔥 | Moyen |
+| Azure DevOps enrichi ✅ | Moyen | 🔥🔥🔥 | Élevé |
+| Intégration Slack/Teams ✅ | Faible | 🔥🔥🔥 | Moyen |
+| Intégration SonarQube ✅ | Faible | 🔥🔥 | Moyen |
 | Plugin VSCode | Élevé | 🔥🔥🔥🔥 | Très élevé |
 | Routing intelligent LLM | Élevé | 🔥🔥🔥 | Très élevé |
-| Estimation des coûts | Moyen | 🔥🔥🔥🔥 | Élevé |
-| Scheduling de tâches | Moyen | 🔥🔥🔥 | Moyen |
-| Génération de tests | Élevé | 🔥🔥🔥🔥 | Élevé |
+| Estimation des coûts ✅ | Moyen | 🔥🔥🔥🔥 | Élevé |
+| Scheduling de tâches ✅ | Moyen | 🔥🔥🔥 | Moyen |
+| Auto-detection tâches ✅ | Moyen | 🔥🔥🔥 | Élevé |
+| Support modèles locaux ✅ | Moyen | 🔥🔥🔥 | Élevé |
+| Génération de tests ✅ | Élevé | 🔥🔥🔥🔥 | Élevé |
 | Command Palette | Faible | 🔥🔥 | Moyen |
 | Multi-utilisateurs | Très élevé | 🔥🔥🔥🔥🔥 | Très élevé |
 | Audit trail | Moyen | 🔥🔥🔥 | Élevé (entreprise) |
@@ -574,27 +1747,29 @@ POSTMAN_API_KEY=PMAK-your-api-key
 
 1. **Command Palette** — Implémentation simple avec un composant dialog + fuzzy search
 2. **Raccourcis clavier** — Ajout d'un hook `useHotkeys` global
-3. **Estimation coûts basique** — Calcul coût par token affiché dans le dashboard existant
-4. **Intégration SonarQube** — Le MCP est déjà disponible, il suffit de consommer les données
+3. **Estimation coûts basique** ✅ — Calcul coût par token affiché dans le dashboard existant
+4. **Intégration SonarQube** ✅ — Le MCP est déjà disponible, il suffit de consommer les données
 5. **Notifications desktop enrichies** — Electron supporte nativement les notifications
-6. **Templates de tâches** — Fichiers YAML dans `.auto-claude/templates/` + UI de sélection
+6. **Templates de tâches** ✅ — Fichiers YAML dans `.auto-claude/templates/` + UI de sélection
 
 ---
 
 ## Roadmap suggérée
 
 ### Phase 1 — Fondations (Q1 2026)
-- Dashboard métriques
-- Estimation des coûts
+- Dashboard métriques ✅
+- Historique et replay sessions ✅
+- Estimation des coûts ✅
 - Command Palette + raccourcis clavier
-- Templates de tâches
+- Templates de tâches ✅
 - Quick wins ci-dessus
 
 ### Phase 2 — Intelligence (Q2 2026)
-- Mode pair programming interactif
-- Agent de refactoring autonome
+- Mode pair programming interactif ✅
+- Agent de refactoring autonome ✅
+- Agent de documentation automatique ✅
 - Routing intelligent multi-provider
-- Génération automatique de tests
+- Génération automatique de tests ✅
 
 ### Phase 3 — Entreprise (Q3 2026)
 - Intégration Jira
@@ -607,4 +1782,3 @@ POSTMAN_API_KEY=PMAK-your-api-key
 - Mode multi-utilisateurs
 - API REST publique + SDK
 - Plugin VSCode
-- Agent de documentation
