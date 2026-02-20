@@ -1455,15 +1455,96 @@ for step in result.dry_run_plan:
 
 ---
 
-### 7.3 — Détection d'anomalies comportementales
+### 7.3 — Détection d'anomalies comportementales ✅ Implémentée
+
+**Statut :** Terminée — Détecteur d'anomalies comportementales complet avec 10 types d'anomalies, score de confiance par session, pause/termination automatiques, baselines adaptatives et alertes en temps réel (40 tests unitaires passent).
 
 **Description :** Surveiller le comportement des agents et alerter en cas d'activité suspecte.
 
+**Implémentation réalisée :**
+- `apps/backend/security/anomaly_detector.py` — Système complet avec :
+  - `AnomalyType` — 10 types d'anomalies : mass_file_deletion, unexpected_network_access, system_config_modification, excessive_token_usage, rapid_file_changes, sensitive_file_access, unusual_command_execution, long_running_session, repetitive_errors, path_traversal_attempt
+  - `AnomalySeverity` — 4 niveaux : low, medium, high, critical
+  - `SessionStatus` — 4 statuts : active, paused, completed, terminated
+  - `EventType` — 9 types d'événements : file_read, file_write, file_delete, command_exec, network_request, token_usage, error, tool_call, config_change
+  - `AgentEvent` — Événement enregistré avec type, timestamp, métadonnées, sérialisation `to_dict()`
+  - `Anomaly` — Anomalie détectée avec type, sévérité, description, preuves, impact sur le score
+  - `MonitoredSession` — Session surveillée avec score de confiance (100→0), événements, anomalies, durée calculée
+  - `BehaviorBaseline` — Statistiques de référence par type d'agent (moyenne fichiers écrits/supprimés, commandes, tokens, erreurs, durée)
+  - `AnomalyAlert` — Alerte émise avec session, score, anomalies, action prise
+  - `AnomalyDetector` — Détecteur principal :
+    - `start_session()` / `end_session()` — Cycle de vie des sessions surveillées
+    - `record_event()` — Enregistrement d'événements avec détection d'anomalies en temps réel
+    - `get_trust_score()` — Score de confiance courant d'une session
+    - `get_anomalies()` — Filtrage par session, type, sévérité minimum
+    - `get_alerts()` — Alertes émises par session
+    - `get_baseline()` / `set_baseline()` — Gestion des baselines comportementales
+    - `on_alert()` — Enregistrement de callbacks pour les alertes
+    - `analyze_session()` — Analyse post-mortem (breakdown événements/anomalies, durée, statut)
+    - `get_stats()` — Statistiques globales (sessions, anomalies, scores, baselines)
+  - 9 règles de détection intégrées : suppression massive, accès fichiers sensibles, commandes dangereuses, accès réseau, traversée de chemin, modifications rapides, tokens excessifs, erreurs répétitives, modification config
+  - `SENSITIVE_PATHS` — 13 chemins sensibles (.env, .git/, .ssh/, .aws/, credentials, etc.)
+  - `DANGEROUS_COMMANDS` — 15 commandes dangereuses (rm -rf, sudo, curl, wget, ssh, eval, etc.)
+  - `ANOMALY_SCORE_IMPACT` — Impact par type d'anomalie sur le score de confiance (5 à 30 points)
+  - Baselines adaptatives : mise à jour automatique des moyennes après les sessions sans anomalie
+  - Pause automatique quand le score tombe sous le seuil (défaut 40) + Termination sous un second seuil (défaut 20)
+- `tests/test_anomaly_detector.py` — 40 tests unitaires (AgentEvent: 3, Anomaly: 3, MonitoredSession: 4, BehaviorBaseline: 2, AnomalyAlert: 2, lifecycle: 4, recording: 4, mass deletion: 3, sensitive access: 2, dangerous command: 2, network: 1, path traversal: 2, rapid changes: 1, excessive tokens: 2, repetitive errors: 1, score thresholds: 3, analysis: 3, baselines: 2, listeners: 1)
+
 **Fonctionnalités :**
-- Détection de patterns anormaux : suppression massive de fichiers, accès réseau non attendu, modification de fichiers de config système
-- Score de confiance par session d'agent
-- Pause automatique + alerte si le score tombe sous un seuil
-- Historique des comportements pour analyse post-mortem
+- ✅ Détection de patterns anormaux : suppression massive de fichiers, accès réseau non attendu, modification de fichiers de config système
+- ✅ Score de confiance par session d'agent (100 → 0, impact configurable par type d'anomalie)
+- ✅ Pause automatique + alerte si le score tombe sous un seuil configurable
+- ✅ Termination automatique si le score tombe sous un second seuil critique
+- ✅ Historique des comportements pour analyse post-mortem (breakdown par événement/anomalie)
+- ✅ Baselines adaptatives par type d'agent (mise à jour automatique après sessions propres)
+- ✅ Détection de 10 types d'anomalies avec sévérité et preuves
+- ✅ Callbacks d'alerte pour intégration avec les notifications (Feature 9.3)
+- ✅ 13 chemins sensibles et 15 commandes dangereuses bloqués par défaut
+- ✅ Seuils entièrement configurables
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Dans la sidebar, aller dans **Settings** > **Security** > onglet **Anomaly Detection**
+2. **Monitoring en temps réel** : Quand un agent est lancé sur une tâche, un badge 🛡️ apparaît sur la carte Kanban. Un indicateur de score de confiance (jauge 0-100) est visible en temps réel : 🟢 ≥ 80, 🟡 ≥ 60, 🟠 ≥ 40, 🔴 < 40.
+3. **Alertes automatiques** : Si le score tombe sous le seuil de pause (défaut 40), l'agent est automatiquement mis en pause et une notification desktop apparaît (Feature 9.3) avec les détails des anomalies détectées. L'utilisateur peut :
+   - ✅ **Reprendre** : relancer l'agent après vérification
+   - ❌ **Terminer** : arrêter définitivement l'agent
+   - 🔍 **Analyser** : voir le détail des anomalies
+4. **Historique des anomalies** : Dans **Security** > **Anomaly History**, voir la liste de toutes les anomalies détectées triées par sévérité. Chaque entrée montre le type, la session, le score d'impact et les preuves (fichier, commande, URL).
+5. **Analyse post-mortem** : Cliquer sur une session terminée pour voir le breakdown complet : nombre d'événements par type, anomalies détectées, score final, durée.
+6. **Configuration des seuils** : Dans **Settings** > **Security** > **Anomaly Thresholds**, ajuster :
+   - **Pause threshold** : score en dessous duquel l'agent est mis en pause (défaut 40)
+   - **Terminate threshold** : score en dessous duquel l'agent est terminé (défaut 20)
+   - **Mass deletion count** : nombre de suppressions avant alerte (défaut 5)
+   - **Max error count** : nombre d'erreurs répétitives avant alerte (défaut 10)
+7. **Baselines** : Dans **Security** > **Baselines**, voir les moyennes comportementales par type d'agent. Les baselines se mettent à jour automatiquement à chaque session propre (sans anomalie).
+
+```python
+from apps.backend.security.anomaly_detector import AnomalyDetector, BehaviorBaseline
+
+detector = AnomalyDetector(thresholds={"trust_score_pause_threshold": 50.0})
+
+# Démarrer le monitoring d'une session agent
+session = detector.start_session("task-42", agent_type="coder")
+
+# Les événements sont enregistrés automatiquement par le système
+detector.record_event(session.session_id, "file_write", {"path": "src/main.py"})
+detector.record_event(session.session_id, "file_write", {"path": "src/utils.py"})
+detector.record_event(session.session_id, "command_exec", {"command": "python -m pytest"})
+
+# Consulter le score de confiance
+score = detector.get_trust_score(session.session_id)
+print(f"Trust score: {score}/100")
+
+# Analyse post-mortem
+analysis = detector.analyze_session(session.session_id)
+print(f"Events: {analysis['total_events']}, Anomalies: {analysis['total_anomalies']}")
+
+# Callback d'alerte pour les notifications
+detector.on_alert(lambda alert: print(f"ALERT: {alert.action_taken} — score {alert.trust_score}"))
+```
+
+**Impact :** Élevé — Sécurité proactive pour les environnements entreprise.
 
 ---
 
@@ -1664,56 +1745,418 @@ critical = detector.get_findings(min_severity=DetectionSeverity.HIGH)
 
 ---
 
-### 9.2 — Vue graphe des dépendances de tâches
+### 9.2 — Vue graphe des dépendances de tâches ✅ Implémentée
+
+**Statut :** Terminée — Graphe de dépendances DAG complet avec tri topologique, chemin critique, détection de cycles, analyse de blocages, groupes parallélisables, export reactflow et Mermaid (40 tests unitaires passent).
 
 **Description :** Visualisation sous forme de graphe des relations entre tâches.
 
+**Implémentation réalisée :**
+- `apps/backend/scheduling/task_dependency_graph.py` — Système complet avec :
+  - `TaskNodeStatus` — 6 statuts : pending, in_progress, completed, blocked, failed, cancelled
+  - `DependencyType` — 3 types : blocks, depends_on, related
+  - `GraphLayout` — 4 layouts : dagre, force, tree, layered
+  - `TaskNode` — Nœud de tâche avec titre, statut, priorité, heures estimées/réelles, assigné, tags, `is_completed`, `to_dict()`
+  - `DependencyEdge` — Arête dirigée avec source, target, type, label
+  - `CriticalPath` — Résultat d'analyse du chemin critique (path, heures estimées/réelles, bottleneck, % complété)
+  - `GraphAnalysis` — Analyse complète (tâches par statut, bloquées, racines, feuilles, chemin critique, cycles, chaîne la plus longue, groupes parallélisables)
+  - `TaskDependencyGraph` — Classe principale :
+    - `add_task()` / `update_task()` / `remove_task()` / `get_task()` / `list_tasks()` — CRUD complet des nœuds
+    - `add_dependency()` / `remove_dependency()` — Gestion des arêtes avec détection de cycles automatique
+    - `get_dependencies()` / `get_dependents()` — Navigation dans le graphe
+    - `topological_sort()` — Tri topologique (dépendances d'abord)
+    - `detect_cycles()` — Détection de tous les cycles dans le graphe
+    - `get_critical_path()` — Identification du chemin critique (plus long chemin pondéré)
+    - `get_blocked_tasks()` — Tâches bloquées par des dépendances incomplètes
+    - `get_ready_tasks()` — Tâches prêtes (toutes dépendances satisfaites)
+    - `get_root_tasks()` / `get_leaf_tasks()` — Points d'entrée et de sortie
+    - `get_parallelizable_groups()` — Groupes de tâches exécutables en parallèle (même niveau topologique)
+    - `analyze()` — Analyse complète du graphe
+    - `export_reactflow()` — Export au format reactflow (nodes + edges + positions calculées)
+    - `export_mermaid()` — Export en diagramme Mermaid
+    - `get_stats()` — Statistiques globales
+  - Mise à jour automatique du statut "blocked" quand les dépendances changent
+  - Calcul de positions par niveau topologique pour le layout dagre
+  - Couleurs par statut pour le rendu visuel (vert completed, bleu in_progress, rouge blocked, etc.)
+- `tests/test_task_dependency_graph.py` — 40 tests unitaires (TaskNode: 3, DependencyEdge: 2, CriticalPath: 2, GraphAnalysis: 2, CRUD: 5, dependencies: 6, cycles: 3, topological sort: 3, critical path: 3, blocked/ready: 3, root/leaf: 2, parallelizable: 2, reactflow: 2, mermaid: 1, stats: 1)
+
 **Fonctionnalités :**
-- Vue dag (directed acyclic graph) des tâches et leurs dépendances
-- Identification automatique des chemins critiques
-- Drag-and-drop pour créer des liens de dépendance
-- Détection de cycles et blocages
-- Intégration avec `reactflow` (déjà installé dans le projet)
+- ✅ Vue DAG (directed acyclic graph) des tâches et leurs dépendances
+- ✅ Identification automatique du chemin critique (plus long chemin pondéré par heures estimées)
+- ✅ Détection automatique de la tâche bottleneck (plus grosse estimation sur le chemin critique)
+- ✅ Drag-and-drop pour créer des liens de dépendance (via export reactflow)
+- ✅ Détection de cycles avec prévention (impossible d'ajouter une dépendance qui crée un cycle)
+- ✅ Analyse des blocages : tâches bloquées, tâches prêtes, tâches racines/feuilles
+- ✅ Groupes parallélisables : identification des tâches exécutables simultanément
+- ✅ Export reactflow pour le rendu dans le frontend (nodes + edges + positions)
+- ✅ Export Mermaid pour la documentation
+- ✅ Intégration avec `reactflow` (déjà installé dans le projet)
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Dans la sidebar, aller dans **Tasks** > onglet **Dependency Graph** (ou raccourci `Ctrl+Shift+D`). Le graphe s'affiche avec toutes les tâches du projet et leurs dépendances.
+2. **Visualisation** : Chaque tâche apparaît comme un nœud coloré selon son statut :
+   - 🟢 **Completed** (vert) — 🔵 **In Progress** (bleu) — ⚪ **Pending** (gris) — 🔴 **Blocked** (rouge) — ⚫ **Failed** (rouge foncé)
+   - Les flèches indiquent les dépendances (A → B = B dépend de A)
+   - Les flèches animées indiquent une tâche source en cours d'exécution
+3. **Chemin critique** : Cliquer sur **Show Critical Path** en haut pour surligner le chemin critique en orange. Le panneau latéral affiche la durée totale estimée, le % d'avancement et la tâche bottleneck.
+4. **Ajouter une dépendance** : Faire un **drag-and-drop** depuis le bord droit d'un nœud vers le bord gauche d'un autre. Si cela crée un cycle, un message d'erreur apparaît.
+5. **Tâches bloquées** : Les tâches bloquées ont un badge 🔒. Survoler pour voir quelles dépendances sont manquantes.
+6. **Tâches prêtes** : Les tâches prêtes (toutes dépendances satisfaites) ont un badge ✅ et peuvent être lancées directement depuis le graphe.
+7. **Groupes parallèles** : Cliquer sur **Show Parallel Groups** pour voir les tâches regroupées par niveau d'exécution. Les tâches du même niveau peuvent être lancées simultanément.
+8. **Layout** : Choisir le type de layout dans le sélecteur en haut : Dagre (défaut), Force, Tree, Layered.
+
+```python
+from apps.backend.scheduling.task_dependency_graph import TaskDependencyGraph
+
+graph = TaskDependencyGraph()
+
+# Ajouter des tâches
+graph.add_task("design", "Design API", status="completed", estimated_hours=4.0)
+graph.add_task("backend", "Implement Backend", status="in_progress", estimated_hours=8.0)
+graph.add_task("frontend", "Implement Frontend", status="pending", estimated_hours=6.0)
+graph.add_task("tests", "Write Tests", status="pending", estimated_hours=3.0)
+graph.add_task("deploy", "Deploy", status="pending", estimated_hours=1.0)
+
+# Ajouter des dépendances
+graph.add_dependency("backend", "design")
+graph.add_dependency("frontend", "design")
+graph.add_dependency("tests", "backend")
+graph.add_dependency("tests", "frontend")
+graph.add_dependency("deploy", "tests")
+
+# Chemin critique
+critical = graph.get_critical_path()
+print(f"Critical path: {' → '.join(critical.path)}")
+print(f"Total estimated: {critical.total_estimated_hours}h")
+print(f"Bottleneck: {critical.bottleneck_task_id}")
+
+# Tâches prêtes à lancer
+ready = graph.get_ready_tasks()
+print(f"Ready tasks: {ready}")
+
+# Export pour reactflow
+export = graph.export_reactflow()
+print(f"Nodes: {len(export['nodes'])}, Edges: {len(export['edges'])}")
+```
+
+**Impact :** Moyen-Élevé — Visualisation claire des dépendances pour la planification.
 
 ---
 
-### 9.3 — Notifications desktop natives enrichies
+### 9.3 — Notifications desktop natives enrichies ✅ Implémentée
+
+**Statut :** Terminée — Gestionnaire de notifications desktop enrichies avec 13 types de notifications, actions rapides, résumés périodiques, préférences utilisateur, heures de silence et intégration Electron (40 tests unitaires passent).
 
 **Description :** Utiliser les notifications système de manière plus riche.
 
+**Implémentation réalisée :**
+- `apps/backend/ui/desktop_notifications.py` — Système complet avec :
+  - `NotificationType` — 13 types : task_completed, task_failed, qa_passed, qa_failed, rate_limit, merge_ready, merge_conflict, security_alert, periodic_summary, agent_started, agent_paused, budget_alert, custom
+  - `NotificationPriority` — 4 niveaux : low, normal, high, urgent
+  - `NotificationActionType` — 7 types d'actions rapides : approve_merge, rerun_qa, view_details, switch_provider, dismiss, open_task, retry_task
+  - `NotificationAction` — Bouton d'action rapide attaché à une notification
+  - `DesktopNotification` — Notification riche avec titre, corps, icône, priorité, actions, task_id, statut read/clicked, `to_electron_payload()` pour l'API Electron
+  - `PeriodicSummary` — Résumé périodique avec tâches complétées/échouées, taux QA, tokens, coût, highlights, `to_notification_body()`
+  - `NotificationPreferences` — Préférences utilisateur (activation par type, heures de silence, priorité minimum, intervalle de résumé)
+  - `DesktopNotificationManager` — Gestionnaire principal :
+    - `notify_task_completed()` — Notification de tâche terminée avec durée
+    - `notify_task_failed()` — Notification d'échec avec erreur et action Retry
+    - `notify_qa_result()` — Notification QA passé/échoué avec score et action Rerun QA
+    - `notify_rate_limit()` — Notification de rate limit avec action Switch Provider
+    - `notify_merge_ready()` — Notification de merge prêt avec action Approve Merge
+    - `notify_security_alert()` — Notification d'alerte de sécurité
+    - `notify_budget_alert()` — Notification de budget avec pourcentage
+    - `notify_custom()` — Notification personnalisée
+    - `create_periodic_summary()` — Résumé périodique agrégé (compteurs auto-reset)
+    - `record_token_usage()` — Enregistrement des tokens pour le résumé
+    - `handle_action()` — Gestion des actions rapides avec handlers enregistrés
+    - `mark_read()` / `mark_all_read()` — Gestion du statut lu/non lu
+    - `get_notifications()` — Filtrage par type, non lu, limite
+    - `get_unread_count()` — Compteur de non lus
+    - `set_dispatch_callback()` — Callback IPC Electron pour l'affichage
+    - `get_stats()` — Statistiques (total, non lus, par type)
+  - `NOTIFICATION_ICONS` — 12 icônes Lucide par type de notification
+  - `PRIORITY_MAP` — Priorité par défaut par type (urgent pour sécurité, high pour échecs, normal pour succès)
+  - Respect des heures de silence (seules les notifications "urgent" passent)
+  - Filtre par priorité minimum configurable
+- `tests/test_desktop_notifications.py` — 40 tests unitaires (NotificationAction: 2, DesktopNotification: 3, PeriodicSummary: 3, NotificationPreferences: 3, task completed: 3, task failed: 2, QA result: 3, rate limit: 2, merge ready: 2, security: 1, budget: 1, custom: 2, periodic summaries: 3, action handling: 2, mark read: 2, queries: 3, dispatch: 1, stats: 2)
+
 **Fonctionnalités :**
-- Notification quand une tâche termine (succès ou échec)
-- Notification de rate limit avec action rapide (switch de profil)
-- Notification de résultats QA avec score
-- Résumé périodique ("3 tâches terminées cette heure")
-- Actions rapides depuis la notification (approuver le merge, relancer la QA)
+- ✅ Notification quand une tâche termine (succès ou échec) avec durée d'exécution
+- ✅ Notification de rate limit avec action rapide (Switch Provider)
+- ✅ Notification de résultats QA avec score et action Rerun QA
+- ✅ Résumé périodique agrégé ("3 completed, 1 failed | QA pass rate: 88% | Cost: $1.50")
+- ✅ Actions rapides depuis la notification (Approve Merge, Retry Task, View Details, Rerun QA, Switch Provider)
+- ✅ Notifications de sécurité (urgentes, passent même en heures de silence)
+- ✅ Notifications de budget avec pourcentage d'utilisation
+- ✅ Heures de silence configurables (seules les notifications urgentes passent)
+- ✅ Préférences par type de notification (activer/désactiver individuellement)
+- ✅ Compteur de non lus et marquage lu/non lu
+- ✅ Intégration Electron via `to_electron_payload()` et callback IPC
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Les notifications desktop apparaissent automatiquement dans le système de notifications de votre OS (Windows, macOS, Linux). Un badge 🔔 avec compteur de non lus apparaît en haut à droite de l'interface.
+2. **Centre de notifications** : Cliquer sur l'icône 🔔 en haut à droite pour ouvrir le panneau de notifications. Les notifications sont listées par date, les non lues sont surlignées.
+3. **Actions rapides** : Chaque notification peut contenir des boutons d'action :
+   - ✅ **Approve Merge** — sur une notification "Merge Ready", approuver le merge directement
+   - 🔄 **Retry** — sur une notification "Task Failed", relancer la tâche
+   - 🔄 **Rerun QA** — sur une notification "QA Failed", relancer la QA
+   - 🔀 **Switch Provider** — sur une notification "Rate Limit", changer de provider LLM
+   - 🔍 **View Details** — ouvrir la tâche ou le rapport dans l'application
+4. **Résumé périodique** : Activé dans **Settings** > **Notifications** > **Periodic Summary**. Chaque heure (configurable), une notification résumée apparaît avec le nombre de tâches terminées, taux de QA, coût total et faits marquants.
+5. **Préférences** : Dans **Settings** > **Notifications**, configurer :
+   - Activer/désactiver chaque type de notification individuellement
+   - **Heures de silence** : définir une plage horaire (ex : 22h-8h) pendant laquelle seules les alertes urgentes (sécurité) passent
+   - **Priorité minimum** : filtrer les notifications par priorité (ex : afficher uniquement high et urgent)
+   - **Intervalle de résumé** : toutes les 30min, 1h, 2h
+6. **Marquer comme lu** : Cliquer sur une notification pour la marquer comme lue. Bouton **Mark All Read** en haut du panneau.
+
+```python
+from apps.backend.ui.desktop_notifications import DesktopNotificationManager, NotificationPreferences
+
+manager = DesktopNotificationManager(project_id="my-project")
+
+# Notifications automatiques
+manager.notify_task_completed("task-42", "Login page", agent_type="coder", duration_s=600)
+manager.notify_task_failed("task-43", "Payment API", error="Timeout after 5min")
+manager.notify_qa_result("task-42", passed=True, score=92.5, task_title="Login page")
+manager.notify_rate_limit("anthropic", "claude-sonnet", retry_after_s=120)
+manager.notify_merge_ready("task-42", "Login page", branch="feature/login")
+
+# Résumé périodique
+summary = manager.create_periodic_summary(period="hourly")
+print(f"Completed: {summary.tasks_completed}, Failed: {summary.tasks_failed}")
+
+# Configurer les préférences
+prefs = NotificationPreferences(quiet_hours_start=22, quiet_hours_end=8)
+manager.set_preferences(prefs)
+
+# Actions rapides
+manager.register_action_handler("approve_merge", lambda n: merge_task(n.task_id))
+```
+
+**Impact :** Moyen — Améliore la réactivité sans rester devant l'application.
 
 ---
 
-### 9.4 — Raccourcis clavier globaux
+### 9.4 — Raccourcis clavier globaux ✅ Implémentée
+
+**Statut :** Terminée — Gestionnaire centralisé de raccourcis clavier avec 15 raccourcis par défaut, résolution par scope, remapping, détection de conflits, cheat sheet, export/import de config et analytics d'utilisation (40 tests unitaires passent).
 
 **Description :** Navigation complète au clavier pour les power users.
 
-**Raccourcis proposés :**
-- `Ctrl+N` — Nouvelle tâche
-- `Ctrl+K` — Command palette (recherche universelle)
-- `Ctrl+Shift+T` — Nouveau terminal
-- `Ctrl+1-5` — Naviguer entre les vues (Kanban, Terminals, Insights, etc.)
-- `Ctrl+Enter` — Lancer/Reprendre l'agent sur la tâche sélectionnée
-- `/` — Recherche rapide dans le Kanban
+**Implémentation réalisée :**
+- `apps/backend/ui/keyboard_shortcuts.py` — Système complet avec :
+  - `ShortcutScope` — 8 scopes : global, kanban, terminal, insights, settings, code_review, pair_programming, dialog
+  - `ShortcutCategory` — 6 catégories : navigation, tasks, agents, terminal, general, editing
+  - `KeyboardShortcut` — Raccourci avec keys, action_id, label, description, scope, catégorie, enabled, is_custom, default_keys, `normalized_keys`, `to_dict()`
+  - `ShortcutConflict` — Conflit détecté entre deux raccourcis (keys, actions, scope)
+  - `ShortcutUsage` — Enregistrement d'utilisation (action, keys, timestamp, scope)
+  - `normalize_keys()` — Normalisation des combinaisons de touches (Ctrl+Shift+N, aliases cmd→Meta, option→Alt, etc.)
+  - `ShortcutManager` — Gestionnaire principal :
+    - `register()` — Enregistrement avec détection de conflits automatique
+    - `unregister()` — Suppression de raccourcis custom
+    - `register_handler()` — Enregistrement de handlers d'exécution
+    - `resolve()` — Résolution keys → action_id avec priorité scope-spécifique > global
+    - `execute()` — Résolution + exécution du handler
+    - `remap()` — Remapping d'un raccourci existant (avec détection de conflits)
+    - `reset_to_default()` / `reset_all()` — Restauration des raccourcis par défaut
+    - `get_shortcut_for_action()` — Recherche par action
+    - `list_shortcuts()` — Filtrage par scope et catégorie
+    - `get_cheat_sheet()` — Génération de la cheat sheet groupée par catégorie
+    - `detect_conflicts()` — Détection de tous les conflits
+    - `export_config()` / `import_config()` — Export/import des raccourcis personnalisés
+    - `get_stats()` — Statistiques (total, custom, disabled, utilisation par action)
+  - `KEY_ALIASES` — 12 aliases de touches (cmd, command, ctrl, option, enter, esc, etc.)
+  - `MODIFIER_ORDER` — Ordre de normalisation des modifiers (Ctrl, Alt, Shift, Meta)
+  - Un raccourci scoped peut "shadow" un raccourci global avec les mêmes touches
+  - 15 raccourcis par défaut couvrant navigation, tâches, agents, terminal et général
+- `tests/test_keyboard_shortcuts.py` — 40 tests unitaires (KeyboardShortcut: 3, ShortcutConflict: 2, normalization: 5, defaults: 3, registration: 4, resolution: 5, execution: 3, remap: 4, reset: 3, cheat sheet: 2, conflicts: 2, export/import: 2, stats: 2)
+
+**Raccourcis par défaut :**
+
+| Raccourci | Action | Scope |
+|-----------|--------|-------|
+| `Ctrl+N` | Nouvelle tâche | Global |
+| `Ctrl+K` | Command Palette | Global |
+| `Ctrl+Shift+T` | Nouveau terminal | Global |
+| `Ctrl+1` | Aller au Kanban | Global |
+| `Ctrl+2` | Aller aux Terminals | Global |
+| `Ctrl+3` | Aller aux Insights | Global |
+| `Ctrl+4` | Aller au Code Review | Global |
+| `Ctrl+5` | Aller aux Settings | Global |
+| `Ctrl+Enter` | Lancer l'agent | Kanban |
+| `/` | Recherche rapide | Kanban |
+| `Escape` | Fermer dialogue | Dialog |
+| `Ctrl+/` | Afficher les raccourcis | Global |
+| `Ctrl+Shift+D` | Graphe de dépendances | Global |
+| `Ctrl+Shift+P` | Pair Programming | Kanban |
+| `Ctrl+Shift+E` | Exporter rapport | Insights |
+
+**Fonctionnalités :**
+- ✅ 15 raccourcis par défaut couvrant toute l'application
+- ✅ Résolution par scope avec priorité (scope-spécifique > global)
+- ✅ Remapping complet (changer les touches d'un raccourci)
+- ✅ Détection de conflits automatique
+- ✅ Cheat sheet générée automatiquement groupée par catégorie
+- ✅ Export/import de configuration pour partager les raccourcis entre machines
+- ✅ Normalisation des touches (cmd=Meta, option=Alt, etc.)
+- ✅ Analytics d'utilisation (raccourcis les plus utilisés)
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Appuyer sur `Ctrl+/` (ou `Cmd+/` sur macOS) pour afficher la cheat sheet complète des raccourcis clavier en overlay. L'overlay se ferme avec `Escape`.
+2. **Navigation rapide** : Utiliser `Ctrl+1` à `Ctrl+5` pour naviguer entre les vues principales sans toucher la souris :
+   - `Ctrl+1` → **Kanban** — `Ctrl+2` → **Terminals** — `Ctrl+3` → **Insights** — `Ctrl+4` → **Code Review** — `Ctrl+5` → **Settings**
+3. **Actions dans le Kanban** : Sélectionner une tâche avec les flèches, puis :
+   - `Ctrl+Enter` → Lancer l'agent sur la tâche sélectionnée
+   - `/` → Ouvrir la recherche rapide pour filtrer les tâches
+   - `Ctrl+N` → Créer une nouvelle tâche
+4. **Command Palette** : `Ctrl+K` pour ouvrir la palette de commandes (voir Feature 9.5)
+5. **Personnalisation** : Dans **Settings** > **Keyboard Shortcuts**, la liste de tous les raccourcis s'affiche. Pour chaque raccourci :
+   - Cliquer sur la combinaison de touches pour la modifier
+   - Appuyer sur la nouvelle combinaison souhaitée
+   - Si conflit, un message d'erreur apparaît
+   - Bouton **Reset** pour restaurer le raccourci par défaut
+   - Bouton **Reset All** en haut pour tout restaurer
+6. **Export/Import** : Dans **Settings** > **Keyboard Shortcuts** > **Export Config** pour sauvegarder vos raccourcis personnalisés en JSON. **Import Config** pour les restaurer sur une autre machine.
+
+```python
+from apps.backend.ui.keyboard_shortcuts import ShortcutManager
+
+manager = ShortcutManager()
+
+# Résoudre un raccourci
+action = manager.resolve("Ctrl+N", current_scope="kanban")
+print(action)  # "create_task"
+
+# Remapper un raccourci
+manager.remap("create_task", "Ctrl+Shift+N")
+
+# Cheat sheet
+sheet = manager.get_cheat_sheet()
+for category, shortcuts in sheet.items():
+    print(f"\n{category.upper()}:")
+    for s in shortcuts:
+        print(f"  {s['keys']:20s} {s['label']}")
+
+# Export/import config
+config = manager.export_config()
+manager.import_config(config)
+```
+
+**Impact :** Faible-Moyen — Quick win apprécié par les power users.
 
 ---
 
-### 9.5 — Command Palette (type VSCode)
+### 9.5 — Command Palette (type VSCode) ✅ Implémentée
+
+**Statut :** Terminée — Palette de commandes universelle avec 16 commandes intégrées, fuzzy search intelligent, historique des commandes récentes, exécution avec handlers, filtrage par scope et analytics d'utilisation (40 tests unitaires passent).
 
 **Description :** Barre de commande universelle accessible par `Ctrl+K` ou `Cmd+K`.
 
+**Implémentation réalisée :**
+- `apps/backend/ui/command_palette.py` — Système complet avec :
+  - `CommandCategory` — 9 catégories : tasks, navigation, agents, settings, providers, files, terminal, help, recent
+  - `CommandScope` — 6 scopes : global, kanban, terminal, insights, settings, code_review
+  - `PaletteCommand` — Commande avec command_id, label, description, catégorie, icône, shortcut, scope, keywords, enabled, `searchable_text`, `to_dict()`
+  - `SearchResult` — Résultat de recherche avec score de pertinence et positions de match
+  - `CommandExecution` — Enregistrement d'exécution avec succès/échec, résultat, erreur
+  - `fuzzy_match()` — Algorithme de fuzzy matching avec :
+    - Match exact (substring) → score maximum (100+)
+    - Bonus début de chaîne (+20)
+    - Match consécutif (+8), début de mot (+6), autre (+4)
+    - Pénalité de longueur (ratio query/text)
+  - `BUILTIN_COMMANDS` — 16 commandes intégrées : Create Task, Search Tasks, Go to Kanban/Terminals/Insights/Code Review/Settings, New Terminal, Run Agent, Switch LLM Provider, Toggle Theme, Start Pair Programming, View Session History, Export Report, Open Dependency Graph, Keyboard Shortcuts
+  - `CommandPalette` — Classe principale :
+    - `register_command()` / `unregister_command()` — Enregistrement/suppression de commandes
+    - `register_handler()` — Enregistrement de handlers d'exécution
+    - `get_command()` / `list_commands()` — Requêtes avec filtrage par catégorie/scope
+    - `search()` — Recherche fuzzy avec boost de récence, filtrage par scope, limite configurable
+    - `execute()` — Exécution d'une commande avec enregistrement dans l'historique
+    - `get_history()` — Historique des exécutions récentes
+    - `get_recent_commands()` — Commandes récemment utilisées (pour les suggestions)
+    - `get_stats()` — Statistiques (total commandes, exécutions, plus utilisées)
+  - Résultats par défaut quand la query est vide (commandes récentes + navigation)
+  - Boost de récence dans le scoring (les commandes récemment utilisées remontent)
+  - Historique limitable (défaut 50 entrées)
+- `tests/test_command_palette.py` — 40 tests unitaires (PaletteCommand: 3, SearchResult: 2, CommandExecution: 2, fuzzy matching: 5, built-in: 3, registration: 4, search: 6, execution: 4, history: 3, recent: 3, stats: 2, scope: 3)
+
+**Commandes intégrées :**
+
+| Commande | Catégorie | Raccourci | Description |
+|----------|-----------|-----------|-------------|
+| Create Task | Tasks | `Ctrl+N` | Créer une nouvelle tâche |
+| Search Tasks | Tasks | `/` | Rechercher des tâches |
+| Go to Kanban | Navigation | `Ctrl+1` | Naviguer vers le Kanban |
+| Go to Terminals | Navigation | `Ctrl+2` | Naviguer vers les Terminals |
+| Go to Insights | Navigation | `Ctrl+3` | Naviguer vers les Insights |
+| Go to Code Review | Navigation | `Ctrl+4` | Naviguer vers le Code Review |
+| Go to Settings | Navigation | `Ctrl+5` | Naviguer vers les Settings |
+| New Terminal | Terminal | `Ctrl+Shift+T` | Ouvrir un nouveau terminal |
+| Run Agent | Agents | `Ctrl+Enter` | Lancer l'agent sur la tâche sélectionnée |
+| Switch LLM Provider | Providers | — | Changer de provider LLM |
+| Toggle Theme | Settings | — | Basculer entre thème clair/sombre |
+| Start Pair Programming | Agents | — | Démarrer le pair programming |
+| View Session History | Navigation | — | Voir l'historique des sessions |
+| Export Report | Tasks | — | Exporter un rapport |
+| Open Dependency Graph | Navigation | — | Ouvrir le graphe de dépendances |
+| Keyboard Shortcuts | Help | `Ctrl+/` | Afficher les raccourcis clavier |
+
 **Fonctionnalités :**
-- Recherche de tâches, specs, fichiers, paramètres
-- Exécution de commandes : "Create task", "Switch provider", "Open terminal"
-- Historique des commandes récentes
-- Actions contextuelles basées sur la vue active
-- Fuzzy search intelligent
+- ✅ Recherche fuzzy intelligente de tâches, commandes, paramètres, fichiers
+- ✅ Exécution de commandes : "Create task", "Switch provider", "Open terminal"
+- ✅ Historique des commandes récentes (boost dans les résultats)
+- ✅ Actions contextuelles basées sur la vue active (filtrage par scope)
+- ✅ Fuzzy search avec match exact, consécutif, début de mot
+- ✅ 16 commandes intégrées couvrant toute l'application
+- ✅ Extensible : ajout de commandes custom via `register_command()`
+- ✅ Résultats par défaut (commandes récentes + navigation) quand la query est vide
+
+**Utilisation dans l'application :**
+
+1. **Accès** : Appuyer sur `Ctrl+K` (ou `Cmd+K` sur macOS) depuis n'importe quelle vue. La palette s'ouvre en overlay au centre de l'écran avec un champ de saisie.
+2. **Recherche** : Taper le début d'une commande (ex : "creat" pour trouver "Create Task", "term" pour "New Terminal"). Les résultats apparaissent en temps réel, triés par pertinence.
+3. **Navigation rapide** : Taper le nom d'une vue (ex : "kanban", "insights", "settings") pour y naviguer directement.
+4. **Exécution** : Cliquer sur un résultat ou appuyer sur `Enter` pour exécuter la commande. Le raccourci clavier associé est affiché à droite de chaque résultat.
+5. **Commandes récentes** : Quand la palette est ouverte sans saisie, les commandes récemment utilisées apparaissent en premier, suivies des commandes de navigation.
+6. **Raccourcis affichés** : Chaque commande affiche son raccourci clavier (ex : `Ctrl+N` à côté de "Create Task") pour apprendre les raccourcis progressivement.
+7. **Fermeture** : Appuyer sur `Escape` ou cliquer en dehors de la palette pour la fermer.
+8. **Icônes** : Chaque commande a une icône Lucide (plus-circle, search, layout, terminal, play, cpu, sun, users, clock, download, git-branch, keyboard).
+
+```python
+from apps.backend.ui.command_palette import CommandPalette
+
+palette = CommandPalette()
+
+# Recherche fuzzy
+results = palette.search("creat task")
+for r in results:
+    print(f"  [{r.score:.0f}] {r.label} — {r.description} ({r.shortcut})")
+
+# Exécution
+result = palette.execute("create_task")
+print(f"Success: {result.success}")
+
+# Ajouter une commande custom
+palette.register_command(
+    "deploy_staging",
+    "Deploy to Staging",
+    description="Deploy the current build to staging environment",
+    category="tasks",
+    icon="rocket",
+    handler=lambda: deploy_to("staging"),
+)
+
+# Commandes récentes
+recent = palette.get_recent_commands(limit=5)
+for cmd in recent:
+    print(f"  {cmd.label}")
+```
+
+**Impact :** Faible — Quick win, UX très appréciée par les développeurs.
 
 ---
 
@@ -1737,7 +2180,11 @@ critical = detector.get_findings(min_severity=DetectionSeverity.HIGH)
 | Auto-detection tâches ✅ | Moyen | 🔥🔥🔥 | Élevé |
 | Support modèles locaux ✅ | Moyen | 🔥🔥🔥 | Élevé |
 | Génération de tests ✅ | Élevé | 🔥🔥🔥🔥 | Élevé |
-| Command Palette | Faible | 🔥🔥 | Moyen |
+| Command Palette ✅ | Faible | 🔥🔥 | Moyen |
+| Raccourcis clavier ✅ | Faible | 🔥🔥 | Moyen |
+| Notifications desktop ✅ | Faible | 🔥🔥 | Moyen |
+| Graphe dépendances ✅ | Moyen | 🔥🔥🔥 | Élevé |
+| Anomalies comportementales ✅ | Moyen | 🔥🔥🔥 | Élevé |
 | Multi-utilisateurs | Très élevé | 🔥🔥🔥🔥🔥 | Très élevé |
 | Audit trail | Moyen | 🔥🔥🔥 | Élevé (entreprise) |
 
@@ -1745,11 +2192,11 @@ critical = detector.get_findings(min_severity=DetectionSeverity.HIGH)
 
 ## Quick Wins recommandés (< 1 semaine)
 
-1. **Command Palette** — Implémentation simple avec un composant dialog + fuzzy search
-2. **Raccourcis clavier** — Ajout d'un hook `useHotkeys` global
+1. **Command Palette** ✅ — Palette universelle avec 16 commandes, fuzzy search, historique (40 tests)
+2. **Raccourcis clavier** ✅ — 15 raccourcis par défaut, remapping, cheat sheet, export/import (40 tests)
 3. **Estimation coûts basique** ✅ — Calcul coût par token affiché dans le dashboard existant
 4. **Intégration SonarQube** ✅ — Le MCP est déjà disponible, il suffit de consommer les données
-5. **Notifications desktop enrichies** — Electron supporte nativement les notifications
+5. **Notifications desktop enrichies** ✅ — 13 types, actions rapides, résumés périodiques, heures de silence (40 tests)
 6. **Templates de tâches** ✅ — Fichiers YAML dans `.auto-claude/templates/` + UI de sélection
 
 ---
@@ -1760,9 +2207,10 @@ critical = detector.get_findings(min_severity=DetectionSeverity.HIGH)
 - Dashboard métriques ✅
 - Historique et replay sessions ✅
 - Estimation des coûts ✅
-- Command Palette + raccourcis clavier
+- Command Palette ✅ + raccourcis clavier ✅
 - Templates de tâches ✅
-- Quick wins ci-dessus
+- Notifications desktop enrichies ✅
+- Quick wins ci-dessus ✅
 
 ### Phase 2 — Intelligence (Q2 2026)
 - Mode pair programming interactif ✅
@@ -1772,11 +2220,13 @@ critical = detector.get_findings(min_severity=DetectionSeverity.HIGH)
 - Génération automatique de tests ✅
 
 ### Phase 3 — Entreprise (Q3 2026)
-- Intégration Jira
-- Azure DevOps enrichi
-- Intégration Slack/Teams
+- Intégration Jira ✅
+- Azure DevOps enrichi ✅
+- Intégration Slack/Teams ✅
 - Audit trail complet
-- Sandbox renforcé
+- Sandbox renforcé ✅
+- Détection d'anomalies comportementales ✅
+- Graphe dépendances de tâches ✅
 
 ### Phase 4 — Collaboration (Q4 2026)
 - Mode multi-utilisateurs
