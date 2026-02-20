@@ -4,6 +4,8 @@
 
 import logging
 import sys
+import asyncio
+from contextlib import asynccontextmanager
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 from contextvars import ContextVar
@@ -27,7 +29,24 @@ from src.connectors.llm_config import (
 )
 from validated_keys_db import set_validated, is_validated
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Start/stop the streaming WebSocket server alongside uvicorn."""
+    streaming_task = None
+    try:
+        from streaming import start_streaming_server, stop_streaming_server
+        streaming_task = asyncio.create_task(start_streaming_server())
+        logging.getLogger(__name__).info("Streaming WebSocket server starting on ws://localhost:8765")
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Could not start streaming server: {e}")
+    yield
+    try:
+        from streaming import stop_streaming_server
+        await stop_streaming_server()
+    except Exception:
+        pass
+
+app = FastAPI(lifespan=lifespan)
 
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter

@@ -6,6 +6,7 @@ Provides real-time event broadcasting to frontend clients.
 
 import json
 import logging
+import time
 from typing import Any, Optional
 
 try:
@@ -36,6 +37,7 @@ class StreamingWebSocketServer:
         self.session_recorder = SessionRecorder()
         self._server = None
         self._clients: dict[str, set[Any]] = {}
+        self._connection_paths: dict[int, str] = {}  # Store path by connection ID
         
     async def start(self):
         """Start the WebSocket server."""
@@ -48,6 +50,8 @@ class StreamingWebSocketServer:
             return
             
         try:
+            # In websockets v16, we need to use a different approach
+            # The handler receives only the websocket connection
             self._server = await websockets.serve(
                 self._handle_client,
                 self.host,
@@ -64,15 +68,79 @@ class StreamingWebSocketServer:
             await self._server.wait_closed()
             logger.info("Streaming WebSocket server stopped")
             
-    async def _handle_client(self, websocket: WebSocketServerProtocol, path: str):
+    async def _process_request(self, path, request_headers):
+        """Process incoming WebSocket connection requests."""
+        # Store the path for later use in the handler
+        # We'll use the connection's ID to store the path
+        logger.info(f"WebSocket connection request to path: {path}")
+        return None
+
+    async def _handle_client(self, websocket: WebSocketServerProtocol):
         """Handle a client connection."""
-        # Extract session_id from path: /stream/{session_id}
-        path_parts = path.strip("/").split("/")
-        if len(path_parts) < 2 or path_parts[0] != "stream":
-            await websocket.close(1008, "Invalid path")
-            return
-            
-        session_id = path_parts[1]
+        logger.info(" NEW CONNECTION RECEIVED!")
+        logger.info(f" WebSocket object: {websocket}")
+        logger.info(f" Local address: {websocket.local_address}")
+        logger.info(f" Remote address: {websocket.remote_address}")
+                
+        # In websockets v16, we need to extract the path from the websocket object
+        # Let's try different approaches to get the path
+        
+        path = "/stream/default"  # Default fallback
+        
+        # Try to get path from websocket attributes
+        try:
+            # Method 1: Check if path attribute exists
+            if hasattr(websocket, 'path'):
+                path = websocket.path
+                logger.info(f"Found path via websocket.path: {path}")
+            # Method 2: Check if request_headers has path info
+            elif hasattr(websocket, 'request_headers'):
+                # The path might be in the request headers or connection info
+                logger.info(f"Request headers: {dict(websocket.request_headers)}")
+            # Method 3: Check if there's a scope attribute (ASGI style)
+            elif hasattr(websocket, 'scope'):
+                scope = websocket.scope
+                if scope and 'path' in scope:
+                    path = scope['path']
+                    logger.info(f"Found path via scope: {path}")
+            # Method 4: Check connection attributes
+            elif hasattr(websocket, 'local_address') and hasattr(websocket, 'remote_address'):
+                # We can't get the path from these, but we can log the connection info
+                logger.info(f"Connection: {websocket.local_address} <-> {websocket.remote_address}")
+        except Exception as e:
+            logger.error(f"Error extracting path: {e}")
+        
+        # For now, we'll use a simple approach: extract session ID from a message
+        # or use a default session
+        logger.info(f"Using path: {path}")
+        
+        # For testing, let's use the full path if we can determine it from the connection
+        # Otherwise, we'll create a session based on the connection ID
+        
+        # Use connection ID as session identifier for now
+        connection_id = id(websocket)
+        session_id = f"session-{connection_id}"
+        
+        # Try to extract a more meaningful session ID if possible
+        if path != "/stream/default":
+            path_parts = path.strip("/").split("/")
+            if len(path_parts) >= 2 and path_parts[0] == "stream":
+                session_id = path_parts[1]
+        
+        logger.info(f"Client connecting with session ID: {session_id}")
+        
+        # Check if session exists, if not, create a default one
+        session_info = self.streaming_manager.get_session_info(session_id)
+        if not session_info:
+            # Auto-create a session for watching purposes
+            await self.streaming_manager.start_session(session_id, {
+                "session_id": session_id,
+                "task": "Live Coding Session",
+                "project_path": "unknown",
+                "auto_created": True,
+                "status": "watching"
+            })
+            logger.info(f"Auto-created session {session_id} for client connection")
         
         # Register client
         if session_id not in self._clients:
@@ -83,6 +151,22 @@ class StreamingWebSocketServer:
         await self.streaming_manager.subscribe(session_id, websocket)
         
         logger.info(f"Client connected to session {session_id}")
+        
+        # Send welcome message
+        try:
+            welcome_event = {
+                "event_type": "session_start",
+                "timestamp": time.time(),
+                "data": {
+                    "session_id": session_id,
+                    "message": "Connected to streaming session",
+                    "auto_created": session_info is None
+                },
+                "session_id": session_id,
+            }
+            await websocket.send(json.dumps(welcome_event))
+        except Exception as e:
+            logger.warning(f"Failed to send welcome message: {e}")
         
         try:
             # Handle incoming messages
@@ -105,6 +189,53 @@ class StreamingWebSocketServer:
         try:
             data = json.loads(message)
             msg_type = data.get("type")
+            
+            # Special handling for session initialization
+            if msg_type == "init_session":
+                # Client is sending the actual session ID
+                actual_session_id = data.get("session_id")
+                if actual_session_id and actual_session_id != session_id:
+                    logger.info(f"Client requested session change: {session_id} -> {actual_session_id}")
+                    
+                    # Move client to the requested session
+                    self._clients[session_id].discard(websocket)
+                    await self.streaming_manager.unsubscribe(session_id, websocket)
+                    logger.info(f"Unsubscribed from old session: {session_id}")
+                    
+                    session_id = actual_session_id
+                    
+                    # Check if new session exists, create if needed
+                    session_info = self.streaming_manager.get_session_info(session_id)
+                    if not session_info:
+                        await self.streaming_manager.start_session(session_id, {
+                            "session_id": session_id,
+                            "task": "Live Coding Session",
+                            "project_path": "unknown",
+                            "auto_created": True,
+                            "status": "watching"
+                        })
+                        logger.info(f"Auto-created session {session_id}")
+                    
+                    # Register with new session
+                    if session_id not in self._clients:
+                        self._clients[session_id] = set()
+                    self._clients[session_id].add(websocket)
+                    await self.streaming_manager.subscribe(session_id, websocket)
+                    logger.info(f"Subscribed to new session: {session_id}")
+                    
+                    # Send confirmation
+                    confirmation = {
+                        "event_type": "session_confirmed",
+                        "timestamp": time.time(),
+                        "data": {
+                            "session_id": session_id,
+                            "message": f"Connected to session {session_id}"
+                        },
+                        "session_id": session_id,
+                    }
+                    await websocket.send(json.dumps(confirmation))
+                    logger.info(f"Sent confirmation for session: {session_id}")
+                    return
             
             if msg_type == "chat_message":
                 # User sent a chat message

@@ -13,7 +13,7 @@ import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from core.runtimes import create_agent_runtime
+from core.client import create_client
 from linear_updater import (
     LinearTaskState,
     is_linear_enabled,
@@ -580,16 +580,13 @@ async def run_autonomous_agent(
         current_phase = "planning" if first_run else "coding"
         phase_model = get_phase_model(spec_dir, current_phase, model)
         phase_thinking_budget = get_phase_thinking_budget(spec_dir, current_phase)
-        config = None  # Peut être enrichi par CLI/env/metadata
-        runtime = create_agent_runtime(
-            spec_dir=spec_dir,
-            phase=current_phase,
-            project_dir=project_dir,
-            agent_type="coder",
-            cli_provider=None,
-            cli_model=phase_model,
-            cli_thinking=phase_thinking_budget,
-            config=config,
+        agent_type = "planner" if first_run else "coder"
+        client = create_client(
+            project_dir,
+            spec_dir,
+            phase_model,
+            agent_type=agent_type,
+            max_thinking_tokens=phase_thinking_budget,
         )
 
         # Generate appropriate prompt
@@ -712,11 +709,7 @@ async def run_autonomous_agent(
                         f"Subtask {subtask_id} marked as STUCK after {attempt_count} failed validation attempts",
                         "error",
                     )
-                    print(
-                        muted(
-                            "Consider: update implementation plan with correct filenames"
-                        )
-                    )
+                    print(muted("Consider: update implementation plan with correct filenames"))
 
                 # Update status
                 status_manager.update(state=BuildState.ERROR)
@@ -724,15 +717,6 @@ async def run_autonomous_agent(
                 # Small delay before retry
                 await asyncio.sleep(AUTO_CONTINUE_DELAY_SECONDS)
                 continue  # Skip to next iteration
-
-            # Create client for coding phase (after file validation passes)
-            # client = create_client(
-            #     project_dir,
-            #     spec_dir,
-            #     phase_model,
-            #     agent_type="coder",
-            #     max_thinking_tokens=phase_thinking_budget,
-            # )
 
             # Get attempt count for recovery context
             attempt_count = recovery_manager.get_attempt_count(subtask_id)
@@ -789,12 +773,11 @@ async def run_autonomous_agent(
             task_logger.set_subtask(subtask_id)
             task_logger.set_session(iteration)
 
-        # Run session with async context manager
-        async with runtime:
-            session_result = await runtime.run_session(prompt)
-            status = session_result.status
-            response = session_result.output
-            error_info = session_result.error
+        # Run session with Claude SDK client
+        async with client:
+            status, response, error_info = await run_agent_session(
+                client, prompt, spec_dir, verbose=verbose, phase=current_log_phase
+            )
 
         plan_validated = False
         if is_planning_phase and status != "error":

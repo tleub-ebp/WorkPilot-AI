@@ -34,7 +34,7 @@ import type {
   ModelType,
   ThinkingLevel
 } from '../../../shared/types';
-import type { PhaseModelConfig, PhaseThinkingConfig } from '../../../shared/types/settings';
+import type { PhaseModelConfig, PhaseThinkingConfig, ModelTypeShort } from '../../../shared/types/settings';
 
 interface TaskFormFieldsProps {
   // Project context (for loading image thumbnails from disk)
@@ -56,12 +56,12 @@ interface TaskFormFieldsProps {
 
   // Agent profile
   profileId: string;
-  model: ModelType | '';
+  model: ModelTypeShort | '';
   thinkingLevel: ThinkingLevel | '';
   phaseModels?: PhaseModelConfig;
   phaseThinking?: PhaseThinkingConfig;
-  onProfileChange: (profileId: string, model: ModelType | '', thinkingLevel: ThinkingLevel | '') => void;
-  onModelChange: (model: ModelType | '') => void;
+  onProfileChange: (profileId: string, model: ModelTypeShort | '', thinkingLevel: ThinkingLevel | '') => void;
+  onModelChange: (model: ModelTypeShort | '') => void;
   onThinkingLevelChange: (level: ThinkingLevel | '') => void;
   onPhaseModelsChange: (config: PhaseModelConfig | undefined) => void;
   onPhaseThinkingChange: (config: PhaseThinkingConfig | undefined) => void;

@@ -2,7 +2,7 @@
  * Task-related types
  */
 
-import type { ThinkingLevel, PhaseModelConfig, PhaseThinkingConfig } from './settings';
+import type { ThinkingLevel, PhaseModelConfig, PhaseThinkingConfig, ModelTypeShort } from './settings';
 import type { ExecutionPhase as ExecutionPhaseType, CompletablePhase } from '../constants/phase-protocol';
 
 export type TaskStatus = 'backlog' | 'queue' | 'in_progress' | 'ai_review' | 'human_review' | 'done' | 'pr_created' | 'error';
@@ -146,7 +146,7 @@ export interface TaskDraft {
   complexity: TaskComplexity | '';
   impact: TaskImpact | '';
   profileId?: string;  // Agent profile ID ('auto', 'complex', 'balanced', 'quick', 'custom')
-  model: ModelType | '';
+  model: ModelTypeShort | '';
   thinkingLevel: ThinkingLevel | '';
   // Auto profile - per-phase configuration
   phaseModels?: PhaseModelConfig;
@@ -230,7 +230,8 @@ export interface TaskMetadata {
   requireReviewBeforeCoding?: boolean;  // Require human review of spec/plan before coding starts
 
   // Agent configuration (from agent profile or manual selection)
-  model?: ModelType;  // Claude model to use (haiku, sonnet, opus) - used when not auto profile
+  provider?: string;  // Active LLM provider (e.g. 'anthropic', 'openai', 'google', 'ollama', ...)
+  model?: ModelTypeShort;  // Model ID to use (supports multi-provider) - used when not auto profile
   thinkingLevel?: ThinkingLevel;  // Thinking budget level (none, low, medium, high, ultrathink)
   // Auto profile - per-phase model configuration
   isAutoProfile?: boolean;  // True when using Auto (Optimized) profile

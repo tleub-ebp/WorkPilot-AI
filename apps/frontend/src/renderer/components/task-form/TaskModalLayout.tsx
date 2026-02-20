@@ -135,7 +135,7 @@ export function TaskModalLayout({
 
             {/* Optional sidebar */}
             {sidebar && sidebarOpen && (
-              <div className="w-80 border-l border-border flex-shrink-0 overflow-hidden">
+              <div className="w-80 border-l border-border shrink-0 overflow-hidden">
                 {sidebar}
               </div>
             )}

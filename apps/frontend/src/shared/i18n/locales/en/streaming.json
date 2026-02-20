@@ -1,0 +1,45 @@
+{
+  "title": "Streaming Development",
+  "dialogTitle": "Live Streaming Session",
+  "dialogDescription": "Watch the AI agent code in real-time",
+  "status": {
+    "live": "LIVE",
+    "offline": "OFFLINE",
+    "initializing": "Initializing...",
+    "sessionStarted": "Session started",
+    "sessionConfirmed": "Session confirmed",
+    "thinking": "Thinking: {{thought}}...",
+    "responding": "Responding..."
+  },
+  "header": {
+    "saveRecording": "Save Recording",
+    "share": "Share",
+    "stopSession": "Stop Session"
+  },
+  "stats": {
+    "files": "{{count}} files",
+    "commands": "Commands:",
+    "tests": "Tests:"
+  },
+  "codeView": {
+    "noFile": "No file selected",
+    "waitingForChanges": "// Waiting for code changes..."
+  },
+  "tabs": {
+    "chat": "Chat",
+    "events": "Events",
+    "timeline": "Timeline"
+  },
+  "chat": {
+    "placeholder": "Type a message to Claude...",
+    "send": "Send"
+  },
+  "timeline": {
+    "comingSoon": "Timeline scrubbing coming soon...",
+    "replayDescription": "Replay sessions at different speeds"
+  },
+  "controls": {
+    "resume": "Resume session",
+    "pause": "Pause session"
+  }
+}

@@ -54,17 +54,17 @@ export function CompetitorAnalysisDialog({
             </h4>
             <ul className="text-sm text-muted-foreground space-y-2">
               <li className="flex items-start gap-2">
-                <Search className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
+                <Search className="h-4 w-4 mt-0.5 text-primary shrink-0" />
                 <span>Identifies 3-5 main competitors based on your project type</span>
               </li>
               <li className="flex items-start gap-2">
-                <Globe className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
+                <Globe className="h-4 w-4 mt-0.5 text-primary shrink-0" />
                 <span>
                   Searches app stores, forums, and social media for user feedback and pain points
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <TrendingUp className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
+                <TrendingUp className="h-4 w-4 mt-0.5 text-primary shrink-0" />
                 <span>
                   Suggests features that address gaps in competitor products
                 </span>
@@ -75,7 +75,7 @@ export function CompetitorAnalysisDialog({
           {/* Privacy notice */}
           <div className="rounded-lg bg-warning/10 border border-warning/30 p-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
               <div className="flex-1">
                 <h4 className="text-sm font-medium text-foreground">
                   Web searches will be performed

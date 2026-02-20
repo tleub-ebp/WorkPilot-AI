@@ -26,14 +26,14 @@ import {
   DEFAULT_PHASE_THINKING
 } from '../../shared/constants';
 import type { ModelType, ThinkingLevel } from '../../shared/types';
-import type { PhaseModelConfig, PhaseThinkingConfig } from '../../shared/types/settings';
+import type { PhaseModelConfig, PhaseThinkingConfig, ModelTypeShort } from '../../shared/types/settings';
 import { cn } from '../lib/utils';
 
 interface AgentProfileSelectorProps {
   /** Currently selected profile ID ('auto', 'complex', 'balanced', 'quick', or 'custom') */
   profileId: string;
   /** Current model value (fallback for non-auto profiles) */
-  model: ModelType | '';
+  model: ModelTypeShort | '';
   /** Current thinking level value (fallback for non-auto profiles) */
   thinkingLevel: ThinkingLevel | '';
   /** Phase model configuration (for auto profile) */
@@ -41,9 +41,9 @@ interface AgentProfileSelectorProps {
   /** Phase thinking configuration (for auto profile) */
   phaseThinking?: PhaseThinkingConfig;
   /** Called when profile selection changes */
-  onProfileChange: (profileId: string, model: ModelType, thinkingLevel: ThinkingLevel) => void;
+  onProfileChange: (profileId: string, model: ModelTypeShort, thinkingLevel: ThinkingLevel) => void;
   /** Called when model changes (in custom mode) */
-  onModelChange: (model: ModelType) => void;
+  onModelChange: (model: ModelTypeShort) => void;
   /** Called when thinking level changes (in custom mode) */
   onThinkingLevelChange: (level: ThinkingLevel) => void;
   /** Called when phase models change (in auto mode) */
@@ -95,7 +95,7 @@ export function AgentProfileSelector({
   const handleProfileSelect = (selectedId: string) => {
     if (selectedId === 'custom') {
       // Keep current model/thinking level, just mark as custom
-      onProfileChange('custom', model as ModelType || 'sonnet', thinkingLevel as ThinkingLevel || 'medium');
+      onProfileChange('custom', model || 'sonnet', thinkingLevel || 'medium');
     } else {
       // Select preset profile - all profiles now have phase configs
       const profile = DEFAULT_AGENT_PROFILES.find(p => p.id === selectedId);
@@ -112,7 +112,7 @@ export function AgentProfileSelector({
     }
   };
 
-  const handlePhaseModelChange = (phase: keyof PhaseModelConfig, value: ModelType) => {
+  const handlePhaseModelChange = (phase: keyof PhaseModelConfig, value: ModelTypeShort) => {
     if (onPhaseModelsChange) {
       onPhaseModelsChange({
         ...currentPhaseModels,
@@ -278,7 +278,7 @@ export function AgentProfileSelector({
                       <Label className="text-[10px] text-muted-foreground">{t('agentProfile.model')}</Label>
                       <Select
                         value={currentPhaseModels[phase]}
-                        onValueChange={(value) => handlePhaseModelChange(phase, value as ModelType)}
+                        onValueChange={(value) => handlePhaseModelChange(phase, value)}
                         disabled={disabled}
                       >
                         <SelectTrigger className="h-8 text-xs">
@@ -330,7 +330,7 @@ export function AgentProfileSelector({
             </Label>
             <Select
               value={model}
-              onValueChange={(value) => onModelChange(value as ModelType)}
+              onValueChange={(value) => onModelChange(value)}
               disabled={disabled}
             >
               <SelectTrigger id="custom-model" className="h-9">

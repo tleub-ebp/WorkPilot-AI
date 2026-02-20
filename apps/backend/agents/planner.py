@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 
 from core.runtimes import create_agent_runtime
-from phase_config import get_phase_model, get_phase_thinking_budget
+from phase_config import get_phase_model, get_phase_provider, get_phase_thinking_budget
 from phase_event import ExecutionPhase, emit_phase
 from task_logger import (
     LogPhase,
@@ -92,6 +92,7 @@ async def run_followup_planner(
         task_logger.set_session(1)
 
     # Migration vers runtime provider-agnostique
+    phase_provider = get_phase_provider(spec_dir)
     phase_model = get_phase_model(spec_dir, "planning", model)
     phase_thinking_budget = get_phase_thinking_budget(spec_dir, "planning")
     config = None
@@ -100,7 +101,7 @@ async def run_followup_planner(
         phase="planning",
         project_dir=project_dir,
         agent_type="planner",
-        cli_provider=None,
+        cli_provider=phase_provider,
         cli_model=phase_model,
         cli_thinking=phase_thinking_budget,
         config=config,

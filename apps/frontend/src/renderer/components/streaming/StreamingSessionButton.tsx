@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Film } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent } from '../ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
 import { StreamingSession } from './StreamingSession';
 
 interface StreamingSessionButtonProps {
@@ -16,7 +16,7 @@ interface StreamingSessionButtonProps {
 
 export function StreamingSessionButton({ taskId, projectPath }: StreamingSessionButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { t } = useTranslation(['tasks']);
+  const { t } = useTranslation(['tasks', 'streaming']);
 
   return (
     <>
@@ -31,7 +31,9 @@ export function StreamingSessionButton({ taskId, projectPath }: StreamingSession
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-[95vw] h-[95vh] p-0">
+        <DialogContent className="max-w-[95vw] h-[95vh] p-0" aria-describedby={undefined}>
+          <DialogTitle className="sr-only">{t('streaming:dialogTitle')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('streaming:dialogDescription')}</DialogDescription>
           <StreamingSession
             sessionId={taskId}
             projectPath={projectPath}

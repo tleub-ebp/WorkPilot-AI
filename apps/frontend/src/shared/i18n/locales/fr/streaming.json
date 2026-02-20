@@ -1,0 +1,45 @@
+{
+  "title": "Développement en streaming",
+  "dialogTitle": "Session de streaming en direct",
+  "dialogDescription": "Regardez l'agent IA coder en temps réel",
+  "status": {
+    "live": "EN DIRECT",
+    "offline": "HORS LIGNE",
+    "initializing": "Initialisation...",
+    "sessionStarted": "Session démarrée",
+    "sessionConfirmed": "Session confirmée",
+    "thinking": "Réflexion : {{thought}}...",
+    "responding": "Réponse en cours..."
+  },
+  "header": {
+    "saveRecording": "Sauvegarder l'enregistrement",
+    "share": "Partager",
+    "stopSession": "Arrêter la session"
+  },
+  "stats": {
+    "files": "{{count}} fichiers",
+    "commands": "Commandes :",
+    "tests": "Tests :"
+  },
+  "codeView": {
+    "noFile": "Aucun fichier sélectionné",
+    "waitingForChanges": "// En attente de modifications du code..."
+  },
+  "tabs": {
+    "chat": "Chat",
+    "events": "Événements",
+    "timeline": "Chronologie"
+  },
+  "chat": {
+    "placeholder": "Écrivez un message à Claude...",
+    "send": "Envoyer"
+  },
+  "timeline": {
+    "comingSoon": "Navigation temporelle bientôt disponible...",
+    "replayDescription": "Rejouez les sessions à différentes vitesses"
+  },
+  "controls": {
+    "resume": "Reprendre la session",
+    "pause": "Mettre en pause la session"
+  }
+}
