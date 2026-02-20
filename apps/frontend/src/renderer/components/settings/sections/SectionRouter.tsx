@@ -7,6 +7,7 @@ import { LinearIntegration } from '../integrations/LinearIntegration';
 import { GitHubIntegration } from '../integrations/GitHubIntegration';
 import { GitLabIntegration } from '../integrations/GitLabIntegration';
 import { AzureDevOpsIntegration } from '../integrations/AzureDevOpsIntegration';
+import { JiraIntegration } from '../integrations/JiraIntegration';
 import { InitializationGuard } from '../common/InitializationGuard';
 import type { ProjectSettingsSection } from '../ProjectSettingsContent';
 
@@ -200,6 +201,27 @@ export function SectionRouter({
               azureDevOpsConnectionStatus={azureDevOpsConnectionStatus}
               isCheckingAzureDevOps={isCheckingAzureDevOps}
               onOpenAzureDevOpsImport={onOpenAzureDevOpsImport}
+            />
+          </InitializationGuard>
+        </SettingsSection>
+      );
+
+    case 'jira':
+      return (
+        <SettingsSection
+          title="Jira Integration"
+          description="Configure and manage Jira Cloud issue synchronization"
+        >
+          <InitializationGuard
+            initialized={!!project.autoBuildPath}
+            title="Jira Integration"
+            description="Enable Jira integration to sync issues with your backlog"
+          >
+            <JiraIntegration
+              envConfig={envConfig}
+              updateEnvConfig={updateEnvConfig}
+              showJiraToken={showAzureDevOpsToken}
+              setShowJiraToken={setShowAzureDevOpsToken}
             />
           </InitializationGuard>
         </SettingsSection>

@@ -1,4 +1,5 @@
 import { Radio, Import, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
@@ -119,20 +120,21 @@ interface ConnectionStatusProps {
 }
 
 function ConnectionStatus({ isChecking, connectionStatus }: ConnectionStatusProps) {
+  const { t } = useTranslation('settings');
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-foreground">Connection Status</p>
+          <p className="text-sm font-medium text-foreground">{t('projectSections.linear.connectionStatus')}</p>
           <p className="text-xs text-muted-foreground">
-            {isChecking ? 'Checking...' :
+            {isChecking ? t('projectSections.linear.checking') :
               connectionStatus?.connected
-                ? `Connected${connectionStatus.teamName ? ` to ${connectionStatus.teamName}` : ''}`
-                : connectionStatus?.error || 'Not connected'}
+                ? (connectionStatus.teamName ? t('projectSections.linear.connectedTo', { team: connectionStatus.teamName }) : t('projectSections.linear.connected'))
+                : connectionStatus?.error || t('projectSections.linear.notConnected')}
           </p>
           {connectionStatus?.connected && connectionStatus.issueCount !== undefined && (
             <p className="text-xs text-muted-foreground mt-1">
-              {connectionStatus.issueCount}+ tasks available to import
+              {t('projectSections.linear.tasksAvailable', { count: connectionStatus.issueCount })}
             </p>
           )}
         </div>

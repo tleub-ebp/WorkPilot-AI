@@ -21,7 +21,11 @@ import {
   Terminal,
   Users,
   Cloud,
-  RefreshCw
+  RefreshCw,
+  Shield,
+  ShieldAlert,
+  Router,
+  CalendarClock
 } from 'lucide-react';
 import {
   FullScreenDialog,
@@ -52,6 +56,10 @@ import { AccountSettings } from './AccountSettings';
 import { GlobalAutoSwitching } from './GlobalAutoSwitching';
 import { getAllConnectors } from './multiconnector/utils';
 import { SettingsSection } from './SettingsSection';
+import { SandboxSettings } from './SandboxSettings';
+import { AnomalyDetectionSettings } from './AnomalyDetectionSettings';
+import { LlmRouterSettings } from './LlmRouterSettings';
+import { SchedulerSettings } from './SchedulerSettings';
 
 // GitLab icon component (lucide-react doesn't have one)
 function GitLabIcon({ className }: { className?: string }) {
@@ -60,6 +68,16 @@ function GitLabIcon({ className }: { className?: string }) {
         <title id="gitlab-icon-title">GitLab</title>
         <path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 4.82 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0 1 18.6 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.51L23 13.45a.84.84 0 0 1-.35.94z"/>
       </svg>
+  );
+}
+
+// Jira icon component (lucide-react doesn't include one)
+function JiraIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" role="img" aria-labelledby="jira-icon-title">
+      <title id="jira-icon-title">Jira</title>
+      <path d="M11.53 2c0 2.4 1.97 4.35 4.35 4.35h1.78v1.7c0 2.4 1.94 4.34 4.34 4.35V2.84a.84.84 0 0 0-.84-.84h-9.63zM6.77 6.8a4.36 4.36 0 0 0 4.34 4.34h1.8v1.72a4.36 4.36 0 0 0 4.34 4.34V7.63a.84.84 0 0 0-.83-.83H6.77zM2 11.6a4.35 4.35 0 0 0 4.34 4.34h1.8v1.72a4.35 4.35 0 0 0 4.34 4.34v-9.57a.84.84 0 0 0-.84-.84H2z"/>
+    </svg>
   );
 }
 
@@ -73,7 +91,7 @@ interface AppSettingsDialogProps {
 }
 
 // App-level settings sections
-export type AppSection = 'appearance' | 'display' | 'language' | 'devtools' | 'terminal-fonts' | 'agent' | 'paths' | 'integrations' | 'accounts' | 'api-profiles' | 'updates' | 'notifications' | 'debug';
+export type AppSection = 'appearance' | 'display' | 'language' | 'devtools' | 'terminal-fonts' | 'agent' | 'paths' | 'integrations' | 'accounts' | 'api-profiles' | 'updates' | 'notifications' | 'debug' | 'sandbox' | 'anomaly-detection' | 'llm-router' | 'scheduler';
 
 interface NavItemConfig<T extends string> {
   id: T;
@@ -91,7 +109,11 @@ const appNavItemsConfig: NavItemConfig<AppSection>[] = [
   { id: 'accounts', icon: Users },
   { id: 'updates', icon: Package },
   { id: 'notifications', icon: Bell },
-  { id: 'debug', icon: Bug }
+  { id: 'debug', icon: Bug },
+  { id: 'sandbox', icon: Shield },
+  { id: 'anomaly-detection', icon: ShieldAlert },
+  { id: 'llm-router', icon: Router },
+  { id: 'scheduler', icon: CalendarClock }
 ];
 
 const projectNavItemsConfig: NavItemConfig<ProjectSettingsSection>[] = [
@@ -100,6 +122,7 @@ const projectNavItemsConfig: NavItemConfig<ProjectSettingsSection>[] = [
   { id: 'github', icon: Github },
   { id: 'gitlab', icon: GitLabIcon },
   { id: 'azure-devops', icon: Cloud },
+  { id: 'jira', icon: JiraIcon },
   { id: 'memory', icon: Database }
 ];
 
@@ -290,6 +313,14 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
         return <AdvancedSettings settings={settings} onSettingsChange={setSettings} section="notifications" version={version} />;
       case 'debug':
         return <DebugSettings />;
+      case 'sandbox':
+        return <SandboxSettings />;
+      case 'anomaly-detection':
+        return <AnomalyDetectionSettings />;
+      case 'llm-router':
+        return <LlmRouterSettings />;
+      case 'scheduler':
+        return <SchedulerSettings />;
       default:
         return null;
     }

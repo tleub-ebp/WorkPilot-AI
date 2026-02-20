@@ -529,39 +529,78 @@ print(f"Faiblesses: {summary.top_weaknesses}")
 
 ### 3.1 — Mode multi-utilisateurs en temps réel ✅ Implémentée
 
-**Statut :** Terminée — Serveur de collaboration temps réel avec gestion des utilisateurs, verrouillage de tâches, synchronisation Kanban, chat d'équipe, détection de conflits et intégration agents (50 tests unitaires passent).
+**Statut :** Terminée — Serveur de collaboration temps réel backend + frontend complet avec store Zustand, 6 composants React, i18n FR/EN, 50 tests backend + 35 tests frontend.
 
-**Description :** Permettre à plusieurs développeurs de travailler sur le même projet WorkPilot AI simultanément.
+**Description :** Permettre à plusieurs développeurs de travailler sur le même projet WorkPilot AI simultanément avec une interface React complète.
 
 **Implémentation réalisée :**
-- `apps/backend/teams/realtime_collaboration.py` — Serveur de collaboration complet avec :
-  - `UserStatus` — 4 statuts : online, away, busy, offline
-  - `EventType` — 16 types d'événements temps réel : user_joined, user_left, user_status_changed, task_updated, task_locked, task_unlocked, task_created, task_deleted, task_moved, chat_message, agent_started, agent_completed, notification, conflict_detected, sync_request, sync_response
-  - `LockType` — 2 types : user, agent
-  - `ConflictResolution` — 4 stratégies : last_write_wins, first_write_wins, manual, merge
-  - `ConnectedUser` — Utilisateur connecté avec statut, rôle, tâche en cours, curseur, horodatage
-  - `TaskLock` — Verrou sur une tâche (par utilisateur ou agent) avec raison et expiration
-  - `RealtimeEvent` — Événement temps réel avec type, expéditeur, données, cibles optionnelles (broadcast ou ciblé)
-  - `ChatMessage` — Message de chat avec réponses, mentions, pièces jointes
-  - `ConflictRecord` — Conflit de modification concurrente avec résolution
-  - `CollaborationServer` — Serveur principal :
-    - `connect_user()` / `disconnect_user()` — Gestion connexion/déconnexion avec libération automatique des verrous
-    - `get_connected_users()` / `get_all_users()` — Liste des utilisateurs en ligne/total
-    - `update_user_status()` — Changement de statut (online/away/busy)
-    - `set_user_current_task()` — Indicateur de présence (qui travaille sur quoi)
-    - `lock_task()` / `unlock_task()` / `force_unlock_task()` — Verrouillage de tâches avec protection contre les conflits
-    - `is_task_locked()` / `get_lock()` / `get_all_locks()` — Inspection des verrous
-    - `broadcast_task_update()` — Synchronisation temps réel des changements de tâches (avec versioning)
-    - `broadcast_task_move()` — Synchronisation des déplacements Kanban (drag-and-drop)
-    - `detect_conflict()` / `resolve_conflict()` — Détection et résolution de conflits de modification concurrente
-    - `send_chat_message()` — Chat d'équipe intégré avec réponses et mentions
-    - `get_chat_history()` / `search_chat()` — Historique et recherche de messages
-    - `on_event()` — Système d'événements avec listeners (par type ou wildcard)
-    - `notify_user()` / `notify_all()` — Notifications ciblées ou broadcast
-    - `notify_agent_started()` / `notify_agent_completed()` — Intégration agents (lock automatique + notification)
-    - `request_sync()` — Synchronisation complète de l'état (reconnexion)
-    - `get_stats()` — Statistiques du serveur
-- `tests/test_realtime_collaboration.py` — 50 tests unitaires (ConnectedUser: 3, TaskLock: 3, RealtimeEvent: 3, ChatMessage: 2, ConflictRecord: 2, users: 7, locks: 8, task updates: 4, chat: 4, conflicts: 3, events: 4, agent integration: 3, sync: 2, stats: 2)
+
+#### Backend — `apps/backend/teams/realtime_collaboration.py`
+Serveur de collaboration complet avec :
+- `UserStatus` — 4 statuts : online, away, busy, offline
+- `EventType` — 16 types d'événements temps réel : user_joined, user_left, user_status_changed, task_updated, task_locked, task_unlocked, task_created, task_deleted, task_moved, chat_message, agent_started, agent_completed, notification, conflict_detected, sync_request, sync_response
+- `LockType` — 2 types : user, agent
+- `ConflictResolution` — 4 stratégies : last_write_wins, first_write_wins, manual, merge
+- `ConnectedUser` — Utilisateur connecté avec statut, rôle, tâche en cours, curseur, horodatage
+- `TaskLock` — Verrou sur une tâche (par utilisateur ou agent) avec raison et expiration
+- `RealtimeEvent` — Événement temps réel avec type, expéditeur, données, cibles optionnelles (broadcast ou ciblé)
+- `ChatMessage` — Message de chat avec réponses, mentions, pièces jointes
+- `ConflictRecord` — Conflit de modification concurrente avec résolution
+- `CollaborationServer` — Serveur principal :
+  - `connect_user()` / `disconnect_user()` — Gestion connexion/déconnexion avec libération automatique des verrous
+  - `get_connected_users()` / `get_all_users()` — Liste des utilisateurs en ligne/total
+  - `update_user_status()` — Changement de statut (online/away/busy)
+  - `set_user_current_task()` — Indicateur de présence (qui travaille sur quoi)
+  - `lock_task()` / `unlock_task()` / `force_unlock_task()` — Verrouillage de tâches avec protection contre les conflits
+  - `is_task_locked()` / `get_lock()` / `get_all_locks()` — Inspection des verrous
+  - `broadcast_task_update()` — Synchronisation temps réel des changements de tâches (avec versioning)
+  - `broadcast_task_move()` — Synchronisation des déplacements Kanban (drag-and-drop)
+  - `detect_conflict()` / `resolve_conflict()` — Détection et résolution de conflits de modification concurrente
+  - `send_chat_message()` — Chat d'équipe intégré avec réponses et mentions
+  - `get_chat_history()` / `search_chat()` — Historique et recherche de messages
+  - `on_event()` — Système d'événements avec listeners (par type ou wildcard)
+  - `notify_user()` / `notify_all()` — Notifications ciblées ou broadcast
+  - `notify_agent_started()` / `notify_agent_completed()` — Intégration agents (lock automatique + notification)
+  - `request_sync()` — Synchronisation complète de l'état (reconnexion)
+  - `get_stats()` — Statistiques du serveur
+
+#### Frontend — Store Zustand
+- `apps/frontend/src/renderer/stores/collaboration-store.ts` — Store Zustand complet avec :
+  - **État** : currentUserId, projectId, connected, syncing, users, locks, chatMessages, conflicts, events, settings, chatOpen, unreadChatCount, replyingTo
+  - **Actions connexion** : `initialize()`, `disconnect()`, `setConnected()`, `setSyncing()`
+  - **Actions utilisateurs** : `addUser()`, `removeUser()`, `updateUserStatus()`, `setUserCurrentTask()`
+  - **Actions verrous** : `lockTask()`, `unlockTask()`, `isTaskLocked()`, `getTaskLock()`
+  - **Actions chat** : `addChatMessage()`, `sendMessage()`, `setReplyingTo()`, `toggleChat()`, `setChatOpen()`, `markChatRead()`
+  - **Actions conflits** : `addConflict()`, `resolveConflict()`
+  - **Actions événements** : `addEvent()` (avec ring buffer max 100)
+  - **Actions settings** : `updateSettings()` (conflictStrategy, présence, chat, notifications)
+  - **Computed** : `getOnlineUsers()`, `getStats()`, `getUnresolvedConflicts()`
+  - Palette de 10 couleurs d'avatars avec hash déterministe par userId
+
+#### Frontend — 6 composants React
+- `apps/frontend/src/renderer/components/collaboration/` :
+  - `PresenceIndicator.tsx` — Avatars circulaires avec statut coloré (🟢🟡🔴⚫), tooltip avec nom, statut et tâche en cours, overflow `+N` au-delà de 5 utilisateurs
+  - `TaskLockBadge.tsx` — Badge 🔒 (user) ou 🤖 (agent) sur les cartes Kanban, popover avec détails du verrou et bouton force-unlock pour admins
+  - `TeamChat.tsx` — Panel de chat flottant en bas à droite avec envoi/réception de messages, réponses, recherche, compteur de messages non lus, bulles colorées par utilisateur
+  - `ConflictResolver.tsx` — Dialog modal de résolution avec comparaison côte-à-côte des deux versions, boutons "Garder la mienne" / "Garder la leur"
+  - `CollaborationSettings.tsx` — Page de configuration complète : stratégie de résolution (4 options en grille), switch présence, paramètres chat (son, bureau), préférences de notifications (5 catégories)
+  - `CollaborationNotifications.tsx` — Composant invisible écoutant le store d'événements et affichant des toasts pour user join/leave, task lock/unlock, agent start/complete, conflict detected
+  - `index.ts` — Barrel export de tous les composants
+
+#### i18n — Namespace `collaboration`
+- `apps/frontend/src/shared/i18n/locales/en/collaboration.json` — 100+ clés EN couvrant : presence, locks, chat, conflicts, notifications, settings, sync, stats
+- `apps/frontend/src/shared/i18n/locales/fr/collaboration.json` — Traductions FR complètes
+- `apps/frontend/src/shared/i18n/index.ts` — Namespace `collaboration` enregistré dans la configuration i18next
+
+#### Tests
+- `tests/test_realtime_collaboration.py` — 50 tests unitaires backend (ConnectedUser: 3, TaskLock: 3, RealtimeEvent: 3, ChatMessage: 2, ConflictRecord: 2, users: 7, locks: 8, task updates: 4, chat: 4, conflicts: 3, events: 4, agent integration: 3, sync: 2, stats: 2)
+- `apps/frontend/src/renderer/__tests__/collaboration-store.test.ts` — 35 tests unitaires frontend (Initialize & Connection: 3, User Management: 6, Task Locking: 6, Chat: 6, Conflicts: 4, Events: 3, Settings: 3, Computed & Stats: 4)
+
+#### Corrections associées
+- **Sentry DSN** : Corrigé dans `apps/frontend/electron.vite.config.ts` — chargement du `.env` frontend en priorité (override) après le `.env` racine, résolvant le message `[Sentry] No DSN configured - error reporting disabled in renderer`
+- **i18n JIRA** : 30 chaînes hardcodées remplacées par des clés i18n dans `JiraIntegration.tsx` + ajout section `jira` dans `settings.json` EN/FR
+- **i18n GitHub** : 5 chaînes hardcodées remplacées dans `GitHubIntegration.tsx` (Connected via GitHub CLI, Connection Status, etc.)
+- **i18n Linear** : 5 chaînes hardcodées remplacées dans `LinearIntegration.tsx` (Connection Status, Checking, etc.)
 
 **Fonctionnalités :**
 - ✅ Synchronisation du Kanban board en temps réel (événements broadcast avec versioning)
@@ -574,6 +613,10 @@ print(f"Faiblesses: {summary.top_weaknesses}")
 - ✅ Libération automatique des verrous à la déconnexion
 - ✅ Synchronisation complète de l'état pour la reconnexion
 - ✅ Force-unlock pour les administrateurs
+- ✅ Store Zustand frontend avec état réactif complet
+- ✅ 6 composants React avec TailwindCSS + shadcn/ui
+- ✅ Internationalisation complète FR/EN (namespace `collaboration`)
+- ✅ 85 tests unitaires (50 backend + 35 frontend)
 
 **Utilisation dans l'application :**
 
@@ -589,7 +632,7 @@ print(f"Faiblesses: {summary.top_weaknesses}")
    - ✅ « L'agent coder a terminé #42 »
    - ⚠️ « Conflit détecté sur la tâche #42 »
 7. **Résolution de conflits** : Si deux utilisateurs modifient la même tâche simultanément, un dialogue de résolution apparaît montrant les deux versions côte à côte. Choisir la version à conserver ou fusionner manuellement.
-8. **Configuration** : Dans **Settings** > **Collaboration**, configurer la stratégie de résolution de conflits (Last Write Wins, First Write Wins, Manual, Merge).
+8. **Configuration** : Dans **Settings** > **Collaboration**, configurer la stratégie de résolution de conflits (Last Write Wins, First Write Wins, Manual, Merge), activer/désactiver la présence, le chat et les notifications.
 
 ```python
 from apps.backend.teams.realtime_collaboration import CollaborationServer
@@ -624,7 +667,28 @@ print(f"Users online: {len(state['users'])}")
 print(f"Active locks: {len(state['locks'])}")
 ```
 
-**Impact :** Très élevé — Transforme l'outil d'un usage solo en outil d'équipe.
+```typescript
+// Frontend — Store Zustand
+import { useCollaborationStore } from './stores/collaboration-store';
+
+// Initialiser la collaboration
+const { initialize, sendMessage, lockTask } = useCollaborationStore.getState();
+initialize('my-project', 'user-1', 'Alice');
+
+// Envoyer un message chat
+sendMessage('Hello team!');
+
+// Verrouiller une tâche
+lockTask('task-42', 'user-1', 'user', 'Editing');
+
+// Composants React
+import { PresenceIndicator, TeamChat, TaskLockBadge } from './components/collaboration';
+// <PresenceIndicator /> — En haut à droite
+// <TeamChat /> — Panel flottant en bas à droite
+// <TaskLockBadge taskId="task-42" /> — Sur chaque carte Kanban
+```
+
+**Impact :** Très élevé — Transforme l'outil d'un usage solo en outil d'équipe avec interface React complète, i18n FR/EN et 85 tests.
 
 ---
 
@@ -1326,7 +1390,9 @@ for s in suggestions[:5]:
 
 ## 7. Sécurité Avancée
 
-### 7.1 — Audit trail complet
+### 7.1 — Audit trail complet ✅ Implémentée
+
+**Statut :** Terminée — Journal d'audit immutable avec 23 types d'actions, checksums SHA-256, recherche full-text, export multi-format, rapports de conformité SOC2/ISO 27001 (40 tests unitaires passent).
 
 **Description :** Journal d'audit traçant toutes les actions de l'application.
 
@@ -1336,6 +1402,69 @@ for s in suggestions[:5]:
 - Stockage sécurisé et inaltérable (append-only)
 - Export pour conformité (SOC2, ISO 27001)
 - Recherche et filtrage dans l'UI
+
+**Implémentation réalisée :**
+- `apps/backend/security/audit_trail.py` — Système d'audit complet avec :
+  - `AuditAction` — 23 types d'actions : task_created, task_updated, task_deleted, task_moved, task_assigned, agent_started, agent_completed, agent_failed, merge_started, merge_completed, merge_conflict, file_created, file_modified, file_deleted, config_changed, user_login, user_logout, export_generated, import_executed, security_violation, rollback_executed, integration_sync, custom
+  - `AuditSeverity` — 4 niveaux : info, warning, error, critical
+  - `ExportFormat` — 3 formats : json, csv, jsonl
+  - `AuditEntry` — Entrée d'audit immutable avec entry_id, timestamp, action, user, project_id, target, target_type, severity, details, metadata, result, ip_address, session_id, checksum SHA-256
+    - `compute_checksum()` — Calcul SHA-256 pour vérification d'intégrité
+    - `to_dict()` / `from_dict()` — Sérialisation/désérialisation
+  - `AuditFilter` — Filtres de recherche (action, user, target, severity, date range, keyword, session, limit, offset)
+  - `AuditSummary` — Statistiques (total, par action, par sévérité, par utilisateur, dates, intégrité)
+  - `AuditTrail` — Classe principale :
+    - `record()` — Enregistrer une action (append-only, checksum automatique)
+    - `get_entry()` / `get_entries()` — Consultation avec filtres combinables
+    - `search()` — Recherche full-text dans les entrées (action, user, target, details)
+    - `count()` — Comptage avec filtres
+    - `verify_integrity()` — Vérification des checksums de toutes les entrées (détection de tampering)
+    - `get_summary()` — Statistiques détaillées avec vérification d'intégrité
+    - `get_stats()` — Statistiques rapides
+    - `export_trail()` — Export en JSON, CSV ou JSONL
+    - `import_trail()` — Import avec déduplication automatique
+    - `get_compliance_report()` — Rapport de conformité SOC2/ISO 27001 (événements sécurité, changements de config, intégrité)
+- `tests/test_audit_trail.py` — 40 tests unitaires (AuditEntry: 5, Recording: 6, Querying: 8, Search: 4, Integrity: 4, Summary: 4, Export/Import: 5, Compliance: 2, Stats: 2)
+
+**Utilisation :**
+
+1. **Accès** : Le système d'audit est automatiquement activé pour chaque projet.
+2. **Enregistrement** : Chaque action (création de tâche, exécution d'agent, merge, etc.) est automatiquement enregistrée avec timestamp, utilisateur, et checksum SHA-256.
+3. **Recherche** : Rechercher dans les logs par mot-clé, action, utilisateur, sévérité, ou plage de dates.
+4. **Intégrité** : Vérifier à tout moment que les logs n'ont pas été altérés (checksums SHA-256).
+5. **Export** : Exporter en JSON, CSV ou JSONL pour audit externe ou conformité.
+6. **Conformité** : Générer un rapport SOC2 ou ISO 27001 avec événements de sécurité, changements de config, et état d'intégrité.
+
+```python
+from apps.backend.security.audit_trail import AuditTrail
+
+trail = AuditTrail(project_id="my-project")
+
+# Enregistrer des actions
+trail.record("task_created", user="alice", target="task-42",
+    details={"title": "Login page"}, severity="info")
+trail.record("agent_started", user="system", target="task-42",
+    metadata={"model": "claude-sonnet"})
+trail.record("config_changed", user="admin", target="settings",
+    severity="warning", details={"key": "theme", "old": "dark", "new": "light"})
+
+# Rechercher dans les logs
+entries = trail.search(keyword="login", action="task_created")
+entries = trail.get_entries(user="alice", severity="info", limit=50)
+
+# Vérifier l'intégrité
+valid, errors = trail.verify_integrity()
+print(f"Intégrité OK: {valid}, Erreurs: {len(errors)}")
+
+# Export pour conformité
+json_export = trail.export_trail("json")
+csv_export = trail.export_trail("csv")
+
+# Rapport de conformité SOC2
+report = trail.get_compliance_report("SOC2")
+print(f"Total: {report['total_entries']}, Sécurité: {report['security_events']}")
+print(f"Intégrité: {'✅' if report['integrity_valid'] else '❌'}")
+```
 
 ---
 
@@ -1719,7 +1848,9 @@ critical = detector.get_findings(min_severity=DetectionSeverity.HIGH)
 
 ---
 
-### 8.4 — Migration de framework assistée
+### 8.4 — Migration de framework assistée ✅ Implémentée
+
+**Statut :** Terminée — Agent de migration complet avec analyse de stack, planification multi-étapes, base de breaking changes connues, exécution avec rollback, génération de tests de régression (40 tests unitaires passent).
 
 **Description :** Agent spécialisé dans les migrations de frameworks et versions.
 
@@ -1729,11 +1860,81 @@ critical = detector.get_findings(min_severity=DetectionSeverity.HIGH)
 - Migration JavaScript → TypeScript
 - Upgrade de dépendances majeures avec résolution automatique des breaking changes
 
+**Implémentation réalisée :**
+- `apps/backend/agents/migration_agent.py` — Agent de migration complet avec :
+  - `MigrationType` — 5 types : version_upgrade, framework_switch, language_migration, dependency_upgrade, config_migration
+  - `MigrationStatus` — 7 statuts : draft, planned, in_progress, completed, failed, rolled_back, cancelled
+  - `StepRisk` — 4 niveaux de risque : low, medium, high, critical
+  - `BreakingChangeType` — 8 types : api_removed, api_renamed, api_signature_changed, behaviour_changed, dependency_removed, config_format_changed, import_path_changed, type_changed
+  - `DetectedDependency` — Dépendance détectée (name, version, type, ecosystem, breaking update)
+  - `BreakingChange` — Breaking change avec description, fichiers affectés, ancien/nouveau API, guide de migration, auto-fixable
+  - `MigrationStep` — Étape de migration avec ordre, type, risque, commandes, transformations de code, commandes de rollback, temps estimé
+  - `StackAnalysis` — Analyse du stack (langages, frameworks, build tools, dépendances, fichiers de config)
+  - `MigrationPlan` — Plan complet avec étapes ordonnées, breaking changes, estimation de temps, progress_pct, rollback
+  - `MigrationResult` — Résultat d'exécution (steps completed/failed, fichiers modifiés, tests générés, durée)
+  - `KNOWN_MIGRATIONS` — Base de breaking changes connues pour React 18→19, Express 4→5, JS→TypeScript
+  - `STACK_INDICATORS` — Détection automatique de 11 frameworks (React, Vue, Angular, Express, Fastify, Django, Flask, Next.js, TypeScript, Webpack, Vite)
+  - `StackAnalyzer` — Analyseur de stack :
+    - `analyze()` — Analyse complète du projet (langages, frameworks, dépendances, fichiers de config)
+    - `analyze_from_data()` — Analyse à partir de données fournies (pour tests)
+  - `MigrationAgent` — Agent principal :
+    - `analyze_stack()` — Analyser le stack technologique du projet
+    - `create_migration_plan()` — Créer un plan de migration multi-étapes avec breaking changes, commandes, transformations
+    - `get_plan()` / `list_plans()` — Consultation des plans
+    - `update_step_status()` — Mise à jour du statut d'une étape
+    - `execute_migration()` — Exécution du plan (avec mode dry_run)
+    - `rollback_migration()` — Rollback complet en ordre inversé
+    - `get_results()` / `get_stats()` — Résultats et statistiques
+  - Génération automatique de tests de régression pour chaque migration (vérification des breaking changes, dépendances, smoke test)
+- `tests/test_migration_agent.py` — 40 tests unitaires (DetectedDependency: 2, BreakingChange: 2, MigrationStep: 3, MigrationPlan: 3, StackAnalyzer: 4, Plan creation: 6, Plan management: 4, Execution: 6, Test generation: 3, Results & Stats: 4, Edge cases: 3)
+
+**Utilisation :**
+
+1. **Analyser le stack** : L'agent détecte automatiquement les langages, frameworks et dépendances du projet.
+2. **Créer un plan** : Spécifier le framework source/cible et la version. L'agent génère un plan multi-étapes avec les breaking changes connues.
+3. **Exécuter** : Lancer la migration (ou en mode dry-run pour prévisualiser). Chaque étape est tracée.
+4. **Rollback** : En cas de problème, rollback instantané vers l'état précédent.
+5. **Tests** : L'agent génère automatiquement des tests de régression vérifiant les breaking changes.
+
+```python
+from apps.backend.agents.migration_agent import MigrationAgent
+
+agent = MigrationAgent(project_root="/path/to/project")
+
+# Analyser le stack technologique
+analysis = agent.analyze_stack()
+print(f"Langages: {analysis.detected_languages}")
+print(f"Frameworks: {analysis.detected_frameworks}")
+print(f"Dépendances: {len(analysis.dependencies)}")
+
+# Créer un plan de migration React 18 → 19
+plan = agent.create_migration_plan("react", "18.2", "19.0")
+print(f"Plan {plan.plan_id}: {len(plan.steps)} étapes, ~{plan.estimated_total_minutes:.0f} min")
+for bc in plan.breaking_changes:
+    print(f"  ⚠️ {bc.description} (auto-fix: {bc.auto_fixable})")
+
+# Exécuter en dry-run d'abord
+dry_result = agent.execute_migration(plan.plan_id, dry_run=True)
+print(f"Dry-run: {dry_result.steps_completed}/{dry_result.steps_total} OK")
+
+# Exécuter la migration
+result = agent.execute_migration(plan.plan_id)
+print(f"Migration: {'✅' if result.success else '❌'}")
+print(f"Tests générés: {result.tests_generated}")
+
+# Rollback si nécessaire
+if not result.success:
+    rollback = agent.rollback_migration(plan.plan_id)
+    print(f"Rollback: {'✅' if rollback.success else '❌'}")
+```
+
 ---
 
 ## 9. UI/UX Avancé
 
-### 9.1 — Mode sombre/clair automatique + thème custom
+### 9.1 — Mode sombre/clair automatique + thème custom ✅ Implémentée
+
+**Statut :** Terminée — Backend ThemeManager complet avec 7 thèmes intégrés + thèmes custom illimités, import/export JSON, validation de couleurs, liaison thème-par-projet, génération CSS. Frontend CustomThemeEditor avec color picker, preview, import/export, sélection. (40 tests unitaires passent).
 
 **Description :** L'application supporte déjà 7 thèmes. Aller plus loin.
 
@@ -1742,6 +1943,82 @@ critical = detector.get_findings(min_severity=DetectionSeverity.HIGH)
 - Éditeur de thème custom avec color picker
 - Import/export de thèmes
 - Thème par projet (un thème différent pour chaque projet ouvert)
+
+**Implémentation réalisée :**
+- `apps/backend/ui/theme_manager.py` — Gestionnaire de thèmes complet avec :
+  - `ThemeMode` — 3 modes : light, dark, system
+  - `ThemeSource` — 3 sources : builtin, custom, imported
+  - `BUILTIN_THEMES` — 7 thèmes intégrés (Default, Dusk, Lime, Ocean, Retro, Neo, Forest) avec palettes light/dark complètes (bg, accent, darkBg, darkAccent, foreground, muted, border)
+  - `ThemeColors` — Palette de couleurs avec 10 propriétés (bg, accent, darkBg, darkAccent, foreground, darkForeground, muted, darkMuted, border, darkBorder)
+    - `validate()` — Validation des couleurs hex (regex #RGB, #RRGGBB, #RRGGBBAA)
+    - `to_dict()` / `from_dict()` — Sérialisation
+  - `CustomTheme` — Thème personnalisé (id, name, description, source, colors, author, version, dates)
+  - `ProjectThemeBinding` — Liaison projet-thème avec mode (light/dark/system)
+  - `ThemeManager` — Classe principale :
+    - `get_mode()` / `set_mode()` — Gestion du mode global (light/dark/system)
+    - `resolve_mode()` — Résolution du mode "system" en light/dark selon la préférence OS
+    - `list_builtin_themes()` / `get_builtin_theme()` — Accès aux 7 thèmes intégrés
+    - `create_custom_theme()` — Créer un thème avec validation des couleurs hex
+    - `get_custom_theme()` / `update_custom_theme()` / `delete_custom_theme()` / `list_custom_themes()` — CRUD complet
+    - `list_all_themes()` — Liste combinée (intégrés + custom)
+    - `set_project_theme()` / `get_project_theme()` / `remove_project_theme()` / `list_project_bindings()` — Thème par projet
+    - `export_theme()` — Export JSON avec version et timestamp
+    - `import_theme()` — Import JSON avec validation des couleurs
+    - `generate_css_variables()` — Génération de CSS custom properties (--theme-bg, --theme-accent, etc.)
+    - `get_stats()` — Statistiques (thèmes intégrés, custom, liaisons projets, mode global)
+- `apps/frontend/src/renderer/components/settings/CustomThemeEditor.tsx` — Composant React avec :
+  - Création de thèmes custom avec 4 color pickers (Light BG, Light Accent, Dark BG, Dark Accent)
+  - Preview en temps réel des couleurs sélectionnées
+  - Import de thèmes depuis un fichier JSON
+  - Export de thèmes vers un fichier JSON
+  - Sélection et suppression de thèmes custom
+  - Intégration dans le `ThemeSelector` existant (sous la grille des thèmes intégrés)
+- `apps/frontend/src/renderer/components/settings/ThemeSelector.tsx` — Modifié pour intégrer le `CustomThemeEditor`
+- `tests/test_theme_manager.py` — 40 tests unitaires (ThemeColors: 4, CustomTheme: 3, Mode management: 4, Built-in themes: 3, Custom CRUD: 6, Per-project: 5, Import/Export: 5, CSS generation: 3, All themes: 3, Stats: 2, Edge cases: 2)
+
+**Utilisation :**
+
+1. **Mode automatique** : Dans Settings > Appearance, le mode "System" détecte automatiquement si votre OS est en mode clair ou sombre et adapte l'interface.
+2. **Thèmes intégrés** : 7 thèmes disponibles (Default, Dusk, Lime, Ocean, Retro, Neo, Forest). Cliquer pour appliquer instantanément.
+3. **Créer un thème custom** : Cliquer sur "New Theme", nommer le thème, ajuster les 4 couleurs avec les color pickers, et cliquer "Create Theme".
+4. **Importer un thème** : Cliquer sur "Import" et sélectionner un fichier JSON de thème partagé.
+5. **Exporter un thème** : Sur un thème custom, cliquer "Export" pour télécharger le fichier JSON.
+6. **Thème par projet** : Chaque projet peut avoir son propre thème, configuré dans les settings du projet.
+
+```python
+from apps.backend.ui.theme_manager import ThemeManager
+
+manager = ThemeManager()
+
+# Mode automatique
+manager.set_mode("system")  # Détecte le mode OS
+resolved = manager.resolve_mode("system", system_prefers_dark=True)
+print(f"Mode résolu: {resolved}")  # "dark"
+
+# Créer un thème custom
+theme = manager.create_custom_theme(
+    "Cyberpunk",
+    colors={"bg": "#1a1a2e", "accent": "#e94560", "darkBg": "#0f0f1a", "darkAccent": "#ff6b6b"},
+    description="Neon-inspired dark theme",
+    author="Alice",
+)
+print(f"Thème créé: {theme.theme_id}")
+
+# Lier un thème à un projet
+manager.set_project_theme("my-project", theme.theme_id, mode="dark")
+
+# Export/Import
+exported = manager.export_theme(theme.theme_id)
+imported = manager.import_theme(exported)
+
+# Générer les CSS variables
+css = manager.generate_css_variables(theme.theme_id, mode="dark")
+print(css)  # :root { --theme-bg: #0f0f1a; --theme-accent: #ff6b6b; ... }
+
+# Statistiques
+stats = manager.get_stats()
+print(f"Thèmes: {stats['total_themes']} ({stats['builtin_themes']} intégrés + {stats['custom_themes']} custom)")
+```
 
 ---
 

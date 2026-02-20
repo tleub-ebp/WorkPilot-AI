@@ -249,11 +249,11 @@ export function GitHubIntegration({
                   <div className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-success" />
                     <div>
-                      <p className="text-sm font-medium text-success">Connected via GitHub CLI</p>
+                      <p className="text-sm font-medium text-success">{t('projectSections.github.connectedViaCLI', { ns: 'settings' })}</p>
                       {oauthUsername && (
                         <p className="text-xs text-success/80 flex items-center gap-1 mt-0.5">
                           <User className="h-3 w-3" />
-                          Authenticated as {oauthUsername}
+                          {t('projectSections.github.authenticatedAs', { ns: 'settings', username: oauthUsername })}
                         </p>
                       )}
                     </div>
@@ -264,7 +264,7 @@ export function GitHubIntegration({
                     onClick={handleSwitchToManual}
                     className="text-xs"
                   >
-                    Use Different Token
+                    {t('projectSections.github.useDifferentToken', { ns: 'settings' })}
                   </Button>
                 </div>
               </div>
@@ -596,16 +596,17 @@ interface ConnectionStatusProps {
 }
 
 function ConnectionStatus({ isChecking, connectionStatus }: ConnectionStatusProps) {
+  const { t } = useTranslation('settings');
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-foreground">Connection Status</p>
+          <p className="text-sm font-medium text-foreground">{t('projectSections.github.connectionStatus', { ns: 'settings' })}</p>
           <p className="text-xs text-muted-foreground">
-            {isChecking ? 'Checking...' :
+            {isChecking ? t('projectSections.github.checking', { ns: 'settings' }) :
               connectionStatus?.connected
-                ? `Connected to ${connectionStatus.repoFullName}`
-                : connectionStatus?.error || 'Not connected'}
+                ? t('projectSections.github.connectedTo', { ns: 'settings', repo: connectionStatus.repoFullName })
+                : connectionStatus?.error || t('projectSections.github.notConnected', { ns: 'settings' })}
           </p>
           {connectionStatus?.connected && connectionStatus.repoDescription && (
             <p className="text-xs text-muted-foreground mt-1 italic">

@@ -591,9 +591,9 @@ def export_dashboard(project_id: str, fmt: str = "json"):
 @app.get("/api/sessions/{project_id}")
 def get_sessions(project_id: str):
     try:
-        from agents.session_history import SessionHistory
-        sh = SessionHistory()
-        sessions = sh.get_sessions(project_id)
+        from agents.session_history import SessionRecorder
+        sh = SessionRecorder(project_id=project_id)
+        sessions = sh.list_sessions()
         return {"success": True, "sessions": [s.to_dict() if hasattr(s, 'to_dict') else s.__dict__ for s in sessions]}
     except Exception as e:
         return {"success": False, "error": str(e)}

@@ -21,6 +21,19 @@ import {
   Wrench,
   FileText,
   Cpu,
+  BarChart3,
+  FileCode2,
+  Wand2,
+  BookOpenCheck,
+  Coins,
+  History,
+  Github,
+  GitPullRequest,
+  GitMerge,
+  Shield,
+  ShieldAlert,
+  Router,
+  CalendarClock,
   type LucideIcon
 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -55,6 +68,7 @@ interface CommandPaletteProps {
   onNavigate: (view: string) => void;
   onNewTask: () => void;
   onOpenSettings: () => void;
+  onOpenSettingsSection?: (section: string) => void;
   onToggleTheme?: () => void;
 }
 
@@ -113,7 +127,8 @@ function getBuiltinCommands(
   onNavigate: (view: string) => void,
   onNewTask: () => void,
   onOpenSettings: () => void,
-  onToggleTheme?: () => void
+  onToggleTheme?: () => void,
+  onOpenSettingsSection?: (section: string) => void
 ): PaletteCommand[] {
   return [
     {
@@ -222,6 +237,114 @@ function getBuiltinCommands(
       handler: () => onNavigate('worktrees'),
     },
     {
+      id: 'go_dashboard',
+      label: 'Go to Dashboard',
+      description: 'View project metrics, KPIs, and analytics',
+      category: 'navigation',
+      icon: BarChart3,
+      keywords: ['dashboard', 'metrics', 'kpi', 'analytics', 'stats'],
+      handler: () => onNavigate('dashboard'),
+    },
+    {
+      id: 'go_code_review',
+      label: 'Go to Code Review',
+      description: 'AI-powered code review with quality scoring',
+      category: 'navigation',
+      icon: FileCode2,
+      keywords: ['review', 'code', 'diff', 'quality'],
+      handler: () => onNavigate('code-review'),
+    },
+    {
+      id: 'go_refactoring',
+      label: 'Go to Refactoring',
+      description: 'Detect code smells and get refactoring proposals',
+      category: 'navigation',
+      icon: Wand2,
+      keywords: ['refactor', 'smells', 'clean', 'code'],
+      handler: () => onNavigate('refactoring'),
+    },
+    {
+      id: 'go_documentation',
+      label: 'Go to Documentation',
+      description: 'Check coverage and generate docstrings',
+      category: 'navigation',
+      icon: BookOpenCheck,
+      keywords: ['docs', 'documentation', 'docstring', 'readme'],
+      handler: () => onNavigate('documentation'),
+    },
+    {
+      id: 'go_cost_estimator',
+      label: 'Go to Cost Estimator',
+      description: 'View LLM usage costs and budgets',
+      category: 'navigation',
+      icon: Coins,
+      keywords: ['cost', 'budget', 'spending', 'tokens', 'money'],
+      handler: () => onNavigate('cost-estimator'),
+    },
+    {
+      id: 'go_session_history',
+      label: 'Go to Session History',
+      description: 'Track agent session performance and costs',
+      category: 'navigation',
+      icon: History,
+      keywords: ['sessions', 'history', 'timeline', 'past'],
+      handler: () => onNavigate('session-history'),
+    },
+    {
+      id: 'go_migration',
+      label: 'Go to Migration',
+      description: 'Framework migration wizard',
+      category: 'navigation',
+      icon: Download,
+      keywords: ['migration', 'framework', 'upgrade', 'wizard'],
+      handler: () => onNavigate('migration'),
+    },
+    {
+      id: 'go_visual_programming',
+      label: 'Go to Visual Programming',
+      description: 'Visual node-based programming interface',
+      category: 'navigation',
+      icon: Sparkles,
+      keywords: ['visual', 'programming', 'nodes', 'flow'],
+      handler: () => onNavigate('visual-programming'),
+    },
+    {
+      id: 'go_github_issues',
+      label: 'Go to GitHub Issues',
+      description: 'View and manage GitHub issues',
+      category: 'navigation',
+      icon: Github,
+      keywords: ['github', 'issues', 'bugs', 'tickets'],
+      handler: () => onNavigate('github-issues'),
+    },
+    {
+      id: 'go_github_prs',
+      label: 'Go to GitHub PRs',
+      description: 'View and review GitHub pull requests',
+      category: 'navigation',
+      icon: GitPullRequest,
+      keywords: ['github', 'pull', 'requests', 'prs', 'review'],
+      handler: () => onNavigate('github-prs'),
+    },
+    {
+      id: 'go_gitlab_issues',
+      label: 'Go to GitLab Issues',
+      description: 'View and manage GitLab issues',
+      category: 'navigation',
+      icon: GitMerge,
+      keywords: ['gitlab', 'issues', 'bugs', 'tickets'],
+      handler: () => onNavigate('gitlab-issues'),
+    },
+    {
+      id: 'go_gitlab_merge_requests',
+      label: 'Go to GitLab Merge Requests',
+      description: 'View and review GitLab merge requests',
+      category: 'navigation',
+      icon: GitMerge,
+      keywords: ['gitlab', 'merge', 'requests', 'mrs', 'review'],
+      handler: () => onNavigate('gitlab-merge-requests'),
+    },
+    {
       id: 'go_settings',
       label: 'Open Settings',
       description: 'Open application settings',
@@ -231,6 +354,44 @@ function getBuiltinCommands(
       keywords: ['settings', 'preferences', 'config'],
       handler: onOpenSettings,
     },
+    ...(onOpenSettingsSection ? [
+      {
+        id: 'open_sandbox_settings',
+        label: 'Open Sandbox Settings',
+        description: 'Agent execution isolation, file whitelist, resource limits',
+        category: 'settings' as CommandCategory,
+        icon: Shield,
+        keywords: ['sandbox', 'security', 'isolation', 'whitelist', 'rollback'],
+        handler: () => onOpenSettingsSection('sandbox'),
+      },
+      {
+        id: 'open_anomaly_settings',
+        label: 'Open Anomaly Detection Settings',
+        description: 'Agent behavior monitoring, trust scores, alerts',
+        category: 'settings' as CommandCategory,
+        icon: ShieldAlert,
+        keywords: ['anomaly', 'detection', 'trust', 'score', 'monitoring', 'security'],
+        handler: () => onOpenSettingsSection('anomaly-detection'),
+      },
+      {
+        id: 'open_router_settings',
+        label: 'Open LLM Router Settings',
+        description: 'Provider routing strategy, fallback chains, A/B testing',
+        category: 'settings' as CommandCategory,
+        icon: Router,
+        keywords: ['router', 'llm', 'provider', 'fallback', 'ab', 'testing', 'routing'],
+        handler: () => onOpenSettingsSection('llm-router'),
+      },
+      {
+        id: 'open_scheduler_settings',
+        label: 'Open Scheduler Settings',
+        description: 'Cron-like task scheduling, chains, priority queues',
+        category: 'settings' as CommandCategory,
+        icon: CalendarClock,
+        keywords: ['scheduler', 'cron', 'schedule', 'recurring', 'chain', 'queue'],
+        handler: () => onOpenSettingsSection('scheduler'),
+      },
+    ] : []),
     {
       id: 'toggle_theme',
       label: 'Toggle Theme',
@@ -294,6 +455,7 @@ export function CommandPalette({
   onNavigate,
   onNewTask,
   onOpenSettings,
+  onOpenSettingsSection,
   onToggleTheme,
 }: CommandPaletteProps) {
   const { t } = useTranslation();
@@ -303,8 +465,8 @@ export function CommandPalette({
   const listRef = useRef<HTMLDivElement>(null);
 
   const commands = useMemo(
-    () => getBuiltinCommands(onNavigate, onNewTask, onOpenSettings, onToggleTheme),
-    [onNavigate, onNewTask, onOpenSettings, onToggleTheme]
+    () => getBuiltinCommands(onNavigate, onNewTask, onOpenSettings, onToggleTheme, onOpenSettingsSection),
+    [onNavigate, onNewTask, onOpenSettings, onToggleTheme, onOpenSettingsSection]
   );
 
   // Filtered & scored results

@@ -141,6 +141,10 @@ function StatusBar({ data }: { data: Record<string, number> }) {
 // ---------------------------------------------------------------------------
 
 function CostBreakdown({ costByModel }: { costByModel: Record<string, number> }) {
+  if (!costByModel || typeof costByModel !== 'object') {
+    return <div className="text-xs text-muted-foreground">No cost data</div>;
+  }
+  
   const entries = Object.entries(costByModel).sort(([, a], [, b]) => b - a);
   const total = entries.reduce((sum, [, v]) => sum + v, 0);
 
