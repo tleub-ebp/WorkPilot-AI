@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿/**
+﻿﻿/**
  * Streaming Session Component - "Twitch-style" real-time coding view
  * 
  * Features:
