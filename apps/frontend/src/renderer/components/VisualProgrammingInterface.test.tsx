@@ -1,3 +1,4 @@
+import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, fireEvent, screen, waitFor } from '@testing-library/react';
 import { VisualProgrammingInterface } from './VisualProgrammingInterface';
@@ -21,7 +22,7 @@ describe('VisualProgrammingInterface', () => {
     // Simule le drag & drop d’un bloc FrontEnd
     const frontendBlock = screen.getByText(/FrontEnd/i);
     const canvas = screen.getByRole('region'); // ou autre sélecteur du canvas
-    fireEvent.dragStart(frontendBlock, { dataTransfer: { setData: jest.fn() } });
+    fireEvent.dragStart(frontendBlock, { dataTransfer: { setData: vi.fn() } });
     fireEvent.drop(canvas, { dataTransfer: { getData: () => 'frontend' }, clientX: 200, clientY: 200 });
     // Le modal de choix de framework doit apparaître
     await waitFor(() => screen.getByText(/Choisissez le framework/i));

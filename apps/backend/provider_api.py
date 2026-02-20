@@ -553,6 +553,233 @@ async def get_provider_usage(provider: str):
     else:
         return {"error": f"Usage non supporté pour le provider '{provider}'"}
 
+# ---------------------------------------------------------------------------
+# Feature API endpoints — Expose backend Python modules to the frontend
+# ---------------------------------------------------------------------------
+
+# --- 1.1 Dashboard Metrics ---
+@app.get("/api/dashboard/snapshot/{project_id}")
+def get_dashboard_snapshot(project_id: str):
+    try:
+        from scheduling.dashboard_metrics import DashboardMetrics
+        dm = DashboardMetrics()
+        snapshot = dm.get_snapshot(project_id)
+        return {"success": True, "snapshot": snapshot.to_dict() if hasattr(snapshot, 'to_dict') else snapshot.__dict__}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/dashboard/stats")
+def get_dashboard_stats():
+    try:
+        from scheduling.dashboard_metrics import DashboardMetrics
+        dm = DashboardMetrics()
+        return {"success": True, "stats": dm.get_stats()}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/dashboard/export/{project_id}")
+def export_dashboard(project_id: str, fmt: str = "json"):
+    try:
+        from scheduling.dashboard_metrics import DashboardMetrics
+        dm = DashboardMetrics()
+        report = dm.export_report(project_id, fmt=fmt)
+        return {"success": True, "report": report, "format": fmt}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# --- 1.2 Session History ---
+@app.get("/api/sessions/{project_id}")
+def get_sessions(project_id: str):
+    try:
+        from agents.session_history import SessionHistory
+        sh = SessionHistory()
+        sessions = sh.get_sessions(project_id)
+        return {"success": True, "sessions": [s.to_dict() if hasattr(s, 'to_dict') else s.__dict__ for s in sessions]}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# --- 2.1 Refactoring Agent ---
+@app.post("/api/refactoring/detect-smells")
+def detect_smells(body: Dict[str, Any] = Body(...)):
+    try:
+        from agents.refactorer import RefactoringAgent
+        agent = RefactoringAgent(thresholds=body.get("thresholds", {}))
+        source = body.get("source", "")
+        smells = agent.detect_smells_from_source(source)
+        return {"success": True, "smells": [s.to_dict() if hasattr(s, 'to_dict') else s.__dict__ for s in smells]}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/refactoring/propose")
+def propose_refactoring(body: Dict[str, Any] = Body(...)):
+    try:
+        from agents.refactorer import RefactoringAgent
+        agent = RefactoringAgent(thresholds=body.get("thresholds", {}))
+        source = body.get("source", "")
+        proposals = agent.propose_refactoring(source=source)
+        return {"success": True, "proposals": [p.to_dict() if hasattr(p, 'to_dict') else p.__dict__ for p in proposals]}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# --- 2.2 Documentation Agent ---
+@app.post("/api/documentation/coverage")
+def check_doc_coverage(body: Dict[str, Any] = Body(...)):
+    try:
+        from agents.documenter import DocumentationAgent, DocFormat
+        fmt = body.get("format", "google")
+        agent = DocumentationAgent(default_format=DocFormat(fmt))
+        file_path = body.get("file_path", "")
+        coverage = agent.check_documentation_coverage(file_path=file_path)
+        return {"success": True, "coverage": coverage}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/documentation/generate-docstrings")
+def generate_docstrings(body: Dict[str, Any] = Body(...)):
+    try:
+        from agents.documenter import DocumentationAgent, DocFormat
+        fmt = body.get("format", "google")
+        agent = DocumentationAgent(default_format=DocFormat(fmt))
+        file_path = body.get("file_path", "")
+        result = agent.generate_docstrings(file_path=file_path)
+        return {"success": True, "result": result.to_dict() if hasattr(result, 'to_dict') else result.__dict__}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/documentation/generate-readme")
+def generate_readme(body: Dict[str, Any] = Body(...)):
+    try:
+        from agents.documenter import DocumentationAgent, DocFormat
+        fmt = body.get("format", "google")
+        agent = DocumentationAgent(default_format=DocFormat(fmt))
+        dir_path = body.get("dir_path", "")
+        result = agent.generate_module_readme(dir_path)
+        return {"success": True, "result": result.to_dict() if hasattr(result, 'to_dict') else result.__dict__}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# --- 2.4 Feedback Learning ---
+@app.get("/api/feedback/stats/{project_id}")
+def get_feedback_stats(project_id: str):
+    try:
+        from agents.feedback_learning import FeedbackLearning
+        fl = FeedbackLearning()
+        stats = fl.get_stats(project_id)
+        return {"success": True, "stats": stats}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# --- 3.2 Task Templates ---
+@app.get("/api/templates")
+def list_task_templates():
+    try:
+        from scheduling.task_templates import TemplateManager
+        tm = TemplateManager()
+        templates = tm.list_templates()
+        return {"success": True, "templates": [t.to_dict() if hasattr(t, 'to_dict') else t.__dict__ for t in templates]}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# --- 3.3 AI Code Review ---
+@app.post("/api/code-review/analyze")
+def analyze_code_review(body: Dict[str, Any] = Body(...)):
+    try:
+        from review.ai_code_review import AICodeReview
+        reviewer = AICodeReview()
+        diff = body.get("diff", "")
+        result = reviewer.review_diff(diff)
+        return {"success": True, "review": result.to_dict() if hasattr(result, 'to_dict') else result.__dict__}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# --- 6.1 Intelligent Router ---
+@app.get("/api/router/config")
+def get_router_config():
+    try:
+        from scheduling.intelligent_router import IntelligentRouter
+        router = IntelligentRouter()
+        config = router.get_config()
+        return {"success": True, "config": config}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# --- 6.2 Local Model Manager ---
+@app.get("/api/local-models/status")
+def get_local_models_status():
+    try:
+        from scheduling.local_model_manager import LocalModelManager
+        mgr = LocalModelManager()
+        status = mgr.get_status()
+        return {"success": True, "status": status}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# --- 6.3 Cost Estimator ---
+@app.get("/api/costs/summary/{project_id}")
+def get_cost_summary(project_id: str):
+    try:
+        from scheduling.cost_estimator import CostEstimator
+        ce = CostEstimator()
+        summary = ce.get_summary(project_id)
+        return {"success": True, "summary": summary}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/costs/budget/{project_id}")
+def get_cost_budget(project_id: str):
+    try:
+        from scheduling.cost_estimator import CostEstimator
+        ce = CostEstimator()
+        budget = ce.get_budget(project_id)
+        return {"success": True, "budget": budget}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# --- 7.2 Sandbox ---
+@app.get("/api/sandbox/status")
+def get_sandbox_status():
+    try:
+        from security.sandbox import SandboxManager
+        mgr = SandboxManager()
+        status = mgr.get_status()
+        return {"success": True, "status": status}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# --- 7.3 Anomaly Detector ---
+@app.get("/api/anomaly/status")
+def get_anomaly_status():
+    try:
+        from security.anomaly_detector import AnomalyDetector
+        detector = AnomalyDetector()
+        status = detector.get_status()
+        return {"success": True, "status": status}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# --- 8.1 Scheduler ---
+@app.get("/api/scheduler/jobs")
+def get_scheduler_jobs():
+    try:
+        from scheduling.scheduler import TaskScheduler
+        sched = TaskScheduler()
+        jobs = sched.list_jobs()
+        return {"success": True, "jobs": [j.to_dict() if hasattr(j, 'to_dict') else j.__dict__ for j in jobs]}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# --- 8.2 Auto-Detection ---
+@app.get("/api/auto-detect/status")
+def get_auto_detect_status():
+    try:
+        from scheduling.auto_detector import AutoDetector
+        detector = AutoDetector()
+        status = detector.get_status()
+        return {"success": True, "status": status}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 if __name__ == "__main__":
     import uvicorn
     try:

@@ -18,7 +18,11 @@
     "worktrees": "Arbres de travail",
     "agentTools": "Aperçu MCP",
     "migration": "Assistant de migration",
-    "visualProgramming": "Programmation visuelle"
+    "visualProgramming": "Programmation visuelle",
+    "dashboard": "Tableau de bord",
+    "codeReview": "Revue de code",
+    "refactoring": "Refactoring",
+    "documentation": "Documentation"
   },
   "actions": {
     "settings": "Paramètres",

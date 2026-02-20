@@ -18,7 +18,11 @@
     "worktrees": "Worktrees",
     "agentTools": "MCP Overview",
     "migration": "Migration Wizard",
-    "visualProgramming": "visualProgramming"
+    "visualProgramming": "Visual Programming",
+    "dashboard": "Dashboard",
+    "codeReview": "Code Review",
+    "refactoring": "Refactoring",
+    "documentation": "Documentation"
   },
   "actions": {
     "settings": "Settings",

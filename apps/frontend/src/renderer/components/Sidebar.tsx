@@ -20,6 +20,10 @@ import {
   Wrench,
   PanelLeft,
   PanelLeftClose,
+  BarChart3,
+  FileCode2,
+  Wand2,
+  BookOpenCheck,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { ScrollArea } from '@/components/ui';
@@ -60,7 +64,7 @@ import { CopilotCliStatusBadge } from './CopilotCliStatusBadge';
 import { UpdateBanner } from './UpdateBanner';
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'code-review' | 'refactoring' | 'documentation';
 
 interface SidebarProps {
   onSettingsClick: () => void;
@@ -87,7 +91,11 @@ const baseNavItems: NavItem[] = [
   { id: 'context', labelKey: 'navigation:items.context', icon: BookOpen, shortcut: 'C' },
   { id: 'agent-tools', labelKey: 'navigation:items.agentTools', icon: Wrench, shortcut: 'M' },
   { id: 'worktrees', labelKey: 'navigation:items.worktrees', icon: GitBranch, shortcut: 'W' },
-  { id: 'migration', labelKey: 'navigation:items.migration', icon: Download, shortcut: 'Z' } // Ajout de la migration
+  { id: 'migration', labelKey: 'navigation:items.migration', icon: Download, shortcut: 'Z' },
+  { id: 'dashboard', labelKey: 'navigation:items.dashboard', icon: BarChart3, shortcut: 'H' },
+  { id: 'code-review', labelKey: 'navigation:items.codeReview', icon: FileCode2, shortcut: 'V' },
+  { id: 'refactoring', labelKey: 'navigation:items.refactoring', icon: Wand2, shortcut: 'F' },
+  { id: 'documentation', labelKey: 'navigation:items.documentation', icon: BookOpenCheck, shortcut: 'O' },
 ];
 
 // GitHub nav items shown when GitHub is enabled

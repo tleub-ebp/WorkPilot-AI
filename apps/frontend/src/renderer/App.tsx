@@ -42,6 +42,15 @@ const GitHubIssues = lazy(() => import('@/components/GitHubIssues').then(m => ({
 const GitLabIssues = lazy(() => import('./components/GitLabIssues').then(m => ({ default: m.GitLabIssues })));
 const GitHubPRs = lazy(() => import('./components/github-prs').then(m => ({ default: m.GitHubPRs })));
 const GitLabMergeRequests = lazy(() => import('./components/gitlab-merge-requests').then(m => ({ default: m.GitLabMergeRequests })));
+const Changelog = lazy(() => import('./components/Changelog').then(m => ({ default: m.Changelog })));
+const AgentTools = lazy(() => import('./components/AgentTools').then(m => ({ default: m.AgentTools })));
+const Worktrees = lazy(() => import('./components/Worktrees').then(m => ({ default: m.Worktrees })));
+const MigrationWizard = lazy(() => import('./components/MigrationWizard').then(m => ({ default: m.MigrationWizard })));
+const VisualProgrammingInterface = lazy(() => import('./components/VisualProgrammingInterface').then(m => ({ default: m.VisualProgrammingInterface })));
+const DashboardMetrics = lazy(() => import('./components/DashboardMetrics').then(m => ({ default: m.DashboardMetrics })));
+const CodeReview = lazy(() => import('./components/CodeReview').then(m => ({ default: m.CodeReview })));
+const RefactoringView = lazy(() => import('./components/RefactoringView').then(m => ({ default: m.RefactoringView })));
+const DocumentationView = lazy(() => import('./components/DocumentationView').then(m => ({ default: m.DocumentationView })));
 import { VersionWarningModal } from './components/VersionWarningModal';
 import { OnboardingWizard } from './components/onboarding';
 import { GitHubSetupModal } from './components/GitHubSetupModal';
@@ -64,6 +73,9 @@ import { ProviderSelector } from './components/ProviderSelector';
 import { ProviderContextProvider } from './components/ProviderContext';
 import { AddProjectModal } from '@/components';
 import { AlertCircle } from 'lucide-react';
+import { CommandPalette } from './components/CommandPalette';
+import { KeyboardShortcutsOverlay } from './components/KeyboardShortcutsOverlay';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 
 // Version constant for version-specific warnings (e.g., reauthentication notices)
 const VERSION_WARNING_275 = '2.7.5';
@@ -158,6 +170,19 @@ export function App() {
   const [isOnboardingWizardOpen, setIsOnboardingWizardOpen] = useState(false);
   const [isVersionWarningModalOpen, setIsVersionWarningModalOpen] = useState(false);
   const [isRefreshingTasks, setIsRefreshingTasks] = useState(false);
+
+  // Command Palette & Keyboard Shortcuts state (Features 9.4 & 9.5)
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isShortcutsOverlayOpen, setIsShortcutsOverlayOpen] = useState(false);
+
+  // Global keyboard shortcuts (Feature 9.4)
+  useKeyboardShortcuts({
+    onCommandPalette: () => setIsCommandPaletteOpen(true),
+    onKeyboardShortcuts: () => setIsShortcutsOverlayOpen(true),
+    onNewTask: () => setIsNewTaskDialogOpen(true),
+    onOpenSettings: () => setIsSettingsDialogOpen(true),
+    onNavigate: (view) => setActiveView(view as SidebarView),
+  });
 
   // Remove project confirmation state
   const [showRemoveProjectDialog, setShowRemoveProjectDialog] = useState(false);
@@ -1085,6 +1110,33 @@ export function App() {
                                   }}
                               />
                           )}
+                          {activeView === 'changelog' && (
+                              <Changelog />
+                          )}
+                          {activeView === 'agent-tools' && (
+                              <AgentTools />
+                          )}
+                          {activeView === 'worktrees' && (activeProjectId || selectedProjectId) && (
+                              <Worktrees projectId={activeProjectId || selectedProjectId!} />
+                          )}
+                          {activeView === 'migration' && (
+                              <MigrationWizard />
+                          )}
+                          {activeView === 'visual-programming' && (
+                              <VisualProgrammingInterface />
+                          )}
+                          {activeView === 'dashboard' && (activeProjectId || selectedProjectId) && (
+                              <DashboardMetrics projectId={activeProjectId || selectedProjectId!} />
+                          )}
+                          {activeView === 'code-review' && (activeProjectId || selectedProjectId) && (
+                              <CodeReview projectId={activeProjectId || selectedProjectId!} />
+                          )}
+                          {activeView === 'refactoring' && (activeProjectId || selectedProjectId) && (
+                              <RefactoringView projectId={activeProjectId || selectedProjectId!} />
+                          )}
+                          {activeView === 'documentation' && (activeProjectId || selectedProjectId) && (
+                              <DocumentationView projectId={activeProjectId || selectedProjectId!} />
+                          )}
                         </>
                     ) : (
                         <div className="flex items-center justify-center h-full text-muted">
@@ -1138,6 +1190,21 @@ export function App() {
               <Toaster />
               {/* Global download progress indicator - shows overall progress of all downloads */}
               <GlobalDownloadIndicator />
+
+              {/* Command Palette (Feature 9.5) */}
+              <CommandPalette
+                  open={isCommandPaletteOpen}
+                  onOpenChange={setIsCommandPaletteOpen}
+                  onNavigate={(view) => setActiveView(view as SidebarView)}
+                  onNewTask={() => setIsNewTaskDialogOpen(true)}
+                  onOpenSettings={() => setIsSettingsDialogOpen(true)}
+              />
+
+              {/* Keyboard Shortcuts Overlay (Feature 9.4) */}
+              <KeyboardShortcutsOverlay
+                  open={isShortcutsOverlayOpen}
+                  onOpenChange={setIsShortcutsOverlayOpen}
+              />
             </TooltipProvider>
 
             {/* Onboarding wizard - shown only once at app start */}
