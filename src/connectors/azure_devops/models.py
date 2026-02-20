@@ -224,3 +224,80 @@ class FileItem:
             commit_id=getattr(api_item, "commit_id", None),
             url=getattr(api_item, "url", None),
         )
+
+
+@dataclass
+class PullRequest:
+    """Azure DevOps Git pull request representation.
+
+    Represents a pull request within an Azure DevOps Git repository,
+    including metadata such as source/target branches, status, and
+    linked work items.
+
+    Attributes:
+        pull_request_id: The unique integer identifier of the PR.
+        title: The PR title.
+        description: The PR description text.
+        status: The PR status (e.g., ``'active'``, ``'completed'``,
+            ``'abandoned'``).
+        source_branch: The source branch ref name.
+        target_branch: The target branch ref name.
+        created_by: The display name of the PR creator, or None.
+        creation_date: The date the PR was created, or None.
+        is_draft: Whether the PR is a draft.
+        merge_status: The merge status (e.g., ``'succeeded'``,
+            ``'conflicts'``), or None.
+        url: The API URL for the PR, or None.
+        repository_id: The repository ID containing this PR, or None.
+    """
+
+    pull_request_id: int
+    title: str
+    description: str
+    status: str
+    source_branch: str
+    target_branch: str
+    created_by: str | None = None
+    creation_date: datetime | None = None
+    is_draft: bool = False
+    merge_status: str | None = None
+    url: str | None = None
+    repository_id: str | None = None
+
+    @classmethod
+    def from_api_response(cls, api_pr: Any) -> "PullRequest":
+        """Create a PullRequest from an Azure DevOps API response object.
+
+        Converts a GitPullRequest object returned by the Azure DevOps
+        SDK into a clean PullRequest dataclass.
+
+        Args:
+            api_pr: A GitPullRequest object from the Azure DevOps SDK.
+
+        Returns:
+            A PullRequest instance populated from the API response.
+        """
+        created_by = None
+        created_by_field = getattr(api_pr, "created_by", None)
+        if created_by_field:
+            created_by = getattr(created_by_field, "display_name", None)
+
+        repo_id = None
+        repository = getattr(api_pr, "repository", None)
+        if repository:
+            repo_id = str(getattr(repository, "id", ""))
+
+        return cls(
+            pull_request_id=getattr(api_pr, "pull_request_id", 0),
+            title=getattr(api_pr, "title", ""),
+            description=getattr(api_pr, "description", ""),
+            status=getattr(api_pr, "status", "unknown"),
+            source_branch=getattr(api_pr, "source_ref_name", ""),
+            target_branch=getattr(api_pr, "target_ref_name", ""),
+            created_by=created_by,
+            creation_date=getattr(api_pr, "creation_date", None),
+            is_draft=getattr(api_pr, "is_draft", False),
+            merge_status=getattr(api_pr, "merge_status", None),
+            url=getattr(api_pr, "url", None),
+            repository_id=repo_id,
+        )

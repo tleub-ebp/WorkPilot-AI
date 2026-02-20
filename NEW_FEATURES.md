@@ -168,28 +168,57 @@
 
 ## 4. Intégrations Externes
 
-### 4.1 — Intégration Jira
+### 4.1 — Intégration Jira ✅ Implémentée
+
+**Statut :** Terminée — Nouveau connecteur Jira Cloud complet avec client HTTP, modèles de données, connecteur haut niveau et synchronisation bidirectionnelle (49 tests unitaires passent).
 
 **Description :** En plus de Linear et GitHub Issues, ajouter le support de Jira, très utilisé en entreprise.
 
+**Implémentation réalisée :**
+- `src/connectors/jira/exceptions.py` — Hiérarchie d'exceptions dédiée (`JiraError`, `JiraAuthenticationError`, `JiraConfigurationError`, `JiraProjectNotFoundError`, `JiraIssueNotFoundError`, `JiraAPIError`)
+- `src/connectors/jira/models.py` — Modèles `JiraUser`, `JiraProject`, `JiraStatus`, `JiraIssue`, `JiraTransition`, `JiraComment` avec parsing ADF (Atlassian Document Format)
+- `src/connectors/jira/client.py` — Client HTTP avec auth email+token, méthodes GET/POST/PUT, mapping d'erreurs automatique
+- `src/connectors/jira/connector.py` — `list_projects()`, `search_issues()`, `get_issue()`, `create_issue()`, `update_issue()`, `get_transitions()`, `transition_issue()`, `sync_status_to_jira()`, `map_jira_status_to_workpilot()`, `add_comment()`, `create_bug_from_qa()`, `import_issues_for_kanban()`
+- `src/connectors/jira/__init__.py` — Exports publics
+- `tests/connectors/jira/test_client.py` — 22 tests (init, config, connect, GET, POST, erreurs HTTP, disconnect)
+- `tests/connectors/jira/test_connector.py` — 27 tests (projets, issues, création, transitions, sync statut, QA, Kanban, modèles)
+
 **Fonctionnalités :**
-- Import de tickets Jira dans le Kanban
-- Synchronisation bidirectionnelle du statut
-- Création automatique de tickets Jira depuis les résultats QA
-- Mapping des champs custom Jira
+- ✅ Import de tickets Jira dans le Kanban (format compatible WorkPilot)
+- ✅ Synchronisation bidirectionnelle du statut (mapping WorkPilot ↔ Jira)
+- ✅ Création automatique de tickets Jira depuis les résultats QA
+- ✅ Mapping des champs custom Jira (`customfield_XXXXX`)
+- ✅ Support JQL (Jira Query Language) pour la recherche
+- ✅ Parsing Atlassian Document Format (ADF) pour les descriptions
+
+**Configuration requise (variables d'environnement) :**
+```
+JIRA_URL=https://your-org.atlassian.net
+JIRA_EMAIL=user@example.com
+JIRA_API_TOKEN=your_api_token
+```
 
 **Impact :** Élevé — Jira est omniprésent dans les entreprises, cible principale d'Auto-Claude EBP.
 
 ---
 
-### 4.2 — Intégration Azure DevOps Boards (enrichie)
+### 4.2 — Intégration Azure DevOps Boards (enrichie) ✅ Implémentée
+
+**Statut :** Terminée — Le connecteur Azure DevOps Boards a été enrichi avec des opérations d'écriture complètes (21 tests unitaires passent).
 
 **Description :** L'intégration Azure DevOps existe déjà (import de work items), mais elle peut être enrichie.
 
-**Améliorations proposées :**
-- Synchronisation bidirectionnelle des statuts (pas juste import)
-- Lien automatique entre les tâches WorkPilot et les work items ADO
-- Création automatique de PR Azure Repos (en plus de GitHub)
+**Implémentation réalisée :**
+- `src/connectors/azure_devops/work_items.py` — `create_work_item()`, `update_work_item()`, `link_work_items()` (sync bidirectionnelle des statuts, liaison de work items)
+- `src/connectors/azure_devops/repos.py` — `create_pull_request()` (création de PR Azure Repos avec reviewers, work items liés, mode draft)
+- `src/connectors/azure_devops/models.py` — Nouveau modèle `PullRequest` dataclass
+- `src/connectors/azure_devops/__init__.py` — Méthodes exposées sur `AzureDevOpsConnector`
+- `tests/connectors/azure_devops/test_work_items_enriched.py` — 21 tests unitaires
+
+**Améliorations proposées (initiales) :**
+- ✅ Synchronisation bidirectionnelle des statuts (pas juste import)
+- ✅ Lien automatique entre les tâches WorkPilot et les work items ADO
+- ✅ Création automatique de PR Azure Repos (en plus de GitHub)
 - Affichage du statut des pipelines CI/CD Azure directement dans l'UI
 - Support des Azure DevOps Wikis pour la documentation générée
 
@@ -207,29 +236,57 @@
 
 ---
 
-### 4.4 — Intégration SonarQube / SonarCloud
+### 4.4 — Intégration SonarQube / SonarCloud ✅ Implémentée
+
+**Statut :** Terminée — Nouveau connecteur SonarQube complet avec client HTTP, modèles de données et connecteur haut niveau (40 tests unitaires passent).
 
 **Description :** Connecter le système de QA existant avec SonarQube pour enrichir l'analyse de qualité.
 
+**Implémentation réalisée :**
+- `src/connectors/sonarqube/client.py` — Client HTTP avec auth par token, gestion d'erreurs, mapping d'exceptions
+- `src/connectors/sonarqube/connector.py` — `list_projects()`, `get_measures()`, `get_quality_gate_status()`, `get_issues()`, `get_measures_history()`, `get_project_summary()`
+- `src/connectors/sonarqube/models.py` — Modèles `SonarProject`, `SonarMeasure`, `SonarIssue`, `QualityGateStatus`, `QualityGateCondition`
+- `src/connectors/sonarqube/exceptions.py` — Hiérarchie d'exceptions dédiée
+- `tests/connectors/sonarqube/test_client.py` — 19 tests (init, connect, GET, erreurs HTTP)
+- `tests/connectors/sonarqube/test_connector.py` — 21 tests (projets, métriques, quality gate, issues, summary, modèles)
+
 **Fonctionnalités :**
-- Import des métriques SonarQube dans le dashboard
+- ✅ Import des métriques SonarQube dans le dashboard
+- ✅ Vérification automatique que la Quality Gate passe avant le merge
+- ✅ Historique de l'évolution de la dette technique
 - L'agent QA prend en compte les issues SonarQube dans son évaluation
-- Vérification automatique que la Quality Gate passe avant le merge
-- Historique de l'évolution de la dette technique
 
 **Note :** Le MCP SonarQube est déjà configuré dans l'environnement, ce qui facilite l'intégration.
 
 ---
 
-### 4.5 — Intégration Postman
+### 4.5 — Intégration Postman ✅ Implémentée
+
+**Statut :** Terminée — Nouveau connecteur Postman complet avec client HTTP, modèles de données, connecteur haut niveau, génération de collections et validation structurelle (45 tests unitaires passent).
 
 **Description :** Utiliser les collections Postman pour valider automatiquement les APIs générées.
 
+**Implémentation réalisée :**
+- `src/connectors/postman/exceptions.py` — Hiérarchie d'exceptions dédiée (`PostmanError`, `PostmanAuthenticationError`, `PostmanConfigurationError`, `PostmanCollectionNotFoundError`, `PostmanEnvironmentNotFoundError`, `PostmanAPIError`)
+- `src/connectors/postman/models.py` — Modèles `PostmanWorkspace`, `PostmanCollection`, `PostmanRequest`, `PostmanEnvironment`, `PostmanTestResult`, `PostmanCollectionRun`
+- `src/connectors/postman/client.py` — Client HTTP avec auth API key, méthodes GET/POST/PUT/DELETE, mapping d'erreurs automatique
+- `src/connectors/postman/connector.py` — `list_workspaces()`, `list_collections()`, `get_collection()`, `get_collection_requests()`, `import_collection_as_spec()`, `generate_collection_from_endpoints()`, `list_environments()`, `get_environment()`, `sync_environment()`, `validate_collection_structure()`, `get_collection_summary()`
+- `src/connectors/postman/__init__.py` — Exports publics
+- `tests/connectors/postman/test_client.py` — 18 tests (init, config, connect, GET, POST, DELETE, erreurs HTTP, disconnect)
+- `tests/connectors/postman/test_connector.py` — 27 tests (workspaces, collections, requests, import spec, génération, environnements, validation, summary, modèles)
+
 **Fonctionnalités :**
-- Import de collections Postman pour servir de spécification API
-- Exécution automatique des tests Postman après génération de code backend
-- Génération automatique de collections Postman depuis les endpoints créés
-- Synchronisation des environnements Postman avec les configs du projet
+- ✅ Import de collections Postman pour servir de spécification API
+- ✅ Extraction récursive des requêtes (dossiers imbriqués supportés)
+- ✅ Génération automatique de collections Postman depuis les endpoints créés (avec scripts de test intégrés)
+- ✅ Synchronisation des environnements Postman avec les configs du projet
+- ✅ Validation structurelle des collections (URL, méthodes HTTP)
+- ✅ Résumé de collection pour dashboard (métriques par méthode HTTP)
+
+**Configuration requise (variables d'environnement) :**
+```
+POSTMAN_API_KEY=PMAK-your-api-key
+```
 
 **Note :** Le MCP Postman est déjà disponible dans l'environnement.
 
@@ -384,16 +441,31 @@
 
 ---
 
-### 8.3 — Génération automatique de tests
+### 8.3 — Génération automatique de tests ✅ Implémentée
+
+**Statut :** Terminée — Agent spécialisé complet avec analyseur de code AST, détection de gaps de couverture, génération de tests unitaires/E2E/TDD (30 tests unitaires passent).
 
 **Description :** Agent spécialisé dans la génération de tests pour le code existant.
 
+**Implémentation réalisée :**
+- `apps/backend/agents/test_generator.py` — Agent complet avec :
+  - `CodeAnalyzer` — Analyseur AST Python : extraction de fonctions, classes, arguments, types de retour, docstrings, décorateurs, estimation de complexité cyclomatique
+  - `TestGeneratorAgent` — Agent principal avec méthodes :
+    - `analyze_coverage()` — Détection des gaps de couverture en comparant source vs tests existants
+    - `generate_unit_tests()` — Génération de tests unitaires (happy path, edge cases, error handling)
+    - `generate_tests_from_user_story()` — Génération de tests E2E depuis des user stories (format Given/When/Then)
+    - `generate_tdd_tests()` — Mode TDD : génération de tests avant l'implémentation
+  - Modèles de données : `FunctionInfo`, `CoverageGap`, `GeneratedTest`, `TestGenerationResult`
+- `tests/test_test_generator.py` — 30 tests unitaires (analyseur, modèles, agent, utilitaires)
+
 **Fonctionnalités :**
-- Analyse de la couverture de code existante
-- Génération de tests unitaires pour les fonctions non couvertes
-- Génération de tests d'intégration basés sur les workflows détectés
-- Génération de tests E2E à partir des user stories
-- Mode "test-first" : écrire les tests avant l'implémentation (TDD assisté)
+- ✅ Analyse de la couverture de code existante (détection intelligente via noms de tests)
+- ✅ Génération de tests unitaires pour les fonctions non couvertes (avec priorité high/medium/low)
+- ✅ Estimation de complexité cyclomatique pour prioriser les tests
+- ✅ Génération de tests E2E à partir des user stories (format Given/When/Then et bullet points)
+- ✅ Mode "test-first" : écrire les tests avant l'implémentation (TDD assisté)
+- ✅ Génération de fichiers de test complets avec imports et structure pytest
+- ✅ Support optionnel d'un LLM provider pour génération assistée par IA
 
 ---
 

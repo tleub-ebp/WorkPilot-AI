@@ -26,7 +26,7 @@ from src.connectors.azure_devops.exceptions import (
     ResourceNotFoundError,
     WorkItemNotFoundError,
 )
-from src.connectors.azure_devops.models import FileItem, Repository, WorkItem
+from src.connectors.azure_devops.models import FileItem, PullRequest, Repository, WorkItem
 from src.connectors.azure_devops.repos import AzureReposClient
 from src.connectors.azure_devops.work_items import AzureWorkItemsClient
 from src.connectors.base import BaseIntegratedConnector
@@ -299,6 +299,56 @@ class AzureDevOpsConnector(BaseIntegratedConnector):
         """
         return self._client.get_connection_info()
 
+    # ── Enriched Boards operations (Feature 4.2) ────────────────────
+
+    def create_work_item(
+        self,
+        project: str,
+        work_item_type: str,
+        title: str,
+        **kwargs,
+    ) -> WorkItem:
+        """Create a new work item. See ``AzureWorkItemsClient.create_work_item``."""
+        return self._work_items.create_work_item(
+            project, work_item_type, title, **kwargs
+        )
+
+    def update_work_item(
+        self,
+        project: str,
+        work_item_id: int,
+        fields: dict[str, object],
+    ) -> WorkItem:
+        """Update a work item's fields. See ``AzureWorkItemsClient.update_work_item``."""
+        return self._work_items.update_work_item(project, work_item_id, fields)
+
+    def link_work_items(
+        self,
+        project: str,
+        source_id: int,
+        target_id: int,
+        link_type: str = "System.LinkTypes.Related",
+        comment: str | None = None,
+    ) -> WorkItem:
+        """Link two work items. See ``AzureWorkItemsClient.link_work_items``."""
+        return self._work_items.link_work_items(
+            project, source_id, target_id, link_type, comment
+        )
+
+    def create_pull_request(
+        self,
+        project: str,
+        repository_id: str,
+        source_branch: str,
+        target_branch: str,
+        title: str,
+        **kwargs,
+    ) -> PullRequest:
+        """Create a PR in Azure Repos. See ``AzureReposClient.create_pull_request``."""
+        return self._repos.create_pull_request(
+            project, repository_id, source_branch, target_branch, title, **kwargs
+        )
+
     # ── Additional convenience methods ───────────────────────────────
 
     @property
@@ -330,6 +380,7 @@ __all__ = [
     "Repository",
     "WorkItem",
     "FileItem",
+    "PullRequest",
     # Exceptions
     "AzureDevOpsError",
     "AuthenticationError",

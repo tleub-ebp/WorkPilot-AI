@@ -331,3 +331,114 @@ class AzureReposClient:
             len(content_str),
         )
         return content_str
+
+    # ── Pull Request operations (Feature 4.2 — enriched Boards) ─────
+
+    def create_pull_request(
+        self,
+        project: str,
+        repository_id: str,
+        source_branch: str,
+        target_branch: str,
+        title: str,
+        description: str | None = None,
+        reviewers: list[str] | None = None,
+        work_item_ids: list[int] | None = None,
+        is_draft: bool = False,
+    ) -> "PullRequest":
+        """Create a pull request in an Azure DevOps Git repository.
+
+        Creates a new PR from a source branch to a target branch,
+        optionally linking work items and adding reviewers.
+
+        Args:
+            project: The project name or identifier.
+            repository_id: The repository name or unique ID.
+            source_branch: The source branch ref (e.g., ``'refs/heads/feature'``).
+                If no ``refs/heads/`` prefix is given, it is added automatically.
+            target_branch: The target branch ref (e.g., ``'refs/heads/main'``).
+                If no ``refs/heads/`` prefix is given, it is added automatically.
+            title: The PR title.
+            description: Optional PR description in Markdown.
+            reviewers: Optional list of reviewer unique names or IDs.
+            work_item_ids: Optional list of work item IDs to link.
+            is_draft: If True, creates the PR as a draft.
+
+        Returns:
+            A PullRequest dataclass with the created PR details.
+
+        Raises:
+            RepositoryNotFoundError: If the repository does not exist.
+            APIError: If the API call fails.
+        """
+        logger.info(
+            "Creating PR '%s' (%s → %s) in '%s/%s'.",
+            title,
+            source_branch,
+            target_branch,
+            project,
+            repository_id,
+        )
+
+        from azure.devops.v7_0.git.models import (
+            GitPullRequest,
+            IdentityRefWithVote,
+            ResourceRef,
+        )
+
+        # Normalise branch refs
+        if not source_branch.startswith("refs/"):
+            source_branch = f"refs/heads/{source_branch}"
+        if not target_branch.startswith("refs/"):
+            target_branch = f"refs/heads/{target_branch}"
+
+        pr_reviewers = None
+        if reviewers:
+            pr_reviewers = [
+                IdentityRefWithVote(unique_name=name) for name in reviewers
+            ]
+
+        pr_work_items = None
+        if work_item_ids:
+            pr_work_items = [
+                ResourceRef(id=str(wid)) for wid in work_item_ids
+            ]
+
+        pr_to_create = GitPullRequest(
+            source_ref_name=source_branch,
+            target_ref_name=target_branch,
+            title=title,
+            description=description or "",
+            reviewers=pr_reviewers,
+            work_item_refs=pr_work_items,
+            is_draft=is_draft,
+        )
+
+        try:
+            git_client = self._get_git_client()
+            api_pr = git_client.create_pull_request(
+                git_pull_request_to_create=pr_to_create,
+                repository_id=repository_id,
+                project=project,
+            )
+        except AzureDevOpsError:
+            raise
+        except Exception as exc:
+            error_msg = str(exc).lower()
+            if "404" in error_msg or "not found" in error_msg:
+                raise RepositoryNotFoundError(
+                    repository_id=repository_id, project=project
+                ) from exc
+            raise APIError(
+                f"Failed to create pull request in repository "
+                f"'{repository_id}': {exc}"
+            ) from exc
+
+        pull_request = PullRequest.from_api_response(api_pr)
+        logger.info(
+            "Created PR #%d: '%s' in repository '%s'.",
+            pull_request.pull_request_id,
+            pull_request.title,
+            repository_id,
+        )
+        return pull_request
