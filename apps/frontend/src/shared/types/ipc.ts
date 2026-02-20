@@ -140,7 +140,9 @@ import type {
   AzureDevOpsProject,
   AzureDevOpsWorkItem,
   AzureDevOpsImportResult,
-  AzureDevOpsSyncStatus, AzureDevOpsRepository
+  AzureDevOpsSyncStatus, AzureDevOpsRepository,
+  JiraWorkItem,
+  JiraSyncStatus
 } from './integrations';
 import type { APIProfile, ProfilesFile, TestConnectionResult, DiscoverModelsResult } from './profile';
 
@@ -494,8 +496,12 @@ export interface ElectronAPI {
     itemTypes?: string[],
     maxItems?: number
   ) => Promise<IPCResult<AzureDevOpsWorkItem[]>>;
-  importAzureDevOpsWorkItems: (projectId: string, workItemIds: number[]) => Promise<IPCResult<AzureDevOpsImportResult>>;
+  importAzureDevOpsWorkItems: (projectId: string, workItemIds: number[], options?: { requireReviewBeforeCoding?: boolean }) => Promise<IPCResult<AzureDevOpsImportResult>>;
   checkAzureDevOpsConnection: (projectId: string) => Promise<IPCResult<AzureDevOpsSyncStatus>>;
+
+  // Jira integration operations
+  getJiraIssues: (projectId: string, maxItems?: number) => Promise<IPCResult<JiraWorkItem[]>>;
+  checkJiraConnection: (projectId: string) => Promise<IPCResult<JiraSyncStatus>>;
 
   // GitHub integration operations
   getGitHubRepositories: (projectId: string) => Promise<IPCResult<GitHubRepository[]>>;

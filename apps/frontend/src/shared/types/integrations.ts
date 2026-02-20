@@ -114,6 +114,33 @@ export interface AzureDevOpsSyncStatus {
 }
 
 // ============================================
+// Jira Integration Types
+// ============================================
+
+export interface JiraWorkItem {
+  id: string; // Jira issue key (e.g., 'PROJ-123')
+  title: string;
+  description?: string;
+  state: string; // e.g., 'To Do', 'In Progress', 'Done'
+  workItemType: string; // e.g., 'Bug', 'Task', 'Story', 'Epic'
+  assignedTo?: string;
+  tags: string[]; // labels
+  priority?: string; // e.g., 'Highest', 'High', 'Medium', 'Low', 'Lowest'
+  createdDate?: string;
+  projectKey?: string;
+  url?: string;
+}
+
+export interface JiraSyncStatus {
+  connected: boolean;
+  instanceUrl?: string;
+  projectKey?: string;
+  issueCount?: number;
+  lastSyncedAt?: string;
+  error?: string;
+}
+
+// ============================================
 // GitHub Integration Types
 // ============================================
 

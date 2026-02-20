@@ -48,8 +48,11 @@ import {
 } from './ui/alert-dialog';
 import { AppSettingsDialog } from './settings/AppSettings';
 import { AzureDevOpsSidePanel } from './azure-devops-import/AzureDevOpsSidePanel';
+import { ImportConfirmDialog } from './azure-devops-import/ImportConfirmDialog';
+import type { ImportableWorkItem } from './azure-devops-import/ImportConfirmDialog';
+import { JiraSidePanel } from './jira-import/JiraSidePanel';
 import type { Task, TaskStatus, TaskOrderState } from '../../shared/types';
-import type { AzureDevOpsWorkItem } from '../../shared/types/integrations';
+import type { AzureDevOpsWorkItem, JiraWorkItem } from '../../shared/types/integrations';
 
 // Type guard for valid drop column targets - preserves literal type from TASK_STATUS_COLUMNS
 const VALID_DROP_COLUMNS = new Set<string>(TASK_STATUS_COLUMNS);
@@ -735,9 +738,27 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   // Azure DevOps import panel state
   const [azureDevOpsPanelOpen, setAzureDevOpsPanelOpen] = useState(false);
 
+  // Jira import panel state
+  const [jiraPanelOpen, setJiraPanelOpen] = useState(false);
+
   // Azure DevOps drag state
   const [isDraggingAzureDevOps, setIsDraggingAzureDevOps] = useState(false);
   const [draggedAzureDevOpsItems, setDraggedAzureDevOpsItems] = useState<AzureDevOpsWorkItem[]>([]);
+
+  // Import confirm dialog state (shown after dropping work items from Azure DevOps / Jira)
+  const [importConfirmDialog, setImportConfirmDialog] = useState<{
+    open: boolean;
+    workItems: ImportableWorkItem[];
+    targetColumn: TaskStatus | null;
+    isImporting: boolean;
+    source: 'azure-devops' | 'jira' | null;
+  }>({
+    open: false,
+    workItems: [],
+    targetColumn: null,
+    isImporting: false,
+    source: null,
+  });
 
   // Calculate collapsed column count for "Expand All" button
   const collapsedColumnCount = useMemo(() => {
@@ -967,6 +988,115 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     }
   }, [toast, t]);
 
+  /**
+   * Handle import confirmation from the ImportConfirmDialog.
+   * Creates tasks from the pending work items with the requireReviewBeforeCoding flag.
+   * Supports both Azure DevOps and Jira work items via the `source` field.
+   */
+  const handleImportConfirm = useCallback(async (requireReviewBeforeCoding: boolean) => {
+    const { workItems, targetColumn, source } = importConfirmDialog;
+    if (!workItems.length || !targetColumn || !projectId) return;
+
+    setImportConfirmDialog(prev => ({ ...prev, isImporting: true }));
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const workItem of workItems) {
+      try {
+        const metadata: Record<string, unknown> = {
+          sourceType: 'imported',
+        };
+
+        if (source === 'jira') {
+          // Jira-specific metadata
+          const jiraItem = workItem as unknown as JiraWorkItem;
+          metadata.jiraIdentifier = jiraItem.id;
+          metadata.jiraUrl = jiraItem.url;
+          metadata.jiraState = jiraItem.state;
+          metadata.jiraType = jiraItem.workItemType;
+          metadata.importSource = 'jira';
+          metadata.priority = jiraItem.priority?.toLowerCase() === 'highest' || jiraItem.priority?.toLowerCase() === 'critical' ? 'urgent' :
+                             jiraItem.priority?.toLowerCase() === 'high' ? 'high' :
+                             jiraItem.priority?.toLowerCase() === 'medium' ? 'medium' : 'low';
+          metadata.category = jiraItem.workItemType?.toLowerCase() === 'bug' ? 'bug_fix' :
+                             jiraItem.workItemType?.toLowerCase() === 'story' ? 'feature' :
+                             jiraItem.workItemType?.toLowerCase() === 'task' ? 'feature' : 'documentation';
+        } else {
+          // Azure DevOps metadata (default)
+          const adoItem = workItem as unknown as AzureDevOpsWorkItem;
+          metadata.azureDevOpsIdentifier = adoItem.id.toString();
+          metadata.azureDevOpsUrl = adoItem.url;
+          metadata.azureDevOpsState = adoItem.state;
+          metadata.azureDevOpsType = adoItem.workItemType;
+          metadata.importSource = 'azure-devops';
+          metadata.priority = adoItem.priority === 1 ? 'urgent' :
+                             adoItem.priority === 2 ? 'high' :
+                             adoItem.priority === 3 ? 'medium' : 'low';
+          metadata.category = adoItem.workItemType === 'Bug' ? 'bug_fix' :
+                             adoItem.workItemType === 'User Story' ? 'feature' :
+                             adoItem.workItemType === 'Task' ? 'feature' : 'documentation';
+        }
+
+        if (requireReviewBeforeCoding) {
+          metadata.requireReviewBeforeCoding = true;
+        }
+
+        const result = await createTask(
+          projectId,
+          workItem.title,
+          workItem.description || '',
+          metadata
+        );
+
+        if (result) {
+          successCount++;
+          console.log('[Import] Created task from work item:', result.id);
+
+          const statusResult = await persistTaskStatus(result.id, targetColumn);
+          if (!statusResult.success) {
+            console.error('[Import] Task created but status update failed:', result.id, statusResult.error);
+          }
+        } else {
+          errorCount++;
+          console.error('[Import] Failed to persist task from work item:', workItem.id);
+        }
+      } catch (error) {
+        errorCount++;
+        console.error('[Import] Failed to create task from work item:', workItem.id, error);
+      }
+    }
+
+    // Refresh tasks to show newly imported ones
+    if (successCount > 0) {
+      try {
+        if (onRefresh) {
+          onRefresh();
+        } else if (projectId) {
+          await window.electronAPI.getTasks(projectId, { forceRefresh: true });
+        }
+      } catch (error) {
+        console.error('[Import] Failed to refresh tasks after import:', error);
+      }
+    }
+
+    // Close dialog
+    setImportConfirmDialog({ open: false, workItems: [], targetColumn: null, isImporting: false, source: null });
+
+    // Show toast
+    if (successCount > 0) {
+      toast({
+        title: t('settings:azureDevOpsImport.importSuccess', { count: successCount }),
+        variant: 'default'
+      });
+    } else {
+      toast({
+        title: t('settings:azureDevOpsImport.errorImportFailed'),
+        variant: 'destructive'
+      });
+    }
+  }, [importConfirmDialog, projectId, onRefresh, toast, t]);
+
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
     
@@ -1187,229 +1317,107 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   }, [projectId, toast, t]);
 
 
-  // Azure DevOps drag detection using native drag events
+  // External drag detection (Azure DevOps + Jira) using native drag events
   useEffect(() => {
     const handleDragOver = (event: DragEvent) => {
       event.preventDefault();
       
-      // Check if dragging Azure DevOps work items
+      // Check if dragging external work items (Azure DevOps or Jira)
       const data = event.dataTransfer?.getData('application/json');
-      console.log('[AzureDevOps] Global dragover event, data:', data);
       
       if (data) {
         try {
           const parsed = JSON.parse(data);
-          if (parsed.type === 'azure-devops-workitems') {
-            console.log('[AzureDevOps] Detected Azure DevOps drag over');
+          if (parsed.type === 'azure-devops-workitems' || parsed.type === 'jira-workitems') {
             setIsDraggingAzureDevOps(true);
             setDraggedAzureDevOpsItems(parsed.workItems || []);
             
             // Find the column we're over
             const target = event.target as HTMLElement;
             const columnElement = target.closest('[data-column-status]');
-            console.log('[AzureDevOps] Target element:', target, 'Column element:', columnElement);
             
             if (columnElement) {
               const columnStatus = columnElement.getAttribute('data-column-status');
-              console.log('[AzureDevOps] Column status:', columnStatus);
               if (columnStatus && isValidDropColumn(columnStatus)) {
                 setOverColumnId(columnStatus);
               }
             }
           }
         } catch (error) {
-          console.error('[AzureDevOps] Error parsing drag data:', error);
+          console.error('[Import] Error parsing drag data:', error);
         }
       }
     };
 
+    /**
+     * Find the target column element from a drop event using coordinate-based detection
+     * with DOM traversal fallback.
+     */
+    const findTargetColumn = (event: DragEvent): HTMLElement | null => {
+      const target = event.target as HTMLElement;
+      const mouseX = event.clientX;
+      const mouseY = event.clientY;
+      
+      // Method 1: Coordinate-based detection (most reliable for drag & drop)
+      const allColumns = document.querySelectorAll('[data-column-status]');
+      
+      for (const column of allColumns) {
+        const rect = column.getBoundingClientRect();
+        const buffer = 5;
+        if (mouseX >= rect.left - buffer && mouseX <= rect.right + buffer && 
+            mouseY >= rect.top - buffer && mouseY <= rect.bottom + buffer) {
+          return column as HTMLElement;
+        }
+      }
+      
+      // Method 2: Fallback to DOM traversal
+      const fromClosest = target.closest('[data-column-status]');
+      if (fromClosest) return fromClosest as HTMLElement;
+      
+      let currentElement = target.parentElement;
+      while (currentElement) {
+        if (currentElement.hasAttribute('data-column-status')) {
+          return currentElement;
+        }
+        currentElement = currentElement.parentElement;
+      }
+      
+      return null;
+    };
+
     const handleDrop = async (event: DragEvent) => {
-      console.log('[AzureDevOps] Global drop event triggered');
       event.preventDefault();
       event.stopPropagation();
       
       const data = event.dataTransfer?.getData('application/json');
-      console.log('[AzureDevOps] Drop data:', data);
-      
       if (!data) return;
       
       try {
         const parsed = JSON.parse(data);
-        console.log('[AzureDevOps] Parsed drop data:', parsed);
         
-        if (parsed.type === 'azure-devops-workitems' && parsed.workItems?.length > 0) {
-          console.log('[AzureDevOps] Processing Azure DevOps work items drop');
-          
-          // Find the target column - use coordinate-based detection first as it's most reliable
-          const target = event.target as HTMLElement;
-          console.log('[AzureDevOps] Drop target element:', target);
-          
-          let columnElement: HTMLElement | null = null;
-          const mouseX = event.clientX;
-          const mouseY = event.clientY;
-          
-          // Method 1: Coordinate-based detection (most reliable for drag & drop)
-          const allColumns = document.querySelectorAll('[data-column-status]');
-          console.log('[AzureDevOps] Found columns:', allColumns.length, 'Mouse position:', mouseX, mouseY);
-          
-          for (const column of allColumns) {
-            const rect = column.getBoundingClientRect();
-            console.log('[AzureDevOps] Column rect:', rect, 'for column:', column.getAttribute('data-column-status'));
-            
-            // Add a small buffer (5px) to make detection more forgiving
-            const buffer = 5;
-            if (mouseX >= rect.left - buffer && mouseX <= rect.right + buffer && 
-                mouseY >= rect.top - buffer && mouseY <= rect.bottom + buffer) {
-              columnElement = column as HTMLElement;
-              console.log('[AzureDevOps] Found column by coordinates:', columnElement.getAttribute('data-column-status'));
-              break;
-            }
-          }
-          
-          // Method 2: Fallback to DOM traversal if coordinate detection fails
-          if (!columnElement) {
-            console.log('[AzureDevOps] Coordinate detection failed, trying DOM traversal');
-            columnElement = target.closest('[data-column-status]');
-            
-            // If not found, try to find the column by traversing up through parent elements
-            if (!columnElement) {
-              let currentElement = target.parentElement;
-              while (currentElement) {
-                if (currentElement.hasAttribute('data-column-status')) {
-                  columnElement = currentElement;
-                  break;
-                }
-                currentElement = currentElement.parentElement;
-              }
-            }
-            
-            if (columnElement) {
-              console.log('[AzureDevOps] Found column by DOM traversal:', columnElement.getAttribute('data-column-status'));
-            }
-          }
-          
-          console.log('[AzureDevOps] Column element found:', columnElement);
+        const isAdo = parsed.type === 'azure-devops-workitems' && parsed.workItems?.length > 0;
+        const isJira = parsed.type === 'jira-workitems' && parsed.workItems?.length > 0;
+        
+        if (isAdo || isJira) {
+          const columnElement = findTargetColumn(event);
           
           if (columnElement) {
             const columnStatus = columnElement.getAttribute('data-column-status');
-            console.log('[AzureDevOps] Drop column status:', columnStatus);
             
             if (columnStatus && isValidDropColumn(columnStatus)) {
-              console.log('[AzureDevOps] Dropping items:', parsed.workItems, 'to column:', columnStatus);
-              
-              // Create tasks from Azure DevOps work items
-              let successCount = 0;
-              let errorCount = 0;
-              
-              for (const workItem of parsed.workItems) {
-                try {
-                  // Create a task from the Azure DevOps work item
-                  const newTask: Task = {
-                    id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                    specId: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                    projectId: projectId || '',
-                    title: workItem.title,
-                    description: workItem.description || '',
-                    status: columnStatus,
-                    subtasks: [],
-                    logs: [`[Azure DevOps] Imported from work item #${workItem.id}`],
-                    metadata: {
-                      sourceType: 'imported',
-                      azureDevOpsIdentifier: workItem.id.toString(),
-                      azureDevOpsUrl: workItem.url,
-                      azureDevOpsState: workItem.state,
-                      azureDevOpsType: workItem.workItemType,
-                      // Map Azure DevOps priority to task priority
-                      priority: workItem.priority === 1 ? 'urgent' : 
-                               workItem.priority === 2 ? 'high' : 
-                               workItem.priority === 3 ? 'medium' : 'low',
-                      // Map work item type to category
-                      category: workItem.workItemType === 'Bug' ? 'bug_fix' :
-                               workItem.workItemType === 'User Story' ? 'feature' :
-                               workItem.workItemType === 'Task' ? 'feature' : 'documentation'
-                    },
-                    createdAt: workItem.createdDate ? new Date(workItem.createdDate) : new Date(),
-                    updatedAt: new Date()
-                  };
-                  
-                  // Persist the task to backend using createTask API
-                  const result = await createTask(
-                    projectId || '',
-                    newTask.title,
-                    newTask.description,
-                    newTask.metadata
-                  );
-                  
-                  if (result) {
-                    successCount++;
-                    console.log('[AzureDevOps] Created and persisted task from work item:', result.id);
-                    
-                    // Now update the task status to the target column
-                    console.log('[AzureDevOps] Updating task status to:', columnStatus);
-                    const statusResult = await persistTaskStatus(result.id, columnStatus);
-                    
-                    if (!statusResult.success) {
-                      console.error('[AzureDevOps] Task created but status update failed:', result.id, statusResult.error);
-                    }
-                  } else {
-                    errorCount++;
-                    console.error('[AzureDevOps] Failed to persist task from work item:', workItem.id);
-                  }
-                } catch (error) {
-                  errorCount++;
-                  console.error('[AzureDevOps] Failed to create task from work item:', workItem.id, error);
-                }
-              }
-              
-              // Refresh tasks to show newly imported ones
-              if (projectId && successCount > 0) {
-                console.log('[AzureDevOps] Refreshing tasks after import...');
-                try {
-                  if (onRefresh) {
-                    await onRefresh();
-                    console.log('[AzureDevOps] Tasks refreshed successfully via onRefresh');
-                  } else {
-                    // Fallback to direct API call if onRefresh not available
-                    await window.electronAPI.getTasks(projectId, { forceRefresh: true });
-                    console.log('[AzureDevOps] Tasks refreshed successfully via direct API');
-                  }
-                } catch (error) {
-                  console.error('[AzureDevOps] Failed to refresh tasks after import:', error);
-                }
-              }
-              
-              // Show appropriate toast based on results
-              if (successCount > 0 && errorCount === 0) {
-                toast({
-                  title: t('settings:azureDevOpsImport.importSuccess', { 
-                    count: successCount 
-                  }),
-                  variant: 'default'
-                });
-              } else if (successCount > 0 && errorCount > 0) {
-                toast({
-                  title: `Importation partielle`,
-                  description: `${successCount} tâches importées avec succès, ${errorCount} échecs`,
-                  variant: 'default'
-                });
-              } else {
-                toast({
-                  title: t('settings:azureDevOpsImport.importError'),
-                  description: `${errorCount} tâches n'ont pas pu être importées`,
-                  variant: 'destructive'
-                });
-              }
-            } else {
-              console.log('[AzureDevOps] Invalid column status:', columnStatus);
+              // Show the import confirmation dialog
+              setImportConfirmDialog({
+                open: true,
+                workItems: parsed.workItems,
+                targetColumn: columnStatus,
+                isImporting: false,
+                source: isJira ? 'jira' : 'azure-devops',
+              });
             }
-          } else {
-            console.log('[AzureDevOps] No column element found');
           }
-        } else {
-          console.log('[AzureDevOps] Not Azure DevOps work items or empty array');
         }
       } catch (error) {
-        console.error('[AzureDevOps] Failed to handle drop:', error);
+        console.error('[Import] Failed to handle drop:', error);
         toast({
           title: t('settings:azureDevOpsImport.importError'),
           description: error instanceof Error ? error.message : t('common:errors.unknownError'),
@@ -1423,7 +1431,6 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     };
 
     const handleDragEnd = () => {
-      console.log('[AzureDevOps] Global drag end event');
       setIsDraggingAzureDevOps(false);
       setDraggedAzureDevOpsItems([]);
       setOverColumnId(null);
@@ -1814,6 +1821,18 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
               {envConfig?.azureDevOpsRepository || 'Azure DevOps'}
             </Button>
           )}
+          {selectedProjectId && envConfig?.jiraEnabled && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setJiraPanelOpen(true)}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+              title="Import Jira Issues"
+            >
+              <Download className="h-4 w-4" />
+              {envConfig?.jiraProjectKey || 'Jira'}
+            </Button>
+          )}
           {onRefresh && (
             <Button
               variant="ghost"
@@ -2039,58 +2058,54 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           onOpenChange={setAzureDevOpsPanelOpen}
           projectId={projectId}
           onWorkItemsImported={async (workItems, targetStatus) => {
-            console.log('Imported work items:', workItems, 'to status:', targetStatus);
+            console.log('Side panel imported work items:', workItems, 'to status:', targetStatus);
             
-            // Import Azure DevOps work items as tasks
-            const { addTask } = useTaskStore.getState();
-            
-            for (const workItem of workItems) {
-              try {
-                // Create a task from the Azure DevOps work item
-                const newTask: Task = {
-                  id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                  specId: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                  projectId: projectId || '',
-                  title: workItem.title,
-                  description: workItem.description || '',
-                  status: targetStatus,
-                  subtasks: [],
-                  logs: [`[Azure DevOps] Imported from work item #${workItem.id}`],
-                  metadata: {
-                    sourceType: 'imported',
-                    azureDevOpsIdentifier: workItem.id.toString(),
-                    azureDevOpsUrl: workItem.url,
-                    azureDevOpsState: workItem.state,
-                    azureDevOpsType: workItem.workItemType,
-                    // Map Azure DevOps priority to task priority
-                    priority: workItem.priority === 1 ? 'urgent' : 
-                             workItem.priority === 2 ? 'high' : 
-                             workItem.priority === 3 ? 'medium' : 'low',
-                    // Map work item type to category
-                    category: workItem.workItemType === 'Bug' ? 'bug_fix' :
-                             workItem.workItemType === 'User Story' ? 'feature' :
-                             workItem.workItemType === 'Task' ? 'feature' : 'documentation'
-                  },
-                  createdAt: workItem.createdDate ? new Date(workItem.createdDate) : new Date(),
-                  updatedAt: new Date()
-                };
-                
-                addTask(newTask);
-                console.log('[AzureDevOps] Created task from work item:', newTask.id);
-              } catch (error) {
-                console.error('[AzureDevOps] Failed to create task from work item:', workItem.id, error);
-              }
-            }
-            
-            toast({
-              title: t('settings:azureDevOpsImport.importSuccess', { 
-                count: workItems.length 
-              }),
-              variant: 'default'
+            // Show the import confirmation dialog
+            setImportConfirmDialog({
+              open: true,
+              workItems: workItems as AzureDevOpsWorkItem[],
+              targetColumn: targetStatus as TaskStatus,
+              isImporting: false,
+              source: 'azure-devops',
             });
           }}
         />
       )}
+
+      {/* Jira Import Panel */}
+      {projectId && (
+        <JiraSidePanel
+          open={jiraPanelOpen}
+          onOpenChange={setJiraPanelOpen}
+          projectId={projectId}
+          onWorkItemsImported={async (workItems, targetStatus) => {
+            console.log('Jira side panel imported work items:', workItems, 'to status:', targetStatus);
+            
+            // Show the import confirmation dialog
+            setImportConfirmDialog({
+              open: true,
+              workItems: workItems as JiraWorkItem[],
+              targetColumn: targetStatus as TaskStatus,
+              isImporting: false,
+              source: 'jira',
+            });
+          }}
+        />
+      )}
+
+      {/* Import Confirmation Dialog (Azure DevOps / Jira drag & drop) */}
+      <ImportConfirmDialog
+        open={importConfirmDialog.open}
+        onOpenChange={(open) => {
+          if (!open) {
+            setImportConfirmDialog({ open: false, workItems: [], targetColumn: null, isImporting: false, source: null });
+          }
+        }}
+        workItems={importConfirmDialog.workItems}
+        targetColumn={importConfirmDialog.targetColumn}
+        isImporting={importConfirmDialog.isImporting}
+        onConfirm={handleImportConfirm}
+      />
     </div>
   );
 }

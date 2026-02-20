@@ -482,7 +482,8 @@ except Exception as e:
     async (
       _,
       projectId: string,
-      workItemIds: number[]
+      workItemIds: number[],
+      options?: { requireReviewBeforeCoding?: boolean }
     ): Promise<IPCResult<AzureDevOpsImportResult>> => {
       const project = projectStore.getProject(projectId);
       if (!project || !project.autoBuildPath) {
@@ -596,6 +597,7 @@ except Exception as e:
               azureDevOpsUrl: safeUrl,
               azureDevOpsState: item.state,
               azureDevOpsType: item.workItemType,
+              ...(options?.requireReviewBeforeCoding && { requireReviewBeforeCoding: true }),
             };
 
             const now = new Date().toISOString();

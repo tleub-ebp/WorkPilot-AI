@@ -967,6 +967,7 @@
   "azureDevOpsImport": {
     "title": "Import Azure DevOps Work Items",
     "description": "Select Azure DevOps work items to import into Auto-Claude",
+    "importSuccess": "{{count}} work item(s) imported successfully",
     "successTitle": "Import Successful!",
     "successCount": "Imported {{count}} work item.",
     "successCount_plural": "Imported {{count}} work items.",
@@ -1001,7 +1002,10 @@
     "noWorkItems": "No work items found",
     "loadingWorkItems": "Loading items...",
     "connectionError": "Azure DevOps connection error",
-    "configureFirst": "Configure Azure DevOps in project settings"
+    "configureFirst": "Configure Azure DevOps in project settings",
+    "importConfirmTitle": "Import {{count}} work item(s)",
+    "importConfirmDescription": "The following items will be imported into the {{column}} column.",
+    "importConfirmButton": "Import {{count}} item(s)"
   },
   "azureDevOps": {
     "enableSyncLabel": "Enable Azure DevOps Sync",

@@ -40,9 +40,10 @@ export function AzureDevOpsImportModal({
   onOpenChange,
   onImportComplete,
 }: AzureDevOpsImportModalProps) {
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'tasks']);
   const [workItems, setWorkItems] = useState<AzureDevOpsWorkItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [requireReviewBeforeCoding, setRequireReviewBeforeCoding] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<AzureDevOpsFilters>({
     workItemType: 'all',
@@ -129,7 +130,8 @@ export function AzureDevOpsImportModal({
     try {
       const result = await window.electronAPI.importAzureDevOpsWorkItems(
         projectId,
-        Array.from(selectedIds)
+        Array.from(selectedIds),
+        requireReviewBeforeCoding ? { requireReviewBeforeCoding: true } : undefined
       );
 
       if (result.success) {
@@ -456,6 +458,30 @@ export function AzureDevOpsImportModal({
               )}
             </ScrollArea>
           </>
+        )}
+
+        {/* Review Requirement Toggle */}
+        {!importResult?.success && syncStatus?.connected && (
+          <div className="flex items-start gap-3 p-4 rounded-lg border border-border bg-muted/30 shrink-0">
+            <Checkbox
+              id="modal-require-review"
+              checked={requireReviewBeforeCoding}
+              onCheckedChange={(checked) => setRequireReviewBeforeCoding(checked === true)}
+              disabled={isImporting}
+              className="mt-0.5"
+            />
+            <div className="flex-1 space-y-1">
+              <Label
+                htmlFor="modal-require-review"
+                className="text-sm font-medium text-foreground cursor-pointer"
+              >
+                {t('tasks:form.requireReviewLabel')}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {t('tasks:form.requireReviewDescription')}
+              </p>
+            </div>
+          </div>
         )}
 
         <DialogFooter className="shrink-0">
