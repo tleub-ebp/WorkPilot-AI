@@ -686,6 +686,7 @@
   },
   "jira": {
     "title": "Intégration Jira",
+    "description": "Configurer et gérer la synchronisation des tickets Jira Cloud",
     "enable": "Activer l'intégration Jira",
     "enableDescription": "Synchroniser les tickets avec Jira Cloud pour un suivi bidirectionnel",
     "instanceUrl": "URL de l'instance Jira",

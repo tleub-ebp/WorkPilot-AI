@@ -209,12 +209,12 @@ export function SectionRouter({
     case 'jira':
       return (
         <SettingsSection
-          title="Jira Integration"
-          description="Configure and manage Jira Cloud issue synchronization"
+          title={t('jira.title')}
+          description={t('jira.description')}
         >
           <InitializationGuard
             initialized={!!project.autoBuildPath}
-            title="Jira Integration"
+            title={t('jira.title')}
             description="Enable Jira integration to sync issues with your backlog"
           >
             <JiraIntegration

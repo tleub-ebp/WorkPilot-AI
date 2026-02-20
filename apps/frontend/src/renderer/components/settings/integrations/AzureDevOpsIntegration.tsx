@@ -71,23 +71,17 @@ function RepositorySelect({
   useEffect(() => {
     const autoDetectRepository = async () => {
       if (value) {
-        console.log('[AzureDevOps] Repository already set:', value);
         return;
       }
       
-      console.log('[AzureDevOps] Auto-detecting repository...');
       try {
         const result = await window.electronAPI.detectAzureDevOpsRepository(projectId);
-        console.log('[AzureDevOps] Detection result:', result);
         
         if (result.success && result.data?.repository) {
-          console.log('[AzureDevOps] Auto-selecting repository:', result.data.repository);
           onChange(result.data.repository);
         } else {
-          console.log('[AzureDevOps] No repository detected');
         }
       } catch (err) {
-        console.warn('[AzureDevOps] Detection failed:', err);
       }
     };
 
@@ -354,7 +348,7 @@ function ImportTasksPrompt({ onOpenAzureDevOpsImport, t }: ImportTasksPromptProp
   return (
     <div className="rounded-lg border border-info/30 bg-info/5 p-4">
       <div className="flex items-start gap-3">
-        <Radio className="h-4 w-4 text-info mt-1 flex-shrink-0" />
+        <Radio className="h-4 w-4 text-info mt-1 shrink-0" />
         <div className="flex-1">
           <p className="text-sm font-medium text-foreground mb-2">
             {t('azureDevOps.importPromptTitle')}

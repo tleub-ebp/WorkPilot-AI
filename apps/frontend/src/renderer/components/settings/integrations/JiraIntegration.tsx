@@ -40,12 +40,19 @@ export function JiraIntegration({
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<JiraSyncStatus | null>(null);
 
-  const jiraEnabled = (envConfig as any)?.jiraEnabled ?? false;
-  const jiraInstanceUrl = (envConfig as any)?.jiraInstanceUrl ?? '';
-  const jiraEmail = (envConfig as any)?.jiraEmail ?? '';
-  const jiraApiToken = (envConfig as any)?.jiraApiToken ?? '';
-  const jiraProjectKey = (envConfig as any)?.jiraProjectKey ?? '';
-  const jiraAutoSync = (envConfig as any)?.jiraAutoSync ?? false;
+  // Guard: don't render until envConfig is loaded (matches AzureDevOpsIntegration pattern)
+  if (!envConfig) {
+    console.warn('[JiraIntegration] envConfig is null — not rendering');
+    return null;
+  }
+
+  const jiraEnabled = envConfig.jiraEnabled ?? false;
+  const jiraInstanceUrl = envConfig.jiraInstanceUrl ?? '';
+  const jiraEmail = envConfig.jiraEmail ?? '';
+  const jiraApiToken = envConfig.jiraApiToken ?? '';
+  const jiraProjectKey = envConfig.jiraProjectKey ?? '';
+  const jiraAutoSync = envConfig.jiraAutoSync ?? false;
+
 
   const handleTestConnection = async () => {
     setIsTestingConnection(true);
@@ -97,7 +104,7 @@ export function JiraIntegration({
         </div>
         <Switch
           checked={jiraEnabled}
-          onCheckedChange={(checked) => updateEnvConfig({ jiraEnabled: checked } as any)}
+          onCheckedChange={(checked) => updateEnvConfig({ jiraEnabled: checked })}
         />
       </div>
 
@@ -114,7 +121,7 @@ export function JiraIntegration({
               id="jira-url"
               type="url"
               value={jiraInstanceUrl}
-              onChange={(e) => updateEnvConfig({ jiraInstanceUrl: e.target.value } as any)}
+              onChange={(e) => updateEnvConfig({ jiraInstanceUrl: e.target.value })}
               placeholder={t('jira.instanceUrlPlaceholder', { ns: 'settings' })}
               className="font-mono text-sm"
             />
@@ -132,7 +139,7 @@ export function JiraIntegration({
               id="jira-email"
               type="email"
               value={jiraEmail}
-              onChange={(e) => updateEnvConfig({ jiraEmail: e.target.value } as any)}
+              onChange={(e) => updateEnvConfig({ jiraEmail: e.target.value })}
               placeholder={t('jira.emailPlaceholder', { ns: 'settings' })}
               className="text-sm"
             />
@@ -152,7 +159,7 @@ export function JiraIntegration({
                   id="jira-token"
                   type={showJiraToken ? 'text' : 'password'}
                   value={jiraApiToken}
-                  onChange={(e) => updateEnvConfig({ jiraApiToken: e.target.value } as any)}
+                  onChange={(e) => updateEnvConfig({ jiraApiToken: e.target.value })}
                   placeholder={t('jira.apiTokenPlaceholder', { ns: 'settings' })}
                   className="pr-10 font-mono text-sm"
                 />
@@ -187,7 +194,7 @@ export function JiraIntegration({
             <Input
               id="jira-project"
               value={jiraProjectKey}
-              onChange={(e) => updateEnvConfig({ jiraProjectKey: e.target.value } as any)}
+              onChange={(e) => updateEnvConfig({ jiraProjectKey: e.target.value })}
               placeholder={t('jira.projectKeyPlaceholder', { ns: 'settings' })}
               className="font-mono text-sm uppercase"
             />
@@ -206,7 +213,7 @@ export function JiraIntegration({
             </div>
             <Switch
               checked={jiraAutoSync}
-              onCheckedChange={(checked) => updateEnvConfig({ jiraAutoSync: checked } as any)}
+              onCheckedChange={(checked) => updateEnvConfig({ jiraAutoSync: checked })}
             />
           </div>
 

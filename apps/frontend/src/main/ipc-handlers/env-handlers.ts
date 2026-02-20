@@ -31,6 +31,16 @@ const AZURE_DEVOPS_ENV_KEYS = {
   AUTO_SYNC: 'AZURE_DEVOPS_AUTO_SYNC'
 } as const;
 
+// Jira environment variable keys
+const JIRA_ENV_KEYS = {
+  ENABLED: 'JIRA_ENABLED',
+  INSTANCE_URL: 'JIRA_INSTANCE_URL',
+  EMAIL: 'JIRA_EMAIL',
+  API_TOKEN: 'JIRA_API_TOKEN',
+  PROJECT_KEY: 'JIRA_PROJECT_KEY',
+  AUTO_SYNC: 'JIRA_AUTO_SYNC'
+} as const;
+
 /**
  * Helper to generate .env line (DRY)
  */
@@ -164,6 +174,26 @@ export function registerEnvHandlers(
     }
     if (config.azureDevOpsAutoSync !== undefined) {
       existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC] = config.azureDevOpsAutoSync ? 'true' : 'false';
+    }
+
+    // Jira Integration
+    if (config.jiraEnabled !== undefined) {
+      existingVars[JIRA_ENV_KEYS.ENABLED] = config.jiraEnabled ? 'true' : 'false';
+    }
+    if (config.jiraInstanceUrl !== undefined) {
+      existingVars[JIRA_ENV_KEYS.INSTANCE_URL] = config.jiraInstanceUrl;
+    }
+    if (config.jiraEmail !== undefined) {
+      existingVars[JIRA_ENV_KEYS.EMAIL] = config.jiraEmail;
+    }
+    if (config.jiraApiToken !== undefined) {
+      existingVars[JIRA_ENV_KEYS.API_TOKEN] = config.jiraApiToken;
+    }
+    if (config.jiraProjectKey !== undefined) {
+      existingVars[JIRA_ENV_KEYS.PROJECT_KEY] = config.jiraProjectKey;
+    }
+    if (config.jiraAutoSync !== undefined) {
+      existingVars[JIRA_ENV_KEYS.AUTO_SYNC] = config.jiraAutoSync ? 'true' : 'false';
     }
     // Git/Worktree Settings
     if (config.defaultBranch !== undefined) {
@@ -303,6 +333,16 @@ ${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.PROJECT, 'MyProject')}
 ${existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC] !== undefined ? `${AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC}=${existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC]}` : `# ${AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC}=false`}
 
 # =============================================================================
+# JIRA INTEGRATION (OPTIONAL)
+# =============================================================================
+${existingVars[JIRA_ENV_KEYS.ENABLED] !== undefined ? `${JIRA_ENV_KEYS.ENABLED}=${existingVars[JIRA_ENV_KEYS.ENABLED]}` : `# ${JIRA_ENV_KEYS.ENABLED}=false`}
+${envLine(existingVars, JIRA_ENV_KEYS.INSTANCE_URL, 'https://your-domain.atlassian.net')}
+${envLine(existingVars, JIRA_ENV_KEYS.EMAIL)}
+${envLine(existingVars, JIRA_ENV_KEYS.API_TOKEN)}
+${envLine(existingVars, JIRA_ENV_KEYS.PROJECT_KEY, 'PROJ')}
+${envLine(existingVars, JIRA_ENV_KEYS.AUTO_SYNC, 'false')}
+
+# =============================================================================
 # GIT/WORKTREE SETTINGS (OPTIONAL)
 # =============================================================================
 # Default base branch for worktree creation
@@ -415,6 +455,7 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
         githubEnabled: false,
         gitlabEnabled: false,
         azureDevOpsEnabled: false,
+        jiraEnabled: false,
         graphitiEnabled: false,
         enableFancyUi: true,
         claudeTokenIsGlobal: false,
@@ -508,6 +549,26 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
         config.azureDevOpsAutoSync = vars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC]?.toLowerCase() === 'true';
       } else if (config.azureDevOpsEnabled) {
         config.azureDevOpsAutoSync = true;
+      }
+
+      // Jira config
+      if (vars[JIRA_ENV_KEYS.ENABLED]?.toLowerCase() === 'true') {
+        config.jiraEnabled = true;
+      }
+      if (vars[JIRA_ENV_KEYS.INSTANCE_URL]) {
+        config.jiraInstanceUrl = vars[JIRA_ENV_KEYS.INSTANCE_URL];
+      }
+      if (vars[JIRA_ENV_KEYS.EMAIL]) {
+        config.jiraEmail = vars[JIRA_ENV_KEYS.EMAIL];
+      }
+      if (vars[JIRA_ENV_KEYS.API_TOKEN]) {
+        config.jiraApiToken = vars[JIRA_ENV_KEYS.API_TOKEN];
+      }
+      if (vars[JIRA_ENV_KEYS.PROJECT_KEY]) {
+        config.jiraProjectKey = vars[JIRA_ENV_KEYS.PROJECT_KEY];
+      }
+      if (vars[JIRA_ENV_KEYS.AUTO_SYNC]?.toLowerCase() === 'true') {
+        config.jiraAutoSync = true;
       }
 
       // Git/Worktree config
@@ -634,11 +695,13 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
           // File doesn't exist yet - existingContent stays undefined
         }
 
+
         // Generate new content
         const newContent = generateEnvContent(config, existingContent);
 
         // Write to file
         writeFileSync(envPath, newContent, 'utf-8');
+
 
         return { success: true };
       } catch (error) {
