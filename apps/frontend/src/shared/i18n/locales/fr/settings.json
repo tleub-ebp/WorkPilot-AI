@@ -104,6 +104,22 @@
     "terminal-fonts": {
       "title": "Polices de terminal",
       "description": "Personnaliser l'apparence des polices de terminal"
+    },
+    "sandbox": {
+      "title": "Sandbox",
+      "description": "Isolation d'exécution des agents & rollback"
+    },
+    "anomaly-detection": {
+      "title": "Détection d'anomalies",
+      "description": "Surveillance comportementale des agents & alertes"
+    },
+    "llm-router": {
+      "title": "Routeur LLM",
+      "description": "Routage intelligent de providers & tests A/B"
+    },
+    "scheduler": {
+      "title": "Planificateur",
+      "description": "Planification de tâches cron & chaînes"
     }
   },
   "apiProfiles": {
@@ -472,7 +488,13 @@
       "description": "Intégration Linear",
       "integrationTitle": "Intégration Linear",
       "integrationDescription": "Se connecter à Linear pour le suivi des issues et l'import de tâches",
-      "syncDescription": "Synchroniser avec Linear pour le suivi des issues"
+      "syncDescription": "Synchroniser avec Linear pour le suivi des issues",
+      "connectionStatus": "État de la connexion",
+      "checking": "Vérification...",
+      "connectedTo": "Connecté à {{team}}",
+      "connected": "Connecté",
+      "notConnected": "Non connecté",
+      "tasksAvailable": "{{count}}+ tâches disponibles à l'import"
     },
     "github": {
       "title": "GitHub",
@@ -480,6 +502,13 @@
       "integrationTitle": "Intégration GitHub",
       "integrationDescription": "Se connecter à GitHub pour le suivi des issues",
       "syncDescription": "Synchroniser avec GitHub Issues",
+      "connectedViaCLI": "Connecté via GitHub CLI",
+      "authenticatedAs": "Authentifié en tant que {{username}}",
+      "useDifferentToken": "Utiliser un autre token",
+      "connectionStatus": "État de la connexion",
+      "checking": "Vérification...",
+      "connectedTo": "Connecté à {{repo}}",
+      "notConnected": "Non connecté",
       "defaultBranch": {
         "label": "Branche par défaut",
         "description": "Branche de base pour créer les arbres de travail de tâches",
@@ -495,6 +524,10 @@
       "integrationTitle": "Intégration Azure DevOps",
       "integrationDescription": "Se connecter à Azure DevOps pour la gestion des éléments de travail",
       "syncDescription": "Synchroniser avec le backlog Azure DevOps"
+    },
+    "jira": {
+      "title": "Jira",
+      "description": "Intégration Jira"
     },
     "memory": {
       "title": "Mémoire",
@@ -650,5 +683,36 @@
       "authRevokedDesc": "Authentification révoquée avec succès pour {{username}}",
       "revokeFailed": "Échec de la révocation"
     }
+  },
+  "jira": {
+    "title": "Intégration Jira",
+    "enable": "Activer l'intégration Jira",
+    "enableDescription": "Synchroniser les tickets avec Jira Cloud pour un suivi bidirectionnel",
+    "instanceUrl": "URL de l'instance Jira",
+    "instanceUrlPlaceholder": "https://votre-org.atlassian.net",
+    "instanceUrlDescription": "L'URL de votre instance Jira Cloud (ex : https://votre-org.atlassian.net)",
+    "email": "E-mail",
+    "emailPlaceholder": "utilisateur@exemple.com",
+    "emailDescription": "L'adresse e-mail associée à votre compte Atlassian",
+    "apiToken": "Token API",
+    "apiTokenPlaceholder": "Entrez votre token API Jira",
+    "apiTokenDescription": "Générez un token sur",
+    "apiTokenLink": "Tokens API Atlassian",
+    "projectKey": "Clé de projet par défaut",
+    "projectKeyPlaceholder": "PROJ",
+    "projectKeyDescription": "La clé du projet Jira pour synchroniser les tickets (ex : PROJ, DEV, TEAM)",
+    "autoSync": "Synchronisation automatique des tickets",
+    "autoSyncDescription": "Synchroniser automatiquement les tickets Jira à l'ouverture du projet",
+    "testConnection": "Tester la connexion",
+    "connected": "Connecté",
+    "connectionFailed": "Échec de la connexion",
+    "instance": "Instance",
+    "project": "Projet",
+    "required": "*",
+    "fillAllFields": "Veuillez remplir tous les champs obligatoires (URL de l'instance, E-mail, Token API)"
+  },
+  "collaboration": {
+    "title": "Collaboration",
+    "description": "Paramètres de collaboration multi-utilisateurs"
   }
 }

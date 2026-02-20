@@ -48,6 +48,22 @@
     "terminal-fonts": {
       "title": "Terminal Fonts",
       "description": "Customize terminal font appearance"
+    },
+    "sandbox": {
+      "title": "Sandbox",
+      "description": "Agent execution isolation & rollback"
+    },
+    "anomaly-detection": {
+      "title": "Anomaly Detection",
+      "description": "Agent behavior monitoring & alerts"
+    },
+    "llm-router": {
+      "title": "LLM Router",
+      "description": "Intelligent provider routing & A/B tests"
+    },
+    "scheduler": {
+      "title": "Scheduler",
+      "description": "Cron-like task scheduling & chains"
     }
   },
   "apiProfiles": {
@@ -349,7 +365,15 @@
       "description": "Linear integration",
       "integrationTitle": "Linear Integration",
       "integrationDescription": "Connect to Linear for issue tracking and task import",
-      "syncDescription": "Sync with Linear for issue tracking"
+      "syncDescription": "Sync with Linear for issue tracking",
+      "connectionStatus": "Connection Status",
+      "checking": "Checking...",
+      "connectedTo": "Connected to {{team}}",
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "tasksAvailable": "{{count}}+ tasks available to import",
+      "connectionString": "https://api.linear.app/graphql",
+      "apiKey": "YOUR_LINEAR_API_KEY"
     },
     "github": {
       "title": "GitHub",
@@ -357,6 +381,13 @@
       "integrationTitle": "GitHub Integration",
       "integrationDescription": "Connect to GitHub for issue tracking",
       "syncDescription": "Sync with GitHub Issues",
+      "connectedViaCLI": "Connected via GitHub CLI",
+      "authenticatedAs": "Authenticated as {{username}}",
+      "useDifferentToken": "Use Different Token",
+      "connectionStatus": "Connection Status",
+      "checking": "Checking...",
+      "connectedTo": "Connected to {{repo}}",
+      "notConnected": "Not connected",
       "defaultBranch": {
         "label": "Default Branch",
         "description": "Base branch for creating task worktrees",
@@ -364,7 +395,9 @@
         "searchPlaceholder": "Search branches...",
         "noBranchesFound": "No branches found",
         "selectedBranchHelp": "All new tasks will branch from {{branch}}"
-      }
+      },
+      "connectionString": "https://api.github.com/graphql",
+      "personalAccessToken": "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"
     },
     "gitlab": {
       "title": "GitLab",
@@ -379,6 +412,10 @@
       "integrationTitle": "Azure DevOps Integration",
       "integrationDescription": "Connect to Azure DevOps for work item management",
       "syncDescription": "Sync with Azure DevOps Backlog"
+    },
+    "jira": {
+      "title": "Jira",
+      "description": "Jira integration"
     },
     "memory": {
       "title": "Memory",
@@ -1080,5 +1117,36 @@
       "authRevokedDesc": "Successfully revoked authentication for {{username}}",
       "revokeFailed": "Revoke Failed"
     }
+  },
+  "jira": {
+    "title": "Jira Integration",
+    "enable": "Enable Jira Integration",
+    "enableDescription": "Sync issues with Jira Cloud for bidirectional task tracking",
+    "instanceUrl": "Jira Instance URL",
+    "instanceUrlPlaceholder": "https://your-org.atlassian.net",
+    "instanceUrlDescription": "Your Jira Cloud instance URL (e.g., https://your-org.atlassian.net)",
+    "email": "Email",
+    "emailPlaceholder": "user@example.com",
+    "emailDescription": "The email address associated with your Atlassian account",
+    "apiToken": "API Token",
+    "apiTokenPlaceholder": "Enter your Jira API token",
+    "apiTokenDescription": "Generate a token at",
+    "apiTokenLink": "Atlassian API Tokens",
+    "projectKey": "Default Project Key",
+    "projectKeyPlaceholder": "PROJ",
+    "projectKeyDescription": "The Jira project key to sync issues from (e.g., PROJ, DEV, TEAM)",
+    "autoSync": "Auto-sync issues",
+    "autoSyncDescription": "Automatically sync Jira issues when the project is opened",
+    "testConnection": "Test Connection",
+    "connected": "Connected",
+    "connectionFailed": "Connection failed",
+    "instance": "Instance",
+    "project": "Project",
+    "required": "*",
+    "fillAllFields": "Please fill in all required fields (Instance URL, Email, API Token)"
+  },
+  "collaboration": {
+    "title": "Collaboration",
+    "description": "Multi-user collaboration settings"
   }
 }

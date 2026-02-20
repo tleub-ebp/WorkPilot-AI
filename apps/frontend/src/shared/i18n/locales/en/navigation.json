@@ -22,7 +22,9 @@
     "dashboard": "Dashboard",
     "codeReview": "Code Review",
     "refactoring": "Refactoring",
-    "documentation": "Documentation"
+    "documentation": "Documentation",
+    "costEstimator": "Cost Estimator",
+    "sessionHistory": "Session History"
   },
   "actions": {
     "settings": "Settings",

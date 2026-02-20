@@ -19,6 +19,7 @@ import enMigrationWizard from './locales/en/migration-wizard.json';
 import enVisualProgramming from './locales/en/visualProgramming.json';
 import enInitDialog from './locales/en/initDialog.json';
 import enProjectInitModal from './locales/en/projectInitModal.json';
+import enCollaboration from './locales/en/collaboration.json';
 
 // Import French translation resources
 import frCommon from './locales/fr/common.json';
@@ -38,6 +39,7 @@ import frMigrationWizard from './locales/fr/migration-wizard.json';
 import frVisualProgramming from './locales/fr/visualProgramming.json';
 import frInitDialog from './locales/fr/initDialog.json';
 import frProjectInitModal from './locales/fr/projectInitModal.json';
+import frCollaboration from './locales/fr/collaboration.json';
 
 export const defaultNS = 'common';
 
@@ -59,7 +61,8 @@ export const resources = {
     changelog: enChangeLog,
     migrationWizard: enMigrationWizard,
     visualProgramming: enVisualProgramming,
-    projectInitModal: enProjectInitModal
+    projectInitModal: enProjectInitModal,
+    collaboration: enCollaboration
   },
   fr: {
     common: frCommon,
@@ -78,7 +81,8 @@ export const resources = {
     changelog: frChangeLog,
     migrationWizard: frMigrationWizard,
     visualProgramming: frVisualProgramming,
-    projectInitModal: frProjectInitModal
+    projectInitModal: frProjectInitModal,
+    collaboration: frCollaboration
   }
 } as const;
 
@@ -90,7 +94,7 @@ i18n
     fallbackLng: 'en',
     defaultNS,
     ns: [
-      'common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'initDialog', 'gitlab', 'taskReview', 'terminal', 'errors', 'context', 'changelog', 'migrationWizard', 'visualProgramming', 'projectInitModal'
+      'common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'initDialog', 'gitlab', 'taskReview', 'terminal', 'errors', 'context', 'changelog', 'migrationWizard', 'visualProgramming', 'projectInitModal', 'collaboration'
     ],
     interpolation: {
       escapeValue: false // React already escapes values

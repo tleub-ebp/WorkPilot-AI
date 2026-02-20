@@ -22,7 +22,9 @@
     "dashboard": "Tableau de bord",
     "codeReview": "Revue de code",
     "refactoring": "Refactoring",
-    "documentation": "Documentation"
+    "documentation": "Documentation",
+    "costEstimator": "Estimateur de coûts",
+    "sessionHistory": "Historique des sessions"
   },
   "actions": {
     "settings": "Paramètres",

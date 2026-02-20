@@ -51,6 +51,8 @@ const DashboardMetrics = lazy(() => import('./components/DashboardMetrics').then
 const CodeReview = lazy(() => import('./components/CodeReview').then(m => ({ default: m.CodeReview })));
 const RefactoringView = lazy(() => import('./components/RefactoringView').then(m => ({ default: m.RefactoringView })));
 const DocumentationView = lazy(() => import('./components/DocumentationView').then(m => ({ default: m.DocumentationView })));
+const CostEstimator = lazy(() => import('./components/CostEstimator').then(m => ({ default: m.CostEstimator })));
+const SessionHistory = lazy(() => import('./components/SessionHistory').then(m => ({ default: m.SessionHistory })));
 import { VersionWarningModal } from './components/VersionWarningModal';
 import { OnboardingWizard } from './components/onboarding';
 import { GitHubSetupModal } from './components/GitHubSetupModal';
@@ -1137,6 +1139,12 @@ export function App() {
                           {activeView === 'documentation' && (activeProjectId || selectedProjectId) && (
                               <DocumentationView projectId={activeProjectId || selectedProjectId!} />
                           )}
+                          {activeView === 'cost-estimator' && (activeProjectId || selectedProjectId) && (
+                              <CostEstimator projectId={activeProjectId || selectedProjectId!} />
+                          )}
+                          {activeView === 'session-history' && (activeProjectId || selectedProjectId) && (
+                              <SessionHistory projectId={activeProjectId || selectedProjectId!} />
+                          )}
                         </>
                     ) : (
                         <div className="flex items-center justify-center h-full text-muted">
@@ -1198,6 +1206,10 @@ export function App() {
                   onNavigate={(view) => setActiveView(view as SidebarView)}
                   onNewTask={() => setIsNewTaskDialogOpen(true)}
                   onOpenSettings={() => setIsSettingsDialogOpen(true)}
+                  onOpenSettingsSection={(section) => {
+                    setSettingsInitialSection(section as AppSection);
+                    setIsSettingsDialogOpen(true);
+                  }}
               />
 
               {/* Keyboard Shortcuts Overlay (Feature 9.4) */}

@@ -4,6 +4,7 @@ import { Label } from '../ui/label';
 import { COLOR_THEMES } from '../../../shared/constants';
 import { useSettingsStore } from '../../stores/settings-store';
 import type { ColorTheme, AppSettings } from '../../../shared/types';
+import { CustomThemeEditor } from './CustomThemeEditor';
 
 interface ThemeSelectorProps {
   settings: AppSettings;
@@ -133,6 +134,9 @@ export function ThemeSelector({ settings, onSettingsChange }: ThemeSelectorProps
           })}
         </div>
       </div>
+
+      {/* Custom Theme Editor — Feature 9.1 */}
+      <CustomThemeEditor settings={settings} onSettingsChange={onSettingsChange} />
     </div>
   );
 }

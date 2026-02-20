@@ -24,6 +24,8 @@ import {
   FileCode2,
   Wand2,
   BookOpenCheck,
+  Coins,
+  History,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { ScrollArea } from '@/components/ui';
@@ -64,7 +66,7 @@ import { CopilotCliStatusBadge } from './CopilotCliStatusBadge';
 import { UpdateBanner } from './UpdateBanner';
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'code-review' | 'refactoring' | 'documentation';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history';
 
 interface SidebarProps {
   onSettingsClick: () => void;
@@ -96,6 +98,8 @@ const baseNavItems: NavItem[] = [
   { id: 'code-review', labelKey: 'navigation:items.codeReview', icon: FileCode2, shortcut: 'V' },
   { id: 'refactoring', labelKey: 'navigation:items.refactoring', icon: Wand2, shortcut: 'F' },
   { id: 'documentation', labelKey: 'navigation:items.documentation', icon: BookOpenCheck, shortcut: 'O' },
+  { id: 'cost-estimator', labelKey: 'navigation:items.costEstimator', icon: Coins, shortcut: 'E' },
+  { id: 'session-history', labelKey: 'navigation:items.sessionHistory', icon: History, shortcut: 'S' },
 ];
 
 // GitHub nav items shown when GitHub is enabled
