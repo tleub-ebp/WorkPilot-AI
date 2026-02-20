@@ -28,18 +28,18 @@ class LocalLLMProvider(LLMProvider):
         return f"[Local LLM] {prompt}"
 
 # Factory for dynamic provider selection
-import apps.backend.provider_api as provider_api
+import provider_api
 
 def get_llm_provider() -> LLMProvider:
     provider_name = provider_api.get_selected_provider()
     if not provider_name:
         import os
-        provider_name = os.getenv("LLM_PROVIDER", "claude_opus").lower()
+        provider_name = os.getenv("LLM_PROVIDER", "anthropic").lower()
     else:
         provider_name = provider_name.lower()
-    if provider_name == "claude_opus":
+    if provider_name in ["anthropic", "claude"]:
         return ClaudeOpusProvider()
-    elif provider_name == "claude_sonnet":
+    elif provider_name == "openai":
         return ClaudeSonnetProvider()
     elif provider_name == "local":
         return LocalLLMProvider()

@@ -394,6 +394,50 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
             </h2>
           </div>
         </div>
+
+        {/* Task list */}
+        <div className="flex-1 min-h-0">
+          <ScrollArea className="h-full px-3 pb-3 pt-2">
+            <SortableContext
+              items={taskIds}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3 min-h-0">
+                {tasks.length === 0 ? (
+                  <div
+                    className={cn(
+                      'empty-column-dropzone flex flex-col items-center justify-center py-6',
+                      isOver && 'active'
+                    )}
+                  >
+                    {isOver ? (
+                      <>
+                        <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center mb-2">
+                          <Plus className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="text-sm font-medium text-primary">{t('kanban.dropHere')}</span>
+                      </>
+                    ) : (
+                      <>
+                        {emptyState.icon}
+                        <span className="mt-2 text-sm font-medium text-muted-foreground/70">
+                          {emptyState.message}
+                        </span>
+                        {emptyState.subtext && (
+                          <span className="mt-0.5 text-xs text-muted-foreground/50">
+                            {emptyState.subtext}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  taskCards
+                )}
+              </div>
+            </SortableContext>
+          </ScrollArea>
+        </div>
       </div>
     );
   }
@@ -401,13 +445,16 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
   return (
     <div
       className="relative flex shrink-0 h-full"
-      style={columnWidth ? { width: columnWidth, minWidth: MIN_COLUMN_WIDTH, maxWidth: MAX_COLUMN_WIDTH } : undefined}
+      style={{ 
+        width: columnWidth || DEFAULT_COLUMN_WIDTH, 
+        minWidth: MIN_COLUMN_WIDTH, 
+        maxWidth: MAX_COLUMN_WIDTH 
+      }}
     >
       <div
         ref={setNodeRef}
         className={cn(
           'flex flex-1 flex-col rounded-xl border border-white/5 bg-linear-to-b from-secondary/30 to-transparent backdrop-blur-sm transition-all duration-200',
-          !columnWidth && 'min-w-80 max-w-120',
           getColumnBorderColor(),
           'border-t-2',
           isOver && 'drop-zone-highlight'
@@ -416,208 +463,208 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
       >
         {/* Column header - enhanced styling */}
         <div className="flex items-center justify-between p-4 border-b border-white/5">
-        <div className="flex items-center gap-2.5">
-          {/* Collapse button */}
-          {onToggleCollapsed && (
-            <Tooltip delayDuration={200}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 hover:bg-muted-foreground/10 hover:text-muted-foreground transition-colors"
-                  onClick={onToggleCollapsed}
-                  aria-label={t('kanban.collapseColumn')}
-                >
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {t('kanban.collapseColumn')}
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {/* Select All checkbox for column */}
-          {onSelectAll && onDeselectAll && (
-            <Tooltip delayDuration={200}>
-              <TooltipTrigger asChild>
-                <div className="flex items-center">
-                  <Checkbox
-                    checked={selectAllCheckedState}
-                    onCheckedChange={handleSelectAllChange}
-                    disabled={taskCount === 0}
-                    aria-label={isAllSelected ? t('kanban.deselectAll') : t('kanban.selectAll')}
-                    className="h-4 w-4"
-                  />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                {isAllSelected ? t('kanban.deselectAll') : t('kanban.selectAll')}
-              </TooltipContent>
-            </Tooltip>
-          )}
-          <h2 className="font-semibold text-sm text-foreground">
-            {t(TASK_STATUS_LABELS[status])}
-          </h2>
-          {status === 'in_progress' && maxParallelTasks ? (
-            <span className={cn(
-              "column-count-badge",
-              tasks.length >= maxParallelTasks && "bg-warning/20 text-warning border-warning/30"
-            )}>
-              {tasks.length}/{maxParallelTasks}
-            </span>
-          ) : (
-            <span className="column-count-badge">
-              {tasks.length}
-            </span>
-          )}
+          <div className="flex items-center gap-2.5">
+            {/* Collapse button */}
+            {onToggleCollapsed && (
+              <Tooltip delayDuration={200}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 hover:bg-muted-foreground/10 hover:text-muted-foreground transition-colors"
+                    onClick={onToggleCollapsed}
+                    aria-label={t('kanban.collapseColumn')}
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t('kanban.collapseColumn')}
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {/* Select All checkbox for column */}
+            {onSelectAll && onDeselectAll && (
+              <Tooltip delayDuration={200}>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center">
+                    <Checkbox
+                      checked={selectAllCheckedState}
+                      onCheckedChange={handleSelectAllChange}
+                      disabled={taskCount === 0}
+                      aria-label={isAllSelected ? t('kanban.deselectAll') : t('kanban.selectAll')}
+                      className="h-4 w-4"
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isAllSelected ? t('kanban.deselectAll') : t('kanban.selectAll')}
+                </TooltipContent>
+              </Tooltip>
+            )}
+            <h2 className="font-semibold text-sm text-foreground">
+              {t(TASK_STATUS_LABELS[status])}
+            </h2>
+            {status === 'in_progress' && maxParallelTasks ? (
+              <span className={cn(
+                "column-count-badge",
+                tasks.length >= maxParallelTasks && "bg-warning/20 text-warning border-warning/30"
+              )}>
+                {tasks.length}/{maxParallelTasks}
+              </span>
+            ) : (
+              <span className="column-count-badge">
+                {tasks.length}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            {/* Lock toggle button - available for all columns */}
+            {onToggleLocked && (
+              <Tooltip delayDuration={200}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      'h-7 w-7 transition-colors',
+                      isLocked
+                        ? 'text-amber-500 bg-amber-500/10 hover:bg-amber-500/20'
+                        : 'hover:bg-muted-foreground/10 hover:text-muted-foreground'
+                    )}
+                    onClick={onToggleLocked}
+                    aria-pressed={isLocked}
+                    aria-label={isLocked ? t('kanban.unlockColumn') : t('kanban.lockColumn')}
+                  >
+                    {isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isLocked ? t('kanban.unlockColumn') : t('kanban.lockColumn')}
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {status === 'backlog' && (
+              <>
+                {onQueueAll && tasks.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
+                    onClick={onQueueAll}
+                    title={t('queue.queueAll')}
+                  >
+                    <ListPlus className="h-4 w-4" />
+                  </Button>
+                )}
+                {onAddClick && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 hover:bg-primary/10 hover:text-primary transition-colors"
+                    onClick={onAddClick}
+                    aria-label={t('kanban.addTaskAriaLabel')}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                )}
+              </>
+            )}
+            {status === 'queue' && onQueueSettings && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
+                onClick={onQueueSettings}
+                title={t('kanban.queueSettings')}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            )}
+            {status === 'done' && onArchiveAll && tasks.length > 0 && !showArchived && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 hover:bg-muted-foreground/10 hover:text-muted-foreground transition-colors"
+                onClick={onArchiveAll}
+                aria-label={t('tooltips.archiveAllDone')}
+              >
+                <Archive className="h-4 w-4" />
+              </Button>
+            )}
+            {status === 'done' && archivedCount !== undefined && archivedCount > 0 && onToggleArchived && (
+              <Tooltip delayDuration={200}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      'h-7 w-7 transition-colors relative',
+                      showArchived
+                        ? 'text-primary bg-primary/10 hover:bg-primary/20'
+                        : 'hover:bg-muted-foreground/10 hover:text-muted-foreground'
+                    )}
+                    onClick={onToggleArchived}
+                    aria-pressed={showArchived}
+                    aria-label={t('common:accessibility.toggleShowArchivedAriaLabel')}
+                  >
+                    <Archive className="h-4 w-4" />
+                    <span className="absolute -top-1 -right-1 text-[10px] font-medium bg-muted rounded-full min-w-[14px] h-[14px] flex items-center justify-center">
+                      {archivedCount}
+                    </span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {showArchived ? t('common:projectTab.hideArchived') : t('common:projectTab.showArchived')}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          {/* Lock toggle button - available for all columns */}
-          {onToggleLocked && (
-            <Tooltip delayDuration={200}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    'h-7 w-7 transition-colors',
-                    isLocked
-                      ? 'text-amber-500 bg-amber-500/10 hover:bg-amber-500/20'
-                      : 'hover:bg-muted-foreground/10 hover:text-muted-foreground'
-                  )}
-                  onClick={onToggleLocked}
-                  aria-pressed={isLocked}
-                  aria-label={isLocked ? t('kanban.unlockColumn') : t('kanban.lockColumn')}
-                >
-                  {isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {isLocked ? t('kanban.unlockColumn') : t('kanban.lockColumn')}
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {status === 'backlog' && (
-            <>
-              {onQueueAll && tasks.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
-                  onClick={onQueueAll}
-                  title={t('queue.queueAll')}
-                >
-                  <ListPlus className="h-4 w-4" />
-                </Button>
-              )}
-              {onAddClick && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 hover:bg-primary/10 hover:text-primary transition-colors"
-                  onClick={onAddClick}
-                  aria-label={t('kanban.addTaskAriaLabel')}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              )}
-            </>
-          )}
-          {status === 'queue' && onQueueSettings && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
-              onClick={onQueueSettings}
-              title={t('kanban.queueSettings')}
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
-          )}
-          {status === 'done' && onArchiveAll && tasks.length > 0 && !showArchived && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 hover:bg-muted-foreground/10 hover:text-muted-foreground transition-colors"
-              onClick={onArchiveAll}
-              aria-label={t('tooltips.archiveAllDone')}
-            >
-              <Archive className="h-4 w-4" />
-            </Button>
-          )}
-          {status === 'done' && archivedCount !== undefined && archivedCount > 0 && onToggleArchived && (
-            <Tooltip delayDuration={200}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    'h-7 w-7 transition-colors relative',
-                    showArchived
-                      ? 'text-primary bg-primary/10 hover:bg-primary/20'
-                      : 'hover:bg-muted-foreground/10 hover:text-muted-foreground'
-                  )}
-                  onClick={onToggleArchived}
-                  aria-pressed={showArchived}
-                  aria-label={t('common:accessibility.toggleShowArchivedAriaLabel')}
-                >
-                  <Archive className="h-4 w-4" />
-                  <span className="absolute -top-1 -right-1 text-[10px] font-medium bg-muted rounded-full min-w-[14px] h-[14px] flex items-center justify-center">
-                    {archivedCount}
-                  </span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {showArchived ? t('common:projectTab.hideArchived') : t('common:projectTab.showArchived')}
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-      </div>
 
-      {/* Task list */}
-      <div className="flex-1 min-h-0">
-        <ScrollArea className="h-full px-3 pb-3 pt-2">
-          <SortableContext
-            items={taskIds}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-3 min-h-[120px]">
-              {tasks.length === 0 ? (
-                <div
-                  className={cn(
-                    'empty-column-dropzone flex flex-col items-center justify-center py-6',
-                    isOver && 'active'
-                  )}
-                >
-                  {isOver ? (
-                    <>
-                      <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center mb-2">
-                        <Plus className="h-4 w-4 text-primary" />
-                      </div>
-                      <span className="text-sm font-medium text-primary">{t('kanban.dropHere')}</span>
-                    </>
-                  ) : (
-                    <>
-                      {emptyState.icon}
-                      <span className="mt-2 text-sm font-medium text-muted-foreground/70">
-                        {emptyState.message}
-                      </span>
-                      {emptyState.subtext && (
-                        <span className="mt-0.5 text-xs text-muted-foreground/50">
-                          {emptyState.subtext}
+        {/* Task list */}
+        <div className="flex-1 min-h-0">
+          <ScrollArea className="h-full px-3 pb-3 pt-2">
+            <SortableContext
+              items={taskIds}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3 min-h-0">
+                {tasks.length === 0 ? (
+                  <div
+                    className={cn(
+                      'empty-column-dropzone flex flex-col items-center justify-center py-6',
+                      isOver && 'active'
+                    )}
+                  >
+                    {isOver ? (
+                      <>
+                        <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center mb-2">
+                          <Plus className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="text-sm font-medium text-primary">{t('kanban.dropHere')}</span>
+                      </>
+                    ) : (
+                      <>
+                        {emptyState.icon}
+                        <span className="mt-2 text-sm font-medium text-muted-foreground/70">
+                          {emptyState.message}
                         </span>
-                      )}
-                    </>
-                  )}
-                </div>
-              ) : (
-                taskCards
-              )}
-            </div>
-          </SortableContext>
-        </ScrollArea>
-      </div>
+                        {emptyState.subtext && (
+                          <span className="mt-0.5 text-xs text-muted-foreground/50">
+                            {emptyState.subtext}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  taskCards
+                )}
+              </div>
+            </SortableContext>
+          </ScrollArea>
+        </div>
       </div>
 
       {/* Resize handle on right edge */}
@@ -1497,6 +1544,31 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       loadKanbanPreferences(projectId);
     }
   }, [projectId, loadKanbanPreferences]);
+
+  // Force update in_progress column width if it's too wide (separate effect to avoid infinite loop)
+  useEffect(() => {
+    if (columnPreferences?.in_progress?.width && columnPreferences.in_progress.width >= 320) {
+      // Update preferences directly in the store to avoid triggering setColumnWidth
+      const updatedPrefs = {
+        ...columnPreferences,
+        in_progress: {
+          ...columnPreferences.in_progress,
+          width: 280
+        }
+      };
+      
+      // Use the store's internal update mechanism
+      useKanbanSettingsStore.setState({
+        columnPreferences: updatedPrefs
+      });
+      
+      // Also save to localStorage immediately
+      if (projectId) {
+        const key = `kanban-column-prefs-${projectId}`;
+        localStorage.setItem(key, JSON.stringify(updatedPrefs));
+      }
+    }
+  }, [columnPreferences?.in_progress?.width, projectId]);
 
   // Create a callback to toggle collapsed state and save to storage
   const handleToggleColumnCollapsed = useCallback((status: typeof TASK_STATUS_COLUMNS[number]) => {

@@ -27,7 +27,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
+# Make claude_agent_sdk optional
+try:
+    from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
+    SDK_AVAILABLE = True
+except ImportError:
+    ClaudeAgentOptions = None
+    ClaudeSDKClient = None
+    SDK_AVAILABLE = False
 
 # Linear status constants (matching Valma AI team setup)
 STATUS_TODO = "Todo"
@@ -113,6 +120,9 @@ def _create_linear_client() -> ClaudeSDKClient:
     Create a minimal Claude client with only Linear MCP tools.
     Used for focused mini-agent calls.
     """
+    if not SDK_AVAILABLE:
+        raise ImportError("claude_agent_sdk is not available")
+    
     from core.auth import (
         ensure_claude_code_oauth_token,
         get_sdk_env_vars,
