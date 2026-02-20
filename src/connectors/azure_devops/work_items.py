@@ -298,3 +298,277 @@ class AzureWorkItemsClient:
             query=wiql_query,
             max_items=max_items,
         )
+
+    # ── Write operations (Feature 4.2 — enriched Boards) ────────────
+
+    def create_work_item(
+        self,
+        project: str,
+        work_item_type: str,
+        title: str,
+        description: str | None = None,
+        assigned_to: str | None = None,
+        state: str | None = None,
+        priority: int | None = None,
+        tags: list[str] | None = None,
+        area_path: str | None = None,
+        iteration_path: str | None = None,
+        additional_fields: dict[str, str] | None = None,
+    ) -> WorkItem:
+        """Create a new work item in an Azure DevOps project.
+
+        Builds a JSON Patch document from the provided fields and sends
+        it to the Work Item Tracking API to create a new work item.
+
+        Args:
+            project: The project name or identifier.
+            work_item_type: The type of work item to create (e.g.,
+                ``'Bug'``, ``'Task'``, ``'User Story'``).
+            title: The title of the new work item.
+            description: Optional HTML description.
+            assigned_to: Optional display name or email of the assignee.
+            state: Optional initial state (e.g., ``'New'``, ``'Active'``).
+            priority: Optional priority level (integer, typically 1-4).
+            tags: Optional list of tags to apply.
+            area_path: Optional area path.
+            iteration_path: Optional iteration/sprint path.
+            additional_fields: Optional dict of extra field reference
+                names to values (e.g., ``{'Custom.Field': 'value'}``).
+
+        Returns:
+            A WorkItem object representing the newly created work item.
+
+        Raises:
+            APIError: If the API call fails.
+        """
+        logger.info(
+            "Creating %s '%s' in project '%s'.",
+            work_item_type,
+            title,
+            project,
+        )
+
+        from azure.devops.v7_0.work_item_tracking.models import JsonPatchOperation
+
+        patch_document = [
+            JsonPatchOperation(
+                op="add",
+                path="/fields/System.Title",
+                value=title,
+            )
+        ]
+
+        _optional_fields: list[tuple[str, Any]] = [
+            ("/fields/System.Description", description),
+            ("/fields/System.AssignedTo", assigned_to),
+            ("/fields/System.State", state),
+            ("/fields/Microsoft.VSTS.Common.Priority", priority),
+            ("/fields/System.Tags", "; ".join(tags) if tags else None),
+            ("/fields/System.AreaPath", area_path),
+            ("/fields/System.IterationPath", iteration_path),
+        ]
+
+        for field_path, value in _optional_fields:
+            if value is not None:
+                patch_document.append(
+                    JsonPatchOperation(op="add", path=field_path, value=value)
+                )
+
+        if additional_fields:
+            for field_name, field_value in additional_fields.items():
+                patch_document.append(
+                    JsonPatchOperation(
+                        op="add",
+                        path=f"/fields/{field_name}",
+                        value=field_value,
+                    )
+                )
+
+        try:
+            wit_client = self._get_wit_client()
+            api_work_item = wit_client.create_work_item(
+                document=patch_document,
+                project=project,
+                type=work_item_type,
+            )
+        except AzureDevOpsError:
+            raise
+        except Exception as exc:
+            raise APIError(
+                f"Failed to create {work_item_type} '{title}' "
+                f"in project '{project}': {exc}"
+            ) from exc
+
+        work_item = WorkItem.from_api_response(api_work_item)
+        logger.info(
+            "Created work item %d: '%s' (%s).",
+            work_item.id,
+            work_item.title,
+            work_item.work_item_type,
+        )
+        return work_item
+
+    def update_work_item(
+        self,
+        project: str,
+        work_item_id: int,
+        fields: dict[str, Any],
+    ) -> WorkItem:
+        """Update an existing work item's fields.
+
+        Supports bidirectional synchronisation by allowing any field to
+        be updated, including state transitions.
+
+        Args:
+            project: The project name or identifier.
+            work_item_id: The ID of the work item to update.
+            fields: A dictionary mapping field reference names to their
+                new values. Common fields include:
+                - ``'System.State'`` — e.g. ``'Active'``, ``'Closed'``
+                - ``'System.Title'`` — new title
+                - ``'System.AssignedTo'`` — assignee name or email
+                - ``'Microsoft.VSTS.Common.Priority'`` — priority int
+
+        Returns:
+            The updated WorkItem object.
+
+        Raises:
+            WorkItemNotFoundError: If the work item does not exist.
+            APIError: If the API call fails.
+        """
+        logger.info(
+            "Updating work item %d in project '%s' (fields: %s).",
+            work_item_id,
+            project,
+            list(fields.keys()),
+        )
+
+        from azure.devops.v7_0.work_item_tracking.models import JsonPatchOperation
+
+        patch_document = [
+            JsonPatchOperation(
+                op="replace",
+                path=f"/fields/{field_name}",
+                value=value,
+            )
+            for field_name, value in fields.items()
+        ]
+
+        try:
+            wit_client = self._get_wit_client()
+            api_work_item = wit_client.update_work_item(
+                document=patch_document,
+                id=work_item_id,
+                project=project,
+            )
+        except AzureDevOpsError:
+            raise
+        except Exception as exc:
+            error_msg = str(exc).lower()
+            if "404" in error_msg or "not found" in error_msg:
+                raise WorkItemNotFoundError(
+                    work_item_id=work_item_id, project=project
+                ) from exc
+            raise APIError(
+                f"Failed to update work item {work_item_id} "
+                f"in project '{project}': {exc}"
+            ) from exc
+
+        work_item = WorkItem.from_api_response(api_work_item)
+        logger.info(
+            "Updated work item %d: state='%s'.",
+            work_item.id,
+            work_item.state,
+        )
+        return work_item
+
+    def link_work_items(
+        self,
+        project: str,
+        source_id: int,
+        target_id: int,
+        link_type: str = "System.LinkTypes.Related",
+        comment: str | None = None,
+    ) -> WorkItem:
+        """Create a link between two work items.
+
+        Adds a relation (link) from the source work item to the target
+        work item. Common link types include:
+        - ``System.LinkTypes.Related`` — general relation
+        - ``System.LinkTypes.Hierarchy-Forward`` — parent → child
+        - ``System.LinkTypes.Hierarchy-Reverse`` — child → parent
+        - ``System.LinkTypes.Dependency-Forward`` — successor
+        - ``System.LinkTypes.Dependency-Reverse`` — predecessor
+
+        Args:
+            project: The project name or identifier.
+            source_id: The ID of the work item to add the link to.
+            target_id: The ID of the work item to link to.
+            link_type: The relation type reference name. Defaults to
+                ``'System.LinkTypes.Related'``.
+            comment: Optional comment describing the link.
+
+        Returns:
+            The updated source WorkItem with the new relation.
+
+        Raises:
+            WorkItemNotFoundError: If either work item does not exist.
+            APIError: If the API call fails.
+        """
+        logger.info(
+            "Linking work item %d → %d (type='%s') in project '%s'.",
+            source_id,
+            target_id,
+            link_type,
+            project,
+        )
+
+        from azure.devops.v7_0.work_item_tracking.models import JsonPatchOperation
+
+        org_url = self._client.settings.organization_url
+        target_url = (
+            f"{org_url}/{project}/_apis/wit/workItems/{target_id}"
+        )
+
+        relation_value: dict[str, Any] = {
+            "rel": link_type,
+            "url": target_url,
+        }
+        if comment:
+            relation_value["attributes"] = {"comment": comment}
+
+        patch_document = [
+            JsonPatchOperation(
+                op="add",
+                path="/relations/-",
+                value=relation_value,
+            )
+        ]
+
+        try:
+            wit_client = self._get_wit_client()
+            api_work_item = wit_client.update_work_item(
+                document=patch_document,
+                id=source_id,
+                project=project,
+            )
+        except AzureDevOpsError:
+            raise
+        except Exception as exc:
+            error_msg = str(exc).lower()
+            if "404" in error_msg or "not found" in error_msg:
+                raise WorkItemNotFoundError(
+                    work_item_id=source_id, project=project
+                ) from exc
+            raise APIError(
+                f"Failed to link work items {source_id} → {target_id} "
+                f"in project '{project}': {exc}"
+            ) from exc
+
+        work_item = WorkItem.from_api_response(api_work_item)
+        logger.info(
+            "Linked work item %d → %d.",
+            source_id,
+            target_id,
+        )
+        return work_item
