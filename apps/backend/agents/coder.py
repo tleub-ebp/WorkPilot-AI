@@ -793,8 +793,8 @@ async def run_autonomous_agent(
         async with runtime:
             session_result = await runtime.run_session(prompt)
             status = session_result.status
-            response = session_result.response
-            error_info = session_result.error_info
+            response = session_result.output
+            error_info = session_result.error
 
         plan_validated = False
         if is_planning_phase and status != "error":

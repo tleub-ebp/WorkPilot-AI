@@ -91,8 +91,11 @@ function createDefaultPreferences(): KanbanColumnPreferences {
   const preferences: Partial<KanbanColumnPreferences> = {};
 
   for (const column of TASK_STATUS_COLUMNS) {
+    // Make in_progress column slightly smaller by default
+    const defaultWidth = column === 'in_progress' ? 280 : DEFAULT_COLUMN_WIDTH;
+    
     preferences[column] = {
-      width: DEFAULT_COLUMN_WIDTH,
+      width: defaultWidth,
       isCollapsed: false,
       isLocked: false
     };
@@ -290,7 +293,15 @@ export const useKanbanSettingsStore = create<KanbanSettingsState>((set, get) => 
       if (stored) {
         const parsed = JSON.parse(stored);
         if (validatePreferences(parsed)) {
-          set({ columnPreferences: parsed });
+          // Update in_progress column width if it's using the old default or any width >= 320
+          const updatedPreferences = { ...parsed };
+          if (updatedPreferences.in_progress?.width === DEFAULT_COLUMN_WIDTH || 
+              (updatedPreferences.in_progress?.width && updatedPreferences.in_progress.width >= 320)) {
+            updatedPreferences.in_progress.width = 280;
+            // Save the updated preferences immediately
+            localStorage.setItem(key, JSON.stringify(updatedPreferences));
+          }
+          set({ columnPreferences: updatedPreferences });
         } else {
           set({ columnPreferences: createDefaultPreferences() });
         }
@@ -299,6 +310,22 @@ export const useKanbanSettingsStore = create<KanbanSettingsState>((set, get) => 
       }
     } catch {
       set({ columnPreferences: createDefaultPreferences() });
+    }
+
+    // Also update current state if in_progress column is too wide
+    const currentState = get();
+    if (currentState.columnPreferences?.in_progress?.width && 
+        currentState.columnPreferences.in_progress.width >= 320) {
+      set((state) => ({
+        ...state,
+        columnPreferences: {
+          ...state.columnPreferences!,
+          in_progress: {
+            ...state.columnPreferences!.in_progress!,
+            width: 280
+          }
+        }
+      } as Partial<KanbanSettingsState>));
     }
 
     // Then, async load from main process via IPC (source of truth)
@@ -313,12 +340,18 @@ export const useKanbanSettingsStore = create<KanbanSettingsState>((set, get) => 
 
         if (result?.success && result.data) {
           if (validatePreferences(result.data)) {
-            set({ columnPreferences: result.data });
+            // Update in_progress column width if it's using the old default or any width >= 320
+            const updatedPreferences = { ...result.data };
+            if (updatedPreferences.in_progress?.width === DEFAULT_COLUMN_WIDTH || 
+                (updatedPreferences.in_progress?.width && updatedPreferences.in_progress.width >= 320)) {
+              updatedPreferences.in_progress.width = 280;
+            }
+            set({ columnPreferences: updatedPreferences });
 
-            // Update localStorage sync cache with IPC data
+            // Update localStorage sync cache with updated IPC data
             try {
               const key = getKanbanSettingsKey(projectId);
-              localStorage.setItem(key, JSON.stringify(result.data));
+              localStorage.setItem(key, JSON.stringify(updatedPreferences));
             } catch {
               // localStorage write failed, non-critical
             }

@@ -2,11 +2,18 @@
 LiteLLMRuntime: AgentRuntime for provider-agnostic LLMs via LiteLLM
 Implements agent loop with tool execution for OpenAI-compatible LLMs
 """
+import sys
+from pathlib import Path
+
+# Ajouter le répertoire racine du projet au chemin pour pouvoir importer src
+project_root = Path(__file__).parent.parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
+
 import asyncio
 from typing import Any, Dict, Optional, List
 from core.runtime import AgentRuntime, SessionResult, StreamEvent, SessionStatus, ErrorType
-from core.llm_client import LLMClient, LLMResponse, LLMToolResponse, ToolCall
-from core.provider_config import ProviderConfig
+from core.llm_client import LLMClient, LLMResponse, LLMToolResponse, ToolCall, ConcreteLLMClient
+from src.connectors.llm_config import ProviderConfig
 from core.runtimes.tool_executor import ToolExecutor, get_tool_definitions
 import progress
 
@@ -18,7 +25,7 @@ class LiteLLMRuntime(AgentRuntime):
         self.agent_type = agent_type
         self.config = config
         self.cli_thinking = cli_thinking
-        self.llm_client = LLMClient.from_provider_config(config)
+        self.llm_client = ConcreteLLMClient.from_provider_config(config)
         self.tool_executor = ToolExecutor(project_dir)
         self.tool_definitions = get_tool_definitions(agent_type)
         self.max_turns = 10
@@ -58,9 +65,8 @@ class LiteLLMRuntime(AgentRuntime):
         status = SessionStatus.COMPLETE if last_response else SessionStatus.ERROR
         return SessionResult(
             status=status,
-            response=last_response,
-            error_info=error_info,
-            tool_calls_count=tool_calls_count,
+            output=last_response,
+            error=error_info,
             usage=usage
         )
 

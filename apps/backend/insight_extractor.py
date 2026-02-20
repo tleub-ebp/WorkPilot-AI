@@ -17,7 +17,7 @@ _module = importlib.util.module_from_spec(_spec)
 sys.modules["_insight_extractor_impl"] = _module
 _spec.loader.exec_module(_module)
 
-# Re-export all public functions
+# Re-export all public functions that actually exist
 extract_session_insights = _module.extract_session_insights
 gather_extraction_inputs = _module.gather_extraction_inputs
 get_changed_files = _module.get_changed_files
@@ -25,8 +25,9 @@ get_commit_messages = _module.get_commit_messages
 get_extraction_model = _module.get_extraction_model
 get_session_diff = _module.get_session_diff
 is_extraction_enabled = _module.is_extraction_enabled
-parse_insights = _module.parse_insights
 run_insight_extraction = _module.run_insight_extraction
+
+# Note: parse_insights doesn't exist in the source module, so we don't export it
 
 __all__ = [
     "extract_session_insights",
@@ -36,6 +37,5 @@ __all__ = [
     "get_extraction_model",
     "get_session_diff",
     "is_extraction_enabled",
-    "parse_insights",
     "run_insight_extraction",
 ]

@@ -129,6 +129,17 @@ export function registerAgenteventsHandlers(
 
   agentManager.on("task-event", (taskId: string, event, projectId?: string) => {
     console.debug(`[agent-events-handlers] Received task-event for ${taskId}:`, event.type, event);
+    
+    // Log détaillé pour les événements CODING_FAILED
+    if (event.type === 'CODING_FAILED') {
+      console.error(`[agent-events-handlers] CODING_FAILED RECEIVED FROM BACKEND:`, {
+        taskId,
+        projectId,
+        event,
+        timestamp: new Date().toISOString(),
+        stackTrace: new Error().stack
+      });
+    }
 
     if (taskStateManager.getLastSequence(taskId) === undefined) {
       const { task, project } = findTaskAndProject(taskId, projectId);

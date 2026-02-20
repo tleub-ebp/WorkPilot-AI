@@ -4,7 +4,7 @@ Permet l'enregistrement, la récupération et la validation des paramètres prov
 """
 import json
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from pathlib import Path
 from apps.backend.core.auth import get_auth_token
 
@@ -17,6 +17,44 @@ def _mask_secret(value: str) -> str:
     return f"{value[:8]}..."
 
 CONFIG_FILE = Path.home() / ".work_pilot_ai_llm_providers.json"
+
+class ProviderConfig:
+    """Configuration class for LLM providers."""
+    
+    def __init__(self, provider: str, model: str, api_key: Optional[str] = None, base_url: Optional[str] = None, **kwargs):
+        self.provider = provider
+        self.model = model
+        self.api_key = api_key
+        self.base_url = base_url
+        self.is_claude_sdk = provider in ['anthropic-sdk', 'claude']
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+    
+    @classmethod
+    def load_provider_config(cls, phase: str, spec_dir: str, cli_provider: Optional[str] = None, cli_model: Optional[str] = None):
+        """Load provider configuration from various sources."""
+        # Priority: CLI provider > environment > config file > defaults
+        if cli_provider:
+            config_data = load_provider_config(cli_provider)
+            if config_data:
+                return cls(
+                    provider=cli_provider,
+                    model=config_data.get('model', cli_model or 'default'),
+                    api_key=config_data.get('api_key'),
+                    base_url=config_data.get('base_url'),
+                    **{k: v for k, v in config_data.items() if k not in ['provider', 'model', 'api_key', 'base_url']}
+                )
+        
+        # Fallback to environment or defaults
+        provider = cli_provider or 'anthropic'
+        model = cli_model or 'claude-3-sonnet-20240229'
+        
+        if provider == 'anthropic' or provider == 'claude':
+            token = get_auth_token()
+            if token and token.startswith("sk-"):
+                return cls(provider=provider, model=model, api_key=token)
+        
+        return cls(provider=provider, model=model)
 
 def save_provider_config(name: str, config: Dict[str, Any]) -> None:
     """Enregistre la configuration d'un provider (clé API, endpoint, etc.)."""

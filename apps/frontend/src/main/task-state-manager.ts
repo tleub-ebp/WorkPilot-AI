@@ -44,6 +44,18 @@ export class TaskStateManager {
   handleTaskEvent(taskId: string, event: TaskEventPayload, task: Task, project: Project): boolean {
     const lastSeq = this.lastSequenceByTask.get(taskId);
     console.debug(`[TaskStateManager] handleTaskEvent: ${event.type} seq=${event.sequence}, lastSeq=${lastSeq}`);
+    
+    // Log détaillé pour les événements CODING_FAILED
+    if (event.type === 'CODING_FAILED') {
+      console.error(`[TaskStateManager] CODING_FAILED EVENT DETECTED:`, {
+        taskId,
+        event,
+        taskStatus: task.status,
+        reviewReason: task.reviewReason,
+        executionPhase: task.executionProgress?.phase,
+        timestamp: new Date().toISOString()
+      });
+    }
 
     if (!this.isNewSequence(taskId, event.sequence)) {
       console.debug(`[TaskStateManager] Event ${event.type} DROPPED - sequence ${event.sequence} not newer than ${lastSeq}`);

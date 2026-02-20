@@ -1,10 +1,17 @@
 """
 Runtime Factory: Choix du runtime agent selon ProviderConfig
 """
-from core.provider_config import ProviderConfig
+import sys
+from pathlib import Path
+
+# Ajouter le répertoire racine du projet au chemin pour pouvoir importer src
+project_root = Path(__file__).parent.parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+from src.connectors.llm_config import ProviderConfig
 from core.runtimes.litellm_runtime import LiteLLMRuntime
 from core.runtimes.copilot_runtime import CopilotRuntime
-from core.runtimes.claude_sdk_runtime import ClaudeSDKRuntime  # à décommenter si le fichier existe
+# from core.runtimes.claude_sdk_runtime import ClaudeSDKRuntime  # Non disponible dans ce workspace
 
 
 def create_agent_runtime(spec_dir, phase, project_dir, agent_type, cli_provider=None, cli_model=None, cli_thinking=None, config=None):
