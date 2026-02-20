@@ -1,1 +1,9 @@
-openai>=1.0.0
+# ============================================================
+# WorkPilot AI — Root Requirements (meta-package)
+# ============================================================
+# Les dépendances réelles sont dans apps/backend/requirements.txt.
+# Ce fichier référence le backend pour permettre un `pip install -r requirements.txt`
+# depuis la racine du projet sans confusion.
+# ============================================================
+
+-r apps/backend/requirements.txt

@@ -1,1 +1,0 @@
-Ce fichier a été supprimé car toute l'intelligence de gestion des providers LLM a été déplacée dans ProviderSelector.tsx. Les fonctionnalités de sélection, affichage et gestion des modèles/providers sont désormais centralisées dans ce composant unique.

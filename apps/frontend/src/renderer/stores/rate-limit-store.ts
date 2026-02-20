@@ -1,21 +1,17 @@
-import { create } from 'zustand';
+/**
+ * @deprecated — Thin backward-compatible wrapper around the unified auth-store.
+ * Import from '../stores/auth-store' for new code.
+ */
+import { useAuthStore } from './auth-store';
 import type { RateLimitInfo, SDKRateLimitInfo } from '../../shared/types';
 
 interface RateLimitState {
-  // Terminal rate limit modal
   isModalOpen: boolean;
   rateLimitInfo: RateLimitInfo | null;
-
-  // SDK rate limit modal (for changelog, tasks, etc.)
   isSDKModalOpen: boolean;
   sdkRateLimitInfo: SDKRateLimitInfo | null;
-
-  // Track if there's a pending rate limit (persists after modal is closed)
-  // User can click the sidebar indicator to reopen
   hasPendingRateLimit: boolean;
   pendingRateLimitType: 'terminal' | 'sdk' | null;
-
-  // Actions
   showRateLimitModal: (info: RateLimitInfo) => void;
   hideRateLimitModal: () => void;
   showSDKRateLimitModal: (info: SDKRateLimitInfo) => void;
@@ -24,59 +20,41 @@ interface RateLimitState {
   clearPendingRateLimit: () => void;
 }
 
-export const useRateLimitStore = create<RateLimitState>((set, get) => ({
-  isModalOpen: false,
-  rateLimitInfo: null,
-  isSDKModalOpen: false,
-  sdkRateLimitInfo: null,
-  hasPendingRateLimit: false,
-  pendingRateLimitType: null,
+function mapState(): RateLimitState {
+  const s = useAuthStore.getState();
+  return {
+    isModalOpen: s.rateLimit_isModalOpen,
+    rateLimitInfo: s.rateLimit_info,
+    isSDKModalOpen: s.rateLimit_isSDKModalOpen,
+    sdkRateLimitInfo: s.rateLimit_sdkInfo,
+    hasPendingRateLimit: s.rateLimit_hasPending,
+    pendingRateLimitType: s.rateLimit_pendingType,
+    showRateLimitModal: s.rateLimit_showModal,
+    hideRateLimitModal: s.rateLimit_hideModal,
+    showSDKRateLimitModal: s.rateLimit_showSDKModal,
+    hideSDKRateLimitModal: s.rateLimit_hideSDKModal,
+    reopenRateLimitModal: s.rateLimit_reopenModal,
+    clearPendingRateLimit: s.rateLimit_clearPending,
+  };
+}
 
-  showRateLimitModal: (info: RateLimitInfo) => {
-    set({
-      isModalOpen: true,
-      rateLimitInfo: info,
-      hasPendingRateLimit: true,
-      pendingRateLimitType: 'terminal'
-    });
-  },
+export const useRateLimitStore = (): RateLimitState => {
+  const store = useAuthStore();
+  return {
+    isModalOpen: store.rateLimit_isModalOpen,
+    rateLimitInfo: store.rateLimit_info,
+    isSDKModalOpen: store.rateLimit_isSDKModalOpen,
+    sdkRateLimitInfo: store.rateLimit_sdkInfo,
+    hasPendingRateLimit: store.rateLimit_hasPending,
+    pendingRateLimitType: store.rateLimit_pendingType,
+    showRateLimitModal: store.rateLimit_showModal,
+    hideRateLimitModal: store.rateLimit_hideModal,
+    showSDKRateLimitModal: store.rateLimit_showSDKModal,
+    hideSDKRateLimitModal: store.rateLimit_hideSDKModal,
+    reopenRateLimitModal: store.rateLimit_reopenModal,
+    clearPendingRateLimit: store.rateLimit_clearPending,
+  };
+};
 
-  hideRateLimitModal: () => {
-    // Keep the rate limit info and pending flag when closing
-    // User can reopen via sidebar indicator
-    set({ isModalOpen: false });
-  },
-
-  showSDKRateLimitModal: (info: SDKRateLimitInfo) => {
-    set({
-      isSDKModalOpen: true,
-      sdkRateLimitInfo: info,
-      hasPendingRateLimit: true,
-      pendingRateLimitType: 'sdk'
-    });
-  },
-
-  hideSDKRateLimitModal: () => {
-    // Keep the rate limit info and pending flag when closing
-    // User can reopen via sidebar indicator
-    set({ isSDKModalOpen: false });
-  },
-
-  reopenRateLimitModal: () => {
-    const state = get();
-    if (state.pendingRateLimitType === 'terminal' && state.rateLimitInfo) {
-      set({ isModalOpen: true });
-    } else if (state.pendingRateLimitType === 'sdk' && state.sdkRateLimitInfo) {
-      set({ isSDKModalOpen: true });
-    }
-  },
-
-  clearPendingRateLimit: () => {
-    set({
-      hasPendingRateLimit: false,
-      pendingRateLimitType: null,
-      rateLimitInfo: null,
-      sdkRateLimitInfo: null
-    });
-  },
-}));
+// Expose getState() for non-React access (e.g. in useIpc.ts)
+useRateLimitStore.getState = mapState;

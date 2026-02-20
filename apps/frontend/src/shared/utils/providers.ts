@@ -1,7 +1,12 @@
-// Central provider fetcher for LLM providers
-// Usage: import { getProviders, CanonicalProvider } from './providers';
+/**
+ * Central provider fetcher for LLM providers.
+ *
+ * Architecture improvement 3.1: providerRegistry is the **single source of truth**
+ * for provider metadata (labels, descriptions, models, capabilities).
+ * This module re-exports a thin adapter so existing consumers keep working.
+ */
 
-import { PROVIDER_MODELS_MAP } from '../constants/models';
+import { providerRegistry } from '../services/providerRegistry';
 import { detectProvider } from './provider-detection';
 import type { APIProfile } from '../types/profile';
 
@@ -23,91 +28,49 @@ export interface ProvidersResponse {
   status: Record<string, boolean>;
 }
 
-/** Human-readable label for each canonical provider */
-const PROVIDER_LABELS: Record<string, string> = {
-  anthropic: 'Anthropic (Claude)',
-  openai: 'OpenAI (ChatGPT)',
-  google: 'Google (Gemini)',
-  mistral: 'Mistral AI',
-  deepseek: 'DeepSeek',
-  meta: 'Meta (LLaMA)',
-  aws: 'AWS (Bedrock)',
-  ollama: 'Ollama (Local)',
-  copilot: 'GitHub Copilot',
-  grok: 'Grok (xAI)',
-};
-
-/** Human-readable description for each canonical provider */
-const PROVIDER_DESCRIPTIONS: Record<string, string> = {
-  anthropic: 'Claude models via Anthropic API',
-  openai: 'GPT and o-series models via OpenAI API',
-  google: 'Gemini models via Google AI',
-  mistral: 'Mistral models via Mistral AI API',
-  deepseek: 'DeepSeek models via DeepSeek API',
-  meta: 'LLaMA models via Meta API / Replicate',
-  aws: 'Models via AWS Bedrock',
-  ollama: 'Locally hosted models via Ollama',
-  copilot: 'GitHub Copilot CLI models (gh copilot)',
-  grok: 'Grok models via xAI API',
-};
-
 /**
- * Returns a static provider list derived from PROVIDER_MODELS_MAP.
+ * Returns a static provider list derived from providerRegistry (single source of truth).
  * Determines auth status from the provided profiles list (a profile
  * for that provider means it is configured / authenticated).
  * Special handling for GitHub Copilot: checks gh CLI authentication.
- *
- * This replaces the previous HTTP fetch to /providers which failed
- * silently in Electron where no HTTP server is running.
  */
 export function getStaticProviders(profiles: APIProfile[] = []): ProvidersResponse {
-  // Build canonical provider list from the model map, excluding the 'claude' alias
-  const providerNames = Object.keys(PROVIDER_MODELS_MAP).filter(
-    (name) => name !== 'claude'
-  );
+  const allProviders = providerRegistry.getAllProviders()
+    .filter((p) => p.name !== 'claude' && p.name !== 'custom');
 
-  const providers: CanonicalProvider[] = providerNames.map((name) => ({
-    name,
-    label: PROVIDER_LABELS[name] ?? name.charAt(0).toUpperCase() + name.slice(1),
-    description: PROVIDER_DESCRIPTIONS[name] ?? '',
+  const providers: CanonicalProvider[] = allProviders.map((p) => ({
+    name: p.name,
+    label: p.label,
+    description: p.description,
   }));
 
   // Determine which providers have a configured profile
   const status: Record<string, boolean> = {};
-  for (const name of providerNames) {
+  for (const p of allProviders) {
     const hasProfile = profiles.some(
-      (p) => detectProvider(p.baseUrl) === name
+      (prof) => detectProvider(prof.baseUrl) === p.name
     );
-    
-    // Special handling for GitHub Copilot: check gh CLI authentication
-    if (name === 'copilot') {
-      // For now, assume Copilot is available (could be enhanced with actual gh CLI check)
-      // In a real Electron app, this could use Node.js child_process to check gh auth status
-      status[name] = true; // We'll assume it's available since gh CLI is working
+
+    if (p.name === 'copilot') {
+      status[p.name] = true;
     } else {
-      // anthropic is always considered available (OAuth / Claude Code subscription)
-      status[name] = name === 'anthropic' || hasProfile;
+      status[p.name] = p.name === 'anthropic' || hasProfile;
     }
   }
 
   // Sort with custom order: anthropic first, copilot second, then others by authentication status and alphabetically
   providers.sort((a, b) => {
-    // Special order: anthropic first
     if (a.name === 'anthropic' && b.name !== 'anthropic') return -1;
     if (b.name === 'anthropic' && a.name !== 'anthropic') return 1;
-    
-    // copilot second (but after anthropic)
+
     if (a.name === 'copilot' && b.name !== 'copilot') return -1;
     if (b.name === 'copilot' && a.name !== 'copilot') return 1;
-    
-    // For remaining providers, sort by authentication status (authenticated first)
-    const aAuthenticated = status[a.name];
-    const bAuthenticated = status[b.name];
-    
-    if (aAuthenticated && !bAuthenticated) return -1;
-    if (!aAuthenticated && bAuthenticated) return 1;
-    
-    // Then sort alphabetically within each group
+
+    const aAuth = status[a.name];
+    const bAuth = status[b.name];
+    if (aAuth && !bAuth) return -1;
+    if (!aAuth && bAuth) return 1;
+
     return a.label.localeCompare(b.label);
   });
 

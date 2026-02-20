@@ -6,14 +6,19 @@ import logging
 import sys
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
-from fastapi import FastAPI, Query, HTTPException, Path, Body
+from contextvars import ContextVar
+from fastapi import FastAPI, Query, HTTPException, Path, Body, Request
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Dict, Any
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from typing import Dict, Any, Optional
 import os
-import sys
 import json
-import requests
+import httpx
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+
+from security.secure_subprocess import run_secure, SubprocessSecurityError
 
 from src.connectors.llm_discovery import get_provider_by_name
 from src.connectors.llm_config import (
@@ -23,15 +28,34 @@ from src.connectors.llm_config import (
 from validated_keys_db import set_validated, is_validated
 
 app = FastAPI()
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+_ALLOWED_ORIGINS = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+    "app://.",               # Electron custom protocol
+    "file://",               # Electron file:// protocol
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_ALLOWED_ORIGINS,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-selected_provider = None  # Variable globale pour stocker le provider sélectionné
+_selected_provider: ContextVar[Optional[str]] = ContextVar("selected_provider", default=None)
 
 def get_env_provider_config(name: str) -> dict | None:
     if name == "claude":
@@ -53,15 +77,13 @@ def get_env_provider_config(name: str) -> dict | None:
     if name == "copilot":
         # Pour Copilot, on vérifie juste l'authentification via gh CLI
         try:
-            import subprocess
-            result = subprocess.run(["gh", "auth", "status"], capture_output=True, text=True, timeout=10)
-            output = result.stdout + result.stderr
-            if "Logged in to github.com" in output:
-                copilot_check = subprocess.run(["gh", "copilot", "--version"], capture_output=True, text=True, timeout=5)
-                if copilot_check.returncode == 0:
+            result = run_secure(["gh", "auth", "status"], timeout=10)
+            if "Logged in to github.com" in result.output:
+                copilot_check = run_secure(["gh", "copilot", "--version"], timeout=5)
+                if copilot_check.success:
                     return {"authenticated": True, "model": "copilot"}
             return None
-        except:
+        except (SubprocessSecurityError, Exception):
             return None
     return None
 
@@ -131,15 +153,13 @@ def get_providers():
             # Cas spécial pour Copilot : vérifier l'authentification gh CLI
             if name == "copilot":
                 try:
-                    import subprocess
-                    result = subprocess.run(["gh", "auth", "status"], capture_output=True, text=True, timeout=10)
-                    output = result.stdout + result.stderr
-                    if "Logged in to github.com" in output:
-                        copilot_check = subprocess.run(["gh", "copilot", "--version"], capture_output=True, text=True, timeout=5)
-                        status[name] = copilot_check.returncode == 0
+                    result = run_secure(["gh", "auth", "status"], timeout=10)
+                    if "Logged in to github.com" in result.output:
+                        copilot_check = run_secure(["gh", "copilot", "--version"], timeout=5)
+                        status[name] = copilot_check.success
                     else:
                         status[name] = False
-                except:
+                except (SubprocessSecurityError, Exception):
                     status[name] = False
             else:
                 status[name] = is_valid or (env_key is not None and env_key.strip() != "")
@@ -168,16 +188,15 @@ def delete_provider_config_api(provider: str):
 
 @app.post("/providers/select")
 def select_provider(provider: str = Query(...)):
-    global selected_provider
-    selected_provider = provider
+    _selected_provider.set(provider)
     return {"selected": provider}
 
-def get_selected_provider():
-    global selected_provider
-    return selected_provider
+def get_selected_provider() -> Optional[str]:
+    return _selected_provider.get()
 
 @app.post("/providers/test/{provider}")
-def test_provider(provider: str):
+@limiter.limit("5/minute")
+def test_provider(request: Request, provider: str):
     config = load_provider_config(provider)
     if not config:
         raise HTTPException(status_code=404, detail="Provider config not found")
@@ -193,16 +212,17 @@ def test_provider(provider: str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Provider test failed: {e}")
 
-@app.post("/providers/test/{provider}")
-def test_provider_api_key(provider: str, payload: dict):
+@app.post("/providers/test-key/{provider}")
+@limiter.limit("5/minute")
+async def test_provider_api_key(request: Request, provider: str, payload: dict):
     api_key = payload.get("api_key")
     base_url = payload.get("base_url")
     if provider == "openai":
         try:
-            import requests
             url = (base_url or "https://api.openai.com") + "/v1/models"
             headers = {"Authorization": f"Bearer {api_key}"}
-            resp = requests.get(url, headers=headers, timeout=10)
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(url, headers=headers, timeout=10)
             if resp.status_code == 200:
                 set_validated(provider, api_key, True)
                 return {"success": True}
@@ -213,10 +233,10 @@ def test_provider_api_key(provider: str, payload: dict):
             return {"success": False, "error": str(e)}
     elif provider == "grok":
         try:
-            import requests
             url = "https://api.x.ai/v1/models"
             headers = {"Authorization": f"Bearer {api_key}"}
-            resp = requests.get(url, headers=headers, timeout=10)
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(url, headers=headers, timeout=10)
             if resp.status_code == 200:
                 set_validated(provider, api_key, True)
                 return {"success": True}
@@ -256,7 +276,8 @@ def get_provider_schema(provider: str):
         return {"error": str(e)}
 
 @app.post("/providers/generate/{provider}")
-def generate_with_provider(provider: str, payload: Dict[str, Any]):
+@limiter.limit("30/minute")
+def generate_with_provider(request: Request, provider: str, payload: Dict[str, Any]):
     provider_cls = get_provider_by_name(provider)
     if not provider_cls:
         raise HTTPException(status_code=404, detail="Provider class not found")
@@ -284,14 +305,15 @@ def ping():
     return {"pong": True}
 
 @app.get("/providers/models/{provider}")
-def get_provider_models(provider: str = Path(..., description="Nom du provider LLM (ex: claude, anthropic, openai, etc.)")):
+async def get_provider_models(provider: str = Path(..., description="Nom du provider LLM (ex: claude, anthropic, openai, etc.)")):
     if provider == "openai":
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             return {"models": [], "provider": provider, "error": "Clé API OpenAI manquante."}
         try:
             headers = {"Authorization": f"Bearer {api_key}"}
-            resp = requests.get("https://api.openai.com/v1/models", headers=headers, timeout=10)
+            async with httpx.AsyncClient() as client:
+                resp = await client.get("https://api.openai.com/v1/models", headers=headers, timeout=10)
             resp.raise_for_status()
             data = resp.json()
             models = [m["id"] for m in data.get("data", [])]
@@ -304,7 +326,8 @@ def get_provider_models(provider: str = Path(..., description="Nom du provider L
             return {"models": [], "provider": provider, "error": "Clé API Anthropic manquante."}
         try:
             headers = {"x-api-key": api_key}
-            resp = requests.get("https://api.anthropic.com/v1/models", headers=headers, timeout=10)
+            async with httpx.AsyncClient() as client:
+                resp = await client.get("https://api.anthropic.com/v1/models", headers=headers, timeout=10)
             resp.raise_for_status()
             data = resp.json()
             models = data.get("models", [])
@@ -322,7 +345,64 @@ def get_provider_models(provider: str = Path(..., description="Nom du provider L
     return {"models": [], "provider": provider, "error": f"Provider '{provider}' non supporté pour la récupération des modèles."}
 
 @app.post("/providers/validate/{provider}")
-def validate_provider_key(provider: str, api_key: str = Body(..., embed=True)):
+@limiter.limit("5/minute")
+async def validate_provider_key(request: Request, provider: str, api_key: str = Body(..., embed=True)):
+    """Validate a provider API key by actually testing it before marking as valid."""
+    # Actually test the key before marking it as validated
+    if provider in ("openai",):
+        try:
+            url = "https://api.openai.com/v1/models"
+            headers = {"Authorization": f"Bearer {api_key}"}
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(url, headers=headers, timeout=10)
+            if resp.status_code != 200:
+                set_validated(provider, api_key, False)
+                raise HTTPException(status_code=400, detail="API key validation failed: invalid key")
+        except httpx.HTTPError as e:
+            set_validated(provider, api_key, False)
+            raise HTTPException(status_code=400, detail=f"API key validation failed: {e}")
+    elif provider in ("grok",):
+        try:
+            url = "https://api.x.ai/v1/models"
+            headers = {"Authorization": f"Bearer {api_key}"}
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(url, headers=headers, timeout=10)
+            if resp.status_code != 200:
+                set_validated(provider, api_key, False)
+                raise HTTPException(status_code=400, detail="API key validation failed: invalid key")
+        except httpx.HTTPError as e:
+            set_validated(provider, api_key, False)
+            raise HTTPException(status_code=400, detail=f"API key validation failed: {e}")
+    elif provider in ("anthropic", "claude"):
+        try:
+            headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01"}
+            async with httpx.AsyncClient() as client:
+                resp = await client.get("https://api.anthropic.com/v1/models", headers=headers, timeout=10)
+            if resp.status_code not in (200, 403):
+                set_validated(provider, api_key, False)
+                raise HTTPException(status_code=400, detail="API key validation failed: invalid key")
+        except httpx.HTTPError as e:
+            set_validated(provider, api_key, False)
+            raise HTTPException(status_code=400, detail=f"API key validation failed: {e}")
+    elif provider in ("google",):
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(
+                    f"https://generativelanguage.googleapis.com/v1/models?key={api_key}",
+                    timeout=10,
+                )
+            if resp.status_code != 200:
+                set_validated(provider, api_key, False)
+                raise HTTPException(status_code=400, detail="API key validation failed: invalid key")
+        except httpx.HTTPError as e:
+            set_validated(provider, api_key, False)
+            raise HTTPException(status_code=400, detail=f"API key validation failed: {e}")
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Provider '{provider}' does not support key validation via this endpoint",
+        )
+
     set_validated(provider, api_key, True)
     return {"status": "validated"}
 
@@ -338,8 +418,77 @@ def db_health():
     except Exception as e:
         return {"db_up": False, "error": str(e)}
 
+@app.get("/health")
+def health_check():
+    """Comprehensive health check returning the status of all subsystems."""
+    import time
+    import platform
+    start = time.monotonic()
+    subsystems: Dict[str, Any] = {}
+
+    # 1. Database (validated_keys_db — SQLite)
+    try:
+        from validated_keys_db import get_db
+        conn = get_db()
+        conn.execute("SELECT 1").fetchone()
+        conn.close()
+        subsystems["database"] = {"status": "ok"}
+    except Exception as e:
+        subsystems["database"] = {"status": "error", "error": str(e)}
+
+    # 2. LLM Providers — quick availability check (env vars / configs)
+    provider_status: Dict[str, bool] = {}
+    for name in ["anthropic", "openai", "google", "grok", "ollama", "copilot"]:
+        try:
+            cfg = get_env_provider_config(name)
+            provider_status[name] = cfg is not None
+        except Exception:
+            provider_status[name] = False
+    subsystems["providers"] = {"status": "ok", "available": provider_status}
+
+    # 3. Graphiti Memory (optional — only if enabled)
+    graphiti_enabled = os.getenv("GRAPHITI_ENABLED", "").lower() == "true"
+    if graphiti_enabled:
+        try:
+            from integrations.graphiti.config import get_graphiti_config
+            gconfig = get_graphiti_config()
+            subsystems["graphiti_memory"] = {
+                "status": "ok",
+                "enabled": True,
+                "llm_provider": gconfig.llm_provider if hasattr(gconfig, "llm_provider") else "unknown",
+                "embedder_provider": gconfig.embedder_provider if hasattr(gconfig, "embedder_provider") else "unknown",
+            }
+        except Exception as e:
+            subsystems["graphiti_memory"] = {"status": "error", "enabled": True, "error": str(e)}
+    else:
+        subsystems["graphiti_memory"] = {"status": "disabled", "enabled": False}
+
+    # 4. configured_providers.json file
+    config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../configured_providers.json'))
+    subsystems["configured_providers_file"] = {"status": "ok" if os.path.exists(config_path) else "missing"}
+
+    # 5. System info
+    subsystems["system"] = {
+        "python_version": platform.python_version(),
+        "platform": platform.platform(),
+        "pid": os.getpid(),
+    }
+
+    elapsed_ms = round((time.monotonic() - start) * 1000, 2)
+    all_ok = all(
+        s.get("status") in ("ok", "disabled")
+        for s in subsystems.values()
+        if isinstance(s, dict) and "status" in s
+    )
+
+    return {
+        "status": "healthy" if all_ok else "degraded",
+        "response_time_ms": elapsed_ms,
+        "subsystems": subsystems,
+    }
+
 @app.get("/providers/usage/{provider}")
-def get_provider_usage(provider: str):
+async def get_provider_usage(provider: str):
     """
     Récupère l'usage et le crédit restant pour le provider OpenAI, Copilot ou autre si implémenté.
     """
@@ -350,7 +499,8 @@ def get_provider_usage(provider: str):
         try:
             headers = {"Authorization": f"Bearer {api_key}"}
             # Use the usage endpoint for token usage instead of billing credits
-            resp = requests.get("https://api.openai.com/v1/usage", headers=headers, timeout=10)
+            async with httpx.AsyncClient() as client:
+                resp = await client.get("https://api.openai.com/v1/usage", headers=headers, timeout=10)
             if resp.status_code == 200:
                 data = resp.json()
                 # Format the response to include token usage information
@@ -364,9 +514,7 @@ def get_provider_usage(provider: str):
             return {"error": str(e)}
     elif provider == "copilot":
         try:
-            # Importer le connecteur Copilot
-            sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
-            from connectors.llm_copilot import get_copilot_usage_metrics
+            from src.connectors.llm_copilot import get_copilot_usage_metrics
             
             usage_data = get_copilot_usage_metrics()
             
@@ -413,4 +561,4 @@ if __name__ == "__main__":
     except ImportError:
         pass
     port = int(os.getenv("BACKEND_PORT", 9000))
-    uvicorn.run("provider_api:app", host="0.0.0.0", port=port, reload=True)
+    uvicorn.run("provider_api:app", host="0.0.0.0", port=port, reload=True, reload_excludes=[".venv"])

@@ -11,6 +11,6 @@ if ! command -v uvicorn >/dev/null 2>&1; then
   echo "[ERREUR] uvicorn n'est pas installe. Lancez 'pip install -r requirements.txt'."
   exit 1
 fi
-uvicorn provider_api:app --host 127.0.0.1 --port 9000 --reload &
+uvicorn provider_api:app --host 127.0.0.1 --port 9000 --reload --reload-exclude .venv &
 cd ../frontend
 pnpm run dev

@@ -1,4 +1,9 @@
 {
+  "boundary": {
+    "title": "Something went wrong",
+    "description": "An error occurred while rendering this content.",
+    "tryAgain": "Try Again"
+  },
   "task": {
     "parseImplementationPlan": "Failed to parse implementation_plan.json for {{specId}}: {{error}}",
     "jsonError": {

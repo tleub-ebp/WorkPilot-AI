@@ -16,7 +16,7 @@ const AccountConnectorCard: React.FC<Props> = ({ provider }) => {
   const testApiKey = async (provider: string, apiKey: string, baseUrl?: string) => {
     // Appel à un endpoint backend de test (à adapter selon l’API réelle)
     try {
-      const res = await fetch(`/providers/test/${provider}`, {
+      const res = await fetch(`/providers/test-key/${provider}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ api_key: apiKey, base_url: baseUrl })

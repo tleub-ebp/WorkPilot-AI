@@ -397,8 +397,8 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
 
   return (
     <div
-      className="relative flex"
-      style={columnWidth ? { width: columnWidth, minWidth: MIN_COLUMN_WIDTH, maxWidth: MAX_COLUMN_WIDTH, flexShrink: 0 } : undefined}
+      className="relative flex shrink-0 h-full"
+      style={columnWidth ? { width: columnWidth, minWidth: MIN_COLUMN_WIDTH, maxWidth: MAX_COLUMN_WIDTH } : undefined}
     >
       <div
         ref={setNodeRef}
@@ -702,6 +702,9 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   // Queue processing lock to prevent race conditions
   const isProcessingQueueRef = useRef(false);
 
+  // Track tasks manually moved to queue to prevent auto-promotion back
+  const manuallyQueuedTaskIdsRef = useRef<Set<string>>(new Set());
+
   // Selection state for bulk actions (Human Review column)
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
 
@@ -931,9 +934,9 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     }
   }, [selectedTaskIds, deselectAllTasks, toast, t]);
 
-  const handleArchiveAll = async () => {
-    // Get projectId from the first task (all tasks should have the same projectId)
-    const projectId = tasks[0]?.projectId;
+  const handleArchiveAll = useCallback(async () => {
+    // Get projectId from the first task (read from store to avoid stale closure)
+    const projectId = useTaskStore.getState().tasks[0]?.projectId;
     if (!projectId) {
       console.error('[KanbanBoard] No projectId found');
       return;
@@ -946,12 +949,9 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     if (!result.success) {
       console.error('[KanbanBoard] Failed to archive tasks:', result.error);
     }
-  };
+  }, [tasksByStatus.done]);
 
-  const handleDeleteTask = async (taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-
+  const handleDeleteTask = useCallback(async (taskId: string) => {
     const result = await deleteTasks([taskId]);
     if (result.success) {
       toast({
@@ -965,9 +965,9 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         variant: 'destructive'
       });
     }
-  };
+  }, [toast, t]);
 
-  const handleDragStart = (event: DragStartEvent) => {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
     
     // Check if this is an Azure DevOps work item drag
@@ -976,13 +976,13 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       return;
     }
     
-    const task = tasks.find((t) => t.id === active.id);
+    const task = useTaskStore.getState().tasks.find((t) => t.id === active.id);
     if (task) {
       setActiveTask(task);
     }
-  };
+  }, []);
 
-  const handleDragOver = (event: DragOverEvent) => {
+  const handleDragOver = useCallback((event: DragOverEvent) => {
     const { over } = event;
 
     if (!over) {
@@ -999,18 +999,18 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     }
 
     // Check if over a task - get its column
-    const overTask = tasks.find((t) => t.id === overId);
+    const overTask = useTaskStore.getState().tasks.find((t) => t.id === overId);
     if (overTask) {
       setOverColumnId(overTask.status);
     }
-  };
+  }, []);
 
   /**
    * Handle status change with worktree cleanup dialog support
    * Consolidated handler that accepts an optional task object for the dialog title
    */
-  const handleStatusChange = async (taskId: string, newStatus: TaskStatus, providedTask?: Task) => {
-    const task = providedTask || tasks.find(t => t.id === taskId);
+  const handleStatusChange = useCallback(async (taskId: string, newStatus: TaskStatus, providedTask?: Task) => {
+    const task = providedTask || useTaskStore.getState().tasks.find(t => t.id === taskId);
     const result = await persistTaskStatus(taskId, newStatus);
 
     if (!result.success) {
@@ -1033,12 +1033,12 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         });
       }
     }
-  };
+  }, [toast, t]);
 
   /**
    * Handle worktree cleanup confirmation
    */
-  const handleWorktreeCleanupConfirm = async () => {
+  const handleWorktreeCleanupConfirm = useCallback(async () => {
     if (!worktreeCleanupDialog.taskId) return;
 
     setWorktreeCleanupDialog(prev => ({ ...prev, isProcessing: true, error: undefined }));
@@ -1062,58 +1062,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         error: result.error || t('dialogs:worktreeCleanup.errorDescription')
       }));
     }
-  };
-
-  /**
-   * Move all backlog tasks to queue
-   */
-  const handleQueueAll = async () => {
-    const backlogTasks = tasksByStatus.backlog;
-    if (backlogTasks.length === 0) return;
-
-    let movedCount = 0;
-    for (const task of backlogTasks) {
-      const result = await persistTaskStatus(task.id, 'queue');
-      if (result.success) {
-        movedCount++;
-      } else {
-        console.error(`[Queue] Failed to move task ${task.id} to queue:`, result.error);
-      }
-    }
-
-    // Auto-promote queued tasks to fill available capacity
-    await processQueue();
-
-    toast({
-      title: t('queue.queueAllSuccess', { count: movedCount }),
-      variant: 'default'
-    });
-  };
-
-  /**
-   * Save queue settings (maxParallelTasks)
-   *
-   * Uses the stored ref value to ensure the save works even if tasks
-   * change while the modal is open.
-   */
-  const handleSaveQueueSettings = async (maxParallel: number) => {
-    const savedProjectId = queueSettingsProjectIdRef.current || projectId;
-    if (!savedProjectId) return;
-
-    const success = await updateProjectSettings(savedProjectId, { maxParallelTasks: maxParallel });
-    if (success) {
-      toast({
-        title: t('queue.settings.saved'),
-        variant: 'default'
-      });
-    } else {
-      toast({
-        title: t('queue.settings.saveFailed'),
-        description: t('queue.settings.retry'),
-        variant: 'destructive'
-      });
-    }
-  };
+  }, [worktreeCleanupDialog.taskId, t]);
 
   /**
    * Automatically move tasks from Queue to In Progress to fill available capacity
@@ -1142,7 +1091,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           t.status === 'in_progress' && !t.metadata?.archivedAt
         ).length;
         const queuedTasks = currentTasks.filter((t) =>
-          t.status === 'queue' && !t.metadata?.archivedAt && !attemptedTaskIds.has(t.id)
+          t.status === 'queue' && !t.metadata?.archivedAt && !attemptedTaskIds.has(t.id) && !manuallyQueuedTaskIdsRef.current.has(t.id)
         );
 
         // Stop if no capacity, no queued tasks, or too many consecutive failures
@@ -1184,6 +1133,59 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       isProcessingQueueRef.current = false;
     }
   }, [maxParallelTasks]);
+
+
+  /**
+   * Move all backlog tasks to queue
+   */
+  const handleQueueAll = useCallback(async () => {
+    const backlogTasks = tasksByStatus.backlog;
+    if (backlogTasks.length === 0) return;
+
+    let movedCount = 0;
+    for (const task of backlogTasks) {
+      const result = await persistTaskStatus(task.id, 'queue');
+      if (result.success) {
+        movedCount++;
+      } else {
+        console.error(`[Queue] Failed to move task ${task.id} to queue:`, result.error);
+      }
+    }
+
+    // Auto-promote queued tasks to fill available capacity
+    await processQueue();
+
+    toast({
+      title: t('queue.queueAllSuccess', { count: movedCount }),
+      variant: 'default'
+    });
+  }, [tasksByStatus.backlog, processQueue, toast, t]);
+
+  /**
+   * Save queue settings (maxParallelTasks)
+   *
+   * Uses the stored ref value to ensure the save works even if tasks
+   * change while the modal is open.
+   */
+  const handleSaveQueueSettings = useCallback(async (maxParallel: number) => {
+    const savedProjectId = queueSettingsProjectIdRef.current || projectId;
+    if (!savedProjectId) return;
+
+    const success = await updateProjectSettings(savedProjectId, { maxParallelTasks: maxParallel });
+    if (success) {
+      toast({
+        title: t('queue.settings.saved'),
+        variant: 'default'
+      });
+    } else {
+      toast({
+        title: t('queue.settings.saveFailed'),
+        description: t('queue.settings.retry'),
+        variant: 'destructive'
+      });
+    }
+  }, [projectId, toast, t]);
+
 
   // Azure DevOps drag detection using native drag events
   useEffect(() => {
@@ -1643,7 +1645,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     }
   }, [tasks, taskOrder, projectId, setTaskOrder, saveTaskOrder]);
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveTask(null);
     setOverColumnId(null);
@@ -1657,8 +1659,8 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     let newStatus: TaskStatus | null = null;
     let oldStatus: TaskStatus | null = null;
 
-    // Get the task being dragged
-    const task = tasks.find((t) => t.id === activeTaskId);
+    // Get the task being dragged (read from store to avoid stale closure)
+    const task = useTaskStore.getState().tasks.find((t) => t.id === activeTaskId);
     if (!task) return;
     oldStatus = task.status;
 
@@ -1667,9 +1669,9 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       newStatus = overId;
     } else {
       // Check if dropped on another task - move to that task's column
-      const overTask = tasks.find((t) => t.id === overId);
+      const overTask = useTaskStore.getState().tasks.find((t) => t.id === overId);
       if (overTask) {
-        const task = tasks.find((t) => t.id === activeTaskId);
+        const task = useTaskStore.getState().tasks.find((t) => t.id === activeTaskId);
         if (!task) return;
 
         // Compare visual columns
@@ -1739,18 +1741,22 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       }
     }
 
+    // Mark task as manually queued to prevent auto-promotion back
+    if (newStatus === 'queue' && oldStatus === 'in_progress') {
+      manuallyQueuedTaskIdsRef.current.add(activeTaskId);
+    }
+
     // Persist status change to file and update local state
     // Use handleStatusChange to properly handle worktree cleanup dialog
     await handleStatusChange(activeTaskId, newStatus, task);
-    
+
     // Update task order for the new column - add task to top of new column
     const oldVisualColumn = getVisualColumn(oldStatus);
     const newVisualColumn = getVisualColumn(newStatus);
-    
+
     if (oldVisualColumn !== newVisualColumn) {
-      console.log(`[Kanban] Moving task ${activeTaskId} from ${oldVisualColumn} to ${newVisualColumn}`);
       moveTaskToColumnTop(activeTaskId, newVisualColumn, oldVisualColumn);
-      
+
       // Persist task order
       if (projectId) {
         saveTaskOrder(projectId);
@@ -1763,14 +1769,17 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     if (oldStatus === 'in_progress' && newStatus !== 'in_progress') {
       // A task left In Progress - check if we can promote from queue
       await processQueue();
+      // Clear manually queued protection after queue processing completes
+      manuallyQueuedTaskIdsRef.current.delete(activeTaskId);
     }
-  };
+  }, [tasks, taskOrder, tasksByStatus, setTaskOrder, reorderTasksInColumn, moveTaskToColumnTop, saveTaskOrder, projectId, maxParallelTasks, handleStatusChange, processQueue]);
 
   // Ajout ou correction de la déclaration de l'état pour la boîte de dialogue de paramètres projet
   // Ajout d'un compteur pour forcer le remount d'AppSettingsDialog
   const [settingsDialogKey, setSettingsDialogKey] = useState(0);
   const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
   const [settingsDialogProjectId, setSettingsDialogProjectId] = useState<string | undefined>(undefined);
+
   useEffect(() => {
   }, [isProjectSettingsOpen]);
 
@@ -1827,7 +1836,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex flex-1 gap-3 overflow-x-auto p-2">
+        <div className="flex flex-1 gap-3 overflow-x-auto overflow-y-hidden min-h-0 p-2">
           {TASK_STATUS_COLUMNS.map((status) => (
             <DroppableColumn
               key={status}

@@ -22,6 +22,7 @@ import {
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
 import { Plus, Sparkles, Grid2X2, FolderTree, File, Folder, History, ChevronDown, Loader2, TerminalSquare, Settings } from 'lucide-react';
+import { TerminalGridSkeleton } from './ui/TerminalGridSkeleton';
 import { SortableTerminalWrapper } from './SortableTerminalWrapper';
 import { Button } from './ui/button';
 import {
@@ -452,10 +453,15 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
   // Terminal IDs for SortableContext
   const terminalIds = useMemo(() => terminals.map(t => t.id), [terminals]);
 
+  // Show skeleton while restoring sessions
+  if (isRestoring && terminals.length === 0) {
+    return <TerminalGridSkeleton />;
+  }
+
   // Empty state
   if (terminals.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-6 p-8">
+      <div className="flex h-full flex-col items-center justify-center gap-6 p-8" role="region" aria-label="Terminal grid empty state">
         <div className="flex flex-col items-center gap-3 text-center">
           <div className="rounded-full bg-card p-4">
             <Grid2X2 className="h-8 w-8 text-muted-foreground" />
