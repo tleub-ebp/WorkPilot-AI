@@ -9,6 +9,9 @@ export * from './phase-protocol';
 // IPC Channel constants
 export * from './ipc';
 
+// IPC Namespace helpers (typed grouped view of IPC channels)
+export * from './ipc-namespaces';
+
 // Task-related constants
 export * from './task';
 

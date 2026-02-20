@@ -53,39 +53,22 @@
 
 ---
 
-## 🔄 Syncing with Upstream
-
-This repository is a fork of [Auto-Claude](https://github.com/AndyMik90/Auto-Claude). Keep your fork in sync with the latest upstream changes:
-
-### Quick Sync
-```bash
-pnpm merge-upstream
-```
-
-Validate setup:
-```bash
-pnpm validate:upstream
-```
-
-📚 **Learn more:** [MERGE_UPSTREAM.md](MERGE_UPSTREAM.md)
-
----
-
-## Requirements
-
-- **Claude Pro/Max subscription** - [Get one here](https://claude.ai/upgrade)
-- **Claude Code CLI** - `npm install -g @anthropic-ai/claude-code`
-- **Git repository** - Your project must be initialized as a git repo
-
----
-
 ## Quick Start
 
 1. **Download and install** the app for your platform
-2. **Open your project** - Select a git repository folder
-3. **Connect Claude** - The app will guide you through OAuth setup
-4. **Create a task** - Describe what you want to build
-5. **Watch it work** - Agents plan, code, and validate autonomously
+2. **Open your project** — select a git repository folder
+3. **Connect Claude** — the app will guide you through OAuth setup
+4. **Create a task** — describe what you want to build
+5. **Watch it work** — agents plan, code, and validate autonomously
+
+Or from source:
+
+```sh
+pnpm install
+pnpm run dev
+```
+
+See the [Setup Guide](docs/SETUP.md) for detailed instructions.
 
 ---
 
@@ -95,19 +78,18 @@ pnpm validate:upstream
 |---------|-------------|
 | **Autonomous Tasks** | Describe your goal; agents handle planning, implementation, and validation |
 | **Parallel Execution** | Run multiple builds simultaneously with up to 12 agent terminals |
-| **Isolated Workspaces** | All changes happen in git worktrees - your main branch stays safe |
+| **Isolated Workspaces** | All changes happen in git worktrees — your main branch stays safe |
 | **Self-Validating QA** | Built-in quality assurance loop catches issues before you review |
-| **🔄 Auto-Fix Loops** | **NEW!** Intelligent test-fix-test automation - automatically fixes test failures ([Guide](docs/features/auto-fix-loops.md)) |
+| **Auto-Fix Loops** | Intelligent test-fix-test automation ([Guide](docs/features/auto-fix-loops.md)) |
 | **AI-Powered Merge** | Automatic conflict resolution when integrating back to main |
 | **Memory Layer** | Agents retain insights across sessions for smarter builds |
 | **GitHub/GitLab Integration** | Import issues, investigate with AI, create merge requests |
 | **Linear Integration** | Sync tasks with Linear for team progress tracking |
-| **🧠 Quality Scorer** | AI code review - 0-100 scoring, 7 languages, auto-fix ([Guide](docs/QUALITY_SCORER.md)) |
+| **Quality Scorer** | AI code review — 0-100 scoring, 7 languages, auto-fix ([Guide](docs/QUALITY_SCORER.md)) |
+| **Multi-Provider LLM** | OpenAI, Claude, Mistral, Ollama and more ([Guide](docs/PROVIDERS.md)) |
 | **Cross-Platform** | Native desktop apps for Windows, macOS, and Linux |
-| **Auto-Updates** | App updates automatically when new versions are released |
 
 ---
-
 
 ## Interface
 
@@ -125,9 +107,9 @@ AI-assisted feature planning with competitor analysis and audience targeting.
 ![Roadmap](.github/assets/Auto-Claude-roadmap.png)
 
 ### Additional Features
-- **Insights** - Chat interface for exploring your codebase
-- **Ideation** - Discover improvements, performance issues, and vulnerabilities
-- **Changelog** - Generate release notes from completed tasks
+- **Insights** — Chat interface for exploring your codebase
+- **Ideation** — Discover improvements, performance issues, and vulnerabilities
+- **Changelog** — Generate release notes from completed tasks
 
 ---
 
@@ -138,7 +120,8 @@ Auto-Claude/
 ├── apps/
 │   ├── backend/     # Python agents, specs, QA pipeline
 │   └── frontend/    # Electron desktop application
-├── guides/          # Additional documentation
+├── docs/            # Documentation
+├── guides/          # Additional guides
 ├── tests/           # Test suite
 └── scripts/         # Build utilities
 ```
@@ -151,27 +134,13 @@ For headless operation, CI/CD integration, or terminal-only workflows:
 
 ```bash
 cd apps/backend
-
-# Create a spec interactively
-python spec_runner.py --interactive
-
-# Run autonomous build
-python run.py --spec 001
-
-# Review and merge
-python run.py --spec 001 --review
-python run.py --spec 001 --merge
+python spec_runner.py --interactive   # Create a spec interactively
+python run.py --spec 001              # Run autonomous build
+python run.py --spec 001 --review     # Review
+python run.py --spec 001 --merge      # Merge
 ```
 
-See [guides/CLI-USAGE.md](guides/CLI-USAGE.md) for complete CLI documentation.
-
----
-
-## Development
-
-Want to build from source or contribute? See [CONTRIBUTING.md](CONTRIBUTING.md) for complete development setup instructions.
-
-For Linux-specific builds (Flatpak, AppImage), see [guides/linux.md](guides/linux.md).
+See [guides/CLI-USAGE.md](guides/CLI-USAGE.md) for the full CLI reference.
 
 ---
 
@@ -179,60 +148,46 @@ For Linux-specific builds (Flatpak, AppImage), see [guides/linux.md](guides/linu
 
 WorkPilot AI uses a three-layer security model:
 
-1. **OS Sandbox** - Bash commands run in isolation
-2. **Filesystem Restrictions** - Operations limited to project directory
-3. **Dynamic Command Allowlist** - Only approved commands based on detected project stack
+1. **OS Sandbox** — Bash commands run in isolation
+2. **Filesystem Restrictions** — Operations limited to project directory
+3. **Dynamic Command Allowlist** — Only approved commands based on detected project stack
 
-All releases are:
-- Scanned with VirusTotal before publishing
-- Include SHA256 checksums for verification
-- Code-signed where applicable (macOS)
+All releases include SHA256 checksums and VirusTotal scans.
 
 ---
 
-## Available Scripts
+## Documentation
 
-| Command | Description |
-|---------|-------------|
-| `pnpm run install:all` | Install backend and frontend dependencies |
-| `pnpm start` | Build and run the desktop app |
-| `pnpm run dev` | Run in development mode with hot reload |
-| `pnpm run package` | Package for current platform |
-| `pnpm run package:mac` | Package for macOS |
-| `pnpm run package:win` | Package for Windows |
-| `pnpm run package:linux` | Package for Linux |
-| `pnpm run package:flatpak` | Package as Flatpak (see [guides/linux.md](guides/linux.md)) |
-| `pnpm run lint` | Run linter |
-| `pnpm test` | Run frontend tests |
-| `pnpm run test:backend` | Run backend tests |
+| Document | Description |
+|----------|-------------|
+| [Setup Guide](docs/SETUP.md) | Installation, requirements, scripts, dev environment |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues and fixes |
+| [Providers Guide](docs/PROVIDERS.md) | Multi-provider LLM setup, Grepai integration |
+| [CLI Usage](guides/CLI-USAGE.md) | Headless / CI usage |
+| [Contributing](CONTRIBUTING.md) | Code style, testing, PR process |
+| [Linux Guide](guides/linux.md) | Flatpak, AppImage builds |
 
 ---
 
 ## Contributing
 
-We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
-- Development setup instructions
-- Code style guidelines
-- Testing requirements
-- Pull request process
+We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style, testing requirements, and PR process.
 
 ---
 
 ## Community
 
-- **Discord** - [Join our community](https://discord.gg/KCXaPBr4Dj)
-- **Issues** - [Report bugs or request features](https://github.com/AndyMik90/Auto-Claude/issues)
-- **Discussions** - [Ask questions](https://github.com/AndyMik90/Auto-Claude/discussions)
+- **Discord** — [Join our community](https://discord.gg/KCXaPBr4Dj)
+- **Issues** — [Report bugs or request features](https://github.com/AndyMik90/Auto-Claude/issues)
+- **Discussions** — [Ask questions](https://github.com/AndyMik90/Auto-Claude/discussions)
 
 ---
 
 ## License
 
-**AGPL-3.0** - GNU Affero General Public License v3.0
+**AGPL-3.0** — GNU Affero General Public License v3.0
 
-WorkPilot AI is free to use. If you modify and distribute it, or run it as a service, your code must also be open source under AGPL-3.0.
-
-Commercial licensing available for closed-source use cases.
+WorkPilot AI is free to use. If you modify and distribute it, or run it as a service, your code must also be open source under AGPL-3.0. Commercial licensing available for closed-source use cases.
 
 ---
 
@@ -241,208 +196,3 @@ Commercial licensing available for closed-source use cases.
 [![GitHub Repo stars](https://img.shields.io/github/stars/AndyMik90/Auto-Claude?style=social)](https://github.com/AndyMik90/Auto-Claude/stargazers)
 
 [![Star History Chart](https://api.star-history.com/svg?repos=AndyMik90/Auto-Claude&type=Date)](https://star-history.com/#AndyMik90/Auto-Claude&Date)
-
-## 🚑 Réparation automatique d'Electron (Windows)
-
-Si le frontend Electron ne démarre pas (erreur Electron uninstall), lance simplement :
-
-    pnpm --filter ./apps/frontend run fix:electron
-
-Ce script télécharge et installe automatiquement le binaire Electron si besoin.
-
-La réparation est aussi lancée automatiquement après chaque installation de dépendances (postinstall).
-
----
-
-## Quickstart Grepai (méthode officielle)
-
-1. Clonez le dépôt Grepai dans src/connectors/grepai/grepai :
-   git clone https://github.com/yoanbernabeu/grepai.git src/connectors/grepai/grepai
-2. Installez les dépendances :
-   pip install -r src/connectors/grepai/grepai/requirements.txt
-3. (Optionnel) Modifiez grepai.yaml pour configurer index_path, port, etc.
-4. Lancez grepai automatiquement via le CLI ou le script d'automatisation :
-   python scripts/quality_cli.py grepai-search --query "def my_function"
-   (grepai sera lancé et utilisé automatiquement)
-
-Grepai sera accessible sur http://localhost:9000 et utilisable dans tous les modules du projet.
-
----
-
-## Integration de Grepai (agent externe)
-
-Grepai est intégré comme agent externe dans le projet.
-
-### Lancer Grepai
-- Utilisez le script Windows : `src/connectors/grepai/grepai_start.bat` pour lancer Grepai via Docker.
-- Grepai sera accessible sur http://localhost:9000.
-
-### Communiquer avec Grepai
-- Utilisez le module Python : `src/connectors/grepai/client.py` pour interagir avec l'API Grepai.
-- Exemple :
-
-```python
-from src.connectors.grepai.client import GrepaiClient
-client = GrepaiClient()
-print(client.health())
-```
-
-### Documentation officielle
-- https://yoanbernabeu.github.io/grepai/installation/
-
-> Grepai doit être lancé comme agent/service externe. Configurez votre projet pour communiquer avec lui selon la documentation.
-
-## Utilisation de Grepai dans l'application
-
-- Grepai est intégré dans le CLI (quality_cli.py) via la commande `grepai-search`.
-- Utilisez le connecteur Grepai (src/connectors/base.py) pour effectuer des recherches avancées dans le code.
-
-### Exemple CLI
-
-    python scripts/quality_cli.py grepai-search --query "def my_function"
-
-### Exemple Python
-
-    from src/connectors.base import GrepaiConnector
-    connector = GrepaiConnector()
-    result = connector.search_code("def my_function")
-    print(result)
-
----
-
-## Automatisation de Grepai
-
-- Grepai est lancé et configuré automatiquement à chaque démarrage du CLI (quality_cli.py).
-- Le script src/connectors/grepai/grepai_launcher.py vérifie la présence de grepai.exe, génère grepai.yaml si besoin, lance grepai et vérifie sa disponibilité.
-- Aucun prérequis manuel : tout est automatisé.
-
-### Exemple
-
-    python scripts/quality_cli.py grepai-search --query "def my_function"
-
-> Grepai sera lancé et utilisable sans intervention.
-
----
-
-## Lancement automatisé (backend + frontend)
-
-Pour lancer toute l’application (API providers + UI) automatiquement :
-
-### Sous Windows
-
-```cmd
-cd apps\backend
-start_backend_and_frontend.cmd
-```
-
-### Sous Linux/Mac
-
-```sh
-cd apps/backend
-chmod +x start_backend_and_frontend.sh
-./start_backend_and_frontend.sh
-```
-
-- Le backend FastAPI (provider_api.py) sera lancé automatiquement sur le port 9000.
-- Le frontend Electron attendra que l’API soit disponible.
-- Si besoin, adapte les variables d’environnement dans `.env` ou via le shell.
-
----
-
-## Démarrage backend LLM (FastAPI)
-
-Le backend LLM (FastAPI) se lance automatiquement via `apps/backend/provider_api.py` :
-
-- Pour un lancement manuel (rarement nécessaire) :
-  ```cmd
-  python apps/backend/provider_api.py
-  ```
-- Le script `start_provider_api.py` est obsolète mais reste compatible (il appelle simplement `provider_api.py`).
-
-En cas de problème, consulte la console pour le message d’erreur détaillé.
-
----
-
-**Astuce:**
-- Pour ajouter d’autres providers, édite `apps/backend/services/provider_registry.py`.
-- Pour changer le port, modifie le script et la CSP dans `index.html`.
-
-## Dépannage: Provider LLM / API non disponible
-
-Si le ProviderSelector affiche:
-
-```
-Impossible de charger la liste des providers. Vérifiez que l'application est bien lancée avec le backend (voir README).
-```
-
-- Vérifiez que le backend FastAPI est bien démarré (voir section "Lancement automatisé").
-- Si besoin, ouvrez un terminal dans `apps/backend` et lancez :
-  - Sous Windows : `start_backend_and_frontend.cmd`
-  - Sous Linux/Mac : `./start_backend_and_frontend.sh`
-- Si une erreur s’affiche (venv ou uvicorn manquant), suivez les instructions à l’écran.
-- Vérifiez que http://localhost:9000/providers répond dans un navigateur ou avec `curl`.
-- Si le port 9000 est déjà utilisé, modifiez-le dans le script et dans la CSP du frontend.
-
----
-
-## Multi-Provider LLM (OpenAI, Claude, Mistral, etc.)
-
-Auto-Claude supporte désormais la gestion avancée de multiples connecteurs LLM via une architecture modulaire :
-
-- **Détection dynamique** des providers disponibles (OpenAI, Claude, Mistral, Ollama, etc.)
-- **Configuration sécurisée** des clés API et paramètres (voir `src/connectors/llm_config.py`)
-- **Sélection et test** du provider actif via l’UI, l’API REST ou la CLI
-- **Extensible** : ajoutez facilement de nouveaux connecteurs (voir `src/connectors/llm_base.py` et `src/connectors/llm_discovery.py`)
-
-Pour plus de détails, consultez la documentation : [docs/features/multi_provider_llm.md](docs/features/multi_provider_llm.md)
-
-### Commandes CLI
-
-```bash
-python apps/backend/cli/main.py provider list
-python apps/backend/cli/main.py provider select --provider openai
-python apps/backend/cli/main.py provider add --provider openai --config '{"api_key": "sk-..."}'
-python apps/backend/cli/main.py provider test --provider openai
-```
-
-### Tests
-
-Des tests unitaires multi-provider (incluant un provider mock pour tests offline/CI) sont disponibles dans `tests/test_llm_provider.py`.
-
----
-
-## Dépannage backend LLM (FastAPI)
-
-Si la popup "Erreur lancement backend LLM" apparaît ou si l’API http://localhost:9000/providers n’est pas disponible :
-
-1. Ouvre un terminal dans `apps/backend`.
-2. Lance manuellement :
-   ```cmd
-   python start_provider_api.py
-   ```
-3. Vérifie la sortie console : toute erreur de démarrage sera affichée.
-4. Si le serveur démarre, recharge l’UI ou relance la fonctionnalité.
-5. Si une erreur persiste, vérifiez que les dépendances sont installées :
-   ```cmd
-   pip install fastapi uvicorn
-   ```
-
-En cas de problème, consulte la console pour le message d’erreur détaillé.
-
----
-
-## 🚀 Quickstart (2026)
-
-Just run at the project root:
-
-```sh
-pnpm install
-pnpm run dev
-```
-
-This will:
-- Automatically create the Python virtual environment for the backend if missing
-- Install all backend Python dependencies
-- Start the FastAPI backend (Uvicorn) and Electron frontend in dev mode
-
-No manual Python or pip commands needed!

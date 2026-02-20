@@ -83,6 +83,12 @@ from .security_orchestrator import (
     SecurityScanResult,
 )
 from .security_report_generator import SecurityReportGenerator
+from .secure_subprocess import (
+    SubprocessResult,
+    SubprocessSecurityError,
+    check_tool_available,
+    run_secure,
+)
 from .tool_input_validator import (
     get_safe_tool_input,
     validate_tool_input,
@@ -182,4 +188,9 @@ __all__ = [
     # Tool input validation
     "validate_tool_input",
     "get_safe_tool_input",
+    # Secure subprocess
+    "run_secure",
+    "SubprocessResult",
+    "SubprocessSecurityError",
+    "check_tool_available",
 ]

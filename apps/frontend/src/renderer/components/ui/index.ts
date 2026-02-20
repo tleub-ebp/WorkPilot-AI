@@ -10,6 +10,7 @@ export * from './progress';
 export * from './scroll-area';
 export * from './select';
 export * from './separator';
+export * from './skeleton';
 export * from './switch';
 export * from './tabs';
 export * from './textarea';

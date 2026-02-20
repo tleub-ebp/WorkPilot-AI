@@ -3,7 +3,7 @@
  */
 
 import { ipcMain } from 'electron';
-import { spawn } from 'child_process';
+import { spawn, ChildProcess } from 'child_process';
 import path from 'path';
 
 export interface MigrationConfig {
@@ -179,7 +179,7 @@ class MigrationService {
 
   private async startMigration(config: MigrationConfig): Promise<any> {
     return new Promise((resolve, reject) => {
-      const pythonPath = process.env.PYTHON_PATH || 'python';
+      const pythonPath: string = process.env.PYTHON_PATH || 'python';
       const backendPath = path.join(__dirname, '..', '..', '..', 'backend');
       
       const args = [
@@ -200,7 +200,7 @@ class MigrationService {
         args.push('--auto-fix');
       }
 
-      const process = spawn(pythonPath, args, {
+      const childProcess = spawn(pythonPath, args, {
         cwd: backendPath,
         env: { ...process.env },
       });
@@ -208,15 +208,15 @@ class MigrationService {
       let output = '';
       let errorOutput = '';
 
-      process.stdout.on('data', (data) => {
+      childProcess.stdout.on('data', (data) => {
         output += data.toString();
       });
 
-      process.stderr.on('data', (data) => {
+      childProcess.stderr.on('data', (data) => {
         errorOutput += data.toString();
       });
 
-      process.on('close', (code) => {
+      childProcess.on('close', (code) => {
         if (code === 0) {
           try {
             // Parse output to get migration ID
@@ -242,7 +242,7 @@ class MigrationService {
         }
       });
 
-      process.on('error', (error) => {
+      childProcess.on('error', (error) => {
         reject(error);
       });
     });
@@ -250,10 +250,10 @@ class MigrationService {
 
   private async getMigrationStatus(migrationId: string): Promise<MigrationStatus> {
     return new Promise((resolve, reject) => {
-      const pythonPath = process.env.PYTHON_PATH || 'python';
+      const pythonPath: string = process.env.PYTHON_PATH || 'python';
       const backendPath = path.join(__dirname, '..', '..', '..', 'backend');
 
-      const process = spawn(
+      const childProcess = spawn(
         pythonPath,
         ['-m', 'migration', 'status', '--migration-id', migrationId, '--json'],
         {
@@ -264,15 +264,15 @@ class MigrationService {
       let output = '';
       let errorOutput = '';
 
-      process.stdout.on('data', (data) => {
+      childProcess.stdout.on('data', (data) => {
         output += data.toString();
       });
 
-      process.stderr.on('data', (data) => {
+      childProcess.stderr.on('data', (data) => {
         errorOutput += data.toString();
       });
 
-      process.on('close', (code) => {
+      childProcess.on('close', (code) => {
         if (code === 0) {
           try {
             const status = JSON.parse(output);
@@ -285,7 +285,7 @@ class MigrationService {
         }
       });
 
-      process.on('error', (error) => {
+      childProcess.on('error', (error) => {
         reject(error);
       });
     });
@@ -293,10 +293,10 @@ class MigrationService {
 
   private async pauseMigration(migrationId: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      const pythonPath = process.env.PYTHON_PATH || 'python';
+      const pythonPath: string = process.env.PYTHON_PATH || 'python';
       const backendPath = path.join(__dirname, '..', '..', '..', 'backend');
 
-      const process = spawn(
+      const childProcess = spawn(
         pythonPath,
         ['-m', 'migration', 'pause', '--migration-id', migrationId],
         {
@@ -304,7 +304,7 @@ class MigrationService {
         }
       );
 
-      process.on('close', (code) => {
+      childProcess.on('close', (code) => {
         if (code === 0) {
           resolve();
         } else {
@@ -312,7 +312,7 @@ class MigrationService {
         }
       });
 
-      process.on('error', (error) => {
+      childProcess.on('error', (error) => {
         reject(error);
       });
     });
@@ -320,10 +320,10 @@ class MigrationService {
 
   private async resumeMigration(migrationId: string): Promise<any> {
     return new Promise((resolve, reject) => {
-      const pythonPath = process.env.PYTHON_PATH || 'python';
+      const pythonPath: string = process.env.PYTHON_PATH || 'python';
       const backendPath = path.join(__dirname, '..', '..', '..', 'backend');
 
-      const process = spawn(
+      const childProcess = spawn(
         pythonPath,
         ['-m', 'migration', 'resume', '--migration-id', migrationId],
         {
@@ -331,7 +331,7 @@ class MigrationService {
         }
       );
 
-      process.on('close', (code) => {
+      childProcess.on('close', (code) => {
         if (code === 0) {
           resolve({ migrationId });
         } else {
@@ -339,7 +339,7 @@ class MigrationService {
         }
       });
 
-      process.on('error', (error) => {
+      childProcess.on('error', (error) => {
         reject(error);
       });
     });
@@ -347,7 +347,7 @@ class MigrationService {
 
   private async rollbackMigration(migrationId: string, checkpoint?: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      const pythonPath = process.env.PYTHON_PATH || 'python';
+      const pythonPath: string = process.env.PYTHON_PATH || 'python';
       const backendPath = path.join(__dirname, '..', '..', '..', 'backend');
 
       const args = ['-m', 'migration', 'rollback', '--migration-id', migrationId];
@@ -356,11 +356,11 @@ class MigrationService {
         args.push('--checkpoint', checkpoint);
       }
 
-      const process = spawn(pythonPath, args, {
+      const childProcess = spawn(pythonPath, args, {
         cwd: backendPath,
       });
 
-      process.on('close', (code) => {
+      childProcess.on('close', (code) => {
         if (code === 0) {
           this.activeMigrations.delete(migrationId);
           resolve();
@@ -369,7 +369,7 @@ class MigrationService {
         }
       });
 
-      process.on('error', (error) => {
+      childProcess.on('error', (error) => {
         reject(error);
       });
     });

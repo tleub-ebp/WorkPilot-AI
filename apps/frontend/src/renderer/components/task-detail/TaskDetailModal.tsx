@@ -276,7 +276,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
       );
     }
 
-    if (task.status === 'backlog' || task.status === 'in_progress') {
+    if (task.status === 'backlog' || task.status === 'queue' || task.status === 'in_progress') {
       return (
         <div className="flex items-center gap-2">
           {/* Watch Live button - show when project path is available */}

@@ -1,4 +1,9 @@
 {
+  "boundary": {
+    "title": "Une erreur est survenue",
+    "description": "Une erreur s'est produite lors du rendu de ce contenu.",
+    "tryAgain": "Réessayer"
+  },
   "task": {
     "parseImplementationPlan": "Échec de l'analyse du fichier implementation_plan.json pour {{specId}} : {{error}}",
     "jsonError": {

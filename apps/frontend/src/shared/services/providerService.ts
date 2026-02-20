@@ -1,12 +1,12 @@
 /**
  * ProviderService - Service centralisé pour la gestion des providers LLM
- * 
- * Point d'entrée unique pour toutes les opérations sur les providers:
- * - Chargement depuis configured_providers.json
- * - Cache en mémoire pour éviter les rechargements
- * - Interfaces TypeScript fortes
- * - Fallback robuste en cas d'erreur
+ *
+ * Architecture improvement 3.1: delegates to providerRegistry (single source of truth)
+ * for the canonical provider list. Falls back to providerRegistry instead of
+ * maintaining a duplicate hardcoded list.
  */
+
+import { providerRegistry } from './providerRegistry';
 
 export interface Provider {
   name: string;
@@ -70,7 +70,6 @@ class ProviderServiceClass {
    */
   private async loadProvidersFromFile(): Promise<Provider[]> {
     try {
-      // Charger depuis le fichier statique servi par Vite
       const response = await fetch('/configured_providers.json');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -78,27 +77,18 @@ class ProviderServiceClass {
       const data = await response.json();
       return data.providers || [];
     } catch (error) {
-      console.warn('[ProviderService] Failed to load providers from file, using fallback:', error);
+      console.warn('[ProviderService] Failed to load providers from file, using providerRegistry fallback:', error);
       return this.getFallbackProviders();
     }
   }
 
   /**
-   * Fallback statique en cas d'échec total
+   * Fallback: delegate to providerRegistry (single source of truth)
    */
   private getFallbackProviders(): Provider[] {
-    return [
-      { name: 'anthropic', label: 'Anthropic (Claude)', description: 'Claude, focalisé sur la sécurité et l\'IA d\'entreprise.' },
-      { name: 'copilot', label: 'GitHub Copilot', description: 'Assistant de code IA par GitHub, basé sur les modèles OpenAI et Claude.' },
-      { name: 'openai', label: 'OpenAI', description: 'Créateur de la série GPT (ChatGPT, GPT-4/4o/5).' },
-      { name: 'google', label: 'Google / Google DeepMind', description: 'Modèles Gemini.' },
-      { name: 'meta', label: 'Meta (Facebook/Meta AI)', description: 'Modèles LLaMA et variantes open source.' },
-      { name: 'mistral', label: 'Mistral AI', description: 'Startup française, LLM open weight et commercial.' },
-      { name: 'deepseek', label: 'DeepSeek', description: 'Entreprise chinoise, agent conversationnel.' },
-      { name: 'aws', label: 'Amazon Web Services (AWS)', description: 'Offre des API LLM intégrées à ses services cloud.' },
-      { name: 'grok', label: 'Grok (xAI)', description: 'Modèles Grok via xAI, la société d\'Elon Musk.' },
-      { name: 'ollama', label: 'LLM local (Ollama, LM Studio, etc.)', description: 'Exécutez un modèle LLM localement sur votre machine (Ollama, LM Studio, etc.).' },
-    ];
+    return providerRegistry.getAllProviders()
+      .filter(p => p.name !== 'custom')
+      .map(p => ({ name: p.name, label: p.label, description: p.description }));
   }
 
   /**

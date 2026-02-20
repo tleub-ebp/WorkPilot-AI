@@ -13,6 +13,6 @@ where uvicorn >nul 2>nul || (
     pause
     exit /b 1
 )
-start "FastAPI" cmd /k "uvicorn provider_api:app --host 127.0.0.1 --port 8000 --reload"
+start "FastAPI" cmd /k "uvicorn provider_api:app --host 127.0.0.1 --port 9000 --reload --reload-exclude .venv"
 cd ..\frontend
 pnpm run dev

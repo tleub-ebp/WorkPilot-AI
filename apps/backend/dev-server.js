@@ -49,7 +49,7 @@ function ensureDeps(cb) {
 }
 
 function runUvicorn() {
-  const uvicornArgs = ['-m', 'uvicorn', 'provider_api:app', '--host', '127.0.0.1', '--port', '9000', '--reload'];
+  const uvicornArgs = ['-m', 'uvicorn', 'provider_api:app', '--host', '127.0.0.1', '--port', '9000', '--reload', '--reload-exclude', '.venv'];
   const proc = spawn(venvPython(), uvicornArgs, { stdio: 'inherit', cwd: __dirname });
   proc.on('exit', (code) => process.exit(code));
 }

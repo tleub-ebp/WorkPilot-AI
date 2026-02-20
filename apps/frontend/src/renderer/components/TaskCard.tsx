@@ -343,6 +343,16 @@ export const TaskCard = memo(function TaskCard({
 
   return (
     <Card
+      role="article"
+      aria-label={displayTitle}
+      aria-selected={isSelectable ? isSelected : undefined}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       className={cn(
         'card-surface task-card-enhanced cursor-pointer relative group',
         isRunning && !isStuck && 'ring-2 ring-primary border-primary task-running-pulse',
@@ -611,7 +621,7 @@ export const TaskCard = memo(function TaskCard({
                 <Archive className="mr-1.5 h-3 w-3" />
                 {t('actions.archive')}
               </Button>
-            ) : (task.status === 'backlog' || task.status === 'in_progress') && (
+            ) : (task.status === 'backlog' || task.status === 'queue' || task.status === 'in_progress') && (
               <>
                 {/* Streaming button - only show when task is running and project path is available */}
                 {isRunning && !isStuck && currentProject?.path && (

@@ -1,44 +1,40 @@
-import { create } from 'zustand';
+/**
+ * @deprecated — Thin backward-compatible wrapper around the unified auth-store.
+ * Import from '../stores/auth-store' for new code.
+ */
+import { useAuthStore } from './auth-store';
 import type { AuthFailureInfo } from '../../shared/types';
 
 interface AuthFailureState {
-  // Auth failure modal state
   isModalOpen: boolean;
   authFailureInfo: AuthFailureInfo | null;
-
-  // TODO: Use hasPendingAuthFailure to show a badge/indicator in the sidebar
-  // when there's an unresolved auth failure (e.g., red dot on Settings icon)
   hasPendingAuthFailure: boolean;
-
-  // Actions
   showAuthFailureModal: (info: AuthFailureInfo) => void;
   hideAuthFailureModal: () => void;
   clearAuthFailure: () => void;
 }
 
-export const useAuthFailureStore = create<AuthFailureState>((set) => ({
-  isModalOpen: false,
-  authFailureInfo: null,
-  hasPendingAuthFailure: false,
+export const useAuthFailureStore = (): AuthFailureState => {
+  const store = useAuthStore();
+  return {
+    isModalOpen: store.authFailure_isModalOpen,
+    authFailureInfo: store.authFailure_info,
+    hasPendingAuthFailure: store.authFailure_hasPending,
+    showAuthFailureModal: store.authFailure_show,
+    hideAuthFailureModal: store.authFailure_hide,
+    clearAuthFailure: store.authFailure_clear,
+  };
+};
 
-  showAuthFailureModal: (info: AuthFailureInfo) => {
-    set({
-      isModalOpen: true,
-      authFailureInfo: info,
-      hasPendingAuthFailure: true,
-    });
-  },
-
-  hideAuthFailureModal: () => {
-    // Keep the failure info when closing so user can see it again
-    set({ isModalOpen: false });
-  },
-
-  clearAuthFailure: () => {
-    set({
-      isModalOpen: false,
-      authFailureInfo: null,
-      hasPendingAuthFailure: false,
-    });
-  },
-}));
+// Expose getState() for non-React access (e.g. in useIpc.ts)
+useAuthFailureStore.getState = () => {
+  const s = useAuthStore.getState();
+  return {
+    isModalOpen: s.authFailure_isModalOpen,
+    authFailureInfo: s.authFailure_info,
+    hasPendingAuthFailure: s.authFailure_hasPending,
+    showAuthFailureModal: s.authFailure_show,
+    hideAuthFailureModal: s.authFailure_hide,
+    clearAuthFailure: s.authFailure_clear,
+  };
+};

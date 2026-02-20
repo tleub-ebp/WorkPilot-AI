@@ -142,7 +142,7 @@ class RollbackManager:
                 timeout=10,
             )
             return result.returncode == 0
-        except:
+        except Exception:
             return False
 
     def get_rollback_plan(self, to_phase: str) -> Dict:
@@ -162,7 +162,7 @@ class RollbackManager:
                 timeout=10,
             )
             commits_to_revert = result.stdout.strip().split("\n")
-        except:
+        except Exception:
             commits_to_revert = []
 
         return {

@@ -408,7 +408,7 @@ class StackAnalyzer:
                 content = py_file.read_text()[:100]
                 if pattern in content:
                     return True
-            except:
+            except Exception:
                 pass
         return False
 
@@ -423,7 +423,7 @@ class StackAnalyzer:
                 data = json.loads(path.read_text())
                 self.cache["package_json"] = data
                 return data
-            except:
+            except (json.JSONDecodeError, OSError):
                 pass
         return None
 
@@ -446,11 +446,11 @@ class StackAnalyzer:
             try:
                 import tomllib  # Python 3.11+
                 return tomllib.loads(path.read_text())
-            except:
+            except (ImportError, Exception):
                 try:
                     import tomli
                     return tomli.loads(path.read_text())
-                except:
+                except Exception:
                     pass
         return None
 
@@ -460,7 +460,7 @@ class StackAnalyzer:
         if path.exists():
             try:
                 return json.loads(path.read_text())
-            except:
+            except (json.JSONDecodeError, OSError):
                 pass
         return None
 

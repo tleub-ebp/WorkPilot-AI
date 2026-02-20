@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { debugLog } from '@shared/utils/debug-logger';
 import {
@@ -33,15 +33,15 @@ import { TaskCreationWizard } from '@/components';
 import { AppSettingsDialog, type AppSection } from './components/settings/AppSettings';
 import type { ProjectSettingsSection } from './components/settings/ProjectSettingsContent';
 import { TerminalGrid } from './components/TerminalGrid';
-import { Roadmap } from './components/Roadmap';
-import { Context } from '@/components';
-import { Ideation } from '@/components';
-import { Insights } from './components/Insights';
+const Roadmap = lazy(() => import('./components/Roadmap').then(m => ({ default: m.Roadmap })));
+const Context = lazy(() => import('@/components/context/Context').then(m => ({ default: m.Context })));
+const Ideation = lazy(() => import('@/components/ideation/Ideation').then(m => ({ default: m.Ideation })));
+const Insights = lazy(() => import('./components/Insights').then(m => ({ default: m.Insights })));
 import { ErrorBoundary } from './components/ui/error-boundary';
-import { GitHubIssues } from '@/components';
-import { GitLabIssues } from './components/GitLabIssues';
-import { GitHubPRs } from './components/github-prs';
-import { GitLabMergeRequests } from './components/gitlab-merge-requests';
+const GitHubIssues = lazy(() => import('@/components/GitHubIssues').then(m => ({ default: m.GitHubIssues })));
+const GitLabIssues = lazy(() => import('./components/GitLabIssues').then(m => ({ default: m.GitLabIssues })));
+const GitHubPRs = lazy(() => import('./components/github-prs').then(m => ({ default: m.GitHubPRs })));
+const GitLabMergeRequests = lazy(() => import('./components/gitlab-merge-requests').then(m => ({ default: m.GitLabMergeRequests })));
 import { VersionWarningModal } from './components/VersionWarningModal';
 import { OnboardingWizard } from './components/onboarding';
 import { GitHubSetupModal } from './components/GitHubSetupModal';
@@ -1012,6 +1012,7 @@ export function App() {
 
                   {/* Main content area */}
                   <main className="flex-1 overflow-hidden">
+                    <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
                     {selectedProject ? (
                         <>
                           {activeView === 'kanban' && (
@@ -1090,6 +1091,7 @@ export function App() {
                           {t('common:noProjectSelected')}
                         </div>
                     )}
+                    </Suspense>
                   </main>
                 </div>
               </div>

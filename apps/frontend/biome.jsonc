@@ -49,7 +49,12 @@
       },
       "suspicious": {
         "recommended": true,
-        "noConsole": "off",
+        "noConsole": {
+          "level": "warn",
+          "options": {
+            "allow": ["warn", "error", "info", "assert"]
+          }
+        },
         "noEmptyBlockStatements": "warn",
         "noAssignInExpressions": "warn",
         "useAwait": "off",
