@@ -366,7 +366,7 @@ export function WorkspaceStatus({
         {/* Workspace Error */}
         {workspaceError && (
           <div className="flex items-start gap-2 p-2.5 rounded-lg bg-destructive/10 border border-destructive/20">
-            <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+            <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
             <p className="text-sm text-destructive">{workspaceError}</p>
           </div>
         )}
@@ -374,7 +374,7 @@ export function WorkspaceStatus({
         {/* Uncommitted Changes Warning */}
         {hasUncommittedChanges && (
           <div className="flex items-start gap-2 p-2.5 rounded-lg bg-warning/10 border border-warning/20">
-            <AlertTriangle className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
+            <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-warning">
                 {uncommittedCount} uncommitted {uncommittedCount === 1 ? 'change' : 'changes'} in main project
@@ -397,7 +397,7 @@ export function WorkspaceStatus({
         {/* Already Merged Scenario - Show friendly message when task changes exist in target */}
         {mergePreview && isAlreadyMerged && (
           <div className="flex items-start gap-2 p-2.5 rounded-lg bg-success/10 border border-success/20">
-            <CheckCheck className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+            <CheckCheck className="h-4 w-4 text-success mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-success">
                 {t('taskReview:merge.alreadyMergedTitle')}
@@ -422,7 +422,7 @@ export function WorkspaceStatus({
         {/* Superseded Scenario - Target has newer version of changes */}
         {mergePreview && isSuperseded && (
           <div className="flex items-start gap-2 p-2.5 rounded-lg bg-info/10 border border-info/20">
-            <Info className="h-4 w-4 text-info mt-0.5 flex-shrink-0" />
+            <Info className="h-4 w-4 text-info mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-info">
                 {t('taskReview:merge.supersededTitle')}

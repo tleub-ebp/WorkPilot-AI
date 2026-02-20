@@ -26,13 +26,14 @@ import { useProjectStore } from '../stores/project-store';
 import { buildBranchOptions } from '../lib/branch-utils';
 import { cn } from '../lib/utils';
 import type { TaskCategory, TaskPriority, TaskComplexity, TaskImpact, TaskMetadata, ImageAttachment, TaskDraft, ModelType, ThinkingLevel, ReferencedFile, GitBranchDetail } from '../../shared/types';
-import type { PhaseModelConfig, PhaseThinkingConfig } from '../../shared/types/settings';
+import type { PhaseModelConfig, PhaseThinkingConfig, ModelTypeShort } from '../../shared/types/settings';
 import {
   DEFAULT_AGENT_PROFILES,
   DEFAULT_PHASE_MODELS,
   DEFAULT_PHASE_THINKING
 } from '../../shared/constants';
 import { useSettingsStore } from '../stores/settings-store';
+import { useProviderContext } from './ProviderContext';
 
 interface TaskCreationWizardProps {
   projectId: string;
@@ -50,6 +51,7 @@ export function TaskCreationWizard({
 }: TaskCreationWizardProps) {
   const { t } = useTranslation(['tasks', 'common']);
   const { settings } = useSettingsStore();
+  const { selectedProvider } = useProviderContext();
   const selectedProfile = DEFAULT_AGENT_PROFILES.find(
     p => p.id === settings.selectedAgentProfile
   ) || DEFAULT_AGENT_PROFILES.find(p => p.id === 'auto')!;
@@ -107,7 +109,7 @@ export function TaskCreationWizard({
 
   // Model configuration
   const [profileId, setProfileId] = useState<string>(settings.selectedAgentProfile || 'auto');
-  const [model, setModel] = useState<ModelType | ''>(selectedProfile.model);
+  const [model, setModel] = useState<ModelTypeShort | ''>(selectedProfile.model);
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel | ''>(selectedProfile.thinkingLevel);
   const [phaseModels, setPhaseModels] = useState<PhaseModelConfig | undefined>(
     settings.customPhaseModels || selectedProfile.phaseModels || DEFAULT_PHASE_MODELS
@@ -419,6 +421,9 @@ export function TaskCreationWizard({
       if (priority) metadata.priority = priority;
       if (complexity) metadata.complexity = complexity;
       if (impact) metadata.impact = impact;
+      // Always include the active LLM provider so the backend knows which provider to use
+      const activeProvider = selectedProvider || settings.selectedProvider || 'anthropic';
+      metadata.provider = activeProvider;
       if (model) metadata.model = model;
       if (thinkingLevel) metadata.thinkingLevel = thinkingLevel;
       if (phaseModels && phaseThinking) {
@@ -607,7 +612,7 @@ export function TaskCreationWizard({
       <div className="space-y-6">
         {/* Worktree isolation info banner */}
         <div className="flex items-start gap-3 p-4 bg-info/10 border border-info/30 rounded-lg">
-          <Info className="h-5 w-5 text-info flex-shrink-0 mt-0.5" />
+          <Info className="h-5 w-5 text-info shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
             <h4 className="text-sm font-medium text-foreground mb-1">
               {t('tasks:wizard.worktreeNotice.title')}

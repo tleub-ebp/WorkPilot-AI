@@ -418,7 +418,7 @@ function TaskResultRow({ result, index, showDetails, onOpenPR }: TaskResultRowPr
         result.status === 'creating' ? 'bg-primary/5' : ''
       }`}
     >
-      <div className="flex-shrink-0 mt-0.5">
+      <div className="shrink-0 mt-0.5">
         {getStatusIcon()}
       </div>
       <div className="flex-1 min-w-0">
@@ -445,14 +445,14 @@ function TaskResultRow({ result, index, showDetails, onOpenPR }: TaskResultRowPr
 
         {showDetails && result.status === 'skipped' && result.error && (
           <div className="flex items-start gap-1 mt-1">
-            <MinusCircle className="h-3 w-3 text-muted-foreground flex-shrink-0 mt-0.5" />
+            <MinusCircle className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
             <span className="text-xs text-muted-foreground">{result.error}</span>
           </div>
         )}
 
         {showDetails && result.status === 'error' && result.error && (
           <div className="flex items-start gap-1 mt-1">
-            <AlertTriangle className="h-3 w-3 text-destructive flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="h-3 w-3 text-destructive shrink-0 mt-0.5" />
             <span className="text-xs text-destructive">{result.error}</span>
           </div>
         )}

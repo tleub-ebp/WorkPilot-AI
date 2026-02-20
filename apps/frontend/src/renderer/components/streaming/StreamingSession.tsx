@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Play, Pause, Square, MessageSquare, Download, Share2, Film, Clock, Code2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
@@ -34,6 +35,7 @@ interface StreamingSessionProps {
 }
 
 export function StreamingSession({ sessionId, projectPath, onClose }: StreamingSessionProps) {
+  const { t } = useTranslation(['streaming']);
   const [isConnected, setIsConnected] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -54,7 +56,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
     testsRun: 0,
   });
   const [progress, setProgress] = useState(0);
-  const [currentStatus, setCurrentStatus] = useState('Initializing...');
+  const [currentStatus, setCurrentStatus] = useState('');
   const [chatInput, setChatInput] = useState('');
   
   const wsRef = useRef<WebSocket | null>(null);
@@ -64,38 +66,99 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
 
   // WebSocket connection
   useEffect(() => {
+    let connectionTimeout: NodeJS.Timeout;
+    let isMounted = true;
+    
+    // Prevent multiple connections
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      console.log('🔌 WebSocket already connected, skipping...');
+      return;
+    }
+    
     const connectWebSocket = () => {
-      const ws = new WebSocket(`ws://localhost:8765/stream/${sessionId}`);
+      if (!isMounted) return;
+      
+      const wsUrl = `ws://localhost:8765/stream/${sessionId}`;
+      console.log('🔌 Connecting to WebSocket...', wsUrl);
+      const ws = new WebSocket(wsUrl);
+      
+      // Set a timeout for connection attempt
+      connectionTimeout = setTimeout(() => {
+        if (!isMounted) return;
+        if (ws.readyState === WebSocket.CONNECTING) {
+          console.log('⏰ Connection timeout, closing...');
+          ws.close(1006, 'Connection timeout');
+        }
+      }, 5000);
       
       ws.onopen = () => {
-        console.log('Streaming session connected');
+        if (!isMounted) return;
+        
+        clearTimeout(connectionTimeout);
+        console.log('✅ Streaming session connected to:', ws.url);
+        console.log('🔍 WebSocket readyState:', ws.readyState);
         setIsConnected(true);
         startTimeRef.current = Date.now();
+        
+        // Send session initialization message to ensure correct session ID
+        const initMessage = {
+          type: 'init_session',
+          session_id: sessionId
+        };
+        ws.send(JSON.stringify(initMessage));
+        console.log('📤 Sent session initialization message:', initMessage);
       };
       
       ws.onmessage = (event) => {
-        const streamEvent: StreamingEvent = JSON.parse(event.data);
-        handleStreamingEvent(streamEvent);
+        if (!isMounted) return;
+        
+        try {
+          const streamEvent: StreamingEvent = JSON.parse(event.data);
+          console.log('📨 WebSocket message received:', streamEvent.event_type);
+          handleStreamingEvent(streamEvent);
+        } catch (error) {
+          console.error('❌ Error parsing WebSocket message:', error);
+        }
       };
       
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        if (!isMounted) return;
+        
+        clearTimeout(connectionTimeout);
+        console.error('❌ WebSocket error:', error);
+        console.error('🔍 WebSocket state:', ws.readyState);
+        console.error('🔍 WebSocket URL:', ws.url);
         setIsConnected(false);
       };
       
-      ws.onclose = () => {
-        console.log('Streaming session disconnected');
+      ws.onclose = (event) => {
+        if (!isMounted) return;
+        
+        clearTimeout(connectionTimeout);
+        console.log('🔌 Streaming session disconnected', event.code, event.reason);
         setIsConnected(false);
+        
+        // NO automatic reconnection - let user manually reconnect
+        console.log('📝 Connection closed. No automatic reconnection.');
       };
       
       wsRef.current = ws;
     };
 
-    connectWebSocket();
+    // Wait a bit before connecting to ensure dialog is fully rendered
+    const initialTimeout = setTimeout(() => {
+      if (isMounted) {
+        connectWebSocket();
+      }
+    }, 500);
 
     return () => {
+      isMounted = false;
+      if (initialTimeout) clearTimeout(initialTimeout);
+      if (connectionTimeout) clearTimeout(connectionTimeout);
       if (wsRef.current) {
-        wsRef.current.close();
+        console.log('🧹 Cleaning up WebSocket connection');
+        wsRef.current.close(1000, 'Component unmounted');
       }
     };
   }, [sessionId]);
@@ -106,14 +169,24 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
 
     switch (event.event_type) {
       case 'session_start':
-        setCurrentStatus('Session started');
+        setCurrentStatus(t('streaming:status.sessionStarted'));
+        break;
+        
+      case 'session_confirmed':
+        setCurrentStatus(t('streaming:status.sessionConfirmed'));
+        console.log('Session confirmed with ID:', event.data.session_id);
         break;
         
       case 'code_change':
       case 'file_update':
+      case 'file_operation':
+        console.log('📝 Code/file event received:', event.event_type, event.data);
         setCurrentFile(event.data.file_path);
         if (event.data.content) {
+          console.log('📄 Setting code content:', event.data.content.substring(0, 100) + '...');
           setCurrentCode(event.data.content);
+        } else {
+          console.log('⚠️ No content in event data');
         }
         setSessionStats(prev => ({
           ...prev,
@@ -121,11 +194,17 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         }));
         break;
         
+      case 'command':
       case 'command_run':
         setSessionStats(prev => ({
           ...prev,
           commandsRun: prev.commandsRun + 1,
         }));
+        break;
+        
+      case 'command_output':
+        // Command output could be displayed in a console view
+        console.log('Command output:', event.data.output);
         break;
         
       case 'test_run':
@@ -135,12 +214,17 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         }));
         break;
         
+      case 'test_result':
+        // Test result could update the test status
+        console.log('Test result:', event.data.success, event.data.summary);
+        break;
+        
       case 'agent_thinking':
-        setCurrentStatus(`Thinking: ${event.data.thinking.slice(0, 50)}...`);
+        setCurrentStatus(t('streaming:status.thinking', { thought: event.data.thinking.slice(0, 50) }));
         break;
         
       case 'agent_response':
-        setCurrentStatus('Responding...');
+        setCurrentStatus(t('streaming:status.responding'));
         break;
         
       case 'chat_message':
@@ -255,17 +339,17 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         <div className="flex items-center gap-4">
           <Film className="w-6 h-6 text-primary" />
           <div>
-            <h2 className="text-xl font-bold">Streaming Development</h2>
+            <h2 className="text-xl font-bold">{t('streaming:title')}</h2>
             <p className="text-sm text-muted-foreground">{projectPath}</p>
           </div>
           <Badge variant={isConnected ? "default" : "secondary"}>
             {isConnected ? (
               <>
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2" />
-                LIVE
+                {t('streaming:status.live')}
               </>
             ) : (
-              'OFFLINE'
+              t('streaming:status.offline')
             )}
           </Badge>
         </div>
@@ -273,15 +357,15 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={downloadRecording}>
             <Download className="w-4 h-4 mr-2" />
-            Save Recording
+            {t('streaming:header.saveRecording')}
           </Button>
           <Button variant="outline" size="sm">
             <Share2 className="w-4 h-4 mr-2" />
-            Share
+            {t('streaming:header.share')}
           </Button>
           <Button variant="destructive" size="sm" onClick={stopSession} className="mr-6">
             <Square className="w-4 h-4 mr-2" />
-            Stop Session
+            {t('streaming:header.stopSession')}
           </Button>
         </div>
       </div>
@@ -295,14 +379,14 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
           </div>
           <div className="flex items-center gap-2">
             <Code2 className="w-4 h-4 text-muted-foreground" />
-            <span>{sessionStats.filesChanged} files</span>
+            <span>{t('streaming:stats.files', { count: sessionStats.filesChanged })}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">Commands:</span>
+            <span className="text-muted-foreground">{t('streaming:stats.commands')}</span>
             <span className="font-mono">{sessionStats.commandsRun}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">Tests:</span>
+            <span className="text-muted-foreground">{t('streaming:stats.tests')}</span>
             <span className="font-mono">{sessionStats.testsRun}</span>
           </div>
         </div>
@@ -319,12 +403,12 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         <div className="flex-1 flex flex-col border-r">
           <div className="px-4 py-2 border-b bg-muted/20">
             <p className="text-sm font-mono text-muted-foreground truncate">
-              {currentFile || 'No file selected'}
+              {currentFile || t('streaming:codeView.noFile')}
             </p>
           </div>
           <ScrollArea className="flex-1 p-4">
             <pre className="text-sm font-mono">
-              <code>{currentCode || '// Waiting for code changes...'}</code>
+              <code>{currentCode || t('streaming:codeView.waitingForChanges')}</code>
             </pre>
           </ScrollArea>
         </div>
@@ -335,13 +419,13 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
             <TabsList className="w-full rounded-none border-b">
               <TabsTrigger value="chat" className="flex-1">
                 <MessageSquare className="w-4 h-4 mr-2" />
-                Chat
+                {t('streaming:tabs.chat')}
               </TabsTrigger>
               <TabsTrigger value="events" className="flex-1">
-                Events ({events.length})
+                {t('streaming:tabs.events')} ({events.length})
               </TabsTrigger>
               <TabsTrigger value="timeline" className="flex-1">
-                Timeline
+                {t('streaming:tabs.timeline')}
               </TabsTrigger>
             </TabsList>
 
@@ -384,11 +468,11 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
-                    placeholder="Type a message to Claude..."
+                    placeholder={t('streaming:chat.placeholder')}
                     className="flex-1 px-3 py-2 text-sm border rounded-md bg-background"
                   />
                   <Button size="sm" onClick={sendChatMessage}>
-                    Send
+                    {t('streaming:chat.send')}
                   </Button>
                 </div>
               </div>
@@ -425,8 +509,8 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
             <TabsContent value="timeline" className="flex-1 m-0 p-4">
               <div className="text-sm text-muted-foreground text-center mt-8">
                 <Film className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                <p>Timeline scrubbing coming soon...</p>
-                <p className="text-xs mt-2">Replay sessions at different speeds</p>
+                <p>{t('streaming:timeline.comingSoon')}</p>
+                <p className="text-xs mt-2">{t('streaming:timeline.replayDescription')}</p>
               </div>
             </TabsContent>
           </Tabs>
@@ -440,7 +524,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
           size="lg" 
           onClick={togglePause}
           disabled={!isConnected}
-          title={isPaused ? "Resume session" : "Pause session"}
+          title={isPaused ? t('streaming:controls.resume') : t('streaming:controls.pause')}
         >
           {isPaused ? (
             <>

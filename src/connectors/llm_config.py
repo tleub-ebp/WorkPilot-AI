@@ -32,28 +32,37 @@ class ProviderConfig:
     
     @classmethod
     def load_provider_config(cls, phase: str, spec_dir: str, cli_provider: Optional[str] = None, cli_model: Optional[str] = None):
-        """Load provider configuration from various sources."""
-        # Priority: CLI provider > environment > config file > defaults
-        if cli_provider:
-            config_data = load_provider_config(cli_provider)
-            if config_data:
-                return cls(
-                    provider=cli_provider,
-                    model=config_data.get('model', cli_model or 'default'),
-                    api_key=config_data.get('api_key'),
-                    base_url=config_data.get('base_url'),
-                    **{k: v for k, v in config_data.items() if k not in ['provider', 'model', 'api_key', 'base_url']}
-                )
+        """Load provider configuration from various sources.
         
-        # Fallback to environment or defaults
+        Priority:
+        1. CLI provider + config file entry (if provider has saved config)
+        2. CLI provider + auth token (for anthropic/claude providers)
+        3. CLI provider + cli_model (for other providers like openai, ollama)
+        4. Default: anthropic provider with system auth token
+        """
         provider = cli_provider or 'anthropic'
         model = cli_model or 'claude-3-sonnet-20240229'
         
-        if provider == 'anthropic' or provider == 'claude':
+        # Try to load saved provider config from ~/.work_pilot_ai_llm_providers.json
+        config_data = load_provider_config(provider)
+        if config_data:
+            return cls(
+                provider=provider,
+                model=cli_model or config_data.get('model', model),
+                api_key=config_data.get('api_key'),
+                base_url=config_data.get('base_url'),
+                **{k: v for k, v in config_data.items() if k not in ['provider', 'model', 'api_key', 'base_url']}
+            )
+        
+        # No saved config — try system auth token for Anthropic/Claude providers
+        if provider in ('anthropic', 'claude'):
             token = get_auth_token()
             if token and token.startswith("sk-"):
                 return cls(provider=provider, model=model, api_key=token)
         
+        # For other providers (openai, ollama, google, etc.), return config
+        # with the model from task_metadata.json — API keys should be in env vars
+        # or in the saved provider config file
         return cls(provider=provider, model=model)
 
 def save_provider_config(name: str, config: Dict[str, Any]) -> None:

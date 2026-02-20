@@ -80,6 +80,7 @@ class PhaseThinkingConfig(TypedDict, total=False):
 class TaskMetadataConfig(TypedDict, total=False):
     """Structure of model-related fields in task_metadata.json"""
 
+    provider: str
     isAutoProfile: bool
     phaseModels: PhaseModelConfig
     phaseThinking: PhaseThinkingConfig
@@ -168,6 +169,35 @@ def load_task_metadata(spec_dir: Path) -> TaskMetadataConfig | None:
             return json.load(f)
     except (json.JSONDecodeError, OSError):
         return None
+
+
+def get_phase_provider(
+    spec_dir: Path,
+    cli_provider: str | None = None,
+) -> str | None:
+    """
+    Get the LLM provider configured for this task.
+
+    Priority:
+    1. CLI argument (if provided)
+    2. Provider from task_metadata.json
+    3. None (let downstream code use its default)
+
+    Args:
+        spec_dir: Path to the spec directory
+        cli_provider: Provider from CLI argument (optional)
+
+    Returns:
+        Provider string (e.g. 'anthropic', 'openai', 'ollama') or None
+    """
+    if cli_provider:
+        return cli_provider
+
+    metadata = load_task_metadata(spec_dir)
+    if metadata and metadata.get("provider"):
+        return metadata["provider"]
+
+    return None
 
 
 def get_phase_model(
