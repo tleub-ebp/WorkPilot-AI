@@ -247,6 +247,10 @@ export const IPC_CHANNELS = {
   AZURE_DEVOPS_LIST_REPOSITORIES: 'azureDevOps:listRepositories',
   AZURE_DEVOPS_DETECT_REPOSITORY: 'azureDevOps:detectRepository',
 
+  // Jira integration
+  JIRA_GET_ISSUES: 'jira:getIssues',
+  JIRA_CHECK_CONNECTION: 'jira:checkConnection',
+
   // GitHub integration
   GITHUB_GET_REPOSITORIES: 'github:getRepositories',
   GITHUB_GET_ISSUES: 'github:getIssues',

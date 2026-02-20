@@ -259,6 +259,7 @@
   "azureDevOpsImport": {
     "title": "Importer des éléments de travail Azure DevOps",
     "description": "Sélectionnez des éléments de travail Azure DevOps à importer dans Auto-Claude",
+    "importSuccess": "{{count}} élément(s) de travail importé(s) avec succès",
     "successTitle": "Import réussi !",
     "successCount": "Importé {{count}} élément de travail.",
     "successCount_plural": "Importé {{count}} éléments de travail.",
@@ -293,7 +294,10 @@
     "noWorkItems": "Aucun élément de travail trouvé",
     "loadingWorkItems": "Chargement des éléments...",
     "connectionError": "Erreur de connexion à Azure DevOps",
-    "configureFirst": "Configurez Azure DevOps dans les paramètres du projet"
+    "configureFirst": "Configurez Azure DevOps dans les paramètres du projet",
+    "importConfirmTitle": "Importer {{count}} élément(s) de travail",
+    "importConfirmDescription": "Les éléments suivants seront importés dans la colonne {{column}}.",
+    "importConfirmButton": "Importer {{count}} élément(s)"
   },
   "dialog": {
     "createTitle": "Ajouter un profil API",

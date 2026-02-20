@@ -21,6 +21,7 @@ import { createLinearAPI, LinearAPI } from './modules/linear-api';
 import { createGitHubAPI, GitHubAPI } from './modules/github-api';
 import { createGitLabAPI, GitLabAPI } from './modules/gitlab-api';
 import { createAzureDevOpsAPI, AzureDevOpsAPI } from './modules/azure-devops-api';
+import { createJiraAPI, JiraAPI } from './modules/jira-api';
 import { createShellAPI, ShellAPI } from './modules/shell-api';
 
 /**
@@ -36,6 +37,7 @@ export interface AgentAPI extends
   GitHubAPI,
   GitLabAPI,
   AzureDevOpsAPI,
+  JiraAPI,
   ShellAPI {}
 
 /**
@@ -52,6 +54,7 @@ export const createAgentAPI = (): AgentAPI => {
   const githubAPI = createGitHubAPI();
   const gitlabAPI = createGitLabAPI();
   const azureDevOpsAPI = createAzureDevOpsAPI();
+  const jiraAPI = createJiraAPI();
   const shellAPI = createShellAPI();
 
   return {
@@ -79,6 +82,9 @@ export const createAgentAPI = (): AgentAPI => {
     // Azure DevOps Integration API
     ...azureDevOpsAPI,
 
+    // Jira Integration API
+    ...jiraAPI,
+
     // Shell Operations API
     ...shellAPI
   };
@@ -94,5 +100,6 @@ export type {
   GitHubAPI,
   GitLabAPI,
   AzureDevOpsAPI,
+  JiraAPI,
   ShellAPI
 };

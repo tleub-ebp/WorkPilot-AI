@@ -47,8 +47,8 @@ export const createAzureDevOpsAPI = (): AzureDevOpsAPI => ({
   ): Promise<IPCResult<AzureDevOpsWorkItem[]>> =>
     invokeIpc(IPC_CHANNELS.AZURE_DEVOPS_GET_WORK_ITEMS, projectId, azureProject, itemTypes, maxItems),
 
-  importAzureDevOpsWorkItems: (projectId: string, workItemIds: number[]): Promise<IPCResult<AzureDevOpsImportResult>> =>
-    invokeIpc(IPC_CHANNELS.AZURE_DEVOPS_IMPORT_WORK_ITEMS, projectId, workItemIds),
+  importAzureDevOpsWorkItems: (projectId: string, workItemIds: number[], options?: { requireReviewBeforeCoding?: boolean }): Promise<IPCResult<AzureDevOpsImportResult>> =>
+    invokeIpc(IPC_CHANNELS.AZURE_DEVOPS_IMPORT_WORK_ITEMS, projectId, workItemIds, options),
 
   checkAzureDevOpsConnection: (projectId: string): Promise<IPCResult<AzureDevOpsSyncStatus>> =>
     invokeIpc(IPC_CHANNELS.AZURE_DEVOPS_CHECK_CONNECTION, projectId)
