@@ -332,6 +332,14 @@ export interface ProjectEnvConfig {
   azureDevOpsRepository?: string; // Repository name
   azureDevOpsAutoSync?: boolean; // Auto-sync work items on project load
 
+  // Jira Integration
+  jiraEnabled: boolean;
+  jiraInstanceUrl?: string; // Jira Cloud instance URL (e.g., https://your-domain.atlassian.net)
+  jiraEmail?: string; // Atlassian account email
+  jiraApiToken?: string; // Jira API token
+  jiraProjectKey?: string; // Jira project key (e.g., PROJ)
+  jiraAutoSync?: boolean; // Auto-sync issues on project load
+
   // Git/Worktree Settings
   defaultBranch?: string; // Base branch for worktree creation (e.g., 'main', 'develop')
 

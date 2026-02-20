@@ -1120,6 +1120,7 @@
   },
   "jira": {
     "title": "Jira Integration",
+    "description": "Configure and manage Jira Cloud issue synchronization",
     "enable": "Enable Jira Integration",
     "enableDescription": "Sync issues with Jira Cloud for bidirectional task tracking",
     "instanceUrl": "Jira Instance URL",

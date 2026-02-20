@@ -159,8 +159,12 @@ export function useProjectSettings(
     const checkVersion = async () => {
       if (open && project.autoBuildPath) {
         setIsCheckingVersion(true);
-        const info = await checkProjectVersion(project.id);
-        setVersionInfo(info);
+        const result = await checkProjectVersion(project.id);
+        if (result.success && result.data) {
+          setVersionInfo(result.data);
+        } else {
+          setVersionInfo(null);
+        }
         setIsCheckingVersion(false);
       }
     };
@@ -332,8 +336,12 @@ export function useProjectSettings(
     try {
       const result = await initializeProject(project.id);
       if (result?.success) {
-        const info = await checkProjectVersion(project.id);
-        setVersionInfo(info);
+        const versionResult = await checkProjectVersion(project.id);
+        if (versionResult.success && versionResult.data) {
+          setVersionInfo(versionResult.data);
+        } else {
+          setVersionInfo(null);
+        }
         const envResult = await window.electronAPI.getProjectEnv(project.id);
         if (envResult.success && envResult.data) {
           setEnvConfig(envResult.data);
@@ -403,9 +411,18 @@ export function useProjectSettings(
     // Use the committed ref as base to handle concurrent calls correctly
     // This ensures rapid updates don't lose changes due to stale state reads
     const baseConfig = committedEnvConfigRef.current || envConfig;
-    if (!baseConfig) return;
+    if (!baseConfig) {
+      console.warn('[useProjectSettings] updateEnvConfig called but baseConfig is null — skipping save. Updates:', updates);
+      return;
+    }
 
     const newConfig = { ...baseConfig, ...updates };
+
+    // Debug: log Jira-specific updates
+    const jiraKeys = Object.keys(updates).filter(k => k.startsWith('jira'));
+    if (jiraKeys.length > 0) {
+      console.log('[useProjectSettings] Jira update:', jiraKeys.map(k => `${k}=${(updates as any)[k]}`).join(', '));
+    }
 
     // Update the ref BEFORE the await (optimistically) to prevent race conditions
     // If two calls happen rapidly, the second will see the first's changes in the ref
@@ -420,6 +437,9 @@ export function useProjectSettings(
         // Note: We don't rollback the ref here because another concurrent call may have
         // already updated it. The error is shown to the user who can retry.
         return;
+      }
+      if (jiraKeys.length > 0) {
+        console.log('[useProjectSettings] Jira save SUCCESS');
       }
     } catch (err) {
       console.error('[useProjectSettings] Error auto-saving env config:', err);
