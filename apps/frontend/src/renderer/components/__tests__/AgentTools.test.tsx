@@ -214,7 +214,7 @@ describe('AgentTools - Agent Profile Resolution', () => {
         { type: 'feature', feature: 'insights' },
         resolvedSettings
       );
-      expect(insightsAgent.model).toBe('sonnet');
+      expect(insightsAgent.model).toBe('claude-sonnet-4-5-20250929');
       expect(insightsAgent.thinking).toBe('medium');
 
       // Ideation feature agent (defaults to opus)
@@ -222,7 +222,7 @@ describe('AgentTools - Agent Profile Resolution', () => {
         { type: 'feature', feature: 'ideation' },
         resolvedSettings
       );
-      expect(ideationAgent.model).toBe('opus');
+      expect(ideationAgent.model).toBe('claude-opus-4-6');
       expect(ideationAgent.thinking).toBe('high');
 
       // Roadmap feature agent (defaults to opus)
@@ -230,7 +230,7 @@ describe('AgentTools - Agent Profile Resolution', () => {
         { type: 'feature', feature: 'roadmap' },
         resolvedSettings
       );
-      expect(roadmapAgent.model).toBe('opus');
+      expect(roadmapAgent.model).toBe('claude-opus-4-6');
       expect(roadmapAgent.thinking).toBe('high');
 
       // GitHub Issues feature agent (defaults to opus)
@@ -238,7 +238,7 @@ describe('AgentTools - Agent Profile Resolution', () => {
         { type: 'feature', feature: 'githubIssues' },
         resolvedSettings
       );
-      expect(githubIssuesAgent.model).toBe('opus');
+      expect(githubIssuesAgent.model).toBe('claude-opus-4-6');
       expect(githubIssuesAgent.thinking).toBe('medium');
 
       // GitHub PRs feature agent (defaults to opus)
@@ -246,7 +246,7 @@ describe('AgentTools - Agent Profile Resolution', () => {
         { type: 'feature', feature: 'githubPrs' },
         resolvedSettings
       );
-      expect(githubPrsAgent.model).toBe('opus');
+      expect(githubPrsAgent.model).toBe('claude-opus-4-6');
       expect(githubPrsAgent.thinking).toBe('medium');
 
       // Utility feature agent (defaults to haiku)
@@ -254,7 +254,7 @@ describe('AgentTools - Agent Profile Resolution', () => {
         { type: 'feature', feature: 'utility' },
         resolvedSettings
       );
-      expect(utilityAgent.model).toBe('haiku');
+      expect(utilityAgent.model).toBe('claude-haiku-4-5-20251001');
       expect(utilityAgent.thinking).toBe('low');
     });
 

@@ -309,6 +309,14 @@ export class AgentManager extends EventEmitter {
       args.push('--base-branch', options.baseBranch);
     }
 
+    // Streaming options
+    if (options.enableStreaming) {
+      args.push('--enable-streaming');
+    }
+    if (options.streamingSessionId) {
+      args.push('--streaming-session-id', options.streamingSessionId);
+    }
+
     // Note: --parallel was removed from run.py CLI - parallel execution is handled internally by the agent
     // The options.parallel and options.workers are kept for future use or logging purposes
     // Note: Model configuration is read from task_metadata.json by the Python scripts,

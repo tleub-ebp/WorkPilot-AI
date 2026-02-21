@@ -495,7 +495,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
                             </span>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {JSON.stringify(event.data).slice(0, 100)}...
+                            {JSON.stringify(event.data || {}).slice(0, 100)}...
                           </p>
                         </div>
                       </div>

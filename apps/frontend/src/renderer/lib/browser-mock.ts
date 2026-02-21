@@ -368,6 +368,14 @@ const browserMockAPI: ElectronAPI = {
     success: true,
     data: []
   }),
+  listAzureDevOpsRepositories: async () => ({
+    success: true,
+    data: []
+  }),
+  detectAzureDevOpsRepository: async () => ({
+    success: true,
+    data: { repository: null }
+  }),
   getAzureDevOpsWorkItems: async () => ({
     success: true,
     data: []
@@ -381,11 +389,30 @@ const browserMockAPI: ElectronAPI = {
     data: { connected: false, organization: null, project: null, error: undefined }
   }),
 
+  // Jira Operations
+  getJiraIssues: async () => ({
+    success: true,
+    data: []
+  }),
+  checkJiraConnection: async () => ({
+    success: true,
+    data: { connected: false, siteUrl: null, error: undefined }
+  }),
+
   // Repository Provider Detection
   detectRepoProvider: async () => ({
     success: true,
     data: { provider: 'unknown' as const, remoteName: 'origin', remoteUrl: undefined }
-  })
+  }),
+
+  // File operations
+  saveJsonFile: async (_folderPath: string, _fileName: string, _data: any) => ({
+    success: false,
+    error: 'Not available in browser mode'
+  }),
+
+  // User directory operations
+  getUserHome: () => '/mock/user/home'
 };
 
 /**

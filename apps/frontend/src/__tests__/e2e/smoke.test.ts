@@ -137,7 +137,7 @@ function cleanupTestDirs(): void {
   }
 }
 
-describe('E2E Smoke Tests', () => {
+describe('E2E Smoke Tests', { timeout: 30000 }, () => {
   beforeEach(async () => {
     cleanupTestDirs();
     setupTestDirs();

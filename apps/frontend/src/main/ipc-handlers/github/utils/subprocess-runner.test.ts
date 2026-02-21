@@ -4,13 +4,24 @@ import { runPythonSubprocess } from './subprocess-runner';
 import * as childProcess from 'child_process';
 import EventEmitter from 'events';
 
-// Mock child_process with importOriginal to preserve all exports
-vi.mock('child_process', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('child_process')>();
+// Mock child_process completely
+vi.mock('child_process', () => {
+  const mockSpawn = vi.fn();
+  const mockExec = vi.fn();
+  const mockExecFile = vi.fn();
+  const mockExecFileSync = vi.fn();
+  
   return {
-    ...actual,
-    spawn: vi.fn(),
-    exec: vi.fn(),
+    spawn: mockSpawn,
+    exec: mockExec,
+    execFile: mockExecFile,
+    execFileSync: mockExecFileSync,
+    default: {
+      spawn: mockSpawn,
+      exec: mockExec,
+      execFile: mockExecFile,
+      execFileSync: mockExecFileSync,
+    },
   };
 });
 
@@ -47,16 +58,35 @@ import { parsePythonCommand } from '../../../python-detector';
 import { detectAuthFailure } from '../../../rate-limit-detector';
 import { isWindows } from '../../../platform';
 
+// Get the mocked spawn function
+const mockSpawn = vi.mocked(childProcess.spawn);
+
 describe('runPythonSubprocess', () => {
-  let mockSpawn: any;
   let mockChildProcess: any;
 
   beforeEach(() => {
-    mockSpawn = vi.mocked(childProcess.spawn);
     mockChildProcess = new EventEmitter();
     mockChildProcess.stdout = new EventEmitter();
     mockChildProcess.stderr = new EventEmitter();
+    mockChildProcess.stdin = new EventEmitter();
     mockChildProcess.kill = vi.fn();
+    mockChildProcess.pid = 12345;
+    mockChildProcess.killed = false;
+    mockChildProcess.connected = true;
+    mockChildProcess.unref = vi.fn();
+    
+    // Properly mock EventEmitter methods
+    mockChildProcess.once = vi.fn((event, listener) => {
+      EventEmitter.prototype.once.call(mockChildProcess, event, listener);
+    });
+    mockChildProcess.on = vi.fn((event, listener) => {
+      EventEmitter.prototype.on.call(mockChildProcess, event, listener);
+    });
+    mockChildProcess.removeAllListeners = vi.fn((event) => {
+      EventEmitter.prototype.removeAllListeners.call(mockChildProcess, event);
+    });
+    
+    // Ensure spawn returns our mock
     mockSpawn.mockReturnValue(mockChildProcess);
     vi.clearAllMocks();
   });
@@ -174,7 +204,7 @@ describe('runPythonSubprocess', () => {
 
         // Assert - should only include safe vars
         const spawnCall = mockSpawn.mock.calls[0];
-        const envArg = spawnCall[2].env;
+        const envArg = spawnCall[2].env!;
 
         // Safe vars should be included
         expect(envArg.PATH).toBe('/usr/bin');
@@ -220,7 +250,7 @@ describe('runPythonSubprocess', () => {
 
         // Assert - Windows-specific vars should be included
         const spawnCall = mockSpawn.mock.calls[0];
-        const envArg = spawnCall[2].env;
+        const envArg = spawnCall[2].env!;
 
         expect(envArg.SYSTEMROOT).toBe('C:\\Windows');
         expect(envArg.COMSPEC).toBe('C:\\Windows\\System32\\cmd.exe');

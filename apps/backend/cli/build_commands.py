@@ -61,6 +61,8 @@ def handle_build_command(
     skip_qa: bool,
     force_bypass_approval: bool,
     base_branch: str | None = None,
+    enable_streaming: bool = False,
+    streaming_session_id: str | None = None,
 ) -> None:
     """
     Handle the main build command.
@@ -77,6 +79,8 @@ def handle_build_command(
         skip_qa: Skip automatic QA validation
         force_bypass_approval: Force bypass approval check
         base_branch: Base branch for worktree creation (default: current branch)
+        enable_streaming: Enable streaming mode for this build
+        streaming_session_id: Streaming session ID for live coding
     """
     # Lazy imports to avoid loading heavy modules
     from agent import run_autonomous_agent, sync_spec_to_source
@@ -247,6 +251,7 @@ def handle_build_command(
                 max_iterations=max_iterations,
                 verbose=verbose,
                 source_spec_dir=source_spec_dir,  # For syncing progress back to main project
+                streaming_session_id=streaming_session_id,
             )
         )
         debug_success("run.py", "Agent execution completed")
@@ -457,6 +462,7 @@ def _handle_build_interrupt(
                     model=model,
                     max_iterations=max_iterations,
                     verbose=verbose,
+                    streaming_session_id=streaming_session_id,
                 )
             )
             # Build completed or was interrupted again - exit

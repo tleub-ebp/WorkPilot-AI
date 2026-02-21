@@ -8,12 +8,34 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { EventEmitter } from 'events';
 import type { ChildProcess } from 'child_process';
 
-// Mock child_process.spawn before importing the module
-vi.mock('child_process', async () => {
-  const actual = await vi.importActual('child_process');
+// Mock child_process before importing the module
+vi.mock('child_process', () => {
+  const mockSpawn = vi.fn(() => {
+    const mockChildProcess = {
+      unref: vi.fn(),
+      on: vi.fn(),
+      once: vi.fn(),
+      emit: vi.fn(),
+      kill: vi.fn(),
+      pid: 99999,
+      stdout: { on: vi.fn() },
+      stderr: { on: vi.fn() },
+      stdin: { on: vi.fn() },
+    };
+    return mockChildProcess;
+  });
+  
   return {
-    ...actual,
-    spawn: vi.fn(() => ({ unref: vi.fn() }))
+    default: {
+      spawn: mockSpawn,
+      exec: vi.fn(),
+      execFile: vi.fn(),
+      execFileSync: vi.fn(),
+    },
+    spawn: mockSpawn,
+    exec: vi.fn(),
+    execFile: vi.fn(),
+    execFileSync: vi.fn(),
   };
 });
 

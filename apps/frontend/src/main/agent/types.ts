@@ -50,6 +50,8 @@ export interface TaskExecutionOptions {
   baseBranch?: string;
   useWorktree?: boolean; // If false, use --direct mode (no worktree isolation)
   useLocalBranch?: boolean; // If true, use local branch directly instead of preferring origin/branch
+  enableStreaming?: boolean; // Enable streaming mode for this task
+  streamingSessionId?: string; // Streaming session ID for live coding
 }
 
 export interface SpecCreationMetadata {
