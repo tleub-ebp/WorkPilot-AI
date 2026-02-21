@@ -22,6 +22,10 @@
     "taskActions": "Actions de la tâche",
     "selectTask": "Sélectionner la tâche : {{title}}"
   },
+  "confirmDelete": {
+    "title": "Supprimer la tâche",
+    "description": "Êtes-vous sûr de vouloir supprimer la tâche \"{{title}}\" ? Cette action est irréversible."
+  },
   "labels": {
     "running": "En cours",
     "aiReview": "Révision IA",

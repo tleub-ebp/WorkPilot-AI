@@ -23,6 +23,10 @@
     "taskActions": "Task actions",
     "selectTask": "Select task: {{title}}"
   },
+  "confirmDelete": {
+    "title": "Delete Task",
+    "description": "Are you sure you want to delete the task \"{{title}}\"? This action is irreversible."
+  },
   "labels": {
     "running": "Running",
     "aiReview": "AI Review",

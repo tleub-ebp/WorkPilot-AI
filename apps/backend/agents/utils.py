@@ -10,7 +10,7 @@ import logging
 import shutil
 from pathlib import Path
 
-from ..core.git_executable import run_git
+from core.git_executable import run_git
 
 logger = logging.getLogger(__name__)
 

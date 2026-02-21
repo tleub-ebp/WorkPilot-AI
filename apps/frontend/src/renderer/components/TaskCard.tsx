@@ -13,7 +13,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
-import {cn, formatRelativeTime, sanitizeMarkdownForDisplay} from '../lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from './ui/alert-dialog';
+import { createPortal } from 'react-dom';
+import {cn, sanitizeMarkdownForDisplay} from '../lib/utils';
 import { PhaseProgressIndicator } from './PhaseProgressIndicator';
 import { StreamingSessionButton } from './streaming/StreamingSessionButton';
 import {
@@ -142,7 +154,10 @@ export const TaskCard = memo(function TaskCard({
   const formatRelativeTime = useFormatRelativeTime();
   const [isStuck, setIsStuck] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const stuckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const deleteButtonRef = useRef<HTMLButtonElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
 
   // Get project details from store to access projectPath
   const projects = useProjectStore((state) => state.projects);
@@ -277,6 +292,38 @@ export const TaskCard = memo(function TaskCard({
     }
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // If delete functionality is available, don't open the task when clicking near the delete button
+    if (onDelete) {
+      // Get the click coordinates relative to the card
+      const rect = cardRef.current?.getBoundingClientRect();
+      if (rect) {
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // If click is in the top-right corner area (where delete button is), don't open task
+        const deleteArea = {
+          x: rect.width - 50,  // 50px from right edge
+          y: 0,               // from top
+          width: 50,
+          height: 40
+        };
+        
+        if (x >= deleteArea.x && x <= deleteArea.x + deleteArea.width &&
+            y >= deleteArea.y && y <= deleteArea.y + deleteArea.height) {
+          return;
+        }
+      }
+    }
+    
+    // Check if the click target is the delete button or its children
+    if (deleteButtonRef.current && deleteButtonRef.current.contains(e.target as Node)) {
+      return;
+    }
+    
+    onClick();
+  };
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'in_progress':
@@ -353,6 +400,7 @@ export const TaskCard = memo(function TaskCard({
           onClick();
         }
       }}
+      ref={cardRef}
       className={cn(
         'card-surface task-card-enhanced cursor-pointer relative group',
         isRunning && !isStuck && 'ring-2 ring-primary border-primary task-running-pulse',
@@ -362,20 +410,82 @@ export const TaskCard = memo(function TaskCard({
         // Azure DevOps imported tasks - custom CSS class for negative styling
         isFromAzureDevOps && 'azure-devops-task'
       )}
-      onClick={onClick}
+      onClick={handleCardClick}
+      onMouseDown={(e) => {
+        // Additional mouse down handler to catch events early
+        if (onDelete) {
+          const rect = cardRef.current?.getBoundingClientRect();
+          if (rect) {
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // If mouse down is in the delete area, prevent the card click
+            const deleteArea = {
+              x: rect.width - 50,
+              y: 0,
+              width: 50,
+              height: 40
+            };
+            
+            if (x >= deleteArea.x && x <= deleteArea.x + deleteArea.width &&
+                y >= deleteArea.y && y <= deleteArea.y + deleteArea.height) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }
+        }
+      }}
     >
-      {/* Delete button - top right corner */}
+      {/* Delete button - positioned at the top right, outside the content flow */}
       {onDelete && (
         <Button
+          ref={deleteButtonRef}
           variant="ghost"
           size="sm"
-          className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
-          onClick={handleDelete}
+          className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive z-50"
           title={t('actions.delete')}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.nativeEvent.stopImmediatePropagation();
+            setIsDeleteDialogOpen(true);
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
         >
           <X className="h-3 w-3" />
         </Button>
       )}
+      
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('tasks:confirmDelete.title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('tasks:confirmDelete.description', { title: displayTitle })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
+              {t('common:buttons.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                if (onDelete) {
+                  onDelete();
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('common:buttons.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       <CardContent className="p-4">
         <div className={isSelectable ? 'flex gap-3' : undefined}>
           {/* Checkbox for selectable mode - stops event propagation */}
