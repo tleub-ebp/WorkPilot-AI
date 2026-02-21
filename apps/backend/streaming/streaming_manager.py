@@ -77,7 +77,9 @@ class StreamingManager:
             "status": "active",
             "event_count": 0,
         }
-        self._subscribers[session_id] = set()
+        # Preserve existing subscribers (frontend may connect before agent starts)
+        if session_id not in self._subscribers:
+            self._subscribers[session_id] = set()
         
         event = StreamingEvent(
             event_type=EventType.SESSION_START,
