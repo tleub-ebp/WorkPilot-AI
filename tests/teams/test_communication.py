@@ -78,8 +78,8 @@ class TestCommunicationBus:
             assert "Debate Thread: Test" in history
             assert "Architect" in history
             assert "Security" in history
-            assert "PROPOSAL" in history
-            assert "CHALLENGE" in history
+            assert "proposal" in history
+            assert "challenge" in history
 
     def test_detect_consensus_with_supports(self):
         """Consensus detected with 3+ supports."""

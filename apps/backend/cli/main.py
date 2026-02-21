@@ -331,6 +331,12 @@ Environment Variables:
         action="store_true",
         help="Enable streaming mode for this build (broadcasts events in real-time)",
     )
+    parser.add_argument(
+        "--streaming-session-id",
+        type=str,
+        default=None,
+        help="Streaming session ID for live coding (connects to existing session)",
+    )
 
     # Provider management commands
     provider_group = parser.add_argument_group("Provider management")
@@ -614,6 +620,8 @@ def _run_cli() -> None:
         skip_qa=args.skip_qa,
         force_bypass_approval=args.force,
         base_branch=args.base_branch,
+        enable_streaming=args.enable_streaming,
+        streaming_session_id=args.streaming_session_id,
     )
 
 

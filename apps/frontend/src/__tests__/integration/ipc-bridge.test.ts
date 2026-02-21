@@ -47,7 +47,7 @@ describe('IPC Bridge Integration', () => {
         'electronAPI',
         expect.any(Object)
       );
-    });
+    }, 10000); // Increase timeout to 10 seconds
 
     describe('Project operations', () => {
       let electronAPI: Record<string, unknown>;

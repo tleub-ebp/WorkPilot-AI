@@ -56,12 +56,31 @@ vi.mock('fs', () => ({
   writeFileSync: vi.fn(),
   mkdirSync: vi.fn(),
   statSync: vi.fn(),
+  default: {
+    existsSync: vi.fn((path: string) => mockFiles.has(path)),
+    readFileSync: vi.fn((path: string) => {
+      const content = mockFiles.get(path);
+      if (content === undefined) {
+        const error = new Error(`ENOENT: no such file or directory, open '${path}'`) as NodeJS.ErrnoException;
+        error.code = 'ENOENT';
+        throw error;
+      }
+      return content;
+    }),
+    writeFileSync: vi.fn(),
+    mkdirSync: vi.fn(),
+    statSync: vi.fn(),
+  }
 }));
 
 // Mock node:child_process
 vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
   execFileSync: vi.fn(),
+  default: {
+    execFile: vi.fn(),
+    execFileSync: vi.fn(),
+  }
 }));
 
 // Mock other dependencies - inherit real constants to keep them in sync

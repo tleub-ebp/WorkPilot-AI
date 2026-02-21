@@ -23,6 +23,53 @@ import { pythonEnvManager } from '../../python-env-manager';
 import { appLog } from '../../app-logger';
 
 /**
+ * Convert TaskMetadata to SpecCreationMetadata for spec creation
+ * This handles the type incompatibility between the two metadata types
+ */
+function convertTaskMetadataToSpecCreation(metadata?: any): any {
+  if (!metadata) return undefined;
+  
+  return {
+    requireReviewBeforeCoding: metadata.requireReviewBeforeCoding,
+    isAutoProfile: metadata.isAutoProfile,
+    phaseModels: convertPhaseModelConfig(metadata.phaseModels),
+    phaseThinking: convertPhaseThinkingConfig(metadata.phaseThinking),
+    model: metadata.model,
+    thinkingLevel: metadata.thinkingLevel,
+    useWorktree: metadata.useWorktree,
+    useLocalBranch: metadata.useLocalBranch,
+  };
+}
+
+/**
+ * Convert PhaseModelConfig (string-based) to SpecCreationMetadata format (literal union)
+ */
+function convertPhaseModelConfig(phaseModels?: any): any {
+  if (!phaseModels) return undefined;
+  
+  return {
+    spec: phaseModels.spec || 'sonnet',
+    planning: phaseModels.planning || 'sonnet', 
+    coding: phaseModels.coding || 'sonnet',
+    qa: phaseModels.qa || 'sonnet',
+  };
+}
+
+/**
+ * Convert PhaseThinkingConfig to SpecCreationMetadata format
+ */
+function convertPhaseThinkingConfig(phaseThinking?: any): any {
+  if (!phaseThinking) return undefined;
+  
+  return {
+    spec: phaseThinking.spec || 'medium',
+    planning: phaseThinking.planning || 'medium',
+    coding: phaseThinking.coding || 'medium',
+    qa: phaseThinking.qa || 'medium',
+  };
+}
+
+/**
  * Atomic file write to prevent TOCTOU race conditions.
  * Writes to a temporary file first, then atomically renames to target.
  * This ensures the target file is never in an inconsistent state.
@@ -248,7 +295,7 @@ export function registerTaskExecutionHandlers(
         // Start spec creation process - pass the existing spec directory
         // so spec_runner uses it instead of creating a new one
         // Also pass baseBranch so worktrees are created from the correct branch
-        agentManager.startSpecCreation(taskId, project.path, taskDescription, specDir, task.metadata, baseBranch, project.id);
+        agentManager.startSpecCreation(taskId, project.path, taskDescription, specDir, convertTaskMetadataToSpecCreation(task.metadata), baseBranch, project.id);
       } else if (needsImplementation) {
         // Spec exists but no subtasks - run run.py to create implementation plan and execute
         // Read the spec.md to get the task description
@@ -271,7 +318,9 @@ export function registerTaskExecutionHandlers(
             workers: 1,
             baseBranch,
             useWorktree: task.metadata?.useWorktree,
-            useLocalBranch: task.metadata?.useLocalBranch
+            useLocalBranch: task.metadata?.useLocalBranch,
+            enableStreaming: _options?.enableStreaming,
+            streamingSessionId: _options?.streamingSessionId,
           },
           project.id
         );
@@ -289,7 +338,9 @@ export function registerTaskExecutionHandlers(
             workers: 1,
             baseBranch,
             useWorktree: task.metadata?.useWorktree,
-            useLocalBranch: task.metadata?.useLocalBranch
+            useLocalBranch: task.metadata?.useLocalBranch,
+            enableStreaming: _options?.enableStreaming,
+            streamingSessionId: _options?.streamingSessionId,
           },
           project.id
         );
@@ -783,7 +834,7 @@ print(json.dumps(result))
             // No spec file - need to run spec_runner.py to create the spec
             const taskDescription = task.description || task.title;
             console.warn('[TASK_UPDATE_STATUS] Starting spec creation for:', task.specId);
-            agentManager.startSpecCreation(taskId, project.path, taskDescription, specDir, task.metadata, baseBranchForUpdate, project.id);
+            agentManager.startSpecCreation(taskId, project.path, taskDescription, specDir, convertTaskMetadataToSpecCreation(task.metadata), baseBranchForUpdate, project.id);
           } else if (needsImplementation) {
             // Spec exists but no subtasks - run run.py to create implementation plan and execute
             console.warn('[TASK_UPDATE_STATUS] Starting task execution (no subtasks) for:', task.specId);
@@ -1235,7 +1286,7 @@ print(json.dumps(result))
               // No spec file - need to run spec_runner.py to create the spec
               const taskDescription = task.description || task.title;
               console.warn(`[Recovery] Starting spec creation for: ${task.specId}`);
-              agentManager.startSpecCreation(taskId, project.path, taskDescription, specDirForWatcher, task.metadata, baseBranchForRecovery, project.id);
+              agentManager.startSpecCreation(taskId, project.path, taskDescription, specDirForWatcher, convertTaskMetadataToSpecCreation(task.metadata), baseBranchForRecovery, project.id);
             } else {
               // Spec exists - run task execution
               console.warn(`[Recovery] Starting task execution for: ${task.specId}`);

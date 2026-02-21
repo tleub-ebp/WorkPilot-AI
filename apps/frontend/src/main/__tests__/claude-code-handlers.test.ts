@@ -60,6 +60,14 @@ vi.mock('../claude-profile-manager', () => ({
 
 // Mock fs and child_process
 vi.mock('fs', () => ({
+  default: {
+    existsSync: vi.fn(() => false),
+    readFileSync: vi.fn(),
+    readdir: vi.fn(() => Promise.resolve([])),
+    mkdir: vi.fn(() => Promise.resolve()),
+    rename: vi.fn(() => Promise.resolve()),
+    unlink: vi.fn(() => Promise.resolve()),
+  },
   existsSync: vi.fn(() => false),
   readFileSync: vi.fn(),
   promises: {
@@ -71,10 +79,16 @@ vi.mock('fs', () => ({
 }));
 
 vi.mock('child_process', () => ({
+  default: {
+    spawn: vi.fn(),
+    exec: vi.fn(),
+    execFile: vi.fn(),
+    execFileSync: vi.fn(),
+  },
+  spawn: vi.fn(),
   exec: vi.fn(),
   execFile: vi.fn(),
   execFileSync: vi.fn(),
-  spawn: vi.fn(() => ({ unref: vi.fn() })),
 }));
 
 // Mock global fetch

@@ -85,6 +85,14 @@ from .utils import (
     sync_spec_to_source,
 )
 
+# Import streaming support
+try:
+    from streaming.agent_wrapper import create_streaming_wrapper
+    STREAMING_AVAILABLE = True
+except ImportError:
+    STREAMING_AVAILABLE = False
+    create_streaming_wrapper = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -362,6 +370,7 @@ async def run_autonomous_agent(
     max_iterations: int | None = None,
     verbose: bool = False,
     source_spec_dir: Path | None = None,
+    streaming_session_id: str | None = None,
 ) -> None:
     """
     Run the autonomous agent loop with automatic memory management.
@@ -376,10 +385,29 @@ async def run_autonomous_agent(
         max_iterations: Maximum number of iterations (None for unlimited)
         verbose: Whether to show detailed output
         source_spec_dir: Original spec directory in main project (for syncing from worktree)
+        streaming_session_id: Optional streaming session ID for live coding
     """
     # Set environment variable for security hooks to find the correct project directory
     # This is needed because os.getcwd() may return the wrong directory in worktree mode
     os.environ[PROJECT_DIR_ENV_VAR] = str(project_dir.resolve())
+
+    # Initialize streaming wrapper if session ID provided
+    streaming_wrapper = None
+    if STREAMING_AVAILABLE and streaming_session_id:
+        try:
+            streaming_wrapper = create_streaming_wrapper(streaming_session_id, enable_recording=True)
+            await streaming_wrapper.start_session({
+                "session_id": streaming_session_id,
+                "task": spec_dir.name,
+                "project_path": str(project_dir),
+                "agent_type": "coder",
+                "model": model,
+                "max_iterations": max_iterations,
+            })
+            print_status(f"Streaming session started: {streaming_session_id}", "success")
+        except Exception as e:
+            logger.warning(f"Failed to start streaming session: {e}")
+            streaming_wrapper = None
 
     # Initialize recovery manager (handles memory persistence)
     recovery_manager = RecoveryManager(spec_dir, project_dir)
@@ -768,16 +796,24 @@ async def run_autonomous_agent(
                 print_status(f"Previous attempts: {attempt_count}", "warning")
             print()
 
-        # Set subtask info in logger
-        if task_logger and subtask_id:
-            task_logger.set_subtask(subtask_id)
-            task_logger.set_session(iteration)
+            # Set session info in logger
+            if task_logger and subtask_id:
+                task_logger.set_subtask(subtask_id)
+                task_logger.set_session(iteration)
 
-        # Run session with Claude SDK client
-        async with client:
-            status, response, error_info = await run_agent_session(
-                client, prompt, spec_dir, verbose=verbose, phase=current_log_phase
-            )
+            # Run session with Claude SDK client
+            async with client:
+                # Emit agent thinking event
+                if streaming_wrapper:
+                    await streaming_wrapper.emit_agent_thinking(f"Starting {agent_type} session {iteration} for subtask {subtask_id or 'planning'}")
+                
+                status, response, error_info = await run_agent_session(
+                    client, prompt, spec_dir, verbose=verbose, phase=current_log_phase
+                )
+                
+                # Emit agent response event
+                if streaming_wrapper and response:
+                    await streaming_wrapper.emit_agent_response(response[:500])  # Limit response length
 
         plan_validated = False
         if is_planning_phase and status != "error":
@@ -1201,3 +1237,11 @@ async def run_autonomous_agent(
         status_manager.update(state=BuildState.COMPLETE)
     else:
         status_manager.update(state=BuildState.PAUSED)
+
+    # Clean up streaming session
+    if streaming_wrapper:
+        try:
+            await streaming_wrapper.end_session()
+            print_status(f"Streaming session ended: {streaming_session_id}", "info")
+        except Exception as e:
+            logger.warning(f"Failed to end streaming session: {e}")
