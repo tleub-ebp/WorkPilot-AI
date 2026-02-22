@@ -84,10 +84,15 @@ def _classify_hostname(hostname: str) -> str:
 
     Args:
         hostname: The git remote hostname (e.g., 'github.com', 'dev.azure.com')
+                  May include a username prefix (e.g., 'org@dev.azure.com')
 
     Returns:
         'github', 'gitlab', 'azure_devops', or 'unknown'
     """
+    # Strip username prefix if present (e.g., "org@dev.azure.com" -> "dev.azure.com")
+    if "@" in hostname:
+        hostname = hostname.rsplit("@", 1)[-1]
+
     hostname_lower = hostname.lower()
 
     # Check for Azure DevOps (cloud and self-hosted)
@@ -158,11 +163,12 @@ def extract_azure_devops_project(
 
         remote_url = result.stdout.strip()
 
-        # Pattern for HTTPS: https://dev.azure.com/{org}/{project}/_git/{repo}
-        # Pattern for old format: https://{org}.visualstudio.com/{project}/_git/{repo}
+        # Pattern for HTTPS: https://[user@]dev.azure.com/{org}/{project}/_git/{repo}
+        # Pattern for old format: https://[user@]{org}.visualstudio.com/{project}/_git/{repo}
+        # The optional [^@]+@ handles URLs with embedded credentials (e.g., https://org@dev.azure.com/...)
         https_patterns = [
-            r"^https?://dev\.azure\.com/[^/]+/([^/]+)/_git/",
-            r"^https?://[^/]+\.visualstudio\.com/([^/]+)/_git/",
+            r"^https?://(?:[^@]+@)?dev\.azure\.com/[^/]+/([^/]+)/_git/",
+            r"^https?://(?:[^@]+@)?[^/]+\.visualstudio\.com/([^/]+)/_git/",
         ]
 
         for pattern in https_patterns:
@@ -189,6 +195,74 @@ def extract_azure_devops_project(
         if scp_match:
             from urllib.parse import unquote
 
+            return unquote(scp_match.group(1))
+
+        return None
+
+    except Exception:
+        return None
+
+
+def extract_azure_devops_org(
+    project_dir: str | Path, remote_name: str | None = None
+) -> str | None:
+    """Extract the Azure DevOps organization name from the git remote URL.
+
+    Args:
+        project_dir: Path to the git repository
+        remote_name: Name of the remote to check (defaults to "origin")
+
+    Returns:
+        The organization name (URL-decoded) if Azure DevOps remote detected, None otherwise
+
+    Examples:
+        >>> extract_azure_devops_org('/path/to/repo')
+        'myorg'  # for https://dev.azure.com/myorg/project/_git/repo
+        'myorg'  # for https://myorg@dev.azure.com/myorg/project/_git/repo
+        'myorg'  # for ssh://git@ssh.dev.azure.com/v3/myorg/project/repo
+        None  # for non-Azure DevOps remotes
+    """
+    try:
+        remote = remote_name if remote_name else "origin"
+        result = run_git(
+            ["remote", "get-url", remote],
+            cwd=project_dir,
+            timeout=5,
+        )
+
+        if result.returncode != 0 or not result.stdout.strip():
+            return None
+
+        remote_url = result.stdout.strip()
+
+        from urllib.parse import unquote
+
+        # HTTPS: https://[user@]dev.azure.com/{org}/{project}/_git/{repo}
+        https_match = re.search(
+            r"^https?://(?:[^@]+@)?dev\.azure\.com/([^/]+)/", remote_url
+        )
+        if https_match:
+            return unquote(https_match.group(1))
+
+        # Old format: https://[user@]{org}.visualstudio.com/...
+        vs_match = re.search(
+            r"^https?://(?:[^@]+@)?([^./]+)\.visualstudio\.com/", remote_url
+        )
+        if vs_match:
+            return unquote(vs_match.group(1))
+
+        # SSH: ssh://git@ssh.dev.azure.com/v3/{org}/{project}/{repo}
+        ssh_match = re.search(
+            r"^ssh://[^@]+@ssh\.dev\.azure\.com/v3/([^/]+)/", remote_url
+        )
+        if ssh_match:
+            return unquote(ssh_match.group(1))
+
+        # git@ format: git@ssh.dev.azure.com:v3/{org}/{project}/{repo}
+        scp_match = re.search(
+            r"^git@ssh\.dev\.azure\.com:v3/([^/]+)/", remote_url
+        )
+        if scp_match:
             return unquote(scp_match.group(1))
 
         return None
@@ -229,11 +303,12 @@ def extract_azure_devops_repository(
 
         remote_url = result.stdout.strip()
 
-        # Pattern for HTTPS: https://dev.azure.com/{org}/{project}/_git/{repo}
-        # Pattern for old format: https://{org}.visualstudio.com/{project}/_git/{repo}
+        # Pattern for HTTPS: https://[user@]dev.azure.com/{org}/{project}/_git/{repo}
+        # Pattern for old format: https://[user@]{org}.visualstudio.com/{project}/_git/{repo}
+        # The optional [^@]+@ handles URLs with embedded credentials (e.g., https://org@dev.azure.com/...)
         https_patterns = [
-            r"^https?://dev\.azure\.com/[^/]+/[^/]+/_git/([^/\s]+)",
-            r"^https?://[^/]+\.visualstudio\.com/[^/]+/_git/([^/\s]+)",
+            r"^https?://(?:[^@]+@)?dev\.azure\.com/[^/]+/[^/]+/_git/([^/\s]+)",
+            r"^https?://(?:[^@]+@)?[^/]+\.visualstudio\.com/[^/]+/_git/([^/\s]+)",
         ]
 
         for pattern in https_patterns:

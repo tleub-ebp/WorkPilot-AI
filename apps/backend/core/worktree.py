@@ -30,7 +30,12 @@ from typing import TypedDict, TypeVar
 
 from core.gh_executable import get_gh_executable, invalidate_gh_cache
 from core.git_executable import get_git_executable, get_isolated_git_env, run_git
-from core.git_provider import detect_git_provider
+from core.git_provider import (
+    detect_git_provider,
+    extract_azure_devops_org,
+    extract_azure_devops_project,
+    extract_azure_devops_repository,
+)
 from core.glab_executable import get_glab_executable, invalidate_glab_cache
 from core.model_config import get_utility_model_config
 from debug import debug_warning
@@ -1178,6 +1183,72 @@ class WorktreeManager:
             error=f"Failed to push branch: {last_error}",
         )
 
+    def _get_azure_devops_credentials(self) -> tuple[str, str] | None:
+        """Get Azure DevOps credentials from git credential manager or environment.
+
+        Tries in order:
+        1. AZURE_DEVOPS_PAT environment variable
+        2. Git credential manager (same credentials used for git push)
+
+        Returns:
+            Tuple of (username, password/PAT) or None if no credentials found.
+        """
+        # 1. Check for PAT in environment
+        pat = os.environ.get("AZURE_DEVOPS_PAT") or os.environ.get(
+            "AZURE_DEVOPS_EXT_PAT"
+        )
+        if pat:
+            return ("", pat)
+
+        # 2. Try git credential manager
+        try:
+            remote_result = self._run_git(
+                ["remote", "get-url", "origin"], cwd=self.project_dir
+            )
+            if remote_result.returncode != 0 or not remote_result.stdout.strip():
+                return None
+
+            remote_url = remote_result.stdout.strip()
+
+            # Parse the remote URL to extract protocol, host, and path
+            from urllib.parse import urlparse
+
+            parsed = urlparse(remote_url)
+            if not parsed.hostname:
+                return None
+
+            # Build credential fill input
+            cred_input = f"protocol={parsed.scheme}\nhost={parsed.hostname}\npath={parsed.path.lstrip('/')}\n\n"
+
+            git_executable = get_git_executable()
+            result = subprocess.run(
+                [git_executable, "credential", "fill"],
+                input=cred_input,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=10,
+                cwd=self.project_dir,
+                env=get_isolated_git_env(),
+            )
+
+            if result.returncode == 0 and result.stdout:
+                username = ""
+                password = ""
+                for line in result.stdout.strip().split("\n"):
+                    if line.startswith("username="):
+                        username = line[len("username=") :]
+                    elif line.startswith("password="):
+                        password = line[len("password=") :]
+                if password:
+                    return (username, password)
+
+        except Exception as e:
+            logger.debug(f"Failed to get credentials from git credential manager: {e}")
+
+        return None
+
     def create_azure_pull_request(
         self,
         spec_name: str,
@@ -1186,13 +1257,16 @@ class WorktreeManager:
         draft: bool = False,
     ) -> PullRequestResult:
         """
-        Create an Azure DevOps pull request for a spec's branch using Azure DevOps SDK.
+        Create an Azure DevOps pull request using the REST API.
+
+        Uses git credential manager or AZURE_DEVOPS_PAT environment variable
+        for authentication (same credentials that git push uses).
 
         Args:
             spec_name: The spec folder name
             target_branch: Target branch for PR (defaults to base_branch)
             title: PR title (defaults to spec name)
-            draft: Whether to create as draft PR (Azure DevOps calls this 'WIP')
+            draft: Whether to create as draft PR
 
         Returns:
             PullRequestResult with keys:
@@ -1201,6 +1275,8 @@ class WorktreeManager:
                 - already_exists: bool (if PR already exists)
                 - error: str (if failed)
         """
+        import requests
+
         info = self.get_worktree_info(spec_name)
         if not info:
             return PullRequestResult(
@@ -1228,21 +1304,48 @@ class WorktreeManager:
         if not pr_body:
             pr_body = self._extract_spec_summary(spec_name)
 
-        # Import Azure DevOps components
-        try:
-            from src.config.settings import Settings
-            from src.connectors.azure_devops.client import AzureDevOpsClient
-            from src.connectors.azure_devops.exceptions import (
-                APIError,
-                AuthenticationError,
-                ConfigurationError,
-            )
-            from azure.devops.v7_0.git.models import GitPullRequest
-        except ImportError as e:
+        # Extract Azure DevOps coordinates from git remote
+        org = extract_azure_devops_org(self.project_dir)
+        project = extract_azure_devops_project(self.project_dir)
+        repository = extract_azure_devops_repository(self.project_dir)
+
+        if not org:
             return PullRequestResult(
                 success=False,
-                error=f"Azure DevOps components not available: {e}",
+                error="Could not extract Azure DevOps organization from git remote URL",
             )
+        if not project:
+            return PullRequestResult(
+                success=False,
+                error="Could not extract Azure DevOps project from git remote URL",
+            )
+        if not repository:
+            return PullRequestResult(
+                success=False,
+                error="Could not extract Azure DevOps repository from git remote URL",
+            )
+
+        # Get credentials
+        credentials = self._get_azure_devops_credentials()
+        if not credentials:
+            return PullRequestResult(
+                success=False,
+                error=(
+                    "No Azure DevOps credentials found. "
+                    "Set AZURE_DEVOPS_PAT environment variable or configure git credential manager."
+                ),
+            )
+
+        username, password = credentials
+        auth = (username, password)
+
+        # URL-encode project and repository for API calls
+        from urllib.parse import quote
+
+        project_encoded = quote(project, safe="")
+        repository_encoded = quote(repository, safe="")
+        base_url = f"https://dev.azure.com/{quote(org, safe='')}/{project_encoded}/_apis/git/repositories/{repository_encoded}"
+        api_version = "api-version=7.1"
 
         def is_pr_retryable(stderr: str) -> bool:
             """Check if PR creation error is retryable (network or HTTP 5xx)."""
@@ -1253,100 +1356,146 @@ class WorktreeManager:
         def do_create_pr() -> tuple[bool, PullRequestResult | None, str]:
             """Execute PR creation for retry wrapper."""
             try:
-                # Load Azure DevOps settings from environment
-                settings = Settings.from_env()
-                client = AzureDevOpsClient(settings)
-                client.connect()
-
-                # Get Git client
-                git_client = client.get_git_client()
-
-                # Extract project and repository from git remote
-                project = extract_azure_devops_project(self.project_dir)
-                repository = extract_azure_devops_repository(self.project_dir)
-
-                if not project:
-                    return (False, None, "Could not extract Azure DevOps project from git remote")
-                if not repository:
-                    return (False, None, "Could not extract Azure DevOps repository from git remote")
-
                 # Check if PR already exists
                 try:
-                    existing_prs = git_client.get_pull_requests(
-                        project=project,
-                        repository_id=repository,
-                        search_criteria={
-                            "sourceRefName": f"refs/heads/{info.branch}",
-                            "targetRefName": f"refs/heads/{target}",
-                        }
+                    search_url = (
+                        f"{base_url}/pullrequests?{api_version}"
+                        f"&searchCriteria.sourceRefName=refs/heads/{info.branch}"
+                        f"&searchCriteria.targetRefName=refs/heads/{target}"
+                        f"&searchCriteria.status=active"
                     )
-                    if existing_prs:
-                        pr_url = existing_prs[0]._links.web.href
-                        return (True, PullRequestResult(
-                            success=True,
-                            pr_url=pr_url,
-                            already_exists=True,
-                        ), "")
+                    resp = requests.get(search_url, auth=auth, timeout=30)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        prs = data.get("value", [])
+                        if prs:
+                            # PR already exists — build the web URL
+                            pr_id = prs[0].get("pullRequestId")
+                            pr_url = (
+                                f"https://dev.azure.com/{quote(org, safe='')}"
+                                f"/{project_encoded}/_git/{repository_encoded}"
+                                f"/pullrequest/{pr_id}"
+                            )
+                            return (
+                                True,
+                                PullRequestResult(
+                                    success=True,
+                                    pr_url=pr_url,
+                                    already_exists=True,
+                                ),
+                                "",
+                            )
                 except Exception:
                     # Continue with creation if check fails
                     pass
 
-                # Create pull request object
-                pull_request = GitPullRequest(
-                    source_ref_name=f"refs/heads/{info.branch}",
-                    target_ref_name=f"refs/heads/{target}",
-                    title=pr_title,
-                    description=pr_body,
-                )
-
-                # Set as WIP (Work In Progress) if draft is requested
+                # Create pull request via REST API
+                create_url = f"{base_url}/pullrequests?{api_version}"
+                payload: dict = {
+                    "sourceRefName": f"refs/heads/{info.branch}",
+                    "targetRefName": f"refs/heads/{target}",
+                    "title": pr_title,
+                    "description": pr_body or "",
+                }
                 if draft:
-                    pull_request.is_draft = True
+                    payload["isDraft"] = True
 
-                # Create the pull request
-                created_pr = git_client.create_pull_request(
-                    git_pull_request_to_create=pull_request,
-                    project=project,
-                    repository_id=repository,
+                resp = requests.post(
+                    create_url,
+                    json=payload,
+                    auth=auth,
+                    timeout=30,
                 )
 
-                if created_pr and created_pr._links and created_pr._links.web:
-                    pr_url = created_pr._links.web.href
-                    return (True, PullRequestResult(
-                        success=True,
-                        pr_url=pr_url,
-                        already_exists=False,
-                    ), "")
-                else:
-                    return (False, None, "Pull request created but could not extract URL")
+                if resp.status_code in (200, 201):
+                    data = resp.json()
+                    pr_id = data.get("pullRequestId")
+                    pr_url = (
+                        f"https://dev.azure.com/{quote(org, safe='')}"
+                        f"/{project_encoded}/_git/{repository_encoded}"
+                        f"/pullrequest/{pr_id}"
+                    )
+                    return (
+                        True,
+                        PullRequestResult(
+                            success=True,
+                            pr_url=pr_url,
+                            already_exists=False,
+                        ),
+                        "",
+                    )
 
-            except (AuthenticationError, ConfigurationError) as e:
-                return (False, None, f"Azure DevOps authentication/configuration error: {e}")
-            except APIError as e:
-                return (False, None, f"Azure DevOps API error: {e}")
-            except Exception as e:
-                error_msg = str(e)
-                if "already exists" in error_msg.lower():
-                    # Try to get existing PR URL
+                # Handle specific error cases
+                error_body = resp.text
+                if resp.status_code == 409 or "already exists" in error_body.lower():
+                    # PR already exists — try to find it
                     try:
-                        existing_prs = git_client.get_pull_requests(
-                            project=project,
-                            repository_id=repository,
-                            search_criteria={
-                                "sourceRefName": f"refs/heads/{info.branch}",
-                                "targetRefName": f"refs/heads/{target}",
-                            }
+                        search_url = (
+                            f"{base_url}/pullrequests?{api_version}"
+                            f"&searchCriteria.sourceRefName=refs/heads/{info.branch}"
+                            f"&searchCriteria.targetRefName=refs/heads/{target}"
+                            f"&searchCriteria.status=active"
                         )
-                        if existing_prs and existing_prs[0]._links:
-                            pr_url = existing_prs[0]._links.web.href
-                            return (True, PullRequestResult(
-                                success=True,
-                                pr_url=pr_url,
-                                already_exists=True,
-                            ), "")
+                        search_resp = requests.get(
+                            search_url, auth=auth, timeout=30
+                        )
+                        if search_resp.status_code == 200:
+                            prs = search_resp.json().get("value", [])
+                            if prs:
+                                pr_id = prs[0].get("pullRequestId")
+                                pr_url = (
+                                    f"https://dev.azure.com/{quote(org, safe='')}"
+                                    f"/{project_encoded}/_git/{repository_encoded}"
+                                    f"/pullrequest/{pr_id}"
+                                )
+                                return (
+                                    True,
+                                    PullRequestResult(
+                                        success=True,
+                                        pr_url=pr_url,
+                                        already_exists=True,
+                                    ),
+                                    "",
+                                )
                     except Exception:
                         pass
-                return (False, None, f"Failed to create Azure DevOps pull request: {e}")
+
+                if resp.status_code == 401:
+                    return (
+                        False,
+                        None,
+                        "Azure DevOps authentication failed. Check your PAT or credentials.",
+                    )
+                if resp.status_code == 403:
+                    return (
+                        False,
+                        None,
+                        "Azure DevOps access denied. Ensure your PAT has 'Code (Read & Write)' scope.",
+                    )
+
+                # Try to parse error message from response
+                try:
+                    err_data = resp.json()
+                    err_msg = err_data.get("message", error_body)
+                except Exception:
+                    err_msg = error_body
+
+                return (
+                    False,
+                    None,
+                    f"Azure DevOps API error (HTTP {resp.status_code}): {err_msg}",
+                )
+
+            except requests.exceptions.Timeout:
+                return (False, None, "timeout")
+            except requests.exceptions.ConnectionError as e:
+                return (False, None, f"connection error: {e}")
+            except Exception as e:
+                return (
+                    False,
+                    None,
+                    f"Failed to create Azure DevOps pull request: {e}",
+                )
 
         # Execute with retry logic
         result, last_error = _with_retry(
@@ -2070,7 +2219,7 @@ class WorktreeManager:
                 remote=push_result.get("remote"),
                 branch=push_result.get("branch"),
                 provider=provider,
-                error="Unable to determine git hosting provider. Supported: GitHub, GitLab.",
+                error="Unable to determine git hosting provider. Supported: GitHub, GitLab, Azure DevOps.",
             )
 
         # Combine results
