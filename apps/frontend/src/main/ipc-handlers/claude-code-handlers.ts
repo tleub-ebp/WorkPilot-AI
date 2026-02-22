@@ -249,8 +249,9 @@ async function fetchLatestVersion(currentInstalled?: string | null): Promise<str
     const response = await fetch('https://registry.npmjs.org/@anthropic-ai/claude-code/latest', {
       headers: {
         'Accept': 'application/json',
+        'User-Agent': 'Claude-Code-App/1.0',
       },
-      signal: AbortSignal.timeout(10000), // 10 second timeout
+      signal: AbortSignal.timeout(30000), // 30 second timeout for better reliability
     });
 
     if (!response.ok) {

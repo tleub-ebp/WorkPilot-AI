@@ -429,6 +429,9 @@ export const IPC_CHANNELS = {
   // GitHub PR Logs (for viewing AI review logs)
   GITHUB_PR_GET_LOGS: 'github:pr:getLogs',
 
+  // Universal PR Details (supports both GitHub and Azure DevOps)
+  PR_DETAILS: 'pr:details',
+
   // GitHub PR Memory operations (saves review insights to memory layer)
   GITHUB_PR_MEMORY_GET: 'github:pr:memory:get',        // Get PR review memories
   GITHUB_PR_MEMORY_SEARCH: 'github:pr:memory:search',  // Search PR review memories

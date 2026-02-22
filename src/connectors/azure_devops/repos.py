@@ -23,7 +23,7 @@ from src.connectors.azure_devops.exceptions import (
     AzureDevOpsError,
     RepositoryNotFoundError,
 )
-from src.connectors.azure_devops.models import FileItem, Repository
+from src.connectors.azure_devops.models import FileItem, PullRequest, PullRequestFileChange, Repository
 
 logger = logging.getLogger(__name__)
 
@@ -442,3 +442,211 @@ class AzureReposClient:
             repository_id,
         )
         return pull_request
+
+    def get_pull_request(
+        self,
+        project: str,
+        repository_id: str,
+        pull_request_id: int,
+    ) -> PullRequest:
+        """Get a pull request by its ID.
+
+        Args:
+            project: The project name or identifier.
+            repository_id: The repository name or unique ID.
+            pull_request_id: The pull request ID.
+
+        Returns:
+            A PullRequest object for the requested PR.
+
+        Raises:
+            RepositoryNotFoundError: If the repository does not exist.
+            APIError: If the API call fails unexpectedly.
+        """
+        logger.info(
+            "Getting PR #%d in '%s/%s'.",
+            pull_request_id,
+            project,
+            repository_id,
+        )
+
+        try:
+            git_client = self._get_git_client()
+            api_pr = git_client.get_pull_request(
+                repository_id=repository_id,
+                project=project,
+                pull_request_id=pull_request_id,
+                include_commits=True,
+                include_work_item_refs=True,
+            )
+        except AzureDevOpsError:
+            raise
+        except Exception as exc:
+            error_msg = str(exc).lower()
+            if "404" in error_msg or "not found" in error_msg:
+                raise RepositoryNotFoundError(
+                    repository_id=repository_id, project=project
+                ) from exc
+            raise APIError(
+                f"Failed to get pull request #{pull_request_id} "
+                f"in repository '{repository_id}': {exc}"
+            ) from exc
+
+        pull_request = PullRequest.from_api_response(api_pr)
+        logger.info(
+            "Retrieved PR #%d: '%s' from repository '%s'.",
+            pull_request.pull_request_id,
+            pull_request.title,
+            repository_id,
+        )
+        return pull_request
+
+    def get_pull_request_files(
+        self,
+        project: str,
+        repository_id: str,
+        pull_request_id: int,
+    ) -> list["PullRequestFileChange"]:
+        """Get the file changes for a pull request.
+
+        Args:
+            project: The project name or identifier.
+            repository_id: The repository name or unique ID.
+            pull_request_id: The pull request ID.
+
+        Returns:
+            A list of PullRequestFileChange objects representing all
+            files changed in the PR.
+
+        Raises:
+            RepositoryNotFoundError: If the repository does not exist.
+            APIError: If the API call fails unexpectedly.
+        """
+        logger.info(
+            "Getting file changes for PR #%d in '%s/%s'.",
+            pull_request_id,
+            project,
+            repository_id,
+        )
+
+        try:
+            git_client = self._get_git_client()
+            api_changes = git_client.get_pull_request_commits(
+                repository_id=repository_id,
+                project=project,
+                pull_request_id=pull_request_id,
+            )
+            
+            # Get the iteration changes to see file differences
+            api_iterations = git_client.get_pull_request_iterations(
+                repository_id=repository_id,
+                project=project,
+                pull_request_id=pull_request_id,
+            )
+            
+            # Get the latest iteration's changes
+            latest_iteration = api_iterations[-1] if api_iterations else None
+            if not latest_iteration:
+                return []
+                
+            api_changes = git_client.get_pull_request_iteration_changes(
+                repository_id=repository_id,
+                project=project,
+                pull_request_id=pull_request_id,
+                iteration_id=latest_iteration.id,
+            )
+            
+        except AzureDevOpsError:
+            raise
+        except Exception as exc:
+            error_msg = str(exc).lower()
+            if "404" in error_msg or "not found" in error_msg:
+                raise RepositoryNotFoundError(
+                    repository_id=repository_id, project=project
+                ) from exc
+            raise APIError(
+                f"Failed to get pull request files for PR #{pull_request_id} "
+                f"in repository '{repository_id}': {exc}"
+            ) from exc
+
+        file_changes = [
+            PullRequestFileChange.from_api_response(change)
+            for change in api_changes.change_entries
+        ]
+
+        logger.info(
+            "Retrieved %d file changes for PR #%d in repository '%s'.",
+            len(file_changes),
+            pull_request_id,
+            repository_id,
+        )
+        return file_changes
+
+    def get_pull_request_details(
+        self,
+        project: str,
+        repository_id: str,
+        pull_request_id: int,
+    ) -> dict:
+        """Get comprehensive pull request details including files.
+
+        Args:
+            project: The project name or identifier.
+            repository_id: The repository name or unique ID.
+            pull_request_id: The pull request ID.
+
+        Returns:
+            A dictionary containing PR details and file changes.
+
+        Raises:
+            RepositoryNotFoundError: If the repository does not exist.
+            APIError: If the API call fails unexpectedly.
+        """
+        logger.info(
+            "Getting comprehensive details for PR #%d in '%s/%s'.",
+            pull_request_id,
+            project,
+            repository_id,
+        )
+
+        # Get PR details
+        pr = self.get_pull_request(project, repository_id, pull_request_id)
+        
+        # Get file changes
+        files = self.get_pull_request_files(project, repository_id, pull_request_id)
+        
+        # Calculate statistics
+        additions = sum(file.additions for file in files)
+        deletions = sum(file.deletions for file in files)
+        changes = sum(file.changes for file in files)
+        
+        return {
+            "id": pr.pull_request_id,
+            "title": pr.title,
+            "description": pr.description,
+            "status": pr.status,
+            "sourceRefName": pr.source_branch,
+            "targetRefName": pr.target_branch,
+            "createdBy": {
+                "displayName": pr.created_by
+            } if pr.created_by else None,
+            "creationDate": pr.creation_date.isoformat() if pr.creation_date else None,
+            "isDraft": pr.is_draft,
+            "mergeStatus": pr.merge_status,
+            "url": pr.url,
+            "repositoryId": pr.repository_id,
+            "additions": additions,
+            "deletions": deletions,
+            "changed_files": len(files),
+            "files": [
+                {
+                    "path": file.path,
+                    "changeType": file.change_type,
+                    "additions": file.additions,
+                    "deletions": file.deletions,
+                    "changes": file.changes,
+                    "oldPath": file.old_path
+                }
+                for file in files
+            ]
+        }

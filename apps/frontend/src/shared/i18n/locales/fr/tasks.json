@@ -49,7 +49,11 @@
   "tooltips": {
     "archiveTask": "Archiver la tâche",
     "archiveAllDone": "Archiver toutes les tâches terminées",
-    "viewPR": "Ouvrir la pull request dans le navigateur"
+    "viewPR": "Ouvrir la pull request dans le navigateur",
+    "viewPRFiles": "Voir les fichiers modifiés"
+  },
+  "prFiles": {
+    "short": "Fichiers"
   },
   "creation": {
     "title": "Créer une nouvelle tâche",

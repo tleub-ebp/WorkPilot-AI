@@ -55,6 +55,10 @@
     "renameProfileAriaLabel": "Renommer le profil",
     "deleteProfileAriaLabel": "Supprimer le profil"
   },
+  "diffViewer": {
+    "noContent": "Aucun diff disponible pour ce fichier",
+    "noContentHint": "Ceci peut être un fichier binaire ou le diff n'est pas disponible"
+  },
   "buttons": {
     "save": "Enregistrer",
     "cancel": "Annuler",

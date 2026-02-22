@@ -36,6 +36,7 @@ import { useKanbanSettingsStore, COLLAPSED_COLUMN_WIDTH, DEFAULT_COLUMN_WIDTH, M
 import { useToast } from '../hooks/use-toast';
 import { WorktreeCleanupDialog } from './WorktreeCleanupDialog';
 import { BulkPRDialog } from './BulkPRDialog';
+import { PRFilesModal } from './PRFilesModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -101,6 +102,7 @@ interface DroppableColumnProps {
   onDeselectAll?: () => void;
   onToggleSelect?: (taskId: string) => void;
   onDeleteTask?: (taskId: string) => void;
+  onViewPRFiles?: (prUrl: string, taskId: string) => void;
   // Collapse props
   isCollapsed?: boolean;
   onToggleCollapsed?: () => void;
@@ -161,14 +163,15 @@ function droppableColumnPropsAreEqual(
   if (prevProps.onSelectAll !== nextProps.onSelectAll) return false;
   if (prevProps.onDeselectAll !== nextProps.onDeselectAll) return false;
   if (prevProps.onToggleSelect !== nextProps.onToggleSelect) return false;
+  if (prevProps.onToggleSelect !== nextProps.onToggleSelect) return false;
   if (prevProps.isCollapsed !== nextProps.isCollapsed) return false;
-  if (prevProps.onToggleCollapsed !== nextProps.onToggleCollapsed) return false;
   if (prevProps.columnWidth !== nextProps.columnWidth) return false;
   if (prevProps.isResizing !== nextProps.isResizing) return false;
   if (prevProps.onResizeStart !== nextProps.onResizeStart) return false;
   if (prevProps.onResizeEnd !== nextProps.onResizeEnd) return false;
   if (prevProps.isLocked !== nextProps.isLocked) return false;
   if (prevProps.onToggleLocked !== nextProps.onToggleLocked) return false;
+  if (prevProps.onViewPRFiles !== nextProps.onViewPRFiles) return false;
 
   // Compare selection props
   const prevSelected = prevProps.selectedTaskIds;
@@ -239,7 +242,7 @@ const getEmptyStateContent = (status: TaskStatus, t: (key: string) => string): {
   }
 };
 
-const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskClick, onStatusChange, isOver, onAddClick, onArchiveAll, onQueueSettings, onQueueAll, maxParallelTasks, archivedCount, showArchived, onToggleArchived, selectedTaskIds, onSelectAll, onDeselectAll, onToggleSelect, onDeleteTask, isCollapsed, onToggleCollapsed, columnWidth, isResizing, onResizeStart, onResizeEnd, isLocked, onToggleLocked }: DroppableColumnProps) {
+const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskClick, onStatusChange, isOver, onAddClick, onArchiveAll, onQueueSettings, onQueueAll, maxParallelTasks, archivedCount, showArchived, onToggleArchived, selectedTaskIds, onSelectAll, onDeselectAll, onToggleSelect, onDeleteTask, onViewPRFiles, isCollapsed, onToggleCollapsed, columnWidth, isResizing, onResizeStart, onResizeEnd, isLocked, onToggleLocked }: DroppableColumnProps) {
   const { t } = useTranslation(['tasks', 'common']);
   const { setNodeRef } = useDroppable({
     id: status
@@ -307,6 +310,20 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
     return handlers;
   }, [tasks, onDeleteTask]);
 
+  // Create stable onViewPRFiles handlers for each task
+  const onViewPRFilesHandlers = useMemo(() => {
+    if (!onViewPRFiles) return null;
+    const handlers = new Map<string, () => void>();
+    tasks.forEach((task) => {
+      handlers.set(task.id, () => {
+        if (task.metadata?.prUrl) {
+          onViewPRFiles(task.metadata.prUrl, task.id);
+        }
+      });
+    });
+    return handlers;
+  }, [tasks, onViewPRFiles]);
+
   // Memoize task card elements to prevent recreation on every render
   const taskCards = useMemo(() => {
     if (tasks.length === 0) return null;
@@ -321,9 +338,10 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
         isSelected={isSelectable ? selectedTaskIds?.has(task.id) : undefined}
         onToggleSelect={onToggleSelectHandlers?.get(task.id)}
         onDelete={onDeleteHandlers.get(task.id)}
+        onViewPRFiles={onViewPRFilesHandlers?.get(task.id)}
       />
     ));
-  }, [tasks, onClickHandlers, onStatusChangeHandlers, onToggleSelectHandlers, onDeleteHandlers, selectedTaskIds]);
+  }, [tasks, onClickHandlers, onStatusChangeHandlers, onToggleSelectHandlers, onDeleteHandlers, onViewPRFilesHandlers, selectedTaskIds]);
 
   const getColumnBorderColor = (): string => {
     switch (status) {
@@ -807,6 +825,11 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     source: null,
   });
 
+  // PR Files Modal state
+  const [prFilesModalOpen, setPrFilesModalOpen] = useState(false);
+  const [selectedPRUrl, setSelectedPRUrl] = useState<string>('');
+  const [selectedTaskId, setSelectedTaskId] = useState<string>('');
+
   // Calculate collapsed column count for "Expand All" button
   const collapsedColumnCount = useMemo(() => {
     if (!columnPreferences) return 0;
@@ -1001,6 +1024,13 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       }
     }
   }, [selectedTaskIds, deselectAllTasks, toast, t]);
+
+  // Handle viewing PR files
+  const handleViewPRFiles = useCallback((prUrl: string, taskId: string) => {
+    setSelectedPRUrl(prUrl);
+    setSelectedTaskId(taskId);
+    setPrFilesModalOpen(true);
+  }, []);
 
   const handleArchiveAll = useCallback(async () => {
     // Get projectId from the first task (read from store to avoid stale closure)
@@ -1929,6 +1959,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
               onDeselectAll={deselectAllTasks}
               onToggleSelect={toggleTaskSelection}
               onDeleteTask={handleDeleteTask}
+              onViewPRFiles={handleViewPRFiles}
               isCollapsed={columnPreferences?.[status]?.isCollapsed}
               onToggleCollapsed={() => handleToggleColumnCollapsed(status)}
               columnWidth={columnPreferences?.[status]?.width}
@@ -2152,6 +2183,14 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         targetColumn={importConfirmDialog.targetColumn}
         isImporting={importConfirmDialog.isImporting}
         onConfirm={handleImportConfirm}
+      />
+
+      {/* PR Files Modal */}
+      <PRFilesModal
+        open={prFilesModalOpen}
+        onOpenChange={setPrFilesModalOpen}
+        prUrl={selectedPRUrl}
+        taskId={selectedTaskId}
       />
     </div>
   );

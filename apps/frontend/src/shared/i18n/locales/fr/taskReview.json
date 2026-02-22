@@ -69,6 +69,27 @@
   "pr": {
     "title": "Créer une Pull Request",
     "description": "Pousser la branche et créer une pull request pour \"{{taskTitle}}\"",
+    "files": {
+      "title": "Fichiers de la Pull Request",
+      "errorTitle": "Erreur des Fichiers de la Pull Request",
+      "errorDescription": "Une erreur s'est produite lors de la récupération des fichiers de la pull request.",
+      "loading": "Chargement des fichiers de la pull request...",
+      "openInGitHub": "Ouvrir dans GitHub",
+      "openInBrowser": "Ouvrir dans le navigateur",
+      "overview": "Aperçu",
+      "files": "Fichiers",
+      "diff": "Diff",
+      "additions": "Ajouts",
+      "deletions": "Suppressions",
+      "changed_files": "Fichiers modifiés",
+      "totalChanges": "Modifications totales",
+      "details": "Détails",
+      "author": "Auteur",
+      "sourceBranch": "Branche source",
+      "targetBranch": "Branche cible",
+      "state": "État",
+      "description": "Description"
+    },
     "errors": {
       "unknown": "Une erreur inconnue s'est produite lors de la création de la pull request",
       "invalidBranchName": "Le nom de branche contient des caractères invalides. Utilisez uniquement des lettres, chiffres, tirets (-), underscores (_) et barres obliques (/).",
@@ -129,6 +150,7 @@
     "viewMode": "Vue",
     "flatList": "Liste plate",
     "treeView": "Vue arborescente",
+    "backToList": "Retour à la liste",
     "status": {
       "added": "ajouté",
       "deleted": "supprimé",

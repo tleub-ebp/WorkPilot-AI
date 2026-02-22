@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../ui/select';
+import { DiffViewer } from '../../ui/diff-viewer';
 import { cn } from '../../../lib/utils';
 import type { WorktreeDiff, WorktreeDiffFile } from '../../../../shared/types';
 
@@ -106,11 +107,13 @@ function FileTreeNode({
   depth,
   defaultExpanded,
   t,
+  onFileClick,
 }: {
   node: TreeNode;
   depth: number;
   defaultExpanded: boolean;
   t: (key: string) => string;
+  onFileClick?: (file: WorktreeDiffFile) => void;
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
@@ -150,6 +153,7 @@ function FileTreeNode({
               depth={depth + 1}
               defaultExpanded={false}
               t={t}
+              onFileClick={onFileClick}
             />
           ))}
       </>
@@ -159,8 +163,9 @@ function FileTreeNode({
   const file = node.file!;
   return (
     <div
-      className="flex items-center justify-between p-1.5 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+      className="flex items-center justify-between p-1.5 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer"
       style={{ paddingLeft: depth * 16 + 8 }}
+      onClick={() => onFileClick?.(file)}
     >
       <div className="flex items-center gap-1.5 min-w-0 flex-1">
         <span className="w-3.5 shrink-0" />
@@ -216,6 +221,7 @@ export function DiffViewDialog({
 }: DiffViewDialogProps) {
   const { t } = useTranslation(['taskReview']);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [selectedFile, setSelectedFile] = useState<WorktreeDiffFile | null>(null);
 
   const tree = useMemo(
     () => (worktreeDiff?.files ? buildFileTree(worktreeDiff.files) : []),
@@ -224,16 +230,48 @@ export function DiffViewDialog({
 
   const hasFiles = worktreeDiff?.files && worktreeDiff.files.length > 0;
 
+  const handleFileClick = useCallback((file: WorktreeDiffFile) => {
+    console.log('[DiffViewDialog] File clicked:', file.path);
+    console.log('[DiffViewDialog] File data:', file);
+    console.log('[DiffViewDialog] File patch length:', file.patch?.length || 0);
+    console.log('[DiffViewDialog] File patch preview:', file.patch?.substring(0, 200) || 'No patch');
+    console.log('[DiffViewDialog] File patch type:', typeof file.patch);
+    console.log('[DiffViewDialog] File patch is undefined:', file.patch === undefined);
+    console.log('[DiffViewDialog] File patch is null:', file.patch === null);
+    console.log('[DiffViewDialog] File patch is empty string:', file.patch === '');
+    setSelectedFile(file);
+  }, []);
+
+  const handleBackToList = useCallback(() => {
+    setSelectedFile(null);
+  }, []);
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+      <AlertDialogContent className="max-w-7xl max-h-[95vh] w-[95vw] h-[90vh] overflow-hidden flex flex-col">
         <AlertDialogHeader>
           <div className="flex items-center justify-between">
             <AlertDialogTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5 text-purple-400" />
-              {t('taskReview:diff.title')}
+              {selectedFile ? (
+                <>
+                  <button
+                    onClick={handleBackToList}
+                    className="mr-2 p-1 hover:bg-muted rounded transition-colors"
+                    title={t('taskReview:diff.backToList')}
+                  >
+                    <ChevronRight className="h-4 w-4 rotate-180" />
+                  </button>
+                  <FileCode className="h-5 w-5 text-blue-400" />
+                  {selectedFile.path.split('/').pop()}
+                </>
+              ) : (
+                <>
+                  <Eye className="h-5 w-5 text-purple-400" />
+                  {t('taskReview:diff.title')}
+                </>
+              )}
             </AlertDialogTitle>
-            {hasFiles && (
+            {!selectedFile && hasFiles && (
               <Select
                 value={viewMode}
                 onValueChange={(v) => setViewMode(v as ViewMode)}
@@ -253,18 +291,29 @@ export function DiffViewDialog({
             )}
           </div>
           <AlertDialogDescription>
-            {worktreeDiff?.summary || t('taskReview:diff.noChanges')}
+            {selectedFile 
+              ? `${selectedFile.path} - ${t(`taskReview:diff.status.${selectedFile.status}`)} (+${selectedFile.additions}, -${selectedFile.deletions})`
+              : worktreeDiff?.summary || t('taskReview:diff.noChanges')
+            }
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="flex-1 overflow-auto min-h-0 -mx-6 px-6">
-          {hasFiles ? (
+          {selectedFile ? (
+            <div className="h-full">
+              <DiffViewer 
+                patch={selectedFile.patch || ''} 
+                className="h-full max-h-[75vh] overflow-auto border rounded"
+              />
+            </div>
+          ) : hasFiles ? (
             viewMode === 'list' ? (
               <div className="space-y-2">
                 {worktreeDiff!.files.map((file, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-2 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                    className="flex items-center justify-between p-2 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer"
+                    onClick={() => handleFileClick(file)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <FileCode
@@ -315,6 +364,7 @@ export function DiffViewDialog({
                     depth={0}
                     defaultExpanded={true}
                     t={t}
+                    onFileClick={handleFileClick}
                   />
                 ))}
               </div>

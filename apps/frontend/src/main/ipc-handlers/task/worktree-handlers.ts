@@ -1843,6 +1843,7 @@ export function registerWorktreeHandlers(
 
         let numstat = '';
         let nameStatus = '';
+        let fullDiff = '';
         try {
           // Get numstat for additions/deletions per file (cross-platform)
           numstat = execFileSync(getToolPath('git'), ['diff', '--numstat', `${baseBranch}...HEAD`], {
@@ -1858,6 +1859,16 @@ export function registerWorktreeHandlers(
             stdio: ['pipe', 'pipe', 'pipe']
           }).trim();
 
+          // Get full diff for patch content
+          fullDiff = execFileSync(getToolPath('git'), ['diff', `${baseBranch}...HEAD`], {
+            cwd: worktreePath,
+            encoding: 'utf-8',
+            stdio: ['pipe', 'pipe', 'pipe']
+          }).trim();
+
+          console.log(`[DEBUG] Full diff length: ${fullDiff.length}`);
+          console.log(`[DEBUG] Full diff preview:`, fullDiff.substring(0, 500));
+
           // Parse name-status to get file statuses
           const statusMap: Record<string, 'added' | 'modified' | 'deleted' | 'renamed'> = {};
           nameStatus.split('\n').filter(Boolean).forEach((line: string) => {
@@ -1872,14 +1883,63 @@ export function registerWorktreeHandlers(
             }
           });
 
-          // Parse numstat for additions/deletions
+          // Function to extract patch for a specific file from full diff
+          const extractFilePatch = (filePath: string, fileStatus: string): string => {
+            const lines = fullDiff.split('\n');
+            let fileLines: string[] = [];
+            let foundFile = false;
+            
+            for (let i = 0; i < lines.length; i++) {
+              const line = lines[i];
+              
+              // Look for the diff header for this file
+              if (line.startsWith('diff --git')) {
+                // Extract file paths from the diff header
+                const match = line.match(/diff --git a\/(.*) b\/(.*)/);
+                if (match && (match[1] === filePath || match[2] === filePath)) {
+                  foundFile = true;
+                  fileLines = [line];
+                  continue;
+                }
+              }
+              
+              // If we found the file and hit the next file, stop
+              if (foundFile && line.startsWith('diff --git')) {
+                // Check if this is a new file's diff
+                const match = line.match(/diff --git a\/(.*) b\/(.*)/);
+                if (match && (match[1] !== filePath && match[2] !== filePath)) {
+                  break;
+                }
+              }
+              
+              // Add lines if we're in this file's section
+              if (foundFile) {
+                fileLines.push(line);
+              }
+            }
+            
+            const patch = fileLines.join('\n');
+            console.log(`[DEBUG] Extracting patch for ${filePath}:`, {
+              foundFile,
+              patchLength: patch.length,
+              patchPreview: patch.substring(0, 200)
+            });
+            
+            return patch;
+          };
+
+          // Parse numstat for additions/deletions and create file objects
           numstat.split('\n').filter(Boolean).forEach((line: string) => {
             const [adds, dels, filePath] = line.split('\t');
+            const fileStatus = statusMap[filePath] || 'modified';
+            const patch = extractFilePatch(filePath, fileStatus);
+            
             files.push({
               path: filePath,
-              status: statusMap[filePath] || 'modified',
+              status: fileStatus,
               additions: parseInt(adds, 10) || 0,
-              deletions: parseInt(dels, 10) || 0
+              deletions: parseInt(dels, 10) || 0,
+              patch: patch || undefined // Only include patch if it exists
             });
           });
         } catch (diffError) {
