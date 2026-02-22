@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { debugLog } from '@shared/utils/debug-logger';
 import {
@@ -60,6 +60,7 @@ import { AzureDevOpsSetupModal } from './components/AzureDevOpsSetupModal';
 import { useProjectStore, loadProjects, addProject, initializeProject, removeProject } from './stores/project-store';
 import { useTaskStore, loadTasks } from './stores/task-store';
 import { useSettingsStore, loadSettings, loadProfiles, saveSettings } from './stores/settings-store';
+import { saveActiveView } from './stores/settings-store';
 import { useClaudeProfileStore, loadClaudeProfiles } from './stores/claude-profile-store';
 import { useTerminalStore, restoreTerminalSessions } from './stores/terminal-store';
 import { initializeGitHubListeners } from './stores/github';
@@ -169,6 +170,8 @@ export function App() {
   const [settingsInitialSection, setSettingsInitialSection] = useState<AppSection | undefined>(undefined);
   const [settingsInitialProjectSection, setSettingsInitialProjectSection] = useState<ProjectSettingsSection | undefined>(undefined);
   const [activeView, setActiveView] = useState<SidebarView>('kanban');
+  const [hasRestoredView, setHasRestoredView] = useState(false);
+  const isRestoringView = useRef(false);
   const [isOnboardingWizardOpen, setIsOnboardingWizardOpen] = useState(false);
   const [isVersionWarningModalOpen, setIsVersionWarningModalOpen] = useState(false);
   const [isRefreshingTasks, setIsRefreshingTasks] = useState(false);
@@ -185,6 +188,26 @@ export function App() {
     onOpenSettings: () => setIsSettingsDialogOpen(true),
     onNavigate: (view) => setActiveView(view as SidebarView),
   });
+
+  // Sauvegarder la vue active lorsqu'elle change (mais pas lors de la restauration)
+  useEffect(() => {
+    if (!isRestoringView.current) {
+      saveActiveView(activeView);
+    }
+  }, [activeView]);
+
+  // Restaurer la vue active une seule fois au chargement initial
+  useEffect(() => {
+    if (!settingsLoading && !hasRestoredView && settings.activeView) {
+      setHasRestoredView(true);
+      isRestoringView.current = true;
+      setActiveView(settings.activeView);
+      // Réinitialiser le flag après un court délai pour permettre les futures sauvegardes
+      setTimeout(() => {
+        isRestoringView.current = false;
+      }, 100);
+    }
+  }, [settingsLoading, settings.activeView]);
 
   // Remove project confirmation state
   const [showRemoveProjectDialog, setShowRemoveProjectDialog] = useState(false);

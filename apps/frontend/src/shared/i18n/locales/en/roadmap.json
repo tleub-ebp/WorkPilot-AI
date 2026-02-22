@@ -1,0 +1,158 @@
+{
+  "header": {
+    "competitorAnalysis": "Competitor Analysis",
+    "clickToViewDetailedAnalysis": "Click to view detailed analysis",
+    "analyzedCompetitors": "Analyzed {{count}} competitors with {{painPoints}} pain points identified",
+    "addFeature": "Add Feature",
+    "addNewFeature": "Add a new feature to the roadmap",
+    "regenerateRoadmap": "Regenerate Roadmap",
+    "target": "Target",
+    "morePersonas": "+{{count}} more personas",
+    "secondaryPersonas": "Secondary Personas:",
+    "features": "features",
+    "phases": "phases"
+  },
+  "emptyState": {
+    "title": "No Roadmap Yet",
+    "description": "Generate an AI-powered roadmap that understands your project's target audience and creates a strategic feature plan.",
+    "generateButton": "Generate Roadmap"
+  },
+  "tabs": {
+    "kanban": "Kanban",
+    "timeline": "Timeline",
+    "table": "Table"
+  },
+  "features": {
+    "title": "Features",
+    "noFeatures": "No features yet",
+    "addFeature": "Add Feature",
+    "deleteFeature": "Delete Feature",
+    "convertToSpec": "Convert to Spec",
+    "goToTask": "Go to Task",
+    "priority": "Priority",
+    "status": "Status",
+    "phase": "Phase",
+    "description": "Description",
+    "acceptanceCriteria": "Acceptance Criteria",
+    "dependencies": "Dependencies",
+    "effort": "Effort",
+    "value": "Value",
+    "risk": "Risk"
+  },
+  "phases": {
+    "title": "Phases",
+    "phase": "Phase",
+    "noPhases": "No phases defined",
+    "duration": "Duration",
+    "startDate": "Start Date",
+    "endDate": "End Date"
+  },
+  "dialogs": {
+    "addFeature": {
+      "title": "Add New Feature",
+      "description": "Description",
+      "name": "Feature Name",
+      "priority": "Priority",
+      "phase": "Phase",
+      "acceptanceCriteria": "Acceptance Criteria",
+      "dependencies": "Dependencies",
+      "effort": "Effort (story points)",
+      "value": "Business Value",
+      "risk": "Risk Level",
+      "cancel": "Cancel",
+      "add": "Add Feature",
+      "addSuccess": "Feature added successfully"
+    },
+    "deleteFeature": {
+      "title": "Delete Feature",
+      "message": "Are you sure you want to delete '{{featureName}}'? This action cannot be undone.",
+      "cancel": "Cancel",
+      "delete": "Delete Feature",
+      "deleteSuccess": "Feature deleted successfully"
+    },
+    "featureDetails": {
+      "title": "Feature Details",
+      "close": "Close",
+      "convertToSpec": "Convert to Spec",
+      "goToTask": "Go to Task",
+      "delete": "Delete Feature"
+    }
+  },
+  "competitorAnalysis": {
+    "title": "Competitor Analysis",
+    "noAnalysis": "No competitor analysis available",
+    "lastUpdated": "Last updated: {{date}}",
+    "competitors": "Competitors",
+    "painPoints": "Pain Points",
+    "opportunities": "Opportunities",
+    "threats": "Threats",
+    "viewAnalysis": "View Analysis",
+    "runNewAnalysis": "Run New Analysis",
+    "useExistingAnalysis": "Use Existing Analysis",
+    "skipAnalysis": "Skip Analysis",
+    "dialog": {
+      "title": "Enable Competitor Analysis?",
+      "description": "Enhance your roadmap with insights from competitor products",
+      "whatItDoes": "What competitor analysis does:",
+      "identifiesCompetitors": "Identifies 3-5 main competitors based on your project type",
+      "searchesForFeedback": "Searches app stores, forums, and social media for user feedback and pain points",
+      "suggestsFeatures": "Suggests features that address gaps in competitor products",
+      "webSearchesTitle": "Web searches will be performed",
+      "webSearchesDescription": "This feature will perform web searches to gather competitor information. Your project name and type will be used in search queries. No code or sensitive data is shared.",
+      "optionalInfo": "You can generate a roadmap without competitor analysis if you prefer. The roadmap will still be based on your project structure and best practices.",
+      "skipButton": "No, Skip Analysis",
+      "enableButton": "Yes, Enable Analysis"
+    }
+  },
+  "generation": {
+    "title": "Generating Roadmap",
+    "analyzing": "Analyzing project requirements...",
+    "generating": "Generating roadmap features...",
+    "organizing": "Organizing into phases...",
+    "finalizing": "Finalizing roadmap...",
+    "cancel": "Cancel Generation",
+    "stop": "Stop Generation"
+  },
+  "save": {
+    "title": "Save Roadmap",
+    "saveSuccess": "Roadmap saved successfully",
+    "saveError": "Failed to save roadmap",
+    "unsavedChanges": "You have unsaved changes",
+    "save": "Save",
+    "discard": "Discard Changes"
+  },
+  "filters": {
+    "title": "Filters",
+    "allPriorities": "All Priorities",
+    "allStatuses": "All Statuses",
+    "allPhases": "All Phases",
+    "highPriority": "High Priority",
+    "mediumPriority": "Medium Priority",
+    "lowPriority": "Low Priority",
+    "notStarted": "Not Started",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "blocked": "Blocked"
+  },
+  "sort": {
+    "title": "Sort",
+    "sortBy": "Sort by",
+    "priority": "Priority",
+    "name": "Name",
+    "phase": "Phase",
+    "status": "Status",
+    "value": "Value",
+    "effort": "Effort",
+    "ascending": "Ascending",
+    "descending": "Descending"
+  },
+  "stats": {
+    "totalFeatures": "Total Features",
+    "completedFeatures": "Completed Features",
+    "inProgressFeatures": "In Progress Features",
+    "notStartedFeatures": "Not Started Features",
+    "totalPhases": "Total Phases",
+    "completedPhases": "Completed Phases",
+    "currentPhase": "Current Phase"
+  }
+}

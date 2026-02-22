@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   BookOpen,
   Play,
@@ -54,7 +55,7 @@ interface DocumentationViewProps {
 // Coverage gauge
 // ---------------------------------------------------------------------------
 
-function CoverageGauge({ pct }: { pct: number }) {
+function CoverageGauge({ pct, t }: { pct: number; t: (key: string) => string }) {
   const color =
     pct >= 80 ? 'text-emerald-500' : pct >= 50 ? 'text-amber-500' : 'text-red-500';
   const bgColor =
@@ -86,11 +87,11 @@ function CoverageGauge({ pct }: { pct: number }) {
         </div>
       </div>
       <div>
-        <p className="text-sm font-semibold text-foreground">Documentation Coverage</p>
+        <p className="text-sm font-semibold text-foreground">{t('documentation:coverage.title')}</p>
         <div className="mt-1 flex items-center gap-1.5">
           <div className={cn('h-2 w-2 rounded-full', bgColor)} />
           <span className="text-xs text-muted-foreground">
-            {pct >= 80 ? 'Well documented' : pct >= 50 ? 'Needs improvement' : 'Poorly documented'}
+            {pct >= 80 ? t('documentation:coverage.wellDocumented') : pct >= 50 ? t('documentation:coverage.needsImprovement') : t('documentation:coverage.poorlyDocumented')}
           </span>
         </div>
       </div>
@@ -103,6 +104,7 @@ function CoverageGauge({ pct }: { pct: number }) {
 // ---------------------------------------------------------------------------
 
 function CopyButton({ text }: { text: string }) {
+  const { t } = useTranslation(['documentation']);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -114,7 +116,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <Button variant="ghost" size="sm" onClick={handleCopy}>
       {copied ? <Check className="h-3.5 w-3.5 mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
-      {copied ? 'Copied' : 'Copy'}
+      {copied ? t('documentation:actions.copied') : t('documentation:actions.copy')}
     </Button>
   );
 }
@@ -124,6 +126,7 @@ function CopyButton({ text }: { text: string }) {
 // ---------------------------------------------------------------------------
 
 export function DocumentationView({ projectId }: DocumentationViewProps) {
+  const { t } = useTranslation(['documentation']);
   const [filePath, setFilePath] = useState('');
   const [dirPath, setDirPath] = useState('');
   const [coverage, setCoverage] = useState<CoverageResult | null>(null);
@@ -150,10 +153,10 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
       if (data.success) {
         setCoverage(data.coverage);
       } else {
-        setError(data.error || 'Coverage check failed');
+        setError(data.error || t('documentation:errors.coverageFailed'));
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Network error');
+      setError(e instanceof Error ? e.message : t('documentation:errors.networkError'));
     } finally {
       setLoading(false);
     }
@@ -174,10 +177,10 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
       if (data.success) {
         setGeneratedDocs(data.result);
       } else {
-        setError(data.error || 'Docstring generation failed');
+        setError(data.error || t('documentation:errors.docstringFailed'));
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Network error');
+      setError(e instanceof Error ? e.message : t('documentation:errors.networkError'));
     } finally {
       setLoadingDocs(false);
     }
@@ -198,10 +201,10 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
       if (data.success) {
         setReadmeContent(data.result?.readme_content || data.result?.readme || '');
       } else {
-        setError(data.error || 'README generation failed');
+        setError(data.error || t('documentation:errors.readmeFailed'));
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Network error');
+      setError(e instanceof Error ? e.message : t('documentation:errors.networkError'));
     } finally {
       setLoadingReadme(false);
     }
@@ -214,9 +217,9 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
         <div className="flex items-center gap-3">
           <BookOpen className="h-6 w-6 text-primary" />
           <div>
-            <h1 className="text-xl font-bold text-foreground">Documentation Agent</h1>
+            <h1 className="text-xl font-bold text-foreground">{t('documentation:title')}</h1>
             <p className="text-sm text-muted-foreground">
-              Check coverage, generate docstrings, and create READMEs
+              {t('documentation:description')}
             </p>
           </div>
         </div>
@@ -224,17 +227,17 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
         {/* Coverage check */}
         <Card>
           <CardContent className="p-5 space-y-3">
-            <label className="text-sm font-medium text-foreground">Check Documentation Coverage</label>
+            <label className="text-sm font-medium text-foreground">{t('documentation:coverage.checkLabel')}</label>
             <div className="flex gap-2">
               <Input
                 value={filePath}
                 onChange={(e) => setFilePath(e.target.value)}
-                placeholder="Path to Python file (e.g., src/connectors/jira/connector.py)"
+                placeholder={t('documentation:coverage.filePathPlaceholder')}
                 className="font-mono text-xs"
               />
               <Button onClick={handleCheckCoverage} disabled={loading || !filePath.trim()}>
                 {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
-                Check
+                {t('documentation:actions.check')}
               </Button>
             </div>
             <Button
@@ -243,7 +246,7 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
               disabled={loadingDocs || !filePath.trim()}
             >
               {loadingDocs ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
-              Generate Docstrings
+              {t('documentation:actions.generateDocstrings')}
             </Button>
           </CardContent>
         </Card>
@@ -251,17 +254,17 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
         {/* README generation */}
         <Card>
           <CardContent className="p-5 space-y-3">
-            <label className="text-sm font-medium text-foreground">Generate README</label>
+            <label className="text-sm font-medium text-foreground">{t('documentation:readme.generateLabel')}</label>
             <div className="flex gap-2">
               <Input
                 value={dirPath}
                 onChange={(e) => setDirPath(e.target.value)}
-                placeholder="Path to module directory (e.g., src/connectors/jira/)"
+                placeholder={t('documentation:readme.dirPathPlaceholder')}
                 className="font-mono text-xs"
               />
               <Button onClick={handleGenerateReadme} disabled={loadingReadme || !dirPath.trim()}>
                 {loadingReadme ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
-                Generate
+                {t('documentation:actions.generate')}
               </Button>
             </div>
           </CardContent>
@@ -282,19 +285,19 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardContent className="p-5">
-                <CoverageGauge pct={coverage.coverage_pct} />
+                <CoverageGauge pct={coverage.coverage_pct} t={t} />
                 <div className="mt-4 grid grid-cols-3 gap-4 text-center">
                   <div>
                     <p className="text-lg font-bold text-foreground">{coverage.documented}</p>
-                    <p className="text-xs text-muted-foreground">Documented</p>
+                    <p className="text-xs text-muted-foreground">{t('documentation:coverage.documented')}</p>
                   </div>
                   <div>
                     <p className="text-lg font-bold text-amber-500">{coverage.partial}</p>
-                    <p className="text-xs text-muted-foreground">Partial</p>
+                    <p className="text-xs text-muted-foreground">{t('documentation:coverage.partial')}</p>
                   </div>
                   <div>
                     <p className="text-lg font-bold text-red-500">{coverage.missing}</p>
-                    <p className="text-xs text-muted-foreground">Missing</p>
+                    <p className="text-xs text-muted-foreground">{t('documentation:coverage.missing')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -303,7 +306,7 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
             {coverage.symbols && coverage.symbols.length > 0 && (
               <Card>
                 <CardContent className="p-5">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Symbols</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-3">{t('documentation:symbols.title')}</h3>
                   <div className="space-y-1.5 max-h-60 overflow-y-auto">
                     {coverage.symbols.map((sym, idx) => (
                       <div key={idx} className="flex items-center gap-2 text-xs">
@@ -330,7 +333,7 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
           <Card>
             <CardContent className="p-5">
               <h3 className="text-sm font-semibold text-foreground mb-4">
-                Generated Docstrings ({generatedDocs.generated_docs.length})
+                {t('documentation:docstrings.title', { count: generatedDocs.generated_docs.length })}
               </h3>
               <div className="space-y-4">
                 {generatedDocs.generated_docs.map((doc, idx) => (
@@ -359,7 +362,7 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
           <Card>
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-foreground">Generated README.md</h3>
+                <h3 className="text-sm font-semibold text-foreground">{t('documentation:readme.title')}</h3>
                 <CopyButton text={readmeContent} />
               </div>
               <pre className="rounded-md bg-secondary/50 p-4 text-xs font-mono text-muted-foreground overflow-x-auto whitespace-pre-wrap max-h-96 overflow-y-auto">

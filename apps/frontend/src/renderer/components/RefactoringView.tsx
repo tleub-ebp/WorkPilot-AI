@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Wand2,
   Play,
@@ -68,6 +69,7 @@ const RISK_CONFIG: Record<string, { color: string; bg: string }> = {
 // ---------------------------------------------------------------------------
 
 export function RefactoringView({ projectId }: RefactoringViewProps) {
+  const { t } = useTranslation(['refactoring']);
   const [source, setSource] = useState('');
   const [smells, setSmells] = useState<CodeSmell[]>([]);
   const [proposals, setProposals] = useState<RefactoringProposal[]>([]);
@@ -102,10 +104,10 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
       if (data.success) {
         setSmells(data.smells || []);
       } else {
-        setError(data.error || 'Detection failed');
+        setError(data.error || t('refactoring:errors.detectionFailed'));
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Network error');
+      setError(e instanceof Error ? e.message : t('refactoring:errors.networkError'));
     } finally {
       setLoading(false);
     }
@@ -126,10 +128,10 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
       if (data.success) {
         setProposals(data.proposals || []);
       } else {
-        setError(data.error || 'Proposal generation failed');
+        setError(data.error || t('refactoring:errors.proposalFailed'));
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Network error');
+      setError(e instanceof Error ? e.message : t('refactoring:errors.networkError'));
     } finally {
       setLoadingProposals(false);
     }
@@ -158,9 +160,9 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
         <div className="flex items-center gap-3">
           <Wand2 className="h-6 w-6 text-primary" />
           <div>
-            <h1 className="text-xl font-bold text-foreground">Refactoring Agent</h1>
+            <h1 className="text-xl font-bold text-foreground">{t('refactoring:title')}</h1>
             <p className="text-sm text-muted-foreground">
-              Detect code smells and get refactoring proposals
+              {t('refactoring:description')}
             </p>
           </div>
         </div>
@@ -169,16 +171,16 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
         <Card>
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground">Python source code</label>
+              <label className="text-sm font-medium text-foreground">{t('refactoring:input.label')}</label>
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={handlePaste}>
                   <ClipboardPaste className="h-3.5 w-3.5 mr-1.5" />
-                  Paste
+                  {t('refactoring:actions.paste')}
                 </Button>
                 {source && (
                   <Button variant="ghost" size="sm" onClick={handleClear}>
                     <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                    Clear
+                    {t('refactoring:actions.clear')}
                   </Button>
                 )}
               </div>
@@ -186,7 +188,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
             <Textarea
               value={source}
               onChange={(e) => setSource(e.target.value)}
-              placeholder="Paste Python source code here to analyze..."
+              placeholder={t('refactoring:input.placeholder')}
               className="min-h-[200px] font-mono text-xs"
               spellCheck={false}
             />
@@ -197,7 +199,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
                 ) : (
                   <Bug className="h-4 w-4 mr-2" />
                 )}
-                {loading ? 'Detecting...' : 'Detect Code Smells'}
+                {loading ? t('refactoring:actions.detecting') : t('refactoring:actions.detectSmells')}
               </Button>
               <Button variant="outline" onClick={handleProposeRefactoring} disabled={loadingProposals || !source.trim()}>
                 {loadingProposals ? (
@@ -205,7 +207,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
                 ) : (
                   <Lightbulb className="h-4 w-4 mr-2" />
                 )}
-                {loadingProposals ? 'Generating...' : 'Propose Refactoring'}
+                {loadingProposals ? t('refactoring:actions.generating') : t('refactoring:actions.proposeRefactoring')}
               </Button>
             </div>
           </CardContent>
@@ -227,7 +229,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-foreground">
-                  Code Smells ({smells.length})
+                  {t('refactoring:smells.title', { count: smells.length })}
                 </h3>
                 <div className="flex gap-2">
                   {Object.entries(
@@ -272,7 +274,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
                           <span className="text-xs font-mono text-muted-foreground">{smell.symbol}</span>
                         )}
                         {smell.line && (
-                          <span className="text-xs text-muted-foreground">L{smell.line}</span>
+                          <span className="text-xs text-muted-foreground">{t('refactoring:smells.line', { line: smell.line })}</span>
                         )}
                         <Badge variant="outline" className={cn('text-xs', cfg.color, cfg.bg)}>
                           {cfg.label}
@@ -283,7 +285,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
                           <p className="text-xs text-muted-foreground">{smell.message}</p>
                           {smell.metric_value !== undefined && smell.threshold !== undefined && (
                             <p className="text-xs text-muted-foreground">
-                              Measured: <span className="font-mono">{smell.metric_value}</span> / Threshold:{' '}
+                              {t('refactoring:smells.measured')} <span className="font-mono">{smell.metric_value}</span> {t('refactoring:smells.threshold')}:{' '}
                               <span className="font-mono">{smell.threshold}</span>
                             </p>
                           )}
@@ -302,7 +304,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
           <Card>
             <CardContent className="p-5">
               <h3 className="text-sm font-semibold text-foreground mb-4">
-                Refactoring Proposals ({proposals.length})
+                {t('refactoring:proposals.title', { count: proposals.length })}
               </h3>
               <div className="space-y-3">
                 {proposals.map((p, idx) => {
@@ -318,13 +320,13 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
                           <span className="text-xs font-mono text-muted-foreground">{p.symbol}</span>
                         )}
                         <Badge variant="outline" className={cn('text-xs ml-auto', rcfg.color, rcfg.bg)}>
-                          Risk: {risk}
+                          {t('refactoring:proposals.risk')}: {risk}
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">{p.description}</p>
                       {p.impact && (
                         <p className="text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">Impact:</span> {p.impact}
+                          <span className="font-medium text-foreground">{t('refactoring:proposals.impact')}:</span> {p.impact}
                         </p>
                       )}
                     </div>
