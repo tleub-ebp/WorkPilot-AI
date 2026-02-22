@@ -26,6 +26,15 @@ import {
   BookOpenCheck,
   Coins,
   History,
+  ChevronDown,
+  ChevronRight,
+  Code,
+  Target,
+  GitFork,
+  Layers,
+  Brain,
+  Database,
+  ArrowRight
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { ScrollArea } from '@/components/ui';
@@ -82,24 +91,81 @@ interface NavItem {
   shortcut?: string;
 }
 
-// Base nav items always shown
-const baseNavItems: NavItem[] = [
-  { id: 'kanban', labelKey: 'navigation:items.kanban', icon: LayoutGrid, shortcut: 'K' },
-  { id: 'terminals', labelKey: 'navigation:items.terminals', icon: Terminal, shortcut: 'A' },
-  { id: 'insights', labelKey: 'navigation:items.insights', icon: Sparkles, shortcut: 'N' },
-  { id: 'roadmap', labelKey: 'navigation:items.roadmap', icon: Map, shortcut: 'D' },
-  { id: 'ideation', labelKey: 'navigation:items.ideation', icon: Lightbulb, shortcut: 'I' },
-  { id: 'changelog', labelKey: 'navigation:items.changelog', icon: FileText, shortcut: 'L' },
-  { id: 'context', labelKey: 'navigation:items.context', icon: BookOpen, shortcut: 'C' },
-  { id: 'agent-tools', labelKey: 'navigation:items.agentTools', icon: Wrench, shortcut: 'M' },
-  { id: 'worktrees', labelKey: 'navigation:items.worktrees', icon: GitBranch, shortcut: 'W' },
-  { id: 'migration', labelKey: 'navigation:items.migration', icon: Download, shortcut: 'Z' },
-  { id: 'dashboard', labelKey: 'navigation:items.dashboard', icon: BarChart3, shortcut: 'H' },
-  { id: 'code-review', labelKey: 'navigation:items.codeReview', icon: FileCode2, shortcut: 'V' },
-  { id: 'refactoring', labelKey: 'navigation:items.refactoring', icon: Wand2, shortcut: 'F' },
-  { id: 'documentation', labelKey: 'navigation:items.documentation', icon: BookOpenCheck, shortcut: 'O' },
-  { id: 'cost-estimator', labelKey: 'navigation:items.costEstimator', icon: Coins, shortcut: 'E' },
-  { id: 'session-history', labelKey: 'navigation:items.sessionHistory', icon: History, shortcut: 'S' },
+interface NavGroup {
+  id: string;
+  labelKey: string;
+  icon: React.ElementType;
+  items: NavItem[];
+  defaultExpanded?: boolean;
+}
+
+// Navigation groups with thematic organization
+const navGroups: NavGroup[] = [
+  {
+    id: 'core',
+    labelKey: 'navigation:groups.core',
+    icon: Target,
+    items: [
+      { id: 'kanban', labelKey: 'navigation:items.kanban', icon: LayoutGrid, shortcut: 'K' },
+      { id: 'terminals', labelKey: 'navigation:items.terminals', icon: Terminal, shortcut: 'A' },
+      { id: 'insights', labelKey: 'navigation:items.insights', icon: Sparkles, shortcut: 'N' },
+    ],
+    defaultExpanded: true
+  },
+  {
+    id: 'development',
+    labelKey: 'navigation:groups.development',
+    icon: Code,
+    items: [
+      { id: 'code-review', labelKey: 'navigation:items.codeReview', icon: FileCode2, shortcut: 'V' },
+      { id: 'refactoring', labelKey: 'navigation:items.refactoring', icon: Wand2, shortcut: 'F' },
+      { id: 'documentation', labelKey: 'navigation:items.documentation', icon: BookOpenCheck, shortcut: 'O' },
+      { id: 'agent-tools', labelKey: 'navigation:items.agentTools', icon: Wrench, shortcut: 'M' },
+      { id: 'visual-programming', labelKey: 'navigation:items.visualProgramming', icon: Brain, shortcut: 'V' },
+    ],
+    defaultExpanded: false
+  },
+  {
+    id: 'integration',
+    labelKey: 'navigation:groups.integration',
+    icon: GitFork,
+    items: [
+      { id: 'worktrees', labelKey: 'navigation:items.worktrees', icon: GitBranch, shortcut: 'W' },
+    ],
+    defaultExpanded: false
+  },
+  {
+    id: 'planning',
+    labelKey: 'navigation:groups.planning',
+    icon: BarChart3,
+    items: [
+      { id: 'roadmap', labelKey: 'navigation:items.roadmap', icon: Map, shortcut: 'D' },
+      { id: 'dashboard', labelKey: 'navigation:items.dashboard', icon: BarChart3, shortcut: 'H' },
+      { id: 'cost-estimator', labelKey: 'navigation:items.costEstimator', icon: Coins, shortcut: 'E' },
+      { id: 'session-history', labelKey: 'navigation:items.sessionHistory', icon: History, shortcut: 'S' },
+    ],
+    defaultExpanded: false
+  },
+  {
+    id: 'knowledge',
+    labelKey: 'navigation:groups.knowledge',
+    icon: BookOpen,
+    items: [
+      { id: 'context', labelKey: 'navigation:items.context', icon: BookOpen, shortcut: 'C' },
+      { id: 'ideation', labelKey: 'navigation:items.ideation', icon: Lightbulb, shortcut: 'I' },
+      { id: 'changelog', labelKey: 'navigation:items.changelog', icon: FileText, shortcut: 'L' },
+    ],
+    defaultExpanded: false
+  },
+  {
+    id: 'utilities',
+    labelKey: 'navigation:groups.utilities',
+    icon: Layers,
+    items: [
+      { id: 'migration', labelKey: 'navigation:items.migration', icon: Download, shortcut: 'Z' },
+    ],
+    defaultExpanded: false
+  }
 ];
 
 // GitHub nav items shown when GitHub is enabled
@@ -130,6 +196,7 @@ export function Sidebar({
   const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
   const [pendingProject, setPendingProject] = useState<Project | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['core'])); // Core group expanded by default
 
   const [showGitHubSetup, setShowGitHubSetup] = useState(false);
   const [gitHubSetupProject, setGitHubSetupProject] = useState<Project | null>(null);
@@ -152,18 +219,30 @@ export function Sidebar({
   // Track the last loaded project ID to avoid redundant loads
   const lastLoadedProjectIdRef = useRef<string | null>(null);
 
-  // Compute visible nav items based on GitHub/GitLab enabled state from store
-  const visibleNavItems = useMemo(() => {
-    const items = [...baseNavItems];
-    items.push({ id: 'visual-programming', labelKey: 'navigation:items.visualProgramming', icon: Sparkles, shortcut: 'V' });
-    if (githubEnabled) {
-      items.push(...githubNavItems);
+  // Compute visible nav groups based on GitHub/GitLab enabled state from store
+  const visibleNavGroups = useMemo(() => {
+    const groups = [...navGroups];
+    
+    // Add GitHub/GitLab items to integration group if enabled
+    const integrationGroup = groups.find(g => g.id === 'integration');
+    if (integrationGroup) {
+      const integrationItems = [...integrationGroup.items];
+      if (githubEnabled) {
+        integrationItems.push(...githubNavItems);
+      }
+      if (gitlabEnabled) {
+        integrationItems.push(...gitlabNavItems);
+      }
+      integrationGroup.items = integrationItems;
     }
-    if (gitlabEnabled) {
-      items.push(...gitlabNavItems);
-    }
-    return items;
+    
+    return groups;
   }, [githubEnabled, gitlabEnabled]);
+
+  // Get all visible items for keyboard shortcuts
+  const visibleNavItems = useMemo(() => {
+    return visibleNavGroups.flatMap(group => group.items);
+  }, [visibleNavGroups]);
 
   // Load envConfig when project changes to ensure store is populated
   useEffect(() => {
@@ -402,7 +481,19 @@ export function Sidebar({
     onViewChange?.(view);
   };
 
-  const renderNavItem = (item: NavItem) => {
+  const toggleGroupExpansion = (groupId: string) => {
+    setExpandedGroups(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupId)) {
+        newSet.delete(groupId);
+      } else {
+        newSet.add(groupId);
+      }
+      return newSet;
+    });
+  };
+
+  const renderNavItem = (item: NavItem, isSubItem = false) => {
     const isActive = activeView === item.id;
     const Icon = item.icon;
 
@@ -417,7 +508,7 @@ export function Sidebar({
           'hover:bg-accent hover:text-accent-foreground',
           'disabled:pointer-events-none disabled:opacity-50',
           isActive && 'bg-accent text-accent-foreground',
-          isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5'
+          isCollapsed ? 'justify-center px-2 py-2' : isSubItem ? 'gap-3 px-3 py-1.5 ml-6' : 'gap-3 px-3 py-2'
         )}
       >
         <Icon className="h-4 w-4 shrink-0" />
@@ -452,6 +543,93 @@ export function Sidebar({
     }
 
     return button;
+  };
+
+  const renderNavGroup = (group: NavGroup) => {
+    const isExpanded = expandedGroups.has(group.id);
+    const GroupIcon = group.icon;
+    const hasActiveItem = group.items.some(item => activeView === item.id);
+
+    if (isCollapsed) {
+      // In collapsed mode, show group icon with tooltip containing all items
+      return (
+        <Tooltip key={group.id}>
+          <TooltipTrigger asChild>
+            <div className="flex flex-col items-center gap-1 py-2">
+              <div className={cn(
+                "flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:scale-105",
+                hasActiveItem ? "bg-accent text-accent-foreground shadow-sm" : "hover:bg-accent hover:text-accent-foreground"
+              )}>
+                <GroupIcon className="h-4 w-4" />
+              </div>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="max-w-xs">
+            <div className="space-y-2">
+              <p className="font-medium text-sm">{t(group.labelKey)}</p>
+              <div className="space-y-1">
+                {group.items.map(item => (
+                  <div key={item.id} className="flex items-center gap-2 text-xs p-1 rounded hover:bg-accent/50">
+                    <item.icon className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{t(item.labelKey)}</span>
+                    {item.shortcut && (
+                      <kbd className="rounded border border-border bg-secondary px-1 font-mono text-[9px] ml-auto">
+                        {item.shortcut}
+                      </kbd>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return (
+      <div key={group.id} className="space-y-1">
+        <button
+          onClick={() => toggleGroupExpansion(group.id)}
+          className={cn(
+            'flex w-full items-center rounded-lg text-sm transition-all duration-200 hover:scale-[1.02]',
+            'hover:bg-accent hover:text-accent-foreground hover:shadow-sm',
+            hasActiveItem && 'bg-accent/50 text-accent-foreground shadow-sm',
+            'gap-3 px-3 py-2.5'
+          )}
+        >
+          <div className={cn(
+            "flex items-center justify-center w-8 h-8 rounded-md transition-colors",
+            hasActiveItem ? "bg-primary/10 text-primary" : "text-muted-foreground"
+          )}>
+            <GroupIcon className="h-4 w-4" />
+          </div>
+          <span className="flex-1 text-left font-medium">{t(group.labelKey)}</span>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+              {group.items.length}
+            </span>
+            <ChevronRight className={cn(
+              'h-4 w-4 shrink-0 transition-transform duration-300 text-muted-foreground',
+              isExpanded && 'rotate-90'
+            )} />
+          </div>
+        </button>
+        
+        {isExpanded && (
+          <div className="space-y-1 animate-in slide-in-from-top-2 duration-300 ease-out">
+            {group.items.map((item, index) => (
+              <div 
+                key={item.id} 
+                className="animate-in slide-in-from-left-2 duration-200 ease-out"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                {renderNavItem(item, true)}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -502,16 +680,9 @@ export function Sidebar({
         {/* Navigation */}
         <ScrollArea className="flex-1">
           <div className={cn("py-4 transition-all duration-300", isCollapsed ? "px-2" : "px-3")}>
-            {/* Project Section */}
-            <div>
-              {!isCollapsed && (
-                <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t('sections.project')}
-                </h3>
-              )}
-              <nav className="space-y-1">
-                {visibleNavItems.map(renderNavItem)}
-              </nav>
+            {/* Navigation Groups */}
+            <div className="space-y-2">
+              {visibleNavGroups.map(renderNavGroup)}
             </div>
           </div>
         </ScrollArea>
