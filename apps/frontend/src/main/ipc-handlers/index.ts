@@ -22,6 +22,7 @@ import { registerContextHandlers } from './context-handlers';
 import { registerEnvHandlers } from './env-handlers';
 import { registerLinearHandlers } from './linear-handlers';
 import { registerAzureDevOpsHandlers } from './azure-devops-handlers';
+import { registerPRDetailsHandlers } from './pr-details-handlers';
 import { registerJiraHandlers } from './jira-handlers';
 import { registerGithubHandlers } from './github-handlers';
 import { registerGitlabHandlers } from './gitlab-handlers';
@@ -93,6 +94,9 @@ export function setupIpcHandlers(
 
   // Azure DevOps integration handlers
   registerAzureDevOpsHandlers(agentManager, getMainWindow);
+
+  // Universal PR Details handler (supports both GitHub and Azure DevOps)
+  registerPRDetailsHandlers();
 
   // Jira integration handlers
   registerJiraHandlers(agentManager, getMainWindow);

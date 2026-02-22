@@ -1153,8 +1153,29 @@ body {
 }
 
 .focus-ring:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
+  box-shadow: var(--shadow-focus);
+}
+
+/* Diff viewer styles */
+.diff-viewer {
+  line-height: 1.4;
+}
+
+.diff-line {
+  min-height: 1.2em;
+}
+
+.diff-line-numbers {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.diff-content {
+  position: relative;
+}
+
+.diff-line:hover .diff-line-numbers {
+  background-color: var(--muted);
 }
 
 /* Column status colors for Kanban */

@@ -11,12 +11,32 @@ gracefully no-op and the application continues with local tracking only.
 import logging
 from pathlib import Path
 
-from src.core.git_provider import extract_azure_devops_project
+# Try different import paths for git_provider
+try:
+    from src.core.git_provider import extract_azure_devops_project
+except ImportError:
+    try:
+        from core.git_provider import extract_azure_devops_project
+    except ImportError:
+        # Fallback: define a dummy function
+        def extract_azure_devops_project(path):
+            return None
 
 from src.config.settings import Settings
 from src.connectors.azure_devops import AzureDevOpsConnector
 
-from .config import AzureDevOpsConfig
+# Import config directly to avoid relative import issues
+try:
+    from .config import AzureDevOpsConfig
+except ImportError:
+    # Fallback for direct execution
+    import importlib.util
+    import sys
+    config_path = Path(__file__).parent / 'config.py'
+    spec = importlib.util.spec_from_file_location("config", config_path)
+    config_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config_module)
+    AzureDevOpsConfig = config_module.AzureDevOpsConfig
 
 logger = logging.getLogger(__name__)
 

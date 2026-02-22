@@ -388,5 +388,92 @@ export const integrationMock = {
   onGitLabInvestigationError: () => () => {},
 
   // OAuth device code event listener (for streaming device code during auth)
-  onGitHubAuthDeviceCode: () => () => {}
+  onGitHubAuthDeviceCode: () => () => {},
+
+  // GitHub PR Operations
+  getPRDetails: async (prNumber: number, taskId?: string) => ({
+    success: true,
+    data: {
+      success: true,
+      data: {
+        number: prNumber,
+        title: `Mock PR #${prNumber}`,
+        body: 'This is a mock pull request for testing purposes',
+        author: 'mock-user',
+        state: 'open',
+        source_branch: 'feature/mock',
+        target_branch: 'main',
+        additions: 10,
+        deletions: 5,
+        changed_files: 2,
+        files: [
+          {
+            filename: 'src/example.ts',
+            status: 'modified' as const,
+            additions: 8,
+            deletions: 3,
+            changes: 11,
+            patch: `@@ -1,8 +1,13 @@
+ function example() {
+-  console.log('old');
++  console.log('new');
++  // Added line
++  // Another added line
+   return true;
+ }
++
++// New function
++function newFunction() {
++  return 'test';
++}
+ `
+          },
+          {
+            filename: 'src/new-file.ts',
+            status: 'added' as const,
+            additions: 2,
+            deletions: 0,
+            changes: 2,
+            patch: `@@ -0,0 +1,2 @@
++// New file
++export const value = 'test';
+ `
+          }
+        ],
+        diff: `diff --git a/src/example.ts b/src/example.ts
+index 1234567..abcdefg 100644
+--- a/src/example.ts
++++ b/src/example.ts
+@@ -1,8 +1,13 @@
+ function example() {
+-  console.log('old');
++  console.log('new');
++  // Added line
++  // Another added line
+   return true;
+ }
++
++// New function
++function newFunction() {
++  return 'test';
++}
+diff --git a/src/new-file.ts b/src/new-file.ts
+new file mode 100644
+index 0000000..abcdefg
+--- /dev/null
++++ b/src/new-file.ts
+@@ -0,0 +1,2 @@
++// New file
++export const value = 'test';
+ `,
+        url: `https://github.com/example/repo/pull/${prNumber}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        labels: ['mock', 'test'],
+        reviewers: ['reviewer1', 'reviewer2'],
+        is_draft: false,
+        mergeable: true
+      }
+    }
+  })
 };

@@ -26,7 +26,7 @@ from src.connectors.azure_devops.exceptions import (
     ResourceNotFoundError,
     WorkItemNotFoundError,
 )
-from src.connectors.azure_devops.models import FileItem, PullRequest, Repository, WorkItem
+from src.connectors.azure_devops.models import FileItem, PullRequest, PullRequestFileChange, Repository, WorkItem
 from src.connectors.azure_devops.repos import AzureReposClient
 from src.connectors.azure_devops.work_items import AzureWorkItemsClient
 from src.connectors.base import BaseIntegratedConnector
@@ -368,6 +368,22 @@ class AzureDevOpsConnector(BaseIntegratedConnector):
         """
         self._client.disconnect()
 
+    def get_repos_client(self) -> AzureReposClient:
+        """Get the underlying repository client.
+
+        Returns:
+            The AzureReposClient instance for direct repository operations.
+        """
+        return self._repos
+
+    def get_work_items_client(self) -> AzureWorkItemsClient:
+        """Get the underlying work items client.
+
+        Returns:
+            The AzureWorkItemsClient instance for direct work item operations.
+        """
+        return self._work_items
+
 
 __all__ = [
     # Main connector
@@ -381,6 +397,7 @@ __all__ = [
     "WorkItem",
     "FileItem",
     "PullRequest",
+    "PullRequestFileChange",
     # Exceptions
     "AzureDevOpsError",
     "AuthenticationError",

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play, Square, Clock, Zap, Target, Shield, Gauge, Palette, FileCode, Bug, Wrench, Loader2, AlertTriangle, RotateCcw, Archive, GitPullRequest, MoreVertical, X } from 'lucide-react';
+import { Play, Square, Clock, Zap, Target, Shield, Gauge, Palette, FileCode, Bug, Wrench, Loader2, AlertTriangle, RotateCcw, Archive, GitPullRequest, MoreVertical, X, FileText } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -78,6 +78,8 @@ interface TaskCardProps {
   onToggleSelect?: () => void;
   // Optional delete handler
   onDelete?: () => void;
+  // Optional PR files viewer handler
+  onViewPRFiles?: (prUrl: string, taskId: string) => void;
 }
 
 // Custom comparator for React.memo - only re-render when relevant task data changes
@@ -93,7 +95,8 @@ function taskCardPropsAreEqual(prevProps: TaskCardProps, nextProps: TaskCardProp
     prevProps.isSelectable === nextProps.isSelectable &&
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.onToggleSelect === nextProps.onToggleSelect &&
-    prevProps.onDelete === nextProps.onDelete
+    prevProps.onDelete === nextProps.onDelete &&
+    prevProps.onViewPRFiles === nextProps.onViewPRFiles
   ) {
     return true;
   }
@@ -148,8 +151,13 @@ export const TaskCard = memo(function TaskCard({
   isSelectable,
   isSelected,
   onToggleSelect,
-  onDelete
+  onDelete,
+  onViewPRFiles
 }: TaskCardProps) {
+  console.log('[TaskCard] Rendering task:', task.id);
+  console.log('[TaskCard] Task has prUrl:', !!task.metadata?.prUrl);
+  console.log('[TaskCard] onViewPRFiles exists:', !!onViewPRFiles);
+  console.log('[TaskCard] Should show PR Files button:', !!(task.metadata?.prUrl && onViewPRFiles));
   const { t } = useTranslation(['tasks', 'errors']);
   const formatRelativeTime = useFormatRelativeTime();
   const [isStuck, setIsStuck] = useState(false);
@@ -289,6 +297,13 @@ export const TaskCard = memo(function TaskCard({
     e.stopPropagation();
     if (task.metadata?.prUrl && window.electronAPI?.openExternal) {
       window.electronAPI.openExternal(task.metadata.prUrl);
+    }
+  };
+
+  const handleViewPRFiles = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (task.metadata?.prUrl && onViewPRFiles) {
+      onViewPRFiles(task.metadata.prUrl, task.id);
     }
   };
 
@@ -715,6 +730,21 @@ export const TaskCard = memo(function TaskCard({
                   >
                     <GitPullRequest className="h-3 w-3" />
                   </Button>
+                )}
+                {task.metadata?.prUrl && onViewPRFiles && (
+                  <>
+                    {console.log('[TaskCard] RENDERING PR FILES BUTTON for task:', task.id)}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 hover:bg-primary/10 transition-colors"
+                      onClick={handleViewPRFiles}
+                      title={t('tooltips.viewPRFiles')}
+                    >
+                      <FileText className="h-3 w-3 mr-1" />
+                      {t('tasks:prFiles.short')}
+                    </Button>
+                  </>
                 )}
                 {!task.metadata?.archivedAt && (
                   <Button

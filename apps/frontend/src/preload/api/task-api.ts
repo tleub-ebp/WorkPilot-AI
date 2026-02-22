@@ -16,7 +16,8 @@ import type {
   SupportedTerminal,
   WorktreeCreatePROptions,
   WorktreeCreatePRResult,
-  ImageAttachment
+  ImageAttachment,
+  PRDetailsResult
 } from '../../shared/types';
 
 export interface TaskAPI {
@@ -71,6 +72,7 @@ export interface TaskAPI {
   archiveTasks: (projectId: string, taskIds: string[], version?: string) => Promise<IPCResult<boolean>>;
   unarchiveTasks: (projectId: string, taskIds: string[]) => Promise<IPCResult<boolean>>;
   createWorktreePR: (taskId: string, options?: WorktreeCreatePROptions) => Promise<IPCResult<WorktreeCreatePRResult>>;
+  getPRDetails: (prNumber: number, taskId?: string) => Promise<IPCResult<PRDetailsResult>>;
 
   // Task Event Listeners
   // Note: projectId is optional for backward compatibility - events without projectId will still work
@@ -194,6 +196,9 @@ export const createTaskAPI = (): TaskAPI => ({
 
   createWorktreePR: (taskId: string, options?: WorktreeCreatePROptions): Promise<IPCResult<WorktreeCreatePRResult>> =>
     ipcRenderer.invoke(IPC_CHANNELS.TASK_WORKTREE_CREATE_PR, taskId, options),
+
+  getPRDetails: (prNumber: number, taskId?: string): Promise<IPCResult<PRDetailsResult>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.PR_DETAILS, prNumber, taskId),
 
   // Task Event Listeners
   onTaskProgress: (

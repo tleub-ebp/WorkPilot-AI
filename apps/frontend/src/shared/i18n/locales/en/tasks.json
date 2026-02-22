@@ -49,7 +49,11 @@
   "tooltips": {
     "archiveTask": "Archive task",
     "archiveAllDone": "Archive all done tasks",
-    "viewPR": "Open pull request in browser"
+    "viewPR": "Open pull request in browser",
+    "viewPRFiles": "View modified files"
+  },
+  "prFiles": {
+    "short": "Files"
   },
   "creation": {
     "title": "Create New Task",

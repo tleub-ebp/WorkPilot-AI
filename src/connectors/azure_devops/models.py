@@ -301,3 +301,46 @@ class PullRequest:
             url=getattr(api_pr, "url", None),
             repository_id=repo_id,
         )
+
+
+@dataclass
+class PullRequestFileChange:
+    """Azure DevOps pull request file change representation.
+
+    Represents a file change within a pull request, including the type
+    of change and statistics for additions/deletions.
+
+    Attributes:
+        path: The file path within the repository.
+        change_type: The type of change ('add', 'edit', 'delete', 'rename').
+        additions: Number of lines added.
+        deletions: Number of lines deleted.
+        changes: Total number of lines changed.
+        old_path: The original file path for renames, or None.
+    """
+
+    path: str
+    change_type: str
+    additions: int = 0
+    deletions: int = 0
+    changes: int = 0
+    old_path: str | None = None
+
+    @classmethod
+    def from_api_response(cls, api_change: Any) -> "PullRequestFileChange":
+        """Create a PullRequestFileChange from an Azure DevOps API response object.
+
+        Args:
+            api_change: A GitPullRequestChange object from the Azure DevOps SDK.
+
+        Returns:
+            A PullRequestFileChange instance populated from the API response.
+        """
+        return cls(
+            path=getattr(api_change, "item", {}).get("path", ""),
+            change_type=getattr(api_change, "change_type", ""),
+            additions=getattr(api_change, "additions", 0),
+            deletions=getattr(api_change, "deletions", 0),
+            changes=getattr(api_change, "additions", 0) + getattr(api_change, "deletions", 0),
+            old_path=getattr(api_change, "source", {}).get("path", None),
+        )

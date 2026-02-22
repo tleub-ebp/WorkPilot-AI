@@ -340,6 +340,7 @@ export interface WorktreeDiffFile {
   status: 'added' | 'modified' | 'deleted' | 'renamed';
   additions: number;
   deletions: number;
+  patch?: string; // Git patch/diff content for the file
 }
 
 // Conflict severity levels from merge system
@@ -483,6 +484,53 @@ export interface WorktreeCreatePRResult {
   error?: string;
   message?: string;  // Human-readable message for both success and error cases
   alreadyExists?: boolean;
+}
+
+/**
+ * Pull Request file data structure
+ */
+export interface PRFileData {
+  filename: string;
+  status: 'added' | 'removed' | 'modified' | 'renamed';
+  additions: number;
+  deletions: number;
+  changes: number;
+  patch?: string;
+  previous_filename?: string;
+}
+
+/**
+ * Pull Request data structure with files
+ */
+export interface PRData {
+  number: number;
+  title: string;
+  body: string;
+  author: string;
+  state: string;
+  source_branch: string;
+  target_branch: string;
+  additions: number;
+  deletions: number;
+  changed_files: number;
+  files: PRFileData[];
+  diff: string;
+  url: string;
+  created_at: string;
+  updated_at: string;
+  labels: string[];
+  reviewers: string[];
+  is_draft: boolean;
+  mergeable: boolean;
+}
+
+/**
+ * Result of fetching PR details with files
+ */
+export interface PRDetailsResult {
+  success: boolean;
+  data?: PRData;
+  error?: string;
 }
 
 /**

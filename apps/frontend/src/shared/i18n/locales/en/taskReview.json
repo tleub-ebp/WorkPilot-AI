@@ -69,6 +69,27 @@
   "pr": {
     "title": "Create Pull Request",
     "description": "Push branch and create a pull request for \"{{taskTitle}}\"",
+    "files": {
+      "title": "Pull Request Files",
+      "errorTitle": "Pull Request Files Error",
+      "errorDescription": "An error occurred while fetching the pull request files.",
+      "loading": "Loading pull request files...",
+      "openInGitHub": "Open in GitHub",
+      "openInBrowser": "Open in browser",
+      "overview": "Overview",
+      "files": "Files",
+      "diff": "Diff",
+      "additions": "Additions",
+      "deletions": "Deletions",
+      "changed_files": "Changed files",
+      "totalChanges": "Total changes",
+      "details": "Details",
+      "author": "Author",
+      "sourceBranch": "Source branch",
+      "targetBranch": "Target branch",
+      "state": "State",
+      "description": "Description"
+    },
     "errors": {
       "unknown": "An unknown error occurred while creating the pull request",
       "invalidBranchName": "Branch name contains invalid characters. Use only letters, numbers, hyphens (-), underscores (_), and forward slashes (/).",
@@ -129,6 +150,7 @@
     "viewMode": "View",
     "flatList": "Flat list",
     "treeView": "Tree view",
+    "backToList": "Back to list",
     "status": {
       "added": "added",
       "deleted": "deleted",
