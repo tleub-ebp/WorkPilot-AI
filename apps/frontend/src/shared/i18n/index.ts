@@ -21,6 +21,11 @@ import enInitDialog from './locales/en/initDialog.json';
 import enProjectInitModal from './locales/en/projectInitModal.json';
 import enCollaboration from './locales/en/collaboration.json';
 import enStreaming from './locales/en/streaming.json';
+import enCodeReview from './locales/en/codeReview.json';
+import enRefactoring from './locales/en/refactoring.json';
+import enDocumentation from './locales/en/documentation.json';
+import enInsights from './locales/en/insights.json';
+import enRoadmap from './locales/en/roadmap.json';
 
 // Import French translation resources
 import frCommon from './locales/fr/common.json';
@@ -42,6 +47,11 @@ import frInitDialog from './locales/fr/initDialog.json';
 import frProjectInitModal from './locales/fr/projectInitModal.json';
 import frCollaboration from './locales/fr/collaboration.json';
 import frStreaming from './locales/fr/streaming.json';
+import frCodeReview from './locales/fr/codeReview.json';
+import frRefactoring from './locales/fr/refactoring.json';
+import frDocumentation from './locales/fr/documentation.json';
+import frInsights from './locales/fr/insights.json';
+import frRoadmap from './locales/fr/roadmap.json';
 
 export const defaultNS = 'common';
 
@@ -65,7 +75,12 @@ export const resources = {
     visualProgramming: enVisualProgramming,
     projectInitModal: enProjectInitModal,
     collaboration: enCollaboration,
-    streaming: enStreaming
+    streaming: enStreaming,
+    codeReview: enCodeReview,
+    refactoring: enRefactoring,
+    documentation: enDocumentation,
+    insights: enInsights,
+    roadmap: enRoadmap
   },
   fr: {
     common: frCommon,
@@ -86,7 +101,12 @@ export const resources = {
     visualProgramming: frVisualProgramming,
     projectInitModal: frProjectInitModal,
     collaboration: frCollaboration,
-    streaming: frStreaming
+    streaming: frStreaming,
+    codeReview: frCodeReview,
+    refactoring: frRefactoring,
+    documentation: frDocumentation,
+    insights: frInsights,
+    roadmap: frRoadmap
   }
 } as const;
 
@@ -98,7 +118,7 @@ i18n
     fallbackLng: 'en',
     defaultNS,
     ns: [
-      'common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'initDialog', 'gitlab', 'taskReview', 'terminal', 'errors', 'context', 'changelog', 'migrationWizard', 'visualProgramming', 'projectInitModal', 'collaboration', 'streaming'
+      'common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'initDialog', 'gitlab', 'taskReview', 'terminal', 'errors', 'context', 'changelog', 'migrationWizard', 'visualProgramming', 'projectInitModal', 'collaboration', 'streaming', 'codeReview', 'refactoring', 'documentation', 'insights', 'roadmap'
     ],
     interpolation: {
       escapeValue: false // React already escapes values

@@ -1,0 +1,36 @@
+﻿{
+  "title": "Revue de Code IA",
+  "description": "Collez un diff ou un extrait de code pour obtenir une revue de qualité automatisée",
+  "input": {
+    "label": "Diff / Code à réviser",
+    "placeholder": "Collez votre git diff ou extrait de code ici...\n\nExemple :\n--- a/src/auth.py\n+++ b/src/auth.py\n@@ -10,6 +10,7 @@\n def login(username, password):\n+    password = base64.b64decode(password)  // problème de sécurité\n     user = db.query(username)"
+  },
+  "actions": {
+    "paste": "Coller",
+    "clear": "Effacer",
+    "runReview": "Lancer la Revue",
+    "analyzing": "Analyse..."
+  },
+  "errors": {
+    "reviewFailed": "La revue a échoué",
+    "networkError": "Erreur réseau"
+  },
+  "score": {
+    "qualityScore": "Score de Qualité",
+    "good": "Bon",
+    "needsImprovement": "À améliorer",
+    "poor": "Mauvais"
+  },
+  "result": {
+    "passed": "Revue Réussie",
+    "failed": "Revue Échouée",
+    "issues": "{{count}} problème trouvé",
+    "issues_plural": "{{count}} problèmes trouvés",
+    "criticalHigh": "critique/élevé"
+  },
+  "issues": {
+    "title": "Problèmes",
+    "line": "ligne {{line}}",
+    "suggestion": "Suggestion"
+  }
+}

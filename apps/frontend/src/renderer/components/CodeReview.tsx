@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   FileCode2,
   Play,
@@ -68,7 +69,7 @@ function SeverityBadge({ severity }: { severity: string }) {
 // Score gauge
 // ---------------------------------------------------------------------------
 
-function ScoreGauge({ score }: { score: number }) {
+function ScoreGauge({ score, t }: { score: number; t: (key: string) => string }) {
   const color =
     score >= 80 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : 'text-red-500';
   const bgColor =
@@ -100,11 +101,11 @@ function ScoreGauge({ score }: { score: number }) {
         </div>
       </div>
       <div>
-        <p className="text-sm font-semibold text-foreground">Quality Score</p>
+        <p className="text-sm font-semibold text-foreground">{t('codeReview:score.qualityScore')}</p>
         <div className="mt-1 flex items-center gap-1.5">
           <div className={cn('h-2 w-2 rounded-full', bgColor)} />
           <span className="text-xs text-muted-foreground">
-            {score >= 80 ? 'Good' : score >= 60 ? 'Needs improvement' : 'Poor'}
+            {score >= 80 ? t('codeReview:score.good') : score >= 60 ? t('codeReview:score.needsImprovement') : t('codeReview:score.poor')}
           </span>
         </div>
       </div>
@@ -117,6 +118,7 @@ function ScoreGauge({ score }: { score: number }) {
 // ---------------------------------------------------------------------------
 
 export function CodeReview({ projectId }: CodeReviewProps) {
+  const { t } = useTranslation(['codeReview']);
   const [diff, setDiff] = useState('');
   const [result, setResult] = useState<ReviewResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -138,10 +140,10 @@ export function CodeReview({ projectId }: CodeReviewProps) {
       if (data.success) {
         setResult(data.review);
       } else {
-        setError(data.error || 'Review failed');
+        setError(data.error || t('codeReview:errors.reviewFailed'));
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Network error');
+      setError(e instanceof Error ? e.message : t('codeReview:errors.networkError'));
     } finally {
       setLoading(false);
     }
@@ -163,9 +165,9 @@ export function CodeReview({ projectId }: CodeReviewProps) {
         <div className="flex items-center gap-3">
           <FileCode2 className="h-6 w-6 text-primary" />
           <div>
-            <h1 className="text-xl font-bold text-foreground">AI Code Review</h1>
+            <h1 className="text-xl font-bold text-foreground">{t('codeReview:title')}</h1>
             <p className="text-sm text-muted-foreground">
-              Paste a diff or code snippet to get an automated quality review
+              {t('codeReview:description')}
             </p>
           </div>
         </div>
@@ -174,16 +176,16 @@ export function CodeReview({ projectId }: CodeReviewProps) {
         <Card>
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground">Diff / Code to review</label>
+              <label className="text-sm font-medium text-foreground">{t('codeReview:input.label')}</label>
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={handlePaste}>
                   <ClipboardPaste className="h-3.5 w-3.5 mr-1.5" />
-                  Paste
+                  {t('codeReview:actions.paste')}
                 </Button>
                 {diff && (
                   <Button variant="ghost" size="sm" onClick={() => { setDiff(''); setResult(null); }}>
                     <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                    Clear
+                    {t('codeReview:actions.clear')}
                   </Button>
                 )}
               </div>
@@ -191,7 +193,7 @@ export function CodeReview({ projectId }: CodeReviewProps) {
             <Textarea
               value={diff}
               onChange={(e) => setDiff(e.target.value)}
-              placeholder={'Paste your git diff or code snippet here...\n\nExample:\n--- a/src/auth.py\n+++ b/src/auth.py\n@@ -10,6 +10,7 @@\n def login(username, password):\n+    password = base64.b64decode(password)  # security issue\n     user = db.query(username)'}
+              placeholder={t('codeReview:input.placeholder')}
               className="min-h-[200px] font-mono text-xs"
               spellCheck={false}
             />
@@ -201,7 +203,7 @@ export function CodeReview({ projectId }: CodeReviewProps) {
               ) : (
                 <Play className="h-4 w-4 mr-2" />
               )}
-              {loading ? 'Analyzing...' : 'Run Review'}
+              {loading ? t('codeReview:actions.analyzing') : t('codeReview:actions.runReview')}
             </Button>
           </CardContent>
         </Card>
@@ -223,7 +225,7 @@ export function CodeReview({ projectId }: CodeReviewProps) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardContent className="p-5">
-                  <ScoreGauge score={result.score} />
+                  <ScoreGauge score={result.score} t={t} />
                 </CardContent>
               </Card>
               <Card>
@@ -235,15 +237,15 @@ export function CodeReview({ projectId }: CodeReviewProps) {
                       <XCircle className="h-5 w-5 text-red-500" />
                     )}
                     <span className={cn('text-sm font-semibold', result.passed ? 'text-emerald-500' : 'text-red-500')}>
-                      {result.passed ? 'Review Passed' : 'Review Failed'}
+                      {result.passed ? t('codeReview:result.passed') : t('codeReview:result.failed')}
                     </span>
                   </div>
                   {result.summary && (
                     <p className="text-sm text-muted-foreground">{result.summary}</p>
                   )}
                   <div className="mt-3 flex gap-3 text-xs text-muted-foreground">
-                    <span>{result.issues.length} issue{result.issues.length !== 1 ? 's' : ''} found</span>
-                    <span>{result.issues.filter(i => i.severity === 'critical' || i.severity === 'high').length} critical/high</span>
+                    <span>{result.issues.length} {t('codeReview:result.issues', { count: result.issues.length })}</span>
+                    <span>{result.issues.filter(i => i.severity === 'critical' || i.severity === 'high').length} {t('codeReview:result.criticalHigh')}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -253,7 +255,7 @@ export function CodeReview({ projectId }: CodeReviewProps) {
             {result.issues.length > 0 && (
               <Card>
                 <CardContent className="p-5">
-                  <h3 className="text-sm font-semibold text-foreground mb-4">Issues</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-4">{t('codeReview:issues.title')}</h3>
                   <div className="space-y-3">
                     {result.issues.map((issue, idx) => (
                       <div
@@ -265,14 +267,14 @@ export function CodeReview({ projectId }: CodeReviewProps) {
                             <SeverityBadge severity={issue.severity} />
                             <span className="text-xs font-mono text-muted-foreground">{issue.rule}</span>
                             {issue.line && (
-                              <span className="text-xs text-muted-foreground">line {issue.line}</span>
+                              <span className="text-xs text-muted-foreground">{t('codeReview:issues.line', { line: issue.line })}</span>
                             )}
                           </div>
                         </div>
                         <p className="text-sm text-foreground">{issue.message}</p>
                         {issue.suggestion && (
                           <div className="rounded-md bg-secondary/50 p-3 text-xs text-muted-foreground">
-                            <span className="font-medium text-foreground">Suggestion: </span>
+                            <span className="font-medium text-foreground">{t('codeReview:issues.suggestion')}: </span>
                             {issue.suggestion}
                           </div>
                         )}

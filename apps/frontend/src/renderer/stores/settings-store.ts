@@ -41,7 +41,7 @@ interface SettingsState {
   setActiveProfile: (profileId: string | null) => Promise<boolean>;
   testConnection: (baseUrl: string, apiKey: string, signal?: AbortSignal) => Promise<TestConnectionResult | null>;
   discoverModels: (baseUrl: string, apiKey: string, signal?: AbortSignal) => Promise<ModelInfo[] | null>;
-  setProviderPriorityOrder: (order: import('../../shared/types').LLMProvider[]) => void;
+  setProviderPriorityOrder: (order: import('../components/settings/multiconnector/types').LLMProvider[]) => void;
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -402,6 +402,14 @@ export async function saveSettings(updates: Partial<AppSettings>): Promise<boole
   } catch {
     return false;
   }
+}
+
+/**
+ * Save active view to settings
+ */
+export async function saveActiveView(view: import('../components/Sidebar').SidebarView): Promise<boolean> {
+  const result = await saveSettings({ activeView: view });
+  return result;
 }
 
 /**

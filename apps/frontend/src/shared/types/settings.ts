@@ -318,6 +318,8 @@ export interface AppSettings {
   sessionThreshold?: number;
   rateLimitEnabled?: boolean;
   authFailureEnabled?: boolean;
+  // Active view persistence (restore last view on app reload)
+  activeView?: import('../../renderer/components/Sidebar').SidebarView;
 }
 
 // Auto-Claude Source Environment Configuration (for auto-claude repo .env)
