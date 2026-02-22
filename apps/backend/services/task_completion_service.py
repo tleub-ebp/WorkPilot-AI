@@ -14,6 +14,7 @@ Workflow:
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, TypedDict, Union
@@ -21,6 +22,63 @@ from typing import Optional, TypedDict, Union
 from core.worktree import WorktreeManager
 
 logger = logging.getLogger(__name__)
+
+
+def _get_app_language() -> str:
+    """Get the current app language from environment variable set by the frontend."""
+    return os.environ.get("APP_LANGUAGE", "en")
+
+
+# ── i18n strings for PR title & body ──────────────────────────────────────
+_PR_STRINGS: dict[str, dict[str, str]] = {
+    "en": {
+        # Title
+        "title_prefix": "feat",
+        # Body sections
+        "header": "Completed task — Human review required",
+        "task_label": "Task",
+        "description_label": "Description",
+        "summary_section": "Summary",
+        "changes_section": "Changes overview",
+        "changes_placeholder": "Describe the main changes introduced by this task.",
+        "checklist_section": "Review checklist",
+        "check_standards": "Code follows project standards",
+        "check_tests": "Tests pass (if applicable)",
+        "check_docs": "Documentation is up to date",
+        "check_coherent": "Changes are consistent with the task",
+        "check_regression": "No regression detected",
+        "warning": "This PR requires human validation before merge.",
+        "footer": "PR created automatically by WorkPilot AI",
+        "no_description": "No description provided.",
+    },
+    "fr": {
+        # Title
+        "title_prefix": "feat",
+        # Body sections
+        "header": "Tâche terminée — Vérification humaine requise",
+        "task_label": "Tâche",
+        "description_label": "Description",
+        "summary_section": "Résumé",
+        "changes_section": "Aperçu des changements",
+        "changes_placeholder": "Décrivez les changements principaux introduits par cette tâche.",
+        "checklist_section": "Checklist de vérification",
+        "check_standards": "Le code respecte les standards du projet",
+        "check_tests": "Les tests passent (si applicables)",
+        "check_docs": "La documentation est à jour",
+        "check_coherent": "Les changements sont cohérents avec la tâche",
+        "check_regression": "Aucune régression détectée",
+        "warning": "Cette PR nécessite une validation humaine avant merge.",
+        "footer": "PR créée automatiquement par WorkPilot AI",
+        "no_description": "Aucune description fournie.",
+    },
+}
+
+
+def _t(key: str, lang: str | None = None) -> str:
+    """Return a translated string for the given key and language."""
+    lang = lang or _get_app_language()
+    strings = _PR_STRINGS.get(lang, _PR_STRINGS["en"])
+    return strings.get(key, _PR_STRINGS["en"].get(key, key))
 
 
 class TaskCompletionResult(TypedDict):
@@ -98,7 +156,7 @@ class TaskCompletionService:
         )
 
         # Étape 2: Création de la PR avec template de vérification humaine
-        pr_title = f"Task: {task_title}"
+        pr_title = self._build_pr_title(task_title)
         pr_body = self._build_pr_body(task_title, task_description)
 
         logger.info(
@@ -140,44 +198,63 @@ class TaskCompletionService:
             error=None,
         )
 
+    def _build_pr_title(self, task_title: str) -> str:
+        """
+        Build a conventional-commit style PR title.
+
+        Format: ``feat: <task_title>``
+
+        Args:
+            task_title: Human-readable task title.
+
+        Returns:
+            Formatted PR title string.
+        """
+        prefix = _t("title_prefix")
+        # Normalise: lowercase first char, strip trailing period
+        title = task_title.strip()
+        if title and title[0].isupper():
+            title = title[0].lower() + title[1:]
+        title = title.rstrip(".")
+        return f"{prefix}: {title}"
+
     def _build_pr_body(
         self, task_title: str, task_description: Optional[str]
     ) -> str:
         """
-        Construit le corps de la PR avec checklist de vérification humaine.
+        Build a rich Markdown PR body with a human-review checklist.
+
+        Uses the ``_t()`` helper so the output is localised to the
+        language configured by the frontend (``APP_LANGUAGE`` env var).
 
         Args:
-            task_title: Titre de la tâche
-            task_description: Description optionnelle de la tâche
+            task_title: Human-readable task title.
+            task_description: Optional longer description of the task.
 
         Returns:
-            Corps formaté de la PR en Markdown
+            Formatted Markdown string for the PR body.
         """
+        desc = task_description or _t("no_description")
+
         body_parts = [
-            "## 🤖 Tâche terminée - Vérification humaine requise",
+            f"## 🤖 {_t('header')}",
             "",
-            f"**Tâche:** {task_title}",
+            f"**{_t('task_label')}:** {task_title}",
+            "",
+            f"**{_t('description_label')}:** {desc}",
+            "",
+            f"### ✅ {_t('checklist_section')}",
+            f"- [ ] {_t('check_standards')}",
+            f"- [ ] {_t('check_tests')}",
+            f"- [ ] {_t('check_docs')}",
+            f"- [ ] {_t('check_coherent')}",
+            f"- [ ] {_t('check_regression')}",
+            "",
+            "---",
+            f"⚠️ **{_t('warning')}**",
+            "",
+            f"_{_t('footer')}_",
         ]
-
-        if task_description:
-            body_parts.extend(["", f"**Description:** {task_description}"])
-
-        body_parts.extend(
-            [
-                "",
-                "### ✅ Checklist de vérification",
-                "- [ ] Le code respecte les standards du projet",
-                "- [ ] Les tests passent (si applicables)",
-                "- [ ] La documentation est à jour",
-                "- [ ] Les changements sont cohérents avec la tâche",
-                "- [ ] Aucune régression détectée",
-                "",
-                "---",
-                "⚠️ **Cette PR nécessite une validation humaine avant merge**",
-                "",
-                "_PR créée automatiquement par Auto-Claude_",
-            ]
-        )
 
         return "\n".join(body_parts)
 

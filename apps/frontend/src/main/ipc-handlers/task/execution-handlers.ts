@@ -18,6 +18,7 @@ import {
 } from './plan-file-utils';
 import { findTaskWorktree } from '../../worktree-paths';
 import { projectStore } from '../../project-store';
+import { getAppLanguage } from '../../app-language';
 import { getIsolatedGitEnv, detectWorktreeBranch } from '../../utils/git-isolation';
 import { pythonEnvManager } from '../../python-env-manager';
 import { appLog } from '../../app-logger';
@@ -662,7 +663,7 @@ print(json.dumps(result))
                 cwd: project.path,
                 encoding: 'utf-8',
                 timeout: 60000, // 60 seconds timeout for PR creation
-                env: { ...process.env }
+                env: { ...process.env, APP_LANGUAGE: getAppLanguage() }
               }
             );
 

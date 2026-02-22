@@ -227,22 +227,58 @@ def test_complete_task_pr_already_exists(
     assert result["pr_url"] == "https://github.com/owner/repo/pull/123"
 
 
-def test_build_pr_body():
-    """Test de construction du corps de la PR"""
+def test_build_pr_body_en(monkeypatch):
+    """Test PR body generation in English."""
+    monkeypatch.setenv("APP_LANGUAGE", "en")
     service = TaskCompletionService(
         project_path=Path("/tmp/test"), base_branch="develop"
     )
-    
-    # Test avec description
+
+    # With description
     body = service._build_pr_body("My Task", "This is a test task")
     assert "My Task" in body
     assert "This is a test task" in body
-    assert "Checklist de vérification" in body
-    assert "validation humaine" in body
-    
-    # Test sans description
+    assert "Review checklist" in body
+    assert "human validation" in body
+    assert "WorkPilot AI" in body
+
+    # Without description → fallback text
     body_no_desc = service._build_pr_body("My Task", None)
     assert "My Task" in body_no_desc
-    assert "This is a test task" not in body_no_desc
-    assert "Checklist de vérification" in body_no_desc
+    assert "No description provided." in body_no_desc
+    assert "Review checklist" in body_no_desc
+
+
+def test_build_pr_body_fr(monkeypatch):
+    """Test PR body generation in French."""
+    monkeypatch.setenv("APP_LANGUAGE", "fr")
+    service = TaskCompletionService(
+        project_path=Path("/tmp/test"), base_branch="develop"
+    )
+
+    body = service._build_pr_body("Ma Tâche", "Ceci est un test")
+    assert "Ma Tâche" in body
+    assert "Ceci est un test" in body
+    assert "Checklist de vérification" in body
+    assert "validation humaine" in body
+
+    body_no_desc = service._build_pr_body("Ma Tâche", None)
+    assert "Aucune description fournie." in body_no_desc
+
+
+def test_build_pr_title(monkeypatch):
+    """Test conventional-commit PR title generation."""
+    monkeypatch.setenv("APP_LANGUAGE", "en")
+    service = TaskCompletionService(
+        project_path=Path("/tmp/test"), base_branch="develop"
+    )
+
+    # Normal title
+    assert service._build_pr_title("Add login page") == "feat: add login page"
+    # Title with trailing period
+    assert service._build_pr_title("Fix bug.") == "feat: fix bug"
+    # Already lowercase
+    assert service._build_pr_title("update readme") == "feat: update readme"
+    # With extra spaces
+    assert service._build_pr_title("  Fix tests  ") == "feat: fix tests"
 
