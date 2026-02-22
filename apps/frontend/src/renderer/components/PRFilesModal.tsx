@@ -61,13 +61,9 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
   const [prData, setPrData] = useState<PRData | null>(null);
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
 
-  console.log('[PRFilesModal] Component render:', { open, prUrl, taskId });
-
   // Reset state when modal opens/closes
   useEffect(() => {
-    console.log('[PRFilesModal] useEffect triggered:', { open, prUrl });
     if (open && prUrl) {
-      console.log('[PRFilesModal] Fetching PR details...');
       fetchPRDetails();
     } else {
       setPrData(null);
@@ -95,10 +91,8 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
           throw new Error('Invalid PR URL format - expected GitHub or Azure DevOps URL');
         }
         prNumber = parseInt(adoMatch[1]);
-        console.log('[PRFilesModal] Detected Azure DevOps PR:', prNumber);
       } else {
         prNumber = parseInt(prMatch[1]);
-        console.log('[PRFilesModal] Detected GitHub PR:', prNumber);
       }
       
       // Call IPC to get PR details with files
@@ -109,12 +103,6 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
       }
 
       setPrData(result.data?.data ?? null);
-      
-      // Debug: Log the structure of files data
-      if (result.data?.data?.files) {
-        console.log('[PRFilesModal] Files data structure:', result.data.data.files);
-        console.log('[PRFilesModal] First file sample:', result.data.data.files[0]);
-      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(errorMessage);
@@ -125,23 +113,14 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
   };
 
   const getFilePatch = (file: PRFileData): string => {
-    console.log(`[PRFilesModal] Getting patch for file: ${file.filename}`, {
-      hasPatch: !!file.patch,
-      patchLength: file.patch?.length,
-      hasGlobalDiff: !!prData?.diff,
-      globalDiffLength: prData?.diff?.length
-    });
-    
     // If file has its own patch, use it
     if (file.patch) {
-      console.log(`[PRFilesModal] Using file's own patch for ${file.filename}`);
       return file.patch;
     }
     
     // Otherwise, try to extract from the global diff
     if (prData?.diff && file.filename) {
       try {
-        console.log(`[PRFilesModal] Attempting to extract patch from global diff for ${file.filename}`);
         // Simple extraction: look for the file in the global diff
         const lines = prData.diff.split('\n');
         let inFileSection = false;
@@ -155,13 +134,11 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
               line.includes(` b/${file.filename}`)) {
             inFileSection = true;
             fileLines = [line];
-            console.log(`[PRFilesModal] Found file section for ${file.filename} at line ${i}`);
             continue;
           }
           
           // If we're in a file section and hit the next file, stop
           if (inFileSection && line.startsWith('diff --git')) {
-            console.log(`[PRFilesModal] End of file section for ${file.filename}`);
             break;
           }
           
@@ -171,28 +148,22 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
           }
         }
         
-        const result = fileLines.length > 0 ? fileLines.join('\n') : '';
-        console.log(`[PRFilesModal] Extracted ${fileLines.length} lines for ${file.filename}`);
-        return result;
+        return fileLines.length > 0 ? fileLines.join('\n') : '';
       } catch (err) {
         console.warn(`Failed to extract patch for ${file.filename}:`, err);
         return '';
       }
     }
     
-    console.log(`[PRFilesModal] No patch available for ${file.filename}`);
     return '';
   };
 
   const toggleFileExpansion = (filename: string) => {
-    console.log(`[PRFilesModal] Toggle file expansion called for: ${filename}`);
     setExpandedFiles(prev => {
       const next = new Set(prev);
       if (next.has(filename)) {
-        console.log(`[PRFilesModal] Collapsing file: ${filename}`);
         next.delete(filename);
       } else {
-        console.log(`[PRFilesModal] Expanding file: ${filename}`);
         next.add(filename);
       }
       return next;
@@ -236,7 +207,6 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
   };
 
   if (loading) {
-    console.log('[PRFilesModal] Rendering loading state');
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-7xl max-h-[95vh] w-[95vw] h-[90vh] overflow-hidden flex flex-col">
