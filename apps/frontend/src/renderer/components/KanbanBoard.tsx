@@ -1545,31 +1545,6 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     }
   }, [projectId, loadKanbanPreferences]);
 
-  // Force update in_progress column width if it's too wide (separate effect to avoid infinite loop)
-  useEffect(() => {
-    if (columnPreferences?.in_progress?.width && columnPreferences.in_progress.width >= 320) {
-      // Update preferences directly in the store to avoid triggering setColumnWidth
-      const updatedPrefs = {
-        ...columnPreferences,
-        in_progress: {
-          ...columnPreferences.in_progress,
-          width: 280
-        }
-      };
-      
-      // Use the store's internal update mechanism
-      useKanbanSettingsStore.setState({
-        columnPreferences: updatedPrefs
-      });
-      
-      // Also save to localStorage immediately
-      if (projectId) {
-        const key = `kanban-column-prefs-${projectId}`;
-        localStorage.setItem(key, JSON.stringify(updatedPrefs));
-      }
-    }
-  }, [columnPreferences?.in_progress?.width, projectId]);
-
   // Create a callback to toggle collapsed state and save to storage
   const handleToggleColumnCollapsed = useCallback((status: typeof TASK_STATUS_COLUMNS[number]) => {
     // Capture projectId at function start to avoid stale closure in setTimeout

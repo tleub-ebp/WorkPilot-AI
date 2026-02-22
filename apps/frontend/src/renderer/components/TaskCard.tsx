@@ -459,33 +459,41 @@ export const TaskCard = memo(function TaskCard({
         </Button>
       )}
       
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('tasks:confirmDelete.title')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('tasks:confirmDelete.description', { title: displayTitle })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
-              {t('common:buttons.cancel')}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
+      {/* Delete confirmation dialog - rendered via portal to prevent event propagation to card */}
+      {isDeleteDialogOpen && createPortal(
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('tasks:confirmDelete.title')}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('tasks:confirmDelete.description', { title: displayTitle })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={(e) => {
+                e.stopPropagation();
                 setIsDeleteDialogOpen(false);
-                if (onDelete) {
-                  onDelete();
-                }
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {t('common:buttons.delete')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      
+              }}>
+                {t('common:buttons.cancel')}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDeleteDialogOpen(false);
+                  if (onDelete) {
+                    onDelete();
+                  }
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {t('common:buttons.delete')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>,
+        document.body
+      )}
+
       <CardContent className="p-4">
         <div className={isSelectable ? 'flex gap-3' : undefined}>
           {/* Checkbox for selectable mode - stops event propagation */}
