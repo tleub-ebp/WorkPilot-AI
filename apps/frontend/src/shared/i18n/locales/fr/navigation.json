@@ -3,6 +3,14 @@
     "project": "Projet",
     "tools": "Outils"
   },
+  "groups": {
+    "core": "🎯 Workflow essentiel",
+    "development": "📁 Outils de développement",
+    "integration": "🌐 Intégrations & Git",
+    "planning": "📊 Planification & Analyse",
+    "knowledge": "💡 Connaissances & Contenu",
+    "utilities": "⚙️ Utilitaires"
+  },
   "items": {
     "kanban": "Tableau Kanban",
     "terminals": "Terminaux Agent",

@@ -3,6 +3,14 @@
     "project": "Project",
     "tools": "Tools"
   },
+  "groups": {
+    "core": " Core Workflow",
+    "development": " Development Tools",
+    "integration": " Integration & Git",
+    "planning": " Planning & Analysis",
+    "knowledge": " Knowledge & Content",
+    "utilities": " Utilities"
+  },
   "items": {
     "kanban": "Kanban Board",
     "terminals": "Agent Terminals",
