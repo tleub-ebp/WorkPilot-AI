@@ -2,6 +2,7 @@
   "refreshTasks": "Actualiser les tâches",
   "status": {
     "backlog": "Backlog",
+    "queue": "File d'attente",
     "todo": "À faire",
     "in_progress": "En cours",
     "review": "Révision",
@@ -42,6 +43,7 @@
     "hasErrors": "Contient des erreurs",
     "qaIssues": "Problèmes QA",
     "approvePlan": "Approuver le plan",
+    "plan_review": "Approuver le plan",
     "stopped": "Arrêté"
   },
   "tooltips": {
@@ -183,7 +185,13 @@
     "showMore": "Afficher plus",
     "showLess": "Afficher moins",
     "created": "Créé",
-    "updated": "Mis à jour"
+    "updated": "Mis à jour",
+    "rationale": "Raison",
+    "problemSolved": "Problème résolu",
+    "targetAudience": "Public cible",
+    "dependencies": "Dépendances",
+    "acceptanceCriteria": "Critères d'acceptation",
+    "affectedFiles": "Fichiers affectés"
   },
   "images": {
     "removeImageAriaLabel": "Supprimer l'image {{filename}}",
@@ -230,12 +238,16 @@
     }
   },
   "feedback": {
+    "requestChanges": "Demander des modifications",
+    "description": "Des problèmes trouvés ? Décrivez ce qui doit être corrigé et l'IA continuera de travailler dessus.",
+    "placeholder": "Décrivez les problèmes ou les modifications nécessaires...",
     "dragDropHint": "Glissez-déposez des images ou collez des captures d'écran",
-    "imageAdded": "Image ajoutée avec succès",
+    "imageAdded": "Image ajoutée avec succès !",
     "maxImagesError": "Maximum de {{count}} images autorisées",
     "invalidTypeError": "Type d'image invalide. Autorisés : {{types}}",
     "removeImage": "Supprimer l'image",
-    "processingError": "Échec du traitement de l'image"
+    "processingError": "Échec du traitement de l'image",
+    "submitting": "Envoi en cours..."
   },
   "review": {
     "mergeTooltip": "Fusionne les changements de la branche d'arbre de travail de la tâche vers votre branche de base. L'IA résoudra les conflits éventuels. Vous pourrez ensuite choisir de conserver ou de supprimer l'arbre de travail."

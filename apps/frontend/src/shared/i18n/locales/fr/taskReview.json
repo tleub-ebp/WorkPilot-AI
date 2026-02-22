@@ -5,6 +5,11 @@
     "openExternal": "Ouvrir dans le terminal externe"
   },
   "merge": {
+    "buildReadyForReview": "Build prêt pour révision",
+    "view": "Voir",
+    "checkForConflicts": "Vérifier les conflits",
+    "checkingForConflicts": "Vérification des conflits...",
+    "commits": "commits",
     "branchHasNewCommits": "La branche {{branch}} a {{count}} nouveau commit.",
     "branchHasNewCommits_other": "La branche {{branch}} a {{count}} nouveaux commits.",
     "branchHasNewCommitsSinceWorktree": "La branche {{branch}} a {{count}} nouveau commit depuis la création de cet arbre de travail.",

@@ -43,6 +43,7 @@
     "hasErrors": "Has Errors",
     "qaIssues": "QA Issues",
     "approvePlan": "Approve Plan",
+    "plan_review": "Approve Plan",
     "stopped": "Stopped"
   },
   "tooltips": {
@@ -231,12 +232,16 @@
     }
   },
   "feedback": {
+    "requestChanges": "Request Changes",
+    "description": "Found issues? Describe what needs to be fixed and the AI will continue working on it.",
+    "placeholder": "Describe the issues or changes needed...",
     "dragDropHint": "Drag & drop images or paste screenshots",
-    "imageAdded": "Image added successfully",
+    "imageAdded": "Image added successfully!",
     "maxImagesError": "Maximum of {{count}} images allowed",
     "invalidTypeError": "Invalid image type. Allowed: {{types}}",
     "removeImage": "Remove image",
-    "processingError": "Failed to process image"
+    "processingError": "Failed to process image",
+    "submitting": "Submitting..."
   },
   "review": {
     "mergeTooltip": "Merges changes from the task's worktree branch back to your base branch. AI will resolve any conflicts. You can then choose whether to keep or remove the worktree."

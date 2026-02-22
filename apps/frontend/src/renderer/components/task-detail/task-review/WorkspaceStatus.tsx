@@ -287,7 +287,7 @@ export function WorkspaceStatus({
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-medium text-sm text-foreground flex items-center gap-2">
             <GitBranch className="h-4 w-4 text-purple-400" />
-            Build Ready for Review
+            {t('taskReview:merge.buildReadyForReview')}
           </h3>
           <Button
             variant="ghost"
@@ -296,7 +296,7 @@ export function WorkspaceStatus({
             className="h-7 px-2 text-xs"
           >
             <Eye className="h-3.5 w-3.5 mr-1" />
-            View
+            {t('taskReview:merge.view')}
           </Button>
         </div>
 
@@ -308,7 +308,7 @@ export function WorkspaceStatus({
           </span>
           <span className="flex items-center gap-1.5 text-muted-foreground">
             <GitCommit className="h-3.5 w-3.5" />
-            <span className="font-medium text-foreground">{worktreeStatus.commitCount || 0}</span> commits
+            <span className="font-medium text-foreground">{worktreeStatus.commitCount || 0}</span> {t('taskReview:merge.commits')}
           </span>
           <span className="flex items-center gap-1 text-success">
             <Plus className="h-3.5 w-3.5" />
@@ -573,7 +573,7 @@ export function WorkspaceStatus({
               className="flex-1"
             >
               <GitMerge className="mr-2 h-4 w-4" />
-              Check for Conflicts
+              {t('taskReview:merge.checkForConflicts')}
             </Button>
           )}
 
@@ -585,7 +585,7 @@ export function WorkspaceStatus({
               className="flex-1"
             >
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Checking for conflicts...
+              {t('taskReview:merge.checkingForConflicts')}
             </Button>
           )}
 
