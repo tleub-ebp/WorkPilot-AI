@@ -1842,6 +1842,18 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       {/* Kanban header avec bouton paramètres projet */}
       <div className="flex items-center justify-between px-2 pt-4 pb-2">
         <div className="flex items-center gap-2">
+          {onRefresh && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+              {isRefreshing ? t('common:buttons.refreshing') : t('tasks:refreshTasks')}
+            </Button>
+          )}
           {/* Expand All button - appears when 3+ columns are collapsed */}
           {collapsedColumnCount >= 3 && (
             <Button
@@ -1878,18 +1890,6 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
             >
               <Download className="h-4 w-4" />
               {envConfig?.jiraProjectKey || 'Jira'}
-            </Button>
-          )}
-          {onRefresh && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onRefresh}
-              disabled={isRefreshing}
-              className="gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
-              {isRefreshing ? t('common:buttons.refreshing') : t('tasks:refreshTasks')}
             </Button>
           )}
         </div>

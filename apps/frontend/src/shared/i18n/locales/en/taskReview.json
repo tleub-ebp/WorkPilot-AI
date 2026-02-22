@@ -121,6 +121,21 @@
     "completionMessage": "All changes have been merged successfully.",
     "errorMessage": "An error occurred during the merge process."
   },
+  "diff": {
+    "title": "Changed Files",
+    "noChanges": "No changes found",
+    "noFiles": "No changed files found",
+    "close": "Close",
+    "viewMode": "View",
+    "flatList": "Flat list",
+    "treeView": "Tree view",
+    "status": {
+      "added": "added",
+      "deleted": "deleted",
+      "modified": "modified",
+      "renamed": "renamed"
+    }
+  },
   "bulkPR": {
     "title": "Create Pull Requests",
     "description": "Create pull requests for {{count}} selected tasks",
