@@ -5,6 +5,11 @@
     "openExternal": "Open in External Terminal"
   },
   "merge": {
+    "buildReadyForReview": "Build Ready for Review",
+    "view": "View",
+    "checkForConflicts": "Check for Conflicts",
+    "checkingForConflicts": "Checking for conflicts...",
+    "commits": "commits",
     "branchHasNewCommits": "{{branch}} branch has {{count}} new commit.",
     "branchHasNewCommits_other": "{{branch}} branch has {{count}} new commits.",
     "branchHasNewCommitsSinceWorktree": "The {{branch}} branch has {{count}} new commit since this worktree was created.",

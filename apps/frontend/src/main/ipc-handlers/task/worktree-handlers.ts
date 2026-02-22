@@ -24,6 +24,7 @@ import { cleanupWorktree } from '../../utils/worktree-cleanup';
 import { killProcessGracefully } from '../../platform';
 import { stripAnsiCodes } from '../../../shared/utils/ansi-sanitizer';
 import { taskStateManager } from '../../task-state-manager';
+import { getAppLanguage } from '../../app-language';
 
 // Regex pattern for validating git branch names
 export const GIT_BRANCH_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9._/-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]$/;
@@ -3288,6 +3289,7 @@ export function registerWorktreeHandlers(
               ...pythonEnv,
               ...profileEnv,
               GITHUB_CLI_PATH: ghCliPath,
+              APP_LANGUAGE: getAppLanguage(),
               PYTHONUNBUFFERED: '1',
               PYTHONUTF8: '1'
             },

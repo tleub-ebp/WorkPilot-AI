@@ -338,7 +338,7 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
                 '[&_ul_ul]:my-1 [&_ol_ol]:my-1 [&_ul_ol]:my-1 [&_ol_ul]:my-1',
                 '[&_ul_ul]:pl-4 [&_ol_ol]:pl-4 [&_ul_ol]:pl-4 [&_ol_ul]:pl-4',
                 // Liens
-                'prose-a:text-info prose-a:underline prose-a:break-words',
+                'prose-a:text-info prose-a:underline prose-a:wrap-break-word',
                 'hover:prose-a:text-info/80',
                 // Blocs de code
                 'prose-pre:bg-muted/50 prose-pre:border prose-pre:border-border',
@@ -364,7 +364,7 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
                 // Règles horizontales
                 'prose-hr:border-border prose-hr:my-6',
                 // Limite de largeur et gestion du débordement
-                '[&_*]:max-w-full [&_*]:overflow-x-auto',
+                '**:max-w-full **:overflow-x-auto',
                 !isExpanded && hasOverflow && 'max-h-[200px]'
               )}
               style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
@@ -429,7 +429,7 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
 
             {/* Gradient overlay when collapsed and has overflow */}
             {!isExpanded && hasOverflow && (
-              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-muted/80 to-transparent pointer-events-none" />
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-linear-to-t from-muted/80 to-transparent pointer-events-none" />
             )}
           </div>
 
@@ -469,7 +469,7 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
             <div>
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
                 <Lightbulb className="h-3 w-3 text-warning" />
-                Rationale
+                {t('tasks:metadata.rationale')}
               </h3>
               <p className="text-sm text-foreground/80">{task.metadata.rationale}</p>
             </div>
@@ -480,7 +480,7 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
             <div>
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
                 <Target className="h-3 w-3 text-success" />
-                Problem Solved
+                {t('tasks:metadata.problemSolved')}
               </h3>
               <p className="text-sm text-foreground/80">{task.metadata.problemSolved}</p>
             </div>
@@ -491,7 +491,7 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
             <div>
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
                 <Users className="h-3 w-3 text-info" />
-                Target Audience
+                {t('tasks:metadata.targetAudience')}
               </h3>
               <p className="text-sm text-foreground/80">{task.metadata.targetAudience}</p>
             </div>
@@ -502,7 +502,7 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
             <div>
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
                 <GitBranch className="h-3 w-3 text-purple-400" />
-                Dependencies
+                {t('tasks:metadata.dependencies')}
               </h3>
               <ul className="text-sm text-foreground/80 list-disc list-inside space-y-0.5">
                 {task.metadata.dependencies.map((dep, idx) => (
@@ -539,7 +539,7 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
             <div>
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
                 <ListChecks className="h-3 w-3 text-success" />
-                Acceptance Criteria
+                {t('tasks:metadata.acceptanceCriteria')}
               </h3>
               <ul className="text-sm text-foreground/80 list-disc list-inside space-y-0.5">
                 {task.metadata.acceptanceCriteria.map((criteria, idx) => (
@@ -554,7 +554,7 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
             <div>
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
                 <FileCode className="h-3 w-3" />
-                Affected Files
+                {t('tasks:metadata.affectedFiles')}
               </h3>
               <div className="flex flex-wrap gap-1">
                 {task.metadata.affectedFiles.map((file, idx) => (
