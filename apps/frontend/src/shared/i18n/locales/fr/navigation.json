@@ -4,8 +4,8 @@
     "tools": "Outils"
   },
   "groups": {
-    "core": "🎯 Workflow essentiel",
-    "development": "📁 Outils de développement",
+    "core": "🎯 Workflow Essentiel",
+    "development": "📁 Outils de Développement",
     "integration": "🌐 Intégrations & Git",
     "planning": "📊 Planification & Analyse",
     "knowledge": "💡 Connaissances & Contenu",

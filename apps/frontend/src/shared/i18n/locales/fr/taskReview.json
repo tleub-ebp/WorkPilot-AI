@@ -121,6 +121,21 @@
     "completionMessage": "Toutes les modifications ont été fusionnées avec succès.",
     "errorMessage": "Une erreur s'est produite pendant le processus de fusion."
   },
+  "diff": {
+    "title": "Fichiers modifiés",
+    "noChanges": "Aucun changement trouvé",
+    "noFiles": "Aucun fichier modifié trouvé",
+    "close": "Fermer",
+    "viewMode": "Vue",
+    "flatList": "Liste plate",
+    "treeView": "Vue arborescente",
+    "status": {
+      "added": "ajouté",
+      "deleted": "supprimé",
+      "modified": "modifié",
+      "renamed": "renommé"
+    }
+  },
   "bulkPR": {
     "title": "Créer des Pull Requests",
     "description": "Créer des pull requests pour {{count}} tâches sélectionnées",
