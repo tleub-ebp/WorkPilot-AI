@@ -224,7 +224,6 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
   }
 
   if (error) {
-    console.log('[PRFilesModal] Rendering error state:', error);
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-7xl max-h-[95vh] w-[95vw] h-[90vh] overflow-hidden flex flex-col">
@@ -255,11 +254,8 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
   }
 
   if (!prData) {
-    console.log('[PRFilesModal] No PR data, rendering null');
     return null;
   }
-
-  console.log('[PRFilesModal] Rendering main content with', prData.files.length, 'files');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -360,10 +356,7 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
                       className={cn(
                         "flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors"
                       )}
-                      onClick={() => {
-                        console.log(`[PRFilesModal] File clicked: ${file.filename}`);
-                        toggleFileExpansion(file.filename);
-                      }}
+                      onClick={() => toggleFileExpansion(file.filename)}
                     >
                       <div className="flex items-center gap-2">
                         {getFileStatusIcon(file.status)}
