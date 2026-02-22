@@ -45,6 +45,48 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
+# ── i18n helpers for PR / MR body fallback ────────────────────────────────
+
+def _get_app_language() -> str:
+    """Return the UI language configured by the frontend (``APP_LANGUAGE`` env var)."""
+    return os.environ.get("APP_LANGUAGE", "en")
+
+
+_WORKTREE_PR_STRINGS: dict[str, dict[str, str]] = {
+    "en": {
+        "fallback_footer": "Auto-generated PR from WorkPilot AI build.",
+        "summary_section": "Summary",
+        "checklist_section": "Review checklist",
+        "check_standards": "Code follows project standards",
+        "check_tests": "Tests pass (if applicable)",
+        "check_docs": "Documentation is up to date",
+        "check_coherent": "Changes are consistent with the task",
+        "check_regression": "No regression detected",
+        "warning": "This PR requires human validation before merge.",
+        "footer": "PR created automatically by WorkPilot AI",
+    },
+    "fr": {
+        "fallback_footer": "PR générée automatiquement par WorkPilot AI.",
+        "summary_section": "Résumé",
+        "checklist_section": "Checklist de vérification",
+        "check_standards": "Le code respecte les standards du projet",
+        "check_tests": "Les tests passent (si applicables)",
+        "check_docs": "La documentation est à jour",
+        "check_coherent": "Les changements sont cohérents avec la tâche",
+        "check_regression": "Aucune régression détectée",
+        "warning": "Cette PR nécessite une validation humaine avant merge.",
+        "footer": "PR créée automatiquement par WorkPilot AI",
+    },
+}
+
+
+def _wt(key: str) -> str:
+    """Return a translated worktree PR string for the current app language."""
+    lang = _get_app_language()
+    strings = _WORKTREE_PR_STRINGS.get(lang, _WORKTREE_PR_STRINGS["en"])
+    return strings.get(key, _WORKTREE_PR_STRINGS["en"].get(key, key))
+
+
 def _is_retryable_network_error(stderr: str) -> bool:
     """Check if an error is a retryable network/connection issue."""
     stderr_lower = stderr.lower()
@@ -1285,7 +1327,7 @@ class WorktreeManager:
             )
 
         target = target_branch or self.base_branch
-        pr_title = title or f"auto-claude: {spec_name}"
+        pr_title = title or f"feat: {spec_name}"
 
         # Try AI-powered PR body from project's PR template, fall back to spec summary
         pr_body: str | None = None
@@ -1543,7 +1585,7 @@ class WorktreeManager:
             )
 
         target = target_branch or self.base_branch
-        pr_title = title or f"auto-claude: {spec_name}"
+        pr_title = title or f"feat: {spec_name}"
 
         # Try AI-powered PR body from project's PR template, fall back to spec summary
         pr_body: str | None = None
@@ -1713,7 +1755,7 @@ class WorktreeManager:
             )
 
         target = target_branch or self.base_branch
-        mr_title = title or f"auto-claude: {spec_name}"
+        mr_title = title or f"feat: {spec_name}"
 
         # Get MR body from spec.md if available
         mr_body = self._extract_spec_summary(spec_name)
@@ -2002,7 +2044,20 @@ class WorktreeManager:
             return None
 
     def _extract_spec_summary(self, spec_name: str) -> str:
-        """Extract a summary from spec.md for PR body."""
+        """
+        Build a rich Markdown PR/MR body from the spec summary.
+
+        Extracts the first paragraphs of ``spec.md`` and wraps them in a
+        localised template that includes a review checklist and footer.
+        When no spec is available the method returns a minimal fallback body.
+
+        Args:
+            spec_name: The spec folder name (e.g. ``001-my-feature``).
+
+        Returns:
+            Formatted Markdown string ready to be used as a PR/MR body.
+        """
+        # ── locate spec.md ────────────────────────────────────────────
         worktree_path = self.get_worktree_path(spec_name)
         spec_path = worktree_path / ".auto-claude" / "specs" / spec_name / "spec.md"
 
@@ -2012,40 +2067,58 @@ class WorktreeManager:
                 self.project_dir / ".auto-claude" / "specs" / spec_name / "spec.md"
             )
 
-        if not spec_path.exists():
-            return "Auto-generated PR from Auto-Claude build."
+        # ── extract raw summary text ──────────────────────────────────
+        raw_summary: str | None = None
+        if spec_path.exists():
+            try:
+                content = spec_path.read_text(encoding="utf-8")
+                lines = content.split("\n")
+                summary_lines: list[str] = []
+                in_content = False
 
-        try:
-            content = spec_path.read_text(encoding="utf-8")
-            # Extract first few paragraphs (skip title, get overview)
-            lines = content.split("\n")
-            summary_lines = []
-            in_content = False
+                for line in lines:
+                    if line.startswith("# "):
+                        continue
+                    if line.strip() and not line.startswith("#"):
+                        in_content = True
+                    if in_content:
+                        if line.startswith("## ") and summary_lines:
+                            break
+                        summary_lines.append(line)
+                        if len(summary_lines) >= 10:
+                            break
 
-            for line in lines:
-                # Skip title headers
-                if line.startswith("# "):
-                    continue
-                # Start capturing after first content line
-                if line.strip() and not line.startswith("#"):
-                    in_content = True
-                if in_content:
-                    if line.startswith("## ") and summary_lines:
-                        break  # Stop at next section
-                    summary_lines.append(line)
-                    if len(summary_lines) >= 10:  # Limit to ~10 lines
-                        break
+                text = "\n".join(summary_lines).strip()
+                if text:
+                    raw_summary = text
+            except (OSError, UnicodeDecodeError) as e:
+                debug_warning(
+                    "worktree",
+                    f"Could not extract spec summary for PR body: {e}",
+                )
 
-            summary = "\n".join(summary_lines).strip()
-            if summary:
-                return summary
-        except (OSError, UnicodeDecodeError) as e:
-            # Silently fall back to default - file read errors shouldn't block PR creation
-            debug_warning(
-                "worktree", f"Could not extract spec summary for PR body: {e}"
-            )
+        # ── build rich markdown body ──────────────────────────────────
+        summary_text = raw_summary or _wt("fallback_footer")
 
-        return "Auto-generated PR from Auto-Claude build."
+        parts = [
+            f"## 🤖 {_wt('summary_section')}",
+            "",
+            summary_text,
+            "",
+            f"### ✅ {_wt('checklist_section')}",
+            f"- [ ] {_wt('check_standards')}",
+            f"- [ ] {_wt('check_tests')}",
+            f"- [ ] {_wt('check_docs')}",
+            f"- [ ] {_wt('check_coherent')}",
+            f"- [ ] {_wt('check_regression')}",
+            "",
+            "---",
+            f"⚠️ **{_wt('warning')}**",
+            "",
+            f"_{_wt('footer')}_",
+        ]
+
+        return "\n".join(parts)
 
     def _get_existing_pr_url(self, spec_name: str, target_branch: str) -> str | None:
         """Get the URL of an existing PR for this branch."""
