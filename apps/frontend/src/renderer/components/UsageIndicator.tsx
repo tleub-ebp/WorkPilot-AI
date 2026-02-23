@@ -430,6 +430,12 @@ export function UsageIndicator() {
   if (!isAvailable || !usage) {
     const needsReauth = activeProfileNeedsReauth;
     
+    // Debug: Log current provider and known providers
+    console.log('[UsageIndicator] Debug - Selected provider:', selectedProvider);
+    console.log('[UsageIndicator] Debug - Known providers:', Array.from(KNOWN_PROVIDERS));
+    console.log('[UsageIndicator] Debug - Is available:', isAvailable);
+    console.log('[UsageIndicator] Debug - Usage data:', usage);
+    
     // Debug OpenAI
     if (selectedProvider?.toLowerCase() === 'openai') {
       let debugProfiles = [];
@@ -541,7 +547,7 @@ export function UsageIndicator() {
         </TooltipProvider>
       );
     }
-    // Fallback générique
+    // Fallback générique pour les providers qui fonctionnent mais n'ont pas de données
     return (
       <TooltipProvider delayDuration={200}>
         <Tooltip>
@@ -555,7 +561,10 @@ export function UsageIndicator() {
             <div className="space-y-1">
               <p className="font-medium">{t('common:usage.dataUnavailable')}</p>
               <p className="text-muted-foreground text-[10px]">
-                {t('common:usage.dataUnavailableDescription')}
+                {selectedProvider === 'anthropic' 
+                  ? "Les données d'usage Anthropic ne sont pas disponibles dans cette version. L'authentification OAuth fonctionne correctement."
+                  : t('common:usage.dataUnavailableDescription')
+                }
               </p>
             </div>
           </TooltipContent>
@@ -757,7 +766,7 @@ export function UsageIndicator() {
                   </div>
                 )}
               </div>
-            ) : isCopilot ? (
+            ) : isCopilot && selectedProvider === 'copilot' ? (
               <div className="py-2 space-y-3">
                 {(usage as any).error === 'INSUFFICIENT_PERMISSIONS' ? (
                   <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-orange-500/10 border border-orange-500/20">

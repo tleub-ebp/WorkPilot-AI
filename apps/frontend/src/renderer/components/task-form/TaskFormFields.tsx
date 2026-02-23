@@ -11,7 +11,7 @@
  */
 import { useRef, useState, useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronUp, Image as ImageIcon, X, Camera } from 'lucide-react';
+import { ChevronDown, ChevronUp, Image as ImageIcon, X, Camera, WandSparkles } from 'lucide-react';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
@@ -24,6 +24,7 @@ import { createThumbnail } from '../ImageUpload';
 import { ScreenshotCapture } from '../ScreenshotCapture';
 import { ImagePreviewModal } from './ImagePreviewModal';
 import { cn } from '../../lib/utils';
+import { usePromptOptimizerStore } from '../../stores/prompt-optimizer-store';
 import { MAX_IMAGES_PER_TASK } from '../../../shared/constants';
 import type {
   TaskCategory,
@@ -322,9 +323,22 @@ export function TaskFormFields({
               style={descriptionOverlay ? { caretColor: 'auto' } : undefined}
             />
           </div>
-          <p id={`${prefix}description-help`} className="text-xs text-muted-foreground">
-            {t('images.pasteHint', { shortcut: navigator.platform.includes('Mac') ? '⌘V' : 'Ctrl+V' })}
-          </p>
+          <div className="flex items-center justify-between">
+            <p id={`${prefix}description-help`} className="text-xs text-muted-foreground">
+              {t('images.pasteHint', { shortcut: navigator.platform.includes('Mac') ? '⌘V' : 'Ctrl+V' })}
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+              disabled={!description.trim() || disabled}
+              onClick={() => usePromptOptimizerStore.getState().openDialog(description, 'general')}
+            >
+              <WandSparkles className="h-3.5 w-3.5" />
+              {t('promptOptimizer:title', { ns: 'promptOptimizer' })}
+            </Button>
+          </div>
 
           {/* Optional children (e.g., @ mention autocomplete) */}
           {children}

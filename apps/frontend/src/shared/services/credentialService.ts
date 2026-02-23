@@ -50,7 +50,16 @@ class CredentialService {
    * Initialiser les écouteurs d'événements IPC
    */
   private initializeEventListeners(): void {
-    if (!window.electronAPI) return;
+    if (!window.electronAPI) {
+      console.warn('[CredentialService] Electron API not available - running in browser environment');
+      return;
+    }
+
+    // Vérifier si les méthodes existent
+    if (!window.electronAPI.on) {
+      console.warn('[CredentialService] window.electronAPI.on not available - running in development mode');
+      return;
+    }
 
     // Écouter les mises à jour de credentials
     window.electronAPI.on('credential:updated', (credential: CredentialConfig | null) => {
