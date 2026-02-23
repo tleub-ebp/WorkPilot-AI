@@ -55,6 +55,88 @@ Métriques complètes sur les agents : taux de succès QA, coût tokens par phas
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Feedback loop indispensable. Les power users vont adorer optimiser leurs agents.
 
+#### 📊 Comment utiliser le Build Analytics Dashboard
+
+Le Build Analytics Dashboard est maintenant disponible dans l'interface WorkPilot AI ! Voici comment l'utiliser :
+
+##### 🚀 Accès au Dashboard
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"Analytics"** dans le groupe "Planning" (raccourci clavier : `A`)
+2. **Ouverture** : Le dashboard s'ouvre directement dans l'interface principale
+
+##### 📈 Fonctionnalités principales
+
+**🎯 Vue d'ensemble (Overview)**
+- **KPIs principaux** : Nombre total de builds, taux de succès, tokens utilisés, coût total
+- **Builds récents** : Liste des derniers builds avec statut, durée, consommation
+- **Performance par phase** : Métriques détaillées pour chaque phase (planning, coding, QA)
+
+**🔧 Vue Builds**
+- **Liste complète** : Tous les builds avec filtres et pagination
+- **Détails build** : Cliquez sur un build pour voir phases, résultats QA, erreurs
+- **Statuts** : Visualisation rapide des builds réussis/échoués/en cours
+
+**⚡ Vue Performance**
+- **Performance des agents** : Succès, durée, tokens et coût par type d'agent
+- **Tendance tokens** : Évolution de la consommation sur la période sélectionnée
+- **Comparaison modèles** : Performance par LLM provider et modèle
+
+**🐛 Vue Erreurs**
+- **Types d'erreurs** : Classification et fréquence des erreurs
+- **Taux de résolution** : Pourcentage d'erreurs résolues automatiquement
+- **Patterns** : Identification des problèmes récurrents
+
+##### 🎛️ Personnalisation
+
+**Période temporelle**
+- Sélectionnez la période d'analyse : 7 jours, 30 jours (par défaut), ou 90 jours
+- Les KPIs et graphiques s'adaptent automatiquement
+
+**Rafraîchissement**
+- Cliquez sur "Refresh" pour mettre à jour les données en temps réel
+- Les données se rafraîchissent automatiquement au chargement
+
+##### 📊 Métriques disponibles
+
+**Builds**
+- Taux de succès global
+- Durée moyenne des builds
+- Nombre d'itérations QA
+- Tokens par build
+
+**Tokens**
+- Consommation totale et par build
+- Coût estimé en USD
+- Répartition par provider/modèle
+
+**QA**
+- Taux de réussite des tests
+- Couverture de code moyenne
+- Score de qualité
+- Issues de sécurité trouvées/résolues
+
+**Erreurs**
+- Classification par type et catégorie
+- Taux de résolution
+- Patterns récurrents
+
+##### 🔍 Tips d'utilisation
+
+1. **Optimisation** : Utilisez la vue "Performance" pour identifier les agents les plus efficaces
+2. **Débogage** : La vue "Erreurs" aide à comprendre les problèmes récurrents
+3. **Budget** : Surveillez les coûts tokens dans la vue d'ensemble
+4. **Tendances** : Comparez les performances sur différentes périodes
+
+##### 🛠️ Pour les développeurs
+
+Le dashboard est alimenté par le système de collecte automatique qui :
+- Capture les événements de phase en temps réel
+- Agrège les données de token usage
+- Enregistre les résultats QA
+- Classifie les erreurs
+
+Les données sont stockées dans une base SQLite locale (`analytics.db`) et accessibles via l'API REST `/analytics/*`.
+
 ### 6. Test Generation Agent
 
 Agent dédié post-build qui analyse le code modifié et génère automatiquement les tests manquants.

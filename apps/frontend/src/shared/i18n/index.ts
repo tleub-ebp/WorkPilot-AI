@@ -26,6 +26,7 @@ import enRefactoring from './locales/en/refactoring.json';
 import enDocumentation from './locales/en/documentation.json';
 import enInsights from './locales/en/insights.json';
 import enRoadmap from './locales/en/roadmap.json';
+import enAnalytics from './locales/en/analytics.json';
 
 // Import French translation resources
 import frCommon from './locales/fr/common.json';
@@ -52,6 +53,7 @@ import frRefactoring from './locales/fr/refactoring.json';
 import frDocumentation from './locales/fr/documentation.json';
 import frInsights from './locales/fr/insights.json';
 import frRoadmap from './locales/fr/roadmap.json';
+import frAnalytics from './locales/fr/analytics.json';
 
 export const defaultNS = 'common';
 
@@ -80,7 +82,8 @@ export const resources = {
     refactoring: enRefactoring,
     documentation: enDocumentation,
     insights: enInsights,
-    roadmap: enRoadmap
+    roadmap: enRoadmap,
+    analytics: enAnalytics
   },
   fr: {
     common: frCommon,
@@ -106,7 +109,8 @@ export const resources = {
     refactoring: frRefactoring,
     documentation: frDocumentation,
     insights: frInsights,
-    roadmap: frRoadmap
+    roadmap: frRoadmap,
+    analytics: frAnalytics
   }
 } as const;
 
@@ -118,7 +122,7 @@ i18n
     fallbackLng: 'en',
     defaultNS,
     ns: [
-      'common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'initDialog', 'gitlab', 'taskReview', 'terminal', 'errors', 'context', 'changelog', 'migrationWizard', 'visualProgramming', 'projectInitModal', 'collaboration', 'streaming', 'codeReview', 'refactoring', 'documentation', 'insights', 'roadmap'
+      'common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'initDialog', 'gitlab', 'taskReview', 'terminal', 'errors', 'context', 'changelog', 'migrationWizard', 'visualProgramming', 'projectInitModal', 'collaboration', 'streaming', 'codeReview', 'refactoring', 'documentation', 'insights', 'roadmap', 'analytics'
     ],
     interpolation: {
       escapeValue: false // React already escapes values

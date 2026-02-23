@@ -48,6 +48,7 @@ const Worktrees = lazy(() => import('./components/Worktrees').then(m => ({ defau
 const MigrationWizard = lazy(() => import('./components/MigrationWizard').then(m => ({ default: m.MigrationWizard })));
 const VisualProgrammingInterface = lazy(() => import('./components/VisualProgrammingInterface').then(m => ({ default: m.VisualProgrammingInterface })));
 const DashboardMetrics = lazy(() => import('./components/DashboardMetrics').then(m => ({ default: m.DashboardMetrics })));
+const AnalyticsDashboard = lazy(() => import('./components/AnalyticsDashboard').then(m => ({ default: m.AnalyticsDashboard })));
 const CodeReview = lazy(() => import('./components/CodeReview').then(m => ({ default: m.CodeReview })));
 const RefactoringView = lazy(() => import('./components/RefactoringView').then(m => ({ default: m.RefactoringView })));
 const DocumentationView = lazy(() => import('./components/DocumentationView').then(m => ({ default: m.DocumentationView })));
@@ -1152,6 +1153,9 @@ export function App() {
                           )}
                           {activeView === 'dashboard' && (activeProjectId || selectedProjectId) && (
                               <DashboardMetrics projectId={activeProjectId || selectedProjectId!} />
+                          )}
+                          {activeView === 'analytics' && (
+                              <AnalyticsDashboard />
                           )}
                           {activeView === 'code-review' && (activeProjectId || selectedProjectId) && (
                               <CodeReview projectId={activeProjectId || selectedProjectId!} />
