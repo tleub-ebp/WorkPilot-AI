@@ -154,10 +154,6 @@ export const TaskCard = memo(function TaskCard({
   onDelete,
   onViewPRFiles
 }: TaskCardProps) {
-  console.log('[TaskCard] Rendering task:', task.id);
-  console.log('[TaskCard] Task has prUrl:', !!task.metadata?.prUrl);
-  console.log('[TaskCard] onViewPRFiles exists:', !!onViewPRFiles);
-  console.log('[TaskCard] Should show PR Files button:', !!(task.metadata?.prUrl && onViewPRFiles));
   const { t } = useTranslation(['tasks', 'errors']);
   const formatRelativeTime = useFormatRelativeTime();
   const [isStuck, setIsStuck] = useState(false);
@@ -733,7 +729,6 @@ export const TaskCard = memo(function TaskCard({
                 )}
                 {task.metadata?.prUrl && onViewPRFiles && (
                   <>
-                    {console.log('[TaskCard] RENDERING PR FILES BUTTON for task:', task.id)}
                     <Button
                       variant="outline"
                       size="sm"

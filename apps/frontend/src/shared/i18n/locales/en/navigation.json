@@ -28,6 +28,7 @@
     "migration": "Migration Wizard",
     "visualProgramming": "Visual Programming",
     "dashboard": "Dashboard",
+    "analytics": "Analytics",
     "codeReview": "Code Review",
     "refactoring": "Refactoring",
     "documentation": "Documentation",

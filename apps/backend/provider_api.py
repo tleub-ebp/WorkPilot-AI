@@ -39,6 +39,15 @@ async def lifespan(app: FastAPI):
         logging.getLogger(__name__).info("Streaming WebSocket server starting on ws://localhost:8765")
     except Exception as e:
         logging.getLogger(__name__).warning(f"Could not start streaming server: {e}")
+    
+    # Initialize analytics database
+    try:
+        from analytics import init_database
+        init_database()
+        logging.getLogger(__name__).info("Analytics database initialized")
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Could not initialize analytics database: {e}")
+    
     yield
     try:
         from streaming import stop_streaming_server
@@ -856,6 +865,11 @@ def get_pr_details(pr_url: str = Query(...)):
         
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+# --- Analytics API ---
+from analytics.api_minimal import router as analytics_router
+app.include_router(analytics_router)
 
 
 if __name__ == "__main__":

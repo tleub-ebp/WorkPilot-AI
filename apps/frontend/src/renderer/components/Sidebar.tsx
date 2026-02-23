@@ -75,7 +75,7 @@ import { CopilotCliStatusBadge } from './CopilotCliStatusBadge';
 import { UpdateBanner } from './UpdateBanner';
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history';
 
 interface SidebarProps {
   onSettingsClick: () => void;
@@ -141,6 +141,7 @@ const navGroups: NavGroup[] = [
     items: [
       { id: 'roadmap', labelKey: 'navigation:items.roadmap', icon: Map, shortcut: 'D' },
       { id: 'dashboard', labelKey: 'navigation:items.dashboard', icon: BarChart3, shortcut: 'H' },
+      { id: 'analytics', labelKey: 'navigation:items.analytics', icon: Database, shortcut: 'A' },
       { id: 'cost-estimator', labelKey: 'navigation:items.costEstimator', icon: Coins, shortcut: 'E' },
       { id: 'session-history', labelKey: 'navigation:items.sessionHistory', icon: History, shortcut: 'S' },
     ],
