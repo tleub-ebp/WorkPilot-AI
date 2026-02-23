@@ -1,0 +1,51 @@
+{
+  "title": "AI Prompt Optimizer",
+  "description": "Enhance your prompt with project context and best practices for better AI results.",
+  "prompt": {
+    "label": "Your Prompt",
+    "placeholder": "Enter the prompt you want to optimize..."
+  },
+  "agentType": {
+    "label": "Agent Type",
+    "description": "Select the agent type to optimize for",
+    "options": {
+      "general": "General",
+      "analysis": "Analysis",
+      "coding": "Coding",
+      "verification": "Verification"
+    },
+    "descriptions": {
+      "general": "General purpose optimization",
+      "analysis": "Optimized for code analysis and review",
+      "coding": "Optimized for code implementation",
+      "verification": "Optimized for testing and QA"
+    }
+  },
+  "actions": {
+    "optimize": "Optimize Prompt",
+    "optimizing": "Optimizing...",
+    "copy": "Copy Optimized Prompt",
+    "copied": "Copied!",
+    "usePrompt": "Use This Prompt",
+    "tryAgain": "Try Again",
+    "close": "Close"
+  },
+  "status": {
+    "idle": "Ready to optimize",
+    "analyzing": "Analyzing prompt and project context...",
+    "complete": "Optimization complete",
+    "error": "Optimization failed"
+  },
+  "result": {
+    "title": "Optimized Prompt",
+    "changes": "Changes Made",
+    "reasoning": "Reasoning",
+    "noChanges": "No changes were needed — your prompt is already well-structured.",
+    "streamingOutput": "Optimizer Output"
+  },
+  "errors": {
+    "noProject": "No project selected. Please select a project first.",
+    "emptyPrompt": "Please enter a prompt to optimize.",
+    "generic": "An error occurred during optimization."
+  }
+}

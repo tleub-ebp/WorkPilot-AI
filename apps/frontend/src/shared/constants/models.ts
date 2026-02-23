@@ -276,7 +276,8 @@ export const DEFAULT_FEATURE_MODELS: FeatureModelConfig = {
   roadmap: 'claude-opus-4-6',              // Strategic planning benefits from Opus
   githubIssues: 'claude-opus-4-6',         // Issue triage and analysis benefits from Opus
   githubPrs: 'claude-opus-4-6',            // PR review benefits from thorough Opus analysis
-  utility: 'claude-haiku-4-5-20251001'     // Fast utility operations (commit messages, merge resolution)
+  utility: 'claude-haiku-4-5-20251001',    // Fast utility operations (commit messages, merge resolution)
+  promptOptimizer: 'claude-sonnet-4-5-20250929' // Balanced prompt optimization
 };
 
 // Default feature thinking configuration
@@ -286,7 +287,8 @@ export const DEFAULT_FEATURE_THINKING: FeatureThinkingConfig = {
   roadmap: 'high',        // Strategic thinking for roadmap
   githubIssues: 'medium', // Moderate thinking for issue analysis
   githubPrs: 'medium',    // Moderate thinking for PR review
-  utility: 'low'          // Fast thinking for utility operations
+  utility: 'low',         // Fast thinking for utility operations
+  promptOptimizer: 'medium' // Balanced thinking for prompt optimization
 };
 
 // Feature labels for UI display
@@ -296,7 +298,8 @@ export const FEATURE_LABELS: Record<keyof FeatureModelConfig, { label: string; d
   roadmap: { label: 'Roadmap', description: 'Create strategic feature roadmaps' },
   githubIssues: { label: 'GitHub Issues', description: 'Automated issue triage and labeling' },
   githubPrs: { label: 'GitHub PR Review', description: 'AI-powered pull request reviews' },
-  utility: { label: 'Utility', description: 'Commit messages and merge conflict resolution' }
+  utility: { label: 'Utility', description: 'Commit messages and merge conflict resolution' },
+  promptOptimizer: { label: 'Prompt Optimizer', description: 'AI-powered prompt enhancement with project context' }
 };
 
 // Default agent profiles for preset model/thinking configurations

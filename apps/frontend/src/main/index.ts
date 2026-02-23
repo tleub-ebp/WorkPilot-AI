@@ -310,14 +310,16 @@ function createWindow(): void {
         console.warn('[main] Blocked URL with disallowed scheme:', details.url);
         return { action: 'deny' };
       }
+      
+      // Open the URL externally and allow the action
+      shell.openExternal(details.url).catch((error) => {
+        console.warn('[main] Failed to open external URL:', details.url, error);
+      });
+      return { action: 'allow' };
     } catch {
       console.warn('[main] Blocked invalid URL:', details.url);
       return { action: 'deny' };
     }
-    shell.openExternal(details.url).catch((error) => {
-      console.warn('[main] Failed to open external URL:', details.url, error);
-    });
-    return { action: 'deny' };
   });
 
   // Load the renderer

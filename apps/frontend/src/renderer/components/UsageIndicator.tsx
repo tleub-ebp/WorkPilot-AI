@@ -88,6 +88,7 @@ export function UsageIndicator() {
   const [activeProfileNeedsReauth, setActiveProfileNeedsReauth] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
+  const [claudeProfile, setClaudeProfile] = useState<any>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { selectedProvider } = useProviderContext();
 
@@ -296,7 +297,48 @@ export function UsageIndicator() {
       setIsOpen(false);
       setIsPinned(false);
     }
-  }, []);
+  }, [selectedProvider]);
+
+  // Effect to check OAuth status for Anthropic provider (similar to AuthStatusIndicator)
+  useEffect(() => {
+    if (selectedProvider === 'anthropic') {
+      const checkOAuthStatus = async () => {
+        try {
+          console.log(`[UsageIndicator] Checking OAuth via IPC...`);
+          
+          // Vérifier directement le fichier de configuration Claude CLI
+          const claudeProfilesResult = await window.electronAPI.invoke('claude:profilesGet');
+          console.log(`[UsageIndicator] Claude profiles:`, claudeProfilesResult);
+          
+          if (claudeProfilesResult.success && claudeProfilesResult.data?.profiles) {
+            // Chercher un profil authentifié (OAuth)
+            const oauthProfile = claudeProfilesResult.data.profiles.find((profile: any) => 
+              profile.isAuthenticated === true
+            );
+            
+            if (oauthProfile) {
+              console.log(`[UsageIndicator] OAuth found in Claude profiles! Profile:`, oauthProfile.name);
+              setClaudeProfile(oauthProfile);
+              
+              // For OAuth profiles, try to fetch usage data
+              // This will trigger the usage monitoring system to use OAuth tokens
+              console.log(`[UsageIndicator] Triggering usage fetch for OAuth profile...`);
+              await window.electronAPI.requestUsageUpdate(selectedProvider);
+            } else {
+              setClaudeProfile(null);
+            }
+          }
+        } catch (error) {
+          console.warn('[UsageIndicator] Failed to check Claude profiles:', error);
+          setClaudeProfile(null);
+        }
+      };
+      
+      checkOAuthStatus();
+    } else {
+      setClaudeProfile(null);
+    }
+  }, [selectedProvider]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -387,6 +429,7 @@ export function UsageIndicator() {
   // Show unavailable state - with better messaging based on cause
   if (!isAvailable || !usage) {
     const needsReauth = activeProfileNeedsReauth;
+    
     // Debug OpenAI
     if (selectedProvider?.toLowerCase() === 'openai') {
       let debugProfiles = [];
@@ -878,7 +921,7 @@ export function UsageIndicator() {
                 <span className={`text-xs font-semibold ${
                     usage.needsReauthentication ? 'text-red-500' : 'text-primary'
                 }`}>
-                  {getInitials(usage.profileName)}
+                  {getInitials(claudeProfile ? claudeProfile.name : usage.profileName)}
                 </span>
                 </div>
                 {/* Status dot for re-auth needed */}
@@ -890,19 +933,19 @@ export function UsageIndicator() {
               {/* Account Info */}
               <div className="flex-1 min-w-0 text-left">
                 <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-muted-foreground font-medium">
-                  {t('common:usage.activeAccount')}
-                </span>
-                  {usage.needsReauthentication && (
-                      <span className="text-[9px] px-1.5 py-0.5 bg-red-500/10 text-destructive rounded font-semibold">
-                    {t('common:usage.needsReauth')}
+                  <span className="text-[10px] text-muted-foreground font-medium">
+                    {t('common:usage.activeAccount')}
                   </span>
+                  {usage.needsReauthentication && (
+                    <span className="text-[9px] px-1.5 py-0.5 bg-red-500/10 text-destructive rounded font-semibold">
+                      {t('common:usage.needsReauth')}
+                    </span>
                   )}
                 </div>
                 <div className={`font-medium text-xs truncate ${
-                    usage.needsReauthentication ? 'text-destructive' : 'text-primary'
+                  usage.needsReauthentication ? 'text-destructive' : 'text-primary'
                 }`}>
-                  {usage.profileEmail || usage.profileName}
+                  {claudeProfile ? claudeProfile.email || claudeProfile.name : (usage.profileEmail || usage.profileName)}
                 </div>
               </div>
 

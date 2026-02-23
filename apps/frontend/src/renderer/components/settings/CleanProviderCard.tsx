@@ -10,7 +10,8 @@ import {
   EyeOff,
   ChevronDown,
   ChevronUp,
-  MoreHorizontal
+  MoreHorizontal,
+  Loader2
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Switch } from '../ui/switch';
@@ -35,6 +36,7 @@ interface CleanProviderCardProps {
   onRemove?: (providerId: string) => void;
   className?: string;
   isAutoSwitchingOpen?: boolean; // Nouvelle prop pour détecter l'état de l'auto-switching
+  isTesting?: boolean; // Nouvelle prop pour l'état de test
 }
 
 // Icônes officielles exactes du ProviderSelector - respectent déjà les couleurs du thème
@@ -159,7 +161,8 @@ export function CleanProviderCard({
   onToggle,
   onRemove,
   className,
-  isAutoSwitchingOpen = false
+  isAutoSwitchingOpen = false,
+  isTesting = false
 }: CleanProviderCardProps) {
   const { t } = useTranslation('settings');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -180,7 +183,6 @@ export function CleanProviderCard({
         ? t('sections.accounts.providerCard.status.error')
         : t('sections.accounts.providerCard.status.active');
     
-    console.log('Status text:', statusText, 'Provider:', provider.id, 'isConfigured:', provider.isConfigured);
     return statusText;
   };
 
@@ -267,8 +269,16 @@ export function CleanProviderCard({
                 variant="ghost"
                 size="sm"
                 className="h-7 px-3 text-xs"
+                disabled={isTesting}
               >
-                {t('sections.accounts.providerCard.test')}
+                {isTesting ? (
+                  <>
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    Test...
+                  </>
+                ) : (
+                  t('sections.accounts.providerCard.test')
+                )}
               </Button>
               <Button
                 onClick={() => onConfigure(provider.id)}

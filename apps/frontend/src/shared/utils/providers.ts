@@ -47,9 +47,33 @@ export function getStaticProviders(profiles: APIProfile[] = []): ProvidersRespon
   // Determine which providers have a configured profile
   const status: Record<string, boolean> = {};
   for (const p of allProviders) {
-    const hasProfile = profiles.some(
-      (prof) => detectProvider(prof.baseUrl) === p.name
-    );
+    // Utiliser la même logique de détection que ProviderRegistry
+    const hasProfile = profiles.some((prof) => {
+      if (!prof.baseUrl) return false;
+      
+      // Logique de détection identique à ProviderRegistry.detectProviderFromProfile
+      if (p.name === 'anthropic') {
+        return prof.baseUrl?.includes('anthropic.com') || prof.name?.toLowerCase().includes('claude');
+      }
+      if (p.name === 'openai') {
+        return prof.baseUrl?.includes('openai.com') || prof.name?.toLowerCase().includes('openai');
+      }
+      if (p.name === 'google') {
+        return prof.baseUrl?.includes('google.com') || prof.name?.toLowerCase().includes('gemini');
+      }
+      if (p.name === 'meta') {
+        return prof.baseUrl?.includes('meta.com') || prof.name?.toLowerCase().includes('llama');
+      }
+      if (p.name === 'mistral') {
+        return prof.baseUrl?.includes('mistral.ai') || prof.name?.toLowerCase().includes('mistral');
+      }
+      if (p.name === 'deepseek') {
+        return prof.baseUrl?.includes('deepseek.com') || prof.name?.toLowerCase().includes('deepseek');
+      }
+      
+      // Fallback sur detectProvider pour les autres
+      return detectProvider(prof.baseUrl) === p.name;
+    });
 
     if (p.name === 'copilot') {
       status[p.name] = true;

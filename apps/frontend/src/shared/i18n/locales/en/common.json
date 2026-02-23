@@ -724,12 +724,8 @@
     "daysAgo_one": "{{count}}d ago",
     "daysAgo_other": "{{count}}d ago"
   },
-  "Claude": "Claude",
-  "selectedModel": "Selected Model",
-  "step1": {
-    "description": "Describe what you want to build."
-  },
-  "step3": {
-    "description": "Review and confirm your project setup."
-  }
+  "test": "Test",
+  "refresh": "Refresh",
+  "save": "Save",
+  "loading": "Loading..."
 }

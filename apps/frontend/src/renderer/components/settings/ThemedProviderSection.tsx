@@ -142,7 +142,6 @@ export function ThemedProviderSection({
 
   const handleConfigure = (providerId: string) => {
     // Ouvrir la configuration du provider
-    console.log('Configure provider:', providerId);
     // TODO: Implémenter la modale de configuration
   };
 
@@ -152,7 +151,6 @@ export function ThemedProviderSection({
     try {
       // Simuler un test
       await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Test provider:', providerId);
     } catch (err) {
       console.error('Test failed:', err);
     } finally {

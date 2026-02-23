@@ -30,6 +30,7 @@ interface CleanProviderGridProps {
   onRefreshProviders?: () => void;
   isLoading?: boolean;
   isAutoSwitchingOpen?: boolean;
+  testingProviders?: Set<string>; // Nouvelle prop pour suivre les providers en cours de test
   className?: string;
 }
 
@@ -47,6 +48,7 @@ export function CleanProviderGrid({
   onRefreshProviders,
   isLoading = false,
   isAutoSwitchingOpen,
+  testingProviders = new Set(),
   className
 }: CleanProviderGridProps) {
   const { t } = useTranslation('settings');
@@ -251,6 +253,7 @@ export function CleanProviderGrid({
                 onRemove={onRemove}
                 className={viewMode === 'list' ? 'max-w-2xl' : ''}
                 isAutoSwitchingOpen={isAutoSwitchingOpen}
+                isTesting={testingProviders.has(provider.id)}
               />
             ))}
           </div>
