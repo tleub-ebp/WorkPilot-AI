@@ -170,7 +170,6 @@ _bmad-output/
 
 # WorkPilot AI generated files
 .security-key
-/shared_docs
 logs/security/
 Agents.md
 nul
