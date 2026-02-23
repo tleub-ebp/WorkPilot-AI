@@ -98,6 +98,59 @@ export function registerSettingsHandlers(
   agentManager: AgentManager,
   getMainWindow: () => BrowserWindow | null
 ): void {
+  // LLM Provider operations
+  ipcMain.handle(
+    IPC_CHANNELS.PROVIDER_SELECT,
+    async (_, provider: string): Promise<IPCResult<string>> => {
+      try {
+        // Make HTTP request to backend to select provider
+        const response = await fetch(`http://127.0.0.1:9000/providers/select?provider=${encodeURIComponent(provider)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Backend responded with ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log(`[IPC:PROVIDER_SELECT] Successfully selected provider: ${provider}`);
+        return { success: true, data: result.selected };
+      } catch (error) {
+        console.error(`[IPC:PROVIDER_SELECT] Failed to select provider ${provider}:`, error);
+        return { 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Failed to select provider' 
+        };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.PROVIDER_GET_SELECTED,
+    async (): Promise<IPCResult<string | null>> => {
+      try {
+        // Make HTTP request to backend to get selected provider
+        const response = await fetch('http://127.0.0.1:9000/providers/selected');
+        
+        if (!response.ok) {
+          throw new Error(`Backend responded with ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log(`[IPC:PROVIDER_GET_SELECTED] Current provider:`, result.selected);
+        return { success: true, data: result.selected };
+      } catch (error) {
+        console.error('[IPC:PROVIDER_GET_SELECTED] Failed to get selected provider:', error);
+        return { 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Failed to get selected provider' 
+        };
+      }
+    }
+  );
   // ============================================
   // Settings Operations
   // ============================================

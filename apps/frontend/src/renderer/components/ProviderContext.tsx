@@ -26,6 +26,15 @@ export const ProviderContextProvider = ({ children }: { children: ReactNode }) =
     }
   }, []);
 
+  useEffect(() => {
+    // Au montage, communique le provider sélectionné au backend
+    if (selectedProvider && window.electronAPI?.selectProvider) {
+      window.electronAPI.selectProvider(selectedProvider).catch(error => {
+        console.error('Failed to sync provider selection to backend on mount:', error);
+      });
+    }
+  }, [selectedProvider]);
+
   return (
     <ProviderContext.Provider value={{ selectedProvider, setSelectedProvider }}>
       {children}

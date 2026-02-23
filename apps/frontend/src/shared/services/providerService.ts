@@ -70,15 +70,19 @@ class ProviderServiceClass {
    */
   private async loadProvidersFromFile(): Promise<Provider[]> {
     try {
+      console.log('[ProviderService] Attempting to load providers from /configured_providers.json');
       const response = await fetch('/configured_providers.json');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       const data = await response.json();
+      console.log('[ProviderService] Successfully loaded providers from file:', data);
       return data.providers || [];
     } catch (error) {
       console.warn('[ProviderService] Failed to load providers from file, using providerRegistry fallback:', error);
-      return this.getFallbackProviders();
+      const fallbackProviders = this.getFallbackProviders();
+      console.log('[ProviderService] Using fallback providers:', fallbackProviders);
+      return fallbackProviders;
     }
   }
 

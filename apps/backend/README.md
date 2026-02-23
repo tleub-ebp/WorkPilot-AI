@@ -119,19 +119,19 @@ from workspace import setup_workspace
 
 ## Multi-Provider LLM Support
 
-Le backend supporte désormais la sélection dynamique du LLM (Claude Opus, Sonnet, Haiku, local, etc.) via la variable d'environnement `LLM_PROVIDER`.
+Le backend supporte la sélection dynamique du LLM via l'interface utilisateur ou la configuration du projet.
 
-Pour ajouter un nouveau provider :
-1. Créez une classe héritant de `LLMProvider` dans `services/llm_provider.py`.
-2. Ajoutez le mapping dans la fonction `get_llm_provider()`.
-3. Configurez `LLM_PROVIDER` dans `.env` ou `.env.example`.
+Providers supportés :
+- Anthropic (Claude Opus, Sonnet, Haiku)
+- OpenAI (GPT-4, GPT-3.5)
+- GitHub Copilot
+- Google (Gemini)
+- Ollama (modèles locaux)
+- Meta (Llama)
+- Mistral AI
+- DeepSeek
 
-Exemple :
-```
-LLM_PROVIDER=claude_opus  # Options: claude_opus, claude_sonnet, local
-```
-
-Tous les appels LLM doivent passer par la factory `get_llm_provider()` pour garantir la modularité et le switch à chaud.
+La sélection du provider se fait automatiquement via l'interface utilisateur et est synchronisée avec les agents d'exécution.
 
 ## License
 

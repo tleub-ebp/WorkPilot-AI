@@ -181,7 +181,8 @@ def get_phase_provider(
     Priority:
     1. CLI argument (if provided)
     2. Provider from task_metadata.json
-    3. None (let downstream code use its default)
+    3. Provider selected via IPC (from frontend UI)
+    4. None (let downstream code use its default)
 
     Args:
         spec_dir: Path to the spec directory
@@ -196,6 +197,15 @@ def get_phase_provider(
     metadata = load_task_metadata(spec_dir)
     if metadata and metadata.get("provider"):
         return metadata["provider"]
+
+    # Check provider selected via IPC (from frontend UI)
+    try:
+        import provider_api
+        selected_provider = provider_api.get_selected_provider()
+        if selected_provider:
+            return selected_provider
+    except Exception:
+        pass
 
     return None
 

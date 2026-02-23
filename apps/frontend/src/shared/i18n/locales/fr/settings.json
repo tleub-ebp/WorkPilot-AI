@@ -32,23 +32,55 @@
     "accounts": {
       "title": "Comptes",
       "description": "Comptes Claude & endpoints API",
+      "multiConnector": {
+        "title": "Gestion multi-connecteur",
+        "description": "Vous pouvez connecter et gérer plusieurs fournisseurs IA (Claude, OpenAI, Mistral, etc.)."
+      },
       "form": {
         "addAccount": "Ajouter un compte {{provider}}",
         "name": "Nom du compte",
         "namePlaceholder": "Nom du compte",
         "apiKey": "Clé API",
         "apiKeyPlaceholder": "sk-...",
-        "oauthToken": "Token OAuth",
-        "oauthTokenPlaceholder": "Token OAuth (si requis)",
-        "baseUrl": "URL de base (optionnel)",
+        "baseUrl": "URL de base",
         "baseUrlPlaceholder": "https://api.exemple.com",
+        "llmGatewayUrl": "URL Gateway LLM",
+        "llmGatewayUrlPlaceholder": "https://gateway.exemple.com",
         "chooseModel": "-- Choisir un modèle --",
         "save": "Enregistrer",
         "cancel": "Annuler"
       },
       "autoSwitching": {
         "globalTitle": "Basculement automatique des comptes",
-        "globalDescription": "Basculez automatiquement entre vos comptes selon l'utilisation et les limites de taux."
+        "globalDescription": "Basculez automatiquement entre vos comptes selon l'utilisation et les limites de taux.",
+        "title": "Auto-switching"
+      },
+      "providerConfig": {
+        "title": "Configuration"
+      },
+      "providerCard": {
+        "configure": "Configurer",
+        "test": "Tester",
+        "edit": "Modifier",
+        "status": {
+          "notConfigured": "Non configuré",
+          "error": "Erreur",
+          "active": "Actif"
+        }
+      },
+      "providers": {
+        "meta": "Modèles Meta AI officiels",
+        "mistral": "Modèles Mistral AI (Mistral, Codéal, etc.)",
+        "deepseek": "Modèles DeepSeek (DeepSeek-Coder, etc.)",
+        "aws": "AWS Bedrock et services Amazon",
+        "copilot": "GitHub Copilot",
+        "grok": "Modèles Grok xAI",
+        "windsurf": "Provider Windsurf AI",
+        "cursor": "Provider Cursor AI",
+        "ollama": "Modèles open-source locaux avec Ollama",
+        "anthropic": "Modèles Claude d'Anthropic",
+        "google": "Accès aux API Google et Google DeepMind",
+        "openai": "Modèles GPT-5 et autres modèles OpenAI"
       },
       "priorityOrder": {
         "title": "Ordre de priorité des fournisseurs",
@@ -78,6 +110,7 @@
         "oauthSection": "Comptes Claude (utilisés en priorité)",
         "apiSection": "Endpoints de secours (quand tous les comptes sont épuisés)",
         "tipTitle": "Comment fonctionne la priorité",
+        "claudeAccountsDescription": "Ajoutez plusieurs abonnements Claude pour basculer automatiquement entre eux lorsque vous atteignez les limites de taux.",
         "tipDescription": "Les comptes Claude sont inclus dans votre abonnement et seront utilisés en priorité. Les endpoints API facturent par requête et servent de secours quand tous les comptes Claude atteignent leurs limites.",
         "providerAuth": "Authentifié via clé API",
         "status": {
@@ -707,6 +740,248 @@
     "project": "Projet",
     "required": "*",
     "fillAllFields": "Veuillez remplir tous les champs obligatoires (URL de l'instance, E-mail, Token API)"
+  },
+  "integrations": {
+    "title": "Intégrations",
+    "description": "Gérer les comptes Claude et les clés API",
+    "claudeAccounts": "Comptes Claude",
+    "claudeAccountsDescription": "Ajoutez plusieurs abonnements Claude pour basculer automatiquement entre eux lorsque vous atteignez les limites de taux.",
+    "claudeAccountsWarning": "Lors de l'authentification, assurez-vous d'être connecté au bon compte Claude dans votre navigateur. Chaque profil doit utiliser un abonnement différent.",
+    "noAccountsYet": "Aucun compte configuré pour le moment",
+    "default": "Par défaut",
+    "active": "Actif",
+    "authenticated": "Authentifié",
+    "needsAuth": "Authentification requise",
+    "authenticate": "S'authentifier",
+    "authenticating": "Authentification...",
+    "setActive": "Définir comme actif",
+    "manualTokenEntry": "Saisie manuelle du jeton",
+    "runSetupToken": "Exécutez claude et tapez /login pour vous authentifier",
+    "tokenPlaceholder": "sk-ant-oat01-...",
+    "emailPlaceholder": "E-mail (optionnel, pour l'affichage)",
+    "saveToken": "Sauvegarder le jeton",
+    "accountNamePlaceholder": "Nom du compte (ex: Travail, Personnel)",
+    "autoSwitching": "Basculement automatique des comptes",
+    "autoSwitchingDescription": "Basculez automatiquement entre les comptes Claude pour éviter les interruptions. Configurez la surveillance proactive pour basculer avant d'atteindre les limites.",
+    "enableAutoSwitching": "Activer le basculement automatique",
+    "masterSwitch": "Commutateur principal pour toutes les fonctions de basculement automatique",
+    "proactiveMonitoring": "Surveillance proactive",
+    "proactiveDescription": "Vérifiez régulièrement l'utilisation et basculez avant d'atteindre les limites",
+    "checkUsageEvery": "Vérifier l'utilisation toutes les",
+    "seconds15": "15 secondes",
+    "seconds30": "30 secondes (recommandé)",
+    "minute1": "1 minute",
+    "disabled": "Désactivé",
+    "sessionThreshold": "Seuil d'utilisation de session",
+    "sessionThresholdDescription": "Basculez lorsque l'utilisation de session atteint ce niveau (recommandé : 95%)",
+    "weeklyThreshold": "Seuil d'utilisation hebdomadaire",
+    "weeklyThresholdDescription": "Basculez lorsque l'utilisation hebdomadaire atteint ce niveau (recommandé : 99%)",
+    "reactiveRecovery": "Récupération réactive",
+    "reactiveDescription": "Basculement automatique en cas de limite de taux inattendue",
+    "autoSwitchOnAuthFailure": "Basculement automatique en cas d'échec d'authentification",
+    "autoSwitchOnAuthFailureDescription": "Basculez automatiquement vers un autre compte authentifié lorsque l'authentification échoue",
+    "apiKeys": "Clés API",
+    "apiKeysInfo": "Les clés définies ici sont utilisées par défaut. Les projets individuels peuvent les remplacer dans leurs paramètres.",
+    "openaiKey": "Clé API OpenAI",
+    "openaiKeyDescription": "Requise pour le backend de mémoire Graphiti (embeddings)",
+    "toast": {
+      "authSuccess": "Profil authentifié",
+      "authSuccessWithEmail": "Connecté en tant que {{email}}",
+      "authSuccessGeneric": "Authentification terminée. Vous pouvez maintenant utiliser ce profil.",
+      "authStartFailed": "Échec de l'authentification",
+      "addProfileFailed": "Échec de l'ajout du profil",
+      "loadProfilesFailed": "Échec du chargement des profils",
+      "deleteProfileFailed": "Échec de la suppression du profil",
+      "renameProfileFailed": "Échec du renommage du profil",
+      "setActiveProfileFailed": "Échec de la définition du profil actif",
+      "profileCreatedAuthFailed": "Profil créé - Authentification requise",
+      "profileCreatedAuthFailedDescription": "Le profil a été ajouté mais l'authentification n'a pas pu démarrer. Cliquez sur le bouton de connexion pour vous authentifier.",
+      "tokenSaved": "Jeton sauvegardé",
+      "tokenSavedDescription": "Votre jeton a été sauvegardé avec succès.",
+      "tokenSaveFailed": "Échec de la sauvegarde du jeton",
+      "settingsUpdateFailed": "Échec de la mise à jour des paramètres",
+      "tryAgain": "Veuillez réessayer.",
+      "terminalCreationFailed": "Échec de la création du terminal d'authentification",
+      "terminalCreationFailedDescription": "Impossible de démarrer le processus d'authentification. {{error}}",
+      "maxTerminalsReached": "Nombre maximum de terminaux atteint",
+      "maxTerminalsReachedDescription": "Veuillez fermer certains terminaux et réessayer. Vous pouvez avoir jusqu'à 12 terminaux ouverts.",
+      "terminalError": "Erreur de terminal",
+      "terminalErrorDescription": "Échec de la création du terminal : {{error}}",
+      "authProcessFailed": "Échec du démarrage du processus d'authentification",
+      "authProcessFailedDescription": "Le terminal d'authentification n'a pas pu être créé. Veuillez réessayer ou consulter les journaux pour plus de détails."
+    },
+    "alerts": {
+      "profileCreatedAuthFailed": "Profil créé mais échec de la préparation de l'authentification : {{error}}",
+      "authPrepareFailed": "Échec de la préparation de l'authentification : {{error}}",
+      "authStartFailedMessage": "Échec du démarrage de l'authentification. Veuillez réessayer."
+    }
+  },
+  "accounts": {
+    "title": "Comptes",
+    "description": "Gérer les comptes Claude et les endpoints API",
+    "tabs": {
+      "claudeCode": "Claude Code",
+      "llmProviders": "Providers LLM",
+      "customEndpoints": "Endpoints personnalisés"
+    },
+    "claudeCode": {
+      "description": "Ajoutez plusieurs abonnements Claude pour basculer automatiquement entre eux lorsque vous atteignez les limites de taux.",
+      "noAccountsYet": "Aucun compte configuré pour le moment",
+      "default": "Par défaut",
+      "active": "Actif",
+      "authenticated": "Authentifié",
+      "needsAuth": "Authentification requise",
+      "authenticate": "S'authentifier",
+      "authenticating": "Authentification...",
+      "setActive": "Définir comme actif",
+      "manualTokenEntry": "Saisie manuelle du jeton",
+      "runSetupToken": "Exécutez claude et tapez /login pour vous authentifier",
+      "tokenPlaceholder": "sk-ant-oat01-...",
+      "emailPlaceholder": "E-mail (optionnel, pour l'affichage)",
+      "saveToken": "Sauvegarder le jeton",
+      "accountNamePlaceholder": "Nom du compte (ex: Travail, Personnel)"
+    },
+    "customEndpoints": {
+      "description": "Configurer des endpoints API compatibles Anthropic personnalisés",
+      "addButton": "Ajouter un profil",
+      "activeBadge": "Actif",
+      "customModels": "Modèles personnalisés : {{models}}",
+      "setActive": {
+        "label": "Définir comme actif",
+        "loading": "Activation..."
+      },
+      "switchToOauth": {
+        "label": "Utiliser Claude Code",
+        "loading": "Basculement..."
+      },
+      "empty": {
+        "title": "Aucun endpoint personnalisé",
+        "description": "Configurez des endpoints API compatibles Anthropic personnalisés pour utiliser des fournisseurs alternatifs.",
+        "action": "Ajouter un profil"
+      },
+      "dialog": {
+        "deleteTitle": "Supprimer le profil",
+        "deleteDescription": "Êtes-vous sûr de vouloir supprimer \"{{name}}\" ? Cette action est irréversible.",
+        "cancel": "Annuler",
+        "delete": "Supprimer",
+        "deleting": "Suppression..."
+      },
+      "sections": {
+        "customized": {
+          "title": "Endpoints personnalisés",
+          "description": "Configurez des endpoints API compatibles Anthropic personnalisés (OpenAI, Azure, etc.)",
+          "endpointCount": "{{count}} endpoint{{count > 1 ? 's' : ''}} configuré{{count > 1 ? 's' : ''}}",
+          "addButton": "Ajouter un endpoint",
+          "empty": {
+            "title": "Aucun endpoint configuré",
+            "description": "Ajoutez des endpoints API personnalisés pour étendre vos options LLM"
+          }
+        },
+        "standard": {
+          "title": "Providers standards",
+          "description": "Configurez les clés API pour les providers LLM standards (OpenAI, Google, Meta, etc.)",
+          "addButton": "Ajouter un compte"
+        }
+      },
+      "buttons": {
+        "activate": "Activer",
+        "activating": "Activation...",
+        "deactivate": "Utiliser Claude Code",
+        "deactivating": "Basculement...",
+        "edit": "Modifier",
+        "delete": "Supprimer"
+      },
+      "tooltips": {
+        "edit": "Modifier",
+        "deleteActive": "Impossible de supprimer l'endpoint actif",
+        "deleteInactive": "Supprimer"
+      }
+    },
+    "autoSwitching": {
+      "title": "Basculement automatique des comptes",
+      "description": "Basculez automatiquement entre les comptes pour éviter les interruptions. Configurez la surveillance proactive pour basculer avant d'atteindre les limites.",
+      "enableAutoSwitching": "Activer le basculement automatique",
+      "masterSwitch": "Commutateur principal pour toutes les fonctions de basculement automatique",
+      "proactiveMonitoring": "Surveillance proactive",
+      "proactiveDescription": "Vérifiez régulièrement l'utilisation et basculez avant d'atteindre les limites",
+      "sessionThreshold": "Seuil d'utilisation de session",
+      "sessionThresholdDescription": "Basculez lorsque l'utilisation de session atteint ce niveau (recommandé : 95%)",
+      "weeklyThreshold": "Seuil d'utilisation hebdomadaire",
+      "weeklyThresholdDescription": "Basculez lorsque l'utilisation hebdomadaire atteint ce niveau (recommandé : 99%)",
+      "reactiveRecovery": "Récupération réactive",
+      "reactiveDescription": "Basculement automatique en cas de limite de taux inattendue",
+      "autoSwitchOnAuthFailure": "Basculement automatique en cas d'échec d'authentification",
+      "autoSwitchOnAuthFailureDescription": "Basculez automatiquement vers un autre compte authentifié lorsque l'authentification échoue"
+    },
+    "priority": {
+      "title": "Ordre de priorité des comptes",
+      "description": "Glissez pour réordonner. Le système utilisera le prochain compte disponible dans l'ordre.",
+      "noAccounts": "Aucun compte configuré. Ajoutez des comptes ci-dessus pour définir la priorité.",
+      "noEmail": "Pas d'e-mail",
+      "active": "Actif",
+      "inUse": "En cours d'utilisation",
+      "next": "Suivant",
+      "unlimited": "Illimité",
+      "unavailable": "Indisponible",
+      "typeOAuth": "OAuth",
+      "typeAPI": "API",
+      "payPerUse": "Paiement à l'usage",
+      "needsAuth": "Non authentifié",
+      "duplicateUsage": "Utilisation dupliquée détectée",
+      "duplicateUsageHint": "Ce profil a une utilisation identique à un autre profil, ce qui suggère qu'ils pourraient être authentifiés sur le même compte Anthropic. Réauthentifiez-vous avec un compte différent.",
+      "needsReauth": "Réauthentification requise",
+      "needsReauthHint": "Le jeton d'actualisation de ce profil est invalide. Cliquez pour vous réauthentifier.",
+      "sessionUsage": "Utilisation de session (fenêtre de 5 heures)",
+      "weeklyUsage": "Utilisation hebdomadaire (fenêtre de 7 jours)",
+      "oauthSection": "Comptes Claude (utilisés en priorité)",
+      "apiSection": "Endpoints de secours (quand tous les comptes sont épuisés)",
+      "tipTitle": "Comment fonctionne la priorité",
+      "tipDescription": "Les comptes Claude sont inclus dans votre abonnement et seront utilisés en priorité. Les endpoints API facturent par requête et servent de secours quand tous les comptes Claude atteignent leurs limites.",
+      "status": {
+        "healthy": "Sain",
+        "moderate": "Modéré",
+        "highUsage": "Utilisation élevée",
+        "nearLimit": "Proche de la limite",
+        "rateLimited": "Limite atteinte"
+      },
+      "providerAuth": "Authentifié via clé API"
+    },
+    "priorityOrder": {
+      "title": "Ordre de priorité des fournisseurs",
+      "up": "Monter",
+      "down": "Descendre"
+    },
+    "toast": {
+      "loadProfilesFailed": "Échec du chargement des profils",
+      "addProfileFailed": "Échec de l'ajout du profil",
+      "deleteProfileFailed": "Échec de la suppression du profil",
+      "renameProfileFailed": "Échec du renommage du profil",
+      "setActiveProfileFailed": "Échec de la définition du profil actif",
+      "tokenSaved": "Jeton sauvegardé",
+      "tokenSavedDescription": "Votre jeton a été sauvegardé avec succès.",
+      "tokenSaveFailed": "Échec de la sauvegarde du jeton",
+      "settingsUpdateFailed": "Échec de la mise à jour des paramètres",
+      "tryAgain": "Veuillez réessayer."
+    },
+    "alerts": {
+      "profileCreatedAuthFailed": "Profil créé mais échec de la préparation de l'authentification : {{error}}",
+      "authPrepareFailed": "Échec de la préparation de l'authentification : {{error}}",
+      "authStartFailedMessage": "Échec du démarrage de l'authentification. Veuillez réessayer."
+    },
+    "form": {
+      "addAccount": "Ajouter un compte {{provider}}",
+      "name": "Nom du compte",
+      "namePlaceholder": "Nom du compte",
+      "apiKey": "Clé API",
+      "apiKeyPlaceholder": "sk-...",
+      "oauthToken": "Jeton OAuth",
+      "oauthTokenPlaceholder": "Jeton OAuth (si requis)",
+      "baseUrl": "URL de base (optionnel)",
+      "baseUrlPlaceholder": "https://api.example.com",
+      "chooseModel": "-- Choisir un modèle --",
+      "save": "Sauvegarder",
+      "cancel": "Annuler"
+    }
   },
   "collaboration": {
     "title": "Collaboration",

@@ -16,7 +16,7 @@ from pathlib import Path
 
 try:
     from ...analysis.test_discovery import TestDiscovery
-    from ...core.client import create_client
+    from ...core.client import create_agent_client
     from ..context_gatherer import PRContext
     from ..models import PRReviewFinding, ReviewSeverity
     from .category_utils import map_category
@@ -24,7 +24,7 @@ except (ImportError, ValueError, SystemError):
     from analysis.test_discovery import TestDiscovery
     from category_utils import map_category
     from context_gatherer import PRContext
-    from core.client import create_client
+    from core.client import create_agent_client
     from models import PRReviewFinding, ReviewSeverity
 
 logger = logging.getLogger(__name__)
@@ -124,7 +124,7 @@ async def spawn_security_review(
             project_dir.parent.parent if project_dir.name == "backend" else project_dir
         )
 
-        client = create_client(
+        client = create_agent_client(
             project_dir=project_root,
             spec_dir=github_dir,
             model=model,
@@ -210,7 +210,7 @@ async def spawn_quality_review(
             project_dir.parent.parent if project_dir.name == "backend" else project_dir
         )
 
-        client = create_client(
+        client = create_agent_client(
             project_dir=project_root,
             spec_dir=github_dir,
             model=model,
@@ -305,7 +305,7 @@ Output findings in JSON format:
             project_dir.parent.parent if project_dir.name == "backend" else project_dir
         )
 
-        client = create_client(
+        client = create_agent_client(
             project_dir=project_root,
             spec_dir=github_dir,
             model=model,

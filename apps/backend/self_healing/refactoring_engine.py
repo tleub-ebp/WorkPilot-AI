@@ -167,7 +167,11 @@ OLD_CODE: Original code snippet
 NEW_CODE: Refactored code snippet
 """
             
-            client = create_client(model=self.model)
+            client = create_agent_client(
+                project_dir=Path.cwd(),  # Use current directory as project_dir
+                spec_dir=Path.cwd(),     # Use current directory as spec_dir
+                model=self.model
+            )
             if not client:
                 return self._create_simple_action(file_path, issues)
             

@@ -166,18 +166,6 @@ class ProviderRegistry {
       ]
     });
 
-    // --- Ollama (Local) ---
-    this.providers.set('ollama', {
-      name: 'ollama',
-      label: 'Ollama (Local)',
-      description: 'Locally hosted models via Ollama',
-      category: 'local',
-      requiresApiKey: false,
-      requiresOAuth: false,
-      requiresCLI: false,
-      models: PROVIDER_MODELS_MAP.ollama || []
-    });
-
     // --- Custom/Enterprise ---
     this.providers.set('custom', {
       name: 'custom',
@@ -188,6 +176,55 @@ class ProviderRegistry {
       requiresOAuth: false,
       requiresCLI: false,
       models: PROVIDER_MODELS_MAP.custom || []
+    });
+
+    // --- Windsurf ---
+    this.providers.set('windsurf', {
+      name: 'windsurf',
+      label: 'Windsurf (Codeium)',
+      description: 'AI-powered coding assistant by Codeium',
+      category: 'special',
+      requiresApiKey: true,
+      requiresOAuth: false,
+      requiresCLI: false,
+      models: [
+        { value: 'windsurf-default', label: 'Windsurf Default', tier: 'standard' },
+        { value: 'windsurf-premier', label: 'Windsurf Premier', tier: 'flagship' },
+        { value: 'windsurf-cascade', label: 'Windsurf Cascade', tier: 'flagship', supportsThinking: true },
+        { value: 'gpt-4o', label: 'GPT-4o', tier: 'flagship' },
+        { value: 'claude-3.5-sonnet', label: 'Claude 3.5 Sonnet', tier: 'flagship' }
+      ]
+    });
+
+    // --- Cursor ---
+    this.providers.set('cursor', {
+      name: 'cursor',
+      label: 'Cursor IDE',
+      description: 'AI-first VS Code fork with advanced features',
+      category: 'special',
+      requiresApiKey: true,
+      requiresOAuth: false,
+      requiresCLI: false,
+      models: [
+        { value: 'cursor-default', label: 'Cursor Default', tier: 'standard' },
+        { value: 'cursor-pro', label: 'Cursor Pro', tier: 'flagship' },
+        { value: 'gpt-4o', label: 'GPT-4o', tier: 'flagship' },
+        { value: 'gpt-4-turbo', label: 'GPT-4 Turbo', tier: 'standard' },
+        { value: 'claude-3.5-sonnet', label: 'Claude 3.5 Sonnet', tier: 'flagship' },
+        { value: 'claude-3-opus', label: 'Claude 3 Opus', tier: 'flagship' }
+      ]
+    });
+
+    // --- Ollama (Local) ---
+    this.providers.set('ollama', {
+      name: 'ollama',
+      label: 'Ollama (Local)',
+      description: 'Locally hosted models via Ollama',
+      category: 'local',
+      requiresApiKey: false,
+      requiresOAuth: false,
+      requiresCLI: false,
+      models: PROVIDER_MODELS_MAP.ollama || []
     });
   }
 

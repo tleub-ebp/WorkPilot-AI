@@ -20,6 +20,9 @@ import { existsSync, readdirSync, statSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import os from 'os';
 
+// Import the colored logs utility
+import { frontendLog } from './colored-logs';
+
 // Configure electron-log (wrapped in try-catch for re-import scenarios in tests)
 try {
   log.initialize();
@@ -195,13 +198,54 @@ export function listLogFiles(): Array<{ name: string; path: string; size: number
 // Re-export the logger for use in other modules
 export const logger = log;
 
-// Export convenience methods that match console API
+// Export convenience methods that match console API with frontend coloration
 export const appLog = {
-  debug: (...args: unknown[]) => log.debug(...args),
-  info: (...args: unknown[]) => log.info(...args),
-  warn: (...args: unknown[]) => log.warn(...args),
-  error: (...args: unknown[]) => log.error(...args),
-  log: (...args: unknown[]) => log.info(...args),
+  debug: (...args: unknown[]) => {
+    log.debug(...args);
+    // Use direct write to avoid recursion
+    if (process.stderr && process.stderr.write) {
+      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+      const message = args.length > 0 ? String(args[0]) : '';
+      const details = args.slice(1).map(arg => JSON.stringify(arg, null, 2)).join(' ');
+      process.stderr.write(`\x1b[90m[${timestamp}]\x1b[0m \x1b[95m[FRONTEND]\x1b[0m \x1b[95m[DEBUG]\x1b[0m \x1b[33m[app-logger]\x1b[0m \x1b[38;5;183m${message}\x1b[0m${details ? ' ' + details : ''}\n`);
+    }
+  },
+  info: (...args: unknown[]) => {
+    log.info(...args);
+    if (process.stderr && process.stderr.write) {
+      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+      const message = args.length > 0 ? String(args[0]) : '';
+      const details = args.slice(1).map(arg => JSON.stringify(arg, null, 2)).join(' ');
+      process.stderr.write(`\x1b[90m[${timestamp}]\x1b[0m \x1b[95m[FRONTEND]\x1b[0m \x1b[38;5;147m[INFO]\x1b[0m \x1b[33m[app-logger]\x1b[0m \x1b[38;5;183m${message}\x1b[0m${details ? ' ' + details : ''}\n`);
+    }
+  },
+  warn: (...args: unknown[]) => {
+    log.warn(...args);
+    if (process.stderr && process.stderr.write) {
+      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+      const message = args.length > 0 ? String(args[0]) : '';
+      const details = args.slice(1).map(arg => JSON.stringify(arg, null, 2)).join(' ');
+      process.stderr.write(`\x1b[90m[${timestamp}]\x1b[0m \x1b[95m[FRONTEND]\x1b[0m \x1b[38;5;221m[WARNING]\x1b[0m \x1b[33m[app-logger]\x1b[0m \x1b[38;5;183m${message}\x1b[0m${details ? ' ' + details : ''}\n`);
+    }
+  },
+  error: (...args: unknown[]) => {
+    log.error(...args);
+    if (process.stderr && process.stderr.write) {
+      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+      const message = args.length > 0 ? String(args[0]) : '';
+      const details = args.slice(1).map(arg => JSON.stringify(arg, null, 2)).join(' ');
+      process.stderr.write(`\x1b[90m[${timestamp}]\x1b[0m \x1b[95m[FRONTEND]\x1b[0m \x1b[38;5;196m[ERROR]\x1b[0m \x1b[33m[app-logger]\x1b[0m \x1b[38;5;183m${message}\x1b[0m${details ? ' ' + details : ''}\n`);
+    }
+  },
+  log: (...args: unknown[]) => {
+    log.info(...args);
+    if (process.stderr && process.stderr.write) {
+      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+      const message = args.length > 0 ? String(args[0]) : '';
+      const details = args.slice(1).map(arg => JSON.stringify(arg, null, 2)).join(' ');
+      process.stderr.write(`\x1b[90m[${timestamp}]\x1b[0m \x1b[95m[FRONTEND]\x1b[0m \x1b[38;5;147m[INFO]\x1b[0m \x1b[33m[app-logger]\x1b[0m \x1b[38;5;183m${message}\x1b[0m${details ? ' ' + details : ''}\n`);
+    }
+  },
 };
 
 // Log unhandled errors

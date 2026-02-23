@@ -117,18 +117,38 @@ class AgentRunner:
         # Create client with thinking budget
         debug(
             "agent_runner",
-            "Creating Claude SDK client...",
+            "Creating agent client...",
             thinking_budget=thinking_budget,
         )
         # Lazy import to avoid circular import with core.client
-        from core.client import create_client
+        from core.client import create_agent_client
 
-        client = create_client(
-            self.project_dir,
-            self.spec_dir,
-            self.model,
+        client = create_agent_client(
+            project_dir=self.project_dir,
+            spec_dir=self.spec_dir,
+            model=self.model,
+            agent_type="spec_writer",  # Use spec_writer type for spec creation
             max_thinking_tokens=thinking_budget,
         )
+        
+        # Debug: Log which provider is being used
+        try:
+            from provider_api import get_selected_provider
+            selected_provider = get_selected_provider()
+            debug("agent_runner", f"Selected provider from IPC: {selected_provider}")
+        except Exception as e:
+            debug("agent_runner", f"Could not get selected provider: {e}")
+        
+        # Debug: Check if input files exist for spec_writer
+        if prompt_file == "spec_writer.md":
+            input_files = ["project_index.json", "requirements.json", "context.json"]
+            for file_name in input_files:
+                file_path = self.spec_dir / file_name
+                exists = file_path.exists()
+                debug("agent_runner", f"Input file {file_name} exists: {exists}")
+                if exists:
+                    size = file_path.stat().st_size
+                    debug("agent_runner", f"Input file {file_name} size: {size} bytes")
 
         current_tool = None
         message_count = 0

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import type { LLMProvider } from './types';
 import { Card, CardContent } from '../../ui/card';
 import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
 import { saveUserProviderConfig } from './utils';
 import { useTranslation } from 'react-i18next';
 
@@ -14,22 +16,57 @@ interface Props {
 // Configuration des champs par provider avec clés i18n
 const providerFields: Record<string, Array<{ name: string; labelKey: string; type: string; required?: boolean; placeholderKey?: string }>> = {
   'openai': [
-    { name: 'name', labelKey: 'settings.accounts.form.name', type: 'text', required: true, placeholderKey: 'settings.accounts.form.namePlaceholder' },
-    { name: 'apiKey', labelKey: 'settings.accounts.form.apiKey', type: 'text', required: true, placeholderKey: 'settings.accounts.form.apiKeyPlaceholder' },
-    { name: 'baseUrl', labelKey: 'settings.accounts.form.baseUrl', type: 'text', required: false, placeholderKey: 'settings.accounts.form.baseUrlPlaceholder' },
+    { name: 'name', labelKey: 'accounts.form.name', type: 'text', required: true, placeholderKey: 'accounts.form.namePlaceholder' },
+    { name: 'apiKey', labelKey: 'accounts.form.apiKey', type: 'text', required: true, placeholderKey: 'accounts.form.apiKeyPlaceholder' },
+    { name: 'baseUrl', labelKey: 'accounts.form.baseUrl', type: 'text', required: false, placeholderKey: 'accounts.form.baseUrlPlaceholder' },
   ],
-  'claude': [
-    { name: 'name', labelKey: 'settings.accounts.form.name', type: 'text', required: true, placeholderKey: 'settings.accounts.form.namePlaceholder' },
-    { name: 'apiKey', labelKey: 'settings.accounts.form.apiKey', type: 'text', required: true, placeholderKey: 'settings.accounts.form.apiKeyPlaceholder' },
-    { name: 'oauthToken', labelKey: 'settings.accounts.form.oauthToken', type: 'text', required: false, placeholderKey: 'settings.accounts.form.oauthTokenPlaceholder' },
-    { name: 'baseUrl', labelKey: 'settings.accounts.form.baseUrl', type: 'text', required: false, placeholderKey: 'settings.accounts.form.baseUrlPlaceholder' },
+  'gemini': [
+    { name: 'name', labelKey: 'accounts.form.name', type: 'text', required: true, placeholderKey: 'accounts.form.namePlaceholder' },
+    { name: 'apiKey', labelKey: 'accounts.form.apiKey', type: 'text', required: true, placeholderKey: 'accounts.form.apiKeyPlaceholder' },
+    { name: 'baseUrl', labelKey: 'accounts.form.baseUrl', type: 'text', required: false, placeholderKey: 'accounts.form.baseUrlPlaceholder' },
+  ],
+  'meta-llama': [
+    { name: 'name', labelKey: 'accounts.form.name', type: 'text', required: true, placeholderKey: 'accounts.form.namePlaceholder' },
+    { name: 'apiKey', labelKey: 'accounts.form.apiKey', type: 'text', required: true, placeholderKey: 'accounts.form.apiKeyPlaceholder' },
+    { name: 'baseUrl', labelKey: 'accounts.form.baseUrl', type: 'text', required: false, placeholderKey: 'accounts.form.baseUrlPlaceholder' },
   ],
   'mistral': [
-    { name: 'name', labelKey: 'settings.accounts.form.name', type: 'text', required: true, placeholderKey: 'settings.accounts.form.namePlaceholder' },
-    { name: 'apiKey', labelKey: 'settings.accounts.form.apiKey', type: 'text', required: true, placeholderKey: 'settings.accounts.form.apiKeyPlaceholder' },
-    { name: 'baseUrl', labelKey: 'settings.accounts.form.baseUrl', type: 'text', required: false, placeholderKey: 'settings.accounts.form.baseUrlPlaceholder' },
+    { name: 'name', labelKey: 'accounts.form.name', type: 'text', required: true, placeholderKey: 'accounts.form.namePlaceholder' },
+    { name: 'apiKey', labelKey: 'accounts.form.apiKey', type: 'text', required: true, placeholderKey: 'accounts.form.apiKeyPlaceholder' },
+    { name: 'baseUrl', labelKey: 'accounts.form.baseUrl', type: 'text', required: false, placeholderKey: 'accounts.form.baseUrlPlaceholder' },
   ],
-  // Ajoutez d'autres providers ici si besoin
+  'deepseek': [
+    { name: 'name', labelKey: 'accounts.form.name', type: 'text', required: true, placeholderKey: 'accounts.form.namePlaceholder' },
+    { name: 'apiKey', labelKey: 'accounts.form.apiKey', type: 'text', required: true, placeholderKey: 'accounts.form.apiKeyPlaceholder' },
+    { name: 'baseUrl', labelKey: 'accounts.form.baseUrl', type: 'text', required: false, placeholderKey: 'accounts.form.baseUrlPlaceholder' },
+  ],
+  'grok': [
+    { name: 'name', labelKey: 'accounts.form.name', type: 'text', required: true, placeholderKey: 'accounts.form.namePlaceholder' },
+    { name: 'apiKey', labelKey: 'accounts.form.apiKey', type: 'text', required: true, placeholderKey: 'accounts.form.apiKeyPlaceholder' },
+    { name: 'baseUrl', labelKey: 'accounts.form.baseUrl', type: 'text', required: false, placeholderKey: 'accounts.form.baseUrlPlaceholder' },
+  ],
+  'google': [
+    { name: 'name', labelKey: 'accounts.form.name', type: 'text', required: true, placeholderKey: 'accounts.form.namePlaceholder' },
+    { name: 'apiKey', labelKey: 'accounts.form.apiKey', type: 'text', required: true, placeholderKey: 'accounts.form.apiKeyPlaceholder' },
+    { name: 'baseUrl', labelKey: 'accounts.form.baseUrl', type: 'text', required: false, placeholderKey: 'accounts.form.baseUrlPlaceholder' },
+  ],
+  'meta': [
+    { name: 'name', labelKey: 'accounts.form.name', type: 'text', required: true, placeholderKey: 'accounts.form.namePlaceholder' },
+    { name: 'apiKey', labelKey: 'accounts.form.apiKey', type: 'text', required: true, placeholderKey: 'accounts.form.apiKeyPlaceholder' },
+    { name: 'baseUrl', labelKey: 'accounts.form.baseUrl', type: 'text', required: false, placeholderKey: 'accounts.form.baseUrlPlaceholder' },
+  ],
+  'windsurf': [
+    { name: 'name', labelKey: 'accounts.form.name', type: 'text', required: true, placeholderKey: 'accounts.form.namePlaceholder' },
+    { name: 'apiKey', labelKey: 'accounts.form.apiKey', type: 'text', required: true, placeholderKey: 'accounts.form.apiKeyPlaceholder' },
+    { name: 'baseUrl', labelKey: 'accounts.form.baseUrl', type: 'text', required: false, placeholderKey: 'accounts.form.baseUrlPlaceholder' },
+  ],
+  'cursor': [
+    { name: 'name', labelKey: 'accounts.form.name', type: 'text', required: true, placeholderKey: 'accounts.form.namePlaceholder' },
+    { name: 'apiKey', labelKey: 'accounts.form.apiKey', type: 'text', required: true, placeholderKey: 'accounts.form.apiKeyPlaceholder' },
+    { name: 'baseUrl', labelKey: 'accounts.form.baseUrl', type: 'text', required: false, placeholderKey: 'accounts.form.baseUrlPlaceholder' },
+    { name: 'llmGatewayUrl', labelKey: 'accounts.form.llmGatewayUrl', type: 'text', required: false, placeholderKey: 'accounts.form.llmGatewayUrlPlaceholder' },
+  ],
+  // Fallback générique pour les autres providers
 };
 
 const getFieldsForProvider = (provider: string) => {
@@ -68,6 +105,7 @@ const AccountForm: React.FC<Props> = ({ provider, onSave, onCancel }) => {
     if (formState['apiKey']) config.api_key = formState['apiKey'];
     if (formState['oauthToken']) config.oauth_token = formState['oauthToken'];
     if (formState['baseUrl']) config.base_url = formState['baseUrl'];
+    if (formState['llmGatewayUrl']) config.llm_gateway_url = formState['llmGatewayUrl'];
     saveUserProviderConfig(provider, config);
     onSave({ ...formState, model });
   };
@@ -76,32 +114,38 @@ const AccountForm: React.FC<Props> = ({ provider, onSave, onCancel }) => {
     <Card className="border border-info/30 bg-info/10 max-w-md mx-auto">
       <CardContent className="p-6">
         <form onSubmit={handleSave} className="flex flex-col gap-4">
-          <h3 className="text-lg font-bold mb-2">{t('settings.accounts.form.addAccount', { provider })}</h3>
+          <h3 className="text-lg font-bold mb-2">{t('accounts.form.addAccount', { provider })}</h3>
           {fields.map(field => (
-            <input
-              key={field.name}
-              name={field.name}
-              className="input input-bordered"
-              placeholder={t(field.placeholderKey || field.labelKey)}
-              required={field.required}
-              type={field.type}
-              value={formState[field.name] || ''}
-              onChange={handleChange}
-            />
+            <div key={field.name} className="space-y-2">
+              <Label htmlFor={field.name}>{t(field.labelKey)}</Label>
+              <Input
+                id={field.name}
+                name={field.name}
+                placeholder={t(field.placeholderKey || field.labelKey)}
+                required={field.required}
+                type={field.type}
+                value={formState[field.name] || ''}
+                onChange={handleChange}
+              />
+            </div>
           ))}
-          <select
-            className="input input-bordered"
-            name="model"
-            required
-            value={formState['model'] || ''}
-            onChange={handleChange}
-          >
-            <option value="">{t('settings.accounts.form.chooseModel')}</option>
-            {models.map(m => <option key={m} value={m}>{m}</option>)}
-          </select>
+          <div className="space-y-2">
+            <Label htmlFor="model">{t('accounts.form.chooseModel')}</Label>
+            <select
+              id="model"
+              name="model"
+              required
+              value={formState['model'] || ''}
+              onChange={handleChange}
+              className="w-full p-2 border border-input rounded-md bg-background"
+            >
+              <option value="">{t('accounts.form.chooseModel')}</option>
+              {models.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
           <div className="flex gap-3 mt-4">
-            <Button type="submit" className="flex-1">{t('settings.accounts.form.save')}</Button>
-            <Button type="button" variant="outline" onClick={onCancel} className="flex-1">{t('settings.accounts.form.cancel')}</Button>
+            <Button type="submit" className="flex-1">{t('accounts.form.save')}</Button>
+            <Button type="button" variant="outline" onClick={onCancel} className="flex-1">{t('accounts.form.cancel')}</Button>
           </div>
         </form>
       </CardContent>

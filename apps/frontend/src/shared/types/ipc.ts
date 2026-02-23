@@ -209,6 +209,11 @@ export interface ElectronAPI {
   deleteTask: (taskId: string) => Promise<IPCResult>;
   updateTask: (taskId: string, updates: { title?: string; description?: string }) => Promise<IPCResult<Task>>;
   startTask: (taskId: string, options?: TaskStartOptions) => void;
+
+  // LLM Provider operations
+  selectProvider: (provider: string) => Promise<IPCResult<string>>;
+  getSelectedProvider: () => Promise<IPCResult<string | null>>;
+
   stopTask: (taskId: string) => void;
   submitReview: (taskId: string, approved: boolean, feedback?: string, images?: ImageAttachment[]) => Promise<IPCResult>;
   updateTaskStatus: (taskId: string, status: TaskStatus, options?: { forceCleanup?: boolean }) => Promise<IPCResult & { worktreeExists?: boolean; worktreePath?: string }>;

@@ -26,6 +26,9 @@ from functools import wraps
 from pathlib import Path
 from typing import Any
 
+# Import the colored logs utility
+from .colored_logs import format_backend_log, write_backend_log
+
 
 # ANSI color codes for terminal output
 class Colors:
@@ -118,7 +121,7 @@ def _write_log(message: str, to_file: bool = True) -> None:
 
 def debug(module: str, message: str, level: int = 1, **kwargs) -> None:
     """
-    Log a debug message.
+    Log a debug message with backend coloration.
 
     Args:
         module: Source module name (e.g., "run.py", "ideation_runner")
@@ -132,31 +135,8 @@ def debug(module: str, message: str, level: int = 1, **kwargs) -> None:
     if _get_debug_level() < level:
         return
 
-    timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-
-    # Build the log line
-    parts = [
-        f"{Colors.TIMESTAMP}[{timestamp}]{Colors.RESET}",
-        f"{Colors.DEBUG}[DEBUG]{Colors.RESET}",
-        f"{Colors.MODULE}[{module}]{Colors.RESET}",
-        f"{Colors.DEBUG_DIM}{message}{Colors.RESET}",
-    ]
-
-    log_line = " ".join(parts)
-
-    # Add kwargs on separate lines if present
-    if kwargs:
-        for key, value in kwargs.items():
-            formatted_value = _format_value(value)
-            if "\n" in formatted_value:
-                # Multi-line value
-                log_line += f"\n  {Colors.KEY}{key}{Colors.RESET}:"
-                for line in formatted_value.split("\n"):
-                    log_line += f"\n    {Colors.VALUE}{line}{Colors.RESET}"
-            else:
-                log_line += f"\n  {Colors.KEY}{key}{Colors.RESET}: {Colors.VALUE}{formatted_value}{Colors.RESET}"
-
-    _write_log(log_line)
+    # Use the new colored logs system
+    write_backend_log(message, "DEBUG", module=module, **kwargs)
 
 
 def debug_detailed(module: str, message: str, **kwargs) -> None:
@@ -170,63 +150,35 @@ def debug_verbose(module: str, message: str, **kwargs) -> None:
 
 
 def debug_success(module: str, message: str, **kwargs) -> None:
-    """Log a success debug message."""
+    """Log a success debug message with backend coloration."""
     if not _get_debug_enabled():
         return
 
-    timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-    log_line = f"{Colors.TIMESTAMP}[{timestamp}]{Colors.RESET} {Colors.SUCCESS}[OK]{Colors.RESET} {Colors.MODULE}[{module}]{Colors.RESET} {message}"
-
-    if kwargs:
-        for key, value in kwargs.items():
-            log_line += f"\n  {Colors.KEY}{key}{Colors.RESET}: {Colors.VALUE}{_format_value(value)}{Colors.RESET}"
-
-    _write_log(log_line)
+    write_backend_log(message, "SUCCESS", module=module, **kwargs)
 
 
 def debug_info(module: str, message: str, **kwargs) -> None:
-    """Log an info debug message."""
+    """Log an info debug message with backend coloration."""
     if not _get_debug_enabled():
         return
 
-    timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-    log_line = f"{Colors.TIMESTAMP}[{timestamp}]{Colors.RESET} {Colors.DEBUG}[INFO]{Colors.RESET} {Colors.MODULE}[{module}]{Colors.RESET} {message}"
-
-    if kwargs:
-        for key, value in kwargs.items():
-            log_line += f"\n  {Colors.KEY}{key}{Colors.RESET}: {Colors.VALUE}{_format_value(value)}{Colors.RESET}"
-
-    _write_log(log_line)
+    write_backend_log(message, "INFO", module=module, **kwargs)
 
 
 def debug_error(module: str, message: str, **kwargs) -> None:
-    """Log an error debug message (always shown if debug enabled)."""
+    """Log an error debug message with backend coloration."""
     if not _get_debug_enabled():
         return
 
-    timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-    log_line = f"{Colors.TIMESTAMP}[{timestamp}]{Colors.RESET} {Colors.ERROR}[ERROR]{Colors.RESET} {Colors.MODULE}[{module}]{Colors.RESET} {Colors.ERROR}{message}{Colors.RESET}"
-
-    if kwargs:
-        for key, value in kwargs.items():
-            log_line += f"\n  {Colors.KEY}{key}{Colors.RESET}: {Colors.VALUE}{_format_value(value)}{Colors.RESET}"
-
-    _write_log(log_line)
+    write_backend_log(message, "ERROR", module=module, **kwargs)
 
 
 def debug_warning(module: str, message: str, **kwargs) -> None:
-    """Log a warning debug message."""
+    """Log a warning debug message with backend coloration."""
     if not _get_debug_enabled():
         return
 
-    timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-    log_line = f"{Colors.TIMESTAMP}[{timestamp}]{Colors.RESET} {Colors.WARNING}[WARN]{Colors.RESET} {Colors.MODULE}[{module}]{Colors.RESET} {Colors.WARNING}{message}{Colors.RESET}"
-
-    if kwargs:
-        for key, value in kwargs.items():
-            log_line += f"\n  {Colors.KEY}{key}{Colors.RESET}: {Colors.VALUE}{_format_value(value)}{Colors.RESET}"
-
-    _write_log(log_line)
+    write_backend_log(message, "WARNING", module=module, **kwargs)
 
 
 def debug_section(module: str, title: str) -> None:

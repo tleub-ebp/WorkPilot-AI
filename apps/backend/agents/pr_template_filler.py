@@ -305,11 +305,11 @@ async def run_pr_template_filler(
     if task_logger:
         task_logger.start_phase(LogPhase.CODING, "PR template filling")
 
-    # Create client following the pattern from planner.py
-    client = create_client(
-        project_dir,
-        spec_dir,
-        model,
+    # Create client using the provider-agnostic factory
+    client = create_agent_client(
+        project_dir=project_dir,
+        spec_dir=spec_dir,
+        model=model,
         agent_type="pr_template_filler",
         max_thinking_tokens=thinking_budget,
     )

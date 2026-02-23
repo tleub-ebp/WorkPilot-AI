@@ -63,7 +63,7 @@ class TriageEngine:
         self, issue: dict, all_issues: list[dict]
     ) -> TriageResult:
         """Triage a single issue using AI."""
-        from core.client import create_client
+        from core.client import create_agent_client
 
         # Build context with issue and potential duplicates
         context = self.build_triage_context(issue, all_issues)
@@ -75,7 +75,7 @@ class TriageEngine:
         # Run AI
         # Resolve model shorthand (e.g., "sonnet") to full model ID for API compatibility
         model = resolve_model_id(self.config.model or "sonnet")
-        client = create_client(
+        client = create_agent_client(
             project_dir=self.project_dir,
             spec_dir=self.github_dir,
             model=model,

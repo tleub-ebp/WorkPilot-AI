@@ -7,6 +7,9 @@ Provides real-time event broadcasting to frontend clients.
 import json
 import logging
 import time
+import subprocess
+import psutil
+import socket
 from typing import Any, Optional
 
 try:
@@ -21,6 +24,68 @@ from .session_recorder import SessionRecorder
 from .streaming_manager import get_streaming_manager
 
 logger = logging.getLogger(__name__)
+
+
+def kill_processes_on_port(port: int) -> bool:
+    """Kill all processes using the specified port."""
+    try:
+        # Check if port is available first
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex(('localhost', port))
+        sock.close()
+        
+        if result != 0:
+            logger.info(f"Port {port} is already available")
+            return True
+            
+        logger.warning(f"Port {port} is occupied, attempting to kill processes...")
+        
+        # Find processes using the port
+        killed_any = False
+        for proc in psutil.process_iter(['pid', 'name', 'connections']):
+            try:
+                connections = proc.info.get('connections', [])
+                for conn in connections:
+                    if conn.status == 'LISTEN' and conn.laddr.port == port:
+                        pid = proc.info['pid']
+                        name = proc.info['name']
+                        logger.info(f"Killing process {pid} ({name}) using port {port}")
+                        proc.terminate()
+                        killed_any = True
+                        
+                        # Wait a bit for graceful termination
+                        time.sleep(1)
+                        
+                        # Force kill if still running
+                        if proc.is_running():
+                            logger.warning(f"Force killing process {pid}")
+                            proc.kill()
+                            
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                continue
+                
+        if killed_any:
+            # Wait for processes to fully terminate
+            time.sleep(2)
+            
+            # Verify port is now available
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            result = sock.connect_ex(('localhost', port))
+            sock.close()
+            
+            if result == 0:
+                logger.error(f"Port {port} is still occupied after killing processes")
+                return False
+            else:
+                logger.info(f"Port {port} is now available after killing processes")
+                return True
+        else:
+            logger.warning(f"No processes found using port {port}, but port is occupied")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error killing processes on port {port}: {e}")
+        return False
 
 
 class StreamingWebSocketServer:
@@ -47,6 +112,11 @@ class StreamingWebSocketServer:
                 "Streaming mode will not be available. "
                 "Install with: pip install websockets"
             )
+            return
+            
+        # Try to kill processes using the port if it's occupied
+        if not kill_processes_on_port(self.port):
+            logger.error(f"Could not free port {self.port}, WebSocket server will not start")
             return
             
         try:

@@ -528,6 +528,10 @@ export const IPC_CHANNELS = {
   GIT_DETECT_PROVIDER: 'git:detectProvider',
   GIT_INITIALIZE: 'git:initialize',
 
+  // LLM Provider operations
+  PROVIDER_SELECT: 'provider:select',
+  PROVIDER_GET_SELECTED: 'provider:getSelected',
+
   // App auto-update operations
   APP_UPDATE_CHECK: 'app-update:check',
   APP_UPDATE_DOWNLOAD: 'app-update:download',

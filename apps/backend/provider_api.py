@@ -83,7 +83,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-_selected_provider: ContextVar[Optional[str]] = ContextVar("selected_provider", default=None)
+# Global variable to store selected provider (ContextVar doesn't work across HTTP requests)
+_selected_provider: Optional[str] = None
 
 def get_env_provider_config(name: str) -> dict | None:
     if name == "claude":
@@ -216,11 +217,18 @@ def delete_provider_config_api(provider: str):
 
 @app.post("/providers/select")
 def select_provider(provider: str = Query(...)):
-    _selected_provider.set(provider)
+    global _selected_provider
+    _selected_provider = provider
     return {"selected": provider}
 
+@app.get("/providers/selected")
+def get_selected_provider_endpoint():
+    """Get the currently selected provider."""
+    return {"selected": get_selected_provider()}
+
 def get_selected_provider() -> Optional[str]:
-    return _selected_provider.get()
+    global _selected_provider
+    return _selected_provider
 
 @app.post("/providers/test/{provider}")
 @limiter.limit("5/minute")

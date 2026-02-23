@@ -26,9 +26,9 @@ import { useProviderContext } from './ProviderContext';
 import { PROVIDER_MODELS_MAP } from '@shared/constants/models';
 import {AppSection} from "@/components/settings/AppSettings";
 
-// All provider keys from the canonical map (excluding the 'claude' alias for anthropic)
+// All provider keys from the canonical map (including both 'anthropic' and 'claude' aliases)
 const KNOWN_PROVIDERS = new Set(
-  Object.keys(PROVIDER_MODELS_MAP).filter(k => k !== 'claude')
+  Object.keys(PROVIDER_MODELS_MAP)
 );
 
 /**
@@ -444,7 +444,7 @@ export function UsageIndicator() {
     }
 
     // Provider non reconnu (absent de PROVIDER_MODELS_MAP)
-    if (selectedProvider && !KNOWN_PROVIDERS.has(selectedProvider.toLowerCase()) && selectedProvider.toLowerCase() !== 'claude') {
+    if (selectedProvider && !KNOWN_PROVIDERS.has(selectedProvider.toLowerCase())) {
       return (
         <TooltipProvider delayDuration={200}>
           <Tooltip>
