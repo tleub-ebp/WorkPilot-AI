@@ -41,6 +41,9 @@ import { registerScreenshotHandlers } from './screenshot-handlers';
 import { registerTerminalWorktreeIpcHandlers } from './terminal';
 import { notificationService } from '../notification-service';
 import { setupQualityHandlers } from './quality-handlers';
+import { registerPromptOptimizerHandlers } from './prompt-optimizer-handlers';
+import { registerCredentialHandlers } from './credential-handlers';
+import { registerGitHubCopilotHandlers } from './github-copilot-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -146,6 +149,15 @@ export function setupIpcHandlers(
   // Quality Scorer handlers (AI Code Review)
   setupQualityHandlers();
 
+  // Prompt Optimizer handlers
+  registerPromptOptimizerHandlers(getMainWindow);
+
+  // Credential Manager handlers (centralized auth and usage management)
+  registerCredentialHandlers();
+
+  // GitHub Copilot CLI handlers (CLI-based authentication)
+  registerGitHubCopilotHandlers();
+
   console.warn('[IPC] All handler modules registered successfully');
 }
 
@@ -174,5 +186,6 @@ export {
   registerCopilotCliHandlers,
   registerMcpHandlers,
   registerProfileHandlers,
-  registerScreenshotHandlers
+  registerScreenshotHandlers,
+  registerPromptOptimizerHandlers
 };

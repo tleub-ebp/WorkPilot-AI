@@ -983,6 +983,75 @@
       "cancel": "Annuler"
     }
   },
+  "githubCopilot": {
+    "title": "GitHub Copilot",
+    "description": "Configuration de GitHub Copilot CLI pour l'authentification",
+    "status": {
+      "notInstalled": "Non installé",
+      "installed": "Installé ({{version}})",
+      "notAuthenticated": "Non authentifié",
+      "authenticated": "Authentifié ({{username}})",
+      "authenticatedAs": "Authentifié en tant que {{username}}"
+    },
+    "authenticate": "S'authentifier",
+    "authSuccess": "Authentification réussie",
+    "authSuccessDescription": "GitHub Copilot est maintenant configuré",
+    "authTerminalTitle": "Terminal GitHub Copilot",
+    "authCloseWarning": "Le terminal est en cours d'authentification. Êtes-vous sûr de vouloir fermer ?",
+    "errors": {
+      "authFailed": "Échec de l'authentification",
+      "saveFailed": "Échec de la sauvegarde",
+      "removeFailed": "Échec de la suppression",
+      "logoutFailed": "Échec de la déconnexion",
+      "tokenRequired": "Token requis",
+      "tokenRequiredDescription": "Veuillez saisir un token GitHub Copilot valide",
+      "unknownError": "Erreur inconnue"
+    },
+    "logout": "Se déconnecter",
+    "logoutSuccess": "Déconnexion réussie",
+    "logoutSuccessDescription": "Vous avez été déconnecté de GitHub Copilot",
+    "testSuccess": "Test réussi",
+    "testFailed": "Test échoué",
+    "testError": "Erreur de test",
+    "tokenSaved": "Token sauvegardé",
+    "tokenSavedDescription": "Le token GitHub Copilot a été sauvegardé",
+    "tokenRemoved": "Token supprimé",
+    "tokenRemovedDescription": "Le token GitHub Copilot a été supprimé",
+    "token": {
+      "title": "Token GitHub Copilot",
+      "label": "Token GitHub Copilot pour l'authentification",
+      "placeholder": "ghp_...",
+      "description": "Token personnel GitHub pour l'authentification Copilot (commence par ghp_, gho_, ou ghu_)",
+      "configured": "Token configuré et prêt à être utilisé"
+    },
+    "instructions": {
+      "title": "Instructions GitHub Copilot",
+      "description": "Guide d'installation et d'authentification GitHub Copilot CLI",
+      "installation": {
+        "title": "Installation",
+        "step1": "Installez GitHub CLI depuis https://github.com/cli/cli",
+        "step2": "Vérifiez l'installation avec 'gh --version'",
+        "step3": "Redémarrez votre terminal après installation"
+      },
+      "authentication": {
+        "title": "Authentification",
+        "step1": "Ouvrez un terminal et exécutez 'gh auth login'",
+        "step2": "Suivez les instructions dans le navigateur qui s'ouvrira",
+        "step3": "Configurez les permissions nécessaires"
+      },
+      "token": {
+        "title": "Token GitHub Copilot",
+        "step1": "Générez un token personnel GitHub depuis https://github.com/settings/tokens",
+        "step2": "Copiez le token (commence par ghp_, gho_, ou ghu_)",
+        "step3": "Configurez le token dans les paramètres"
+      }
+    }
+  },
+  "common": {
+    "test": "Tester",
+    "refresh": "Actualiser",
+    "save": "Enregistrer"
+  },
   "collaboration": {
     "title": "Collaboration",
     "description": "Paramètres de collaboration multi-utilisateurs"

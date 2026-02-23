@@ -23,6 +23,7 @@ import { createGitLabAPI, GitLabAPI } from './modules/gitlab-api';
 import { createAzureDevOpsAPI, AzureDevOpsAPI } from './modules/azure-devops-api';
 import { createJiraAPI, JiraAPI } from './modules/jira-api';
 import { createShellAPI, ShellAPI } from './modules/shell-api';
+import { createPromptOptimizerAPI, PromptOptimizerAPI } from './modules/prompt-optimizer-api';
 
 /**
  * Combined Agent API interface
@@ -38,7 +39,8 @@ export interface AgentAPI extends
   GitLabAPI,
   AzureDevOpsAPI,
   JiraAPI,
-  ShellAPI {}
+  ShellAPI,
+  PromptOptimizerAPI {}
 
 /**
  * Creates the complete Agent API by combining all module APIs
@@ -56,6 +58,7 @@ export const createAgentAPI = (): AgentAPI => {
   const azureDevOpsAPI = createAzureDevOpsAPI();
   const jiraAPI = createJiraAPI();
   const shellAPI = createShellAPI();
+  const promptOptimizerAPI = createPromptOptimizerAPI();
 
   return {
     // Roadmap API
@@ -86,7 +89,10 @@ export const createAgentAPI = (): AgentAPI => {
     ...jiraAPI,
 
     // Shell Operations API
-    ...shellAPI
+    ...shellAPI,
+
+    // Prompt Optimizer API
+    ...promptOptimizerAPI
   };
 };
 
@@ -101,5 +107,6 @@ export type {
   GitLabAPI,
   AzureDevOpsAPI,
   JiraAPI,
-  ShellAPI
+  ShellAPI,
+  PromptOptimizerAPI
 };

@@ -107,11 +107,7 @@ export function AdvancedSettings({ settings, onSettingsChange, section, version 
         if (isCancelled) return;
 
         if (result.success && result.data) {
-          // An update was already downloaded - show "Install and Restart" button
-          setAppUpdateInfo(result.data);
-          setIsAppUpdateDownloaded(true);
-          console.log('[AdvancedSettings] Found already-downloaded update:', result.data.version);
-          return; // Don't check for new updates if we already have one downloaded
+          // Found already-downloaded update
         }
       } catch (err) {
         console.error('Failed to check for downloaded update:', err);

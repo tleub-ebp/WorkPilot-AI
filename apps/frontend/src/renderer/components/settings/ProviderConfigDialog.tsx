@@ -14,9 +14,10 @@ import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { Textarea } from '../ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { AlertCircle, Key, Globe, Server, CheckCircle, X, Users, LogIn, Loader2 } from 'lucide-react';
+import { AlertCircle, Key, Globe, Server, CheckCircle, X, Users, LogIn, Loader2, Github } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 import { AuthTerminal } from './AuthTerminal';
+import { GitHubCopilotConfig } from './GitHubCopilotConfig';
 import { cn } from '@/lib/utils';
 
 interface ProviderConfigDialogProps {
@@ -180,11 +181,13 @@ export function ProviderConfigDialog({
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
-  const [activeTab, setActiveTab] = useState<'api' | 'oauth'>('api');
+  const [activeTab, setActiveTab] = useState<'api' | 'oauth' | 'github-copilot'>('api');
   const [authTerminal, setAuthTerminal] = useState<AuthTerminalState | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   const providerConfig = provider ? providerFields[provider.id] : null;
+  const supportsOAuth = ['anthropic', 'claude'].includes(provider?.id || '');
+  const supportsGitHubCopilot = provider?.id === 'copilot';
 
   useEffect(() => {
     if (provider && providerConfig && isOpen) {
@@ -202,8 +205,17 @@ export function ProviderConfigDialog({
       
       setFormData(initialData);
       setTestResult(null);
+      
+      // Sélectionner l'onglet par défaut selon le provider
+      if (provider.id === 'copilot') {
+        setActiveTab('github-copilot');
+      } else if (supportsOAuth) {
+        setActiveTab('oauth');
+      } else {
+        setActiveTab('api');
+      }
     }
-  }, [provider, providerConfig, settings, isOpen]);
+  }, [provider, providerConfig, settings, isOpen, supportsOAuth]);
 
   const handleSave = () => {
     if (!provider || !providerConfig) return;
@@ -300,8 +312,6 @@ export function ProviderConfigDialog({
     setIsAuthenticating(false);
   };
 
-  const supportsOAuth = ['anthropic', 'claude'].includes(provider?.id || '');
-
   if (!provider || !providerConfig) return null;
 
   const content = (
@@ -320,22 +330,30 @@ export function ProviderConfigDialog({
         </div>
       </DialogHeader>
 
-      {supportsOAuth ? (
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'api' | 'oauth')}>
+      {(supportsOAuth || supportsGitHubCopilot) ? (
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'api' | 'oauth' | 'github-copilot')}>
           <TabsList className="w-full justify-start">
             <TabsTrigger value="api" className="flex items-center gap-2">
               <Key className="w-4 h-4" />
               Clé API
             </TabsTrigger>
-            <TabsTrigger value="oauth" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              OAuth Claude Code
-            </TabsTrigger>
+            {supportsOAuth && (
+              <TabsTrigger value="oauth" className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                OAuth Claude Code
+              </TabsTrigger>
+            )}
+            {supportsGitHubCopilot && (
+              <TabsTrigger value="github-copilot" className="flex items-center gap-2">
+                <Github className="w-4 h-4" />
+                OAuth GitHub Copilot
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="api" className="space-y-6 py-4">
             <div className="space-y-6">
-              {providerConfig.requiresApiKey && (
+              {providerConfig.requiresApiKey && provider?.id !== 'copilot' && (
                 <div className="space-y-2">
                   <Label htmlFor="apiKey" className="flex items-center gap-2">
                     <Key className="w-4 h-4" />
@@ -360,6 +378,56 @@ export function ProviderConfigDialog({
                       {showApiKey ? <X className="w-3 h-3" /> : <Key className="w-3 h-3" />}
                     </Button>
                   </div>
+                </div>
+              )}
+
+              {/* GitHub Copilot Token Configuration */}
+              {provider?.id === 'copilot' && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="copilot-token" className="flex items-center gap-2">
+                      <Key className="w-4 h-4" />
+                      {t('githubCopilot.token.label')}
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="copilot-token"
+                        type={showApiKey ? 'text' : 'password'}
+                        placeholder={t('githubCopilot.token.placeholder')}
+                        className="font-mono pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                        onClick={() => setShowApiKey(!showApiKey)}
+                      >
+                        {showApiKey ? <X className="w-3 h-3" /> : <Key className="w-3 h-3" />}
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {t('githubCopilot.token.description')}
+                    </p>
+                  </div>
+
+                  {/* Token Actions */}
+                  <div className="flex gap-2">
+                    <Button>
+                      {t('common.save')}
+                    </Button>
+                    <Button variant="outline">
+                      {t('common.remove')}
+                    </Button>
+                  </div>
+
+                  {/* Token Status */}
+                  <Alert>
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      {t('githubCopilot.token.configured')}
+                    </AlertDescription>
+                  </Alert>
                 </div>
               )}
 
@@ -472,6 +540,19 @@ export function ProviderConfigDialog({
               </div>
             </div>
           </TabsContent>
+
+          {supportsGitHubCopilot && (
+            <TabsContent value="github-copilot" className="space-y-6 py-4">
+              <div className="space-y-4">
+                <div className="rounded-lg bg-muted/30 border border-border p-4">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {t('settings.githubCopilot.description')}
+                  </p>
+                  <GitHubCopilotConfig />
+                </div>
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       ) : (
         <div className="space-y-6 py-4">

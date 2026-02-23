@@ -66,6 +66,11 @@ export function AuthStatusIndicator() {
   const [githubStatus, setGithubStatus] = useState<{ available: boolean; isAuth?: boolean; username?: string } | null>(null);
   const [isLoadingGithubStatus, setIsLoadingGithubStatus] = useState(false);
 
+  // Track OAuth status for Anthropic
+  const [oauthStatus, setOauthStatus] = useState<{ type: 'oauth'; name: string; provider: 'anthropic'; providerLabel: string; badgeColor: string } | null>(null);
+  const [isLoadingOauth, setIsLoadingOauth] = useState(false);
+  const [claudeProfile, setClaudeProfile] = useState<any>(null);
+
   // Single effect: subscribe to live updates + refresh on provider/profile change
   useEffect(() => {
     setIsLoadingUsage(true);
@@ -126,6 +131,148 @@ export function AuthStatusIndicator() {
     }
   }, [selectedProvider]);
 
+  // Effect to check OAuth status for Anthropic provider
+  useEffect(() => {
+    if (selectedProvider === 'anthropic') {
+      setIsLoadingOauth(true);
+      
+      const checkOAuthStatus = async () => {
+        try {
+          console.log(`[AuthStatusIndicator] Checking OAuth via IPC...`);
+          const result = await window.electronAPI.invoke('autobuild:source:env:get');
+          console.log(`[AuthStatusIndicator] IPC result:`, result);
+          console.log(`[AuthStatusIndicator] Full IPC data:`, JSON.stringify(result.data, null, 2));
+          
+          if (result.success && result.data.hasClaudeToken) {
+            console.log(`[AuthStatusIndicator] OAuth detected via IPC for Anthropic`);
+            setOauthStatus({
+              type: 'oauth',
+              name: 'OAuth',
+              provider: 'anthropic',
+              providerLabel: 'Anthropic',
+              badgeColor: 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/15'
+            });
+            return;
+          } else {
+            console.log(`[AuthStatusIndicator] IPC result: success=${result.success}, hasClaudeToken=${result.data?.hasClaudeToken}`);
+            console.log(`[AuthStatusIndicator] Available data keys:`, Object.keys(result.data || {}));
+            
+            // Vérifier les settings globaux directement
+            try {
+              const settingsResult = await window.electronAPI.invoke('settings:get');
+              console.log(`[AuthStatusIndicator] Global settings:`, settingsResult);
+              console.log(`[AuthStatusIndicator] Global Claude OAuth Token:`, settingsResult.data?.globalClaudeOAuthToken ? 'EXISTS' : 'NOT_FOUND');
+              
+              if (settingsResult.success && settingsResult.data?.globalClaudeOAuthToken) {
+                console.log(`[AuthStatusIndicator] OAuth found in global settings!`);
+                setOauthStatus({
+                  type: 'oauth',
+                  name: 'OAuth',
+                  provider: 'anthropic',
+                  providerLabel: 'Anthropic',
+                  badgeColor: 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/15'
+                });
+                return;
+              }
+            } catch (settingsError) {
+              console.warn('[AuthStatusIndicator] Failed to check global settings:', settingsError);
+            }
+            
+            // Vérifier directement le fichier de configuration Claude CLI
+            try {
+              const claudeProfilesResult = await window.electronAPI.invoke('claude:profilesGet');
+              console.log(`[AuthStatusIndicator] Claude profiles:`, claudeProfilesResult);
+              
+              if (claudeProfilesResult.success && claudeProfilesResult.data?.profiles) {
+                // Chercher un profil authentifié (OAuth)
+                const oauthProfile = claudeProfilesResult.data.profiles.find((profile: any) => 
+                  profile.isAuthenticated === true
+                );
+                
+                if (oauthProfile) {
+                  console.log(`[AuthStatusIndicator] OAuth found in Claude profiles! Profile:`, oauthProfile.name);
+                  console.log(`[AuthStatusIndicator] Profile details:`, {
+                    name: oauthProfile.name,
+                    email: oauthProfile.email,
+                    subscriptionType: oauthProfile.subscriptionType,
+                    isAuthenticated: oauthProfile.isAuthenticated
+                  });
+                  setClaudeProfile(oauthProfile); // Stocker le profil pour l'affichage
+                  setOauthStatus({
+                    type: 'oauth',
+                    name: 'OAuth',
+                    provider: 'anthropic',
+                    providerLabel: 'Anthropic',
+                    badgeColor: 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/15'
+                  });
+                  return;
+                } else {
+                  setClaudeProfile(null); // Réinitialiser si aucun profil trouvé
+                }
+              }
+            } catch (claudeError) {
+              console.warn('[AuthStatusIndicator] Failed to check Claude profiles:', claudeError);
+            }
+          }
+        } catch (error) {
+          console.warn('[AuthStatusIndicator] Failed to check OAuth status:', error);
+        }
+        
+        // Fallback: vérifier localStorage (au cas où)
+        const claudeOAuthToken = localStorage.getItem('claude_oauth_token');
+        const anthropicApiKey = localStorage.getItem('anthropic_api_key');
+        
+        console.log(`[AuthStatusIndicator] OAuth check for selectedProvider ${selectedProvider}:`, {
+          hasClaudeOAuth: !!claudeOAuthToken,
+          claudeOAuthTokenLength: claudeOAuthToken?.length,
+          hasAnthropicApiKey: !!anthropicApiKey,
+          anthropicApiKeyLength: anthropicApiKey?.length,
+          selectedProvider
+        });
+        
+        const hasOAuth = !!(claudeOAuthToken || anthropicApiKey);
+        
+        if (hasOAuth) {
+          console.log(`[AuthStatusIndicator] Using OAuth for Anthropic - returning OAuth status`);
+          setOauthStatus({
+            type: 'oauth',
+            name: 'OAuth',
+            provider: 'anthropic',
+            providerLabel: 'Anthropic',
+            badgeColor: 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/15'
+          });
+        } else {
+          console.log(`[AuthStatusIndicator] No OAuth detected for ${selectedProvider}`);
+          
+          // Afficher un message d'aide dans la console
+          console.log(`[AuthStatusIndicator] 💡 Pour activer OAuth, exécutez dans la console:`);
+          console.log(`[AuthStatusIndicator] 💡 window.electronAPI.invoke('settings:update', { globalClaudeOAuthToken: 'votre-token-ici' })`);
+          console.log(`[AuthStatusIndicator] 💡 Ou allez dans Settings > API Configuration`);
+          
+          // Définir le token OAuth dans les settings globaux
+          const setOAuthToken = async (token: string) => {
+            try {
+              await window.electronAPI.invoke('settings:update', { globalClaudeOAuthToken: token });
+              console.log(`[AuthStatusIndicator] Token OAuth défini avec succès !`);
+            } catch (error) {
+              console.error(`[AuthStatusIndicator] Erreur lors de la définition du token OAuth:`, error);
+            }
+          };
+          
+          setOauthStatus(null);
+        }
+      };
+      
+      checkOAuthStatus().finally(() => {
+        setIsLoadingOauth(false);
+      });
+    } else {
+      // Clear OAuth status when not using Anthropic
+      setOauthStatus(null);
+      setIsLoadingOauth(false);
+    }
+  }, [selectedProvider]);
+
   // Determine if usage warning badge should be shown
   const shouldShowUsageWarning = usage && !isLoadingUsage && (
     usage.sessionPercent >= 90 || usage.weeklyPercent >= 90
@@ -149,10 +296,16 @@ export function AuthStatusIndicator() {
 
   // Calcul dynamique du provider et du profil
   const authStatus = useMemo(() => {
+    // Si on a un statut OAuth pour Anthropic, l'utiliser
+    if (selectedProvider === 'anthropic' && oauthStatus) {
+      return oauthStatus;
+    }
+    
     if (selectedProvider) {
       const providerProfile = profiles.find(p => detectProvider(p.baseUrl) === selectedProvider);
       const provider = selectedProvider as ApiProvider;
       const providerLabel = getProviderLabel(provider);
+      console.log(`[AuthStatusIndicator] Found profile for ${selectedProvider}:`, providerProfile?.name);
       if (providerProfile) {
         return {
           type: 'profile',
@@ -192,7 +345,7 @@ export function AuthStatusIndicator() {
       return OAUTH_FALLBACK;
     }
     return OAUTH_FALLBACK;
-  }, [selectedProvider, profiles, activeProfileId]);
+  }, [selectedProvider, profiles, activeProfileId, oauthStatus]);
 
   // Helper function to truncate ID for display
   const truncateId = (id: string | undefined): string => {
@@ -301,6 +454,40 @@ export function AuthStatusIndicator() {
                     <span className="text-[10px]">{t('common:usage.subscription')}</span>
                   </div>
                   <span className="font-medium text-[10px]">{t('common:usage.claudeCodeSubscription')}</span>
+                </div>
+              )}
+
+              {/* Claude profile details for OAuth */}
+              {isOAuth && claudeProfile && (
+                <div className="pt-2 border-t space-y-2">
+                  {/* Profile name with icon */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Shield className="h-3 w-3" />
+                      <span className="text-[10px]">Profil Claude</span>
+                    </div>
+                    <span className="font-medium text-[10px]">{claudeProfile.name}</span>
+                  </div>
+                  {/* Email with icon */}
+                  {claudeProfile.email && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Key className="h-3 w-3" />
+                        <span className="text-[10px]">Email</span>
+                      </div>
+                      <span className="text-[10px] font-medium text-blue-500">{claudeProfile.email}</span>
+                    </div>
+                  )}
+                  {/* Subscription type with icon */}
+                  {claudeProfile.subscriptionType && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Server className="h-3 w-3" />
+                        <span className="text-[10px]">Type</span>
+                      </div>
+                      <span className="text-[10px] font-medium text-green-500 capitalize">{claudeProfile.subscriptionType}</span>
+                    </div>
+                  )}
                 </div>
               )}
 

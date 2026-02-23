@@ -99,9 +99,12 @@ export function useXterm({ terminalId, onCommandEnter, onResize, onDimensionsRea
 
     const fitAddon = new FitAddon();
     const webLinksAddon = new WebLinksAddon((_event, uri) => {
+      // Use our custom openExternal API instead of default window.open
       window.electronAPI?.openExternal?.(uri).catch((error) => {
         console.warn('[useXterm] Failed to open URL:', uri, error);
       });
+      // Return false to prevent the default window.open behavior
+      return false;
     });
     const serializeAddon = new SerializeAddon();
 

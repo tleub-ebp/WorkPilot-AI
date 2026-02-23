@@ -126,7 +126,6 @@ export function ImprovedProviderSection({
 
   const handleConfigure = (providerId: string) => {
     // Ouvrir la configuration du provider
-    console.log('Configure provider:', providerId);
     // TODO: Implémenter la modale de configuration
   };
 
@@ -138,7 +137,6 @@ export function ImprovedProviderSection({
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // TODO: Implémenter le vrai test d'API
-      console.log('Test provider:', providerId);
     } catch (err) {
       console.error('Test failed:', err);
     } finally {

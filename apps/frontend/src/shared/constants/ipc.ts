@@ -614,5 +614,12 @@ export const IPC_CHANNELS = {
   // Queue routing events (main -> renderer)
   QUEUE_PROFILE_SWAPPED: 'queue:profileSwapped',      // Task switched to different profile
   QUEUE_SESSION_CAPTURED: 'queue:sessionCaptured',    // Session ID captured from running task
-  QUEUE_BLOCKED_NO_PROFILES: 'queue:blockedNoProfiles' // All profiles unavailable
+  QUEUE_BLOCKED_NO_PROFILES: 'queue:blockedNoProfiles', // All profiles unavailable
+
+  // Prompt Optimizer operations
+  PROMPT_OPTIMIZER_OPTIMIZE: 'promptOptimizer:optimize',        // Request prompt optimization
+  PROMPT_OPTIMIZER_STREAM_CHUNK: 'promptOptimizer:streamChunk', // Streaming text chunk (main -> renderer)
+  PROMPT_OPTIMIZER_STATUS: 'promptOptimizer:status',            // Status update (main -> renderer)
+  PROMPT_OPTIMIZER_ERROR: 'promptOptimizer:error',              // Error event (main -> renderer)
+  PROMPT_OPTIMIZER_COMPLETE: 'promptOptimizer:complete'         // Optimization complete (main -> renderer)
 } as const;

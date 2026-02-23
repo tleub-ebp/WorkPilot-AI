@@ -189,6 +189,7 @@ export interface FeatureModelConfig {
   githubIssues: ModelTypeShort; // GitHub Issues automation
   githubPrs: ModelTypeShort;    // GitHub PR review automation
   utility: ModelTypeShort;      // Utility agents (commit message, merge resolver)
+  promptOptimizer: ModelTypeShort; // AI Prompt Optimizer
 }
 
 // Feature-specific thinking level configuration
@@ -199,6 +200,7 @@ export interface FeatureThinkingConfig {
   githubIssues: ThinkingLevel;
   githubPrs: ThinkingLevel;
   utility: ThinkingLevel;
+  promptOptimizer: ThinkingLevel; // AI Prompt Optimizer
 }
 
 // Agent profile for preset model/thinking configurations

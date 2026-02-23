@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SettingsSection } from './SettingsSection';
 import { CleanProviderGrid } from './CleanProviderGrid';
-import { GlobalAutoSwitching } from './GlobalAutoSwitching';
-import { ProviderConfigDialog } from './ProviderConfigDialog';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
 import { getAllConnectors } from './multiconnector/utils';
-import { useSettings } from './hooks/useSettings';
-import { Loader2, AlertCircle, Info, CheckCircle, Activity, X } from 'lucide-react';
+import { Loader2, AlertCircle, Info, X, Activity, CheckCircle, XCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
-import { cn } from '@/lib/utils';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
+import { GlobalAutoSwitching } from './GlobalAutoSwitching';
+import { ProviderConfigDialog } from './ProviderConfigDialog';
+import { getStaticProviders } from '@shared/utils/providers';
+import { useSettingsStore } from '@/stores/settings-store';
+import { useToast } from '@/hooks/use-toast';
+import { ProviderService } from '@shared/services/providerService';
+import type { APIProfile } from '@shared/types/profile';
 
 interface Provider {
   id: string;
@@ -75,23 +78,23 @@ export function CleanProviderSection({
   isOpen 
 }: CleanProviderSectionProps) {
   const { t } = useTranslation('settings');
+  const { toast } = useToast();
   const [connectors, setConnectors] = useState<Array<{ id: string, label: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [warning, setWarning] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [testingProviders, setTestingProviders] = useState<Set<string>>(new Set());
-  const [configDialogOpen, setConfigDialogOpen] = useState(false);
-  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [autoSwitchingOpen, setAutoSwitchingOpen] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+  const [configDialogOpen, setConfigDialogOpen] = useState(false);
+
+  // Utiliser les profiles comme le ProviderSelector
+  const { profiles, setActiveProfile } = useSettingsStore();
 
   // Charger les connecteurs
   useEffect(() => {
     const loadConnectors = async () => {
       setIsLoading(true);
       setError(null);
-      setWarning(null);
-      setSuccess(null);
       try {
         const connectors = await getAllConnectors();
         setConnectors(connectors);
@@ -109,45 +112,27 @@ export function CleanProviderSection({
     }
   }, [isOpen]);
 
-  const getApiKeyField = (providerId: string): string | null => {
-    const fields: Record<string, string> = {
-      'openai': 'globalOpenAIApiKey',
-      'gemini': 'globalGoogleDeepMindApiKey',
-      'google': 'globalGoogleDeepMindApiKey',
-      'meta-llama': 'globalMetaApiKey',
-      'meta': 'globalMetaApiKey',
-      'mistral': 'globalMistralApiKey',
-      'deepseek': 'globalDeepSeekApiKey',
-      'grok': 'globalGrokApiKey',
-      'windsurf': 'globalWindsurfApiKey',
-      'cursor': 'globalCursorApiKey',
-      'azure-openai': 'globalAzureApiKey',
-      'anthropic': 'globalAnthropicApiKey',
-      'claude': 'globalAnthropicApiKey',
-      'ollama': 'globalOllamaUrl',
-      'copilot': 'globalCopilotToken',
-      'aws': 'globalAwsAccessKey',
-    };
-    return fields[providerId] || null;
-  };
+  // Utiliser la même logique que ProviderSelector pour déterminer le statut
+  const { providers: staticProviders, status } = useMemo(
+    () => getStaticProviders(profiles),
+    [profiles]
+  );
 
-  // Transformer les connecteurs en providers pour la grille
-  const providers: Provider[] = connectors.map(connector => {
-    const category = providerCategories[connector.id] || 'independent';
-    const apiKeyField = getApiKeyField(connector.id);
-    const hasApiKey = apiKeyField && settings[apiKeyField];
-    
-    return {
-      id: connector.id,
-      name: connector.label,
-      category,
-      description: t(`sections.accounts.providers.${connector.id}`) || providerDescriptions[connector.id],
-      isConfigured: !!hasApiKey,
-      isWorking: hasApiKey ? true : undefined,
-      lastTested: hasApiKey ? new Date().toISOString() : undefined,
+  // Transformer les providers statiques en providers pour la grille
+  const providers: Provider[] = staticProviders.map(provider => {
+    const mappedProvider = {
+      id: provider.name,
+      name: provider.label,
+      category: providerCategories[provider.name] || 'independent',
+      description: t(`sections.accounts.providers.${provider.name}`) || provider.description,
+      isConfigured: status[provider.name] || false,
+      isWorking: status[provider.name] ? true : undefined,
+      lastTested: status[provider.name] ? new Date().toISOString() : undefined,
       usageCount: Math.floor(Math.random() * 100),
-      isPremium: ['anthropic', 'claude', 'openai', 'gemini'].includes(connector.id),
+      isPremium: ['anthropic', 'claude', 'openai', 'gemini'].includes(provider.name),
     };
+    
+    return mappedProvider;
   });
 
   const handleConfigure = (providerId: string) => {
@@ -162,17 +147,64 @@ export function CleanProviderSection({
     setTestingProviders(prev => new Set(prev).add(providerId));
     
     try {
-      // Simuler un test réel - vérifier si la clé API est configurée
-      const apiKeyField = getApiKeyField(providerId);
-      if (apiKeyField && settings[apiKeyField]) {
-        // Simuler une connexion réussie
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setSuccess(`Test réussi pour ${providerId} !`);
+      // Vérifier si des profiles de test sont nécessaires et les ajouter
+      const updatedProfiles = await ensureTestProfiles();
+      
+      // Passer les profiles mis à jour au ProviderService
+      ProviderService.setProfiles(updatedProfiles);
+      
+      // Utiliser le vrai service de test du provider
+      const result = await ProviderService.testProvider(providerId);
+      
+      if (result.success) {
+        // Mettre à jour le statut du provider pour indiquer qu'il fonctionne
+        // TODO: Mettre à jour le statut dans le store ou l'état local
+        
+        // Afficher un toast de succès avec détails
+        let description = t('sections.accounts.providerCard.testSuccessDescription', { 
+          providerName: providerId 
+        });
+        
+        if (result.details) {
+          if (result.details.modelCount) {
+            description += ` (${t('sections.accounts.providerCard.testDetails.modelsAvailable', { count: result.details.modelCount })})`;
+          } else if (result.details.model) {
+            description += ` (${t('sections.accounts.providerCard.testDetails.modelUsed', { model: result.details.model })})`;
+          }
+        }
+        
+        toast({
+          title: t('sections.accounts.providerCard.testSuccess'),
+          description,
+        });
+        
+        // Test provider success
       } else {
-        throw new Error('Aucune clé API configurée');
+        // Afficher un toast d'erreur avec le message réel de l'API
+        toast({
+          variant: 'destructive',
+          title: t('sections.accounts.providerCard.testError'),
+          description: t('sections.accounts.providerCard.testErrorDescription', { 
+            providerName: providerId,
+            error: result.message
+          }),
+        });
+        
+        console.error('Test failed:', providerId, result.message);
       }
+      
     } catch (err) {
-      setError(`Test échoué pour ${providerId}: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+      console.error('Test error:', err);
+      
+      // Afficher un toast d'erreur générique
+      toast({
+        variant: 'destructive',
+        title: t('sections.accounts.providerCard.testError'),
+        description: t('sections.accounts.providerCard.testErrorDescription', { 
+          providerName: providerId,
+          error: t('sections.accounts.providerCard.errors.unknownError')
+        }),
+      });
     } finally {
       setTestingProviders(prev => {
         const newSet = new Set(prev);
@@ -182,24 +214,66 @@ export function CleanProviderSection({
     }
   };
 
-  const handleToggle = (providerId: string, enabled: boolean) => {
-    const apiKeyField = getApiKeyField(providerId);
-    if (apiKeyField) {
-      onSettingsChange({
-        ...settings,
-        [`${apiKeyField}Enabled`]: enabled
+  // Fonction pour s'assurer que les profiles de test existent
+  const ensureTestProfiles = async () => {
+    const { profiles, saveProfile } = useSettingsStore.getState();
+    
+    // Profiles de test à ajouter
+    const testProfiles = [
+      {
+        name: 'Anthropic Test',
+        baseUrl: 'https://api.anthropic.com',
+        apiKey: 'sk-ant-test-key-placeholder', // À remplacer par une vraie clé
+      },
+      {
+        name: 'Google Gemini Test',
+        baseUrl: 'https://generativelanguage.googleapis.com',
+        apiKey: 'test-google-key-placeholder', // À remplacer par une vraie clé
+      },
+      {
+        name: 'Mistral Test',
+        baseUrl: 'https://api.mistral.ai',
+        apiKey: 'test-mistral-key-placeholder', // À remplacer par une vraie clé
+      }
+    ];
+
+    let addedProfiles = [];
+    
+    for (const testProfile of testProfiles) {
+      const exists = profiles.some(p => 
+        p.baseUrl === testProfile.baseUrl || 
+        p.name === testProfile.name
+      );
+      
+      if (!exists) {
+        // Adding test profile
+        await saveProfile(testProfile);
+        addedProfiles.push(testProfile.name);
+      }
+    }
+    
+    // Si des profiles ont été ajoutés, informer l'utilisateur
+    if (addedProfiles.length > 0) {
+      toast({
+        title: 'Profiles de test ajoutés',
+        description: `${addedProfiles.join(', ')} ont été créés. Configurez vos clés API pour tester.`,
+        duration: 5000,
       });
     }
+    
+    // Rafraîchir les profiles après ajout
+    const { profiles: updatedProfiles } = useSettingsStore.getState();
+    return updatedProfiles;
+  };
+
+  const handleToggle = (providerId: string, enabled: boolean) => {
+    // Pour l'instant, on ne fait rien car on utilise les profiles
+    // Toggle provider
   };
 
   const handleRemove = (providerId: string) => {
-    const apiKeyField = getApiKeyField(providerId);
-    if (apiKeyField && window.confirm('Êtes-vous sûr de vouloir supprimer la configuration de ce provider ?')) {
-      onSettingsChange({
-        ...settings,
-        [apiKeyField]: ''
-      });
-    }
+    // Pour l'instant, on ne fait rien car on utilise les profiles
+    // Remove provider
   };
 
   const handleRefresh = () => {
@@ -260,54 +334,26 @@ export function CleanProviderSection({
           </div>
         )}
 
-        {warning && (
-          <div className="mb-6 p-4 bg-yellow-50/50 border border-yellow-100 rounded-lg">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-yellow-600" />
-              <span className="text-sm text-yellow-700">{warning}</span>
-            </div>
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-6 p-4 bg-green-50/50 border border-green-100 rounded-lg">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-sm text-green-700">{success}</span>
-            </div>
-          </div>
-        )}
-
         <div className="flex gap-6">
           {/* Colonne de gauche - Providers (prend toute la largeur si auto-switching fermé) */}
           <div className={autoSwitchingOpen ? "flex-2" : "flex-1"}>
             {/* Alertes simples */}
           {providers.filter(p => p.isConfigured).length === 0 && (
-            <Alert className="border-primary/20 bg-primary/5">
-              <Info className="h-4 w-4 text-primary" />
-              <AlertDescription className="text-primary">
-                <div className="space-y-1">
-                  <p className="font-medium">Commencez avec votre premier provider</p>
-                  <p className="text-sm">
-                    Configurez au moins un provider pour commencer à utiliser l'application.
-                  </p>
-                </div>
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                {t('sections.accounts.alerts.noProviders')}
               </AlertDescription>
             </Alert>
           )}
 
           {providers.filter(p => p.isWorking === false).length > 0 && (
-            <Alert className="border-destructive/20 bg-destructive/5">
-              <AlertCircle className="h-4 w-4 text-destructive" />
-              <AlertDescription className="text-destructive">
-                <div className="space-y-1">
-                  <p className="font-medium">
-                    {providers.filter(p => p.isWorking === false).length} provider(s) nécessitent votre attention
-                  </p>
-                  <p className="text-sm">
-                    Vérifiez vos clés API et réessayez.
-                  </p>
-                </div>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {t('sections.accounts.alerts.providerErrors', { 
+                  count: providers.filter(p => p.isWorking === false).length 
+                })}
               </AlertDescription>
             </Alert>
           )}
@@ -321,6 +367,7 @@ export function CleanProviderSection({
               onRemove={handleRemove}
               isLoading={isLoading}
               isAutoSwitchingOpen={autoSwitchingOpen}
+              testingProviders={testingProviders}
             />
           </div>
 

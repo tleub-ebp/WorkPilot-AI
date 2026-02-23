@@ -139,7 +139,6 @@ export function SophisticatedProviderSection({
 
   const handleConfigure = (providerId: string) => {
     // Ouvrir la configuration du provider avec une animation
-    console.log('Configure provider:', providerId);
     // TODO: Implémenter la modale de configuration élégante
   };
 
@@ -149,7 +148,6 @@ export function SophisticatedProviderSection({
     try {
       // Simuler un test avec animation
       await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Test provider:', providerId);
     } catch (err) {
       console.error('Test failed:', err);
     } finally {

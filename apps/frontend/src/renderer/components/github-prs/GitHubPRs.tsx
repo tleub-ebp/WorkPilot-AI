@@ -277,3 +277,5 @@ export function GitHubPRs({ onOpenSettings, isActive = false }: GitHubPRsProps) 
     </div>
   );
 }
+
+export default GitHubPRs;
