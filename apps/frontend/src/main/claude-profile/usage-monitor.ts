@@ -42,6 +42,7 @@ function getCredentialFingerprint(credential: string | null | undefined): string
 const ALLOWED_USAGE_API_DOMAINS: ReadonlySet<string> = new Set([
   'api.anthropic.com',
   'api.openai.com',
+  'localhost',  // Allow localhost for our FastAPI backend
 ]);
 
 /**
@@ -56,7 +57,7 @@ interface ProviderUsageEndpoint {
 const PROVIDER_USAGE_ENDPOINTS: readonly ProviderUsageEndpoint[] = [
   {
     provider: 'anthropic',
-    usagePath: '/api/oauth/usage',
+    usagePath: '/providers/usage/anthropic',  // Use our FastAPI backend instead of OAuth API
   },
   {
     provider: 'openai',
@@ -113,6 +114,19 @@ export function getUsageEndpoint(provider: ApiProvider, baseUrl: string): string
   }
 
   try {
+    // Special handling for anthropic - use our FastAPI backend
+    if (provider === 'anthropic') {
+      const backendUrl = 'http://localhost:9000' + endpointConfig.usagePath;
+      if (isDebug) {
+        console.warn('[UsageMonitor:ENDPOINT_CONSTRUCTION] Using FastAPI backend for anthropic:', {
+          provider,
+          backendUrl
+        });
+      }
+      return backendUrl;
+    }
+
+    // For other providers, use the original logic
     const url = new URL(baseUrl);
     const originalPath = url.pathname;
     // Replace the path with the usage endpoint path

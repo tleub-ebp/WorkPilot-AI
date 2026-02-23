@@ -27,6 +27,7 @@ import enDocumentation from './locales/en/documentation.json';
 import enInsights from './locales/en/insights.json';
 import enRoadmap from './locales/en/roadmap.json';
 import enAnalytics from './locales/en/analytics.json';
+import enPromptOptimizer from './locales/en/promptOptimizer.json';
 
 // Import French translation resources
 import frCommon from './locales/fr/common.json';
@@ -54,6 +55,7 @@ import frDocumentation from './locales/fr/documentation.json';
 import frInsights from './locales/fr/insights.json';
 import frRoadmap from './locales/fr/roadmap.json';
 import frAnalytics from './locales/fr/analytics.json';
+import frPromptOptimizer from './locales/fr/promptOptimizer.json';
 
 export const defaultNS = 'common';
 
@@ -83,7 +85,8 @@ export const resources = {
     documentation: enDocumentation,
     insights: enInsights,
     roadmap: enRoadmap,
-    analytics: enAnalytics
+    analytics: enAnalytics,
+    promptOptimizer: enPromptOptimizer
   },
   fr: {
     common: frCommon,
@@ -110,7 +113,8 @@ export const resources = {
     documentation: frDocumentation,
     insights: frInsights,
     roadmap: frRoadmap,
-    analytics: frAnalytics
+    analytics: frAnalytics,
+    promptOptimizer: frPromptOptimizer
   }
 } as const;
 
@@ -122,7 +126,7 @@ i18n
     fallbackLng: 'en',
     defaultNS,
     ns: [
-      'common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'initDialog', 'gitlab', 'taskReview', 'terminal', 'errors', 'context', 'changelog', 'migrationWizard', 'visualProgramming', 'projectInitModal', 'collaboration', 'streaming', 'codeReview', 'refactoring', 'documentation', 'insights', 'roadmap', 'analytics'
+      'common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'initDialog', 'gitlab', 'taskReview', 'terminal', 'errors', 'context', 'changelog', 'migrationWizard', 'visualProgramming', 'projectInitModal', 'collaboration', 'streaming', 'codeReview', 'refactoring', 'documentation', 'insights', 'roadmap', 'analytics', 'promptOptimizer'
     ],
     interpolation: {
       escapeValue: false // React already escapes values

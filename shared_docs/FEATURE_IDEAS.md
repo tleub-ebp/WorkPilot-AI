@@ -164,7 +164,7 @@ Mode collaboratif temps réel où l'IA code en parallèle du développeur sur le
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Le vrai pair programming avec une IA. Pas du copilot inline, du vrai travail parallèle coordonné.
 
-### 9. AI Prompt Optimizer
+### 9. AI Prompt Optimizer ✅ Implémenté
 
 Amélioration automatique des prompts utilisateurs pour garantir les meilleurs résultats possibles des agents IA.
 
@@ -172,6 +172,90 @@ Amélioration automatique des prompts utilisateurs pour garantir les meilleurs r
 - **Exploite :** Context system, Memory (Graphiti), build analytics, agent events
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Les utilisateurs n'ont plus besoin d'être experts en prompt engineering. L'IA garantit systématiquement les meilleurs prompts possibles = qualité constante et frustration zéro.
+
+#### 🧙 Comment utiliser le AI Prompt Optimizer
+
+Le AI Prompt Optimizer est maintenant disponible dans l'interface WorkPilot AI ! Voici comment l'utiliser :
+
+##### 🚀 Accès au Prompt Optimizer
+
+1. **Depuis le formulaire de tâche** : Lorsque vous créez ou éditez une tâche, cliquez sur le bouton **✨ AI Prompt Optimizer** situé à côté du champ de description
+2. **Ouverture** : Une boîte de dialogue modale s'ouvre avec l'éditeur de prompt
+
+##### 📝 Utilisation pas à pas
+
+**Étape 1 — Saisir votre prompt**
+- Entrez ou modifiez votre prompt dans la zone de texte
+- Le prompt peut être n'importe quelle instruction destinée à un agent IA
+- Exemple : *"Ajouter une page de login avec email et mot de passe"*
+
+**Étape 2 — Choisir le type d'agent**
+- Sélectionnez le type d'agent cible dans le menu déroulant :
+  - **Général** : Optimisation polyvalente, adaptée à tout type de tâche
+  - **Analyse** : Optimisé pour l'analyse de code, les revues et l'exploration du codebase
+  - **Code** : Optimisé pour l'implémentation, la génération et la modification de code
+  - **Vérification** : Optimisé pour les tests, l'assurance qualité et la validation
+
+**Étape 3 — Lancer l'optimisation**
+- Cliquez sur le bouton **"Optimiser le Prompt"** (icône ✨)
+- L'optimiseur analyse votre prompt et le contexte du projet en temps réel
+- Vous pouvez suivre la progression grâce au statut affiché et au flux de sortie en direct
+
+**Étape 4 — Examiner le résultat**
+- Une fois terminé, vous verrez :
+  - 📄 **Le prompt optimisé** : Votre prompt enrichi avec le contexte projet
+  - 📝 **Les modifications apportées** : Liste détaillée de ce qui a été amélioré
+  - 💡 **Le raisonnement** : Explication de pourquoi ces améliorations ont été faites
+
+**Étape 5 — Utiliser ou copier**
+- Cliquez sur **"Utiliser ce Prompt"** pour injecter le prompt optimisé directement dans votre tâche
+- Ou cliquez sur **"Copier"** pour le copier dans le presse-papiers
+
+##### 🎯 Ce que l'optimiseur fait
+
+L'IA enrichit automatiquement votre prompt avec :
+- **Le contexte du projet** : Stack technique, langages, frameworks détectés
+- **Les conventions** : Patterns de nommage, style de code existant
+- **L'historique des builds** : Leçons tirées des builds précédents (taux de succès QA, erreurs récurrentes)
+- **La roadmap** : Features en cours et terminées pour éviter les doublons
+- **Les directives agent** : Instructions spécifiques au type d'agent sélectionné
+
+##### ⚙️ Configuration avancée
+
+Le modèle IA et le niveau de réflexion utilisés par l'optimiseur sont configurables :
+1. Allez dans **Paramètres** (⚙️)
+2. Section **"Feature Model Configuration"**
+3. Modifiez les réglages pour **"Prompt Optimizer"** :
+   - **Modèle** : Choisissez le modèle LLM (Sonnet, Opus, Haiku, etc.)
+   - **Niveau de réflexion** : None, Low, Medium, High, ou Ultrathink
+
+##### 🔄 En cas d'erreur
+
+- Si l'optimisation échoue, un message d'erreur s'affiche
+- Cliquez sur **"Réessayer"** pour relancer l'optimisation
+- Vérifiez qu'un projet est bien sélectionné (nécessaire pour le contexte)
+
+##### 🛠️ Architecture technique
+
+L'optimiseur suit le flux suivant :
+1. **Frontend** : Le composant `PromptOptimizerDialog` envoie le prompt via IPC
+2. **Main process** : Le service `PromptOptimizerService` lance le runner Python en sous-processus
+3. **Backend** : Le runner `prompt_optimizer_runner.py` charge le contexte projet, construit un system prompt enrichi, et utilise le Claude Agent SDK pour optimiser
+4. **Streaming** : Les résultats sont streamés en temps réel vers l'UI via des événements IPC
+
+##### 🧪 Tests
+
+Pour exécuter les tests de cette fonctionnalité :
+
+```bash
+# Tests backend (Python)
+cd apps/backend
+.venv/bin/pytest tests/test_prompt_optimizer_runner.py -v
+
+# Tests frontend (Vitest)
+cd apps/frontend
+npm test -- --run src/renderer/stores/__tests__/prompt-optimizer-store.test.ts
+```
 
 ### 10. Conflict Predictor
 
@@ -341,6 +425,6 @@ Traduire du code entre langages tout en préservant la logique et les patterns i
 | Tier | # | Features | Impact |
 |------|---|----------|--------|
 | **S** | 4 | Agent Replay, Self-Healing, Incident Responder, Multi-Repo | Game changers — différenciateurs marché uniques |
-| **A** | 5 | Analytics, Test Gen, Dependency Sentinel, AI Pair, Conflict Predictor | Strong impact — features attendues par les power users |
+| **A** | 5 | Analytics ✅, Test Gen, Dependency Sentinel, AI Pair, Prompt Optimizer ✅, Conflict Predictor | Strong impact — features attendues par les power users |
 | **B** | 6 | Live Review, Auto-Refactor, Pipeline Gen, Smart Estimation, NL Git, Snippets | Solid value — améliorations significatives du quotidien |
 | **C** | 10 | Team Sync, Env Cloner, Arch Viz, Migration, Perf Profiler, Doc Agent, Marketplace, Voice, Playground, Cross-Lang | Nice to have — vision long terme |

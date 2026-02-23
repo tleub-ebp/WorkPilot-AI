@@ -586,6 +586,27 @@ async def get_provider_usage(provider: str):
             return {"error": f"Module Copilot non disponible: {e}"}
         except Exception as e:
             return {"error": f"Erreur lors de la récupération des métriques Copilot: {e}"}
+    elif provider == "anthropic" or provider == "claude":
+        try:
+            from connectors.llm_anthropic_usage import get_anthropic_usage_metrics
+            
+            usage_data = get_anthropic_usage_metrics()
+            
+            # Formater les données pour le frontend
+            if "error" in usage_data:
+                return usage_data
+            
+            return {
+                "provider": "anthropic",
+                "available": True,
+                "usage": usage_data.get("usage", {}),
+                "fetched_at": usage_data.get("fetched_at"),
+                "providerName": "anthropic"
+            }
+        except ImportError as e:
+            return {"error": f"Module Anthropic usage non disponible: {e}"}
+        except Exception as e:
+            return {"error": f"Erreur lors de la récupération des métriques Anthropic: {e}"}
     else:
         return {"error": f"Usage non supporté pour le provider '{provider}'"}
 

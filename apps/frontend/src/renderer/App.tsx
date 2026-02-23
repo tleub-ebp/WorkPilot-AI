@@ -79,6 +79,7 @@ import { AddProjectModal } from '@/components';
 import { AlertCircle } from 'lucide-react';
 import { CommandPalette } from './components/CommandPalette';
 import { KeyboardShortcutsOverlay } from './components/KeyboardShortcutsOverlay';
+import { PromptOptimizerDialog } from './components/prompt-optimizer';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 
 // Version constant for version-specific warnings (e.g., reauthentication notices)
@@ -1244,6 +1245,9 @@ export function App() {
                   open={isShortcutsOverlayOpen}
                   onOpenChange={setIsShortcutsOverlayOpen}
               />
+
+              {/* AI Prompt Optimizer Dialog (Feature 9) */}
+              <PromptOptimizerDialog />
             </TooltipProvider>
 
             {/* Onboarding wizard - shown only once at app start */}
