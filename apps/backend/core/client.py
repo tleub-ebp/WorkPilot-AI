@@ -866,25 +866,50 @@ def create_client(
 
 def _get_active_provider(spec_dir: Path | None = None) -> str:
     """
-    Determine the active AI provider from environment or project settings.
+    Determine the active AI provider from IPC selection, environment or project settings.
 
     Resolution order:
-    1. AUTO_CLAUDE_PROVIDER environment variable
-    2. Project-level .auto-claude/.env → AI_PROVIDER key
-    3. Default: "claude"
+    1. Provider selected via IPC (from frontend UI selection)
+    2. AUTO_CLAUDE_PROVIDER environment variable
+    3. Project-level .auto-claude/.env → AI_PROVIDER key
+    4. Default: "claude"
 
     Args:
         spec_dir: Optional spec directory to check for project-level settings.
 
     Returns:
-        Provider identifier string: "claude" or "copilot"
+        Provider identifier string: "claude", "copilot", "openai", etc.
     """
-    # 1. Environment variable override
+    # 1. Check provider selected via IPC (from frontend UI)
+    try:
+        from provider_api import get_selected_provider
+        selected_provider = get_selected_provider()
+        if selected_provider:
+            # Map provider names to internal format
+            provider_mapping = {
+                "anthropic": "claude",
+                "claude": "claude", 
+                "copilot": "copilot",
+                "openai": "openai",
+                "google": "google",
+                "ollama": "ollama",
+                "meta": "meta",
+                "mistral": "mistral",
+                "deepseek": "deepseek"
+            }
+            mapped_provider = provider_mapping.get(selected_provider.lower(), selected_provider.lower())
+            if mapped_provider:
+                return mapped_provider
+    except Exception:
+        # Fallback to other methods if IPC provider check fails
+        pass
+
+    # 2. Environment variable override
     env_provider = os.environ.get("AUTO_CLAUDE_PROVIDER", "").lower().strip()
-    if env_provider in ("claude", "copilot"):
+    if env_provider in ("claude", "copilot", "openai", "google", "ollama", "meta", "mistral", "deepseek"):
         return env_provider
 
-    # 2. Project-level setting from spec's parent project
+    # 3. Project-level setting from spec's parent project
     if spec_dir:
         env_path = spec_dir / ".auto-claude" / ".env"
         if not env_path.exists():
@@ -902,12 +927,12 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
                         line = line.strip()
                         if line.startswith("AI_PROVIDER="):
                             value = line.split("=", 1)[1].strip().strip("\"'").lower()
-                            if value in ("claude", "copilot"):
+                            if value in ("claude", "copilot", "openai", "google", "ollama", "meta", "mistral", "deepseek"):
                                 return value
             except Exception:
                 pass
 
-    # 3. Default
+    # 4. Default
     return "claude"
 
 
@@ -1020,6 +1045,16 @@ def create_agent_client(
         return ClaudeAgentClient(sdk_client)
 
     else:
-        raise ValueError(
-            f"Unsupported provider: '{provider}'. Supported: 'claude', 'copilot'"
+        # For other providers (openai, google, ollama, etc.), fall back to Claude SDK
+        # These providers are handled at the LLM client level via the provider selection
+        logger.warning(f"Provider '{provider}' not directly supported, falling back to Claude SDK with provider selection")
+        sdk_client = create_client(
+            project_dir=project_dir,
+            spec_dir=spec_dir,
+            model=model,
+            agent_type=agent_type,
+            max_thinking_tokens=max_thinking_tokens,
+            output_format=output_format,
+            agents=agents,
         )
+        return ClaudeAgentClient(sdk_client)

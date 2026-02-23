@@ -23,9 +23,10 @@ interface GlobalAutoSwitchingProps {
   settings: AppSettings;
   onSettingsChange: (settings: AppSettings) => void;
   isOpen: boolean;
+  useSheet?: boolean;
 }
 
-export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen }: GlobalAutoSwitchingProps) {
+export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useSheet = false }: GlobalAutoSwitchingProps) {
   const { t } = useTranslation('settings');
   const { toast } = useToast();
   const { profiles: apiProfiles, activeProfileId: activeApiProfileId } = useSettingsStore();

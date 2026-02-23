@@ -174,7 +174,19 @@ function SortableAccountItem({ account, index }: SortableAccountItemProps) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium text-foreground truncate">
-            {account.displayName}
+            {account.name === 'copilot' ? 'Copilot' :
+             account.name === 'google' ? 'Google' :
+             account.name === 'mistral' ? 'Mistral' :
+             account.name === 'grok' ? 'Grok' :
+             account.name === 'aws' ? 'AWS' :
+             account.name === 'meta-llama' ? 'Meta Llama' :
+             account.name === 'meta' ? 'Meta' :
+             account.name === 'openai' ? 'OpenAI' :
+             account.name === 'deepseek' ? 'DeepSeek' :
+             account.name === 'gemini' ? 'Gemini' :
+             account.name === 'windsurf' ? 'Windsurf' :
+             account.name === 'cursor' ? 'Cursor' :
+             account.displayName}
           </span>
           {/* Account type indicator */}
           <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 bg-muted rounded">

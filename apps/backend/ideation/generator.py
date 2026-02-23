@@ -16,7 +16,7 @@ from pathlib import Path
 # Add auto-claude to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from client import create_client
+from core.client import create_agent_client
 from phase_config import get_thinking_budget, resolve_model_id
 from ui import print_status
 from core.runtimes import create_agent_runtime
@@ -176,10 +176,10 @@ Write the fixed JSON to the file now.
 """
 
         # Use agent_type="ideation" for recovery agent as well
-        client = create_client(
-            self.project_dir,
-            self.output_dir,
-            resolve_model_id(self.model),
+        client = create_agent_client(
+            project_dir=self.project_dir,
+            spec_dir=self.output_dir,
+            model=resolve_model_id(self.model),
             max_thinking_tokens=self.thinking_budget,
             agent_type="ideation",
         )

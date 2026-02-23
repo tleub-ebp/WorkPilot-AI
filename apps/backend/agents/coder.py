@@ -609,10 +609,10 @@ async def run_autonomous_agent(
         phase_model = get_phase_model(spec_dir, current_phase, model)
         phase_thinking_budget = get_phase_thinking_budget(spec_dir, current_phase)
         agent_type = "planner" if first_run else "coder"
-        client = create_client(
-            project_dir,
-            spec_dir,
-            phase_model,
+        client = create_agent_client(
+            project_dir=project_dir,
+            spec_dir=spec_dir,
+            model=phase_model,
             agent_type=agent_type,
             max_thinking_tokens=phase_thinking_budget,
         )

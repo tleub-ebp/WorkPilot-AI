@@ -84,11 +84,6 @@ from core.dependency_validator import validate_platform_dependencies
 validate_platform_dependencies()
 
 from cli import main
-from services.llm_provider import get_llm_provider
-
-# Example usage of dynamic LLM provider (for integration in CLI/services)
-llm_provider = get_llm_provider()
-# Example: response = llm_provider.generate("Hello, world!")
 
 def is_uvicorn_running(host="127.0.0.1", port=9000):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:

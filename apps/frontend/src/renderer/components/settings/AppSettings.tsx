@@ -52,7 +52,7 @@ import { ProjectSelector } from './ProjectSelector';
 import { ProjectSettingsContent, ProjectSettingsSection } from './ProjectSettingsContent';
 import { useProjectStore } from '@/stores/project-store';
 import type { UseProjectSettingsReturn } from '@/components/project-settings';
-import { AccountSettings } from './AccountSettings';
+import { CleanProviderSection } from './CleanProviderSection';
 import { GlobalAutoSwitching } from './GlobalAutoSwitching';
 import { getAllConnectors } from './multiconnector/utils';
 import { SettingsSection } from './SettingsSection';
@@ -135,6 +135,7 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
   const { settings, setSettings, isSaving, error, saveSettings, revertTheme, commitTheme } = useSettings();
   const [version, setVersion] = useState<string>('');
   const [connectors, setConnectors] = useState<Array<{ id: string, label: string }>>([]);
+  const [isLoadingConnectors, setIsLoadingConnectors] = useState<boolean>(true);
 
   // Project state (déclaré avant tout usage)
   const projects = useProjectStore((state) => state.projects);
@@ -202,7 +203,20 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
 
   // Load connectors on mount
   useEffect(() => {
-    getAllConnectors().then(setConnectors);
+    const loadConnectors = async () => {
+      setIsLoadingConnectors(true);
+      try {
+        const connectors = await getAllConnectors();
+        setConnectors(connectors);
+      } catch (error) {
+        // Fallback: set empty array to prevent infinite loading
+        setConnectors([]);
+      } finally {
+        setIsLoadingConnectors(false);
+      }
+    };
+    
+    loadConnectors();
   }, []);
 
   const handleSave = async () => {
@@ -252,61 +266,7 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
       case 'paths':
         return <GeneralSettings settings={settings} onSettingsChange={setSettings} section="paths" onOpenAccountsSettings={handleOpenAccountsSettings} />;
       case 'accounts':
-        return (
-          <SettingsSection
-            title={t('accounts.title')}
-            description={t('accounts.description')}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Colonne principale : Tous les providers */}
-              <div className="lg:col-span-2 space-y-6">
-                <div className="mb-6">
-                  <div className="text-base font-semibold mb-2">Gestion multi-connecteur</div>
-                  <div className="text-sm text-muted-foreground mb-4">
-                    Vous pouvez connecter et gérer plusieurs fournisseurs IA (Claude, OpenAI, Mistral, etc.).
-                  </div>
-                </div>
-                
-                {/* Liste de tous les providers */}
-                {connectors.map((connector) => (
-                  <AccountSettings
-                    key={connector.id}
-                    settings={settings}
-                    onSettingsChange={setSettings}
-                    isOpen={open}
-                    connector={connector}
-                    showAutoSwitching={false} // Masquer l'auto-switching individuel
-                  />
-                ))}
-              </div>
-
-              {/* Colonne latérale : Automatic Account Switching global */}
-              <div className="lg:col-span-1">
-                <div className="sticky top-6">
-                  <div className="rounded-lg bg-muted/30 border border-border p-4 space-y-4">
-                    <div className="flex items-center gap-2">
-                      <RefreshCw className="h-4 w-4 text-muted-foreground" />
-                      <h3 className="text-sm font-semibold text-foreground">
-                        {t('accounts.autoSwitching.globalTitle', 'Automatic Account Switching')}
-                      </h3>
-                    </div>
-
-                    <p className="text-xs text-muted-foreground">
-                      {t('accounts.autoSwitching.globalDescription', 'Basculez automatiquement entre vos comptes selon l\'utilisation et les limites de taux.')}
-                    </p>
-
-                    {/* Ici viendra le composant GlobalAutoSwitching */}
-                    <GlobalAutoSwitching 
-                      settings={settings}
-                      onSettingsChange={setSettings}
-                      isOpen={open}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </SettingsSection>
-        );
+        return <CleanProviderSection settings={settings} onSettingsChange={setSettings} isOpen={open} />;
       case 'updates':
         return <AdvancedSettings settings={settings} onSettingsChange={setSettings} section="updates" version={version} />;
       case 'notifications':

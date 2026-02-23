@@ -46,6 +46,9 @@ export interface ElectronAPI extends
   requestUsageUpdate: (providerName?: string) => Promise<IPCResult<UsageSnapshot | null>>;
   /** Get GitHub CLI status for Copilot authentication */
   getGithubCliStatus: () => Promise<IPCResult<{ available: boolean; isAuth?: boolean; username?: string }>>;
+  /** LLM Provider operations */
+  selectProvider: (provider: string) => Promise<IPCResult<string>>;
+  getSelectedProvider: () => Promise<IPCResult<string | null>>;
 }
 
 export const createElectronAPI = (): ElectronAPI => ({

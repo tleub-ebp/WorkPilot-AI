@@ -157,10 +157,10 @@ async def run_qa_validation_loop(
         qa_model = get_phase_model(spec_dir, "qa", model)
         fixer_thinking_budget = get_phase_thinking_budget(spec_dir, "qa")
 
-        fix_client = create_client(
-            project_dir,
-            spec_dir,
-            qa_model,
+        fix_client = create_agent_client(
+            project_dir=project_dir,
+            spec_dir=spec_dir,
+            model=qa_model,
             agent_type="qa_fixer",
             max_thinking_tokens=fixer_thinking_budget,
         )
@@ -245,10 +245,10 @@ async def run_qa_validation_loop(
             model=qa_model,
             thinking_budget=qa_thinking_budget,
         )
-        client = create_client(
-            project_dir,
-            spec_dir,
-            qa_model,
+        client = create_agent_client(
+            project_dir=project_dir,
+            spec_dir=spec_dir,
+            model=qa_model,
             agent_type="qa_reviewer",
             max_thinking_tokens=qa_thinking_budget,
         )
@@ -440,10 +440,10 @@ async def run_qa_validation_loop(
             )
             print("\nRunning QA Fixer Agent...")
 
-            fix_client = create_client(
-                project_dir,
-                spec_dir,
-                qa_model,
+            fix_client = create_agent_client(
+                project_dir=project_dir,
+                spec_dir=spec_dir,
+                model=qa_model,
                 agent_type="qa_fixer",
                 max_thinking_tokens=fixer_thinking_budget,
             )

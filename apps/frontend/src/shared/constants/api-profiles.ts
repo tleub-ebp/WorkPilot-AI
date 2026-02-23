@@ -27,12 +27,6 @@ export const API_PROVIDER_PRESETS: readonly ApiProviderPreset[] = [
   },
   {
     id: 'gemini',
-    // Google AI Studio (la plus courante)
-    // Base URL officielle pour l'API Gemini REST (Google)
-    // Base URL : https://generativelanguage.googleapis.com/v1beta/
-    // Endpoint type : models/{model}:generateContent
-    // Exemple d'appel complet :
-    //   https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=VOTRE_CLE_API
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     labelKey: 'settings:apiProfiles.presets.gemini'
   },

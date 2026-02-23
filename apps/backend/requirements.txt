@@ -55,6 +55,7 @@ slowapi>=0.1.9
 requests>=2.31.0
 httpx>=0.27.0
 sqlalchemy>=2.0.0
+psutil>=5.9.0
 
 # Ajout d'une note pour l'installation automatique de uvicorn si absent
 # Pour garantir l'automatisation, il est recommandé d'ajouter uvicorn dans requirements.txt racine ou de documenter l'installation automatique.

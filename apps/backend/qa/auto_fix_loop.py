@@ -555,11 +555,11 @@ The automated tests have failed. Please analyze the test output below and apply 
         qa_model = get_phase_model(self.spec_dir, "qa", self.model)
         fixer_thinking_budget = get_phase_thinking_budget(self.spec_dir, "qa")
 
-        # Create client
-        fix_client = create_client(
-            self.project_dir,
-            self.spec_dir,
-            qa_model,
+        # Create client using the provider-agnostic factory
+        fix_client = create_agent_client(
+            project_dir=self.project_dir,
+            spec_dir=self.spec_dir,
+            model=qa_model,
             agent_type="qa_fixer",
             max_thinking_tokens=fixer_thinking_budget,
         )

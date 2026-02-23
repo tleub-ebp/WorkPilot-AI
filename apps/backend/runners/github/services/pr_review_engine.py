@@ -127,7 +127,7 @@ class PRReviewEngine:
         context: PRContext,
     ) -> dict | list[PRReviewFinding]:
         """Run a single review pass and return findings or scan result."""
-        from core.client import create_client
+        from core.client import create_agent_client
 
         pass_prompt = self.prompt_manager.get_review_pass_prompt(review_pass)
 
@@ -223,7 +223,7 @@ class PRReviewEngine:
 
         # Resolve model shorthand (e.g., "sonnet") to full model ID for API compatibility
         model = resolve_model_id(self.config.model or "sonnet")
-        client = create_client(
+        client = create_agent_client(
             project_dir=project_root,
             spec_dir=self.github_dir,
             model=model,
@@ -462,7 +462,7 @@ class PRReviewEngine:
 
     async def _run_structural_pass(self, context: PRContext) -> str:
         """Run the structural review pass."""
-        from core.client import create_client
+        from core.client import create_agent_client
 
         # Load the structural prompt file
         prompt_file = (
@@ -488,7 +488,7 @@ class PRReviewEngine:
 
         # Resolve model shorthand (e.g., "sonnet") to full model ID for API compatibility
         model = resolve_model_id(self.config.model or "sonnet")
-        client = create_client(
+        client = create_agent_client(
             project_dir=project_root,
             spec_dir=self.github_dir,
             model=model,
@@ -514,7 +514,7 @@ class PRReviewEngine:
 
     async def _run_ai_triage_pass(self, context: PRContext) -> str:
         """Run the AI comment triage pass."""
-        from core.client import create_client
+        from core.client import create_agent_client
 
         if not context.ai_bot_comments:
             return "[]"
@@ -548,7 +548,7 @@ class PRReviewEngine:
 
         # Resolve model shorthand (e.g., "sonnet") to full model ID for API compatibility
         model = resolve_model_id(self.config.model or "sonnet")
-        client = create_client(
+        client = create_agent_client(
             project_dir=project_root,
             spec_dir=self.github_dir,
             model=model,

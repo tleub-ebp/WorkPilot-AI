@@ -111,11 +111,11 @@ class ClaudeTeam:
         for role_def in self.roles:
             print(f"   {role_def.name} is thinking...")
 
-            # Create agent client
-            client = create_client(
-                self.project_dir,
-                self.spec_dir,
-                self.config.model,
+            # Create agent client using the provider-agnostic factory
+            client = create_agent_client(
+                project_dir=self.project_dir,
+                spec_dir=self.spec_dir,
+                model=self.config.model,
                 agent_type=f"team_{role_def.role.value}",
             )
 
@@ -194,10 +194,10 @@ Review the proposals and debate above. You can:
 Keep your response concise (under 150 words). Focus on advancing the discussion."""
 
                 try:
-                    client = create_client(
-                        self.project_dir,
-                        self.spec_dir,
-                        self.config.model,
+                    client = create_agent_client(
+                        project_dir=self.project_dir,
+                        spec_dir=self.spec_dir,
+                        model=self.config.model,
                         agent_type=f"team_{role_def.role.value}",
                     )
 
@@ -256,10 +256,10 @@ Vote options:
 Provide your vote and brief reasoning (under 100 words)."""
 
             try:
-                client = create_client(
-                    self.project_dir,
-                    self.spec_dir,
-                    self.config.model,
+                client = create_agent_client(
+                    project_dir=self.project_dir,
+                    spec_dir=self.spec_dir,
+                    model=self.config.model,
                     agent_type=f"team_{role_def.role.value}",
                 )
 

@@ -31,7 +31,53 @@
     },
     "accounts": {
       "title": "Accounts",
-      "description": "Claude accounts & API endpoints"
+      "description": "Claude accounts & API endpoints",
+      "form": {
+        "addAccount": "Add {{provider}} Account",
+        "name": "Account Name",
+        "namePlaceholder": "Account Name",
+        "apiKey": "API Key",
+        "apiKeyPlaceholder": "sk-...",
+        "baseUrl": "Base URL",
+        "baseUrlPlaceholder": "https://api.example.com",
+        "llmGatewayUrl": "LLM Gateway URL",
+        "llmGatewayUrlPlaceholder": "https://gateway.example.com",
+        "chooseModel": "-- Choose Model --",
+        "save": "Save",
+        "cancel": "Cancel"
+      },
+      "autoSwitching": {
+        "globalTitle": "Automatic Account Switching",
+        "globalDescription": "Automatically switch between your accounts based on usage and rate limits.",
+        "title": "Auto-switching"
+      },
+      "providerConfig": {
+        "title": "Configuration"
+      },
+      "providerCard": {
+        "configure": "Configure",
+        "test": "Test",
+        "edit": "Edit",
+        "status": {
+          "notConfigured": "Not configured",
+          "error": "Error",
+          "active": "Active"
+        }
+      },
+      "providers": {
+        "meta": "Official Meta AI models",
+        "mistral": "Mistral AI models (Mistral, Codéal, etc.)",
+        "deepseek": "DeepSeek models (DeepSeek-Coder, etc.)",
+        "aws": "AWS Bedrock and Amazon services",
+        "copilot": "GitHub Copilot",
+        "grok": "Grok xAI models",
+        "windsurf": "Windsurf AI provider",
+        "cursor": "Cursor AI provider",
+        "ollama": "Local open-source models with Ollama",
+        "anthropic": "Anthropic Claude models",
+        "google": "Google and Google DeepMind API access",
+        "openai": "GPT-4, GPT-3.5 and other OpenAI models"
+      }
     },
     "updates": {
       "title": "Updates",
@@ -539,8 +585,13 @@
   "accounts": {
     "title": "Accounts",
     "description": "Manage Claude accounts and API endpoints",
+    "multiConnector": {
+      "title": "Multi-Connector Management",
+      "description": "You can connect and manage multiple AI providers (Claude, OpenAI, Mistral, etc.)."
+    },
     "tabs": {
       "claudeCode": "Claude Code",
+      "llmProviders": "LLM Providers",
       "customEndpoints": "Custom Endpoints"
     },
     "claudeCode": {
@@ -573,11 +624,6 @@
         "label": "Use Claude Code",
         "loading": "Switching..."
       },
-      "tooltips": {
-        "edit": "Edit profile",
-        "deleteActive": "Cannot delete active profile",
-        "deleteInactive": "Delete profile"
-      },
       "empty": {
         "title": "No Custom Endpoints",
         "description": "Configure custom Anthropic-compatible API endpoints to use alternative providers.",
@@ -589,6 +635,36 @@
         "cancel": "Cancel",
         "delete": "Delete",
         "deleting": "Deleting..."
+      },
+      "sections": {
+        "customized": {
+          "title": "Custom Endpoints",
+          "description": "Configure custom Anthropic-compatible API endpoints (OpenAI, Azure, etc.)",
+          "endpointCount": "{{count}} endpoint{{count > 1 ? 's' : ''}} configured",
+          "addButton": "Add Endpoint",
+          "empty": {
+            "title": "No endpoints configured",
+            "description": "Add custom API endpoints to extend your LLM options"
+          }
+        },
+        "standard": {
+          "title": "Standard Providers",
+          "description": "Configure API keys for standard LLM providers (OpenAI, Google, Meta, etc.)",
+          "addButton": "Add Account"
+        }
+      },
+      "buttons": {
+        "activate": "Activate",
+        "activating": "Activating...",
+        "deactivate": "Use Claude Code",
+        "deactivating": "Switching...",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "tooltips": {
+        "edit": "Edit",
+        "deleteActive": "Cannot delete active endpoint",
+        "deleteInactive": "Delete"
       }
     },
     "autoSwitching": {

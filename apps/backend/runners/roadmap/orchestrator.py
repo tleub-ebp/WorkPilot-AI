@@ -8,7 +8,7 @@ import asyncio
 import json
 from pathlib import Path
 
-from client import create_client
+from core.client import create_agent_client
 from debug import debug, debug_error, debug_section, debug_success
 from init import init_auto_claude_dir
 from phase_config import get_thinking_budget
@@ -58,7 +58,7 @@ class RoadmapOrchestrator:
             self.project_dir,
             self.output_dir,
             self.model,
-            create_client,
+            create_agent_client,
             self.thinking_budget,
         )
 

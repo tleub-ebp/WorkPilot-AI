@@ -39,6 +39,10 @@ export interface SettingsAPI {
 
   // Spell check
   setSpellCheckLanguages: (language: string) => Promise<IPCResult<{ success: boolean }>>;
+
+  // LLM Provider operations
+  selectProvider: (provider: string) => Promise<IPCResult<string>>;
+  getSelectedProvider: () => Promise<IPCResult<string | null>>;
 }
 
 export const createSettingsAPI = (): SettingsAPI => ({
@@ -90,5 +94,12 @@ export const createSettingsAPI = (): SettingsAPI => ({
 
   // Spell check - sync spell checker language with app language
   setSpellCheckLanguages: (language: string): Promise<IPCResult<{ success: boolean }>> =>
-    ipcRenderer.invoke(IPC_CHANNELS.SPELLCHECK_SET_LANGUAGES, language)
+    ipcRenderer.invoke(IPC_CHANNELS.SPELLCHECK_SET_LANGUAGES, language),
+
+  // LLM Provider operations
+  selectProvider: (provider: string): Promise<IPCResult<string>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.PROVIDER_SELECT, provider),
+
+  getSelectedProvider: (): Promise<IPCResult<string | null>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.PROVIDER_GET_SELECTED),
 });
