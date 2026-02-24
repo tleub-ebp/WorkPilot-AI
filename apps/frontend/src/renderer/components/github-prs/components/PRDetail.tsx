@@ -258,13 +258,13 @@ export function PRDetail({
 
   // Analyze code quality after review completes
   useEffect(() => {
-    if (reviewResult?.success && pr.changed_files && pr.changed_files.length > 0) {
-      const fileNames = pr.changed_files.map(f => f.filename);
+    if (reviewResult?.success && pr.files && pr.files.length > 0) {
+      const fileNames = pr.files.map(f => f.path);
       qualityScore.analyzePR(pr.number, fileNames, projectId).catch(err => {
         console.error('Failed to analyze quality:', err);
       });
     }
-  }, [reviewResult?.success, pr.number, pr.changed_files, projectId, qualityScore]);
+  }, [reviewResult?.success, pr.number, pr.files, projectId, qualityScore]);
 
   // Load logs when logs section is expanded or when reviewing (for live logs)
   useEffect(() => {
@@ -1349,7 +1349,7 @@ ${t('prReview.blockedStatusMessageFooter')}`;
             <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('prReview.description')}</h3>
              <ScrollArea className="h-[400px] w-full rounded-md border p-4 bg-muted/10">
               {pr.body ? (
-                <pre className="whitespace-pre-wrap text-sm text-muted-foreground font-sans break-words">
+                <pre className="whitespace-pre-wrap text-sm text-muted-foreground font-sans wrap-break-word">
                   {pr.body}
                 </pre>
               ) : (

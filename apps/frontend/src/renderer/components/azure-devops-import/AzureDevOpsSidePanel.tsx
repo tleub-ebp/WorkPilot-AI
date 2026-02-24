@@ -389,6 +389,13 @@ export function AzureDevOpsSidePanel({
   const handleDragEnd = useCallback(() => {
     console.log('[AzureDevOps] Drag end');
     setDraggedIds(new Set());
+    
+    // Dispatch custom event for KanbanBoard to detect
+    const customEvent = new CustomEvent('azure-devops-drag-end', {
+      bubbles: true,
+      cancelable: true
+    });
+    document.dispatchEvent(customEvent);
   }, []);
 
   // Handle work items drop from Kanban columns

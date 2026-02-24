@@ -1525,6 +1525,68 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     };
   }, [onWorkItemsImported, toast, t, onRefresh, projectId]);
 
+  // Simple Jira drag highlighting using custom events
+  useEffect(() => {
+    let isExternalDragging = false;
+
+    const handleExternalDragStart = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      isExternalDragging = true;
+      setIsDraggingAzureDevOps(true);
+      setDraggedAzureDevOpsItems(customEvent.detail.workItems || []);
+    };
+
+    const handleDragOver = (event: DragEvent) => {
+      if (!isExternalDragging) return;
+      
+      event.preventDefault();
+      
+      const mouseX = event.clientX;
+      const mouseY = event.clientY;
+      const allColumns = document.querySelectorAll('[data-column-status]');
+      
+      let foundColumn = false;
+      for (const column of allColumns) {
+        const rect = column.getBoundingClientRect();
+        const buffer = 20;
+        if (mouseX >= rect.left - buffer && mouseX <= rect.right + buffer && 
+            mouseY >= rect.top - buffer && mouseY <= rect.bottom + buffer) {
+          const columnStatus = column.getAttribute('data-column-status');
+          if (columnStatus && isValidDropColumn(columnStatus)) {
+            setOverColumnId(columnStatus);
+            foundColumn = true;
+          }
+          break;
+        }
+      }
+      
+      if (!foundColumn) {
+        setOverColumnId(null);
+      }
+    };
+
+    const handleExternalDragEnd = () => {
+      isExternalDragging = false;
+      setIsDraggingAzureDevOps(false);
+      setDraggedAzureDevOpsItems([]);
+      setOverColumnId(null);
+    };
+
+    document.addEventListener('jira-drag-start', handleExternalDragStart);
+    document.addEventListener('azure-devops-drag-start', handleExternalDragStart);
+    document.addEventListener('dragover', handleDragOver);
+    document.addEventListener('jira-drag-end', handleExternalDragEnd);
+    document.addEventListener('azure-devops-drag-end', handleExternalDragEnd);
+
+    return () => {
+      document.removeEventListener('jira-drag-start', handleExternalDragStart);
+      document.removeEventListener('azure-devops-drag-start', handleExternalDragStart);
+      document.removeEventListener('dragover', handleDragOver);
+      document.removeEventListener('jira-drag-end', handleExternalDragEnd);
+      document.removeEventListener('azure-devops-drag-end', handleExternalDragEnd);
+    };
+  }, []);
+
   // Register task status change listener for queue auto-promotion
   // This ensures processQueue() is called whenever a task leaves in_progress
   useEffect(() => {

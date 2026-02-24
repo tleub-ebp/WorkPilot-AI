@@ -75,12 +75,13 @@ import { ProjectTabBar } from './components/ProjectTabBar';
 import { ViewStateProvider } from './contexts/ViewStateContext';
 import { ProviderSelector } from './components/ProviderSelector';
 import { ProviderContextProvider } from './components/ProviderContext';
-import { AddProjectModal } from '@/components';
+import { AddProjectModal } from './components/AddProjectModal';
 import { AlertCircle } from 'lucide-react';
 import { CommandPalette } from './components/CommandPalette';
 import { KeyboardShortcutsOverlay } from './components/KeyboardShortcutsOverlay';
 import { PromptOptimizerDialog } from './components/prompt-optimizer';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { autoDetectAndUpdateProject } from './utils/repositoryDetector';
 
 // Version constant for version-specific warnings (e.g., reauthentication notices)
 const VERSION_WARNING_275 = '2.7.5';
@@ -253,6 +254,64 @@ export function App() {
       cleanupDownloadListener();
     };
   }, []);
+
+  // Auto-detect repository types for loaded projects
+  useEffect(() => {
+    if (projects.length > 0 || activeProjectId) {
+      console.log('🔍 Starting auto-detection for loaded projects:', {
+        projectsCount: projects.length,
+        activeProjectId,
+        projects: projects.map(p => ({ id: p.id, name: p.name, path: p.path }))
+      });
+      
+      const detectProjectsWithDelay = async () => {
+        // Get the list of projects to detect (either from projects array or just the active project)
+        const projectsToDetect = projects.length > 0 ? projects : (activeProjectId ? projects.filter(p => p.id === activeProjectId) : []);
+        
+        if (projectsToDetect.length === 0) {
+          console.log('⏸️ No projects to detect');
+          return;
+        }
+        
+        for (const project of projectsToDetect) {
+          try {
+            console.log('🔍 Auto-detecting repository for project:', project.name, project.path);
+            
+            // Skip if project already has a provider configured
+            if (project.settings?.provider) {
+              console.log('⏭️ Project already has provider configured, skipping:', project.name);
+              continue;
+            }
+            
+            const result = await autoDetectAndUpdateProject(project);
+            
+            if (result.success) {
+              console.log('✅ Auto-detected project:', {
+                name: project.name,
+                provider: result.detection?.provider,
+                remoteUrl: result.detection?.remoteUrl
+              });
+            } else {
+              console.log('❌ Failed to auto-detect project:', {
+                name: project.name,
+                error: result.error
+              });
+            }
+          } catch (error) {
+            console.error('❌ Error auto-detecting project:', project.name, error);
+          }
+          
+          // Small delay between projects to avoid overwhelming the system
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        console.log('🏁 Auto-detection completed for all projects');
+      };
+      
+      // Run detection with a small delay to ensure UI is responsive
+      setTimeout(detectProjectsWithDelay, 500);
+    }
+  }, [projects.length, activeProjectId]); // Trigger when projects change or active project changes
 
   // Restore tab state and open tabs for loaded projects
   useEffect(() => {
