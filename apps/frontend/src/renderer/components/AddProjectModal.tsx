@@ -15,7 +15,8 @@ import { addProject } from '@/stores/project-store';
 import { useToast } from '@/hooks/use-toast';
 import { AzureDevOpsRemoteConfigModal } from './AzureDevOpsRemoteConfigModal';
 import { GitHubRemoteConfigModal } from './GitHubRemoteConfigModal';
-import { Github, Radio, Package } from 'lucide-react';
+import { GitSetupModal } from './GitSetupModal';
+import { Github, Radio } from 'lucide-react';
 
 // Types explicites pour les props et états
 interface AddProjectModalProps {
@@ -24,29 +25,18 @@ interface AddProjectModalProps {
   onProjectAdded?: (project: any, skipped: boolean) => void | Promise<void>;
 }
 
-type RemoteType = 'github' | 'azure' | 'jira' | null;
-type RemoteConfigType = 'github' | 'azure' | 'jira' | null;
+type RemoteType = 'github' | 'azure' | null;
+type RemoteConfigType = 'github' | 'azure' | null;
 
 interface RemoteConfig {
   githubToken?: string;
   githubRepo?: string;
   azureOrg?: string;
   azurePat?: string;
-  jiraInstanceUrl?: string;
-  jiraEmail?: string;
-  jiraApiToken?: string;
-  jiraProjectKey?: string;
   orgUrl?: string;
   pat?: string;
   repo?: string;
   token?: string;
-}
-
-interface JiraConfig {
-  instanceUrl: string;
-  email: string;
-  apiToken: string;
-  projectKey: string;
 }
 
 // Types pour les configs remote
@@ -60,6 +50,7 @@ interface GitHubConfig {
 }
 
 export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProjectModalProps) {
+  console.log('🔥 AddProjectModal: open prop changed to', open);
   const { t } = useTranslation('dialogs');
   const { toast } = useToast();
   const [step, setStep] = useState<number>(0);
@@ -77,6 +68,66 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
   const [showGitCommitModal, setShowGitCommitModal] = useState<boolean>(false);
   const [pendingProjectPath, setPendingProjectPath] = useState<string | null>(null);
   const [detectedProvider, setDetectedProvider] = useState<'github' | 'azure_devops' | 'unknown' | null>(null);
+
+  // Git setup modal handlers
+  const handleGitInitialized = () => {
+    console.log('🔥 GIT-SETUP: handleGitInitialized - FORCE CLOSING ALL MODALS');
+    console.log('🔥 GIT-SETUP: onOpenChange function type:', typeof onOpenChange);
+    console.log('🔥 GIT-SETUP: Current open prop value:', open);
+    
+    // Forcer la fermeture immédiate du GitSetupModal
+    console.log('🔥 GIT-SETUP: FORCE closing GitSetupModal');
+    setShowGitCommitModal(false);
+    setPendingProjectPath(null);
+    
+    // Forcer la fermeture immédiate du modal parent
+    console.log('🔥 GIT-SETUP: FORCE closing parent modal');
+    try {
+      onOpenChange(false);
+      console.log('🔥 GIT-SETUP: onOpenChange(false) called successfully');
+    } catch (error) {
+      console.error('🔥 GIT-SETUP: Error calling onOpenChange:', error);
+    }
+    
+    // Nettoyer tous les états pour éviter les ré-rendres
+    setStep(0);
+    setError(null);
+  };
+
+  // Get remote config for Git setup
+  const getRemoteConfigForGitSetup = () => {
+    console.log('� GIT-SETUP: getRemoteConfigForGitSetup called:', { 
+      remoteType, 
+      remoteConfig, 
+      projectName 
+    });
+    
+    if (remoteType === 'github' && (remoteConfig.githubRepo || remoteConfig.repo)) {
+      const config = {
+        url: `https://github.com/${remoteConfig.githubRepo || remoteConfig.repo}.git`,
+        name: 'origin'
+      };
+      console.log('🔥 GIT-SETUP: ✅ GitHub remote config:', config);
+      return config;
+    }
+    if (remoteType === 'azure' && (remoteConfig.azureOrg || remoteConfig.orgUrl)) {
+      // Extract repo name from org URL or construct a default one
+      const orgUrl = remoteConfig.azureOrg || remoteConfig.orgUrl || '';
+      const repoName = projectName?.replace(/[^A-Za-z0-9_.-]/g, '-') || 'project';
+      const config = {
+        url: `${orgUrl.replace(/\/$/, '')}/_git/${repoName}`,
+        name: 'origin'
+      };
+      console.log('🔥 GIT-SETUP: ✅ Azure remote config:', config);
+      return config;
+    }
+    console.log('🔥 GIT-SETUP: ❌ No remote config available');
+    return undefined;
+  };
+
+  useEffect(() => {
+    console.log('🔥 GIT-SETUP: AddProjectModal open prop changed to:', open);
+  }, [open]);
 
   useEffect(() => {
     if (open) {
@@ -245,7 +296,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
     const options = {
       showGithub: true,
       showAzure: true,
-      showJira: true,
+      showJira: false,
       showSkip: true
     };
     console.log('📋 Showing all provider options:', options);
@@ -289,7 +340,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
         <div className="space-y-2">
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={initGit} onChange={e => setInitGit(e.target.checked)} />
-            {t('addProject.gitInitYes', 'Initialiser git local')}
+            {t('addProject.gitInitYes')}
           </label>
         </div>
         <div className="space-y-2">
@@ -313,7 +364,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
                 </div>
               </button>
             )}
-            
+
             {shouldShowProviderOptions().showAzure && (
               <button
                 type="button"
@@ -332,26 +383,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
                 </div>
               </button>
             )}
-            
-            {shouldShowProviderOptions().showJira && (
-              <button
-                type="button"
-                aria-pressed={remoteType === 'jira'}
-                onClick={() => { setRemoteType('jira'); setProviderSelected(true); }}
-                className={`w-full flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:bg-accent hover:border-accent transition-all duration-200 text-left ${remoteType === 'jira' ? 'ring-2 ring-blue-600' : ''}`}
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-600/10">
-                  <Package className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-foreground">Jira</h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    Connect to Jira for issue tracking and project management
-                  </p>
-                </div>
-              </button>
-            )}
-            
+
             {shouldShowProviderOptions().showSkip && (
               <button
                 type="button"
@@ -365,7 +397,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-foreground">{t('repoProvider.skip')}</h3>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    {t('repoProvider.skipDescription', 'Ne pas connecter de fournisseur distant maintenant.')}
+                    {t('repoProvider.skipDescription')}
                   </p>
                 </div>
               </button>
@@ -379,46 +411,118 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
 
   // Rendu de l'étape résumé
   const renderStep1 = () => (
-    <div className="p-4 rounded-xl bg-card shadow-lg max-w-lg mx-auto">
-      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-        <span role="img" aria-label="Résumé">📝</span> Résumé de la configuration
-      </h2>
-      <div className="space-y-2">
-        <div><b>Nom du projet :</b> {projectName}</div>
-        <div><b>Emplacement :</b> {projectLocation}</div>
-        <div><b>Git local :</b> {initGit ? 'Oui' : 'Non'}</div>
-        <div className="flex items-center gap-2">
-          <b>Remote :</b>
-          {remoteType === 'github' && <span className="flex items-center gap-1"><span className="bg-black text-white rounded px-2 py-0.5 text-xs">GitHub</span></span>}
-          {remoteType === 'azure' && <span className="flex items-center gap-1"><span className="bg-blue-700 text-white rounded px-2 py-0.5 text-xs">Azure DevOps</span></span>}
-          {remoteType === 'jira' && <span className="flex items-center gap-1"><span className="bg-blue-600 text-white rounded px-2 py-0.5 text-xs">Jira</span></span>}
-          {remoteType === null && <span className="text-muted-foreground">Aucun</span>}
+    <div className="space-y-4">
+      {/* Header épuré */}
+      <div className="text-center space-y-2">
+        <h2 className="text-xl font-semibold">{t('addProject.summaryTitle')}</h2>
+        <p className="text-sm text-muted-foreground">
+          {t('addProject.summarySubtitle')}
+        </p>
+      </div>
+
+      {/* Configuration cards épurées */}
+      <div className="space-y-3">
+        {/* Project info card */}
+        <div className="rounded-lg border bg-card p-4 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+              <span className="text-lg">📁</span>
+            </div>
+            <div className="flex-1 space-y-2">
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">{t('addProject.projectInfoTitle')}</h3>
+                <p className="font-medium">{projectName}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">{t('addProject.locationTitle')}</h3>
+                <p className="font-mono text-sm bg-muted/50 rounded px-2 py-1 inline-block">
+                  {projectLocation}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-        {remoteType === 'github' && (
-          <div className="ml-4 text-sm text-muted-foreground">
-            <div><b>Repository :</b> {remoteConfig.githubRepo || remoteConfig.repo}</div>
-            <div><b>Token :</b> {(remoteConfig.githubToken || remoteConfig.token) ? '•••••••••' : ''}</div>
+
+        {/* Git configuration card */}
+        <div className="rounded-lg border bg-card p-4 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+              <span className="text-lg">🔀</span>
+            </div>
+            <div className="flex-1 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-muted-foreground">{t('addProject.gitLocalTitle')}</h3>
+                <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  initGit 
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' 
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  {initGit ? t('addProject.enabled') : t('addProject.disabled')}
+                </div>
+              </div>
+              
+              {/* Remote configuration */}
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-muted-foreground">{t('addProject.remoteTitle')}</h3>
+                {remoteType === 'github' && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50">
+                    <Github className="h-4 w-4" />
+                    <span className="text-sm font-medium">GitHub</span>
+                  </div>
+                )}
+                {remoteType === 'azure' && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50">
+                    <Radio className="h-4 w-4" />
+                    <span className="text-sm font-medium">Azure DevOps</span>
+                  </div>
+                )}
+                {remoteType === null && (
+                  <div className="px-3 py-2 rounded-md bg-muted/30">
+                    <span className="text-sm text-muted-foreground">{t('addProject.noRemoteConfigured')}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Remote details */}
+              {remoteType === 'github' && (
+                <div className="space-y-1 pl-3 border-l-2 border-border">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{t('addProject.repository')} :</span>
+                    <span className="font-mono text-xs">{remoteConfig.githubRepo || remoteConfig.repo}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{t('addProject.token')} :</span>
+                    <span className="font-mono text-xs">•••••••••</span>
+                  </div>
+                </div>
+              )}
+              {remoteType === 'azure' && (
+                <div className="space-y-1 pl-3 border-l-2 border-border">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{t('addProject.organization')} :</span>
+                    <span className="font-mono text-xs">{remoteConfig.azureOrg || remoteConfig.orgUrl}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{t('addProject.pat')} :</span>
+                    <span className="font-mono text-xs">•••••••••</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-        {remoteType === 'azure' && (
-          <div className="ml-4 text-sm text-muted-foreground">
-            <div><b>Organisation :</b> {remoteConfig.azureOrg || remoteConfig.orgUrl}</div>
-            <div><b>PAT :</b> {(remoteConfig.azurePat || remoteConfig.pat) ? '•••••••••' : ''}</div>
-          </div>
-        )}
-        {remoteType === 'jira' && (
-          <div className="ml-4 text-sm text-muted-foreground">
-            <div><b>Instance URL :</b> {remoteConfig.jiraInstanceUrl}</div>
-            <div><b>Email :</b> {remoteConfig.jiraEmail}</div>
-            <div><b>Project Key :</b> {remoteConfig.jiraProjectKey}</div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
 
   // Création effective du projet
   const handleCreate = async () => {
+    console.log('🔥 GIT-SETUP: handleCreate called - starting project creation');
+    if (!projectName || !projectLocation) {
+      setError(t('addProject.fillRequiredFields'));
+      return;
+    }
+
     setIsCreating(true);
     setError(null);
     try {
@@ -454,29 +558,29 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
           azureDevOpsOrgUrl: remoteConfig.azureOrg || remoteConfig.orgUrl,
           azureDevOpsPat: remoteConfig.azurePat || remoteConfig.pat,
         });
-      } else if (project && remoteType === 'jira') {
-        await window.electronAPI.updateProjectEnv(project.id, {
-          jiraEnabled: true,
-          jiraInstanceUrl: remoteConfig.jiraInstanceUrl,
-          jiraEmail: remoteConfig.jiraEmail,
-          jiraApiToken: remoteConfig.jiraApiToken,
-          jiraProjectKey: remoteConfig.jiraProjectKey,
-        });
       }
+
       // Vérifie la présence d'un commit git si git a été initialisé
       if (initGit) {
         const status = await window.electronAPI.checkGitStatus(result.data.path);
         if (status && status.success && status.data && !status.data.hasCommits && !showGitCommitModal) {
-          setPendingProjectPath(result.data.path);
-          setShowGitCommitModal(true);
-          setIsCreating(false);
-          return;
+          // Finaliser le projet d'abord
+          onProjectAdded?.(project, false);
+          
+          // Puis afficher le modal Git SEULEMENT si aucun remote n'a été configuré
+          // (car si un remote est configuré, le modal Git est déjà géré par les callbacks remote)
+          if (!remoteType) {
+            setPendingProjectPath(result.data.path);
+            setShowGitCommitModal(true);
+            setIsCreating(false);
+            return;
+          }
         }
       }
       // Si pas de popin à afficher, afficher le toast immédiatement
       toast({
-        title: t('addProject.successTitle', 'Projet créé'),
-        description: t('addProject.successDescription', 'Le projet a bien été créé et configuré.'),
+        title: t('addProject.successTitle'),
+        description: t('addProject.successDescription'),
         variant: 'default',
       });
       onProjectAdded?.(project, false);
@@ -484,11 +588,12 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
     } catch (err: any) {
       setError(err instanceof Error ? err.message : t('addProject.failedToCreate'));
       toast({
-        title: t('addProject.failedToCreateTitle', 'Erreur lors de la création'),
-        description: err instanceof Error ? err.message : t('addProject.failedToCreate', 'Impossible de créer le projet.'),
+        title: t('addProject.failedToCreateTitle'),
+        description: err instanceof Error ? err.message : t('addProject.failedToCreate'),
         variant: 'destructive',
       });
     } finally {
+      console.log('🔥 GIT-SETUP: Project creation completed - isCreating set to false');
       setIsCreating(false);
     }
   };
@@ -500,109 +605,97 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
     }
     if (step === 1 && remoteType === 'github') return !!(remoteConfig.githubToken || remoteConfig.token) && !!(remoteConfig.githubRepo || remoteConfig.repo);
     if (step === 1 && remoteType === 'azure') return !!(remoteConfig.azureOrg || remoteConfig.orgUrl) && !!(remoteConfig.azurePat || remoteConfig.pat);
-    if (step === 1 && remoteType === 'jira') return !!(remoteConfig.jiraInstanceUrl && remoteConfig.jiraEmail && remoteConfig.jiraApiToken && remoteConfig.jiraProjectKey);
     return true;
   };
 
   // Rendu principal
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl">
-          {step === 0 && renderStep0()}
-          {step === 1 && renderStep1()}
-          <DialogFooter>
-            {step > 0 && (
-              <Button variant="outline" onClick={() => setStep(step - 1)} disabled={isCreating}>
-                {t('addProject.back', 'Précédent')}
-              </Button>
-            )}
-            {step < 1 && (
-              <Button onClick={async () => {
-                if (remoteType === 'github') {
-                  setRemoteConfigType('github');
-                  setShowRemoteConfigModal(true);
-                } else if (remoteType === 'azure') {
-                  setRemoteConfigType('azure');
-                  setShowRemoteConfigModal(true);
-                } else if (remoteType === 'jira') {
-                  // Pour Jira, on demande directement la configuration sans modal complexe
-                  const instanceUrl = prompt("Jira Instance URL (ex: https://your-org.atlassian.net):");
-                  const email = prompt("Jira Email:");
-                  const apiToken = prompt("Jira API Token:");
-                  const projectKey = prompt("Jira Project Key:");
-                  
-                  if (instanceUrl && email && apiToken && projectKey) {
-                    setRemoteConfig({
-                      jiraInstanceUrl: instanceUrl,
-                      jiraEmail: email,
-                      jiraApiToken: apiToken,
-                      jiraProjectKey: projectKey
-                    });
-                    setStep(1);
-                  }
-                } else {
-                  // Auto-detect repository type for existing git repositories
-                  if (projectLocation && projectName) {
-                    const projectPath = `${projectLocation}/${projectName.trim()}`;
-                    
-                    // Check if .git directory exists (indicating an existing repository)
-                    try {
-                      const gitStatus = await window.electronAPI.checkGitStatus(projectPath);
-                      if (gitStatus && gitStatus.success && gitStatus.data && gitStatus.data.isGitRepo) {
-                        const detected = await detectRepositoryProvider(projectPath);
-                        if (detected === 'github') {
-                          setRemoteConfigType('github');
-                          setShowRemoteConfigModal(true);
-                        } else if (detected === 'azure_devops') {
-                          setRemoteConfigType('azure');
-                          setShowRemoteConfigModal(true);
+      {open && (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className="sm:max-w-2xl">
+            {step === 0 && renderStep0()}
+            {step === 1 && renderStep1()}
+            <DialogFooter>
+              {step > 0 && (
+                <Button variant="outline" onClick={() => setStep(step - 1)} disabled={isCreating}>
+                  {t('addProject.back', 'Précédent')}
+                </Button>
+              )}
+              {step < 1 && (
+                <Button onClick={async () => {
+                  if (remoteType === 'github') {
+                    setRemoteConfigType('github');
+                    setShowRemoteConfigModal(true);
+                  } else if (remoteType === 'azure') {
+                    setRemoteConfigType('azure');
+                    setShowRemoteConfigModal(true);
+                  } else {
+                    // Auto-detect repository type for existing git repositories
+                    if (projectLocation && projectName) {
+                      const projectPath = `${projectLocation}/${projectName.trim()}`;
+                      
+                      // Check if .git directory exists (indicating an existing repository)
+                      try {
+                        const gitStatus = await window.electronAPI.checkGitStatus(projectPath);
+                        if (gitStatus && gitStatus.success && gitStatus.data && gitStatus.data.isGitRepo) {
+                          const detected = await detectRepositoryProvider(projectPath);
+                          if (detected === 'github') {
+                            setRemoteConfigType('github');
+                            setShowRemoteConfigModal(true);
+                          } else if (detected === 'azure_devops') {
+                            setRemoteConfigType('azure');
+                            setShowRemoteConfigModal(true);
+                          } else {
+                            // Unknown provider, skip remote configuration
+                            setStep(1);
+                          }
                         } else {
-                          // Unknown provider, skip remote configuration
+                          // No git repository found, skip remote configuration
                           setStep(1);
                         }
-                      } else {
-                        // No git repository found, skip remote configuration
+                      } catch (error) {
+                        // Error checking git status, skip remote configuration
                         setStep(1);
                       }
-                    } catch (error) {
-                      // Error checking git status, skip remote configuration
+                    } else {
+                      // No project path yet, skip remote configuration
                       setStep(1);
                     }
-                  } else {
-                    // No project path yet, skip remote configuration
-                    setStep(1);
                   }
-                }
-              }} disabled={!canNext() || isCreating}>
-                {t('addProject.next', 'Suivant')}
-              </Button>
-            )}
-            {step === 1 && (
-              <Button onClick={handleCreate} disabled={isCreating}>
-                {isCreating ? t('addProject.creating', 'Création...') : t('addProject.createProject', 'Créer le projet')}
-              </Button>
-            )}
-          </DialogFooter>
-          {error && <div className="text-sm text-destructive bg-destructive/10 rounded-lg p-3 mt-2" role="alert">{error}</div>}
-        </DialogContent>
-      </Dialog>
+                }} disabled={!canNext() || isCreating}>
+                  {t('addProject.next')}
+                </Button>
+              )}
+              {step === 1 && (
+                <Button onClick={handleCreate} disabled={isCreating}>
+                  {isCreating ? t('addProject.creating') : t('addProject.createProject')}
+                </Button>
+              )}
+            </DialogFooter>
+            {error && <div className="text-sm text-destructive bg-destructive/10 rounded-lg p-3 mt-2" role="alert">{error}</div>}
+          </DialogContent>
+        </Dialog>
+      )}
       {showRemoteConfigModal && (remoteConfigType === 'azure' || detectedProvider === 'azure_devops') && (
         <AzureDevOpsRemoteConfigModal
           open={showRemoteConfigModal}
           onOpenChange={setShowRemoteConfigModal}
           initialConfig={remoteConfig}
           onSave={async (config: AzureDevOpsConfig) => {
+            console.log('🔥 GIT-SETUP: Azure config saved - closing remote modal');
             setRemoteConfig(config);
             setShowRemoteConfigModal(false);
             if (projectLocation && projectName) {
               const projectPath = `${projectLocation}/${projectName.trim()}`;
               const status = await window.electronAPI.checkGitStatus(projectPath);
 
-              if (status && status.success && status.data && !status.data.hasCommits && !showGitCommitModal) {
+              if (status && status.success && status.data && !status.data.hasCommits && !showGitCommitModal && !pendingProjectPath) {
+                console.log('🔥 GIT-SETUP: Opening Git modal for Azure project');
                 setPendingProjectPath(projectPath);
                 setShowGitCommitModal(true);
               } else {
+                console.log('🔥 GIT-SETUP: No Git modal needed for Azure project');
                 setStep(1);
               }
             } else {
@@ -618,15 +711,18 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
           onOpenChange={setShowRemoteConfigModal}
           initialConfig={remoteConfig}
           onSave={async (config: GitHubConfig) => {
+            console.log('🔥 GIT-SETUP: GitHub config saved - closing remote modal');
             setRemoteConfig(config);
             setShowRemoteConfigModal(false);
             if (projectLocation && projectName) {
               const projectPath = `${projectLocation}/${projectName.trim()}`;
               const status = await window.electronAPI.checkGitStatus(projectPath);
-              if (status && status.success && status.data && !status.data.hasCommits && !showGitCommitModal) {
+              if (status && status.success && status.data && !status.data.hasCommits && !showGitCommitModal && !pendingProjectPath) {
+                console.log('🔥 GIT-SETUP: Opening Git modal for GitHub project');
                 setPendingProjectPath(projectPath);
                 setShowGitCommitModal(true);
               } else {
+                console.log('🔥 GIT-SETUP: No Git modal needed for GitHub project');
                 setStep(1);
               }
             } else {
@@ -634,6 +730,59 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
             }
           }}
         />
+      )}
+
+      {/* Git Setup Modal */}
+      {showGitCommitModal && pendingProjectPath && (
+        <>
+          {console.log('🔥 GIT-SETUP: Rendering GitSetupModal - showGitCommitModal:', showGitCommitModal, 'pendingProjectPath:', pendingProjectPath)}
+          <GitSetupModal
+          open={showGitCommitModal}
+          onOpenChange={(isOpen) => {
+            console.log('🔥 GIT-SETUP: GitSetupModal onOpenChange called with:', isOpen);
+            setShowGitCommitModal(isOpen);
+            if (!isOpen) {
+              setPendingProjectPath(null);
+            }
+          }}
+          project={{
+            id: 'temp',
+            name: projectName?.trim() || 'temp-project',
+            path: pendingProjectPath,
+            autoBuildPath: '',
+            settings: {
+              model: 'claude-3-5-sonnet-20241022',
+              memoryBackend: 'file',
+              linearSync: false,
+              notifications: {
+                onTaskComplete: true,
+                onTaskFailed: true,
+                onReviewNeeded: true,
+                sound: true
+              },
+              graphitiMcpEnabled: false
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }}
+          gitStatus={{
+            isGitRepo: true,
+            hasCommits: false,
+            currentBranch: 'main'
+          }}
+          onGitInitialized={handleGitInitialized}
+          onSkip={() => {
+            console.log('🔥 GIT-SETUP: Skip clicked - closing parent modal');
+            setShowGitCommitModal(false);
+            setPendingProjectPath(null);
+            setTimeout(() => {
+              console.log('🔥 GIT-SETUP: Closing parent modal after skip');
+              onOpenChange(false);
+            }, 200);
+          }}
+          remoteConfig={getRemoteConfigForGitSetup()}
+        />
+        </>
       )}
     </>
   );

@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
-import { Button } from '../ui/button';
-import { Loader2, RefreshCw, Activity, AlertCircle } from 'lucide-react';
+import { RefreshCw, Activity, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AccountPriorityList, type UnifiedAccount } from './AccountPriorityList';
 import { useSettingsStore, saveSettings } from '../../stores/settings-store';
 import { useClaudeProfileStore, loadClaudeProfiles as loadGlobalClaudeProfiles } from '../../stores/claude-profile-store';
 import type { AppSettings } from '../../../shared/types';
+import { getStaticProviders } from '@shared/utils/providers';
+import { getProvider as getRegistryProvider } from '@shared/services/providerRegistry';
 
 /** Authenticated provider entry for the priority list */
 interface AuthenticatedProvider {
@@ -145,26 +146,49 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
 
   // Build unified accounts list
   const buildUnifiedAccounts = (): UnifiedAccount[] => {
-    console.log('[GlobalAutoSwitching] Building unified accounts...');
-    console.log('[GlobalAutoSwitching] Authenticated providers:', authenticatedProviders);
-    console.log('[GlobalAutoSwitching] Priority order:', priorityOrder);
-    
     const unifiedList: UnifiedAccount[] = [];
-    
-    // Add OAuth profiles with usage data
+
+    // Track which providers are already represented to avoid duplicates
+    const representedProviders = new Set<string>();
+
+    // Helper: get display label from providerRegistry for consistent naming with left grid
+    const getRegistryLabel = (providerName: string): string => {
+      const regProvider = getRegistryProvider(providerName);
+      return regProvider?.label || providerName;
+    };
+
+    // Helper: detect provider name from an API profile (URL + name based)
+    const detectProviderFromProfile = (profile: { baseUrl?: string; name?: string }): string => {
+      const url = profile.baseUrl?.toLowerCase() || '';
+      const name = profile.name?.toLowerCase() || '';
+
+      if (url.includes('anthropic.com') || name.includes('claude') || name.includes('anthropic')) return 'anthropic';
+      if (url.includes('openai.com') || name.includes('openai') || name.includes('chatgpt')) return 'openai';
+      if (url.includes('google.com') || name.includes('gemini') || name.includes('google')) return 'google';
+      if (url.includes('mistral.ai') || name.includes('mistral')) return 'mistral';
+      if (url.includes('deepseek.com') || name.includes('deepseek')) return 'deepseek';
+      if (url.includes('meta.com') || name.includes('llama') || name.includes('meta')) return 'meta';
+      if (url.includes('x.ai') || name.includes('grok')) return 'grok';
+      if (url.includes('aws.amazon.com') || name.includes('bedrock') || name.includes('aws')) return 'aws';
+      if (url.includes('ollama') || name.includes('ollama') || url.includes('localhost') || url.includes('127.0.0.1')) return 'ollama';
+      if (url.includes('github.com') || name.includes('copilot')) return 'copilot';
+
+      return 'custom';
+    };
+
+    // Loop 1: Add OAuth profiles (Claude accounts) with usage data
     claudeProfiles.forEach((profile) => {
       const usageData = profileUsageData.get(profile.id);
       unifiedList.push({
         id: `oauth-${profile.id}`,
-        name: profile.name,
+        name: 'anthropic',
         type: 'oauth',
-        displayName: profile.name,
-        identifier: profile.email || t('accounts.priority.noEmail'),
+        displayName: getRegistryLabel('anthropic'),
+        identifier: profile.email || profile.name || t('accounts.priority.noEmail'),
         isActive: profile.id === activeClaudeProfileId && !activeApiProfileId,
         isNext: false,
         isAvailable: profile.isAuthenticated ?? false,
         hasUnlimitedUsage: false,
-        // Use real usage data from the usage monitor
         sessionPercent: usageData?.sessionPercent,
         weeklyPercent: usageData?.weeklyPercent,
         isRateLimited: usageData?.isRateLimited,
@@ -172,98 +196,93 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
         isAuthenticated: profile.isAuthenticated,
         needsReauthentication: usageData?.needsReauthentication,
       });
+      representedProviders.add('anthropic');
     });
     
-    // Add API profiles
+    // Loop 2: Add ALL API profiles (no priority order filter — show all configured profiles)
     apiProfiles.forEach((profile) => {
-      console.log(`[GlobalAutoSwitching] Processing API profile: ${profile.name} (ID: ${profile.id})`);
-      
-      // Only add if profile is in priority order or if priority order is empty (backward compatibility)
-      const profileName = profile.name.toLowerCase().replace(/\s+/g, '-');
-      
-      // Check if profile name matches any provider in priority order
-      const isInPriorityOrder = priorityOrder.length === 0 || priorityOrder.some(providerId => {
-        // Handle different matching strategies
-        if (providerId === profileName) return true; // Exact match
-        if (profile.name.toLowerCase().includes(providerId)) return true; // Profile name contains provider ID
-        if (providerId === 'openai' && profile.name.toLowerCase().includes('openai')) return true;
-        if (providerId === 'google' && profile.name.toLowerCase().includes('google')) return true;
-        if (providerId === 'anthropic' && profile.name.toLowerCase().includes('anthropic')) return true;
-        if (providerId === 'mistral' && profile.name.toLowerCase().includes('mistral')) return true;
-        return false;
+      const providerName = detectProviderFromProfile(profile);
+
+      // Skip Anthropic profiles since they are already covered by OAuth (Loop 1)
+      if (providerName === 'anthropic' && representedProviders.has('anthropic')) return;
+
+      unifiedList.push({
+        id: `api-${profile.id}`,
+        name: providerName,
+        type: 'api',
+        displayName: getRegistryLabel(providerName),
+        identifier: profile.baseUrl || profile.name,
+        isActive: profile.id === activeApiProfileId,
+        isNext: false,
+        isAvailable: true,
+        hasUnlimitedUsage: true,
+        sessionPercent: undefined,
+        weeklyPercent: undefined,
       });
-      
-      console.log(`[GlobalAutoSwitching] Profile ${profile.name} - in priority order: ${isInPriorityOrder}`);
-      
-      if (isInPriorityOrder) {
-        unifiedList.push({
-          id: `api-${profile.id}`,
-          name: profile.name,
-          type: 'api',
-          displayName: profile.name,
-          identifier: profile.baseUrl,
-          isActive: profile.id === activeApiProfileId,
-          isNext: false,
-          isAvailable: true,
-          hasUnlimitedUsage: true,
-          sessionPercent: undefined,
-          weeklyPercent: undefined,
-        });
-        console.log(`[GlobalAutoSwitching] Added profile ${profile.name} to unified list`);
-      }
+      representedProviders.add(providerName);
     });
 
-    // Add authenticated providers (Copilot, OpenAI, etc.) - only if they are in priority order or if no priority order is set
+    // Loop 3: Add authenticated providers (Copilot, settings-based API keys)
+    // Only if not already represented by OAuth or API profiles
     authenticatedProviders.forEach((prov) => {
-      console.log(`[GlobalAutoSwitching] Processing provider: ${prov.name}, id: ${prov.id}`);
-      
-      // Skip if already represented by an API profile
-      const alreadyInList = unifiedList.some((a) => a.name === prov.name || a.id === prov.id);
-      console.log(`[GlobalAutoSwitching] ${prov.name} already in list: ${alreadyInList}`);
-      
-      // Show provider if it's in priority order OR if priority order is empty (backward compatibility)
-      // But only show authenticated providers when priority order is empty if they are actually configured
-      const isInPriorityOrder = priorityOrder.includes(prov.id);
-      const showWhenEmpty = priorityOrder.length === 0 && (
-        prov.name === 'copilot' && prov.isAuthenticated // Always show authenticated Copilot when no priority order
-      );
-      
-      console.log(`[GlobalAutoSwitching] ${prov.name} - in priority order: ${isInPriorityOrder}, show when empty: ${showWhenEmpty}`);
-      
-      if (!alreadyInList && (isInPriorityOrder || showWhenEmpty)) {
-        const account = {
-          id: prov.id,
-          name: prov.name,
-          type: 'api' as const,
-          displayName: prov.label,
-          identifier: prov.username ? `@${prov.username}` : t('accounts.priority.providerAuth'),
-          isActive: false,
-          isNext: false,
-          isAvailable: true,
-          hasUnlimitedUsage: prov.name !== 'copilot',
-          sessionPercent: undefined,
-          weeklyPercent: undefined,
-          isAuthenticated: true,
-        };
-        unifiedList.push(account);
-        console.log(`[GlobalAutoSwitching] Added ${prov.name} to unified list:`, account);
-      }
+      if (representedProviders.has(prov.name)) return;
+
+      unifiedList.push({
+        id: prov.id,
+        name: prov.name,
+        type: 'api' as const,
+        displayName: getRegistryLabel(prov.name),
+        identifier: prov.username ? `@${prov.username}` : t('accounts.priority.providerAuth'),
+        isActive: false,
+        isNext: false,
+        isAvailable: true,
+        hasUnlimitedUsage: prov.name !== 'copilot',
+        sessionPercent: undefined,
+        weeklyPercent: undefined,
+        isAuthenticated: true,
+      });
+      representedProviders.add(prov.name);
     });
 
-    console.log('[GlobalAutoSwitching] Unified list before sorting:', unifiedList);
+    // Fallback: use getStaticProviders() to catch any configured providers not yet represented
+    // This ensures profiles detected by URL/name matching appear even if Loops 2 & 3 missed them
+    const { providers: staticProviders, status: staticStatus } = getStaticProviders(apiProfiles);
+    for (const sp of staticProviders) {
+      if (representedProviders.has(sp.name)) continue;
+      if (!staticStatus[sp.name]) continue; // Not configured/authenticated
 
-    // Sort by priority order if available
+      unifiedList.push({
+        id: sp.name,
+        name: sp.name,
+        type: 'api' as const,
+        displayName: getRegistryLabel(sp.name),
+        identifier: t('accounts.priority.providerAuth'),
+        isActive: false,
+        isNext: false,
+        isAvailable: true,
+        hasUnlimitedUsage: sp.name !== 'copilot',
+        sessionPercent: undefined,
+        weeklyPercent: undefined,
+        isAuthenticated: true,
+      });
+      representedProviders.add(sp.name);
+    }
+
+    // Sort by priority order if available, with improved matching by id or provider name
     if (priorityOrder.length > 0) {
       unifiedList.sort((a, b) => {
-        const aIndex = priorityOrder.indexOf(a.id);
-        const bIndex = priorityOrder.indexOf(b.id);
-        const aPos = aIndex === -1 ? Infinity : aIndex;
-        const bPos = bIndex === -1 ? Infinity : bIndex;
+        const findIndex = (account: UnifiedAccount): number => {
+          let idx = priorityOrder.indexOf(account.id);
+          if (idx !== -1) return idx;
+          idx = priorityOrder.indexOf(account.name);
+          if (idx !== -1) return idx;
+          return -1;
+        };
+        const aPos = findIndex(a) === -1 ? Infinity : findIndex(a);
+        const bPos = findIndex(b) === -1 ? Infinity : findIndex(b);
         return aPos - bPos;
       });
     }
-
-    console.log('[GlobalAutoSwitching] Final unified list:', unifiedList);
     return unifiedList;
   };
 

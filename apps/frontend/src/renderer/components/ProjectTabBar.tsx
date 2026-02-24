@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
@@ -30,6 +30,58 @@ export function ProjectTabBar({
   onSettingsClick
 }: ProjectTabBarProps) {
   const { t } = useTranslation('common');
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  // Check scroll position
+  const checkScrollPosition = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    
+    setCanScrollLeft(container.scrollLeft > 0);
+    setCanScrollRight(
+      container.scrollLeft < container.scrollWidth - container.clientWidth
+    );
+  };
+
+  // Scroll tabs
+  const scrollTabs = (direction: 'left' | 'right') => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    
+    const scrollAmount = 200; // pixels
+    container.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
+    });
+  };
+
+  // Auto-scroll to active tab
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container || !activeProjectId) return;
+    
+    const activeTab = container.querySelector(`[data-project-id="${activeProjectId}"]`);
+    if (activeTab) {
+      activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, [activeProjectId]);
+
+  // Check scroll on mount and resize
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    
+    checkScrollPosition();
+    container.addEventListener('scroll', checkScrollPosition);
+    window.addEventListener('resize', checkScrollPosition);
+    
+    return () => {
+      container.removeEventListener('scroll', checkScrollPosition);
+      window.removeEventListener('resize', checkScrollPosition);
+    };
+  }, [projects]);
 
   // Keyboard shortcuts for tab navigation
   useEffect(() => {
@@ -88,10 +140,34 @@ export function ProjectTabBar({
   return (
     <div className={cn(
       'flex items-center border-b border-border bg-background',
-      'overflow-x-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent',
       className
     )}>
-      <div className="flex items-center flex-1 min-w-0">
+      {/* Left scroll button */}
+      {canScrollLeft && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={() => scrollTabs('left')}
+              aria-label="Défiler vers la gauche"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Défiler vers la gauche</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
+
+      {/* Scrollable tab container */}
+      <div 
+        ref={scrollContainerRef}
+        className="flex items-center flex-1 min-w-0 overflow-x-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
+        style={{ scrollBehavior: 'smooth' }}
+      >
         {projects.map((project, index) => {
           const isActiveTab = activeProjectId === project.id;
           return (
@@ -111,15 +187,12 @@ export function ProjectTabBar({
             />
           );
         })}
-      </div>
-
-      <div className="flex items-center gap-2 px-4 py-1">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 shrink-0"
               onClick={onAddProject}
               aria-label={t('projectTab.addProjectAriaLabel')}
             >
@@ -130,6 +203,29 @@ export function ProjectTabBar({
             <p>{t('projectTab.addProjectTooltip')}</p>
           </TooltipContent>
         </Tooltip>
+      </div>
+
+      {/* Right scroll button */}
+      {canScrollRight && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={() => scrollTabs('right')}
+              aria-label="Défiler vers la droite"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Défiler vers la droite</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
+
+      <div className="flex items-center gap-2 px-4 py-1 shrink-0">
         <AuthStatusIndicator />
         <UsageIndicator />
       </div>

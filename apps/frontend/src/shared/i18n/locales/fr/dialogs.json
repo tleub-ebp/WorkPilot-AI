@@ -51,13 +51,16 @@
     "selectVisibilityAriaLabel": "Définir la visibilité du dépôt sur {{visibility}}"
   },
   "repoProvider": {
-    "title": "Choisir le fournisseur de depot",
-    "description": "Choisissez ou {{projectName}} doit se connecter pour le suivi des tickets.",
+    "title": "Choisir le fournisseur distant",
+    "description": "Choisissez où {{projectName}} doit se connecter pour le suivi des tickets et la gestion du code.",
     "githubTitle": "Depot GitHub",
-    "githubDescription": "Utiliser GitHub pour les issues, PR et branches.",
+    "githubDescription": "Utiliser GitHub pour les issues, PR, branches et hébergement de dépôt.",
     "azureTitle": "Azure DevOps",
-    "azureDescription": "Utiliser Azure DevOps Boards pour les work items.",
-    "skip": "Ignorer pour le moment"
+    "azureDescription": "Utiliser Azure DevOps Boards pour les work items et hébergement de dépôt.",
+    "jiraTitle": "Jira (Suivi de tickets uniquement)",
+    "jiraDescription": "Connecter à Jira pour le suivi des tickets et la gestion de projet (nécessite un dépôt Git séparé).",
+    "skip": "Ignorer pour le moment",
+    "skipDescription": "Ne pas connecter de fournisseur distant maintenant."
   },
   "azureDevOpsSetup": {
     "title": "Connecter ? Azure DevOps",
@@ -156,7 +159,26 @@
     "failedToOpen": "Échec de l'ouverture du projet",
     "failedToCreate": "Échec de la création du projet",
     "openExistingAriaLabel": "Ouvrir un dossier de projet existant",
-    "createNewAriaLabel": "Créer un nouveau projet"
+    "createNewAriaLabel": "Créer un nouveau projet",
+    "gitInitYes": "Initialiser git local",
+    "summaryTitle": "Résumé de la configuration",
+    "summarySubtitle": "Vérifiez les détails de votre projet avant de le créer",
+    "projectInfoTitle": "Nom du projet",
+    "locationTitle": "Emplacement",
+    "gitLocalTitle": "Git local",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "remoteTitle": "Remote",
+    "noRemoteConfigured": "Aucun remote configuré",
+    "repository": "Repository",
+    "token": "Token",
+    "organization": "Organisation",
+    "pat": "PAT",
+    "fillRequiredFields": "Veuillez remplir tous les champs obligatoires",
+    "successTitle": "Projet créé",
+    "successDescription": "Le projet a bien été créé et configuré.",
+    "failedToCreateTitle": "Erreur lors de la création",
+    "next": "Suivant"
   },
   "customModel": {
     "title": "Configuration du modèle personnalisé",

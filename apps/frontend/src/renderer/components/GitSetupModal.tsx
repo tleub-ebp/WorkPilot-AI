@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GitBranch, Terminal, CheckCircle2, AlertCircle, Loader2, FolderGit2 } from 'lucide-react';
 import { Button } from './ui/button';
@@ -20,6 +20,7 @@ interface GitSetupModalProps {
   gitStatus: GitStatus | null;
   onGitInitialized: () => void;
   onSkip?: () => void;
+  remoteConfig?: { url?: string; name?: string };
 }
 
 export function GitSetupModal({
@@ -28,39 +29,60 @@ export function GitSetupModal({
   project,
   gitStatus,
   onGitInitialized,
-  onSkip
+  onSkip,
+  remoteConfig
 }: GitSetupModalProps) {
+  console.log('🔥 GitSetupModal: open prop changed to', open);
   const { t } = useTranslation('dialogs');
   const { toast } = useToast();
   const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<'info' | 'initializing' | 'success'>('info');
   const needsGitInit = gitStatus && !gitStatus.isGitRepo;
+  
+  // Store remoteConfig in local state to prevent it from being lost
+  const [storedRemoteConfig, setStoredRemoteConfig] = useState(remoteConfig);
+  
+  // Update stored remoteConfig when prop changes
+  useEffect(() => {
+    if (remoteConfig) {
+      setStoredRemoteConfig(remoteConfig);
+    }
+  }, [remoteConfig]);
 
   const handleInitializeGit = async () => {
     if (!project) return;
+
+    console.log('� GIT-SETUP: � GitSetupModal handleInitializeGit called:', { 
+      projectPath: project.path, 
+      remoteConfig: storedRemoteConfig 
+    });
 
     setIsInitializing(true);
     setError(null);
     setStep('initializing');
 
     try {
-      // Call the backend to initialize git
-      const result = await window.electronAPI.initializeGit(project.path);
+      // Call the backend to initialize git with remote config if available
+      console.log('🔥 GIT-SETUP: 🔧 Calling initializeGit with:', { 
+      projectPath: project.path, 
+      remoteConfig: JSON.stringify(storedRemoteConfig, null, 2) 
+    });
+      const result = await window.electronAPI.initializeGit(project.path, storedRemoteConfig);
+      console.log('🔥 GIT-SETUP: 📋 initializeGit result:', result);
 
       if (result.success) {
+        console.log('🔥 GIT-SETUP: ✅ Git initialization successful, closing modal...');
         setStep('success');
-        // Wait un peu pour UX, puis toast et fermeture
+        
+        // Close this modal first
+        onOpenChange(false);
+        
+        // Then call the parent callback after a short delay
         setTimeout(() => {
-          toast({
-            title: t('gitSetup.successTitle', 'Dépôt Git initialisé'),
-            description: t('gitSetup.successDesc', 'Le dépôt Git a bien été initialisé.'),
-            variant: 'default',
-          });
+          console.log('🔥 GIT-SETUP: Calling onGitInitialized callback');
           onGitInitialized();
-          onOpenChange(false);
-          setStep('info');
-        }, 1000);
+        }, 100);
       } else {
         setError(result.error || 'Failed to initialize git');
         toast({
@@ -89,8 +111,15 @@ export function GitSetupModal({
       description: t('gitSetup.skipDesc', 'Vous pourrez initialiser Git plus tard.'),
       variant: 'default',
     });
-    onSkip?.();
+    
+    // Close this modal first
     onOpenChange(false);
+    
+    // Then call the parent callback after a short delay
+    setTimeout(() => {
+      console.log('🔥 GIT-SETUP: Calling onSkip callback');
+      onSkip?.();
+    }, 100);
   };
 
   const renderInfoStep = () => (
@@ -139,6 +168,12 @@ export function GitSetupModal({
               <CheckCircle2 className="h-4 w-4 text-primary" />
               {t('gitSetup.createCommit')}
             </li>
+            {storedRemoteConfig?.url && (
+              <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                {t('gitSetup.setupRemote', 'Configurer le remote')}
+              </li>
+            )}
           </ul>
         </div>
 

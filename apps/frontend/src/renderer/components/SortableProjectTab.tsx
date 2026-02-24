@@ -55,15 +55,12 @@ export function SortableProjectTab({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group relative flex items-center min-w-0',
-        // Responsive max-widths: smaller on mobile, larger on desktop
-        isActive
-          ? 'max-w-[180px] sm:max-w-[220px] md:max-w-[280px]'
-          : 'max-w-[120px] sm:max-w-[160px] md:max-w-[200px]',
+        'group relative flex items-center shrink-0',
         'border-r border-border last:border-r-0',
         'touch-none transition-all duration-200',
         isDragging && 'opacity-60 scale-[0.98] shadow-lg'
       )}
+      data-project-id={project.id}
       {...attributes}
     >
       <Tooltip delayDuration={200}>
@@ -77,12 +74,12 @@ export function SortableProjectTab({
               'min-w-0 truncate hover:bg-muted/50 transition-colors',
               'border-b-2 border-transparent cursor-pointer',
               isActive && [
-                'bg-background border-b-primary text-foreground',
-                'hover:bg-background'
+                'bg-accent/80 border-b-primary text-foreground shadow-sm',
+                'hover:bg-accent/90'
               ],
               !isActive && [
-                'text-muted-foreground',
-                'hover:text-foreground'
+                'bg-muted/30 text-muted-foreground',
+                'hover:bg-muted/50 hover:text-foreground'
               ]
             )}
             onClick={onSelect}
