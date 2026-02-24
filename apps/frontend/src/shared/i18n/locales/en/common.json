@@ -94,7 +94,13 @@
     "delete": "Delete",
     "settings": "Settings",
     "next": "Next",
-    "createProject": "Create Project"
+    "createProject": "Create Project",
+    "enabled": "enabled",
+    "disabled": "disabled",
+    "enable": "enable",
+    "disable": "disable",
+    "add": "Add",
+    "cancel": "Cancel"
   },
   "os": {
     "windows": "Windows",
@@ -493,6 +499,13 @@
     "swap": "Swap",
     "noProfileForProvider": "No profile configured for provider {{provider}}.",
     "copilotAuthNote": "{{provider}} uses GitHub CLI authentication (gh auth login).",
+    "checkingGithubStatus": "Checking GitHub status...",
+    "githubStatus": "GitHub Status",
+    "connected": "Connected",
+    "notConnected": "Not connected",
+    "githubCliNotAvailable": "GitHub CLI not available. Install GitHub CLI and run",
+    "cannotCheckGithubStatus": "Cannot check GitHub CLI status",
+    "copilotDashboardLink": "View GitHub Copilot dashboard →",
     "openaiCostLabel": "OpenAI Cost (current month)",
     "openaiCostDescription": "The displayed cost corresponds to your OpenAI usage for the current month (estimate).",
     "openaiDashboard": "View OpenAI dashboard",

@@ -16,6 +16,7 @@ import {
 import { Button } from '../ui/button';
 import { Switch } from '../ui/switch';
 import { cn } from '@/lib/utils';
+import type { ProfileUsageSummary } from '@shared/types/agent';
 
 interface CleanProviderCardProps {
   provider: {
@@ -29,6 +30,14 @@ interface CleanProviderCardProps {
     usageCount?: number;
     isPremium?: boolean;
     icon?: React.ReactNode;
+    // Real data fields
+    realUsageData?: ProfileUsageSummary;
+    realApiKeyInfo?: {
+      hasKey: boolean;
+      keyPreview?: string;
+      provider?: string;
+      isOAuth?: boolean;
+    };
   };
   onConfigure: (providerId: string) => void;
   onTest: (providerId: string) => void;
@@ -164,7 +173,7 @@ export function CleanProviderCard({
   isAutoSwitchingOpen = false,
   isTesting = false
 }: CleanProviderCardProps) {
-  const { t } = useTranslation('settings');
+  const { t, i18n } = useTranslation('settings');
   const [isExpanded, setIsExpanded] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
 
@@ -307,38 +316,117 @@ export function CleanProviderCard({
       {/* Détails étendus */}
       {isExpanded && provider.isConfigured && (
         <div className="pt-2 border-t border-gray-100 space-y-2">
+          {/* Clé API */}
           <div className="flex items-center justify-between text-xs">
-            <span className="text-gray-500">Clé API</span>
-            <div className="flex items-center gap-2">
-              <code className="px-2 py-1 bg-gray-50 rounded text-xs font-mono text-gray-600">
-                {showApiKey ? 'sk-...' : 'sk-...••••••••••••••••••••••••••••••••'}
-              </code>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowApiKey(!showApiKey)}
-                className="h-5 w-5 p-0"
-              >
-                {showApiKey ? (
-                  <EyeOff className="w-3 h-3" />
-                ) : (
-                  <Eye className="w-3 h-3" />
-                )}
-              </Button>
+            <span className="text-gray-500 shrink-0">
+              {provider.realApiKeyInfo?.isOAuth ? t('sections.accounts.providerCard.oauth') : t('sections.accounts.providerCard.apiKey')}
+            </span>
+            <div className="flex items-center gap-2 min-w-0 flex-1 max-w-[60%]">
+              {provider.realApiKeyInfo?.hasKey ? (
+                <>
+                  {provider.realApiKeyInfo?.isOAuth ? (
+                    <div className="px-2 py-1 bg-green-50 rounded text-xs font-medium text-green-700 border border-green-200">
+                      {t('sections.accounts.providerCard.oauthCli')}
+                    </div>
+                  ) : (
+                    <>
+                      <code className="px-2 py-1 bg-gray-50 rounded text-xs font-mono text-gray-600 truncate min-w-0 flex-1">
+                        {showApiKey && provider.realApiKeyInfo.keyPreview ? 
+                          provider.realApiKeyInfo.keyPreview : 
+                          'sk-...••••••••••••••••••••••••••••••••'
+                        }
+                      </code>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowApiKey(!showApiKey)}
+                        className="h-5 w-5 p-0 shrink-0"
+                      >
+                        {showApiKey ? (
+                          <EyeOff className="w-3 h-3" />
+                        ) : (
+                          <Eye className="w-3 h-3" />
+                        )}
+                      </Button>
+                    </>
+                  )}
+                </>
+              ) : (
+                <span className="text-gray-400 italic">{t('sections.accounts.providerCard.notConfigured')}</span>
+              )}
             </div>
           </div>
 
-          {provider.lastTested && (
+          {/* Dernier test */}
+          {provider.lastTested ? (
             <div className="flex items-center justify-between text-xs text-gray-500">
-              <span>Dernier test</span>
-              <span>{new Date(provider.lastTested).toLocaleDateString()}</span>
+              <span>{t('sections.accounts.providerCard.lastTest')}</span>
+              <span>{new Date(provider.lastTested).toLocaleDateString(
+                i18n.language === 'fr' ? 'fr-FR' : 'en-US',
+                {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
+                }
+              )}</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between text-xs text-gray-400">
+              <span>{t('sections.accounts.providerCard.lastTest')}</span>
+              <span className="italic">{t('sections.accounts.providerCard.neverTested')}</span>
             </div>
           )}
 
-          {provider.usageCount && (
+          {/* Utilisations */}
+          {provider.realUsageData ? (
             <div className="flex items-center justify-between text-xs text-gray-500">
-              <span>Utilisations ce mois</span>
+              <span>{t('sections.accounts.providerCard.usage')}</span>
+              <div className="text-right">
+                <div className="font-medium text-gray-700">
+                  {provider.realUsageData.sessionPercent ? `${Math.round(provider.realUsageData.sessionPercent)}%` : 'N/A'}
+                </div>
+                {provider.realUsageData.weeklyPercent && (
+                  <div className="text-gray-400 text-[10px]">
+                    {t('sections.accounts.providerCard.week')}: {Math.round(provider.realUsageData.weeklyPercent)}%
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : provider.usageCount ? (
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>{t('sections.accounts.providerCard.usageThisMonth')}</span>
               <span className="font-medium text-gray-700">{provider.usageCount}</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between text-xs text-gray-400">
+              <span>{t('sections.accounts.providerCard.usage')}</span>
+              <span className="italic">{t('sections.accounts.providerCard.notAvailable')}</span>
+            </div>
+          )}
+
+          {/* Provider source */}
+          {provider.realApiKeyInfo?.provider && (
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>{t('sections.accounts.providerCard.source')}</span>
+              <span className="text-gray-600">{provider.realApiKeyInfo.provider}</span>
+            </div>
+          )}
+
+          {/* Statut du provider */}
+          {provider.realUsageData?.isRateLimited && (
+            <div className="flex items-center justify-between text-xs text-orange-600">
+              <span>{t('sections.accounts.providerCard.status')}</span>
+              <span className="font-medium">{t('sections.accounts.providerCard.rateLimited')}</span>
+            </div>
+          )}
+
+          {provider.realUsageData?.needsReauthentication && (
+            <div className="flex items-center justify-between text-xs text-red-600">
+              <span>{t('sections.accounts.providerCard.status')}</span>
+              <span className="font-medium">{t('sections.accounts.providerCard.needsReauth')}</span>
             </div>
           )}
         </div>

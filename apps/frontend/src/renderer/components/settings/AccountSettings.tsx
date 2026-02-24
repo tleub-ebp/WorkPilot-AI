@@ -184,7 +184,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
       try {
         const copilotResult = await window.electronAPI.checkCopilotAuth();
         if (copilotResult.success && copilotResult.data?.authenticated) {
-          provs.push({ id: 'provider-copilot', name: 'copilot', label: 'GitHub Copilot', isAuthenticated: true, username: copilotResult.data.username });
+          provs.push({ id: 'copilot', name: 'copilot', label: 'GitHub Copilot', isAuthenticated: true, username: copilotResult.data.username });
         }
       } catch { /* ignore */ }
 
@@ -200,7 +200,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
       for (const p of apiKeyProviders) {
         const val = settings[p.key];
         if (val && typeof val === 'string' && val.trim().length > 0) {
-          provs.push({ id: `provider-${p.name}`, name: p.name, label: p.label, isAuthenticated: true });
+          provs.push({ id: p.name, name: p.name, label: p.label, isAuthenticated: true });
         }
       }
 

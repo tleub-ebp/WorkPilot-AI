@@ -53,56 +53,82 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
     loadGlobalClaudeProfiles();
   }, []);
 
-  // Detect authenticated providers on mount and when settings change
+  // Detect authenticated providers on mount and when relevant settings change
   useEffect(() => {
     const detectAuthenticatedProviders = async () => {
+      console.log('[GlobalAutoSwitching] Starting provider detection...');
       const providers: AuthenticatedProvider[] = [];
 
       // Check Copilot via GitHub CLI
       try {
+        console.log('[GlobalAutoSwitching] Checking Copilot auth...');
+        if (!window.electronAPI || !window.electronAPI.checkCopilotAuth) {
+          console.error('[GlobalAutoSwitching] window.electronAPI.checkCopilotAuth is not available');
+          return;
+        }
+        
         const copilotResult = await window.electronAPI.checkCopilotAuth();
-        if (copilotResult.success && copilotResult.data?.authenticated) {
-          providers.push({
-            id: 'provider-copilot',
+        console.log('[GlobalAutoSwitching] Copilot result:', copilotResult);
+        
+        if (copilotResult && copilotResult.success && copilotResult.data?.authenticated) {
+          const copilotProvider = {
+            id: 'copilot', // Use same ID as CleanProviderSection
             name: 'copilot',
             label: 'GitHub Copilot',
             isAuthenticated: true,
             username: copilotResult.data.username,
-          });
+          };
+          providers.push(copilotProvider);
+          console.log('[GlobalAutoSwitching] Added Copilot provider:', copilotProvider);
+        } else {
+          console.log('[GlobalAutoSwitching] Copilot not authenticated or result invalid');
         }
       } catch (err) {
-        console.warn('[GlobalAutoSwitching] Failed to check Copilot auth:', err);
+        console.error('[GlobalAutoSwitching] Failed to check Copilot auth:', err);
+        console.error('[GlobalAutoSwitching] Error details:', err instanceof Error ? err.message : String(err));
       }
 
       // Check API-key based providers from settings
-      const apiKeyProviders: Array<{ name: string; label: string; key: keyof AppSettings }> = [
+      const apiKeyProviders = [
         { name: 'openai', label: 'OpenAI', key: 'globalOpenAIApiKey' },
         { name: 'google', label: 'Google (Gemini)', key: 'globalGoogleDeepMindApiKey' },
         { name: 'mistral', label: 'Mistral AI', key: 'globalMistralApiKey' },
         { name: 'grok', label: 'Grok (xAI)', key: 'globalGrokApiKey' },
         { name: 'deepseek', label: 'DeepSeek', key: 'globalDeepSeekApiKey' },
         { name: 'aws', label: 'AWS (Bedrock)', key: 'globalAWSApiKey' },
+        { name: 'meta', label: 'Meta AI', key: 'globalMetaApiKey' },
+        { name: 'azure-openai', label: 'Azure OpenAI', key: 'globalOpenAIApiKey' },
       ];
 
-      for (const prov of apiKeyProviders) {
-        const apiKey = settings[prov.key];
-        if (apiKey && typeof apiKey === 'string' && apiKey.trim().length > 0) {
-          providers.push({
-            id: `provider-${prov.name}`,
-            name: prov.name,
-            label: prov.label,
+      apiKeyProviders.forEach(({ name, label, key }) => {
+        if (settings[key as keyof AppSettings]) {
+          const provider = {
+            id: name, // Use same ID as CleanProviderSection (without 'provider-' prefix)
+            name,
+            label,
             isAuthenticated: true,
-          });
+          };
+          providers.push(provider);
+          console.log(`[GlobalAutoSwitching] Added API key provider: ${name}`, provider);
         }
-      }
+      });
 
+      console.log('[GlobalAutoSwitching] Final detected providers:', providers);
       setAuthenticatedProviders(providers);
     };
 
     if (isOpen) {
       detectAuthenticatedProviders();
     }
-  }, [isOpen, settings]);
+  }, [isOpen, 
+    settings.globalOpenAIApiKey, 
+    settings.globalGoogleDeepMindApiKey, 
+    settings.globalMistralApiKey, 
+    settings.globalGrokApiKey, 
+    settings.globalDeepSeekApiKey, 
+    settings.globalAWSApiKey, 
+    settings.globalMetaApiKey
+  ]);
 
   // Sync autoSwitchEnabled with settings
   useEffect(() => {
@@ -119,6 +145,10 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
 
   // Build unified accounts list
   const buildUnifiedAccounts = (): UnifiedAccount[] => {
+    console.log('[GlobalAutoSwitching] Building unified accounts...');
+    console.log('[GlobalAutoSwitching] Authenticated providers:', authenticatedProviders);
+    console.log('[GlobalAutoSwitching] Priority order:', priorityOrder);
+    
     const unifiedList: UnifiedAccount[] = [];
     
     // Add OAuth profiles with usage data
@@ -146,30 +176,65 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
     
     // Add API profiles
     apiProfiles.forEach((profile) => {
-      unifiedList.push({
-        id: `api-${profile.id}`,
-        name: profile.name,
-        type: 'api',
-        displayName: profile.name,
-        identifier: profile.baseUrl,
-        isActive: profile.id === activeApiProfileId,
-        isNext: false,
-        isAvailable: true,
-        hasUnlimitedUsage: true,
-        sessionPercent: undefined,
-        weeklyPercent: undefined,
+      console.log(`[GlobalAutoSwitching] Processing API profile: ${profile.name} (ID: ${profile.id})`);
+      
+      // Only add if profile is in priority order or if priority order is empty (backward compatibility)
+      const profileName = profile.name.toLowerCase().replace(/\s+/g, '-');
+      
+      // Check if profile name matches any provider in priority order
+      const isInPriorityOrder = priorityOrder.length === 0 || priorityOrder.some(providerId => {
+        // Handle different matching strategies
+        if (providerId === profileName) return true; // Exact match
+        if (profile.name.toLowerCase().includes(providerId)) return true; // Profile name contains provider ID
+        if (providerId === 'openai' && profile.name.toLowerCase().includes('openai')) return true;
+        if (providerId === 'google' && profile.name.toLowerCase().includes('google')) return true;
+        if (providerId === 'anthropic' && profile.name.toLowerCase().includes('anthropic')) return true;
+        if (providerId === 'mistral' && profile.name.toLowerCase().includes('mistral')) return true;
+        return false;
       });
+      
+      console.log(`[GlobalAutoSwitching] Profile ${profile.name} - in priority order: ${isInPriorityOrder}`);
+      
+      if (isInPriorityOrder) {
+        unifiedList.push({
+          id: `api-${profile.id}`,
+          name: profile.name,
+          type: 'api',
+          displayName: profile.name,
+          identifier: profile.baseUrl,
+          isActive: profile.id === activeApiProfileId,
+          isNext: false,
+          isAvailable: true,
+          hasUnlimitedUsage: true,
+          sessionPercent: undefined,
+          weeklyPercent: undefined,
+        });
+        console.log(`[GlobalAutoSwitching] Added profile ${profile.name} to unified list`);
+      }
     });
 
-    // Add authenticated providers (Copilot, OpenAI, etc.)
+    // Add authenticated providers (Copilot, OpenAI, etc.) - only if they are in priority order or if no priority order is set
     authenticatedProviders.forEach((prov) => {
+      console.log(`[GlobalAutoSwitching] Processing provider: ${prov.name}, id: ${prov.id}`);
+      
       // Skip if already represented by an API profile
       const alreadyInList = unifiedList.some((a) => a.name === prov.name || a.id === prov.id);
-      if (!alreadyInList) {
-        unifiedList.push({
+      console.log(`[GlobalAutoSwitching] ${prov.name} already in list: ${alreadyInList}`);
+      
+      // Show provider if it's in priority order OR if priority order is empty (backward compatibility)
+      // But only show authenticated providers when priority order is empty if they are actually configured
+      const isInPriorityOrder = priorityOrder.includes(prov.id);
+      const showWhenEmpty = priorityOrder.length === 0 && (
+        prov.name === 'copilot' && prov.isAuthenticated // Always show authenticated Copilot when no priority order
+      );
+      
+      console.log(`[GlobalAutoSwitching] ${prov.name} - in priority order: ${isInPriorityOrder}, show when empty: ${showWhenEmpty}`);
+      
+      if (!alreadyInList && (isInPriorityOrder || showWhenEmpty)) {
+        const account = {
           id: prov.id,
           name: prov.name,
-          type: 'api',
+          type: 'api' as const,
           displayName: prov.label,
           identifier: prov.username ? `@${prov.username}` : t('accounts.priority.providerAuth'),
           isActive: false,
@@ -179,9 +244,13 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
           sessionPercent: undefined,
           weeklyPercent: undefined,
           isAuthenticated: true,
-        });
+        };
+        unifiedList.push(account);
+        console.log(`[GlobalAutoSwitching] Added ${prov.name} to unified list:`, account);
       }
     });
+
+    console.log('[GlobalAutoSwitching] Unified list before sorting:', unifiedList);
 
     // Sort by priority order if available
     if (priorityOrder.length > 0) {
@@ -194,10 +263,18 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
       });
     }
 
+    console.log('[GlobalAutoSwitching] Final unified list:', unifiedList);
     return unifiedList;
   };
 
   const unifiedAccounts = buildUnifiedAccounts();
+
+  // Sync priority order with settings.providerPriorityOrder
+  useEffect(() => {
+    if (settings.providerPriorityOrder && settings.providerPriorityOrder.length > 0) {
+      setPriorityOrder(settings.providerPriorityOrder);
+    }
+  }, [settings.providerPriorityOrder]);
 
   // Load priority order from settings
   const loadPriorityOrder = async () => {
@@ -216,7 +293,14 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
     setPriorityOrder(newOrder);
     setIsSavingPriority(true);
     try {
+      // Save to Electron API
       await window.electronAPI.setAccountPriorityOrder(newOrder);
+      
+      // Also save to settings for consistency
+      onSettingsChange({
+        ...settings,
+        providerPriorityOrder: newOrder
+      });
     } catch (err) {
       console.warn('[GlobalAutoSwitching] Failed to save priority order:', err);
       toast({
@@ -420,13 +504,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
                 {t('settings:autoSwitching.priorityOrder.title')}
               </h4>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {t('settings:autoSwitching.priorityOrder.description')}
-            </p>
-            {/* Debug: Afficher le nombre de comptes */}
-            <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-              {t('settings:autoSwitching.debug.accountsFound', { count: unifiedAccounts.length })}
-            </div>
+            
             <AccountPriorityList
               accounts={unifiedAccounts}
               onReorder={handlePriorityReorder}

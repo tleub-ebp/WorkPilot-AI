@@ -53,19 +53,53 @@
       "autoSwitching": {
         "globalTitle": "Basculement automatique des comptes",
         "globalDescription": "Basculez automatiquement entre vos comptes selon l'utilisation et les limites de taux.",
-        "title": "Auto-switching"
+        "title": "Basculement automatique",
+        "providerAdded": "Provider ajouté à l'auto-switching",
+        "providerRemoved": "Provider retiré de l'auto-switching",
+        "providerDescription": "{{providerName}} a été {{action}} à la liste d'auto-switching",
+        "syncError": "Erreur de synchronisation",
+        "syncErrorDescription": "Impossible de synchroniser le provider avec l'auto-switching"
       },
       "providerConfig": {
-        "title": "Configuration"
+        "title": "Configuration {{providerName}}"
       },
       "providerCard": {
         "configure": "Configurer",
         "test": "Tester",
         "edit": "Modifier",
+        "apiKey": "Clé API",
+        "authentication": "Authentification",
+        "oauthCli": "OAuth (CLI)",
+        "notConfigured": "Non configurée",
+        "lastTest": "Dernier test",
+        "neverTested": "Jamais testé",
+        "usage": "Utilisations",
+        "usageThisMonth": "Utilisations ce mois",
+        "week": "semaine",
+        "notAvailable": "Non disponible",
+        "source": "Source",
         "status": {
           "notConfigured": "Non configuré",
           "error": "Erreur",
           "active": "Actif"
+        },
+        "rateLimited": "Limité par taux",
+        "needsReauth": "Requiert réauthentification",
+        "statusNested": {
+          "notConfigured": "Non configuré",
+          "error": "Erreur",
+          "active": "Actif"
+        },
+        "testSuccess": "Test réussi",
+        "testSuccessDescription": "Le provider {{providerName}} fonctionne correctement",
+        "testError": "Test échoué",
+        "testErrorDescription": "Le provider {{providerName}} a échoué : {{error}}",
+        "testDetails": {
+          "modelsAvailable": "{{count}} modèles disponibles",
+          "modelUsed": "Modèle utilisé : {{model}}"
+        },
+        "errors": {
+          "unknownError": "Erreur inconnue"
         }
       },
       "providers": {
@@ -80,7 +114,19 @@
         "ollama": "Modèles open-source locaux avec Ollama",
         "anthropic": "Modèles Claude d'Anthropic",
         "google": "Accès aux API Google et Google DeepMind",
-        "openai": "Modèles GPT-5 et autres modèles OpenAI"
+        "openai": "Modèles GPT-5 et autres modèles OpenAI",
+        "loadError": "Impossible de charger la liste des providers"
+      },
+      "providerToggle": {
+        "enabled": "Provider activé",
+        "disabled": "Provider désactivé",
+        "description": "{{providerId}} a été {{action}} avec succès",
+        "error": "Erreur",
+        "errorDescription": "Impossible de {{action}} le provider {{providerId}}"
+      },
+      "alerts": {
+        "noProviders": "Aucun provider configuré. Configurez vos clés API pour commencer.",
+        "providerErrors": "{{count}} provider(s) en erreur"
       },
       "priorityOrder": {
         "title": "Ordre de priorité des fournisseurs",

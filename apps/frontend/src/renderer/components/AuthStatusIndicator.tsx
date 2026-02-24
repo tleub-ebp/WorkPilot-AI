@@ -1,17 +1,17 @@
 /**
- * AuthStatusIndicator - Display a current authentication method in header
+ * AuthStatusIndicator - Dumb display component for authentication status
  *
  * Shows the active authentication method and provider:
- * - OAuth: Shows "OAuth Anthropic" with Lock icon
- * - API Profile: Shows provider name (Anthropic, OpenAI, Ollama, Copilot) with Key icon and provider-specific colors
+ * - OAuth: Shows "Anthropic" with Lock icon (Claude Code subscription)
+ * - API Profile: Shows provider name with Key icon and provider-specific colors
  *
- * Provider detection is based on the profile's baseUrl:
- * - api.anthropic.com → Anthropic
- * - github.com/api.github.com → GitHub Copilot
- * - api.openai.com → OpenAI
- * - localhost/127.0.0.1 → Ollama (Local)
+ * This component does NOT perform any authentication detection.
+ * Auth type is derived purely from selectedProvider + profiles data:
+ * - If selectedProvider matches an API profile -> type 'profile'
+ * - If selectedProvider is 'anthropic' with no API profile -> type 'oauth'
+ * - Otherwise -> type 'provider'
  *
- * Usage warning badge: Shows to the left of provider badge when usage exceeds 90%
+ * Usage data comes from UsageMonitor via IPC push events.
  */
 
 import { useMemo, useState, useEffect } from 'react';
@@ -42,7 +42,7 @@ const PROVIDER_TRANSLATION_KEYS: Readonly<Record<ApiProvider, string>> = {
 } as const;
 
 /**
- * OAuth fallback state when no profile is active or profile not found
+ * OAuth fallback state when no API profile is active (e.g. Claude Code subscription)
  */
 const OAUTH_FALLBACK = {
   type: 'oauth' as const,
@@ -53,7 +53,6 @@ const OAUTH_FALLBACK = {
 } as const;
 
 export function AuthStatusIndicator() {
-  // Subscribe to a profile state from the settings store
   const { profiles, activeProfileId } = useSettingsStore();
   const { t } = useTranslation(['common']);
   const { selectedProvider } = useProviderContext();
@@ -66,24 +65,17 @@ export function AuthStatusIndicator() {
   const [githubStatus, setGithubStatus] = useState<{ available: boolean; isAuth?: boolean; username?: string } | null>(null);
   const [isLoadingGithubStatus, setIsLoadingGithubStatus] = useState(false);
 
-  // Track OAuth status for Anthropic
-  const [oauthStatus, setOauthStatus] = useState<{ type: 'oauth'; name: string; provider: 'anthropic'; providerLabel: string; badgeColor: string } | null>(null);
-  const [isLoadingOauth, setIsLoadingOauth] = useState(false);
-  const [claudeProfile, setClaudeProfile] = useState<any>(null);
-
-  // Single effect: subscribe to live updates + refresh on provider/profile change
+  // Subscribe to live usage updates + refresh on provider/profile change
   useEffect(() => {
     setIsLoadingUsage(true);
     setUsage(null);
 
-    // Subscribe to live usage push events
     const unsubscribe = window.electronAPI.onUsageUpdated((snapshot: UsageSnapshot) => {
       if (selectedProvider && snapshot.providerName && snapshot.providerName !== selectedProvider) return;
       setUsage(snapshot);
       setIsLoadingUsage(false);
     });
 
-    // Request current usage immediately
     window.electronAPI.requestUsageUpdate()
       .then((result) => {
         if (result.success && result.data) {
@@ -103,12 +95,11 @@ export function AuthStatusIndicator() {
     };
   }, [selectedProvider, activeProfileId]);
 
-  // Effect to fetch GitHub CLI status when Copilot provider is selected
+  // Fetch GitHub CLI status when Copilot provider is selected
   useEffect(() => {
     if (selectedProvider === 'copilot') {
       setIsLoadingGithubStatus(true);
-      
-      // Request GitHub CLI status from main process
+
       window.electronAPI.getGithubCliStatus?.()
         .then((result: { success: boolean; data: { available: boolean; isAuth?: boolean; username?: string } }) => {
           if (result.success && result.data) {
@@ -125,151 +116,8 @@ export function AuthStatusIndicator() {
           setIsLoadingGithubStatus(false);
         });
     } else {
-      // Clear GitHub status when not using Copilot
       setGithubStatus(null);
       setIsLoadingGithubStatus(false);
-    }
-  }, [selectedProvider]);
-
-  // Effect to check OAuth status for Anthropic provider
-  useEffect(() => {
-    if (selectedProvider === 'anthropic') {
-      setIsLoadingOauth(true);
-      
-      const checkOAuthStatus = async () => {
-        try {
-          console.log(`[AuthStatusIndicator] Checking OAuth via IPC...`);
-          const result = await window.electronAPI.invoke('autobuild:source:env:get');
-          console.log(`[AuthStatusIndicator] IPC result:`, result);
-          console.log(`[AuthStatusIndicator] Full IPC data:`, JSON.stringify(result.data, null, 2));
-          
-          if (result.success && result.data.hasClaudeToken) {
-            console.log(`[AuthStatusIndicator] OAuth detected via IPC for Anthropic`);
-            setOauthStatus({
-              type: 'oauth',
-              name: 'OAuth',
-              provider: 'anthropic',
-              providerLabel: 'Anthropic',
-              badgeColor: 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/15'
-            });
-            return;
-          } else {
-            console.log(`[AuthStatusIndicator] IPC result: success=${result.success}, hasClaudeToken=${result.data?.hasClaudeToken}`);
-            console.log(`[AuthStatusIndicator] Available data keys:`, Object.keys(result.data || {}));
-            
-            // Vérifier les settings globaux directement
-            try {
-              const settingsResult = await window.electronAPI.invoke('settings:get');
-              console.log(`[AuthStatusIndicator] Global settings:`, settingsResult);
-              console.log(`[AuthStatusIndicator] Global Claude OAuth Token:`, settingsResult.data?.globalClaudeOAuthToken ? 'EXISTS' : 'NOT_FOUND');
-              
-              if (settingsResult.success && settingsResult.data?.globalClaudeOAuthToken) {
-                console.log(`[AuthStatusIndicator] OAuth found in global settings!`);
-                setOauthStatus({
-                  type: 'oauth',
-                  name: 'OAuth',
-                  provider: 'anthropic',
-                  providerLabel: 'Anthropic',
-                  badgeColor: 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/15'
-                });
-                return;
-              }
-            } catch (settingsError) {
-              console.warn('[AuthStatusIndicator] Failed to check global settings:', settingsError);
-            }
-            
-            // Vérifier directement le fichier de configuration Claude CLI
-            try {
-              const claudeProfilesResult = await window.electronAPI.invoke('claude:profilesGet');
-              console.log(`[AuthStatusIndicator] Claude profiles:`, claudeProfilesResult);
-              
-              if (claudeProfilesResult.success && claudeProfilesResult.data?.profiles) {
-                // Chercher un profil authentifié (OAuth)
-                const oauthProfile = claudeProfilesResult.data.profiles.find((profile: any) => 
-                  profile.isAuthenticated === true
-                );
-                
-                if (oauthProfile) {
-                  console.log(`[AuthStatusIndicator] OAuth found in Claude profiles! Profile:`, oauthProfile.name);
-                  console.log(`[AuthStatusIndicator] Profile details:`, {
-                    name: oauthProfile.name,
-                    email: oauthProfile.email,
-                    subscriptionType: oauthProfile.subscriptionType,
-                    isAuthenticated: oauthProfile.isAuthenticated
-                  });
-                  setClaudeProfile(oauthProfile); // Stocker le profil pour l'affichage
-                  setOauthStatus({
-                    type: 'oauth',
-                    name: 'OAuth',
-                    provider: 'anthropic',
-                    providerLabel: 'Anthropic',
-                    badgeColor: 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/15'
-                  });
-                  return;
-                } else {
-                  setClaudeProfile(null); // Réinitialiser si aucun profil trouvé
-                }
-              }
-            } catch (claudeError) {
-              console.warn('[AuthStatusIndicator] Failed to check Claude profiles:', claudeError);
-            }
-          }
-        } catch (error) {
-          console.warn('[AuthStatusIndicator] Failed to check OAuth status:', error);
-        }
-        
-        // Fallback: vérifier localStorage (au cas où)
-        const claudeOAuthToken = localStorage.getItem('claude_oauth_token');
-        const anthropicApiKey = localStorage.getItem('anthropic_api_key');
-        
-        console.log(`[AuthStatusIndicator] OAuth check for selectedProvider ${selectedProvider}:`, {
-          hasClaudeOAuth: !!claudeOAuthToken,
-          claudeOAuthTokenLength: claudeOAuthToken?.length,
-          hasAnthropicApiKey: !!anthropicApiKey,
-          anthropicApiKeyLength: anthropicApiKey?.length,
-          selectedProvider
-        });
-        
-        const hasOAuth = !!(claudeOAuthToken || anthropicApiKey);
-        
-        if (hasOAuth) {
-          console.log(`[AuthStatusIndicator] Using OAuth for Anthropic - returning OAuth status`);
-          setOauthStatus({
-            type: 'oauth',
-            name: 'OAuth',
-            provider: 'anthropic',
-            providerLabel: 'Anthropic',
-            badgeColor: 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/15'
-          });
-        } else {
-          console.log(`[AuthStatusIndicator] No OAuth detected for ${selectedProvider}`);
-          
-          // Afficher un message d'aide dans la console
-          console.log(`[AuthStatusIndicator] 💡 Pour activer OAuth, exécutez dans la console:`);
-          console.log(`[AuthStatusIndicator] 💡 window.electronAPI.invoke('settings:update', { globalClaudeOAuthToken: 'votre-token-ici' })`);
-          console.log(`[AuthStatusIndicator] 💡 Ou allez dans Settings > API Configuration`);
-          
-          // Définir le token OAuth dans les settings globaux
-          const setOAuthToken = async (token: string) => {
-            try {
-              await window.electronAPI.invoke('settings:update', { globalClaudeOAuthToken: token });
-              console.log(`[AuthStatusIndicator] Token OAuth défini avec succès !`);
-            } catch (error) {
-              console.error(`[AuthStatusIndicator] Erreur lors de la définition du token OAuth:`, error);
-            }
-          };
-          
-          setOauthStatus(null);
-        }
-      };
-      
-      checkOAuthStatus().finally(() => {
-        setIsLoadingOauth(false);
-      });
-    } else {
-      // Clear OAuth status when not using Anthropic
-      setOauthStatus(null);
-      setIsLoadingOauth(false);
     }
   }, [selectedProvider]);
 
@@ -278,7 +126,6 @@ export function AuthStatusIndicator() {
     usage.sessionPercent >= 90 || usage.weeklyPercent >= 90
   );
 
-  // Get the higher usage percentage for the warning badge
   const warningBadgePercent = usage
     ? Math.max(usage.sessionPercent, usage.weeklyPercent)
     : 0;
@@ -294,21 +141,16 @@ export function AuthStatusIndicator() {
     sessionResetTime = !hasHardcodedText(usage?.sessionResetTime) ? usage?.sessionResetTime : undefined;
   }
 
-  // Calcul dynamique du provider et du profil
+  // Derive auth status purely from selectedProvider + profiles (no IPC calls)
   const authStatus = useMemo(() => {
-    // Si on a un statut OAuth pour Anthropic, l'utiliser
-    if (selectedProvider === 'anthropic' && oauthStatus) {
-      return oauthStatus;
-    }
-    
     if (selectedProvider) {
       const providerProfile = profiles.find(p => detectProvider(p.baseUrl) === selectedProvider);
       const provider = selectedProvider as ApiProvider;
       const providerLabel = getProviderLabel(provider);
-      console.log(`[AuthStatusIndicator] Found profile for ${selectedProvider}:`, providerProfile?.name);
+
       if (providerProfile) {
         return {
-          type: 'profile',
+          type: 'profile' as const,
           name: providerProfile.name,
           id: providerProfile.id,
           baseUrl: providerProfile.baseUrl,
@@ -318,21 +160,28 @@ export function AuthStatusIndicator() {
           badgeColor: getProviderBadgeColor(provider)
         };
       }
+
+      // No matching API profile — for anthropic, assume OAuth (Claude Code subscription)
+      if (provider === 'anthropic') {
+        return OAUTH_FALLBACK;
+      }
+
       return {
-        type: 'provider',
+        type: 'provider' as const,
         name: providerLabel,
         provider,
         providerLabel,
         badgeColor: getProviderBadgeColor(provider)
       };
     }
+
     if (activeProfileId) {
       const activeProfile = profiles.find(p => p.id === activeProfileId);
       if (activeProfile) {
         const provider = detectProvider(activeProfile.baseUrl);
         const providerLabel = getProviderLabel(provider);
         return {
-          type: 'profile',
+          type: 'profile' as const,
           name: activeProfile.name,
           id: activeProfile.id,
           baseUrl: activeProfile.baseUrl,
@@ -344,8 +193,9 @@ export function AuthStatusIndicator() {
       }
       return OAUTH_FALLBACK;
     }
+
     return OAUTH_FALLBACK;
-  }, [selectedProvider, profiles, activeProfileId, oauthStatus]);
+  }, [selectedProvider, profiles, activeProfileId]);
 
   // Helper function to truncate ID for display
   const truncateId = (id: string | undefined): string => {
@@ -353,29 +203,8 @@ export function AuthStatusIndicator() {
     return id.slice(0, 8);
   };
 
-  // Get localized provider label for display
-  // Uses type-safe mapping with fallback to getProviderLabel for unknown providers
-  const getLocalizedProviderLabel = (provider: ApiProvider): string => {
-    const translationKey = PROVIDER_TRANSLATION_KEYS[provider];
-
-    // If we have a translation key (including providerUnknown), use it
-    if (translationKey) {
-      const translated = t(translationKey);
-      // If translation returns the key itself (not found), use getProviderLabel fallback
-      if (translated !== translationKey) {
-        return translated;
-      }
-    }
-
-    // Fallback to getProviderLabel for providers without translation keys
-    return getProviderLabel(provider);
-  };
-
   const isOAuth = authStatus.type === 'oauth';
   const Icon = isOAuth ? Lock : Key;
-  // Compute once and reuse for aria-label and displayed text
-  const localizedProviderLabel = getLocalizedProviderLabel(authStatus.provider);
-  // Badge label: nom du provider sélectionné
   const badgeLabel = getProviderLabel(authStatus.provider);
 
   return (
@@ -405,7 +234,7 @@ export function AuthStatusIndicator() {
         </TooltipProvider>
       )}
 
-      {/* Provider Badge + Popin */}
+      {/* Provider Badge + Tooltip */}
       <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -457,44 +286,10 @@ export function AuthStatusIndicator() {
                 </div>
               )}
 
-              {/* Claude profile details for OAuth */}
-              {isOAuth && claudeProfile && (
-                <div className="pt-2 border-t space-y-2">
-                  {/* Profile name with icon */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Shield className="h-3 w-3" />
-                      <span className="text-[10px]">Profil Claude</span>
-                    </div>
-                    <span className="font-medium text-[10px]">{claudeProfile.name}</span>
-                  </div>
-                  {/* Email with icon */}
-                  {claudeProfile.email && (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Key className="h-3 w-3" />
-                        <span className="text-[10px]">Email</span>
-                      </div>
-                      <span className="text-[10px] font-medium text-blue-500">{claudeProfile.email}</span>
-                    </div>
-                  )}
-                  {/* Subscription type with icon */}
-                  {claudeProfile.subscriptionType && (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Server className="h-3 w-3" />
-                        <span className="text-[10px]">Type</span>
-                      </div>
-                      <span className="text-[10px] font-medium text-green-500 capitalize">{claudeProfile.subscriptionType}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
               {/* Profile details for API profiles */}
               {authStatus.type === 'profile' ? (
                 <div className="pt-2 border-t space-y-2">
-                  {/* Profile name with icon */}
+                  {/* Profile name */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-muted-foreground">
                       <Key className="h-3 w-3" />
@@ -502,7 +297,7 @@ export function AuthStatusIndicator() {
                     </div>
                     <span className="font-medium text-[10px]">{authStatus.name}</span>
                   </div>
-                  {/* Profile ID with icon */}
+                  {/* Profile ID */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-muted-foreground">
                       <Fingerprint className="h-3 w-3" />
@@ -512,7 +307,7 @@ export function AuthStatusIndicator() {
                       <span className="text-xs text-muted-foreground">{truncateId(authStatus.id)}</span>
                     )}
                   </div>
-                  {/* API Endpoint with better styling */}
+                  {/* API Endpoint */}
                   {authStatus.baseUrl && (
                     <div className="pt-1">
                       <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-1">
@@ -526,17 +321,17 @@ export function AuthStatusIndicator() {
                   )}
                 </div>
               ) : (
-                // Affichage spécial pour Copilot avec informations GitHub CLI réelles
+                // Copilot-specific info with GitHub CLI status
                 selectedProvider === 'copilot' ? (
                   <div className="pt-2 border-t space-y-2">
                     <div className="text-[10px] text-muted-foreground">
-                      {t('common:usage.copilotAuthNote', { provider: 'GitHub Copilot' }) || 'GitHub Copilot utilise l\'authentification GitHub CLI (gh auth login)'}
+                      {t('common:usage.copilotAuthNote', { provider: 'GitHub Copilot' })}
                     </div>
-                    
+
                     {/* GitHub CLI Status */}
                     {isLoadingGithubStatus ? (
                       <div className="text-[10px] text-muted-foreground italic">
-                        Vérification du statut GitHub...
+                        {t('common:usage.checkingGithubStatus')}
                       </div>
                     ) : githubStatus ? (
                       githubStatus.available ? (
@@ -544,17 +339,17 @@ export function AuthStatusIndicator() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5 text-muted-foreground">
                               <Shield className="h-3 w-3" />
-                              <span className="text-[10px]">Statut GitHub</span>
+                              <span className="text-[10px]">{t('common:usage.githubStatus')}</span>
                             </div>
                             <span className={`text-[10px] font-medium ${githubStatus.isAuth ? 'text-green-500' : 'text-red-500'}`}>
-                              {githubStatus.isAuth ? 'Connecté' : 'Non connecté'}
+                              {githubStatus.isAuth ? t('common:usage.connected') : t('common:usage.notConnected')}
                             </span>
                           </div>
                           {githubStatus.username && (
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-1.5 text-muted-foreground">
                                 <Key className="h-3 w-3" />
-                                <span className="text-[10px]">Compte actif</span>
+                                <span className="text-[10px]">{t('common:usage.activeAccount')}</span>
                               </div>
                               <span className="text-[10px] font-medium text-blue-500">
                                 @{githubStatus.username}
@@ -564,16 +359,16 @@ export function AuthStatusIndicator() {
                         </div>
                       ) : (
                         <div className="text-[10px] text-red-500">
-                          GitHub CLI non disponible. Installez GitHub CLI et exécutez <code className="bg-muted px-1 rounded">gh auth login</code>
+                          {t('common:usage.githubCliNotAvailable')} <code className="bg-muted px-1 rounded">gh auth login</code>
                         </div>
                       )
                     ) : (
                       <div className="text-[10px] text-muted-foreground italic">
-                        Impossible de vérifier le statut GitHub CLI
+                        {t('common:usage.cannotCheckGithubStatus')}
                       </div>
                     )}
-                    
-                    {/* Note sur l'absence de données d'utilisation */}
+
+                    {/* Note about missing usage data */}
                     <div className="pt-1 border-t">
                       <div className="text-[10px] text-muted-foreground italic">
                         {t('common:usage.dataUnavailable')}
@@ -582,21 +377,17 @@ export function AuthStatusIndicator() {
                         {t('common:usage.dataUnavailableDescription')}
                       </div>
                       <div className="text-[10px] text-muted-foreground mt-1">
-                        Consultez le <a href="https://github.com/settings/copilot" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">dashboard GitHub Copilot</a> pour suivre votre utilisation
+                        <a href="https://github.com/settings/copilot" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+                          {t('common:usage.copilotDashboardLink')}
+                        </a>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  // Affichage du fallback si aucune donnée d'usage n'est disponible pour le provider sélectionné
-                  !usage && selectedProvider ? (
-                    <div className="pt-2 border-t text-[10px] text-muted-foreground">
-                      {t('common:usage.noProfileForProvider', { provider: selectedProvider })}
-                    </div>
-                  ) : (
-                    <div className="pt-2 border-t text-[10px] text-muted-foreground">
-                      {t('common:usage.noProfileForProvider', { provider: badgeLabel }) || `Aucun profil configuré pour le provider ${badgeLabel}`}
-                    </div>
-                  )
+                  // Fallback when no profile configured for this provider
+                  <div className="pt-2 border-t text-[10px] text-muted-foreground">
+                    {t('common:usage.noProfileForProvider', { provider: badgeLabel })}
+                  </div>
                 )
               )}
             </div>

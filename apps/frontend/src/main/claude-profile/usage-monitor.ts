@@ -57,7 +57,7 @@ interface ProviderUsageEndpoint {
 const PROVIDER_USAGE_ENDPOINTS: readonly ProviderUsageEndpoint[] = [
   {
     provider: 'anthropic',
-    usagePath: '/providers/usage/anthropic',  // Use our FastAPI backend instead of OAuth API
+    usagePath: '/api/oauth/usage',  // Real Anthropic OAuth usage API (returns five_hour/seven_day utilization)
   },
   {
     provider: 'openai',
@@ -114,19 +114,7 @@ export function getUsageEndpoint(provider: ApiProvider, baseUrl: string): string
   }
 
   try {
-    // Special handling for anthropic - use our FastAPI backend
-    if (provider === 'anthropic') {
-      const backendUrl = 'http://localhost:9000' + endpointConfig.usagePath;
-      if (isDebug) {
-        console.warn('[UsageMonitor:ENDPOINT_CONSTRUCTION] Using FastAPI backend for anthropic:', {
-          provider,
-          backendUrl
-        });
-      }
-      return backendUrl;
-    }
-
-    // For other providers, use the original logic
+    // Construct usage endpoint URL from baseUrl + usagePath
     const url = new URL(baseUrl);
     const originalPath = url.pathname;
     // Replace the path with the usage endpoint path
@@ -880,6 +868,65 @@ export class UsageMonitor extends EventEmitter {
 
     // No credential available
     this.debugLog('[UsageMonitor:TRACE] No credential available (no API or OAuth profile active)');
+    return undefined;
+  }
+
+  /**
+   * Get credential for a specific OAuth profile.
+   *
+   * Unlike getCredential() which uses getActiveProfile() (which may return a different
+   * profile than the one we want), this method directly targets the specified profile's
+   * configDir for token retrieval.
+   */
+  private async getCredentialForProfile(profile: { id: string; name: string; configDir?: string }): Promise<string | undefined> {
+    if (!profile.configDir) {
+      console.warn('[UsageMonitor:getCredentialForProfile] Profile has no configDir:', profile.name);
+      return undefined;
+    }
+
+    // Try ensureValidToken first (proactive refresh)
+    try {
+      const tokenResult = await ensureValidToken(profile.configDir);
+
+      if (tokenResult.wasRefreshed) {
+        console.log('[UsageMonitor:getCredentialForProfile] Proactively refreshed token for:', profile.name);
+        if (tokenResult.persistenceFailed) {
+          console.warn('[UsageMonitor:getCredentialForProfile] Token refreshed but persistence failed for:', profile.name);
+          this.needsReauthProfiles.add(profile.id);
+        } else {
+          this.needsReauthProfiles.delete(profile.id);
+        }
+      }
+
+      if (tokenResult.token) {
+        return tokenResult.token;
+      }
+
+      // Token unavailable
+      if (tokenResult.error) {
+        console.warn('[UsageMonitor:getCredentialForProfile] Token validation failed for', profile.name, ':', tokenResult.error);
+        if (tokenResult.errorCode === 'invalid_grant' || tokenResult.errorCode === 'missing_credentials') {
+          this.needsReauthProfiles.add(profile.id);
+        }
+      }
+    } catch (error) {
+      console.error('[UsageMonitor:getCredentialForProfile] ensureValidToken threw for', profile.name, ':', error);
+    }
+
+    // Fallback: direct keychain read
+    const keychainCreds = getCredentialsFromKeychain(profile.configDir);
+    if (keychainCreds.token) {
+      console.log('[UsageMonitor:getCredentialForProfile] Using fallback keychain token for:', profile.name);
+      return keychainCreds.token;
+    }
+
+    if (keychainCreds.error) {
+      console.warn('[UsageMonitor:getCredentialForProfile] Keychain access failed for', profile.name, ':', keychainCreds.error);
+    }
+
+    // Mark as needing re-authentication
+    this.needsReauthProfiles.add(profile.id);
+    console.warn('[UsageMonitor:getCredentialForProfile] No credential found for:', profile.name, '- user may need to re-authenticate');
     return undefined;
   }
 
@@ -2373,43 +2420,66 @@ export class UsageMonitor extends EventEmitter {
 
         return snapshot;
       }
+      // No matching API profile found — fall through to Step 2
+      console.log('[UsageMonitor:getUsageForProvider] Step 1: No API profile found for provider:', providerName);
     } catch (error) {
-      this.debugLog('[UsageMonitor:getUsageForProvider] Failed to search API profiles:', error);
+      console.warn('[UsageMonitor:getUsageForProvider] Step 1: Failed to search API profiles:', error);
     }
 
     // Step 2: Search OAuth profiles (ClaudeProfileManager) — these are always 'anthropic'
     if (providerName === 'anthropic') {
-      const profileManager = getClaudeProfileManager();
-      const oauthProfile = profileManager.getProfilesSortedByAvailability()?.[0];
+      try {
+        const profileManager = getClaudeProfileManager();
+        const oauthProfile = profileManager.getProfilesSortedByAvailability()?.[0];
 
-      if (oauthProfile) {
-        this.debugLog('[UsageMonitor:getUsageForProvider] Found OAuth profile for anthropic:', {
-          profileId: oauthProfile.id,
-          profileName: oauthProfile.name
-        });
-
-        // Get credential for OAuth profile
-        const credential = await this.getCredential();
-        if (credential) {
-          const activeProfileResult: ActiveProfileResult = {
+        if (oauthProfile) {
+          console.log('[UsageMonitor:getUsageForProvider] Found OAuth profile:', {
             profileId: oauthProfile.id,
             profileName: oauthProfile.name,
-            profileEmail: oauthProfile.email,
-            isAPIProfile: false,
-            baseUrl: 'https://api.anthropic.com',
-            credential
-          };
+            configDir: oauthProfile.configDir
+          });
 
-          const snapshot = await this.fetchUsageViaAPI(
-              credential,
-              oauthProfile.id,
-              oauthProfile.name,
-              oauthProfile.email,
-              activeProfileResult
-          );
+          // Get credential directly for THIS specific profile (not the generic active profile)
+          // Previously used this.getCredential() which calls getActiveProfile() — a different
+          // profile could be returned if multiple profiles exist or priority differs.
+          const credential = await this.getCredentialForProfile(oauthProfile);
+          if (credential) {
+            console.log('[UsageMonitor:getUsageForProvider] Got credential for OAuth profile, fetching usage...');
+            const activeProfileResult: ActiveProfileResult = {
+              profileId: oauthProfile.id,
+              profileName: oauthProfile.name,
+              profileEmail: oauthProfile.email,
+              isAPIProfile: false,
+              baseUrl: 'https://api.anthropic.com',
+              credential
+            };
 
-          return snapshot;
+            const snapshot = await this.fetchUsageViaAPI(
+                credential,
+                oauthProfile.id,
+                oauthProfile.name,
+                oauthProfile.email,
+                activeProfileResult
+            );
+
+            if (snapshot) {
+              console.log('[UsageMonitor:getUsageForProvider] Got usage snapshot:', {
+                sessionPercent: snapshot.sessionPercent,
+                weeklyPercent: snapshot.weeklyPercent
+              });
+            } else {
+              console.warn('[UsageMonitor:getUsageForProvider] fetchUsageViaAPI returned null');
+            }
+
+            return snapshot;
+          } else {
+            console.warn('[UsageMonitor:getUsageForProvider] No credential obtained for OAuth profile:', oauthProfile.name);
+          }
+        } else {
+          console.warn('[UsageMonitor:getUsageForProvider] No OAuth profiles found in ClaudeProfileManager');
         }
+      } catch (error) {
+        console.error('[UsageMonitor:getUsageForProvider] Step 2 OAuth lookup failed:', error);
       }
     }
 
@@ -2419,7 +2489,7 @@ export class UsageMonitor extends EventEmitter {
       return this.currentUsage;
     }
 
-    this.debugLog('[UsageMonitor:getUsageForProvider] No profile found for provider:', providerName);
+    console.warn('[UsageMonitor:getUsageForProvider] No usage data found for provider:', providerName, '(all 3 steps failed)');
     return null;
   }
 

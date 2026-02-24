@@ -119,15 +119,14 @@ class ProviderServiceClass {
    */
   async saveUserProviderConfig(provider: string, config: ProviderConfig): Promise<void> {
     try {
-      const fs = await import('node:fs/promises');
-      const path = await import('node:path');
-      const configPath = path.resolve(process.env.HOME || process.env.USERPROFILE || '', '.work_pilot_ai_llm_providers.json');
-      
+      // Utiliser localStorage au lieu de fs pour le contexte navigateur
+      const configKey = `work_pilot_ai_llm_providers_${provider}`;
+      const existingData = localStorage.getItem(configKey);
       let allConfigs: Record<string, ProviderConfig> = {};
-      if (await fs.access(configPath).then(() => true).catch(() => false)) {
+      
+      if (existingData) {
         try {
-          const data = await fs.readFile(configPath, 'utf-8');
-          allConfigs = JSON.parse(data);
+          allConfigs = JSON.parse(existingData);
         } catch {
           // Ignorer les erreurs de lecture
         }
@@ -135,7 +134,8 @@ class ProviderServiceClass {
       
       // Fusionner avec la configuration existante
       allConfigs[provider] = { ...(allConfigs[provider]), ...config };
-      await fs.writeFile(configPath, JSON.stringify(allConfigs, null, 2), 'utf-8');
+      
+      localStorage.setItem(configKey, JSON.stringify(allConfigs, null, 2));
     } catch (error) {
       console.error('[ProviderService] Failed to save user provider config:', error);
       throw error;
@@ -560,15 +560,14 @@ class ProviderServiceClass {
    */
   async getUserProviderConfig(provider: string): Promise<ProviderConfig | null> {
     try {
-      const fs = await import('node:fs/promises');
-      const path = await import('node:path');
-      const configPath = path.resolve(process.env.HOME || process.env.USERPROFILE || '', '.work_pilot_ai_llm_providers.json');
+      // Utiliser localStorage au lieu de fs pour le contexte navigateur
+      const configKey = `work_pilot_ai_llm_providers_${provider}`;
+      const data = localStorage.getItem(configKey);
       
-      if (!(await fs.access(configPath).then(() => true).catch(() => false))) {
+      if (!data) {
         return null;
       }
       
-      const data = await fs.readFile(configPath, 'utf-8');
       const allConfigs: Record<string, ProviderConfig> = JSON.parse(data);
       return allConfigs[provider] || null;
     } catch (error) {
