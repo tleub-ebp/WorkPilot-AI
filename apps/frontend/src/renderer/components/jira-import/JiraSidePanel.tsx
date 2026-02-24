@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download, Search, RefreshCw, X, ChevronRight, GripVertical, ChevronLeft } from 'lucide-react';
+import { Download, Search, RefreshCw, X, ChevronRight, GripVertical, ChevronLeft, Settings } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
@@ -29,6 +29,7 @@ interface JiraSidePanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onWorkItemsImported?: (workItems: JiraWorkItem[], targetStatus: TaskStatus) => void;
+  onOpenSettings?: () => void;
 }
 
 interface JiraFilters {
@@ -40,7 +41,8 @@ export function JiraSidePanel({
   projectId,
   open,
   onOpenChange,
-  onWorkItemsImported
+  onWorkItemsImported,
+  onOpenSettings
 }: JiraSidePanelProps) {
   const { t } = useTranslation('settings');
   const [workItems, setWorkItems] = useState<JiraWorkItem[]>([]);
@@ -463,7 +465,18 @@ export function JiraSidePanel({
         {/* Error Banner */}
         {error && (
           <div className="mx-4 mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-md">
-            <p className="text-sm text-red-500">{error}</p>
+            <p className="text-sm text-red-500 mb-3">{error}</p>
+            {error.includes('not configured') && onOpenSettings && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onOpenSettings}
+                className="gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                Configure Jira
+              </Button>
+            )}
           </div>
         )}
 

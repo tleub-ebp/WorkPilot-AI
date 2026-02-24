@@ -452,7 +452,7 @@
     "accountExceedsThreshold": "L'utilisation du compte dépasse le seuil de 90%",
     "authentication": "Authentification",
     "authenticationAriaLabel": "Authentification : {{provider}}",
-    "authenticationDetails": "Détails de l'authentification",
+    "authenticationDetails": "Détails de l'authentification ",
     "apiProfile": "Profil API",
     "apiKey": "Clé API",
     "oauth": "OAuth",

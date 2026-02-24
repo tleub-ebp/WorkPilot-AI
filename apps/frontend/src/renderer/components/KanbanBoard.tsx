@@ -80,6 +80,8 @@ interface KanbanBoardProps {
   onRefresh?: () => void;
   isRefreshing?: boolean;
   onWorkItemsImported?: (workItems: AzureDevOpsWorkItem[], targetStatus: TaskStatus) => void;
+  onOpenJiraSettings?: () => void;
+  onOpenAzureDevOpsSettings?: () => void;
 }
 
 interface DroppableColumnProps {
@@ -720,7 +722,7 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
   );
 }, droppableColumnPropsAreEqual);
 
-export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isRefreshing, onWorkItemsImported }: KanbanBoardProps) {
+export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isRefreshing, onWorkItemsImported, onOpenJiraSettings, onOpenAzureDevOpsSettings }: KanbanBoardProps) {
   const { t } = useTranslation(['tasks', 'dialogs', 'common']);
   const { toast } = useToast();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -1341,7 +1343,6 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     }
   }, [maxParallelTasks]);
 
-
   /**
    * Move all backlog tasks to queue
    */
@@ -1392,7 +1393,6 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       });
     }
   }, [projectId, toast, t]);
-
 
   // External drag detection (Azure DevOps + Jira) using native drag events
   useEffect(() => {
@@ -2135,6 +2135,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           open={azureDevOpsPanelOpen}
           onOpenChange={setAzureDevOpsPanelOpen}
           projectId={projectId}
+          onOpenSettings={onOpenAzureDevOpsSettings}
           onWorkItemsImported={async (workItems, targetStatus) => {
             console.log('Side panel imported work items:', workItems, 'to status:', targetStatus);
             
@@ -2156,6 +2157,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           open={jiraPanelOpen}
           onOpenChange={setJiraPanelOpen}
           projectId={projectId}
+          onOpenSettings={onOpenJiraSettings}
           onWorkItemsImported={async (workItems, targetStatus) => {
             console.log('Jira side panel imported work items:', workItems, 'to status:', targetStatus);
             
