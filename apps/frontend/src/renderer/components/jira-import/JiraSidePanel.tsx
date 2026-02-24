@@ -474,7 +474,7 @@ export function JiraSidePanel({
                 className="gap-2"
               >
                 <Settings className="h-4 w-4" />
-                Configure Jira
+                {t('settings:jiraImport.configureButton')}
               </Button>
             )}
           </div>
