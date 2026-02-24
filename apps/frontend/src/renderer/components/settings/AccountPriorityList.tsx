@@ -437,9 +437,6 @@ export function AccountPriorityList({ accounts, onReorder, isLoading }: AccountP
     <div className="space-y-4">
       {/* Header */}
       <div>
-        <h4 className="text-sm font-semibold text-foreground mb-1">
-          {t('accounts.priority.title')}
-        </h4>
         <p className="text-xs text-muted-foreground">
           {t('accounts.priority.description')}
         </p>

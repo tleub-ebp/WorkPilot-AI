@@ -49,7 +49,12 @@
       "autoSwitching": {
         "globalTitle": "Automatic Account Switching",
         "globalDescription": "Automatically switch between your accounts based on usage and rate limits.",
-        "title": "Auto-switching"
+        "title": "Auto-switching",
+        "providerAdded": "Provider added to auto-switching",
+        "providerRemoved": "Provider removed from auto-switching",
+        "providerDescription": "{{providerName}} has been {{action}} to auto-switching list",
+        "syncError": "Sync Error",
+        "syncErrorDescription": "Failed to sync provider with auto-switching"
       },
       "providerConfig": {
         "title": "Configuration"
@@ -58,10 +63,39 @@
         "configure": "Configure",
         "test": "Test",
         "edit": "Edit",
+        "apiKey": "API Key",
+        "authentication": "Authentication",
+        "oauthCli": "OAuth (CLI)",
+        "notConfigured": "Not configured",
+        "lastTest": "Last test",
+        "neverTested": "Never tested",
+        "usage": "Usage",
+        "usageThisMonth": "Usage this month",
+        "week": "week",
+        "notAvailable": "Not available",
+        "source": "Source",
         "status": {
           "notConfigured": "Not configured",
           "error": "Error",
           "active": "Active"
+        },
+        "rateLimited": "Rate limited",
+        "needsReauth": "Needs re-authentication",
+        "statusNested": {
+          "notConfigured": "Not configured",
+          "error": "Error",
+          "active": "Active"
+        },
+        "testSuccess": "Test successful",
+        "testSuccessDescription": "The {{providerName}} provider is working correctly",
+        "testError": "Test failed",
+        "testErrorDescription": "The {{providerName}} provider failed: {{error}}",
+        "testDetails": {
+          "modelsAvailable": "{{count}} models available",
+          "modelUsed": "Model used: {{model}}"
+        },
+        "errors": {
+          "unknownError": "Unknown error"
         }
       },
       "providers": {
@@ -71,12 +105,24 @@
         "aws": "AWS Bedrock and Amazon services",
         "copilot": "GitHub Copilot",
         "grok": "Grok xAI models",
-        "windsurf": "Windsurf AI provider",
-        "cursor": "Cursor AI provider",
+        "windsurf": "Windsurf AI Provider",
+        "cursor": "Cursor AI Provider",
         "ollama": "Local open-source models with Ollama",
         "anthropic": "Anthropic Claude models",
         "google": "Google and Google DeepMind API access",
-        "openai": "GPT-4, GPT-3.5 and other OpenAI models"
+        "openai": "GPT-5 and other OpenAI models",
+        "loadError": "Failed to load provider list"
+      },
+      "providerToggle": {
+        "enabled": "Provider enabled",
+        "disabled": "Provider disabled",
+        "description": "{{providerId}} has been {{action}} successfully",
+        "error": "Error",
+        "errorDescription": "Failed to {{action}} provider {{providerId}}"
+      },
+      "alerts": {
+        "noProviders": "No providers configured. Configure your API keys to get started.",
+        "providerErrors": "{{count}} provider(s) with errors"
       }
     },
     "updates": {

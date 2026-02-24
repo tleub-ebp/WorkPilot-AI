@@ -14,6 +14,7 @@ import { useSettingsStore } from '@/stores/settings-store';
 import { useToast } from '@/hooks/use-toast';
 import { ProviderService } from '@shared/services/providerService';
 import type { APIProfile } from '@shared/types/profile';
+import type { ProfileUsageSummary } from '@shared/types/agent';
 
 interface Provider {
   id: string;
@@ -26,6 +27,14 @@ interface Provider {
   usageCount?: number;
   isPremium?: boolean;
   icon?: React.ReactNode;
+  // Real data fields
+  realUsageData?: ProfileUsageSummary;
+  realApiKeyInfo?: {
+    hasKey: boolean;
+    keyPreview?: string;
+    provider?: string;
+    isOAuth?: boolean;
+  };
 }
 
 interface CleanProviderSectionProps {
@@ -78,6 +87,7 @@ export function CleanProviderSection({
   isOpen 
 }: CleanProviderSectionProps) {
   const { t } = useTranslation('settings');
+  const { t: tCommon } = useTranslation('common');
   const { toast } = useToast();
   const [connectors, setConnectors] = useState<Array<{ id: string, label: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,31 +96,300 @@ export function CleanProviderSection({
   const [autoSwitchingOpen, setAutoSwitchingOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [providersState, setProvidersState] = useState<Provider[]>([]);
+  
+  // Real data states
+  const [profileUsageData, setProfileUsageData] = useState<Map<string, ProfileUsageSummary>>(new Map());
+  const [providerTestResults, setProviderTestResults] = useState<Map<string, { date: string; success: boolean }>>(new Map());
 
   // Utiliser les profiles comme le ProviderSelector
   const { profiles, setActiveProfile } = useSettingsStore();
 
-  // Charger les connecteurs
+  // Track if we're in a manual toggle operation to avoid auto-sync conflicts
+  const [isManualToggle, setIsManualToggle] = useState(false);
+
+  // Load real data when section is opened
   useEffect(() => {
-    const loadConnectors = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const connectors = await getAllConnectors();
-        setConnectors(connectors);
-      } catch (err) {
-        console.error('Failed to load connectors:', err);
-        setError('Impossible de charger la liste des providers');
-        setConnectors([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     if (isOpen) {
       loadConnectors();
+      loadProfileUsageData();
+      loadProviderTestResults();
+      // Auto-sync configured providers with auto-switching
+      if (!isManualToggle) {
+        syncConfiguredProvidersWithAutoSwitching();
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, providersState, isManualToggle]);
+
+  // Auto-sync configured providers with auto-switching
+  const syncConfiguredProvidersWithAutoSwitching = async () => {
+    try {
+      const currentSettings = { ...settings };
+      
+      // Initialize providerPriorityOrder if it doesn't exist
+      if (!currentSettings.providerPriorityOrder) {
+        currentSettings.providerPriorityOrder = [];
+      }
+      
+      // Get all configured providers
+      const configuredProviders = providersState.filter(p => p.isConfigured);
+      
+      // Add configured providers to auto-switching if not already present
+      const updatedPriorityOrder = [...currentSettings.providerPriorityOrder];
+      configuredProviders.forEach(provider => {
+        if (!updatedPriorityOrder.includes(provider.id)) {
+          updatedPriorityOrder.push(provider.id);
+        }
+      });
+      
+      // Remove unconfigured providers from auto-switching
+      const finalPriorityOrder = updatedPriorityOrder.filter(providerId => 
+        providersState.some(p => p.id === providerId && p.isConfigured)
+      );
+      
+      // Update settings only if changed and not during a manual toggle operation
+      if (JSON.stringify(currentSettings.providerPriorityOrder) !== JSON.stringify(finalPriorityOrder)) {
+        currentSettings.providerPriorityOrder = finalPriorityOrder;
+        onSettingsChange(currentSettings);
+      }
+      
+    } catch (error) {
+      console.error('Failed to sync configured providers with auto-switching:', error);
+    }
+  };
+
+  // Load connectors
+  const loadConnectors = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const connectors = await getAllConnectors();
+      setConnectors(connectors);
+    } catch (err) {
+      console.error('Failed to load connectors:', err);
+      setError(t('sections.accounts.providers.loadError'));
+      setConnectors([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load profile usage data
+  const loadProfileUsageData = async () => {
+    try {
+      const result = await window.electronAPI.requestAllProfilesUsage?.(true);
+      if (result?.success && result.data) {
+        const usageMap = new Map<string, ProfileUsageSummary>();
+        result.data.allProfiles.forEach((profile: ProfileUsageSummary) => {
+          usageMap.set(profile.profileId, profile);
+        });
+        setProfileUsageData(usageMap);
+      }
+    } catch (err) {
+      console.warn('[CleanProviderSection] Failed to load profile usage data:', err);
+    }
+  };
+
+  // Load provider test results from settings or backend
+  const loadProviderTestResults = async () => {
+    try {
+      // For now, we'll simulate loading test results
+      // In a real implementation, this would load from a backend API or settings
+      const testResults = new Map<string, { date: string; success: boolean }>();
+      
+      // Check if we have any recent test results in settings
+      Object.keys(settings).forEach(key => {
+        if (key.startsWith('testResult_')) {
+          const providerId = key.replace('testResult_', '');
+          const result = settings[key];
+          if (result && result.date) {
+            testResults.set(providerId, {
+              date: result.date,
+              success: result.success || false
+            });
+          }
+        }
+      });
+      
+      setProviderTestResults(testResults);
+    } catch (err) {
+      console.warn('[CleanProviderSection] Failed to load provider test results:', err);
+    }
+  };
+
+  // Helper function to check if provider uses OAuth authentication
+  const isProviderOAuth = (providerId: string): boolean => {
+    // List of providers that typically use OAuth/CLI authentication
+    const oauthProviders = [
+      'copilot',      // GitHub Copilot CLI
+      'cursor',       // Cursor CLI
+      'windsurf',      // Windsurf CLI
+      // Add other OAuth providers as needed
+    ];
+    
+    return oauthProviders.includes(providerId);
+  };
+
+  // Get API key info for a provider
+  const getApiKeyInfo = (providerId: string): { hasKey: boolean; keyPreview?: string; provider?: string; isOAuth?: boolean } => {
+    // Check if provider uses OAuth authentication
+    const isOAuthProvider = isProviderOAuth(providerId);
+    
+    // Check profiles for API keys
+    const profile = profiles.find(p => {
+      if (!p.baseUrl) return false;
+      const detectedProvider = detectProviderFromUrl(p.baseUrl);
+      return detectedProvider === providerId || 
+             (providerId === 'claude' && detectedProvider === 'anthropic') ||
+             (providerId === 'gemini' && p.baseUrl.includes('googleapis.com')) ||
+             (providerId === 'google' && p.baseUrl.includes('googleapis.com'));
+    });
+
+    if (profile && profile.apiKey) {
+      return {
+        hasKey: true,
+        keyPreview: maskApiKey(profile.apiKey),
+        provider: profile.name,
+        isOAuth: false
+      };
+    }
+
+    // Check settings for API keys (for providers like OpenAI, etc.)
+    const apiKeyField = getProviderApiKeyField(providerId);
+    if (apiKeyField && settings[apiKeyField]) {
+      return {
+        hasKey: true,
+        keyPreview: maskApiKey(settings[apiKeyField]),
+        isOAuth: false
+      };
+    }
+
+    // For OAuth providers, check if they are configured (even without API key)
+    if (isOAuthProvider && profile) {
+      return {
+        hasKey: true,
+        keyPreview: undefined,
+        provider: profile.name,
+        isOAuth: true
+      };
+    }
+
+    return { hasKey: false };
+  };
+
+  // Helper function to detect provider from URL
+  const detectProviderFromUrl = (url: string): string => {
+    const urlLower = url.toLowerCase();
+    if (urlLower.includes('api.anthropic.com')) return 'anthropic';
+    if (urlLower.includes('api.openai.com')) return 'openai';
+    if (urlLower.includes('googleapis.com')) return 'google';
+    if (urlLower.includes('api.mistral.ai')) return 'mistral';
+    if (urlLower.includes('api.deepseek.com')) return 'deepseek';
+    if (urlLower.includes('api.x.ai')) return 'grok';
+    if (urlLower.includes('api.meta.ai')) return 'meta';
+    return 'unknown';
+  };
+
+  // Helper function to get API key field for provider
+  const getProviderApiKeyField = (providerId: string): string | null => {
+    const apiKeyMap: Record<string, string> = {
+      'openai': 'globalOpenAIApiKey',
+      'gemini': 'globalGoogleApiKey',
+      'google': 'globalGoogleDeepMindApiKey',
+      'meta': 'globalMetaApiKey',
+      'meta-llama': 'globalMetaLlamaApiKey',
+      'mistral': 'globalMistralApiKey',
+      'deepseek': 'globalDeepSeekApiKey',
+      'grok': 'globalGrokApiKey',
+      'aws': 'globalAWSApiKey',
+      'azure-openai': 'globalOpenAIApiKey',
+    };
+    return apiKeyMap[providerId] || null;
+  };
+
+  // Helper function to mask API key
+  const maskApiKey = (apiKey: string): string => {
+    if (!apiKey || apiKey.length < 10) return 'sk-...';
+    return `sk-${apiKey.substring(3, 7)}...••••••••••••••••••••••••••••`;
+  };
+
+  // Helper function to detect and sync providers with auto-switching
+  const syncProviderWithAutoSwitching = async (providerId: string, action: 'add' | 'remove' | 'toggle', enabled?: boolean) => {
+    try {
+      console.log(`[AutoSwitching Sync] ${action} provider: ${providerId}, enabled: ${enabled}`);
+      
+      // Get current auto-switching settings
+      const currentSettings = { ...settings };
+      
+      // Initialize providerPriorityOrder if it doesn't exist
+      if (!currentSettings.providerPriorityOrder) {
+        currentSettings.providerPriorityOrder = [];
+      }
+      
+      console.log(`[AutoSwitching Sync] Current priority order:`, currentSettings.providerPriorityOrder);
+      
+      const providerName = staticProviders.find(p => p.name === providerId)?.label || providerId;
+      
+      if (action === 'add' || (action === 'toggle' && enabled === true)) {
+        // Add provider to auto-switching priority list if not already present
+        if (!currentSettings.providerPriorityOrder.includes(providerId)) {
+          currentSettings.providerPriorityOrder = [...currentSettings.providerPriorityOrder, providerId];
+          console.log(`[AutoSwitching Sync] Added ${providerId} to priority order`);
+        } else {
+          console.log(`[AutoSwitching Sync] ${providerId} already in priority order`);
+        }
+      } else if (action === 'remove' || (action === 'toggle' && enabled === false)) {
+        // Remove provider from auto-switching priority list only if it exists
+        const beforeCount = currentSettings.providerPriorityOrder.length;
+        if (currentSettings.providerPriorityOrder.includes(providerId)) {
+          currentSettings.providerPriorityOrder = currentSettings.providerPriorityOrder.filter((id: string) => id !== providerId);
+          console.log(`[AutoSwitching Sync] Removed ${providerId} from priority order`);
+        } else {
+          console.log(`[AutoSwitching Sync] ${providerId} not in priority order, nothing to remove`);
+        }
+        const afterCount = currentSettings.providerPriorityOrder.length;
+        console.log(`[AutoSwitching Sync] Priority order size changed: ${beforeCount} -> ${afterCount}`);
+      }
+      
+      console.log(`[AutoSwitching Sync] Final priority order:`, currentSettings.providerPriorityOrder);
+      
+      // Update settings only if there's a change
+      const currentPriorityOrder = settings.providerPriorityOrder || [];
+      if (JSON.stringify(currentPriorityOrder) !== JSON.stringify(currentSettings.providerPriorityOrder)) {
+        onSettingsChange(currentSettings);
+        console.log(`[AutoSwitching Sync] Settings updated`);
+      } else {
+        console.log(`[AutoSwitching Sync] No change in settings, skipping update`);
+      }
+      
+      // Show toast notification only for meaningful actions
+      if (action === 'toggle' && enabled === true && !currentSettings.providerPriorityOrder.includes(providerId)) {
+        toast({
+          title: t('sections.accounts.autoSwitching.providerAdded'),
+          description: t('sections.accounts.autoSwitching.providerDescription', { 
+            providerName: providerName,
+            action: tCommon('actions.add')
+          }),
+        });
+      } else if (action === 'toggle' && enabled === false && currentSettings.providerPriorityOrder.includes(providerId)) {
+        toast({
+          title: t('sections.accounts.autoSwitching.providerRemoved'),
+          description: t('sections.accounts.autoSwitching.providerDescription', { 
+            providerName: providerName,
+            action: tCommon('actions.delete')
+          }),
+        });
+      }
+      
+    } catch (error) {
+      console.error('Failed to sync provider with auto-switching:', error);
+      toast({
+        variant: 'destructive',
+        title: t('sections.accounts.autoSwitching.syncError'),
+        description: t('sections.accounts.autoSwitching.syncErrorDescription'),
+      });
+    }
+  };
 
   // Utiliser la même logique que ProviderSelector pour déterminer le statut
   const { providers: staticProviders, status } = useMemo(
@@ -118,22 +397,45 @@ export function CleanProviderSection({
     [profiles]
   );
 
-  // Transformer les providers statiques en providers pour la grille
-  const providers: Provider[] = staticProviders.map(provider => {
-    const mappedProvider = {
-      id: provider.name,
-      name: provider.label,
-      category: providerCategories[provider.name] || 'independent',
-      description: t(`sections.accounts.providers.${provider.name}`) || provider.description,
-      isConfigured: status[provider.name] || false,
-      isWorking: status[provider.name] ? true : undefined,
-      lastTested: status[provider.name] ? new Date().toISOString() : undefined,
-      usageCount: Math.floor(Math.random() * 100),
-      isPremium: ['anthropic', 'claude', 'openai', 'gemini'].includes(provider.name),
-    };
-    
-    return mappedProvider;
-  });
+  // Transformer les providers statiques en providers pour la grille avec mémorisation
+  const providers = useMemo(() => {
+    return staticProviders.map(provider => {
+      // Get real usage data for this provider
+      const usageData = Array.from(profileUsageData.values()).find(profile => 
+        profile.profileName?.toLowerCase().includes(provider.name.toLowerCase()) ||
+        profile.profileId.includes(provider.name)
+      );
+
+      // Get test result for this provider
+      const testResult = providerTestResults.get(provider.name);
+
+      // Get API key info for this provider
+      const apiKeyInfo = getApiKeyInfo(provider.name);
+
+      const mappedProvider = {
+        id: provider.name,
+        name: provider.label,
+        category: providerCategories[provider.name] || 'independent',
+        description: t(`sections.accounts.providers.${provider.name}`) || provider.description,
+        isConfigured: status[provider.name] || false,
+        isWorking: status[provider.name] ? true : undefined,
+        // Use real data instead of dummy data
+        lastTested: testResult?.date,
+        usageCount: usageData?.sessionPercent ? Math.round(usageData.sessionPercent) : undefined,
+        isPremium: ['anthropic', 'claude', 'openai', 'gemini'].includes(provider.name),
+        // Add real data fields
+        realUsageData: usageData,
+        realApiKeyInfo: apiKeyInfo,
+      };
+      
+      return mappedProvider;
+    });
+  }, [staticProviders, status, profileUsageData, providerTestResults, profiles, t]);
+
+  // Synchronize providersState with providers (avoid infinite loop)
+  useEffect(() => {
+    setProvidersState(providers);
+  }, [providers.length, providers.map(p => `${p.id}-${p.isConfigured}-${p.lastTested}`).join(',')]);
 
   const handleConfigure = (providerId: string) => {
     const provider = providers.find(p => p.id === providerId);
@@ -149,13 +451,28 @@ export function CleanProviderSection({
     try {
       // Vérifier si des profiles de test sont nécessaires et les ajouter
       const updatedProfiles = await ensureTestProfiles();
-      
+
       // Passer les profiles mis à jour au ProviderService
       ProviderService.setProfiles(updatedProfiles);
-      
+
       // Utiliser le vrai service de test du provider
       const result = await ProviderService.testProvider(providerId);
-      
+
+      // Save test result
+      const testResult = {
+        date: new Date().toISOString(),
+        success: result.success
+      };
+
+      // Update provider test results
+      setProviderTestResults(prev => new Map(prev).set(providerId, testResult));
+
+      // Save to settings for persistence
+      onSettingsChange({
+        ...settings,
+        [`testResult_${providerId}`]: testResult
+      });
+
       if (result.success) {
         // Mettre à jour le statut du provider pour indiquer qu'il fonctionne
         // TODO: Mettre à jour le statut dans le store ou l'état local
@@ -266,9 +583,65 @@ export function CleanProviderSection({
     return updatedProfiles;
   };
 
-  const handleToggle = (providerId: string, enabled: boolean) => {
-    // Pour l'instant, on ne fait rien car on utilise les profiles
-    // Toggle provider
+  const handleToggle = async (providerId: string, enabled: boolean) => {
+    try {
+      console.log(`[Toggle] Starting toggle for provider: ${providerId}, enabled: ${enabled}`);
+      
+      // Set manual toggle flag to prevent auto-sync conflicts
+      setIsManualToggle(true);
+      
+      // Get the current provider configuration
+      const currentConfig = await ProviderService.getUserProviderConfig(providerId) || {};
+      
+      // Update the enabled status in the configuration
+      const updatedConfig = {
+        ...currentConfig,
+        enabled: enabled,
+        lastUpdated: new Date().toISOString()
+      };
+      
+      console.log(`[Toggle] Saving config for ${providerId}:`, updatedConfig);
+      
+      // Save the updated configuration
+      await ProviderService.saveUserProviderConfig(providerId, updatedConfig);
+      
+      // Update the local providers state to reflect the change
+      setProvidersState((prevProviders: Provider[]) => 
+        prevProviders.map((provider: Provider) => 
+          provider.id === providerId 
+            ? { ...provider, isWorking: enabled ? true : false }
+            : provider
+        )
+      );
+      
+      console.log(`[Toggle] Updated local state for ${providerId}`);
+      
+      // Sync with auto-switching (manual operation)
+      await syncProviderWithAutoSwitching(providerId, 'toggle', enabled);
+      
+      // Show toast notification
+      toast({
+        title: enabled ? t('sections.accounts.providerToggle.enabled') : t('sections.accounts.providerToggle.disabled'),
+        description: t('sections.accounts.providerToggle.description', { 
+          providerId: providerId,
+          action: enabled ? tCommon('actions.enabled') : tCommon('actions.disabled')
+        }),
+      });
+      
+    } catch (error) {
+      console.error('Failed to toggle provider:', error);
+      toast({
+        variant: 'destructive',
+        title: t('sections.accounts.providerToggle.error'),
+        description: t('sections.accounts.providerToggle.errorDescription', { 
+          providerId: providerId,
+          action: enabled ? tCommon('actions.enable') : tCommon('actions.disable')
+        }),
+      });
+    } finally {
+      // Reset manual toggle flag after a short delay
+      setTimeout(() => setIsManualToggle(false), 500);
+    }
   };
 
   const handleRemove = (providerId: string) => {
@@ -338,7 +711,7 @@ export function CleanProviderSection({
           {/* Colonne de gauche - Providers (prend toute la largeur si auto-switching fermé) */}
           <div className={autoSwitchingOpen ? "flex-2" : "flex-1"}>
             {/* Alertes simples */}
-          {providers.filter(p => p.isConfigured).length === 0 && (
+          {providersState.filter(p => p.isConfigured).length === 0 && (
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
@@ -347,12 +720,12 @@ export function CleanProviderSection({
             </Alert>
           )}
 
-          {providers.filter(p => p.isWorking === false).length > 0 && (
+          {providersState.filter(p => p.isWorking === false).length > 0 && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 {t('sections.accounts.alerts.providerErrors', { 
-                  count: providers.filter(p => p.isWorking === false).length 
+                  count: providersState.filter(p => p.isWorking === false).length 
                 })}
               </AlertDescription>
             </Alert>
@@ -360,7 +733,7 @@ export function CleanProviderSection({
 
             {/* Grille de providers */}
             <CleanProviderGrid
-              providers={providers}
+              providers={providersState}
               onConfigure={handleConfigure}
               onTest={handleTest}
               onToggle={handleToggle}

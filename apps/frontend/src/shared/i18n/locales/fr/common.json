@@ -94,7 +94,13 @@
     "delete": "Supprimer",
     "settings": "Paramètres",
     "next": "Suivant",
-    "createProject": "Créer un projet"
+    "createProject": "Créer un projet",
+    "enabled": "activé",
+    "disabled": "désactivé",
+    "enable": "activer",
+    "disable": "désactiver",
+    "add": "Ajouter",
+    "cancel": "Annuler"
   },
   "os": {
     "windows": "Windows",
@@ -493,6 +499,13 @@
     "swap": "Échanger",
     "noProfileForProvider": "Aucun profil configuré pour le fournisseur {{provider}}.",
     "copilotAuthNote": "{{provider}} utilise l'authentification GitHub CLI (gh auth login).",
+    "checkingGithubStatus": "Vérification du statut GitHub...",
+    "githubStatus": "Statut GitHub",
+    "connected": "Connecté",
+    "notConnected": "Non connecté",
+    "githubCliNotAvailable": "GitHub CLI non disponible. Installez GitHub CLI et exécutez",
+    "cannotCheckGithubStatus": "Impossible de vérifier le statut GitHub CLI",
+    "copilotDashboardLink": "Voir le dashboard GitHub Copilot →",
     "openaiCostLabel": "Coût OpenAI (mois en cours)",
     "openaiCostDescription": "Le coût affiché correspond à votre utilisation OpenAI pour le mois en cours (estimation).",
     "openaiDashboard": "Afficher le tableau de bord OpenAI",
