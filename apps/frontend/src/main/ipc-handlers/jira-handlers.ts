@@ -269,4 +269,46 @@ except Exception as e:
       }
     }
   );
+
+  ipcMain.handle(
+    IPC_CHANNELS.JIRA_TEST_CONNECTION,
+    async (_, config: { instanceUrl: string; email: string; apiToken: string }): Promise<IPCResult<JiraSyncStatus>> => {
+      if (!config.instanceUrl || !config.email || !config.apiToken) {
+        return {
+          success: false,
+          error: 'Jira credentials are required',
+        };
+      }
+
+      try {
+        // Create a temporary environment for testing
+        const envOverrides: Record<string, string> = {
+          JIRA_URL: config.instanceUrl,
+          JIRA_EMAIL: config.email,
+          JIRA_API_TOKEN: config.apiToken,
+        };
+
+        // Test connection using a temporary path (current working directory)
+        const result = await callJiraPython(process.cwd(), 'test_connection', {}, envOverrides);
+
+        return {
+          success: true,
+          data: {
+            connected: true,
+            instanceUrl: config.instanceUrl,
+          },
+        };
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        return {
+          success: true,
+          data: {
+            connected: false,
+            error: errorMessage,
+          },
+        };
+      }
+    }
+  );
 }

@@ -9,7 +9,13 @@ gracefully no-op and the application continues with local tracking only.
 """
 
 import logging
+import sys
 from pathlib import Path
+
+# Add project root to Python path to resolve src imports
+project_root = Path(__file__).parent.parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 # Try different import paths for git_provider
 try:
@@ -25,18 +31,8 @@ except ImportError:
 from src.config.settings import Settings
 from src.connectors.azure_devops import AzureDevOpsConnector
 
-# Import config directly to avoid relative import issues
-try:
-    from .config import AzureDevOpsConfig
-except ImportError:
-    # Fallback for direct execution
-    import importlib.util
-    import sys
-    config_path = Path(__file__).parent / 'config.py'
-    spec = importlib.util.spec_from_file_location("config", config_path)
-    config_module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(config_module)
-    AzureDevOpsConfig = config_module.AzureDevOpsConfig
+# Import config directly
+from .config import AzureDevOpsConfig
 
 logger = logging.getLogger(__name__)
 

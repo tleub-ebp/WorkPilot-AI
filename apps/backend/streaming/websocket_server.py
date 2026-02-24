@@ -42,9 +42,9 @@ def kill_processes_on_port(port: int) -> bool:
         
         # Find processes using the port
         killed_any = False
-        for proc in psutil.process_iter(['pid', 'name', 'connections']):
+        for proc in psutil.process_iter(['pid', 'name']):
             try:
-                connections = proc.info.get('connections', [])
+                connections = proc.connections()
                 for conn in connections:
                     if conn.status == 'LISTEN' and conn.laddr.port == port:
                         pid = proc.info['pid']

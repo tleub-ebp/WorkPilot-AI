@@ -1,4 +1,5 @@
-"""Azure DevOps connector - Integration with Azure Repos and Azure Boards.
+"""
+Azure DevOps connector - Integration with Azure Repos and Azure Boards.
 
 Provides a unified interface for interacting with Azure DevOps services,
 including repository browsing, file content retrieval, and work item
@@ -11,21 +12,29 @@ Example:
     >>> items = connector.list_backlog_items("MyProject")
 """
 
+# CRITICAL: Add project root to sys.path BEFORE any other imports
+import sys
+from pathlib import Path
+
+# Calculate project root (4 levels up from this file: azure_devops -> connectors -> src -> project root)
+project_root = Path(__file__).resolve().parent.parent.parent.parent
+project_root_str = str(project_root)
+
+# Force project root to be at the VERY BEGINNING of sys.path
+# Remove any existing occurrences first
+while project_root_str in sys.path:
+    sys.path.remove(project_root_str)
+sys.path.insert(0, project_root_str)
+
+# Verify the path is correct
+import os
+if not os.path.exists(project_root / 'src' / 'config' / 'settings.py'):
+    raise ImportError(f"Project root path incorrect: {project_root}")
+
 import logging
 from typing import Optional
-
 from src.config.settings import Settings
 from src.connectors.azure_devops.client import AzureDevOpsClient
-from src.connectors.azure_devops.exceptions import (
-    APIError,
-    AuthenticationError,
-    AzureDevOpsError,
-    ConfigurationError,
-    RateLimitError,
-    RepositoryNotFoundError,
-    ResourceNotFoundError,
-    WorkItemNotFoundError,
-)
 from src.connectors.azure_devops.models import FileItem, PullRequest, PullRequestFileChange, Repository, WorkItem
 from src.connectors.azure_devops.repos import AzureReposClient
 from src.connectors.azure_devops.work_items import AzureWorkItemsClient

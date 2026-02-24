@@ -482,7 +482,7 @@ export function AzureDevOpsSidePanel({
                 className="gap-2"
               >
                 <Settings className="h-4 w-4" />
-                Configure Azure DevOps
+                {t('settings:azureDevOpsImport.configureButton')}
               </Button>
             )}
           </div>

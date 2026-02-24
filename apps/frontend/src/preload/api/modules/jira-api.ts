@@ -12,6 +12,7 @@ import { invokeIpc } from './ipc-utils';
 export interface JiraAPI {
   getJiraIssues: (projectId: string, maxItems?: number) => Promise<IPCResult<JiraWorkItem[]>>;
   checkJiraConnection: (projectId: string) => Promise<IPCResult<JiraSyncStatus>>;
+  testJiraConnection: (config: { instanceUrl: string; email: string; apiToken: string }) => Promise<IPCResult<JiraSyncStatus>>;
 }
 
 /**
@@ -23,4 +24,7 @@ export const createJiraAPI = (): JiraAPI => ({
 
   checkJiraConnection: (projectId: string): Promise<IPCResult<JiraSyncStatus>> =>
     invokeIpc(IPC_CHANNELS.JIRA_CHECK_CONNECTION, projectId),
+
+  testJiraConnection: (config: { instanceUrl: string; email: string; apiToken: string }): Promise<IPCResult<JiraSyncStatus>> =>
+    invokeIpc(IPC_CHANNELS.JIRA_TEST_CONNECTION, config),
 });

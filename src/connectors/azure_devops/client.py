@@ -17,6 +17,17 @@ Example:
 
 import logging
 from typing import Any
+import sys
+from pathlib import Path
+
+# Ensure project root is in sys.path for module resolution
+project_root = Path(__file__).resolve().parent.parent.parent.parent
+project_root_str = str(project_root)
+
+# Force project root to be at the VERY BEGINNING of sys.path
+while project_root_str in sys.path:
+    sys.path.remove(project_root_str)
+sys.path.insert(0, project_root_str)
 
 from azure.devops.connection import Connection
 from msrest.authentication import BasicAuthentication
