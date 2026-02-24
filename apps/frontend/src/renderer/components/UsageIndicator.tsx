@@ -717,15 +717,15 @@ export function UsageIndicator() {
                 {isRefreshing ? (
                   <>
                     <Activity className="h-2.5 w-2.5 motion-safe:animate-spin" />
-                    <span>Mise à jour...</span>
+                    <span>{t('common:usage.updating')}</span>
                   </>
                 ) : lastRefreshTime ? (
                   <>
                     <Clock className="h-2.5 w-2.5" />
-                    <span>Il y a {Math.floor((new Date().getTime() - lastRefreshTime.getTime()) / 60000)} min</span>
+                    <span>{t('common:usage.lastUpdate', { minutes: Math.floor((new Date().getTime() - lastRefreshTime.getTime()) / 60000) })}</span>
                   </>
                 ) : (
-                  <span>Temps réel</span>
+                  <span>{t('common:usage.realTime')}</span>
                 )}
               </div>
             </div>
