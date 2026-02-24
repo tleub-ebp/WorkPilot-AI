@@ -310,6 +310,8 @@ export interface AppSettings {
   // Sidebar collapsed state (icons only when true)
   sidebarCollapsed?: boolean;
   providerPriorityOrder?: import('../../renderer/components/settings/multiconnector/types').LLMProvider[];
+  // Providers explicitly disabled from auto-switching by user toggle
+  disabledAutoSwitchProviders?: string[];
   // Configuration pour providers custom/enterprise
   customProviderUrl?: string;
   customProviderApiKey?: string;

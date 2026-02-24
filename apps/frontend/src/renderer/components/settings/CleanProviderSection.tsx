@@ -107,21 +107,18 @@ export function CleanProviderSection({
   // Utiliser les profiles comme le ProviderSelector
   const { profiles, setActiveProfile } = useSettingsStore();
 
-  // Track if we're in a manual toggle operation to avoid auto-sync conflicts
-  const [isManualToggle, setIsManualToggle] = useState(false);
-
-  // Load real data when section is opened
+  // Load real data when section is opened (runs once when panel opens)
   useEffect(() => {
     if (isOpen) {
       loadConnectors();
       loadProfileUsageData();
       loadProviderTestResults();
-      // Auto-sync configured providers with auto-switching
-      if (!isManualToggle) {
-        syncConfiguredProvidersWithAutoSwitching();
-      }
+      // Auto-sync configured providers with auto-switching (respects disabled list)
+      // NOTE: Only runs on open, NOT on providersState change, to avoid overwriting
+      // settings during manual toggle operations (which update providersState).
+      syncConfiguredProvidersWithAutoSwitching();
     }
-  }, [isOpen, providersState, isManualToggle]);
+  }, [isOpen]);
 
   // Auto-sync configured providers with auto-switching
   const syncConfiguredProvidersWithAutoSwitching = async () => {
@@ -135,11 +132,12 @@ export function CleanProviderSection({
       
       // Get all configured providers
       const configuredProviders = providersState.filter(p => p.isConfigured);
-      
-      // Add configured providers to auto-switching if not already present
+      const disabledProviders: string[] = currentSettings.disabledAutoSwitchProviders || [];
+
+      // Add configured providers to auto-switching if not already present AND not explicitly disabled
       const updatedPriorityOrder = [...currentSettings.providerPriorityOrder];
       configuredProviders.forEach(provider => {
-        if (!updatedPriorityOrder.includes(provider.id)) {
+        if (!updatedPriorityOrder.includes(provider.id) && !disabledProviders.includes(provider.id)) {
           updatedPriorityOrder.push(provider.id);
         }
       });
@@ -331,74 +329,6 @@ export function CleanProviderSection({
   const maskApiKey = (apiKey: string): string => {
     if (!apiKey || apiKey.length < 10) return 'sk-...';
     return `sk-${apiKey.substring(3, 7)}...••••••••••••••••••••••••••••`;
-  };
-
-  // Helper function to detect and sync providers with auto-switching
-  const syncProviderWithAutoSwitching = async (providerId: string, action: 'add' | 'remove' | 'toggle', enabled?: boolean) => {
-    try {
-      
-      // Get current auto-switching settings
-      const currentSettings = { ...settings };
-      
-      // Initialize providerPriorityOrder if it doesn't exist
-      if (!currentSettings.providerPriorityOrder) {
-        currentSettings.providerPriorityOrder = [];
-      }
-      
-      
-      const providerName = staticProviders.find(p => p.name === providerId)?.label || providerId;
-      
-      if (action === 'add' || (action === 'toggle' && enabled === true)) {
-        // Add provider to auto-switching priority list if not already present
-        if (!currentSettings.providerPriorityOrder.includes(providerId)) {
-          currentSettings.providerPriorityOrder = [...currentSettings.providerPriorityOrder, providerId];
-        } else {
-        }
-      } else if (action === 'remove' || (action === 'toggle' && enabled === false)) {
-        // Remove provider from auto-switching priority list only if it exists
-        const beforeCount = currentSettings.providerPriorityOrder.length;
-        if (currentSettings.providerPriorityOrder.includes(providerId)) {
-          currentSettings.providerPriorityOrder = currentSettings.providerPriorityOrder.filter((id: string) => id !== providerId);
-        } else {
-        }
-        const afterCount = currentSettings.providerPriorityOrder.length;
-      }
-      
-      
-      // Update settings only if there's a change
-      const currentPriorityOrder = settings.providerPriorityOrder || [];
-      if (JSON.stringify(currentPriorityOrder) !== JSON.stringify(currentSettings.providerPriorityOrder)) {
-        onSettingsChange(currentSettings);
-      } else {
-      }
-      
-      // Show toast notification only for meaningful actions
-      if (action === 'toggle' && enabled === true && !currentSettings.providerPriorityOrder.includes(providerId)) {
-        toast({
-          title: t('sections.accounts.autoSwitching.providerAdded'),
-          description: t('sections.accounts.autoSwitching.providerDescription', { 
-            providerName: providerName,
-            action: tCommon('actions.add')
-          }),
-        });
-      } else if (action === 'toggle' && enabled === false && currentSettings.providerPriorityOrder.includes(providerId)) {
-        toast({
-          title: t('sections.accounts.autoSwitching.providerRemoved'),
-          description: t('sections.accounts.autoSwitching.providerDescription', { 
-            providerName: providerName,
-            action: tCommon('actions.delete')
-          }),
-        });
-      }
-      
-    } catch (error) {
-      console.error('Failed to sync provider with auto-switching:', error);
-      toast({
-        variant: 'destructive',
-        title: t('sections.accounts.autoSwitching.syncError'),
-        description: t('sections.accounts.autoSwitching.syncErrorDescription'),
-      });
-    }
   };
 
   // Utiliser la même logique que ProviderSelector pour déterminer le statut
@@ -595,59 +525,78 @@ export function CleanProviderSection({
 
   const handleToggle = async (providerId: string, enabled: boolean) => {
     try {
-      
-      // Set manual toggle flag to prevent auto-sync conflicts
-      setIsManualToggle(true);
-      
+
       // Get the current provider configuration
       const currentConfig = await ProviderService.getUserProviderConfig(providerId) || {};
-      
+
       // Update the enabled status in the configuration
       const updatedConfig = {
         ...currentConfig,
         enabled: enabled,
         lastUpdated: new Date().toISOString()
       };
-      
-      
+
       // Save the updated configuration
       await ProviderService.saveUserProviderConfig(providerId, updatedConfig);
-      
+
       // Update the local providers state to reflect the change
-      setProvidersState((prevProviders: Provider[]) => 
-        prevProviders.map((provider: Provider) => 
-          provider.id === providerId 
-            ? { ...provider, isWorking: enabled ? true : false }
+      setProvidersState((prevProviders: Provider[]) =>
+        prevProviders.map((provider: Provider) =>
+          provider.id === providerId
+            ? { ...provider, isWorking: !!enabled }
             : provider
         )
       );
-      
-      
-      // Sync with auto-switching (manual operation)
-      await syncProviderWithAutoSwitching(providerId, 'toggle', enabled);
-      
+
+      // Build ALL settings changes in a SINGLE update to avoid race conditions.
+      // Previously, disabledAutoSwitchProviders and providerPriorityOrder were updated
+      // in separate onSettingsChange() calls, causing the second to overwrite the first.
+      const updatedSettings = { ...settings };
+
+      // 1) Update disabled list
+      const currentDisabled = updatedSettings.disabledAutoSwitchProviders || [];
+      if (!enabled) {
+        if (!currentDisabled.includes(providerId)) {
+          updatedSettings.disabledAutoSwitchProviders = [...currentDisabled, providerId];
+        }
+      } else {
+        updatedSettings.disabledAutoSwitchProviders = currentDisabled.filter((id: string) => id !== providerId);
+      }
+
+      // 2) Update priority order (add/remove from auto-switching list)
+      const currentPriority = updatedSettings.providerPriorityOrder || [];
+      if (enabled) {
+        // Add to priority list if not already present
+        if (!currentPriority.includes(providerId)) {
+          updatedSettings.providerPriorityOrder = [...currentPriority, providerId];
+        }
+      } else {
+        // Remove from priority list
+        updatedSettings.providerPriorityOrder = currentPriority.filter((id: string) => id !== providerId);
+      }
+
+      // 3) Single atomic settings update — no race condition
+      onSettingsChange(updatedSettings);
+
       // Show toast notification
       toast({
         title: enabled ? t('sections.accounts.providerToggle.enabled') : t('sections.accounts.providerToggle.disabled'),
-        description: t('sections.accounts.providerToggle.description', { 
+        description: t('sections.accounts.providerToggle.description', {
           providerId: providerId,
           action: enabled ? tCommon('actions.enabled') : tCommon('actions.disabled')
         }),
       });
-      
+
     } catch (error) {
       console.error('Failed to toggle provider:', error);
       toast({
         variant: 'destructive',
         title: t('sections.accounts.providerToggle.error'),
-        description: t('sections.accounts.providerToggle.errorDescription', { 
+        description: t('sections.accounts.providerToggle.errorDescription', {
           providerId: providerId,
           action: enabled ? tCommon('actions.enable') : tCommon('actions.disable')
         }),
       });
-    } finally {
-      // Reset manual toggle flag after a short delay
-      setTimeout(() => setIsManualToggle(false), 500);
     }
   };
 

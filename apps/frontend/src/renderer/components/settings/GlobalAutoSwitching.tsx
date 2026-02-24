@@ -259,9 +259,15 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
       representedProviders.add(sp.name);
     }
 
+    // Filter out providers explicitly disabled by the user toggle
+    const disabledProviders: string[] = (settings as any).disabledAutoSwitchProviders || [];
+    const filteredList = disabledProviders.length > 0
+      ? unifiedList.filter(account => !disabledProviders.includes(account.id) && !disabledProviders.includes(account.name))
+      : unifiedList;
+
     // Sort by priority order if available, with improved matching by id or provider name
     if (priorityOrder.length > 0) {
-      unifiedList.sort((a, b) => {
+      filteredList.sort((a, b) => {
         const findIndex = (account: UnifiedAccount): number => {
           let idx = priorityOrder.indexOf(account.id);
           if (idx !== -1) return idx;
@@ -274,7 +280,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
         return aPos - bPos;
       });
     }
-    return unifiedList;
+    return filteredList;
   };
 
   const unifiedAccounts = buildUnifiedAccounts();
