@@ -198,14 +198,18 @@ class JiraConnector:
 
         logger.info("Searching Jira issues: %s (max=%d).", jql, max_results)
 
-        data = self._client.post(
-            "/rest/api/3/search",
-            json_data={
-                "jql": jql,
-                "maxResults": max_results,
-                "startAt": start_at,
-                "fields": fields or DEFAULT_FIELDS,
-            },
+        params = {
+            "jql": jql,
+            "maxResults": max_results,
+            "startAt": start_at,
+        }
+        
+        if fields or DEFAULT_FIELDS:
+            params["fields"] = ",".join(fields or DEFAULT_FIELDS)
+        
+        data = self._client.get(
+            "/rest/api/3/search/jql",
+            params=params,
         )
 
         issues_data = data.get("issues", [])

@@ -367,6 +367,13 @@ export function JiraSidePanel({
   const handleDragEnd = useCallback(() => {
     console.log('[Jira] Drag end');
     setDraggedIds(new Set());
+    
+    // Dispatch custom event for KanbanBoard to detect
+    const customEvent = new CustomEvent('jira-drag-end', {
+      bubbles: true,
+      cancelable: true
+    });
+    document.dispatchEvent(customEvent);
   }, []);
 
   // Get color for work item type badge
