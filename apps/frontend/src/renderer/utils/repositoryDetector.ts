@@ -18,7 +18,6 @@ export interface RepositoryDetectionResult {
  * This is more reliable than using git commands as it analyzes the local configuration
  */
 export async function detectRepositoryProvider(projectPath: string): Promise<RepositoryDetectionResult> {
-  console.log('🔍 Detecting repository provider for:', projectPath);
   
   try {
     // First try to read the .git/config file directly for more reliable detection

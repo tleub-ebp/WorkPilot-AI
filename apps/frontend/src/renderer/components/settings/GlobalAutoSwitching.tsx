@@ -57,19 +57,15 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
   // Detect authenticated providers on mount and when relevant settings change
   useEffect(() => {
     const detectAuthenticatedProviders = async () => {
-      console.log('[GlobalAutoSwitching] Starting provider detection...');
       const providers: AuthenticatedProvider[] = [];
 
       // Check Copilot via GitHub CLI
       try {
-        console.log('[GlobalAutoSwitching] Checking Copilot auth...');
         if (!window.electronAPI || !window.electronAPI.checkCopilotAuth) {
-          console.error('[GlobalAutoSwitching] window.electronAPI.checkCopilotAuth is not available');
           return;
         }
         
         const copilotResult = await window.electronAPI.checkCopilotAuth();
-        console.log('[GlobalAutoSwitching] Copilot result:', copilotResult);
         
         if (copilotResult && copilotResult.success && copilotResult.data?.authenticated) {
           const copilotProvider = {
@@ -80,12 +76,9 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
             username: copilotResult.data.username,
           };
           providers.push(copilotProvider);
-          console.log('[GlobalAutoSwitching] Added Copilot provider:', copilotProvider);
         } else {
-          console.log('[GlobalAutoSwitching] Copilot not authenticated or result invalid');
         }
       } catch (err) {
-        console.error('[GlobalAutoSwitching] Failed to check Copilot auth:', err);
         console.error('[GlobalAutoSwitching] Error details:', err instanceof Error ? err.message : String(err));
       }
 
@@ -110,11 +103,9 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
             isAuthenticated: true,
           };
           providers.push(provider);
-          console.log(`[GlobalAutoSwitching] Added API key provider: ${name}`, provider);
         }
       });
 
-      console.log('[GlobalAutoSwitching] Final detected providers:', providers);
       setAuthenticatedProviders(providers);
     };
 

@@ -49,6 +49,8 @@ export interface ElectronAPI extends
   /** LLM Provider operations */
   selectProvider: (provider: string) => Promise<IPCResult<string>>;
   getSelectedProvider: () => Promise<IPCResult<string | null>>;
+  /** Test GitHub connection for remote configuration */
+  testGitHubConnection: (config: { repo: string; token: string }) => Promise<{ success: boolean; status?: number; error?: string }>;
 }
 
 export const createElectronAPI = (): ElectronAPI => ({
@@ -57,7 +59,7 @@ export const createElectronAPI = (): ElectronAPI => ({
   ...createTaskAPI(),
   ...createSettingsAPI(),
   ...createFileAPI(),
-  ...createAgentAPI(),  // Includes: Roadmap, Ideation, Insights, Changelog, Linear, GitHub, GitLab, Azure DevOps, Shell
+  ...createAgentAPI(),
   ...createAppUpdateAPI(),
   ...createDebugAPI(),
   ...createClaudeCodeAPI(),
@@ -72,6 +74,9 @@ export const createElectronAPI = (): ElectronAPI => ({
   createClaudeProfileDirectory: (profileName: string) => invokeIpc('claude:profileCreateDir', profileName),
   requestUsageUpdate: (providerName?: string) => invokeIpc<IPCResult<UsageSnapshot | null>>('claude:usageRequest', providerName),
   getGithubCliStatus: () => invokeIpc<IPCResult<{ available: boolean; isAuth?: boolean; username?: string }>>('copilotCli:getStatus'),
+  selectProvider: (provider: string) => invokeIpc<IPCResult<string>>('provider:select', provider),
+  getSelectedProvider: () => invokeIpc<IPCResult<string | null>>('provider:getSelected'),
+  testGitHubConnection: (config: { repo: string; token: string }) => invokeIpc('github:testConnection', config),
 });
 
 // Export individual API creators for potential use in tests or specialized contexts

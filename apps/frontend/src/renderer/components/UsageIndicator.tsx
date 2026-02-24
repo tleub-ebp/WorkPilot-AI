@@ -307,11 +307,9 @@ export function UsageIndicator() {
     if (selectedProvider === 'anthropic') {
       const checkOAuthStatus = async () => {
         try {
-          console.log(`[UsageIndicator] Checking OAuth via IPC...`);
           
           // Vérifier directement le fichier de configuration Claude CLI
           const claudeProfilesResult = await window.electronAPI.invoke('claude:profilesGet');
-          console.log(`[UsageIndicator] Claude profiles:`, claudeProfilesResult);
           
           if (claudeProfilesResult.success && claudeProfilesResult.data?.profiles) {
             // Chercher un profil authentifié (OAuth)
@@ -320,12 +318,10 @@ export function UsageIndicator() {
             );
             
             if (oauthProfile) {
-              console.log(`[UsageIndicator] OAuth found in Claude profiles! Profile:`, oauthProfile.name);
               setClaudeProfile(oauthProfile);
               
               // For OAuth profiles, try to fetch usage data
               // This will trigger the usage monitoring system to use OAuth tokens
-              console.log(`[UsageIndicator] Triggering usage fetch for OAuth profile...`);
               await window.electronAPI.requestUsageUpdate(selectedProvider);
             } else {
               setClaudeProfile(null);
@@ -364,11 +360,9 @@ export function UsageIndicator() {
 
     // Only set up polling for providers that support usage tracking
     if (selectedProvider && KNOWN_PROVIDERS.has(selectedProvider.toLowerCase())) {
-      console.log(`[UsageIndicator] Setting up real-time polling for provider: ${selectedProvider}`);
       
       // Set up polling interval (30 seconds)
       pollingIntervalRef.current = setInterval(async () => {
-        console.log(`[UsageIndicator] Auto-refreshing usage data...`);
         setIsRefreshing(true);
         
         try {
@@ -478,10 +472,6 @@ export function UsageIndicator() {
     const needsReauth = activeProfileNeedsReauth;
     
     // Debug: Log current provider and known providers
-    console.log('[UsageIndicator] Debug - Selected provider:', selectedProvider);
-    console.log('[UsageIndicator] Debug - Known providers:', Array.from(KNOWN_PROVIDERS));
-    console.log('[UsageIndicator] Debug - Is available:', isAvailable);
-    console.log('[UsageIndicator] Debug - Usage data:', usage);
     
     // Debug OpenAI
     if (selectedProvider?.toLowerCase() === 'openai') {

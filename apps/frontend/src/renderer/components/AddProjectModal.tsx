@@ -50,7 +50,6 @@ interface GitHubConfig {
 }
 
 export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProjectModalProps) {
-  console.log('🔥 AddProjectModal: open prop changed to', open);
   const { t } = useTranslation('dialogs');
   const { toast } = useToast();
   const [step, setStep] = useState<number>(0);
@@ -71,22 +70,13 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
 
   // Git setup modal handlers
   const handleGitInitialized = () => {
-    console.log('🔥 GIT-SETUP: handleGitInitialized - FORCE CLOSING ALL MODALS');
-    console.log('🔥 GIT-SETUP: onOpenChange function type:', typeof onOpenChange);
-    console.log('🔥 GIT-SETUP: Current open prop value:', open);
     
-    // Forcer la fermeture immédiate du GitSetupModal
-    console.log('🔥 GIT-SETUP: FORCE closing GitSetupModal');
     setShowGitCommitModal(false);
     setPendingProjectPath(null);
     
-    // Forcer la fermeture immédiate du modal parent
-    console.log('🔥 GIT-SETUP: FORCE closing parent modal');
     try {
       onOpenChange(false);
-      console.log('🔥 GIT-SETUP: onOpenChange(false) called successfully');
     } catch (error) {
-      console.error('🔥 GIT-SETUP: Error calling onOpenChange:', error);
     }
     
     // Nettoyer tous les états pour éviter les ré-rendres
@@ -96,18 +86,12 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
 
   // Get remote config for Git setup
   const getRemoteConfigForGitSetup = () => {
-    console.log('� GIT-SETUP: getRemoteConfigForGitSetup called:', { 
-      remoteType, 
-      remoteConfig, 
-      projectName 
-    });
     
     if (remoteType === 'github' && (remoteConfig.githubRepo || remoteConfig.repo)) {
       const config = {
         url: `https://github.com/${remoteConfig.githubRepo || remoteConfig.repo}.git`,
         name: 'origin'
       };
-      console.log('🔥 GIT-SETUP: ✅ GitHub remote config:', config);
       return config;
     }
     if (remoteType === 'azure' && (remoteConfig.azureOrg || remoteConfig.orgUrl)) {
@@ -118,15 +102,12 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
         url: `${orgUrl.replace(/\/$/, '')}/_git/${repoName}`,
         name: 'origin'
       };
-      console.log('🔥 GIT-SETUP: ✅ Azure remote config:', config);
       return config;
     }
-    console.log('🔥 GIT-SETUP: ❌ No remote config available');
     return undefined;
   };
 
   useEffect(() => {
-    console.log('🔥 GIT-SETUP: AddProjectModal open prop changed to:', open);
   }, [open]);
 
   useEffect(() => {
@@ -153,21 +134,16 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
   // Auto-detect repository type when project path changes
   useEffect(() => {
     const autoDetectProvider = async () => {
-      console.log('🚀 Auto-detect useEffect triggered. projectLocation:', projectLocation, 'projectName:', projectName, 'step:', step);
       
       if (projectLocation && projectName && step === 0) {
         const projectPath = `${projectLocation}/${projectName.trim()}`;
-        console.log('🎯 Project path ready for detection:', projectPath);
         
         try {
           // Check if it's an existing git repository
           const gitStatus = await window.electronAPI.checkGitStatus(projectPath);
-          console.log('📊 Git status result:', gitStatus);
           
           if (gitStatus && gitStatus.success && gitStatus.data && gitStatus.data.isGitRepo) {
-            console.log('✅ Git repository detected, proceeding with provider detection');
             const detected = await detectRepositoryProvider(projectPath);
-            console.log('🔍 Detection completed, result:', detected);
             
             if (detected !== 'unknown') {
               // Auto-select the detected provider
@@ -186,17 +162,14 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
             }
           } else {
             // No git repo, don't auto-select anything unless user already selected
-            console.log('❌ No git repository found');
             if (!providerSelected) {
               setRemoteType(null);
             }
           }
         } catch (error) {
           // Error checking, don't change user's selection
-          console.error('Error auto-detecting provider:', error);
         }
       } else {
-        console.log('⏸️ Auto-detect conditions not met:', { projectLocation: !!projectLocation, projectName: !!projectName, step });
       }
     };
 
@@ -205,33 +178,26 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
 
   // Function to detect repository provider from existing git repository
   const detectRepositoryProvider = async (projectPath: string) => {
-    console.log('🔍 Detecting repository provider for:', projectPath);
     
     try {
       // First try to read the .git/config file directly for more reliable detection
       const gitConfigPath = `${projectPath}/.git/config`;
-      console.log('📁 Attempting to read git config from:', gitConfigPath);
       
       try {
         const result = await window.electronAPI.invoke('fileExplorer:read', gitConfigPath);
-        console.log('📄 Git config read result:', result);
         
         if (result.success && result.data) {
           const configContent = result.data;
-          console.log('📝 Git config content preview:', configContent.substring(0, 200));
           
           // Parse the git config file to find remote URLs
           const urlMatches = configContent.match(/url\s*=\s*(.+)/g);
-          console.log('🔗 Found URL matches:', urlMatches);
           
           if (urlMatches) {
             for (const match of urlMatches) {
               const url = match.split('=', 2)[1].trim();
-              console.log('🌐 Checking URL:', url);
               
               // Check for Azure DevOps patterns
               if (url.includes('dev.azure.com') || url.includes('visualstudio.com')) {
-                console.log('✅ Detected Azure DevOps repository');
                 setDetectedProvider('azure_devops');
                 setRemoteType('azure');
                 return 'azure_devops';
@@ -239,7 +205,6 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
               
               // Check for GitHub patterns
               if (url.includes('github.com')) {
-                console.log('✅ Detected GitHub repository');
                 setDetectedProvider('github');
                 setRemoteType('github');
                 return 'github';
@@ -247,16 +212,12 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
             }
           }
         } else {
-          console.log('❌ Failed to read git config:', result.error);
         }
       } catch (configError) {
-        console.log('⚠️ Could not read git config file, falling back to git command:', configError);
       }
       
       // Fallback to the existing git command approach
-      console.log('🔄 Using fallback git command approach');
       const gitResult = await window.electronAPI.detectRepoProvider(projectPath);
-      console.log('🔧 Git command result:', gitResult);
       
       if (gitResult.success && gitResult.data) {
         setDetectedProvider(gitResult.data.provider);
@@ -269,16 +230,13 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
         return gitResult.data.provider;
       }
     } catch (error) {
-      console.error('❌ Failed to detect repository provider:', error);
     }
     
-    console.log('🤷 Unknown provider detected');
     return 'unknown';
   };
 
   // Determine which provider options to show
   const shouldShowProviderOptions = () => {
-    console.log('🎛️ Determining provider options. detectedProvider:', detectedProvider, 'remoteType:', remoteType);
     
     // If we have a detected provider and it's not unknown, only show that option
     if (detectedProvider && detectedProvider !== 'unknown') {
@@ -288,7 +246,6 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
         showJira: false, // Never auto-detect Jira from git
         showSkip: true // Always allow skipping
       };
-      console.log('✨ Auto-detected provider options:', options);
       return options;
     }
     
@@ -299,7 +256,6 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
       showJira: false,
       showSkip: true
     };
-    console.log('📋 Showing all provider options:', options);
     return options;
   };
 
@@ -517,7 +473,6 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
 
   // Création effective du projet
   const handleCreate = async () => {
-    console.log('🔥 GIT-SETUP: handleCreate called - starting project creation');
     if (!projectName || !projectLocation) {
       setError(t('addProject.fillRequiredFields'));
       return;
@@ -593,7 +548,6 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
         variant: 'destructive',
       });
     } finally {
-      console.log('🔥 GIT-SETUP: Project creation completed - isCreating set to false');
       setIsCreating(false);
     }
   };
@@ -683,7 +637,6 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
           onOpenChange={setShowRemoteConfigModal}
           initialConfig={remoteConfig}
           onSave={async (config: AzureDevOpsConfig) => {
-            console.log('🔥 GIT-SETUP: Azure config saved - closing remote modal');
             setRemoteConfig(config);
             setShowRemoteConfigModal(false);
             if (projectLocation && projectName) {
@@ -691,11 +644,9 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
               const status = await window.electronAPI.checkGitStatus(projectPath);
 
               if (status && status.success && status.data && !status.data.hasCommits && !showGitCommitModal && !pendingProjectPath) {
-                console.log('🔥 GIT-SETUP: Opening Git modal for Azure project');
                 setPendingProjectPath(projectPath);
                 setShowGitCommitModal(true);
               } else {
-                console.log('🔥 GIT-SETUP: No Git modal needed for Azure project');
                 setStep(1);
               }
             } else {
@@ -711,18 +662,15 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
           onOpenChange={setShowRemoteConfigModal}
           initialConfig={remoteConfig}
           onSave={async (config: GitHubConfig) => {
-            console.log('🔥 GIT-SETUP: GitHub config saved - closing remote modal');
             setRemoteConfig(config);
             setShowRemoteConfigModal(false);
             if (projectLocation && projectName) {
               const projectPath = `${projectLocation}/${projectName.trim()}`;
               const status = await window.electronAPI.checkGitStatus(projectPath);
               if (status && status.success && status.data && !status.data.hasCommits && !showGitCommitModal && !pendingProjectPath) {
-                console.log('🔥 GIT-SETUP: Opening Git modal for GitHub project');
                 setPendingProjectPath(projectPath);
                 setShowGitCommitModal(true);
               } else {
-                console.log('🔥 GIT-SETUP: No Git modal needed for GitHub project');
                 setStep(1);
               }
             } else {
@@ -735,11 +683,9 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
       {/* Git Setup Modal */}
       {showGitCommitModal && pendingProjectPath && (
         <>
-          {console.log('🔥 GIT-SETUP: Rendering GitSetupModal - showGitCommitModal:', showGitCommitModal, 'pendingProjectPath:', pendingProjectPath)}
           <GitSetupModal
           open={showGitCommitModal}
           onOpenChange={(isOpen) => {
-            console.log('🔥 GIT-SETUP: GitSetupModal onOpenChange called with:', isOpen);
             setShowGitCommitModal(isOpen);
             if (!isOpen) {
               setPendingProjectPath(null);
@@ -772,11 +718,9 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
           }}
           onGitInitialized={handleGitInitialized}
           onSkip={() => {
-            console.log('🔥 GIT-SETUP: Skip clicked - closing parent modal');
             setShowGitCommitModal(false);
             setPendingProjectPath(null);
             setTimeout(() => {
-              console.log('🔥 GIT-SETUP: Closing parent modal after skip');
               onOpenChange(false);
             }, 200);
           }}

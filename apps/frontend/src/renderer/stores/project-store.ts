@@ -103,11 +103,6 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         ? state.tabOrder
         : [...state.tabOrder, projectId];
 
-      console.log('[ProjectStore] Adding new tab:', {
-        newOpenProjectIds,
-        newTabOrder
-      });
-
       set({
         openProjectIds: newOpenProjectIds,
         tabOrder: newTabOrder,
@@ -117,7 +112,6 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       // Save to main process (debounced)
       saveTabStateToMain();
     } else {
-      console.log('[ProjectStore] Project already open, just activating');
       // Project already open, just make it active
       get().setActiveProject(projectId);
     }
@@ -166,7 +160,6 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   restoreTabState: () => {
     // This is now handled by loadTabStateFromMain() called during loadProjects()
-    console.log('[ProjectStore] restoreTabState called - now handled by IPC');
   },
 
 
@@ -218,7 +211,6 @@ function saveTabStateToMain(): void {
       activeProjectId: store.activeProjectId,
       tabOrder: store.tabOrder
     };
-    console.log('[ProjectStore] Saving tab state to main process:', tabState);
     try {
       await window.electronAPI.saveTabState(tabState);
     } catch (err) {
