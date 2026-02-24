@@ -89,7 +89,10 @@ export function UsageIndicator() {
   const [isOpen, setIsOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const [claudeProfile, setClaudeProfile] = useState<any>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const { selectedProvider } = useProviderContext();
 
   /**
@@ -346,8 +349,52 @@ export function UsageIndicator() {
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
       }
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
     };
   }, []);
+
+  // Real-time polling effect - refresh usage data every 30 seconds
+  useEffect(() => {
+    // Clear any existing interval
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+
+    // Only set up polling for providers that support usage tracking
+    if (selectedProvider && KNOWN_PROVIDERS.has(selectedProvider.toLowerCase())) {
+      console.log(`[UsageIndicator] Setting up real-time polling for provider: ${selectedProvider}`);
+      
+      // Set up polling interval (30 seconds)
+      pollingIntervalRef.current = setInterval(async () => {
+        console.log(`[UsageIndicator] Auto-refreshing usage data...`);
+        setIsRefreshing(true);
+        
+        try {
+          await window.electronAPI.requestUsageUpdate(selectedProvider);
+          await window.electronAPI.requestAllProfilesUsage?.();
+          setLastRefreshTime(new Date());
+        } catch (error) {
+          console.warn('[UsageIndicator] Failed to refresh usage data:', error);
+        } finally {
+          // Brief visual feedback of refresh
+          setTimeout(() => setIsRefreshing(false), 1000);
+        }
+      }, 30000); // 30 seconds
+
+      // Also refresh immediately when provider changes
+      window.electronAPI.requestUsageUpdate(selectedProvider);
+      window.electronAPI.requestAllProfilesUsage?.();
+    }
+
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
+  }, [selectedProvider]);
 
   // Get formatted reset times (calculated dynamically from timestamps)
   const sessionResetTime = usage?.sessionResetTimestamp
@@ -620,7 +667,7 @@ export function UsageIndicator() {
               onMouseLeave={handleMouseLeave}
               onClick={handleTriggerClick}
           >
-            <Icon className="h-3.5 w-3.5 shrink-0" />
+            <Icon className={`h-3.5 w-3.5 shrink-0 ${isRefreshing ? 'motion-safe:animate-spin' : ''}`} />
             {/* Show "!" when re-auth needed, otherwise dual usage display */}
             {usage.needsReauthentication ? (
                 <span className="text-xs font-semibold text-red-500" title={t('common:usage.needsReauth')}>
@@ -660,9 +707,27 @@ export function UsageIndicator() {
         >
           <div className="p-3 space-y-3">
             {/* Header with overall status */}
-            <div className="flex items-center gap-1.5 pb-2 border-b">
-              <Icon className="h-3.5 w-3.5" />
-              <span className="font-semibold text-xs">{t('common:usage.usageBreakdown')}</span>
+            <div className="flex items-center justify-between pb-2 border-b">
+              <div className="flex items-center gap-1.5">
+                <Icon className="h-3.5 w-3.5" />
+                <span className="font-semibold text-xs">{t('common:usage.usageBreakdown')}</span>
+              </div>
+              {/* Real-time indicator */}
+              <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+                {isRefreshing ? (
+                  <>
+                    <Activity className="h-2.5 w-2.5 motion-safe:animate-spin" />
+                    <span>Mise à jour...</span>
+                  </>
+                ) : lastRefreshTime ? (
+                  <>
+                    <Clock className="h-2.5 w-2.5" />
+                    <span>Il y a {Math.floor((new Date().getTime() - lastRefreshTime.getTime()) / 60000)} min</span>
+                  </>
+                ) : (
+                  <span>Temps réel</span>
+                )}
+              </div>
             </div>
 
             {/* Re-auth required prompt - shown when active profile needs re-authentication */}
