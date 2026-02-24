@@ -32,7 +32,6 @@ export function GitSetupModal({
   onSkip,
   remoteConfig
 }: GitSetupModalProps) {
-  console.log('🔥 GitSetupModal: open prop changed to', open);
   const { t } = useTranslation('dialogs');
   const { toast } = useToast();
   const [isInitializing, setIsInitializing] = useState(false);
@@ -53,26 +52,15 @@ export function GitSetupModal({
   const handleInitializeGit = async () => {
     if (!project) return;
 
-    console.log('� GIT-SETUP: � GitSetupModal handleInitializeGit called:', { 
-      projectPath: project.path, 
-      remoteConfig: storedRemoteConfig 
-    });
-
     setIsInitializing(true);
     setError(null);
     setStep('initializing');
 
     try {
       // Call the backend to initialize git with remote config if available
-      console.log('🔥 GIT-SETUP: 🔧 Calling initializeGit with:', { 
-      projectPath: project.path, 
-      remoteConfig: JSON.stringify(storedRemoteConfig, null, 2) 
-    });
       const result = await window.electronAPI.initializeGit(project.path, storedRemoteConfig);
-      console.log('🔥 GIT-SETUP: 📋 initializeGit result:', result);
 
       if (result.success) {
-        console.log('🔥 GIT-SETUP: ✅ Git initialization successful, closing modal...');
         setStep('success');
         
         // Close this modal first
@@ -80,7 +68,6 @@ export function GitSetupModal({
         
         // Then call the parent callback after a short delay
         setTimeout(() => {
-          console.log('🔥 GIT-SETUP: Calling onGitInitialized callback');
           onGitInitialized();
         }, 100);
       } else {
@@ -117,7 +104,6 @@ export function GitSetupModal({
     
     // Then call the parent callback after a short delay
     setTimeout(() => {
-      console.log('🔥 GIT-SETUP: Calling onSkip callback');
       onSkip?.();
     }, 100);
   };

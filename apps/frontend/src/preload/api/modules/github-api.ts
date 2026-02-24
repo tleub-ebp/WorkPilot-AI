@@ -164,6 +164,7 @@ export interface GitHubAPI {
   getGitHubIssue: (projectId: string, issueNumber: number) => Promise<IPCResult<GitHubIssue>>;
   getIssueComments: (projectId: string, issueNumber: number) => Promise<IPCResult<any[]>>;
   checkGitHubConnection: (projectId: string) => Promise<IPCResult<GitHubSyncStatus>>;
+  testGitHubConnection: (config: { repo: string; token: string }) => Promise<{ success: boolean; status?: number; error?: string }>;
   investigateGitHubIssue: (projectId: string, issueNumber: number, selectedCommentIds?: number[]) => void;
   importGitHubIssues: (projectId: string, issueNumbers: number[]) => Promise<IPCResult<GitHubImportResult>>;
   createGitHubRelease: (
@@ -505,6 +506,9 @@ export const createGitHubAPI = (): GitHubAPI => ({
 
   checkGitHubConnection: (projectId: string): Promise<IPCResult<GitHubSyncStatus>> =>
     invokeIpc(IPC_CHANNELS.GITHUB_CHECK_CONNECTION, projectId),
+
+  testGitHubConnection: (config: { repo: string; token: string }): Promise<{ success: boolean; status?: number; error?: string }> =>
+    invokeIpc('github:testConnection', config),
 
   investigateGitHubIssue: (projectId: string, issueNumber: number, selectedCommentIds?: number[]): void =>
     sendIpc(IPC_CHANNELS.GITHUB_INVESTIGATE_ISSUE, projectId, issueNumber, selectedCommentIds),

@@ -258,54 +258,35 @@ export function App() {
   // Auto-detect repository types for loaded projects
   useEffect(() => {
     if (projects.length > 0 || activeProjectId) {
-      console.log('🔍 Starting auto-detection for loaded projects:', {
-        projectsCount: projects.length,
-        activeProjectId,
-        projects: projects.map(p => ({ id: p.id, name: p.name, path: p.path }))
-      });
       
       const detectProjectsWithDelay = async () => {
         // Get the list of projects to detect (either from projects array or just the active project)
         const projectsToDetect = projects.length > 0 ? projects : (activeProjectId ? projects.filter(p => p.id === activeProjectId) : []);
         
         if (projectsToDetect.length === 0) {
-          console.log('⏸️ No projects to detect');
           return;
         }
         
         for (const project of projectsToDetect) {
           try {
-            console.log('🔍 Auto-detecting repository for project:', project.name, project.path);
             
             // Skip if project already has a provider configured
             if (project.settings?.provider) {
-              console.log('⏭️ Project already has provider configured, skipping:', project.name);
               continue;
             }
             
             const result = await autoDetectAndUpdateProject(project);
             
             if (result.success) {
-              console.log('✅ Auto-detected project:', {
-                name: project.name,
-                provider: result.detection?.provider,
-                remoteUrl: result.detection?.remoteUrl
-              });
             } else {
-              console.log('❌ Failed to auto-detect project:', {
-                name: project.name,
-                error: result.error
-              });
             }
           } catch (error) {
-            console.error('❌ Error auto-detecting project:', project.name, error);
           }
           
           // Small delay between projects to avoid overwhelming the system
           await new Promise(resolve => setTimeout(resolve, 100));
         }
         
-        console.log('🏁 Auto-detection completed for all projects');
       };
       
       // Run detection with a small delay to ensure UI is responsive
@@ -315,14 +296,6 @@ export function App() {
 
   // Restore tab state and open tabs for loaded projects
   useEffect(() => {
-    console.warn('[App] Tab restore useEffect triggered:', {
-      projectsCount: projects.length,
-      openProjectIds,
-      activeProjectId,
-      selectedProjectId,
-      projectTabsCount: projectTabs.length,
-      projectTabIds: projectTabs.map(p => p.id)
-    });
 
     if (projects.length > 0) {
       // Check openProjectIds (persisted state) instead of projectTabs (computed)
@@ -330,34 +303,28 @@ export function App() {
       if (openProjectIds.length === 0) {
         // No tabs persisted at all, open the first available project
         const projectToOpen = activeProjectId || selectedProjectId || projects[0].id;
-        console.warn('[App] No tabs persisted, opening project:', projectToOpen);
         // Verify the project exists before opening
         if (projects.some(p => p.id === projectToOpen)) {
           openProjectTab(projectToOpen);
           setActiveProject(projectToOpen);
         } else {
           // Fallback to first project if stored IDs are invalid
-          console.warn('[App] Project not found, falling back to first project:', projects[0].id);
           openProjectTab(projects[0].id);
           setActiveProject(projects[0].id);
         }
         return;
       }
-      console.warn('[App] Tabs already persisted, checking active project');
       // If there's an active project but no tabs open for it, open a tab
       // Note: Use openProjectIds instead of projectTabs to avoid re-render loop
       // (projectTabs creates a new array on every render)
       if (activeProjectId && !openProjectIds.includes(activeProjectId)) {
-        console.warn('[App] Active project has no tab, opening:', activeProjectId);
         openProjectTab(activeProjectId);
       }
       // If there's a selected project but no active project, make it active
       else if (selectedProjectId && !activeProjectId) {
-        console.warn('[App] No active project, using selected:', selectedProjectId);
         setActiveProject(selectedProjectId);
         openProjectTab(selectedProjectId);
       } else {
-        console.warn('[App] Tab state is valid, no action needed');
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- projectTabs is intentionally omitted to avoid infinite re-render (computed array creates new reference each render)

@@ -133,9 +133,59 @@ export function registerGetRepositories(): void {
 }
 
 /**
+ * Test GitHub connection for remote configuration modal
+ */
+export function registerTestConnection(): void {
+  ipcMain.handle(
+    'github:testConnection',
+    async (_, config: { repo: string; token: string }): Promise<{ success: boolean; status?: number; error?: string }> => {
+      if (!config.repo || !config.token) {
+        return { success: false, error: 'Repository and token are required' };
+      }
+
+      try {
+        // Normalize repo reference (handles full URLs, git URLs, etc.)
+        const normalizedRepo = normalizeRepoReference(config.repo);
+        if (!normalizedRepo) {
+          return {
+            success: false,
+            error: 'Invalid repository format. Use owner/repo or GitHub URL.'
+          };
+        }
+
+        // Test connection by fetching repo info
+        const response = await fetch(`https://api.github.com/repos/${normalizedRepo}`, {
+          headers: {
+            'Authorization': `token ${config.token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (response.ok) {
+          return { success: true };
+        } else {
+          // Return status code for specific error handling in frontend
+          return {
+            success: false,
+            status: response.status,
+            error: response.statusText || 'Connection failed'
+          };
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Network error during connection test'
+        };
+      }
+    }
+  );
+}
+
+/**
  * Register all repository-related handlers
  */
 export function registerRepositoryHandlers(): void {
   registerCheckConnection();
   registerGetRepositories();
+  registerTestConnection();
 }

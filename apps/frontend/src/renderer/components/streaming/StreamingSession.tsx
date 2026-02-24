@@ -71,7 +71,6 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
     
     // Prevent multiple connections
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      console.log('🔌 WebSocket already connected, skipping...');
       return;
     }
     
@@ -79,14 +78,12 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
       if (!isMounted) return;
       
       const wsUrl = `ws://localhost:8765/stream/${sessionId}`;
-      console.log('🔌 Connecting to WebSocket...', wsUrl);
       const ws = new WebSocket(wsUrl);
       
       // Set a timeout for connection attempt
       connectionTimeout = setTimeout(() => {
         if (!isMounted) return;
         if (ws.readyState === WebSocket.CONNECTING) {
-          console.log('⏰ Connection timeout, closing...');
           ws.close(1006, 'Connection timeout');
         }
       }, 5000);
@@ -95,8 +92,6 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         if (!isMounted) return;
         
         clearTimeout(connectionTimeout);
-        console.log('✅ Streaming session connected to:', ws.url);
-        console.log('🔍 WebSocket readyState:', ws.readyState);
         setIsConnected(true);
         startTimeRef.current = Date.now();
         
@@ -106,7 +101,6 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
           session_id: sessionId
         };
         ws.send(JSON.stringify(initMessage));
-        console.log('📤 Sent session initialization message:', initMessage);
       };
       
       ws.onmessage = (event) => {
@@ -114,7 +108,6 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         
         try {
           const streamEvent: StreamingEvent = JSON.parse(event.data);
-          console.log('📨 WebSocket message received:', streamEvent.event_type);
           handleStreamingEvent(streamEvent);
         } catch (error) {
           console.error('❌ Error parsing WebSocket message:', error);
@@ -135,11 +128,9 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         if (!isMounted) return;
         
         clearTimeout(connectionTimeout);
-        console.log('🔌 Streaming session disconnected', event.code, event.reason);
         setIsConnected(false);
         
         // NO automatic reconnection - let user manually reconnect
-        console.log('📝 Connection closed. No automatic reconnection.');
       };
       
       wsRef.current = ws;
@@ -157,7 +148,6 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
       if (initialTimeout) clearTimeout(initialTimeout);
       if (connectionTimeout) clearTimeout(connectionTimeout);
       if (wsRef.current) {
-        console.log('🧹 Cleaning up WebSocket connection');
         wsRef.current.close(1000, 'Component unmounted');
       }
     };
@@ -174,19 +164,15 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         
       case 'session_confirmed':
         setCurrentStatus(t('streaming:status.sessionConfirmed'));
-        console.log('Session confirmed with ID:', event.data.session_id);
         break;
         
       case 'code_change':
       case 'file_update':
       case 'file_operation':
-        console.log('📝 Code/file event received:', event.event_type, event.data);
         setCurrentFile(event.data.file_path);
         if (event.data.content) {
-          console.log('📄 Setting code content:', event.data.content.substring(0, 100) + '...');
           setCurrentCode(event.data.content);
         } else {
-          console.log('⚠️ No content in event data');
         }
         setSessionStats(prev => ({
           ...prev,
@@ -204,7 +190,6 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         
       case 'command_output':
         // Command output could be displayed in a console view
-        console.log('Command output:', event.data.output);
         break;
         
       case 'test_run':
@@ -216,7 +201,6 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         
       case 'test_result':
         // Test result could update the test status
-        console.log('Test result:', event.data.success, event.data.summary);
         break;
         
       case 'agent_thinking':

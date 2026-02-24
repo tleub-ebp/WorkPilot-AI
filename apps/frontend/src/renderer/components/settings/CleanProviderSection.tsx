@@ -336,7 +336,6 @@ export function CleanProviderSection({
   // Helper function to detect and sync providers with auto-switching
   const syncProviderWithAutoSwitching = async (providerId: string, action: 'add' | 'remove' | 'toggle', enabled?: boolean) => {
     try {
-      console.log(`[AutoSwitching Sync] ${action} provider: ${providerId}, enabled: ${enabled}`);
       
       // Get current auto-switching settings
       const currentSettings = { ...settings };
@@ -346,7 +345,6 @@ export function CleanProviderSection({
         currentSettings.providerPriorityOrder = [];
       }
       
-      console.log(`[AutoSwitching Sync] Current priority order:`, currentSettings.providerPriorityOrder);
       
       const providerName = staticProviders.find(p => p.name === providerId)?.label || providerId;
       
@@ -354,32 +352,24 @@ export function CleanProviderSection({
         // Add provider to auto-switching priority list if not already present
         if (!currentSettings.providerPriorityOrder.includes(providerId)) {
           currentSettings.providerPriorityOrder = [...currentSettings.providerPriorityOrder, providerId];
-          console.log(`[AutoSwitching Sync] Added ${providerId} to priority order`);
         } else {
-          console.log(`[AutoSwitching Sync] ${providerId} already in priority order`);
         }
       } else if (action === 'remove' || (action === 'toggle' && enabled === false)) {
         // Remove provider from auto-switching priority list only if it exists
         const beforeCount = currentSettings.providerPriorityOrder.length;
         if (currentSettings.providerPriorityOrder.includes(providerId)) {
           currentSettings.providerPriorityOrder = currentSettings.providerPriorityOrder.filter((id: string) => id !== providerId);
-          console.log(`[AutoSwitching Sync] Removed ${providerId} from priority order`);
         } else {
-          console.log(`[AutoSwitching Sync] ${providerId} not in priority order, nothing to remove`);
         }
         const afterCount = currentSettings.providerPriorityOrder.length;
-        console.log(`[AutoSwitching Sync] Priority order size changed: ${beforeCount} -> ${afterCount}`);
       }
       
-      console.log(`[AutoSwitching Sync] Final priority order:`, currentSettings.providerPriorityOrder);
       
       // Update settings only if there's a change
       const currentPriorityOrder = settings.providerPriorityOrder || [];
       if (JSON.stringify(currentPriorityOrder) !== JSON.stringify(currentSettings.providerPriorityOrder)) {
         onSettingsChange(currentSettings);
-        console.log(`[AutoSwitching Sync] Settings updated`);
       } else {
-        console.log(`[AutoSwitching Sync] No change in settings, skipping update`);
       }
       
       // Show toast notification only for meaningful actions
@@ -605,7 +595,6 @@ export function CleanProviderSection({
 
   const handleToggle = async (providerId: string, enabled: boolean) => {
     try {
-      console.log(`[Toggle] Starting toggle for provider: ${providerId}, enabled: ${enabled}`);
       
       // Set manual toggle flag to prevent auto-sync conflicts
       setIsManualToggle(true);
@@ -620,7 +609,6 @@ export function CleanProviderSection({
         lastUpdated: new Date().toISOString()
       };
       
-      console.log(`[Toggle] Saving config for ${providerId}:`, updatedConfig);
       
       // Save the updated configuration
       await ProviderService.saveUserProviderConfig(providerId, updatedConfig);
@@ -634,7 +622,6 @@ export function CleanProviderSection({
         )
       );
       
-      console.log(`[Toggle] Updated local state for ${providerId}`);
       
       // Sync with auto-switching (manual operation)
       await syncProviderWithAutoSwitching(providerId, 'toggle', enabled);
