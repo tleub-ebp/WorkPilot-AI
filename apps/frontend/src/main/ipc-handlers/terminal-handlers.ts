@@ -522,23 +522,29 @@ export function registerTerminalHandlers(
   // ============================================
 
   // Request current usage snapshot
+  // Returns fresh data directly AND emits it as an event so both
+  // the IPC response and event listeners receive updated usage.
   ipcMain.handle(
     IPC_CHANNELS.USAGE_REQUEST,
     async (event: IpcMainInvokeEvent, providerName?: string): Promise<IPCResult<import('../../shared/types').UsageSnapshot | null>> => {
       try {
         const monitor = getUsageMonitor();
-        
+
         let usage: UsageSnapshot | null;
-        
+
         if (providerName) {
           // Use getUsageForProvider for specific provider requests
-          console.log(`[IPC:USAGE_REQUEST] Getting usage for provider: ${providerName}`);
           usage = await monitor.getUsageForProvider(providerName);
         } else {
           // Use getCurrentUsage for general requests (backward compatibility)
           usage = monitor.getCurrentUsage();
         }
-        
+
+        // Also emit the fresh usage so event-based listeners stay in sync
+        if (usage) {
+          monitor.emit('usage-updated', usage);
+        }
+
         return { success: true, data: usage };
       } catch (error) {
         return {
