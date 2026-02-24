@@ -197,10 +197,10 @@ export function AuthStatusIndicator() {
     return OAUTH_FALLBACK;
   }, [selectedProvider, profiles, activeProfileId]);
 
-  // Helper function to truncate ID for display
-  const truncateId = (id: string | undefined): string => {
+  // Helper function to get full ID for display
+  const getFullId = (id: string | undefined): string => {
     if (!id) return '';
-    return id.slice(0, 8);
+    return id;
   };
 
   const isOAuth = authStatus.type === 'oauth';
@@ -304,7 +304,7 @@ export function AuthStatusIndicator() {
                       <span className="text-[10px]">{t('common:usage.id')}</span>
                     </div>
                     {authStatus.id && (
-                      <span className="text-xs text-muted-foreground">{truncateId(authStatus.id)}</span>
+                      <span className="text-xs text-muted-foreground ml-2">{getFullId(authStatus.id)}</span>
                     )}
                   </div>
                   {/* API Endpoint */}

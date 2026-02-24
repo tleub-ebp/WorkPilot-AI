@@ -1074,6 +1074,14 @@ export function App() {
                                   onNewTaskClick={() => setIsNewTaskDialogOpen(true)}
                                   onRefresh={handleRefreshTasks}
                                   isRefreshing={isRefreshingTasks}
+                                  onOpenJiraSettings={() => {
+                                    setSettingsInitialProjectSection('jira');
+                                    setIsSettingsDialogOpen(true);
+                                  }}
+                                  onOpenAzureDevOpsSettings={() => {
+                                    setSettingsInitialProjectSection('azure-devops');
+                                    setIsSettingsDialogOpen(true);
+                                  }}
                               />
                           )}
                           {/* TerminalGrid is always mounted but hidden when not active to preserve terminal state */}
