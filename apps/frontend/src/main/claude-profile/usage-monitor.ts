@@ -962,7 +962,36 @@ export class UsageMonitor extends EventEmitter {
       // Step 2: Fetch current usage (pass activeProfile for consistency)
       const credential = await this.getCredential();
       const provider = detectProvider(activeProfile.baseUrl);
-      const usage = await this.fetchUsage(profileId, credential, activeProfile, provider, suppressErrors);
+      let usage = await this.fetchUsage(profileId, credential, activeProfile, provider, suppressErrors);
+
+      // For anthropic API key profiles, if weekly data is missing (0%), try OAuth as well
+      // since the OAuth usage endpoint may return more complete data with an OAuth token
+      if (usage && isAPIProfile && provider === 'anthropic' && usage.weeklyPercent === 0 && usage.sessionPercent > 0) {
+        this.debugLog('[UsageMonitor] API key returned incomplete anthropic data, trying OAuth supplement');
+        const profileManager = getClaudeProfileManager();
+        const oauthProfile = profileManager.getProfilesSortedByAvailability()?.[0];
+        if (oauthProfile) {
+          const oauthCredential = await this.getCredentialForProfile(oauthProfile);
+          if (oauthCredential) {
+            const oauthResult: ActiveProfileResult = {
+              profileId: oauthProfile.id,
+              profileName: oauthProfile.name,
+              profileEmail: oauthProfile.email,
+              isAPIProfile: false,
+              baseUrl: 'https://api.anthropic.com'
+            };
+            const oauthUsage = await this.fetchUsageViaAPI(
+                oauthCredential, oauthProfile.id, oauthProfile.name,
+                oauthProfile.email, oauthResult, suppressErrors
+            );
+            if (oauthUsage && oauthUsage.weeklyPercent > 0) {
+              // Merge: use OAuth weekly data, keep API session data
+              usage = { ...usage, weeklyPercent: oauthUsage.weeklyPercent, weeklyResetTimestamp: oauthUsage.weeklyResetTimestamp };
+            }
+          }
+        }
+      }
+
       if (!usage) {
         this.debugLog('[UsageMonitor] Failed to fetch usage');
         return;
@@ -2315,18 +2344,6 @@ export class UsageMonitor extends EventEmitter {
   async getUsageForProvider(providerName: string): Promise<UsageSnapshot | null> {
     this.debugLog('[UsageMonitor:getUsageForProvider] Fetching usage for provider:', providerName);
 
-    // DEBUG: Exporter la liste des profils détectés et leur provider pour la popin
-    try {
-      const profilesFile = await loadProfilesFile();
-      if (typeof window !== 'undefined') {
-        (window as any).debugProfiles = profilesFile.profiles.map((p: any) => ({
-          name: p.name,
-          baseUrl: p.baseUrl,
-          detectedProvider: detectProvider(p.baseUrl)
-        }));
-      }
-    } catch {}
-
     // Copilot special case — uses gh CLI, not a traditional API profile in profiles.json
     // Fetch directly from our FastAPI backend without requiring a matching profile
     if (providerName === 'copilot') {
@@ -2364,6 +2381,7 @@ export class UsageMonitor extends EventEmitter {
     }
 
     // Step 1: Search API profiles first (profiles.json) — these cover anthropic, openai, ollama API key profiles
+    let apiProfileSnapshot: UsageSnapshot | null = null;
     try {
       const profilesFile = await loadProfilesFile();
       const apiProfile = profilesFile.profiles.find(p => {
@@ -2410,7 +2428,7 @@ export class UsageMonitor extends EventEmitter {
           credential: apiProfile.apiKey
         };
 
-        const snapshot = await this.fetchUsageViaAPI(
+        apiProfileSnapshot = await this.fetchUsageViaAPI(
             apiProfile.apiKey,
             apiProfile.id,
             apiProfile.name,
@@ -2418,10 +2436,23 @@ export class UsageMonitor extends EventEmitter {
             activeProfileResult
         );
 
-        return snapshot;
+        // For non-anthropic providers, return immediately (no OAuth fallback)
+        // For anthropic, if the API key fetch returned incomplete data (e.g., no weekly),
+        // fall through to try OAuth which may have better data
+        if (apiProfileSnapshot && providerName !== 'anthropic') {
+          return apiProfileSnapshot;
+        }
+        if (apiProfileSnapshot && apiProfileSnapshot.weeklyPercent > 0) {
+          return apiProfileSnapshot;
+        }
+        // API key profile returned null or incomplete data for anthropic — try OAuth
+        this.debugLog('[UsageMonitor:getUsageForProvider] Step 1: API profile returned incomplete data, trying OAuth', {
+          hasSnapshot: !!apiProfileSnapshot,
+          weeklyPercent: apiProfileSnapshot?.weeklyPercent
+        });
+      } else {
+        this.debugLog('[UsageMonitor:getUsageForProvider] Step 1: No API profile found for provider:', providerName);
       }
-      // No matching API profile found — fall through to Step 2
-      console.log('[UsageMonitor:getUsageForProvider] Step 1: No API profile found for provider:', providerName);
     } catch (error) {
       console.warn('[UsageMonitor:getUsageForProvider] Step 1: Failed to search API profiles:', error);
     }
@@ -2433,18 +2464,14 @@ export class UsageMonitor extends EventEmitter {
         const oauthProfile = profileManager.getProfilesSortedByAvailability()?.[0];
 
         if (oauthProfile) {
-          console.log('[UsageMonitor:getUsageForProvider] Found OAuth profile:', {
+          this.debugLog('[UsageMonitor:getUsageForProvider] Found OAuth profile:', {
             profileId: oauthProfile.id,
-            profileName: oauthProfile.name,
-            configDir: oauthProfile.configDir
+            profileName: oauthProfile.name
           });
 
           // Get credential directly for THIS specific profile (not the generic active profile)
-          // Previously used this.getCredential() which calls getActiveProfile() — a different
-          // profile could be returned if multiple profiles exist or priority differs.
           const credential = await this.getCredentialForProfile(oauthProfile);
           if (credential) {
-            console.log('[UsageMonitor:getUsageForProvider] Got credential for OAuth profile, fetching usage...');
             const activeProfileResult: ActiveProfileResult = {
               profileId: oauthProfile.id,
               profileName: oauthProfile.name,
@@ -2463,24 +2490,32 @@ export class UsageMonitor extends EventEmitter {
             );
 
             if (snapshot) {
-              console.log('[UsageMonitor:getUsageForProvider] Got usage snapshot:', {
+              this.debugLog('[UsageMonitor:getUsageForProvider] Got OAuth usage snapshot:', {
                 sessionPercent: snapshot.sessionPercent,
                 weeklyPercent: snapshot.weeklyPercent
               });
-            } else {
-              console.warn('[UsageMonitor:getUsageForProvider] fetchUsageViaAPI returned null');
+              return snapshot;
             }
-
-            return snapshot;
+            this.debugLog('[UsageMonitor:getUsageForProvider] fetchUsageViaAPI returned null for OAuth');
           } else {
-            console.warn('[UsageMonitor:getUsageForProvider] No credential obtained for OAuth profile:', oauthProfile.name);
+            this.debugLog('[UsageMonitor:getUsageForProvider] No credential obtained for OAuth profile:', oauthProfile.name);
           }
         } else {
-          console.warn('[UsageMonitor:getUsageForProvider] No OAuth profiles found in ClaudeProfileManager');
+          this.debugLog('[UsageMonitor:getUsageForProvider] No OAuth profiles found in ClaudeProfileManager');
         }
       } catch (error) {
         console.error('[UsageMonitor:getUsageForProvider] Step 2 OAuth lookup failed:', error);
       }
+    }
+
+    // Step 2b: If API profile snapshot was obtained earlier (even with incomplete weekly data),
+    // return it as a fallback rather than returning nothing
+    if (apiProfileSnapshot) {
+      this.debugLog('[UsageMonitor:getUsageForProvider] Returning API profile snapshot as fallback:', {
+        sessionPercent: apiProfileSnapshot.sessionPercent,
+        weeklyPercent: apiProfileSnapshot.weeklyPercent
+      });
+      return apiProfileSnapshot;
     }
 
     // Step 3: Check if currentUsage matches the requested provider
@@ -2489,7 +2524,7 @@ export class UsageMonitor extends EventEmitter {
       return this.currentUsage;
     }
 
-    console.warn('[UsageMonitor:getUsageForProvider] No usage data found for provider:', providerName, '(all 3 steps failed)');
+    this.debugLog('[UsageMonitor:getUsageForProvider] No usage data found for provider:', providerName);
     return null;
   }
 

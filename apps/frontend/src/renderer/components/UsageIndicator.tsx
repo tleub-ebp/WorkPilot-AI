@@ -91,8 +91,10 @@ export function UsageIndicator() {
   const [claudeProfile, setClaudeProfile] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
+  const [, setTick] = useState(0); // Force re-render for "last update" time display
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const tickIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const { selectedProvider } = useProviderContext();
 
   /**
@@ -339,6 +341,18 @@ export function UsageIndicator() {
     }
   }, [selectedProvider]);
 
+  // Tick every 30s to keep "last update" time display fresh
+  useEffect(() => {
+    tickIntervalRef.current = setInterval(() => {
+      setTick(prev => prev + 1);
+    }, 30000);
+    return () => {
+      if (tickIntervalRef.current) {
+        clearInterval(tickIntervalRef.current);
+      }
+    };
+  }, []);
+
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -347,6 +361,9 @@ export function UsageIndicator() {
       }
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
+      }
+      if (tickIntervalRef.current) {
+        clearInterval(tickIntervalRef.current);
       }
     };
   }, []);
@@ -358,19 +375,45 @@ export function UsageIndicator() {
       clearInterval(pollingIntervalRef.current);
     }
 
+    // Helper to fetch and apply fresh usage data
+    const fetchAndApplyUsage = async () => {
+      try {
+        const result = await window.electronAPI.requestUsageUpdate(selectedProvider);
+        if (result.success && result.data) {
+          if (selectedProvider && result.data.providerName && result.data.providerName !== selectedProvider) return;
+          setUsage(result.data);
+          setIsAvailable(true);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.warn('[UsageIndicator] Failed to refresh usage data:', error);
+      }
+
+      try {
+        const allResult = await window.electronAPI.requestAllProfilesUsage?.();
+        if (allResult?.success && allResult?.data) {
+          const nonActiveProfiles = allResult.data.allProfiles.filter(p => !p.isActive);
+          setOtherProfiles(nonActiveProfiles);
+          const activeProfile = allResult.data.allProfiles.find(p => p.isActive);
+          if (activeProfile?.needsReauthentication) {
+            setActiveProfileNeedsReauth(true);
+          }
+        }
+      } catch (error) {
+        console.warn('[UsageIndicator] Failed to refresh all profiles usage:', error);
+      }
+    };
+
     // Only set up polling for providers that support usage tracking
     if (selectedProvider && KNOWN_PROVIDERS.has(selectedProvider.toLowerCase())) {
-      
+
       // Set up polling interval (30 seconds)
       pollingIntervalRef.current = setInterval(async () => {
         setIsRefreshing(true);
-        
+
         try {
-          await window.electronAPI.requestUsageUpdate(selectedProvider);
-          await window.electronAPI.requestAllProfilesUsage?.();
+          await fetchAndApplyUsage();
           setLastRefreshTime(new Date());
-        } catch (error) {
-          console.warn('[UsageIndicator] Failed to refresh usage data:', error);
         } finally {
           // Brief visual feedback of refresh
           setTimeout(() => setIsRefreshing(false), 1000);
@@ -378,8 +421,7 @@ export function UsageIndicator() {
       }, 30000); // 30 seconds
 
       // Also refresh immediately when provider changes
-      window.electronAPI.requestUsageUpdate(selectedProvider);
-      window.electronAPI.requestAllProfilesUsage?.();
+      fetchAndApplyUsage();
     }
 
     return () => {
