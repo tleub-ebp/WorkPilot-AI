@@ -756,12 +756,13 @@ export function registerProjectHandlers(
   // Initialize git in a project (run git init and create initial commit)
   ipcMain.handle(
     IPC_CHANNELS.GIT_INITIALIZE,
-    async (_, projectPath: string): Promise<IPCResult<InitializationResult>> => {
+    async (_, projectPath: string, remoteConfig?: { url?: string; name?: string }): Promise<IPCResult<InitializationResult>> => {
+      console.log('🔥 GIT-SETUP: IPC Handler called with:', { projectPath, remoteConfig });
       try {
         if (!existsSync(projectPath)) {
           return { success: false, error: 'Directory does not exist' };
         }
-        const result = initializeGit(projectPath);
+        const result = initializeGit(projectPath, remoteConfig);
         return { success: result.success, data: result, error: result.error };
       } catch (error) {
         return {

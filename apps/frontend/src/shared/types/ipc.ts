@@ -863,7 +863,7 @@ export interface ElectronAPI {
   detectMainBranch: (projectPath: string) => Promise<IPCResult<string | null>>;
   checkGitStatus: (projectPath: string) => Promise<IPCResult<GitStatus>>;
   detectRepoProvider: (projectPath: string) => Promise<IPCResult<RepoProviderDetectionResult>>;
-  initializeGit: (projectPath: string) => Promise<IPCResult<InitializationResult>>;
+  initializeGit: (projectPath: string, remoteConfig?: { url?: string; name?: string }) => Promise<IPCResult<InitializationResult>>;
 
   // Ollama model detection operations
   checkOllamaStatus: (baseUrl?: string) => Promise<IPCResult<{

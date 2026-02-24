@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
 import { GlobalAutoSwitching } from './GlobalAutoSwitching';
 import { ProviderConfigDialog } from './ProviderConfigDialog';
 import { getStaticProviders } from '@shared/utils/providers';
+import { getProvider as getRegistryProvider } from '@shared/services/providerRegistry';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useToast } from '@/hooks/use-toast';
 import { ProviderService } from '@shared/services/providerService';
@@ -34,6 +35,7 @@ interface Provider {
     keyPreview?: string;
     provider?: string;
     isOAuth?: boolean;
+    authMethod?: 'api-key' | 'oauth' | 'cli' | 'local';
   };
 }
 
@@ -217,29 +219,34 @@ export function CleanProviderSection({
     }
   };
 
-  // Helper function to check if provider uses OAuth authentication
+  // Determine the auth method for a provider using providerRegistry as source of truth
+  const getProviderAuthMethod = (providerId: string): 'api-key' | 'oauth' | 'cli' | 'local' => {
+    const registryProvider = getRegistryProvider(providerId);
+    if (registryProvider) {
+      if (registryProvider.requiresCLI) return 'cli';
+      if (registryProvider.requiresOAuth && !registryProvider.requiresApiKey) return 'oauth';
+      if (!registryProvider.requiresApiKey && !registryProvider.requiresOAuth && !registryProvider.requiresCLI) return 'local';
+    }
+    return 'api-key';
+  };
+
+  // Helper function to check if provider uses OAuth or CLI authentication (non-API-key based)
   const isProviderOAuth = (providerId: string): boolean => {
-    // List of providers that typically use OAuth/CLI authentication
-    const oauthProviders = [
-      'copilot',      // GitHub Copilot CLI
-      'cursor',       // Cursor CLI
-      'windsurf',      // Windsurf CLI
-      // Add other OAuth providers as needed
-    ];
-    
-    return oauthProviders.includes(providerId);
+    const authMethod = getProviderAuthMethod(providerId);
+    return authMethod === 'cli' || authMethod === 'oauth';
   };
 
   // Get API key info for a provider
-  const getApiKeyInfo = (providerId: string): { hasKey: boolean; keyPreview?: string; provider?: string; isOAuth?: boolean } => {
-    // Check if provider uses OAuth authentication
-    const isOAuthProvider = isProviderOAuth(providerId);
-    
+  const getApiKeyInfo = (providerId: string): { hasKey: boolean; keyPreview?: string; provider?: string; isOAuth?: boolean; authMethod?: 'api-key' | 'oauth' | 'cli' | 'local' } => {
+    // Determine auth method from registry
+    const authMethod = getProviderAuthMethod(providerId);
+    const isOAuthOrCLI = authMethod === 'cli' || authMethod === 'oauth';
+
     // Check profiles for API keys
     const profile = profiles.find(p => {
       if (!p.baseUrl) return false;
       const detectedProvider = detectProviderFromUrl(p.baseUrl);
-      return detectedProvider === providerId || 
+      return detectedProvider === providerId ||
              (providerId === 'claude' && detectedProvider === 'anthropic') ||
              (providerId === 'gemini' && p.baseUrl.includes('googleapis.com')) ||
              (providerId === 'google' && p.baseUrl.includes('googleapis.com'));
@@ -250,7 +257,8 @@ export function CleanProviderSection({
         hasKey: true,
         keyPreview: maskApiKey(profile.apiKey),
         provider: profile.name,
-        isOAuth: false
+        isOAuth: false,
+        authMethod: 'api-key'
       };
     }
 
@@ -260,21 +268,33 @@ export function CleanProviderSection({
       return {
         hasKey: true,
         keyPreview: maskApiKey(settings[apiKeyField]),
-        isOAuth: false
+        isOAuth: false,
+        authMethod: 'api-key'
       };
     }
 
-    // For OAuth providers, check if they are configured (even without API key)
-    if (isOAuthProvider && profile) {
+    // For OAuth/CLI providers, check if they are configured (even without API key)
+    if (isOAuthOrCLI && profile) {
       return {
         hasKey: true,
         keyPreview: undefined,
         provider: profile.name,
-        isOAuth: true
+        isOAuth: true,
+        authMethod
       };
     }
 
-    return { hasKey: false };
+    // For local providers (e.g. Ollama), mark as configured without a key
+    if (authMethod === 'local') {
+      return {
+        hasKey: true,
+        keyPreview: undefined,
+        isOAuth: false,
+        authMethod: 'local'
+      };
+    }
+
+    return { hasKey: false, authMethod };
   };
 
   // Helper function to detect provider from URL

@@ -750,6 +750,73 @@ export function registerCreateGitHubRepo(): void {
 
         debugLog('Created repo:', { fullName, url });
 
+        // Ensure the remote is properly configured in .git/config
+        try {
+          const remoteUrl = `https://github.com/${fullName}.git`;
+          
+          // Check if origin already exists and update if needed
+          try {
+            const existingRemote = execFileSync(getToolPath('git'), ['remote', 'get-url', 'origin'], {
+              cwd: options.projectPath,
+              encoding: 'utf-8',
+              stdio: 'pipe'
+            }).trim();
+            
+            // Update if different
+            if (existingRemote !== remoteUrl) {
+              debugLog('Updating existing origin remote:', { existingRemote, remoteUrl });
+              execFileSync(getToolPath('git'), ['remote', 'set-url', 'origin', remoteUrl], {
+                cwd: options.projectPath,
+                encoding: 'utf-8',
+                stdio: 'pipe'
+              });
+            }
+          } catch {
+            // No origin exists, add it
+            debugLog('Adding origin remote:', remoteUrl);
+            execFileSync(getToolPath('git'), ['remote', 'add', 'origin', remoteUrl], {
+              cwd: options.projectPath,
+              encoding: 'utf-8',
+              stdio: 'pipe'
+            });
+          }
+
+          // Configure the default branch tracking
+          try {
+            // Get the current branch
+            const currentBranch = execFileSync(getToolPath('git'), ['branch', '--show-current'], {
+              cwd: options.projectPath,
+              encoding: 'utf-8',
+              stdio: 'pipe'
+            }).trim();
+            
+            // Set up branch tracking for main/master
+            const mainBranches = ['main', 'master'];
+            for (const branch of mainBranches) {
+              try {
+                execFileSync(getToolPath('git'), ['branch', '--set-upstream-to=origin/' + branch, branch], {
+                  cwd: options.projectPath,
+                  encoding: 'utf-8',
+                  stdio: 'pipe'
+                });
+                debugLog('Set up tracking for branch:', branch);
+                break;
+              } catch {
+                // Branch doesn't exist, try next
+                continue;
+              }
+            }
+          } catch (error) {
+            debugLog('Warning: Could not set up branch tracking:', error);
+            // Don't fail the operation, just log it
+          }
+
+          debugLog('Git remote configuration completed successfully');
+        } catch (configError) {
+          debugLog('Warning: Failed to configure git remote:', configError);
+          // Don't fail the repo creation, but log the issue
+        }
+
         return {
           success: true,
           data: { fullName, url }

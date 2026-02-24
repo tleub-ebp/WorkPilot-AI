@@ -559,7 +559,7 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
                     {isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent side="left">
                   {isLocked ? t('kanban.unlockColumn') : t('kanban.lockColumn')}
                 </TooltipContent>
               </Tooltip>
@@ -578,15 +578,22 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
                   </Button>
                 )}
                 {onAddClick && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 hover:bg-primary/10 hover:text-primary transition-colors"
-                    onClick={onAddClick}
-                    aria-label={t('kanban.addTaskAriaLabel')}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  <Tooltip delayDuration={200}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 hover:bg-primary/10 hover:text-primary transition-colors"
+                        onClick={onAddClick}
+                        aria-label={t('kanban.addTaskAriaLabel')}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      {t('kanban.addTaskAriaLabel')}
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </>
             )}

@@ -37,6 +37,7 @@ interface CleanProviderCardProps {
       keyPreview?: string;
       provider?: string;
       isOAuth?: boolean;
+      authMethod?: 'api-key' | 'oauth' | 'cli' | 'local';
     };
   };
   onConfigure: (providerId: string) => void;
@@ -316,23 +317,36 @@ export function CleanProviderCard({
       {/* Détails étendus */}
       {isExpanded && provider.isConfigured && (
         <div className="pt-2 border-t border-gray-100 space-y-2">
-          {/* Clé API */}
+          {/* Authentication method */}
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-500 shrink-0">
-              {provider.realApiKeyInfo?.isOAuth ? t('sections.accounts.providerCard.oauth') : t('sections.accounts.providerCard.apiKey')}
+              {provider.realApiKeyInfo?.authMethod === 'cli'
+                ? t('sections.accounts.providerCard.authCli')
+                : provider.realApiKeyInfo?.authMethod === 'oauth'
+                  ? t('sections.accounts.providerCard.authOauth')
+                  : provider.realApiKeyInfo?.authMethod === 'local'
+                    ? t('sections.accounts.providerCard.authLocal')
+                    : t('sections.accounts.providerCard.apiKey')}
             </span>
             <div className="flex items-center gap-2 min-w-0 flex-1 max-w-[60%]">
               {provider.realApiKeyInfo?.hasKey ? (
-                <>
-                  {provider.realApiKeyInfo?.isOAuth ? (
+                provider.realApiKeyInfo?.authMethod === 'cli' ? (
+                    <div className="px-2 py-1 bg-blue-50 rounded text-xs font-medium text-blue-700 border border-blue-200">
+                      {t('sections.accounts.providerCard.cliAuthenticated')}
+                    </div>
+                  ) : provider.realApiKeyInfo?.authMethod === 'oauth' ? (
                     <div className="px-2 py-1 bg-green-50 rounded text-xs font-medium text-green-700 border border-green-200">
-                      {t('sections.accounts.providerCard.oauthCli')}
+                      {t('sections.accounts.providerCard.oauthConnected')}
+                    </div>
+                  ) : provider.realApiKeyInfo?.authMethod === 'local' ? (
+                    <div className="px-2 py-1 bg-purple-50 rounded text-xs font-medium text-purple-700 border border-purple-200">
+                      {t('sections.accounts.providerCard.localRunning')}
                     </div>
                   ) : (
                     <>
                       <code className="px-2 py-1 bg-gray-50 rounded text-xs font-mono text-gray-600 truncate min-w-0 flex-1">
-                        {showApiKey && provider.realApiKeyInfo.keyPreview ? 
-                          provider.realApiKeyInfo.keyPreview : 
+                        {showApiKey && provider.realApiKeyInfo.keyPreview ?
+                          provider.realApiKeyInfo.keyPreview :
                           'sk-...••••••••••••••••••••••••••••••••'
                         }
                       </code>
@@ -349,8 +363,7 @@ export function CleanProviderCard({
                         )}
                       </Button>
                     </>
-                  )}
-                </>
+                  )
               ) : (
                 <span className="text-gray-400 italic">{t('sections.accounts.providerCard.notConfigured')}</span>
               )}

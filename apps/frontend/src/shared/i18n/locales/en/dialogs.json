@@ -51,13 +51,16 @@
     "selectVisibilityAriaLabel": "Set repository visibility to {{visibility}}"
   },
   "repoProvider": {
-    "title": "Repository Provider",
-    "description": "Choose where {{projectName}} should connect for issue tracking.",
+    "title": "Remote Provider",
+    "description": "Choose where {{projectName}} should connect for issue tracking and code management.",
     "githubTitle": "GitHub Repository",
-    "githubDescription": "Use GitHub for issues, PRs, and branch tracking.",
+    "githubDescription": "Use GitHub for issues, PRs, branches, and repository hosting.",
     "azureTitle": "Azure DevOps",
-    "azureDescription": "Use Azure DevOps Boards for work items.",
-    "skip": "Skip for now"
+    "azureDescription": "Use Azure DevOps Boards for work items and repository hosting.",
+    "jiraTitle": "Jira (Issue Tracking Only)",
+    "jiraDescription": "Connect to Jira for issue tracking and project management (requires separate Git repository).",
+    "skip": "Skip for now",
+    "skipDescription": "Don't connect a remote provider now."
   },
   "azureDevOpsSetup": {
     "title": "Connect to Azure DevOps",
@@ -156,7 +159,26 @@
     "failedToOpen": "Failed to open project",
     "failedToCreate": "Failed to create project",
     "openExistingAriaLabel": "Open existing project folder",
-    "createNewAriaLabel": "Create new project"
+    "createNewAriaLabel": "Create new project",
+    "gitInitYes": "Initialize local git",
+    "summaryTitle": "Configuration Summary",
+    "summarySubtitle": "Review your project details before creating",
+    "projectInfoTitle": "Project Name",
+    "locationTitle": "Location",
+    "gitLocalTitle": "Local Git",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "remoteTitle": "Remote",
+    "noRemoteConfigured": "No remote configured",
+    "repository": "Repository",
+    "token": "Token",
+    "organization": "Organization",
+    "pat": "PAT",
+    "fillRequiredFields": "Please fill all required fields",
+    "successTitle": "Project Created",
+    "successDescription": "The project has been successfully created and configured.",
+    "failedToCreateTitle": "Creation Error",
+    "next": "Next"
   },
   "customModel": {
     "title": "Custom Model Configuration",
