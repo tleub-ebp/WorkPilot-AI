@@ -28,18 +28,18 @@ Ce guide explique comment les skills Claude Code ont été intégrés et adapté
 
 ### 2. Skills Business (Adaptés EBP)
 
-#### ebp-brand-guidelines
+#### brand-guidelines
 - **Source**: Adapté de anthropics/skills/brand-guidelines
-- **Purpose**: Guidelines de marque EBP pour documents business
+- **Purpose**: Guidelines de marque professionnelle pour documents business
 - **Adaptation**: 
-  - Couleurs EBP (Bleu #0056b3, Orange #ff6b35, Vert #27ae60, Rouge #e74c3c)
+  - Couleurs professionnelles (Bleu #0056b3, Orange #ff6b35, Vert #27ae60, Rouge #e74c3c)
   - Typographie (Inter pour titres, Open Sans pour corps)
   - Templates de documents business
-- **Utilisation**: Formatting cohérent des documents EBP
+- **Utilisation**: Formatting cohérent des documents business
 
-#### ebp-business-comms
+#### business-comms
 - **Source**: Adapté de anthropics/skills/internal-comms
-- **Purpose**: Communications business EBP standards
+- **Purpose**: Communications business standards professionnels
 - **Adaptation**:
   - Templates de rapports de projet
   - Formats de newsletters business
@@ -70,11 +70,11 @@ claude-skills/
 │       ├── test-template.cs           # Template tests unitaires
 │       ├── dockerfile                 # Dockerfile optimisé
 │       └── github-actions.yml         # Pipeline CI/CD
-├── ebp-brand-guidelines/              # Skill business branding
-│   ├── SKILL.md                       # Guidelines EBP
+├── brand-guidelines/                # Skill business branding
+│   ├── SKILL.md                       # Guidelines professionnelles
 │   └── examples/
 │       └── business-report-template.md # Template de rapport
-└── ebp-business-comms/                # Skill business communications
+└── business-comms/                    # Skill business communications
     ├── SKILL.md                       # Guidelines communications
     └── examples/
         └── project-reports.md         # Template de rapport de projet
@@ -128,14 +128,14 @@ Les skills EBP adaptés sont disponibles localement dans le projet:
 "Utilise le skill net-developer pour déployer cette application sur Azure App Service"
 ```
 ```bash
-# Utiliser ebp-brand-guidelines pour le formatting
-"Utilise le skill ebp-brand-guidelines pour formater ce rapport business selon les standards EBP"
+# Utiliser brand-guidelines pour le formatting
+"Utilise le skill brand-guidelines pour formater ce rapport business selon les standards professionnels"
 ```
 
 ### 4. Communications de Projet
 ```bash
-# Utiliser ebp-business-comms pour les rapports
-"Utilise le skill ebp-business-comms pour créer un rapport de statut hebdomadaire pour le projet X"
+# Utiliser business-comms pour les rapports
+"Utilise le skill business-comms pour créer un rapport de statut hebdomadaire pour le projet X"
 ```
 
 ## Adaptations Spécifiques EBP

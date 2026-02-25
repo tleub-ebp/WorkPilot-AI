@@ -10,8 +10,8 @@ Ce répertoire contient les skills Claude Code adaptés pour le projet Auto-Clau
 - **net-developer** : Agent IA spécialisé pour le développement .NET (C#, ASP.NET Core, EF Core)
 
 ### Skills business (à adapter)
-- **brand-guidelines** : Guidelines de marque pour les documents EBP
-- **internal-comms** : Communications internes et reporting
+- **brand-guidelines** : Guidelines de marque professionnelle pour les documents business
+- **business-comms** : Communications business standards professionnels
 - **doc-coauthoring** : Co-création de documents business
 
 ## Structure
@@ -59,7 +59,7 @@ chmod +x claude-skills/install-multi-agent.sh
 ```bash
 mkdir -p .github/skills
 cp -r claude-skills/net-developer .github/skills/
-cp -r claude-skills/ebp-brand-guidelines .github/skills/
+cp -r claude-skills/brand-guidelines .github/skills/
 ```
 
 **Niveau global:**

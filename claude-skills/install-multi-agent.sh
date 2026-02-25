@@ -55,8 +55,8 @@ skills:
   - net-developer
   - mcp-builder
   - webapp-testing
-  - ebp-brand-guidelines
-  - ebp-business-comms
+  - brand-guidelines
+  - business-comms
 
 agents:
   - net-architect
