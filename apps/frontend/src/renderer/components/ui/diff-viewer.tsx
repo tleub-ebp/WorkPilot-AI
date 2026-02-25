@@ -41,9 +41,9 @@ export function DiffViewer({ patch, className }: DiffViewerProps) {
             key={index}
             className={cn(
               "flex diff-line",
-              line.type === 'added' && "bg-green-500/10",
-              line.type === 'removed' && "bg-red-500/10",
-              line.type === 'hunk' && "bg-blue-500/10",
+              line.type === 'added' && "bg-green-500/20",
+              line.type === 'removed' && "bg-red-500/20",
+              line.type === 'hunk' && "bg-blue-500/20",
               line.type === 'context' && "bg-transparent"
             )}
           >
@@ -53,28 +53,28 @@ export function DiffViewer({ patch, className }: DiffViewerProps) {
             )}>
               <div className={cn(
                 "w-10 text-right pr-2",
-                line.type === 'added' && "text-green-600",
-                line.type === 'removed' && "text-red-600",
+                line.type === 'added' && "text-green-400 font-medium",
+                line.type === 'removed' && "text-red-400 font-medium",
                 line.type === 'context' && "text-muted-foreground",
-                line.type === 'hunk' && "text-blue-600"
+                line.type === 'hunk' && "text-blue-400 font-medium"
               )}>
                 {line.newLineNumber || ''}
               </div>
               <div className={cn(
                 "w-10 text-right pr-2 border-l border-border",
-                line.type === 'added' && "text-green-600",
-                line.type === 'removed' && "text-red-600",
+                line.type === 'added' && "text-green-400 font-medium",
+                line.type === 'removed' && "text-red-400 font-medium",
                 line.type === 'context' && "text-muted-foreground",
-                line.type === 'hunk' && "text-blue-600"
+                line.type === 'hunk' && "text-blue-400 font-medium"
               )}>
                 {line.oldLineNumber || ''}
               </div>
             </div>
             <div className={cn(
               "flex-1 px-2 py-0.5 whitespace-pre overflow-x-auto",
-              line.type === 'added' && "text-green-700",
-              line.type === 'removed' && "text-red-700",
-              line.type === 'hunk' && "text-blue-700",
+              line.type === 'added' && "text-green-400 font-medium",
+              line.type === 'removed' && "text-red-400 font-medium",
+              line.type === 'hunk' && "text-blue-400 font-medium",
               line.type === 'context' && "text-foreground"
             )}>
               {line.content}
