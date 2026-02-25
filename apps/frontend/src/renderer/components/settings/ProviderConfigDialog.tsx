@@ -668,7 +668,7 @@ export function ProviderConfigDialog({
   // Sinon, retourner le Dialog complet
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-w-[650px]">
         {content}
       </DialogContent>
     </Dialog>

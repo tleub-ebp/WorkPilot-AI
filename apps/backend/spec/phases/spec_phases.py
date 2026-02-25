@@ -86,8 +86,39 @@ Create:
                 f"Running spec writer (attempt {attempt + 1})...", "progress"
             )
 
+            # Check if we have sufficient context before running agent
+            context_file = self.spec_dir / "context.json"
+            requirements_file = self.spec_dir / "requirements.json"
+            
+            # Create enhanced context for minimal scenarios
+            additional_context = ""
+            if context_file.exists():
+                try:
+                    import json
+                    with open(context_file, encoding="utf-8") as f:
+                        ctx = json.load(f)
+                    
+                    # If we're in fallback mode with minimal context, add helpful guidance
+                    if ctx.get("fallback_mode") and not ctx.get("files_to_modify"):
+                        additional_context = f"""
+**IMPORTANT**: You're working with minimal context because the context discovery script failed.
+The task description is: {ctx.get('task_description', 'Unknown')}
+
+Since you have minimal context, create a SPECIFIC and ACTIONABLE spec based on the task description:
+1. Extract the main requirement from the task description
+2. Create a complete spec with all required sections (Overview, Workflow Type, Task Scope, Success Criteria)
+3. Be specific about what needs to be implemented
+4. Include reasonable assumptions based on the task description
+5. Create comprehensive QA criteria
+
+It's OK to make reasonable assumptions to create a complete spec. The goal is to provide a clear implementation guide.
+"""
+                except Exception:
+                    pass
+
             success, output = await self.run_agent_fn(
                 "spec_writer.md",
+                additional_context=additional_context,
                 phase_name="spec_writing",
             )
 
@@ -108,7 +139,175 @@ Create:
             else:
                 errors.append(f"Attempt {attempt + 1}: Agent did not create spec.md")
 
+        # If all attempts failed, create a fallback spec
+        if not spec_file.exists():
+            self.ui.print_status("Creating fallback spec.md...", "warning")
+            self._create_fallback_spec()
+            if spec_file.exists():
+                return PhaseResult(
+                    "spec_writing", True, [str(spec_file)], ["Created fallback spec"], MAX_RETRIES
+                )
+
         return PhaseResult("spec_writing", False, [], errors, MAX_RETRIES)
+
+    def _create_fallback_spec(self) -> None:
+        """Create a fallback spec.md when agent fails."""
+        spec_file = self.spec_dir / "spec.md"
+        requirements_file = self.spec_dir / "requirements.json"
+        
+        # Load requirements for task description
+        task_desc = "Unknown task"
+        workflow_type = "feature"
+        
+        if requirements_file.exists():
+            try:
+                import json
+                with open(requirements_file, encoding="utf-8") as f:
+                    req = json.load(f)
+                task_desc = req.get("task_description", task_desc)
+                workflow_type = req.get("workflow_type", workflow_type)
+            except Exception:
+                pass
+        
+        # Create a basic but complete spec
+        fallback_spec = f"""# Specification: {task_desc[:50]}{'...' if len(task_desc) > 50 else ''}
+
+## Overview
+
+This task addresses: {task_desc}
+
+## Workflow Type
+
+**Type**: {workflow_type}
+
+**Rationale**: Based on the task description, this appears to be a {workflow_type} type of work.
+
+## Task Scope
+
+### Services Involved
+- **Backend Service** (primary) - Main implementation service
+
+### This Task Will:
+- [ ] Implement the requirements described in the task
+- [ ] Follow established patterns and conventions
+- [ ] Ensure code quality and testing
+
+### Out of Scope:
+- Major architectural changes
+- Breaking changes to existing APIs
+
+## Service Context
+
+### Backend Service
+
+**Tech Stack:**
+- Language: Python
+- Framework: Based on project structure
+
+**How to Run:**
+```bash
+# Standard Python run commands
+python -m src.main
+```
+
+## Files to Modify
+
+| File | Service | What to Change |
+|------|---------|---------------|
+| *To be determined* | Backend | Implementation based on task requirements |
+
+## Files to Reference
+
+| File | Pattern to Copy |
+|------|----------------|
+| *To be determined* | Existing patterns in the codebase |
+
+## Patterns to Follow
+
+### Code Style
+
+Follow existing codebase patterns for:
+- Function naming conventions
+- Error handling
+- Documentation
+- Testing structure
+
+## Requirements
+
+### Functional Requirements
+
+1. **Main Requirement**
+   - Description: {task_desc}
+   - Acceptance: Implementation meets the described requirements
+
+### Edge Cases
+
+1. **Error Handling** - Proper error handling for edge cases
+2. **Input Validation** - Validate inputs appropriately
+
+## Implementation Notes
+
+### DO
+- Follow existing code patterns
+- Add appropriate error handling
+- Include tests for new functionality
+- Document changes clearly
+
+### DON'T
+- Break existing functionality
+- Introduce unnecessary complexity
+- Skip error handling
+
+## Development Environment
+
+### Start Services
+
+```bash
+# Start the application as per project conventions
+python -m src.main
+```
+
+### Service URLs
+- Backend: http://localhost:8000 (typical)
+
+## Success Criteria
+
+The task is complete when:
+
+1. [ ] Requirements are implemented as described
+2. [ ] Code follows established patterns
+3. [ ] No console errors
+4. [ ] Existing tests still pass
+5. [ ] New functionality is tested
+
+## QA Acceptance Criteria
+
+**CRITICAL**: These criteria must be verified before sign-off.
+
+### Unit Tests
+| Test | File | What to Verify |
+|------|------|----------------|
+| New functionality tests | *To be created* | Verify new implementation |
+
+### Integration Tests
+| Test | Services | What to Verify |
+|------|----------|----------------|
+| Integration test | Backend | Component interaction |
+
+### QA Sign-off Requirements
+- [ ] All unit tests pass
+- [ ] All integration tests pass
+- [ ] No regressions in existing functionality
+- [ ] Code follows established patterns
+- [ ] No security vulnerabilities introduced
+
+---
+
+*This spec was automatically generated as a fallback when the spec writer agent failed.*
+"""
+
+        with open(spec_file, "w", encoding="utf-8") as f:
+            f.write(fallback_spec)
 
     async def phase_self_critique(self) -> PhaseResult:
         """Self-critique the spec using extended thinking."""

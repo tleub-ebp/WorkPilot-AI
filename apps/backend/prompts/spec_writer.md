@@ -26,14 +26,21 @@ You MUST create `spec.md` with ALL required sections (see template below).
 ```bash
 # Read all input files
 cat project_index.json
-cat requirements.json
+cat requirements.json  
 cat context.json
 ```
 
+**IMPORTANT**: If any of these files are empty, missing, or contain minimal data, proceed anyway! You can still create a meaningful spec.
+
 Extract from these files:
-- **From project_index.json**: Services, tech stacks, ports, run commands
+- **From project_index.json**: Services, tech stacks, ports, run commands (if available)
 - **From requirements.json**: Task description, workflow type, services, acceptance criteria
-- **From context.json**: Files to modify, files to reference, patterns
+- **From context.json**: Files to modify, files to reference, patterns (if available)
+
+**IF CONTEXT IS MINIMAL**: Use the task description from requirements.json to create a complete spec. Make reasonable assumptions about:
+- Project structure (standard Python/TypeScript project layout)
+- Tech stack (based on file extensions in task description)
+- Implementation approach (based on task type)
 
 ---
 
@@ -46,7 +53,7 @@ Before writing, think about:
 - Which service should be built first?
 - What are the dependencies between services?
 
-### 1.2: Risk Assessment
+### 1.2: Risk Assessment  
 - What could go wrong?
 - What edge cases exist?
 - Any security considerations?
@@ -55,6 +62,8 @@ Before writing, think about:
 - What patterns from reference files apply?
 - What utilities can be reused?
 - What's the code style?
+
+**IF NO REFERENCE FILES**: Use standard best practices for the technology stack implied by the task.
 
 ---
 
@@ -79,42 +88,46 @@ cat > spec.md << 'SPEC_EOF'
 ## Task Scope
 
 ### Services Involved
-- **[service-name]** (primary) - [role from context analysis]
-- **[service-name]** (integration) - [role from context analysis]
+- **[service-name]** (primary) - [role from context analysis or "Main implementation service"]
+- **[service-name]** (integration) - [role from context analysis or "Supporting service if applicable"]
+
+**IF NO SERVICES FOUND**: Use "Backend Service" as primary and describe based on task type.
 
 ### This Task Will:
-- [ ] [Specific change 1 - from requirements]
-- [ ] [Specific change 2 - from requirements]
-- [ ] [Specific change 3 - from requirements]
+- [ ] [Specific change 1 - from requirements or task description]
+- [ ] [Specific change 2 - from requirements or task description]  
+- [ ] [Specific change 3 - from requirements or task description]
 
 ### Out of Scope:
-- [What this task does NOT include]
+- [What this task does NOT include - use reasonable assumptions]
 
 ## Service Context
 
-### [Primary Service Name]
+### [Primary Service Name or "Backend Service"]
 
 **Tech Stack:**
-- Language: [from project_index.json]
-- Framework: [from project_index.json]
-- Key directories: [from project_index.json]
+- Language: [from project_index.json or infer from file extensions]
+- Framework: [from project_index.json or "Standard framework for language"]
+- Key directories: [from project_index.json or "Standard project layout"]
 
-**Entry Point:** `[path from project_index]`
+**Entry Point:** `[path from project_index.json or "Standard entry point"]`
 
 **How to Run:**
 ```bash
-[command from project_index.json]
+[command from project_index.json or "Standard run command for language/framework"]
 ```
 
-**Port:** [port from project_index.json]
+**Port:** [port from project_index.json or "Typical port for service type"]
 
-[Repeat for each involved service]
+[Repeat for each involved service or skip if single service]
 
 ## Files to Modify
 
 | File | Service | What to Change |
 |------|---------|---------------|
-| `[path from context.json]` | [service] | [specific change needed] |
+| `[path from context.json or "To be determined from task"]` | [service] | [specific change needed] |
+
+**IF NO FILES LISTED**: Extract file paths from task description or use "To be determined" with explanation.
 
 ## Files to Reference
 
@@ -122,13 +135,15 @@ These files show patterns to follow:
 
 | File | Pattern to Copy |
 |------|----------------|
-| `[path from context.json]` | [what pattern this demonstrates] |
+| `[path from context.json or "Existing files in same directory"]` | [what pattern this demonstrates] |
+
+**IF NO REFERENCE FILES**: Use "Standard patterns for [language/framework]"
 
 ## Patterns to Follow
 
-### [Pattern Name]
+### [Pattern Name or "Standard Coding Practices"]
 
-From `[reference file path]`:
+From `[reference file path or "Industry best practices"]`:
 
 ```[language]
 [code snippet if available from context, otherwise describe pattern]
@@ -138,13 +153,15 @@ From `[reference file path]`:
 - [What to notice about this pattern]
 - [What to replicate]
 
+**IF NO REFERENCE FILES**: Describe standard patterns for the technology stack (e.g., "Python error handling with try/except", "TypeScript interface definitions", etc.)
+
 ## Requirements
 
 ### Functional Requirements
 
-1. **[Requirement Name from requirements.json]**
+1. **[Requirement Name from requirements.json or task description]**
    - Description: [What it does]
-   - Acceptance: [How to verify - from acceptance_criteria]
+   - Acceptance: [How to verify - from acceptance_criteria or task description]
 
 2. **[Requirement Name]**
    - Description: [What it does]
@@ -155,40 +172,42 @@ From `[reference file path]`:
 1. **[Edge Case]** - [How to handle it]
 2. **[Edge Case]** - [How to handle it]
 
+**IF NO SPECIFIC REQUIREMENTS**: Use standard requirements for the task type (e.g., "Input validation", "Error handling", "Logging", etc.)
+
 ## Implementation Notes
 
 ### DO
-- Follow the pattern in `[file]` for [thing]
-- Reuse `[utility/component]` for [purpose]
-- [Specific guidance based on context]
+- Follow the pattern in `[file]` for [thing] or use standard practices
+- Reuse `[utility/component]` for [purpose] or create standard utilities
+- [Specific guidance based on context or best practices]
 
 ### DON'T
-- Create new [thing] when [existing thing] works
-- [Anti-pattern to avoid based on context]
+- Create new [thing] when [existing thing] works or use standard approaches
+- [Anti-pattern to avoid based on context or common mistakes]
 
 ## Development Environment
 
 ### Start Services
 
 ```bash
-[commands from project_index.json]
+[commands from project_index.json or standard startup commands]
 ```
 
 ### Service URLs
-- [Service Name]: http://localhost:[port]
+- [Service Name]: http://localhost:[port or typical port]
 
 ### Required Environment Variables
-- `VAR_NAME`: [from project_index or .env.example]
+- `VAR_NAME`: [from project_index or .env.example or standard env vars]
 
 ## Success Criteria
 
 The task is complete when:
 
-1. [ ] [From requirements.json acceptance_criteria]
-2. [ ] [From requirements.json acceptance_criteria]
+1. [ ] [From requirements.json acceptance_criteria or "Main requirement implemented"]
+2. [ ] [From requirements.json acceptance_criteria or "Functionality works as described"]
 3. [ ] No console errors
 4. [ ] Existing tests still pass
-5. [ ] New functionality verified via browser/API
+5. [ ] New functionality verified via browser/API or appropriate testing method
 
 ## QA Acceptance Criteria
 
@@ -197,27 +216,37 @@ The task is complete when:
 ### Unit Tests
 | Test | File | What to Verify |
 |------|------|----------------|
-| [Test Name] | `[path/to/test]` | [What this test should verify] |
+| [Test Name] | `[path/to/test or "Test file to be created"]` | [What this test should verify] |
+
+**IF NO SPECIFIC TESTS**: Create standard tests for the functionality (e.g., "Unit tests for new function", "Integration tests for API endpoints", etc.)
 
 ### Integration Tests
 | Test | Services | What to Verify |
 |------|----------|----------------|
 | [Test Name] | [service-a ↔ service-b] | [API contract, data flow] |
 
+**IF SINGLE SERVICE**: Use "Integration test for service with dependencies" or skip if not applicable.
+
 ### End-to-End Tests
 | Flow | Steps | Expected Outcome |
 |------|-------|------------------|
 | [User Flow] | 1. [Step] 2. [Step] | [Expected result] |
+
+**IF NOT APPLICABLE**: Use "Manual testing of new functionality" or skip.
 
 ### Browser Verification (if frontend)
 | Page/Component | URL | Checks |
 |----------------|-----|--------|
 | [Component] | `http://localhost:[port]/[path]` | [What to verify] |
 
+**IF NOT FRONTEND**: Replace with appropriate verification method (API testing, CLI testing, etc.)
+
 ### Database Verification (if applicable)
 | Check | Query/Command | Expected |
 |-------|---------------|----------|
 | [Migration exists] | `[command]` | [Expected output] |
+
+**IF NOT APPLICABLE**: Skip or use "Data persistence verification" as needed.
 
 ### QA Sign-off Requirements
 - [ ] All unit tests pass

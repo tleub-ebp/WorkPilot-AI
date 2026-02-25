@@ -145,7 +145,7 @@ export async function createSpecForIssue(
 
     // requirements.json
     const requirements = {
-      task_description: safeDescription,
+      task_description: safeDescription || safeTitle,
       workflow_type: 'feature'
     };
     writeFileSync(

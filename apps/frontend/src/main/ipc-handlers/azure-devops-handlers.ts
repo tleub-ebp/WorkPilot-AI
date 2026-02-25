@@ -614,7 +614,7 @@ except Exception as e:
             writeFileSync(planPath, JSON.stringify(implementationPlan, null, 2), 'utf-8');
 
             const requirements = {
-              task_description: safeDescription,
+              task_description: safeDescription || safeTitle,
               workflow_type: category
             };
             const requirementsPath = path.join(specDir, AUTO_BUILD_PATHS.REQUIREMENTS);
