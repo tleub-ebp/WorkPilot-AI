@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { SortableProjectTab } from './SortableProjectTab';
-import { UsageIndicator } from './UsageIndicator';
 import { AuthStatusIndicator } from './AuthStatusIndicator';
+import { UsageIndicator } from './UsageIndicator';
 import type { Project } from '@shared/types';
+import type { UsageSnapshot } from '@shared/types';
 
 interface ProjectTabBarProps {
   projects: Project[];
@@ -33,6 +34,10 @@ export function ProjectTabBar({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  
+  // State for usage warning
+  const [usage, setUsage] = useState<UsageSnapshot | null>(null);
+  const [isLoadingUsage, setIsLoadingUsage] = useState(true);
 
   // Check scroll position
   const checkScrollPosition = () => {
@@ -133,6 +138,36 @@ export function ProjectTabBar({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [projects, activeProjectId, onProjectSelect, onProjectClose]);
 
+  // Fetch usage data for warning badge
+  useEffect(() => {
+    const fetchUsage = async () => {
+      try {
+        setIsLoadingUsage(true);
+        const result = await window.electronAPI.requestUsageUpdate();
+        if (result.success && result.data) {
+          setUsage(result.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch usage snapshot:', error);
+        setUsage(null);
+      } finally {
+        setIsLoadingUsage(false);
+      }
+    };
+
+    fetchUsage();
+
+    // Subscribe to live usage updates
+    const unsubscribe = window.electronAPI.onUsageUpdated((snapshot: UsageSnapshot) => {
+      setUsage(snapshot);
+      setIsLoadingUsage(false);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   if (projects.length === 0) {
     return null;
   }
@@ -228,6 +263,28 @@ export function ProjectTabBar({
       <div className="flex items-center gap-2 px-4 py-1 shrink-0">
         <AuthStatusIndicator />
         <UsageIndicator />
+        {/* Usage Warning Badge (shown when usage >= 90%) */}
+        {usage && !isLoadingUsage && (usage.sessionPercent >= 90 || usage.weeklyPercent >= 90) && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-red-500/10 text-red-500 border-red-500/20">
+                <AlertTriangle className="h-3.5 w-3.5 motion-safe:animate-pulse" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs max-w-xs">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground font-medium">{t('common:usage.usageAlert')}</span>
+                  <span className="font-semibold text-red-500">{Math.round(Math.max(usage.sessionPercent, usage.weeklyPercent))}%</span>
+                </div>
+                <div className="h-px bg-border" />
+                <div className="text-[10px] text-muted-foreground">
+                  {t('common:usage.accountExceedsThreshold')}
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
     </div>
   );
