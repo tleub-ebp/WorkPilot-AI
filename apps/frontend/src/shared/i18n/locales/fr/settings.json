@@ -1007,6 +1007,14 @@
     "authSuccessDescription": "GitHub Copilot est maintenant configuré",
     "authTerminalTitle": "Terminal GitHub Copilot",
     "authCloseWarning": "Le terminal est en cours d'authentification. Êtes-vous sûr de vouloir fermer ?",
+    "authTerminal": {
+      "connecting": "Connexion...",
+      "authenticate": "S'authentifier: {{profileName}}",
+      "completeSetup": "Terminer la configuration: {{profileName}}",
+      "authenticatedAs": "Authentifié en tant que {{username}}",
+      "authenticated": "Authentifié!",
+      "authError": "Erreur d'authentification"
+    },
     "errors": {
       "authFailed": "Échec de l'authentification",
       "saveFailed": "Échec de la sauvegarde",
