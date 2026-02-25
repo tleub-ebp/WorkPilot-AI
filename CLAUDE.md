@@ -6,6 +6,37 @@ WorkPilot AI is an autonomous multi-agent coding framework that plans, builds, a
 
 > **Deep-dive reference:** [ARCHITECTURE.md](shared_docs/ARCHITECTURE.md) | **Frontend contributing:** [apps/frontend/CONTRIBUTING.md](apps/frontend/CONTRIBUTING.md)
 
+## Table of Contents
+
+- [Product Overview](#product-overview)
+- [Critical Rules](#critical-rules)
+- [Project Structure](#project-structure)
+- [Commands Quick Reference](#commands-quick-reference)
+- [Backend Development](#backend-development)
+  - [Claude Agent SDK Usage](#claude-agent-sdk-usage)
+  - [Agent Prompts](#agent-prompts)
+  - [Spec Directory Structure](#spec-directory-structure)
+  - [Memory System (Graphiti)](#memory-system-graphiti)
+  - [Skills System](#skills-system)
+  - [Workflow Logger](#workflow-logger)
+- [Frontend Development](#frontend-development)
+  - [Tech Stack](#tech-stack)
+  - [Path Aliases](#path-aliases)
+  - [State Management (Zustand)](#state-management-zustand)
+  - [Styling](#styling)
+  - [IPC Communication](#ipc-communication)
+  - [Agent Management](#agent-management)
+  - [Claude Profile System](#claude-profile-system)
+  - [Terminal System](#terminal-system)
+- [Code Quality](#code-quality)
+- [i18n Guidelines](#i18n-guidelines)
+- [Cross-Platform](#cross-platform)
+- [E2E Testing (Electron MCP)](#e2e-testing-electron-mcp)
+- [Integrated Tools](#integrated-tools)
+  - [grepai Integration](#grepai-integration)
+- [Running the Application](#running-the-application)
+- [Troubleshooting](#troubleshooting)
+
 ## Product Overview
 
 WorkPilot AI is a desktop application (+ CLI) where users describe a goal and AI agents autonomously handle planning, implementation, and QA validation. All work happens in isolated git worktrees so the main branch stays safe.
@@ -42,15 +73,15 @@ WorkPilot AI is a desktop application (+ CLI) where users describe a goal and AI
 
 ## Project Structure
 
-```
-autonomous-coding/
+Auto-Claude_EBP/
 ├── apps/
 │   ├── backend/                 # Python backend/CLI — ALL agent logic
-│   │   ├── core/                # client.py, auth.py, worktree.py, platform/
+│   │   ├── core/                # client.py, auth.py, worktree.py, platform/, workflow_logger.py
 │   │   ├── security/            # Command allowlisting, validators, hooks
 │   │   ├── agents/              # planner, coder, session management
 │   │   ├── qa/                  # reviewer, fixer, loop, criteria
 │   │   ├── spec/                # Spec creation pipeline
+│   │   ├── skills/              # AI skills system with optimization
 │   │   ├── cli/                 # CLI commands (spec, build, workspace, QA)
 │   │   ├── context/             # Task context building, semantic search
 │   │   ├── runners/             # Standalone runners (spec, roadmap, insights, github)
@@ -83,16 +114,26 @@ autonomous-coding/
 │           │   ├── types/       # 19+ type definition files
 │           │   └── utils/       # ANSI sanitizer, shell escape, provider detection
 │           └── types/           # TypeScript type definitions
+├── src/                         # Shared connectors and utilities
+│   └── connectors/
+│       └── grepai/              # grepai semantic search integration
 ├── guides/                      # Documentation
 ├── tests/                       # Backend test suite
 └── scripts/                     # Build and utility scripts
-```
 
 ## Commands Quick Reference
 
 ### Setup
+
+**Prerequisites:**
+- Python 3.8+ with `uv` package manager
+- Node.js 18+ with `pnpm` package manager
+- Git
+
 ```bash
-pnpm run install:all              # Install all dependencies from root
+# Install all dependencies from root
+pnpm run install:all
+
 # Or separately:
 cd apps/backend && uv venv && uv pip install -r requirements.txt
 cd apps/frontend && pnpm install
@@ -187,6 +228,62 @@ Each spec in `.auto-claude/specs/XXX-name/` contains: `spec.md`, `requirements.j
 ### Memory System (Graphiti)
 
 Graph-based semantic memory in `integrations/graphiti/`. Configured through the Electron app's onboarding/settings UI (CLI users can alternatively set `GRAPHITI_ENABLED=true` in `.env`). See [ARCHITECTURE.md](shared_docs/ARCHITECTURE.md#memory-system) for details.
+
+### Skills System
+
+Advanced AI skills system in `apps/backend/skills/` with token optimization and dynamic context management:
+
+**Key Features:**
+- **Token Optimization:** Compress metadata, limit descriptions to 512 chars, cache operations
+- **Context Management:** Aggressive compaction at 70% limit, checkpoint system
+- **Performance:** Default max_workers=3, timeout=25s, subagent delegation
+- **Dynamic Registration:** Runtime skill validation and registration
+
+**Usage Example:**
+```python
+from apps.backend.skills.skill_manager import skill_manager
+
+# Execute optimized skill
+result = await skill_manager.execute_skill(
+    skill_name="framework-migration",
+    action="analyze",
+    context={"framework": "react", "project_path": "/path/to/project"}
+)
+```
+
+**Files:**
+- `skill_manager.py` - Main skill orchestration
+- `context_optimizer.py` - Context compaction and checkpoints
+- `token_optimizer.py` - Token counting and compression
+- `dynamic_skill_manager.py` - Runtime skill registration
+
+See `apps/backend/skills/CLAUDE.md` for detailed guidelines.
+
+### Workflow Logger
+
+Centralized logging system for tracking all AI agents, skills, hooks and workflows:
+
+**Features:**
+- Structured logging with visual indicators (🤖 agents, ⚡ skills, 🪝 hooks)
+- Automatic duration tracking and trace IDs
+- Both human-readable and JSON structured output
+- Active trace monitoring
+
+**Usage:**
+```python
+from core.workflow_logger import workflow_logger
+
+# Log agent execution
+trace_id = workflow_logger.log_agent_start("Claude Code", "refactor_task", {"file": "app.py"})
+workflow_logger.log_agent_end("Claude Code", "success", {"changes": 5}, trace_id=trace_id)
+
+# Log skill execution
+skill_trace = workflow_logger.log_skill_start("framework-migration", "analyze", {"framework": "react"})
+workflow_logger.log_skill_end("framework-migration", "success", {"migrations_found": 3}, trace_id=skill_trace)
+
+# Monitor active traces
+active = workflow_logger.get_active_traces()
+```
 
 ## Frontend Development
 
@@ -326,3 +423,86 @@ npm run dev        # Development mode with HMR
 
 # Project data: .auto-claude/specs/ (gitignored)
 ```
+
+## Integrated Tools
+
+### grepai Integration
+
+Semantic code search tool integrated for enhanced AI agent code exploration:
+
+**Setup:**
+```bash
+# Start grepai server (Docker or CLI on http://localhost:9000)
+cd src/connectors/grepai
+python test_grepai.py  # Test integration
+```
+
+**Usage in Agents:**
+```python
+from src.connectors.grepai.client import GrepaiClient
+
+client = GrepaiClient("http://localhost:9000")
+results = client.search("user authentication flow", top_k=5)
+```
+
+**Features:**
+- Natural language code search
+- Vector embeddings for semantic matching
+- Call graph tracing with `grepai trace`
+- JSON output for AI agent integration
+- Fallback to standard grep when unavailable
+
+**Files:**
+- `src/connectors/grepai/client.py` - Python client
+- `src/connectors/grepai/grepai/` - Embedded grepai tool
+- `docs/grepai_integration.md` - Integration guide
+
+## Troubleshooting
+
+### Common Issues
+
+**Claude Authentication Problems:**
+```bash
+# Check profile configuration
+cat ~/.claude/profiles.json
+# Refresh tokens automatically via UI or:
+python -c "from main.claude_profile.token_refresh import refresh_all_tokens; refresh_all_tokens()"
+```
+
+**Build Issues Cross-Platform:**
+```bash
+# Use platform abstraction functions
+from core.platform import isWindows, findExecutable, joinPaths
+
+# Never hardcode paths
+exe_path = findExecutable("node")  # Works on Win/Mac/Linux
+full_path = joinPaths(["src", "components"])  # OS-agnostic
+```
+
+**grepai Connection Issues:**
+```bash
+# Check if grepai is running
+curl http://localhost:9000/health
+# Start grepai if needed
+cd src/connectors/grepai && python grepai_launcher.py
+```
+
+**Memory System Issues:**
+```bash
+# Check Graphiti status
+python -c "from integrations.graphiti.client import check_connection; print(check_connection())"
+# Enable via environment if needed
+export GRAPHITI_ENABLED=true
+```
+
+**Performance Issues:**
+- Check skill optimization: `python apps/backend/skills/performance_test.py`
+- Monitor workflow logs: `tail -f logs/workflow.log`
+- Reduce concurrent agents in settings
+
+### Getting Help
+
+- Check `logs/workflow.log` for detailed execution traces
+- Run `python apps/backend/.venv/bin/pytest tests/ -v` for test failures
+- See [guides/](guides/) for detailed setup instructions
+- Check [ARCHITECTURE.md](shared_docs/ARCHITECTURE.md) for system design

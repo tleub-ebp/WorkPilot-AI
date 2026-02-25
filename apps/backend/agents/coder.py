@@ -48,11 +48,6 @@ from task_logger import (
 )
 from ui import (
     BuildState,
-    Icons,
-    StatusManager,
-    bold,
-    box,
-    highlight,
     icon,
     muted,
     print_key_value,
@@ -387,6 +382,19 @@ async def run_autonomous_agent(
         source_spec_dir: Original spec directory in main project (for syncing from worktree)
         streaming_session_id: Optional streaming session ID for live coding
     """
+    # Log agent start
+    agent_trace_id = workflow_logger.log_agent_start(
+        "Claude Code",
+        "autonomous_agent_loop",
+        {
+            "project_dir": str(project_dir),
+            "spec_dir": str(spec_dir),
+            "model": model,
+            "max_iterations": max_iterations,
+            "streaming_session_id": streaming_session_id
+        }
+    )
+    
     # Set environment variable for security hooks to find the correct project directory
     # This is needed because os.getcwd() may return the wrong directory in worktree mode
     os.environ[PROJECT_DIR_ENV_VAR] = str(project_dir.resolve())
@@ -1235,8 +1243,37 @@ async def run_autonomous_agent(
     # Set final status
     if completed == total:
         status_manager.update(state=BuildState.COMPLETE)
+        # Log agent completion
+        workflow_logger.log_agent_end(
+            "Claude Code", 
+            "autonomous_agent_loop", 
+            "success",
+            {
+                "total_sessions": iteration,
+                "completed_subtasks": completed,
+                "total_subtasks": total,
+                "project_dir": str(project_dir),
+                "spec_dir": str(spec_dir.name)
+            },
+            agent_trace_id
+        )
     else:
         status_manager.update(state=BuildState.PAUSED)
+        # Log agent pause
+        workflow_logger.log_agent_end(
+            "Claude Code", 
+            "autonomous_agent_loop", 
+            "paused",
+            {
+                "total_sessions": iteration,
+                "completed_subtasks": completed,
+                "total_subtasks": total,
+                "remaining": total - completed,
+                "project_dir": str(project_dir),
+                "spec_dir": str(spec_dir.name)
+            },
+            agent_trace_id
+        )
 
     # Clean up streaming session
     if streaming_wrapper:
