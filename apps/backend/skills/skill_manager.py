@@ -21,6 +21,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
+from core.workflow_logger import workflow_logger
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -64,8 +66,27 @@ class Skill:
     
     def execute_script(self, script_name: str, args: Dict[str, Any] = None) -> Dict[str, Any]:
         """Execute a script from this skill's scripts directory."""
+        # Log skill execution start
+        skill_trace_id = workflow_logger.log_skill_start(
+            self.metadata.name,
+            f"execute_script:{script_name}",
+            {
+                "script": script_name,
+                "args": args,
+                "skill_path": str(self.metadata.skill_path)
+            }
+        )
+        
         script_path = self.metadata.skill_path / "scripts" / script_name
         if not script_path.exists():
+            # Log skill error
+            workflow_logger.log_skill_end(
+                self.metadata.name,
+                f"execute_script:{script_name}",
+                "error",
+                {"error": f"Script not found: {script_path}"},
+                skill_trace_id
+            )
             raise FileNotFoundError(f"Script not found: {script_path}")
         
         # Build command arguments
@@ -86,13 +107,37 @@ class Skill:
                 timeout=300  # 5 minute timeout
             )
             
-            return {
+            execution_result = {
                 "success": result.returncode == 0,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
                 "returncode": result.returncode
             }
+            
+            # Log skill completion
+            workflow_logger.log_skill_end(
+                self.metadata.name,
+                f"execute_script:{script_name}",
+                "success" if result.returncode == 0 else "error",
+                {
+                    "returncode": result.returncode,
+                    "stdout_length": len(result.stdout),
+                    "stderr_length": len(result.stderr),
+                    "timed_out": False
+                },
+                skill_trace_id
+            )
+            
+            return execution_result
         except subprocess.TimeoutExpired:
+            # Log skill timeout
+            workflow_logger.log_skill_end(
+                self.metadata.name,
+                f"execute_script:{script_name}",
+                "timeout",
+                {"timed_out": True, "timeout_seconds": 300},
+                skill_trace_id
+            )
             return {
                 "success": False,
                 "stdout": "",
@@ -100,6 +145,14 @@ class Skill:
                 "returncode": -1
             }
         except Exception as e:
+            # Log skill exception
+            workflow_logger.log_skill_end(
+                self.metadata.name,
+                f"execute_script:{script_name}",
+                "error",
+                {"error": str(e), "exception_type": type(e).__name__},
+                skill_trace_id
+            )
             return {
                 "success": False,
                 "stdout": "",
