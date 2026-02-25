@@ -78,7 +78,7 @@ export function getStaticProviders(profiles: APIProfile[] = []): ProvidersRespon
     if (p.name === 'copilot') {
       status[p.name] = true;
     } else {
-      status[p.name] = p.name === 'anthropic' || hasProfile;
+      status[p.name] = hasProfile;
     }
   }
 
