@@ -1468,7 +1468,10 @@ export class UsageMonitor extends EventEmitter {
 
     // Attempt 1: Direct API call (preferred)
     // Per-profile tracking: if API fails for one profile, it only affects that profile
-    if (this.shouldUseApiMethod(profileId) && credential) {
+    // Skip for anthropic API key profiles — the OAuth usage endpoint (/api/oauth/usage)
+    // requires an OAuth Bearer token, not a plain API key (always returns 401)
+    const isAnthropicApiKey = activeProfile?.isAPIProfile && providerName === 'anthropic';
+    if (this.shouldUseApiMethod(profileId) && credential && !isAnthropicApiKey) {
       this.debugLog('[UsageMonitor:FETCH] Attempting API fetch method');
       const apiUsage = await this.fetchUsageViaAPI(credential, profileId, profileName, profileEmail, activeProfile, suppressErrors);
       if (apiUsage) {
@@ -1484,6 +1487,8 @@ export class UsageMonitor extends EventEmitter {
       this.debugLog('[UsageMonitor] API method failed, recording failure timestamp for cooldown retry');
       this.debugLog('[UsageMonitor:FETCH] API fetch failed, will retry after cooldown');
       this.apiFailureTimestamps.set(profileId, Date.now());
+    } else if (isAnthropicApiKey) {
+      this.debugLog('[UsageMonitor:FETCH] Skipping API fetch for anthropic API key profile — OAuth endpoint requires OAuth token');
     } else if (!credential) {
       this.debugLog('[UsageMonitor:FETCH] No credential available, skipping API method');
     }
@@ -2396,8 +2401,13 @@ export class UsageMonitor extends EventEmitter {
           profileName: apiProfile.name
         });
 
-        // OpenAI special case — usage API a different format
-        if (providerName === 'openai') {
+        // Skip API key attempt for anthropic — the OAuth usage endpoint (/api/oauth/usage)
+        // requires an OAuth Bearer token, not a plain API key. Plain API keys will always
+        // get 401 here, so skip directly to Step 2 (OAuth profile lookup) instead.
+        if (providerName === 'anthropic') {
+          this.debugLog('[UsageMonitor:getUsageForProvider] Step 1: Skipping API key for anthropic — OAuth usage endpoint requires OAuth token, falling through to Step 2');
+        } else if (providerName === 'openai') {
+          // OpenAI special case — usage API has a different format
           try {
             const resp = await fetch('http://localhost:9000/providers/usage/openai');
             if (!resp.ok) {
@@ -2416,40 +2426,31 @@ export class UsageMonitor extends EventEmitter {
           } catch (e) {
             return null;
           }
-        }
+        } else {
+          // Non-anthropic, non-openai providers — try API key fetch
+          const activeProfileResult: ActiveProfileResult = {
+            profileId: apiProfile.id,
+            profileName: apiProfile.name,
+            profileEmail: undefined,
+            isAPIProfile: true,
+            baseUrl: apiProfile.baseUrl,
+            credential: apiProfile.apiKey
+          };
 
-        // Build ActiveProfileResult to use with fetchUsageViaAPI
-        const activeProfileResult: ActiveProfileResult = {
-          profileId: apiProfile.id,
-          profileName: apiProfile.name,
-          profileEmail: undefined,
-          isAPIProfile: true,
-          baseUrl: apiProfile.baseUrl,
-          credential: apiProfile.apiKey
-        };
+          apiProfileSnapshot = await this.fetchUsageViaAPI(
+              apiProfile.apiKey,
+              apiProfile.id,
+              apiProfile.name,
+              undefined,
+              activeProfileResult,
+              true // suppressErrors — Step 1 is a best-effort attempt before OAuth fallback
+          );
 
-        apiProfileSnapshot = await this.fetchUsageViaAPI(
-            apiProfile.apiKey,
-            apiProfile.id,
-            apiProfile.name,
-            undefined,
-            activeProfileResult
-        );
-
-        // For non-anthropic providers, return immediately (no OAuth fallback)
-        // For anthropic, if the API key fetch returned incomplete data (e.g., no weekly),
-        // fall through to try OAuth which may have better data
-        if (apiProfileSnapshot && providerName !== 'anthropic') {
-          return apiProfileSnapshot;
+          if (apiProfileSnapshot) {
+            return apiProfileSnapshot;
+          }
+          this.debugLog('[UsageMonitor:getUsageForProvider] Step 1: API profile returned no data, trying OAuth fallback');
         }
-        if (apiProfileSnapshot && apiProfileSnapshot.weeklyPercent > 0) {
-          return apiProfileSnapshot;
-        }
-        // API key profile returned null or incomplete data for anthropic — try OAuth
-        this.debugLog('[UsageMonitor:getUsageForProvider] Step 1: API profile returned incomplete data, trying OAuth', {
-          hasSnapshot: !!apiProfileSnapshot,
-          weeklyPercent: apiProfileSnapshot?.weeklyPercent
-        });
       } else {
         this.debugLog('[UsageMonitor:getUsageForProvider] Step 1: No API profile found for provider:', providerName);
       }

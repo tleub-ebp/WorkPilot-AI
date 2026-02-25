@@ -20,6 +20,8 @@ interface Provider {
   usageCount?: number;
   isPremium?: boolean;
   icon?: React.ReactNode;
+  authType?: 'oauth' | 'api_key' | 'cli' | 'none';
+  apiKeyMasked?: string;
 }
 
 interface ThemedProviderSectionProps {
@@ -121,22 +123,46 @@ export function ThemedProviderSection({
     return fields[providerId] || null;
   };
 
+  // Providers utilisant OAuth (Claude Code subscription)
+  const oauthProviders = new Set(['anthropic', 'claude']);
+  // Providers utilisant un CLI externe
+  const cliProviders = new Set(['copilot']);
+
+  const maskApiKey = (key: string): string => {
+    if (!key || key.length < 8) return '••••••••';
+    const prefix = key.slice(0, 5);
+    const suffix = key.slice(-4);
+    return `${prefix}${'•'.repeat(Math.min(key.length - 9, 20))}${suffix}`;
+  };
+
+  const getAuthType = (providerId: string, hasApiKey: boolean): 'oauth' | 'api_key' | 'cli' | 'none' => {
+    if (oauthProviders.has(providerId)) return 'oauth';
+    if (cliProviders.has(providerId)) return 'cli';
+    if (hasApiKey) return 'api_key';
+    return 'none';
+  };
+
   // Transformer les connecteurs en providers pour la grille
   const providers: Provider[] = connectors.map(connector => {
     const category = providerCategories[connector.id] || 'independent';
     const apiKeyField = getApiKeyField(connector.id);
-    const hasApiKey = apiKeyField && settings[apiKeyField];
-    
+    const rawApiKey = apiKeyField ? settings[apiKeyField] : '';
+    const hasApiKey = !!rawApiKey;
+    const authType = getAuthType(connector.id, hasApiKey);
+    const isConfigured = authType === 'oauth' || authType === 'cli' || hasApiKey;
+
     return {
       id: connector.id,
       name: connector.label,
       category,
       description: providerDescriptions[connector.id],
-      isConfigured: !!hasApiKey,
-      isWorking: hasApiKey ? true : undefined,
-      lastTested: hasApiKey ? new Date().toISOString() : undefined,
-      usageCount: Math.floor(Math.random() * 100),
+      isConfigured,
+      isWorking: isConfigured ? true : undefined,
+      lastTested: undefined,
+      usageCount: undefined,
       isPremium: ['anthropic', 'claude', 'openai', 'gemini'].includes(connector.id),
+      authType,
+      apiKeyMasked: hasApiKey && authType === 'api_key' ? maskApiKey(rawApiKey) : undefined,
     };
   });
 
@@ -180,6 +206,11 @@ export function ThemedProviderSection({
         [apiKeyField]: ''
       });
     }
+  };
+
+  const handleAddProvider = () => {
+    // TODO: Ouvrir une modale pour ajouter un nouveau provider
+    console.log('Add provider clicked');
   };
 
   const handleRefresh = () => {
@@ -269,6 +300,7 @@ export function ThemedProviderSection({
           onTest={handleTest}
           onToggle={handleToggle}
           onRemove={handleRemove}
+          onAddProvider={handleAddProvider}
           onRefreshProviders={handleRefresh}
           isLoading={testingProviders.size > 0}
         />

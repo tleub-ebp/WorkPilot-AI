@@ -336,15 +336,6 @@ export function GitHubCopilotConfig() {
         <CardContent>
           <div className="space-y-4 text-sm">
             <div>
-              <h4 className="font-medium">{t('githubCopilot.instructions.installation.title')}</h4>
-              <ol className="list-decimal list-inside space-y-1 ml-4">
-                <li>{t('githubCopilot.instructions.installation.step1')}</li>
-                <li>{t('githubCopilot.instructions.installation.step2')}</li>
-                <li>{t('githubCopilot.instructions.installation.step3')}</li>
-              </ol>
-            </div>
-            
-            <div>
               <h4 className="font-medium">{t('githubCopilot.instructions.authentication.title')}</h4>
               <ol className="list-decimal list-inside space-y-1 ml-4">
                 <li>{t('githubCopilot.instructions.authentication.step1')}</li>

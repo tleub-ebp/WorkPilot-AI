@@ -31,7 +31,7 @@
     },
     "accounts": {
       "title": "Accounts",
-      "description": "Claude accounts & API endpoints",
+      "description": "Accounts & API endpoints",
       "form": {
         "addAccount": "Add {{provider}} Account",
         "name": "Account Name",
@@ -349,8 +349,8 @@
     "sourceFallback": "Fallback",
     "notDetected": "Not detected",
     "autoClaudePath": "WorkPilot AI Path",
-    "autoClaudePathDescription": "Relative path to auto-claude directory in projects",
-    "autoClaudePathPlaceholder": "auto-claude (default)",
+    "autoClaudePathDescription": "Relative path to workpilot-ai directory in projects",
+    "autoClaudePathPlaceholder": "workpilot-ai (default)",
     "autoNameTerminals": "Automatically name terminals",
     "autoNameTerminalsDescription": "Use AI to generate descriptive names for terminal tabs based on their activity"
   },
@@ -877,7 +877,7 @@
         "description": "Web browser automation for testing"
       },
       "autoClaude": {
-        "name": "Auto-Claude Tools",
+        "name": "WorkPilot AI Tools",
         "description": "Build progress tracking"
       }
     },
@@ -1071,7 +1071,7 @@
   },
   "azureDevOpsImport": {
     "title": "Import Azure DevOps Work Items",
-    "description": "Select Azure DevOps work items to import into Auto-Claude",
+    "description": "Select Azure DevOps work items to import into WorkPilot AI",
     "importSuccess": "{{count}} work item(s) imported successfully",
     "successTitle": "Import Successful!",
     "successCount": "Imported {{count}} work item.",
@@ -1138,7 +1138,7 @@
     "connectionNotConnected": "Not connected",
     "connectionWorkItemCount": "{{count}}+ work items available to import",
     "importPromptTitle": "Import Work Items",
-    "importPromptDescription": "Select and import work items from your Azure DevOps backlog to create Auto-Claude tasks.",
+    "importPromptDescription": "Select and import work items from your Azure DevOps backlog to create WorkPilot AI tasks.",
     "importPromptButton": "Select Work Items to Import",
     "apiKey": "API Key",
     "discoverModels": "Discover Models",
@@ -1258,7 +1258,7 @@
   },
   "jiraImport": {
     "title": "Import Jira Issues",
-    "description": "Select Jira issues to import into Auto-Claude",
+    "description": "Select Jira issues to import into WorkPilot AI",
     "importSuccess": "{{count}} issue(s) imported successfully",
     "successTitle": "Import Successful!",
     "successCount": "Imported {{count}} issue.",
@@ -1302,7 +1302,7 @@
   },
   "githubCopilot": {
     "title": "GitHub Copilot",
-    "description": "GitHub Copilot CLI configuration for authentication",
+    "description": "Configure GitHub Copilot for AI coding assistance directly in your editor",
     "status": {
       "notInstalled": "Not installed",
       "installed": "Installed ({{version}})",
@@ -1341,13 +1341,7 @@
     },
     "instructions": {
       "title": "GitHub Copilot Instructions",
-      "description": "GitHub Copilot CLI installation and authentication guide",
-      "installation": {
-        "title": "Installation",
-        "step1": "Install GitHub CLI from https://github.com/cli/cli",
-        "step2": "Verify installation with 'gh --version'",
-        "step3": "Restart your terminal after installation"
-      },
+      "description": "GitHub Copilot authentication guide",
       "authentication": {
         "title": "Authentication",
         "step1": "Open a terminal and run 'gh auth login'",
@@ -1362,10 +1356,41 @@
       }
     }
   },
-  "common": {
-    "test": "Test",
-    "refresh": "Refresh",
-    "save": "Save"
+  "providerGrid": {
+    "title": "LLM Providers",
+    "description": "Manage your AI services",
+    "search": {
+      "placeholder": "Search for a provider...",
+      "results": "{{count}} result{{count > 1 ? 's' : ''}} for \"{{query}}\"",
+      "noResults": "No providers found",
+      "noProviders": "No providers available",
+      "adjustCriteria": "Try adjusting your search criteria.",
+      "addFirst": "Start by adding your first provider.",
+      "addFirstButton": "Add your first provider"
+    },
+    "filters": {
+      "placeholder": "Filter",
+      "all": "All",
+      "configured": "Configured",
+      "unconfigured": "Unconfigured",
+      "errors": "With errors"
+    },
+    "sort": {
+      "placeholder": "Sort by",
+      "name": "Name",
+      "category": "Category",
+      "status": "Status",
+      "usage": "Usage"
+    },
+    "stats": {
+      "total": "{{count}} total",
+      "configured": "{{count}} configured",
+      "errors": "{{count}} errors"
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "add": "Add"
+    }
   },
   "collaboration": {
     "title": "Collaboration",
