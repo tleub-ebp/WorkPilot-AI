@@ -1322,6 +1322,14 @@
     "authenticate": "Authenticate",
     "authTerminalTitle": "GitHub Copilot Authentication Terminal",
     "authCloseWarning": "The terminal is authenticating. Are you sure you want to close?",
+    "authTerminal": {
+      "connecting": "Connecting...",
+      "authenticate": "Authenticate: {{profileName}}",
+      "completeSetup": "Complete setup: {{profileName}}",
+      "authenticatedAs": "Authenticated as {{username}}",
+      "authenticated": "Authenticated!",
+      "authError": "Authentication Error"
+    },
     "errors": {
       "authFailed": "Authentication failed",
       "saveFailed": "Save failed",
