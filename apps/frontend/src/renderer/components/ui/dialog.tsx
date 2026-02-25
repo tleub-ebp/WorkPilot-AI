@@ -18,7 +18,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      'fixed inset-0 z-50 bg-black/80 backdrop-blur-sm',
+      'fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm',
       'data-[state=open]:animate-in data-[state=closed]:animate-out',
       'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
       className
@@ -38,11 +38,11 @@ const DialogContent = React.forwardRef<
 >(({ className, children, hideCloseButton, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none">
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'z-50 p-4 w-full max-w-lg',
+        'z-[60] p-4 w-full max-w-lg pointer-events-auto',
         'bg-card border border-border rounded-2xl',
         'shadow-xl',
         'data-[state=open]:animate-in data-[state=closed]:animate-out',

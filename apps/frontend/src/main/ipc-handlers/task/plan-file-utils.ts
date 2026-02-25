@@ -242,13 +242,15 @@ export function persistPlanStatusAndReasonSync(
       if (!isFileNotFoundError(readErr)) {
         throw readErr;
       }
-      // File doesn't exist - create a minimal plan with just status fields
-      // The spec runner will populate the full plan later
+      // File doesn't exist - create a minimal status-only plan.
+      // The spec runner will populate the full plan (with phases/subtasks) later.
+      // IMPORTANT: Do NOT include phases: [] here. An empty phases array causes
+      // the backend planner validator to fail with "No phases defined" before
+      // the planner agent gets a chance to create a real plan.
       const planDir = path.dirname(planPath);
       mkdirSync(planDir, { recursive: true });
       plan = {
-        created_at: new Date().toISOString(),
-        phases: []
+        created_at: new Date().toISOString()
       };
       console.log(`[plan-file-utils] Creating minimal plan for XState persistence: ${planPath}`);
     }
@@ -297,12 +299,12 @@ export function persistPlanPhaseSync(
       if (!isFileNotFoundError(readErr)) {
         throw readErr;
       }
-      // File doesn't exist - create minimal plan
+      // File doesn't exist - create minimal status-only plan.
+      // Do NOT include phases: [] — the backend planner will populate phases.
       const planDir = path.dirname(planPath);
       mkdirSync(planDir, { recursive: true });
       plan = {
-        created_at: new Date().toISOString(),
-        phases: []
+        created_at: new Date().toISOString()
       };
     }
 

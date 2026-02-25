@@ -33,6 +33,10 @@ class PlanningPhaseMixin:
                 )
                 return PhaseResult("planning", True, [str(plan_file)], [], 0)
             self.ui.print_status("Plan exists but invalid, regenerating...", "warning")
+            # Delete the invalid/stub plan file so the planner agent starts fresh.
+            # The frontend creates status-only stubs (for XState persistence) that
+            # have no phases — these must be removed before the planner runs.
+            plan_file.unlink(missing_ok=True)
 
         errors = []
 

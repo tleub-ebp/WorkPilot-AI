@@ -34,6 +34,12 @@ class ToolExecutor:
             return await self._read_file(arguments.get("path"))
         elif tool_name == "write_file":
             return await self._write_file(arguments.get("path"), arguments.get("content"))
+        elif tool_name == "Write":  # Alias for planner compatibility
+            return await self._write_file(
+                arguments.get("file_path"), 
+                arguments.get("CodeContent"),
+                arguments.get("EmptyFile", False)
+            )
         elif tool_name == "list_files":
             return await self._list_files(arguments.get("directory", "."))
         elif tool_name == "run_command":
@@ -56,19 +62,24 @@ class ToolExecutor:
         except Exception as e:
             raise RuntimeError(f"Error reading file {path}: {e}")
     
-    async def _write_file(self, path: Optional[str], content: Optional[str]) -> str:
+    async def _write_file(self, path: Optional[str], content: Optional[str] = None, empty_file: bool = False) -> str:
         """Write content to a file."""
         if not path:
             raise ValueError("Path is required for write_file")
-        if content is None:
-            raise ValueError("Content is required for write_file")
         
         file_path = self.project_dir / path
         file_path.parent.mkdir(parents=True, exist_ok=True)
         
         try:
             with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(content)
+                if empty_file:
+                    # Create empty file
+                    pass
+                elif content is not None:
+                    f.write(content)
+                else:
+                    # Default content if none provided
+                    f.write("")
             return f"Successfully wrote to {path}"
         except Exception as e:
             raise RuntimeError(f"Error writing file {path}: {e}")
@@ -214,6 +225,29 @@ def get_tool_definitions(agent_type: str) -> List[Dict[str, Any]]:
         ])
     elif agent_type == "planner":
         base_tools.extend([
+            {
+                "name": "Write",
+                "description": "Write content to a file (for creating implementation_plan.json)",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "file_path": {
+                            "type": "string",
+                            "description": "Path to the file to write"
+                        },
+                        "CodeContent": {
+                            "type": "string",
+                            "description": "Content to write to the file"
+                        },
+                        "EmptyFile": {
+                            "type": "boolean",
+                            "description": "Whether to create an empty file",
+                            "default": False
+                        }
+                    },
+                    "required": ["file_path", "CodeContent", "EmptyFile"]
+                }
+            },
             {
                 "name": "analyze_project",
                 "description": "Analyze the project structure",
