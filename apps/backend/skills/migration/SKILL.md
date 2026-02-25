@@ -1,7 +1,7 @@
 ---
 name: framework-migration
 description: Automate framework migrations with dependency resolution and rollback. Use for framework upgrades, version updates, or technology stack changes.
-triggers: ["migration", "upgrade", "framework switch", "version update", "technology change"]
+triggers: ["migration", "upgrade", "framework switch", "version update", "technology change", "angular", "@angular", "angular upgrade", "angular migration"]
 category: development
 version: "1.0.0"
 author: "Workforce AI Team"
@@ -17,6 +17,7 @@ author: "Workforce AI Team"
 
 ## Supported Frameworks
 - **React**: 18→19 (ReactDOM.render → createRoot, automatic batching)
+- **Angular**: 15→16, 16→17, 17→18, 18→19 (standalone components, signals, zoneless apps)
 - **Express**: 4→5 (req.query behavior changes, improved security)
 - **JavaScript→TypeScript**: Full type migration with tsconfig generation
 - **Build Tools**: Webpack→Vite, custom build systems
