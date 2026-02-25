@@ -73,7 +73,7 @@ WorkPilot AI is a desktop application (+ CLI) where users describe a goal and AI
 
 ## Project Structure
 
-Auto-Claude_EBP/
+WorkPilot_AI/
 ├── apps/
 │   ├── backend/                 # Python backend/CLI — ALL agent logic
 │   │   ├── core/                # client.py, auth.py, worktree.py, platform/, workflow_logger.py

@@ -18,6 +18,7 @@ Example:
 
 from src.connectors.jira.client import JiraClient
 from src.connectors.jira.connector import JiraConnector
+from src.connectors.jira.work_items import JiraWorkItemsClient
 from src.connectors.jira.exceptions import (
     JiraAPIError,
     JiraAuthenticationError,
@@ -38,6 +39,8 @@ from src.connectors.jira.models import (
 __all__ = [
     # Main connector
     "JiraConnector",
+    # Work items client (high-level interface)
+    "JiraWorkItemsClient",
     # Underlying client
     "JiraClient",
     # Data models

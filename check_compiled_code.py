@@ -9,7 +9,7 @@ def check_compiled_code():
     print("🔍 Checking if Copilot modifications are compiled...")
     
     # Check the usage-monitor.ts file for our modifications
-    usage_monitor_file = "c:\\Users\\thomas.leberre\\Repositories\\Auto-Claude_EBP\\apps\\frontend\\src\\main\\claude-profile\\usage-monitor.ts"
+    usage_monitor_file = "C:\\Users\\thomas.leberre\\Repositories\\Auto-Claude_EBP\\apps\\frontend\\src\\main\\claude-profile\\usage-monitor.ts"
     
     try:
         with open(usage_monitor_file, 'r', encoding='utf-8') as f:
