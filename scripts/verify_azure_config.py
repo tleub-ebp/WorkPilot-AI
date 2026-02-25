@@ -74,7 +74,7 @@ if all_correct:
     print("Prochaines étapes:")
     print("1. Fermez COMPLÈTEMENT l'application Auto-Claude")
     print("2. Redémarrez l'application")
-    print("3. Ouvrez le projet 'Auto-Claude_EBP' (pas auto-code-ebp)")
+    print("3. Ouvrez le projet 'WorkPilot AI' (pas workpilot-ai)")
     print("4. Essayez d'importer des work items Azure DevOps")
     print()
     print("Vous devriez voir dans les logs:")

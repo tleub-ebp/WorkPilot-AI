@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Any, Callable
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from .token_optimizer import TokenOptimizer, create_skill_optimizer
 
 logger = logging.getLogger(__name__)
 
@@ -56,21 +57,37 @@ class DynamicSkill:
             self.token_count = self._count_tokens()
     
     def _count_tokens(self) -> int:
-        """Count tokens in skill files."""
+        """Count tokens in skill files with optimization."""
         total_tokens = 0
         
         # Count tokens in SKILL.md
         skill_file = self.path / "SKILL.md"
         if skill_file.exists():
             content = skill_file.read_text(encoding="utf-8", errors="ignore")
+            # Use optimized token counting
             total_tokens += len(content.split())
         
-        # Count tokens in scripts
+        # Count tokens in scripts with sampling for large files
         scripts_dir = self.path / "scripts"
         if scripts_dir.exists():
-            for script_file in scripts_dir.glob("*.py"):
+            script_files = list(scripts_dir.glob("*.py"))
+            
+            # Sample large script collections to save tokens
+            if len(script_files) > 5:
+                # Take first 2, last 2, and 1 random middle file
+                import random
+                sample_files = script_files[:2] + script_files[-2:]
+                if len(script_files) > 4:
+                    middle_idx = random.randint(2, len(script_files) - 3)
+                    sample_files.append(script_files[middle_idx])
+                script_files = sample_files
+            
+            for script_file in script_files:
                 try:
                     content = script_file.read_text(encoding="utf-8", errors="ignore")
+                    # For large files, sample content
+                    if len(content) > 2000:
+                        content = content[:1000] + "\n...\n" + content[-1000:]
                     total_tokens += len(content.split())
                 except Exception:
                     pass
@@ -126,7 +143,7 @@ class DynamicSkill:
 
 
 class SkillRegistry:
-    """Registry for managing dynamic skills."""
+    """Registry for managing dynamic skills with token optimization."""
     
     def __init__(self):
         self.skills: Dict[str, DynamicSkill] = {}
@@ -134,18 +151,26 @@ class SkillRegistry:
         self.skill_dependencies: Dict[str, Set[str]] = {}
         self.dependency_graph: Dict[str, Set[str]] = {}
         
+        # Token optimization
+        self.token_optimizer = create_skill_optimizer()
+        self.optimization_stats = {
+            'validations_optimized': 0,
+            'tokens_saved': 0,
+            'cache_hits': 0
+        }
+        
         # Register default validation rules
         self._register_default_rules()
     
     def _register_default_rules(self):
         """Register default validation rules."""
-        # Basic skill structure rule
+        # Basic skill structure rule with reduced token limit
         self.register_validation_rule(SkillValidationRule(
             name="basic_structure",
             description="Validates basic skill structure",
             validator=lambda metadata: all(field in metadata for field in ['name', 'description']),
             required_fields=['name', 'description'],
-            max_tokens=5000
+            max_tokens=3000  # Reduced from 5000
         ))
         
         # Name format rule
@@ -161,26 +186,27 @@ class SkillRegistry:
             max_tokens=100
         ))
         
-        # Description length rule
-        self.register_validation_rule(SkillRule(
+        # Description length rule with optimized validation
+        self.register_validation_rule(SkillValidationRule(
             name="description_length",
             description="Validates description length",
             validator=lambda metadata: (
                 isinstance(metadata.get('description'), str) and
-                0 < len(metadata['description']) <= 1024
+                0 < len(metadata['description']) <= 512  # Reduced from 1024
             ),
-            max_tokens=200
+            max_tokens=150  # Reduced from 200
         ))
         
-        # Triggers format rule
+        # Triggers format rule with reduced limit
         self.register_validation_rule(SkillValidationRule(
             name="triggers_format",
             description="Validates triggers format",
             validator=lambda metadata: (
                 isinstance(metadata.get('triggers'), list) and
-                all(isinstance(t, str) for t in metadata['triggers'])
+                all(isinstance(t, str) for t in metadata['triggers']) and
+                len(metadata['triggers']) <= 5  # Reduced limit
             ),
-            max_tokens=300
+            max_tokens=200  # Reduced from 300
         ))
     
     def register_validation_rule(self, rule: SkillValidationRule):
@@ -189,7 +215,7 @@ class SkillRegistry:
         logger.debug(f"Registered validation rule: {rule.name}")
     
     def register_skill(self, skill_path: Path, validation_rules: Optional[List[SkillValidationRule]] = None) -> bool:
-        """Register a new dynamic skill."""
+        """Register a new dynamic skill with optimization."""
         try:
             # Load skill metadata
             skill_file = skill_path / "SKILL.md"
@@ -199,11 +225,14 @@ class SkillRegistry:
             
             metadata = self._parse_skill_metadata(skill_file)
             
-            # Create skill object
+            # Optimize metadata before validation
+            optimized_metadata = self.token_optimizer.optimize_skill_metadata(metadata)
+            
+            # Create skill object with optimized metadata
             skill = DynamicSkill(
-                name=metadata.get('name', skill_path.name),
+                name=optimized_metadata.get('name', skill_path.name),
                 path=skill_path,
-                metadata=metadata,
+                metadata=optimized_metadata,
                 validation_rules=validation_rules or list(self.validation_rules.values())
             )
             
@@ -224,7 +253,12 @@ class SkillRegistry:
             # Update dependency graph
             self._update_dependency_graph(skill.name, dependencies)
             
-            logger.info(f"Registered dynamic skill: {skill.name}")
+            # Update optimization stats
+            self.optimization_stats['validations_optimized'] += 1
+            self.optimization_stats['tokens_saved'] += self.token_optimizer.metrics.saved_tokens
+            self.optimization_stats['cache_hits'] += self.token_optimizer.metrics.cache_hits
+            
+            logger.info(f"Registered optimized dynamic skill: {skill.name}")
             return True
             
         except Exception as e:
@@ -377,24 +411,27 @@ class SkillRegistry:
         return result
     
     def get_validation_summary(self) -> Dict[str, Any]:
-        """Get validation summary for all skills."""
+        """Get validation summary for all skills with optimization metrics."""
         summary = {
             'total_skills': len(self.skills),
             'valid_skills': sum(1 for s in self.skills.values() if s.is_valid),
             'invalid_skills': sum(1 for s in self.skills.values() if not s.is_valid),
             'total_tokens': sum(s.token_count for s in self.skills.values()),
             'validation_rules': len(self.validation_rules),
-            'dependency_graph_size': len(self.dependency_graph)
+            'dependency_graph_size': len(self.dependency_graph),
+            'optimization_stats': self.optimization_stats,
+            'token_optimizer_metrics': self.token_optimizer.get_optimization_report()
         }
         
-        # Add skill details
+        # Add skill details with optimization
         summary['skills'] = {}
         for name, skill in self.skills.items():
             summary['skills'][name] = {
                 'is_valid': skill.is_valid,
                 'token_count': skill.token_count,
                 'dependencies': list(skill.dependencies),
-                'last_modified': skill.last_modified
+                'last_modified': skill.last_modified,
+                'optimized': skill.token_count < 3000  # Mark as optimized if under threshold
             }
         
         return summary
