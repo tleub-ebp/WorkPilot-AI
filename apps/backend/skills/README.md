@@ -8,17 +8,17 @@ Ce dossier contient les skills Claude refactorisés selon les meilleures pratiqu
 
 ```
 skills/
-├── skill_manager.py          # Gestionnaire des skills (chargement progressif)
-├── migration/                 # Skill de migration de framework
-│   ├── SKILL.md              # Métadonnées et instructions du skill
-│   ├── scripts/              # Scripts exécutables
-│   │   ├── analyze_stack.py  # Analyse du stack technologique
-│   │   └── execute_migration.py # Exécution de la migration
-│   ├── data/                 # Données et ressources
-│   │   └── breaking_changes.json # Base de données des changements cassants
-│   └── templates/            # Templates de documents
-│       └── migration_plan.md # Template de plan de migration
-└── README.md                 # Ce fichier
+├── skill_manager.py                # Gestionnaire des skills (chargement progressif)
+├── migration/                      # Skill de migration de framework
+│   ├── SKILL.md                    # Métadonnées et instructions du skill
+│   ├── scripts/                    # Scripts exécutables
+│   │   ├── analyze_stack.py        # Analyse du stack technologique
+│   │   └── execute_migration.py    # Exécution de la migration
+│   ├── data/                       # Données et ressources
+│   │   └── breaking_changes.json   # Base de données des changements cassants
+│   └── templates/                  # Templates de documents
+│       └── migration_plan.md       # Template de plan de migration
+└── README.md                       # Ce fichier
 ```
 
 ## Concepts Clés
