@@ -79,6 +79,10 @@ export function ThemedProviderSection({
   const [error, setError] = useState<string | null>(null);
   const [testingProviders, setTestingProviders] = useState<Set<string>>(new Set());
 
+  // Vérifier si l'utilisateur est authentifié via OAuth (Claude Code CLI)
+  // Le token OAuth est stocké directement dans les settings globaux
+  const hasClaudeOAuth = Boolean(settings.globalClaudeOAuthToken);
+
   // Charger les connecteurs
   useEffect(() => {
     const loadConnectors = async () => {
@@ -123,9 +127,7 @@ export function ThemedProviderSection({
     return fields[providerId] || null;
   };
 
-  // Providers utilisant OAuth (Claude Code subscription)
-  const oauthProviders = new Set(['anthropic', 'claude']);
-  // Providers utilisant un CLI externe
+  // Providers utilisant un CLI externe (GitHub CLI)
   const cliProviders = new Set(['copilot']);
 
   const maskApiKey = (key: string): string => {
@@ -136,8 +138,15 @@ export function ThemedProviderSection({
   };
 
   const getAuthType = (providerId: string, hasApiKey: boolean): 'oauth' | 'api_key' | 'cli' | 'none' => {
-    if (oauthProviders.has(providerId)) return 'oauth';
-    if (cliProviders.has(providerId)) return 'cli';
+    // Anthropic/Claude : vérifier d'abord l'auth OAuth via les profils Claude (CLI)
+    // avant de regarder si une clé API existe
+    if ((providerId === 'anthropic' || providerId === 'claude') && hasClaudeOAuth) {
+      return 'oauth';
+    }
+    // Copilot : utilise l'authentification via GitHub CLI
+    if (cliProviders.has(providerId) && hasApiKey) {
+      return 'cli';
+    }
     if (hasApiKey) return 'api_key';
     return 'none';
   };
