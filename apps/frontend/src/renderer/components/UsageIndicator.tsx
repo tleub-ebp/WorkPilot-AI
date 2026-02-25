@@ -63,10 +63,10 @@ const getBadgeColorClasses = (percent: number): string => {
  * Get gradient background class based on usage percentage
  */
 const getGradientClass = (percent: number): string => {
-  if (percent >= THRESHOLD_CRITICAL) return 'bg-gradient-to-r from-red-600 to-red-500';
-  if (percent >= THRESHOLD_WARNING) return 'bg-gradient-to-r from-orange-600 to-orange-500';
-  if (percent >= THRESHOLD_ELEVATED) return 'bg-gradient-to-r from-yellow-600 to-yellow-500';
-  return 'bg-gradient-to-r from-green-600 to-green-500';
+  if (percent >= THRESHOLD_CRITICAL) return 'bg-linear-to-r from-red-600 to-red-500';
+  if (percent >= THRESHOLD_WARNING) return 'bg-linear-to-r from-orange-600 to-orange-500';
+  if (percent >= THRESHOLD_ELEVATED) return 'bg-linear-to-r from-yellow-600 to-yellow-500';
+  return 'bg-linear-to-r from-green-600 to-green-500';
 };
 
 /**
@@ -452,6 +452,35 @@ export function UsageIndicator() {
       setIsLoading(false);
     });
 
+    // Listen for provider changes to update UI immediately
+    const handleProviderChange = (event: CustomEvent) => {
+      const { provider } = event.detail;
+      if (provider !== selectedProvider) return;
+      
+      // Reset states immediately for visual feedback
+      setIsLoading(true);
+      setUsage(null);
+      setIsAvailable(false);
+      setActiveProfileNeedsReauth(false);
+      
+      // Force immediate refresh of usage data for the new provider
+      window.electronAPI.requestUsageUpdate(provider).then((result) => {
+        setIsLoading(false);
+        if (result.success && result.data) {
+          setUsage(result.data);
+          setIsAvailable(true);
+        } else {
+          setIsAvailable(false);
+        }
+      }).catch((error) => {
+        console.warn('[UsageIndicator] Failed to fetch usage after provider change:', error);
+        setIsLoading(false);
+        setIsAvailable(false);
+      });
+    };
+
+    window.addEventListener('providerChanged', handleProviderChange as EventListener);
+
     // Listen for all profiles usage updates (for multi-profile display)
     const unsubscribeAllProfiles = window.electronAPI.onAllProfilesUsageUpdated?.((allProfilesUsage) => {
       // Filter out the active profile - we only want to show "other" profiles
@@ -489,26 +518,24 @@ export function UsageIndicator() {
           setActiveProfileNeedsReauth(true);
         }
       }
-    }).catch((error) => {
-      console.warn('[UsageIndicator] Failed to fetch all profiles usage:', error);
     });
 
     return () => {
       unsubscribe();
       unsubscribeAllProfiles?.();
+      window.removeEventListener('providerChanged', handleProviderChange as EventListener);
     };
   }, [selectedProvider]);
 
   // Show loading state
   if (isLoading) {
     return (
-        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground">
-          <Activity className="h-3.5 w-3.5 motion-safe:animate-pulse" />
-          <span className="text-xs font-semibold">{t('common:usage.loading')}</span>
-        </div>
+      <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground">
+        <Activity className="h-3.5 w-3.5 motion-safe:animate-pulse" />
+        <span className="text-xs font-semibold">{t('common:usage.loading')}</span>
+      </div>
     );
   }
-
   // Show unavailable state - with better messaging based on cause
   if (!isAvailable || !usage) {
     const needsReauth = activeProfileNeedsReauth;
@@ -589,7 +616,7 @@ export function UsageIndicator() {
               <div className="space-y-1">
                 <p className="font-medium">{t('common:usage.dataUnavailable')}</p>
                 <p className="text-muted-foreground text-[10px]">
-                  {t('common:usage.providerNotSupported', 'Ce fournisseur ne propose pas d’API de suivi de consommation ou n’est pas encore supporté.')}
+                  {t('common:usage.providerNotSupported')}
                 </p>
               </div>
             </TooltipContent>
@@ -1173,3 +1200,7 @@ export function UsageIndicator() {
       </Popover>
   );
 }
+
+
+
+

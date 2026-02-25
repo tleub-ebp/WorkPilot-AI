@@ -217,6 +217,11 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
       if (window.electronAPI?.selectProvider) {
         await window.electronAPI.selectProvider(value);
       }
+      
+      // Notifier immédiatement les composants du changement de provider
+      window.dispatchEvent(new CustomEvent('providerChanged', { 
+        detail: { provider: value, timestamp: Date.now() }
+      }));
     } catch (error) {
       console.error('Failed to communicate provider selection to backend:', error);
     }
