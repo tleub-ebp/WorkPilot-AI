@@ -1,0 +1,36 @@
+# Étape 1: Build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copier les fichiers csproj et restaurer les dépendances
+COPY ["src/MyProject.API/MyProject.API.csproj", "src/MyProject.API/"]
+COPY ["src/MyProject.Application/MyProject.Application.csproj", "src/MyProject.Application/"]
+COPY ["src/MyProject.Domain/MyProject.Domain.csproj", "src/MyProject.Domain/"]
+COPY ["src/MyProject.Infrastructure/MyProject.Infrastructure.csproj", "src/MyProject.Infrastructure/"]
+RUN dotnet restore "src/MyProject.API/MyProject.API.csproj"
+
+# Copier tout le code source
+COPY . .
+
+# Build et publish
+WORKDIR "/src/src/MyProject.API"
+RUN dotnet publish "MyProject.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+# Étape 2: Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+
+# Variables d'environnement
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_URLS=http://+:80
+
+# Port exposé
+EXPOSE 80
+
+# Point d'entrée
+ENTRYPOINT ["dotnet", "MyProject.API.dll"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost/health || exit 1

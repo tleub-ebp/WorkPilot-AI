@@ -20,6 +20,12 @@ Ce guide explique comment les skills Claude Code ont été intégrés et adapté
 - **Adaptation**: Traduction des scripts helper, maintien des fonctionnalités
 - **Utilisation**: Testing des interfaces frontend EBP
 
+#### net-developer
+- **Source**: Skill original pour développement .NET
+- **Purpose**: Agent IA spécialisé pour l'écosystème .NET
+- **Adaptation**: Complet avec scripts, templates et best practices .NET
+- **Utilisation**: Développement d'applications .NET modernes avec Clean Architecture
+
 ### 2. Skills Business (Adaptés EBP)
 
 #### ebp-brand-guidelines
@@ -53,6 +59,17 @@ claude-skills/
 │   ├── SKILL.md                       # Instructions (FR)
 │   └── scripts/
 │       └── with_server.py             # Script serveur (FR)
+├── net-developer/                     # Skill technique .NET
+│   ├── SKILL.md                       # Instructions complètes .NET
+│   ├── scripts/                       # Scripts automatisés
+│   │   ├── create_project.py          # Création projet .NET
+│   │   └── add_entity.py              # Ajout entité avec repository
+│   └── examples/                      # Templates et exemples
+│       ├── webapi-template.cs         # Template API REST
+│       ├── entity-template.cs         # Template entité EF Core
+│       ├── test-template.cs           # Template tests unitaires
+│       ├── dockerfile                 # Dockerfile optimisé
+│       └── github-actions.yml         # Pipeline CI/CD
 ├── ebp-brand-guidelines/              # Skill business branding
 │   ├── SKILL.md                       # Guidelines EBP
 │   └── examples/
@@ -96,7 +113,20 @@ Les skills EBP adaptés sont disponibles localement dans le projet:
 "Utilise le skill webapp-testing pour tester notre dashboard de KPIs sur localhost:3000"
 ```
 
-### 3. Création de Documents Business
+### 3. Développement d'Applications .NET
+```bash
+# Utiliser net-developer pour créer une application
+"Utilise le skill net-developer pour créer une API REST .NET 8 pour la gestion des produits"
+
+# Ajouter une entité
+"Utilise le skill net-developer pour ajouter une entité Customer avec les propriétés Name, Email, Phone"
+
+# Implémenter un test
+"Utilise le skill net-developer pour écrire des tests unitaires pour le ProductService"
+
+# Déployer sur Azure
+"Utilise le skill net-developer pour déployer cette application sur Azure App Service"
+```
 ```bash
 # Utiliser ebp-brand-guidelines pour le formatting
 "Utilise le skill ebp-brand-guidelines pour formater ce rapport business selon les standards EBP"
