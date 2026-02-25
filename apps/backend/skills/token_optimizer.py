@@ -25,6 +25,13 @@ from collections import defaultdict, deque
 import threading
 from functools import lru_cache
 
+# Import optimization configuration
+try:
+    from .optimization_config import get_optimization_config, MAX_DESCRIPTION_LENGTH, MAX_TRIGGERS_COUNT, SAMPLING_THRESHOLD, COMPRESSION_THRESHOLD, PREDICTIVE_CACHE_SIZE, DEDUPLICATION_MIN_LENGTH
+except ImportError:
+    # Fallback for direct execution
+    from optimization_config import get_optimization_config, MAX_DESCRIPTION_LENGTH, MAX_TRIGGERS_COUNT, SAMPLING_THRESHOLD, COMPRESSION_THRESHOLD, PREDICTIVE_CACHE_SIZE, DEDUPLICATION_MIN_LENGTH
+
 logger = logging.getLogger(__name__)
 
 
