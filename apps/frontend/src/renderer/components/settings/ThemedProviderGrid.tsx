@@ -142,14 +142,14 @@ export function ThemedProviderGrid({
         {/* Statistiques */}
         <div className="flex gap-4 text-sm">
           <div className="px-3 py-1 bg-gray-100 rounded">
-            <span className="font-medium">{stats.total}</span> {t('providerGrid.stats.total')}
+            {t('providerGrid.stats.total', { count: stats.total })}
           </div>
           <div className="px-3 py-1 bg-green-100 text-green-700 rounded">
-            <span className="font-medium">{stats.configured}</span> {t('providerGrid.stats.configured')}
+            {t('providerGrid.stats.configured', { count: stats.configured })}
           </div>
           {stats.errors > 0 && (
             <div className="px-3 py-1 bg-red-100 text-red-700 rounded">
-              <span className="font-medium">{stats.errors}</span> {t('providerGrid.stats.errors')}
+              {t('providerGrid.stats.errors', { count: stats.errors })}
             </div>
           )}
         </div>
@@ -172,7 +172,7 @@ export function ThemedProviderGrid({
           
           <div className="flex gap-2">
             <Select value={sortBy} onValueChange={(value: SortBy) => setSortBy(value)}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-44">
                 <SelectValue placeholder={t('providerGrid.sort.placeholder')} />
               </SelectTrigger>
               <SelectContent>
@@ -184,7 +184,7 @@ export function ThemedProviderGrid({
             </Select>
 
             <Select value={filterStatus} onValueChange={(value: FilterStatus) => setFilterStatus(value)}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-44">
                 <Filter className="w-4 h-4 mr-2 text-gray-500" />
                 <SelectValue placeholder={t('providerGrid.filters.placeholder')} />
               </SelectTrigger>

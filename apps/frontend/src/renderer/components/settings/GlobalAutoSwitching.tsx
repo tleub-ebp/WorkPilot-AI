@@ -76,7 +76,6 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
             username: copilotResult.data.username,
           };
           providers.push(copilotProvider);
-        } else {
         }
       } catch (err) {
         console.error('[GlobalAutoSwitching] Error details:', err instanceof Error ? err.message : String(err));
@@ -285,14 +284,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
 
   const unifiedAccounts = buildUnifiedAccounts();
 
-  // Sync priority order with settings.providerPriorityOrder
-  useEffect(() => {
-    if (settings.providerPriorityOrder && settings.providerPriorityOrder.length > 0) {
-      setPriorityOrder(settings.providerPriorityOrder);
-    }
-  }, [settings.providerPriorityOrder]);
-
-  // Load priority order from settings
+  // Load priority order from ClaudeProfileManager
   const loadPriorityOrder = async () => {
     try {
       const result = await window.electronAPI.getAccountPriorityOrder();
@@ -309,14 +301,8 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
     setPriorityOrder(newOrder);
     setIsSavingPriority(true);
     try {
-      // Save to Electron API
+      // Save to ClaudeProfileManager (single source of truth)
       await window.electronAPI.setAccountPriorityOrder(newOrder);
-      
-      // Also save to settings for consistency
-      onSettingsChange({
-        ...settings,
-        providerPriorityOrder: newOrder
-      });
     } catch (err) {
       console.warn('[GlobalAutoSwitching] Failed to save priority order:', err);
       toast({

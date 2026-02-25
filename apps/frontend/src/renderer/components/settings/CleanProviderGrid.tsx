@@ -22,15 +22,17 @@ interface Provider {
 
 interface CleanProviderGridProps {
   providers: Provider[];
+  isLoading?: boolean;
   onConfigure: (providerId: string) => void;
-  onTest: (providerId: string) => void;
-  onToggle: (providerId: string, enabled: boolean) => void;
+  onTest?: (providerId: string) => void;
+  onToggle?: (providerId: string, enabled: boolean) => void;
   onRemove?: (providerId: string) => void;
   onAddProvider?: () => void;
   onRefreshProviders?: () => void;
-  isLoading?: boolean;
   isAutoSwitchingOpen?: boolean;
   testingProviders?: Set<string>;
+  settings?: any;
+  onSettingsChange?: (settings: any) => void;
   className?: string;
 }
 
@@ -49,13 +51,58 @@ export function CleanProviderGrid({
   isLoading = false,
   isAutoSwitchingOpen,
   testingProviders = new Set(),
+  settings,
+  onSettingsChange,
   className
 }: CleanProviderGridProps) {
   const { t } = useTranslation('settings');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
-  const [sortBy, setSortBy] = useState<SortBy>('name');
+  
+  // Initialize state from settings or use defaults
+  const [searchQuery, setSearchQuery] = useState(settings?.providerSearchQuery || '');
+  const [viewMode, setViewMode] = useState<ViewMode>(settings?.providerViewMode || 'grid');
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>(settings?.providerFilterStatus || 'all');
+  const [sortBy, setSortBy] = useState<SortBy>(settings?.providerSortBy || 'name');
+
+  // Save state to settings when it changes
+  const updateSearchQuery = (value: string) => {
+    setSearchQuery(value);
+    if (onSettingsChange) {
+      onSettingsChange({
+        ...settings,
+        providerSearchQuery: value
+      });
+    }
+  };
+
+  const updateViewMode = (value: ViewMode) => {
+    setViewMode(value);
+    if (onSettingsChange) {
+      onSettingsChange({
+        ...settings,
+        providerViewMode: value
+      });
+    }
+  };
+
+  const updateFilterStatus = (value: FilterStatus) => {
+    setFilterStatus(value);
+    if (onSettingsChange) {
+      onSettingsChange({
+        ...settings,
+        providerFilterStatus: value
+      });
+    }
+  };
+
+  const updateSortBy = (value: SortBy) => {
+    setSortBy(value);
+    if (onSettingsChange) {
+      onSettingsChange({
+        ...settings,
+        providerSortBy: value
+      });
+    }
+  };
 
   // Filtres et recherche simples
   const filteredProviders = useMemo(() => {
@@ -139,14 +186,14 @@ export function CleanProviderGrid({
       {/* Statistiques */}
       <div className="flex items-center gap-4 text-sm">
         <div className="px-2 py-1 bg-primary/10 text-primary rounded">
-          <span className="font-medium">{stats.total}</span> {t('providerGrid.stats.total')}
+          {t('providerGrid.stats.total', { count: stats.total })}
         </div>
         <div className="px-2 py-1 bg-green-500/10 text-green-600 rounded">
-          <span className="font-medium">{stats.configured}</span> {t('providerGrid.stats.configured')}
+          {t('providerGrid.stats.configured', { count: stats.configured })}
         </div>
         {stats.errors > 0 && (
           <div className="px-2 py-1 bg-red-500/10 text-red-600 rounded">
-            <span className="font-medium">{stats.errors}</span> {t('providerGrid.stats.errors')}
+            {t('providerGrid.stats.errors', { count: stats.errors })}
           </div>
         )}
       </div>
@@ -160,15 +207,15 @@ export function CleanProviderGrid({
               <Input
                 placeholder={t('providerGrid.search.placeholder')}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => updateSearchQuery(e.target.value)}
                 className="pl-10 bg-background border-border"
               />
             </div>
           </div>
           
           <div className="flex gap-2">
-            <Select value={filterStatus} onValueChange={(value: FilterStatus) => setFilterStatus(value)}>
-              <SelectTrigger className="w-32 bg-background border-border">
+            <Select value={filterStatus} onValueChange={(value: FilterStatus) => updateFilterStatus(value)}>
+              <SelectTrigger className="w-48 bg-background border-border">
                 <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
                 <SelectValue placeholder={t('providerGrid.filters.placeholder')} />
               </SelectTrigger>
@@ -180,8 +227,8 @@ export function CleanProviderGrid({
               </SelectContent>
             </Select>
 
-            <Select value={sortBy} onValueChange={(value: SortBy) => setSortBy(value)}>
-              <SelectTrigger className="w-32 bg-background border-border">
+            <Select value={sortBy} onValueChange={(value: SortBy) => updateSortBy(value)}>
+              <SelectTrigger className="w-48 bg-background border-border">
                 <SelectValue placeholder={t('providerGrid.sort.placeholder')} />
               </SelectTrigger>
               <SelectContent>
@@ -196,7 +243,7 @@ export function CleanProviderGrid({
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => setViewMode('grid')}
+                onClick={() => updateViewMode('grid')}
                 className="h-6 w-6 p-0"
               >
                 <Grid3x3 className="w-3 h-3" />
@@ -204,7 +251,7 @@ export function CleanProviderGrid({
               <Button
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => setViewMode('list')}
+                onClick={() => updateViewMode('list')}
                 className="h-6 w-6 p-0"
               >
                 <List className="w-3 h-3" />

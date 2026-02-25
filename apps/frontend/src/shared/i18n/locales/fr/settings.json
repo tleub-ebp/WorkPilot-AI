@@ -33,8 +33,17 @@
       "title": "Comptes",
       "description": "Fournisseurs IA et comptes API",
       "multiConnector": {
-        "title": "Gestion multi-fournisseurs",
-        "description": "Vous pouvez connecter et gérer plusieurs fournisseurs IA (Claude, OpenAI, Mistral, etc.)."
+        "title": "Gestion des fournisseurs IA",
+        "description": "Connectez et gérez plusieurs fournisseurs d'intelligence artificielle (Claude, OpenAI, Mistral, etc.).",
+        "stats": {
+          "total": "{{count}} total",
+          "configured": "{{count}} configurés",
+          "errors": "{{count}} erreurs"
+        },
+        "buttons": {
+          "refresh": "Actualiser",
+          "addProvider": "Ajouter un fournisseur"
+        }
       },
       "form": {
         "addAccount": "Ajouter un compte {{provider}}",
