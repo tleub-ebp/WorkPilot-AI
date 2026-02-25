@@ -25,6 +25,13 @@ from typing import Dict, List, Set, Optional, Any, Tuple
 from collections import deque
 import threading
 
+# Import optimization configuration
+try:
+    from .optimization_config import get_optimization_config, MAX_CONTEXT_LIMIT_RATIO, DEFAULT_MAX_WORKERS, DEFAULT_TIMEOUT, CHECKPOINT_INTERVAL, PRIORITY_THRESHOLD
+except ImportError:
+    # Fallback for direct execution
+    from optimization_config import get_optimization_config, MAX_CONTEXT_LIMIT_RATIO, DEFAULT_MAX_WORKERS, DEFAULT_TIMEOUT, CHECKPOINT_INTERVAL, PRIORITY_THRESHOLD
+
 logger = logging.getLogger(__name__)
 
 

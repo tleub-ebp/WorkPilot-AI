@@ -25,6 +25,13 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from .token_optimizer import TokenOptimizer, create_skill_optimizer
 
+# Import optimization configuration
+try:
+    from .optimization_config import get_optimization_config, DEFAULT_MAX_WORKERS, DEFAULT_TIMEOUT, OPTIMIZATION_ENABLED, SUBAGENT_THRESHOLD, VALIDATION_CACHE_SIZE
+except ImportError:
+    # Fallback for direct execution
+    from optimization_config import get_optimization_config, DEFAULT_MAX_WORKERS, DEFAULT_TIMEOUT, OPTIMIZATION_ENABLED, SUBAGENT_THRESHOLD, VALIDATION_CACHE_SIZE
+
 logger = logging.getLogger(__name__)
 
 

@@ -4,6 +4,8 @@ Performance Test for Optimized Skills System
 
 Tests token usage, performance improvements, and optimization ratios
 for the new context and token optimization systems.
+
+Enhanced with specific optimization constants and metrics.
 """
 
 import json
@@ -20,6 +22,7 @@ from token_optimizer import TokenOptimizer, create_token_optimizer
 from personalized_context import PersonalizedSkillManager
 from dynamic_skill_manager import DynamicSkillManager
 from composite_skills import CompositeSkillExecutor, CompositeSkill
+from optimization_config import get_optimization_config, OPTIMIZATION_CONFIG
 
 # Legacy imports for comparison
 try:
@@ -39,13 +42,24 @@ def test_new_optimization_systems():
     print("📊 Token Optimizer Test:")
     token_optimizer = create_token_optimizer()
     
-    # Test content optimization
+    # Test content optimization with new constants
     test_content = {
         'name': 'test-skill',
         'description': 'This is a very long description that goes on and on and should be compressed to save tokens in the system',
-        'triggers': ['trigger1', 'trigger2', 'trigger3', 'trigger4', 'trigger5', 'trigger6'],
+        'triggers': ['trigger1', 'trigger2', 'trigger3', 'trigger4', 'trigger5', 'trigger6'],  # > MAX_TRIGGERS_COUNT
         'metadata': {'key1': 'value1', 'key2': 'value2', 'key3': 'value3'} * 10
     }
+    
+    print(f"  Optimization constants:")
+    config = get_optimization_config()
+    print(f"    Max description length: {config.token.max_description_length}")
+    print(f"    Max triggers count: {config.token.max_triggers_count}")
+    print(f"    Sampling threshold: {config.token.sampling_threshold}")
+    print(f"    Context limit ratio: {config.context.max_context_limit_ratio}")
+    print(f"    Default max workers: {config.context.default_max_workers}")
+    print(f"    Default timeout: {config.context.default_timeout}s")
+    print(f"    Optimization enabled: {config.performance.optimization_enabled}")
+    print(f"    Subagent threshold: {config.performance.subagent_threshold}")
     
     original_tokens = token_optimizer.counter.count_tokens(test_content)
     optimized_content, optimized_tokens = token_optimizer.optimize_content(test_content, 'metadata')
