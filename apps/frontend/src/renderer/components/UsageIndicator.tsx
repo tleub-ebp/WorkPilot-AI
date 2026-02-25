@@ -679,15 +679,17 @@ export function UsageIndicator() {
   );
 
   const maxUsage = Math.max(usage.sessionPercent, usage.weeklyPercent);
+  const isOpenAI = usage.providerName === 'openai';
+  const isCopilot = usage.providerName === 'copilot';
   // Show AlertCircle when re-auth needed or high usage
+  const hasCopilotError = isCopilot && (usage as any).error && (usage as any).error !== "NONE";
   const Icon = usage.needsReauthentication ? AlertCircle :
+      (isCopilot && (usage as any).error && (usage as any).error !== "NONE") ? AlertCircle :
       maxUsage >= THRESHOLD_WARNING ? AlertCircle :
           maxUsage >= THRESHOLD_ELEVATED ? TrendingUp :
               Activity;
 
   // Après la récupération des labels et des valeurs d'usage
-  const isOpenAI = usage.providerName === 'openai';
-  const isCopilot = usage.providerName === 'copilot';
 
   return (
       <Popover open={isOpen} onOpenChange={handleOpenChange}>
