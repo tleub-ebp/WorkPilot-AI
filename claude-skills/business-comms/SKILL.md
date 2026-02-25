@@ -1,11 +1,11 @@
-name: ebp-business-comms
-description: Ressources pour rédiger des communications business EBP (Business Planning) en utilisant les formats standards de l'entreprise. Utiliser pour rapports de projet, newsletters business, FAQs, rapports de statut, mises à jour leadership, etc.
+name: business-comms
+description: Ressources pour rédiger des communications business en utilisant les formats standards professionnels. Utiliser pour rapports de projet, newsletters business, FAQs, rapports de statut, mises à jour leadership, etc.
 license: Complete terms in LICENSE.txt
 ---
 
 ## Quand utiliser ce skill
 
-Pour rédiger des communications business EBP, utiliser ce skill pour:
+Pour rédiger des communications business professionnelles, utiliser ce skill pour:
 - Rapports de projet et statuts
 - Newsletters business internes
 - FAQs business et techniques
@@ -17,7 +17,7 @@ Pour rédiger des communications business EBP, utiliser ce skill pour:
 
 ## Comment utiliser ce skill
 
-Pour rédiger toute communication business:
+Pour rédiger toute communication business professionnelle:
 
 1. **Identifier le type de communication** depuis la demande
 2. **Charger le fichier guideline approprié** depuis le répertoire `examples/`:
@@ -28,15 +28,17 @@ Pour rédiger toute communication business:
     - `examples/leadership-updates.md` - Pour mises à jour leadership
     - `examples/general-business-comms.md` - Pour tout autre type de communication
 3. **Suivre les instructions spécifiques** dans ce fichier pour le formatage, ton, et contenu
+4. **Appliquer les guidelines de marque** appropriées si disponible
+5. **Générer le contenu** selon les standards professionnels
 
 Si le type de communication ne correspond à aucune guideline existante, demander clarification ou plus de contexte sur le format désiré.
 
-## Standards EBP
+## Standards Professionnels
 
 ### Structure des Rapports
 
-**Format Standard EBP:**
-1. **En-tête**: Logo EBP, date, titre du rapport
+**Format Standard:**
+1. **En-tête**: Logo de marque, date, titre du rapport
 2. **Résumé Exécutif**: Points clés en 3-4 lignes
 3. **KPIs Principaux**: Métriques essentielles avec graphiques
 4. **Analyse Détaillée**: Sections par domaine

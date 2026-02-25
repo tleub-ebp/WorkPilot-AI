@@ -28,8 +28,8 @@ mkdir -p .github/skills
 
 # Copier les skills EBP
 cp -r claude-skills/net-developer .github/skills/
-cp -r claude-skills/ebp-brand-guidelines .github/skills/
-cp -r claude-skills/ebp-business-comms .github/skills/
+cp -r claude-skills/brand-guidelines .github/skills/
+cp -r claude-skills/business-comms .github/skills/
 ```
 
 **Installation globale**
@@ -57,22 +57,22 @@ done
 
 ```
 claude-skills/
-├── README.md                           # Documentation générale
-├── MULTI_AGENT_GUIDE.md               # Ce guide
-├── agents/                            # Agents spécialisés (style Copilot)
-│   ├── ebp-net-architect.md           # Architecte .NET EBP
-│   ├── ebp-performance-analyst.md      # Analyste performance EBP
-│   └── ebp-business-analyst.md        # Analyste business EBP
-├── skills/                            # Skills génériques
-│   ├── mcp-builder/                   # Skill technique MCP
-│   ├── webapp-testing/                # Skill testing web
-│   ├── net-developer/                 # Skill .NET complet
-│   ├── ebp-brand-guidelines/          # Guidelines marque EBP
-│   └── ebp-business-comms/            # Communications business
-└── platforms/                         # Configurations spécifiques
-    ├── claude-code/                   # Configuration Claude Code
-    ├── github-copilot/                # Configuration Copilot
-    └── opencode/                      # Configuration OpenCode
+├── README.md                         # Documentation générale
+├── MULTI_AGENT_GUIDE.md              # Ce guide
+├── agents/                           # Agents spécialisés (style Copilot)
+│   ├── net-architect.md              # Architecte .NET
+│   ├── performance-analyst.md        # Analyste performance
+│   └── business-analyst.md           # Analyste business
+├── skills/                           # Skills génériques
+│   ├── mcp-builder/                  # Skill technique MCP
+│   ├── webapp-testing/               # Skill testing web
+│   ├── net-developer/                # Skill .NET complet
+│   ├── brand-guidelines/             # Guidelines marque professionnelle
+│   └── business-comms/               # Communications business
+└── platforms/                        # Configurations spécifiques
+    ├── claude-code/                  # Configuration Claude Code
+    ├── github-copilot/               # Configuration Copilot
+    └── opencode/                     # Configuration OpenCode
 ```
 
 ## 🎯 Agents Spécialisés (Style GitHub Copilot)
@@ -122,8 +122,8 @@ skills:
   - net-developer
   - mcp-builder
   - webapp-testing
-  - ebp-brand-guidelines
-  - ebp-business-comms
+  - brand-guidelines
+  - business-comms
 
 agents:
   - net-architect
@@ -166,8 +166,8 @@ Les agents sont invoqués selon le contexte :
 # Performance → performance-analyst  
 "Analyse les performances de notre API .NET et optimise les endpoints lents"
 
-# Business → ebp-business-comms
-"Crée un rapport de statut mensuel pour le projet EBP"
+# Business → business-comms
+"Crée un rapport de statut mensuel pour le projet"
 ```
 
 ### 2. Collaboration d'Agents
@@ -179,7 +179,7 @@ Les agents peuvent collaborer sur des tâches complexes :
 # → net-architect (architecture)
 # → net-developer (implémentation)
 # → performance-analyst (optimisation)
-# → ebp-business-comms (reporting)
+# → business-comms (reporting)
 ```
 
 ## 🚀 Installation Rapide
@@ -291,8 +291,8 @@ git pull origin main
 ## 📊 Monitoring et Analytics
 
 ### Usage des Agents
-- ** ebp-net-architect**: 35% des requêtes architecture
-- **ebp-performance-analyst**: 25% des requêtes performance  
+- **net-architect**: 35% des requêtes architecture
+- **performance-analyst**: 25% des requêtes performance  
 - **net-developer**: 40% des requêtes développement
 
 ### Performance

@@ -1,32 +1,32 @@
-name: ebp-brand-guidelines
-description: Applique les guidelines de marque EBP (Business Planning) aux artefacts. Utilise pour les couleurs EBP, typographie, standards visuels et formatage de documents business.
+name: brand-guidelines
+description: Applique les guidelines de marque aux artefacts. Utilise pour les couleurs de marque, typographie, standards visuels et formatage de documents business.
 license: Complete terms in LICENSE.txt
 ---
 
-# Guidelines de Marque EBP
+# Guidelines de Marque
 
 ## Vue d'ensemble
 
-Accéder aux ressources d'identité visuelle et de style EBP pour le Business Planning.
+Accéder aux ressources d'identité visuelle et de style pour le branding professionnel.
 
-**Mots-clés**: branding EBP, identité visuelle, post-processing, styling, couleurs EBP, typographie, formatage visuel, design business
+**Mots-clés**: branding, identité visuelle, post-processing, styling, couleurs de marque, typographie, formatage visuel, design business
 
-## Guidelines de Marque EBP
+## Guidelines de Marque
 
 ### Couleurs
 
 **Couleurs Principales:**
 
-- Bleu EBP: `#0056b3` - Primaire pour les titres et éléments importants
+- Bleu Primaire: `#0056b3` - Primaire pour les titres et éléments importants
 - Gris Foncé: `#2c3e50` - Texte principal et fonds sombres
 - Blanc: `#ffffff` - Fonds clairs et textes sur fonds sombres
 - Gris Moyen: `#95a5a6` - Éléments secondaires
 
 **Couleurs d'Accent:**
 
-- Orange EBP: `#ff6b35` - Accent primaire pour les CTAs
-- Vert EBP: `#27ae60` - Succès et indicateurs positifs
-- Rouge EBP: `#e74c3c` - Alertes et indicateurs négatifs
+- Orange: `#ff6b35` - Accent primaire pour les CTAs
+- Vert: `#27ae60` - Succès et indicateurs positifs
+- Rouge: `#e74c3c` - Alertes et indicateurs négatifs
 
 ### Typographie
 
