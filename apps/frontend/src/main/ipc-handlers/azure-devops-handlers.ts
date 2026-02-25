@@ -78,7 +78,7 @@ export function registerAzureDevOpsHandlers(
   const fixProjectName = (projectName: string | null | undefined): string => {
     if (!projectName) return 'MéCa';
     // Fix common mistakes: repository name instead of project name
-    if (projectName === 'MeCa Web' || projectName === 'MeCa%20Web' || projectName === 'Auto-Claude_EBP') {
+    if (projectName === 'MeCa Web' || projectName === 'MeCa%20Web') {
       return 'MéCa';
     }
     return projectName;
