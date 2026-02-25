@@ -601,21 +601,51 @@ except Exception as e:
             };
 
             const now = new Date().toISOString();
-            const implementationPlan = {
-              feature: safeTitle,
-              description: safeDescription,
-              created_at: now,
-              updated_at: now,
-              status: 'pending',
-              phases: []
-            };
 
-            const planPath = path.join(specDir, AUTO_BUILD_PATHS.IMPLEMENTATION_PLAN);
-            writeFileSync(planPath, JSON.stringify(implementationPlan, null, 2), 'utf-8');
+            // Do NOT pre-create implementation_plan.json with empty phases.
+            // The spec pipeline's planning phase will create it properly with
+            // actual phases and subtasks based on the spec.md it generates.
+            // Pre-creating with phases: [] causes the planner to fail validation
+            // 3 times and the task errors out.
+
+            // Build a rich task description for the spec pipeline
+            const descriptionParts: string[] = [];
+            descriptionParts.push(`# ${safeTitle}`);
+            descriptionParts.push('');
+            descriptionParts.push(`**Source:** Azure DevOps ${item.workItemType} ${safeIdentifier}`);
+            if (item.state) descriptionParts.push(`**State:** ${item.state}`);
+            if (item.priority) descriptionParts.push(`**Priority:** ${item.priority}`);
+            if (item.areaPath) descriptionParts.push(`**Area:** ${sanitizeText(item.areaPath, 200)}`);
+            if (item.iterationPath) descriptionParts.push(`**Iteration:** ${sanitizeText(item.iterationPath, 200)}`);
+            if (item.tags && item.tags.length > 0) {
+              descriptionParts.push(`**Tags:** ${item.tags.map(t => sanitizeText(t, 100)).join(', ')}`);
+            }
+            descriptionParts.push('');
+            descriptionParts.push('## Description');
+            descriptionParts.push('');
+            if (safeDescription) {
+              // Strip basic HTML tags from Azure DevOps rich text descriptions
+              const cleanDescription = safeDescription
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/<\/?(p|div|li|ul|ol|h[1-6]|span|strong|em|b|i|a|table|tr|td|th|thead|tbody)[^>]*>/gi, '\n')
+                .replace(/<[^>]+>/g, '')
+                .replace(/&nbsp;/g, ' ')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+              descriptionParts.push(cleanDescription || safeTitle);
+            } else {
+              descriptionParts.push(safeTitle);
+            }
+
+            const richDescription = descriptionParts.join('\n');
 
             const requirements = {
-              task_description: safeDescription || safeTitle,
-              workflow_type: category
+              task_description: richDescription,
+              workflow_type: category === 'bug' ? 'bugfix' : category === 'task' ? 'feature' : category
             };
             const requirementsPath = path.join(specDir, AUTO_BUILD_PATHS.REQUIREMENTS);
             writeFileSync(requirementsPath, JSON.stringify(requirements, null, 2), 'utf-8');

@@ -128,20 +128,9 @@ export async function createSpecForIssue(
     // Create initial files
     const now = new Date().toISOString();
 
-    // implementation_plan.json
-    const implementationPlan = {
-      feature: safeTitle,
-      description: safeDescription,
-      created_at: now,
-      updated_at: now,
-      status: 'pending',
-      phases: []
-    };
-    writeFileSync(
-      path.join(specDir, AUTO_BUILD_PATHS.IMPLEMENTATION_PLAN),
-      JSON.stringify(implementationPlan, null, 2),
-      'utf-8'
-    );
+    // Do NOT pre-create implementation_plan.json with empty phases.
+    // The spec pipeline's planning phase will create it properly with
+    // actual phases and subtasks based on the spec.md it generates.
 
     // requirements.json
     const requirements = {

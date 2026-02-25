@@ -193,7 +193,126 @@
     },
     "debug": {
       "title": "Debug & Logs",
-      "description": "Outils de dépannage"
+      "description": "Accéder aux journaux et informations de debug pour le dépannage",
+      "errorReporting": {
+        "label": "Rapport d'erreurs anonyme",
+        "description": "Envoyer des rapports de plantage pour aider à améliorer WorkPilot AI. Aucune donnée personnelle ou code n'est collecté."
+      },
+      "openLogsFolder": "Ouvrir le dossier des journaux",
+      "copyDebugInfo": "Copier les infos de debug",
+      "copied": "Copié !",
+      "loadInfo": "Charger les infos de debug",
+      "systemInfo": "Informations système",
+      "logsLocation": "Emplacement des journaux",
+      "recentErrors": "Erreurs récentes",
+      "noRecentErrors": "Aucune erreur récente",
+      "helpTitle": "Rapporter des problèmes",
+      "helpText": "Lors du signalement de bugs, cliquez sur \"Copier les infos de debug\" pour obtenir les informations système et les erreurs récentes qui nous aident à diagnostiquer le problème."
+    },
+    "projectSettings": {
+      "noProjectSelected": {
+        "title": "Aucun projet sélectionné",
+        "description": "Sélectionnez un projet dans la barre latérale pour configurer ses paramètres."
+      }
+    },
+    "mcp": {
+      "title": "Vue d'ensemble des serveurs MCP",
+      "titleWithProject": "Vue d'ensemble des serveurs MCP pour {{projectName}}",
+      "description": "Configurer quels serveurs MCP sont disponibles pour les agents dans ce projet",
+      "descriptionNoProject": "Sélectionnez un projet pour configurer les serveurs MCP",
+      "serversEnabled": "{{count}} serveurs activés",
+      "configuration": "Configuration des serveurs MCP",
+      "configurationHint": "Les serveurs désactivés réduisent l'utilisation du contexte et le temps de démarrage",
+      "noProjectSelected": "Aucun projet sélectionné",
+      "noProjectSelectedDescription": "Sélectionnez un projet dans le menu déroulant pour voir et configurer les serveurs MCP.",
+      "projectNotInitialized": "Projet non initialisé",
+      "projectNotInitializedDescription": "Initialisez WorkPilot AI pour ce projet pour configurer les serveurs MCP.",
+      "browserAutomation": "Automatisation du navigateur (agents QA uniquement)",
+      "alwaysEnabled": "toujours activé",
+      "addServer": "Ajouter un serveur",
+      "addMcpTo": "Ajouter un serveur MCP à {{agent}}",
+      "addMcpDescription": "Sélectionnez un serveur MCP à ajouter à cet agent",
+      "allMcpsAdded": "Tous les serveurs MCP disponibles sont déjà ajoutés",
+      "added": "ajouté",
+      "removed": "supprimé",
+      "remove": "Supprimer",
+      "restore": "Restaurer",
+      "noMcpServers": "Aucun serveur MCP",
+      "cannotRemove": "Impossible de supprimer (requis)",
+      "servers": {
+        "context7": {
+          "name": "Context7",
+          "description": "Recherche de documentation pour les bibliothèques"
+        },
+        "graphiti": {
+          "name": "Mémoire Graphiti",
+          "description": "Graphe de connaissances pour le contexte inter-sessions",
+          "notConfigured": "Nécessite une configuration mémoire (voir paramètres Mémoire)"
+        },
+        "linear": {
+          "name": "Linear",
+          "description": "Intégration gestion de projet",
+          "notConfigured": "Nécessite une intégration Linear (voir paramètres Linear)"
+        },
+        "electron": {
+          "name": "Electron",
+          "description": "Automatisation d'application de bureau via Chrome DevTools"
+        },
+        "puppeteer": {
+          "name": "Puppeteer",
+          "description": "Automatisation de navigateur web pour les tests"
+        },
+        "autoClaude": {
+          "name": "Outils WorkPilot AI",
+          "description": "Suivi des progrès de build"
+        }
+      },
+      "customServers": "Serveurs personnalisés",
+      "addCustomServer": "Ajouter un serveur personnalisé",
+      "editCustomServer": "Modifier un serveur personnalisé",
+      "customServerDescription": "Ajouter un serveur MCP basé sur commande ou HTTP",
+      "serverType": "Type de serveur",
+      "typeCommand": "Commande (npx/npm)",
+      "typeHttp": "HTTP",
+      "serverName": "Nom",
+      "serverNamePlaceholder": "Mon serveur MCP",
+      "serverDescription": "Description",
+      "serverDescriptionPlaceholder": "Ce que fait ce serveur",
+      "command": "Commande",
+      "args": "Arguments",
+      "argsHint": "Arguments séparés par des espaces",
+      "url": "URL",
+      "headers": "En-têtes",
+      "headerName": "Nom d'en-tête",
+      "headerValue": "Valeur d'en-tête",
+      "noCustomServers": "Aucun serveur personnalisé configuré. Ajoutez-en un pour utiliser avec vos agents.",
+      "errorNameRequired": "Le nom du serveur est requis",
+      "errorIdExists": "Un serveur avec cet ID existe déjà",
+      "errorCommandRequired": "La commande est requise pour les serveurs basés sur commande",
+      "errorUrlRequired": "L'URL est requise pour les serveurs basés sur HTTP",
+      "testConnection": "Tester",
+      "testing": "Test...",
+      "authToken": "Jeton d'authentification",
+      "authTokenPlaceholder": "Collez votre jeton API ou PAT ici",
+      "authTokenHint": "Utilisé comme jeton Bearer dans l'en-tête Authorization",
+      "advancedHeaders": "En-têtes supplémentaires",
+      "status": {
+        "healthy": "Le serveur répond",
+        "unhealthy": "Le serveur ne répond pas",
+        "needsAuth": "Authentification requise",
+        "checking": "Vérification...",
+        "unknown": "Statut inconnu"
+      },
+      "hints": {
+        "github": "Ceci ressemble à un serveur MCP GitHub. Vous aurez besoin d'un Personal Access Token avec les portées appropriées.",
+        "createGithubPat": "Créer un PAT GitHub",
+        "google": "Ceci ressemble à une API Google. Vous aurez besoin d'un jeton OAuth ou d'une clé API.",
+        "createGoogleToken": "Créer des identifiants Google",
+        "anthropic": "Ceci ressemble à une API Anthropic. Vous aurez besoin d'une clé API.",
+        "createAnthropicKey": "Créer une clé API Anthropic",
+        "openai": "Ceci ressemble à une API OpenAI. Vous aurez besoin d'une clé API.",
+        "createOpenaiKey": "Créer une clé API OpenAI"
+      }
     },
     "terminal-fonts": {
       "title": "Polices de terminal",
@@ -322,6 +441,13 @@
       }
     }
   },
+  "modelSelect": {
+    "placeholder": "Sélectionner un modèle ou saisir manuellement",
+    "placeholderManual": "Saisir le nom du modèle (ex: claude-sonnet-4-5-20250929)",
+    "searchPlaceholder": "Rechercher des modèles...",
+    "noResults": "Aucun modèle ne correspond à votre recherche",
+    "discoveryNotAvailable": "Découverte de modèles indisponible. Saisissez le nom du modèle manuellement."
+  },
   "azureDevOps": {
     "enableSyncLabel": "Activer la synchronisation Azure DevOps",
     "enableSyncDescription": "Gérer automatiquement les éléments de travail du backlog Azure DevOps",
@@ -375,6 +501,10 @@
     "emptySubtitle": "Essayez d'ajuster vos filtres",
     "done": "Terminé",
     "cancel": "Annuler",
+    "configureButton": "Configurer Azure DevOps",
+    "selectedItems": "{{count}} élément(s) sélectionné(s)",
+    "dragInstructions": "Sélectionnez des éléments puis faites-les glisser dans une colonne",
+    "moreItems": "+{{count}} élément(s) supplémentaire(s)",
     "importing": "Import en cours...",
     "importButton": "Importer Azure DevOps",
     "noResults": "Aucun modèle ne correspond à votre recherche",
@@ -1059,16 +1189,16 @@
     }
   },
   "providerGrid": {
-    "title": "Fournisseurs d'IA",
-    "description": "Gérez vos services d'intelligence artificielle",
+    "title": "Gestion des fournisseurs IA",
+    "description": "Connectez et gérez plusieurs fournisseurs d'intelligence artificielle",
     "search": {
-      "placeholder": "Rechercher un provider...",
+      "placeholder": "Rechercher un fournisseur...",
       "results": "{{count}} résultat{{count > 1 ? 's' : ''}} pour \"{{query}}\"",
-      "noResults": "Aucun provider trouvé",
-      "noProviders": "Aucun provider disponible",
+      "noResults": "Aucun fournisseur trouvé",
+      "noProviders": "Aucun fournisseur disponible",
       "adjustCriteria": "Essayez d'ajuster vos critères de recherche.",
-      "addFirst": "Commencez par ajouter votre premier provider.",
-      "addFirstButton": "Ajouter votre premier provider"
+      "addFirst": "Commencez par ajouter votre premier fournisseur.",
+      "addFirstButton": "Ajouter votre premier fournisseur"
     },
     "filters": {
       "placeholder": "Filtrer",
@@ -1092,6 +1222,208 @@
     "actions": {
       "refresh": "Actualiser",
       "add": "Ajouter"
+    }
+  },
+  "terminalFonts": {
+    "title": "Polices de terminal",
+    "description": "Personnaliser l'apparence et le comportement des polices de terminal",
+    "configActions": "Configuration :",
+    "export": "Exporter JSON",
+    "import": "Importer JSON",
+    "copy": "Copier dans le presse-papiers",
+    "fontConfig": {
+      "title": "Configuration de la police",
+      "description": "Personnaliser la famille, taille, graisse, hauteur de ligne et espacement des caractères",
+      "fontFamily": "Famille de police",
+      "fontFamilyDescription": "Police monospace principale pour le texte du terminal",
+      "selectFont": "Sélectionner une police...",
+      "searchFont": "Rechercher des polices...",
+      "noFonts": "Aucune police trouvée",
+      "fontChain": "Chaîne de polices :",
+      "fontSize": "Taille de police",
+      "fontSizeDescription": "Taille de police de base en pixels (10-24px)",
+      "decreaseFontSize": "Réduire la taille de police de {{step}}px",
+      "increaseFontSize": "Augmenter la taille de police de {{step}}px",
+      "pixels": "pixels",
+      "fontWeight": "Graisse de police",
+      "fontWeightDescription": "Graisse de police de 100 (fin) à 900 (noir), par incréments de 100",
+      "commonWeights": "Courants : 400 (normal), 600 (semi-gras), 700 (gras)",
+      "decreaseFontWeight": "Réduire la graisse de police de {{step}}",
+      "increaseFontWeight": "Augmenter la graisse de police de {{step}}",
+      "lineHeight": "Hauteur de ligne",
+      "lineHeightDescription": "Hauteur de ligne comme multiple de la taille de police (1.0-2.0)",
+      "letterSpacing": "Espacement des caractères",
+      "letterSpacingDescription": "Espacement horizontal entre les caractères (-2 à 5px)"
+    },
+    "cursorConfig": {
+      "title": "Configuration du curseur",
+      "description": "Personnaliser le style, le comportement de clignotement et la couleur d'accent du curseur",
+      "cursorStyle": "Style de curseur",
+      "cursorStyleDescription": "Choisir l'apparence du curseur de terminal",
+      "selectStyle": "Sélectionner un style de curseur...",
+      "currentStyle": "Actuel :",
+      "styleBlock": "Bloc",
+      "styleBlockDescription": "Curseur en bloc complet",
+      "styleUnderline": "Souligné",
+      "styleUnderlineDescription": "Curseur souligné",
+      "styleBar": "Barre",
+      "styleBarDescription": "Curseur en barre verticale",
+      "cursorBlink": "Clignotement du curseur",
+      "cursorBlinkDescription": "Activer ou désactiver l'animation de clignotement du curseur",
+      "blinkStatus": "Statut :",
+      "enabled": "Activé",
+      "disabled": "Désactivé",
+      "cursorAccentColor": "Couleur d'accent du curseur",
+      "cursorAccentColorDescription": "Choisir la couleur du curseur de terminal",
+      "cursorColorLabel": "Couleur d'accent du curseur",
+      "cursorColorDescription": "Couleur actuelle : {{color}}",
+      "pickColor": "Cliquer pour choisir une couleur",
+      "resetColor": "Réinitialiser en noir",
+      "reset": "Réinitialiser",
+      "preview": "Aperçu :"
+    },
+    "performanceConfig": {
+      "title": "Paramètres de performance",
+      "description": "Ajuster la limite de défilement et autres paramètres liés à la performance",
+      "presets": "Préréglages rapides",
+      "presetsDescription": "Limites de défilement courantes pour différents cas d'usage",
+      "scrollback": "Limite de défilement",
+      "scrollbackDescription": "Nombre maximum de lignes à conserver dans l'historique du terminal",
+      "scrollbackPresets": "Préréglages rapides",
+      "presetMinimal": "Minimal",
+      "presetMinimalDescription": "Historique minimal (1K lignes)",
+      "presetStandard": "Standard",
+      "presetStandardDescription": "Historique standard (10K lignes)",
+      "presetExtended": "Étendu",
+      "presetExtendedDescription": "Historique étendu (50K lignes)",
+      "presetMaximum": "Maximum",
+      "presetMaximumDescription": "Historique maximum (100K lignes)",
+      "decreaseScrollback": "Réduire le défilement de {{step}}",
+      "increaseScrollback": "Augmenter le défilement de {{step}}",
+      "lines": "lignes",
+      "kValue": "{{value}}K",
+      "scrollbackValue": "{{value}} lignes"
+    },
+    "presets": {
+      "title": "Préréglages rapides",
+      "description": "Appliquer des préréglages de police de terminal configurés ou sauvegarder les vôtres",
+      "builtin": "Préréglages intégrés",
+      "builtinDescription": "Cliquer pour appliquer un préréglage configuré",
+      "vscode": "Consolas 14px, curseur bloc",
+      "vscodeName": "VS Code",
+      "intellij": "JetBrains Mono 13px, curseur bloc",
+      "intellijName": "IntelliJ IDEA",
+      "macos": "SF Mono 13px, curseur bloc",
+      "macosName": "Terminal macOS",
+      "ubuntu": "Ubuntu Mono 13px, curseur bloc",
+      "ubuntuName": "Terminal Ubuntu",
+      "reset": "Réinitialiser aux valeurs par défaut",
+      "resetDescription": "Restaurer les paramètres par défaut pour votre système d'exploitation",
+      "resetToOS": "Réinitialiser aux valeurs par défaut {{os}}",
+      "resetButton": "Réinitialiser aux valeurs par défaut du système d'exploitation",
+      "custom": "Préréglages personnalisés",
+      "customDescription": "Sauvegarder votre configuration actuelle comme un préréglage personnalisé",
+      "presetNamePlaceholder": "Nom du préréglage...",
+      "savePreset": "Sauvegarder la configuration actuelle comme un préréglage",
+      "applyPreset": "Appliquer ce préréglage",
+      "deletePreset": "Supprimer ce préréglage",
+      "noCustomPresets": "Aucun préréglage personnalisé pour le moment. Sauvegardez votre configuration actuelle pour commencer.",
+      "duplicateName": "Un préréglage avec ce nom existe déjà",
+      "saved": "Préréglage \"{{name}}\" sauvegardé",
+      "deleted": "Préréglage \"{{name}}\" supprimé",
+      "unknownFont": "Inconnu",
+      "applyFailed": "Échec de l'application du préréglage \"{{name}}\"",
+      "presetNameLabel": "Nom du préréglage",
+      "summary": "{{font}}, {{size}}px, curseur {{cursor}}"
+    },
+    "preview": {
+      "title": "Aperçu en direct",
+      "description": "Aperçu de vos paramètres de terminal en temps réel (mise à jour dans 300ms)",
+      "ariaLabel": "Aperçu de la police de terminal",
+      "infoText": "Cet aperçu se met à jour dans les 300ms suivant tout changement pour montrer l'apparence de vos paramètres dans les terminaux réels."
+    },
+    "importExport": {
+      "exportSuccess": "Paramètres exportés avec succès",
+      "exportFailed": "Échec de l'export des paramètres",
+      "importSuccess": "Paramètres importés avec succès",
+      "importFailed": "Échec de l'import des paramètres : format JSON invalide",
+      "importFailedRange": "Échec de l'import des paramètres : valeurs hors plage valide",
+      "copySuccess": "Paramètres copiés dans le presse-papiers",
+      "copyFailed": "Échec de la copie dans le presse-papiers",
+      "fileTooLarge": "Fichier d'import trop volumineux (max 10KB)",
+      "readError": "Échec de lecture du fichier"
+    },
+    "slider": {
+      "decrease": "Réduire {{label}} de {{step}}",
+      "increase": "Augmenter {{label}} de {{step}}",
+      "currentValue": "Valeur actuelle : {{value}}"
+    }
+  },
+  "instructions": {
+    "title": "Instructions GitHub Copilot",
+    "description": "Guide d'authentification GitHub Copilot",
+    "authentication": {
+      "title": "Authentification",
+      "step1": "Ouvrez un terminal et exécutez 'gh auth login'",
+      "step2": "Suivez les instructions dans le navigateur qui s'ouvrira",
+      "step3": "Configurez les permissions nécessaires",
+      "installed": "Installé ({{version}})",
+      "notAuthenticated": "Non authentifié",
+      "authenticated": "Authentifié ({{username}})",
+      "authenticatedAs": "Authentifié en tant que {{username}}"
+    },
+    "authenticate": "S'authentifier",
+    "authTerminalTitle": "Terminal d'authentification GitHub Copilot",
+    "authCloseWarning": "Le terminal est en cours d'authentification. Êtes-vous sûr de vouloir fermer ?",
+    "authTerminal": {
+      "connecting": "Connexion...",
+      "authenticate": "S'authentifier: {{profileName}}",
+      "completeSetup": "Terminer la configuration: {{profileName}}",
+      "authenticatedAs": "Authentifié en tant que {{username}}",
+      "authenticated": "Authentifié !",
+      "authError": "Erreur d'authentification"
+    },
+    "errors": {
+      "authFailed": "Échec d'authentification",
+      "saveFailed": "Échec de sauvegarde",
+      "removeFailed": "Échec de suppression",
+      "logoutFailed": "Échec de déconnexion",
+      "tokenRequired": "Jeton requis",
+      "tokenRequiredDescription": "Veuillez saisir un jeton GitHub Copilot valide",
+      "unknownError": "Erreur inconnue"
+    },
+    "logout": "Se déconnecter",
+    "logoutSuccess": "Déconnexion réussie",
+    "logoutSuccessDescription": "Vous avez été déconnecté de GitHub Copilot",
+    "testSuccess": "Test réussi",
+    "testFailed": "Test échoué",
+    "testError": "Erreur de test",
+    "tokenSaved": "Jeton sauvegardé",
+    "tokenSavedDescription": "Le jeton GitHub Copilot a été sauvegardé",
+    "tokenRemoved": "Jeton supprimé",
+    "tokenRemovedDescription": "Le jeton GitHub Copilot a été supprimé",
+    "token": {
+      "title": "Jeton GitHub Copilot",
+      "label": "Jeton GitHub Copilot pour l'authentification",
+      "placeholder": "ghp_...",
+      "description": "Jeton personnel GitHub pour l'authentification Copilot (commence par ghp_, gho_, ou ghu_)",
+      "configured": "Jeton configuré et prêt à être utilisé"
+    },
+    "instructions": {
+      "title": "Instructions GitHub Copilot",
+      "description": "Guide d'authentification GitHub Copilot",
+      "authentication": {
+        "title": "Authentification",
+        "step1": "Ouvrez un terminal et exécutez 'gh auth login'",
+        "step2": "Suivez les instructions dans le navigateur qui s'ouvrira",
+        "step3": "Configurez les permissions nécessaires"
+      },
+      "token": {
+        "title": "Jeton GitHub Copilot",
+        "step1": "Générez un jeton personnel GitHub depuis https://github.com/settings/tokens",
+        "step2": "Copiez le jeton (commence par ghp_, gho_, ou ghu_)",
+        "step3": "Configurez le jeton dans les paramètres"
+      }
     }
   },
   "collaboration": {

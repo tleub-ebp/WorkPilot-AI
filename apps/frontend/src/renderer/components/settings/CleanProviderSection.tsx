@@ -6,7 +6,7 @@ import { getAllConnectors } from './multiconnector/utils';
 import { Loader2, AlertCircle, Info, X, Activity, CheckCircle, XCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
+import { Dialog, DialogContent } from '../ui/dialog';
 import { GlobalAutoSwitching } from './GlobalAutoSwitching';
 import { ProviderConfigDialog } from './ProviderConfigDialog';
 import { getStaticProviders } from '@shared/utils/providers';
@@ -690,27 +690,20 @@ export function CleanProviderSection({
         </div>
       </div>
 
-      {/* Sheet de configuration - tiroir ouvrant sur la droite */}
-      <Sheet open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
-        <SheetContent side="right" className="w-[95vw] max-w-[1200px] overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>
-              {t('sections.accounts.providerConfig.title')} {selectedProvider?.name}
-            </SheetTitle>
-          </SheetHeader>
-          <div className="mt-6">
-            <ProviderConfigDialog
-              isOpen={configDialogOpen}
-              onOpenChange={setConfigDialogOpen}
-              provider={selectedProvider}
-              settings={settings}
-              onSettingsChange={onSettingsChange}
-              onTest={handleTest}
-              useSheet={true}
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* Dialog de configuration - centré */}
+      <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
+        <DialogContent className="max-w-[650px]">
+          <ProviderConfigDialog
+            isOpen={configDialogOpen}
+            onOpenChange={setConfigDialogOpen}
+            provider={selectedProvider}
+            settings={settings}
+            onSettingsChange={onSettingsChange}
+            onTest={handleTest}
+            useSheet={true}
+          />
+        </DialogContent>
+      </Dialog>
     </SettingsSection>
   );
 }

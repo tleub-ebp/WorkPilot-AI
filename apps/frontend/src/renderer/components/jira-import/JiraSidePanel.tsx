@@ -687,7 +687,7 @@ export function JiraSidePanel({
             </div>
 
             <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-              {selectedWorkItems.length} item(s) selected
+              {t('jiraImport.selectedItems', { count: selectedWorkItems.length })}
               <div className="mt-1 space-y-1">
                 {selectedWorkItems.slice(0, 3).map((item) => (
                   <div key={item.id} className="flex items-center gap-2">
@@ -696,7 +696,7 @@ export function JiraSidePanel({
                   </div>
                 ))}
                 {selectedWorkItems.length > 3 && (
-                  <div>+{selectedWorkItems.length - 3} more</div>
+                  <div>{t('jiraImport.moreItems', { count: selectedWorkItems.length - 3 })}</div>
                 )}
               </div>
             </div>
