@@ -4,7 +4,7 @@ This file provides guidance to Claude Code when working with this repository.
 
 WorkPilot AI is an autonomous multi-agent coding framework that plans, builds, and validates software for you. It's a monorepo with a Python backend (CLI + agent logic) and an Electron/React frontend (desktop UI).
 
-> **Deep-dive reference:** [ARCHITECTURE.md](shared_docs/ARCHITECTURE.md) | **Frontend contributing:** [apps/frontend/CONTRIBUTING.md](apps/frontend/CONTRIBUTING.md)
+> **Deep-dive reference:** [ARCHITECTURE.md](shared_docs/ARCHITECTURE.md) | [Architecture Deep Dives](shared_docs/README.md) | **Frontend contributing:** [apps/frontend/CONTRIBUTING.md](apps/frontend/CONTRIBUTING.md)
 
 ## Table of Contents
 
