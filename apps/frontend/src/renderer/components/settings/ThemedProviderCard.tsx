@@ -38,6 +38,8 @@ interface ThemedProviderCardProps {
     usageCount?: number;
     isPremium?: boolean;
     icon?: React.ReactNode;
+    authType?: 'oauth' | 'api_key' | 'cli' | 'none';
+    apiKeyMasked?: string;
   };
   onConfigure: (providerId: string) => void;
   onTest: (providerId: string) => void;
@@ -266,39 +268,57 @@ export function ThemedProviderCard({
         {isExpanded && provider.isConfigured && (
           <div className="pt-2 border-t border-gray-100 space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-xs text-gray-600">Clé API</Label>
+              <Label className="text-xs text-gray-600">
+                {provider.authType === 'oauth' || provider.authType === 'cli'
+                  ? 'Authentification'
+                  : 'Clé API'}
+              </Label>
               <div className="flex items-center gap-2">
-                <div className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
-                  {showApiKey ? 'sk-...' : 'sk-...••••••••••••••••••••••••••••••••'}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowApiKey(!showApiKey)}
-                  className="h-6 w-6 p-0"
-                >
-                  {showApiKey ? (
-                    <EyeOff className="w-3 h-3" />
-                  ) : (
-                    <Eye className="w-3 h-3" />
-                  )}
-                </Button>
+                {provider.authType === 'oauth' ? (
+                  <div className="px-2 py-1 bg-blue-50 border border-blue-200 rounded text-xs font-medium text-blue-700">
+                    OAuth
+                  </div>
+                ) : provider.authType === 'cli' ? (
+                  <div className="px-2 py-1 bg-purple-50 border border-purple-200 rounded text-xs font-medium text-purple-700">
+                    GitHub CLI
+                  </div>
+                ) : provider.apiKeyMasked ? (
+                  <>
+                    <div className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+                      {showApiKey ? provider.apiKeyMasked : provider.apiKeyMasked.replace(/[^.•](?=[^.•]{4})/g, '•')}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="h-6 w-6 p-0"
+                    >
+                      {showApiKey ? (
+                        <EyeOff className="w-3 h-3" />
+                      ) : (
+                        <Eye className="w-3 h-3" />
+                      )}
+                    </Button>
+                  </>
+                ) : (
+                  <div className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-500">
+                    Non renseignée
+                  </div>
+                )}
               </div>
             </div>
 
-            {provider.lastTested && (
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <span>Dernier test</span>
-                <span>{new Date(provider.lastTested).toLocaleDateString()}</span>
-              </div>
-            )}
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>Dernier test</span>
+              <span>{provider.lastTested ? new Date(provider.lastTested).toLocaleDateString() : 'Jamais testé'}</span>
+            </div>
 
-            {provider.usageCount && (
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <span>Utilisations ce mois</span>
-                <span className="font-medium text-gray-700">{provider.usageCount}</span>
-              </div>
-            )}
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>Utilisations ce mois</span>
+              <span className="font-medium text-gray-700">
+                {provider.usageCount != null ? provider.usageCount : 'Non disponible'}
+              </span>
+            </div>
           </div>
         )}
       </div>

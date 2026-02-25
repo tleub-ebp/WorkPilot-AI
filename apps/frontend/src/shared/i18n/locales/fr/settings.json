@@ -31,9 +31,9 @@
     },
     "accounts": {
       "title": "Comptes",
-      "description": "Comptes Claude & endpoints API",
+      "description": "Fournisseurs IA et comptes API",
       "multiConnector": {
-        "title": "Gestion multi-connecteur",
+        "title": "Gestion multi-fournisseurs",
         "description": "Vous pouvez connecter et gérer plusieurs fournisseurs IA (Claude, OpenAI, Mistral, etc.)."
       },
       "form": {
@@ -61,7 +61,7 @@
         "syncErrorDescription": "Impossible de synchroniser le provider avec l'auto-switching"
       },
       "providerConfig": {
-        "title": "Configuration {{providerName}}"
+        "title": "Configuration"
       },
       "providerCard": {
         "configure": "Configurer",
@@ -188,7 +188,7 @@
     },
     "terminal-fonts": {
       "title": "Polices de terminal",
-      "description": "Personnaliser l'apparence des polices de terminal"
+      "description": "Apparence des polices de terminal"
     },
     "sandbox": {
       "title": "Sandbox",
@@ -196,7 +196,7 @@
     },
     "anomaly-detection": {
       "title": "Détection d'anomalies",
-      "description": "Surveillance comportementale des agents & alertes"
+      "description": "Surveillance comportementale des agents"
     },
     "llm-router": {
       "title": "Routeur LLM",
@@ -334,7 +334,7 @@
     "connectionNotConnected": "Non connecté",
     "connectionWorkItemCount": "{{count}}+ éléments de travail disponibles à l'import",
     "importPromptTitle": "Importer des éléments de travail",
-    "importPromptDescription": "Sélectionnez et importez des éléments de travail depuis votre backlog Azure DevOps pour créer des tâches Auto-Claude.",
+    "importPromptDescription": "Sélectionnez et importez des éléments de travail depuis votre backlog Azure DevOps pour créer des tâches WorkPilot AI.",
     "importPromptButton": "Sélectionner les éléments à importer",
     "autoSyncLabel": "Synchronisation auto des éléments de travail",
     "autoSyncDescription": "Importer automatiquement les nouveaux éléments de travail à l'ouverture du projet",
@@ -343,7 +343,7 @@
   },
   "azureDevOpsImport": {
     "title": "Importer des éléments de travail Azure DevOps",
-    "description": "Sélectionnez des éléments de travail Azure DevOps à importer dans Auto-Claude",
+    "description": "Sélectionnez des éléments de travail Azure DevOps à importer dans WorkPilot AI",
     "importSuccess": "{{count}} élément(s) de travail importé(s) avec succès",
     "successTitle": "Import réussi !",
     "successCount": "Importé {{count}} élément de travail.",
@@ -433,8 +433,8 @@
     "sourceFallback": "Valeur par défaut",
     "notDetected": "Non détecté",
     "autoClaudePath": "Chemin WorkPilot AI",
-    "autoClaudePathDescription": "Chemin relatif vers le répertoire auto-claude dans les projets",
-    "autoClaudePathPlaceholder": "auto-claude (par défaut)",
+    "autoClaudePathDescription": "Chemin relatif vers le répertoire workpilot-ai dans les projets",
+    "autoClaudePathPlaceholder": "workpilot-ai (par défaut)",
     "autoNameTerminals": "Nommer automatiquement les terminaux",
     "autoNameTerminalsDescription": "Utiliser l'IA pour générer des noms descriptifs pour les onglets de terminal en fonction de leur activité"
   },
@@ -985,7 +985,7 @@
   },
   "githubCopilot": {
     "title": "GitHub Copilot",
-    "description": "Configuration de GitHub Copilot CLI pour l'authentification",
+    "description": "Configurez GitHub Copilot pour l'assistance au codage IA directement dans votre éditeur",
     "status": {
       "notInstalled": "Non installé",
       "installed": "Installé ({{version}})",
@@ -1026,13 +1026,7 @@
     },
     "instructions": {
       "title": "Instructions GitHub Copilot",
-      "description": "Guide d'installation et d'authentification GitHub Copilot CLI",
-      "installation": {
-        "title": "Installation",
-        "step1": "Installez GitHub CLI depuis https://github.com/cli/cli",
-        "step2": "Vérifiez l'installation avec 'gh --version'",
-        "step3": "Redémarrez votre terminal après installation"
-      },
+      "description": "Guide d'authentification GitHub Copilot",
       "authentication": {
         "title": "Authentification",
         "step1": "Ouvrez un terminal et exécutez 'gh auth login'",
@@ -1047,10 +1041,41 @@
       }
     }
   },
-  "common": {
-    "test": "Tester",
-    "refresh": "Actualiser",
-    "save": "Enregistrer"
+  "providerGrid": {
+    "title": "Fournisseurs d'IA",
+    "description": "Gérez vos services d'intelligence artificielle",
+    "search": {
+      "placeholder": "Rechercher un provider...",
+      "results": "{{count}} résultat{{count > 1 ? 's' : ''}} pour \"{{query}}\"",
+      "noResults": "Aucun provider trouvé",
+      "noProviders": "Aucun provider disponible",
+      "adjustCriteria": "Essayez d'ajuster vos critères de recherche.",
+      "addFirst": "Commencez par ajouter votre premier provider.",
+      "addFirstButton": "Ajouter votre premier provider"
+    },
+    "filters": {
+      "placeholder": "Filtrer",
+      "all": "Tous",
+      "configured": "Configurés",
+      "unconfigured": "Non configurés",
+      "errors": "Avec erreurs"
+    },
+    "sort": {
+      "placeholder": "Trier par",
+      "name": "Nom",
+      "category": "Catégorie",
+      "status": "Statut",
+      "usage": "Utilisation"
+    },
+    "stats": {
+      "total": "{{count}} total",
+      "configured": "{{count}} configurés",
+      "errors": "{{count}} erreurs"
+    },
+    "actions": {
+      "refresh": "Actualiser",
+      "add": "Ajouter"
+    }
   },
   "collaboration": {
     "title": "Collaboration",

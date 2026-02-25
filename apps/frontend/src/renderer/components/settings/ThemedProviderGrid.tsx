@@ -18,6 +18,8 @@ interface Provider {
   usageCount?: number;
   isPremium?: boolean;
   icon?: React.ReactNode;
+  authType?: 'oauth' | 'api_key' | 'cli' | 'none';
+  apiKeyMasked?: string;
 }
 
 interface ThemedProviderGridProps {
@@ -109,8 +111,8 @@ export function ThemedProviderGrid({
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Providers LLM</h2>
-            <p className="text-sm text-gray-600">Gérez vos services d'intelligence artificielle</p>
+            <h2 className="text-lg font-semibold">{t('providerGrid.title')}</h2>
+            <p className="text-sm text-gray-600">{t('providerGrid.description')}</p>
           </div>
           
           <div className="flex gap-2">
@@ -122,7 +124,7 @@ export function ThemedProviderGrid({
                 size="sm"
               >
                 <RefreshCw className={cn('w-4 h-4 mr-2', isLoading && 'animate-spin')} />
-                Actualiser
+                {t('providerGrid.actions.refresh')}
               </Button>
             )}
             {onAddProvider && (
@@ -131,7 +133,7 @@ export function ThemedProviderGrid({
                 size="sm"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Ajouter
+                {t('providerGrid.actions.add')}
               </Button>
             )}
           </div>
@@ -140,14 +142,14 @@ export function ThemedProviderGrid({
         {/* Statistiques */}
         <div className="flex gap-4 text-sm">
           <div className="px-3 py-1 bg-gray-100 rounded">
-            <span className="font-medium">{stats.total}</span> total
+            <span className="font-medium">{stats.total}</span> {t('providerGrid.stats.total')}
           </div>
           <div className="px-3 py-1 bg-green-100 text-green-700 rounded">
-            <span className="font-medium">{stats.configured}</span> configurés
+            <span className="font-medium">{stats.configured}</span> {t('providerGrid.stats.configured')}
           </div>
           {stats.errors > 0 && (
             <div className="px-3 py-1 bg-red-100 text-red-700 rounded">
-              <span className="font-medium">{stats.errors}</span> erreurs
+              <span className="font-medium">{stats.errors}</span> {t('providerGrid.stats.errors')}
             </div>
           )}
         </div>
@@ -160,7 +162,7 @@ export function ThemedProviderGrid({
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="Rechercher un provider..."
+                placeholder={t('providerGrid.search.placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -169,28 +171,28 @@ export function ThemedProviderGrid({
           </div>
           
           <div className="flex gap-2">
-            <Select value={filterStatus} onValueChange={(value: FilterStatus) => setFilterStatus(value)}>
-              <SelectTrigger className="w-40">
-                <Filter className="w-4 h-4 mr-2 text-gray-500" />
-                <SelectValue />
+            <Select value={sortBy} onValueChange={(value: SortBy) => setSortBy(value)}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder={t('providerGrid.sort.placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
-                <SelectItem value="configured">Configurés</SelectItem>
-                <SelectItem value="unconfigured">Non configurés</SelectItem>
-                <SelectItem value="errors">Avec erreurs</SelectItem>
+                <SelectItem value="name">{t('providerGrid.sort.name')}</SelectItem>
+                <SelectItem value="category">{t('providerGrid.sort.category')}</SelectItem>
+                <SelectItem value="status">{t('providerGrid.sort.status')}</SelectItem>
+                <SelectItem value="usage">{t('providerGrid.sort.usage')}</SelectItem>
               </SelectContent>
             </Select>
 
-            <Select value={sortBy} onValueChange={(value: SortBy) => setSortBy(value)}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
+            <Select value={filterStatus} onValueChange={(value: FilterStatus) => setFilterStatus(value)}>
+              <SelectTrigger className="w-40">
+                <Filter className="w-4 h-4 mr-2 text-gray-500" />
+                <SelectValue placeholder={t('providerGrid.filters.placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="name">Nom</SelectItem>
-                <SelectItem value="category">Catégorie</SelectItem>
-                <SelectItem value="status">Statut</SelectItem>
-                <SelectItem value="usage">Utilisation</SelectItem>
+                <SelectItem value="all">{t('providerGrid.filters.all')}</SelectItem>
+                <SelectItem value="configured">{t('providerGrid.filters.configured')}</SelectItem>
+                <SelectItem value="unconfigured">{t('providerGrid.filters.unconfigured')}</SelectItem>
+                <SelectItem value="errors">{t('providerGrid.filters.errors')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -215,12 +217,11 @@ export function ThemedProviderGrid({
           </div>
         </div>
 
-        {/* Résultats de recherche */}
-        {searchQuery && (
-          <div className="text-sm text-gray-600">
-            {filteredAndSortedProviders.length} résultat{filteredAndSortedProviders.length > 1 ? 's' : ''} pour "{searchQuery}"
-          </div>
-        )}
+            {searchQuery && (
+              <div className="text-sm text-gray-600">
+                {t('providerGrid.search.results', { count: filteredAndSortedProviders.length, query: searchQuery })}
+              </div>
+            )}
       </div>
 
       {/* Grille de providers */}
@@ -234,25 +235,25 @@ export function ThemedProviderGrid({
               <div>
                 <h3 className="font-medium text-gray-900">
                   {searchQuery || filterStatus !== 'all' 
-                    ? 'Aucun provider trouvé'
-                    : 'Aucun provider disponible'
+                    ? t('providerGrid.search.noResults')
+                    : t('providerGrid.search.noProviders')
                   }
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
                   {searchQuery || filterStatus !== 'all' 
-                    ? 'Essayez d\'ajuster vos critères de recherche.'
-                    : 'Commencez par ajouter votre premier provider.'
+                    ? t('providerGrid.search.adjustCriteria')
+                    : t('providerGrid.search.addFirst')
                   }
                 </p>
               </div>
               {onAddProvider && !searchQuery && filterStatus === 'all' && (
-                <Button
-                  onClick={onAddProvider}
-                  size="sm"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Ajouter votre premier provider
-                </Button>
+                  <Button
+                    onClick={onAddProvider}
+                    size="sm"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    {t('providerGrid.search.addFirstButton')}
+                  </Button>
               )}
             </div>
           </div>

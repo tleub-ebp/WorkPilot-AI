@@ -30,7 +30,7 @@ interface CleanProviderGridProps {
   onRefreshProviders?: () => void;
   isLoading?: boolean;
   isAutoSwitchingOpen?: boolean;
-  testingProviders?: Set<string>; // Nouvelle prop pour suivre les providers en cours de test
+  testingProviders?: Set<string>;
   className?: string;
 }
 
@@ -71,8 +71,26 @@ export function CleanProviderGrid({
       return matchesSearch && matchesFilter;
     });
 
+    // Ajouter la logique de tri manquante
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'category':
+          return a.category.localeCompare(b.category);
+        case 'status':
+          const statusA = a.isConfigured ? (a.isWorking === false ? -1 : 1) : 0;
+          const statusB = b.isConfigured ? (b.isWorking === false ? -1 : 1) : 0;
+          return statusB - statusA;
+        case 'usage':
+          return (b.usageCount || 0) - (a.usageCount || 0);
+        default:
+          return 0;
+      }
+    });
+
     return filtered;
-  }, [providers, searchQuery, filterStatus]);
+  }, [providers, searchQuery, filterStatus, sortBy]);
 
   // Statistiques simples
   const stats = useMemo(() => {
@@ -88,9 +106,9 @@ export function CleanProviderGrid({
       {/* Header avec actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-foreground">Providers LLM</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('providerGrid.title')}</h2>
           <p className="text-sm text-muted-foreground">
-            Gérez vos providers de modèles linguistiques
+            {t('providerGrid.description')}
           </p>
         </div>
         
@@ -103,7 +121,7 @@ export function CleanProviderGrid({
               disabled={isLoading}
             >
               <RefreshCw className={cn("w-4 h-4 mr-2", isLoading && "animate-spin")} />
-              Rafraîchir
+              {t('providerGrid.actions.refresh')}
             </Button>
           )}
           {onAddProvider && (
@@ -112,7 +130,7 @@ export function CleanProviderGrid({
               size="sm"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Ajouter un provider
+              {t('providerGrid.actions.add')}
             </Button>
           )}
         </div>
@@ -121,14 +139,14 @@ export function CleanProviderGrid({
       {/* Statistiques */}
       <div className="flex items-center gap-4 text-sm">
         <div className="px-2 py-1 bg-primary/10 text-primary rounded">
-          <span className="font-medium">{stats.configured}</span> configurés
+          <span className="font-medium">{stats.total}</span> {t('providerGrid.stats.total')}
         </div>
-        <div className="px-2 py-1 bg-muted text-muted-foreground rounded">
-          <span className="font-medium">{stats.total - stats.configured}</span> non configurés
+        <div className="px-2 py-1 bg-green-500/10 text-green-600 rounded">
+          <span className="font-medium">{stats.configured}</span> {t('providerGrid.stats.configured')}
         </div>
         {stats.errors > 0 && (
-          <div className="px-2 py-1 bg-destructive/10 text-destructive rounded">
-            <span className="font-medium">{stats.errors}</span> erreurs
+          <div className="px-2 py-1 bg-red-500/10 text-red-600 rounded">
+            <span className="font-medium">{stats.errors}</span> {t('providerGrid.stats.errors')}
           </div>
         )}
       </div>
@@ -140,7 +158,7 @@ export function CleanProviderGrid({
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder="Rechercher un provider..."
+                placeholder={t('providerGrid.search.placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-background border-border"
@@ -152,25 +170,25 @@ export function CleanProviderGrid({
             <Select value={filterStatus} onValueChange={(value: FilterStatus) => setFilterStatus(value)}>
               <SelectTrigger className="w-32 bg-background border-border">
                 <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
-                <SelectValue />
+                <SelectValue placeholder={t('providerGrid.filters.placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
-                <SelectItem value="configured">Configurés</SelectItem>
-                <SelectItem value="unconfigured">Non configurés</SelectItem>
-                <SelectItem value="errors">Avec erreurs</SelectItem>
+                <SelectItem value="all">{t('providerGrid.filters.all')}</SelectItem>
+                <SelectItem value="configured">{t('providerGrid.filters.configured')}</SelectItem>
+                <SelectItem value="unconfigured">{t('providerGrid.filters.unconfigured')}</SelectItem>
+                <SelectItem value="errors">{t('providerGrid.filters.errors')}</SelectItem>
               </SelectContent>
             </Select>
 
             <Select value={sortBy} onValueChange={(value: SortBy) => setSortBy(value)}>
               <SelectTrigger className="w-32 bg-background border-border">
-                <SelectValue />
+                <SelectValue placeholder={t('providerGrid.sort.placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="name">Nom</SelectItem>
-                <SelectItem value="category">Catégorie</SelectItem>
-                <SelectItem value="status">Statut</SelectItem>
-                <SelectItem value="usage">Utilisation</SelectItem>
+                <SelectItem value="name">{t('providerGrid.sort.name')}</SelectItem>
+                <SelectItem value="category">{t('providerGrid.sort.category')}</SelectItem>
+                <SelectItem value="status">{t('providerGrid.sort.status')}</SelectItem>
+                <SelectItem value="usage">{t('providerGrid.sort.usage')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -198,7 +216,7 @@ export function CleanProviderGrid({
         {/* Résultats de recherche */}
         {searchQuery && (
           <div className="text-xs text-muted-foreground">
-            {filteredProviders.length} résultat{filteredProviders.length > 1 ? 's' : ''} pour "{searchQuery}"
+            {t('providerGrid.search.results', { count: filteredProviders.length, query: searchQuery })}
           </div>
         )}
       </div>
@@ -214,14 +232,14 @@ export function CleanProviderGrid({
               <div>
                 <h3 className="font-medium text-foreground">
                   {searchQuery || filterStatus !== 'all' 
-                    ? 'Aucun provider trouvé'
-                    : 'Aucun provider disponible'
+                    ? t('providerGrid.search.noResults')
+                    : t('providerGrid.search.noProviders')
                   }
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   {searchQuery || filterStatus !== 'all' 
-                    ? 'Essayez d\'ajuster vos critères de recherche.'
-                    : 'Commencez par ajouter votre premier provider.'
+                    ? t('providerGrid.search.adjustCriteria')
+                    : t('providerGrid.search.addFirst')
                   }
                 </p>
               </div>
@@ -231,7 +249,7 @@ export function CleanProviderGrid({
                   size="sm"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Ajouter votre premier provider
+                  {t('providerGrid.search.addFirstButton')}
                 </Button>
               )}
             </div>
