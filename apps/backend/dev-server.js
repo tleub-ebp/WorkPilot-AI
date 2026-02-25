@@ -2,10 +2,13 @@
 // Ensures Python venv is activated and dependencies are installed before running Uvicorn
 
 import { spawn } from 'child_process';
-import { resolve, join } from 'path';
+import { resolve, join, dirname } from 'path';
 import { existsSync } from 'fs';
+import { fileURLToPath } from 'url';
 
 const isWin = process.platform === 'win32';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const venvDir = resolve(__dirname, '../../.venv');
 const requirements = resolve(__dirname, 'requirements.txt');
 
