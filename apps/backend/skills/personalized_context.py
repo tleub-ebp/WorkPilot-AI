@@ -24,6 +24,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Set, Optional, Any, Tuple
 import hashlib
+from .context_optimizer import ContextOptimizer
+from .token_optimizer import TokenOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +47,11 @@ class UserProfile:
         self.usage_patterns[skill_name] = self.usage_patterns.get(skill_name, 0) + 1
         self.last_active = time.time()
         
-        # Keep history manageable
-        if len(self.skill_history) > 1000:
-            self.skill_history = self.skill_history[-500:]
+        # Keep history manageable - reduced from 1000 to 500 for token optimization
+        if len(self.skill_history) > 500:
+            self.skill_history = self.skill_history[-250:]
     
-    def get_frequent_skills(self, limit: int = 10) -> List[Tuple[str, int]]:
+    def get_frequent_skills(self, limit: int = 5) -> List[Tuple[str, int]]:  # Reduced from 10 to 5
         """Get most frequently used skills."""
         sorted_skills = sorted(
             self.usage_patterns.items(),
@@ -215,13 +217,24 @@ class PersonalizedSkillManager:
         # Learning system
         self.learner = ContextLearner()
         
+        # Optimization systems
+        self.context_optimizer = ContextOptimizer(max_context_size=8000)  # Reduced from default
+        self.token_optimizer = TokenOptimizer(cache_size=500, cache_ttl=1800.0)  # 30 min TTL
+        
         # Load existing data
         self._load_user_data()
         
         # User session tracking
         self.active_sessions: Set[str] = set()
         
-        logger.info("Personalized skill manager initialized")
+        # Optimization metrics
+        self.optimization_stats = {
+            'context_compactions': 0,
+            'token_savings': 0,
+            'cache_hits': 0
+        }
+        
+        logger.info("Personalized skill manager initialized with optimization")
     
     def _load_user_data(self):
         """Load existing user data."""
@@ -333,25 +346,38 @@ class PersonalizedSkillManager:
     
     def get_relevant_skills(self, query: str, session_id: str, 
                               context: Optional[Dict] = None) -> List[str]:
-        """Get relevant skills with personalization."""
+        """Get relevant skills with personalization and optimization."""
         # Extract user and project info from session ID
         user_id, project_id = self._parse_session_id(session_id)
         
         if user_id not in self.user_profiles:
             user_id = "default"
         
+        # Optimize query and context
+        optimized_query = self.token_optimizer.optimize_query(query, context)
+        
         # Get base skills from manager
         base_skills = self.base_skill_manager.get_relevant_skills(query)
         
-        # Apply personalization
+        # Apply personalization with optimization
         personalized_skills = self._apply_personalization(
-            base_skills, user_id, project_id, context
+            base_skills, user_id, project_id, optimized_query.get('context')
+        )
+        
+        # Optimize results before returning
+        optimized_skills, _ = self.token_optimizer.optimize_content(
+            personalized_skills, 'list', use_cache=True
         )
         
         # Record usage for learning
-        self._record_usage(user_id, query, personalized_skills)
+        self._record_usage(user_id, query, optimized_skills)
         
-        return personalized_skills
+        # Apply context optimization if needed
+        if len(optimized_skills) > 8:  # Reduced from 10
+            optimized_skills = self._optimize_skill_list(optimized_skills)
+            self.optimization_stats['context_compactions'] += 1
+        
+        return optimized_skills
     
     def _parse_session_id(self, session_id: str) -> Tuple[str, Optional[str]]:
         """Parse session ID to extract user_id and project_id."""
@@ -362,11 +388,11 @@ class PersonalizedSkillManager:
     
     def _apply_personalization(self, base_skills: List[str], user_id: str, 
                            project_id: Optional[str], context: Optional[Dict]) -> List[str]:
-        """Apply personalization to skill results."""
+        """Apply personalization to skill results with optimization."""
         user_profile = self.user_profiles[user_id]
         
-        # Get frequent skills from user history
-        frequent_skills = user_profile.get_frequent_skills(limit=5)
+        # Get frequent skills from user history (reduced limit)
+        frequent_skills = user_profile.get_frequent_skills(limit=3)  # Reduced from 5
         frequent_skill_names = [skill[0] for skill in frequent_skills]
         
         # Combine base skills with frequent skills
@@ -381,21 +407,23 @@ class PersonalizedSkillManager:
             for skill_name in combined_skills:
                 skill_metadata = self.base_skill_manager.get_skill_info(skill_name)
                 if skill_metadata:
-                    relevance = project_context.get_relevance_score(skill_name, skill_metadata)
+                    # Optimize metadata before scoring
+                    optimized_metadata = self.token_optimizer.optimize_skill_metadata(skill_metadata)
+                    relevance = project_context.get_relevance_score(skill_name, optimized_metadata)
                     scored_skills.append((skill_name, relevance))
                 else:
                     scored_skills.append((skill_name, 0.5))  # Default relevance
             
-            # Sort by relevance and return top skills
+            # Sort by relevance and return top skills (reduced limit)
             scored_skills.sort(key=lambda x: x[1], reverse=True)
             personalized_skills = [skill[0] for skill in scored_skills]
         else:
             # No project context, use user preferences
             personalized_skills = self._apply_user_preferences(combined_skills, user_profile)
         
-        # Apply learning-based predictions
+        # Apply learning-based predictions (reduced limit)
         if context:
-            predicted_skills = self.learner.predict_next_skills(query, context, limit=3)
+            predicted_skills = self.learner.predict_next_skills(query, context, limit=2)  # Reduced from 3
             predicted_skill_names = [skill[0] for skill in predicted_skills]
             
             # Add predicted skills if not already present
@@ -403,7 +431,7 @@ class PersonalizedSkillManager:
                 if skill_name not in personalized_skills:
                     personalized_skills.append(skill_name)
         
-        return personalized_skills[:10]  # Limit to top 10
+        return personalized_skills[:8]  # Reduced from 10
     
     def _apply_user_preferences(self, skills: List[str], profile: UserProfile) -> List[str]:
         """Apply user preferences to skill ranking."""
@@ -438,15 +466,22 @@ class PersonalizedSkillManager:
         return [skill[0] for skill in skill_scores]
     
     def _record_usage(self, user_id: str, query: str, skills_used: List[str]):
-        """Record usage for learning."""
+        """Record usage for learning with optimization."""
         if user_id in self.user_profiles:
             self.user_profiles[user_id].add_skill_usage(skills_used[0] if skills_used else 'unknown')
             
-            # Update learner
-            self.learner.learn_from_interaction(query, skills_used, True, {
+            # Optimize context before updating learner
+            user_context = {
                 'user_id': user_id,
-                'recent_skills': self.user_profiles[user_id].skill_history[-10:] if self.user_profiles[user_id].skill_history else []
-            })
+                'recent_skills': self.user_profiles[user_id].skill_history[-5:] if self.user_profiles[user_id].skill_history else []  # Reduced from 10
+            }
+            
+            # Update learner
+            self.learner.learn_from_interaction(query, skills_used, True, user_context)
+            
+            # Update optimization stats
+            self.optimization_stats['token_savings'] = self.token_optimizer.metrics.saved_tokens
+            self.optimization_stats['cache_hits'] = self.token_optimizer.metrics.cache_hits
     
     def analyze_project(self, project_id: str):
         """Analyze project to extract context."""
@@ -567,21 +602,67 @@ class PersonalizedSkillManager:
             )[:10]
         }
     
+    def get_optimization_stats(self) -> Dict[str, Any]:
+        """Get optimization statistics."""
+        stats = self.optimization_stats.copy()
+        stats.update({
+            'context_optimizer_metrics': self.context_optimizer.get_metrics(),
+            'token_optimizer_metrics': self.token_optimizer.get_optimization_report()
+        })
+        return stats
+    
+    def _optimize_skill_list(self, skills: List[str]) -> List[str]:
+        """Optimize skill list using context optimizer."""
+        context_dict = {'skills': skills}
+        optimized = self.context_optimizer.optimize_context(context_dict)
+        return optimized.get('skills', skills[:8])
+    
+    def create_context_checkpoint(self, metadata: Optional[Dict] = None) -> str:
+        """Create a context checkpoint."""
+        context_data = {
+            'user_profiles': {uid: profile.__dict__ for uid, profile in self.user_profiles.items()},
+            'project_contexts': {pid: context.__dict__ for pid, context in self.project_contexts.items()},
+            'optimization_stats': self.optimization_stats
+        }
+        return self.context_optimizer.create_checkpoint(context_data, metadata)
+    
+    def restore_context_checkpoint(self, checkpoint_id: str) -> bool:
+        """Restore from context checkpoint."""
+        context_data = self.context_optimizer.restore_checkpoint(checkpoint_id)
+        if context_data:
+            # Restore user profiles
+            for uid, profile_data in context_data.get('user_profiles', {}).items():
+                self.user_profiles[uid] = UserProfile(**profile_data)
+            
+            # Restore project contexts
+            for pid, context_data in context_data.get('project_contexts', {}).items():
+                self.project_contexts[pid] = ProjectContext(**context_data)
+            
+            # Restore optimization stats
+            self.optimization_stats = context_data.get('optimization_stats', {})
+            
+            logger.info(f"Restored from checkpoint: {checkpoint_id}")
+            return True
+        
+        return False
+    
     def export_user_data(self, filepath: str):
         """Export all user data to file."""
         try:
+            # Optimize data before export
+            optimized_profiles = {}
+            for user_id, profile in self.user_profiles.items():
+                optimized_profiles[user_id] = {
+                    'preferences': profile.preferences,
+                    'skill_history': self.token_optimizer.optimize_user_history(profile.skill_history, max_items=100),
+                    'project_types': profile.project_types,
+                    'team_context': profile.team_context,
+                    'usage_patterns': profile.usage_patterns,
+                    'last_active': profile.last_active
+                }
+            
             export_data = {
-                'user_profiles': {
-                    user_id: {
-                        'preferences': profile.preferences,
-                        'skill_history': profile.skill_history,
-                        'project_types': profile.project_types,
-                        'team_context': profile.team_context,
-                        'usage_patterns': profile.usage_patterns,
-                        'last_active': profile.last_active
-                    }
-                    for user_id, profile in self.user_profiles.items()
-                },
+                'user_profiles': optimized_profiles,
                 'project_contexts': {
                     project_id: {
                         'project_type': context.project_type,
@@ -593,13 +674,14 @@ class PersonalizedSkillManager:
                     }
                     for project_id, context in self.project_contexts.items()
                 },
-                'learning_insights': self.get_learning_insights()
+                'learning_insights': self.get_learning_insights(),
+                'optimization_stats': self.optimization_stats
             }
             
             with open(filepath, 'w') as f:
                 json.dump(export_data, f, indent=2)
             
-            logger.info(f"Exported user data to {filepath}")
+            logger.info(f"Exported optimized user data to {filepath}")
         except Exception as e:
             logger.error(f"Failed to export user data: {e}")
     

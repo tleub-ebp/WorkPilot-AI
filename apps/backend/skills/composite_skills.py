@@ -20,6 +20,8 @@ from typing import Dict, List, Optional, Any, Callable, Union
 from enum import Enum
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
+from .token_optimizer import TokenOptimizer, create_token_optimizer
+from .context_optimizer import ContextOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +45,7 @@ class ExecutionStatus(Enum):
 
 @dataclass
 class SkillExecutionResult:
-    """Result of skill execution."""
+    """Result of skill execution with optimization."""
     skill_name: str
     status: ExecutionStatus
     result: Optional[Any] = None
@@ -51,6 +53,7 @@ class SkillExecutionResult:
     execution_time: float = 0.0
     tokens_used: int = 0
     metadata: Dict[str, Any] = field(default_factory=dict)
+    optimized: bool = False  # Track if result was optimized
     
     def to_dict(self) -> Dict:
         return {
@@ -60,7 +63,8 @@ class SkillExecutionResult:
             'error': self.error,
             'execution_time': self.execution_time,
             'tokens_used': self.tokens_used,
-            'metadata': self.metadata
+            'metadata': self.metadata,
+            'optimized': self.optimized
         }
 
 
@@ -77,16 +81,17 @@ class CompositionRule:
 
 @dataclass
 class CompositeSkill:
-    """Represents a composite skill that combines multiple skills."""
+    """Represents a composite skill that combines multiple skills with optimization."""
     name: str
     description: str
     sub_skills: List[str]
     composition_type: CompositionType
     composition_rules: List[CompositionRule] = field(default_factory=list)
     dependencies: Dict[str, List[str]] = field(default_factory=dict)
-    max_parallel_workers: int = 4
-    timeout: float = 30.0
-    retry_attempts: int = 0
+    max_parallel_workers: int = 3  # Reduced from 4 for resource optimization
+    timeout: float = 25.0  # Reduced from 30.0
+    retry_attempts: int = 1  # Reduced from default for efficiency
+    optimization_enabled: bool = True
     
     def __post_init__(self):
         # Validate composition
@@ -129,35 +134,87 @@ class CompositeSkill:
         return False
 
 
-class CompositeSkillExecutor:
-    """Executes composite skills with orchestration."""
+class SubAgent:
+    """Subagent for specialized investigation tasks."""
     
-    def __init__(self, skill_manager, max_workers: int = 4):
+    def __init__(self, name: str, handler: Callable):
+        self.name = name
+        self.handler = handler
+        self.usage_count = 0
+    
+    def execute(self, *args, **kwargs) -> Any:
+        """Execute subagent task."""
+        self.usage_count += 1
+        return self.handler(*args, **kwargs)
+
+
+class CompositeSkillExecutor:
+    """Executes composite skills with orchestration and subagent optimization."""
+    
+    def __init__(self, skill_manager, max_workers: int = 3):  # Reduced from 4
         self.skill_manager = skill_manager
         self.max_workers = max_workers
         self.execution_history: List[Dict] = []
+        
+        # Optimization systems
+        self.token_optimizer = create_token_optimizer()
+        self.context_optimizer = ContextOptimizer(max_context_size=6000)
+        
+        # Subagent system for investigation
+        self.subagents = {
+            'investigator': SubAgent('investigator', self._investigate_skill),
+            'validator': SubAgent('validator', self._validate_result),
+            'optimizer': SubAgent('optimizer', self._optimize_execution)
+        }
+        
+        # Performance metrics
+        self.performance_metrics = {
+            'total_executions': 0,
+            'optimized_executions': 0,
+            'subagent_usage': 0,
+            'token_savings': 0
+        }
     
     def execute(self, composite_skill: CompositeSkill, context: Optional[Dict] = None) -> Dict[str, Any]:
-        """Execute a composite skill."""
+        """Execute a composite skill with optimization and subagents."""
         start_time = time.time()
         context = context or {}
         
-        logger.info(f"Executing composite skill: {composite_skill.name}")
+        logger.info(f"Executing optimized composite skill: {composite_skill.name}")
+        self.performance_metrics['total_executions'] += 1
         
         try:
+            # Optimize context if enabled
+            if composite_skill.optimization_enabled:
+                optimized_context = self.context_optimizer.optimize_context(context)
+                self.performance_metrics['optimized_executions'] += 1
+            else:
+                optimized_context = context
+            
+            # Use subagents for investigation if complex skill
+            if len(composite_skill.sub_skills) > 3:
+                investigation_result = self._use_subagent('investigator', composite_skill, optimized_context)
+                if investigation_result:
+                    optimized_context.update(investigation_result)
+                    self.performance_metrics['subagent_usage'] += 1
+            
+            # Execute based on composition type
             if composite_skill.composition_type == CompositionType.SEQUENTIAL:
-                results = self._execute_sequential(composite_skill, context)
+                results = self._execute_sequential(composite_skill, optimized_context)
             elif composite_skill.composition_type == CompositionType.PARALLEL:
-                results = self._execute_parallel(composite_skill, context)
+                results = self._execute_parallel(composite_skill, optimized_context)
             elif composite_skill.composition_type == CompositionType.CONDITIONAL:
-                results = self._execute_conditional(composite_skill, context)
+                results = self._execute_conditional(composite_skill, optimized_context)
             elif composite_skill.composition_type == CompositionType.PIPELINE:
-                results = self._execute_pipeline(composite_skill, context)
+                results = self._execute_pipeline(composite_skill, optimized_context)
             else:
                 raise ValueError(f"Unsupported composition type: {composite_skill.composition_type}")
             
+            # Optimize results with subagent validation
+            optimized_results = self._optimize_results(results, composite_skill)
+            
             # Combine results
-            combined_result = self._combine_results(results, composite_skill)
+            combined_result = self._combine_results(optimized_results, composite_skill)
             
             execution_time = time.time() - start_time
             
@@ -167,11 +224,16 @@ class CompositeSkillExecutor:
                 'execution_time': execution_time,
                 'success': all(r.status == ExecutionStatus.COMPLETED for r in results.values()),
                 'sub_skill_results': {name: result.to_dict() for name, result in results.items()},
-                'context': context
+                'context': optimized_context,
+                'optimized': composite_skill.optimization_enabled,
+                'subagents_used': self.performance_metrics['subagent_usage']
             }
             self.execution_history.append(execution_record)
             
-            logger.info(f"Completed composite skill {composite_skill.name} in {execution_time:.2f}s")
+            # Update performance metrics
+            self.performance_metrics['token_savings'] += self.token_optimizer.metrics.saved_tokens
+            
+            logger.info(f"Completed optimized composite skill {composite_skill.name} in {execution_time:.2f}s")
             
             return combined_result
             
@@ -425,9 +487,15 @@ class CompositeSkillExecutor:
         return self.execution_history[-limit:]
     
     def get_performance_stats(self) -> Dict[str, Any]:
-        """Get performance statistics."""
+        """Get performance statistics with optimization metrics."""
         if not self.execution_history:
-            return {}
+            return {
+                'total_executions': 0,
+                'optimized_executions': 0,
+                'subagent_usage': 0,
+                'token_savings': 0,
+                'token_optimizer_metrics': self.token_optimizer.get_optimization_report()
+            }
         
         total_executions = len(self.execution_history)
         successful_executions = sum(1 for record in self.execution_history if record['success'])
@@ -440,8 +508,101 @@ class CompositeSkillExecutor:
             'success_rate': successful_executions / total_executions,
             'average_execution_time': sum(execution_times) / len(execution_times),
             'min_execution_time': min(execution_times),
-            'max_execution_time': max(execution_times)
+            'max_execution_time': max(execution_times),
+            'optimization_metrics': self.performance_metrics,
+            'token_optimizer_metrics': self.token_optimizer.get_optimization_report(),
+            'subagent_stats': {
+                name: {'usage_count': agent.usage_count} 
+                for name, agent in self.subagents.items()
+            }
         }
+    
+    def _use_subagent(self, agent_name: str, composite_skill: CompositeSkill, context: Dict) -> Optional[Dict]:
+        """Use a subagent for specialized task."""
+        if agent_name in self.subagents:
+            try:
+                return self.subagents[agent_name].execute(composite_skill, context)
+            except Exception as e:
+                logger.warning(f"Subagent {agent_name} failed: {e}")
+        return None
+    
+    def _investigate_skill(self, composite_skill: CompositeSkill, context: Dict) -> Dict:
+        """Investigator subagent: analyze skill dependencies and requirements."""
+        investigation = {
+            'dependency_analysis': {},
+            'resource_requirements': {},
+            'optimization_suggestions': []
+        }
+        
+        # Analyze dependencies
+        for skill_name in composite_skill.sub_skills:
+            skill_info = self.skill_manager.get_skill_info(skill_name)
+            if skill_info:
+                investigation['dependency_analysis'][skill_name] = {
+                    'complexity': 'high' if skill_info.get('dependencies') else 'low',
+                    'estimated_tokens': skill_info.get('token_count', 0)
+                }
+        
+        # Suggest optimizations
+        if len(composite_skill.sub_skills) > 5:
+            investigation['optimization_suggestions'].append('Consider splitting into smaller composite skills')
+        
+        return investigation
+    
+    def _validate_result(self, result: Any, context: Dict) -> bool:
+        """Validator subagent: validate execution results."""
+        if isinstance(result, dict):
+            return result.get('success', False) is True
+        return result is not None
+    
+    def _optimize_execution(self, composite_skill: CompositeSkill, context: Dict) -> Dict:
+        """Optimizer subagent: suggest execution optimizations."""
+        optimizations = {
+            'parallel_opportunities': [],
+            'cache_suggestions': [],
+            'resource_optimizations': []
+        }
+        
+        # Identify parallel execution opportunities
+        if composite_skill.composition_type == CompositionType.SEQUENTIAL:
+            independent_skills = []
+            for skill in composite_skill.sub_skills:
+                dependencies = composite_skill.dependencies.get(skill, [])
+                if not dependencies or not any(dep in composite_skill.sub_skills for dep in dependencies):
+                    independent_skills.append(skill)
+            
+            if len(independent_skills) > 1:
+                optimizations['parallel_opportunities'] = independent_skills
+        
+        return optimizations
+    
+    def _optimize_results(self, results: Dict[str, SkillExecutionResult], 
+                         composite_skill: CompositeSkill) -> Dict[str, SkillExecutionResult]:
+        """Optimize execution results."""
+        optimized_results = {}
+        
+        for skill_name, result in results.items():
+            # Optimize result content
+            if result.result and isinstance(result.result, (dict, list, str)):
+                optimized_content, _ = self.token_optimizer.optimize_content(
+                    result.result, 'auto', use_cache=True
+                )
+                
+                optimized_result = SkillExecutionResult(
+                    skill_name=result.skill_name,
+                    status=result.status,
+                    result=optimized_content,
+                    error=result.error,
+                    execution_time=result.execution_time,
+                    tokens_used=result.tokens_used,
+                    metadata=result.metadata,
+                    optimized=True
+                )
+                optimized_results[skill_name] = optimized_result
+            else:
+                optimized_results[skill_name] = result
+        
+        return optimized_results
 
 
 class CompositeSkillManager:
