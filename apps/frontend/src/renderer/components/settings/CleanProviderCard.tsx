@@ -40,9 +40,9 @@ interface CleanProviderCardProps {
       authMethod?: 'api-key' | 'oauth' | 'cli' | 'local';
     };
   };
-  onConfigure: (providerId: string) => void;
-  onTest: (providerId: string) => void;
-  onToggle: (providerId: string, enabled: boolean) => void;
+  onConfigure?: (providerId: string) => void;
+  onTest?: (providerId: string) => void;
+  onToggle?: (providerId: string, enabled: boolean) => void;
   onRemove?: (providerId: string) => void;
   className?: string;
   isAutoSwitchingOpen?: boolean; // Nouvelle prop pour détecter l'état de l'auto-switching
@@ -178,6 +178,31 @@ export function CleanProviderCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
 
+  // Safe callback handlers with null checks
+  const handleConfigure = () => {
+    if (onConfigure) {
+      onConfigure(provider.id);
+    }
+  };
+
+  const handleTest = () => {
+    if (onTest) {
+      onTest(provider.id);
+    }
+  };
+
+  const handleToggle = (enabled: boolean) => {
+    if (onToggle) {
+      onToggle(provider.id, enabled);
+    }
+  };
+
+  const handleRemove = () => {
+    if (onRemove) {
+      onRemove(provider.id);
+    }
+  };
+
   const ProviderIcon = providerIcons[provider.id] || <div className="w-4 h-4 bg-gray-400 rounded" />;
 
   const getStatusColor = () => {
@@ -252,7 +277,7 @@ export function CleanProviderCard({
           {provider.isConfigured && (
             <Switch
               checked={provider.isWorking !== false}
-              onCheckedChange={(checked) => onToggle(provider.id, checked)}
+              onCheckedChange={(checked) => handleToggle(checked)}
               className="shrink-0"
             />
           )}
@@ -264,7 +289,7 @@ export function CleanProviderCard({
         <div className="flex items-center gap-2">
           {!provider.isConfigured ? (
             <Button
-              onClick={() => onConfigure(provider.id)}
+              onClick={handleConfigure}
               variant="outline"
               size="sm"
               className="h-7 px-3 text-xs"
@@ -275,7 +300,7 @@ export function CleanProviderCard({
           ) : (
             <>
               <Button
-                onClick={() => onTest(provider.id)}
+                onClick={handleTest}
                 variant="ghost"
                 size="sm"
                 className="h-7 px-3 text-xs"
@@ -291,7 +316,7 @@ export function CleanProviderCard({
                 )}
               </Button>
               <Button
-                onClick={() => onConfigure(provider.id)}
+                onClick={handleConfigure}
                 variant="ghost"
                 size="sm"
                 className="h-7 px-3 text-xs"

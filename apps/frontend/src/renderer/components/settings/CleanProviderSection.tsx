@@ -113,50 +113,8 @@ export function CleanProviderSection({
       loadConnectors();
       loadProfileUsageData();
       loadProviderTestResults();
-      // Auto-sync configured providers with auto-switching (respects disabled list)
-      // NOTE: Only runs on open, NOT on providersState change, to avoid overwriting
-      // settings during manual toggle operations (which update providersState).
-      syncConfiguredProvidersWithAutoSwitching();
     }
   }, [isOpen]);
-
-  // Auto-sync configured providers with auto-switching
-  const syncConfiguredProvidersWithAutoSwitching = async () => {
-    try {
-      const currentSettings = { ...settings };
-      
-      // Initialize providerPriorityOrder if it doesn't exist
-      if (!currentSettings.providerPriorityOrder) {
-        currentSettings.providerPriorityOrder = [];
-      }
-      
-      // Get all configured providers
-      const configuredProviders = providersState.filter(p => p.isConfigured);
-      const disabledProviders: string[] = currentSettings.disabledAutoSwitchProviders || [];
-
-      // Add configured providers to auto-switching if not already present AND not explicitly disabled
-      const updatedPriorityOrder = [...currentSettings.providerPriorityOrder];
-      configuredProviders.forEach(provider => {
-        if (!updatedPriorityOrder.includes(provider.id) && !disabledProviders.includes(provider.id)) {
-          updatedPriorityOrder.push(provider.id);
-        }
-      });
-      
-      // Remove unconfigured providers from auto-switching
-      const finalPriorityOrder = updatedPriorityOrder.filter(providerId => 
-        providersState.some(p => p.id === providerId && p.isConfigured)
-      );
-      
-      // Update settings only if changed and not during a manual toggle operation
-      if (JSON.stringify(currentSettings.providerPriorityOrder) !== JSON.stringify(finalPriorityOrder)) {
-        currentSettings.providerPriorityOrder = finalPriorityOrder;
-        onSettingsChange(currentSettings);
-      }
-      
-    } catch (error) {
-      console.error('Failed to sync configured providers with auto-switching:', error);
-    }
-  };
 
   // Load connectors
   const loadConnectors = async () => {
@@ -548,12 +506,9 @@ export function CleanProviderSection({
         )
       );
 
-      // Build ALL settings changes in a SINGLE update to avoid race conditions.
-      // Previously, disabledAutoSwitchProviders and providerPriorityOrder were updated
-      // in separate onSettingsChange() calls, causing the second to overwrite the first.
+      // Update disabledAutoSwitchProviders setting
+      // Note: providerPriorityOrder is now managed solely by ClaudeProfileManager
       const updatedSettings = { ...settings };
-
-      // 1) Update disabled list
       const currentDisabled = updatedSettings.disabledAutoSwitchProviders || [];
       if (!enabled) {
         if (!currentDisabled.includes(providerId)) {
@@ -563,19 +518,7 @@ export function CleanProviderSection({
         updatedSettings.disabledAutoSwitchProviders = currentDisabled.filter((id: string) => id !== providerId);
       }
 
-      // 2) Update priority order (add/remove from auto-switching list)
-      const currentPriority = updatedSettings.providerPriorityOrder || [];
-      if (enabled) {
-        // Add to priority list if not already present
-        if (!currentPriority.includes(providerId)) {
-          updatedSettings.providerPriorityOrder = [...currentPriority, providerId];
-        }
-      } else {
-        // Remove from priority list
-        updatedSettings.providerPriorityOrder = currentPriority.filter((id: string) => id !== providerId);
-      }
-
-      // 3) Single atomic settings update — no race condition
+      // Single atomic settings update
       onSettingsChange(updatedSettings);
 
       // Show toast notification
@@ -617,7 +560,7 @@ export function CleanProviderSection({
       >
         <div className="flex flex-col items-center justify-center py-16 space-y-4">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-          <span className="text-sm text-gray-600">Chargement des providers...</span>
+          <span className="text-sm text-gray-600">AAChargement des providers...</span>
         </div>
       </SettingsSection>
     );
@@ -650,8 +593,8 @@ export function CleanProviderSection({
 
   return (
     <SettingsSection
-      title={t('accounts.multiConnector.title')}
-      description={t('accounts.multiConnector.description')}
+      title={t('sections.accounts.multiConnector.title')}
+      description={t('sections.accounts.multiConnector.description')}
     >
       <div className="space-y-6">
         {error && (
@@ -697,6 +640,8 @@ export function CleanProviderSection({
               isLoading={isLoading}
               isAutoSwitchingOpen={autoSwitchingOpen}
               testingProviders={testingProviders}
+              settings={settings}
+              onSettingsChange={onSettingsChange}
             />
           </div>
 

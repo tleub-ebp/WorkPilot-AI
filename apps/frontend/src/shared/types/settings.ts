@@ -324,6 +324,11 @@ export interface AppSettings {
   authFailureEnabled?: boolean;
   // Active view persistence (restore last view on app reload)
   activeView?: import('../../renderer/components/Sidebar').SidebarView;
+  // Provider grid UI preferences
+  providerViewMode?: 'grid' | 'list';
+  providerFilterStatus?: 'all' | 'configured' | 'unconfigured' | 'errors';
+  providerSortBy?: 'name' | 'category' | 'status' | 'usage';
+  providerSearchQuery?: string;
 }
 
 // Auto-Claude Source Environment Configuration (for auto-claude repo .env)

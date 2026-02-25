@@ -638,8 +638,17 @@
     "title": "Accounts",
     "description": "Manage Claude accounts and API endpoints",
     "multiConnector": {
-      "title": "Multi-Connector Management",
-      "description": "You can connect and manage multiple AI providers (Claude, OpenAI, Mistral, etc.)."
+      "title": "AI Provider Management",
+      "description": "Connect and manage multiple AI providers (Claude, OpenAI, Mistral, etc.).",
+      "stats": {
+        "total": "{{count}} total",
+        "configured": "{{count}} configured",
+        "errors": "{{count}} errors"
+      },
+      "buttons": {
+        "refresh": "Refresh",
+        "addProvider": "Add Provider"
+      }
     },
     "tabs": {
       "claudeCode": "Claude Code",
@@ -1357,8 +1366,8 @@
     }
   },
   "providerGrid": {
-    "title": "LLM Providers",
-    "description": "Manage your AI services",
+    "title": "AI Provider Management",
+    "description": "Connect and manage multiple AI providers",
     "search": {
       "placeholder": "Search for a provider...",
       "results": "{{count}} result{{count > 1 ? 's' : ''}} for \"{{query}}\"",

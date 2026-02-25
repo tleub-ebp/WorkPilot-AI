@@ -109,15 +109,15 @@ export function ProviderGrid({
       {/* En-tête avec statistiques */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Providers LLM</h2>
+          <h2 className="text-2xl font-bold text-foreground">{t('providerGrid.title')}</h2>
           <div className="flex gap-2 mt-2">
-            <Badge variant="secondary">{stats.total} total</Badge>
+            <Badge variant="secondary">{t('providerGrid.stats.total', { count: stats.total })}</Badge>
             <Badge className="bg-green-100 text-green-800 border-green-200">
-              {stats.configured} configurés
+              {t('providerGrid.stats.configured', { count: stats.configured })}
             </Badge>
             {stats.errors > 0 && (
               <Badge variant="destructive">
-                {stats.errors} erreurs
+                {t('providerGrid.stats.errors', { count: stats.errors })}
               </Badge>
             )}
           </div>
@@ -173,7 +173,7 @@ export function ProviderGrid({
           </Select>
 
           <Select value={sortBy} onValueChange={(value: SortBy) => setSortBy(value)}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

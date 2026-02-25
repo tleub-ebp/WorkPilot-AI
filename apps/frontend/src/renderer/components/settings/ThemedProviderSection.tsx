@@ -258,8 +258,8 @@ export function ThemedProviderSection({
 
   return (
     <SettingsSection
-      title={t('accounts.multiConnector.title')}
-      description={t('accounts.multiConnector.description')}
+      title={t('sections.accounts.multiConnector.title')}
+      description={t('sections.accounts.multiConnector.description')}
     >
       <div className="space-y-6">
         {/* Alertes */}
