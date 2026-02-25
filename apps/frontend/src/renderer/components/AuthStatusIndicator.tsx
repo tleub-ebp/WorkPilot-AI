@@ -14,6 +14,7 @@
  * Usage data comes from UsageMonitor via IPC push events.
  */
 
+import React from 'react';
 import { useMemo, useState, useEffect } from 'react';
 import { AlertTriangle, Key, Lock, Shield, Server, Fingerprint, ExternalLink } from 'lucide-react';
 import {
@@ -209,31 +210,6 @@ export function AuthStatusIndicator() {
 
   return (
     <div className="flex items-center gap-2">
-      {/* Usage Warning Badge (shown when usage >= 90%) */}
-      {shouldShowUsageWarning && (
-        <TooltipProvider delayDuration={200}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-red-500/10 text-red-500 border-red-500/20">
-                <AlertTriangle className="h-3.5 w-3.5 motion-safe:animate-pulse" />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs max-w-xs">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground font-medium">{t('common:usage.usageAlert')}</span>
-                  <span className="font-semibold text-red-500">{Math.round(warningBadgePercent)}%</span>
-                </div>
-                <div className="h-px bg-border" />
-                <div className="text-[10px] text-muted-foreground">
-                  {t('common:usage.accountExceedsThreshold')}
-                </div>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
-
       {/* Provider Badge + Tooltip */}
       <TooltipProvider delayDuration={200}>
         <Tooltip>
@@ -395,34 +371,6 @@ export function AuthStatusIndicator() {
         </Tooltip>
       </TooltipProvider>
 
-      {/* 5 Hour Usage Badge (shown when session usage >= 90%) */}
-      {usage && !isLoadingUsage && usage.sessionPercent >= 90 && (
-        <TooltipProvider delayDuration={200}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-red-500/10 text-red-500 border-red-500/20 text-xs font-semibold">
-                {Math.round(usage.sessionPercent)}%
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs max-w-xs">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground font-medium">{localizeUsageWindowLabel(usage?.usageWindows?.sessionWindowLabel, t)}</span>
-                  <span className="font-semibold text-red-500">{Math.round(usage.sessionPercent)}%</span>
-                </div>
-                {sessionResetTime && (
-                  <>
-                    <div className="h-px bg-border" />
-                    <div className="text-[10px] text-muted-foreground">
-                      {sessionResetTime}
-                    </div>
-                  </>
-                )}
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
-    </div>
+      </div>
   );
 }
