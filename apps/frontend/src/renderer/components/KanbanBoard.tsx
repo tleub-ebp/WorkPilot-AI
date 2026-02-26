@@ -1451,6 +1451,31 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
             setIsDraggingAzureDevOps(true);
             setDraggedAzureDevOpsItems(parsed.workItems || []);
             
+            // Auto-scroll functionality
+            const kanbanContainer = document.querySelector('.overflow-x-auto.overflow-y-hidden');
+            if (kanbanContainer) {
+              const containerRect = kanbanContainer.getBoundingClientRect();
+              const scrollThreshold = 50; // pixels from edge
+              const scrollSpeed = 10; // pixels per frame
+              
+              const mouseX = event.clientX;
+              
+              // Check if mouse is near left edge
+              if (mouseX <= containerRect.left + scrollThreshold) {
+                kanbanContainer.scrollBy({
+                  left: -scrollSpeed,
+                  behavior: 'auto'
+                });
+              }
+              // Check if mouse is near right edge
+              else if (mouseX >= containerRect.right - scrollThreshold) {
+                kanbanContainer.scrollBy({
+                  left: scrollSpeed,
+                  behavior: 'auto'
+                });
+              }
+            }
+            
             // Find the column we're over
             const target = event.target as HTMLElement;
             const columnElement = target.closest('[data-column-status]');
@@ -1586,6 +1611,29 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       const mouseX = event.clientX;
       const mouseY = event.clientY;
       const allColumns = document.querySelectorAll('[data-column-status]');
+      
+      // Auto-scroll functionality
+      const kanbanContainer = document.querySelector('.overflow-x-auto.overflow-y-hidden');
+      if (kanbanContainer) {
+        const containerRect = kanbanContainer.getBoundingClientRect();
+        const scrollThreshold = 50; // pixels from edge
+        const scrollSpeed = 10; // pixels per frame
+        
+        // Check if mouse is near left edge
+        if (mouseX <= containerRect.left + scrollThreshold) {
+          kanbanContainer.scrollBy({
+            left: -scrollSpeed,
+            behavior: 'auto'
+          });
+        }
+        // Check if mouse is near right edge
+        else if (mouseX >= containerRect.right - scrollThreshold) {
+          kanbanContainer.scrollBy({
+            left: scrollSpeed,
+            behavior: 'auto'
+          });
+        }
+      }
       
       let foundColumn = false;
       for (const column of allColumns) {
