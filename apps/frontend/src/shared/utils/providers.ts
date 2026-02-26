@@ -33,8 +33,9 @@ export interface ProvidersResponse {
  * Determines auth status from the provided profiles list (a profile
  * for that provider means it is configured / authenticated).
  * Special handling for GitHub Copilot: checks gh CLI authentication.
+ * Special handling for Windsurf: OAuth status from backend.
  */
-export function getStaticProviders(profiles: APIProfile[] = []): ProvidersResponse {
+export async function getStaticProviders(profiles: APIProfile[] = []): Promise<ProvidersResponse> {
   const allProviders = providerRegistry.getAllProviders()
     .filter((p) => p.name !== 'claude' && p.name !== 'custom');
 
@@ -46,6 +47,19 @@ export function getStaticProviders(profiles: APIProfile[] = []): ProvidersRespon
 
   // Determine which providers have a configured profile
   const status: Record<string, boolean> = {};
+  
+  // Check Windsurf status from backend
+  let windsurfStatus = false;
+  try {
+    const response = await fetch(`${API_BASE}/providers/windsurf/status`);
+    if (response.ok) {
+      const data = await response.json();
+      windsurfStatus = data.available && data.authenticated;
+    }
+  } catch (error) {
+    console.warn('Failed to fetch Windsurf status:', error);
+  }
+
   for (const p of allProviders) {
     // Utiliser la même logique de détection que ProviderRegistry
     const hasProfile = profiles.some((prof) => {
@@ -70,6 +84,10 @@ export function getStaticProviders(profiles: APIProfile[] = []): ProvidersRespon
       if (p.name === 'deepseek') {
         return prof.baseUrl?.includes('deepseek.com') || prof.name?.toLowerCase().includes('deepseek');
       }
+      if (p.name === 'windsurf') {
+        // Windsurf est OAuth-only, vérifier via le statut du backend
+        return false; // Le statut sera déterminé par le backend
+      }
       
       // Fallback sur detectProvider pour les autres
       return detectProvider(prof.baseUrl) === p.name;
@@ -77,6 +95,8 @@ export function getStaticProviders(profiles: APIProfile[] = []): ProvidersRespon
 
     if (p.name === 'copilot') {
       status[p.name] = true;
+    } else if (p.name === 'windsurf') {
+      status[p.name] = windsurfStatus;
     } else {
       status[p.name] = hasProfile;
     }
