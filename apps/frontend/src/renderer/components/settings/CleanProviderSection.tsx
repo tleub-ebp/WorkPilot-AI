@@ -9,7 +9,7 @@ import { Button } from '../ui/button';
 import { Dialog, DialogContent } from '../ui/dialog';
 import { GlobalAutoSwitching } from './GlobalAutoSwitching';
 import { ProviderConfigDialog } from './ProviderConfigDialog';
-import { getStaticProviders } from '@shared/utils/providers';
+import { getStaticProviders, type CanonicalProvider } from '@shared/utils/providers';
 import { getProvider as getRegistryProvider } from '@shared/services/providerRegistry';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useToast } from '@/hooks/use-toast';
@@ -306,10 +306,23 @@ export function CleanProviderSection({
   };
 
   // Utiliser la même logique que ProviderSelector pour déterminer le statut
-  const { providers: staticProviders, status } = useMemo(
-    () => getStaticProviders(profiles),
-    [profiles]
-  );
+  const [staticProviders, setStaticProviders] = useState<CanonicalProvider[]>([]);
+  const [providerStatus, setProviderStatus] = useState<Record<string, boolean>>({});
+
+  // Charger les providers de manière asynchrone
+  useEffect(() => {
+    const loadProviders = async () => {
+      try {
+        const result = await getStaticProviders(profiles);
+        setStaticProviders(result.providers);
+        setProviderStatus(result.status);
+      } catch (error) {
+        console.error('Failed to load providers:', error);
+      }
+    };
+    
+    loadProviders();
+  }, [profiles]);
 
   // Transformer les providers statiques en providers pour la grille avec mémorisation
   const providers = useMemo(() => {
@@ -331,8 +344,8 @@ export function CleanProviderSection({
         name: provider.label,
         category: providerCategories[provider.name] || 'independent',
         description: t(`sections.accounts.providers.${provider.name}`) || provider.description,
-        isConfigured: status[provider.name] || false,
-        isWorking: status[provider.name] ? true : undefined,
+        isConfigured: providerStatus[provider.name] || false,
+        isWorking: providerStatus[provider.name] ? true : undefined,
         // Use real data instead of dummy data
         lastTested: testResult?.date,
         usageCount: usageData?.sessionPercent ? Math.round(usageData.sessionPercent) : undefined,
@@ -344,7 +357,7 @@ export function CleanProviderSection({
       
       return mappedProvider;
     });
-  }, [staticProviders, status, profileUsageData, providerTestResults, profiles, t]);
+  }, [staticProviders, providerStatus, profileUsageData, providerTestResults, profiles, t]);
 
   // Synchronize providersState with providers (avoid infinite loop)
   useEffect(() => {

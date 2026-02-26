@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -18,6 +18,7 @@ import { AlertCircle, Key, Globe, Server, CheckCircle, X, Users, LogIn, Loader2,
 import { Alert, AlertDescription } from '../ui/alert';
 import { AuthTerminal } from './AuthTerminal';
 import { GitHubCopilotConfig } from './GitHubCopilotConfig';
+import { VisuallyHidden } from '../ui/visually-hidden';
 import { cn } from '@/lib/utils';
 
 interface ProviderConfigDialogProps {
@@ -33,6 +34,16 @@ interface ProviderConfigDialogProps {
   onSettingsChange: (settings: any) => void;
   onTest?: (providerId: string) => Promise<void>;
   useSheet?: boolean; // Nouvelle prop pour savoir si on est dans un Sheet
+}
+
+interface ProviderConfig {
+  apiKey?: string;
+  apiUrl?: string;
+  model?: string;
+  description: string;
+  requiresApiKey: boolean;
+  placeholder?: string;
+  icon: React.ReactNode;
 }
 
 interface AuthTerminalState {
@@ -52,15 +63,8 @@ export function ProviderConfigDialog({
 }: ProviderConfigDialogProps) {
   const { t } = useTranslation('settings');
   
-  const providerFields: Record<string, {
-    apiKey?: string;
-    apiUrl?: string;
-    model?: string;
-    description?: string;
-    requiresApiKey: boolean;
-    placeholder?: string;
-    icon: React.ReactNode;
-  }> = {
+  // Mémoriser providerFields pour éviter les recréations infinies
+  const providerFields: Record<string, ProviderConfig> = useMemo(() => ({
     'openai': {
       apiKey: 'globalOpenAIApiKey',
       apiUrl: 'globalOpenAIApiBaseUrl',
@@ -160,7 +164,7 @@ export function ProviderConfigDialog({
       placeholder: 'http://localhost:11434',
       icon: <Server className="w-4 h-4" />
     }
-  };
+  }), [t]);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -169,7 +173,7 @@ export function ProviderConfigDialog({
   const [authTerminal, setAuthTerminal] = useState<AuthTerminalState | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  const providerConfig = provider ? providerFields[provider.id] : null;
+  const providerConfig = provider ? providerFields[provider.id as keyof typeof providerFields] : null;
   const supportsOAuth = ['anthropic', 'claude', 'windsurf'].includes(provider?.id || '');
   const supportsGitHubCopilot = provider?.id === 'copilot';
 
@@ -324,7 +328,7 @@ export function ProviderConfigDialog({
             {supportsOAuth && (
               <TabsTrigger value="oauth" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
-                OAuth Claude Code
+                OAuth
               </TabsTrigger>
             )}
             {supportsGitHubCopilot && (
@@ -669,6 +673,13 @@ export function ProviderConfigDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[650px]">
+        {/* Hidden titles for accessibility */}
+        <VisuallyHidden>
+          <DialogTitle>{provider?.name}</DialogTitle>
+          <DialogDescription>
+            {providerConfig?.description}
+          </DialogDescription>
+        </VisuallyHidden>
         {content}
       </DialogContent>
     </Dialog>
