@@ -7,15 +7,29 @@ import { getClaudeProfileManager } from './claude-profile-manager';
 import { getUsageMonitor } from './claude-profile/usage-monitor';
 
 /**
- * Regex pattern to detect Claude Code rate limit messages
- * Matches: "Limit reached · resets Dec 17 at 6am (Europe/Oslo)"
+ * Regex patterns to detect Claude Code rate limit messages.
+ * Claude CLI uses two known formats:
+ *   1. "Limit reached · resets Dec 17 at 6am (Europe/Oslo)"
+ *   2. "You've hit your limit · resets 10am (Europe/Paris)"
  */
-const RATE_LIMIT_PATTERN = /Limit reached\s*[·•]\s*resets\s+(.+?)(?:\s*$|\n)/im;
+const RATE_LIMIT_PATTERNS = [
+  /Limit reached\s*[·•]\s*resets\s+(.+?)(?:\s*$|\n)/im,
+  /hit your limit\s*[·•]\s*resets\s+(.+?)(?:\s*$|\n)/im,
+];
+
+/** @deprecated Use RATE_LIMIT_PATTERNS instead — kept for backward compatibility */
+const RATE_LIMIT_PATTERN = RATE_LIMIT_PATTERNS[0];
 
 /**
- * Additional patterns that might indicate rate limiting
+ * Additional patterns that might indicate rate limiting.
+ *
+ * IMPORTANT: These match against the FULL process output.
+ * Be careful NOT to add patterns that match diagnostic/error messages
+ * from our own code (e.g., "may indicate rate limit" would cause false positives).
+ * Only match patterns that come from the Claude CLI/API itself.
  */
 const RATE_LIMIT_INDICATORS = [
+  /hit your limit/i,
   /rate\s*limit/i,
   /usage\s*limit/i,
   /limit\s*reached/i,
@@ -183,37 +197,41 @@ export function detectRateLimit(
   output: string,
   profileId?: string
 ): RateLimitDetectionResult {
-  // Check for the primary rate limit pattern
-  const match = output.match(RATE_LIMIT_PATTERN);
+  // Check for primary rate limit patterns (these extract the reset time)
+  // Supports multiple Claude CLI message formats:
+  //   "Limit reached · resets Dec 17 at 6am (Europe/Oslo)"
+  //   "You've hit your limit · resets 10am (Europe/Paris)"
+  for (const primaryPattern of RATE_LIMIT_PATTERNS) {
+    const match = output.match(primaryPattern);
+    if (match) {
+      const resetTime = match[1].trim();
+      const limitType = classifyLimitType(resetTime);
 
-  if (match) {
-    const resetTime = match[1].trim();
-    const limitType = classifyLimitType(resetTime);
+      // Record the rate limit event in the profile manager
+      const profileManager = getClaudeProfileManager();
+      const effectiveProfileId = profileId || profileManager.getActiveProfile().id;
 
-    // Record the rate limit event in the profile manager
-    const profileManager = getClaudeProfileManager();
-    const effectiveProfileId = profileId || profileManager.getActiveProfile().id;
+      try {
+        profileManager.recordRateLimitEvent(effectiveProfileId, resetTime);
+      } catch (err) {
+        console.error('[RateLimitDetector] Failed to record rate limit event:', err);
+      }
 
-    try {
-      profileManager.recordRateLimitEvent(effectiveProfileId, resetTime);
-    } catch (err) {
-      console.error('[RateLimitDetector] Failed to record rate limit event:', err);
+      // Find best alternative profile
+      const bestProfile = profileManager.getBestAvailableProfile(effectiveProfileId);
+
+      return {
+        isRateLimited: true,
+        resetTime,
+        limitType,
+        profileId: effectiveProfileId,
+        suggestedProfile: bestProfile ? {
+          id: bestProfile.id,
+          name: bestProfile.name
+        } : undefined,
+        originalError: sanitizeErrorOutput(output)
+      };
     }
-
-    // Find best alternative profile
-    const bestProfile = profileManager.getBestAvailableProfile(effectiveProfileId);
-
-    return {
-      isRateLimited: true,
-      resetTime,
-      limitType,
-      profileId: effectiveProfileId,
-      suggestedProfile: bestProfile ? {
-        id: bestProfile.id,
-        name: bestProfile.name
-      } : undefined,
-      originalError: sanitizeErrorOutput(output)
-    };
   }
 
   // Check for secondary rate limit indicators
@@ -249,7 +267,12 @@ export function isRateLimitError(output: string): boolean {
  * Extract reset time from rate limit message
  */
 export function extractResetTime(output: string): string | null {
-  const match = output.match(RATE_LIMIT_PATTERN);
+  // Try all primary patterns to extract reset time
+  let match: RegExpMatchArray | null = null;
+  for (const pattern of RATE_LIMIT_PATTERNS) {
+    match = output.match(pattern);
+    if (match) break;
+  }
   return match ? match[1].trim() : null;
 }
 

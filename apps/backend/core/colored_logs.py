@@ -123,7 +123,7 @@ def format_backend_log(
     **kwargs
 ) -> str:
     """
-    Format a backend log message with appropriate colors.
+    Format a backend log message with appropriate colors and model info.
     
     Args:
         message: The log message
@@ -141,6 +141,15 @@ def format_backend_log(
         from datetime import datetime
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
     
+    # Get model information for logging
+    try:
+        from .model_info import get_model_info_for_logs
+        model_info = get_model_info_for_logs()
+        model_info_string = f"{colors.RESET}[{model_info['provider']}:{model_info['model_label']}]{colors.RESET}"
+    except Exception:
+        # Fallback if model info is not available
+        model_info_string = f"{colors.RESET}[unknown:unknown]{colors.RESET}"
+    
     # Get the appropriate color for the level
     level_colors = {
         "DEBUG": colors.DEBUG,
@@ -157,6 +166,7 @@ def format_backend_log(
         f"{colors.PREFIX}[BACKEND]{colors.RESET}",
         f"{level_color}[{level}]{colors.RESET}",
         f"{colors.MODULE}[{module}]{colors.RESET}",
+        model_info_string,
         f"{colors.DEBUG_DIM}{message}{colors.RESET}",
     ]
     

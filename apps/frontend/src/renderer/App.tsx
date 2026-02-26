@@ -28,6 +28,7 @@ import {
 } from '@/components/ui';
 import { Sidebar, type SidebarView } from '@/components';
 import { KanbanBoard } from '@/components';
+import { KanbanSkeleton } from '@/components/ui/KanbanSkeleton';
 import { TaskDetailModal } from '@/components/task-detail';
 import { TaskCreationWizard } from '@/components';
 import { AppSettingsDialog, type AppSection } from './components/settings/AppSettings';
@@ -131,12 +132,14 @@ export function App() {
   const projects = useProjectStore((state) => state.projects);
   const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
   const activeProjectId = useProjectStore((state) => state.activeProjectId);
+  const isLoadingProjects = useProjectStore((state) => state.isLoading);
   const getProjectTabs = useProjectStore((state) => state.getProjectTabs);
   const openProjectIds = useProjectStore((state) => state.openProjectIds);
   const openProjectTab = useProjectStore((state) => state.openProjectTab);
   const setActiveProject = useProjectStore((state) => state.setActiveProject);
   const reorderTabs = useProjectStore((state) => state.reorderTabs);
   const tasks = useTaskStore((state) => state.tasks);
+  const isLoadingTasks = useTaskStore((state) => state.isLoading);
   const settings = useSettingsStore((state) => state.settings);
   const settingsLoading = useSettingsStore((state) => state.isLoading);
 
@@ -1091,24 +1094,43 @@ export function App() {
                   {/* Main content area */}
                   <main className="flex-1 overflow-hidden">
                     <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                    {activeView === 'kanban' && !selectedProject && (
+                              <>
+                                {isLoadingProjects && projects.length === 0 ? (
+                                  <KanbanSkeleton />
+                                ) : (
+                                  <div className="flex items-center justify-center h-full text-muted">
+                                    {t('common:noProjectSelected')}
+                                  </div>
+                                )}
+                              </>
+                          )}
                     {selectedProject ? (
                         <>
                           {activeView === 'kanban' && (
-                              <KanbanBoard
-                                  tasks={tasks}
-                                  onTaskClick={handleTaskClick}
-                                  onNewTaskClick={() => setIsNewTaskDialogOpen(true)}
-                                  onRefresh={handleRefreshTasks}
-                                  isRefreshing={isRefreshingTasks}
-                                  onOpenJiraSettings={() => {
-                                    setSettingsInitialProjectSection('jira');
-                                    setIsSettingsDialogOpen(true);
-                                  }}
-                                  onOpenAzureDevOpsSettings={() => {
-                                    setSettingsInitialProjectSection('azure-devops');
-                                    setIsSettingsDialogOpen(true);
-                                  }}
-                              />
+                              <>
+                                {(isLoadingTasks && tasks.length === 0) ? (
+                                  <KanbanSkeleton />
+                                ) : isRefreshingTasks ? (
+                                  <KanbanSkeleton showRefreshText={true} />
+                                ) : (
+                                  <KanbanBoard
+                                      tasks={tasks}
+                                      onTaskClick={handleTaskClick}
+                                      onNewTaskClick={() => setIsNewTaskDialogOpen(true)}
+                                      onRefresh={handleRefreshTasks}
+                                      isRefreshing={isRefreshingTasks}
+                                      onOpenJiraSettings={() => {
+                                        setSettingsInitialProjectSection('jira');
+                                        setIsSettingsDialogOpen(true);
+                                      }}
+                                      onOpenAzureDevOpsSettings={() => {
+                                        setSettingsInitialProjectSection('azure-devops');
+                                        setIsSettingsDialogOpen(true);
+                                      }}
+                                  />
+                                )}
+                              </>
                           )}
                           {/* TerminalGrid is always mounted but hidden when not active to preserve terminal state */}
                           <div className={activeView === 'terminals' ? 'h-full' : 'hidden'}>

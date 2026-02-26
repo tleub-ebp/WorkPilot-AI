@@ -5,6 +5,7 @@ interface KanbanSkeletonProps {
   columns?: number;
   cardsPerColumn?: number[];
   className?: string;
+  showRefreshText?: boolean;
 }
 
 /**
@@ -15,13 +16,20 @@ export function KanbanSkeleton({
   columns = 5,
   cardsPerColumn = [3, 2, 4, 1, 2],
   className,
+  showRefreshText = false,
 }: KanbanSkeletonProps) {
   return (
     <div
       role="status"
-      aria-label="Loading kanban board..."
+      aria-label={showRefreshText ? "Refreshing kanban board..." : "Loading kanban board..."}
       className={cn('flex gap-3 p-4 h-full overflow-hidden', className)}
     >
+      {showRefreshText && (
+        <div className="absolute top-4 right-4 flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+          <span>Actualisation...</span>
+        </div>
+      )}
       {Array.from({ length: columns }).map((_, colIdx) => (
         <div
           key={colIdx}

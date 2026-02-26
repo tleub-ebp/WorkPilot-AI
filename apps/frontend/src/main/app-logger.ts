@@ -23,6 +23,10 @@ import os from 'os';
 // Import the colored logs utility
 import { frontendLog } from './colored-logs';
 
+// Import settings utilities for model info
+import { readSettingsFile } from './settings-utils';
+import { PROVIDER_MODELS_MAP } from '../shared/constants/models';
+
 // Configure electron-log (wrapped in try-catch for re-import scenarios in tests)
 try {
   log.initialize();
@@ -32,15 +36,89 @@ try {
 
 // File transport configuration
 log.transports.file.maxSize = 10 * 1024 * 1024; // 10MB max file size
-log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {text}';
 log.transports.file.fileName = 'main.log';
-
-// Note: We use electron-log's default archiveLogFn which properly rotates logs
-// by renaming old files to .old format. Custom implementations were problematic.
 
 // Console transport - always show warnings and errors, debug only in dev mode
 log.transports.console.level = process.env.NODE_ENV === 'development' ? 'debug' : 'warn';
 log.transports.console.format = '[{h}:{i}:{s}] [{level}] {text}';
+
+/**
+ * Get current LLM model and provider information for logging
+ */
+function getCurrentModelInfo(): { model: string; provider: string; modelLabel: string } {
+  try {
+    // Try to get settings first
+    const settings = readSettingsFile();
+    
+    if (settings && settings.selectedProvider && settings.defaultModel) {
+      const provider = settings.selectedProvider as string;
+      const modelId = settings.defaultModel as string;
+      
+      // Try to get model label from PROVIDER_MODELS_MAP
+      const providerModels = PROVIDER_MODELS_MAP[provider];
+      let modelLabel = modelId;
+      
+      if (providerModels) {
+        const modelInfo = providerModels.find((m: any) => m.value === modelId);
+        if (modelInfo) {
+          modelLabel = modelInfo.label;
+        }
+      }
+      
+      return {
+        model: modelId,
+        provider,
+        modelLabel
+      };
+    }
+    
+    // Ultimate fallback - simplified without profile manager
+    return {
+      model: 'unknown',
+      provider: 'unknown',
+      modelLabel: 'unknown'
+    };
+  } catch (error) {
+    return {
+      model: 'error',
+      provider: 'error',
+      modelLabel: 'error'
+    };
+  }
+}
+
+/**
+ * Get model/provider info as a formatted string for logging
+ * Export this function so other modules can use it
+ */
+export function getModelInfoString(): string {
+  const modelInfo = getCurrentModelInfo();
+  return `[${modelInfo.provider}:${modelInfo.modelLabel}]`;
+}
+
+/**
+ * Enhanced logging function that includes model/provider info
+ * Export this for other modules to use
+ */
+export function logWithModelInfo(level: 'debug' | 'info' | 'warn' | 'error', ...args: unknown[]): void {
+  const modelInfoString = getModelInfoString();
+  const modifiedArgs = [modelInfoString, ...args];
+  
+  switch (level) {
+    case 'debug':
+      log.debug(...modifiedArgs);
+      break;
+    case 'info':
+      log.info(...modifiedArgs);
+      break;
+    case 'warn':
+      log.warn(...modifiedArgs);
+      break;
+    case 'error':
+      log.error(...modifiedArgs);
+      break;
+  }
+}
 
 // Determine if this is a beta version
 function isBetaVersion(): boolean {
@@ -198,53 +276,39 @@ export function listLogFiles(): Array<{ name: string; path: string; size: number
 // Re-export the logger for use in other modules
 export const logger = log;
 
-// Export convenience methods that match console API with frontend coloration
+// Export convenience methods that match console API with frontend coloration and model/provider info
 export const appLog = {
-  debug: (...args: unknown[]) => {
-    log.debug(...args);
-    // Use direct write to avoid recursion
-    if (process.stderr && process.stderr.write) {
-      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
-      const message = args.length > 0 ? String(args[0]) : '';
-      const details = args.slice(1).map(arg => JSON.stringify(arg, null, 2)).join(' ');
-      process.stderr.write(`\x1b[90m[${timestamp}]\x1b[0m \x1b[95m[FRONTEND]\x1b[0m \x1b[95m[DEBUG]\x1b[0m \x1b[33m[app-logger]\x1b[0m \x1b[38;5;183m${message}\x1b[0m${details ? ' ' + details : ''}\n`);
-    }
+  debug: (message: string, ...args: unknown[]) => {
+    // Use frontendLog for colored output (now includes model info automatically)
+    frontendLog.debug(message, ...args);
+    // Also log to file with model info
+    const modelInfoString = getModelInfoString();
+    const modifiedArgs = [modelInfoString, message, ...args];
+    log.debug(...modifiedArgs);
   },
-  info: (...args: unknown[]) => {
-    log.info(...args);
-    if (process.stderr && process.stderr.write) {
-      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
-      const message = args.length > 0 ? String(args[0]) : '';
-      const details = args.slice(1).map(arg => JSON.stringify(arg, null, 2)).join(' ');
-      process.stderr.write(`\x1b[90m[${timestamp}]\x1b[0m \x1b[95m[FRONTEND]\x1b[0m \x1b[38;5;147m[INFO]\x1b[0m \x1b[33m[app-logger]\x1b[0m \x1b[38;5;183m${message}\x1b[0m${details ? ' ' + details : ''}\n`);
-    }
+  info: (message: string, ...args: unknown[]) => {
+    frontendLog.info(message, ...args);
+    const modelInfoString = getModelInfoString();
+    const modifiedArgs = [modelInfoString, message, ...args];
+    log.info(...modifiedArgs);
   },
-  warn: (...args: unknown[]) => {
-    log.warn(...args);
-    if (process.stderr && process.stderr.write) {
-      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
-      const message = args.length > 0 ? String(args[0]) : '';
-      const details = args.slice(1).map(arg => JSON.stringify(arg, null, 2)).join(' ');
-      process.stderr.write(`\x1b[90m[${timestamp}]\x1b[0m \x1b[95m[FRONTEND]\x1b[0m \x1b[38;5;221m[WARNING]\x1b[0m \x1b[33m[app-logger]\x1b[0m \x1b[38;5;183m${message}\x1b[0m${details ? ' ' + details : ''}\n`);
-    }
+  warn: (message: string, ...args: unknown[]) => {
+    frontendLog.warn(message, ...args);
+    const modelInfoString = getModelInfoString();
+    const modifiedArgs = [modelInfoString, message, ...args];
+    log.warn(...modifiedArgs);
   },
-  error: (...args: unknown[]) => {
-    log.error(...args);
-    if (process.stderr && process.stderr.write) {
-      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
-      const message = args.length > 0 ? String(args[0]) : '';
-      const details = args.slice(1).map(arg => JSON.stringify(arg, null, 2)).join(' ');
-      process.stderr.write(`\x1b[90m[${timestamp}]\x1b[0m \x1b[95m[FRONTEND]\x1b[0m \x1b[38;5;196m[ERROR]\x1b[0m \x1b[33m[app-logger]\x1b[0m \x1b[38;5;183m${message}\x1b[0m${details ? ' ' + details : ''}\n`);
-    }
+  error: (message: string, ...args: unknown[]) => {
+    frontendLog.error(message, ...args);
+    const modelInfoString = getModelInfoString();
+    const modifiedArgs = [modelInfoString, message, ...args];
+    log.error(...modifiedArgs);
   },
-  log: (...args: unknown[]) => {
-    log.info(...args);
-    if (process.stderr && process.stderr.write) {
-      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
-      const message = args.length > 0 ? String(args[0]) : '';
-      const details = args.slice(1).map(arg => JSON.stringify(arg, null, 2)).join(' ');
-      process.stderr.write(`\x1b[90m[${timestamp}]\x1b[0m \x1b[95m[FRONTEND]\x1b[0m \x1b[38;5;147m[INFO]\x1b[0m \x1b[33m[app-logger]\x1b[0m \x1b[38;5;183m${message}\x1b[0m${details ? ' ' + details : ''}\n`);
-    }
+  log: (message: string, ...args: unknown[]) => {
+    frontendLog.info(message, ...args);
+    const modelInfoString = getModelInfoString();
+    const modifiedArgs = [modelInfoString, message, ...args];
+    log.info(...modifiedArgs);
   },
 };
 
