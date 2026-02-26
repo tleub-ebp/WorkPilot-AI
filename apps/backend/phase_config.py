@@ -55,6 +55,35 @@ DEFAULT_PHASE_MODELS: dict[str, str] = {
     "qa": "sonnet",
 }
 
+# Provider-specific default models (full model IDs, not Claude shorthands).
+# Used when a task has a provider set but no explicit model configuration.
+# Keys must match provider names from provider_api.py / ProviderContext.
+# Values are the "standard" tier model for each provider — a sensible default
+# that balances quality and cost across all phases.
+PROVIDER_DEFAULT_MODELS: dict[str, dict[str, str]] = {
+    # Anthropic / Claude — use Claude shorthands (resolved by resolve_model_id)
+    "anthropic": {"spec": "sonnet", "planning": "sonnet", "coding": "sonnet", "qa": "sonnet"},
+    "claude":    {"spec": "sonnet", "planning": "sonnet", "coding": "sonnet", "qa": "sonnet"},
+    # OpenAI
+    "openai":    {"spec": "gpt-4o", "planning": "gpt-4o", "coding": "gpt-4o", "qa": "gpt-4o"},
+    # GitHub Copilot
+    "copilot":   {"spec": "claude-sonnet-4-5", "planning": "claude-sonnet-4-5", "coding": "claude-sonnet-4-5", "qa": "claude-sonnet-4-5"},
+    # Google Gemini
+    "google":    {"spec": "gemini-2.5-pro", "planning": "gemini-2.5-pro", "coding": "gemini-2.5-pro", "qa": "gemini-2.5-pro"},
+    # Mistral AI
+    "mistral":   {"spec": "mistral-large-2", "planning": "mistral-large-2", "coding": "mistral-large-2", "qa": "mistral-large-2"},
+    # DeepSeek
+    "deepseek":  {"spec": "deepseek-v3", "planning": "deepseek-v3", "coding": "deepseek-v3", "qa": "deepseek-v3"},
+    # Grok (xAI)
+    "grok":      {"spec": "grok-2", "planning": "grok-2", "coding": "grok-2", "qa": "grok-2"},
+    # Meta (LLaMA)
+    "meta":      {"spec": "meta-llama/llama-4-scout", "planning": "meta-llama/llama-4-scout", "coding": "meta-llama/llama-4-scout", "qa": "meta-llama/llama-4-scout"},
+    # AWS Bedrock
+    "aws":       {"spec": "anthropic.claude-sonnet-4-5-v1", "planning": "anthropic.claude-sonnet-4-5-v1", "coding": "anthropic.claude-sonnet-4-5-v1", "qa": "anthropic.claude-sonnet-4-5-v1"},
+    # Ollama (local)
+    "ollama":    {"spec": "llama3.3", "planning": "llama3.3", "coding": "llama3.3", "qa": "llama3.3"},
+}
+
 DEFAULT_PHASE_THINKING: dict[str, str] = {
     "spec": "medium",
     "planning": "high",
@@ -210,10 +239,41 @@ def get_phase_provider(
     return None
 
 
+def _resolve_provider_model(model: str, provider: str | None) -> str:
+    """
+    Resolve a model identifier to a full model ID, provider-aware.
+
+    For Anthropic/Claude providers (or no provider), uses resolve_model_id()
+    which maps shorthands like "sonnet" to full Claude model IDs.
+    For other providers, model IDs are already full IDs and are passed through.
+
+    Args:
+        model: Model shorthand or full ID
+        provider: LLM provider name (e.g. 'openai', 'anthropic') or None
+
+    Returns:
+        Full model ID ready for the API
+    """
+    # Anthropic/Claude shorthands need resolution
+    if not provider or provider in ("anthropic", "claude"):
+        return resolve_model_id(model)
+
+    # For non-Anthropic providers, check if it's a Claude shorthand
+    # (could happen if user switched providers but metadata still has "sonnet")
+    if model in MODEL_ID_MAP:
+        # This is a Claude shorthand but provider is not Anthropic — use provider defaults
+        # Caller should handle this; just pass through resolve_model_id as fallback
+        return resolve_model_id(model)
+
+    # Already a full model ID for non-Anthropic provider
+    return model
+
+
 def get_phase_model(
     spec_dir: Path,
     phase: Phase,
     cli_model: str | None = None,
+    cli_provider: str | None = None,
 ) -> str:
     """
     Get the resolved model ID for a specific execution phase.
@@ -222,12 +282,14 @@ def get_phase_model(
     1. CLI argument (if provided)
     2. Phase-specific config from task_metadata.json (if auto profile)
     3. Single model from task_metadata.json (if not auto profile)
-    4. Default phase configuration
+    4. Provider-specific default (if provider is known)
+    5. Default phase configuration (Anthropic/Claude fallback)
 
     Args:
         spec_dir: Path to the spec directory
         phase: Execution phase (spec, planning, coding, qa)
         cli_model: Model from CLI argument (optional)
+        cli_provider: Provider from CLI argument (optional)
 
     Returns:
         Resolved full model ID
@@ -243,14 +305,28 @@ def get_phase_model(
         # Check for auto profile with phase-specific config
         if metadata.get("isAutoProfile") and metadata.get("phaseModels"):
             phase_models = metadata["phaseModels"]
+            provider = cli_provider or metadata.get("provider")
             model = phase_models.get(phase, DEFAULT_PHASE_MODELS[phase])
-            return resolve_model_id(model)
+            return _resolve_provider_model(model, provider)
 
         # Non-auto profile: use single model
         if metadata.get("model"):
-            return resolve_model_id(metadata["model"])
+            provider = cli_provider or metadata.get("provider")
+            return _resolve_provider_model(metadata["model"], provider)
 
-    # Fall back to default phase configuration
+    # Fall back to provider-specific defaults if provider is known
+    provider = cli_provider
+    if not provider and metadata:
+        provider = metadata.get("provider")
+    if not provider:
+        provider = get_phase_provider(spec_dir)
+
+    if provider and provider in PROVIDER_DEFAULT_MODELS:
+        provider_models = PROVIDER_DEFAULT_MODELS[provider]
+        model = provider_models.get(phase, DEFAULT_PHASE_MODELS[phase])
+        return _resolve_provider_model(model, provider)
+
+    # Ultimate fallback: Anthropic/Claude default
     return resolve_model_id(DEFAULT_PHASE_MODELS[phase])
 
 
@@ -322,6 +398,7 @@ def get_phase_config(
     phase: Phase,
     cli_model: str | None = None,
     cli_thinking: str | None = None,
+    cli_provider: str | None = None,
 ) -> tuple[str, str, int | None]:
     """
     Get the full configuration for a specific execution phase.
@@ -331,11 +408,12 @@ def get_phase_config(
         phase: Execution phase (spec, planning, coding, qa)
         cli_model: Model from CLI argument (optional)
         cli_thinking: Thinking level from CLI argument (optional)
+        cli_provider: Provider from CLI argument (optional)
 
     Returns:
         Tuple of (model_id, thinking_level, thinking_budget)
     """
-    model_id = get_phase_model(spec_dir, phase, cli_model)
+    model_id = get_phase_model(spec_dir, phase, cli_model, cli_provider)
     thinking_level = get_phase_thinking(spec_dir, phase, cli_thinking)
     thinking_budget = get_thinking_budget(thinking_level)
 

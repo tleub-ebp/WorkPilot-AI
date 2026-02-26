@@ -26,13 +26,12 @@ def main():
     logger.info("Démarrage du backend Auto-Claude EBP...")
     
     try:
-        # Importer et démarrer l'application FastAPI
+        # Importer et démarrer l'application FastAPI via uvicorn
         import uvicorn
-        from provider_api import app
         
         # Configuration du serveur
         host = "127.0.0.1"
-        port = 8000
+        port = 9000
         
         logger.info(f"Démarrage du serveur sur http://{host}:{port}")
         

@@ -70,7 +70,17 @@
         "syncErrorDescription": "Impossible de synchroniser le provider avec l'auto-switching"
       },
       "providerConfig": {
-        "title": "Configuration"
+        "title": "Configuration",
+        "windsurfAuth": {
+          "description": "Windsurf AI utilise l'authentification OAuth. Le token est automatiquement détecté depuis votre installation Windsurf.",
+          "oauthDetected": "Authentification OAuth Windsurf détectée",
+          "tokenLoaded": "Le token OAuth Windsurf a été automatiquement chargé depuis votre environnement.",
+          "noConfigRequired": "Pas de configuration manuelle requise.",
+          "claudeCodeAuth": "Utilisez l'authentification OAuth Claude Code pour vous connecter facilement avec votre compte Claude.",
+          "authenticating": "Authentification...",
+          "connectWithClaude": "Se connecter avec Claude Code",
+          "terminalInstructions": "Cela ouvrira un terminal où vous pourrez exécuter la commande `/login` pour vous authentifier."
+        }
       },
       "providerCard": {
         "configure": "Configurer",

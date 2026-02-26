@@ -56,13 +56,15 @@ export interface TaskExecutionOptions {
 
 export interface SpecCreationMetadata {
   requireReviewBeforeCoding?: boolean;
+  // LLM provider (anthropic, openai, copilot, google, mistral, deepseek, grok, meta, aws, ollama)
+  provider?: string;
   // Auto profile - phase-based model and thinking configuration
   isAutoProfile?: boolean;
   phaseModels?: {
-    spec: 'haiku' | 'sonnet' | 'opus';
-    planning: 'haiku' | 'sonnet' | 'opus';
-    coding: 'haiku' | 'sonnet' | 'opus';
-    qa: 'haiku' | 'sonnet' | 'opus';
+    spec: string;     // Model ID (Claude shorthand or full model ID for any provider)
+    planning: string;
+    coding: string;
+    qa: string;
   };
   phaseThinking?: {
     spec: 'none' | 'low' | 'medium' | 'high' | 'ultrathink';
@@ -71,7 +73,7 @@ export interface SpecCreationMetadata {
     qa: 'none' | 'low' | 'medium' | 'high' | 'ultrathink';
   };
   // Non-auto profile - single model and thinking level
-  model?: 'haiku' | 'sonnet' | 'opus';
+  model?: string;  // Model ID (Claude shorthand like 'sonnet' or full ID like 'gpt-4o')
   thinkingLevel?: 'none' | 'low' | 'medium' | 'high' | 'ultrathink';
   // Workspace mode - whether to use worktree isolation
   useWorktree?: boolean; // If false, use --direct mode (no worktree isolation)

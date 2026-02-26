@@ -213,6 +213,11 @@ export class AgentManager extends EventEmitter {
       args.push('--auto-approve');
     }
 
+    // Pass LLM provider if specified (enables provider-aware model defaults in backend)
+    if (metadata?.provider) {
+      args.push('--provider', metadata.provider);
+    }
+
     // Pass model and thinking level configuration
     // For auto profile, use phase-specific config; otherwise use single model/thinking
     if (metadata?.isAutoProfile && metadata.phaseModels && metadata.phaseThinking) {
