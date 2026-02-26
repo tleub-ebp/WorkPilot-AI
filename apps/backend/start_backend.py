@@ -38,7 +38,7 @@ def main():
         
         # Démarrer le serveur avec reload pour le développement
         uvicorn.run(
-            app,
+            "provider_api:app",
             host=host,
             port=port,
             reload=True,
