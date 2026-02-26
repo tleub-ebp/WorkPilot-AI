@@ -25,7 +25,10 @@
   },
   "confirmDelete": {
     "title": "Delete Task",
-    "description": "Are you sure you want to delete the task \"{{title}}\"? This action is irreversible."
+    "description": "Are you sure you want to delete the task \"{{title}}\"? This action is irreversible.",
+    "warning": "This action cannot be undone. All task files, including the spec, implementation plan, and any generated code will be permanently deleted from the project.",
+    "cancel": "Cancel",
+    "confirm": "Delete Permanently"
   },
   "labels": {
     "running": "Running",
@@ -117,6 +120,7 @@
     "tasksToDelete": "Tasks to delete",
     "deleteConfirmButton": "Delete {{count}} Tasks",
     "deleteSuccess": "Successfully deleted {{count}} task(s)",
+    "deleteSuccessSingle": "Task \"{{title}}\" deleted successfully",
     "deleteError": "Failed to delete some tasks",
     "clearSelection": "Clear Selection",
     "collapseColumn": "Collapse column",

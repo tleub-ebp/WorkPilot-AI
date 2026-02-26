@@ -792,6 +792,17 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Single task delete confirmation dialog state
+  const [singleDeleteConfirm, setSingleDeleteConfirm] = useState<{
+    open: boolean;
+    taskId: string | null;
+    taskTitle: string;
+  }>({
+    open: false,
+    taskId: null,
+    taskTitle: ''
+  });
+
   // Worktree cleanup dialog state
   const [worktreeCleanupDialog, setWorktreeCleanupDialog] = useState<{
     open: boolean;
@@ -1059,10 +1070,34 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   }, [tasksByStatus.done]);
 
   const handleDeleteTask = useCallback(async (taskId: string) => {
-    const result = await deleteTasks([taskId]);
+    // Get the task information for the confirmation dialog
+    const task = useTaskStore.getState().tasks.find((t) => t.id === taskId);
+    const taskTitle = task?.title || 'Untitled';
+    
+    // Open confirmation dialog instead of deleting directly
+    setSingleDeleteConfirm({
+      open: true,
+      taskId,
+      taskTitle
+    });
+  }, []);
+
+  // Handle confirmed single task delete
+  const handleConfirmSingleDelete = useCallback(async () => {
+    if (!singleDeleteConfirm.taskId) return;
+
+    const result = await deleteTasks([singleDeleteConfirm.taskId]);
+    
+    // Close the dialog
+    setSingleDeleteConfirm({
+      open: false,
+      taskId: null,
+      taskTitle: ''
+    });
+
     if (result.success) {
       toast({
-        title: t('kanban.deleteSuccess', { count: 1 }),
+        title: t('kanban.deleteSuccessSingle', { title: singleDeleteConfirm.taskTitle }),
         variant: 'default'
       });
     } else {
@@ -1072,7 +1107,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         variant: 'destructive'
       });
     }
-  }, [toast, t]);
+  }, [singleDeleteConfirm.taskId, singleDeleteConfirm.taskTitle, toast, t]);
 
   /**
    * Handle import confirmation from the ImportConfirmDialog.
@@ -2142,6 +2177,38 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
               ) : (
                 t('kanban.deleteConfirmButton', { count: selectedTaskIds.size })
               )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Single task delete confirmation dialog */}
+      <AlertDialog open={singleDeleteConfirm.open} onOpenChange={(open) => setSingleDeleteConfirm(prev => ({ ...prev, open }))}>
+        <AlertDialogContent className="sm:max-w-[425px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              {t('tasks:confirmDelete.title')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('tasks:confirmDelete.description', { title: singleDeleteConfirm.taskTitle })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {/* Warning message */}
+          <p className="text-sm text-destructive">
+            {t('tasks:confirmDelete.warning')}
+          </p>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {t('tasks:confirmDelete.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmSingleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('tasks:confirmDelete.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

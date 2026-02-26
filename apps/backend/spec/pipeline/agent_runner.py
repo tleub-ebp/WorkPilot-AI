@@ -244,6 +244,26 @@ class AgentRunner:
                                 current_tool = None
 
                 print()
+
+                # Detect empty sessions: if the agent didn't call any tools
+                # and produced no meaningful output, something went wrong
+                # (e.g., rate limit, auth failure, invalid CWD, prompt too long).
+                if tool_count == 0 and len(response_text.strip()) < 50:
+                    debug_error(
+                        "agent_runner",
+                        "Agent session completed but produced no tool calls and minimal output",
+                        message_count=message_count,
+                        tool_count=tool_count,
+                        response_length=len(response_text),
+                    )
+                    if self.task_logger:
+                        self.task_logger.log_error(
+                            f"Agent session empty: 0 tool calls, {len(response_text)}b output "
+                            f"(may indicate rate limit, auth failure, or invalid CWD)",
+                            LogPhase.PLANNING,
+                        )
+                    return False, f"Agent session empty (0 tools, {len(response_text)}b output): {response_text[:200]}"
+
                 debug_success(
                     "agent_runner",
                     "Agent session completed successfully",
