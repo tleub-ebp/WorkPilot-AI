@@ -744,5 +744,6 @@
   "test": "Test",
   "refresh": "Actualiser",
   "save": "Enregistrer",
-  "loading": "Chargement..."
+  "loading": "Chargement...",
+  "noProjectSelected": "Pas de projet sélectionné"
 }
