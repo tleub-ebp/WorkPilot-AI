@@ -410,6 +410,35 @@ export function AzureDevOpsSidePanel({
     document.dispatchEvent(customEvent);
   }, []);
 
+  // Prevent drops on the panel itself - let them fall through to the kanban underneath
+  const handlePanelDragOver = useCallback((e: React.DragEvent) => {
+    // Allow drag over events to pass through to the kanban underneath
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handlePanelDrop = useCallback((e: React.DragEvent) => {
+    // Prevent drops on the panel itself - let them fall through to the kanban underneath
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Get the drag data and check if it's our work items
+    const data = e.dataTransfer.getData('application/json');
+    if (!data) return;
+    
+    try {
+      const parsed = JSON.parse(data);
+      if (parsed.type === 'azure-devops-workitems') {
+        // This is our data - let it fall through to the kanban underneath
+        // We don't handle the drop here, the kanban will handle it
+        return;
+      }
+    } catch (error) {
+      // Not our data, ignore
+      return;
+    }
+  }, []);
+
   // Handle work items drop from Kanban columns
   const handleWorkItemsDrop = useCallback((workItems: AzureDevOpsWorkItem[], targetStatus: TaskStatus) => {
     if (onWorkItemsImported) {
@@ -447,6 +476,8 @@ export function AzureDevOpsSidePanel({
         className="fixed right-0 top-0 h-full bg-background border-l border-border shadow-2xl flex flex-col z-300"
         style={{ width: `${panelWidth}px` }}
         data-side-panel="azure-devops"
+        onDragOver={handlePanelDragOver}
+        onDrop={handlePanelDrop}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
