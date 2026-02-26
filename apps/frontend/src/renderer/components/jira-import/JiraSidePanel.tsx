@@ -48,6 +48,21 @@ export function JiraSidePanel({
   const [workItems, setWorkItems] = useState<JiraWorkItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Gérer la fermeture par clic en dehors du panel
+  useEffect(() => {
+    if (!open) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        onOpenChange(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open, onOpenChange]);
   const [filters, setFilters] = useState<JiraFilters>({
     workItemType: 'all',
     state: 'all',
@@ -418,17 +433,13 @@ export function JiraSidePanel({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-300 flex">
-      {/* Backdrop */}
+    <>
+      {/* Panel seulement - pas de conteneur qui bloque l'écran */}
       <div
-        className="absolute inset-0 bg-black/20"
-        onClick={() => onOpenChange(false)}
-      />
-
-      {/* Panel */}
-      <div
-        className="absolute right-0 top-0 h-full bg-background border-l border-border shadow-2xl flex flex-col"
+        ref={panelRef}
+        className="fixed right-0 top-0 h-full bg-background border-l border-border shadow-2xl flex flex-col z-300"
         style={{ width: `${panelWidth}px` }}
+        data-side-panel="jira"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
@@ -712,6 +723,6 @@ export function JiraSidePanel({
           <div className="absolute inset-y-0 -left-2 -right-2" />
         </div>
       </div>
-    </div>
+      </>
   );
 }
