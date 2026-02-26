@@ -54,6 +54,17 @@ describe('Rate Limit Detector', () => {
       expect(result.limitType).toBe('session');
     });
 
+    it('should detect "You\'ve hit your limit" Claude CLI format', async () => {
+      const { detectRateLimit } = await import('../rate-limit-detector');
+
+      const output = "You've hit your limit · resets 10am (Europe/Paris)";
+      const result = detectRateLimit(output);
+
+      expect(result.isRateLimited).toBe(true);
+      expect(result.resetTime).toBe('10am (Europe/Paris)');
+      expect(result.limitType).toBe('session');
+    });
+
     it('should detect secondary rate limit indicators', async () => {
       const { detectRateLimit } = await import('../rate-limit-detector');
 
@@ -61,13 +72,24 @@ describe('Rate Limit Detector', () => {
         'rate limit exceeded',
         'usage limit reached',
         'You have exceeded your limit',
-        'too many requests'
+        'too many requests',
+        "You've hit your limit"
       ];
 
       for (const output of testCases) {
         const result = detectRateLimit(output);
         expect(result.isRateLimited).toBe(true);
       }
+    });
+
+    it('should NOT false-positive on diagnostic messages mentioning possible causes', async () => {
+      const { detectRateLimit } = await import('../rate-limit-detector');
+
+      // Our agent_runner.py error message should NOT trigger rate limit detection
+      const diagnosticOutput = 'Agent session empty: 0 tool calls, 0b output — possible causes: usage cap reached, auth failure, invalid working directory, or model unavailable.';
+      const result = detectRateLimit(diagnosticOutput);
+
+      expect(result.isRateLimited).toBe(false);
     });
 
     it('should return false for non-rate-limit output', async () => {
@@ -105,13 +127,22 @@ describe('Rate Limit Detector', () => {
   });
 
   describe('extractResetTime', () => {
-    it('should extract reset time from rate limit message', async () => {
+    it('should extract reset time from "Limit reached" format', async () => {
       const { extractResetTime } = await import('../rate-limit-detector');
 
       const output = 'Limit reached · resets Dec 17 at 6am (Europe/Oslo)';
       const resetTime = extractResetTime(output);
 
       expect(resetTime).toBe('Dec 17 at 6am (Europe/Oslo)');
+    });
+
+    it('should extract reset time from "hit your limit" format', async () => {
+      const { extractResetTime } = await import('../rate-limit-detector');
+
+      const output = "You've hit your limit · resets 10am (Europe/Paris)";
+      const resetTime = extractResetTime(output);
+
+      expect(resetTime).toBe('10am (Europe/Paris)');
     });
 
     it('should return null for non-rate-limit output', async () => {

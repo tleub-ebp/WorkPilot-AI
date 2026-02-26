@@ -92,6 +92,67 @@ const detectAutoBuildSourcePath = (): string | null => {
 };
 
 /**
+ * Helper function to make HTTP requests to backend with retry logic
+ */
+async function makeBackendRequest<T>(
+  url: string, 
+  options: RequestInit = {}, 
+  maxRetries: number = 2
+): Promise<{ success: boolean; data?: T; error?: string }> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout per attempt
+      
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`Backend responded with ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      return { success: true, data };
+      
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.warn(`[Backend Request] Attempt ${attempt} timed out for ${url}`);
+        if (attempt === maxRetries) {
+          return { 
+            success: false, 
+            error: `Timeout: Le backend ne répond pas après ${maxRetries} tentatives.` 
+          };
+        }
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        continue;
+      } else if (error instanceof Error && error.message.includes('ECONNREFUSED')) {
+        return { 
+          success: false, 
+          error: `Backend inaccessible: Veuillez vérifier que le backend est démarré.` 
+        };
+      } else {
+        console.error(`[Backend Request] Attempt ${attempt} failed for ${url}:`, error);
+        if (attempt === maxRetries) {
+          return { 
+            success: false, 
+            error: error instanceof Error ? error.message : 'Request failed' 
+          };
+        }
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, 500 * attempt));
+      }
+    }
+  }
+  
+  return { success: false, error: 'Max retries exceeded' };
+}
+
+/**
  * Register all settings-related IPC handlers
  */
 export function registerSettingsHandlers(
@@ -103,26 +164,30 @@ export function registerSettingsHandlers(
     IPC_CHANNELS.PROVIDER_SELECT,
     async (_, provider: string): Promise<IPCResult<string>> => {
       try {
-        // Make HTTP request to backend to select provider
-        const response = await fetch(`http://127.0.0.1:9000/providers/select?provider=${encodeURIComponent(provider)}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        console.log(`[IPC:PROVIDER_SELECT] Attempting to select provider: ${provider}`);
         
-        if (!response.ok) {
-          throw new Error(`Backend responded with ${response.status}: ${response.statusText}`);
+        const result = await makeBackendRequest<{ selected: string }>(
+          `http://127.0.0.1:9000/providers/select?provider=${encodeURIComponent(provider)}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        
+        if (result.success && result.data) {
+          console.log(`[IPC:PROVIDER_SELECT] Successfully selected provider: ${provider}`);
+          return { success: true, data: result.data.selected };
+        } else {
+          console.error(`[IPC:PROVIDER_SELECT] Failed to select provider ${provider}:`, result.error);
+          return { success: false, error: result.error };
         }
-        
-        const result = await response.json();
-        console.log(`[IPC:PROVIDER_SELECT] Successfully selected provider: ${provider}`);
-        return { success: true, data: result.selected };
       } catch (error) {
-        console.error(`[IPC:PROVIDER_SELECT] Failed to select provider ${provider}:`, error);
+        console.error(`[IPC:PROVIDER_SELECT] Unexpected error for provider ${provider}:`, error);
         return { 
           success: false, 
-          error: error instanceof Error ? error.message : 'Failed to select provider' 
+          error: error instanceof Error ? error.message : 'Unexpected error' 
         };
       }
     }
@@ -132,21 +197,24 @@ export function registerSettingsHandlers(
     IPC_CHANNELS.PROVIDER_GET_SELECTED,
     async (): Promise<IPCResult<string | null>> => {
       try {
-        // Make HTTP request to backend to get selected provider
-        const response = await fetch('http://127.0.0.1:9000/providers/selected');
+        console.log(`[IPC:PROVIDER_GET_SELECTED] Getting current provider`);
         
-        if (!response.ok) {
-          throw new Error(`Backend responded with ${response.status}: ${response.statusText}`);
+        const result = await makeBackendRequest<{ selected: string | null }>(
+          'http://127.0.0.1:9000/providers/selected'
+        );
+        
+        if (result.success && result.data) {
+          console.log(`[IPC:PROVIDER_GET_SELECTED] Current provider:`, result.data.selected);
+          return { success: true, data: result.data.selected };
+        } else {
+          console.error('[IPC:PROVIDER_GET_SELECTED] Failed to get selected provider:', result.error);
+          return { success: false, error: result.error };
         }
-        
-        const result = await response.json();
-        console.log(`[IPC:PROVIDER_GET_SELECTED] Current provider:`, result.selected);
-        return { success: true, data: result.selected };
       } catch (error) {
-        console.error('[IPC:PROVIDER_GET_SELECTED] Failed to get selected provider:', error);
+        console.error('[IPC:PROVIDER_GET_SELECTED] Unexpected error:', error);
         return { 
           success: false, 
-          error: error instanceof Error ? error.message : 'Failed to get selected provider' 
+          error: error instanceof Error ? error.message : 'Unexpected error' 
         };
       }
     }

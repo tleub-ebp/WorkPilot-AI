@@ -529,25 +529,43 @@ async def get_provider_usage(provider: str):
     Récupère l'usage et le crédit restant pour le provider OpenAI, Copilot ou autre si implémenté.
     """
     if provider == "openai":
+        # NOTE: L'endpoint /v1/usage d'OpenAI ne fonctionne plus avec les clés API standards
+        # depuis 2025. Il nécessite des permissions spéciales (api.usage.read) et souvent
+        # une clé d'administrateur. Voir : https://community.openai.com/t/how-to-view-billing-via-api/1362751
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             return {"error": "Clé API OpenAI manquante."}
+        
+        # Essai avec l'endpoint alternatif /v1/organization/usage si disponible
         try:
             headers = {"Authorization": f"Bearer {api_key}"}
-            # Use the usage endpoint for token usage instead of billing credits
             async with httpx.AsyncClient() as client:
-                resp = await client.get("https://api.openai.com/v1/usage", headers=headers, timeout=10)
+                # Tentative avec l'endpoint d'organisation (peut aussi nécessiter des permissions spéciales)
+                resp = await client.get("https://api.openai.com/v1/organization/usage", headers=headers, timeout=10)
+            
             if resp.status_code == 200:
                 data = resp.json()
-                # Format the response to include token usage information
                 return {
                     "provider": "openai",
                     "usage": data,
-                    "fetched_at": "now"
+                    "fetched_at": "now",
+                    "note": "Données d'usage récupérées avec succès"
                 }
-            return {"error": resp.text, "status_code": resp.status_code}
+            else:
+                # Si l'endpoint échoue, retourner un message informatif
+                return {
+                    "provider": "openai",
+                    "error": f"Erreur {resp.status_code}: L'endpoint d'usage OpenAI nécessite des permissions spéciales (api.usage.read) ou une clé d'administrateur. Veuillez vérifier votre dashboard OpenAI pour l'usage actuel.",
+                    "status_code": resp.status_code,
+                    "alternative": "Consultez https://platform.openai.com/settings/organization/billing/overview"
+                }
         except Exception as e:
-            return {"error": str(e)}
+            return {
+                "provider": "openai", 
+                "error": f"Impossible de récupérer l'usage OpenAI: {str(e)}",
+                "note": "L'endpoint /v1/usage d'OpenAI nécessite des permissions spéciales depuis 2025",
+                "alternative": "Consultez https://platform.openai.com/settings/organization/billing/overview"
+            }
     elif provider == "copilot":
         try:
             from src.connectors.llm_copilot import get_copilot_usage_metrics

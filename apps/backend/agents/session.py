@@ -102,6 +102,8 @@ def is_rate_limit_error(error: Exception) -> bool:
         for p in [
             "limit reached",
             "rate limit",
+            "rate_limit",       # SDK may use underscore variant (e.g., "rate_limit_event")
+            "hit your limit",   # Claude CLI format: "You've hit your limit"
             "too many requests",
             "usage limit",
             "quota exceeded",

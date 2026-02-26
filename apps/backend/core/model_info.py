@@ -1,0 +1,261 @@
+#!/usr/bin/env python3
+"""
+Model Information Utility
+=========================
+
+Utility for getting current LLM model and provider information for logging.
+Similar to frontend functionality but adapted for backend architecture.
+"""
+
+import json
+import os
+from typing import Dict, Any, Optional, Tuple
+
+
+def get_current_model_info() -> Dict[str, str]:
+    """
+    Get current LLM model and provider information for logging.
+    
+    Returns:
+        Dictionary containing provider, model, and model_label information
+    """
+    try:
+        # Try to get selected provider from global state (provider_api.py)
+        try:
+            from provider_api import get_selected_provider
+            selected_provider = get_selected_provider()
+        except ImportError:
+            selected_provider = None
+        
+        # If no selected provider, try to detect from environment
+        if not selected_provider:
+            selected_provider = _detect_provider_from_env()
+        
+        if not selected_provider:
+            return {
+                "provider": "unknown",
+                "model": "unknown", 
+                "model_label": "unknown"
+            }
+        
+        # Get model information for the provider
+        model_info = _get_model_info_for_provider(selected_provider)
+        
+        return {
+            "provider": selected_provider,
+            "model": model_info.get("model", "unknown"),
+            "model_label": model_info.get("model_label", model_info.get("model", "unknown"))
+        }
+        
+    except Exception as error:
+        return {
+            "provider": "error",
+            "model": "error",
+            "model_label": "error"
+        }
+
+
+def _detect_provider_from_env() -> Optional[str]:
+    """Detect which provider is likely configured based on environment variables."""
+    
+    # Check in order of preference
+    if os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY") or os.getenv("CLAUDE_CODE_OAUTH_TOKEN"):
+        return "anthropic"
+    elif os.getenv("OPENAI_API_KEY"):
+        return "openai"
+    elif os.getenv("GOOGLE_API_KEY"):
+        return "google"
+    elif os.getenv("GROK_API_KEY"):
+        return "grok"
+    elif os.getenv("OLLAMA_BASE_URL"):
+        return "ollama"
+    elif _is_copilot_available():
+        return "copilot"
+    
+    return None
+
+
+def _is_copilot_available() -> bool:
+    """Check if GitHub Copilot is available via gh CLI."""
+    try:
+        from security.secure_subprocess import run_secure
+        result = run_secure(["gh", "auth", "status"], timeout=10)
+        return "Logged in to github.com" in result.output
+    except Exception:
+        return False
+
+
+def _get_model_info_for_provider(provider: str) -> Dict[str, str]:
+    """Get model information for a specific provider."""
+    
+    if provider == "anthropic":
+        # Try to get from provider config first
+        try:
+            from src.connectors.llm_config import load_provider_config
+            config = load_provider_config("anthropic") or load_provider_config("claude")
+            if config and "model" in config:
+                return {
+                    "model": config["model"],
+                    "model_label": _format_anthropic_model_label(config["model"])
+                }
+        except ImportError:
+            pass
+        
+        # Fallback to environment or defaults
+        model = os.getenv("ANTHROPIC_MODEL", "claude-opus-4-6")
+        return {
+            "model": model,
+            "model_label": _format_anthropic_model_label(model)
+        }
+    
+    elif provider == "openai":
+        try:
+            from src.connectors.llm_config import load_provider_config
+            config = load_provider_config("openai")
+            if config and "model" in config:
+                return {
+                    "model": config["model"],
+                    "model_label": _format_openai_model_label(config["model"])
+                }
+        except ImportError:
+            pass
+        
+        model = os.getenv("OPENAI_MODEL", "gpt-5.2")
+        return {
+            "model": model,
+            "model_label": _format_openai_model_label(model)
+        }
+    
+    elif provider == "google":
+        try:
+            from src.connectors.llm_config import load_provider_config
+            config = load_provider_config("google")
+            if config and "model" in config:
+                return {
+                    "model": config["model"],
+                    "model_label": _format_google_model_label(config["model"])
+                }
+        except ImportError:
+            pass
+        
+        model = os.getenv("GOOGLE_MODEL", "gemini-3.0")
+        return {
+            "model": model,
+            "model_label": _format_google_model_label(model)
+        }
+    
+    elif provider == "grok":
+        try:
+            from src.connectors.llm_config import load_provider_config
+            config = load_provider_config("grok")
+            if config and "model" in config:
+                return {
+                    "model": config["model"],
+                    "model_label": _format_grok_model_label(config["model"])
+                }
+        except ImportError:
+            pass
+        
+        model = os.getenv("GROK_MODEL", "grok-2")
+        return {
+            "model": model,
+            "model_label": _format_grok_model_label(model)
+        }
+    
+    elif provider == "ollama":
+        try:
+            from src.connectors.llm_config import load_provider_config
+            config = load_provider_config("ollama")
+            if config and "model" in config:
+                return {
+                    "model": config["model"],
+                    "model_label": f"Ollama: {config['model']}"
+                }
+        except ImportError:
+            pass
+        
+        model = os.getenv("OLLAMA_MODEL", "llama3")
+        return {
+            "model": model,
+            "model_label": f"Ollama: {model}"
+        }
+    
+    elif provider == "copilot":
+        return {
+            "model": "copilot",
+            "model_label": "GitHub Copilot"
+        }
+    
+    # Default fallback
+    return {
+        "model": "unknown",
+        "model_label": "Unknown Model"
+    }
+
+
+def _format_anthropic_model_label(model: str) -> str:
+    """Format Anthropic model label for display."""
+    model_labels = {
+        "claude-opus-4-6": "Claude Opus 4.6",
+        "claude-sonnet-4-5-20250929": "Claude Sonnet 4.5",
+        "claude-haiku-4-5-20251001": "Claude Haiku 4.5",
+        "claude-opus-4-5-20251101": "Claude Opus 4.5",
+        "opus-4.6": "Opus 4.6",
+    }
+    return model_labels.get(model, f"Claude: {model}")
+
+
+def _format_openai_model_label(model: str) -> str:
+    """Format OpenAI model label for display."""
+    model_labels = {
+        "gpt-5.2": "ChatGPT 5.2",
+        "gpt-4o": "ChatGPT 4o",
+        "gpt-4": "ChatGPT 4",
+        "gpt-3.5-turbo": "ChatGPT 3.5 Turbo",
+    }
+    return model_labels.get(model, f"ChatGPT: {model}")
+
+
+def _format_google_model_label(model: str) -> str:
+    """Format Google model label for display."""
+    model_labels = {
+        "gemini-3.0": "Gemini 3.0",
+        "gemini-2.0": "Gemini 2.0",
+        "gemini-1.5-pro": "Gemini 1.5 Pro",
+        "gemini-1.5-flash": "Gemini 1.5 Flash",
+    }
+    return model_labels.get(model, f"Gemini: {model}")
+
+
+def _format_grok_model_label(model: str) -> str:
+    """Format Grok model label for display."""
+    model_labels = {
+        "grok-2": "Grok 2",
+        "grok-1": "Grok 1",
+    }
+    return model_labels.get(model, f"Grok: {model}")
+
+
+def get_model_info_string() -> str:
+    """
+    Get model/provider info as a formatted string for logging.
+    
+    Returns:
+        String in format [provider:model_label]
+    """
+    model_info = get_current_model_info()
+    return f"[{model_info['provider']}:{model_info['model_label']}]"
+
+
+def get_model_info_for_logs() -> Dict[str, str]:
+    """
+    Get model info for logging (simplified interface).
+    
+    Returns:
+        Dictionary with provider and model_label keys
+    """
+    model_info = get_current_model_info()
+    return {
+        "provider": model_info["provider"],
+        "model_label": model_info["model_label"]
+    }

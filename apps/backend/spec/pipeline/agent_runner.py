@@ -115,11 +115,26 @@ class AgentRunner:
             )
 
         # Create client with thinking budget
+        # Log model/CWD prominently so issues are visible in task console
         debug(
             "agent_runner",
-            "Creating agent client...",
+            "Creating agent client",
+            model=self.model,
             thinking_budget=thinking_budget,
+            project_dir=str(self.project_dir),
+            project_dir_exists=self.project_dir.exists(),
+            spec_dir=str(self.spec_dir),
+            spec_dir_exists=self.spec_dir.exists(),
         )
+        if self.task_logger:
+            self.task_logger.log(
+                f"Agent config: model={self.model}, thinking={thinking_budget}, "
+                f"CWD exists={self.project_dir.exists()}",
+                LogEntryType.TEXT,
+                LogPhase.PLANNING,
+                print_to_console=True,
+            )
+
         # Lazy import to avoid circular import with core.client
         from core.client import create_agent_client
 
@@ -130,7 +145,7 @@ class AgentRunner:
             agent_type="spec_writer",  # Use spec_writer type for spec creation
             max_thinking_tokens=thinking_budget,
         )
-        
+
         # Debug: Log which provider is being used
         try:
             from provider_api import get_selected_provider
@@ -153,6 +168,7 @@ class AgentRunner:
         current_tool = None
         message_count = 0
         tool_count = 0
+        hit_usage_cap = False  # Track if we received a rate/usage limit event from SDK
 
         try:
             async with client:
@@ -243,11 +259,52 @@ class AgentRunner:
                                     )
                                 current_tool = None
 
+                    else:
+                        # Handle unknown/special message types from the SDK.
+                        # The Claude SDK may send rate_limit_event, error, or other
+                        # non-standard message types that we need to detect.
+                        debug(
+                            "agent_runner",
+                            f"Received non-standard message type: {msg_type}",
+                            msg_attrs=str(dir(msg))[:200],
+                        )
+
+                        # Detect rate/usage limit events from SDK
+                        # The SDK sends a message with type name containing "rate_limit"
+                        # when the account has hit its usage cap.
+                        if "rate_limit" in msg_type.lower() or "limit" in msg_type.lower():
+                            hit_usage_cap = True
+                            # Extract any details from the message for logging
+                            limit_detail = ""
+                            for attr in ("message", "error", "detail", "retry_after", "reset_at"):
+                                val = getattr(msg, attr, None)
+                                if val is not None:
+                                    limit_detail += f" {attr}={val}"
+
+                            # Use "hit your limit" phrasing so frontend rate-limit-detector
+                            # catches it via the /hit your limit/i pattern.
+                            cap_msg = f"You've hit your limit — Claude SDK returned {msg_type}.{limit_detail}"
+                            debug_error("agent_runner", cap_msg)
+                            print(f"\n⚠️  {cap_msg}", flush=True)
+                            if self.task_logger:
+                                self.task_logger.log_error(cap_msg, LogPhase.PLANNING)
+
                 print()
+
+                # If we received a usage cap event, fail immediately with a clear message
+                if hit_usage_cap:
+                    cap_error = (
+                        f"You've hit your limit — the Claude SDK returned a usage cap event. "
+                        f"Please wait for the limit to reset or switch to a different Claude profile."
+                    )
+                    debug_error("agent_runner", cap_error)
+                    if self.task_logger:
+                        self.task_logger.log_error(cap_error, LogPhase.PLANNING)
+                    return False, cap_error
 
                 # Detect empty sessions: if the agent didn't call any tools
                 # and produced no meaningful output, something went wrong
-                # (e.g., rate limit, auth failure, invalid CWD, prompt too long).
+                # (e.g., auth failure, invalid CWD, prompt too long).
                 if tool_count == 0 and len(response_text.strip()) < 50:
                     debug_error(
                         "agent_runner",
@@ -256,13 +313,21 @@ class AgentRunner:
                         tool_count=tool_count,
                         response_length=len(response_text),
                     )
+                    # IMPORTANT: Do NOT include the words "rate limit" in the error message!
+                    # The frontend rate-limit-detector.ts pattern-matches on /rate\s*limit/i
+                    # in the process output, which causes a false positive detection.
                     if self.task_logger:
                         self.task_logger.log_error(
                             f"Agent session empty: 0 tool calls, {len(response_text)}b output "
-                            f"(may indicate rate limit, auth failure, or invalid CWD)",
+                            f"— possible causes: usage cap reached, auth failure, invalid working directory, "
+                            f"or model unavailable. Check Claude profile settings.",
                             LogPhase.PLANNING,
                         )
-                    return False, f"Agent session empty (0 tools, {len(response_text)}b output): {response_text[:200]}"
+                    return False, (
+                        f"Agent session empty (0 tools, {len(response_text)}b output). "
+                        f"Possible causes: usage cap, auth failure, invalid CWD, model unavailable. "
+                        f"Response: {response_text[:200]}"
+                    )
 
                 debug_success(
                     "agent_runner",
@@ -274,11 +339,31 @@ class AgentRunner:
                 return True, response_text
 
         except Exception as e:
+            error_str = str(e).lower()
             debug_error(
                 "agent_runner",
                 f"Agent session error: {e}",
                 exception_type=type(e).__name__,
             )
+
+            # Detect rate/usage limit exceptions from the SDK.
+            # The Claude Agent SDK may raise exceptions like:
+            #   "Unknown message type: rate_limit_event"
+            # when the account has hit its usage cap. We need to surface
+            # this clearly so the frontend rate-limit-detector picks it up.
+            if "rate_limit" in error_str or "limit_event" in error_str:
+                # Use "hit your limit" phrasing so frontend rate-limit-detector.ts
+                # matches via /hit your limit/i pattern and triggers proper UI.
+                cap_msg = (
+                    f"You've hit your limit — Claude SDK error: {e}. "
+                    f"Please wait for the limit to reset or switch to a different Claude profile."
+                )
+                debug_error("agent_runner", cap_msg)
+                print(f"\n⚠️  {cap_msg}", flush=True)
+                if self.task_logger:
+                    self.task_logger.log_error(cap_msg, LogPhase.PLANNING)
+                return False, cap_msg
+
             if self.task_logger:
                 self.task_logger.log_error(f"Agent error: {e}", LogPhase.PLANNING)
             return False, str(e)

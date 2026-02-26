@@ -15,6 +15,66 @@
 
 import { app } from 'electron';
 
+// Helper function to get model info without circular dependency
+function getModelInfoForLogs(): { provider: string; modelLabel: string } {
+  try {
+    // Try to get settings directly to avoid circular import
+    const { readSettingsFile } = require('./settings-utils');
+    const { PROVIDER_MODELS_MAP } = require('../shared/constants/models');
+    
+    const settings = readSettingsFile();
+    
+    if (settings && settings.selectedProvider && settings.defaultModel) {
+      const provider = settings.selectedProvider as string;
+      const modelId = settings.defaultModel as string;
+      
+      // Try to get model label from PROVIDER_MODELS_MAP
+      const providerModels = PROVIDER_MODELS_MAP[provider];
+      let modelLabel = modelId;
+      
+      if (providerModels) {
+        const modelInfo = providerModels.find((m: any) => m.value === modelId);
+        if (modelInfo) {
+          modelLabel = modelInfo.label;
+        }
+      }
+      
+      return { provider, modelLabel };
+    }
+    
+    // Fallback: try to detect from environment like backend does
+    return detectProviderFromEnv();
+    
+  } catch (error) {
+    // Final fallback: try environment detection
+    try {
+      return detectProviderFromEnv();
+    } catch {
+      return { provider: 'error', modelLabel: 'error' };
+    }
+  }
+}
+
+// Helper function to detect provider from environment (backend-style fallback)
+function detectProviderFromEnv(): { provider: string; modelLabel: string } {
+  const env = process.env;
+  
+  if (env.ANTHROPIC_API_KEY || env.CLAUDE_API_KEY || env.CLAUDE_CODE_OAUTH_TOKEN) {
+    return { provider: 'anthropic', modelLabel: 'Claude' };
+  } else if (env.OPENAI_API_KEY) {
+    return { provider: 'openai', modelLabel: 'ChatGPT' };
+  } else if (env.GOOGLE_API_KEY) {
+    return { provider: 'google', modelLabel: 'Gemini' };
+  } else if (env.GROK_API_KEY) {
+    return { provider: 'grok', modelLabel: 'Grok' };
+  } else if (env.OLLAMA_BASE_URL) {
+    return { provider: 'ollama', modelLabel: 'Ollama' };
+  } else {
+    // Default to copilot since we're in Claude Code environment
+    return { provider: 'copilot', modelLabel: 'GitHub Copilot' };
+  }
+}
+
 // ANSI color codes for terminal output
 class FrontendColors {
   static readonly RESET = '\x1b[0m';
@@ -42,6 +102,7 @@ function supportsColor(): boolean {
   if (process.env.NO_COLOR) {
     return false;
   }
+
   if (process.env.FORCE_COLOR) {
     return true;
   }
@@ -98,10 +159,14 @@ function formatFrontendLog(
 ): string {
   if (!supportsColor()) {
     // Return non-colored version for non-color terminals
-    return `[${timestamp || getTimestamp()}] [FRONTEND] [${level}] [${module}] ${message}`;
+    const modelInfo = getModelInfoForLogs();
+    const modelInfoString = `[${modelInfo.provider}:${modelInfo.modelLabel}]`;
+    return `[${timestamp || getTimestamp()}] [FRONTEND] [${level}] [${module}] ${modelInfoString} ${message}`;
   }
   
   const ts = timestamp || getTimestamp();
+  const modelInfo = getModelInfoForLogs();
+  const modelInfoString = `${FrontendColors.RESET}[${modelInfo.provider}:${modelInfo.modelLabel}]${FrontendColors.RESET}`;
   
   // Get the appropriate color for the level
   const levelColors: Record<string, string> = {
@@ -113,12 +178,13 @@ function formatFrontendLog(
   };
   const levelColor = levelColors[level.toUpperCase()] || FrontendColors.DEBUG;
   
-  // Build the log line
+  // Build the log line with model info
   const parts = [
     `${FrontendColors.TIMESTAMP}[${ts}]${FrontendColors.RESET}`,
     `${FrontendColors.PREFIX}[FRONTEND]${FrontendColors.RESET}`,
     `${levelColor}[${level}]${FrontendColors.RESET}`,
     `${FrontendColors.MODULE}[${module}]${FrontendColors.RESET}`,
+    modelInfoString,
     `${FrontendColors.DEBUG_DIM}${message}${FrontendColors.RESET}`,
   ];
   

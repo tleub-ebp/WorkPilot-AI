@@ -125,11 +125,19 @@ class StreamingWebSocketServer:
             self._server = await websockets.serve(
                 self._handle_client,
                 self.host,
-                self.port
+                self.port,
+                # Add error handling at the server level
+                process_request=self._process_request,
+                # Set reasonable limits to prevent abuse
+                max_size=10_000_000,  # 10MB max message size
+                ping_interval=20,      # Send ping every 20 seconds
+                ping_timeout=10,       # Wait 10 seconds for pong response
+                close_timeout=10,      # Wait 10 seconds for close handshake
             )
             logger.info(f"Streaming WebSocket server started on ws://{self.host}:{self.port}")
         except Exception as e:
             logger.error(f"Failed to start WebSocket server: {e}")
+            # Don't re-raise, just log and continue without WebSocket support
             
     async def stop(self):
         """Stop the WebSocket server."""
@@ -147,107 +155,127 @@ class StreamingWebSocketServer:
 
     async def _handle_client(self, websocket: WebSocketServerProtocol):
         """Handle a client connection."""
-        logger.info(" NEW CONNECTION RECEIVED!")
-        logger.info(f" WebSocket object: {websocket}")
-        logger.info(f" Local address: {websocket.local_address}")
-        logger.info(f" Remote address: {websocket.remote_address}")
-                
-        # In websockets v16, we need to extract the path from the websocket object
-        # Let's try different approaches to get the path
-        
-        path = "/stream/default"  # Default fallback
-        
-        # Try to get path from websocket attributes
         try:
-            # Method 1: Check if path attribute exists
-            if hasattr(websocket, 'path'):
-                path = websocket.path
-                logger.info(f"Found path via websocket.path: {path}")
-            # Method 2: Check if request_headers has path info
-            elif hasattr(websocket, 'request_headers'):
-                # The path might be in the request headers or connection info
-                logger.info(f"Request headers: {dict(websocket.request_headers)}")
-            # Method 3: Check if there's a scope attribute (ASGI style)
-            elif hasattr(websocket, 'scope'):
-                scope = websocket.scope
-                if scope and 'path' in scope:
-                    path = scope['path']
-                    logger.info(f"Found path via scope: {path}")
-            # Method 4: Check connection attributes
-            elif hasattr(websocket, 'local_address') and hasattr(websocket, 'remote_address'):
-                # We can't get the path from these, but we can log the connection info
-                logger.info(f"Connection: {websocket.local_address} <-> {websocket.remote_address}")
-        except Exception as e:
-            logger.error(f"Error extracting path: {e}")
-        
-        # For now, we'll use a simple approach: extract session ID from a message
-        # or use a default session
-        logger.info(f"Using path: {path}")
-        
-        # For testing, let's use the full path if we can determine it from the connection
-        # Otherwise, we'll create a session based on the connection ID
-        
-        # Use connection ID as session identifier for now
-        connection_id = id(websocket)
-        session_id = f"session-{connection_id}"
-        
-        # Try to extract a more meaningful session ID if possible
-        if path != "/stream/default":
-            path_parts = path.strip("/").split("/")
-            if len(path_parts) >= 2 and path_parts[0] == "stream":
-                session_id = path_parts[1]
-        
-        logger.info(f"Client connecting with session ID: {session_id}")
-        
-        # Check if session exists, if not, create a default one
-        session_info = self.streaming_manager.get_session_info(session_id)
-        if not session_info:
-            # Auto-create a session for watching purposes
-            await self.streaming_manager.start_session(session_id, {
-                "session_id": session_id,
-                "task": "Live Coding Session",
-                "project_path": "unknown",
-                "auto_created": True,
-                "status": "watching"
-            })
-            logger.info(f"Auto-created session {session_id} for client connection")
-        
-        # Register client
-        if session_id not in self._clients:
-            self._clients[session_id] = set()
-        self._clients[session_id].add(websocket)
-        
-        # Subscribe to streaming manager
-        await self.streaming_manager.subscribe(session_id, websocket)
-        
-        logger.info(f"Client connected to session {session_id}")
-        
-        # Send welcome message
-        try:
-            welcome_event = {
-                "event_type": "session_start",
-                "timestamp": time.time(),
-                "data": {
+            logger.info(" NEW CONNECTION RECEIVED!")
+            logger.info(f" WebSocket object: {websocket}")
+            logger.info(f" Local address: {websocket.local_address}")
+            logger.info(f" Remote address: {websocket.remote_address}")
+                    
+            # In websockets v16, we need to extract the path from the websocket object
+            # Let's try different approaches to get the path
+            
+            path = "/stream/default"  # Default fallback
+            
+            # Try to get path from websocket attributes
+            try:
+                # Method 1: Check if path attribute exists
+                if hasattr(websocket, 'path'):
+                    path = websocket.path
+                    logger.info(f"Found path via websocket.path: {path}")
+                # Method 2: Check if request_headers has path info
+                elif hasattr(websocket, 'request_headers'):
+                    # The path might be in the request headers or connection info
+                    logger.info(f"Request headers: {dict(websocket.request_headers)}")
+                # Method 3: Check if there's a scope attribute (ASGI style)
+                elif hasattr(websocket, 'scope'):
+                    scope = websocket.scope
+                    if scope and 'path' in scope:
+                        path = scope['path']
+                        logger.info(f"Found path via scope: {path}")
+                # Method 4: Check connection attributes
+                elif hasattr(websocket, 'local_address') and hasattr(websocket, 'remote_address'):
+                    # We can't get the path from these, but we can log the connection info
+                    logger.info(f"Connection: {websocket.local_address} <-> {websocket.remote_address}")
+            except Exception as e:
+                logger.error(f"Error extracting path: {e}")
+            
+            # For now, we'll use a simple approach: extract session ID from a message
+            # or use a default session
+            logger.info(f"Using path: {path}")
+            
+            # For testing, let's use the full path if we can determine it from the connection
+            # Otherwise, we'll create a session based on the connection ID
+            
+            # Use connection ID as session identifier for now
+            connection_id = id(websocket)
+            session_id = f"session-{connection_id}"
+            
+            # Try to extract a more meaningful session ID if possible
+            if path != "/stream/default":
+                path_parts = path.strip("/").split("/")
+                if len(path_parts) >= 2 and path_parts[0] == "stream":
+                    session_id = path_parts[1]
+            
+            logger.info(f"Client connecting with session ID: {session_id}")
+            
+            # Check if session exists, if not, create a default one
+            session_info = self.streaming_manager.get_session_info(session_id)
+            if not session_info:
+                # Auto-create a session for watching purposes
+                await self.streaming_manager.start_session(session_id, {
                     "session_id": session_id,
-                    "message": "Connected to streaming session",
-                    "auto_created": session_info is None
-                },
-                "session_id": session_id,
-            }
-            await websocket.send(json.dumps(welcome_event))
+                    "task": "Live Coding Session",
+                    "project_path": "unknown",
+                    "auto_created": True,
+                    "status": "watching"
+                })
+                logger.info(f"Auto-created session {session_id} for client connection")
+            
+            # Register client
+            if session_id not in self._clients:
+                self._clients[session_id] = set()
+            self._clients[session_id].add(websocket)
+            
+            # Subscribe to streaming manager
+            await self.streaming_manager.subscribe(session_id, websocket)
+            
+            logger.info(f"Client connected to session {session_id}")
+            
+            # Send welcome message
+            try:
+                welcome_event = {
+                    "event_type": "session_start",
+                    "timestamp": time.time(),
+                    "data": {
+                        "session_id": session_id,
+                        "message": "Connected to streaming session",
+                        "auto_created": session_info is None
+                    },
+                    "session_id": session_id,
+                }
+                await websocket.send(json.dumps(welcome_event))
+            except Exception as e:
+                logger.warning(f"Failed to send welcome message: {e}")
+            
+            try:
+                # Handle incoming messages
+                async for message in websocket:
+                    await self._handle_message(session_id, websocket, message)
+            except websockets.exceptions.ConnectionClosed:
+                logger.info(f"Client disconnected from session {session_id}")
+            except websockets.exceptions.ConnectionClosedOK:
+                logger.info(f"Client cleanly disconnected from session {session_id}")
+            except websockets.exceptions.ConnectionClosedError as e:
+                logger.warning(f"Client connection closed with error from session {session_id}: {e}")
+            except websockets.exceptions.InvalidMessage as e:
+                logger.warning(f"Invalid message received from session {session_id}: {e}")
+            except Exception as e:
+                logger.error(f"Unexpected error in client handler for session {session_id}: {e}")
+            finally:
+                # Unregister client
+                self._clients[session_id].discard(websocket)
+                await self.streaming_manager.unsubscribe(session_id, websocket)
+                logger.info(f"Client cleanup completed for session {session_id}")
+                
         except Exception as e:
-            logger.warning(f"Failed to send welcome message: {e}")
-        
-        try:
-            # Handle incoming messages
-            async for message in websocket:
-                await self._handle_message(session_id, websocket, message)
-        except websockets.exceptions.ConnectionClosed:
-            logger.info(f"Client disconnected from session {session_id}")
-        finally:
-            # Unregister client
-            self._clients[session_id].discard(websocket)
-            await self.streaming_manager.unsubscribe(session_id, websocket)
+            logger.error(f"Critical error in _handle_client: {e}")
+            # Ensure cleanup even if connection fails early
+            try:
+                if 'session_id' in locals():
+                    self._clients[session_id].discard(websocket)
+                    await self.streaming_manager.unsubscribe(session_id, websocket)
+            except Exception as cleanup_error:
+                logger.error(f"Error during cleanup: {cleanup_error}")
             
     async def _handle_message(
         self,
