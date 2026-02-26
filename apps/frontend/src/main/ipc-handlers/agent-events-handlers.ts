@@ -214,9 +214,19 @@ export function registerAgenteventsHandlers(
 
     // Persist phase to plan file for restoration on app refresh
     // Must persist to BOTH main project and worktree (if exists) since task may be loaded from either
+    //
+    // GUARD: Only persist phase to files that ALREADY exist. During the spec creation
+    // pipeline, the backend's planning phase deletes stub plan files before running the
+    // planner agent. If we recreate the file here (via persistPlanPhaseSync's
+    // create-if-missing behavior), the planner validator would find an empty stub
+    // instead of the real plan the agent is supposed to create.
     if (task && project && progress.phase && !xstateInTerminalState) {
       const mainPlanPath = getPlanPath(project, task);
-      persistPlanPhaseSync(mainPlanPath, progress.phase, project.id);
+      if (existsSync(mainPlanPath)) {
+        persistPlanPhaseSync(mainPlanPath, progress.phase, project.id);
+      } else {
+        console.debug(`[agent-events-handlers] Skipping persistPlanPhaseSync for ${taskId}: plan file does not exist yet (backend planner will create it)`);
+      }
 
       // Also persist to worktree if task has one
       const worktreePath = findTaskWorktree(project.path, task.specId);
@@ -264,9 +274,16 @@ export function registerAgenteventsHandlers(
     // The planner agent writes implementation_plan.json via the Write tool, which replaces
     // the entire file and strips the frontend's status/xstateState/executionPhase fields.
     // This causes tasks to snap back to backlog on refresh.
-    const planWithStatus = plan as { xstateState?: string; executionPhase?: string; status?: string };
+    //
+    // GUARD: Only re-stamp plans that have REAL content (phases with subtasks).
+    // During the spec creation pipeline, the backend may delete stub plan files
+    // before the planner agent runs. If we re-stamp a stub (no phases), we would
+    // recreate the file that the backend just deleted, causing the planner validator
+    // to find an empty plan and fail with "No phases defined".
+    const planWithStatus = plan as { xstateState?: string; executionPhase?: string; status?: string; phases?: unknown[] };
     const currentXState = taskStateManager.getCurrentState(taskId);
-    if (currentXState && !planWithStatus.xstateState && task && project) {
+    const hasRealContent = Array.isArray(planWithStatus.phases) && planWithStatus.phases.length > 0;
+    if (currentXState && !planWithStatus.xstateState && hasRealContent && task && project) {
       console.debug(`[agent-events-handlers] Re-stamping XState status on plan file for ${taskId} (state: ${currentXState})`);
       const mainPlanPath = getPlanPath(project, task);
       const { status, reviewReason } = mapStateToLegacy(currentXState);
@@ -287,6 +304,8 @@ export function registerAgenteventsHandlers(
           persistPlanStatusAndReasonSync(worktreePlanPath, status, reviewReason, project.id, currentXState, phase);
         }
       }
+    } else if (currentXState && !planWithStatus.xstateState && !hasRealContent) {
+      console.debug(`[agent-events-handlers] Skipping re-stamp for ${taskId}: plan has no phases (stub/empty). Backend planner will populate it.`);
     }
   });
 
