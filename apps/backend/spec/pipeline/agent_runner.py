@@ -136,9 +136,14 @@ class AgentRunner:
             )
 
         # Lazy import to avoid circular import with core.client
-        from core.client import create_agent_client
+        # IMPORTANT: Use create_client (raw SDK client), NOT create_agent_client.
+        # create_agent_client wraps messages in AgentMessage objects, but this
+        # code checks for raw SDK type names ("AssistantMessage", "UserMessage").
+        # Using create_agent_client causes all messages to have type "AgentMessage",
+        # making the type checks below fail and resulting in "Agent session empty" errors.
+        from core.client import create_client
 
-        client = create_agent_client(
+        client = create_client(
             project_dir=self.project_dir,
             spec_dir=self.spec_dir,
             model=self.model,

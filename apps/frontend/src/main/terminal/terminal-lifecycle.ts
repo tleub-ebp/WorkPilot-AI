@@ -55,8 +55,17 @@ export async function createTerminal(
   }
 
   try {
-    // For auth terminals, don't inject existing OAuth token - we want a fresh login
-    const profileEnv = skipOAuthToken ? {} : PtyManager.getActiveProfileEnv();
+    // For auth terminals, skip the existing OAuth token (we want a fresh login)
+    // but KEEP CLAUDE_CONFIG_DIR so Claude CLI stores the new token in the correct
+    // profile directory. Without CLAUDE_CONFIG_DIR, `claude /login` writes the token
+    // to ~/.claude (default) instead of the profile's configDir, causing stale/revoked
+    // tokens in the profile directory and 401 authentication errors.
+    const baseProfileEnv = PtyManager.getActiveProfileEnv();
+    const profileEnv = skipOAuthToken
+      ? (baseProfileEnv.CLAUDE_CONFIG_DIR
+          ? { CLAUDE_CONFIG_DIR: baseProfileEnv.CLAUDE_CONFIG_DIR }
+          : {})
+      : baseProfileEnv;
 
     // Read env vars from Claude Code CLI settings files (.claude/settings.json hierarchy)
     const claudeCodeEnv = getClaudeCodeEnv(projectPath);

@@ -124,6 +124,8 @@ def get_provider_status(provider: str):
         # For Windsurf, check OAuth token specifically
         if provider == "windsurf":
             oauth_token = os.getenv("WINDSURF_OAUTH_TOKEN")
+            print(f"DEBUG: oauth_token = {oauth_token[:20] if oauth_token else 'None'}...")
+            print(f"DEBUG: bool check = {bool(oauth_token and oauth_token.strip() != '')}")
             return {
                 "available": True,
                 "authenticated": bool(oauth_token and oauth_token.strip() != ""),

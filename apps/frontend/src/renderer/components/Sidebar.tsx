@@ -644,7 +644,11 @@ export function Sidebar({
           "electron-drag flex h-14 items-center pt-6 transition-all duration-300",
           isCollapsed ? "justify-center px-2" : "px-4"
         )}>
-          {!isCollapsed && (
+          {isCollapsed ? (
+            <div className="electron-no-drag flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
+              W
+            </div>
+          ) : (
             <span className="electron-no-drag text-lg font-bold text-primary">WorkPilot AI</span>
           )}
         </div>

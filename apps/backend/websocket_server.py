@@ -52,9 +52,12 @@ async def main():
         try:
             while True:
                 await asyncio.sleep(1)
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, asyncio.CancelledError):
             logger.info("Shutdown signal received")
         
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        logger.info("WebSocket server shutdown requested")
+        # Don't re-raise these exceptions for clean shutdown
     except Exception as e:
         logger.error(f"WebSocket server error: {e}")
         raise
@@ -69,4 +72,9 @@ async def main():
             logger.error(f"Error stopping WebSocket server: {e}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("WebSocket server stopped by user")
+    except asyncio.CancelledError:
+        logger.info("WebSocket server cancelled")
