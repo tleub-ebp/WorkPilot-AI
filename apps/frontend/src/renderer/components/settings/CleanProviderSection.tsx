@@ -201,7 +201,7 @@ export function CleanProviderSection({
     // Special handling for OAuth providers like Windsurf that don't need profiles
     if (isOAuthOrCLI && providerId === 'windsurf') {
       // Check if Windsurf OAuth token is available via backend status
-      const isConfigured = status[providerId] || false;
+      const isConfigured = providerStatus[providerId] || false;
       if (isConfigured) {
         return {
           hasKey: true,

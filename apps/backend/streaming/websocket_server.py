@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 def kill_processes_on_port(port: int) -> bool:
-    """Kill all processes using the specified port."""
+    """Kill all processes using the specified port. Only targets processes actually listening on this specific port."""
     try:
         # Check if port is available first
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -40,27 +40,44 @@ def kill_processes_on_port(port: int) -> bool:
             
         logger.warning(f"Port {port} is occupied, attempting to kill processes...")
         
-        # Find processes using the port
+        # Find processes using the port - be very specific
         killed_any = False
-        for proc in psutil.process_iter(['pid', 'name']):
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
             try:
                 connections = proc.connections()
                 for conn in connections:
-                    if conn.status == 'LISTEN' and conn.laddr.port == port:
+                    # Be very specific: only kill processes LISTENING on the exact port
+                    if (conn.status == 'LISTEN' and 
+                        conn.laddr.port == port and 
+                        (conn.laddr.ip == '127.0.0.1' or conn.laddr.ip == '0.0.0.0' or conn.laddr.ip == '::1')):
+                        
                         pid = proc.info['pid']
                         name = proc.info['name']
-                        logger.info(f"Killing process {pid} ({name}) using port {port}")
-                        proc.terminate()
-                        killed_any = True
+                        cmdline = proc.info.get('cmdline', [])
                         
-                        # Wait a bit for graceful termination
-                        time.sleep(1)
+                        # Additional safety: only kill processes that are actually WebSocket-related
+                        # or Python processes that are clearly using this port
+                        is_websocket_process = (
+                            'websocket' in ' '.join(cmdline).lower() or
+                            'ws_server' in ' '.join(cmdline).lower() or
+                            port == 8765  # We know this is our WebSocket port
+                        )
                         
-                        # Force kill if still running
-                        if proc.is_running():
-                            logger.warning(f"Force killing process {pid}")
-                            proc.kill()
+                        if is_websocket_process:
+                            logger.info(f"Killing WebSocket process {pid} ({name}) using port {port}")
+                            proc.terminate()
+                            killed_any = True
                             
+                            # Wait a bit for graceful termination
+                            time.sleep(1)
+                            
+                            # Force kill if still running
+                            if proc.is_running():
+                                logger.warning(f"Force killing WebSocket process {pid}")
+                                proc.kill()
+                        else:
+                            logger.info(f"Skipping non-WebSocket process {pid} ({name}) on port {port}")
+                        
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 continue
                 
