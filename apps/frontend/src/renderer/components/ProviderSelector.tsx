@@ -3,7 +3,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '.
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { useTranslation } from 'react-i18next';
-import type { CanonicalProvider } from '@shared/utils/providers';
+import type { CanonicalProvider, ProvidersResponse } from '@shared/utils/providers';
 import { getStaticProviders } from '@shared/utils/providers';
 import { useProviderContext } from './ProviderContext';
 import { useSettingsStore } from '@/stores/settings-store';
@@ -167,16 +167,32 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
     }
   };
 
-  // Build static provider list from PROVIDER_MODELS_MAP + profile auth status
-  const { providers, status } = useMemo(
-    () => getStaticProviders(profiles),
-    [profiles]
-  );
+  const [providersData, setProvidersData] = useState<ProvidersResponse>({ providers: [], status: {} });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProviders = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getStaticProviders(profiles);
+        setProvidersData(data);
+      } catch (error) {
+        console.error('Failed to load providers:', error);
+        setProvidersData({ providers: [], status: {} });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProviders();
+  }, [profiles]);
+
+  const { providers, status } = providersData;
 
   // Set default provider on mount if none selected
   useEffect(() => {
     if (!selected && providers.length > 0) {
-      const defaultProvider = providers.find((p) => p.name === 'anthropic') ?? providers[0];
+      const defaultProvider = providers.find((p: CanonicalProvider) => p.name === 'anthropic') ?? providers[0];
       setSelected(defaultProvider.name);
     }
   }, [providers, selected, setSelected]);
@@ -198,7 +214,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
   const handleSelect = async (value: string) => {
     if (!status[value]) {
       // Trouver le provider pour afficher son nom dans le dialog
-      const provider = providers.find(p => p.name === value);
+      const provider = providers.find((p: CanonicalProvider) => p.name === value);
       setPendingProvider(provider?.label || value);
       setShowAuthDialog(true);
       return;
@@ -250,25 +266,39 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
             <SelectValue placeholder={t('providerSelector.placeholder', '-- Choisir un provider --')} />
           </SelectTrigger>
           <SelectContent>
-            {providers.map((p: CanonicalProvider) => (
-              <SelectItem key={p.name} value={p.name} title={p.description}>
+            {isLoading ? (
+              <SelectItem value="loading" disabled>
                 <span className="flex items-center gap-2 truncate">
-                  {providerIcons[p.name] || (
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label={p.label}>
-                      <title>{p.label}</title>
-                      <circle cx="10" cy="10" r="9" stroke="#BDBDBD" strokeWidth="2" fill="#F5F5F5" />
-                      <text x="50%" y="55%" textAnchor="middle" fontSize="10" fill="#BDBDBD" fontWeight="bold" dy=".3em">{capitalize(p.label.charAt(0))}</text>
-                    </svg>
-                  )}
-                  <span className="truncate">{p.label}</span>
-                  {status[p.name] ? (
-                    <Badge variant="success">{t('providerSelector.status.ok', 'OK')}</Badge>
-                  ) : (
-                    <Badge variant="warning">{t('providerSelector.status.notAuthenticated', 'Non authentifié')}</Badge>
-                  )}
+                  <span>Chargement...</span>
                 </span>
               </SelectItem>
-            ))}
+            ) : providers.length === 0 ? (
+              <SelectItem value="no-providers" disabled>
+                <span className="flex items-center gap-2 truncate">
+                  <span>Aucun provider disponible</span>
+                </span>
+              </SelectItem>
+            ) : (
+              providers.map((p: CanonicalProvider) => (
+                <SelectItem key={p.name} value={p.name} title={p.description}>
+                  <span className="flex items-center gap-2 truncate">
+                    {providerIcons[p.name] || (
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label={p.label}>
+                        <title>{p.label}</title>
+                        <circle cx="10" cy="10" r="9" stroke="#BDBDBD" strokeWidth="2" fill="#F5F5F5" />
+                        <text x="50%" y="55%" textAnchor="middle" fontSize="10" fill="#BDBDBD" fontWeight="bold" dy=".3em">{capitalize(p.label.charAt(0))}</text>
+                      </svg>
+                    )}
+                    <span className="truncate">{p.label}</span>
+                    {status[p.name] ? (
+                      <Badge variant="success">{t('providerSelector.status.ok', 'OK')}</Badge>
+                    ) : (
+                      <Badge variant="warning">{t('providerSelector.status.notAuthenticated', 'Non authentifié')}</Badge>
+                    )}
+                  </span>
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
       </div>

@@ -31,14 +31,10 @@ from validated_keys_db import set_validated, is_validated
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Start/stop the streaming WebSocket server alongside uvicorn."""
-    streaming_task = None
-    try:
-        from streaming import start_streaming_server, stop_streaming_server
-        streaming_task = asyncio.create_task(start_streaming_server())
-        logging.getLogger(__name__).info("Streaming WebSocket server starting on ws://localhost:8765")
-    except Exception as e:
-        logging.getLogger(__name__).warning(f"Could not start streaming server: {e}")
+    """FastAPI lifespan without WebSocket server to prevent blocking issues."""
+    # WebSocket disabled temporarily due to connection issues
+    # Updated to websockets v16.0 which resolves handshake problems
+    # WebSocket is now handled separately in websocket_server.py
     
     # Initialize analytics database
     try:
@@ -48,12 +44,9 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logging.getLogger(__name__).warning(f"Could not initialize analytics database: {e}")
     
+    logging.getLogger(__name__).info("Backend started without WebSocket (disabled for stability)")
+    
     yield
-    try:
-        from streaming import stop_streaming_server
-        await stop_streaming_server()
-    except Exception:
-        pass
 
 app = FastAPI(lifespan=lifespan)
 
@@ -120,6 +113,27 @@ def get_env_provider_config(name: str) -> dict | None:
     return None
 
 # Correction de la détection dynamique : n'afficher que les providers réellement implémentés
+@app.get("/providers/{provider}/status")
+def get_provider_status(provider: str):
+    """Get the status of a specific provider."""
+    try:
+        cfg = get_env_provider_config(provider)
+        if cfg is None:
+            return {"available": False, "authenticated": False}
+        
+        # For Windsurf, check OAuth token specifically
+        if provider == "windsurf":
+            oauth_token = os.getenv("WINDSURF_OAUTH_TOKEN")
+            return {
+                "available": True,
+                "authenticated": bool(oauth_token and oauth_token.strip() != ""),
+                "oauth": True
+            }
+        
+        return {"available": True, "authenticated": True}
+    except Exception as e:
+        return {"available": False, "authenticated": False, "error": str(e)}
+
 @app.get("/providers")
 def get_providers():
     config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../configured_providers.json'))
