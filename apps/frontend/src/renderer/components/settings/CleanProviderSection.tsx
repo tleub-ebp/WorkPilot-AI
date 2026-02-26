@@ -198,6 +198,21 @@ export function CleanProviderSection({
     const authMethod = getProviderAuthMethod(providerId);
     const isOAuthOrCLI = authMethod === 'cli' || authMethod === 'oauth';
 
+    // Special handling for OAuth providers like Windsurf that don't need profiles
+    if (isOAuthOrCLI && providerId === 'windsurf') {
+      // Check if Windsurf OAuth token is available via backend status
+      const isConfigured = status[providerId] || false;
+      if (isConfigured) {
+        return {
+          hasKey: true,
+          keyPreview: undefined,
+          provider: 'Windsurf OAuth',
+          isOAuth: true,
+          authMethod: 'oauth'
+        };
+      }
+    }
+
     // Check profiles for API keys
     const profile = profiles.find(p => {
       if (!p.baseUrl) return false;
@@ -229,7 +244,7 @@ export function CleanProviderSection({
       };
     }
 
-    // For OAuth/CLI providers, check if they are configured (even without API key)
+    // For other OAuth/CLI providers, check if they are configured (even without API key)
     if (isOAuthOrCLI && profile) {
       return {
         hasKey: true,
@@ -263,6 +278,7 @@ export function CleanProviderSection({
     if (urlLower.includes('api.deepseek.com')) return 'deepseek';
     if (urlLower.includes('api.x.ai')) return 'grok';
     if (urlLower.includes('api.meta.ai')) return 'meta';
+    if (urlLower.includes('windsurf.com') || urlLower.includes('codeium.com')) return 'windsurf';
     return 'unknown';
   };
 

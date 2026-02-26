@@ -219,6 +219,12 @@ Examples:
         action="store_true",
         help="Build directly in project without worktree isolation (default: use isolated worktree)",
     )
+    parser.add_argument(
+        "--provider",
+        type=str,
+        default=None,
+        help="LLM provider (anthropic, openai, copilot, google, mistral, deepseek, grok, meta, aws, ollama)",
+    )
 
     args = parser.parse_args()
 
@@ -273,8 +279,24 @@ Examples:
                 project_dir = parent
                 break
 
-    # Resolve model shorthand to full model ID
-    resolved_model = resolve_model_id(args.model)
+    # Resolve model: if provider is non-Anthropic and model is the default "sonnet",
+    # use the provider-specific default model instead of the Claude shorthand.
+    from phase_config import PROVIDER_DEFAULT_MODELS
+
+    if (
+        args.provider
+        and args.provider not in ("anthropic", "claude")
+        and args.model == "sonnet"  # argparse default — user didn't explicitly set a model
+    ):
+        provider_defaults = PROVIDER_DEFAULT_MODELS.get(args.provider, {})
+        resolved_model = provider_defaults.get("spec", args.model)
+        debug(
+            "spec_runner",
+            f"Using provider-specific default model for '{args.provider}'",
+            resolved_model=resolved_model,
+        )
+    else:
+        resolved_model = resolve_model_id(args.model)
 
     debug(
         "spec_runner",
@@ -283,6 +305,7 @@ Examples:
         task_description=task_description[:200] if task_description else None,
         model=resolved_model,
         thinking_level=args.thinking_level,
+        provider=args.provider,
         complexity_override=args.complexity,
         use_ai_assessment=not args.no_ai_assessment,
         interactive=args.interactive or not task_description,

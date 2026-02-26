@@ -41,132 +41,6 @@ interface AuthTerminalState {
   profileName: string;
 }
 
-const providerFields: Record<string, {
-  apiKey?: string;
-  apiUrl?: string;
-  model?: string;
-  description?: string;
-  requiresApiKey: boolean;
-  placeholder?: string;
-  icon: React.ReactNode;
-}> = {
-  'openai': {
-    apiKey: 'globalOpenAIApiKey',
-    apiUrl: 'globalOpenAIApiBaseUrl',
-    model: 'globalOpenAIModel',
-    description: 'Clé API OpenAI pour accéder aux modèles GPT',
-    requiresApiKey: true,
-    placeholder: 'sk-...',
-    icon: <Key className="w-4 h-4" />
-  },
-  'anthropic': {
-    apiKey: 'globalAnthropicApiKey',
-    description: 'Clé API Anthropic pour accéder aux modèles Claude',
-    requiresApiKey: true,
-    placeholder: 'sk-ant-...',
-    icon: <Key className="w-4 h-4" />
-  },
-  'claude': {
-    apiKey: 'globalAnthropicApiKey',
-    description: 'Clé API Anthropic pour accéder aux modèles Claude',
-    requiresApiKey: true,
-    placeholder: 'sk-ant-...',
-    icon: <Key className="w-4 h-4" />
-  },
-  'gemini': {
-    apiKey: 'globalGoogleDeepMindApiKey',
-    description: 'Clé API Google pour accéder aux modèles Gemini',
-    requiresApiKey: true,
-    placeholder: 'AIza...',
-    icon: <Key className="w-4 h-4" />
-  },
-  'google': {
-    apiKey: 'globalGoogleDeepMindApiKey',
-    description: 'Clé API Google pour accéder aux modèles Gemini',
-    requiresApiKey: true,
-    placeholder: 'AIza...',
-    icon: <Key className="w-4 h-4" />
-  },
-  'meta-llama': {
-    apiKey: 'globalMetaApiKey',
-    description: 'Clé API Meta pour accéder aux modèles Llama',
-    requiresApiKey: true,
-    placeholder: 'META-...',
-    icon: <Key className="w-4 h-4" />
-  },
-  'meta': {
-    apiKey: 'globalMetaApiKey',
-    description: 'Clé API Meta pour accéder aux modèles Llama',
-    requiresApiKey: true,
-    placeholder: 'META-...',
-    icon: <Key className="w-4 h-4" />
-  },
-  'mistral': {
-    apiKey: 'globalMistralApiKey',
-    description: 'Clé API Mistral AI pour accéder aux modèles',
-    requiresApiKey: true,
-    placeholder: 'MISTRAL-...',
-    icon: <Key className="w-4 h-4" />
-  },
-  'deepseek': {
-    apiKey: 'globalDeepSeekApiKey',
-    description: 'Clé API DeepSeek pour accéder aux modèles',
-    requiresApiKey: true,
-    placeholder: 'sk-...',
-    icon: <Key className="w-4 h-4" />
-  },
-  'grok': {
-    apiKey: 'globalGrokApiKey',
-    description: 'Clé API Grok pour accéder aux modèles',
-    requiresApiKey: true,
-    placeholder: 'xai-...',
-    icon: <Key className="w-4 h-4" />
-  },
-  'windsurf': {
-    apiKey: 'globalWindsurfApiKey',
-    description: 'Clé API Windsurf pour accéder aux modèles',
-    requiresApiKey: true,
-    placeholder: 'ws-...',
-    icon: <Key className="w-4 h-4" />
-  },
-  'cursor': {
-    apiKey: 'globalCursorApiKey',
-    description: 'Clé API Cursor pour accéder aux modèles',
-    requiresApiKey: true,
-    placeholder: 'crsr-...',
-    icon: <Key className="w-4 h-4" />
-  },
-  'azure-openai': {
-    apiKey: 'globalAzureApiKey',
-    apiUrl: 'globalAzureApiBaseUrl',
-    description: 'Clé API Azure OpenAI et endpoint URL',
-    requiresApiKey: true,
-    placeholder: 'Azure API Key...',
-    icon: <Server className="w-4 h-4" />
-  },
-  'ollama': {
-    apiUrl: 'globalOllamaUrl',
-    description: 'URL du serveur Ollama local',
-    requiresApiKey: false,
-    placeholder: 'http://localhost:11434',
-    icon: <Globe className="w-4 h-4" />
-  },
-  'copilot': {
-    apiKey: 'globalCopilotToken',
-    description: 'Token GitHub Copilot pour l\'authentification',
-    requiresApiKey: true,
-    placeholder: 'ghp_...',
-    icon: <Key className="w-4 h-4" />
-  },
-  'aws': {
-    apiKey: 'globalAwsAccessKey',
-    description: 'Clé d\'accès AWS pour Bedrock',
-    requiresApiKey: true,
-    placeholder: 'AKIA...',
-    icon: <Server className="w-4 h-4" />
-  }
-};
-
 export function ProviderConfigDialog({
   isOpen,
   onOpenChange,
@@ -177,6 +51,116 @@ export function ProviderConfigDialog({
   useSheet = false
 }: ProviderConfigDialogProps) {
   const { t } = useTranslation('settings');
+  
+  const providerFields: Record<string, {
+    apiKey?: string;
+    apiUrl?: string;
+    model?: string;
+    description?: string;
+    requiresApiKey: boolean;
+    placeholder?: string;
+    icon: React.ReactNode;
+  }> = {
+    'openai': {
+      apiKey: 'globalOpenAIApiKey',
+      apiUrl: 'globalOpenAIApiBaseUrl',
+      model: 'globalOpenAIModel',
+      description: t('sections.accounts.providers.openai'),
+      requiresApiKey: true,
+      placeholder: 'sk-...',
+      icon: <Key className="w-4 h-4" />
+    },
+    'anthropic': {
+      apiKey: 'globalAnthropicApiKey',
+      description: t('sections.accounts.providers.anthropic'),
+      requiresApiKey: true,
+      placeholder: 'sk-ant...',
+      icon: <Key className="w-4 h-4" />
+    },
+    'claude': {
+      apiKey: 'globalAnthropicApiKey',
+      description: t('sections.accounts.providers.anthropic'),
+      requiresApiKey: true,
+      placeholder: 'sk-ant...',
+      icon: <Key className="w-4 h-4" />
+    },
+    'gemini': {
+      apiKey: 'globalGoogleDeepMindApiKey',
+      description: t('sections.accounts.providers.google'),
+      requiresApiKey: true,
+      placeholder: 'AIza...',
+      icon: <Key className="w-4 h-4" />
+    },
+    'google': {
+      apiKey: 'globalGoogleDeepMindApiKey',
+      description: t('sections.accounts.providers.google'),
+      requiresApiKey: true,
+      placeholder: 'AIza...',
+      icon: <Key className="w-4 h-4" />
+    },
+    'meta-llama': {
+      apiKey: 'globalMetaApiKey',
+      description: t('sections.accounts.providers.meta'),
+      requiresApiKey: true,
+      placeholder: 'META-...',
+      icon: <Key className="w-4 h-4" />
+    },
+    'meta': {
+      apiKey: 'globalMetaApiKey',
+      description: t('sections.accounts.providers.meta'),
+      requiresApiKey: true,
+      placeholder: 'META-...',
+      icon: <Key className="w-4 h-4" />
+    },
+    'mistral': {
+      apiKey: 'globalMistralApiKey',
+      description: t('sections.accounts.providers.mistral'),
+      requiresApiKey: true,
+      placeholder: 'MISTRAL-...',
+      icon: <Key className="w-4 h-4" />
+    },
+    'deepseek': {
+      apiKey: 'globalDeepSeekApiKey',
+      description: t('sections.accounts.providers.deepseek'),
+      requiresApiKey: true,
+      placeholder: 'sk-...',
+      icon: <Key className="w-4 h-4" />
+    },
+    'grok': {
+      apiKey: 'globalGrokApiKey',
+      description: t('sections.accounts.providers.grok'),
+      requiresApiKey: true,
+      placeholder: 'xai-...',
+      icon: <Key className="w-4 h-4" />
+    },
+    'windsurf': {
+      description: t('sections.accounts.providers.windsurf'),
+      requiresApiKey: false,
+      icon: <LogIn className="w-4 h-4" />
+    },
+    'cursor': {
+      apiKey: 'globalCursorApiKey',
+      description: t('sections.accounts.providers.cursor'),
+      requiresApiKey: true,
+      placeholder: 'crsr-...',
+      icon: <Key className="w-4 h-4" />
+    },
+    'azure-openai': {
+      apiKey: 'globalAzureApiKey',
+      apiUrl: 'globalAzureApiBaseUrl',
+      description: t('sections.accounts.providers.aws'),
+      requiresApiKey: true,
+      placeholder: 'Azure API Key...',
+      icon: <Server className="w-4 h-4" />
+    },
+    'ollama': {
+      apiUrl: 'globalOllamaApiUrl',
+      description: t('sections.accounts.providers.ollama'),
+      requiresApiKey: false,
+      placeholder: 'http://localhost:11434',
+      icon: <Server className="w-4 h-4" />
+    }
+  };
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -186,7 +170,7 @@ export function ProviderConfigDialog({
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   const providerConfig = provider ? providerFields[provider.id] : null;
-  const supportsOAuth = ['anthropic', 'claude'].includes(provider?.id || '');
+  const supportsOAuth = ['anthropic', 'claude', 'windsurf'].includes(provider?.id || '');
   const supportsGitHubCopilot = provider?.id === 'copilot';
 
   useEffect(() => {
@@ -335,12 +319,12 @@ export function ProviderConfigDialog({
           <TabsList className="w-full justify-start">
             <TabsTrigger value="api" className="flex items-center gap-2">
               <Key className="w-4 h-4" />
-              Clé API
+              {t('sections.accounts.form.apiKey')}
             </TabsTrigger>
             {supportsOAuth && (
               <TabsTrigger value="oauth" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
-                OAuth Claude Code
+                OAuth
               </TabsTrigger>
             )}
             {supportsGitHubCopilot && (
@@ -357,7 +341,7 @@ export function ProviderConfigDialog({
                 <div className="space-y-2">
                   <Label htmlFor="apiKey" className="flex items-center gap-2">
                     <Key className="w-4 h-4" />
-                    Clé API
+                    {t('sections.accounts.form.apiKey')}
                   </Label>
                   <div className="relative">
                     <Input
@@ -481,44 +465,60 @@ export function ProviderConfigDialog({
             <div className="space-y-4">
               <div className="rounded-lg bg-muted/30 border border-border p-4">
                 <p className="text-sm text-muted-foreground mb-4">
-                  Utilisez l'authentification OAuth Claude Code pour vous connecter facilement avec votre compte Claude.
+                  {provider?.id === 'windsurf' 
+                    ? t('sections.accounts.providerConfig.windsurfAuth.description')
+                    : t('sections.accounts.providerConfig.windsurfAuth.claudeCodeAuth')
+                  }
                 </p>
 
-                {!authTerminal ? (
+                {provider?.id === 'windsurf' ? (
                   <div className="space-y-4">
-                    <Button
-                      onClick={handleOAuthAuth}
-                      disabled={isAuthenticating}
-                      className="w-full"
-                    >
-                      {isAuthenticating ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Authentification...
-                        </>
-                      ) : (
-                        <>
-                          <LogIn className="w-4 h-4 mr-2" />
-                          Se connecter avec Claude Code
-                        </>
-                      )}
-                    </Button>
-                    
+                    <div className="flex items-center gap-2 text-sm">
+                      <LogIn className="w-4 h-4 text-green-600" />
+                      <span className="text-green-600">{t('sections.accounts.providerConfig.windsurfAuth.oauthDetected')}</span>
+                    </div>
                     <div className="text-xs text-muted-foreground">
-                      <p>Cela ouvrira un terminal où vous pourrez exécuter la commande `/login` pour vous authentifier.</p>
+                      <p>{t('sections.accounts.providerConfig.windsurfAuth.tokenLoaded')}</p>
+                      <p>{t('sections.accounts.providerConfig.windsurfAuth.noConfigRequired')}</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-primary/30 overflow-hidden" style={{ height: '320px' }}>
-                    <AuthTerminal
-                      terminalId={authTerminal.terminalId}
-                      configDir={authTerminal.configDir}
-                      profileName={authTerminal.profileName}
-                      onClose={handleAuthTerminalClose}
-                      onAuthSuccess={handleAuthTerminalSuccess}
-                      onAuthError={handleAuthTerminalError}
-                    />
-                  </div>
+                  !authTerminal ? (
+                    <div className="space-y-4">
+                      <Button
+                        onClick={handleOAuthAuth}
+                        disabled={isAuthenticating}
+                        className="w-full"
+                      >
+                        {isAuthenticating ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            {t('sections.accounts.providerConfig.windsurfAuth.authenticating')}
+                          </>
+                        ) : (
+                          <>
+                            <LogIn className="w-4 h-4 mr-2" />
+                            {t('sections.accounts.providerConfig.windsurfAuth.connectWithClaude')}
+                          </>
+                        )}
+                      </Button>
+                      
+                      <div className="text-xs text-muted-foreground">
+                        <p>{t('sections.accounts.providerConfig.windsurfAuth.terminalInstructions')}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-primary/30 overflow-hidden" style={{ height: '320px' }}>
+                      <AuthTerminal
+                        terminalId={authTerminal.terminalId}
+                        configDir={authTerminal.configDir}
+                        profileName={authTerminal.profileName}
+                        onClose={handleAuthTerminalClose}
+                        onAuthSuccess={handleAuthTerminalSuccess}
+                        onAuthError={handleAuthTerminalError}
+                      />
+                    </div>
+                  )
                 )}
 
                 {testResult && (
@@ -560,7 +560,7 @@ export function ProviderConfigDialog({
             <div className="space-y-2">
               <Label htmlFor="apiKey" className="flex items-center gap-2">
                 <Key className="w-4 h-4" />
-                Clé API
+                {t('sections.accounts.form.apiKey')}
               </Label>
               <div className="relative">
                 <Input

@@ -251,6 +251,30 @@ class ProviderRegistry:
             ]
         )
         
+        # --- Windsurf AI ---
+        self._providers['windsurf'] = Provider(
+            name='windsurf',
+            label='Windsurf AI',
+            description='Windsurf AI models via Windsurf platform - Enterprise Edition (OAuth only)',
+            category='special',
+            requires_api_key=False,  # Pas de clé API traditionnelle
+            requires_oauth=True,   # Uniquement OAuth
+            requires_cli=False,
+            models=[
+                {'value': 'swe-1.5', 'label': 'SWE-1.5', 'tier': 'flagship', 'supportsThinking': True},
+                {'value': 'claude-opus-4.6', 'label': 'Claude Opus 4.6', 'tier': 'flagship', 'supportsThinking': True},
+                {'value': 'claude-sonnet-4.6', 'label': 'Claude Sonnet 4.6', 'tier': 'standard', 'supportsThinking': True},
+                {'value': 'gpt-5.2-low-thinking', 'label': 'GPT-5.2 Low Thinking', 'tier': 'standard'},
+                {'value': 'swe-1.5-fast', 'label': 'SWE-1.5 Fast', 'tier': 'fast'},
+                {'value': 'claude-sonnet-4.5', 'label': 'Claude Sonnet 4.5', 'tier': 'standard', 'supportsThinking': True},
+                # Garder les modèles originaux pour compatibilité
+                {'value': 'windsurf-codestral', 'label': 'Windsurf Codestral', 'tier': 'flagship'},
+                {'value': 'windsurf-sonnet', 'label': 'Windsurf Sonnet', 'tier': 'standard'},
+                {'value': 'windsurf-haiku', 'label': 'Windsurf Haiku', 'tier': 'fast'},
+                {'value': 'windsurf-custom', 'label': 'Windsurf Custom', 'tier': 'standard'},
+            ]
+        )
+        
         # --- Custom/Enterprise ---
         self._providers['custom'] = Provider(
             name='custom',
@@ -394,6 +418,9 @@ class ProviderRegistry:
         if provider_name == 'anthropic':
             # Vérifier le token Claude Code OAuth
             return bool(os.getenv("CLAUDE_CODE_OAUTH_TOKEN") or os.getenv("ANTHROPIC_API_KEY"))
+        elif provider_name == 'windsurf':
+            # Vérifier le token OAuth Windsurf
+            return bool(os.getenv("WINDSURF_OAUTH_TOKEN"))
         return False
     
     def add_provider(self, provider: Provider) -> None:

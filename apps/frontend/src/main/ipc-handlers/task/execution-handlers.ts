@@ -29,9 +29,10 @@ import { appLog } from '../../app-logger';
  */
 function convertTaskMetadataToSpecCreation(metadata?: any): any {
   if (!metadata) return undefined;
-  
+
   return {
     requireReviewBeforeCoding: metadata.requireReviewBeforeCoding,
+    provider: metadata.provider,
     isAutoProfile: metadata.isAutoProfile,
     phaseModels: convertPhaseModelConfig(metadata.phaseModels),
     phaseThinking: convertPhaseThinkingConfig(metadata.phaseThinking),
@@ -284,6 +285,33 @@ export function registerTaskExecutionHandlers(
       const needsImplementation = hasSpec && task.subtasks.length === 0;
 
       console.warn('[TASK_START] hasSpec:', hasSpec, 'needsSpecCreation:', needsSpecCreation, 'needsImplementation:', needsImplementation);
+
+      // Inject provider defaults for imported tasks that lack model/provider configuration.
+      // This ensures tasks from Azure DevOps, JIRA, GitHub, etc. use the correct provider
+      // and model based on the project's current settings, rather than always defaulting
+      // to Claude Sonnet. The provider is also persisted to task_metadata.json so that
+      // later phases (planning, coding, QA) in run.py/phase_config.py use the right models.
+      if (task.metadata && !task.metadata.provider) {
+        const projectProvider = project.settings?.provider;
+        if (projectProvider) {
+          task.metadata.provider = projectProvider;
+          console.warn('[TASK_START] Injected provider from project settings:', projectProvider);
+          // Persist provider to task_metadata.json so backend phases use correct models
+          try {
+            const metadataPath = path.join(specDir, 'task_metadata.json');
+            if (existsSync(metadataPath)) {
+              const existingContent = safeReadFileSync(metadataPath);
+              if (existingContent) {
+                const existingMetadata = JSON.parse(existingContent);
+                existingMetadata.provider = projectProvider;
+                atomicWriteFileSync(metadataPath, JSON.stringify(existingMetadata, null, 2));
+              }
+            }
+          } catch (err) {
+            console.warn('[TASK_START] Failed to persist provider to task_metadata.json:', err);
+          }
+        }
+      }
 
       // Get base branch: task-level override takes precedence over project settings
       const baseBranch = task.metadata?.baseBranch || project.settings?.mainBranch;
