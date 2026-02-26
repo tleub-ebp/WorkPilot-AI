@@ -606,7 +606,13 @@ export function getBestAvailableProfileEnv(): BestProfileEnvResult {
   }
 
   // Use active profile (either it's fine, or no better alternative exists)
-  const activeEnv = profileManager.getActiveProfileEnv();
+  // IMPORTANT: Use getProfileEnv() instead of getActiveProfileEnv() to ensure
+  // the OAuth token is retrieved from Keychain and explicitly passed as
+  // CLAUDE_CODE_OAUTH_TOKEN. getActiveProfileEnv() only sets CLAUDE_CONFIG_DIR
+  // which relies on the CLI to read tokens — but the Agent SDK needs the token
+  // in the environment. Without this, the backend falls back to reading
+  // .credentials.json which may contain an expired token, causing 401 errors.
+  const activeEnv = profileManager.getProfileEnv(activeProfile.id);
   return {
     env: ensureCleanProfileEnv(activeEnv),
     profileId: activeProfile.id,
@@ -629,13 +635,22 @@ export function getBestAvailableProfileEnv(): BestProfileEnvResult {
  * @returns Environment with CLAUDE_CODE_OAUTH_TOKEN cleared if CLAUDE_CONFIG_DIR is set
  */
 function ensureCleanProfileEnv(env: Record<string, string>): Record<string, string> {
-  if (env.CLAUDE_CONFIG_DIR) {
-    // Clear CLAUDE_CODE_OAUTH_TOKEN to ensure SDK uses credentials from CLAUDE_CONFIG_DIR
+  if (env.CLAUDE_CONFIG_DIR && !env.CLAUDE_CODE_OAUTH_TOKEN) {
+    // CLAUDE_CONFIG_DIR is set but no explicit OAuth token was provided
+    // (e.g., from getActiveProfileEnv() which only sets CLAUDE_CONFIG_DIR).
+    // Clear any stale CLAUDE_CODE_OAUTH_TOKEN from process.env to prevent
+    // using a token from a different profile. The backend will read fresh
+    // credentials from the config directory or system credential store.
     return {
       ...env,
       CLAUDE_CODE_OAUTH_TOKEN: ''
     };
   }
+  // Either:
+  // 1. No CLAUDE_CONFIG_DIR (no profile) — nothing to clean
+  // 2. Token was explicitly set by getProfileEnv() from Keychain — keep it.
+  //    This fresh token IS for the correct profile (retrieved using the
+  //    profile's config_dir hash), so there's no risk of cross-profile leakage.
   return env;
 }
 
