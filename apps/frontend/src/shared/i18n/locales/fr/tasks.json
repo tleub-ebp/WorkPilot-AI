@@ -26,6 +26,7 @@
   "confirmDelete": {
     "title": "Supprimer la tâche",
     "description": "Êtes-vous sûr de vouloir supprimer la tâche \"{{title}}\" ? Cette action est irréversible.",
+    "irreversibleAction": "Cette action est irréversible.",
     "warning": "Cette action ne peut pas être annulée. Tous les fichiers de la tâche, y compris la spécification, le plan d'implémentation et tout code généré seront supprimés définitivement du projet.",
     "cancel": "Annuler",
     "confirm": "Supprimer définitivement"
@@ -122,6 +123,9 @@
     "deleteSuccess": "{{count}} tâche(s) supprimée(s) avec succès",
     "deleteSuccessSingle": "Tâche \"{{title}}\" supprimée avec succès",
     "deleteError": "Échec de la suppression de certaines tâches",
+    "restoreSuccess": "Tâche restaurée avec succès",
+    "restoreError": "Échec de la restauration de la tâche",
+    "undo": "Annuler",
     "clearSelection": "Effacer la sélection",
     "collapseColumn": "Réduire la colonne",
     "expandColumn": "Développer la colonne",

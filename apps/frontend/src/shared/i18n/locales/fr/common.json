@@ -86,7 +86,8 @@
     "gotIt": "Compris",
     "continue": "Continuer",
     "saving": "Enregistrement...",
-    "deleting": "Suppression..."
+    "deleting": "Suppression...",
+    "undo": "Annuler"
   },
   "actions": {
     "save": "Enregistrer",

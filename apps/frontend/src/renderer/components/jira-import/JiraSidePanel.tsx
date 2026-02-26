@@ -371,6 +371,12 @@ export function JiraSidePanel({
     e.dataTransfer.effectAllowed = 'copy';
     setDraggedIds(new Set(workItemIds));
 
+    // Marquer le panel comme étant en cours de drag
+    const panelElement = panelRef.current;
+    if (panelElement) {
+      panelElement.setAttribute('data-dragging', 'true');
+    }
+
     const customEvent = new CustomEvent('jira-drag-start', {
       detail: dragData,
       bubbles: true,
@@ -382,6 +388,12 @@ export function JiraSidePanel({
   const handleDragEnd = useCallback(() => {
     console.log('[Jira] Drag end');
     setDraggedIds(new Set());
+    
+    // Nettoyer l'attribut data-dragging
+    const panelElement = panelRef.current;
+    if (panelElement) {
+      panelElement.removeAttribute('data-dragging');
+    }
     
     // Dispatch custom event for KanbanBoard to detect
     const customEvent = new CustomEvent('jira-drag-end', {
@@ -648,17 +660,20 @@ export function JiraSidePanel({
                   className={cn(
                     "flex items-start gap-3 p-3 rounded-md border transition-all cursor-pointer",
                     "hover:bg-muted/50",
+                    "select-none", // Empêche la sélection de texte
                     selectedIds.has(item.id) && "bg-primary/10 border-primary/30 cursor-grab",
                     draggedIds.has(item.id) && "cursor-grabbing opacity-50"
                   )}
                   onClick={() => toggleItem(item.id)}
-                  draggable={selectedIds.has(item.id)}
+                  draggable={true} // Toujours draggable, pas seulement si sélectionné
                   onDragStart={(e) => {
                     console.log('[Jira] Drag start triggered for item:', item.id);
+                    // Si l'item est déjà sélectionné, dragger tous les items sélectionnés
                     if (selectedIds.has(item.id)) {
                       handleDragStart(e, Array.from(selectedIds));
                     } else {
-                      e.preventDefault();
+                      // Sinon, dragger uniquement cet item
+                      handleDragStart(e, [item.id]);
                     }
                   }}
                   onDragEnd={handleDragEnd}
@@ -675,39 +690,39 @@ export function JiraSidePanel({
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-mono text-xs text-muted-foreground">
+                      <span className="font-mono text-xs text-muted-foreground select-none">
                         {item.id}
                       </span>
-                      <Badge variant="outline" className={getTypeColor(item.workItemType)}>
+                      <Badge variant="outline" className={cn(getTypeColor(item.workItemType), "select-none")}>
                         {item.workItemType}
                       </Badge>
-                      <Badge variant="outline">{item.state}</Badge>
+                      <Badge variant="outline" className="select-none">{item.state}</Badge>
                       {item.priority && (
-                        <Badge variant="outline" className={getPriorityColor(item.priority)}>
+                        <Badge variant="outline" className={cn(getPriorityColor(item.priority), "select-none")}>
                           {item.priority}
                         </Badge>
                       )}
                     </div>
-                    <h4 className="font-medium text-sm mb-1 truncate">{item.title}</h4>
+                    <h4 className="font-medium text-sm mb-1 truncate select-none">{item.title}</h4>
                     {item.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">
+                      <p className="text-xs text-muted-foreground line-clamp-2 select-none">
                         {item.description}
                       </p>
                     )}
                     {item.assignedTo && (
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs text-muted-foreground mt-1 select-none">
                         Assignee: {item.assignedTo}
                       </p>
                     )}
                     {item.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {item.tags.slice(0, 3).map((tag, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
+                          <Badge key={idx} variant="secondary" className="text-xs select-none">
                             {tag}
                           </Badge>
                         ))}
                         {item.tags.length > 3 && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-xs select-none">
                             +{item.tags.length - 3}
                           </Badge>
                         )}

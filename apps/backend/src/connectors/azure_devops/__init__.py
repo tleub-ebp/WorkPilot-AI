@@ -42,8 +42,61 @@ class AzureDevOpsConnector(BaseIntegratedConnector):
 
     def list_backlog_items(self, project: str, item_types: Optional[List[str]] = None, max_items: int = 100) -> List[Dict[str, Any]]:
         """List work items from backlog."""
-        # Mock implementation for now
-        return []
+        # Mock implementation for now - in real implementation, this would call Azure DevOps API
+        # For now, return mock data with repository information
+        mock_items = [
+            {
+                'id': 1,
+                'title': 'Fix login authentication issue',
+                'description': 'Users cannot log in with valid credentials',
+                'state': 'Active',
+                'workItemType': 'Bug',
+                'assignedTo': 'john.doe@example.com',
+                'tags': ['authentication', 'critical'],
+                'priority': 1,
+                'createdDate': '2024-01-15T10:00:00Z',
+                'areaPath': f'{project}\\WebApp',
+                'iterationPath': f'{project}\\Sprint 1',
+                'url': f'{self.settings.organization_url}/{project}/_workitems/edit/1',
+                'repository': 'web-app-repo'  # Add repository info
+            },
+            {
+                'id': 2,
+                'title': 'Implement user profile feature',
+                'description': 'Add user profile page with editable fields',
+                'state': 'New',
+                'workItemType': 'User Story',
+                'assignedTo': 'jane.smith@example.com',
+                'tags': ['feature', 'ui'],
+                'priority': 2,
+                'createdDate': '2024-01-16T14:30:00Z',
+                'areaPath': f'{project}\\WebApp',
+                'iterationPath': f'{project}\\Sprint 2',
+                'url': f'{self.settings.organization_url}/{project}/_workitems/edit/2',
+                'repository': 'web-app-repo'  # Add repository info
+            },
+            {
+                'id': 3,
+                'title': 'Optimize database queries',
+                'description': 'Improve performance of slow database operations',
+                'state': 'In Progress',
+                'workItemType': 'Task',
+                'tags': ['performance', 'backend'],
+                'priority': 3,
+                'createdDate': '2024-01-17T09:15:00Z',
+                'areaPath': f'{project}\\Backend',
+                'iterationPath': f'{project}\\Sprint 1',
+                'url': f'{self.settings.organization_url}/{project}/_workitems/edit/3',
+                'repository': 'api-service'  # Add repository info
+            }
+        ]
+        
+        # Filter by item types if specified
+        if item_types:
+            mock_items = [item for item in mock_items if item['workItemType'] in item_types]
+        
+        # Limit to max_items
+        return mock_items[:max_items]
 
     def list_repositories(self, project: str) -> List[Dict[str, Any]]:
         """List repositories in a project."""

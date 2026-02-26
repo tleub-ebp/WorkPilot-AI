@@ -78,6 +78,7 @@ export interface AzureDevOpsWorkItem {
   areaPath?: string;
   iterationPath?: string;
   url?: string;
+  repository?: string; // Repository name where the work item is associated
 }
 
 export interface AzureDevOpsProject {
