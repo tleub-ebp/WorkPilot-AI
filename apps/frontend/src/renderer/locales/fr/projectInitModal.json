@@ -3,7 +3,7 @@
   "description": "Décrivez ce que vous voulez construire.",
   "projectDescriptionLabel": "Description du projet",
   "projectDescriptionPlaceholder": "Décrivez votre projet...",
-  "providerLabel": "Fournisseur de modèle IA",
+  "providerLabel": "FournisseurS de modèle IA",
   "verifyConfig": "Vérifiez et confirmez la configuration de votre projet.",
   "projectNameLabel": "Nom du projet",
   "selectedModelLabel": "Modèle sélectionné",

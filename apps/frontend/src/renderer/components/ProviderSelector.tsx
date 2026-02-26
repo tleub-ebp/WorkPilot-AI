@@ -243,7 +243,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
     <>
       <div className="flex items-center gap-4">
         <Label htmlFor="provider-select" className="whitespace-nowrap">
-          {t('providerSelector.label', "Fournisseur de modèle IA")}
+          {t('providerSelector.label', "Mdèle IA")}
         </Label>
         <Select value={selected} onValueChange={handleSelect}>
           <SelectTrigger id="provider-select" className="w-full">
