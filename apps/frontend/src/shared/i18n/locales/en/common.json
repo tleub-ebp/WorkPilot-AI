@@ -744,5 +744,6 @@
   "test": "Test",
   "refresh": "Refresh",
   "save": "Save",
-  "loading": "Loading..."
+  "loading": "Loading...",
+  "noProjectSelected": "No project selected"
 }
