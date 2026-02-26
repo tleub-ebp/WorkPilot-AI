@@ -15,6 +15,7 @@ export interface AzureDevOpsWorkItem {
   areaPath?: string;
   iterationPath?: string;
   url?: string;
+  repository?: string;
 }
 
 export interface AzureDevOpsImportModalProps {

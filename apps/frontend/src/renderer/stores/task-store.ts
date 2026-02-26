@@ -938,6 +938,77 @@ export async function deleteTask(
   }
 }
 
+// Temporary backup for deleted tasks (for undo functionality)
+const deletedTasksBackup = new Map<string, { task: Task; timestamp: number }>();
+const BACKUP_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Clean up expired backups
+ */
+function cleanupExpiredBackups(): void {
+  const now = Date.now();
+  for (const [taskId, backup] of deletedTasksBackup.entries()) {
+    if (now - backup.timestamp > BACKUP_EXPIRY_MS) {
+      deletedTasksBackup.delete(taskId);
+    }
+  }
+}
+
+/**
+ * Restore a deleted task from backup
+ */
+export async function restoreTask(taskId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const backup = deletedTasksBackup.get(taskId);
+    if (!backup) {
+      return { success: false, error: 'Task backup not found or expired' };
+    }
+
+    const projectId = backup.task.projectId;
+    
+    if (!projectId) {
+      return { success: false, error: 'No project ID found for task restoration' };
+    }
+    
+    // Recreate the task in the backend using createTask API
+    const result = await window.electronAPI.createTask(
+      projectId,
+      backup.task.title,
+      backup.task.description || '',
+      backup.task.metadata || {}
+    );
+    
+    if (!result.success) {
+      return { 
+        success: false, 
+        error: result.error || 'Failed to restore task in backend' 
+      };
+    }
+    
+    // Reload tasks from backend to get the updated state
+    await loadTasks(projectId);
+    
+    // Remove from backup
+    deletedTasksBackup.delete(taskId);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('[TaskStore] Error restoring task:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Get backed up task for undo functionality
+ */
+export function getDeletedTaskBackup(taskId: string): { task: Task; timestamp: number } | undefined {
+  cleanupExpiredBackups();
+  return deletedTasksBackup.get(taskId);
+}
+
 /**
  * Delete multiple tasks
  * Permanently removes tasks from the project
@@ -949,11 +1020,22 @@ export async function deleteTasks(
   const failedIds: string[] = [];
 
   try {
+    // Create backups before deletion
+    const now = Date.now();
+    for (const taskId of taskIds) {
+      const task = store.tasks.find(t => t.id === taskId || t.specId === taskId);
+      if (task) {
+        deletedTasksBackup.set(taskId, { task: { ...task }, timestamp: now });
+      }
+    }
+
     // Delete tasks one by one (API only supports single delete)
     for (const taskId of taskIds) {
       const result = await window.electronAPI.deleteTask(taskId);
       if (!result.success) {
         failedIds.push(taskId);
+        // Remove backup for failed deletion
+        deletedTasksBackup.delete(taskId);
       }
     }
 

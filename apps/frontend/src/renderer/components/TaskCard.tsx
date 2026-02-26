@@ -95,8 +95,8 @@ function taskCardPropsAreEqual(prevProps: TaskCardProps, nextProps: TaskCardProp
     prevProps.isSelectable === nextProps.isSelectable &&
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.onToggleSelect === nextProps.onToggleSelect &&
-    prevProps.onDelete === nextProps.onDelete &&
-    prevProps.onViewPRFiles === nextProps.onViewPRFiles
+    prevProps.onViewPRFiles === nextProps.onViewPRFiles &&
+    prevProps.onDelete === nextProps.onDelete
   ) {
     return true;
   }
@@ -282,13 +282,6 @@ export const TaskCard = memo(function TaskCard({
     }
   };
 
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onDelete) {
-      onDelete();
-    }
-  };
-
   const handleViewPR = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (task.metadata?.prUrl && window.electronAPI?.openExternal) {
@@ -303,6 +296,13 @@ export const TaskCard = memo(function TaskCard({
     }
   };
 
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete();
+    }
+  };
+
   const handleCardClick = (e: React.MouseEvent) => {
     // If delete functionality is available, don't open the task when clicking near the delete button
     if (onDelete) {
@@ -311,27 +311,15 @@ export const TaskCard = memo(function TaskCard({
       if (rect) {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        
-        // If click is in the top-right corner area (where delete button is), don't open task
-        const deleteArea = {
-          x: rect.width - 50,  // 50px from right edge
-          y: 0,               // from top
-          width: 50,
-          height: 40
-        };
-        
+        // Define a 32x32px area in the top-right corner where clicks should trigger delete
+        const deleteArea = { x: rect.width - 32, y: 0, width: 32, height: 32 };
         if (x >= deleteArea.x && x <= deleteArea.x + deleteArea.width &&
             y >= deleteArea.y && y <= deleteArea.y + deleteArea.height) {
-          return;
+          return; // Don't open the task if clicking in the delete area
         }
       }
     }
-    
-    // Check if the click target is the delete button or its children
-    if (deleteButtonRef.current && deleteButtonRef.current.contains(e.target as Node)) {
-      return;
-    }
-    
+    // Open task details on click
     onClick();
   };
 
@@ -429,15 +417,14 @@ export const TaskCard = memo(function TaskCard({
           if (rect) {
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            
-            // If mouse down is in the delete area, prevent the card click
+            // If click is in the top-right corner area (where delete button is), don't open task
             const deleteArea = {
-              x: rect.width - 50,
-              y: 0,
+              x: rect.width - 50,  // 50px from right edge
+              y: 0,               // from top
               width: 50,
               height: 40
             };
-            
+
             if (x >= deleteArea.x && x <= deleteArea.x + deleteArea.width &&
                 y >= deleteArea.y && y <= deleteArea.y + deleteArea.height) {
               e.preventDefault();
@@ -447,65 +434,24 @@ export const TaskCard = memo(function TaskCard({
         }
       }}
     >
-      {/* Delete button - positioned at the top right, outside the content flow */}
-      {onDelete && (
-        <Button
-          ref={deleteButtonRef}
-          variant="ghost"
-          size="sm"
-          className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive z-50"
-          title={t('actions.delete')}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            e.nativeEvent.stopImmediatePropagation();
-            setIsDeleteDialogOpen(true);
-          }}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-        >
-          <X className="h-3 w-3" />
-        </Button>
-      )}
-      
-      {/* Delete confirmation dialog - rendered via portal to prevent event propagation to card */}
-      {isDeleteDialogOpen && createPortal(
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t('tasks:confirmDelete.title')}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t('tasks:confirmDelete.description', { title: displayTitle })}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={(e) => {
-                e.stopPropagation();
-                setIsDeleteDialogOpen(false);
-              }}>
-                {t('common:buttons.cancel')}
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsDeleteDialogOpen(false);
-                  if (onDelete) {
-                    onDelete();
-                  }
-                }}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {t('common:buttons.delete')}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>,
-        document.body
-      )}
-
       <CardContent className="p-4">
+        {/* Delete button - positioned at the top right, outside the content flow */}
+        {onDelete && (
+          <Button
+            ref={deleteButtonRef}
+            variant="ghost"
+            size="sm"
+            className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive z-50"
+            title={t('actions.delete')}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDelete(e);
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
         <div className={isSelectable ? 'flex gap-3' : undefined}>
           {/* Checkbox for selectable mode - stops event propagation */}
           {isSelectable && (

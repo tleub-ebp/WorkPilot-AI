@@ -195,6 +195,12 @@ export interface TaskMetadata {
   azureDevOpsState?: string;  // Azure DevOps work item state
   azureDevOpsType?: string;  // Azure DevOps work item type (Bug, User Story, Task, etc.)
 
+  // Jira Integration
+  jiraIdentifier?: string;  // Jira issue key (e.g., 'PROJ-123')
+  jiraUrl?: string;  // Jira issue URL
+  jiraState?: string;  // Jira issue state
+  jiraType?: string;  // Jira issue type (Bug, Story, Task, etc.)
+
   // Classification
   category?: TaskCategory;
   complexity?: TaskComplexity;

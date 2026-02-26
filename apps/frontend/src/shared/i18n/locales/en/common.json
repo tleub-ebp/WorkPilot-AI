@@ -86,7 +86,8 @@
     "gotIt": "Got it",
     "continue": "Continue",
     "saving": "Saving...",
-    "deleting": "Deleting..."
+    "deleting": "Deleting...",
+    "undo": "Undo"
   },
   "actions": {
     "save": "Save",

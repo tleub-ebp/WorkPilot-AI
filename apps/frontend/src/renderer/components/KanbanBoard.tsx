@@ -29,7 +29,7 @@ import { SortableTaskCard } from './SortableTaskCard';
 import { QueueSettingsModal } from './QueueSettingsModal';
 import { TASK_STATUS_COLUMNS, TASK_STATUS_LABELS } from '../../shared/constants';
 import { cn } from '../lib/utils';
-import { persistTaskStatus, forceCompleteTask, archiveTasks, deleteTasks, useTaskStore, createTask } from '../stores/task-store';
+import { persistTaskStatus, forceCompleteTask, archiveTasks, deleteTasks, useTaskStore, createTask, restoreTask } from '../stores/task-store';
 import { updateProjectSettings, useProjectStore } from '../stores/project-store';
 import { useProjectEnvStore, loadProjectEnvConfig } from '../stores/project-env-store';
 import { useKanbanSettingsStore, COLLAPSED_COLUMN_WIDTH, DEFAULT_COLUMN_WIDTH, MIN_COLUMN_WIDTH, MAX_COLUMN_WIDTH } from '../stores/kanban-settings-store';
@@ -46,6 +46,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogPortal,
+  AlertDialogOverlay,
 } from './ui/alert-dialog';
 import { AppSettingsDialog } from './settings/AppSettings';
 import { AzureDevOpsSidePanel } from './azure-devops-import/AzureDevOpsSidePanel';
@@ -164,7 +166,6 @@ function droppableColumnPropsAreEqual(
   if (prevProps.onToggleArchived !== nextProps.onToggleArchived) return false;
   if (prevProps.onSelectAll !== nextProps.onSelectAll) return false;
   if (prevProps.onDeselectAll !== nextProps.onDeselectAll) return false;
-  if (prevProps.onToggleSelect !== nextProps.onToggleSelect) return false;
   if (prevProps.onToggleSelect !== nextProps.onToggleSelect) return false;
   if (prevProps.isCollapsed !== nextProps.isCollapsed) return false;
   if (prevProps.columnWidth !== nextProps.columnWidth) return false;
@@ -803,6 +804,9 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     taskTitle: ''
   });
 
+  // Store recently deleted tasks for undo functionality
+  const [recentlyDeletedTasks, setRecentlyDeletedTasks] = useState<Map<string, Task>>(new Map());
+
   // Worktree cleanup dialog state
   const [worktreeCleanupDialog, setWorktreeCleanupDialog] = useState<{
     open: boolean;
@@ -1003,17 +1007,10 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     }
   }, [selectedTaskIds.size]);
 
-  // Handle bulk PR dialog completion - clear selection
-  const handleBulkPRComplete = useCallback(() => {
-    deselectAllTasks();
-  }, [deselectAllTasks]);
-
-  // Handle opening delete confirmation dialog
+  // Handle opening the delete confirmation dialog
   const handleOpenDeleteConfirm = useCallback(() => {
-    if (selectedTaskIds.size > 0) {
-      setDeleteConfirmOpen(true);
-    }
-  }, [selectedTaskIds.size]);
+    setDeleteConfirmOpen(true);
+  }, []);
 
   // Handle confirmed bulk delete
   const handleConfirmDelete = useCallback(async () => {
@@ -1021,6 +1018,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
 
     setIsDeleting(true);
     const taskIdsToDelete = Array.from(selectedTaskIds);
+
     const result = await deleteTasks(taskIdsToDelete);
 
     setIsDeleting(false);
@@ -1029,6 +1027,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     if (result.success) {
       toast({
         title: t('kanban.deleteSuccess', { count: taskIdsToDelete.length }),
+        variant: 'default'
       });
       deselectAllTasks();
     } else {
@@ -1044,6 +1043,10 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       }
     }
   }, [selectedTaskIds, deselectAllTasks, toast, t]);
+
+  // Handle bulk PR dialog completion - clear selection
+  const handleBulkPRComplete = useCallback(() => {
+  }, []);
 
   // Handle viewing PR files
   const handleViewPRFiles = useCallback((prUrl: string, taskId: string) => {
@@ -1086,6 +1089,9 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   const handleConfirmSingleDelete = useCallback(async () => {
     if (!singleDeleteConfirm.taskId) return;
 
+    // Get the full task data before deletion for potential undo
+    const taskToDelete = useTaskStore.getState().tasks.find((t) => t.id === singleDeleteConfirm.taskId);
+    
     const result = await deleteTasks([singleDeleteConfirm.taskId]);
     
     // Close the dialog
@@ -1095,9 +1101,20 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       taskTitle: ''
     });
 
-    if (result.success) {
+    if (result.success && taskToDelete) {
+      // Store the deleted task for undo functionality
+      setRecentlyDeletedTasks(prev => new Map(prev).set(singleDeleteConfirm.taskId!, taskToDelete));
+      
       toast({
         title: t('kanban.deleteSuccessSingle', { title: singleDeleteConfirm.taskTitle }),
+        action: (
+          <button
+            onClick={() => handleUndoDelete(singleDeleteConfirm.taskId!)}
+            className="px-2 py-1 text-sm bg-primary/10 hover:bg-primary/20 text-primary rounded transition-colors"
+          >
+            {t('kanban.undo')}
+          </button>
+        ),
         variant: 'default'
       });
     } else {
@@ -1106,8 +1123,46 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         description: result.error,
         variant: 'destructive'
       });
+      // Still clear selection for successfully deleted tasks
+      if (result.failedIds) {
+        const remainingIds = new Set(result.failedIds);
+        setSelectedTaskIds(remainingIds);
+      }
     }
   }, [singleDeleteConfirm.taskId, singleDeleteConfirm.taskTitle, toast, t]);
+
+  // Handle undo delete
+  const handleUndoDelete = useCallback(async (taskId: string) => {
+    try {
+      const result = await restoreTask(taskId);
+      
+      if (result.success) {
+        // Remove from recently deleted tasks (for UI state consistency)
+        setRecentlyDeletedTasks(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(taskId);
+          return newMap;
+        });
+
+        toast({
+          title: t('kanban.restoreSuccess'),
+          variant: 'default'
+        });
+      } else {
+        toast({
+          title: t('kanban.restoreError'),
+          description: result.error,
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      toast({
+        title: t('kanban.restoreError'),
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive'
+      });
+    }
+  }, [toast, t]);
 
   /**
    * Handle import confirmation from the ImportConfirmDialog.
@@ -2016,9 +2071,6 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
   const [settingsDialogProjectId, setSettingsDialogProjectId] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
-  }, [isProjectSettingsOpen]);
-
   return (
     <div className="flex h-full flex-col">
       {/* Kanban header avec bouton paramètres projet */}
@@ -2174,48 +2226,79 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <AlertDialogContent className="sm:max-w-[500px]">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <Trash2 className="h-5 w-5" />
+        <AlertDialogPortal>
+          <AlertDialogOverlay className="bg-black/60 backdrop-blur-md" />
+          <AlertDialogContent className="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] border-0 bg-linear-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] duration-300">
+          <div className="absolute inset-0 rounded-2xl bg-linear-to-r from-red-500/20 via-orange-500/20 to-red-500/20 p-px">
+            <div className="h-full w-full rounded-2xl bg-slate-900/95" />
+          </div>
+          <div className="relative z-10 p-8">
+          <AlertDialogHeader className="text-center space-y-4">
+            {/* Icon with animated background */}
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-red-500/20 to-red-600/30 p-px">
+              <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-900/90">
+                <Trash2 className="h-8 w-8 text-red-400" />
+              </div>
+            </div>
+            
+            <AlertDialogTitle className="text-2xl font-bold text-white">
               {t('kanban.deleteConfirmTitle')}
             </AlertDialogTitle>
-            <AlertDialogDescription>
+            
+            <AlertDialogDescription className="text-base text-slate-300 leading-relaxed">
               {t('kanban.deleteConfirmDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          {/* Task List Preview */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">{t('kanban.tasksToDelete')}</label>
-            <ScrollArea className="h-32 rounded-md border border-border p-2">
-              <div className="space-y-1">
+          {/* Enhanced Task List Preview */}
+          <div className="mt-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-slate-200">{t('kanban.tasksToDelete')}</label>
+              <span className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-medium text-red-300">
+                {selectedTaskIds.size} {selectedTaskIds.size === 1 ? 'tâche' : 'tâches'}
+              </span>
+            </div>
+            <ScrollArea className="h-32 rounded-xl border border-slate-700/50 bg-slate-800/50 p-3 backdrop-blur-sm">
+              <div className="space-y-2">
                 {selectedTasks.map((task, idx) => (
                   <div
                     key={task.id}
-                    className="flex items-center gap-2 text-sm py-1 px-2 rounded hover:bg-muted/50"
+                    className="group flex items-center gap-3 rounded-lg bg-slate-700/30 px-3 py-2.5 text-sm transition-all hover:bg-slate-700/50"
                   >
-                    <span className="text-muted-foreground">{idx + 1}.</span>
-                    <span className="truncate">{task.title}</span>
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-600/50 text-xs font-medium text-slate-300">
+                      {idx + 1}
+                    </div>
+                    <span className="flex-1 truncate text-slate-200">{task.title}</span>
+                    <Trash2 className="h-4 w-4 text-red-400/60 opacity-0 transition-opacity group-hover:opacity-100" />
                   </div>
                 ))}
               </div>
             </ScrollArea>
           </div>
 
-          {/* Warning message */}
-          <p className="text-sm text-destructive">
-            {t('kanban.deleteWarning')}
-          </p>
+          {/* Enhanced Warning message */}
+          <div className="mt-6 rounded-xl border border-red-500/20 bg-red-500/5 p-4 backdrop-blur-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500/20">
+                <span className="text-xs font-bold text-red-400">!</span>
+              </div>
+              <p className="text-sm font-medium text-red-300 leading-relaxed">
+                {t('kanban.deleteWarning')}
+              </p>
+            </div>
+          </div>
 
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>
+          <AlertDialogFooter className="mt-8 gap-3">
+            <AlertDialogCancel 
+              disabled={isDeleting}
+              className="flex-1 rounded-xl border border-slate-600/50 bg-slate-700/50 text-slate-200 backdrop-blur-sm transition-all hover:bg-slate-700/70 hover:border-slate-500/50 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               {t('common:buttons.cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="flex-1 rounded-xl border-0 bg-linear-to-r from-red-500 to-red-600 text-white font-semibold shadow-lg transition-all hover:from-red-600 hover:to-red-700 hover:shadow-red-500/25 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isDeleting ? (
                 <>
@@ -2223,11 +2306,16 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
                   {t('common:buttons.deleting')}
                 </>
               ) : (
-                t('kanban.deleteConfirmButton', { count: selectedTaskIds.size })
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {t('kanban.deleteConfirmButton', { count: selectedTaskIds.size })}
+                </>
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
+          </div>
         </AlertDialogContent>
+      </AlertDialogPortal>
       </AlertDialog>
 
       {/* Single task delete confirmation dialog */}
@@ -2244,9 +2332,10 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           </AlertDialogHeader>
 
           {/* Warning message */}
-          <p className="text-sm text-destructive">
-            {t('tasks:confirmDelete.warning')}
-          </p>
+          <div className="text-sm text-destructive space-y-2 mt-4">
+            <p>{t('tasks:confirmDelete.irreversibleAction')}</p>
+            <p>{t('tasks:confirmDelete.warning')}</p>
+          </div>
 
           <AlertDialogFooter>
             <AlertDialogCancel>
