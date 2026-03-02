@@ -485,18 +485,22 @@ export function handleOAuthToken(
 
     // Clear Keychain cache to get fresh credentials
     clearKeychainCache(profile.configDir);
+    console.warn('[ClaudeIntegration] Reading credentials from configDir:', profile.configDir);
 
     // Extract full credentials from Keychain including subscriptionType and rateLimitTier
     const keychainCreds = getFullCredentialsFromKeychain(profile.configDir);
 
     // Check if there was a keychain access error (not just "not found")
     if (keychainCreds.error) {
-      console.error('[ClaudeIntegration] Keychain access error:', keychainCreds.error);
+      console.error('[ClaudeIntegration] Keychain access error for configDir:', profile.configDir, 'error:', keychainCreds.error);
       // Don't retry on keychain failures - they won't resolve with retries
       return;
     }
 
     if (keychainCreds.token) {
+      console.warn('[ClaudeIntegration] Token found after login - configDir:', profile.configDir,
+        'tokenFingerprint:', `${keychainCreds.token.slice(0, 8)}...${keychainCreds.token.slice(-4)}`,
+        'expiresAt:', keychainCreds.expiresAt || '(unknown)');
       // NOTE: We intentionally do NOT store the OAuth token in the profile.
       // Storing causes AutoClaude to use a stale cached token instead of letting
       // Claude CLI read fresh tokens from Keychain (which auto-refreshes).

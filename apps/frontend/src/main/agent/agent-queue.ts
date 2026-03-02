@@ -12,6 +12,9 @@ import { detectRateLimit, createSDKRateLimitInfo, getBestAvailableProfileEnv } f
 import { getAPIProfileEnv } from '../services/profile';
 import { getOAuthModeClearVars } from './env-utils';
 import { debugLog, debugError } from '../../shared/utils/debug-logger';
+import { getClaudeProfileManager } from '../claude-profile-manager';
+import { ensureValidToken } from '../claude-profile/token-refresh';
+import { clearKeychainCache } from '../claude-profile/credential-utils';
 import { stripAnsiCodes } from '../../shared/utils/ansi-sanitizer';
 import { parsePythonCommand } from '../python-detector';
 import { pythonEnvManager } from '../python-env-manager';
@@ -77,6 +80,32 @@ export class AgentQueueManager {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Force-refresh OAuth token before spawning an agent process.
+   * Uses forceRefresh to guarantee a fresh access_token from Anthropic,
+   * preventing 401 errors from tokens that were revoked but not yet expired locally.
+   */
+  private async refreshTokenBeforeSpawn(): Promise<void> {
+    try {
+      const profileManager = getClaudeProfileManager();
+      const activeProfile = profileManager.getActiveProfile();
+      if (activeProfile?.configDir) {
+        const tokenResult = await ensureValidToken(activeProfile.configDir, undefined, { forceRefresh: true });
+        if (tokenResult.wasRefreshed) {
+          clearKeychainCache(activeProfile.configDir);
+          debugLog('[Agent Queue] Force-refreshed OAuth token before spawn for profile:', activeProfile.name);
+        } else if (tokenResult.errorCode === 'invalid_grant' || tokenResult.errorCode === 'invalid_client') {
+          debugLog('[Agent Queue] PERMANENT TOKEN ERROR:', tokenResult.error, '- user must re-authenticate');
+        } else if (tokenResult.error) {
+          debugLog('[Agent Queue] Token refresh warning:', tokenResult.error);
+        }
+      }
+    } catch (error) {
+      // Non-fatal: proceed with existing token
+      debugLog('[Agent Queue] Pre-spawn token refresh failed (non-fatal):', error instanceof Error ? error.message : String(error));
+    }
   }
 
   /**
@@ -325,6 +354,9 @@ export class AgentQueueManager {
 
     // Get combined environment variables
     const combinedEnv = this.processManager.getCombinedEnv(projectPath);
+
+    // Proactively refresh OAuth token before reading credentials for env setup
+    await this.refreshTokenBeforeSpawn();
 
     // Get best available Claude profile environment (automatically handles rate limits)
     const profileResult = getBestAvailableProfileEnv();
@@ -658,6 +690,9 @@ export class AgentQueueManager {
 
     // Get combined environment variables
     const combinedEnv = this.processManager.getCombinedEnv(projectPath);
+
+    // Proactively refresh OAuth token before reading credentials for env setup
+    await this.refreshTokenBeforeSpawn();
 
     // Get best available Claude profile environment (automatically handles rate limits)
     const profileResult = getBestAvailableProfileEnv();

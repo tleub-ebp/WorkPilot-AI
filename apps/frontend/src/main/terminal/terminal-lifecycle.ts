@@ -79,10 +79,12 @@ export async function createTerminal(
     // 3. Custom env from TerminalCreateOptions
     const mergedEnv = { ...claudeCodeEnv, ...profileEnv, ...(customEnv || {}) };
 
-    if (mergedEnv.CLAUDE_CODE_OAUTH_TOKEN) {
+    // Always log auth-critical env vars (not just in debug mode) so auth issues are diagnosable
+    if (skipOAuthToken) {
+      console.warn('[TerminalLifecycle] Auth terminal - CLAUDE_CONFIG_DIR:', mergedEnv.CLAUDE_CONFIG_DIR || '(not set)');
+      console.warn('[TerminalLifecycle] Auth terminal - token will be stored in:', mergedEnv.CLAUDE_CONFIG_DIR ? `${mergedEnv.CLAUDE_CONFIG_DIR}/.credentials.json` : '~/.claude/.credentials.json (default)');
+    } else if (mergedEnv.CLAUDE_CODE_OAUTH_TOKEN) {
       debugLog('[TerminalLifecycle] Injecting OAuth token from active profile');
-    } else if (skipOAuthToken) {
-      debugLog('[TerminalLifecycle] Skipping OAuth token injection (auth terminal)');
     }
     if (mergedEnv.CLAUDE_CONFIG_DIR) {
       debugLog('[TerminalLifecycle] Setting CLAUDE_CONFIG_DIR:', mergedEnv.CLAUDE_CONFIG_DIR);

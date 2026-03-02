@@ -173,7 +173,6 @@ class AgentRunner:
         current_tool = None
         message_count = 0
         tool_count = 0
-        hit_usage_cap = False  # Track if we received a rate/usage limit event from SDK
 
         try:
             async with client:
@@ -266,46 +265,33 @@ class AgentRunner:
 
                     else:
                         # Handle unknown/special message types from the SDK.
-                        # The Claude SDK may send rate_limit_event, error, or other
-                        # non-standard message types that we need to detect.
-                        debug(
-                            "agent_runner",
-                            f"Received non-standard message type: {msg_type}",
-                            msg_attrs=str(dir(msg))[:200],
-                        )
+                        # The SDK may send SystemMessage, StreamEvent, or other types.
+                        # With our monkey-patch (Bug #12), unknown types like
+                        # "rate_limit_event" are converted to SystemMessage(subtype=...).
+                        msg_subtype = getattr(msg, "subtype", None) or ""
 
-                        # Detect rate/usage limit events from SDK
-                        # The SDK sends a message with type name containing "rate_limit"
-                        # when the account has hit its usage cap.
-                        if "rate_limit" in msg_type.lower() or "limit" in msg_type.lower():
-                            hit_usage_cap = True
-                            # Extract any details from the message for logging
-                            limit_detail = ""
-                            for attr in ("message", "error", "detail", "retry_after", "reset_at"):
-                                val = getattr(msg, attr, None)
-                                if val is not None:
-                                    limit_detail += f" {attr}={val}"
-
-                            # Use "hit your limit" phrasing so frontend rate-limit-detector
-                            # catches it via the /hit your limit/i pattern.
-                            cap_msg = f"You've hit your limit — Claude SDK returned {msg_type}.{limit_detail}"
-                            debug_error("agent_runner", cap_msg)
-                            print(f"\n⚠️  {cap_msg}", flush=True)
-                            if self.task_logger:
-                                self.task_logger.log_error(cap_msg, LogPhase.PLANNING)
+                        # Check if this is a rate_limit_event that was converted
+                        # to SystemMessage by our monkey-patch. These are informational
+                        # pause signals from the CLI, NOT hard rate limits. The CLI
+                        # handles the pause internally — we just log and continue.
+                        if "rate_limit" in msg_subtype.lower():
+                            print(
+                                f"\n⏳ Rate limit pause (CLI will retry automatically)...",
+                                flush=True,
+                            )
+                            debug(
+                                "agent_runner",
+                                f"Rate limit event received (subtype={msg_subtype}), "
+                                "session continues — CLI handles retry internally",
+                            )
+                        else:
+                            debug(
+                                "agent_runner",
+                                f"Received message type: {msg_type}",
+                                subtype=msg_subtype,
+                            )
 
                 print()
-
-                # If we received a usage cap event, fail immediately with a clear message
-                if hit_usage_cap:
-                    cap_error = (
-                        f"You've hit your limit — the Claude SDK returned a usage cap event. "
-                        f"Please wait for the limit to reset or switch to a different Claude profile."
-                    )
-                    debug_error("agent_runner", cap_error)
-                    if self.task_logger:
-                        self.task_logger.log_error(cap_error, LogPhase.PLANNING)
-                    return False, cap_error
 
                 # Detect empty sessions: if the agent didn't call any tools
                 # and produced no meaningful output, something went wrong

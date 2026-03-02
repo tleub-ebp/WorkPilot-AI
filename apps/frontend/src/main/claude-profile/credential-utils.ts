@@ -856,7 +856,11 @@ function getCredentialsFromLinux(configDir?: string, forceRefresh = false): Plat
  * Get the credentials file path for Linux
  */
 function getLinuxCredentialsPath(configDir?: string): string {
-  const baseDir = configDir || join(homedir(), '.claude');
+  let baseDir = configDir || join(homedir(), '.claude');
+  // Expand ~ to home directory (Node.js doesn't resolve ~ in file paths)
+  if (baseDir.startsWith('~')) {
+    baseDir = join(homedir(), baseDir.slice(1));
+  }
   return join(baseDir, '.credentials.json');
 }
 
@@ -1073,7 +1077,11 @@ function findPowerShellPath(): string | null {
  * Claude CLI on Windows stores credentials in .credentials.json files, not Windows Credential Manager
  */
 function getWindowsCredentialsPath(configDir?: string): string {
-  const baseDir = configDir || join(homedir(), '.claude');
+  let baseDir = configDir || join(homedir(), '.claude');
+  // Expand ~ to home directory (Node.js doesn't resolve ~ in file paths)
+  if (baseDir.startsWith('~')) {
+    baseDir = join(homedir(), baseDir.slice(1));
+  }
   return join(baseDir, '.credentials.json');
 }
 
