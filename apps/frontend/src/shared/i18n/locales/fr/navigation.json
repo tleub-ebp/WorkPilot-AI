@@ -9,7 +9,8 @@
     "integration": "🌐 Intégrations & Git",
     "planning": "📊 Planification & Analyse",
     "knowledge": "💡 Connaissances & Contenu",
-    "utilities": "⚙️ Utilitaires"
+    "utilities": "⚙️ Utilitaires",
+    "aiTools": "🤖 Outils IA"
   },
   "items": {
     "kanban": "Tableau Kanban",
@@ -33,7 +34,13 @@
     "refactoring": "Refactoring",
     "documentation": "Documentation",
     "costEstimator": "Estimateur de coûts",
-    "sessionHistory": "Historique des sessions"
+    "sessionHistory": "Historique des sessions",
+    "testGeneration": "Génération de tests",
+    "promptOptimizer": "Optimiseur de prompts",
+    "codePlayground": "Bac à sable de code",
+    "dependencySentinel": "Sentinelle de dépendances",
+    "conflictPredictor": "Prédicteur de conflits",
+    "naturalLanguageGit": "Git en langage naturel"
   },
   "actions": {
     "settings": "Paramètres",

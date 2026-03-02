@@ -45,6 +45,8 @@ import { registerPromptOptimizerHandlers } from './prompt-optimizer-handlers';
 import { registerCredentialHandlers } from './credential-handlers';
 import { registerGitHubCopilotHandlers } from './github-copilot-handlers';
 import { setupNaturalLanguageGitHandlers } from './natural-language-git-handlers';
+import { setupSmartEstimationHandlers } from './smart-estimation-handlers';
+import { setupConflictPredictorHandlers } from './conflict-predictor-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -161,6 +163,12 @@ export function setupIpcHandlers(
 
   // Natural Language Git handlers
   setupNaturalLanguageGitHandlers();
+
+  // Smart Estimation handlers
+  setupSmartEstimationHandlers();
+
+  // Conflict Predictor handlers
+  setupConflictPredictorHandlers();
 
   console.warn('[IPC] All handler modules registered successfully');
 }

@@ -71,6 +71,7 @@ import { useTestGenerationStore, openTestGenerationDialog } from '@/stores/test-
 import { usePromptOptimizerStore, openPromptOptimizerDialog } from '@/stores/prompt-optimizer-store';
 import { useCodePlaygroundStore, openCodePlaygroundDialog } from '@/stores/code-playground-store';
 import { useNaturalLanguageGitStore, openNaturalLanguageGitDialog } from '@/stores/natural-language-git-store';
+import { useConflictPredictorStore, openConflictPredictorDialog } from '@/stores/conflict-predictor-store';
 import { AddProjectModal } from './AddProjectModal';
 import { GitSetupModal } from './GitSetupModal';
 import { AzureDevOpsSetupModal } from './AzureDevOpsSetupModal';
@@ -83,10 +84,11 @@ import { TestGenerationDialog } from './test-generation/TestGenerationDialog';
 import { PromptOptimizerDialog } from './prompt-optimizer/PromptOptimizerDialog';
 import { CodePlaygroundDialog } from './code-playground/CodePlaygroundDialog';
 import { NaturalLanguageGitDialog } from './natural-language-git/NaturalLanguageGitDialog';
+import { ConflictPredictorDialog } from './conflict-predictor/ConflictPredictorDialog';
 import { VoiceControlDialog } from './voice-control/VoiceControlDialog';
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor';
 
 interface SidebarProps {
   onSettingsClick: () => void;
@@ -145,6 +147,7 @@ const navGroups: NavGroup[] = [
       { id: 'prompt-optimizer', labelKey: 'navigation:items.promptOptimizer', icon: WandSparkles, shortcut: 'P' },
       { id: 'code-playground', labelKey: 'navigation:items.codePlayground', icon: Zap, shortcut: 'G' },
       { id: 'dependency-sentinel', labelKey: 'navigation:items.dependencySentinel', icon: Shield, shortcut: 'D' },
+      { id: 'conflict-predictor', labelKey: 'navigation:items.conflictPredictor', icon: GitMerge, shortcut: 'C' },
       { id: 'natural-language-git', labelKey: 'navigation:items.naturalLanguageGit', icon: GitBranch, shortcut: 'G' },
     ],
     defaultExpanded: false
@@ -233,6 +236,7 @@ export function Sidebar({
   const [showTestGenerationDialog, setShowTestGenerationDialog] = useState(false);
   const [showPromptOptimizerDialog, setShowPromptOptimizerDialog] = useState(false);
   const [showCodePlaygroundDialog, setShowCodePlaygroundDialog] = useState(false);
+  const [showConflictPredictorDialog, setShowConflictPredictorDialog] = useState(false);
   const [showNaturalLanguageGitDialog, setShowNaturalLanguageGitDialog] = useState(false);
   const [showVoiceControlDialog, setShowVoiceControlDialog] = useState(false);
 
@@ -516,6 +520,10 @@ export function Sidebar({
     }
     if (view === 'code-playground') {
       openCodePlaygroundDialog();
+      return;
+    }
+    if (view === 'conflict-predictor') {
+      openConflictPredictorDialog();
       return;
     }
     if (view === 'natural-language-git') {
@@ -858,6 +866,7 @@ const toggleGroupExpansion = (groupId: string) => {
       {showTestGenerationDialog && <TestGenerationDialog />}
       {showPromptOptimizerDialog && <PromptOptimizerDialog />}
       {showCodePlaygroundDialog && <CodePlaygroundDialog />}
+      {showConflictPredictorDialog && <ConflictPredictorDialog />}
       {showNaturalLanguageGitDialog && <NaturalLanguageGitDialog />}
       {showVoiceControlDialog && <VoiceControlDialog />}
     </TooltipProvider>
