@@ -44,6 +44,7 @@ import { setupQualityHandlers } from './quality-handlers';
 import { registerPromptOptimizerHandlers } from './prompt-optimizer-handlers';
 import { registerCredentialHandlers } from './credential-handlers';
 import { registerGitHubCopilotHandlers } from './github-copilot-handlers';
+import { setupNaturalLanguageGitHandlers } from './natural-language-git-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -157,6 +158,9 @@ export function setupIpcHandlers(
 
   // GitHub Copilot CLI handlers (CLI-based authentication)
   registerGitHubCopilotHandlers();
+
+  // Natural Language Git handlers
+  setupNaturalLanguageGitHandlers();
 
   console.warn('[IPC] All handler modules registered successfully');
 }

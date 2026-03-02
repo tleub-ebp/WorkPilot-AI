@@ -46,7 +46,7 @@ Un seul spec qui orchestre des modifications sur plusieurs repositories simultan
 
 ## Tier A — Strong Impact
 
-### 5. Build Analytics Dashboard
+### 5. Build Analytics Dashboard ✅ Implémenté
 
 Métriques complètes sur les agents : taux de succès QA, coût tokens par phase, patterns d'échec, évolution dans le temps.
 
@@ -137,16 +137,107 @@ Le dashboard est alimenté par le système de collecte automatique qui :
 
 Les données sont stockées dans une base SQLite locale (`analytics.db`) et accessibles via l'API REST `/analytics/*`.
 
-### 6. Test Generation Agent
+### 6. Test Generation Agent ✅ Implémenté
 
-Agent dédié post-build qui analyse le code modifié et génère automatiquement les tests manquants.
+Agent IA spécialisé dans la génération automatique de tests et l'analyse de couverture de code.
 
-- **Principe :** Après chaque build, analyse la couverture et génère les tests unitaires/intégration manquants. Respecte les conventions de test existantes, les fixtures du projet, et les patterns déjà utilisés.
-- **Exploite :** Agent coder, context system, Memory (Graphiti)
+- **Principe :** Analyse le code source pour identifier les zones non couvertes par les tests, détecte les conventions de test existantes, et génère automatiquement des tests unitaires, d'intégration et E2E. Supporte les approches TDD et post-build. S'intègre automatiquement dans le pipeline de build.
+- **Exploite :** Code analyzer, convention detection, LLM generation, build pipeline integration
 - **Effort :** Moyen
-- **Pourquoi c'est banger :** "J'ai implémenté la feature ET les tests sont déjà écrits." Ça change tout.
+- **Pourquoi c'est banger :** La couverture de test s'améliore automatiquement. Plus besoin d'écrire manuellement les tests de base.
 
-### 7. Dependency Sentinel
+#### 🧪 Comment utiliser le Test Generation Agent
+
+Le Test Generation Agent est maintenant disponible dans l'interface WorkPilot AI ! Voici comment l'utiliser :
+
+##### 🚀 Accès au Test Generation Agent
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"Test Generation"** dans le groupe "Tools" (icône 🧪)
+2. **Ouverture** : Une boîte de dialogue modale s'ouvre avec les différentes options de génération
+
+##### 📝 Modes d'utilisation
+
+**🔍 Mode Analyse**
+- Analyse la couverture de code d'un fichier ou module spécifique
+- Identifie les fonctions et branches non testées
+- Génère un rapport détaillé des gaps de couverture
+- **Utilisation** : Entrez le chemin du fichier à analyser, cliquez sur "Analyze Coverage"
+
+**🧪 Mode Unit Tests**
+- Génère des tests unitaires pour un fichier source
+- Détecte automatiquement les conventions de test existantes
+- Crée des tests happy path, edge cases et gestion d'erreurs
+- **Utilisation** : Spécifiez le fichier source et le fichier de test existant (optionnel)
+
+**🌐 Mode E2E Tests**
+- Génère des tests end-to-end depuis une user story
+- Crée des scénarios de test complets avec étapes détaillées
+- Supporte les frameworks Cypress, Playwright, ou Selenium
+- **Utilisation** : Entrez votre user story, sélectionnez le framework cible
+
+**🔄 Mode TDD**
+- Génère des tests avant l'implémentation (Test-Driven Development)
+- Crée des tests failing basés sur une spécification
+- Suit les meilleures pratiques TDD
+- **Utilisation** : Fournissez la spécification ou les requirements
+
+##### 🎯 Ce que l'agent fait
+
+L'agent effectue les tâches suivantes automatiquement :
+- **Détection des conventions** : Analyse les tests existants pour identifier le framework, style, et patterns
+- **Analyse de couverture** : Identifie les lignes, branches et fonctions non couvertes
+- **Génération intelligente** : Crée des tests pertinents basés sur le code et les conventions
+- **Écriture de fichiers** : Génère les fichiers de test directement dans le projet
+- **Intégration build** : Peut se déclencher automatiquement après chaque build
+
+##### ⚙️ Configuration avancée
+
+Le modèle IA et le niveau de réflexion utilisés par l'agent sont configurables :
+1. Allez dans **Paramètres** (⚙️)
+2. Section **"Feature Model Configuration"**
+3. Modifiez les réglages pour **"Test Generation Agent"** :
+   - **Modèle** : Choisissez le modèle LLM (Sonnet, Opus, Haiku, etc.)
+   - **Niveau de réflexion** : None, Low, Medium, High, ou Ultrathink
+
+##### 🔄 Intégration avec le build pipeline
+
+Pour activer la génération automatique après les builds :
+1. **Configuration** : Activez l'option "Post-build test generation" dans les paramètres
+2. **Déclenchement** : L'agent analyse automatiquement les fichiers modifiés après chaque build
+3. **Rapports** : Les résultats sont disponibles dans les logs de build et le dashboard analytics
+
+##### 📊 Résultats et rapports
+
+Après chaque génération, l'agent fournit :
+- **📁 Fichiers créés** : Liste des fichiers de test générés avec leur emplacement
+- **📈 Couverture améliorée** : Pourcentage de couverture avant et après
+- **🔍 Gaps identifiés** : Zones de code toujours non couvertes
+- **⚠️ Recommandations** : Suggestions pour améliorer la couverture
+
+##### 🛠️ Architecture technique
+
+L'agent suit le flux suivant :
+1. **Frontend** : Le composant `TestGenerationDialog` envoie les requêtes via IPC
+2. **Backend** : Le service `TestGenerationService` analyse le code et détecte les conventions
+3. **Agent** : Le `TestGeneratorAgent` génère les tests en utilisant le LLM configuré
+4. **Écriture** : Les fichiers de test sont écrits directement dans le projet
+5. **Intégration** : Hook post-build pour la génération automatique
+
+##### 🧪 Tests
+
+Pour exécuter les tests de cette fonctionnalité :
+
+```bash
+# Tests backend (Python)
+cd apps/backend
+.venv/bin/pytest tests/test_generation_service.py -v
+
+# Tests frontend (Vitest)  
+cd apps/frontend
+npm test -- --run src/renderer/stores/__tests__/test-generation-store.test.ts
+```
+
+### 7. Dependency Sentinel ✅ Implémenté
 
 Surveillance proactive 24/7 des dépendances : CVE, mises à jour breaking, licences incompatibles, avec PR automatique.
 
@@ -164,7 +255,7 @@ Mode collaboratif temps réel où l'IA code en parallèle du développeur sur le
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Le vrai pair programming avec une IA. Pas du copilot inline, du vrai travail parallèle coordonné.
 
-### 9. AI Prompt Optimizer ✅ Implémenté
+### 9. AI Prompt Optimizer 
 
 Amélioration automatique des prompts utilisateurs pour garantir les meilleurs résultats possibles des agents IA.
 
@@ -306,7 +397,7 @@ Scores de complexité basés sur l'historique réel des builds passés.
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Priorisation data-driven. Plus on utilise WorkPilot, plus les estimations sont précises.
 
-### 14. Natural Language Git
+### 14. Natural Language Git ✅ Implémenté
 
 Manipuler git en langage naturel directement depuis l'interface.
 
@@ -314,6 +405,13 @@ Manipuler git en langage naturel directement depuis l'interface.
 - **Exploite :** Terminal system, Insights chat
 - **Effort :** Faible
 - **Pourquoi c'est banger :** Quick win à fort impact. Git devient accessible à tous.
+
+**Implémentation :**
+- Interface dialog avec input en langage naturel
+- Conversion AI vers commandes Git via Claude
+- Exécution avec confirmation et affichage des résultats
+- Support des commandes Git les plus courantes
+- Gestion d'erreurs et streaming en temps réel
 
 ### 15. Context-Aware Snippets
 
