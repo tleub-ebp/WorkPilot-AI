@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 import type { ContextAwareSnippetResult } from '../../../main/context-aware-snippets-service';
 
 /**
@@ -8,111 +8,108 @@ import type { ContextAwareSnippetResult } from '../../../main/context-aware-snip
  * from the renderer process.
  */
 
-// Generate a context-aware snippet
-export const generateContextAwareSnippet = async (
-  projectDir: string,
-  snippetType: 'component' | 'function' | 'class' | 'hook' | 'utility' | 'api' | 'test',
-  description: string,
-  language?: string,
-  model?: string,
-  thinkingLevel?: string
-): Promise<{ success: boolean; error?: string }> => {
-  return await ipcRenderer.invoke('context-aware-snippets:generate', {
-    projectDir,
-    snippetType,
-    description,
-    language,
-    model,
-    thinkingLevel,
-  });
-};
+export interface ContextAwareSnippetsAPI {
+  generateContextAwareSnippet: (
+    projectDir: string,
+    snippetType: 'component' | 'function' | 'class' | 'hook' | 'utility' | 'api' | 'test',
+    description: string,
+    language?: string,
+    model?: string,
+    thinkingLevel?: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  cancelSnippetGeneration: () => Promise<{ success: boolean; cancelled?: boolean; error?: string }>;
+  configureSnippetsService: (
+    pythonPath?: string,
+    autoBuildSourcePath?: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  onSnippetStreamChunk: (callback: (chunk: string) => void) => void;
+  onSnippetStatus: (callback: (status: string) => void) => void;
+  onSnippetError: (callback: (error: string) => void) => void;
+  onSnippetComplete: (callback: (result: ContextAwareSnippetResult) => void) => void;
+  removeSnippetStreamChunkListener: (callback: (chunk: string) => void) => void;
+  removeSnippetStatusListener: (callback: (status: string) => void) => void;
+  removeSnippetErrorListener: (callback: (error: string) => void) => void;
+  removeSnippetCompleteListener: (callback: (result: ContextAwareSnippetResult) => void) => void;
+}
 
-// Cancel active snippet generation
-export const cancelSnippetGeneration = async (): Promise<{ success: boolean; cancelled?: boolean; error?: string }> => {
-  return await ipcRenderer.invoke('context-aware-snippets:cancel');
-};
+export const createContextAwareSnippetsAPI = (): ContextAwareSnippetsAPI => ({
+  generateContextAwareSnippet: async (
+    projectDir: string,
+    snippetType: 'component' | 'function' | 'class' | 'hook' | 'utility' | 'api' | 'test',
+    description: string,
+    language?: string,
+    model?: string,
+    thinkingLevel?: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    return await ipcRenderer.invoke('context-aware-snippets:generate', {
+      projectDir,
+      snippetType,
+      description,
+      language,
+      model,
+      thinkingLevel,
+    });
+  },
 
-// Configure the snippets service
-export const configureSnippetsService = async (
-  pythonPath?: string,
-  autoBuildSourcePath?: string
-): Promise<{ success: boolean; error?: string }> => {
-  return await ipcRenderer.invoke('context-aware-snippets:configure', {
-    pythonPath,
-    autoBuildSourcePath,
-  });
-};
+  cancelSnippetGeneration: async (): Promise<{ success: boolean; cancelled?: boolean; error?: string }> => {
+    return await ipcRenderer.invoke('context-aware-snippets:cancel');
+  },
 
-// Event listeners for streaming updates
-export const onSnippetStreamChunk = (callback: (chunk: string) => void) => {
-  ipcRenderer.on('context-aware-snippets:stream-chunk', (_, chunk) => callback(chunk));
-};
+  configureSnippetsService: async (
+    pythonPath?: string,
+    autoBuildSourcePath?: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    return await ipcRenderer.invoke('context-aware-snippets:configure', {
+      pythonPath,
+      autoBuildSourcePath,
+    });
+  },
 
-export const onSnippetStatus = (callback: (status: string) => void) => {
-  ipcRenderer.on('context-aware-snippets:status', (_, status) => callback(status));
-};
+  onSnippetStreamChunk: (callback: (chunk: string) => void) => {
+    ipcRenderer.on('context-aware-snippets:stream-chunk', (event: IpcRendererEvent, chunk: string) => callback(chunk));
+  },
 
-export const onSnippetError = (callback: (error: string) => void) => {
-  ipcRenderer.on('context-aware-snippets:error', (_, error) => callback(error));
-};
+  onSnippetStatus: (callback: (status: string) => void) => {
+    ipcRenderer.on('context-aware-snippets:status', (event: IpcRendererEvent, status: string) => callback(status));
+  },
 
-export const onSnippetComplete = (callback: (result: ContextAwareSnippetResult) => void) => {
-  ipcRenderer.on('context-aware-snippets:complete', (_, result) => callback(result));
-};
+  onSnippetError: (callback: (error: string) => void) => {
+    ipcRenderer.on('context-aware-snippets:error', (event: IpcRendererEvent, error: string) => callback(error));
+  },
 
-// Cleanup event listeners
-export const removeSnippetStreamChunkListener = (callback: (chunk: string) => void) => {
-  ipcRenderer.removeListener('context-aware-snippets:stream-chunk', callback);
-};
+  onSnippetComplete: (callback: (result: ContextAwareSnippetResult) => void) => {
+    ipcRenderer.on('context-aware-snippets:complete', (event: IpcRendererEvent, result: ContextAwareSnippetResult) => callback(result));
+  },
 
-export const removeSnippetStatusListener = (callback: (status: string) => void) => {
-  ipcRenderer.removeListener('context-aware-snippets:status', callback);
-};
+  removeSnippetStreamChunkListener: (callback: (chunk: string) => void) => {
+    ipcRenderer.removeListener('context-aware-snippets:stream-chunk', (event: IpcRendererEvent, chunk: string) => callback(chunk));
+  },
 
-export const removeSnippetErrorListener = (callback: (error: string) => void) => {
-  ipcRenderer.removeListener('context-aware-snippets:error', callback);
-};
+  removeSnippetStatusListener: (callback: (status: string) => void) => {
+    ipcRenderer.removeListener('context-aware-snippets:status', (event: IpcRendererEvent, status: string) => callback(status));
+  },
 
-export const removeSnippetCompleteListener = (callback: (result: ContextAwareSnippetResult) => void) => {
-  ipcRenderer.removeListener('context-aware-snippets:complete', callback);
-};
+  removeSnippetErrorListener: (callback: (error: string) => void) => {
+    ipcRenderer.removeListener('context-aware-snippets:error', (event: IpcRendererEvent, error: string) => callback(error));
+  },
 
-// Expose the API to the renderer process
-contextBridge.exposeInMainWorld('electronAPI', {
-  ...window.electronAPI,
-  // Context-Aware Snippets methods
-  generateContextAwareSnippet,
-  cancelSnippetGeneration,
-  configureSnippetsService,
-  // Event listeners
-  onSnippetStreamChunk,
-  onSnippetStatus,
-  onSnippetError,
-  onSnippetComplete,
-  removeSnippetStreamChunkListener,
-  removeSnippetStatusListener,
-  removeSnippetErrorListener,
-  removeSnippetCompleteListener,
+  removeSnippetCompleteListener: (callback: (result: ContextAwareSnippetResult) => void) => {
+    ipcRenderer.removeListener('context-aware-snippets:complete', (event: IpcRendererEvent, result: ContextAwareSnippetResult) => callback(result));
+  },
 });
 
-// Type declarations for the exposed API
-declare global {
-  interface Window {
-    electronAPI: {
-      // Existing methods...
-      generateContextAwareSnippet: typeof generateContextAwareSnippet;
-      cancelSnippetGeneration: typeof cancelSnippetGeneration;
-      configureSnippetsService: typeof configureSnippetsService;
-      onSnippetStreamChunk: typeof onSnippetStreamChunk;
-      onSnippetStatus: typeof onSnippetStatus;
-      onSnippetError: typeof onSnippetError;
-      onSnippetComplete: typeof onSnippetComplete;
-      removeSnippetStreamChunkListener: typeof removeSnippetStreamChunkListener;
-      removeSnippetStatusListener: typeof removeSnippetStatusListener;
-      removeSnippetErrorListener: typeof removeSnippetErrorListener;
-      removeSnippetCompleteListener: typeof removeSnippetCompleteListener;
-      // Add other existing methods as needed
-      [key: string]: any;
-    };
-  }
-}
+// Export individual functions for backward compatibility
+export const generateContextAwareSnippet = createContextAwareSnippetsAPI().generateContextAwareSnippet;
+export const cancelSnippetGeneration = createContextAwareSnippetsAPI().cancelSnippetGeneration;
+export const configureSnippetsService = createContextAwareSnippetsAPI().configureSnippetsService;
+export const onSnippetStreamChunk = createContextAwareSnippetsAPI().onSnippetStreamChunk;
+export const onSnippetStatus = createContextAwareSnippetsAPI().onSnippetStatus;
+export const onSnippetError = createContextAwareSnippetsAPI().onSnippetError;
+export const onSnippetComplete = createContextAwareSnippetsAPI().onSnippetComplete;
+export const removeSnippetStreamChunkListener = createContextAwareSnippetsAPI().removeSnippetStreamChunkListener;
+export const removeSnippetStatusListener = createContextAwareSnippetsAPI().removeSnippetStatusListener;
+export const removeSnippetErrorListener = createContextAwareSnippetsAPI().removeSnippetErrorListener;
+export const removeSnippetCompleteListener = createContextAwareSnippetsAPI().removeSnippetCompleteListener;
+
+// Note: This module exports functions that are integrated into the main ElectronAPI
+// The contextBridge exposure is handled in the main preload/index.ts file

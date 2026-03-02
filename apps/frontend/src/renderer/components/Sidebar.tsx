@@ -41,7 +41,6 @@ import {
   TestTube,
   WandSparkles,
   TrendingUp,
-  Code
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { ScrollArea } from '@/components/ui';

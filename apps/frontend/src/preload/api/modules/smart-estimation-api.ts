@@ -4,6 +4,8 @@
  * Provides API interface for Smart Estimation functionality
  */
 
+import { invokeIpc } from './ipc-utils';
+
 export interface SmartEstimationAPI {
   runSmartEstimation: (projectId: string, taskDescription: string) => Promise<void>;
   cancelSmartEstimation: () => Promise<boolean>;
@@ -14,39 +16,38 @@ export interface SmartEstimationAPI {
   onSmartEstimationEvent: (callback: (event: any) => void) => () => void;
 }
 
-declare global {
-  interface Window {
-    electronAPI: {
-      runSmartEstimation: (projectId: string, taskDescription: string) => Promise<void>;
-      cancelSmartEstimation: () => Promise<boolean>;
-      onSmartEstimationStreamChunk: (callback: (chunk: string) => void) => () => void;
-      onSmartEstimationStatus: (callback: (status: string) => void) => () => void;
-      onSmartEstimationError: (callback: (error: string) => void) => () => void;
-      onSmartEstimationComplete: (callback: (result: any) => void) => () => void;
-      onSmartEstimationEvent: (callback: (event: any) => void) => () => void;
-    };
-  }
-}
-
-export const smartEstimationAPI: SmartEstimationAPI = {
+export const createSmartEstimationAPI = (): SmartEstimationAPI => ({
   runSmartEstimation: (projectId: string, taskDescription: string) => 
-    window.electronAPI.runSmartEstimation(projectId, taskDescription),
+    invokeIpc('smart-estimation:run', { projectId, taskDescription }),
   
   cancelSmartEstimation: () => 
-    window.electronAPI.cancelSmartEstimation(),
+    invokeIpc('smart-estimation:cancel'),
   
-  onSmartEstimationStreamChunk: (callback: (chunk: string) => void) => 
-    window.electronAPI.onSmartEstimationStreamChunk(callback),
+  onSmartEstimationStreamChunk: (callback: (chunk: string) => void) => {
+    // TODO: Implement event listener setup
+    return () => { /* TODO: Implement cleanup */ };
+  },
   
-  onSmartEstimationStatus: (callback: (status: string) => void) => 
-    window.electronAPI.onSmartEstimationStatus(callback),
+  onSmartEstimationStatus: (callback: (status: string) => void) => {
+    // TODO: Implement event listener setup
+    return () => { /* TODO: Implement cleanup */ };
+  },
   
-  onSmartEstimationError: (callback: (error: string) => void) => 
-    window.electronAPI.onSmartEstimationError(callback),
+  onSmartEstimationError: (callback: (error: string) => void) => {
+    // TODO: Implement event listener setup
+    return () => { /* TODO: Implement cleanup */ };
+  },
   
-  onSmartEstimationComplete: (callback: (result: any) => void) => 
-    window.electronAPI.onSmartEstimationComplete(callback),
+  onSmartEstimationComplete: (callback: (result: any) => void) => {
+    // TODO: Implement event listener setup
+    return () => { /* TODO: Implement cleanup */ };
+  },
   
-  onSmartEstimationEvent: (callback: (event: any) => void) => 
-    window.electronAPI.onSmartEstimationEvent(callback),
-};
+  onSmartEstimationEvent: (callback: (event: any) => void) => {
+    // TODO: Implement event listener setup
+    return () => { /* TODO: Implement cleanup */ };
+  },
+});
+
+// Note: This module exports functions that are integrated into the main ElectronAPI
+// The contextBridge exposure is handled in the main preload/index.ts file

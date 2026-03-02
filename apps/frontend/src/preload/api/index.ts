@@ -16,9 +16,18 @@ import { type ScreenshotAPI, createScreenshotAPI } from './screenshot-api';
 import { type QueueAPI, createQueueAPI } from './queue-api';
 import { type QualityAPI, createQualityAPI } from './modules/quality-api';
 import { type NaturalLanguageGitAPI, createNaturalLanguageGitAPI } from './natural-language-git-api';
-import { type PromptOptimizerAPI, createPromptOptimizerAPI } from './modules/prompt-optimizer-api';
-import { type CodePlaygroundAPI, createCodePlaygroundAPI } from './modules/code-playground-api';
-import { type ConflictPredictorAPI, createConflictPredictorAPI } from './modules/conflict-predictor-api';
+import type { PromptOptimizerAPI } from './modules/prompt-optimizer-api';
+import { createPromptOptimizerAPI } from './modules/prompt-optimizer-api';
+import type { CodePlaygroundAPI } from './modules/code-playground-api';
+import { createCodePlaygroundAPI } from './modules/code-playground-api';
+import type { ConflictPredictorAPI } from './modules/conflict-predictor-api';
+import { createConflictPredictorAPI } from './modules/conflict-predictor-api';
+import { type VoiceControlAPI, createVoiceControlAPI } from './modules/voice-control-api';
+import type { AutoRefactorAPI } from './modules/auto-refactor-api';
+import { createAutoRefactorAPI } from './modules/auto-refactor-api';
+import { type SmartEstimationAPI, createSmartEstimationAPI } from './modules/smart-estimation-api';
+import type { ContextAwareSnippetsAPI } from './modules/context-aware-snippets-api';
+import { createContextAwareSnippetsAPI } from './modules/context-aware-snippets-api';
 import { invokeIpc } from './modules/ipc-utils';
 import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
@@ -44,7 +53,10 @@ export interface ElectronAPI extends
   NaturalLanguageGitAPI,
   PromptOptimizerAPI,
   CodePlaygroundAPI,
-  ConflictPredictorAPI {
+  ConflictPredictorAPI,
+  VoiceControlAPI,
+  SmartEstimationAPI,
+  ContextAwareSnippetsAPI {
   github: GitHubAPI;
   /** Queue routing API for rate limit recovery */
   queue: QueueAPI;
@@ -61,35 +73,40 @@ export interface ElectronAPI extends
   testGitHubConnection: (config: { repo: string; token: string }) => Promise<{ success: boolean; status?: number; error?: string }>;
 }
 
-export const createElectronAPI = (): ElectronAPI => ({
-  ...createProjectAPI(),
-  ...createTerminalAPI(),
-  ...createTaskAPI(),
-  ...createSettingsAPI(),
-  ...createFileAPI(),
-  ...createAgentAPI(),
-  ...createAppUpdateAPI(),
-  ...createDebugAPI(),
-  ...createClaudeCodeAPI(),
-  ...createCopilotCliAPI(),
-  ...createCopilotOAuthAPI(),
-  ...createMcpAPI(),
-  ...createProfileAPI(),
-  ...createScreenshotAPI(),
-  ...createNaturalLanguageGitAPI(),
-  ...createPromptOptimizerAPI(),
-  ...createCodePlaygroundAPI(),
-  ...createConflictPredictorAPI(),
-  github: createGitHubAPI(),
-  queue: createQueueAPI(),  // Queue routing for rate limit recovery
-  quality: createQualityAPI(),  // Code quality analysis
-  createClaudeProfileDirectory: (profileName: string) => invokeIpc('claude:profileCreateDir', profileName),
-  requestUsageUpdate: (providerName?: string) => invokeIpc<IPCResult<UsageSnapshot | null>>('claude:usageRequest', providerName),
-  getGithubCliStatus: () => invokeIpc<IPCResult<{ available: boolean; isAuth?: boolean; username?: string }>>('copilotCli:getStatus'),
-  selectProvider: (provider: string) => invokeIpc<IPCResult<string>>('provider:select', provider),
-  getSelectedProvider: () => invokeIpc<IPCResult<string | null>>('provider:getSelected'),
-  testGitHubConnection: (config: { repo: string; token: string }) => invokeIpc('github:testConnection', config),
-});
+export const createElectronAPI = (): ElectronAPI => {
+  return {
+    ...createProjectAPI(),
+    ...createTerminalAPI(),
+    ...createTaskAPI(),
+    ...createSettingsAPI(),
+    ...createFileAPI(),
+    ...createAgentAPI(),
+    ...createAppUpdateAPI(),
+    ...createDebugAPI(),
+    ...createClaudeCodeAPI(),
+    ...createCopilotCliAPI(),
+    ...createCopilotOAuthAPI(),
+    ...createMcpAPI(),
+    ...createProfileAPI(),
+    ...createScreenshotAPI(),
+    ...createNaturalLanguageGitAPI(),
+    ...createPromptOptimizerAPI(),
+    ...createCodePlaygroundAPI(),
+    ...createConflictPredictorAPI(),
+    ...createVoiceControlAPI(),
+    ...createSmartEstimationAPI(),
+    ...createContextAwareSnippetsAPI(),
+    github: createGitHubAPI(),
+    queue: createQueueAPI(),  // Queue routing for rate limit recovery
+    quality: createQualityAPI(),  // Code quality analysis
+    createClaudeProfileDirectory: (profileName: string) => invokeIpc<{ success: boolean; data?: string; error?: string }>('claude:profileCreateDir', profileName),
+    requestUsageUpdate: (providerName?: string) => invokeIpc<IPCResult<UsageSnapshot | null>>('claude:usageRequest', providerName),
+    getGithubCliStatus: () => invokeIpc<IPCResult<{ available: boolean; isAuth?: boolean; username?: string }>>('copilotCli:getStatus'),
+    selectProvider: (provider: string) => invokeIpc<IPCResult<string>>('provider:select', provider),
+    getSelectedProvider: () => invokeIpc<IPCResult<string | null>>('provider:getSelected'),
+    testGitHubConnection: (config: { repo: string; token: string }) => invokeIpc<{ success: boolean; status?: number; error?: string }>('github:testConnection', config),
+  };
+};
 
 // Export individual API creators for potential use in tests or specialized contexts
 // Note: IdeationAPI, InsightsAPI, GitLabAPI, and AzureDevOpsAPI are included in AgentAPI
@@ -109,8 +126,14 @@ export { createMcpAPI } from './modules/mcp-api';
 export { createScreenshotAPI } from './screenshot-api';
 export { createQueueAPI } from './queue-api';
 export { createQualityAPI } from './modules/quality-api';
-export { createCopilotOAuthAPI } from './modules/copilot-oauth-api';
+export { createAutoRefactorAPI } from './modules/auto-refactor-api';
 export { createNaturalLanguageGitAPI } from './natural-language-git-api';
+export { createPromptOptimizerAPI } from './modules/prompt-optimizer-api';
+export { createCodePlaygroundAPI } from './modules/code-playground-api';
+export { createConflictPredictorAPI } from './modules/conflict-predictor-api';
+export { createSmartEstimationAPI } from './modules/smart-estimation-api';
+export { createContextAwareSnippetsAPI } from './modules/context-aware-snippets-api';
+export { createVoiceControlAPI } from './modules/voice-control-api';
 
 export type { ProjectAPI } from './project-api';
 export type { TerminalAPI } from './terminal-api';
@@ -129,3 +152,6 @@ export type { ScreenshotAPI } from './screenshot-api';
 export type { QueueAPI } from './queue-api';
 export type { QualityAPI } from './modules/quality-api';
 export type { NaturalLanguageGitAPI } from './natural-language-git-api';
+export type { SmartEstimationAPI } from './modules/smart-estimation-api';
+export type { ContextAwareSnippetsAPI } from './modules/context-aware-snippets-api';
+export type { VoiceControlAPI } from './modules/voice-control-api';
