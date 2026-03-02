@@ -74,13 +74,16 @@ def create_projects(base_dir, project_name, project_type, framework, database):
     
     # API (selon le type)
     if project_type == "webapi":
-        if not run_command(f"dotnet new webapi -n {api_project} -f {framework}", src_dir):
+        if not run_command(f"dotnet new webapi -n {api_project} -f {framework} --minimal", src_dir):
             return False
     elif project_type == "blazor":
         if not run_command(f"dotnet new blazorserver -n {api_project} -f {framework}", src_dir):
             return False
     elif project_type == "console":
         if not run_command(f"dotnet new console -n {api_project} -f {framework}", src_dir):
+            return False
+    elif project_type == "worker":
+        if not run_command(f"dotnet new worker -n {api_project} -f {framework}", src_dir):
             return False
     else:
         print(f"Type de projet non supporté: {project_type}")
@@ -153,7 +156,8 @@ def add_nuget_packages(base_dir, project_name, database):
         "Microsoft.Extensions.DependencyInjection.Abstractions",
         "Microsoft.Extensions.Logging.Abstractions",
         "FluentValidation",
-        "AutoMapper"
+        "MediatR",
+        "Mapster"  # Alternative to AutoMapper with better performance
     ]
     
     for package in packages_app:
@@ -167,17 +171,26 @@ def add_nuget_packages(base_dir, project_name, database):
     if database == "sqlserver":
         db_packages = [
             "Microsoft.EntityFrameworkCore.SqlServer",
-            "Microsoft.EntityFrameworkCore.Tools"
+            "Microsoft.EntityFrameworkCore.Tools",
+            "Microsoft.EntityFrameworkCore.Design"
         ]
     elif database == "postgresql":
         db_packages = [
             "Npgsql.EntityFrameworkCore.PostgreSQL",
-            "Microsoft.EntityFrameworkCore.Tools"
+            "Microsoft.EntityFrameworkCore.Tools",
+            "Microsoft.EntityFrameworkCore.Design"
         ]
     elif database == "sqlite":
         db_packages = [
             "Microsoft.EntityFrameworkCore.Sqlite",
-            "Microsoft.EntityFrameworkCore.Tools"
+            "Microsoft.EntityFrameworkCore.Tools",
+            "Microsoft.EntityFrameworkCore.Design"
+        ]
+    elif database == "cosmosdb":
+        db_packages = [
+            "Microsoft.EntityFrameworkCore.Cosmos",
+            "Microsoft.EntityFrameworkCore.Tools",
+            "Microsoft.EntityFrameworkCore.Design"
         ]
     else:
         db_packages = []
@@ -191,7 +204,10 @@ def add_nuget_packages(base_dir, project_name, database):
     test_packages = [
         "Moq",
         "FluentAssertions",
-        "Microsoft.Extensions.Logging.Testing"
+        "Microsoft.Extensions.Logging.Testing",
+        "Microsoft.NET.Test.Sdk",
+        "coverlet.collector",
+        "Testcontainers"
     ]
     
     for package in test_packages:
@@ -314,9 +330,9 @@ Instructions de déploiement à ajouter.
 def main():
     parser = argparse.ArgumentParser(description='Créer un nouveau projet .NET avec Clean Architecture')
     parser.add_argument('--name', required=True, help='Nom du projet')
-    parser.add_argument('--type', choices=['webapi', 'blazor', 'console'], default='webapi', help='Type de projet')
-    parser.add_argument('--framework', choices=['net8.0', 'net9.0'], default='net8.0', help='Framework .NET')
-    parser.add_argument('--database', choices=['sqlserver', 'postgresql', 'sqlite'], default='sqlserver', help='Base de données cible')
+    parser.add_argument('--type', choices=['webapi', 'blazor', 'console', 'worker'], default='webapi', help='Type de projet')
+    parser.add_argument('--framework', choices=['net10.0', 'net9.0', 'net8.0'], default='net10.0', help='Framework .NET')
+    parser.add_argument('--database', choices=['sqlserver', 'postgresql', 'sqlite', 'cosmosdb'], default='sqlserver', help='Base de données cible')
     
     args = parser.parse_args()
     

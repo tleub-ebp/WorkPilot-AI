@@ -91,23 +91,122 @@ else: # complex
 - **BMAD Best Practices**: Application des patterns enterprise éprouvés
 - **Performance Scoring**: Évaluation objective impact performance de chaque décision
 - **Agile Validation**: BMAD structure les revues architecturales
+- **Akka.NET Integration**: Systèmes distribués avec actors et clustering
+- **.NET Aspire Orchestration**: Cloud-native application orchestration
+- **BenchmarkDotNet Analysis**: Performance testing et optimisation continue
+- **TestContainers Integration**: Tests d'intégration distribués avec conteneurs
 
-**Cloud Architecture (Enhanced):**
+**Modern C# Patterns (.NET 10):**
 ```
-# BMAD Workflow: Cloud Migration Strategy
-# Autonomous Execution: Autonomous cost-benefit analysis
+# Immutability by Default - Records et Value Objects
+public sealed record OrderEvent(
+    Guid OrderId,
+    DateTime Timestamp,
+    OrderEventType Type
+);
 
-## Azure Services Selection:
-- App Services vs Container Apps (Autonomous auto-evaluation)
-- AKS vs Azure Functions (BMAD decision framework)
-- Cosmos DB vs SQL Server (Performance scoring)
-- Service Bus vs Event Grid (Integration patterns)
+# Type Safety - Nullable Reference Types
+public sealed class OrderProcessor
+{
+    public async Task<OrderResult?> ProcessOrderAsync(OrderRequest? request)
+    {
+        if (request is null) return null;
+        // Processing logic
+    }
+}
 
-## Decision Process:
-1. Autonomous: Parallel analysis of all options
-2. BMAD: Structured decision workshop
-3. Memory: Store decision rationale
-4. Quality Score: Objective evaluation
+# Performance-Aware - Span<T> et Pooling
+public static bool ValidateOrderData(ReadOnlySpan<byte> data)
+{
+    // Zero-allocation processing
+    return data.Length > 0 && data[0] == 0x89;
+}
+
+# Composition over Inheritance - Sealed par défaut
+public sealed class OrderService
+{
+    private readonly IOrderRepository _repository;
+    private readonly IEventPublisher _publisher;
+    
+    public OrderService(IOrderRepository repository, IEventPublisher publisher)
+    {
+        _repository = repository;
+        _publisher = publisher;
+    }
+}
+```
+
+**Akka.NET Integration Patterns:**
+```
+# Autonomous Actor System Design
+# BMAD Structured Implementation
+
+## Phase 1: Actor Hierarchy (BMAD)
+1. **Root Actor Definition**
+   - BMAD: Workshop actor boundaries
+   - Autonomous: Parallel hierarchy evaluation
+   - Output: Actor system specification
+
+2. **Supervision Strategies**
+   - BMAD: Failure handling patterns
+   - Autonomous: Automatic supervision configuration
+   - Output: Resilience strategy
+
+## Phase 2: Clustering (Autonomous)
+1. **Cluster Bootstrap**
+   - Automatic seed node configuration
+   - Health check implementation
+   - Split-brain resolver setup
+
+2. **Persistence Integration**
+   - Event sourcing with actors
+   - Snapshot strategies
+   - Performance optimization
+```
+
+**Performance Optimization Integration:**
+```
+# BMAD Performance Workshop
+# Autonomous BenchmarkDotNet Analysis
+
+## Performance Assessment:
+1. **Benchmark Design**
+   - BMAD: Performance requirements workshop
+   - Autonomous: Automatic benchmark generation
+   - Output: Performance baseline
+
+2. **Optimization Implementation**
+   - Span<T> integration for memory efficiency
+   - Object pooling for allocation reduction
+   - Async streams for large datasets
+
+3. **Continuous Monitoring**
+   - BenchmarkDotNet regression detection
+   - Performance gates in CI/CD
+   - Real-time performance metrics
+```
+
+**TestContainers Integration Strategy:**
+```
+# BMAD Integration Testing Strategy
+# Autonomous TestContainer Management
+
+## Test Environment Setup:
+1. **Container Orchestration**
+   - BMAD: Test environment requirements
+   - Autonomous: Automatic container provisioning
+   - Output: Isolated test environment
+
+2. **Integration Test Design**
+   - PostgreSQL, Redis, RabbitMQ containers
+   - Multi-service testing scenarios
+   - Database migration testing
+
+3. **CI/CD Integration**
+   - Automated test execution
+   - Parallel test execution
+   - Resource cleanup and optimization
+```
 ```
 
 **Memory System Integration:**
@@ -178,7 +277,7 @@ class HybridArchitectureMemory:
 - **Retrospective**: Memory update + workflow optimization
 ```
 
-**Code Quality Enhancement:**
+**Code Quality Enhancement (Modern .NET 10):**
 
 **Autonomous Code Review + Structured Guidelines:**
 ```csharp
@@ -189,35 +288,68 @@ class HybridArchitectureMemory:
 [BMADWorkflows("clean-architecture", "performance-first")]
 public class OrderService
 {
-    // Autonomous: Automatic optimization suggestions
-    // BMAD: Structured pattern application
+    // Autonomous: Performance profiling with Span<T>
+    // BMAD: Clean architecture validation
     
     public async Task<Order> ProcessOrderAsync(OrderRequest request)
     {
-        // Autonomous: Performance profiling
-        // BMAD: Clean architecture validation
+        // Modern C# patterns with immutability
+        var order = new Order(
+            Id: Guid.NewGuid(),
+            CustomerId: request.CustomerId,
+            Items: request.Items.Select(i => new OrderItem(i.ProductId, i.Quantity)).ToImmutableList(),
+            CreatedAt: DateTime.UtcNow
+        );
         
-        return await _orderRepository.CreateOrderAsync(order);
+        // Async/await with ValueTask for performance
+        var result = await _repository.CreateOrderAsync(order);
+        
+        // Event publishing with structured events
+        await _eventPublisher.PublishAsync(new OrderCreatedEvent(order));
+        
+        return result;
     }
+}
+
+// Records immutables pour les events
+public sealed record OrderCreatedEvent(
+    Guid OrderId,
+    Guid CustomerId,
+    ImmutableList<OrderItem> Items,
+    DateTime CreatedAt
+) : IDomainEvent;
+
+// Value objects avec IEquatable<T>
+public sealed record OrderItem(
+    Guid ProductId,
+    int Quantity,
+    decimal UnitPrice
+) : IEquatable<OrderItem>
+{
+    public decimal TotalPrice => Quantity * UnitPrice;
 }
 ```
 
-**DevOps Integration:**
+**DevOps Integration (.NET 10 + Modern Tooling):**
 
 **CI/CD Pipeline (Hybrid):**
 ```yaml
 # hybrid-pipeline.yml
 # Autonomous: Autonomous pipeline optimization
 # BMAD: Structured deployment workflow
+# .NET 10: Modern tooling integration
 
 stages:
   - autonomous_analysis:
       - parallel_architecture_review
       - quality_scoring
       - performance_benchmark
+      - benchmarkdotnet_regression_check
       
   - bmm_structured_deployment:
       - structured_testing_workflow
+      - testcontainers_integration_tests
+      - aspire_orchestration_validation
       - agile_validation_gates
       - stakeholder_approval
       
@@ -225,6 +357,7 @@ stages:
       - memory_update
       - workflow_optimization
       - continuous_improvement
+      - performance_monitoring
 ```
 
 **Business Intelligence Integration:**

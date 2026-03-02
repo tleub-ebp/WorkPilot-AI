@@ -16,45 +16,55 @@ Agent IA expert dans l'écosystème .NET pour développer des applications robus
 ### 🎯 Frameworks et Technologies
 
 #### Core .NET
-- **.NET 8/9**: Dernières fonctionnalités et améliorations de performance
-- **C# 12**: Nouvelles fonctionnalités du langage (primary constructors, collection expressions)
-- **ASP.NET Core**: Développement web et API REST
-- **Entity Framework Core**: ORM moderne pour l'accès aux données
-- **Blazor**: Framework web UI avec C#
+- **.NET 10**: Dernières fonctionnalités et améliorations de performance
+- **C# 13**: Nouvelles fonctionnalités du langage (params spans, extension types, improved pattern matching)
+- **ASP.NET Core 10**: Développement web et API REST avec performance optimisée
+- **Entity Framework Core 10**: ORM moderne pour l'accès aux données avec améliorations de performance
+- **Blazor 10**: Framework web UI avec C# et améliorations de rendu
 
 #### Architecture et Patterns
-- **Microservices**: Architecture basée sur des services indépendants
-- **Clean Architecture**: Séparation des responsabilités
-- **Domain-Driven Design (DDD)**: Modélisation métier
-- **CQRS**: Command Query Responsibility Segregation
-- **Repository Pattern**: Abstraction de l'accès aux données
+- **Microservices**: Architecture basée sur des services indépendants avec .NET Aspire
+- **Clean Architecture**: Séparation des responsabilités avec immutabilité par défaut
+- **Domain-Driven Design (DDD)**: Modélisation métier avec value objects et aggregates
+- **CQRS**: Command Query Responsibility Segregation avec MediatR
+- **Repository Pattern**: Abstraction de l'accès aux données avec specifications
+- **Event Sourcing**: Patterns de persistance événementielle
+- **Circuit Breaker**: Patterns de résilience avec Polly
 
 #### Testing et Qualité
-- **xUnit**: Framework de testing unitaire
-- **Moq**: Framework de mocking
-- **FluentAssertions**: Assertions fluides
-- **SpecFlow**: Testing BDD
+- **xUnit**: Framework de testing unitaire avec .NET 10
+- **Moq**: Framework de mocking avec improved performance
+- **FluentAssertions**: Assertions fluides et lisibles
+- **SpecFlow**: Testing BDD avec Gherkin
 - **Selenium**: Testing E2E pour applications web
+- **TestContainers**: Tests d'intégration avec conteneurs Docker
+- **BenchmarkDotNet**: Performance testing et optimisation
+- **Playwright**: Testing E2E moderne et rapide
 
 ### 🛠️ Outils et Environnement
 
 #### Développement
-- **Visual Studio 2022**: IDE principal
-- **Visual Studio Code**: Éditeur léger
-- **Rider**: IDE JetBrains
-- **.NET CLI**: Outils en ligne de commande
+- **Visual Studio 2025**: IDE principal avec .NET 10 support
+- **Visual Studio Code**: Éditeur léger avec C# Dev Kit
+- **Rider**: IDE JetBrains avec .NET 10 support
+- **.NET CLI**: Outils en ligne de commande améliorés
+- **C# Dev Kit**: Extension VS Code pour développement .NET
 
 #### Base de Données
-- **SQL Server**: Base de données principale Microsoft
-- **PostgreSQL**: Alternative open source
+- **SQL Server 2022**: Base de données principale Microsoft avec performance améliorée
+- **PostgreSQL 15**: Alternative open source avec support JSON avancé
 - **SQLite**: Base de données légère pour développement
-- **Redis**: Cache et messagerie
+- **Redis 7**: Cache et messagerie avec clustering amélioré
+- **Cosmos DB**: Base de données NoSQL multi-modèle
+- **MongoDB**: Base de données NoSQL document-oriented
 
 #### Cloud et DevOps
-- **Azure**: Platform cloud Microsoft
-- **Docker**: Conteneurisation
-- **GitHub Actions**: CI/CD
-- **Azure DevOps**: Pipeline de déploiement
+- **Azure**: Platform cloud Microsoft avec .NET 10 support
+- **Docker**: Conteneurisation avec multi-arch builds
+- **GitHub Actions**: CI/CD avec .NET 10 workflows
+- **Azure DevOps**: Pipeline de déploiement avancé
+- **Kubernetes**: Orchestration de conteneurs avec .NET Aspire
+- **Terraform**: Infrastructure as Code
 
 ---
 
@@ -71,17 +81,17 @@ Agent IA expert dans l'écosystème .NET pour développer des applications robus
 - Planifier la structure du projet
 
 #### 1.2 Choix Techniques
-- **Framework**: .NET 8/9 selon requirements
-- **Architecture**: Monolith vs Microservices
-- **Base de données**: SQL Server vs PostgreSQL
-- **Hébergement**: Azure App Service vs Containers
+- **Framework**: .NET 10 selon requirements
+- **Architecture**: Monolith vs Microservices avec .NET Aspire
+- **Base de données**: SQL Server 2022 vs PostgreSQL 15 vs Cosmos DB
+- **Hébergement**: Azure App Service vs Containers vs Kubernetes
 
 ### Phase 2: Initialisation du Projet
 
 #### 2.1 Création du Projet
 Utiliser les scripts helper pour créer la structure de base :
 ```bash
-python scripts/create_project.py --name "MyApp" --type webapi --framework net8.0
+python scripts/create_project.py --name "MyApp" --type webapi --framework net10.0
 ```
 
 #### 2.2 Configuration Initiale
@@ -151,9 +161,10 @@ python scripts/create_project.py --help
 
 **Options:**
 - `--name`: Nom du projet
-- `--type`: Type (webapi, blazor, console, classlib)
-- `--framework`: Version .NET (net8.0, net9.0)
-- `--database`: Base de données (sqlserver, postgresql, sqlite)
+- `--type`: Type (webapi, blazor, console, classlib, worker)
+- `--framework`: Version .NET (net10.0, net9.0, net8.0)
+- `--database`: Base de données (sqlserver, postgresql, sqlite, cosmosdb)
+- `--architecture`: Architecture (clean, hexagonal, onion)
 
 ### `scripts/add_entity.py`
 Ajoute une nouvelle entité avec son repository et tests :
@@ -255,15 +266,21 @@ public class ProductServiceTests
 
 ### Code Quality
 - **Naming**: Suivre les conventions C# (PascalCase pour public, camelCase pour private)
-- **SOLID**: Appliquer les principes SOLID
-- **Async/Await**: Utiliser correctement l'asynchronisme
+- **SOLID**: Appliquer les principes SOLID avec composition over inheritance
+- **Async/Await**: Utiliser correctement l'asynchronisme avec ValueTask
 - **Exception Handling**: Gérer les exceptions de manière appropriée
+- **Immutability**: Utiliser records et readonly structs par défaut
+- **Type Safety**: Nullable reference types activés globalement
+- **No Magic**: Éviter AutoMapper et réflexion lourde
 
 ### Performance
 - **Entity Framework**: Utiliser AsNoTracking() pour les requêtes en lecture seule
 - **Caching**: Implémenter le caching pour les données fréquemment accédées
 - **Connection Pooling**: Configurer correctement le pooling de connexions
 - **Lazy Loading**: Éviter le lazy loading dans les API
+- **Span<T>**: Utiliser Span<T> pour performance memory-efficient
+- **Pooling**: Object pooling pour réduire allocations
+- **Async Streams**: Utiliser IAsyncEnumerable pour gros datasets
 
 ### Sécurité
 - **Authentication**: Utiliser ASP.NET Core Identity
@@ -273,9 +290,12 @@ public class ProductServiceTests
 
 ### Monitoring
 - **Logging**: Utiliser Serilog pour le logging structuré
-- **Health Checks**: Implémenter des health checks
-- **Application Insights**: Monitoring Azure
+- **Health Checks**: Implémenter des health checks avec .NET Aspire
+- **Application Insights**: Monitoring Azure avec .NET 10
 - **Error Tracking**: Intégrer un système de tracking d'erreurs
+- **OpenTelemetry**: Télémétrie distribuée
+- **Prometheus**: Métriques de performance
+- **Jaeger**: Distributed tracing
 
 ---
 
@@ -309,7 +329,7 @@ Pour utiliser ce skill dans Claude Code :
 
 ```bash
 # Créer un nouveau projet API
-"Utilise le skill net-developer pour créer une API REST .NET 8 pour la gestion des produits"
+"Utilise le skill net-developer pour créer une API REST .NET 10 pour la gestion des produits"
 
 # Ajouter une entité
 "Utilise le skill net-developer pour ajouter une entité Customer avec les propriétés Name, Email, Phone"
@@ -319,6 +339,12 @@ Pour utiliser ce skill dans Claude Code :
 
 # Déployer sur Azure
 "Utilise le skill net-developer pour déployer cette application sur Azure App Service"
+
+# Optimiser la performance
+"Utilise le skill net-developer pour optimiser les performances avec Span<T> et pooling"
+
+# Ajouter TestContainers
+"Utilise le skill net-developer pour configurer TestContainers pour les tests d'intégration"
 ```
 
 Le skill fournit des instructions complètes, des scripts automatisés et des templates pour accélérer le développement .NET tout en maintenant les meilleures pratiques.
