@@ -146,6 +146,7 @@ let mainWindow: BrowserWindow | null = null;
 let agentManager: AgentManager | null = null;
 let terminalManager: TerminalManager | null = null;
 let backendProcess: ChildProcessWithoutNullStreams | null = null;
+let streamingServerProcess: ChildProcessWithoutNullStreams | null = null;
 
 // Re-entrancy guard for before-quit handler.
 // The first before-quit call pauses quit for async cleanup, then calls app.quit() again.
@@ -430,6 +431,71 @@ async function ensureBackendLaunched() {
   }
 }
 
+// Launch streaming WebSocket server as a background process
+async function launchStreamingServer() {
+  const backendDir = resolve(__dirname, '../../../backend');
+  const pythonPath = pythonEnvManager.getPythonPath();
+  if (!pythonPath || !existsSync(pythonPath)) {
+    console.warn('[main] Cannot start streaming server: Python not found');
+    return;
+  }
+
+  // Check if port 8765 is already in use (server might already be running)
+  try {
+    const net = await import('net');
+    const isPortFree = await new Promise<boolean>((resolvePort) => {
+      const tester = net.createServer()
+        .once('error', () => resolvePort(false))
+        .once('listening', () => { tester.close(); resolvePort(true); })
+        .listen(8765, '127.0.0.1');
+    });
+    if (!isPortFree) {
+      console.log('[main] Streaming server port 8765 already in use, skipping launch');
+      return;
+    }
+  } catch {
+    // If port check fails, try to start anyway
+  }
+
+  streamingServerProcess = spawn(pythonPath, ['-m', 'cli.main', '--streaming-server'], {
+    cwd: backendDir,
+    stdio: 'pipe',
+    detached: false,
+    env: { ...process.env }
+  });
+
+  streamingServerProcess.stdout?.on('data', (data: Buffer) => {
+    console.log('[streaming-server]', data.toString().trim());
+  });
+  streamingServerProcess.stderr?.on('data', (data: Buffer) => {
+    console.warn('[streaming-server]', data.toString().trim());
+  });
+  streamingServerProcess.on('exit', (code) => {
+    console.warn(`[streaming-server] Process exited with code ${code}`);
+    streamingServerProcess = null;
+  });
+
+  console.log('[main] Streaming WebSocket server launched on ws://localhost:8765');
+}
+
+async function ensureStreamingServerLaunched() {
+  if (pythonEnvManager.isEnvReady()) {
+    try {
+      await launchStreamingServer();
+    } catch (err) {
+      console.warn('[main] Failed to start streaming server:', err);
+    }
+  } else {
+    pythonEnvManager.once('ready', async () => {
+      try {
+        await launchStreamingServer();
+      } catch (err) {
+        console.warn('[main] Failed to start streaming server:', err);
+      }
+    });
+  }
+}
+
 // Initialisation explicite du PythonEnvManager avec le chemin du backend (corrigé)
 const backendSourcePath = resolve(__dirname, '../../../backend');
 pythonEnvManager.initialize(backendSourcePath).then((status) => {
@@ -698,10 +764,21 @@ app.whenReady().then(async () => {
       '\nVérifiez que le venv Python et les dépendances sont bien installés.');
     // On continue, mais le frontend affichera une erreur si l'API n'est pas disponible
   }
+
+  // Start streaming WebSocket server for live coding feature
+  ensureStreamingServerLaunched().catch((err) => {
+    console.warn('[main] Streaming server launch failed (non-critical):', err);
+  });
 });
 
-// Arrêt propre du backend à la fermeture de l'app
+// Arrêt propre du backend et du streaming server à la fermeture de l'app
 app.on('will-quit', () => {
+  if (streamingServerProcess) {
+    try {
+      streamingServerProcess.kill();
+    } catch {}
+    streamingServerProcess = null;
+  }
   if (backendProcess) {
     try {
       backendProcess.kill();

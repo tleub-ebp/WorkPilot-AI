@@ -348,8 +348,8 @@ export function registerTaskExecutionHandlers(
             baseBranch,
             useWorktree: task.metadata?.useWorktree,
             useLocalBranch: task.metadata?.useLocalBranch,
-            enableStreaming: _options?.enableStreaming,
-            streamingSessionId: _options?.streamingSessionId,
+            enableStreaming: _options?.enableStreaming ?? true,
+            streamingSessionId: _options?.streamingSessionId ?? taskId,
           },
           project.id
         );
@@ -368,8 +368,8 @@ export function registerTaskExecutionHandlers(
             baseBranch,
             useWorktree: task.metadata?.useWorktree,
             useLocalBranch: task.metadata?.useLocalBranch,
-            enableStreaming: _options?.enableStreaming,
-            streamingSessionId: _options?.streamingSessionId,
+            enableStreaming: _options?.enableStreaming ?? true,
+            streamingSessionId: _options?.streamingSessionId ?? taskId,
           },
           project.id
         );

@@ -5,6 +5,8 @@
   "status": {
     "live": "EN DIRECT",
     "offline": "HORS LIGNE",
+    "connecting": "CONNEXION...",
+    "reconnect": "Reconnecter",
     "initializing": "Initialisation...",
     "sessionStarted": "Session démarrée",
     "sessionConfirmed": "Session confirmée",
