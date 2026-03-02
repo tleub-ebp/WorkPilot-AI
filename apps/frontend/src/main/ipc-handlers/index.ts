@@ -47,6 +47,7 @@ import { registerGitHubCopilotHandlers } from './github-copilot-handlers';
 import { setupNaturalLanguageGitHandlers } from './natural-language-git-handlers';
 import { setupSmartEstimationHandlers } from './smart-estimation-handlers';
 import { setupConflictPredictorHandlers } from './conflict-predictor-handlers';
+import { registerVoiceControlHandlers } from './voice-control-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -169,6 +170,9 @@ export function setupIpcHandlers(
 
   // Conflict Predictor handlers
   setupConflictPredictorHandlers();
+
+  // Voice Control handlers
+  registerVoiceControlHandlers();
 
   console.warn('[IPC] All handler modules registered successfully');
 }

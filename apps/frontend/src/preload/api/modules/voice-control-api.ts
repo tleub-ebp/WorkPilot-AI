@@ -4,6 +4,9 @@
  * Provides voice control functionality through IPC communication
  */
 
+import { ipcRenderer, IpcRendererEvent } from 'electron';
+import { invokeIpc } from './ipc-utils';
+
 export interface VoiceControlAPI {
   // Voice recording control
   startVoiceRecording: (request?: {
@@ -42,55 +45,73 @@ export function createVoiceControlAPI(): VoiceControlAPI {
   return {
     // Voice recording control
     startVoiceRecording: async (request) => {
-      return await window.electron.invoke('start-voice-recording', request);
+      return await invokeIpc('voice-control:startRecording', request);
     },
     
     stopVoiceRecording: async () => {
-      return await window.electron.invoke('stop-voice-recording');
+      return await invokeIpc('voice-control:stopRecording');
     },
     
     cancelVoiceControl: async () => {
-      return await window.electron.invoke('cancel-voice-control');
+      return await invokeIpc('voice-control:cancel');
     },
     
     isVoiceControlActive: async () => {
-      return await window.electron.invoke('is-voice-control-active');
+      return await invokeIpc('voice-control:isActive');
     },
     
     // Configuration
     configureVoiceControl: async (config) => {
-      return await window.electron.invoke('configure-voice-control', config);
+      return await invokeIpc('voice-control:configure', config);
     },
     
     // Event listeners
     onVoiceControlStatus: (callback) => {
-      const unsubscribe = window.electron.onVoiceControlStatus(callback);
-      return unsubscribe;
+      ipcRenderer.on('voice-control:status', (event: IpcRendererEvent, status: string) => callback(status));
+      return () => {
+        ipcRenderer.removeAllListeners('voice-control:status');
+      };
     },
     
     onVoiceControlStreamChunk: (callback) => {
-      const unsubscribe = window.electron.onVoiceControlStreamChunk(callback);
-      return unsubscribe;
+      ipcRenderer.on('voice-control:stream-chunk', (event: IpcRendererEvent, chunk: string) => callback(chunk));
+      return () => {
+        ipcRenderer.removeAllListeners('voice-control:stream-chunk');
+      };
     },
     
     onVoiceControlError: (callback) => {
-      const unsubscribe = window.electron.onVoiceControlError(callback);
-      return unsubscribe;
+      ipcRenderer.on('voice-control:error', (event: IpcRendererEvent, error: string) => callback(error));
+      return () => {
+        ipcRenderer.removeAllListeners('voice-control:error');
+      };
     },
     
     onVoiceControlComplete: (callback) => {
-      const unsubscribe = window.electron.onVoiceControlComplete(callback);
-      return unsubscribe;
+      ipcRenderer.on('voice-control:complete', (event: IpcRendererEvent, result: {
+        transcript: string;
+        command: string;
+        action: string;
+        parameters: Record<string, any>;
+        confidence: number;
+      }) => callback(result));
+      return () => {
+        ipcRenderer.removeAllListeners('voice-control:complete');
+      };
     },
     
     onVoiceControlAudioLevel: (callback) => {
-      const unsubscribe = window.electron.onVoiceControlAudioLevel(callback);
-      return unsubscribe;
+      ipcRenderer.on('voice-control:audio-level', (event: IpcRendererEvent, level: number) => callback(level));
+      return () => {
+        ipcRenderer.removeAllListeners('voice-control:audio-level');
+      };
     },
     
     onVoiceControlDuration: (callback) => {
-      const unsubscribe = window.electron.onVoiceControlDuration(callback);
-      return unsubscribe;
+      ipcRenderer.on('voice-control:duration', (event: IpcRendererEvent, duration: number) => callback(duration));
+      return () => {
+        ipcRenderer.removeAllListeners('voice-control:duration');
+      };
     },
   };
 }

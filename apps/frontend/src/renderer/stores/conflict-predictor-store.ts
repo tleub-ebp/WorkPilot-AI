@@ -133,7 +133,16 @@ export const useConflictPredictorStore = create<ConflictPredictorState>((set) =>
 }));
 
 /**
+ * Open the conflict predictor dialog
+ */
+export const openConflictPredictorDialog = () => {
+  useConflictPredictorStore.getState().reset();
+  useConflictPredictorStore.setState({ isOpen: true });
+};
+
+/**
  * Start conflict prediction analysis
+ * Uses window.electronAPI (preload bridge) instead of direct IPC imports
  */
 export const startConflictPrediction = async (projectId: string) => {
   useConflictPredictorStore.setState({
@@ -145,8 +154,7 @@ export const startConflictPrediction = async (projectId: string) => {
   });
 
   try {
-    const { conflictPredictorStartAnalysis } = await import('../electron/ipc-handlers');
-    await conflictPredictorStartAnalysis(projectId);
+    await window.electronAPI.runConflictPrediction(projectId);
   } catch (error) {
     useConflictPredictorStore.setState({
       error: error instanceof Error ? error.message : 'Failed to start conflict analysis',
@@ -157,15 +165,14 @@ export const startConflictPrediction = async (projectId: string) => {
 
 /**
  * Setup IPC event listeners for conflict predictor events
+ * Uses window.electronAPI (preload bridge) instead of direct ipcRenderer imports
  */
 export const setupConflictPredictorListeners = () => {
-  const cleanup: (() => void)[] = [];
+  const cleanupFns: (() => void)[] = [];
 
-  // Listen for conflict predictor events
-  const setupEventListener = async () => {
-    const { ipcRenderer } = await import('electron');
-
-    const handleConflictPredictorEvent = (_event: any, data: any) => {
+  // Listen for conflict predictor events via preload API
+  if (window.electronAPI.onConflictPredictionEvent) {
+    const unsubEvent = window.electronAPI.onConflictPredictionEvent((data: any) => {
       const { type, data: eventData } = data;
 
       switch (type) {
@@ -198,39 +205,32 @@ export const setupConflictPredictorListeners = () => {
           });
           break;
       }
-    };
+    });
+    if (unsubEvent) cleanupFns.push(unsubEvent);
+  }
 
-    const handleConflictPredictorResult = (_event: any, data: any) => {
+  if (window.electronAPI.onConflictPredictionComplete) {
+    const unsubComplete = window.electronAPI.onConflictPredictionComplete((data: any) => {
       useConflictPredictorStore.setState({
         result: data,
         phase: 'complete',
       });
-    };
+    });
+    if (unsubComplete) cleanupFns.push(unsubComplete);
+  }
 
-    const handleConflictPredictorError = (_event: any, error: string) => {
+  if (window.electronAPI.onConflictPredictionError) {
+    const unsubError = window.electronAPI.onConflictPredictionError((error: string) => {
       useConflictPredictorStore.setState({
         error,
         phase: 'error',
       });
-    };
-
-    // Register event listeners
-    ipcRenderer.on('conflict-predictor-event', handleConflictPredictorEvent);
-    ipcRenderer.on('conflict-predictor-result', handleConflictPredictorResult);
-    ipcRenderer.on('conflict-predictor-error', handleConflictPredictorError);
-
-    // Store cleanup functions
-    cleanup.push(() => {
-      ipcRenderer.removeListener('conflict-predictor-event', handleConflictPredictorEvent);
-      ipcRenderer.removeListener('conflict-predictor-result', handleConflictPredictorResult);
-      ipcRenderer.removeListener('conflict-predictor-error', handleConflictPredictorError);
     });
-  };
-
-  setupEventListener();
+    if (unsubError) cleanupFns.push(unsubError);
+  }
 
   // Return cleanup function
   return () => {
-    cleanup.forEach(fn => fn());
+    cleanupFns.forEach(fn => fn());
   };
 };
