@@ -17,3 +17,4 @@ export * from './MigrationWizard';
 export * from './VisualProgrammingInterface';
 export { ProviderManager } from "./ProviderManager";
 export { ProviderSelector } from "./ProviderSelector";
+export * from './test-generation';

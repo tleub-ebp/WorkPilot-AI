@@ -274,10 +274,13 @@ export const DEFAULT_FEATURE_MODELS: FeatureModelConfig = {
   insights: 'claude-sonnet-4-5-20250929',   // Fast, responsive chat
   ideation: 'claude-opus-4-6',              // Creative ideation benefits from Opus
   roadmap: 'claude-opus-4-6',              // Strategic planning benefits from Opus
+  'natural-language-git': 'claude-sonnet-4-5-20250929', // Natural language Git commands
   githubIssues: 'claude-opus-4-6',         // Issue triage and analysis benefits from Opus
   githubPrs: 'claude-opus-4-6',            // PR review benefits from thorough Opus analysis
   utility: 'claude-haiku-4-5-20251001',    // Fast utility operations (commit messages, merge resolution)
-  promptOptimizer: 'claude-sonnet-4-5-20250929' // Balanced prompt optimization
+  promptOptimizer: 'claude-sonnet-4-5-20250929', // Balanced prompt optimization
+  testGenerator: 'claude-sonnet-4-5-20250929',  // Balanced test generation for comprehensive coverage
+  codeReview: 'claude-opus-4-6'            // Code review benefits from thorough Opus analysis
 };
 
 // Default feature thinking configuration
@@ -285,10 +288,13 @@ export const DEFAULT_FEATURE_THINKING: FeatureThinkingConfig = {
   insights: 'medium',     // Balanced thinking for chat
   ideation: 'high',       // Deep thinking for creative ideas
   roadmap: 'high',        // Strategic thinking for roadmap
+  'natural-language-git': 'medium', // Natural language Git commands
   githubIssues: 'medium', // Moderate thinking for issue analysis
   githubPrs: 'medium',    // Moderate thinking for PR review
   utility: 'low',         // Fast thinking for utility operations
-  promptOptimizer: 'medium' // Balanced thinking for prompt optimization
+  promptOptimizer: 'medium', // Balanced thinking for prompt optimization
+  testGenerator: 'medium',  // Balanced thinking for test generation
+  codeReview: 'medium'     // Balanced thinking for code review
 };
 
 // Feature labels for UI display
@@ -296,10 +302,13 @@ export const FEATURE_LABELS: Record<keyof FeatureModelConfig, { label: string; d
   insights: { label: 'Insights Chat', description: 'Ask questions about your codebase' },
   ideation: { label: 'Ideation', description: 'Generate feature ideas and improvements' },
   roadmap: { label: 'Roadmap', description: 'Create strategic feature roadmaps' },
+  'natural-language-git': { label: 'Natural Language Git', description: 'Execute Git commands using natural language' },
   githubIssues: { label: 'GitHub Issues', description: 'Automated issue triage and labeling' },
   githubPrs: { label: 'GitHub PR Review', description: 'AI-powered pull request reviews' },
   utility: { label: 'Utility', description: 'Commit messages and merge conflict resolution' },
-  promptOptimizer: { label: 'Prompt Optimizer', description: 'AI-powered prompt enhancement with project context' }
+  promptOptimizer: { label: 'Prompt Optimizer', description: 'AI-powered prompt enhancement with project context' },
+  testGenerator: { label: 'Test Generation Agent', description: 'AI-powered test generation and coverage analysis' },
+  codeReview: { label: 'Code Review Agent', description: 'AI-powered code review and quality analysis' }
 };
 
 // Default agent profiles for preset model/thinking configurations

@@ -15,6 +15,7 @@ import { type ProfileAPI, createProfileAPI } from './profile-api';
 import { type ScreenshotAPI, createScreenshotAPI } from './screenshot-api';
 import { type QueueAPI, createQueueAPI } from './queue-api';
 import { type QualityAPI, createQualityAPI } from './modules/quality-api';
+import { type NaturalLanguageGitAPI, createNaturalLanguageGitAPI } from './natural-language-git-api';
 import { invokeIpc } from './modules/ipc-utils';
 import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
@@ -36,7 +37,8 @@ export interface ElectronAPI extends
   CopilotOAuthAPI,
   McpAPI,
   ProfileAPI,
-  ScreenshotAPI {
+  ScreenshotAPI,
+  NaturalLanguageGitAPI {
   github: GitHubAPI;
   /** Queue routing API for rate limit recovery */
   queue: QueueAPI;
@@ -68,6 +70,7 @@ export const createElectronAPI = (): ElectronAPI => ({
   ...createMcpAPI(),
   ...createProfileAPI(),
   ...createScreenshotAPI(),
+  ...createNaturalLanguageGitAPI(),
   github: createGitHubAPI(),
   queue: createQueueAPI(),  // Queue routing for rate limit recovery
   quality: createQualityAPI(),  // Code quality analysis
@@ -98,6 +101,7 @@ export { createScreenshotAPI } from './screenshot-api';
 export { createQueueAPI } from './queue-api';
 export { createQualityAPI } from './modules/quality-api';
 export { createCopilotOAuthAPI } from './modules/copilot-oauth-api';
+export { createNaturalLanguageGitAPI } from './natural-language-git-api';
 
 export type { ProjectAPI } from './project-api';
 export type { TerminalAPI } from './terminal-api';
@@ -115,3 +119,4 @@ export type { McpAPI } from './modules/mcp-api';
 export type { ScreenshotAPI } from './screenshot-api';
 export type { QueueAPI } from './queue-api';
 export type { QualityAPI } from './modules/quality-api';
+export type { NaturalLanguageGitAPI } from './natural-language-git-api';

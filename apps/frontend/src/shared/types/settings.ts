@@ -186,10 +186,13 @@ export interface FeatureModelConfig {
   insights: ModelTypeShort;    // Insights chat feature
   ideation: ModelTypeShort;    // Ideation generation
   roadmap: ModelTypeShort;     // Roadmap generation
+  'natural-language-git': ModelTypeShort;  // Natural Language Git feature
   githubIssues: ModelTypeShort; // GitHub Issues automation
   githubPrs: ModelTypeShort;    // GitHub PR review automation
   utility: ModelTypeShort;      // Utility agents (commit message, merge resolver)
   promptOptimizer: ModelTypeShort; // AI Prompt Optimizer
+  testGenerator: ModelTypeShort; // Test Generation Agent
+  codeReview: ModelTypeShort; // Code Review Agent
 }
 
 // Feature-specific thinking level configuration
@@ -197,10 +200,13 @@ export interface FeatureThinkingConfig {
   insights: ThinkingLevel;
   ideation: ThinkingLevel;
   roadmap: ThinkingLevel;
+  'natural-language-git': ThinkingLevel;  // Natural Language Git feature
   githubIssues: ThinkingLevel;
   githubPrs: ThinkingLevel;
   utility: ThinkingLevel;
   promptOptimizer: ThinkingLevel; // AI Prompt Optimizer
+  testGenerator: ThinkingLevel; // Test Generation Agent
+  codeReview: ThinkingLevel; // Code Review Agent
 }
 
 // Agent profile for preset model/thinking configurations
