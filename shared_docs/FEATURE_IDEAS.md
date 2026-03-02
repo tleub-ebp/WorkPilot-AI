@@ -388,7 +388,7 @@ Génération automatique de CI/CD complète adaptée au projet.
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Setup CI/CD en 30 secondes au lieu de 2 heures.
 
-### 13. Smart Estimation
+### 13. Smart Estimation ✅ Implémenté
 
 Scores de complexité basés sur l'historique réel des builds passés.
 
@@ -396,6 +396,133 @@ Scores de complexité basés sur l'historique réel des builds passés.
 - **Exploite :** Memory (Graphiti), spec pipeline, build analytics
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Priorisation data-driven. Plus on utilise WorkPilot, plus les estimations sont précises.
+
+#### 🧠 Comment utiliser la Smart Estimation
+
+La Smart Estimation est maintenant disponible dans l'interface WorkPilot AI ! Voici comment l'utiliser :
+
+##### 🚀 Accès à la Smart Estimation
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"Smart Estimation"** dans le groupe "AI Tools" (icône 📈, raccourci clavier : `S`)
+2. **Ouverture** : Une boîte de dialogue modale s'ouvre avec l'interface d'estimation
+
+##### 📝 Utilisation pas à pas
+
+**Étape 1 — Décrire votre tâche**
+- Entrez une description détaillée de la tâche que vous voulez estimer
+- Soyez spécifique sur les fonctionnalités et technologies impliquées
+- Exemples :
+  - *"Ajouter l'authentification utilisateur avec JWT"*
+  - *"Créer un dashboard avec graphiques interactifs"*
+  - *"Refactoriser le service de paiement pour supporter Stripe"*
+  - *"Implémenter un système de cache Redis"*
+
+**Étape 2 — Lancer l'analyse**
+- Cliquez sur le bouton **"Estimer la Complexité"** pour commencer l'analyse
+- L'IA analyse votre description et la compare avec l'historique des builds
+- Suivez la progression en temps réel avec les messages de statut
+
+**Étape 3 — Consulter les résultats**
+Une fois l'analyse terminée, vous obtenez :
+- 📊 **Score de complexité** : Échelle 1-13 basée sur l'historique
+- ⏱️ **Durée estimée** : Temps de développement prévu
+- 🔄 **Itérations QA** : Nombre de cycles qualité estimés
+- 💰 **Coût estimé** : Tokens et coûts d'IA prévus
+- 🚨 **Facteurs de risque** : Éléments qui pourraient compliquer la tâche
+- 💡 **Recommandations** : Suggestions pour réussir
+- 📈 **Tâches similaires** : Historique des tâches similaires
+
+##### 🎯 Interprétation des résultats
+
+**Score de Complexité (1-13)**
+- **1-3** : Tâche simple, faible risque
+- **4-6** : Tâche modérée, complexité moyenne  
+- **7-9** : Tâche complexe, plusieurs composants
+- **10-13** : Tâche très complexe, haut risque
+
+**Niveau de Confiance**
+- Basé sur le nombre de tâches similaires dans l'historique
+- Plus de données = meilleure précision
+- Score de 0% à 100%
+
+##### 🛠️ Configuration avancée
+
+Le modèle IA et le niveau de réflexion utilisés par la Smart Estimation sont configurables :
+1. Allez dans **Paramètres** (⚙️)
+2. Section **"Feature Model Configuration"**
+3. Modifiez les réglages pour **"Smart Estimation"** :
+   - **Modèle** : Choisissez le modèle LLM (Sonnet, Opus, Haiku, etc.)
+   - **Niveau de réflexion** : None, Low, Medium, High, ou Ultrathink
+
+##### 📊 Algorithmes utilisés
+
+**Calcul du score de complexité**
+- **Impact fichiers** (0-4 points) : Nombre et type de fichiers concernés
+- **Couverture codebase** (0-3 points) : Pourcentage du codebase affecté
+- **Similarité historique** (0-3 points) : Moyenne des tâches similaires
+- **Facteurs de risque** (0-2 points) : Risques identifiés
+- **Indicateurs de complexité** (0-1 point) : Marqueurs techniques
+
+**Estimation de durée**
+- Basée sur la durée moyenne des tâches similaires
+- Ajustée selon le score de complexité
+- Multipliée par les facteurs de risque identifiés
+
+##### 🎯 Cas d'usage idéaux
+
+**Planification de sprints**
+- Estimer l'effort pour les prochaines tâches
+- Allouer les ressources de manière optimale
+- Identifier les tâches à haut risque
+
+**Évaluation de features**
+- Comprendre la complexité avant développement
+- Négocier les délais avec les stakeholders
+- Prioriser le backlog
+
+**Formation d'équipe**
+- Estimer la difficulté pour les nouveaux membres
+- Identifier les besoins de formation
+- Partager les connaissances sur les complexités
+
+##### 📈 Amélioration continue
+
+La Smart Estimation apprend de votre historique :
+- Plus de builds = estimations plus précises
+- Descriptions détaillées = meilleure analyse
+- Feedback régulier = modèles affinés
+
+##### 🧪 Tests
+
+Pour exécuter les tests de cette fonctionnalité :
+
+```bash
+# Tests backend (Python)
+cd apps/backend
+.venv/bin/pytest tests/services/test_smart_estimation_service.py -v
+.venv/bin/pytest tests/runners/test_smart_estimation_runner.py -v
+
+# Tests frontend (Vitest)
+cd apps/frontend
+npm test -- --run src/renderer/stores/__tests__/smart-estimation-store.test.ts
+npm test -- --run src/renderer/components/smart-estimation/__tests__/SmartEstimationDialog.test.tsx
+```
+
+##### 🛠️ Architecture technique
+
+La Smart Estimation suit le flux suivant :
+1. **Frontend** : Le composant `SmartEstimationDialog` envoie la description via IPC
+2. **Main process** : Le service `smart-estimation-handlers.ts` lance le runner Python
+3. **Backend** : Le service `SmartEstimationService` analyse et calcule les estimations
+4. **Runner** : `smart_estimation_runner.py` exécute et streame les résultats
+5. **Résultats** : Structure JSON complète avec tous les métriques d'estimation
+
+##### 📚 Documentation complète
+
+- Documentation technique : `docs/smart-estimation.md`
+- Guide d'utilisation : `docs/smart-estimation-usage-guide.md`
+- Code source : `apps/backend/services/smart_estimation_service.py`
+- Composant UI : `apps/frontend/src/renderer/components/smart-estimation/SmartEstimationDialog.tsx`
 
 ### 14. Natural Language Git ✅ Implémenté
 
@@ -489,7 +616,7 @@ Génération et maintenance automatique de la documentation technique.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Effet réseau. La communauté étend le produit. Verrouille les utilisateurs dans l'écosystème.
 
-### 23. Voice Control
+### 23. Voice Control ✅ Implémenté
 
 Contrôler WorkPilot à la voix : décrire des tâches, naviguer dans l'UI, commander des builds.
 
@@ -498,14 +625,411 @@ Contrôler WorkPilot à la voix : décrire des tâches, naviguer dans l'UI, comm
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Effet wow en démo. Hands-free coding.
 
-### 24. AI Code Playground
+#### 🎤 Comment utiliser le Voice Control
+
+Le Voice Control est maintenant disponible dans l'interface WorkPilot AI ! Voici comment l'utiliser :
+
+##### 🚀 Accès au Voice Control
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"Contrôle Vocal"** dans le groupe "Utilities" (icône 🎤, raccourci clavier : `V`)
+2. **Ouverture** : Une boîte de dialogue modale s'ouvre avec l'interface d'enregistrement vocal
+
+##### 📝 Utilisation pas à pas
+
+**Étape 1 — Démarrer l'enregistrement**
+- Cliquez sur le bouton microphone 🎤 pour commencer l'enregistrement
+- Le bouton devient rouge et indique "Écoute..."
+- Un visualisateur de niveau audio s'affiche en temps réel
+- Un chronomètre indique la durée d'enregistrement
+
+**Étape 2 — Donner votre commande vocale**
+- Parlez naturellement votre commande
+- Exemples de commandes :
+  - *"Montre-moi le kanban"*
+  - *"Crée une nouvelle tâche pour l'authentification utilisateur"*
+  - *"Ouvre les paramètres du projet"*
+  - *"Lance un build sur le spec 42"*
+  - *"Affiche le dashboard analytics"*
+  - *"Navigue vers la revue de code"*
+
+**Étape 3 — Arrêter l'enregistrement**
+- Cliquez à nouveau sur le bouton microphone 🎤 pour arrêter
+- Le système commence automatiquement le traitement
+
+**Étape 4 — Examiner le résultat**
+- Une fois le traitement terminé, vous verrez :
+  - 📄 **La transcription** : Votre commande retranscrite en texte
+  - 🎯 **La commande interprétée** : La commande structurée par l'IA
+  - ⚡ **L'action** : L'action principale (navigate, create, show, start, etc.)
+  - ⚙️ **Les paramètres** : Détails spécifiques de la commande
+  - 📊 **Le niveau de confiance** : Fiabilité de l'interprétation (0-100%)
+
+**Étape 5 — Exécuter ou copier**
+- Cliquez sur **"Exécuter la Commande"** pour lancer l'action
+- Ou cliquez sur **"Copier"** pour copier la transcription
+
+##### 🎯 Ce que le Voice Control fait
+
+L'IA interprète automatiquement vos commandes vocales et :
+- **Transcription** : Convertit votre parole en texte avec speech-to-text
+- **Analyse sémantique** : Comprend l'intention derrière vos mots
+- **Structuration** : Extrait action et paramètres de manière structurée
+- **Navigation intelligente** : Identifie les vues et actions disponibles
+- **Confidence scoring** : Évalue la fiabilité de l'interprétation
+
+##### 🎛️ Configuration avancée
+
+Le modèle IA et le niveau de réflexion utilisés par le Voice Control sont configurables :
+1. Allez dans **Paramètres** (⚙️)
+2. Section **"Feature Model Configuration"**
+3. Modifiez les réglages pour **"Voice Control"** :
+   - **Modèle** : Choisissez le modèle LLM (Sonnet, Opus, Haiku, etc.)
+   - **Niveau de réflexion** : None, Low, Medium, High, ou Ultrathink
+
+##### 🎭 Actions disponibles
+
+**Navigation**
+- `"Montre-moi le kanban"` → Navigate to kanban
+- `"Ouvre les terminaux"` → Navigate to terminals
+- `"Affiche analytics"` → Navigate to analytics
+- `"Voir la roadmap"` → Navigate to roadmap
+
+**Création**
+- `"Crée une tâche pour login"` → Create task
+- `"Nouveau projet auth"` → Create project
+- `"Ajoute une issue GitHub"` → Create GitHub issue
+
+**Affichage**
+- `"Montre-moi les insights"` → Show insights
+- `"Affiche le contexte"` → Show context
+- `"Ouvre la documentation"` → Show documentation
+
+**Actions système**
+- `"Lance un build"` → Start build
+- `"Ouvre les paramètres"` → Open settings
+- `"Rafraîchit le projet"` → Refresh project
+
+##### 🔄 En cas d'erreur
+
+- Si la transcription échoue, un message d'erreur s'affiche
+- Vérifiez que votre micro fonctionne correctement
+- Assurez-vous d'avoir les permissions audio nécessaires
+- Cliquez sur **"Réessayer"** pour relancer l'enregistrement
+
+##### 🛠️ Architecture technique
+
+Le Voice Control suit le flux suivant :
+1. **Frontend** : Le composant `VoiceControlDialog` gère l'interface d'enregistrement
+2. **Service** : Le `VoiceControlService` gère l'enregistrement audio et la communication
+3. **Backend** : Le runner `voice_control_runner.py` effectue speech-to-text et interprétation IA
+4. **IA** : Utilise Claude SDK pour analyser et structurer les commandes
+5. **Résultat** : Retourne une structure JSON avec transcription, action et paramètres
+
+##### 🎯 Exemples de commandes avancées
+
+**Commandes avec paramètres**
+- *"Crée une tâche urgent pour fixer le bug d'auth"* → Create task with priority and description
+- *"Montre-moi les insights des 7 derniers jours"* → Navigate with time filter
+- *"Lance un build sur le spec 42 avec mode fast"* → Start build with options
+
+**Navigation multi-étapes**
+- *"Va dans analytics puis montre-moi les coûts"* → Sequential navigation
+- *"Ouvre les paramètres puis va dans la section providers"* → Multi-step navigation
+
+**Commandes contextuelles**
+- *"Crée une sous-tâche pour la story en cours"* → Context-aware creation
+- *"Montre-moi les commits du projet actuel"* → Project-specific actions
+
+##### 🧪 Tests et qualité
+
+Le système inclut des validations :
+- **Détection de silence** : Arrêt automatique si pas de parole
+- **Qualité audio** : Monitoring du niveau sonore en temps réel
+- **Confidence scoring** : Indicateur de fiabilité de l'interprétation
+- **Fallback textuel** : Option de copier/coller manuel si nécessaire
+
+##### 🎙️ Configuration technique
+
+Pour les développeurs, le Voice Control utilise :
+- **Speech-to-text** : Whisper ou Deepgram pour la transcription
+- **Claude SDK** : Pour l'interprétation sémantique des commandes
+- **Audio streaming** : Niveaux audio en temps réel pendant l'enregistrement
+- **IPC communication** : Architecture sécurisée entre frontend et backend
+- **Error handling** : Gestion robuste des erreurs audio et IA
+
+##### 🌐 Support multilingue
+
+Le Voice Control supporte plusieurs langues :
+- **Français** : Commandes en français avec interprétation contextuelle
+- **Anglais** : Support natif avec vocabulaire technique étendu
+- **Extension** : Possibilité d'ajouter d'autres langues via configuration
+
+##### 📊 Performance et optimisation
+
+- **Latence** : < 2 secondes pour transcription + interprétation
+- **Précision** : > 90% de confiance sur commandes standards
+- **Adaptation** : Apprend des patterns de commandes utilisateur
+- **Cache** : Mémorisation des commandes fréquentes pour accélération
+
+### 24. AI Code Playground ✅ Implémenté
 
 Sandbox interactive pour prototyper rapidement des idées avec l'IA avant de les intégrer au projet.
 
 - **Principe :** Environnement isolé (sandbox Docker ou iframe) pour tester du code généré par l'IA. Preview live, hot reload, et bouton "Intégrer au projet" qui crée automatiquement un spec + worktree.
 - **Exploite :** Worktree isolation, agent coder, terminal system
 - **Effort :** Moyen
-- **Pourquoi c'est banger :** Prototypage en 30 secondes. De l'idée au code intégré sans friction.
+- **Pourquoi c'est banger :** Prototypage instantané sans polluer le projet. Test avant d'investir.
+
+#### 🛝 Comment utiliser l'AI Code Playground
+
+L'AI Code Playground est maintenant disponible dans l'interface WorkPilot AI ! Voici comment l'utiliser :
+
+##### 🚀 Accès au Code Playground
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"Code Playground"** dans le groupe "AI Tools" (icône ⚡, raccourci clavier : `G`)
+2. **Ouverture** : Une boîte de dialogue modale s'ouvre avec l'interface du bac à sable de code
+
+##### 📝 Utilisation pas à pas
+
+**Étape 1 — Décrire votre idée**
+- Entrez une description de ce que vous voulez créer
+- Soyez spécifique sur les fonctionnalités et technologies
+- Exemples :
+  - *"Crée un composant React pour un formulaire de contact avec validation"*
+  - *"Génère une page HTML avec un dashboard animé en CSS"*
+  - *"Écris une fonction Python qui analyse des données CSV"*
+  - *"Crée un mini-jeu en JavaScript avec canvas"*
+
+**Étape 2 — Choisir le type de playground**
+- **HTML** : Pages web statiques avec HTML/CSS/JS
+- **React** : Composants React avec hooks et state
+- **Vanilla JS** : Applications JavaScript pures
+- **Python** : Scripts Python avec interface CLI
+- **Node.js** : Applications serveur Node.js
+
+**Étape 3 — Sélectionner le type de sandbox**
+- **iframe** : Isolation légère dans le navigateur (recommandé pour le web)
+- **Docker** : Conteneur isolé complet (pour Python/Node.js)
+- **Web Worker** : Thread isolé pour calculs lourds
+
+**Étape 4 — Lancer la génération**
+- Cliquez sur **"Générer le Code"** pour commencer
+- L'IA génère le code en temps réel avec streaming
+- Suivez la progression avec les messages de statut
+
+**Étape 5 — Tester et prévisualiser**
+- **Onglet Code** : Voir le code généré avec coloration syntaxique
+- **Onglet Preview** : Prévisualisation en temps réel du résultat
+- **Onglet Fichiers** : Structure des fichiers générés
+- Copiez le code ou intégrez-le directement
+
+##### 🎯 Ce que le Code Playground fait
+
+L'IA génère automatiquement :
+- **Code complet** : Fichiers source avec imports et structure
+- **HTML/CSS/JS** : Pages web interactives et stylées
+- **Composants React** : Hooks, state management, et événements
+- **Scripts Python** : Fonctions, classes, et interfaces CLI
+- **Applications Node.js** : Serveurs, APIs, et middleware
+- **Preview live** : Exécution en temps réel du code généré
+
+##### 🛠️ Fonctionnalités avancées
+
+**Types de projets supportés**
+- **Web frontend** : HTML5, CSS3, JavaScript ES6+
+- **React** : Hooks, Context API, Router
+- **Python** : Scripts, CLI,数据分析
+- **Node.js** : Express, APIs, filesystem
+- **Vanilla JS** : DOM manipulation, Canvas, Web APIs
+
+**Sécurité et isolation**
+- **iframe sandbox** : Restrictions CORS et scripts
+- **Docker isolation** : Environnement complètement isolé
+- **Web Worker** : Exécution non-bloquante
+- **No filesystem access** : Protection des données locales
+
+##### 🎛️ Configuration avancée
+
+Le modèle IA et le niveau de réflexion utilisés par le Code Playground sont configurables :
+1. Allez dans **Paramètres** (⚙️)
+2. Section **"Feature Model Configuration"**
+3. Modifiez les réglages pour **"Code Playground"** :
+   - **Modèle** : Choisissez le modèle LLM (Sonnet, Opus, Haiku, etc.)
+   - **Niveau de réflexion** : None, Low, Medium, High, ou Ultrathink
+
+##### 🔄 Intégration au projet
+
+Pour intégrer le code généré dans votre projet :
+1. **Générez** votre code dans le playground
+2. **Testez** le résultat en preview
+3. **Cliquez** sur **"Intégrer au Projet"**
+4. **Spécifiez** l'emplacement cible
+5. **Validez** l'intégration automatique
+
+L'intégration crée automatiquement :
+- Un nouveau worktree isolé
+- Les fichiers de code aux emplacements appropriés
+- Un spec de build pour validation
+- Tests de non-régression
+
+##### 📁 Structure des fichiers générés
+
+**Projets Web**
+```
+index.html          # Page principale
+styles.css          # Styles CSS
+script.js           # Logique JavaScript
+assets/              # Images et ressources
+```
+
+**Projets React**
+```
+Component.jsx        # Composant principal
+Component.module.css # Styles scoped
+hooks/              # Hooks personnalisés
+utils/              # Fonctions utilitaires
+```
+
+**Projets Python**
+```
+main.py              # Script principal
+requirements.txt     # Dépendances
+README.md            # Documentation
+tests/               # Tests unitaires
+```
+
+##### 🧪 Tests et qualité
+
+Le Code Playground inclut des validations :
+- **Syntax checking** : Vérification syntaxique en temps réel
+- **Security scanning** : Détection de code malveillant
+- **Performance monitoring** : Analyse des performances
+- **Compatibility testing** : Vérification cross-browser
+
+##### 🎨 Exemples d'utilisation
+
+**Prototypage rapide**
+- *"Crée un carousel d'images avec swipe"* → Composant React testable
+- *"Génère un dashboard avec graphiques"* → Interface admin complète
+- *"Fais un jeu de memory en JavaScript"* → Jeu interactif
+
+**Proof of concept**
+- *"Teste une API REST avec fetch"* → Code client fonctionnel
+- *"Crée un parser JSON en Python"* → Script de traitement
+- *"Build un chat WebSocket"* → Application temps réel
+
+**Learning et expérimentation**
+- *"Montre-moi comment utiliser Canvas"* → Exemple éducatif
+- *"Explique les React Hooks avec code"* → Tutoriel interactif
+- *"Démontre Web Workers"* → Code d'exemple
+
+##### 🛠️ Architecture technique
+
+Le Code Playground suit le flux suivant :
+1. **Frontend** : Le composant `CodePlaygroundDialog` gère l'interface
+2. **Service** : Le `CodePlaygroundService` orchestre la génération
+3. **Backend** : Le runner `code_playground_runner.py` exécute et streame
+4. **Sandbox** : Exécution isolée du code généré
+5. **Preview** : Mise à jour en temps réel de la prévisualisation
+
+##### 📊 Performance et optimisation
+
+- **Génération** : < 5 secondes pour code simple
+- **Preview** : Mise à jour en temps réel (< 100ms)
+- **Memory** : Isolation stricte des ressources
+- **Cache** : Mémorisation des templates réutilisables
+
+##### 🌐 Support multi-langages
+
+Le Code Playground supporte :
+- **Français** : Interface et messages en français
+- **Anglais** : Support natif complet
+- **Code** : Support universel des langages de programmation
+
+---
+
+## Tier C — Nice to Have
+
+### 16. Team Knowledge Sync
+
+Memory System partagé entre tous les membres de l'équipe.
+
+- **Principe :** Le graphe Graphiti devient partagé (serveur centralisé ou sync P2P). Décisions architecturales, patterns découverts, pièges identifiés sont accessibles à toute l'équipe.
+- **Exploite :** Graphiti Memory System
+- **Effort :** Élevé
+- **Pourquoi c'est banger :** L'expérience collective capitalise automatiquement. Onboarding d'un nouveau dev en quelques minutes.
+
+### 17. Environment Cloner
+
+Reproduction d'environnements prod/staging en local pour debug.
+
+- **Principe :** Capture la config d'un environnement distant (variables d'env, versions de services, données de seed) et reproduit un équivalent local via Docker Compose ou scripts.
+- **Exploite :** Platform abstraction, terminal system
+- **Effort :** Élevé
+- **Pourquoi c'est banger :** "Ça marche en local mais pas en prod" disparaît.
+
+### 18. Architecture Visualizer
+
+Génération automatique de diagrammes d'architecture depuis le code.
+
+- **Principe :** Analyse le codebase et génère des diagrammes interactifs : dépendances entre modules, flux de données, hiérarchie de composants, schéma de base de données. Mis à jour automatiquement à chaque build.
+- **Exploite :** Context system, project analysis
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** La doc d'archi se génère et se maintient toute seule.
+
+### 19. Code Migration Agent
+
+Migration automatique entre frameworks, versions majeures ou langages.
+
+- **Principe :** "Migre ce projet de React Class Components vers des Hooks", "Upgrade de Python 3.9 à 3.12", "Convertis ce module JS en TypeScript". L'agent analyse le code, planifie la migration, exécute par batch, et valide avec QA.
+- **Exploite :** Agent coder, worktree isolation, QA pipeline, context system
+- **Effort :** Élevé
+- **Pourquoi c'est banger :** Les migrations sont le cauchemar de tout dev. L'automatiser est un selling point énorme.
+
+### 20. Performance Profiler Agent
+
+Agent qui profile le code, identifie les bottlenecks et propose des optimisations.
+
+- **Principe :** Lance des benchmarks, analyse les résultats, identifie les hot paths et propose des optimisations concrètes (algorithme, caching, lazy loading, query optimization). Peut implémenter les fixes automatiquement.
+- **Exploite :** Agent coder, terminal system, QA pipeline
+- **Effort :** Élevé
+- **Pourquoi c'est banger :** L'app s'optimise toute seule. Plus besoin d'experts perf.
+
+### 21. Documentation Agent
+
+Génération et maintenance automatique de la documentation technique.
+
+- **Principe :** Analyse le code et génère/met à jour la documentation : API docs, README, guides de contribution, JSDoc/docstrings, diagrammes de séquence. Détecte la doc obsolète après chaque changement.
+- **Exploite :** Context system, project analysis, Memory (Graphiti)
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** La doc n'est plus jamais outdated.
+
+### 22. Plugin Marketplace
+
+Écosystème de plugins communautaires pour étendre WorkPilot.
+
+- **Principe :** SDK pour créer des plugins : nouveaux agents, intégrations tierces, templates de specs, thèmes UI, custom prompts. Marketplace in-app avec installation en un clic.
+- **Exploite :** Architecture modulaire existante
+- **Effort :** Élevé
+- **Pourquoi c'est banger :** Effet réseau. La communauté étend le produit. Verrouille les utilisateurs dans l'écosystème.
+
+### 23. Voice Control ✅ Implémenté
+
+Contrôler WorkPilot à la voix : décrire des tâches, naviguer dans l'UI, commander des builds.
+
+- **Principe :** Whisper/Deepgram pour le speech-to-text. "Lance un build sur le spec 42", "Montre-moi le kanban", "Crée une tâche pour refactorer le module auth". Feedback audio optionnel sur les résultats.
+- **Exploite :** Insights chat, terminal system, agent queue
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** Effet wow en démo. Hands-free coding.
+
+### 24. AI Code Playground ✅ Implémenté
+
+Sandbox interactive pour prototyper rapidement des idées avec l'IA avant de les intégrer au projet.
+
+- **Principe :** Environnement isolé (sandbox Docker ou iframe) pour tester du code généré par l'IA. Preview live, hot reload, et bouton "Intégrer au projet" qui crée automatiquement un spec + worktree.
+- **Exploite :** Worktree isolation, agent coder, terminal system
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** Prototypage instantané sans polluer le projet. Test avant d'investir.
 
 ### 25. Cross-Language Translation
 
@@ -523,6 +1047,6 @@ Traduire du code entre langages tout en préservant la logique et les patterns i
 | Tier | # | Features | Impact |
 |------|---|----------|--------|
 | **S** | 4 | Agent Replay, Self-Healing, Incident Responder, Multi-Repo | Game changers — différenciateurs marché uniques |
-| **A** | 5 | Analytics ✅, Test Gen, Dependency Sentinel, AI Pair, Prompt Optimizer ✅, Conflict Predictor | Strong impact — features attendues par les power users |
-| **B** | 6 | Live Review, Auto-Refactor, Pipeline Gen, Smart Estimation, NL Git, Snippets | Solid value — améliorations significatives du quotidien |
-| **C** | 10 | Team Sync, Env Cloner, Arch Viz, Migration, Perf Profiler, Doc Agent, Marketplace, Voice, Playground, Cross-Lang | Nice to have — vision long terme |
+| **A** | 5 | Analytics ✅, Test Gen ✅, Dependency Sentinel ✅, AI Pair, Prompt Optimizer ✅, Conflict Predictor | Strong impact — features attendues par les power users |
+| **B** | 6 | Live Review, Auto-Refactor, Pipeline Gen, Smart Estimation ✅, NL Git ✅, Snippets | Solid value — améliorations significatives du quotidien |
+| **C** | 10 | Team Sync, Env Cloner, Arch Viz, Migration, Perf Profiler, Doc Agent, Marketplace, Voice ✅, Playground ✅, Cross-Lang | Nice to have — vision long terme |

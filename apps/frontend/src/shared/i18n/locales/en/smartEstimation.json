@@ -1,0 +1,36 @@
+{
+  "title": "Smart Estimation",
+  "description": "Get AI-powered complexity estimates based on your project's build history",
+  "task": {
+    "label": "Task Description",
+    "placeholder": "Describe the task you want to estimate (e.g., 'Add user authentication with JWT', 'Create dashboard with charts', 'Refactor payment service')"
+  },
+  "status": {
+    "analyzing": "Analyzing task complexity...",
+    "error": "Estimation failed"
+  },
+  "errors": {
+    "noProject": "Please select a project to get accurate estimations",
+    "generic": "An error occurred during estimation. Please try again."
+  },
+  "actions": {
+    "estimate": "Estimate Complexity",
+    "close": "Close",
+    "tryAgain": "Try Again",
+    "copy": "Copy",
+    "copied": "Copied!"
+  },
+  "result": {
+    "complexityScore": "Complexity Score",
+    "analysisProgress": "Analysis Progress",
+    "estimatedDuration": "Est. Duration",
+    "qaIterations": "Est. QA Iterations",
+    "iterations": "iterations",
+    "estimatedCost": "Est. Cost",
+    "reasoning": "Analysis Reasoning",
+    "riskFactors": "Risk Factors",
+    "recommendations": "Recommendations",
+    "similarTasks": "Similar Historical Tasks",
+    "similarTasksDescription": "Based on your build history, these similar tasks provide context for the estimation"
+  }
+}

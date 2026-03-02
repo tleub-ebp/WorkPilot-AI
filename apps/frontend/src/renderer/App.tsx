@@ -81,6 +81,7 @@ import { AlertCircle } from 'lucide-react';
 import { CommandPalette } from './components/CommandPalette';
 import { KeyboardShortcutsOverlay } from './components/KeyboardShortcutsOverlay';
 import { PromptOptimizerDialog } from './components/prompt-optimizer';
+import { VoiceControlDialog } from './components/voice-control';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { autoDetectAndUpdateProject } from './utils/repositoryDetector';
 
@@ -1304,6 +1305,9 @@ export function App() {
 
               {/* AI Prompt Optimizer Dialog (Feature 9) */}
               <PromptOptimizerDialog />
+
+              {/* Voice Control Dialog (Feature 23) */}
+              <VoiceControlDialog />
             </TooltipProvider>
 
             {/* Onboarding wizard - shown only once at app start */}

@@ -203,3 +203,9 @@ export async function executeGitCommand(projectId: string) {
     store.setError(error instanceof Error ? error.message : 'Unknown error');
   }
 }
+
+// Helper function to open dialog
+export const openNaturalLanguageGitDialog = () => {
+  useNaturalLanguageGitStore.getState().reset();
+  // This would be handled by the component that opens the dialog
+}

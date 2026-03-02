@@ -193,6 +193,7 @@ export interface FeatureModelConfig {
   promptOptimizer: ModelTypeShort; // AI Prompt Optimizer
   testGenerator: ModelTypeShort; // Test Generation Agent
   codeReview: ModelTypeShort; // Code Review Agent
+  voiceControl: ModelTypeShort; // Voice Control feature
 }
 
 // Feature-specific thinking level configuration
@@ -207,6 +208,7 @@ export interface FeatureThinkingConfig {
   promptOptimizer: ThinkingLevel; // AI Prompt Optimizer
   testGenerator: ThinkingLevel; // Test Generation Agent
   codeReview: ThinkingLevel; // Code Review Agent
+  voiceControl: ThinkingLevel; // Voice Control feature
 }
 
 // Agent profile for preset model/thinking configurations

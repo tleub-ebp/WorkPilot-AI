@@ -85,7 +85,7 @@ interface TestGenerationState {
   setPhase: (phase: TestGenerationPhase) => void;
   setStatus: (status: string) => void;
   setResult: (result: TestGenerationResult) => void;
-  setPostBuildResults: (results: PostBuildResult[]) => void;
+  setPostBuildResults: (postBuildResults: PostBuildResult[]) => void;
   setError: (error: string) => void;
   setMaxTestsPerFunction: (max: number) => void;
   reset: () => void;
@@ -336,3 +336,9 @@ export const useTestGenerationStore = create<TestGenerationState>((set, get) => 
     }
   },
 }));
+
+// Helper function to open dialog
+export const openTestGenerationDialog = () => {
+  useTestGenerationStore.getState().reset();
+  // This would be handled by the component that opens the dialog
+};
