@@ -57,6 +57,10 @@ import { JiraSidePanel } from './jira-import/JiraSidePanel';
 import type { Task, TaskStatus, TaskOrderState } from '../../shared/types';
 import type { AzureDevOpsWorkItem, JiraWorkItem } from '../../shared/types/integrations';
 
+// Import logos
+import AzureDevOpsLogo from '../assets/logos/azure-devops.svg';
+import JiraLogo from '../assets/logos/jira.svg';
+
 // Type guard for valid drop column targets - preserves literal type from TASK_STATUS_COLUMNS
 const VALID_DROP_COLUMNS = new Set<string>(TASK_STATUS_COLUMNS);
 function isValidDropColumn(id: string): id is typeof TASK_STATUS_COLUMNS[number] {
@@ -2108,10 +2112,10 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
               size="sm"
               onClick={() => setAzureDevOpsPanelOpen(true)}
               className="gap-2 text-muted-foreground hover:text-foreground"
-              title={t('settings:azureDevOpsImport.importButton')}
+              title="Import Azure DevOps Issues"
             >
-              <Download className="h-4 w-4" />
-              {envConfig?.azureDevOpsRepository || 'Azure DevOps'}
+              <img src={AzureDevOpsLogo} alt="Azure DevOps" className="h-4 w-4" />
+              {envConfig?.azureDevOpsProject || 'Azure DevOps'}
             </Button>
           )}
           {selectedProjectId && envConfig?.jiraEnabled && (
@@ -2122,7 +2126,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
               className="gap-2 text-muted-foreground hover:text-foreground"
               title="Import Jira Issues"
             >
-              <Download className="h-4 w-4" />
+              <img src={JiraLogo} alt="Jira" className="h-4 w-4" />
               {envConfig?.jiraProjectKey || 'Jira'}
             </Button>
           )}
