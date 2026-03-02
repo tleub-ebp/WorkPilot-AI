@@ -152,3 +152,9 @@ export function setupPromptOptimizerListeners(): () => void {
     unsubComplete();
   };
 }
+
+// Helper function to open dialog
+export const openPromptOptimizerDialog = () => {
+  usePromptOptimizerStore.getState().reset();
+  // This would be handled by the component that opens the dialog
+};

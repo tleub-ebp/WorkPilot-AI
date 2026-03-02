@@ -34,7 +34,13 @@ import {
   Layers,
   Brain,
   Database,
-  ArrowRight
+  ArrowRight,
+  Mic,
+  Zap,
+  Shield,
+  TestTube,
+  WandSparkles,
+  TrendingUp
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { ScrollArea } from '@/components/ui';
@@ -56,15 +62,15 @@ import {
 import { cn } from '@/lib/utils';
 import {
   useProjectStore,
-  removeProject,
   initializeProject
 } from '@/stores/project-store';
-import { useSettingsStore, saveSettings } from '@/stores/settings-store';
-import {
-  useProjectEnvStore,
-  loadProjectEnvConfig,
-  clearProjectEnvConfig
-} from '@/stores/project-env-store';
+import { useSettingsStore } from '@/stores/settings-store';
+import { useProjectEnvStore, loadProjectEnvConfig, clearProjectEnvConfig } from '@/stores/project-env-store';
+import { saveSettings } from '@/stores/settings-store';
+import { useTestGenerationStore, openTestGenerationDialog } from '@/stores/test-generation-store';
+import { usePromptOptimizerStore, openPromptOptimizerDialog } from '@/stores/prompt-optimizer-store';
+import { useCodePlaygroundStore, openCodePlaygroundDialog } from '@/stores/code-playground-store';
+import { useNaturalLanguageGitStore, openNaturalLanguageGitDialog } from '@/stores/natural-language-git-store';
 import { AddProjectModal } from './AddProjectModal';
 import { GitSetupModal } from './GitSetupModal';
 import { AzureDevOpsSetupModal } from './AzureDevOpsSetupModal';
@@ -73,9 +79,14 @@ import { RateLimitIndicator } from './RateLimitIndicator';
 import { ClaudeCodeStatusBadge } from './ClaudeCodeStatusBadge';
 import { CopilotCliStatusBadge } from './CopilotCliStatusBadge';
 import { UpdateBanner } from './UpdateBanner';
+import { TestGenerationDialog } from './test-generation/TestGenerationDialog';
+import { PromptOptimizerDialog } from './prompt-optimizer/PromptOptimizerDialog';
+import { CodePlaygroundDialog } from './code-playground/CodePlaygroundDialog';
+import { NaturalLanguageGitDialog } from './natural-language-git/NaturalLanguageGitDialog';
+import { VoiceControlDialog } from './voice-control/VoiceControlDialog';
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git';
 
 interface SidebarProps {
   onSettingsClick: () => void;
@@ -126,6 +137,19 @@ const navGroups: NavGroup[] = [
     defaultExpanded: false
   },
   {
+    id: 'ai-tools',
+    labelKey: 'navigation:groups.aiTools',
+    icon: Sparkles,
+    items: [
+      { id: 'test-generation', labelKey: 'navigation:items.testGeneration', icon: TestTube, shortcut: 'T' },
+      { id: 'prompt-optimizer', labelKey: 'navigation:items.promptOptimizer', icon: WandSparkles, shortcut: 'P' },
+      { id: 'code-playground', labelKey: 'navigation:items.codePlayground', icon: Zap, shortcut: 'G' },
+      { id: 'dependency-sentinel', labelKey: 'navigation:items.dependencySentinel', icon: Shield, shortcut: 'D' },
+      { id: 'natural-language-git', labelKey: 'navigation:items.naturalLanguageGit', icon: GitBranch, shortcut: 'G' },
+    ],
+    defaultExpanded: false
+  },
+  {
     id: 'integration',
     labelKey: 'navigation:groups.integration',
     icon: GitFork,
@@ -163,6 +187,7 @@ const navGroups: NavGroup[] = [
     labelKey: 'navigation:groups.utilities',
     icon: Layers,
     items: [
+      { id: 'voice-control', labelKey: 'navigation:items.voiceControl', icon: Mic, shortcut: 'V' },
       { id: 'migration', labelKey: 'navigation:items.migration', icon: Download, shortcut: 'Z' },
     ],
     defaultExpanded: false
@@ -203,6 +228,13 @@ export function Sidebar({
   const [gitHubSetupProject, setGitHubSetupProject] = useState<Project | null>(null);
   const [showAzureDevOpsSetup, setShowAzureDevOpsSetup] = useState(false);
   const [azureDevOpsSetupProject, setAzureDevOpsSetupProject] = useState<Project | null>(null);
+
+  // AI Tools states
+  const [showTestGenerationDialog, setShowTestGenerationDialog] = useState(false);
+  const [showPromptOptimizerDialog, setShowPromptOptimizerDialog] = useState(false);
+  const [showCodePlaygroundDialog, setShowCodePlaygroundDialog] = useState(false);
+  const [showNaturalLanguageGitDialog, setShowNaturalLanguageGitDialog] = useState(false);
+  const [showVoiceControlDialog, setShowVoiceControlDialog] = useState(false);
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
 
@@ -472,19 +504,36 @@ export function Sidebar({
     setAzureDevOpsSetupProject(null);
   };
 
-  const _handleRemoveProject = async (projectId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    await removeProject(projectId);
-  };
-
   const handleNavClick = (view: SidebarView) => {
+    // Handle AI Tools that open dialogs instead of changing view
+    if (view === 'test-generation') {
+      openTestGenerationDialog();
+      return;
+    }
+    if (view === 'prompt-optimizer') {
+      openPromptOptimizerDialog();
+      return;
+    }
+    if (view === 'code-playground') {
+      openCodePlaygroundDialog();
+      return;
+    }
+    if (view === 'natural-language-git') {
+      setShowNaturalLanguageGitDialog(true);
+      return;
+    }
+    if (view === 'voice-control') {
+      setShowVoiceControlDialog(true);
+      return;
+    }
+    
+    // Handle regular view changes
     onViewChange?.(view);
   };
 
-  const toggleGroupExpansion = (groupId: string) => {
-    setExpandedGroups(prev => {
-      const newSet = new Set(prev);
+const toggleGroupExpansion = (groupId: string) => {
+    setExpandedGroups((prevSet) => {
+      const newSet = new Set(prevSet);
       if (newSet.has(groupId)) {
         newSet.delete(groupId);
       } else {
@@ -804,6 +853,13 @@ export function Sidebar({
         gitStatus={gitStatus}
         onGitInitialized={handleGitInitialized}
       />
+
+      {/* AI Tools Dialogs */}
+      {showTestGenerationDialog && <TestGenerationDialog />}
+      {showPromptOptimizerDialog && <PromptOptimizerDialog />}
+      {showCodePlaygroundDialog && <CodePlaygroundDialog />}
+      {showNaturalLanguageGitDialog && <NaturalLanguageGitDialog />}
+      {showVoiceControlDialog && <VoiceControlDialog />}
     </TooltipProvider>
   );
 }

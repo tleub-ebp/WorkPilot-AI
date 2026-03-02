@@ -1,0 +1,39 @@
+{
+  "title": "Contrôle Vocal",
+  "description": "Contrôlez WorkPilot avec votre voix - enregistrez des commandes et naviguez mains libres",
+  "recording": {
+    "level": "Niveau Audio",
+    "listening": "Écoute de votre commande..."
+  },
+  "processing": {
+    "level": "Traitement"
+  },
+  "status": {
+    "listening": "Écoute...",
+    "processing": "Traitement de la commande vocale...",
+    "error": "Erreur de Contrôle Vocal"
+  },
+  "instructions": {
+    "clickToRecord": "Cliquez sur le bouton micro pour commencer l'enregistrement",
+    "clickToStop": "Cliquez sur le bouton micro pour arrêter l'enregistrement"
+  },
+  "result": {
+    "streamingOutput": "Sortie de Traitement",
+    "transcript": "Transcription",
+    "command": "Commande Interprétée",
+    "action": "Action",
+    "parameters": "Paramètres"
+  },
+  "actions": {
+    "close": "Fermer",
+    "cancel": "Annuler",
+    "execute": "Exécuter la Commande",
+    "tryAgain": "Réessayer",
+    "copy": "Copier",
+    "copied": "Copié"
+  },
+  "errors": {
+    "noProject": "Veuillez sélectionner un projet pour utiliser le contrôle vocal",
+    "generic": "Une erreur est survenue lors du traitement vocal"
+  }
+}

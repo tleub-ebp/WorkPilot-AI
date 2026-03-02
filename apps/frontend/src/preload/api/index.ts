@@ -16,6 +16,8 @@ import { type ScreenshotAPI, createScreenshotAPI } from './screenshot-api';
 import { type QueueAPI, createQueueAPI } from './queue-api';
 import { type QualityAPI, createQualityAPI } from './modules/quality-api';
 import { type NaturalLanguageGitAPI, createNaturalLanguageGitAPI } from './natural-language-git-api';
+import { type PromptOptimizerAPI, createPromptOptimizerAPI } from './modules/prompt-optimizer-api';
+import { type CodePlaygroundAPI, createCodePlaygroundAPI } from './modules/code-playground-api';
 import { invokeIpc } from './modules/ipc-utils';
 import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
@@ -38,7 +40,9 @@ export interface ElectronAPI extends
   McpAPI,
   ProfileAPI,
   ScreenshotAPI,
-  NaturalLanguageGitAPI {
+  NaturalLanguageGitAPI,
+  PromptOptimizerAPI,
+  CodePlaygroundAPI {
   github: GitHubAPI;
   /** Queue routing API for rate limit recovery */
   queue: QueueAPI;
@@ -71,6 +75,8 @@ export const createElectronAPI = (): ElectronAPI => ({
   ...createProfileAPI(),
   ...createScreenshotAPI(),
   ...createNaturalLanguageGitAPI(),
+  ...createPromptOptimizerAPI(),
+  ...createCodePlaygroundAPI(),
   github: createGitHubAPI(),
   queue: createQueueAPI(),  // Queue routing for rate limit recovery
   quality: createQualityAPI(),  // Code quality analysis
