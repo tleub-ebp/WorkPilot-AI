@@ -18,6 +18,7 @@ import { type QualityAPI, createQualityAPI } from './modules/quality-api';
 import { type NaturalLanguageGitAPI, createNaturalLanguageGitAPI } from './natural-language-git-api';
 import { type PromptOptimizerAPI, createPromptOptimizerAPI } from './modules/prompt-optimizer-api';
 import { type CodePlaygroundAPI, createCodePlaygroundAPI } from './modules/code-playground-api';
+import { type ConflictPredictorAPI, createConflictPredictorAPI } from './modules/conflict-predictor-api';
 import { invokeIpc } from './modules/ipc-utils';
 import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
@@ -42,7 +43,8 @@ export interface ElectronAPI extends
   ScreenshotAPI,
   NaturalLanguageGitAPI,
   PromptOptimizerAPI,
-  CodePlaygroundAPI {
+  CodePlaygroundAPI,
+  ConflictPredictorAPI {
   github: GitHubAPI;
   /** Queue routing API for rate limit recovery */
   queue: QueueAPI;
@@ -77,6 +79,7 @@ export const createElectronAPI = (): ElectronAPI => ({
   ...createNaturalLanguageGitAPI(),
   ...createPromptOptimizerAPI(),
   ...createCodePlaygroundAPI(),
+  ...createConflictPredictorAPI(),
   github: createGitHubAPI(),
   queue: createQueueAPI(),  // Queue routing for rate limit recovery
   quality: createQualityAPI(),  // Code quality analysis

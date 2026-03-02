@@ -255,7 +255,7 @@ Mode collaboratif temps réel où l'IA code en parallèle du développeur sur le
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Le vrai pair programming avec une IA. Pas du copilot inline, du vrai travail parallèle coordonné.
 
-### 9. AI Prompt Optimizer 
+### 9. AI Prompt Optimizer ✅ Implémenté 
 
 Amélioration automatique des prompts utilisateurs pour garantir les meilleurs résultats possibles des agents IA.
 
@@ -348,7 +348,7 @@ cd apps/frontend
 npm test -- --run src/renderer/stores/__tests__/prompt-optimizer-store.test.ts
 ```
 
-### 10. Conflict Predictor
+### 10. Conflict Predictor ✅ Implémenté
 
 Détection proactive des conflits potentiels entre branches/worktrees actifs avant qu'ils ne surviennent.
 
@@ -356,6 +356,121 @@ Détection proactive des conflits potentiels entre branches/worktrees actifs ava
 - **Exploite :** Worktree isolation, semantic merge, agent state
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Prévenir plutôt que guérir. Élimine une des plus grosses frictions du dev parallèle.
+
+#### 🚀 Comment utiliser le Conflict Predictor
+
+Le Conflict Predictor est accessible via la navigation principale dans la section **"🤖 Outils IA"**.
+
+**Étape 1 — Accéder au Conflict Predictor**
+- Dans la barre latérale, cliquez sur **"🤖 Outils IA"** pour déplier la section
+- Cliquez sur **"Conflict Predictor"** (raccourci clavier : `C`)
+- La fenêtre du Conflict Predictor s'ouvre
+
+**Étape 2 — Lancer l'analyse**
+- Cliquez sur le bouton **"Analyze Conflicts"**
+- Le système analyse automatiquement :
+  - Tous les worktrees actifs du projet
+  - Les branches et leurs modifications
+  - Les fichiers modifiés dans chaque worktree
+  - Les zones de chevauchement potentielles
+
+**Étape 3 — Examiner les résultats**
+L'interface présente plusieurs onglets :
+
+**📊 Overview**
+- **Risk Assessment** : Évaluation globale du risque (LOW/MEDIUM/HIGH/CRITICAL)
+- **Statistiques** : Nombre de worktrees, de conflits, de fichiers modifiés
+- **Active Worktrees** : Liste des worktrees et branches actives
+- **Safe Merge Order** : Ordre de fusion recommandé pour minimiser les conflits
+
+**⚠️ Conflicts**
+- Liste détaillée des conflits détectés avec :
+  - **Niveau de risque** : Critical, High, Medium, Low avec icônes et couleurs
+  - **Fichiers concernés** : Chemins complets des fichiers en conflit
+  - **Worktrees impliqués** : Quels worktrees modifient les mêmes zones
+  - **Description** : Nature exacte du conflit
+  - **Stratégie de résolution** : Approche recommandée pour résoudre
+
+**📁 Files**
+- Vue complète de tous les fichiers modifiés avec :
+  - Type de modification (added/modified/deleted/renamed)
+  - Nombre de lignes ajoutées/supprimées
+  - Worktree d'origine
+
+**💡 Recommendations**
+- **Recommandations personnalisées** : Suggestions basées sur l'analyse
+- **High Risk Areas** : Zones nécessitant une attention particulière
+- **Safe Merge Order** : Séquence optimisée pour les fusions
+
+**Étape 4 — Exporter les résultats**
+- Cliquez sur **"Copy Report"** pour copier l'analyse complète
+- Le rapport inclut tous les détails pour documentation ou partage
+
+**Étape 5 — Ré-analyser si nécessaire**
+- Cliquez sur **"Re-analyze"** pour relancer l'analyse après des modifications
+- Le système met à jour automatiquement les résultats
+
+#### 🎯 Ce que le Conflict Predictor détecte
+
+**Types de conflits**
+- **Direct Overlap** : Modifications sur les mêmes lignes dans différents worktrees
+- **Structural Conflicts** : Changements de structure qui peuvent impacter d'autres modifications
+- **Dependency Conflicts** : Modifications de dépendances partagées
+- **Configuration Conflicts** : Changements dans les fichiers de configuration
+
+**Niveaux de risque**
+- 🔴 **Critical** : Conflits garantis nécessitant une intervention immédiate
+- 🟠 **High** : Forte probabilité de conflits avec impact significatif
+- 🟡 **Medium** : Conflits possibles avec impact modéré
+- 🟢 **Low** : Faible probabilité de conflits ou impact minimal
+
+#### 🎛️ Configuration avancée
+
+Le modèle IA utilisé par le Conflict Predictor est configurable :
+1. Allez dans **Paramètres** (⚙️)
+2. Section **"Feature Model Configuration"**
+3. Modifiez les réglages pour **"Conflict Predictor"** :
+   - **Modèle** : Choisissez le modèle LLM (Sonnet, Opus, Haiku, etc.)
+   - **Niveau de réflexion** : None, Low, Medium, High, ou Ultrathink
+
+#### 📈 Exemples d'utilisation
+
+**Scénario 1 — Développement parallèle**
+```
+Worktree A: Modifie src/auth/login.js (ajout nouvelle validation)
+Worktree B: Modifie src/auth/login.js (changement format email)
+→ Résultat : Conflit HIGH détecté avec stratégie de résolution
+```
+
+**Scénario 2 — Refactoring safe**
+```
+Worktree A: Refactor src/utils/helpers.js (renommer fonction)
+Worktree B: Ajoute src/utils/new-feature.js (nouveau fichier)
+→ Résultat : Pas de conflit, fusion safe
+```
+
+**Scénario 3 — Configuration partagée**
+```
+Worktree A: Met à jour package.json (nouvelle dépendance)
+Worktree B: Met à jour package.json (version différente)
+→ Résultat : Conflit CRITICAL sur gestion de versions
+```
+
+#### 🔧 Architecture technique
+
+Le Conflict Predictor utilise :
+- **Git worktrees** : Analyse isolée des branches
+- **Diff analysis** : Comparaison intelligente des modifications
+- **Semantic detection** : Compréhension du type de changements
+- **Risk scoring** : Évaluation probabiliste des conflits
+- **Resolution strategies** : Base de données de patterns de résolution
+
+#### 💡 Tips d'utilisation
+
+- **Analysez régulièrement** : Lancez une analyse après chaque session importante
+- **Suivez les recommandations** : L'ordre de fusion suggéré minimise les risques
+- **Documentez les conflits** : Utilisez "Copy Report" pour traçabilité
+- **Anticipez** : L'analyse avant de commencer gros travaux prévient les blocages
 
 ---
 

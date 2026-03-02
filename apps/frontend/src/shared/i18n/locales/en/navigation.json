@@ -9,7 +9,8 @@
     "integration": " Integration & Git",
     "planning": " Planning & Analysis",
     "knowledge": " Knowledge & Content",
-    "utilities": " Utilities"
+    "utilities": " Utilities",
+    "aiTools": " AI Tools"
   },
   "items": {
     "kanban": "Kanban Board",
@@ -33,7 +34,13 @@
     "refactoring": "Refactoring",
     "documentation": "Documentation",
     "costEstimator": "Cost Estimator",
-    "sessionHistory": "Session History"
+    "sessionHistory": "Session History",
+    "testGeneration": "Test Generation",
+    "promptOptimizer": "Prompt Optimizer",
+    "codePlayground": "Code Playground",
+    "dependencySentinel": "Dependency Sentinel",
+    "conflictPredictor": "Conflict Predictor",
+    "naturalLanguageGit": "Natural Language Git"
   },
   "actions": {
     "settings": "Settings",
