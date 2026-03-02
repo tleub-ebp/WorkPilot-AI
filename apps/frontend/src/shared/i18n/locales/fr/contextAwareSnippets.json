@@ -1,0 +1,59 @@
+{
+  "title": "Context-Aware Snippets",
+  "description": {
+    "label": "Description de l'extrait",
+    "placeholder": "Décrivez ce que vous voulez générer... (ex: 'fonction pour valider un email', 'composant de bouton avec loading state')"
+  },
+  "snippetType": {
+    "label": "Type d'extrait",
+    "options": {
+      "component": "Composant",
+      "function": "Fonction",
+      "class": "Classe",
+      "hook": "Hook",
+      "utility": "Utilitaire",
+      "api": "API",
+      "test": "Test"
+    },
+    "descriptions": {
+      "component": "Composant React/Vue/Angulaire avec props et état",
+      "function": "Fonction réutilisable avec paramètres et retour",
+      "class": "Définition de classe avec méthodes et propriétés",
+      "hook": "Hook personnalisé React avec état et effets",
+      "utility": "Fonction utilitaire pure pour des tâches communes",
+      "api": "Point de terminaison API avec gestion des erreurs",
+      "test": "Cas de test unitaire ou d'intégration"
+    }
+  },
+  "language": {
+    "label": "Langage de programmation",
+    "autoDetect": "Détecter automatiquement",
+    "autoDetectDescription": "Le langage sera détecté automatiquement à partir de la structure de votre projet",
+    "placeholder": "Sélectionnez un langage"
+  },
+  "status": {
+    "analyzing": "Analyse du contexte du projet...",
+    "generating": "Génération de l'extrait...",
+    "error": "Erreur de génération"
+  },
+  "result": {
+    "snippet": "Extrait généré",
+    "description": "Description",
+    "contextUsed": "Contexte utilisé",
+    "adaptations": "Adaptations du projet",
+    "reasoning": "Raisonnement",
+    "streamingOutput": "Sortie en direct"
+  },
+  "actions": {
+    "generate": "Générer l'extrait",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "copy": "Copier",
+    "copied": "Copié !",
+    "tryAgain": "Réessayer"
+  },
+  "errors": {
+    "noProject": "Veuillez sélectionner un projet pour analyser son contexte.",
+    "generic": "Une erreur est survenue lors de la génération de l'extrait."
+  }
+}

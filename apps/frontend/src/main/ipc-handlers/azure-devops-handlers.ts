@@ -73,15 +73,16 @@ export function registerAzureDevOpsHandlers(
   };
 
   /**
-   * Helper to fix project name if it's the repository name instead
+   * Helper to normalize project name (URL-decode if needed)
    */
-  const fixProjectName = (projectName: string | null | undefined): string => {
-    if (!projectName) return 'MéCa';
-    // Fix common mistakes: repository name instead of project name
-    if (projectName === 'MeCa Web' || projectName === 'MeCa%20Web') {
-      return 'MéCa';
+  const normalizeProjectName = (projectName: string | null | undefined): string | undefined => {
+    if (!projectName) return undefined;
+    // URL-decode project name if it was encoded (e.g., 'MeCa%20Web' → 'MeCa Web')
+    try {
+      return decodeURIComponent(projectName);
+    } catch {
+      return projectName;
     }
-    return projectName;
   };
 
   /**
@@ -121,8 +122,7 @@ try:
     # Get credentials from environment
     pat = os.getenv('AZURE_DEVOPS_PAT')
     org_url = os.getenv('AZURE_DEVOPS_ORG_URL')
-    # FORCE MéCa to prevent using incorrect system env var
-    project = 'MéCa'
+    project = os.getenv('AZURE_DEVOPS_PROJECT')
     
     if not pat or not org_url:
         print(json.dumps({'error': 'Azure DevOps not configured'}))
@@ -249,7 +249,8 @@ except Exception as e:
       if (config.pat) envOverrides.AZURE_DEVOPS_PAT = config.pat;
       if (config.orgUrl) envOverrides.AZURE_DEVOPS_ORG_URL = config.orgUrl;
       // Always set AZURE_DEVOPS_PROJECT to override any system env var
-      envOverrides.AZURE_DEVOPS_PROJECT = fixProjectName(config.projectName);
+      const normalizedProject = normalizeProjectName(config.projectName);
+      if (normalizedProject) envOverrides.AZURE_DEVOPS_PROJECT = normalizedProject;
       if (!config.pat || !config.orgUrl) {
         return {
           success: true,
@@ -274,7 +275,7 @@ except Exception as e:
           data: {
             connected: true,
             organizationUrl: config.orgUrl,
-            projectName: config.projectName || undefined,
+            projectName: normalizeProjectName(config.projectName),
           },
         };
       } catch (error: unknown) {
@@ -303,7 +304,8 @@ except Exception as e:
       const envOverrides: Record<string, string> = {};
       if (config.pat) envOverrides.AZURE_DEVOPS_PAT = config.pat;
       if (config.orgUrl) envOverrides.AZURE_DEVOPS_ORG_URL = config.orgUrl;
-      envOverrides.AZURE_DEVOPS_PROJECT = fixProjectName(config.projectName);
+      const normalizedProject = normalizeProjectName(config.projectName);
+      if (normalizedProject) envOverrides.AZURE_DEVOPS_PROJECT = normalizedProject;
 
       if (!config.pat || !config.orgUrl) {
         return {
@@ -324,7 +326,7 @@ except Exception as e:
         const repos = (await callAzureDevOpsPython(
           projectPath,
           'list_repositories',
-          { project: fixProjectName(config.projectName) },
+          { project: normalizeProjectName(config.projectName) },
           envOverrides
         )) as import('../../shared/types').AzureDevOpsRepository[];
 
@@ -437,7 +439,8 @@ except Exception as e:
       if (config.pat) envOverrides.AZURE_DEVOPS_PAT = config.pat;
       if (config.orgUrl) envOverrides.AZURE_DEVOPS_ORG_URL = config.orgUrl;
       // Always set AZURE_DEVOPS_PROJECT to override any system env var
-      envOverrides.AZURE_DEVOPS_PROJECT = fixProjectName(config.projectName);
+      const normalizedProject = normalizeProjectName(config.projectName);
+      if (normalizedProject) envOverrides.AZURE_DEVOPS_PROJECT = normalizedProject;
       if (!config.pat || !config.orgUrl) {
         return {
           success: false,
@@ -448,20 +451,8 @@ except Exception as e:
       try {
         const projectPath = path.join(project.path, project.autoBuildPath || '');
         
-        // Debug: Log what project value we're using
-        // FORCE MéCa if config contains "MeCa Web" (repository name instead of project)
-        let projectToUse = azureProject || config.projectName;
-        if (projectToUse === 'MeCa Web' || projectToUse === 'MeCa%20Web') {
-          projectToUse = 'MéCa';
-        }
-        console.log('[Azure DevOps] Debug info:');
-        console.log('  - azureProject param:', azureProject);
-        console.log('  - config.projectName:', config.projectName);
-        console.log('  - project.name:', project.name);
-        console.log('  - envOverrides.AZURE_DEVOPS_PROJECT:', envOverrides.AZURE_DEVOPS_PROJECT);
-        console.log('  - Will use project (after fix):', projectToUse);
-        
-        // Don't pass project param - let Python script use envOverrides or hardcoded value
+        const projectToUse = normalizeProjectName(azureProject || config.projectName);
+
         const items = (await callAzureDevOpsPython(projectPath, 'list_work_items', {
           project: projectToUse,
           item_types: itemTypes,
@@ -495,7 +486,8 @@ except Exception as e:
       if (config.pat) envOverrides.AZURE_DEVOPS_PAT = config.pat;
       if (config.orgUrl) envOverrides.AZURE_DEVOPS_ORG_URL = config.orgUrl;
       // Always set AZURE_DEVOPS_PROJECT to override any system env var
-      envOverrides.AZURE_DEVOPS_PROJECT = fixProjectName(config.projectName);
+      const normalizedProject = normalizeProjectName(config.projectName);
+      if (normalizedProject) envOverrides.AZURE_DEVOPS_PROJECT = normalizedProject;
       if (!config.pat || !config.orgUrl) {
         return { success: false, error: 'Azure DevOps not configured' };
       }
@@ -505,7 +497,7 @@ except Exception as e:
 
         // Get work items details
         const items = (await callAzureDevOpsPython(projectPath, 'list_work_items', {
-          project: fixProjectName(config.projectName),
+          project: normalizeProjectName(config.projectName),
           max_items: 1000,
         }, envOverrides)) as AzureDevOpsWorkItem[];
 
