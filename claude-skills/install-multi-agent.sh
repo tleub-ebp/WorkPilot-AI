@@ -53,6 +53,10 @@ install_claude_code() {
 # Claude Code Configuration EBP
 skills:
   - net-developer
+  - akka-net-patterns
+  - aspire-orchestration
+  - benchmark-dotnet
+  - testcontainers-integration
   - mcp-builder
   - webapp-testing
   - brand-guidelines
@@ -60,11 +64,15 @@ skills:
 
 agents:
   - net-architect
+  - bmad-net-architect
   - performance-analyst
 
 auto_invoke: true
 context_awareness: true
 business_focus: ebp
+net_version: 10
+performance_optimization: true
+modern_patterns: true
 EOF
     
     echo "✅ Claude Code configuré"
@@ -92,12 +100,19 @@ agents:
   auto_invoke: true
   personalities:
     - net-architect
+    - bmad-net-architect
     - performance-analyst
     - net-developer
+    - akka-net-specialist
+    - benchmark-designer
+    - testcontainers-expert
 
 business_context: ebp
 architecture_focus: clean_architecture
 performance_optimization: true
+net_version: 10
+modern_patterns: immutability,type_safety,performance
+distributed_systems: akka_net,aspire,testcontainers
 EOF
     
     echo "✅ GitHub Copilot (projet) configuré"
@@ -149,6 +164,9 @@ auto_load: true
 business_focus: ebp
 architecture_patterns: clean_architecture, ddd, microservices
 performance_monitoring: true
+net_version: 10
+modern_patterns: immutability,type_safety,performance
+distributed_systems: akka_net,aspire,testcontainers
 EOF
     
     echo "✅ OpenCode configuré"
@@ -170,7 +188,9 @@ install_cursor() {
     "enabled": true,
     "directory": "~/.cursor/skills",
     "auto_load": true,
-    "ebp_focus": true
+    "ebp_focus": true,
+    "net_version": 10,
+    "modern_patterns": true
   },
   "agents": {
     "enabled": true,
@@ -180,7 +200,9 @@ install_cursor() {
   "business_context": {
     "domain": "ebp",
     "architecture": "clean_architecture",
-    "performance": "optimized"
+    "performance": "optimized",
+    "net_version": 10,
+    "modern_patterns": "immutability,type_safety,performance"
   }
 }
 EOF
