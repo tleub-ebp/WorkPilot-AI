@@ -5,6 +5,8 @@
   "status": {
     "live": "LIVE",
     "offline": "OFFLINE",
+    "connecting": "CONNECTING...",
+    "reconnect": "Reconnect",
     "initializing": "Initializing...",
     "sessionStarted": "Session started",
     "sessionConfirmed": "Session confirmed",

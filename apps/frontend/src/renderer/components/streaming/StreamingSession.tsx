@@ -11,7 +11,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play, Pause, Square, MessageSquare, Download, Share2, Film, Clock, Code2 } from 'lucide-react';
+import { Play, Pause, Square, MessageSquare, Download, Share2, Film, Clock, Code2, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -58,102 +58,20 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
   const [progress, setProgress] = useState(0);
   const [currentStatus, setCurrentStatus] = useState('');
   const [chatInput, setChatInput] = useState('');
-  
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
+
   const wsRef = useRef<WebSocket | null>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const eventScrollRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef<number>(Date.now());
+  const retryTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
 
-  // WebSocket connection
-  useEffect(() => {
-    let connectionTimeout: NodeJS.Timeout;
-    let isMounted = true;
-    
-    // Prevent multiple connections
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      return;
-    }
-    
-    const connectWebSocket = () => {
-      if (!isMounted) return;
-      
-      const wsUrl = `ws://localhost:8765/stream/${sessionId}`;
-      const ws = new WebSocket(wsUrl);
-      
-      // Set a timeout for connection attempt
-      connectionTimeout = setTimeout(() => {
-        if (!isMounted) return;
-        if (ws.readyState === WebSocket.CONNECTING) {
-          ws.close(1006, 'Connection timeout');
-        }
-      }, 5000);
-      
-      ws.onopen = () => {
-        if (!isMounted) return;
-        
-        clearTimeout(connectionTimeout);
-        setIsConnected(true);
-        startTimeRef.current = Date.now();
-        
-        // Send session initialization message to ensure correct session ID
-        const initMessage = {
-          type: 'init_session',
-          session_id: sessionId
-        };
-        ws.send(JSON.stringify(initMessage));
-      };
-      
-      ws.onmessage = (event) => {
-        if (!isMounted) return;
-        
-        try {
-          const streamEvent: StreamingEvent = JSON.parse(event.data);
-          handleStreamingEvent(streamEvent);
-        } catch (error) {
-          console.error('❌ Error parsing WebSocket message:', error);
-        }
-      };
-      
-      ws.onerror = (error) => {
-        if (!isMounted) return;
-        
-        clearTimeout(connectionTimeout);
-        console.error('❌ WebSocket error:', error);
-        console.error('🔍 WebSocket state:', ws.readyState);
-        console.error('🔍 WebSocket URL:', ws.url);
-        setIsConnected(false);
-      };
-      
-      ws.onclose = (event) => {
-        if (!isMounted) return;
-        
-        clearTimeout(connectionTimeout);
-        setIsConnected(false);
-        
-        // NO automatic reconnection - let user manually reconnect
-      };
-      
-      wsRef.current = ws;
-    };
+  const MAX_AUTO_RETRIES = 5;
+  const RETRY_DELAY_MS = 3000;
 
-    // Wait a bit before connecting to ensure dialog is fully rendered
-    const initialTimeout = setTimeout(() => {
-      if (isMounted) {
-        connectWebSocket();
-      }
-    }, 500);
-
-    return () => {
-      isMounted = false;
-      if (initialTimeout) clearTimeout(initialTimeout);
-      if (connectionTimeout) clearTimeout(connectionTimeout);
-      if (wsRef.current) {
-        wsRef.current.close(1000, 'Component unmounted');
-      }
-    };
-  }, [sessionId]);
-
-  // Handle streaming events
+  // Handle streaming events - defined before connectWebSocket since it's referenced in ws.onmessage
   const handleStreamingEvent = useCallback((event: StreamingEvent) => {
     setEvents(prev => [...prev, event]);
 
@@ -161,25 +79,24 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
       case 'session_start':
         setCurrentStatus(t('streaming:status.sessionStarted'));
         break;
-        
+
       case 'session_confirmed':
         setCurrentStatus(t('streaming:status.sessionConfirmed'));
         break;
-        
+
       case 'code_change':
       case 'file_update':
       case 'file_operation':
         setCurrentFile(event.data.file_path);
         if (event.data.content) {
           setCurrentCode(event.data.content);
-        } else {
         }
         setSessionStats(prev => ({
           ...prev,
           filesChanged: prev.filesChanged + 1,
         }));
         break;
-        
+
       case 'command':
       case 'command_run':
         setSessionStats(prev => ({
@@ -187,30 +104,28 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
           commandsRun: prev.commandsRun + 1,
         }));
         break;
-        
+
       case 'command_output':
-        // Command output could be displayed in a console view
         break;
-        
+
       case 'test_run':
         setSessionStats(prev => ({
           ...prev,
           testsRun: prev.testsRun + 1,
         }));
         break;
-        
+
       case 'test_result':
-        // Test result could update the test status
         break;
-        
+
       case 'agent_thinking':
         setCurrentStatus(t('streaming:status.thinking', { thought: event.data.thinking.slice(0, 50) }));
         break;
-        
+
       case 'agent_response':
         setCurrentStatus(t('streaming:status.responding'));
         break;
-        
+
       case 'chat_message':
         setChatMessages(prev => [...prev, {
           author: event.data.author,
@@ -219,11 +134,10 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
           author_type: event.data.author_type,
         }]);
         break;
-        
+
       case 'progress_update':
         setProgress(event.data.progress);
         setCurrentStatus(event.data.status);
-        // Handle pause/resume state
         if (typeof event.data.is_paused === 'boolean') {
           setIsPaused(event.data.is_paused);
         }
@@ -234,7 +148,115 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
     if (eventScrollRef.current) {
       eventScrollRef.current.scrollTop = eventScrollRef.current.scrollHeight;
     }
-  }, []);
+  }, [t]);
+
+  // WebSocket connection function
+  const connectWebSocket = useCallback(() => {
+    if (!isMountedRef.current) return;
+
+    // Close existing connection if any
+    if (wsRef.current) {
+      wsRef.current.close(1000, 'Reconnecting');
+      wsRef.current = null;
+    }
+
+    setIsRetrying(true);
+    const wsUrl = `ws://localhost:8765/stream/${sessionId}`;
+    const ws = new WebSocket(wsUrl);
+
+    // Set a timeout for connection attempt
+    const connectionTimeout = setTimeout(() => {
+      if (!isMountedRef.current) return;
+      if (ws.readyState === WebSocket.CONNECTING) {
+        ws.close(1006, 'Connection timeout');
+      }
+    }, 5000);
+
+    ws.onopen = () => {
+      if (!isMountedRef.current) return;
+
+      clearTimeout(connectionTimeout);
+      setIsConnected(true);
+      setIsRetrying(false);
+      setRetryCount(0);
+      startTimeRef.current = Date.now();
+
+      // Send session initialization message to ensure correct session ID
+      const initMessage = {
+        type: 'init_session',
+        session_id: sessionId
+      };
+      ws.send(JSON.stringify(initMessage));
+    };
+
+    ws.onmessage = (event) => {
+      if (!isMountedRef.current) return;
+
+      try {
+        const streamEvent: StreamingEvent = JSON.parse(event.data);
+        handleStreamingEvent(streamEvent);
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+
+    ws.onerror = () => {
+      if (!isMountedRef.current) return;
+      clearTimeout(connectionTimeout);
+      setIsConnected(false);
+      setIsRetrying(false);
+    };
+
+    ws.onclose = () => {
+      if (!isMountedRef.current) return;
+
+      clearTimeout(connectionTimeout);
+      setIsConnected(false);
+      setIsRetrying(false);
+
+      // Auto-retry if under the limit
+      setRetryCount(prev => {
+        const newCount = prev + 1;
+        if (newCount <= MAX_AUTO_RETRIES) {
+          retryTimerRef.current = setTimeout(() => {
+            if (isMountedRef.current) {
+              connectWebSocket();
+            }
+          }, RETRY_DELAY_MS);
+        }
+        return newCount;
+      });
+    };
+
+    wsRef.current = ws;
+  }, [sessionId, handleStreamingEvent]);
+
+  // Manual reconnect handler
+  const handleReconnect = useCallback(() => {
+    setRetryCount(0);
+    connectWebSocket();
+  }, [connectWebSocket]);
+
+  // Initial WebSocket connection
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    // Wait a bit before connecting to ensure dialog is fully rendered
+    const initialTimeout = setTimeout(() => {
+      if (isMountedRef.current) {
+        connectWebSocket();
+      }
+    }, 500);
+
+    return () => {
+      isMountedRef.current = false;
+      if (initialTimeout) clearTimeout(initialTimeout);
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+      if (wsRef.current) {
+        wsRef.current.close(1000, 'Component unmounted');
+      }
+    };
+  }, [sessionId, connectWebSocket]);
 
   // Send chat message
   const sendChatMessage = useCallback(() => {
@@ -332,10 +354,21 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2" />
                 {t('streaming:status.live')}
               </>
+            ) : isRetrying ? (
+              <>
+                <RefreshCw className="w-3 h-3 mr-2 animate-spin" />
+                {t('streaming:status.connecting')}
+              </>
             ) : (
               t('streaming:status.offline')
             )}
           </Badge>
+          {!isConnected && !isRetrying && retryCount > MAX_AUTO_RETRIES && (
+            <Button variant="outline" size="sm" onClick={handleReconnect} className="gap-1">
+              <RefreshCw className="w-3 h-3" />
+              {t('streaming:status.reconnect')}
+            </Button>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
