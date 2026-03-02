@@ -40,7 +40,8 @@ import {
   Shield,
   TestTube,
   WandSparkles,
-  TrendingUp
+  TrendingUp,
+  Code
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { ScrollArea } from '@/components/ui';
@@ -72,6 +73,7 @@ import { usePromptOptimizerStore, openPromptOptimizerDialog } from '@/stores/pro
 import { useCodePlaygroundStore, openCodePlaygroundDialog } from '@/stores/code-playground-store';
 import { useNaturalLanguageGitStore, openNaturalLanguageGitDialog } from '@/stores/natural-language-git-store';
 import { useConflictPredictorStore, openConflictPredictorDialog } from '@/stores/conflict-predictor-store';
+import { useContextAwareSnippetsStore, openContextAwareSnippetsDialog } from '@/stores/context-aware-snippets-store';
 import { AddProjectModal } from './AddProjectModal';
 import { GitSetupModal } from './GitSetupModal';
 import { AzureDevOpsSetupModal } from './AzureDevOpsSetupModal';
@@ -85,10 +87,11 @@ import { PromptOptimizerDialog } from './prompt-optimizer/PromptOptimizerDialog'
 import { CodePlaygroundDialog } from './code-playground/CodePlaygroundDialog';
 import { NaturalLanguageGitDialog } from './natural-language-git/NaturalLanguageGitDialog';
 import { ConflictPredictorDialog } from './conflict-predictor/ConflictPredictorDialog';
+import { ContextAwareSnippetsDialog } from './context-aware-snippets/ContextAwareSnippetsDialog';
 import { VoiceControlDialog } from './voice-control/VoiceControlDialog';
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets';
 
 interface SidebarProps {
   onSettingsClick: () => void;
@@ -145,6 +148,7 @@ const navGroups: NavGroup[] = [
     items: [
       { id: 'test-generation', labelKey: 'navigation:items.testGeneration', icon: TestTube, shortcut: 'T' },
       { id: 'prompt-optimizer', labelKey: 'navigation:items.promptOptimizer', icon: WandSparkles, shortcut: 'P' },
+      { id: 'context-aware-snippets', labelKey: 'navigation:items.contextAwareSnippets', icon: Code, shortcut: 'S' },
       { id: 'code-playground', labelKey: 'navigation:items.codePlayground', icon: Zap, shortcut: 'G' },
       { id: 'dependency-sentinel', labelKey: 'navigation:items.dependencySentinel', icon: Shield, shortcut: 'D' },
       { id: 'conflict-predictor', labelKey: 'navigation:items.conflictPredictor', icon: GitMerge, shortcut: 'C' },
@@ -235,6 +239,7 @@ export function Sidebar({
   // AI Tools states
   const [showTestGenerationDialog, setShowTestGenerationDialog] = useState(false);
   const [showPromptOptimizerDialog, setShowPromptOptimizerDialog] = useState(false);
+  const [showContextAwareSnippetsDialog, setShowContextAwareSnippetsDialog] = useState(false);
   const [showCodePlaygroundDialog, setShowCodePlaygroundDialog] = useState(false);
   const [showConflictPredictorDialog, setShowConflictPredictorDialog] = useState(false);
   const [showNaturalLanguageGitDialog, setShowNaturalLanguageGitDialog] = useState(false);
@@ -516,6 +521,10 @@ export function Sidebar({
     }
     if (view === 'prompt-optimizer') {
       openPromptOptimizerDialog();
+      return;
+    }
+    if (view === 'context-aware-snippets') {
+      openContextAwareSnippetsDialog();
       return;
     }
     if (view === 'code-playground') {
@@ -865,6 +874,7 @@ const toggleGroupExpansion = (groupId: string) => {
       {/* AI Tools Dialogs */}
       {showTestGenerationDialog && <TestGenerationDialog />}
       {showPromptOptimizerDialog && <PromptOptimizerDialog />}
+      {showContextAwareSnippetsDialog && <ContextAwareSnippetsDialog />}
       {showCodePlaygroundDialog && <CodePlaygroundDialog />}
       {showConflictPredictorDialog && <ConflictPredictorDialog />}
       {showNaturalLanguageGitDialog && <NaturalLanguageGitDialog />}

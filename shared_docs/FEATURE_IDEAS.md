@@ -485,7 +485,7 @@ Review en temps réel pendant que le dev code, pas après.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Shift-left ultime. Les problèmes sont détectés à l'écriture, pas à la review.
 
-### 11. Auto-Refactor Agent
+### 11. Auto-Refactor Agent ✅ Implémenté
 
 Détection continue de code smells, dette technique et patterns obsolètes avec refactoring autonome.
 
@@ -493,6 +493,171 @@ Détection continue de code smells, dette technique et patterns obsolètes avec 
 - **Exploite :** Agent coder, worktree isolation, QA reviewer
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La dette technique se réduit toute seule.
+
+#### 🛠️ Comment utiliser l'Auto-Refactor Agent
+
+L'Auto-Refactor Agent est maintenant disponible dans l'interface WorkPilot AI ! Voici comment l'utiliser :
+
+##### 🚀 Accès à l'Auto-Refactor Agent
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"Auto-Refactor"** dans le groupe "AI Tools" (icône 🔄)
+2. **Ouverture** : Une boîte de dialogue modale s'ouvre avec les options d'analyse et de configuration
+
+##### ⚙️ Configuration de l'analyse
+
+**Exécution Automatique**
+- Activez cette option pour que l'agent exécute automatiquement les refactorings
+- ⚠️ **Attention** : Cette option modifiera directement votre code. Utilisez avec prudence.
+- Par défaut, l'agent génère uniquement un plan de refactoring pour validation
+
+**Modèle IA**
+- Choisissez le modèle LLM pour l'analyse :
+  - **claude-3.5-sonnet** : Modèle équilibré pour l'analyse de code
+  - **claude-3.5-haiku** : Rapide pour les analyses simples
+  - **claude-3-opus** : Haute précision pour les projets complexes
+  - **gpt-4 / gpt-4-turbo** : Alternatives OpenAI
+
+**Niveau de Réflexion**
+- Ajustez la profondeur d'analyse :
+  - **Aucun** : Analyse rapide et superficielle
+  - **Faible** : Analyse basique des problèmes évidents
+  - **Moyen** : Analyse équilibrée (recommandé)
+  - **Élevé** : Analyse approfondie avec plus de contexte
+  - **Ultra-Réflexion** : Analyse exhaustive (plus lent)
+
+##### 📋 Processus d'analyse
+
+**Étape 1 — Lancer l'analyse**
+- Cliquez sur **"Analyser"** pour une analyse simple
+- Cliquez sur **"Exécuter"** pour une analyse avec exécution automatique
+- L'agent scanne votre codebase à la recherche de problèmes
+
+**Étape 2 — Surveillance de la progression**
+- Suivez l'analyse en temps réel avec la sortie en direct
+- Les statuts indiquent les phases : "Analyse...", "Génération du plan...", "Exécution..."
+- L'analyse peut prendre plusieurs minutes selon la taille du projet
+
+**Étape 3 — Résultats de l'analyse**
+
+**📊 Résumé**
+- **Problèmes Identifiés** : Nombre total d'issues trouvées
+- **Éléments de Refactoring** : Actions de refactoring suggérées
+- **Quick Wins** : Corrections simples à fort impact
+- **Niveau de Risque** : Évaluation du risque global (Low/Medium/High/Critical)
+
+**🔍 Résultats d'Analyse Détaillés**
+- **Code Smells** : Fonctions trop longues, classes volumineuses, code dupliqué
+- **Dette Technique** : Patterns obsolètes, vulnérabilités, problèmes de performance
+- **Issues Architecturales** : Couplage fort, violations SOLID, incohérences
+
+**📋 Plan de Refactoring**
+- **Priorisation** : Actions classées par impact et complexité
+- **Dépendances** : Ordre suggéré pour éviter les conflits
+- **Stratégies** : Approches spécifiques pour chaque type de refactoring
+
+**⚡ Résultats d'Exécution** (si auto-exécution activée)
+- **Fichiers Modifiés** : Liste des fichiers impactés
+- **Changes Appliqués** : Détail des modifications effectuées
+- **Statut de Succès** : Résultat de chaque opération
+
+##### 🎯 Types d'issues détectées
+
+**Code Smells**
+- **Long Methods** : Fonctions et méthodes trop longues (>50 lignes)
+- **Large Classes** : Classes avec trop de responsabilités
+- **Duplicate Code** : Code copié-collé à refactoriser
+- **Complex Conditionals** : Logique imbriquée complexe
+- **Magic Numbers** : Nombres et chaînes hard-codées
+
+**Dette Technique**
+- **Deprecated Patterns** : Utilisation de méthodes/patterns obsolètes
+- **Security Issues** : Vulnérabilités potentielles
+- **Performance Bottlenecks** : Points de contention identifiés
+- **Missing Error Handling** : Absence de gestion d'erreurs
+- **Hard-coded Values** : Configuration externalisée nécessaire
+
+**Issues Architecturales**
+- **Tight Coupling** : Dépendances excessives entre modules
+- **SOLID Violations** : Non-respect des principes SOLID
+- **Inconsistent Patterns** : Styles de code incohérents
+- **Missing Abstractions** : Opportunités d'abstraction manquées
+
+##### 🎛️ Bonnes pratiques
+
+**Avant l'analyse**
+- **Commit votre code** : Assurez-vous d'avoir un point de restauration
+- **Désactivez l'auto-exécution** : Pour les premières utilisations
+- **Vérifiez les .gitignore** : Évitez d'analyser les fichiers temporaires
+
+**Pendant l'analyse**
+- **Surveillez la sortie** : Vérifiez les messages d'erreur ou d'avertissement
+- **Notez les quick wins** : Priorisez les corrections simples
+- **Documentez les décisions** : Gardez trace des choix de refactoring
+
+**Après l'analyse**
+- **Revoyez le plan** : Validez chaque action proposée
+- **Testez progressivement** : Appliquez les changements par lots
+- **Mesurez l'impact** : Vérifiez que les améliorations sont effectives
+
+##### 🔄 En cas d'erreur
+
+**Erreurs courantes**
+- **Rate limit** : Trop de requêtes API. Attendez quelques minutes.
+- **Authentication** : Vérifiez vos credentials dans les Paramètres
+- **Memory issues** : Projet trop volumineux. Essayez avec "Niveau de Réflexion" plus bas.
+
+**Solutions**
+- Cliquez sur **"Réessayer"** pour relancer l'analyse
+- Vérifiez la configuration du modèle et des clés API
+- Réduisez la portée d'analyse si nécessaire
+
+##### 🛠️ Architecture technique
+
+L'Auto-Refactor Agent suit le flux suivant :
+1. **Frontend** : Le composant `AutoRefactorDialog` envoie la requête via IPC
+2. **Main Process** : Le service `AutoRefactorService` lance le runner Python
+3. **Backend** : Le runner `auto_refactor_runner.py` analyse le codebase
+4. **Agent IA** : Le `CoderAgent` génère et exécute les refactorings
+5. **Résultats** : Structure JSON complète avec analyse, plan et exécution
+
+##### 🧪 Tests
+
+Pour exécuter les tests de cette fonctionnalité :
+
+```bash
+# Tests backend (Python)
+cd apps/backend
+.venv/bin/pytest tests/test_auto_refactor_runner.py -v
+
+# Tests frontend (Vitest)
+cd apps/frontend
+npm test -- --run src/renderer/stores/__tests__/auto-refactor-store.test.ts
+```
+
+##### 📈 Métriques et monitoring
+
+L'agent fournit des métriques détaillées :
+- **Taux de détection** : Pourcentage d'issues identifiées
+- **Complexité des refactorings** : Estimation de l'effort requis
+- **Impact sur la qualité** : Amélioration attendue du code
+- **Risques identifiés** : Évaluation probabiliste des breaking changes
+
+##### 💡 Tips d'utilisation avancée
+
+**Pour les grands projets**
+- Utilisez le niveau de réflexion "Moyen" pour un bon équilibre
+- Désactivez l'auto-exécution pour valider chaque changement
+- Concentrez-vous sur les quick wins pour un impact rapide
+
+**Pour les petits projets**
+- Le niveau "Élevé" donne les meilleurs résultats
+- L'auto-exécution est généralement sûre
+- Profitez-en pour nettoyer la dette technique accumulée
+
+**Intégration CI/D**
+- Intégrez l'agent dans votre pipeline de build
+- Utilisez les résultats pour améliorer les guidelines de code
+- Automatisez les corrections simples et récurrentes
 
 ### 12. Pipeline Generator
 
@@ -655,7 +820,7 @@ Manipuler git en langage naturel directement depuis l'interface.
 - Support des commandes Git les plus courantes
 - Gestion d'erreurs et streaming en temps réel
 
-### 15. Context-Aware Snippets
+### 15. Context-Aware Snippets ✅ Implémenté
 
 Snippets intelligents qui s'adaptent au style et aux conventions du projet.
 
@@ -663,6 +828,137 @@ Snippets intelligents qui s'adaptent au style et aux conventions du projet.
 - **Exploite :** Context system, Memory (Graphiti), project analysis
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Chaque snippet "semble écrit par quelqu'un qui connaît le projet".
+
+#### 🧠 Comment utiliser les Context-Aware Snippets
+
+Les Context-Aware Snippets sont maintenant disponibles dans l'interface WorkPilot AI ! Voici comment les utiliser :
+
+##### 🚀 Accès aux Context-Aware Snippets
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"🤖 Outils IA"** pour déplier la section
+2. **Sélection** : Cliquez sur **"Context-Aware Snippets"** (raccourci clavier : `S`)
+3. **Ouverture** : Une boîte de dialogue modale s'ouvre avec les options de génération
+
+##### 📝 Utilisation pas à pas
+
+**Étape 1 — Choisir le type d'extrait**
+- Sélectionnez le type de snippet dans le menu déroulant :
+  - **Composant** : Composant React/Vue/Angulaire avec props et état
+  - **Fonction** : Fonction réutilisable avec paramètres et retour
+  - **Classe** : Définition de classe avec méthodes et propriétés
+  - **Hook** : Hook personnalisé React avec état et effets
+  - **Utilitaire** : Fonction utilitaire pure pour des tâches communes
+  - **API** : Point de terminaison API avec gestion des erreurs
+  - **Test** : Cas de test unitaire ou d'intégration
+
+**Étape 2 — Décrire l'extrait souhaité**
+- Entrez une description détaillée de ce que vous voulez générer
+- Soyez spécifique sur les fonctionnalités et le comportement attendu
+- Exemples :
+  - *"fonction pour valider un email avec regex"*
+  - *"composant de bouton avec loading state et désactivation"*
+  - *"hook personnalisé pour gérer le localStorage"*
+  - *"classe pour gérer les erreurs HTTP"*
+
+**Étape 3 — Configurer le langage**
+- **Auto-détection** : Laissez le système détecter automatiquement le langage depuis votre projet
+- **Manuel** : Sélectionnez manuellement le langage (JavaScript, TypeScript, Python, etc.)
+
+**Étape 4 — Lancer la génération**
+- Cliquez sur le bouton **"Générer l'extrait"** (icône 💻)
+- L'IA analyse votre projet et génère un snippet adapté à votre contexte
+- Suivez la progression en temps réel avec les messages de statut
+
+**Étape 5 — Utiliser le résultat**
+Une fois la génération terminée, vous obtenez :
+- 📄 **Le snippet généré** : Code complet et fonctionnel
+- 📝 **Description** : Ce que fait le snippet
+- 🏷️ **Contexte utilisé** : Éléments du projet analysés
+- 🔧 **Adaptations** : Modifications faites pour votre projet
+- 💡 **Raisonnement** : Pourquoi le snippet est conçu ainsi
+
+##### 🎯 Ce que l'IA analyse et adapte
+
+**Conventions de code**
+- Style de nommage (camelCase, PascalCase, etc.)
+- Formatage (indentation, quotes, semicolons)
+- Organisation des imports et dépendances
+
+**Patterns du projet**
+- Frameworks et bibliothèques utilisés
+- Structure de composants existants
+- Hooks et utilitaires personnalisés
+- Patterns d'erreur et de logging
+
+**Imports et dépendances**
+- Imports existants dans le projet
+- Bibliothèques disponibles
+- Configuration ESLint/Prettier
+- Style guide du projet
+
+##### 🎛️ Configuration avancée
+
+Le modèle IA et le niveau de réflexion utilisés par les snippets sont configurables :
+1. Allez dans **Paramètres** (⚙️)
+2. Section **"Feature Model Configuration"**
+3. Modifiez les réglages pour **"Context-Aware Snippets"** :
+   - **Modèle** : Choisissez le modèle LLM (Sonnet, Opus, Haiku, etc.)
+   - **Niveau de réflexion** : None, Low, Medium, High, ou Ultrathink
+
+##### 🔄 Exemples d'utilisation
+
+**Composant React**
+```
+Type: Composant
+Description: "bouton avec loading state et validation"
+Résultat: Composant Button avec props, état de chargement, et gestion des erreurs adapté au style du projet
+```
+
+**Fonction utilitaire**
+```
+Type: Fonction  
+Description: "valider un email avec regex et messages d'erreur"
+Résultat: Fonction pure avec regex, messages d'erreur localisés, et types TypeScript si le projet les utilise
+```
+
+**Hook personnalisé**
+```
+Type: Hook
+Description: "hook pour gérer les appels API avec loading et error"
+Résultat: Hook custom utilisant useState, useEffect, et les patterns d'API du projet
+```
+
+##### 🛠️ Architecture technique
+
+Les Context-Aware Snippets suivent le flux suivant :
+1. **Frontend** : Le composant `ContextAwareSnippetsDialog` envoie la requête via IPC
+2. **Main process** : Le service `ContextAwareSnippetsService` lance le runner Python
+3. **Backend** : Le runner `context_aware_snippets_runner.py` analyse le projet et génère le snippet
+4. **Analyse** : Détection des langages, frameworks, conventions et patterns
+5. **Génération** : Utilisation du Claude Agent SDK avec le contexte enrichi
+6. **Streaming** : Les résultats sont streamés en temps réel vers l'UI
+
+##### 🧪 Tests
+
+Pour exécuter les tests de cette fonctionnalité :
+
+```bash
+# Tests backend (Python)
+cd apps/backend
+.venv/bin/pytest tests/context_aware_snippets_service.py -v
+
+# Tests frontend (Vitest)
+cd apps/frontend
+npm test -- --run src/renderer/stores/__tests__/context-aware-snippets-store.test.ts
+npm test -- --run src/renderer/components/context-aware-snippets/__tests__/ContextAwareSnippetsDialog.test.tsx
+```
+
+##### 💡 Tips d'utilisation
+
+- **Soyez spécifiques** : Plus votre description est détaillée, meilleur sera le résultat
+- **Utilisez l'auto-détection** : Laissez le système détecter le langage pour une meilleure adaptation
+- **Vérifiez les imports** : Le snippet utilisera les imports et patterns de votre projet
+- **Itérez si nécessaire** : N'hésitez pas à affiner la description pour obtenir exactement ce que vous voulez
 
 ---
 

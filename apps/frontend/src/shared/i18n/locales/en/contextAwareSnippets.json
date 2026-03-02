@@ -1,0 +1,59 @@
+{
+  "title": "Context-Aware Snippets",
+  "description": {
+    "label": "Snippet Description",
+    "placeholder": "Describe what you want to generate... (e.g., 'function to validate email', 'button component with loading state')"
+  },
+  "snippetType": {
+    "label": "Snippet Type",
+    "options": {
+      "component": "Component",
+      "function": "Function",
+      "class": "Class",
+      "hook": "Hook",
+      "utility": "Utility",
+      "api": "API",
+      "test": "Test"
+    },
+    "descriptions": {
+      "component": "React/Vue/Angular component with props and state",
+      "function": "Reusable function with parameters and return",
+      "class": "Class definition with methods and properties",
+      "hook": "Custom React hook with state and effects",
+      "utility": "Pure utility function for common tasks",
+      "api": "API endpoint with error handling",
+      "test": "Unit or integration test case"
+    }
+  },
+  "language": {
+    "label": "Programming Language",
+    "autoDetect": "Auto-detect",
+    "autoDetectDescription": "Language will be automatically detected from your project structure",
+    "placeholder": "Select a language"
+  },
+  "status": {
+    "analyzing": "Analyzing project context...",
+    "generating": "Generating snippet...",
+    "error": "Generation error"
+  },
+  "result": {
+    "snippet": "Generated Snippet",
+    "description": "Description",
+    "contextUsed": "Context Used",
+    "adaptations": "Project Adaptations",
+    "reasoning": "Reasoning",
+    "streamingOutput": "Live Output"
+  },
+  "actions": {
+    "generate": "Generate Snippet",
+    "cancel": "Cancel",
+    "close": "Close",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "tryAgain": "Try Again"
+  },
+  "errors": {
+    "noProject": "Please select a project to analyze its context.",
+    "generic": "An error occurred while generating the snippet."
+  }
+}

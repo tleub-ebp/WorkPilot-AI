@@ -42,6 +42,8 @@ interface ImportConfirmDialogProps {
   targetColumn: TaskStatus | null;
   isImporting: boolean;
   onConfirm: (requireReviewBeforeCoding: boolean) => void;
+  /** Called when the user explicitly cancels (closes the side panel too) */
+  onCancel?: () => void;
 }
 
 export function ImportConfirmDialog({
@@ -51,6 +53,7 @@ export function ImportConfirmDialog({
   targetColumn,
   isImporting,
   onConfirm,
+  onCancel,
 }: ImportConfirmDialogProps) {
   const { t } = useTranslation(['settings', 'tasks', 'common']);
   const [requireReviewBeforeCoding, setRequireReviewBeforeCoding] = useState(false);
@@ -138,7 +141,10 @@ export function ImportConfirmDialog({
         <AlertDialogFooter>
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() => {
+              onOpenChange(false);
+              onCancel?.();
+            }}
             disabled={isImporting}
           >
             {t('common:buttons.cancel')}

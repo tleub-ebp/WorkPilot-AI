@@ -1,0 +1,61 @@
+{
+  "title": "Auto-Refactor Agent",
+  "description": "Analyze your codebase for code smells, technical debt, and outdated patterns, then generate and execute automatic refactoring plans.",
+  "config": {
+    "autoExecute": {
+      "label": "Auto Execute",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "warning": "⚠️ Auto execution will directly modify your code. Use with caution."
+    },
+    "model": {
+      "label": "AI Model"
+    },
+    "thinkingLevel": {
+      "label": "Thinking Level",
+      "options": {
+        "none": "None",
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "ultrathink": "Ultra-Think"
+      }
+    }
+  },
+  "status": {
+    "analyzing": "Analyzing codebase...",
+    "executing": "Executing refactoring...",
+    "error": "Analysis error"
+  },
+  "errors": {
+    "noProject": "No project selected. Please select a project before continuing.",
+    "generic": "An error occurred during analysis. Please try again."
+  },
+  "actions": {
+    "close": "Close",
+    "analyze": "Analyze",
+    "execute": "Execute",
+    "cancel": "Cancel",
+    "tryAgain": "Try Again",
+    "copy": "Copy",
+    "copied": "Copied"
+  },
+  "result": {
+    "streamingOutput": "Live Output",
+    "analysis": {
+      "title": "Analysis Results"
+    },
+    "plan": {
+      "title": "Refactoring Plan"
+    },
+    "execution": {
+      "title": "Execution Results"
+    }
+  },
+  "summary": {
+    "issuesFound": "Issues Found",
+    "refactoringItems": "Refactoring Items",
+    "quickWins": "Quick Wins",
+    "riskLevel": "Risk Level"
+  }
+}

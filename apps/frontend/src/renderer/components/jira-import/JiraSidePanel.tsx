@@ -55,9 +55,13 @@ export function JiraSidePanel({
     if (!open) return;
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        onOpenChange(false);
-      }
+      const target = event.target as Node;
+      // Don't close if clicking inside the panel
+      if (panelRef.current && panelRef.current.contains(target)) return;
+      // Don't close if clicking inside a dialog/alert dialog (e.g., ImportConfirmDialog portal)
+      const targetEl = target instanceof Element ? target : target.parentElement;
+      if (targetEl?.closest('[role="alertdialog"], [role="dialog"], [data-radix-portal]')) return;
+      onOpenChange(false);
     };
 
     document.addEventListener('mousedown', handleClickOutside);

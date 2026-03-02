@@ -2458,6 +2458,11 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         targetColumn={importConfirmDialog.targetColumn}
         isImporting={importConfirmDialog.isImporting}
         onConfirm={handleImportConfirm}
+        onCancel={() => {
+          // Close the side panel when user cancels the import dialog
+          setAzureDevOpsPanelOpen(false);
+          setJiraPanelOpen(false);
+        }}
       />
 
       {/* PR Files Modal */}
