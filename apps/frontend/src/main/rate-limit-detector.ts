@@ -61,8 +61,10 @@ const AUTH_FAILURE_PATTERNS = [
   // Match 401 status codes in structured error output
   /status[:\s]+401/i,
   /HTTP\s*401/i,
-  // Match specific error prefixes that indicate actual errors (not AI discussion)
-  /Error:\s*.*(?:unauthorized|authentication|invalid\s*token)/i,
+  // Match specific error prefixes that indicate actual API errors (not AI discussion or spec content).
+  // Require "Error:" to be at the start of a line to avoid matching mid-sentence error discussions.
+  // Use non-greedy .* to prevent matching across long lines of AI-generated content.
+  /^Error:\s*.*?(?:unauthorized|authentication_error|invalid\s*(?:bearer\s+)?token)/im,
   // Match · Please run /login format from Claude CLI
   /·\s*Please\s+run\s+\/login/i,
 ];
@@ -289,8 +291,11 @@ function classifyAuthFailureType(output: string): 'missing' | 'invalid' | 'expir
   if (/expired|session\s*expired|obtain\s*(a\s*)?new\s*token|refresh\s*(your\s*)?(existing\s*)?token/.test(lowerOutput)) {
     return 'expired';
   }
-  // Check for invalid auth - includes 401, authentication_error, unauthorized
-  if (/invalid|unauthorized|denied|401|authentication_error/.test(lowerOutput)) {
+  // Check for invalid auth - MUST be specific to actual auth errors.
+  // IMPORTANT: Do NOT match the bare word "invalid" — it appears in many non-auth contexts
+  // like "Plan created but invalid", "Script output invalid", validation errors, etc.
+  // Only match auth-specific phrases.
+  if (/invalid\s*(bearer\s+)?token|invalid\s*credentials|invalid\s*api[_\s]*key|invalid\s*oauth|unauthorized|access\s*denied|authentication_error|\b401\b/.test(lowerOutput)) {
     return 'invalid';
   }
   return 'unknown';
@@ -613,8 +618,21 @@ export function getBestAvailableProfileEnv(): BestProfileEnvResult {
   // in the environment. Without this, the backend falls back to reading
   // .credentials.json which may contain an expired token, causing 401 errors.
   const activeEnv = profileManager.getProfileEnv(activeProfile.id);
+  const cleanEnv = ensureCleanProfileEnv(activeEnv);
+
+  // Always log auth env for agent processes (critical for diagnosing 401 errors)
+  console.warn('[RateLimitDetector] Agent process env:', {
+    profileId: activeProfile.id,
+    profileName: activeProfile.name,
+    CLAUDE_CONFIG_DIR: cleanEnv.CLAUDE_CONFIG_DIR || '(not set)',
+    hasOAuthToken: !!cleanEnv.CLAUDE_CODE_OAUTH_TOKEN,
+    tokenFingerprint: cleanEnv.CLAUDE_CODE_OAUTH_TOKEN
+      ? `${cleanEnv.CLAUDE_CODE_OAUTH_TOKEN.slice(0, 8)}...${cleanEnv.CLAUDE_CODE_OAUTH_TOKEN.slice(-4)}`
+      : '(none)',
+  });
+
   return {
-    env: ensureCleanProfileEnv(activeEnv),
+    env: cleanEnv,
     profileId: activeProfile.id,
     profileName: activeProfile.name,
     wasSwapped: false

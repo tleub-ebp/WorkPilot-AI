@@ -17,6 +17,8 @@ import { detectRateLimit, createSDKRateLimitInfo, getBestAvailableProfileEnv, de
 import { getAPIProfileEnv } from '../services/profile';
 import { projectStore } from '../project-store';
 import { getClaudeProfileManager } from '../claude-profile-manager';
+import { ensureValidToken, markAgentRunning, markAgentStopped } from '../claude-profile/token-refresh';
+import { clearKeychainCache } from '../claude-profile/credential-utils';
 import { parsePythonCommand, validatePythonPath } from '../python-detector';
 import { pythonEnvManager, getConfiguredPythonPath } from '../python-env-manager';
 import { buildMemoryEnvVars } from '../memory-env-builder';
@@ -309,6 +311,19 @@ export class AgentProcessManager {
 
   private handleAuthFailure(taskId: string, allOutput: string): boolean {
     appLog.info('[AgentProcess] No rate limit detected - checking for auth failure');
+
+    // FALSE POSITIVE GUARD: If the process output contains multiple phase completion
+    // markers, it means the auth was working fine for earlier phases. The failure is
+    // likely from something else (rate limit, model issue, validation error, etc.)
+    // not an authentication problem. The auth patterns can match AI-generated content
+    // that DISCUSSES authentication topics (e.g., in specs about auth features).
+    const phaseMarkerCount = (allOutput.match(/__EXEC_PHASE__/g) || []).length;
+    if (phaseMarkerCount >= 3) {
+      appLog.info('[AgentProcess] Skipping auth failure check: output contains', phaseMarkerCount,
+        'phase markers — auth was working for earlier phases. Process failure is likely from another cause.');
+      return false;
+    }
+
     const authFailureDetection = detectAuthFailure(allOutput);
 
     if (!authFailureDetection.isAuthFailure) {
@@ -599,18 +614,75 @@ export class AgentProcessManager {
       spawnId
     });
 
+    // CRITICAL: Force-refresh OAuth token BEFORE reading credentials for env setup.
+    //
+    // Why forceRefresh: true?
+    // A token can be revoked on Anthropic's side while its local expiresAt timestamp
+    // still says it's valid. This happens when:
+    // - The UsageMonitor previously refreshed the token mid-run (Bug #8, now fixed)
+    // - The user authenticated from another device/session
+    // - Any other process called the refresh endpoint
+    //
+    // By force-refreshing, we exchange the refresh_token for a guaranteed-fresh access_token
+    // BEFORE the agent process starts. This eliminates the "revoked but not expired" gap.
+    //
+    // If the refresh_token is also revoked (invalid_grant), the error code is propagated
+    // and the UI should prompt re-authentication.
+    try {
+      const profileManager = getClaudeProfileManager();
+      const activeProfile = profileManager.getActiveProfile();
+      if (activeProfile?.configDir) {
+        const tokenResult = await ensureValidToken(activeProfile.configDir, undefined, { forceRefresh: true });
+        if (tokenResult.wasRefreshed) {
+          // Clear credential cache so getProfileEnv() reads the fresh token, not a stale cached one
+          clearKeychainCache(activeProfile.configDir);
+          appLog.warn('[AgentProcess] Force-refreshed OAuth token before agent spawn for profile:', activeProfile.name,
+            '| new fingerprint:', tokenResult.token ? `${tokenResult.token.slice(0, 8)}...${tokenResult.token.slice(-4)}` : '(none)');
+        } else if (tokenResult.errorCode === 'invalid_grant' || tokenResult.errorCode === 'invalid_client') {
+          // Permanent error — the refresh_token is also revoked. User must re-authenticate.
+          appLog.error('[AgentProcess] PERMANENT TOKEN ERROR:', tokenResult.error,
+            '- the refresh token is revoked. User must re-authenticate from the Accounts page.');
+          // Still proceed — will fail with 401, but the error handling will surface the re-auth prompt
+        } else if (tokenResult.error) {
+          appLog.warn('[AgentProcess] Token refresh warning:', tokenResult.error, '- proceeding with existing credentials');
+        }
+      }
+    } catch (error) {
+      // Non-fatal: if refresh fails, we still try with the existing token.
+      // The backend may succeed if it has its own refresh mechanism, or the error
+      // will be caught and reported as a 401 by the normal error handling flow.
+      appLog.warn('[AgentProcess] Pre-spawn token refresh failed (non-fatal):', error instanceof Error ? error.message : String(error));
+    }
+
     const env = this.setupProcessEnvironment(extraEnv);
+
+    // CRITICAL: Mark this profile's token as "in use" by an agent process.
+    // While marked, the UsageMonitor's ensureValidToken() will SKIP refresh for this
+    // configDir, preventing token revocation that would cause 401 in the subprocess.
+    const profileManager = getClaudeProfileManager();
+    const agentConfigDir = profileManager.getActiveProfile()?.configDir;
+    if (agentConfigDir) {
+      markAgentRunning(agentConfigDir);
+      appLog.info('[AgentProcess] Marked profile token as in-use for agent:', agentConfigDir);
+    }
 
     // Get Python environment (PYTHONPATH for bundled packages, etc.)
     const pythonEnv = pythonEnvManager.getPythonEnv();
 
     // Get active API profile environment variables
+    // BUG FIX #11: Only load API profile env when NOT using OAuth authentication.
+    // When the active Claude profile has OAuth credentials (agentConfigDir is set),
+    // any active API profile in profiles.json would inject ANTHROPIC_BASE_URL
+    // (e.g., https://api.anthropic.com) which forces the CLI to use an endpoint
+    // that doesn't support OAuth bearer tokens, causing 401 errors.
     let apiProfileEnv: Record<string, string> = {};
-    try {
-      apiProfileEnv = await getAPIProfileEnv();
-    } catch (error) {
-      appLog.error('[Agent Process] Failed to get API profile env:', error);
-      // Continue with empty profile env (falls back to OAuth mode)
+    if (!agentConfigDir) {
+      try {
+        apiProfileEnv = await getAPIProfileEnv();
+      } catch (error) {
+        appLog.error('[Agent Process] Failed to get API profile env:', error);
+        // Continue with empty profile env (falls back to OAuth mode)
+      }
     }
 
     // Get OAuth mode clearing vars (clears stale ANTHROPIC_* vars when in OAuth mode)
@@ -800,6 +872,13 @@ export class AgentProcessManager {
     });
 
     childProcess.on('exit', (code: number | null) => {
+      // CRITICAL: Unmark this profile's token as "in use" so the UsageMonitor
+      // can resume normal token refresh operations for this profile.
+      if (agentConfigDir) {
+        markAgentStopped(agentConfigDir);
+        appLog.info('[AgentProcess] Unmarked profile token after agent exit:', agentConfigDir);
+      }
+
       if (stdoutBuffer.trim()) {
         this.emitter.emit('log', taskId, stdoutBuffer + '\n', projectId);
         processLog(stdoutBuffer);

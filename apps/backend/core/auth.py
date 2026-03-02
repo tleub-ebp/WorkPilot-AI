@@ -974,6 +974,23 @@ def configure_sdk_authentication(config_dir: str | None = None) -> None:
                    - API profile mode: requires ANTHROPIC_AUTH_TOKEN
                    - OAuth mode: requires CLAUDE_CODE_OAUTH_TOKEN (from Keychain or env)
     """
+    # SAFETY NET (Bug #11): If both ANTHROPIC_BASE_URL and CLAUDE_CODE_OAUTH_TOKEN
+    # are present, OAuth mode should take precedence. The CLI's default OAuth endpoint
+    # is different from api.anthropic.com, which does NOT support OAuth bearer tokens.
+    # Remove ANTHROPIC_BASE_URL and ANTHROPIC_AUTH_TOKEN to let OAuth work correctly.
+    if (
+        os.environ.get("ANTHROPIC_BASE_URL", "").strip()
+        and os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "").strip()
+    ):
+        stale_url = os.environ.get("ANTHROPIC_BASE_URL", "")
+        logger.warning(
+            "Both ANTHROPIC_BASE_URL (%s) and CLAUDE_CODE_OAUTH_TOKEN are set. "
+            "Removing ANTHROPIC_BASE_URL to use OAuth authentication.",
+            stale_url,
+        )
+        os.environ.pop("ANTHROPIC_BASE_URL", None)
+        os.environ.pop("ANTHROPIC_AUTH_TOKEN", None)
+
     api_profile_mode = bool(os.environ.get("ANTHROPIC_BASE_URL", "").strip())
 
     if api_profile_mode:
@@ -1001,7 +1018,19 @@ def configure_sdk_authentication(config_dir: str | None = None) -> None:
         # Ensure SDK can access it via its expected env var
         # This is required because the SDK doesn't know about per-profile Keychain naming
         os.environ["CLAUDE_CODE_OAUTH_TOKEN"] = oauth_token
-        logger.info("Using OAuth authentication")
+
+        # Log token fingerprint for debugging (safe: only first/last chars)
+        # IMPORTANT: Avoid printing words like "invalid", "401", "authentication_error"
+        # in stdout — the frontend's auth failure detector scans process output and
+        # those keywords would cause FALSE POSITIVE auth failure detection.
+        token_fp = f"{oauth_token[:8]}...{oauth_token[-4:]}" if len(oauth_token) > 16 else "(short)"
+        logger.info("Using OAuth authentication (token: %s, config_dir: %s)", token_fp, config_dir or "(default)")
+
+        # Debug: Compare token sources to detect mismatches between env/file
+        env_token = os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "")
+        env_fp = f"{env_token[:8]}...{env_token[-4:]}" if len(env_token) > 16 else "(not set)"
+        if env_fp != token_fp:
+            logger.warning("Token mismatch: env=%s resolved=%s", env_fp, token_fp)
 
 
 def ensure_claude_code_oauth_token() -> None:

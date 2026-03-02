@@ -154,6 +154,38 @@ except ImportError:
     ClaudeSDKClient = None
     HookMatcher = None
 
+# BUG FIX #12: Monkey-patch SDK message parser to handle unknown message types
+# gracefully instead of raising MessageParseError. The Claude CLI may send message
+# types (e.g., "rate_limit_event") that the SDK version doesn't recognize yet.
+# Without this patch, unknown types crash the entire agent session.
+try:
+    import claude_agent_sdk._internal.message_parser as _sdk_msg_parser
+    from claude_agent_sdk.types import SystemMessage as _SDKSystemMessage
+
+    _original_parse_message = _sdk_msg_parser.parse_message
+
+    def _patched_parse_message(data):
+        try:
+            return _original_parse_message(data)
+        except Exception as exc:
+            if "Unknown message type" in str(exc):
+                msg_type = data.get("type", "unknown") if isinstance(data, dict) else "unknown"
+                logger.warning(
+                    "SDK received unknown message type '%s' — skipping gracefully "
+                    "(data keys: %s)",
+                    msg_type,
+                    list(data.keys()) if isinstance(data, dict) else "N/A",
+                )
+                # Return as a SystemMessage so the session can continue
+                return _SDKSystemMessage(subtype=msg_type, data=data)
+            raise
+
+    _sdk_msg_parser.parse_message = _patched_parse_message
+    logger.debug("Patched SDK message parser for unknown message type resilience")
+except Exception:
+    # If patching fails (e.g., SDK not installed), continue without it
+    pass
+
 try:
     from core.auth import (
         configure_sdk_authentication,

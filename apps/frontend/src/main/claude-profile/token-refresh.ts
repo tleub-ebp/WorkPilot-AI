@@ -301,25 +301,140 @@ export async function refreshOAuthToken(
 }
 
 // =============================================================================
+// Concurrency Control for Token Refresh
+// =============================================================================
+
+/**
+ * Per-configDir mutex to prevent concurrent token refreshes.
+ *
+ * CRITICAL: When a token is refreshed, the old token is IMMEDIATELY REVOKED.
+ * If two components (e.g., UsageMonitor and AgentProcess) refresh simultaneously:
+ * - Component A refreshes with refresh_token R1 → gets T-A
+ * - Component B also refreshes with R1 → gets error (R1 already used) or gets T-B
+ * - One of T-A or T-B is immediately revoked, leaving an invalid token
+ *
+ * This mutex ensures only one refresh happens at a time per configDir.
+ */
+const refreshLocks = new Map<string, Promise<EnsureValidTokenResult>>();
+
+/**
+ * Set of configDir paths that currently have an agent process running.
+ * When an agent is running, the UsageMonitor should NOT refresh tokens for that
+ * profile, because:
+ * 1. The agent already has the token in its subprocess env
+ * 2. Refreshing would REVOKE that token, causing a 401 in the agent
+ * 3. The agent can't pick up the new token (it's in a subprocess)
+ */
+const agentRunningProfiles = new Set<string>();
+
+/**
+ * Mark a profile as having an active agent process.
+ * While marked, ensureValidToken will skip refresh for this configDir.
+ */
+export function markAgentRunning(configDir: string | undefined): void {
+  const key = normalizeConfigDir(configDir);
+  agentRunningProfiles.add(key);
+}
+
+/**
+ * Unmark a profile when its agent process exits.
+ */
+export function markAgentStopped(configDir: string | undefined): void {
+  const key = normalizeConfigDir(configDir);
+  agentRunningProfiles.delete(key);
+}
+
+/**
+ * Check if an agent is running for a configDir.
+ */
+export function isAgentRunning(configDir: string | undefined): boolean {
+  const key = normalizeConfigDir(configDir);
+  return agentRunningProfiles.has(key);
+}
+
+function normalizeConfigDir(configDir: string | undefined): string {
+  if (!configDir) return '__default__';
+  return configDir.startsWith('~')
+    ? configDir.replace(/^~/, homedir())
+    : configDir;
+}
+
+// =============================================================================
+// Token Refresh Cooldown (Bug #10)
+// =============================================================================
+
+/**
+ * Per-configDir cooldown tracker for token refreshes.
+ *
+ * PROBLEM (Bug #10): The UsageMonitor calls ensureValidToken() on every 30-second
+ * polling cycle for the active profile (and for inactive profiles when fetching usage).
+ * Each call that finds a near-expiry token triggers a refresh, which:
+ * 1. REVOKES the previous access token
+ * 2. Consumes the refresh token (single-use in OAuth)
+ * 3. Issues a new access_token + refresh_token pair
+ *
+ * Rapid sequential refreshes (e.g., 6 in a row) can trigger Anthropic's OAuth security
+ * mechanisms (refresh token replay detection), invalidating the ENTIRE token family.
+ * This causes all tokens to become invalid, including ones given to agent subprocesses.
+ *
+ * SOLUTION: After a successful refresh, enforce a cooldown period (60 seconds) during
+ * which no further refreshes are allowed for the same configDir. The only exception is
+ * forceRefresh from agent spawn, which bypasses the cooldown (since it needs a
+ * guaranteed-fresh token for the subprocess).
+ */
+const lastRefreshTimestamps = new Map<string, number>();
+
+/**
+ * Cooldown period in milliseconds after a successful token refresh.
+ * During this period, ensureValidToken() will return the existing token
+ * without attempting another refresh (unless forceRefresh is set).
+ */
+const REFRESH_COOLDOWN_MS = 60_000; // 60 seconds
+
+// =============================================================================
 // Integrated Token Validation and Refresh
 // =============================================================================
+
+/**
+ * Options for ensureValidToken
+ */
+export interface EnsureValidTokenOptions {
+  /**
+   * Force a token refresh regardless of expiry time.
+   *
+   * Use this before spawning agent subprocesses to guarantee a fresh token.
+   * A token can be revoked on Anthropic's side (e.g., by a previous race condition)
+   * while its local expiresAt timestamp still says it's valid. forceRefresh bypasses
+   * the expiry check and always uses the refresh_token to get a new access_token.
+   *
+   * If the refresh_token is also revoked (invalid_grant), the error is propagated
+   * to the caller so it can prompt re-authentication.
+   */
+  forceRefresh?: boolean;
+}
 
 /**
  * Ensure a valid token is available, refreshing if necessary.
  *
  * This function:
  * 1. Reads credentials from keychain
- * 2. Checks if token is expired or near expiry
+ * 2. Checks if token is expired or near expiry (unless forceRefresh is set)
  * 3. If needed, refreshes the token and writes back to keychain
  * 4. Returns a valid token
  *
+ * CONCURRENCY SAFETY: Uses a per-configDir lock to prevent simultaneous refreshes.
+ * When an agent process is running (marked via markAgentRunning), refresh is SKIPPED
+ * to avoid revoking the token the agent is using.
+ *
  * @param configDir - Config directory for the profile (can be undefined for default profile)
  * @param onRefreshed - Optional callback when tokens are refreshed
+ * @param options - Optional settings like forceRefresh
  * @returns Valid token or null with error information
  */
 export async function ensureValidToken(
   configDir: string | undefined,
-  onRefreshed?: OnTokenRefreshedCallback
+  onRefreshed?: OnTokenRefreshedCallback,
+  options?: EnsureValidTokenOptions
 ): Promise<EnsureValidTokenResult> {
   const isDebug = process.env.DEBUG === 'true';
 
@@ -327,6 +442,17 @@ export async function ensureValidToken(
   const expandedConfigDir = configDir?.startsWith('~')
     ? configDir.replace(/^~/, homedir())
     : configDir;
+
+  // CONCURRENCY GUARD: If another refresh is in progress for this configDir,
+  // wait for it to complete and return its result
+  const lockKey = expandedConfigDir || '__default__';
+  const existingLock = refreshLocks.get(lockKey);
+  if (existingLock) {
+    if (isDebug) {
+      console.warn('[TokenRefresh:ensureValidToken] Another refresh in progress for', lockKey, '- waiting');
+    }
+    return existingLock;
+  }
 
   if (isDebug) {
     console.warn('[TokenRefresh:ensureValidToken] Checking token validity', {
@@ -355,7 +481,11 @@ export async function ensureValidToken(
   }
 
   // Step 2: Check if token is expired or near expiry
-  const needsRefresh = isTokenExpiredOrNearExpiry(creds.expiresAt);
+  // When forceRefresh is set, ALWAYS refresh regardless of expiry timestamp.
+  // This handles the case where a token was revoked on Anthropic's side (e.g., by a
+  // previous race condition) but its local expiresAt hasn't passed yet.
+  const forceRefresh = options?.forceRefresh === true;
+  const needsRefresh = forceRefresh || isTokenExpiredOrNearExpiry(creds.expiresAt);
 
   if (!needsRefresh) {
     if (isDebug) {
@@ -369,11 +499,52 @@ export async function ensureValidToken(
     };
   }
 
+  if (forceRefresh) {
+    console.warn('[TokenRefresh:ensureValidToken] Force refresh requested — bypassing expiry check', {
+      configDir: expandedConfigDir || 'default',
+      currentTokenFingerprint: creds.token ? `${creds.token.slice(0, 8)}...${creds.token.slice(-4)}` : '(none)',
+      hasRefreshToken: !!creds.refreshToken
+    });
+  }
+
   if (isDebug) {
     console.warn('[TokenRefresh:ensureValidToken] Token needs refresh', {
       expiresAt: creds.expiresAt ? new Date(creds.expiresAt).toISOString() : 'unknown',
       hasRefreshToken: !!creds.refreshToken
     });
+  }
+
+  // AGENT SAFETY GUARD: If an agent process is currently running with this profile's
+  // token, DO NOT refresh — the refresh would REVOKE the token the agent is using,
+  // causing an immediate 401. The agent has the token baked into its subprocess env
+  // and cannot pick up a new one. Return the existing (possibly near-expiry) token.
+  if (agentRunningProfiles.has(lockKey)) {
+    console.warn('[TokenRefresh:ensureValidToken] SKIPPING refresh — agent process is running for',
+      lockKey, '(token would be revoked, causing 401 in agent subprocess)');
+    return {
+      token: creds.token,
+      wasRefreshed: false,
+      error: 'Refresh skipped: agent process running with this token'
+    };
+  }
+
+  // COOLDOWN GUARD (Bug #10): If we recently refreshed this profile's token,
+  // skip refresh to avoid rapid token rotation that can trigger Anthropic's
+  // OAuth security mechanisms (token family invalidation).
+  // Exception: forceRefresh (from agent spawn) bypasses cooldown because
+  // the agent needs a guaranteed-fresh token for its subprocess env.
+  if (!forceRefresh) {
+    const lastRefresh = lastRefreshTimestamps.get(lockKey);
+    if (lastRefresh && (Date.now() - lastRefresh) < REFRESH_COOLDOWN_MS) {
+      const cooldownRemaining = REFRESH_COOLDOWN_MS - (Date.now() - lastRefresh);
+      console.warn('[TokenRefresh:ensureValidToken] COOLDOWN — skipping refresh for',
+        lockKey, `(${Math.round(cooldownRemaining / 1000)}s remaining after recent refresh)`);
+      return {
+        token: creds.token,
+        wasRefreshed: false,
+        error: 'Refresh skipped: cooldown after recent refresh'
+      };
+    }
   }
 
   // Step 3: Check if we have a refresh token
@@ -389,85 +560,100 @@ export async function ensureValidToken(
     };
   }
 
-  // Step 4: Refresh the token
-  const refreshResult = await refreshOAuthToken(creds.refreshToken, expandedConfigDir);
+  // Step 4: Refresh the token (with concurrency lock)
+  const refreshPromise = (async (): Promise<EnsureValidTokenResult> => {
+    const refreshResult = await refreshOAuthToken(creds.refreshToken!, expandedConfigDir);
 
-  if (!refreshResult.success || !refreshResult.accessToken || !refreshResult.refreshToken || !refreshResult.expiresAt) {
-    console.error('[TokenRefresh:ensureValidToken] Token refresh failed:', refreshResult.error);
+    if (!refreshResult.success || !refreshResult.accessToken || !refreshResult.refreshToken || !refreshResult.expiresAt) {
+      console.error('[TokenRefresh:ensureValidToken] Token refresh failed:', refreshResult.error);
 
-    // Check for permanent errors (revoked/invalid tokens)
-    const isPermanentError = refreshResult.errorCode === 'invalid_grant' ||
-                             refreshResult.errorCode === 'invalid_client';
+      // Check for permanent errors (revoked/invalid tokens)
+      const isPermanentError = refreshResult.errorCode === 'invalid_grant' ||
+                               refreshResult.errorCode === 'invalid_client';
 
-    if (isPermanentError) {
-      // Return null for permanent errors to prevent infinite 401 loops
-      console.error('[TokenRefresh:ensureValidToken] Permanent error detected, returning null token');
+      if (isPermanentError) {
+        // Return null for permanent errors to prevent infinite 401 loops
+        console.error('[TokenRefresh:ensureValidToken] Permanent error detected, returning null token');
+        return {
+          token: null,
+          wasRefreshed: false,
+          error: `Token refresh failed: ${refreshResult.error}`,
+          errorCode: refreshResult.errorCode
+        };
+      }
+
+      // For transient errors (network issues, etc.), return old token as best-effort fallback
       return {
-        token: null,
+        token: creds.token,
         wasRefreshed: false,
         error: `Token refresh failed: ${refreshResult.error}`,
         errorCode: refreshResult.errorCode
       };
     }
 
-    // For transient errors (network issues, etc.), return old token as best-effort fallback
-    return {
-      token: creds.token,
-      wasRefreshed: false,
-      error: `Token refresh failed: ${refreshResult.error}`,
-      errorCode: refreshResult.errorCode
-    };
-  }
+    // Step 5: CRITICAL - Write new tokens to keychain immediately
+    // The old token is now REVOKED, so we must persist the new one
+    const updateResult = updateKeychainCredentials(expandedConfigDir, {
+      accessToken: refreshResult.accessToken,
+      refreshToken: refreshResult.refreshToken,
+      expiresAt: refreshResult.expiresAt,
+      scopes: creds.scopes || undefined
+    });
 
-  // Step 5: CRITICAL - Write new tokens to keychain immediately
-  // The old token is now REVOKED, so we must persist the new one
-  const updateResult = updateKeychainCredentials(expandedConfigDir, {
-    accessToken: refreshResult.accessToken,
-    refreshToken: refreshResult.refreshToken,
-    expiresAt: refreshResult.expiresAt,
-    scopes: creds.scopes || undefined
-  });
+    // Track if persistence failed - callers can alert user to re-authenticate
+    let persistenceFailed = false;
 
-  // Track if persistence failed - callers can alert user to re-authenticate
-  let persistenceFailed = false;
+    if (!updateResult.success) {
+      // This is a critical error - we have new tokens but can't persist them
+      console.error('[TokenRefresh:ensureValidToken] CRITICAL: Failed to persist refreshed tokens:', updateResult.error);
+      console.error('[TokenRefresh:ensureValidToken] The new token will be lost on next restart!');
+      console.error('[TokenRefresh:ensureValidToken] Old credentials in keychain are now REVOKED and must be cleared on restart');
+      persistenceFailed = true;
 
-  if (!updateResult.success) {
-    // This is a critical error - we have new tokens but can't persist them
-    console.error('[TokenRefresh:ensureValidToken] CRITICAL: Failed to persist refreshed tokens:', updateResult.error);
-    console.error('[TokenRefresh:ensureValidToken] The new token will be lost on next restart!');
-    console.error('[TokenRefresh:ensureValidToken] Old credentials in keychain are now REVOKED and must be cleared on restart');
-    persistenceFailed = true;
-
-    // Clear credential cache immediately to prevent serving revoked tokens from cache
-    // On restart, the revoked tokens will trigger re-authentication via Bugs #3 and #4 fixes
-    clearKeychainCache(expandedConfigDir);
-    // Still return the new token for this session
-  } else {
-    if (isDebug) {
-      console.warn('[TokenRefresh:ensureValidToken] Successfully refreshed and persisted token', {
-        newExpiresAt: new Date(refreshResult.expiresAt).toISOString()
-      });
+      // Clear credential cache immediately to prevent serving revoked tokens from cache
+      // On restart, the revoked tokens will trigger re-authentication via Bugs #3 and #4 fixes
+      clearKeychainCache(expandedConfigDir);
+      // Still return the new token for this session
+    } else {
+      if (isDebug) {
+        console.warn('[TokenRefresh:ensureValidToken] Successfully refreshed and persisted token', {
+          newExpiresAt: new Date(refreshResult.expiresAt).toISOString()
+        });
+      }
     }
+
+    // Step 6: Clear the credential cache so next read gets fresh data
+    clearKeychainCache(expandedConfigDir);
+
+    // Step 7: Call the callback if provided
+    if (onRefreshed) {
+      onRefreshed(
+        expandedConfigDir,
+        refreshResult.accessToken,
+        refreshResult.refreshToken,
+        refreshResult.expiresAt
+      );
+    }
+
+    // Record cooldown timestamp after successful refresh (Bug #10)
+    // This prevents rapid sequential refreshes from UsageMonitor cycles
+    lastRefreshTimestamps.set(lockKey, Date.now());
+
+    return {
+      token: refreshResult.accessToken,
+      wasRefreshed: true,
+      ...(persistenceFailed && { persistenceFailed: true })
+    };
+  })();
+
+  // Register the lock so other callers wait for this refresh to complete
+  refreshLocks.set(lockKey, refreshPromise);
+
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshLocks.delete(lockKey);
   }
-
-  // Step 6: Clear the credential cache so next read gets fresh data
-  clearKeychainCache(expandedConfigDir);
-
-  // Step 7: Call the callback if provided
-  if (onRefreshed) {
-    onRefreshed(
-      expandedConfigDir,
-      refreshResult.accessToken,
-      refreshResult.refreshToken,
-      refreshResult.expiresAt
-    );
-  }
-
-  return {
-    token: refreshResult.accessToken,
-    wasRefreshed: true,
-    ...(persistenceFailed && { persistenceFailed: true })
-  };
 }
 
 /**
@@ -495,6 +681,18 @@ export async function reactiveTokenRefresh(
     console.warn('[TokenRefresh:reactive] Performing reactive token refresh (401 received)', {
       configDir: expandedConfigDir || 'default'
     });
+  }
+
+  // AGENT SAFETY GUARD: Same as ensureValidToken — don't refresh while agent is running
+  const lockKey = expandedConfigDir || '__default__';
+  if (agentRunningProfiles.has(lockKey)) {
+    console.warn('[TokenRefresh:reactive] SKIPPING reactive refresh — agent process is running for',
+      lockKey, '(refresh would revoke the token the agent is using)');
+    return {
+      token: null,
+      wasRefreshed: false,
+      error: 'Reactive refresh skipped: agent process running with this token'
+    };
   }
 
   // Read credentials to get refresh token
@@ -559,6 +757,9 @@ export async function reactiveTokenRefresh(
       refreshResult.expiresAt
     );
   }
+
+  // Record cooldown timestamp after successful reactive refresh (Bug #10)
+  lastRefreshTimestamps.set(lockKey, Date.now());
 
   if (isDebug) {
     console.warn('[TokenRefresh:reactive] Reactive refresh successful');
