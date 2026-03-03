@@ -1,4 +1,10 @@
 import { create } from 'zustand';
+import type { ElectronAPI } from '@shared/types/ipc';
+
+// Extend globalThis to include electronAPI
+declare global {
+  var electronAPI: ElectronAPI;
+}
 
 /**
  * Conflict risk information
@@ -142,7 +148,7 @@ export const openConflictPredictorDialog = () => {
 
 /**
  * Start conflict prediction analysis
- * Uses window.electronAPI (preload bridge) instead of direct IPC imports
+ * Uses globalThis.electronAPI (preload bridge) instead of direct IPC imports
  */
 export const startConflictPrediction = async (projectId: string) => {
   useConflictPredictorStore.setState({
@@ -154,7 +160,11 @@ export const startConflictPrediction = async (projectId: string) => {
   });
 
   try {
-    await window.electronAPI.runConflictPrediction(projectId);
+    if (globalThis.electronAPI && typeof globalThis.electronAPI.runConflictPrediction === 'function') {
+      await globalThis.electronAPI.runConflictPrediction(projectId);
+    } else {
+      throw new Error('Conflict prediction API not available');
+    }
   } catch (error) {
     useConflictPredictorStore.setState({
       error: error instanceof Error ? error.message : 'Failed to start conflict analysis',
@@ -165,14 +175,14 @@ export const startConflictPrediction = async (projectId: string) => {
 
 /**
  * Setup IPC event listeners for conflict predictor events
- * Uses window.electronAPI (preload bridge) instead of direct ipcRenderer imports
+ * Uses globalThis.electronAPI (preload bridge) instead of direct IPC imports
  */
 export const setupConflictPredictorListeners = () => {
   const cleanupFns: (() => void)[] = [];
 
   // Listen for conflict predictor events via preload API
-  if (window.electronAPI.onConflictPredictionEvent) {
-    const unsubEvent = window.electronAPI.onConflictPredictionEvent((data: any) => {
+  if (globalThis.electronAPI && typeof globalThis.electronAPI.onConflictPredictionEvent === 'function') {
+    const unsubEvent = globalThis.electronAPI.onConflictPredictionEvent((data: any) => {
       const { type, data: eventData } = data;
 
       switch (type) {
@@ -184,46 +194,38 @@ export const setupConflictPredictorListeners = () => {
           break;
 
         case 'progress':
+          useConflictPredictorStore.setState({ status: eventData });
+          break;
+        case 'output':
           useConflictPredictorStore.setState((state) => ({
-            status: eventData.status || 'Analyzing...',
-            streamingOutput: state.streamingOutput + `${eventData.status}\n`,
+            streamingOutput: state.streamingOutput + eventData,
           }));
           break;
-
-        case 'complete':
-          useConflictPredictorStore.setState({
-            phase: 'complete',
-            status: 'Analysis complete',
-            result: eventData,
-          });
-          break;
-
-        case 'error':
-          useConflictPredictorStore.setState({
-            phase: 'error',
-            error: eventData.error || 'Analysis failed',
-          });
-          break;
+        default:
+          console.log('Unknown conflict prediction event type:', type, eventData);
       }
     });
     if (unsubEvent) cleanupFns.push(unsubEvent);
   }
 
-  if (window.electronAPI.onConflictPredictionComplete) {
-    const unsubComplete = window.electronAPI.onConflictPredictionComplete((data: any) => {
+  // Use individual event listeners as fallback
+  if (globalThis.electronAPI && typeof globalThis.electronAPI.onConflictPredictionComplete === 'function') {
+    const unsubComplete = globalThis.electronAPI.onConflictPredictionComplete((data: any) => {
       useConflictPredictorStore.setState({
         result: data,
         phase: 'complete',
+        status: 'Analysis complete',
       });
     });
     if (unsubComplete) cleanupFns.push(unsubComplete);
   }
 
-  if (window.electronAPI.onConflictPredictionError) {
-    const unsubError = window.electronAPI.onConflictPredictionError((error: string) => {
+  if (globalThis.electronAPI && typeof globalThis.electronAPI.onConflictPredictionError === 'function') {
+    const unsubError = globalThis.electronAPI.onConflictPredictionError((error: string) => {
       useConflictPredictorStore.setState({
         error,
         phase: 'error',
+        status: 'Analysis failed',
       });
     });
     if (unsubError) cleanupFns.push(unsubError);

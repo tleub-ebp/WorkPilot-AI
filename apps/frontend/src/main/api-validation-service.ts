@@ -5,8 +5,8 @@
  * Used by the Graphiti memory integration for embedding and LLM operations.
  */
 
-import https from 'https';
-import type { IncomingMessage } from 'http';
+import https from 'node:https';
+import type { IncomingMessage } from 'node:http';
 
 export interface ApiValidationResult {
   success: boolean;
@@ -25,7 +25,7 @@ export interface ApiValidationResult {
 export async function validateOpenAIApiKey(
   apiKey: string
 ): Promise<ApiValidationResult> {
-  if (!apiKey || !apiKey.trim()) {
+  if (!apiKey?.trim()) {
     return {
       success: false,
       message: 'API key is required',
@@ -33,7 +33,7 @@ export async function validateOpenAIApiKey(
   }
 
   // Basic format validation
-  const trimmedKey = apiKey.trim();
+  const trimmedKey = apiKey?.trim() || '';
   if (!trimmedKey.startsWith('sk-') && !trimmedKey.startsWith('sess-')) {
     return {
       success: false,
@@ -144,14 +144,14 @@ export async function validateOpenAIApiKey(
 export async function validateAnthropicApiKey(
   apiKey: string
 ): Promise<ApiValidationResult> {
-  if (!apiKey || !apiKey.trim()) {
+  if (!apiKey?.trim()) {
     return {
       success: false,
       message: 'API key is required',
     };
   }
 
-  const trimmedKey = apiKey.trim();
+  const trimmedKey = apiKey?.trim() || '';
   if (!trimmedKey.startsWith('sk-ant-')) {
     return {
       success: false,
@@ -176,14 +176,14 @@ export async function validateAnthropicApiKey(
 export async function validateGoogleApiKey(
   apiKey: string
 ): Promise<ApiValidationResult> {
-  if (!apiKey || !apiKey.trim()) {
+  if (!apiKey?.trim()) {
     return {
       success: false,
       message: 'API key is required',
     };
   }
 
-  const trimmedKey = apiKey.trim();
+  const trimmedKey = apiKey?.trim() || '';
   if (!trimmedKey.startsWith('AIza')) {
     return {
       success: false,
@@ -225,7 +225,7 @@ export async function validateLLMApiKey(
       };
     case 'azure_openai':
       // Azure OpenAI uses different auth, just validate presence
-      if (!apiKey || !apiKey.trim()) {
+      if (!apiKey?.trim()) {
         return {
           success: false,
           message: 'Azure OpenAI API key is required',

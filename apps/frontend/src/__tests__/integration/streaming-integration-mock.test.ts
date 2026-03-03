@@ -5,11 +5,10 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { EventEmitter } from 'events';
 
 // Mock WebSocket for testing (instead of 'ws' module)
 class MockWebSocket {
-  static instances: MockWebSocket[] = [];
+  static readonly instances: MockWebSocket[] = [];
   url: string;
   onopen: ((event: Event) => void) | null = null;
   onmessage: ((event: MessageEvent<string>) => void) | null = null;
@@ -72,7 +71,8 @@ class MockWebSocket {
       }, 5);
       
     } catch (error) {
-      // Echo the raw message if JSON parsing fails
+      // JSON parsing failed - echo the raw message as fallback
+      console.warn('[MockWebSocket] JSON parse error, echoing raw message:', error);
       if (this.onmessage) {
         const event = new MessageEvent('message', { data });
         this.onmessage(event);
@@ -88,7 +88,7 @@ class MockWebSocket {
   }
 
   static clearInstances(): void {
-    MockWebSocket.instances = [];
+    MockWebSocket.instances.length = 0;
   }
 }
 
@@ -147,15 +147,11 @@ describe('Streaming Integration Tests (Mock)', () => {
       }, timeout);
       
       const messageHandler = (event: MessageEvent) => {
-        try {
-          const message = JSON.parse(event.data as string);
-          if (message.event_type === eventType) {
-            clearTimeout(timeoutId);
-            ws.onmessage = null;
-            resolve(message);
-          }
-        } catch (error) {
-          // Ignore JSON parse errors
+        const message = JSON.parse(event.data as string);
+        if (message.event_type === eventType) {
+          clearTimeout(timeoutId);
+          ws.onmessage = null;
+          resolve(message);
         }
       };
       

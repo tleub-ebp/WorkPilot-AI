@@ -1,5 +1,10 @@
 import { create } from 'zustand';
-import type { AppSettings } from '../../shared/types';
+import type { ElectronAPI } from '@shared/types/ipc';
+
+// Extend globalThis to include electronAPI
+declare global {
+  var electronAPI: ElectronAPI;
+}
 
 /**
  * Natural Language Git store state
@@ -132,34 +137,34 @@ export function setupNaturalLanguageGitListeners() {
   };
 
   // Register IPC listeners
-  if (window.electronAPI?.onNaturalLanguageGitStatus) {
-    window.electronAPI.onNaturalLanguageGitStatus(handleStatus);
+  if (globalThis.electronAPI?.onNaturalLanguageGitStatus) {
+    globalThis.electronAPI.onNaturalLanguageGitStatus(handleStatus);
   }
-  if (window.electronAPI?.onNaturalLanguageGitStreamChunk) {
-    window.electronAPI.onNaturalLanguageGitStreamChunk(handleStreamChunk);
+  if (globalThis.electronAPI?.onNaturalLanguageGitStreamChunk) {
+    globalThis.electronAPI.onNaturalLanguageGitStreamChunk(handleStreamChunk);
   }
-  if (window.electronAPI?.onNaturalLanguageGitError) {
-    window.electronAPI.onNaturalLanguageGitError(handleError);
+  if (globalThis.electronAPI?.onNaturalLanguageGitError) {
+    globalThis.electronAPI.onNaturalLanguageGitError(handleError);
   }
-  if (window.electronAPI?.onNaturalLanguageGitComplete) {
-    window.electronAPI.onNaturalLanguageGitComplete(handleComplete);
+  if (globalThis.electronAPI?.onNaturalLanguageGitComplete) {
+    globalThis.electronAPI.onNaturalLanguageGitComplete(handleComplete);
   }
 
   setupComplete = true;
 
   // Cleanup function
   return () => {
-    if (window.electronAPI?.removeNaturalLanguageGitStatusListener) {
-      window.electronAPI.removeNaturalLanguageGitStatusListener(handleStatus);
+    if (globalThis.electronAPI?.removeNaturalLanguageGitStatusListener) {
+      globalThis.electronAPI.removeNaturalLanguageGitStatusListener(handleStatus);
     }
-    if (window.electronAPI?.removeNaturalLanguageGitStreamChunkListener) {
-      window.electronAPI.removeNaturalLanguageGitStreamChunkListener(handleStreamChunk);
+    if (globalThis.electronAPI?.removeNaturalLanguageGitStreamChunkListener) {
+      globalThis.electronAPI.removeNaturalLanguageGitStreamChunkListener(handleStreamChunk);
     }
-    if (window.electronAPI?.removeNaturalLanguageGitErrorListener) {
-      window.electronAPI.removeNaturalLanguageGitErrorListener(handleError);
+    if (globalThis.electronAPI?.removeNaturalLanguageGitErrorListener) {
+      globalThis.electronAPI.removeNaturalLanguageGitErrorListener(handleError);
     }
-    if (window.electronAPI?.removeNaturalLanguageGitCompleteListener) {
-      window.electronAPI.removeNaturalLanguageGitCompleteListener(handleComplete);
+    if (globalThis.electronAPI?.removeNaturalLanguageGitCompleteListener) {
+      globalThis.electronAPI.removeNaturalLanguageGitCompleteListener(handleComplete);
     }
     setupComplete = false;
   };
@@ -184,16 +189,16 @@ export async function executeGitCommand(projectId: string) {
 
   try {
     // Get project path
-    const projectPath = await window.electronAPI?.getProjectPath(projectId);
+    const projectPath = await globalThis.electronAPI?.getProjectPath(projectId);
     if (!projectPath) {
       throw new Error('Project path not found');
     }
 
     // Get settings for model configuration
-    const settings = await window.electronAPI?.getSettings();
+    const settings = await globalThis.electronAPI?.getSettings();
     
     // Call the main process to execute the command
-    await window.electronAPI?.executeNaturalLanguageGit({
+    await globalThis.electronAPI?.executeNaturalLanguageGit({
       projectPath,
       command: naturalLanguageCommand,
       model: settings?.data?.featureModels?.['natural-language-git'],

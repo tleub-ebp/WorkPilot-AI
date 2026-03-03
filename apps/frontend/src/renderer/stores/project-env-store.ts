@@ -1,5 +1,11 @@
 import { create } from 'zustand';
 import type { ProjectEnvConfig } from '../../shared/types';
+import type { ElectronAPI } from '@shared/types/ipc';
+
+// Extend globalThis to include electronAPI
+declare global {
+  var electronAPI: ElectronAPI;
+}
 
 interface ProjectEnvState {
   // State
@@ -75,7 +81,7 @@ export async function loadProjectEnvConfig(projectId: string): Promise<ProjectEn
   initialStore.setError(null);
 
   try {
-    const result = await window.electronAPI.getProjectEnv(projectId);
+    const result = await globalThis.electronAPI.getProjectEnv(projectId);
 
     // Get fresh store state after async operation for consistency
     const currentStore = useProjectEnvStore.getState();

@@ -1,7 +1,7 @@
-import { spawn, ChildProcess } from 'child_process';
-import { existsSync } from 'fs';
-import path from 'path';
-import { EventEmitter } from 'events';
+import { spawn, ChildProcess } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { EventEmitter } from 'node:events';
 import { app } from 'electron';
 import { MODEL_ID_MAP } from '../shared/constants';
 import type { AppSettings } from '../shared/types';
@@ -147,7 +147,7 @@ export class ContextAwareSnippetsService extends EventEmitter {
     try {
       const settingsPath = path.join(app.getPath('userData'), 'settings.json');
       if (existsSync(settingsPath)) {
-        const { readFileSync } = require('fs');
+        const { readFileSync } = require('node:fs');
         const settings: AppSettings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
         if (settings.globalClaudeOAuthToken) {
           processEnv.CLAUDE_OAUTH_TOKEN = settings.globalClaudeOAuthToken;
@@ -213,9 +213,7 @@ export class ContextAwareSnippetsService extends EventEmitter {
     proc.on('close', (code) => {
       this.activeProcess = null;
 
-      if (code === 0 && snippetResult) {
-        this.emit('complete', snippetResult);
-      } else if (code !== 0) {
+      if (code !== 0) {
         // Check for common error patterns
         const combinedOutput = fullOutput + stderrOutput;
         if (combinedOutput.includes('rate_limit') || combinedOutput.includes('Rate limit')) {
@@ -225,21 +223,21 @@ export class ContextAwareSnippetsService extends EventEmitter {
         } else {
           this.emit('error', `Snippet generation failed (exit code ${code}). ${stderrOutput.slice(-500)}`);
         }
-      } else {
+      } else if (snippetResult) {
+        this.emit('complete', snippetResult);
+      } else if (fullOutput.trim()) {
         // Process completed but no structured result found
         // Try to use the raw output as the snippet
-        if (fullOutput.trim()) {
-          this.emit('complete', {
-            snippet: fullOutput.trim(),
-            language: request.language || 'unknown',
-            description: request.description,
-            context_used: ['raw-output'],
-            adaptations: ['basic-formatting'],
-            reasoning: 'The generator completed but did not produce a structured result.',
-          } as ContextAwareSnippetResult);
-        } else {
-          this.emit('error', 'Snippet generation completed but produced no output.');
-        }
+        this.emit('complete', {
+          snippet: fullOutput.trim(),
+          language: request.language || 'unknown',
+          description: request.description,
+          context_used: ['raw-output'],
+          adaptations: ['basic-formatting'],
+          reasoning: 'The generator completed but did not produce a structured result.',
+        } as ContextAwareSnippetResult);
+      } else {
+        this.emit('error', 'Snippet generation completed but produced no output.');
       }
     });
 

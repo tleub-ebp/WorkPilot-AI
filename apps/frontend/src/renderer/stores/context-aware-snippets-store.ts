@@ -14,6 +14,8 @@ export interface ContextAwareSnippetResult {
 
 export type ContextAwareSnippetsPhase = 'idle' | 'generating' | 'complete' | 'error';
 
+export type SnippetType = 'component' | 'function' | 'class' | 'hook' | 'utility' | 'api' | 'test';
+
 interface ContextAwareSnippetsState {
   // State
   phase: ContextAwareSnippetsPhase;
@@ -22,20 +24,20 @@ interface ContextAwareSnippetsState {
   result: ContextAwareSnippetResult | null;
   error: string | null;
   isOpen: boolean;
-  snippetType: 'component' | 'function' | 'class' | 'hook' | 'utility' | 'api' | 'test';
+  snippetType: SnippetType;
   description: string;
   language: string;
   autoDetectLanguage: boolean;
 
   // Actions
-  openDialog: (snippetType?: 'component' | 'function' | 'class' | 'hook' | 'utility' | 'api' | 'test', description?: string, language?: string) => void;
+  openDialog: (snippetType?: SnippetType, description?: string, language?: string) => void;
   closeDialog: () => void;
   setPhase: (phase: ContextAwareSnippetsPhase) => void;
   setStatus: (status: string) => void;
   appendStreamingOutput: (chunk: string) => void;
   setResult: (result: ContextAwareSnippetResult) => void;
   setError: (error: string) => void;
-  setSnippetType: (snippetType: 'component' | 'function' | 'class' | 'hook' | 'utility' | 'api' | 'test') => void;
+  setSnippetType: (snippetType: SnippetType) => void;
   setDescription: (description: string) => void;
   setLanguage: (language: string) => void;
   setAutoDetectLanguage: (autoDetect: boolean) => void;
@@ -130,7 +132,7 @@ export function startSnippetGeneration(projectId: string): void {
   useContextAwareSnippetsStore.setState({ streamingOutput: '', error: null, result: null });
 
   // Send generation request via IPC
-  window.electronAPI.generateContextAwareSnippet(
+  globalThis.electronAPI.generateContextAwareSnippet(
     projectId,
     snippetType,
     description,
@@ -147,32 +149,33 @@ export function setupContextAwareSnippetsListeners(): () => void {
   const store = () => useContextAwareSnippetsStore.getState();
 
   // Listen for streaming chunks
-  const unsubChunk = window.electronAPI.onSnippetStreamChunk((chunk: string) => {
+  const unsubChunk = globalThis.electronAPI.onSnippetStreamChunk((chunk: string) => {
     store().appendStreamingOutput(chunk);
   });
 
   // Listen for status updates
-  const unsubStatus = window.electronAPI.onSnippetStatus((status: string) => {
+  const unsubStatus = globalThis.electronAPI.onSnippetStatus((status: string) => {
     store().setStatus(status);
   });
 
   // Listen for errors
-  const unsubError = window.electronAPI.onSnippetError((error: string) => {
+  const unsubError = globalThis.electronAPI.onSnippetError((error: string) => {
     store().setError(error);
   });
 
   // Listen for completion with structured result
-  const unsubComplete = window.electronAPI.onSnippetComplete(
+  const unsubComplete = globalThis.electronAPI.onSnippetComplete(
     (result: ContextAwareSnippetResult) => {
       store().setResult(result);
     }
   );
 
   return () => {
-    unsubChunk();
-    unsubStatus();
-    unsubError();
-    unsubComplete();
+    // Only call cleanup functions if they exist and are functions
+    if (typeof unsubChunk === 'function') unsubChunk();
+    if (typeof unsubStatus === 'function') unsubStatus();
+    if (typeof unsubError === 'function') unsubError();
+    if (typeof unsubComplete === 'function') unsubComplete();
   };
 }
 
@@ -180,7 +183,7 @@ export function setupContextAwareSnippetsListeners(): () => void {
  * Cancel active snippet generation
  */
 export function cancelSnippetGeneration(): void {
-  window.electronAPI.cancelSnippetGeneration();
+  globalThis.electronAPI.cancelSnippetGeneration();
 }
 
 // Helper function to open dialog

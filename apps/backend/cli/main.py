@@ -50,6 +50,11 @@ _PARENT_DIR = Path(__file__).parent.parent
 if str(_PARENT_DIR) not in sys.path:
     sys.path.insert(0, str(_PARENT_DIR))
 
+# Ensure project root is in path for src.connectors imports (e.g. src.connectors.llm_config)
+_PROJECT_ROOT = _PARENT_DIR.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""

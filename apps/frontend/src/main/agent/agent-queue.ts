@@ -1,7 +1,7 @@
-import { spawn } from 'child_process';
-import path from 'path';
-import { existsSync, writeFileSync, mkdirSync, unlinkSync, promises as fsPromises } from 'fs';
-import { EventEmitter } from 'events';
+import { spawn } from 'node:child_process';
+import path from 'node:path';
+import { existsSync, writeFileSync, mkdirSync, unlinkSync, promises as fsPromises } from 'node:fs';
+import { EventEmitter } from 'node:events';
 import { AgentState } from './agent-state';
 import { AgentEvents } from './agent-events';
 import { AgentProcessManager } from './agent-process';

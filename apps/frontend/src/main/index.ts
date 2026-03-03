@@ -3,16 +3,16 @@
 // require-in-the-middle hooks. Sentry's hooks expect require.cache to exist,
 // which is only available in CommonJS. Without this, node-pty native module
 // loading fails with "ReferenceError: require is not defined".
-import { createRequire } from 'module';
+import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 // Make require globally available for Sentry's require-in-the-middle hooks
 globalThis.require = require;
 
 // Load .env file FIRST before any other imports that might use process.env
 import { config } from 'dotenv';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { existsSync } from 'fs';
+import { join, resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { accessSync, readFileSync, writeFileSync, rmSync,existsSync } from 'node:fs';
 
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -36,8 +36,6 @@ for (const envPath of possibleEnvPaths) {
 }
 
 import { app, BrowserWindow, shell, nativeImage, session, screen, Menu, MenuItem } from 'electron';
-import { join } from 'path';
-import { accessSync, readFileSync, writeFileSync, rmSync } from 'fs';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 import { setupIpcHandlers } from './ipc-setup';
 import { ensureOAuthServerRunning } from './oauth-server';
@@ -58,8 +56,8 @@ import { isProfileAuthenticated } from './claude-profile/profile-utils';
 import { isMacOS, isWindows } from './platform';
 import { ptyDaemonClient } from './terminal/pty-daemon-client';
 import type { AppSettings, AuthFailureInfo } from '../shared/types';
-import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
-import http from 'http';
+import { spawn, ChildProcessWithoutNullStreams } from 'node:child_process';
+import http from 'node:http';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Window sizing constants
@@ -219,17 +217,22 @@ function createWindow(): void {
     mainWindow?.show();
   });
 
-  // Configure initial spell check languages with proper fallback logic
-  // Uses shared constant for consistency with the IPC handler
-  const defaultLanguage = 'en';
-  const defaultSpellCheckLanguages = SPELL_CHECK_LANGUAGE_MAP[defaultLanguage] || [DEFAULT_SPELL_CHECK_LANGUAGE];
+  // Initialize spell check languages
+  const defaultSpellCheckLanguages = Object.keys(SPELL_CHECK_LANGUAGE_MAP);
   const availableSpellCheckLanguages = session.defaultSession.availableSpellCheckerLanguages;
+  
   const validSpellCheckLanguages = defaultSpellCheckLanguages.filter(lang =>
     availableSpellCheckLanguages.includes(lang)
   );
-  const initialSpellCheckLanguages = validSpellCheckLanguages.length > 0
-    ? validSpellCheckLanguages
-    : (availableSpellCheckLanguages.includes(DEFAULT_SPELL_CHECK_LANGUAGE) ? [DEFAULT_SPELL_CHECK_LANGUAGE] : []);
+  
+  let initialSpellCheckLanguages: string[];
+  if (validSpellCheckLanguages.length > 0) {
+    initialSpellCheckLanguages = validSpellCheckLanguages;
+  } else {
+    initialSpellCheckLanguages = availableSpellCheckLanguages.includes(DEFAULT_SPELL_CHECK_LANGUAGE)
+      ? [DEFAULT_SPELL_CHECK_LANGUAGE]
+      : [];
+  }
 
   if (initialSpellCheckLanguages.length > 0) {
     session.defaultSession.setSpellCheckerLanguages(initialSpellCheckLanguages);
@@ -239,7 +242,7 @@ function createWindow(): void {
   }
 
   // Handle context menu with spell check and standard editing options
-  mainWindow.webContents.on('context-menu', (_event, params) => {
+  mainWindow?.webContents.on('context-menu', (_event: Electron.Event, params: Electron.ContextMenuParams) => {
     const menu = new Menu();
 
     // Add spelling suggestions if there's a misspelled word
@@ -303,11 +306,11 @@ function createWindow(): void {
   // Handle external links with URL scheme allowlist for security
   // Note: Terminal links now use IPC via WebLinksAddon callback, but this handler
   // catches any other window.open() calls (e.g., from third-party libraries)
-  const ALLOWED_URL_SCHEMES = ['http:', 'https:', 'mailto:'];
-  mainWindow.webContents.setWindowOpenHandler((details) => {
+  const ALLOWED_URL_SCHEMES = new Set(['http:', 'https:', 'mailto:']);
+  mainWindow?.webContents.setWindowOpenHandler((details: Electron.HandlerDetails) => {
     try {
       const url = new URL(details.url);
-      if (!ALLOWED_URL_SCHEMES.includes(url.protocol)) {
+      if (!ALLOWED_URL_SCHEMES.has(url.protocol)) {
         console.warn('[main] Blocked URL with disallowed scheme:', details.url);
         return { action: 'deny' };
       }
@@ -324,14 +327,16 @@ function createWindow(): void {
   });
 
   // Load the renderer
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
-  } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
+  if (mainWindow) {
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+      mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
+    } else {
+      mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
+    }
   }
 
   // Open DevTools in development
-  if (is.dev) {
+  if (is.dev && mainWindow) {
     mainWindow.webContents.openDevTools({ mode: 'right' });
   }
 
@@ -442,7 +447,7 @@ async function launchStreamingServer() {
 
   // Check if port 8765 is already in use (server might already be running)
   try {
-    const net = await import('net');
+    const net = await import('node:net');
     const isPortFree = await new Promise<boolean>((resolvePort) => {
       const tester = net.createServer()
         .once('error', () => resolvePort(false))
@@ -569,7 +574,7 @@ app.whenReady().then(async () => {
         // Old structure: /path/to/project/auto-claude
         // New structure: /path/to/project/apps/backend
         let migrated = false;
-        if (validAutoBuildPath.endsWith('/auto-claude') || validAutoBuildPath.endsWith('\\auto-claude')) {
+        if (validAutoBuildPath.endsWith('/auto-claude') || validAutoBuildPath.endsWith(String.raw`\auto-claude`)) {
           const basePath = validAutoBuildPath.replace(/[/\\]auto-claude$/, '');
           const correctedPath = join(basePath, 'apps', 'backend');
           const correctedSpecRunnerPath = join(correctedPath, 'runners', 'spec_runner.py');
@@ -732,7 +737,9 @@ app.whenReady().then(async () => {
 
       initializeAppUpdater(mainWindow, betaUpdates);
       console.warn('[main] App auto-updater initialized');
-      console.warn(`[main] Beta updates: ${betaUpdates ? 'enabled' : 'disabled'}`);
+      
+      const betaUpdatesStatus = betaUpdates ? 'enabled' : 'disabled';
+      console.warn(`[main] Beta updates: ${betaUpdatesStatus}`);
       if (forceUpdater && !app.isPackaged) {
         console.warn('[main] Updater forced in dev mode via DEBUG_UPDATER=true');
         console.warn('[main] Note: Updates won\'t actually work in dev mode');

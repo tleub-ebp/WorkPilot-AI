@@ -3,10 +3,10 @@
  * Handles persistence of profile data to disk
  */
 
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
-import { readFile } from 'fs/promises';
-import { homedir } from 'os';
-import { join } from 'path';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import type { ClaudeProfile, ClaudeAutoSwitchSettings } from '../../shared/types';
 
 /**
