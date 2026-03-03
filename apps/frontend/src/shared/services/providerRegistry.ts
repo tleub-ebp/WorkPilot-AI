@@ -40,7 +40,7 @@ export interface ProvidersResponse {
  */
 class ProviderRegistry {
   private static instance: ProviderRegistry;
-  private providers: Map<string, Provider> = new Map();
+  private readonly providers: Map<string, Provider> = new Map();
 
   private constructor() {
     this.initializeProviders();
@@ -270,9 +270,9 @@ class ProviderRegistry {
 
       // Cas spécial pour GitHub Copilot (vérification gh CLI)
       if (name === 'copilot' && provider.requiresCLI) {
-        if (typeof window !== 'undefined' && window.electronAPI) {
+        if (typeof globalThis !== 'undefined' && globalThis.electronAPI) {
           // Dans Electron, utiliser Node.js pour vérifier gh CLI
-          const isAuthenticated = await window.electronAPI.checkCopilotAuth();
+          const isAuthenticated = await globalThis.electronAPI.checkCopilotAuth();
           status.authenticated = isAuthenticated;
         } else {
           // Fallback dans le navigateur (assume disponible pour le développement)
@@ -355,15 +355,14 @@ class ProviderRegistry {
    */
   private checkOAuthStatus(providerName: string): boolean {
     // Logique OAuth spécifique
-    switch (providerName) {
-      case 'anthropic':
-        // Vérifier le token Claude Code OAuth
-        return typeof localStorage !== 'undefined' && 
-               (localStorage.getItem('claude_oauth_token') || 
-                localStorage.getItem('anthropic_api_key')) !== null;
-      default:
-        return false;
+    if (providerName === 'anthropic') {
+      // Vérifier le token Claude Code OAuth
+      return typeof localStorage !== 'undefined' && 
+             (localStorage.getItem('claude_oauth_token') || 
+              localStorage.getItem('anthropic_api_key')) !== null;
     }
+    
+    return false;
   }
 
   /**

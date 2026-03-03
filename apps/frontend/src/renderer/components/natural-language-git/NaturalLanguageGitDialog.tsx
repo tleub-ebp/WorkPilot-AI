@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Copy, Loader2, GitBranch, Terminal, RotateCcw, X, Play } from 'lucide-react';
+import { Check, Copy, Loader2, GitBranch, Terminal, RotateCcw, X } from 'lucide-react';
 
 import {
   Dialog,
@@ -129,7 +129,12 @@ export function NaturalLanguageGitDialog() {
               value={naturalLanguageCommand}
               onChange={(e) => setNaturalLanguageCommand(e.target.value)}
               placeholder={t('naturalLanguageGit:command.placeholder')}
-              className="min-h-[100px]"
+              className="min-h-[100px] border-2 border-yellow-400 focus:border-yellow-500 focus-visible:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
+              style={{
+                border: '2px solid rgb(250, 204, 21)',
+                borderRadius: '0.5rem',
+                outline: 'none'
+              }}
               disabled={isProcessing}
             />
             <div className="text-xs text-muted-foreground">
@@ -258,15 +263,15 @@ function ResultView({
   onCopy,
   t,
 }: {
-  result: {
+  readonly result: {
     generatedCommand: string;
     explanation: string;
     executionOutput: string;
     success: boolean;
   };
-  copied: boolean;
-  onCopy: (text: string) => void;
-  t: (key: string) => string;
+  readonly copied: boolean;
+  readonly onCopy: (text: string) => void;
+  readonly t: (key: string) => string;
 }) {
   return (
     <div className="space-y-4">

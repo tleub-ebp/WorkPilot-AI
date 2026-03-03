@@ -48,9 +48,7 @@ import type {
   ImageAttachment,
   ReviewReason,
   MergeProgress,
-  PRDetailsResult,
-  PRData,
-  PRFileData
+  PRDetailsResult
 } from './task';
 import type {
   TerminalCreateOptions,
@@ -952,6 +950,15 @@ export interface ElectronAPI {
   // Screenshot capture operations
   getSources: () => Promise<IPCResult<ScreenshotSource[]> & { devMode?: boolean }>;
   capture: (options: { sourceId: string }) => Promise<IPCResult<string>>;
+
+  // Conflict Predictor operations
+  runConflictPrediction: (projectId: string) => Promise<void>;
+  cancelConflictPrediction: () => Promise<boolean>;
+
+  // Conflict Predictor event listeners
+  onConflictPredictionEvent: (callback: (event: any) => void) => () => void;
+  onConflictPredictionError: (callback: (error: string) => void) => () => void;
+  onConflictPredictionComplete: (callback: (result: any) => void) => () => void;
 
   // Queue Routing API (rate limit recovery)
   queue: import('../../preload/api/queue-api').QueueAPI;

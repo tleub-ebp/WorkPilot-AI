@@ -74,9 +74,17 @@ class ProviderServiceClass {
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
+      
+      // Check if the response is actually JSON and not HTML
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        throw new Error(`Expected JSON but received ${contentType || 'unknown content type'}`);
+      }
+      
       const data = await response.json();
       return data.providers || [];
     } catch (error) {
+      console.warn('Failed to load providers from configured_providers.json, using fallback:', error);
       const fallbackProviders = this.getFallbackProviders();
       return fallbackProviders;
     }
@@ -148,171 +156,13 @@ class ProviderServiceClass {
   async testProvider(providerName: string): Promise<{ success: boolean; message: string; details?: any }> {
     try {
       // Essayer d'abord le nouveau système CredentialManager si disponible
-      if (window.electronAPI?.invoke) {
-        try {
-          const result = await window.electronAPI.invoke('credential:testProvider', providerName);
-          console.log(`[ProviderService] Used CredentialManager for ${providerName}:`, result);
-          return result;
-        } catch (credentialError) {
-          console.log(`[ProviderService] CredentialManager test failed for ${providerName}, falling back to legacy:`, credentialError);
-          // Continuer avec la logique legacy si le CredentialManager échoue
-        }
+      const credentialResult = await this.tryCredentialManager(providerName);
+      if (credentialResult) {
+        return credentialResult;
       }
 
       // Logique legacy existante en fallback
-      // Récupérer la configuration depuis les profiles (comme le composant)
-      const { getStaticProviders } = await import('@shared/utils/providers');
-      const { useSettingsStore } = await import('@/stores/settings-store');
-      
-      // Accéder au store pour récupérer les profiles
-      // Note: En contexte client, nous devons passer les profiles en paramètre
-      const profiles = this.getCurrentProfiles();
-      const { providers: staticProviders, status } = getStaticProviders(profiles);
-      
-      const provider = staticProviders.find(p => p.name === providerName);
-      if (!provider) {
-        return { 
-          success: false, 
-          message: 'Provider not found' 
-        };
-      }
-
-      // Vérifier si le provider est configuré (même logique que le composant)
-      if (!status[providerName]) {
-        // Cas spécial pour copilot - il est toujours configuré dans le composant
-        if (providerName === 'copilot') {
-          // Copilot utilise l'authentification GitHub CLI, pas de profile API
-          // On peut faire un test basique ou retourner succès directement
-          return { 
-            success: true, 
-            message: 'GitHub Copilot authentication (CLI-based)',
-            details: { method: 'GitHub CLI' }
-          };
-        }
-        
-        return { 
-          success: false, 
-          message: 'Provider not configured' 
-        };
-      }
-
-      // Récupérer la configuration API depuis les profiles
-      let apiKey: string | undefined;
-      let baseUrl: string | undefined;
-
-      console.log(`[ProviderService] Testing ${providerName}, available profiles:`, profiles.length);
-      
-      // Importer la fonction de détection pour être cohérent avec le composant
-      const { detectProvider } = await import('@shared/utils/provider-detection');
-      
-      // Afficher tous les providers configurés selon la logique du composant
-      const configuredProviders = profiles.map((p: any) => ({
-        name: p.name,
-        baseUrl: p.baseUrl,
-        detectedProvider: p.baseUrl ? detectProvider(p.baseUrl) : 'no-url',
-        hasApiKey: !!p.apiKey
-      }));
-      console.log(`[ProviderService] Configured providers:`, configuredProviders);
-      
-      // Chercher dans les profiles APIProfile pour trouver la clé API et l'URL de base
-      const profile = profiles.find((p: any) => {
-        console.log(`[ProviderService] Checking profile:`, { 
-          name: p.name, 
-          baseUrl: p.baseUrl, 
-          hasApiKey: !!p.apiKey,
-          detectedProvider: p.baseUrl ? detectProvider(p.baseUrl) : 'no-url'
-        });
-        
-        // Utiliser la même logique de détection que le composant
-        if (!p.baseUrl) return false;
-        
-        const detectedProvider = detectProvider(p.baseUrl);
-        const baseUrlLower = p.baseUrl.toLowerCase();
-        
-        // Cas spéciaux pour les providers non supportés par detectProvider
-        if (providerName === 'gemini' || providerName === 'google') {
-          return baseUrlLower.includes('googleapis.com') || baseUrlLower.includes('generativelanguage.googleapis.com');
-        }
-        
-        if (providerName === 'mistral') {
-          return baseUrlLower.includes('mistral.ai') || baseUrlLower.includes('api.mistral.ai');
-        }
-        
-        // Utiliser detectProvider pour les autres
-        return detectedProvider === providerName || 
-               (providerName === 'claude' && detectedProvider === 'anthropic');
-      });
-
-      if (profile) {
-        apiKey = profile.apiKey;
-        baseUrl = profile.baseUrl;
-        console.log(`[ProviderService] Found matching profile for ${providerName}:`, { name: profile.name, baseUrl });
-      } else {
-        console.log(`[ProviderService] No matching profile found for ${providerName}`);
-      }
-
-      if (!apiKey && !baseUrl) {
-        return { 
-          success: false, 
-          message: 'Missing API configuration' 
-        };
-      }
-
-      // Cas spécial pour Anthropic - utiliser le testConnection du store qui contourne les CSP
-      if (providerName === 'anthropic' || providerName === 'claude') {
-        const { testConnection } = useSettingsStore.getState();
-        
-        // Pour Anthropic, le provider est toujours considéré comme configuré via OAuth/Claude Code
-        // On fait un test basique sans clé API pour vérifier si le système fonctionne
-        console.log(`[ProviderService] Testing Anthropic with OAuth/Claude Code authentication`);
-        
-        // Utiliser un test basique - si ça échoue avec auth, c'est normal car on n'a pas de vraie clé
-        const result = await testConnection('https://api.anthropic.com', 'test-oauth-check');
-        
-        if (result) {
-          // Si le test réussit, c'est étrange (on n'a pas de vraie clé)
-          // S'il échoue avec 'auth', c'est normal - ça veut dire que l'endpoint est accessible mais requiert une vraie auth
-          if (result.success) {
-            return { 
-              success: true, 
-              message: 'Anthropic provider is accessible (OAuth/Claude Code)',
-              details: { method: 'OAuth/Claude Code', status: 'Accessible' }
-            };
-          } else if (result.errorType === 'auth') {
-            return { 
-              success: true, 
-              message: 'Anthropic provider is configured (OAuth/Claude Code active)',
-              details: { method: 'OAuth/Claude Code', status: 'Authentication required but working' }
-            };
-          } else {
-            return { 
-              success: false, 
-              message: result.errorType ? `Anthropic provider error: ${result.errorType}` : (result.message || 'Anthropic provider unavailable'),
-              details: { error: result.errorType ? result.errorType : 'Unknown error' }
-            };
-          }
-        } else {
-          return { 
-            success: false, 
-            message: 'Anthropic provider test not available' 
-          };
-        }
-      }
-
-      // Effectuer un test de connexion selon le type de provider
-      switch (providerName) {
-        case 'openai':
-          return await this.testOpenAIConnection(apiKey!, baseUrl);
-        case 'gemini':
-        case 'google':
-          return await this.testGoogleConnection(apiKey!, baseUrl);
-        case 'mistral':
-          return await this.testMistralConnection(apiKey!, baseUrl);
-        case 'ollama':
-          return await this.testOllamaConnection(baseUrl!);
-        default:
-          return await this.testGenericConnection(baseUrl!, apiKey!);
-      }
+      return await this.testProviderLegacy(providerName);
     } catch (error) {
       console.error(`[ProviderService] Test failed for ${providerName}:`, error);
       return { 
@@ -320,6 +170,185 @@ class ProviderServiceClass {
         message: error instanceof Error ? error.message : 'Unknown error' 
       };
     }
+  }
+
+  /**
+   * Essaie d'utiliser le CredentialManager pour tester un provider
+   */
+  private async tryCredentialManager(providerName: string): Promise<{ success: boolean; message: string; details?: any } | null> {
+    if (!globalThis.electronAPI?.invoke) {
+      return null;
+    }
+
+    try {
+      const result = await globalThis.electronAPI.invoke('credential:testProvider', providerName);
+      console.log(`[ProviderService] Used CredentialManager for ${providerName}:`, result);
+      return result;
+    } catch (credentialError) {
+      console.log(`[ProviderService] CredentialManager test failed for ${providerName}, falling back to legacy:`, credentialError);
+      return null;
+    }
+  }
+
+  /**
+   * Teste un provider avec la logique legacy
+   */
+  private async testProviderLegacy(providerName: string): Promise<{ success: boolean; message: string; details?: any }> {
+    const { providers: staticProviders, status } = await this.getProviderData();
+    
+    const provider = staticProviders.find(p => p.name === providerName);
+    if (!provider) {
+      return { success: false, message: 'Provider not found' };
+    }
+
+    if (!status[providerName]) {
+      return this.handleUnconfiguredProvider(providerName);
+    }
+
+    const { apiKey, baseUrl } = await this.getProviderConfig(providerName);
+    
+    if (!apiKey && !baseUrl) {
+      return { success: false, message: 'Missing API configuration' };
+    }
+
+    return await this.testProviderConnection(providerName, apiKey, baseUrl);
+  }
+
+  /**
+   * Récupère les données des providers
+   */
+  private async getProviderData() {
+    const { getStaticProviders } = await import('@shared/utils/providers');
+    const profiles = this.getCurrentProfiles();
+    return await getStaticProviders(profiles);
+  }
+
+  /**
+   * Gère le cas des providers non configurés
+   */
+  private handleUnconfiguredProvider(providerName: string): { success: boolean; message: string; details?: any } {
+    if (providerName === 'copilot') {
+      return {
+        success: true,
+        message: 'GitHub Copilot authentication (CLI-based)',
+        details: { method: 'GitHub CLI' }
+      };
+    }
+    
+    return { success: false, message: 'Provider not configured' };
+  }
+
+  /**
+   * Récupère la configuration API pour un provider
+   */
+  private async getProviderConfig(providerName: string): Promise<{ apiKey?: string; baseUrl?: string }> {
+    const profiles = this.getCurrentProfiles();
+    const { detectProvider } = await import('@shared/utils/provider-detection');
+    
+    console.log(`[ProviderService] Testing ${providerName}, available profiles:`, profiles.length);
+    
+    const profile = this.findProviderProfile(profiles, providerName, detectProvider);
+    
+    if (profile) {
+      console.log(`[ProviderService] Found matching profile for ${providerName}:`, { name: profile.name, baseUrl: profile.baseUrl });
+      return { apiKey: profile.apiKey, baseUrl: profile.baseUrl };
+    } else {
+      console.log(`[ProviderService] No matching profile found for ${providerName}`);
+      return {};
+    }
+  }
+
+  /**
+   * Trouve le profile correspondant à un provider
+   */
+  private findProviderProfile(profiles: any[], providerName: string, detectProvider: (baseUrl: string) => string): any {
+    return profiles.find((p: any) => {
+      if (!p.baseUrl) return false;
+      
+      const detectedProvider = detectProvider(p.baseUrl);
+      const baseUrlLower = p.baseUrl.toLowerCase();
+      
+      return this.matchesProvider(providerName, detectedProvider, baseUrlLower);
+    });
+  }
+
+  /**
+   * Vérifie si un profile correspond à un provider
+   */
+  private matchesProvider(providerName: string, detectedProvider: string, baseUrlLower: string): boolean {
+    switch (providerName) {
+      case 'gemini':
+      case 'google':
+        return baseUrlLower.includes('googleapis.com') || baseUrlLower.includes('generativelanguage.googleapis.com');
+      case 'mistral':
+        return baseUrlLower.includes('mistral.ai') || baseUrlLower.includes('api.mistral.ai');
+      default:
+        return detectedProvider === providerName || 
+               (providerName === 'claude' && detectedProvider === 'anthropic');
+    }
+  }
+
+  /**
+   * Teste la connexion selon le type de provider
+   */
+  private async testProviderConnection(providerName: string, apiKey?: string, baseUrl?: string): Promise<{ success: boolean; message: string; details?: any }> {
+    // Cas spécial pour Anthropic
+    if (providerName === 'anthropic' || providerName === 'claude') {
+      return await this.testAnthropicProvider();
+    }
+
+    // Test de connexion générique selon le type de provider
+    switch (providerName) {
+      case 'openai':
+        return await this.testOpenAIConnection(apiKey!, baseUrl);
+      case 'gemini':
+      case 'google':
+        return await this.testGoogleConnection(apiKey!, baseUrl);
+      case 'mistral':
+        return await this.testMistralConnection(apiKey!, baseUrl);
+      case 'ollama':
+        return await this.testOllamaConnection(baseUrl!);
+      default:
+        return await this.testGenericConnection(baseUrl!, apiKey);
+    }
+  }
+
+  /**
+   * Teste le provider Anthropic avec OAuth/Claude Code
+   */
+  private async testAnthropicProvider(): Promise<{ success: boolean; message: string; details?: any }> {
+    const { useSettingsStore } = await import('@/stores/settings-store');
+    const { testConnection } = useSettingsStore.getState();
+    
+    console.log(`[ProviderService] Testing Anthropic with OAuth/Claude Code authentication`);
+    
+    const result = await testConnection('https://api.anthropic.com', 'test-oauth-check');
+    
+    if (!result) {
+      return { success: false, message: 'Anthropic provider test not available' };
+    }
+
+    if (result.success) {
+      return {
+        success: true,
+        message: 'Anthropic provider is accessible (OAuth/Claude Code)',
+        details: { method: 'OAuth/Claude Code', status: 'Accessible' }
+      };
+    }
+
+    if (result.errorType === 'auth') {
+      return {
+        success: true,
+        message: 'Anthropic provider is configured (OAuth/Claude Code active)',
+        details: { method: 'OAuth/Claude Code', status: 'Authentication required but working' }
+      };
+    }
+
+    return {
+      success: false,
+      message: result.errorType ? `Anthropic provider error: ${result.errorType}` : (result.message || 'Anthropic provider unavailable'),
+      details: { error: result.errorType ? result.errorType : 'Unknown error' }
+    };
   }
 
   /**

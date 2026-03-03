@@ -1,0 +1,62 @@
+{
+  "title": "Code Playground",
+  "description": "AI-powered code generation and testing environment",
+  "idea": {
+    "label": "What would you like to create?",
+    "placeholder": "Describe your idea (e.g., 'A todo app with drag and drop', 'A responsive navigation menu', 'A data visualization chart')"
+  },
+  "playgroundType": {
+    "label": "Playground Type",
+    "options": {
+      "html": "HTML/CSS/JS",
+      "react": "React",
+      "vanilla-js": "Vanilla JavaScript",
+      "python": "Python",
+      "node": "Node.js"
+    }
+  },
+  "sandboxType": {
+    "label": "Sandbox Type",
+    "options": {
+      "iframe": "IFrame",
+      "docker": "Docker",
+      "webworker": "Web Worker"
+    }
+  },
+  "actions": {
+    "close": "Close",
+    "start": "Start",
+    "tryAgain": "Try Again",
+    "copy": "Copy",
+    "copied": "Copied",
+    "integrate": "Integrate to Project"
+  },
+  "tabs": {
+    "code": "Code",
+    "preview": "Preview",
+    "files": "Files"
+  },
+  "status": {
+    "generating": "Generating code...",
+    "error": "Error occurred"
+  },
+  "result": {
+    "streamingOutput": "Generation Output"
+  },
+  "preview": {
+    "title": "Live Preview",
+    "noPreview": "No preview available"
+  },
+  "files": {
+    "structure": "File Structure",
+    "description": "Generated files and their sizes",
+    "noFiles": "No files generated"
+  },
+  "integration": {
+    "title": "Integration Notes"
+  },
+  "errors": {
+    "noProject": "Please select a project to use the Code Playground",
+    "generic": "An unexpected error occurred. Please try again."
+  }
+}

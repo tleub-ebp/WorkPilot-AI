@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Copy, Loader2, Code, RotateCcw, X, Zap } from 'lucide-react';
-
+import { Check, Copy, Loader2, Code, RotateCcw, Zap } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -21,7 +20,6 @@ import {
   SelectValue,
 } from '../ui/select';
 import { Switch } from '../ui/switch';
-
 import {
   useContextAwareSnippetsStore,
   startSnippetGeneration,
@@ -66,7 +64,7 @@ const COMMON_LANGUAGES = [
  */
 interface ContextAwareSnippetsDialogProps {
   /** Called when the user clicks "Copy Snippet" with the generated code */
-  onCopySnippet?: (snippet: string) => void;
+  readonly onCopySnippet?: (snippet: string) => void;
 }
 
 export function ContextAwareSnippetsDialog({ onCopySnippet }: ContextAwareSnippetsDialogProps) {
@@ -181,10 +179,10 @@ export function ContextAwareSnippetsDialog({ onCopySnippet }: ContextAwareSnippe
               }
               disabled={isGenerating}
             >
-              <SelectTrigger id="snippet-type-select">
+              <SelectTrigger id="snippet-type-select" className="border-2 border-yellow-400 focus:border-yellow-500 focus-visible:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200" style={{ border: '2px solid rgb(250, 204, 21)', borderRadius: '0.5rem', outline: 'none' }}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-70">
                 {SNIPPET_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
                     <div className="flex flex-col">
@@ -202,14 +200,19 @@ export function ContextAwareSnippetsDialog({ onCopySnippet }: ContextAwareSnippe
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="snippet-description">
-              {t('contextAwareSnippets:description.label')}
+              {t('contextAwareSnippets:snippetDescription.label')}
             </Label>
             <Textarea
               id="snippet-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder={t('contextAwareSnippets:description.placeholder')}
-              className="min-h-[100px]"
+              placeholder={t('contextAwareSnippets:snippetDescription.placeholder')}
+              className="min-h-[100px] border-2 border-yellow-400 focus:border-yellow-500 focus-visible:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
+              style={{
+                border: '2px solid rgb(250, 204, 21)',
+                borderRadius: '0.5rem',
+                outline: 'none'
+              }}
               disabled={isGenerating}
             />
           </div>
@@ -237,10 +240,10 @@ export function ContextAwareSnippetsDialog({ onCopySnippet }: ContextAwareSnippe
               onValueChange={setLanguage}
               disabled={isGenerating || autoDetectLanguage}
             >
-              <SelectTrigger id="language-select">
+              <SelectTrigger id="language-select" className="border-2 border-yellow-400 focus:border-yellow-500 focus-visible:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200" style={{ border: '2px solid rgb(250, 204, 21)', borderRadius: '0.5rem', outline: 'none' }}>
                 <SelectValue placeholder={t('contextAwareSnippets:language.placeholder')} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-70">
                 {COMMON_LANGUAGES.map((lang) => (
                   <SelectItem key={lang} value={lang}>
                     {lang.charAt(0).toUpperCase() + lang.slice(1)}
@@ -390,10 +393,10 @@ function ResultView({
   onCopy,
   t,
 }: {
-  result: ContextAwareSnippetResult;
-  copied: boolean;
-  onCopy: (text: string) => void;
-  t: (key: string) => string;
+  readonly result: ContextAwareSnippetResult;
+  readonly copied: boolean;
+  readonly onCopy: (text: string) => void;
+  readonly t: (key: string) => string;
 }) {
   return (
     <div className="space-y-4">
@@ -445,9 +448,9 @@ function ResultView({
             {t('contextAwareSnippets:result.contextUsed')}
           </Label>
           <div className="flex flex-wrap gap-1">
-            {result.context_used.map((context, i) => (
+            {result.context_used.map((context) => (
               <span
-                key={`context-${i}`}
+                key={`context-${context}`}
                 className="bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-xs"
               >
                 {context}
@@ -464,9 +467,9 @@ function ResultView({
             {t('contextAwareSnippets:result.adaptations')}
           </Label>
           <ul className="space-y-1 pl-1">
-            {result.adaptations.map((adaptation, i) => (
+            {result.adaptations.map((adaptation) => (
               <li
-                key={`adaptation-${i}`}
+                key={`adaptation-${adaptation}`}
                 className="flex items-start gap-2 text-sm text-muted-foreground"
               >
                 <span className="text-primary mt-1.5 shrink-0">•</span>

@@ -160,17 +160,13 @@ export interface ColorThemeDefinition {
 // Thinking level for Claude model (budget token allocation)
 export type ThinkingLevel = 'none' | 'low' | 'medium' | 'high' | 'ultrathink';
 
-// Model type shorthand – now accepts any model ID string for multi-provider support.
-// The legacy Claude shorthand values ('haiku', 'sonnet', 'opus') are still valid.
-export type ModelTypeShort = string;
-
 // Phase-based model configuration for Auto profile
 // Each phase can use a different model optimized for that task type
 export interface PhaseModelConfig {
-  spec: ModelTypeShort;       // Spec creation (discovery, requirements, context)
-  planning: ModelTypeShort;   // Implementation planning
-  coding: ModelTypeShort;     // Actual coding implementation
-  qa: ModelTypeShort;         // QA review and fixing
+  spec: string;       // Spec creation (discovery, requirements, context)
+  planning: string;   // Implementation planning
+  coding: string;     // Actual coding implementation
+  qa: string;         // QA review and fixing
 }
 
 // Thinking level configuration per phase
@@ -183,17 +179,17 @@ export interface PhaseThinkingConfig {
 
 // Feature-specific model configuration (for non-pipeline features)
 export interface FeatureModelConfig {
-  insights: ModelTypeShort;    // Insights chat feature
-  ideation: ModelTypeShort;    // Ideation generation
-  roadmap: ModelTypeShort;     // Roadmap generation
-  'natural-language-git': ModelTypeShort;  // Natural Language Git feature
-  githubIssues: ModelTypeShort; // GitHub Issues automation
-  githubPrs: ModelTypeShort;    // GitHub PR review automation
-  utility: ModelTypeShort;      // Utility agents (commit message, merge resolver)
-  promptOptimizer: ModelTypeShort; // AI Prompt Optimizer
-  testGenerator: ModelTypeShort; // Test Generation Agent
-  codeReview: ModelTypeShort; // Code Review Agent
-  voiceControl: ModelTypeShort; // Voice Control feature
+  insights: string;    // Insights chat feature
+  ideation: string;    // Ideation generation
+  roadmap: string;     // Roadmap generation
+  'natural-language-git': string;  // Natural Language Git feature
+  githubIssues: string; // GitHub Issues automation
+  githubPrs: string;    // GitHub PR review automation
+  utility: string;      // Utility agents (commit message, merge resolver)
+  promptOptimizer: string; // AI Prompt Optimizer
+  testGenerator: string; // Test Generation Agent
+  codeReview: string; // Code Review Agent
+  voiceControl: string; // Voice Control feature
 }
 
 // Feature-specific thinking level configuration
@@ -217,7 +213,7 @@ export interface AgentProfile {
   id: string;
   name: string;
   description: string;
-  model: ModelTypeShort;           // Primary model (shown in profile card)
+  model: string;           // Primary model (shown in profile card)
   thinkingLevel: ThinkingLevel;    // Primary thinking level (shown in profile card)
   icon?: string;                   // Lucide icon name
   // Per-phase configuration - all profiles now have this

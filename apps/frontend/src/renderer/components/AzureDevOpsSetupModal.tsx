@@ -15,11 +15,11 @@ import { Label } from './ui/label';
 import type { Project, ProjectEnvConfig } from '../../shared/types';
 
 interface AzureDevOpsSetupModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  project: Project;
-  onComplete: () => void;
-  onSkip?: () => void;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly project: Project;
+  readonly onComplete: () => void;
+  readonly onSkip?: () => void;
 }
 
 export function AzureDevOpsSetupModal({
@@ -43,7 +43,7 @@ export function AzureDevOpsSetupModal({
       setIsLoading(true);
       setError(null);
       try {
-        const result = await window.electronAPI.getProjectEnv(project.id);
+        const result = await globalThis.electronAPI.getProjectEnv(project.id);
         const config = result.success ? (result.data as ProjectEnvConfig | null) : null;
 
         setOrgUrl(config?.azureDevOpsOrgUrl || '');
@@ -75,7 +75,7 @@ export function AzureDevOpsSetupModal({
     setError(null);
 
     try {
-      await window.electronAPI.updateProjectEnv(project.id, {
+      await globalThis.electronAPI.updateProjectEnv(project.id, {
         azureDevOpsEnabled: true,
         azureDevOpsOrgUrl: trimmedOrgUrl,
         azureDevOpsPat: trimmedPat,

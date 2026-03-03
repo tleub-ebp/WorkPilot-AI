@@ -4,7 +4,7 @@
  * Provides API interface for Conflict Predictor functionality
  */
 
-import { invokeIpc } from './ipc-utils';
+import { invokeIpc, createIpcListener } from './ipc-utils';
 
 export interface ConflictPredictorAPI {
   runConflictPrediction: (projectId: string) => Promise<void>;
@@ -24,58 +24,73 @@ export const createConflictPredictorAPI = (): ConflictPredictorAPI => ({
     invokeIpc('cancel-conflict-prediction'),
   
   onConflictPredictionStreamChunk: (callback: (chunk: string) => void) => {
-    const unsubscribe = window.electronAPI.onConflictPredictionEvent?.((event: any) => {
+    return createIpcListener('conflict-predictor-event', (event: any) => {
       if (event.type === 'progress' && event.data.status) {
         callback(event.data.status);
       }
     });
-    return unsubscribe || (() => {});
   },
   
   onConflictPredictionStatus: (callback: (status: string) => void) => {
-    const unsubscribe = window.electronAPI.onConflictPredictionEvent?.((event: any) => {
+    return createIpcListener('conflict-predictor-event', (event: any) => {
       if (event.type === 'progress' && event.data.status) {
         callback(event.data.status);
       }
     });
-    return unsubscribe || (() => {});
   },
   
   onConflictPredictionError: (callback: (error: string) => void) => {
-    const unsubscribe = window.electronAPI.onConflictPredictionError?.(callback);
-    return unsubscribe || (() => {});
+    return createIpcListener('conflict-predictor-error', (error: string) => {
+      callback(error);
+    });
   },
   
   onConflictPredictionComplete: (callback: (result: any) => void) => {
-    const unsubscribe = window.electronAPI.onConflictPredictionComplete?.(callback);
-    return unsubscribe || (() => {});
+    return createIpcListener('conflict-predictor-complete', (result: any) => {
+      callback(result);
+    });
   },
   
   onConflictPredictionEvent: (callback: (event: any) => void) => {
-    const unsubscribe = window.electronAPI.onConflictPredictionEvent?.(callback);
-    return unsubscribe || (() => {});
+    return createIpcListener('conflict-predictor-event', (event: any) => {
+      callback(event);
+    });
   },
 });
 
 export const conflictPredictorAPI: ConflictPredictorAPI = {
   runConflictPrediction: (projectId: string) => 
-    window.electronAPI.runConflictPrediction(projectId),
+    invokeIpc('run-conflict-prediction', { projectId }),
   
   cancelConflictPrediction: () => 
-    window.electronAPI.cancelConflictPrediction(),
+    invokeIpc('cancel-conflict-prediction'),
   
   onConflictPredictionStreamChunk: (callback: (chunk: string) => void) => 
-    window.electronAPI.onConflictPredictionStreamChunk(callback),
+    createIpcListener('conflict-predictor-event', (event: any) => {
+      if (event.type === 'progress' && event.data.status) {
+        callback(event.data.status);
+      }
+    }),
   
   onConflictPredictionStatus: (callback: (status: string) => void) => 
-    window.electronAPI.onConflictPredictionStatus(callback),
+    createIpcListener('conflict-predictor-event', (event: any) => {
+      if (event.type === 'progress' && event.data.status) {
+        callback(event.data.status);
+      }
+    }),
   
   onConflictPredictionError: (callback: (error: string) => void) => 
-    window.electronAPI.onConflictPredictionError(callback),
+    createIpcListener('conflict-predictor-error', (error: string) => {
+      callback(error);
+    }),
   
   onConflictPredictionComplete: (callback: (result: any) => void) => 
-    window.electronAPI.onConflictPredictionComplete(callback),
+    createIpcListener('conflict-predictor-complete', (result: any) => {
+      callback(result);
+    }),
   
   onConflictPredictionEvent: (callback: (event: any) => void) => 
-    window.electronAPI.onConflictPredictionEvent(callback),
+    createIpcListener('conflict-predictor-event', (event: any) => {
+      callback(event);
+    }),
 };

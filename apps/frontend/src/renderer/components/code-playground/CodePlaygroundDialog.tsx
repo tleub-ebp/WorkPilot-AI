@@ -166,7 +166,12 @@ export function CodePlaygroundDialog({ onIntegrate }: CodePlaygroundDialogProps)
               value={editableIdea}
               onChange={(e) => setEditableIdea(e.target.value)}
               placeholder={t('codePlayground:idea.placeholder')}
-              className="min-h-[100px]"
+              className="min-h-[100px] border-2 border-yellow-400 focus:border-yellow-500 focus-visible:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
+              style={{
+                border: '2px solid rgb(250, 204, 21)',
+                borderRadius: '0.5rem',
+                outline: 'none'
+              }}
               disabled={isGenerating}
             />
           </div>

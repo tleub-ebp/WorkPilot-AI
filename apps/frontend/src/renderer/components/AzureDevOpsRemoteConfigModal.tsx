@@ -6,10 +6,10 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 
 interface AzureDevOpsRemoteConfigModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (config: { orgUrl: string; pat: string }) => void;
-  initialConfig?: { orgUrl?: string; pat?: string };
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onSave: (config: { orgUrl: string; pat: string }) => void;
+  readonly initialConfig?: { orgUrl?: string; pat?: string };
 }
 
 export function AzureDevOpsRemoteConfigModal({ open, onOpenChange, onSave, initialConfig }: AzureDevOpsRemoteConfigModalProps) {

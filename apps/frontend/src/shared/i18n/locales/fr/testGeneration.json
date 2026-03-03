@@ -1,0 +1,101 @@
+{
+  "title": "Agent de Génération de Tests",
+  "description": "Analysez les gaps de couverture et générez des suites de tests complètes pour votre code.",
+  "analyzeCoverage": "Analyser la couverture",
+  "generateTests": "Générer les tests",
+  "sourceFile": {
+    "label": "Fichier source",
+    "placeholder": "Sélectionnez un fichier à analyser"
+  },
+  "existingTest": {
+    "label": "Fichier de test existant"
+  },
+  "unit": {
+    "placeholder": "Sélectionnez un fichier pour la génération de tests unitaires"
+  },
+  "maxTests": {
+    "label": "Max de tests par fonction"
+  },
+  "userStory": {
+    "label": "User Story",
+    "placeholder": "Décrivez la user story ou le scénario..."
+  },
+  "targetModule": {
+    "label": "Module cible",
+    "placeholder": "ex: src/auth/login.py"
+  },
+  "actions": {
+    "analyze": "Analyser",
+    "unitTests": "Tests unitaires",
+    "e2eTests": "Tests E2E",
+    "tddMode": "Mode TDD",
+    "analyzeCoverage": "Analyser la couverture",
+    "generateTests": "Générer les tests",
+    "generateUnitTests": "Générer Tests Unitaires",
+    "generateE2ETests": "Générer Tests E2E",
+    "generateTDDTests": "Générer Tests TDD",
+    "copyAll": "Copier tout",
+    "applyTests": "Appliquer Tests",
+    "close": "Fermer",
+    "copy": "Copier",
+    "copied": "Copié",
+    "tryAgain": "Réessayer",
+    "cancel": "Annuler",
+    "apply": "Appliquer",
+    "generate": "Générer"
+  },
+  "tabs": {
+    "analyze": "Analyser",
+    "unit": "Unitaires",
+    "e2e": "E2E",
+    "tdd": "TDD"
+  },
+  "status": {
+    "analyzing": "Analyse du fichier...",
+    "generating": "Génération des tests...",
+    "error": "Erreur"
+  },
+  "coverage": {
+    "title": "Analyse de Couverture",
+    "gaps": "Gaps de couverture identifiés",
+    "noGaps": "Aucun gap de couverture trouvé",
+    "priority": {
+      "high": "Haute priorité",
+      "medium": "Priorité moyenne",
+      "low": "Basse priorité"
+    }
+  },
+  "result": {
+    "generatedTests": "Tests générés",
+    "coverageGapsFound": "Gaps de couverture trouvés",
+    "generatedUnitTests": "Tests unitaires générés",
+    "generatedE2ETests": "Tests E2E générés",
+    "generatedTDDTests": "Tests TDD générés",
+    "testFile": "Fichier de test",
+    "coverage": "Couverture",
+    "explanation": "Explication",
+    "reasoning": "Raisonnement",
+    "streamingOutput": "Sortie en direct"
+  },
+  "tdd": {
+    "spec": {
+      "label": "Spécification de fonction (JSON)",
+      "placeholder": "{\n  \"name\": \"calculate_total\",\n  \"args\": [\"items\", \"tax_rate\"],\n  \"returns\": \"float\",\n  \"description\": \"Calculer le total avec taxe\",\n  \"edge_cases\": [\"empty_items\", \"invalid_tax_rate\"]\n}"
+    },
+    "generate": "Générer depuis la spec"
+  },
+  "snippetType": {
+    "label": "Type de snippet",
+    "options": {
+      "component": "Composant"
+    }
+  },
+  "language": {
+    "label": "Langue"
+  },
+  "errors": {
+    "noFile": "Veuillez sélectionner un fichier à analyser",
+    "noProject": "Veuillez sélectionner un projet",
+    "generic": "Une erreur est survenue lors de la génération des tests"
+  }
+}

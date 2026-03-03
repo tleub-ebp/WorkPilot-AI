@@ -178,6 +178,7 @@ export function setupCodePlaygroundListeners() {
 
 // Helper function to open dialog
 export const openCodePlaygroundDialog = () => {
-  useCodePlaygroundStore.getState().reset();
-  // This would be handled by the component that opens the dialog
+  const store = useCodePlaygroundStore.getState();
+  store.reset();
+  store.openDialog('', 'html', 'iframe');
 };

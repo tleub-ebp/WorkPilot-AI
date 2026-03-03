@@ -188,6 +188,7 @@ export function cancelSnippetGeneration(): void {
 
 // Helper function to open dialog
 export const openContextAwareSnippetsDialog = () => {
-  useContextAwareSnippetsStore.getState().reset();
-  // This would be handled by the component that opens the dialog
+  const store = useContextAwareSnippetsStore.getState();
+  store.reset();
+  store.openDialog('component', '', '');
 };

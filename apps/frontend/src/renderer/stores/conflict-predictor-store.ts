@@ -174,6 +174,74 @@ export const startConflictPrediction = async (projectId: string) => {
 };
 
 /**
+ * Handle conflict prediction events
+ */
+const handleConflictPredictionEvent = (data: any) => {
+  const { type, data: eventData } = data;
+
+  switch (type) {
+    case 'start':
+      useConflictPredictorStore.setState({
+        phase: 'analyzing',
+        status: eventData.status || 'Starting analysis...',
+      });
+      break;
+
+    case 'progress':
+      useConflictPredictorStore.setState({ status: eventData });
+      break;
+    case 'output':
+      useConflictPredictorStore.setState((state) => ({
+        streamingOutput: state.streamingOutput + eventData,
+      }));
+      break;
+    default:
+      console.log('Unknown conflict prediction event type:', type, eventData);
+  }
+};
+
+/**
+ * Handle conflict prediction completion
+ */
+const handleConflictPredictionComplete = (data: any) => {
+  useConflictPredictorStore.setState({
+    result: data,
+    phase: 'complete',
+    status: 'Analysis complete',
+  });
+};
+
+/**
+ * Handle conflict prediction error
+ */
+const handleConflictPredictionError = (error: string) => {
+  useConflictPredictorStore.setState({
+    error,
+    phase: 'error',
+    status: 'Analysis failed',
+  });
+};
+
+/**
+ * Helper function to setup event listener with error handling
+ */
+const setupEventListener = (
+  apiFunction: (callback: (data: any) => void) => (() => void) | undefined,
+  eventName: string,
+  handler: (data: any) => void,
+  cleanupFns: (() => void)[]
+) => {
+  if (apiFunction) {
+    try {
+      const unsub = apiFunction(handler);
+      if (unsub) cleanupFns.push(unsub);
+    } catch (error) {
+      console.error(`Failed to setup ${eventName} listener:`, error);
+    }
+  }
+};
+
+/**
  * Setup IPC event listeners for conflict predictor events
  * Uses globalThis.electronAPI (preload bridge) instead of direct IPC imports
  */
@@ -181,55 +249,27 @@ export const setupConflictPredictorListeners = () => {
   const cleanupFns: (() => void)[] = [];
 
   // Listen for conflict predictor events via preload API
-  if (globalThis.electronAPI && typeof globalThis.electronAPI.onConflictPredictionEvent === 'function') {
-    const unsubEvent = globalThis.electronAPI.onConflictPredictionEvent((data: any) => {
-      const { type, data: eventData } = data;
-
-      switch (type) {
-        case 'start':
-          useConflictPredictorStore.setState({
-            phase: 'analyzing',
-            status: eventData.status || 'Starting analysis...',
-          });
-          break;
-
-        case 'progress':
-          useConflictPredictorStore.setState({ status: eventData });
-          break;
-        case 'output':
-          useConflictPredictorStore.setState((state) => ({
-            streamingOutput: state.streamingOutput + eventData,
-          }));
-          break;
-        default:
-          console.log('Unknown conflict prediction event type:', type, eventData);
-      }
-    });
-    if (unsubEvent) cleanupFns.push(unsubEvent);
-  }
+  setupEventListener(
+    globalThis.electronAPI?.onConflictPredictionEvent,
+    'conflict prediction event',
+    handleConflictPredictionEvent,
+    cleanupFns
+  );
 
   // Use individual event listeners as fallback
-  if (globalThis.electronAPI && typeof globalThis.electronAPI.onConflictPredictionComplete === 'function') {
-    const unsubComplete = globalThis.electronAPI.onConflictPredictionComplete((data: any) => {
-      useConflictPredictorStore.setState({
-        result: data,
-        phase: 'complete',
-        status: 'Analysis complete',
-      });
-    });
-    if (unsubComplete) cleanupFns.push(unsubComplete);
-  }
+  setupEventListener(
+    globalThis.electronAPI?.onConflictPredictionComplete,
+    'conflict prediction complete',
+    handleConflictPredictionComplete,
+    cleanupFns
+  );
 
-  if (globalThis.electronAPI && typeof globalThis.electronAPI.onConflictPredictionError === 'function') {
-    const unsubError = globalThis.electronAPI.onConflictPredictionError((error: string) => {
-      useConflictPredictorStore.setState({
-        error,
-        phase: 'error',
-        status: 'Analysis failed',
-      });
-    });
-    if (unsubError) cleanupFns.push(unsubError);
-  }
+  setupEventListener(
+    globalThis.electronAPI?.onConflictPredictionError,
+    'conflict prediction error',
+    handleConflictPredictionError,
+    cleanupFns
+  );
 
   // Return cleanup function
   return () => {
