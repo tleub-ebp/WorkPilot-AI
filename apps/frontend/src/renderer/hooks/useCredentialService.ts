@@ -29,7 +29,7 @@ export interface UseCredentialServiceReturn {
  * Hook pour utiliser le CredentialService
  */
 export function useCredentialService(selectedProvider?: string): UseCredentialServiceReturn {
-  const [activeCredential, setActiveCredentialState] = useState<CredentialConfig | null>(null);
+  const [activeCredential, setActiveCredential] = useState<CredentialConfig | null>(null);
   const [usageData, setUsageData] = useState<UsageData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAvailable, setIsAvailable] = useState(false);
@@ -45,7 +45,7 @@ export function useCredentialService(selectedProvider?: string): UseCredentialSe
 
       // Charger le credential actif
       const credential = await credentialService.getActiveCredential();
-      setActiveCredentialState(credential);
+      setActiveCredential(credential);
 
       // Charger les données d'usage si un provider est spécifié
       if (selectedProvider) {
@@ -145,7 +145,7 @@ export function useCredentialService(selectedProvider?: string): UseCredentialSe
 
     // S'abonner aux événements
     const handleCredentialUpdated = (credential: CredentialConfig | null) => {
-      setActiveCredentialState(credential);
+      setActiveCredential(credential);
     };
 
     const handleUsageChanged = (data: UsageData) => {

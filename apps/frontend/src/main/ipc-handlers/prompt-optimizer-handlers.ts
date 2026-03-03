@@ -1,7 +1,7 @@
 import { ipcMain, app } from 'electron';
 import type { BrowserWindow } from 'electron';
-import path from 'path';
-import { existsSync, readFileSync } from 'fs';
+import path from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
 import { debugError } from '../../shared/utils/debug-logger';
 import {
   IPC_CHANNELS,

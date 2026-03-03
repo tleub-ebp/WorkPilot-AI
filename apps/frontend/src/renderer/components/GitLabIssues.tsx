@@ -14,7 +14,7 @@ import {
 import type { GitLabIssue } from "../../shared/types";
 import type { GitLabIssuesProps } from "./gitlab-issues/types";
 
-export function GitLabIssues({ onOpenSettings, onNavigateToTask }: GitLabIssuesProps) {
+export function GitLabIssues({ onOpenSettings, onNavigateToTask }: Readonly<GitLabIssuesProps>) {
   const { t } = useTranslation("gitlab");
   const projects = useProjectStore((state) => state.projects);
   const selectedProjectId = useProjectStore((state) => state.selectedProjectId);

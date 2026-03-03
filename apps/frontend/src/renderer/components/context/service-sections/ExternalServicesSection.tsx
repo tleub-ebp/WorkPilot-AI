@@ -9,7 +9,7 @@ import {
 import type { ServiceInfo } from '../../../../shared/types';
 
 interface ExternalServicesSectionProps {
-  services: ServiceInfo['services'];
+  readonly services: ServiceInfo['services'];
 }
 
 export function ExternalServicesSection({ services }: ExternalServicesSectionProps) {
@@ -38,7 +38,7 @@ export function ExternalServicesSection({ services }: ExternalServicesSectionPro
             <span className="text-xs text-muted-foreground">Databases</span>
             <div className="flex flex-wrap gap-1 mt-1">
               {services.databases.map((db, idx) => (
-                <Badge key={idx} variant="secondary" className="text-xs">
+                <Badge key={`db-${db.type || db.client}-${idx}`} variant="secondary" className="text-xs">
                   <HardDrive className="h-3 w-3 mr-1" />
                   {db.type || db.client}
                 </Badge>
@@ -51,7 +51,7 @@ export function ExternalServicesSection({ services }: ExternalServicesSectionPro
             <span className="text-xs text-muted-foreground">Email</span>
             <div className="flex flex-wrap gap-1 mt-1">
               {services.email.map((email, idx) => (
-                <Badge key={idx} variant="secondary" className="text-xs">
+                <Badge key={`email-${email.provider || email.client}-${idx}`} variant="secondary" className="text-xs">
                   <Mail className="h-3 w-3 mr-1" />
                   {email.provider || email.client}
                 </Badge>
@@ -64,7 +64,7 @@ export function ExternalServicesSection({ services }: ExternalServicesSectionPro
             <span className="text-xs text-muted-foreground">Payments</span>
             <div className="flex flex-wrap gap-1 mt-1">
               {services.payments.map((payment, idx) => (
-                <Badge key={idx} variant="secondary" className="text-xs">
+                <Badge key={`payment-${payment.provider || payment.client}-${idx}`} variant="secondary" className="text-xs">
                   <CreditCard className="h-3 w-3 mr-1" />
                   {payment.provider || payment.client}
                 </Badge>
@@ -77,7 +77,7 @@ export function ExternalServicesSection({ services }: ExternalServicesSectionPro
             <span className="text-xs text-muted-foreground">Cache</span>
             <div className="flex flex-wrap gap-1 mt-1">
               {services.cache.map((cache, idx) => (
-                <Badge key={idx} variant="secondary" className="text-xs">
+                <Badge key={`cache-${cache.type || cache.client}-${idx}`} variant="secondary" className="text-xs">
                   <Zap className="h-3 w-3 mr-1" />
                   {cache.type || cache.client}
                 </Badge>

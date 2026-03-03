@@ -120,7 +120,6 @@ export const AUTO_BUILD_PATHS = {
  * Get the specs directory path.
  * All specs go to .auto-claude/specs/ (the project's data directory).
  */
-export function getSpecsDir(autoBuildPath: string | undefined): string {
-  const basePath = autoBuildPath || '.auto-claude';
-  return `${basePath}/specs`;
+export function getSpecsDir(autoBuildPath: string = '.auto-claude'): string {
+  return `${autoBuildPath}/specs`;
 }

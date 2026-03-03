@@ -745,5 +745,16 @@
   "refresh": "Refresh",
   "save": "Save",
   "loading": "Loading...",
-  "noProjectSelected": "No project selected"
+  "noProjectSelected": "No project selected",
+  "agnosticUsage": {
+    "loadFailed": "Failed to load usage data",
+    "unsupportedAuthMethod": "Provider {{provider}} does not support {{authMethod}} authentication",
+    "setProviderFailed": "Failed to set active provider",
+    "refreshFailed": "Failed to refresh usage data",
+    "validationFailed": "Failed to validate credentials",
+    "testFailed": "Failed to test provider",
+    "genericError": "An error occurred",
+    "noUsageData": "No usage data available",
+    "providerGeneric": "Generic"
+  }
 }

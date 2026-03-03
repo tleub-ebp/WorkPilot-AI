@@ -745,5 +745,16 @@
   "refresh": "Actualiser",
   "save": "Enregistrer",
   "loading": "Chargement...",
-  "noProjectSelected": "Pas de projet sélectionné"
+  "noProjectSelected": "Pas de projet sélectionné",
+  "agnosticUsage": {
+    "loadFailed": "Échec du chargement des données d'utilisation",
+    "unsupportedAuthMethod": "Le fournisseur {{provider}} ne prend pas en charge l'authentification {{authMethod}}",
+    "setProviderFailed": "Échec de la définition du fournisseur actif",
+    "refreshFailed": "Échec de l'actualisation des données d'utilisation",
+    "validationFailed": "Échec de la validation des informations d'identification",
+    "testFailed": "Échec du test du fournisseur",
+    "genericError": "Une erreur s'est produite",
+    "noUsageData": "Aucune donnée d'utilisation disponible",
+    "providerGeneric": "Générique"
+  }
 }

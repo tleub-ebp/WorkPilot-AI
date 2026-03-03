@@ -307,9 +307,13 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
 
     set((state) => {
       const newTerminals = state.terminals.filter((t) => t.id !== id);
-      const newActiveId = state.activeTerminalId === id
-        ? (newTerminals.length > 0 ? newTerminals[newTerminals.length - 1].id : null)
-        : state.activeTerminalId;
+      let newActiveId: string | null;
+      
+      if (state.activeTerminalId === id) {
+        newActiveId = newTerminals.at(-1)?.id ?? null;
+      } else {
+        newActiveId = state.activeTerminalId;
+      }
 
       return {
         terminals: newTerminals,
@@ -454,7 +458,7 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
       get().setPendingClaudeResume(terminal.id, false);
 
       debugLog(`[TerminalStore] Activating deferred Claude resume for terminal: ${terminal.id}`);
-      window.electronAPI.activateDeferredClaudeResume(terminal.id);
+      globalThis.electronAPI.activateDeferredClaudeResume(terminal.id);
 
       // Wait 500ms before processing next terminal (staggered delay)
       if (i < pendingTerminals.length - 1) {
@@ -519,7 +523,7 @@ export async function restoreTerminalSessions(projectPath: string): Promise<void
       const aliveChecks = await Promise.all(
         projectTerminals.map(async (terminal) => {
           try {
-            const result = await window.electronAPI.checkTerminalPtyAlive(terminal.id);
+            const result = await globalThis.electronAPI.checkTerminalPtyAlive(terminal.id);
             return { terminal, alive: result.success && result.data?.alive === true };
           } catch {
             return { terminal, alive: false };
@@ -550,7 +554,7 @@ export async function restoreTerminalSessions(projectPath: string): Promise<void
 
     // Restore from disk
     debugLog(`[TerminalStore] Fetching terminal sessions from disk for project: ${projectPath}`);
-    const result = await window.electronAPI.getTerminalSessions(projectPath);
+    const result = await globalThis.electronAPI.getTerminalSessions(projectPath);
     if (!result.success || !result.data || result.data.length === 0) {
       debugLog(`[TerminalStore] No sessions found on disk for project: ${projectPath}, success: ${result.success}, sessionCount: ${result.data?.length || 0}`);
       return;

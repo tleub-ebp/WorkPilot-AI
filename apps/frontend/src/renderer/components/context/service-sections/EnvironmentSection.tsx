@@ -9,7 +9,7 @@ import {
 import type { ServiceInfo } from '../../../../shared/types';
 
 interface EnvironmentSectionProps {
-  environment: ServiceInfo['environment'];
+  readonly environment: ServiceInfo['environment'];
 }
 
 export function EnvironmentSection({ environment }: EnvironmentSectionProps) {

@@ -8,7 +8,7 @@ import {
 import type { ServiceInfo } from '../../../../shared/types';
 
 interface MonitoringSectionProps {
-  monitoring: ServiceInfo['monitoring'];
+  readonly monitoring: ServiceInfo['monitoring'];
 }
 
 export function MonitoringSection({ monitoring }: MonitoringSectionProps) {

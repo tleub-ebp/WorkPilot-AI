@@ -9,7 +9,7 @@ import {
 import type { ServiceInfo } from '../../../../shared/types';
 
 interface DatabaseSectionProps {
-  database: ServiceInfo['database'];
+  readonly database: ServiceInfo['database'];
 }
 
 export function DatabaseSection({ database }: DatabaseSectionProps) {

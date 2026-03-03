@@ -15,7 +15,6 @@ import type { UsageSnapshot } from '@shared/types/agent';
  * Convert UsageSnapshot to AgnosticUsageData
  */
 export function convertToAgnosticUsage(snapshot: UsageSnapshot): AgnosticUsageData {
-  const providerConfig = getProviderConfig(snapshot.providerName || 'generic');
   
   // Base metrics conversion
   const metrics: BaseUsageMetrics = {

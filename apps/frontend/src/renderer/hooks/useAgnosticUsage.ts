@@ -14,8 +14,7 @@ import {
   supportsAuthMethod 
 } from '@shared/types/agnostic-usage';
 import { 
-  convertToAgnosticUsage, 
-  convertBackendError,
+  convertToAgnosticUsage,
   formatUsageValue,
   getUsageColorClass,
   getBadgeColorClasses,
@@ -63,7 +62,7 @@ export interface UseAgnosticUsageReturn {
 export function useAgnosticUsage(selectedProvider?: string): UseAgnosticUsageReturn {
   const { t } = useTranslation(['common']);
   const { selectedProvider: contextProvider } = useProviderContext();
-  const provider = selectedProvider || contextProvider || 'generic';
+  const provider = selectedProvider || contextProvider || t('agnosticUsage.providerGeneric', 'generic');
   const providerConfig = getProviderConfig(provider);
   
   // State
@@ -150,7 +149,7 @@ export function useAgnosticUsage(selectedProvider?: string): UseAgnosticUsageRet
       // Convert error to UsageError format
       const usageError: UsageError = {
         code: 'LOAD_FAILED',
-        message: err instanceof Error ? err.message : 'Failed to load usage data',
+        message: t('agnosticUsage.loadFailed', 'Failed to load usage data'),
         provider,
         requiresAction: true,
         actionType: 'retry'
@@ -160,7 +159,7 @@ export function useAgnosticUsage(selectedProvider?: string): UseAgnosticUsageRet
       setIsLoading(false);
       setIsAvailable(false);
     }
-  }, [provider, convertLegacyUsageData]);
+  }, [provider, convertLegacyUsageData, t]);
 
   /**
    * Set active provider
@@ -173,7 +172,7 @@ export function useAgnosticUsage(selectedProvider?: string): UseAgnosticUsageRet
       if (!supportsAuthMethod(providerName, type)) {
         const usageError: UsageError = {
           code: 'UNSUPPORTED_AUTH_METHOD',
-          message: `Provider ${providerName} does not support ${type} authentication`,
+          message: t('agnosticUsage.unsupportedAuthMethod', 'Provider {{provider}} does not support {{authMethod}} authentication', { provider: providerName, authMethod: type }),
           provider: providerName,
           requiresAction: true,
           actionType: 'configuration'
@@ -203,7 +202,7 @@ export function useAgnosticUsage(selectedProvider?: string): UseAgnosticUsageRet
       
       const usageError: UsageError = {
         code: 'SET_PROVIDER_FAILED',
-        message: err instanceof Error ? err.message : 'Failed to set active provider',
+        message: t('agnosticUsage.setProviderFailed', 'Failed to set active provider'),
         provider: providerName,
         requiresAction: true,
         actionType: 'retry'
@@ -212,7 +211,7 @@ export function useAgnosticUsage(selectedProvider?: string): UseAgnosticUsageRet
       setError(usageError);
       throw err;
     }
-  }, [provider, convertLegacyUsageData]);
+  }, [provider, convertLegacyUsageData, t]);
 
   /**
    * Refresh usage data
@@ -240,7 +239,7 @@ export function useAgnosticUsage(selectedProvider?: string): UseAgnosticUsageRet
       
       const usageError: UsageError = {
         code: 'REFRESH_FAILED',
-        message: err instanceof Error ? err.message : 'Failed to refresh usage data',
+        message: t('agnosticUsage.refreshFailed', 'Failed to refresh usage data'),
         provider: providerName || provider,
         requiresAction: true,
         actionType: 'retry'
@@ -248,7 +247,7 @@ export function useAgnosticUsage(selectedProvider?: string): UseAgnosticUsageRet
       
       setError(usageError);
     }
-  }, [provider, convertLegacyUsageData]);
+  }, [provider, convertLegacyUsageData, t]);
 
   /**
    * Validate credentials
@@ -262,7 +261,7 @@ export function useAgnosticUsage(selectedProvider?: string): UseAgnosticUsageRet
       
       const usageError: UsageError = {
         code: 'VALIDATION_FAILED',
-        message: err instanceof Error ? err.message : 'Failed to validate credentials',
+        message: t('agnosticUsage.validationFailed', 'Failed to validate credentials'),
         provider,
         requiresAction: true,
         actionType: 'reauth'
@@ -271,7 +270,7 @@ export function useAgnosticUsage(selectedProvider?: string): UseAgnosticUsageRet
       setError(usageError);
       return false;
     }
-  }, [provider]);
+  }, [provider, t]);
 
   /**
    * Test provider
@@ -285,7 +284,7 @@ export function useAgnosticUsage(selectedProvider?: string): UseAgnosticUsageRet
       
       const usageError: UsageError = {
         code: 'TEST_FAILED',
-        message: err instanceof Error ? err.message : 'Failed to test provider',
+        message: t('agnosticUsage.testFailed', 'Failed to test provider'),
         provider: providerName,
         requiresAction: true,
         actionType: 'retry'
@@ -294,7 +293,7 @@ export function useAgnosticUsage(selectedProvider?: string): UseAgnosticUsageRet
       setError(usageError);
       return { success: false, message: usageError.message };
     }
-  }, []);
+  }, [t]);
 
   /**
    * Clear error
@@ -307,9 +306,9 @@ export function useAgnosticUsage(selectedProvider?: string): UseAgnosticUsageRet
    * Format value based on provider and format
    */
   const handleFormatValue = useCallback((format?: 'percentage' | 'tokens' | 'cost' | 'custom') => {
-    if (!usageData) return '0';
+    if (!usageData) return t('agnosticUsage.noUsageData', '0');
     return formatUsageValue(usageData, format);
-  }, [usageData]);
+  }, [usageData, t]);
 
   /**
    * Get color class based on usage

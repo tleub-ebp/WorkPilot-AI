@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
 
 interface ProviderContextType {
   selectedProvider: string;
@@ -7,36 +7,20 @@ interface ProviderContextType {
 
 const ProviderContext = createContext<ProviderContextType | undefined>(undefined);
 
-export const ProviderContextProvider = ({ children }: { children: ReactNode }) => {
-  const [selectedProvider, setSelectedProviderState] = useState<string>(() => {
-    // Restaure depuis localStorage si disponible
-    return localStorage.getItem('selectedProvider') || '';
-  });
+interface ProviderContextProviderProps {
+  children: ReactNode;
+}
 
-  const setSelectedProvider = (provider: string) => {
-    setSelectedProviderState(provider);
-    localStorage.setItem('selectedProvider', provider);
-  };
+export const ProviderContextProvider: React.FC<ProviderContextProviderProps> = ({ children }) => {
+  const [selectedProvider, setSelectedProvider] = useState<string>('');
 
-  useEffect(() => {
-    // Synchronise le provider au montage
-    const stored = localStorage.getItem('selectedProvider');
-    if (stored && stored !== selectedProvider) {
-      setSelectedProviderState(stored);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Au montage, communique le provider sélectionné au backend
-    if (selectedProvider && window.electronAPI?.selectProvider) {
-      window.electronAPI.selectProvider(selectedProvider).catch(error => {
-        console.error('Failed to sync provider selection to backend on mount:', error);
-      });
-    }
-  }, [selectedProvider]);
+  const contextValue = useMemo(() => ({
+    selectedProvider,
+    setSelectedProvider,
+  }), [selectedProvider]);
 
   return (
-    <ProviderContext.Provider value={{ selectedProvider, setSelectedProvider }}>
+    <ProviderContext.Provider value={contextValue}>
       {children}
     </ProviderContext.Provider>
   );

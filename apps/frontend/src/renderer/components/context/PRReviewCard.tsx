@@ -19,7 +19,7 @@ import type { MemoryEpisode } from '../../../shared/types';
 import { formatDate } from './utils';
 
 interface PRReviewCardProps {
-  memory: MemoryEpisode;
+  readonly memory: MemoryEpisode;
 }
 
 interface ParsedPRReview {

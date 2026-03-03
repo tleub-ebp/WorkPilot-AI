@@ -19,11 +19,11 @@ import {
 import type { RoadmapFeature, Roadmap } from '../../shared/types';
 
 interface SortableFeatureCardProps {
-  feature: RoadmapFeature;
-  roadmap?: Roadmap;
-  onClick: () => void;
-  onConvertToSpec?: (feature: RoadmapFeature) => void;
-  onGoToTask?: (specId: string) => void;
+  readonly feature: RoadmapFeature;
+  readonly roadmap?: Roadmap;
+  readonly onClick: () => void;
+  readonly onConvertToSpec?: (feature: RoadmapFeature) => void;
+  readonly onGoToTask?: (specId: string) => void;
 }
 
 export function SortableFeatureCard({

@@ -10,7 +10,7 @@ import { AgentManager } from '../agent';
 import { TerminalManager } from '../terminal-manager';
 import { PythonEnvManager } from '../python-env-manager';
 
-// Import all handler registration functions
+// Import all handler registration functions for internal use
 import { registerProjectHandlers } from './project-handlers';
 import { registerTaskHandlers } from './task-handlers';
 import { registerTerminalHandlers } from './terminal-handlers';
@@ -48,6 +48,44 @@ import { setupNaturalLanguageGitHandlers } from './natural-language-git-handlers
 import { setupSmartEstimationHandlers } from './smart-estimation-handlers';
 import { setupConflictPredictorHandlers } from './conflict-predictor-handlers';
 import { registerVoiceControlHandlers } from './voice-control-handlers';
+
+// Re-export all handler registration functions using export...from syntax
+export { registerProjectHandlers } from './project-handlers';
+export { registerTaskHandlers } from './task-handlers';
+export { registerTerminalHandlers } from './terminal-handlers';
+export { registerAgenteventsHandlers } from './agent-events-handlers';
+export { registerSettingsHandlers } from './settings-handlers';
+export { registerFileHandlers } from './file-handlers';
+export { registerRoadmapHandlers } from './roadmap-handlers';
+export { registerContextHandlers } from './context-handlers';
+export { registerEnvHandlers } from './env-handlers';
+export { registerLinearHandlers } from './linear-handlers';
+export { registerAzureDevOpsHandlers } from './azure-devops-handlers';
+export { registerPRDetailsHandlers } from './pr-details-handlers';
+export { registerJiraHandlers } from './jira-handlers';
+export { registerGithubHandlers } from './github-handlers';
+export { registerGitlabHandlers } from './gitlab-handlers';
+export { registerIdeationHandlers } from './ideation-handlers';
+export { registerChangelogHandlers } from './changelog-handlers';
+export { registerInsightsHandlers } from './insights-handlers';
+export { registerMemoryHandlers } from './memory-handlers';
+export { registerAppUpdateHandlers } from './app-update-handlers';
+export { registerDebugHandlers } from './debug-handlers';
+export { registerClaudeCodeHandlers } from './claude-code-handlers';
+export { registerCopilotCliHandlers } from './copilot-cli-handlers';
+export { registerCopilotOAuthHandlers } from './copilot-oauth-handlers';
+export { registerMcpHandlers } from './mcp-handlers';
+export { registerProfileHandlers } from './profile-handlers';
+export { registerScreenshotHandlers } from './screenshot-handlers';
+export { registerTerminalWorktreeIpcHandlers } from './terminal';
+export { setupQualityHandlers } from './quality-handlers';
+export { registerPromptOptimizerHandlers } from './prompt-optimizer-handlers';
+export { registerCredentialHandlers } from './credential-handlers';
+export { registerGitHubCopilotHandlers } from './github-copilot-handlers';
+export { setupNaturalLanguageGitHandlers } from './natural-language-git-handlers';
+export { setupSmartEstimationHandlers } from './smart-estimation-handlers';
+export { setupConflictPredictorHandlers } from './conflict-predictor-handlers';
+export { registerVoiceControlHandlers } from './voice-control-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -176,32 +214,3 @@ export function setupIpcHandlers(
 
   console.warn('[IPC] All handler modules registered successfully');
 }
-
-// Re-export all individual registration functions for potential custom usage
-export {
-  registerProjectHandlers,
-  registerTaskHandlers,
-  registerTerminalHandlers,
-  registerTerminalWorktreeIpcHandlers,
-  registerAgenteventsHandlers,
-  registerSettingsHandlers,
-  registerFileHandlers,
-  registerRoadmapHandlers,
-  registerContextHandlers,
-  registerEnvHandlers,
-  registerLinearHandlers,
-  registerGithubHandlers,
-  registerGitlabHandlers,
-  registerIdeationHandlers,
-  registerChangelogHandlers,
-  registerInsightsHandlers,
-  registerMemoryHandlers,
-  registerAppUpdateHandlers,
-  registerDebugHandlers,
-  registerClaudeCodeHandlers,
-  registerCopilotCliHandlers,
-  registerMcpHandlers,
-  registerProfileHandlers,
-  registerScreenshotHandlers,
-  registerPromptOptimizerHandlers
-};

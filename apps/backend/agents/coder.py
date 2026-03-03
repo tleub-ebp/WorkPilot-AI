@@ -13,7 +13,7 @@ import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from core.client import create_client
+from core.client import create_agent_client
 from core.workflow_logger import workflow_logger
 from linear_updater import (
     LinearTaskState,
@@ -49,6 +49,11 @@ from task_logger import (
 )
 from ui import (
     BuildState,
+    Icons,
+    StatusManager,
+    bold,
+    box,
+    highlight,
     icon,
     muted,
     print_key_value,
@@ -90,6 +95,9 @@ except ImportError:
     create_streaming_wrapper = None
 
 logger = logging.getLogger(__name__)
+
+# Agent name constant for logging
+AGENT_NAME = "Claude Code"
 
 
 # =============================================================================
@@ -385,7 +393,7 @@ async def run_autonomous_agent(
     """
     # Log agent start
     agent_trace_id = workflow_logger.log_agent_start(
-        "Claude Code",
+        AGENT_NAME,
         "autonomous_agent_loop",
         {
             "project_dir": str(project_dir),
@@ -810,19 +818,23 @@ async def run_autonomous_agent(
                 task_logger.set_subtask(subtask_id)
                 task_logger.set_session(iteration)
 
-            # Run session with Claude SDK client
-            async with client:
-                # Emit agent thinking event
-                if streaming_wrapper:
-                    await streaming_wrapper.emit_agent_thinking(f"Starting {agent_type} session {iteration} for subtask {subtask_id or 'planning'}")
-                
-                status, response, error_info = await run_agent_session(
-                    client, prompt, spec_dir, verbose=verbose, phase=current_log_phase
-                )
-                
-                # Emit agent response event
-                if streaming_wrapper and response:
-                    await streaming_wrapper.emit_agent_response(response[:500])  # Limit response length
+        # Run session with Claude SDK client
+        # Initialize status before async with block in case client context manager fails
+        status = "error"
+        response = None
+        error_info = {"type": "client_error", "message": "Client session failed to start"}
+        async with client:
+            # Emit agent thinking event
+            if streaming_wrapper:
+                await streaming_wrapper.emit_agent_thinking(f"Starting {agent_type} session {iteration} for subtask {subtask_id or 'planning'}")
+
+            status, response, error_info = await run_agent_session(
+                client, prompt, spec_dir, verbose=verbose, phase=current_log_phase
+            )
+
+            # Emit agent response event
+            if streaming_wrapper and response:
+                await streaming_wrapper.emit_agent_response(response[:500])  # Limit response length
 
         plan_validated = False
         if is_planning_phase and status != "error":
@@ -1246,7 +1258,7 @@ async def run_autonomous_agent(
         status_manager.update(state=BuildState.COMPLETE)
         # Log agent completion
         workflow_logger.log_agent_end(
-            "Claude Code", 
+            AGENT_NAME, 
             "autonomous_agent_loop", 
             "success",
             {
@@ -1262,7 +1274,7 @@ async def run_autonomous_agent(
         status_manager.update(state=BuildState.PAUSED)
         # Log agent pause
         workflow_logger.log_agent_end(
-            "Claude Code", 
+            AGENT_NAME, 
             "autonomous_agent_loop", 
             "paused",
             {

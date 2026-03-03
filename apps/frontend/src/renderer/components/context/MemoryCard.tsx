@@ -19,7 +19,7 @@ import { formatDate } from './utils';
 import { PRReviewCard } from './PRReviewCard';
 
 interface MemoryCardProps {
-  memory: MemoryEpisode;
+  readonly memory: MemoryEpisode;
 }
 
 interface ParsedSessionInsight {

@@ -8,7 +8,8 @@ import { ProjectIndexTab } from './ProjectIndexTab';
 import { MemoriesTab } from './MemoriesTab';
 import type { ContextProps } from './types';
 
-export function Context({ projectId }: ContextProps) {
+export function Context(props: ContextProps) {
+  const { projectId } = props;
   const { t } = useTranslation(['context']);
   
   const {

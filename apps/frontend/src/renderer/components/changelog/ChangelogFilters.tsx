@@ -11,40 +11,42 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { cn } from '../../lib/utils';
 import type { ChangelogSourceMode, GitBranchInfo, GitTagInfo } from '../../../shared/types';
 
+type GitHistoryType = 'recent' | 'since-date' | 'tag-range' | 'since-version';
+
 interface ChangelogFiltersProps {
   // Source mode
-  sourceMode: ChangelogSourceMode;
-  onSourceModeChange: (mode: ChangelogSourceMode) => void;
+  readonly sourceMode: ChangelogSourceMode;
+  readonly onSourceModeChange: (mode: ChangelogSourceMode) => void;
   // Task counts
-  doneTasksCount: number;
+  readonly doneTasksCount: number;
   // Git data
-  branches: GitBranchInfo[];
-  tags: GitTagInfo[];
-  defaultBranch: string;
-  isLoadingGitData: boolean;
-  isLoadingCommits: boolean;
+  readonly branches: GitBranchInfo[];
+  readonly tags: GitTagInfo[];
+  readonly defaultBranch: string;
+  readonly isLoadingGitData: boolean;
+  readonly isLoadingCommits: boolean;
   // Git history options
-  gitHistoryType: 'recent' | 'since-date' | 'tag-range' | 'since-version';
-  gitHistoryCount: number;
-  gitHistorySinceDate: string;
-  gitHistoryFromTag: string;
-  gitHistoryToTag: string;
-  gitHistorySinceVersion: string;
-  includeMergeCommits: boolean;
-  onGitHistoryTypeChange: (type: 'recent' | 'since-date' | 'tag-range' | 'since-version') => void;
-  onGitHistoryCountChange: (count: number) => void;
-  onGitHistorySinceDateChange: (date: string) => void;
-  onGitHistoryFromTagChange: (tag: string) => void;
-  onGitHistoryToTagChange: (tag: string) => void;
-  onGitHistorySinceVersionChange: (version: string) => void;
-  onIncludeMergeCommitsChange: (include: boolean) => void;
+  readonly gitHistoryType: GitHistoryType;
+  readonly gitHistoryCount: number;
+  readonly gitHistorySinceDate: string;
+  readonly gitHistoryFromTag: string;
+  readonly gitHistoryToTag: string;
+  readonly gitHistorySinceVersion: string;
+  readonly includeMergeCommits: boolean;
+  readonly onGitHistoryTypeChange: (type: GitHistoryType) => void;
+  readonly onGitHistoryCountChange: (count: number) => void;
+  readonly onGitHistorySinceDateChange: (date: string) => void;
+  readonly onGitHistoryFromTagChange: (tag: string) => void;
+  readonly onGitHistoryToTagChange: (tag: string) => void;
+  readonly onGitHistorySinceVersionChange: (version: string) => void;
+  readonly onIncludeMergeCommitsChange: (include: boolean) => void;
   // Branch diff options
-  baseBranch: string;
-  compareBranch: string;
-  onBaseBranchChange: (branch: string) => void;
-  onCompareBranchChange: (branch: string) => void;
+  readonly baseBranch: string;
+  readonly compareBranch: string;
+  readonly onBaseBranchChange: (branch: string) => void;
+  readonly onCompareBranchChange: (branch: string) => void;
   // Actions
-  onLoadCommitsPreview: () => void;
+  readonly onLoadCommitsPreview: () => void;
 }
 
 export function ChangelogFilters({
@@ -173,7 +175,7 @@ export function ChangelogFilters({
                 <Label className="text-xs">{t('changelog:gitHistory.typeLabel')}</Label>
                 <Select
                   value={gitHistoryType}
-                  onValueChange={(v) => onGitHistoryTypeChange(v as 'recent' | 'since-date' | 'tag-range' | 'since-version')}
+                  onValueChange={(v) => onGitHistoryTypeChange(v as GitHistoryType)}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -216,7 +218,7 @@ export function ChangelogFilters({
                     min={1}
                     max={500}
                     value={gitHistoryCount}
-                    onChange={(e) => onGitHistoryCountChange(parseInt(e.target.value, 10) || 25)}
+                    onChange={(e) => onGitHistoryCountChange(Number.parseInt(e.target.value, 10) || 25)}
                   />
                 </div>
               )}

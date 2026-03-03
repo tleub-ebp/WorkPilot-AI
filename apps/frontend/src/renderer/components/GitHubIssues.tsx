@@ -21,7 +21,7 @@ import { GitHubSetupModal } from "./GitHubSetupModal";
 import type { GitHubIssue } from "../../shared/types";
 import type { GitHubIssuesProps } from "./github-issues/types";
 
-export function GitHubIssues({ onOpenSettings, onNavigateToTask }: GitHubIssuesProps) {
+export function GitHubIssues({ onOpenSettings, onNavigateToTask }: Readonly<GitHubIssuesProps>) {
   const projects = useProjectStore((state) => state.projects);
   const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
@@ -173,7 +173,7 @@ export function GitHubIssues({ onOpenSettings, onNavigateToTask }: GitHubIssuesP
             error={error}
             onSelectIssue={selectIssue}
             onInvestigate={handleInvestigate}
-            onLoadMore={!isSearchActive ? handleLoadMore : undefined}
+            onLoadMore={isSearchActive ? undefined : handleLoadMore}
           />
         </div>
 

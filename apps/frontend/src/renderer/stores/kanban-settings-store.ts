@@ -163,7 +163,7 @@ function saveKanbanPreferencesToMain(projectId: string): void {
   // Debounce saves to avoid excessive IPC calls
   saveKanbanPrefsTimeout = setTimeout(async () => {
     try {
-      await window.electronAPI.saveKanbanPreferences(projectId, preferencesToSave);
+      await globalThis.electronAPI.saveKanbanPreferences(projectId, preferencesToSave);
     } catch (err) {
       // IPC save failed — localStorage sync cache is still available as fallback
       console.debug('[KanbanSettings] IPC save failed, using localStorage fallback:', err);
@@ -304,7 +304,7 @@ export const useKanbanSettingsStore = create<KanbanSettingsState>((set, get) => 
     // Then, async load from main process via IPC (source of truth)
     (async () => {
       try {
-        const result = await window.electronAPI.getKanbanPreferences(projectId);
+        const result = await globalThis.electronAPI.getKanbanPreferences(projectId);
 
         // Check if project changed while IPC was in flight - discard stale result
         if (currentLoadingProjectId !== projectId) {

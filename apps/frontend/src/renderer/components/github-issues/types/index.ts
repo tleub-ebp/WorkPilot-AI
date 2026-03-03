@@ -4,87 +4,87 @@ import type { AutoFixConfig, AutoFixQueueItem } from '../../../../preload/api/mo
 export type FilterState = 'open' | 'closed' | 'all';
 
 export interface GitHubIssuesProps {
-  onOpenSettings?: () => void;
+  readonly onOpenSettings?: () => void;
   /** Navigate to view a task in the kanban board */
-  onNavigateToTask?: (taskId: string) => void;
+  readonly onNavigateToTask?: (taskId: string) => void;
 }
 
 export interface IssueListItemProps {
-  issue: GitHubIssue;
-  isSelected: boolean;
-  onClick: () => void;
-  onInvestigate: () => void;
+  readonly issue: GitHubIssue;
+  readonly isSelected: boolean;
+  readonly onClick: () => void;
+  readonly onInvestigate: () => void;
 }
 
 export interface IssueDetailProps {
-  issue: GitHubIssue;
-  onInvestigate: () => void;
-  investigationResult: GitHubInvestigationResult | null;
+  readonly issue: GitHubIssue;
+  readonly onInvestigate: () => void;
+  readonly investigationResult: GitHubInvestigationResult | null;
   /** ID of existing task linked to this issue (from metadata.githubIssueNumber) */
-  linkedTaskId?: string;
+  readonly linkedTaskId?: string;
   /** Handler to navigate to view the linked task */
-  onViewTask?: (taskId: string) => void;
+  readonly onViewTask?: (taskId: string) => void;
   /** Project ID for auto-fix functionality */
-  projectId?: string;
+  readonly projectId?: string;
   /** Auto-fix configuration */
-  autoFixConfig?: AutoFixConfig | null;
+  readonly autoFixConfig?: AutoFixConfig | null;
   /** Auto-fix queue item for this issue */
-  autoFixQueueItem?: AutoFixQueueItem | null;
+  readonly autoFixQueueItem?: AutoFixQueueItem | null;
 }
 
 export interface InvestigationDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedIssue: GitHubIssue | null;
-  investigationStatus: {
-    phase: string;
-    progress: number;
-    message: string;
-    error?: string;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly selectedIssue: GitHubIssue | null;
+  readonly investigationStatus: {
+    readonly phase: string;
+    readonly progress: number;
+    readonly message: string;
+    readonly error?: string;
   };
-  onStartInvestigation: (selectedCommentIds: number[]) => void;
-  onClose: () => void;
-  projectId?: string;
+  readonly onStartInvestigation: (selectedCommentIds: number[]) => void;
+  readonly onClose: () => void;
+  readonly projectId?: string;
 }
 
 export interface IssueListHeaderProps {
-  repoFullName: string;
-  openIssuesCount: number;
-  isLoading: boolean;
-  searchQuery: string;
-  filterState: FilterState;
-  onSearchChange: (query: string) => void;
-  onFilterChange: (state: FilterState) => void;
-  onRefresh: () => void;
+  readonly repoFullName: string;
+  readonly openIssuesCount: number;
+  readonly isLoading: boolean;
+  readonly searchQuery: string;
+  readonly filterState: FilterState;
+  readonly onSearchChange: (query: string) => void;
+  readonly onFilterChange: (state: FilterState) => void;
+  readonly onRefresh: () => void;
   // Auto-fix toggle (reactive - for new issues)
-  autoFixEnabled?: boolean;
-  autoFixRunning?: boolean;
-  autoFixProcessing?: number; // Number of issues being processed
-  onAutoFixToggle?: (enabled: boolean) => void;
+  readonly autoFixEnabled?: boolean;
+  readonly autoFixRunning?: boolean;
+  readonly autoFixProcessing?: number; // Number of issues being processed
+  readonly onAutoFixToggle?: (enabled: boolean) => void;
   // Analyze & Group (proactive - for existing issues)
-  onAnalyzeAndGroup?: () => void;
-  isAnalyzing?: boolean;
+  readonly onAnalyzeAndGroup?: () => void;
+  readonly isAnalyzing?: boolean;
 }
 
 export interface IssueListProps {
-  issues: GitHubIssue[];
-  selectedIssueNumber: number | null;
-  isLoading: boolean;
-  isLoadingMore?: boolean;
-  hasMore?: boolean;
-  error: string | null;
-  onSelectIssue: (issueNumber: number) => void;
-  onInvestigate: (issue: GitHubIssue) => void;
-  onLoadMore?: () => void;
+  readonly issues: GitHubIssue[];
+  readonly selectedIssueNumber: number | null;
+  readonly isLoading: boolean;
+  readonly isLoadingMore?: boolean;
+  readonly hasMore?: boolean;
+  readonly error: string | null;
+  readonly onSelectIssue: (issueNumber: number) => void;
+  readonly onInvestigate: (issue: GitHubIssue) => void;
+  readonly onLoadMore?: () => void;
 }
 
 export interface EmptyStateProps {
-  searchQuery?: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  message: string;
+  readonly searchQuery?: string;
+  readonly icon?: React.ComponentType<{ className?: string }>;
+  readonly message: string;
 }
 
 export interface NotConnectedStateProps {
-  error: string | null;
-  onOpenSettings?: () => void;
+  readonly error: string | null;
+  readonly onOpenSettings?: () => void;
 }

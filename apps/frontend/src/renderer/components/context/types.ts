@@ -1,3 +1,3 @@
 export interface ContextProps {
-  projectId: string;
+  readonly projectId: string;
 }

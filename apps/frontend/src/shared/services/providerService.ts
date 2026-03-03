@@ -70,19 +70,9 @@ class ProviderServiceClass {
    */
   private async loadProvidersFromFile(): Promise<Provider[]> {
     try {
-      const response = await fetch('/configured_providers.json');
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      // Check if the response is actually JSON and not HTML
-      const contentType = response.headers.get('content-type');
-      if (!contentType?.includes('application/json')) {
-        throw new Error(`Expected JSON but received ${contentType || 'unknown content type'}`);
-      }
-      
-      const data = await response.json();
-      return data.providers || [];
+      // Import the JSON file directly from src
+      const providersData = await import('../../configured_providers.json');
+      return providersData.providers || [];
     } catch (error) {
       console.warn('Failed to load providers from configured_providers.json, using fallback:', error);
       const fallbackProviders = this.getFallbackProviders();

@@ -71,7 +71,7 @@ export async function loadClaudeProfiles(): Promise<void> {
   store.setLoading(true);
 
   try {
-    const result = await window.electronAPI.getClaudeProfiles();
+    const result = await globalThis.window?.electronAPI.getClaudeProfiles();
     if (result.success && result.data) {
       store.setProfiles(result.data);
     }
@@ -93,7 +93,7 @@ export async function switchTerminalToProfile(
   store.setSwitching(true);
 
   try {
-    const result = await window.electronAPI.switchClaudeProfile(terminalId, profileId);
+    const result = await globalThis.window?.electronAPI.switchClaudeProfile(terminalId, profileId);
     if (result.success) {
       store.setActiveProfile(profileId);
       return true;

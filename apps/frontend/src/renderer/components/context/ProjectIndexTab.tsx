@@ -11,10 +11,10 @@ import { InfoItem } from './InfoItem';
 import type { ProjectIndex } from '../../../shared/types';
 
 interface ProjectIndexTabProps {
-  projectIndex: ProjectIndex | null;
-  indexLoading: boolean;
-  indexError: string | null;
-  onRefresh: () => void;
+  readonly projectIndex: ProjectIndex | null;
+  readonly indexLoading: boolean;
+  readonly indexError: string | null;
+  readonly onRefresh: () => void;
 }
 
 export function ProjectIndexTab({
@@ -101,7 +101,7 @@ export function ProjectIndexTab({
                   {Object.keys(projectIndex.services).length > 0 && (
                     <Badge variant="secondary">
                       {Object.keys(projectIndex.services).length} service
-                      {Object.keys(projectIndex.services).length !== 1 ? 's' : ''}
+                      {Object.keys(projectIndex.services).length === 1 ? '' : 's'}
                     </Badge>
                   )}
                 </div>
