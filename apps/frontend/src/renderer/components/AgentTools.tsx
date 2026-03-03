@@ -59,7 +59,7 @@ import {
   resolveAgentSettings as resolveAgentModelConfig,
   type AgentSettingsSource,
 } from '../hooks';
-import type { ModelTypeShort, ThinkingLevel } from '../../shared/types/settings';
+import type { ThinkingLevel } from '../../shared/types/settings';
 
 // Agent configuration data - mirrors AGENT_CONFIGS from backend
 // Model and thinking are now dynamically read from user settings
@@ -75,7 +75,7 @@ interface AgentConfig {
 }
 
 // Helper to get model label from short name
-function getModelLabel(modelShort: ModelTypeShort): string {
+function getModelLabel(modelShort: string): string {
   const model = AVAILABLE_MODELS.find(m => m.value === modelShort);
   return model?.label.replace('Claude ', '') || modelShort;
 }
@@ -988,7 +988,7 @@ export function AgentTools() {
 
   // Resolve model and thinking for an agent based on its settings source
   const getAgentModelConfig = useMemo(() => {
-    return (config: AgentConfig): { model: ModelTypeShort; thinking: ThinkingLevel } => {
+    return (config: AgentConfig): { model: string; thinking: ThinkingLevel } => {
       return resolveAgentModelConfig(config.settingsSource, { phaseModels, phaseThinking, featureModels, featureThinking });
     };
   }, [phaseModels, phaseThinking, featureModels, featureThinking]);

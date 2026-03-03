@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '../ui/select';
-import type { AgentProfile, PhaseModelConfig, PhaseThinkingConfig, ModelTypeShort, ThinkingLevel } from '../../../shared/types/settings';
+import type { AgentProfile, PhaseModelConfig, PhaseThinkingConfig, ThinkingLevel } from '../../../shared/types/settings';
 
 /**
  * Icon mapping for agent profile icons
@@ -151,7 +151,7 @@ export function AgentProfileSettings() {
     });
   };
 
-  const handlePhaseModelChange = async (phase: keyof PhaseModelConfig, value: ModelTypeShort) => {
+  const handlePhaseModelChange = async (phase: keyof PhaseModelConfig, value: string) => {
     const newPhaseModels = { ...currentPhaseModels, [phase]: value };
     if (isClaude) {
       await saveSettings({ customPhaseModels: newPhaseModels });
@@ -353,7 +353,7 @@ export function AgentProfileSettings() {
                         {isClaude ? (
                           <Select
                             value={currentPhaseModels[phase]}
-                            onValueChange={(value) => handlePhaseModelChange(phase, value as ModelTypeShort)}
+                            onValueChange={(value) => handlePhaseModelChange(phase, value as string)}
                           >
                             <SelectTrigger className="h-9">
                               <SelectValue />
@@ -372,7 +372,7 @@ export function AgentProfileSettings() {
                                 // keep the field open; user types the model ID
                                 handlePhaseModelChange(phase, customModelPerPhase[phase] || 'custom');
                               } else {
-                                handlePhaseModelChange(phase, value as ModelTypeShort);
+                                handlePhaseModelChange(phase, value as string);
                               }
                             }}
                           >

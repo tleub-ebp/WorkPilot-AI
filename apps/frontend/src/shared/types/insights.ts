@@ -2,7 +2,7 @@
  * Insights and ideation types
  */
 
-import type { TaskMetadata } from './task';
+import type { TaskMetadata, ModelType } from './task';
 
 // ============================================
 // Ideation Types
@@ -157,7 +157,6 @@ export interface IdeationSummary {
 // ============================================
 
 import type { ThinkingLevel } from './settings';
-import type { ModelType } from './task';
 
 // Model configuration for insights sessions
 export interface InsightsModelConfig {

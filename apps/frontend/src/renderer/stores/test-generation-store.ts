@@ -339,6 +339,7 @@ export const useTestGenerationStore = create<TestGenerationState>((set, get) => 
 
 // Helper function to open dialog
 export const openTestGenerationDialog = () => {
-  useTestGenerationStore.getState().reset();
-  // This would be handled by the component that opens the dialog
+  const store = useTestGenerationStore.getState();
+  store.reset();
+  store.openDialog('', '');
 };

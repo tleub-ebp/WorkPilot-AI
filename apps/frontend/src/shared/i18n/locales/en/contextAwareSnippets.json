@@ -1,6 +1,7 @@
 {
   "title": "Context-Aware Snippets",
-  "description": {
+  "description": "Generate AI-powered code snippets adapted to your project's context and coding style.",
+  "snippetDescription": {
     "label": "Snippet Description",
     "placeholder": "Describe what you want to generate... (e.g., 'function to validate email', 'button component with loading state')"
   },

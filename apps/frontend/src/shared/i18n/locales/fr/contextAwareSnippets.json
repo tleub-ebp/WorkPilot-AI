@@ -1,6 +1,7 @@
 {
-  "title": "Context-Aware Snippets",
-  "description": {
+  "title": "Extraits contextuels",
+  "description": "Générez des extraits de code alimentés par l'IA adaptés au contexte et au style de codage de votre projet.",
+  "snippetDescription": {
     "label": "Description de l'extrait",
     "placeholder": "Décrivez ce que vous voulez générer... (ex: 'fonction pour valider un email', 'composant de bouton avec loading state')"
   },

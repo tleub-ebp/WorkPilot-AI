@@ -172,7 +172,12 @@ export function DependencySentinelDialog() {
                 placeholder={t('dialogs:dependencySentinel.searchPlaceholder', 'Search dependencies...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 border-2 border-yellow-400 focus:border-yellow-500 focus-visible:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
+                style={{
+                  border: '2px solid rgb(250, 204, 21)',
+                  borderRadius: '0.5rem',
+                  outline: 'none'
+                }}
               />
             </div>
             <Button

@@ -193,7 +193,6 @@ export type GraphitiEmbeddingProvider = 'openai' | 'voyage' | 'azure_openai' | '
 
 // Legacy type aliases for backward compatibility
 export type GraphitiLLMProvider = 'openai' | 'anthropic' | 'azure_openai' | 'ollama' | 'google' | 'groq' | 'openrouter';
-export type GraphitiProviderType = GraphitiLLMProvider;
 
 export interface GraphitiProviderConfig {
   // Embedding Provider (LLM provider removed - Claude SDK handles RAG)
@@ -234,7 +233,7 @@ export interface GraphitiProviderConfig {
 }
 
 export interface GraphitiProviderInfo {
-  id: GraphitiProviderType;
+  id: GraphitiLLMProvider;
   name: string;
   description: string;
   requiresApiKey: boolean;

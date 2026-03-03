@@ -28,7 +28,6 @@ import type {
   PhaseThinkingConfig,
   FeatureModelConfig,
   FeatureThinkingConfig,
-  ModelTypeShort,
   ThinkingLevel,
 } from '../../shared/types/settings';
 
@@ -54,13 +53,13 @@ export interface ResolvedAgentSettings {
 export type AgentSettingsSource =
   | { type: 'phase'; phase: 'spec' | 'planning' | 'coding' | 'qa' }
   | { type: 'feature'; feature: 'insights' | 'ideation' | 'roadmap' | 'githubIssues' | 'githubPrs' | 'utility' }
-  | { type: 'fixed'; model: ModelTypeShort; thinking: ThinkingLevel };
+  | { type: 'fixed'; model: string; thinking: ThinkingLevel };
 
 /**
  * Resolved model and thinking for an agent
  */
 export interface AgentModelConfig {
-  model: ModelTypeShort;
+  model: string;
   thinking: ThinkingLevel;
 }
 

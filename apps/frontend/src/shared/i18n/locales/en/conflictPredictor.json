@@ -1,0 +1,43 @@
+{
+  "title": "Conflict Predictor",
+  "description": "Proactive conflict detection between worktrees and branches",
+  "actions": {
+    "analyzeConflicts": "Analyze Conflicts",
+    "cancel": "Cancel",
+    "close": "Close",
+    "copy": "Copy",
+    "copied": "Copied",
+    "retry": "Retry"
+  },
+  "status": {
+    "analyzing": "Analyzing conflicts...",
+    "error": "Error",
+    "ready": "Ready"
+  },
+  "result": {
+    "conflicts": "Detected Conflicts",
+    "riskLevel": "Risk Level",
+    "worktrees": "Active Worktrees",
+    "recommendations": "Recommendations",
+    "safeMergeOrder": "Safe Merge Order",
+    "highRiskAreas": "High Risk Areas",
+    "summary": "Summary",
+    "streamingOutput": "Live Output"
+  },
+  "riskLevels": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "critical": "Critical"
+  },
+  "conflictTypes": {
+    "modification": "Modification",
+    "deletion": "Deletion",
+    "addition": "Addition",
+    "rename": "Rename"
+  },
+  "errors": {
+    "noProject": "Please select a project",
+    "generic": "An error occurred during analysis"
+  }
+}

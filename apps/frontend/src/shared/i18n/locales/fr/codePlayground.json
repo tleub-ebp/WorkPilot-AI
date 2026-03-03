@@ -1,0 +1,62 @@
+{
+  "title": "Bac à sable",
+  "description": "Environnement de génération et de test de code IA",
+  "idea": {
+    "label": "Que souhaitez-vous créer ?",
+    "placeholder": "Décrivez votre idée (ex: 'Une application todo avec glisser-déposer', 'Un menu de navigation responsive', 'Un graphique de visualisation de données')"
+  },
+  "playgroundType": {
+    "label": "Type de bac à sable",
+    "options": {
+      "html": "HTML/CSS/JS",
+      "react": "React",
+      "vanilla-js": "JavaScript Vanilla",
+      "python": "Python",
+      "node": "Node.js"
+    }
+  },
+  "sandboxType": {
+    "label": "Type d'isolation",
+    "options": {
+      "iframe": "IFrame",
+      "docker": "Docker",
+      "webworker": "Web Worker"
+    }
+  },
+  "actions": {
+    "close": "Fermer",
+    "start": "Démarrer",
+    "tryAgain": "Réessayer",
+    "copy": "Copier",
+    "copied": "Copié",
+    "integrate": "Intégrer au projet"
+  },
+  "tabs": {
+    "code": "Code",
+    "preview": "Aperçu",
+    "files": "Fichiers"
+  },
+  "status": {
+    "generating": "Génération du code...",
+    "error": "Une erreur est survenue"
+  },
+  "result": {
+    "streamingOutput": "Sortie de génération"
+  },
+  "preview": {
+    "title": "Aperçu en direct",
+    "noPreview": "Aperçu non disponible"
+  },
+  "files": {
+    "structure": "Structure des fichiers",
+    "description": "Fichiers générés et leurs tailles",
+    "noFiles": "Aucun fichier généré"
+  },
+  "integration": {
+    "title": "Notes d'intégration"
+  },
+  "errors": {
+    "noProject": "Veuillez sélectionner un projet pour utiliser le Bac à sable",
+    "generic": "Une erreur inattendue est survenue. Veuillez réessayer."
+  }
+}

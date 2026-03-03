@@ -99,6 +99,8 @@ import {
   openDependencySentinelDialog
 } from '@/stores/dependency-sentinel-store';
 
+import { useNaturalLanguageGitStore } from '@/stores/natural-language-git-store';
+
 // Modals & Components
 import { AddProjectModal } from './AddProjectModal';
 import { GitSetupModal } from './GitSetupModal';
@@ -266,7 +268,6 @@ export function Sidebar({
   const [azureDevOpsSetupProject, setAzureDevOpsSetupProject] = useState<Project | null>(null);
 
   // AI Tools states - managed by individual stores
-  const [showNaturalLanguageGitDialog, setShowNaturalLanguageGitDialog] = useState(false);
   const [showVoiceControlDialog, setShowVoiceControlDialog] = useState(false);
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
@@ -526,7 +527,7 @@ export function Sidebar({
       return;
     }
     if (view === 'natural-language-git') {
-      setShowNaturalLanguageGitDialog(true);
+      useNaturalLanguageGitStore.getState().openDialog();
       return;
     }
     if (view === 'voice-control') {

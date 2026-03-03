@@ -9,6 +9,8 @@ export interface PromptOptimizerResult {
   reasoning: string;
 }
 
+export type AgentType = 'analysis' | 'coding' | 'verification' | 'general';
+
 export type PromptOptimizerPhase = 'idle' | 'optimizing' | 'complete' | 'error';
 
 interface PromptOptimizerState {
@@ -20,17 +22,17 @@ interface PromptOptimizerState {
   error: string | null;
   isOpen: boolean;
   initialPrompt: string;
-  agentType: 'analysis' | 'coding' | 'verification' | 'general';
+  agentType: AgentType;
 
   // Actions
-  openDialog: (prompt: string, agentType?: 'analysis' | 'coding' | 'verification' | 'general') => void;
+  openDialog: (prompt: string, agentType?: AgentType) => void;
   closeDialog: () => void;
   setPhase: (phase: PromptOptimizerPhase) => void;
   setStatus: (status: string) => void;
   appendStreamingOutput: (chunk: string) => void;
   setResult: (result: PromptOptimizerResult) => void;
   setError: (error: string) => void;
-  setAgentType: (agentType: 'analysis' | 'coding' | 'verification' | 'general') => void;
+  setAgentType: (agentType: AgentType) => void;
   reset: () => void;
 }
 
@@ -112,7 +114,7 @@ export function startOptimization(projectId: string): void {
   usePromptOptimizerStore.setState({ streamingOutput: '', error: null, result: null });
 
   // Send optimization request via IPC
-  window.electronAPI.optimizePrompt(projectId, initialPrompt, agentType);
+  globalThis.electronAPI.optimizePrompt(projectId, initialPrompt, agentType);
 }
 
 /**
@@ -124,22 +126,22 @@ export function setupPromptOptimizerListeners(): () => void {
   const store = () => usePromptOptimizerStore.getState();
 
   // Listen for streaming chunks
-  const unsubChunk = window.electronAPI.onPromptOptimizerStreamChunk((chunk: string) => {
+  const unsubChunk = globalThis.electronAPI.onPromptOptimizerStreamChunk((chunk: string) => {
     store().appendStreamingOutput(chunk);
   });
 
   // Listen for status updates
-  const unsubStatus = window.electronAPI.onPromptOptimizerStatus((status: string) => {
+  const unsubStatus = globalThis.electronAPI.onPromptOptimizerStatus((status: string) => {
     store().setStatus(status);
   });
 
   // Listen for errors
-  const unsubError = window.electronAPI.onPromptOptimizerError((error: string) => {
+  const unsubError = globalThis.electronAPI.onPromptOptimizerError((error: string) => {
     store().setError(error);
   });
 
   // Listen for completion with structured result
-  const unsubComplete = window.electronAPI.onPromptOptimizerComplete(
+  const unsubComplete = globalThis.electronAPI.onPromptOptimizerComplete(
     (result: PromptOptimizerResult) => {
       store().setResult(result);
     }
@@ -155,6 +157,7 @@ export function setupPromptOptimizerListeners(): () => void {
 
 // Helper function to open dialog
 export const openPromptOptimizerDialog = () => {
-  usePromptOptimizerStore.getState().reset();
-  // This would be handled by the component that opens the dialog
+  const store = usePromptOptimizerStore.getState();
+  store.reset();
+  store.openDialog('', 'general');
 };

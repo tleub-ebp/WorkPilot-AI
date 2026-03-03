@@ -23,7 +23,7 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/colla
 import { cn } from '../../lib/utils';
 import { useSettingsStore } from '../../stores/settings-store';
 import type { Task, TaskLogs, TaskLogPhase, TaskPhaseLog, TaskLogEntry, TaskMetadata } from '../../../shared/types';
-import type { PhaseModelConfig, ThinkingLevel, ModelTypeShort } from '../../../shared/types/settings';
+import type { PhaseModelConfig, ThinkingLevel } from '../../../shared/types/settings';
 
 interface TaskLogsProps {
   task: Task;
@@ -64,7 +64,7 @@ const LOG_PHASE_TO_CONFIG_PHASE: Record<TaskLogPhase, keyof PhaseModelConfig> = 
 };
 
 // Short labels for models
-const MODEL_SHORT_LABELS: Record<ModelTypeShort, string> = {
+const MODEL_SHORT_LABELS: Record<string, string> = {
   opus: 'Opus',
   sonnet: 'Sonnet',
   haiku: 'Haiku'

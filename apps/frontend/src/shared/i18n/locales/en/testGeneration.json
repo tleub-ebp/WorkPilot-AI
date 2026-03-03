@@ -1,0 +1,101 @@
+{
+  "title": "Test Generation Agent",
+  "description": "Analyze coverage gaps and generate comprehensive test suites for your code.",
+  "analyzeCoverage": "Analyze Coverage",
+  "generateTests": "Generate Tests",
+  "sourceFile": {
+    "label": "Source File",
+    "placeholder": "Select a file to analyze"
+  },
+  "existingTest": {
+    "label": "Existing Test File"
+  },
+  "unit": {
+    "placeholder": "Select a file for unit test generation"
+  },
+  "maxTests": {
+    "label": "Max Tests per Function"
+  },
+  "userStory": {
+    "label": "User Story",
+    "placeholder": "Describe the user story or scenario..."
+  },
+  "targetModule": {
+    "label": "Target Module",
+    "placeholder": "e.g., src/auth/login.py"
+  },
+  "actions": {
+    "analyze": "Analyze",
+    "unitTests": "Unit Tests",
+    "e2eTests": "E2E Tests",
+    "tddMode": "TDD Mode",
+    "analyzeCoverage": "Analyze Coverage",
+    "generateTests": "Generate Tests",
+    "generateUnitTests": "Generate Unit Tests",
+    "generateE2ETests": "Generate E2E Tests",
+    "generateTDDTests": "Generate TDD Tests",
+    "copyAll": "Copy All",
+    "applyTests": "Apply Tests",
+    "close": "Close",
+    "copy": "Copy",
+    "copied": "Copied",
+    "tryAgain": "Try Again",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "generate": "Generate"
+  },
+  "tabs": {
+    "analyze": "Analyze",
+    "unit": "Unit",
+    "e2e": "E2E",
+    "tdd": "TDD"
+  },
+  "status": {
+    "analyzing": "Analyzing file...",
+    "generating": "Generating tests...",
+    "error": "Error"
+  },
+  "coverage": {
+    "title": "Coverage Analysis",
+    "gaps": "Coverage gaps identified",
+    "noGaps": "No coverage gaps found",
+    "priority": {
+      "high": "High priority",
+      "medium": "Medium priority",
+      "low": "Low priority"
+    }
+  },
+  "result": {
+    "generatedTests": "Generated Tests",
+    "coverageGapsFound": "Coverage Gaps Found",
+    "generatedUnitTests": "Generated Unit Tests",
+    "generatedE2ETests": "Generated E2E Tests",
+    "generatedTDDTests": "Generated TDD Tests",
+    "testFile": "Test File",
+    "coverage": "Coverage",
+    "explanation": "Explanation",
+    "reasoning": "Reasoning",
+    "streamingOutput": "Live Output"
+  },
+  "tdd": {
+    "spec": {
+      "label": "Function Specification (JSON)",
+      "placeholder": "{\n  \"name\": \"calculate_total\",\n  \"args\": [\"items\", \"tax_rate\"],\n  \"returns\": \"float\",\n  \"description\": \"Calculate total with tax\",\n  \"edge_cases\": [\"empty_items\", \"invalid_tax_rate\"]\n}"
+    },
+    "generate": "Generate from spec"
+  },
+  "snippetType": {
+    "label": "Snippet Type",
+    "options": {
+      "component": "Component"
+    }
+  },
+  "language": {
+    "label": "Language"
+  },
+  "errors": {
+    "noFile": "Please select a file to analyze",
+    "noProject": "Please select a project",
+    "generic": "An error occurred during test generation"
+  }
+}

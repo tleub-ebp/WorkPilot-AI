@@ -2,7 +2,7 @@
  * Task-related types
  */
 
-import type { ThinkingLevel, PhaseModelConfig, PhaseThinkingConfig, ModelTypeShort } from './settings';
+import type { ThinkingLevel, PhaseModelConfig, PhaseThinkingConfig } from './settings';
 import type { ExecutionPhase as ExecutionPhaseType, CompletablePhase } from '../constants/phase-protocol';
 
 export type TaskStatus = 'backlog' | 'queue' | 'in_progress' | 'ai_review' | 'human_review' | 'done' | 'pr_created' | 'error';
@@ -146,7 +146,7 @@ export interface TaskDraft {
   complexity: TaskComplexity | '';
   impact: TaskImpact | '';
   profileId?: string;  // Agent profile ID ('auto', 'complex', 'balanced', 'quick', 'custom')
-  model: ModelTypeShort | '';
+  model: string;
   thinkingLevel: ThinkingLevel | '';
   // Auto profile - per-phase configuration
   phaseModels?: PhaseModelConfig;
@@ -162,7 +162,7 @@ export type TaskComplexity = 'trivial' | 'small' | 'medium' | 'large' | 'complex
 export type TaskImpact = 'low' | 'medium' | 'high' | 'critical';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 // Re-export ThinkingLevel (defined in settings.ts) for convenience
-export type { ThinkingLevel };
+export type { ThinkingLevel } from './settings';
 export type ModelType = 'haiku' | 'sonnet' | 'opus';
 export type TaskCategory =
   | 'feature'
@@ -237,7 +237,7 @@ export interface TaskMetadata {
 
   // Agent configuration (from agent profile or manual selection)
   provider?: string;  // Active LLM provider (e.g. 'anthropic', 'openai', 'google', 'ollama', ...)
-  model?: ModelTypeShort;  // Model ID to use (supports multi-provider) - used when not auto profile
+  model?: string;  // Model ID to use (supports multi-provider) - used when not auto profile
   thinkingLevel?: ThinkingLevel;  // Thinking budget level (none, low, medium, high, ultrathink)
   // Auto profile - per-phase model configuration
   isAutoProfile?: boolean;  // True when using Auto (Optimized) profile

@@ -15,10 +15,9 @@ import {
   SortableContext,
   horizontalListSortingStrategy
 } from '@dnd-kit/sortable';
-import { TooltipProvider } from '@/components/ui';
-import { Button } from '@/components/ui';
-import { Toaster } from './components/ui/toaster';
 import {
+  TooltipProvider,
+  Button,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -26,11 +25,11 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui';
+import { Toaster } from './components/ui/toaster';
 import { Sidebar, type SidebarView } from '@/components';
-import { KanbanBoard } from '@/components';
+import { KanbanBoard, TaskCreationWizard } from '@/components';
 import { KanbanSkeleton } from '@/components/ui/KanbanSkeleton';
 import { TaskDetailModal } from '@/components/task-detail';
-import { TaskCreationWizard } from '@/components';
 import { AppSettingsDialog, type AppSection } from './components/settings/AppSettings';
 import type { ProjectSettingsSection } from './components/settings/ProjectSettingsContent';
 import { TerminalGrid } from './components/TerminalGrid';
@@ -59,10 +58,9 @@ import { VersionWarningModal } from './components/VersionWarningModal';
 import { OnboardingWizard } from './components/onboarding';
 import { GitHubSetupModal } from './components/GitHubSetupModal';
 import { AzureDevOpsSetupModal } from './components/AzureDevOpsSetupModal';
-import { useProjectStore, loadProjects, addProject, initializeProject, removeProject } from './stores/project-store';
+import { useProjectStore, loadProjects, addProject, removeProject } from './stores/project-store';
 import { useTaskStore, loadTasks } from './stores/task-store';
-import { useSettingsStore, loadSettings, loadProfiles, saveSettings } from './stores/settings-store';
-import { saveActiveView } from './stores/settings-store';
+import { useSettingsStore, loadSettings, loadProfiles, saveActiveView, saveSettings } from './stores/settings-store';
 import { useClaudeProfileStore, loadClaudeProfiles } from './stores/claude-profile-store';
 import { useTerminalStore, restoreTerminalSessions } from './stores/terminal-store';
 import { initializeGitHubListeners } from './stores/github';
@@ -90,12 +88,12 @@ const VERSION_WARNING_275 = '2.7.5';
 
 // Wrapper component for ProjectTabBar
 interface ProjectTabBarWithContextProps {
-  projects: Project[];
-  activeProjectId: string | null;
-  onProjectSelect: (projectId: string) => void;
-  onProjectClose: (projectId: string) => void;
-  onAddProject: () => void;
-  onSettingsClick: () => void;
+  readonly projects: Project[];
+  readonly activeProjectId: string | null;
+  readonly onProjectSelect: (projectId: string) => void;
+  readonly onProjectClose: (projectId: string) => void;
+  readonly onAddProject: () => void;
+  readonly onSettingsClick: () => void;
 }
 
 function ProjectTabBarWithContext({
@@ -259,13 +257,25 @@ export function App() {
     };
   }, []);
 
+  const getProjectsToDetect = () => {
+    if (projects.length > 0) {
+      return projects;
+    }
+    
+    if (activeProjectId) {
+      return projects.filter(p => p.id === activeProjectId);
+    }
+    
+    return [];
+  };
+
   // Auto-detect repository types for loaded projects
   useEffect(() => {
     if (projects.length > 0 || activeProjectId) {
       
       const detectProjectsWithDelay = async () => {
         // Get the list of projects to detect (either from projects array or just the active project)
-        const projectsToDetect = projects.length > 0 ? projects : (activeProjectId ? projects.filter(p => p.id === activeProjectId) : []);
+        const projectsToDetect = getProjectsToDetect();
         
         if (projectsToDetect.length === 0) {
           return;
@@ -279,12 +289,9 @@ export function App() {
               continue;
             }
             
-            const result = await autoDetectAndUpdateProject(project);
-            
-            if (result.success) {
-            } else {
-            }
+            await autoDetectAndUpdateProject(project);
           } catch (error) {
+            console.error(`[App] Failed to auto-detect provider for project ${project.name}:`, error);
           }
           
           // Small delay between projects to avoid overwhelming the system
@@ -328,7 +335,6 @@ export function App() {
       else if (selectedProjectId && !activeProjectId) {
         setActiveProject(selectedProjectId);
         openProjectTab(selectedProjectId);
-      } else {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- projectTabs is intentionally omitted to avoid infinite re-render (computed array creates new reference each render)
@@ -369,7 +375,7 @@ export function App() {
       if (!settingsHaveLoaded) return;
 
       try {
-        const version = await window.electronAPI.getAppVersion();
+        const version = await globalThis.electronAPI.getAppVersion();
         const seenWarnings = settings.seenVersionWarnings || [];
 
         // Show warning for 2.7.5 if not already seen
@@ -409,7 +415,7 @@ export function App() {
   useEffect(() => {
     const syncSpellCheck = async () => {
       try {
-        const result = await window.electronAPI.setSpellCheckLanguages(i18n.language);
+        const result = await globalThis.electronAPI.setSpellCheckLanguages(i18n.language);
         if (!result.success) {
           console.warn('[App] Failed to set spell check language:', result.error);
         }
@@ -432,16 +438,16 @@ export function App() {
       setIsSettingsDialogOpen(true);
     };
 
-    window.addEventListener('open-app-settings', handleOpenAppSettings);
+    globalThis.addEventListener('open-app-settings', handleOpenAppSettings);
     return () => {
-      window.removeEventListener('open-app-settings', handleOpenAppSettings);
+      globalThis.removeEventListener('open-app-settings', handleOpenAppSettings);
     };
   }, []);
 
   // Listen for app updates - auto-open settings to 'updates' section when update is ready
   useEffect(() => {
     // When an update is downloaded and ready to install, open settings to updates section
-    const cleanupDownloaded = window.electronAPI.onAppUpdateDownloaded(() => {
+    const cleanupDownloaded = globalThis.electronAPI.onAppUpdateDownloaded(() => {
       console.warn('[App] Update downloaded, opening settings to updates section');
       setSettingsInitialSection('updates');
       setIsSettingsDialogOpen(true);
@@ -489,7 +495,7 @@ export function App() {
       if ((e.ctrlKey || e.metaKey) && e.key === 't' && activeView !== 'terminals') {
         e.preventDefault();
         try {
-          const path = await window.electronAPI.selectDirectory();
+          const path = await globalThis.electronAPI.selectDirectory();
           if (path) {
             const project = await addProject(path);
             if (project) {
@@ -508,8 +514,8 @@ export function App() {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    globalThis.addEventListener('keydown', handleKeyDown);
+    return () => globalThis.removeEventListener('keydown', handleKeyDown);
   }, [activeView, openProjectTab]);
 
   // Load tasks when project changes
@@ -542,13 +548,12 @@ export function App() {
         root.classList.add('dark');
       } else if (settings.theme === 'light') {
         root.classList.remove('dark');
+      } else if (globalThis.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // System preference - dark mode
+        root.classList.add('dark');
       } else {
-        // System preference
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          root.classList.add('dark');
-        } else {
-          root.classList.remove('dark');
-        }
+        // System preference - light mode
+        root.classList.remove('dark');
       }
     };
 
@@ -556,20 +561,20 @@ export function App() {
     // Validate colorTheme against known themes, fallback to 'default' if invalid
     const validThemeIds = COLOR_THEMES.map((t) => t.id);
     const rawColorTheme = settings.colorTheme ?? 'default';
-    const colorTheme: ColorTheme = validThemeIds.includes(rawColorTheme as ColorTheme)
-        ? (rawColorTheme as ColorTheme)
+    const colorTheme: ColorTheme = validThemeIds.includes(rawColorTheme)
+        ? rawColorTheme
         : 'default';
 
     if (colorTheme === 'default') {
-      root.removeAttribute('data-theme');
+      delete root.dataset.theme;
     } else {
-      root.setAttribute('data-theme', colorTheme);
+      root.dataset.theme = colorTheme;
     }
 
     applyTheme();
 
     // Listen for system theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const mediaQuery = globalThis.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
       if (settings.theme === 'system') {
         applyTheme();
@@ -587,7 +592,7 @@ export function App() {
     const root = document.documentElement;
     const scale = settings.uiScale ?? UI_SCALE_DEFAULT;
     const clampedScale = Math.max(UI_SCALE_MIN, Math.min(UI_SCALE_MAX, scale));
-    root.setAttribute('data-ui-scale', clampedScale.toString());
+    root.dataset.uiScale = clampedScale.toString();
   }, [settings.uiScale]);
 
   // Update selected task when tasks change (for real-time updates)
@@ -711,22 +716,15 @@ export function App() {
     // Note: TerminalGrid is always mounted (just hidden), so no need to wait
     const terminal = useTerminalStore.getState().addTerminal(cwd, selectedProject?.path);
 
-    if (!terminal) {
-      console.error('[App] Failed to add terminal to store (max terminals reached?)');
-    } else {
+    if (terminal) {
       console.warn('[App] Terminal added to store:', terminal.id);
+    } else {
+      console.error('[App] Failed to add terminal to store (max terminals reached?)');
     }
   };
 
   const handleAddProject = () => {
     setShowAddProjectModal(true);
-  };
-
-  const inferProviderFromRemote = (provider: 'github' | 'azure_devops' | 'unknown', remoteUrl?: string) => {
-    if (provider !== 'unknown' || !remoteUrl) return provider;
-    if (/github\.com[:/]/i.test(remoteUrl)) return 'github';
-    if (/dev\.azure\.com|visualstudio\.com|ssh\.dev\.azure\.com/i.test(remoteUrl)) return 'azure_devops';
-    return 'unknown';
   };
 
   const handleProjectAdded = async (project: Project, needsInit: boolean) => {
@@ -741,7 +739,7 @@ export function App() {
       return;
     }
     try {
-      const envResult = await window.electronAPI.getProjectEnv(project.id);
+      const envResult = await globalThis.electronAPI.getProjectEnv(project.id);
       const envConfig = envResult.success ? envResult.data : null;
       const hasProvider = !!(envConfig?.githubEnabled || envConfig?.azureDevOpsEnabled);
       if (!hasProvider) {
@@ -770,12 +768,6 @@ export function App() {
       setProjectToRemove(project);
       setShowRemoveProjectDialog(true);
     }
-  };
-
-  // Fonction pour fermer l'onglet ET supprimer le projet du store global
-  const handleProjectTabCloseAndRemove = async (projectId: string) => {
-    useProjectStore.getState().closeProjectTab(projectId);
-    await removeProject(projectId); // suppression globale
   };
 
   // Handle confirm remove project
@@ -830,37 +822,6 @@ export function App() {
     }
   };
 
-  const handleInitialize = async () => {
-    if (!pendingProject) return;
-
-    const projectId = pendingProject.id;
-    setIsInitializing(true);
-    setInitSuccess(false);
-    setInitError(null);
-
-    try {
-      const result = await initializeProject(projectId);
-      if (result?.success) {
-        setInitSuccess(true);
-        setIsInitializing(false);
-        setShowInitDialog(false);
-        setPendingProject(null);
-
-        // Show repo provider setup modal
-        if (result.success && pendingProject) {
-          setRepoProviderProject(pendingProject);
-          setShowRepoProviderSetup(true);
-        }
-      } else {
-        setInitError(result?.error || t('common:errors.unknownError'));
-        setIsInitializing(false);
-      }
-    } catch (err) {
-      setInitError(err instanceof Error ? err.message : t('common:errors.unknownError'));
-      setIsInitializing(false);
-    }
-  };
-
   const handleGitHubSetupComplete = async (settings: {
     githubToken: string;
     githubRepo: string;
@@ -877,7 +838,7 @@ export function App() {
       // The user needs to separately authenticate with Claude using 'claude setup-token'
 
       // Update project env config with GitHub settings
-      await window.electronAPI.updateProjectEnv(gitHubSetupProject.id, {
+      await globalThis.electronAPI.updateProjectEnv(gitHubSetupProject.id, {
         githubEnabled: true,
         githubToken: settings.githubToken, // GitHub token for repo access
         githubRepo: settings.githubRepo,
@@ -886,7 +847,7 @@ export function App() {
       });
 
       // Update project settings with mainBranch
-      await window.electronAPI.updateProjectSettings(gitHubSetupProject.id, {
+      await globalThis.electronAPI.updateProjectSettings(gitHubSetupProject.id, {
         mainBranch: settings.mainBranch
       });
 
@@ -904,32 +865,6 @@ export function App() {
   const handleGitHubSetupSkip = () => {
     setShowGitHubSetup(false);
     setGitHubSetupProject(null);
-    setPendingRepoProvider(null);
-  };
-
-  const handleRepoProviderSelectGitHub = () => {
-    if (!repoProviderProject) return;
-
-    setShowRepoProviderSetup(false);
-    setPendingRepoProvider('github');
-    setGitHubSetupProject(repoProviderProject);
-    setShowGitHubSetup(true);
-    setRepoProviderProject(null);
-  };
-
-  const handleRepoProviderSelectAzureDevOps = () => {
-    if (!repoProviderProject) return;
-
-    setShowRepoProviderSetup(false);
-    setPendingRepoProvider('azure_devops');
-    setAzureDevOpsSetupProject(repoProviderProject);
-    setShowAzureDevOpsSetup(true);
-    setRepoProviderProject(null);
-  };
-
-  const handleRepoProviderSkip = () => {
-    setShowRepoProviderSetup(false);
-    setRepoProviderProject(null);
     setPendingRepoProvider(null);
   };
 
@@ -965,7 +900,7 @@ export function App() {
           }
           // Check if response is actually JSON
           const contentType = res.headers.get('content-type');
-          if (!contentType || !contentType.includes('application/json')) {
+          if (!contentType?.includes('application/json')) {
             throw new Error('Response is not JSON');
           }
           return res.json();
@@ -1005,7 +940,7 @@ export function App() {
           }
           // Check if response is actually JSON
           const contentType = res.headers.get('content-type');
-          if (!contentType || !contentType.includes('application/json')) {
+          if (!contentType?.includes('application/json')) {
             throw new Error('Response is not JSON');
           }
           return res.json();
@@ -1025,6 +960,34 @@ export function App() {
           setProviderModelsError(`Erreur lors de la récupération des modèles pour le provider «${selectedProvider}».`);
         });
   }, [selectedProvider]);
+
+  const getKanbanContent = () => {
+    if (isLoadingTasks && tasks.length === 0) {
+      return <KanbanSkeleton />;
+    }
+    
+    if (isRefreshingTasks) {
+      return <KanbanSkeleton showRefreshText={true} />;
+    }
+    
+    return (
+      <KanbanBoard
+          tasks={tasks}
+          onTaskClick={handleTaskClick}
+          onNewTaskClick={() => setIsNewTaskDialogOpen(true)}
+          onRefresh={handleRefreshTasks}
+          isRefreshing={isRefreshingTasks}
+          onOpenJiraSettings={() => {
+            setSettingsInitialProjectSection('jira');
+            setIsSettingsDialogOpen(true);
+          }}
+          onOpenAzureDevOpsSettings={() => {
+            setSettingsInitialProjectSection('azure-devops');
+            setIsSettingsDialogOpen(true);
+          }}
+      />
+    );
+  };
 
   return (
       <ProviderContextProvider>
@@ -1110,27 +1073,7 @@ export function App() {
                         <>
                           {activeView === 'kanban' && (
                               <>
-                                {(isLoadingTasks && tasks.length === 0) ? (
-                                  <KanbanSkeleton />
-                                ) : isRefreshingTasks ? (
-                                  <KanbanSkeleton showRefreshText={true} />
-                                ) : (
-                                  <KanbanBoard
-                                      tasks={tasks}
-                                      onTaskClick={handleTaskClick}
-                                      onNewTaskClick={() => setIsNewTaskDialogOpen(true)}
-                                      onRefresh={handleRefreshTasks}
-                                      isRefreshing={isRefreshingTasks}
-                                      onOpenJiraSettings={() => {
-                                        setSettingsInitialProjectSection('jira');
-                                        setIsSettingsDialogOpen(true);
-                                      }}
-                                      onOpenAzureDevOpsSettings={() => {
-                                        setSettingsInitialProjectSection('azure-devops');
-                                        setIsSettingsDialogOpen(true);
-                                      }}
-                                  />
-                                )}
+                                {getKanbanContent()}
                               </>
                           )}
                           {/* TerminalGrid is always mounted but hidden when not active to preserve terminal state */}

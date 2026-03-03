@@ -25,33 +25,33 @@ import {
   DEFAULT_PHASE_MODELS,
   DEFAULT_PHASE_THINKING
 } from '../../shared/constants';
-import type { ModelType, ThinkingLevel } from '../../shared/types';
-import type { PhaseModelConfig, PhaseThinkingConfig, ModelTypeShort } from '../../shared/types/settings';
+import type { ThinkingLevel } from '../../shared/types';
+import type { PhaseModelConfig, PhaseThinkingConfig } from '../../shared/types/settings';
 import { cn } from '../lib/utils';
 
 interface AgentProfileSelectorProps {
   /** Currently selected profile ID ('auto', 'complex', 'balanced', 'quick', or 'custom') */
-  profileId: string;
+  readonly profileId: string;
   /** Current model value (fallback for non-auto profiles) */
-  model: ModelTypeShort | '';
+  readonly model: string;
   /** Current thinking level value (fallback for non-auto profiles) */
-  thinkingLevel: ThinkingLevel | '';
+  readonly thinkingLevel: ThinkingLevel | '';
   /** Phase model configuration (for auto profile) */
-  phaseModels?: PhaseModelConfig;
+  readonly phaseModels?: PhaseModelConfig;
   /** Phase thinking configuration (for auto profile) */
-  phaseThinking?: PhaseThinkingConfig;
+  readonly phaseThinking?: PhaseThinkingConfig;
   /** Called when profile selection changes */
-  onProfileChange: (profileId: string, model: ModelTypeShort, thinkingLevel: ThinkingLevel) => void;
+  readonly onProfileChange: (profileId: string, model: string, thinkingLevel: ThinkingLevel) => void;
   /** Called when model changes (in custom mode) */
-  onModelChange: (model: ModelTypeShort) => void;
+  readonly onModelChange: (model: string) => void;
   /** Called when thinking level changes (in custom mode) */
-  onThinkingLevelChange: (level: ThinkingLevel) => void;
+  readonly onThinkingLevelChange: (level: ThinkingLevel) => void;
   /** Called when phase models change (in auto mode) */
-  onPhaseModelsChange?: (phaseModels: PhaseModelConfig) => void;
+  readonly onPhaseModelsChange?: (phaseModels: PhaseModelConfig) => void;
   /** Called when phase thinking changes (in auto mode) */
-  onPhaseThinkingChange?: (phaseThinking: PhaseThinkingConfig) => void;
+  readonly onPhaseThinkingChange?: (phaseThinking: PhaseThinkingConfig) => void;
   /** Whether the selector is disabled */
-  disabled?: boolean;
+  readonly disabled?: boolean;
 }
 
 const iconMap: Record<string, React.ElementType> = {
@@ -112,7 +112,7 @@ export function AgentProfileSelector({
     }
   };
 
-  const handlePhaseModelChange = (phase: keyof PhaseModelConfig, value: ModelTypeShort) => {
+  const handlePhaseModelChange = (phase: keyof PhaseModelConfig, value: string) => {
     if (onPhaseModelsChange) {
       onPhaseModelsChange({
         ...currentPhaseModels,

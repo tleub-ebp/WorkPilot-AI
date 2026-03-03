@@ -2,119 +2,139 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 // Import English translation resources
-import enCommon from './locales/en/common.json';
-import enNavigation from './locales/en/navigation.json';
-import enSettings from './locales/en/settings.json';
-import enTasks from './locales/en/tasks.json';
-import enWelcome from './locales/en/welcome.json';
-import enOnboarding from './locales/en/onboarding.json';
-import enDialogs from './locales/en/dialogs.json';
-import enGitlab from './locales/en/gitlab.json';
-import enTaskReview from './locales/en/taskReview.json';
-import enTerminal from './locales/en/terminal.json';
-import enErrors from './locales/en/errors.json';
-import enContext from './locales/en/context.json';
-import enChangeLog from './locales/en/changelog.json';
-import enMigrationWizard from './locales/en/migration-wizard.json';
-import enVisualProgramming from './locales/en/visualProgramming.json';
-import enInitDialog from './locales/en/initDialog.json';
-import enProjectInitModal from './locales/en/projectInitModal.json';
-import enCollaboration from './locales/en/collaboration.json';
-import enStreaming from './locales/en/streaming.json';
-import enCodeReview from './locales/en/codeReview.json';
-import enRefactoring from './locales/en/refactoring.json';
-import enDocumentation from './locales/en/documentation.json';
-import enInsights from './locales/en/insights.json';
-import enRoadmap from './locales/en/roadmap.json';
 import enAnalytics from './locales/en/analytics.json';
+import enChangelog from './locales/en/changelog.json';
+import enCodePlayground from './locales/en/codePlayground.json';
+import enCodeReview from './locales/en/codeReview.json';
+import enCollaboration from './locales/en/collaboration.json';
+import enCommon from './locales/en/common.json';
+import enConflictPredictor from './locales/en/conflictPredictor.json';
+import enContext from './locales/en/context.json';
+import enContextAwareSnippets from './locales/en/contextAwareSnippets.json';
+import enDialogs from './locales/en/dialogs.json';
+import enDocumentation from './locales/en/documentation.json';
+import enErrors from './locales/en/errors.json';
+import enGitlab from './locales/en/gitlab.json';
+import enInitDialog from './locales/en/initDialog.json';
+import enInsights from './locales/en/insights.json';
+import enMigrationWizard from './locales/en/migration-wizard.json';
+import enNaturalLanguageGit from './locales/en/naturalLanguageGit.json';
+import enNavigation from './locales/en/navigation.json';
+import enOnboarding from './locales/en/onboarding.json';
 import enPromptOptimizer from './locales/en/promptOptimizer.json';
+import enProjectInitModal from './locales/en/projectInitModal.json';
+import enRefactoring from './locales/en/refactoring.json';
+import enRoadmap from './locales/en/roadmap.json';
+import enSettings from './locales/en/settings.json';
+import enStreaming from './locales/en/streaming.json';
+import enTaskReview from './locales/en/taskReview.json';
+import enTasks from './locales/en/tasks.json';
+import enTerminal from './locales/en/terminal.json';
+import enTestGeneration from './locales/en/testGeneration.json';
+import enVisualProgramming from './locales/en/visualProgramming.json';
+import enWelcome from './locales/en/welcome.json';
 
 // Import French translation resources
-import frCommon from './locales/fr/common.json';
-import frNavigation from './locales/fr/navigation.json';
-import frSettings from './locales/fr/settings.json';
-import frTasks from './locales/fr/tasks.json';
-import frWelcome from './locales/fr/welcome.json';
-import frOnboarding from './locales/fr/onboarding.json';
-import frDialogs from './locales/fr/dialogs.json';
-import frGitlab from './locales/fr/gitlab.json';
-import frTaskReview from './locales/fr/taskReview.json';
-import frTerminal from './locales/fr/terminal.json';
-import frErrors from './locales/fr/errors.json';
-import frContext from './locales/fr/context.json';
-import frChangeLog from './locales/fr/changelog.json';
-import frMigrationWizard from './locales/fr/migration-wizard.json';
-import frVisualProgramming from './locales/fr/visualProgramming.json';
-import frInitDialog from './locales/fr/initDialog.json';
-import frProjectInitModal from './locales/fr/projectInitModal.json';
-import frCollaboration from './locales/fr/collaboration.json';
-import frStreaming from './locales/fr/streaming.json';
-import frCodeReview from './locales/fr/codeReview.json';
-import frRefactoring from './locales/fr/refactoring.json';
-import frDocumentation from './locales/fr/documentation.json';
-import frInsights from './locales/fr/insights.json';
-import frRoadmap from './locales/fr/roadmap.json';
 import frAnalytics from './locales/fr/analytics.json';
+import frChangelog from './locales/fr/changelog.json';
+import frCodePlayground from './locales/fr/codePlayground.json';
+import frCodeReview from './locales/fr/codeReview.json';
+import frCollaboration from './locales/fr/collaboration.json';
+import frCommon from './locales/fr/common.json';
+import frConflictPredictor from './locales/fr/conflictPredictor.json';
+import frContext from './locales/fr/context.json';
+import frContextAwareSnippets from './locales/fr/contextAwareSnippets.json';
+import frDialogs from './locales/fr/dialogs.json';
+import frDocumentation from './locales/fr/documentation.json';
+import frErrors from './locales/fr/errors.json';
+import frGitlab from './locales/fr/gitlab.json';
+import frInitDialog from './locales/fr/initDialog.json';
+import frInsights from './locales/fr/insights.json';
+import frMigrationWizard from './locales/fr/migration-wizard.json';
+import frNaturalLanguageGit from './locales/fr/naturalLanguageGit.json';
+import frNavigation from './locales/fr/navigation.json';
+import frOnboarding from './locales/fr/onboarding.json';
 import frPromptOptimizer from './locales/fr/promptOptimizer.json';
+import frProjectInitModal from './locales/fr/projectInitModal.json';
+import frRefactoring from './locales/fr/refactoring.json';
+import frRoadmap from './locales/fr/roadmap.json';
+import frSettings from './locales/fr/settings.json';
+import frStreaming from './locales/fr/streaming.json';
+import frTaskReview from './locales/fr/taskReview.json';
+import frTasks from './locales/fr/tasks.json';
+import frTerminal from './locales/fr/terminal.json';
+import frTestGeneration from './locales/fr/testGeneration.json';
+import frVisualProgramming from './locales/fr/visualProgramming.json';
+import frWelcome from './locales/fr/welcome.json';
 
 export const defaultNS = 'common';
 
 export const resources = {
   en: {
-    common: enCommon,
-    navigation: enNavigation,
-    settings: enSettings,
-    tasks: enTasks,
-    welcome: enWelcome,
-    onboarding: enOnboarding,
-    dialogs: enDialogs,
-    initDialog: enInitDialog,
-    gitlab: enGitlab,
-    taskReview: enTaskReview,
-    terminal: enTerminal,
-    errors: enErrors,
-    context: enContext,
-    changelog: enChangeLog,
-    migrationWizard: enMigrationWizard,
-    visualProgramming: enVisualProgramming,
-    projectInitModal: enProjectInitModal,
-    collaboration: enCollaboration,
-    streaming: enStreaming,
-    codeReview: enCodeReview,
-    refactoring: enRefactoring,
-    documentation: enDocumentation,
-    insights: enInsights,
-    roadmap: enRoadmap,
     analytics: enAnalytics,
-    promptOptimizer: enPromptOptimizer
+    changelog: enChangelog,
+    codePlayground: enCodePlayground,
+    codeReview: enCodeReview,
+    collaboration: enCollaboration,
+    common: enCommon,
+    conflictPredictor: enConflictPredictor,
+    context: enContext,
+    contextAwareSnippets: enContextAwareSnippets,
+    dialogs: enDialogs,
+    documentation: enDocumentation,
+    errors: enErrors,
+    gitlab: enGitlab,
+    initDialog: enInitDialog,
+    insights: enInsights,
+    migrationWizard: enMigrationWizard,
+    naturalLanguageGit: enNaturalLanguageGit,
+    navigation: enNavigation,
+    onboarding: enOnboarding,
+    promptOptimizer: enPromptOptimizer,
+    projectInitModal: enProjectInitModal,
+    refactoring: enRefactoring,
+    roadmap: enRoadmap,
+    settings: enSettings,
+    streaming: enStreaming,
+    taskReview: enTaskReview,
+    tasks: enTasks,
+    terminal: enTerminal,
+    testGeneration: enTestGeneration,
+    visualProgramming: enVisualProgramming,
+    welcome: enWelcome
   },
   fr: {
-    common: frCommon,
-    navigation: frNavigation,
-    settings: frSettings,
-    tasks: frTasks,
-    welcome: frWelcome,
-    onboarding: frOnboarding,
-    dialogs: frDialogs,
-    initDialog: frInitDialog,
-    gitlab: frGitlab,
-    taskReview: frTaskReview,
-    terminal: frTerminal,
-    errors: frErrors,
-    context: frContext,
-    changelog: frChangeLog,
-    migrationWizard: frMigrationWizard,
-    visualProgramming: frVisualProgramming,
-    projectInitModal: frProjectInitModal,
-    collaboration: frCollaboration,
-    streaming: frStreaming,
-    codeReview: frCodeReview,
-    refactoring: frRefactoring,
-    documentation: frDocumentation,
-    insights: frInsights,
-    roadmap: frRoadmap,
     analytics: frAnalytics,
-    promptOptimizer: frPromptOptimizer
+    changelog: frChangelog,
+    codePlayground: frCodePlayground,
+    codeReview: frCodeReview,
+    collaboration: frCollaboration,
+    common: frCommon,
+    conflictPredictor: frConflictPredictor,
+    context: frContext,
+    contextAwareSnippets: frContextAwareSnippets,
+    dialogs: frDialogs,
+    documentation: frDocumentation,
+    errors: frErrors,
+    gitlab: frGitlab,
+    initDialog: frInitDialog,
+    insights: frInsights,
+    migrationWizard: frMigrationWizard,
+    naturalLanguageGit: frNaturalLanguageGit,
+    navigation: frNavigation,
+    onboarding: frOnboarding,
+    promptOptimizer: frPromptOptimizer,
+    projectInitModal: frProjectInitModal,
+    refactoring: frRefactoring,
+    roadmap: frRoadmap,
+    settings: frSettings,
+    streaming: frStreaming,
+    taskReview: frTaskReview,
+    tasks: frTasks,
+    terminal: frTerminal,
+    testGeneration: frTestGeneration,
+    visualProgramming: frVisualProgramming,
+    welcome: frWelcome
   }
 } as const;
 
@@ -122,17 +142,47 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'en', // Default language (will be overridden by settings)
+    lng: 'en', 
     fallbackLng: 'en',
     defaultNS,
     ns: [
-      'common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'initDialog', 'gitlab', 'taskReview', 'terminal', 'errors', 'context', 'changelog', 'migrationWizard', 'visualProgramming', 'projectInitModal', 'collaboration', 'streaming', 'codeReview', 'refactoring', 'documentation', 'insights', 'roadmap', 'analytics', 'promptOptimizer'
+      'analytics',
+      'changelog',
+      'codePlayground',
+      'codeReview',
+      'collaboration',
+      'common',
+      'conflictPredictor',
+      'context',
+      'contextAwareSnippets',
+      'dialogs',
+      'documentation',
+      'errors',
+      'gitlab',
+      'initDialog',
+      'insights',
+      'migrationWizard',
+      'naturalLanguageGit',
+      'navigation',
+      'onboarding',
+      'promptOptimizer',
+      'projectInitModal',
+      'refactoring',
+      'roadmap',
+      'settings',
+      'streaming',
+      'taskReview',
+      'tasks',
+      'terminal',
+      'testGeneration',
+      'visualProgramming',
+      'welcome'
     ],
     interpolation: {
-      escapeValue: false // React already escapes values
+      escapeValue: false 
     },
     react: {
-      useSuspense: false // Disable suspense for Electron compatibility
+      useSuspense: false 
     }
   });
 

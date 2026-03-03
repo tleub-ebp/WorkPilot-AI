@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Copy, Loader2, Sparkles, WandSparkles, RotateCcw, X } from 'lucide-react';
+import { Check, Copy, Loader2, Sparkles, WandSparkles, RotateCcw } from 'lucide-react';
 
 import {
   Dialog,
@@ -43,7 +43,7 @@ const AGENT_TYPES = ['general', 'analysis', 'coding', 'verification'] as const;
  */
 interface PromptOptimizerDialogProps {
   /** Called when the user clicks "Use This Prompt" with the optimized text */
-  onUsePrompt?: (optimizedPrompt: string) => void;
+  readonly onUsePrompt?: (optimizedPrompt: string) => void;
 }
 
 export function PromptOptimizerDialog({ onUsePrompt }: PromptOptimizerDialogProps) {
@@ -157,7 +157,12 @@ export function PromptOptimizerDialog({ onUsePrompt }: PromptOptimizerDialogProp
               value={editablePrompt}
               onChange={(e) => setEditablePrompt(e.target.value)}
               placeholder={t('promptOptimizer:prompt.placeholder')}
-              className="min-h-[120px]"
+              className="min-h-[120px] border-2 border-yellow-400 focus:border-yellow-500 focus-visible:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
+              style={{
+                border: '2px solid rgb(250, 204, 21)',
+                borderRadius: '0.5rem',
+                outline: 'none'
+              }}
               disabled={isOptimizing}
             />
           </div>
@@ -215,7 +220,7 @@ export function PromptOptimizerDialog({ onUsePrompt }: PromptOptimizerDialogProp
                   </Label>
                   <pre
                     ref={streamOutputRef}
-                    className="bg-muted/50 rounded-lg p-3 text-xs font-mono max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
+                    className="bg-muted/50 rounded-lg p-3 text-xs font-mono max-h-[200px] overflow-y-auto whitespace-pre-wrap wrap-break-word"
                   >
                     {streamingOutput}
                   </pre>
@@ -315,10 +320,10 @@ function ResultView({
   onCopy,
   t,
 }: {
-  result: PromptOptimizerResult;
-  copied: boolean;
-  onCopy: (text: string) => void;
-  t: (key: string) => string;
+  readonly result: PromptOptimizerResult;
+  readonly copied: boolean;
+  readonly onCopy: (text: string) => void;
+  readonly t: (key: string) => string;
 }) {
   return (
     <div className="space-y-4">
@@ -359,9 +364,9 @@ function ResultView({
         </Label>
         {result.changes.length > 0 ? (
           <ul className="space-y-1 pl-1">
-            {result.changes.map((change, i) => (
+            {result.changes.map((change) => (
               <li
-                key={`change-${i}`}
+                key={`change-${change}`}
                 className="flex items-start gap-2 text-sm text-muted-foreground"
               >
                 <span className="text-primary mt-1.5 shrink-0">•</span>

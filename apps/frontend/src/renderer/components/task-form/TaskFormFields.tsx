@@ -32,10 +32,9 @@ import type {
   TaskComplexity,
   TaskImpact,
   ImageAttachment,
-  ModelType,
   ThinkingLevel
 } from '../../../shared/types';
-import type { PhaseModelConfig, PhaseThinkingConfig, ModelTypeShort } from '../../../shared/types/settings';
+import type { PhaseModelConfig, PhaseThinkingConfig } from '../../../shared/types/settings';
 
 interface TaskFormFieldsProps {
   // Project context (for loading image thumbnails from disk)
@@ -57,12 +56,12 @@ interface TaskFormFieldsProps {
 
   // Agent profile
   profileId: string;
-  model: ModelTypeShort | '';
+  model: string | '';
   thinkingLevel: ThinkingLevel | '';
   phaseModels?: PhaseModelConfig;
   phaseThinking?: PhaseThinkingConfig;
-  onProfileChange: (profileId: string, model: ModelTypeShort | '', thinkingLevel: ThinkingLevel | '') => void;
-  onModelChange: (model: ModelTypeShort | '') => void;
+  onProfileChange: (profileId: string, model: string | '', thinkingLevel: ThinkingLevel | '') => void;
+  onModelChange: (model: string | '') => void;
   onThinkingLevelChange: (level: ThinkingLevel | '') => void;
   onPhaseModelsChange: (config: PhaseModelConfig | undefined) => void;
   onPhaseThinkingChange: (config: PhaseThinkingConfig | undefined) => void;

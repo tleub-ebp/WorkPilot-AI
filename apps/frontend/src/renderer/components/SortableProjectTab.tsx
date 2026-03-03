@@ -7,18 +7,18 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { Project } from '../../shared/types';
 
 interface SortableProjectTabProps {
-  project: Project;
-  isActive: boolean;
-  canClose: boolean;
-  tabIndex: number;
-  onSelect: () => void;
-  onClose: (e: React.MouseEvent) => void;
+  readonly project: Project;
+  readonly isActive: boolean;
+  readonly canClose: boolean;
+  readonly tabIndex: number;
+  readonly onSelect: () => void;
+  readonly onClose: (e: React.MouseEvent) => void;
   // Optional control props for active tab
-  onSettingsClick?: () => void;
+  readonly onSettingsClick?: () => void;
 }
 
 // Detect if running on macOS for keyboard shortcut display
-const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().includes('MAC');
 const modKey = isMac ? '⌘' : 'Ctrl+';
 
 export function SortableProjectTab({
@@ -65,7 +65,8 @@ export function SortableProjectTab({
     >
       <Tooltip delayDuration={200}>
         <TooltipTrigger asChild>
-          <div
+          <button
+            type="button"
             className={cn(
               'flex-1 flex items-center gap-1 sm:gap-2',
               // Responsive padding: tighter on mobile, normal on desktop
@@ -73,6 +74,7 @@ export function SortableProjectTab({
               'text-xs sm:text-sm',
               'min-w-0 truncate hover:bg-muted/50 transition-colors',
               'border-b-2 border-transparent cursor-pointer',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
               isActive && [
                 'bg-accent/80 border-b-primary text-foreground shadow-sm',
                 'hover:bg-accent/90'
@@ -83,6 +85,7 @@ export function SortableProjectTab({
               ]
             )}
             onClick={onSelect}
+            aria-label={t('projectTab.selectTab', { projectName: project.name })}
           >
             {/* Drag handle - visible on hover, hidden on mobile */}
             <div
@@ -97,7 +100,7 @@ export function SortableProjectTab({
             <span className="truncate font-medium">
               {project.name}
             </span>
-          </div>
+          </button>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="flex items-center gap-2">
           <span>{project.name}</span>

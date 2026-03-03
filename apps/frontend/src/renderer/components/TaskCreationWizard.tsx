@@ -26,7 +26,7 @@ import { useProjectStore } from '../stores/project-store';
 import { buildBranchOptions } from '../lib/branch-utils';
 import { cn } from '../lib/utils';
 import type { TaskCategory, TaskPriority, TaskComplexity, TaskImpact, TaskMetadata, ImageAttachment, TaskDraft, ModelType, ThinkingLevel, ReferencedFile, GitBranchDetail } from '../../shared/types';
-import type { PhaseModelConfig, PhaseThinkingConfig, ModelTypeShort } from '../../shared/types/settings';
+import type { PhaseModelConfig, PhaseThinkingConfig } from '../../shared/types/settings';
 import {
   DEFAULT_AGENT_PROFILES,
   DEFAULT_PHASE_MODELS,
@@ -109,7 +109,7 @@ export function TaskCreationWizard({
 
   // Model configuration
   const [profileId, setProfileId] = useState<string>(settings.selectedAgentProfile || 'auto');
-  const [model, setModel] = useState<ModelTypeShort | ''>(selectedProfile.model);
+  const [model, setModel] = useState<string | ''>(selectedProfile.model);
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel | ''>(selectedProfile.thinkingLevel);
   const [phaseModels, setPhaseModels] = useState<PhaseModelConfig | undefined>(
     settings.customPhaseModels || selectedProfile.phaseModels || DEFAULT_PHASE_MODELS

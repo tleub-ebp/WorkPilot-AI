@@ -1,5 +1,5 @@
 {
-  "title": "Natural Language Git",
+  "title": "Git en langage naturel",
   "description": "Manipuler git en langage naturel directement depuis l'interface",
   "command": {
     "label": "Commande Git",
