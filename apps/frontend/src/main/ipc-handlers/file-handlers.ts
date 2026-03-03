@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron';
-import { readdirSync, statSync } from 'fs';
-import { readFile } from 'fs/promises';
-import path from 'path';
+import { readdirSync, statSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { IPC_CHANNELS } from '../../shared/constants';
 import type { IPCResult, FileNode } from '../../shared/types';
 
@@ -134,7 +134,7 @@ export function registerFileHandlers(): void {
         const safeDir = validation.path;
         const safeFile = path.join(safeDir, fileName);
         // Write JSON file
-        const fs = await import('fs/promises');
+        const fs = await import('node:fs/promises');
         await fs.writeFile(safeFile, JSON.stringify(data, null, 2), 'utf-8');
         return { success: true, data: true };
       } catch (error) {

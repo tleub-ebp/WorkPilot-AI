@@ -8,8 +8,7 @@
  * due to macOS screen recording permission requirements for unsigned builds.
  * In dev mode, the handler returns a devMode flag so the UI can show a helpful message.
  */
-import { ipcMain, app } from 'electron';
-import { desktopCapturer } from 'electron';
+import { ipcMain, app, desktopCapturer } from 'electron';
 import { IPC_CHANNELS } from '../../shared/constants/ipc';
 import type { ScreenshotSource, ScreenshotCaptureOptions } from '../../shared/types/screenshot';
 

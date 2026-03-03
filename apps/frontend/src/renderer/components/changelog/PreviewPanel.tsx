@@ -6,11 +6,23 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+// Factory function to create markdown components with projectPath
+const createMarkdownComponents = (projectPath?: string): Components => ({
+  img: ({ src, alt }) => (
+    <MarkdownImage src={src} alt={alt} projectPath={projectPath} />
+  )
+});
+
+// Component for handling markdown images with local image support
+const MarkdownImage = ({ src, alt, projectPath }: { src?: string; alt?: string; projectPath?: string }) => {
+  return <LocalImage src={src || ''} alt={alt || ''} projectPath={projectPath} />;
+};
+
 // Component for loading local images via IPC
 interface LocalImageProps {
-  src: string;
-  alt: string;
-  projectPath?: string;
+  readonly src: string;
+  readonly alt: string;
+  readonly projectPath?: string;
 }
 
 function LocalImage({ src, alt, projectPath }: LocalImageProps) {
@@ -40,7 +52,7 @@ function LocalImage({ src, alt, projectPath }: LocalImageProps) {
         setError(null);
         // Handle relative paths like .github/assets/... or ./path/to/image
         const relativePath = src.startsWith('./') ? src.slice(2) : src;
-        const result = await window.electronAPI.readLocalImage(projectPath, relativePath);
+        const result = await globalThis.electronAPI.readLocalImage(projectPath, relativePath);
         if (result.success && result.data) {
           setImageSrc(result.data);
         } else {
@@ -78,21 +90,21 @@ function LocalImage({ src, alt, projectPath }: LocalImageProps) {
 }
 
 interface PreviewPanelProps {
-  generatedChangelog: string;
-  saveSuccess: boolean;
-  copySuccess: boolean;
-  canSave: boolean;
-  isDragOver: boolean;
-  imageError: string | null;
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
-  projectPath?: string;
-  onSave: () => void;
-  onCopy: () => void;
-  onChangelogEdit: (content: string) => void;
-  onPaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDragLeave: (e: React.DragEvent) => void;
-  onDrop: (e: React.DragEvent) => void;
+  readonly generatedChangelog: string;
+  readonly saveSuccess: boolean;
+  readonly copySuccess: boolean;
+  readonly canSave: boolean;
+  readonly isDragOver: boolean;
+  readonly imageError: string | null;
+  readonly textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  readonly projectPath?: string;
+  readonly onSave: () => void;
+  readonly onCopy: () => void;
+  readonly onChangelogEdit: (content: string) => void;
+  readonly onPaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
+  readonly onDragOver: (e: React.DragEvent) => void;
+  readonly onDragLeave: (e: React.DragEvent) => void;
+  readonly onDrop: (e: React.DragEvent) => void;
 }
 
 export function PreviewPanel({
@@ -115,11 +127,7 @@ export function PreviewPanel({
   const [viewMode, setViewMode] = useState<'markdown' | 'preview'>('markdown');
 
   // Custom components for ReactMarkdown to handle local image paths
-  const markdownComponents: Components = useMemo(() => ({
-    img: ({ src, alt }) => {
-      return <LocalImage src={src || ''} alt={alt || ''} projectPath={projectPath} />;
-    }
-  }), [projectPath]);
+  const markdownComponents = useMemo(() => createMarkdownComponents(projectPath), [projectPath]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -189,8 +197,9 @@ export function PreviewPanel({
       </div>
 
       {/* Preview Content */}
-      <div
+      <section
         className={`flex-1 overflow-hidden p-6 ${isDragOver ? 'bg-muted/50' : ''}`}
+        aria-label="Changelog preview with drag and drop support"
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
@@ -250,7 +259,7 @@ export function PreviewPanel({
             </div>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

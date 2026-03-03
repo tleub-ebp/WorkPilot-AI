@@ -14,39 +14,39 @@ import type {
 } from '../../../shared/types';
 
 interface Step2ConfigureGenerateProps {
-  sourceMode: ChangelogSourceMode;
-  selectedTaskIds: string[];
-  doneTasks: ChangelogTask[];
-  previewCommits: GitCommitType[];
-  existingChangelog: { lastVersion?: string } | null;
-  version: string;
-  versionReason: string | null;
-  date: string;
-  format: ChangelogFormat;
-  audience: ChangelogAudience;
-  emojiLevel: ChangelogEmojiLevel;
-  customInstructions: string;
-  generationProgress: { stage: string; progress: number; message?: string; error?: string } | null;
-  generatedChangelog: string;
-  isGenerating: boolean;
-  error: string | null;
-  showAdvanced: boolean;
-  saveSuccess: boolean;
-  copySuccess: boolean;
-  canGenerate: boolean;
-  canSave: boolean;
-  onBack: () => void;
-  onVersionChange: (v: string) => void;
-  onDateChange: (d: string) => void;
-  onFormatChange: (f: ChangelogFormat) => void;
-  onAudienceChange: (a: ChangelogAudience) => void;
-  onEmojiLevelChange: (l: ChangelogEmojiLevel) => void;
-  onCustomInstructionsChange: (i: string) => void;
-  onShowAdvancedChange: (show: boolean) => void;
-  onGenerate: () => void;
-  onSave: () => void;
-  onCopy: () => void;
-  onChangelogEdit: (content: string) => void;
+  readonly sourceMode: ChangelogSourceMode;
+  readonly selectedTaskIds: string[];
+  readonly doneTasks: ChangelogTask[];
+  readonly previewCommits: GitCommitType[];
+  readonly existingChangelog: { lastVersion?: string } | null;
+  readonly version: string;
+  readonly versionReason: string | null;
+  readonly date: string;
+  readonly format: ChangelogFormat;
+  readonly audience: ChangelogAudience;
+  readonly emojiLevel: ChangelogEmojiLevel;
+  readonly customInstructions: string;
+  readonly generationProgress: { stage: string; progress: number; message?: string; error?: string } | null;
+  readonly generatedChangelog: string;
+  readonly isGenerating: boolean;
+  readonly error: string | null;
+  readonly showAdvanced: boolean;
+  readonly saveSuccess: boolean;
+  readonly copySuccess: boolean;
+  readonly canGenerate: boolean;
+  readonly canSave: boolean;
+  readonly onBack: () => void;
+  readonly onVersionChange: (v: string) => void;
+  readonly onDateChange: (d: string) => void;
+  readonly onFormatChange: (f: ChangelogFormat) => void;
+  readonly onAudienceChange: (a: ChangelogAudience) => void;
+  readonly onEmojiLevelChange: (l: ChangelogEmojiLevel) => void;
+  readonly onCustomInstructionsChange: (i: string) => void;
+  readonly onShowAdvancedChange: (show: boolean) => void;
+  readonly onGenerate: () => void;
+  readonly onSave: () => void;
+  readonly onCopy: () => void;
+  readonly onChangelogEdit: (content: string) => void;
 }
 
 export function Step2ConfigureGenerate(props: Step2ConfigureGenerateProps) {
@@ -128,12 +128,12 @@ export function Step2ConfigureGenerate(props: Step2ConfigureGenerateProps) {
 }
 
 interface Step3ReleaseArchiveProps {
-  projectId: string;
-  version: string;
-  selectedTaskIds: string[];
-  doneTasks: ChangelogTask[];
-  generatedChangelog: string;
-  onDone: () => void;
+  readonly projectId: string;
+  readonly version: string;
+  readonly selectedTaskIds: string[];
+  readonly doneTasks: ChangelogTask[];
+  readonly generatedChangelog: string;
+  readonly onDone: () => void;
 }
 
 export function Step3ReleaseArchive(props: Step3ReleaseArchiveProps) {

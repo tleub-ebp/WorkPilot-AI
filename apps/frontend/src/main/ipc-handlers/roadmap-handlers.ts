@@ -20,8 +20,8 @@ import type {
   AppSettings,
 } from "../../shared/types";
 import type { RoadmapConfig } from "../agent/types";
-import path from "path";
-import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync } from "fs";
+import path from "node:path";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync } from "node:fs";
 import { projectStore } from "../project-store";
 import { AgentManager } from "../agent";
 import { debugLog, debugError } from "../../shared/utils/debug-logger";
@@ -541,8 +541,9 @@ ${(feature.acceptance_criteria || []).map((c: string) => `- [ ] ${c}`).join("\n"
           : [];
         const existingNumbers = existingDirs
           .map((name) => {
-            const match = name.match(/^(\d+)/);
-            return match ? parseInt(match[1], 10) : 0;
+            const regex = /^(\d+)/;
+            const match = regex.exec(name);
+            return match ? Number.parseInt(match[1], 10) : 0;
           })
           .filter((n) => n > 0);
         if (existingNumbers.length > 0) {
@@ -552,8 +553,8 @@ ${(feature.acceptance_criteria || []).map((c: string) => `- [ ] ${c}`).join("\n"
         // Create spec ID with zero-padded number and slugified title
         const slugifiedTitle = feature.title
           .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, "")
+          .replaceAll(/[^a-z0-9]+/g, "-")
+          .replaceAll(/^-|-$/g, "")
           .substring(0, 50);
         const specId = `${String(specNumber).padStart(3, "0")}-${slugifiedTitle}`;
 

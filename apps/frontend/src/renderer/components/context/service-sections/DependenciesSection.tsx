@@ -8,7 +8,7 @@ import {
 } from '../../ui/collapsible';
 
 interface DependenciesSectionProps {
-  dependencies: string[];
+  readonly dependencies: string[];
 }
 
 export function DependenciesSection({ dependencies }: DependenciesSectionProps) {

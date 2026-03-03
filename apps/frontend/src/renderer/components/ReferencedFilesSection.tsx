@@ -10,11 +10,11 @@ import {
 } from './ui/tooltip';
 
 interface ReferencedFilesSectionProps {
-  files: ReferencedFile[];
-  onRemove: (id: string) => void;
-  maxFiles: number;
-  disabled?: boolean;
-  className?: string;
+  readonly files: ReferencedFile[];
+  readonly onRemove: (id: string) => void;
+  readonly maxFiles: number;
+  readonly disabled?: boolean;
+  readonly className?: string;
 }
 
 /**
@@ -107,12 +107,14 @@ export function ReferencedFilesSection({
       <div className={cn('space-y-2', className)}>
         {/* Header with count badge */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            Referenced Files
-            <span className="ml-2 text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              Referenced Files
+            </span>
+            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
               {files.length}/{maxFiles}
             </span>
-          </span>
+          </div>
         </div>
 
         {/* File list */}

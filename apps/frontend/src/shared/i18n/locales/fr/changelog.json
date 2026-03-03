@@ -81,10 +81,23 @@
     "summaryCommits": "{{count}} commit sélectionné",
     "summaryCommits_plural": "{{count}} commits sélectionnés",
     "tasksSelectedCount": "{{selected}} sur {{total}} tâches sélectionnées",
+    "backToSelection": "Retour à la sélection",
+    "including": "Incluant",
+    "releaseInfo": "Informations de publication",
     "versionLabel": "Version",
     "versionPlaceholder": "ex. 1.0.0",
     "dateLabel": "Date de publication",
+    "previous": "Précédent : {{version}}",
+    "outputStyle": "Style de sortie",
     "formatLabel": "Format",
+    "audienceLabel": "Audience",
+    "emojiLabel": "Emojis",
+    "advancedOptions": "Options avancées",
+    "customInstructionsLabel": "Instructions personnalisées",
+    "customInstructionsPlaceholder": "Ajoutez des instructions spéciales pour l'IA...",
+    "customInstructionsHelp": "Optionnel. Guidez l'IA sur le ton, les détails spécifiques à inclure, etc.",
+    "generating": "Génération...",
+    "generateChangelog": "Générer le journal",
     "formats": {
       "keepAChangelog": "Keep a Changelog",
       "keepAChangelogDesc": "Format structuré avec sections Ajouté/Modifié/Corrigé/Supprimé",
@@ -93,7 +106,6 @@
       "githubRelease": "GitHub Release",
       "githubReleaseDesc": "Notes de version style GitHub"
     },
-    "audienceLabel": "Audience",
     "audiences": {
       "technical": "Technique",
       "technicalDesc": "Changements techniques détaillés pour les développeurs",
@@ -102,7 +114,6 @@
       "marketing": "Marketing",
       "marketingDesc": "Contenu axé sur la valeur et les avantages"
     },
-    "emojiLabel": "Niveau d'emojis",
     "emojiLevels": {
       "none": "Aucun",
       "noneDesc": "Pas d'emojis",
@@ -113,8 +124,9 @@
       "high": "Partout",
       "highDesc": "Emojis sur les titres et chaque ligne"
     },
-    "customInstructionsLabel": "Instructions personnalisées (optionnel)",
-    "customInstructionsPlaceholder": "Ajoutez des instructions spécifiques pour la génération du journal...",
+    "emojiLevelLabel": "Niveau d'emojis",
+    "customInstructionsLabelOld": "Instructions personnalisées (optionnel)",
+    "customInstructionsPlaceholderOld": "Ajoutez des instructions spécifiques pour la génération du journal...",
     "showAdvanced": "Afficher les options avancées",
     "hideAdvanced": "Masquer les options avancées"
   },

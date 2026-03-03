@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Shield, AlertTriangle, CheckCircle, X, Loader2, RefreshCw, Search, Package } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle, Loader2, RefreshCw, Search, Package } from 'lucide-react';
 
 import {
   Dialog,
@@ -208,20 +208,29 @@ export function DependencySentinelDialog() {
             <TabsContent value="dependencies" className="mt-4">
               <ScrollArea className="h-[400px]">
                 <div className="space-y-3">
-                  {isLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                      <span className="ml-2">{t('common:loading', 'Loading...')}</span>
-                    </div>
-                  ) : filteredDependencies.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      {searchQuery
+                  {(() => {
+                    if (isLoading) {
+                      return (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-6 w-6 animate-spin" />
+                          <span className="ml-2">{t('common:loading', 'Loading...')}</span>
+                        </div>
+                      );
+                    }
+
+                    if (filteredDependencies.length === 0) {
+                      const emptyMessage = searchQuery
                         ? t('dialogs:dependencySentinel.noDependenciesFound', 'No dependencies found matching your search')
-                        : t('dialogs:dependencySentinel.noDependencies', 'No dependencies found')
-                      }
-                    </div>
-                  ) : (
-                    filteredDependencies.map((dep) => (
+                        : t('dialogs:dependencySentinel.noDependencies', 'No dependencies found');
+                      
+                      return (
+                        <div className="text-center py-8 text-muted-foreground">
+                          {emptyMessage}
+                        </div>
+                      );
+                    }
+
+                    return filteredDependencies.map((dep) => (
                       <Card key={dep.name}>
                         <CardHeader className="pb-3">
                           <div className="flex items-center justify-between">
@@ -252,8 +261,8 @@ export function DependencySentinelDialog() {
                           )}
                         </CardContent>
                       </Card>
-                    ))
-                  )}
+                    ));
+                  })()}
                 </div>
               </ScrollArea>
             </TabsContent>
@@ -261,20 +270,29 @@ export function DependencySentinelDialog() {
             <TabsContent value="vulnerabilities" className="mt-4">
               <ScrollArea className="h-[400px]">
                 <div className="space-y-3">
-                  {isLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                      <span className="ml-2">{t('common:loading', 'Loading...')}</span>
-                    </div>
-                  ) : filteredVulnerabilities.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      {searchQuery
+                  {(() => {
+                    if (isLoading) {
+                      return (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-6 w-6 animate-spin" />
+                          <span className="ml-2">{t('common:loading', 'Loading...')}</span>
+                        </div>
+                      );
+                    }
+
+                    if (filteredVulnerabilities.length === 0) {
+                      const emptyMessage = searchQuery
                         ? t('dialogs:dependencySentinel.noVulnerabilitiesFound', 'No vulnerabilities found matching your search')
-                        : t('dialogs:dependencySentinel.noVulnerabilities', 'No vulnerabilities found')
-                      }
-                    </div>
-                  ) : (
-                    filteredVulnerabilities.map((vuln) => (
+                        : t('dialogs:dependencySentinel.noVulnerabilities', 'No vulnerabilities found');
+                      
+                      return (
+                        <div className="text-center py-8 text-muted-foreground">
+                          {emptyMessage}
+                        </div>
+                      );
+                    }
+
+                    return filteredVulnerabilities.map((vuln) => (
                       <Card key={vuln.id}>
                         <CardHeader className="pb-3">
                           <div className="flex items-center justify-between">
@@ -300,8 +318,8 @@ export function DependencySentinelDialog() {
                           </div>
                         </CardContent>
                       </Card>
-                    ))
-                  )}
+                    ));
+                  })()}
                 </div>
               </ScrollArea>
             </TabsContent>

@@ -4,9 +4,9 @@ import type { GitLabIssue, GitLabInvestigationResult } from '../../../../shared/
 export type FilterState = 'opened' | 'closed' | 'all';
 
 export interface GitLabIssuesProps {
-  onOpenSettings?: () => void;
+  readonly onOpenSettings?: () => void;
   /** Navigate to view a task in the kanban board */
-  onNavigateToTask?: (taskId: string) => void;
+  readonly onNavigateToTask?: (taskId: string) => void;
 }
 
 export interface IssueListItemProps {

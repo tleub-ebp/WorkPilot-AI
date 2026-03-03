@@ -257,10 +257,12 @@ export function registerTaskExecutionHandlers(
         console.warn('[TASK_START] XState:', currentXState, '-> coding via USER_RESUMED');
         taskStateManager.handleUiEvent(taskId, { type: 'USER_RESUMED' }, task, project);
       } else if (currentXState) {
-        // XState actor exists but in another state (coding, planning, etc.)
-        // This shouldn't happen normally, but handle gracefully
-        console.warn('[TASK_START] XState in unexpected state:', currentXState, '- sending PLANNING_STARTED');
-        taskStateManager.handleUiEvent(taskId, { type: 'PLANNING_STARTED' }, task, project);
+        // XState actor exists but in another state (coding, planning, qa_review, etc.)
+        // Clear the stale actor and restart fresh from backlog
+        console.warn('[TASK_START] XState in unexpected state:', currentXState, '- clearing actor and restarting fresh');
+        taskStateManager.clearTask(taskId);
+        const resetTask = { ...task, status: 'backlog' as TaskStatus, reviewReason: undefined, executionProgress: undefined };
+        taskStateManager.handleUiEvent(taskId, { type: 'PLANNING_STARTED' }, resetTask, project);
       } else if (task.status === 'human_review' && task.reviewReason === 'plan_review') {
         // No XState actor - fallback to task data (e.g., after app restart)
         console.warn('[TASK_START] No XState actor, task data: plan_review -> coding via PLAN_APPROVED');
@@ -274,6 +276,9 @@ export function registerTaskExecutionHandlers(
         console.warn('[TASK_START] Fresh start via PLANNING_STARTED');
         taskStateManager.handleUiEvent(taskId, { type: 'PLANNING_STARTED' }, task, project);
       }
+
+      // Reset terminal event tracking so handleProcessExited works correctly for the new run
+      taskStateManager.resetForNewRun(taskId);
 
       // Start file watcher for this task
       const specsBaseDir = getSpecsDir(project.autoBuildPath);

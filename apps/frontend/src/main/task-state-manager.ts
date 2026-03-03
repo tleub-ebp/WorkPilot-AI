@@ -181,6 +181,16 @@ export class TaskStateManager {
     return this.getCurrentState(taskId) === 'plan_review';
   }
 
+  /**
+   * Reset terminal event tracking for a task.
+   * Must be called before starting a new process for a task to ensure
+   * handleProcessExited works correctly for the new process.
+   */
+  resetForNewRun(taskId: string): void {
+    this.terminalEventSeen.delete(taskId);
+    this.lastSequenceByTask.delete(taskId);
+  }
+
   clearTask(taskId: string): void {
     this.lastSequenceByTask.delete(taskId);
     this.lastStateByTask.delete(taskId);

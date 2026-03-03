@@ -1,7 +1,7 @@
 import { ipcMain, app } from "electron";
 import type { BrowserWindow } from "electron";
-import path from "path";
-import { existsSync, readdirSync, mkdirSync, writeFileSync, readFileSync } from "fs";
+import path from "node:path";
+import { existsSync, readdirSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { debugError } from "../../shared/utils/debug-logger";
 import {
   IPC_CHANNELS,
@@ -23,6 +23,20 @@ import type {
 import { projectStore } from "../project-store";
 import { insightsService } from "../insights-service";
 import { safeSendToRenderer } from "./utils";
+import { MODEL_ID_MAP } from "../../shared/constants/models";
+
+/**
+ * Convert full model ID to short model type
+ */
+function getModelTypeFromModelId(modelId: string): 'haiku' | 'sonnet' | 'opus' {
+  for (const [shortName, fullId] of Object.entries(MODEL_ID_MAP)) {
+    if (fullId === modelId) {
+      return shortName as 'haiku' | 'sonnet' | 'opus';
+    }
+  }
+  // Default fallback to sonnet if model not found
+  return 'sonnet';
+}
 
 /**
  * Read insights feature settings from the settings file
@@ -42,7 +56,7 @@ function getInsightsFeatureSettings(): InsightsModelConfig {
 
       return {
         profileId: "balanced", // Default profile for settings-based config
-        model: featureModels.insights ?? DEFAULT_FEATURE_MODELS.insights,
+        model: getModelTypeFromModelId(featureModels.insights ?? DEFAULT_FEATURE_MODELS.insights),
         thinkingLevel: featureThinking.insights ?? DEFAULT_FEATURE_THINKING.insights,
       };
     }
@@ -53,7 +67,7 @@ function getInsightsFeatureSettings(): InsightsModelConfig {
   // Return defaults if settings file doesn't exist or fails to parse
   return {
     profileId: "balanced", // Default profile for settings-based config
-    model: DEFAULT_FEATURE_MODELS.insights,
+    model: getModelTypeFromModelId(DEFAULT_FEATURE_MODELS.insights),
     thinkingLevel: DEFAULT_FEATURE_THINKING.insights,
   };
 }
@@ -175,8 +189,9 @@ export function registerInsightsHandlers(getMainWindow: () => BrowserWindow | nu
 
           const existingNumbers = existingDirs
             .map((name) => {
-              const match = name.match(/^(\d+)/);
-              return match ? parseInt(match[1], 10) : 0;
+              const regex = /^(\d+)/;
+              const match = regex.exec(name);
+              return match ? Number.parseInt(match[1], 10) : 0;
             })
             .filter((n) => n > 0);
 
@@ -188,8 +203,8 @@ export function registerInsightsHandlers(getMainWindow: () => BrowserWindow | nu
         // Create spec ID with zero-padded number and slugified title
         const slugifiedTitle = title
           .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, "")
+          .replaceAll(/[^a-z0-9]+/g, "-")
+          .replaceAll(/^-|-$/g, "")
           .substring(0, 50);
         const specId = `${String(specNumber).padStart(3, "0")}-${slugifiedTitle}`;
 

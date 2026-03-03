@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { config as dotenvConfig } from 'dotenv';
-import { resolve } from 'path';
+import { resolve } from 'node:path';
 
 dotenvConfig({ path: resolve(__dirname, '../../.env') });
 
@@ -22,8 +22,14 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/providers': backendUrl,
-      '/providers/': backendUrl,
+      '/providers': {
+        target: backendUrl,
+        changeOrigin: true,
+      },
+      '/providers/': {
+        target: backendUrl,
+        changeOrigin: true,
+      },
       '/api': backendUrl,
       '/api/': backendUrl,
       '/projects': backendUrl,

@@ -81,10 +81,23 @@
     "summaryCommits": "{{count}} commit selected",
     "summaryCommits_plural": "{{count}} commits selected",
     "tasksSelectedCount": "{{selected}} of {{total}} tasks selected",
+    "backToSelection": "Back to Selection",
+    "including": "Including",
+    "releaseInfo": "Release Info",
     "versionLabel": "Version",
     "versionPlaceholder": "e.g., 1.0.0",
     "dateLabel": "Release Date",
+    "previous": "Previous: {{version}}",
+    "outputStyle": "Output Style",
     "formatLabel": "Format",
+    "audienceLabel": "Audience",
+    "emojiLabel": "Emojis",
+    "advancedOptions": "Advanced Options",
+    "customInstructionsLabel": "Custom Instructions",
+    "customInstructionsPlaceholder": "Add any special instructions for the AI...",
+    "customInstructionsHelp": "Optional. Guide the AI on tone, specific details to include, etc.",
+    "generating": "Generating...",
+    "generateChangelog": "Generate Changelog",
     "formats": {
       "keepAChangelog": "Keep a Changelog",
       "keepAChangelogDesc": "Structured format with Added/Changed/Fixed/Removed sections",
@@ -93,7 +106,6 @@
       "githubRelease": "GitHub Release",
       "githubReleaseDesc": "GitHub-style release notes"
     },
-    "audienceLabel": "Audience",
     "audiences": {
       "technical": "Technical",
       "technicalDesc": "Detailed technical changes for developers",
@@ -102,7 +114,6 @@
       "marketing": "Marketing",
       "marketingDesc": "Value-focused copy emphasizing benefits"
     },
-    "emojiLabel": "Emoji Level",
     "emojiLevels": {
       "none": "None",
       "noneDesc": "No emojis",
@@ -113,8 +124,9 @@
       "high": "Everything",
       "highDesc": "Emojis on headings and every line"
     },
-    "customInstructionsLabel": "Custom Instructions (optional)",
-    "customInstructionsPlaceholder": "Add any specific instructions for changelog generation...",
+    "emojiLevelLabel": "Emoji Level",
+    "customInstructionsLabelOld": "Custom Instructions (optional)",
+    "customInstructionsPlaceholderOld": "Add any specific instructions for changelog generation...",
     "showAdvanced": "Show Advanced Options",
     "hideAdvanced": "Hide Advanced Options"
   },

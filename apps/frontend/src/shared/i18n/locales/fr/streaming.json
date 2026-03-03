@@ -43,5 +43,27 @@
   "controls": {
     "resume": "Reprendre la session",
     "pause": "Mettre en pause la session"
+  },
+  "test": {
+    "title": "Test de Streaming",
+    "serverRunning": "Serveur en marche",
+    "serverStopped": "Serveur arrêté",
+    "sessionId": "ID de Session",
+    "sessionIdPlaceholder": "Auto-généré ou entrez personnalisé",
+    "generate": "Générer",
+    "connectionStatus": "État de Connexion",
+    "connected": "Connecté",
+    "disconnected": "Déconnecté",
+    "selectTask": "Sélectionner une Tâche",
+    "selectTaskPlaceholder": "Sélectionner une tâche...",
+    "startTaskWithStreaming": "Démarrer la Tâche avec Streaming",
+    "startStreamingServer": "Démarrer le Serveur de Streaming",
+    "instructions": "Instructions :",
+    "instruction1": "Démarrer le serveur de streaming s'il n'est pas en marche",
+    "instruction2": "Générer ou entrer un ID de session",
+    "instruction3": "Sélectionner une tâche du backlog/queue",
+    "instruction4": "Cliquez sur \"Démarrer la Tâche avec Streaming\"",
+    "instruction5": "La tâche s'exécutera avec des événements en streaming en direct",
+    "pleaseSelectTask": "Veuillez sélectionner une tâche"
   }
 }

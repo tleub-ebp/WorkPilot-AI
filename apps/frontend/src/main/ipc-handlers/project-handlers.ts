@@ -1,7 +1,6 @@
-import { ipcMain, app } from 'electron';
-import { existsSync, } from 'fs';
-import path from 'path';
-import { execFileSync } from 'child_process';
+import { ipcMain } from 'electron';
+import { existsSync, } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { IPC_CHANNELS } from '../../shared/constants';
 import type {
   Project,
@@ -200,6 +199,101 @@ function getCurrentGitBranch(projectPath: string): string | null {
  * Detect the main branch for a git repository
  * Checks for common main branch names in order of preference
  */
+// Helper function to parse git remote output
+function parseGitRemotes(gitOutput: string): Map<string, { fetch?: string; push?: string }> {
+  const remotes = new Map<string, { fetch?: string; push?: string }>();
+  const remoteRegex = /^(\S+)\s+(\S+)\s+\((fetch|push)\)$/;
+  
+  for (const line of gitOutput.trim().split('\n')) {
+    const match = remoteRegex.exec(line.trim());
+    if (!match) continue;
+    const name = match[1];
+    const url = match[2];
+    const type = match[3] as 'fetch' | 'push';
+    const entry = remotes.get(name) || {};
+    entry[type] = url;
+    remotes.set(name, entry);
+  }
+  
+  return remotes;
+}
+
+// Helper function to detect provider from URL
+function detectProviderFromUrl(url: string): 'github' | 'azure_devops' | 'unknown' {
+  if (/github\.com[:/]/i.test(url)) return 'github';
+  if (/dev\.azure\.com|visualstudio\.com|ssh\.dev\.azure\.com/i.test(url)) return 'azure_devops';
+  return 'unknown';
+}
+
+// Helper function to get URL from remote entry
+function getRemoteUrl(remote: { fetch?: string; push?: string }): string | undefined {
+  return remote.fetch || remote.push;
+}
+
+// Helper function to create provider result
+function createProviderResult(provider: string, remoteName: string, remoteUrl?: string): RepoProviderDetectionResult {
+  return { provider: provider as 'github' | 'azure_devops' | 'unknown', remoteName, remoteUrl };
+}
+
+// Helper function to try get origin URL as fallback
+function tryGetOriginFallback(projectPath: string): RepoProviderDetectionResult | null {
+  try {
+    const originUrl = execFileSync(getToolPath('git'), ['config', '--get', 'remote.origin.url'], {
+      cwd: projectPath,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe']
+    }).trim();
+
+    if (originUrl) {
+      return createProviderResult(detectProviderFromUrl(originUrl), 'origin', originUrl);
+    }
+  } catch {
+    // Ignore and return null
+  }
+  return null;
+}
+
+// Helper function to find known provider in remotes
+function findKnownProvider(remotes: Map<string, { fetch?: string; push?: string }>): RepoProviderDetectionResult | null {
+  // Try origin first
+  const origin = remotes.get('origin');
+  if (origin) {
+    const url = getRemoteUrl(origin);
+    const provider = detectProviderFromUrl(url!);
+    if (provider !== 'unknown') {
+      return createProviderResult(provider, 'origin', url);
+    }
+  }
+
+  // Try all other remotes
+  for (const [name, urls] of remotes.entries()) {
+    const url = getRemoteUrl(urls);
+    const provider = detectProviderFromUrl(url!);
+    if (provider !== 'unknown') {
+      return createProviderResult(provider, name, url);
+    }
+  }
+
+  return null;
+}
+
+// Helper function to get fallback result
+function getFallbackResult(remotes: Map<string, { fetch?: string; push?: string }>): RepoProviderDetectionResult {
+  const origin = remotes.get('origin');
+  if (origin) {
+    const url = getRemoteUrl(origin);
+    return createProviderResult('unknown', 'origin', url);
+  }
+
+  const firstEntry = remotes.entries().next().value;
+  if (!firstEntry) {
+    return createProviderResult('unknown', 'origin');
+  }
+  
+  const [firstName, firstUrls] = firstEntry;
+  return createProviderResult('unknown', firstName, getRemoteUrl(firstUrls));
+}
+
 function detectRepoProvider(projectPath: string): RepoProviderDetectionResult {
   try {
     const result = execFileSync(getToolPath('git'), ['remote', '-v'], {
@@ -208,96 +302,21 @@ function detectRepoProvider(projectPath: string): RepoProviderDetectionResult {
       stdio: ['pipe', 'pipe', 'pipe']
     });
 
-    const remotes = new Map<string, { fetch?: string; push?: string }>();
-    for (const line of result.trim().split('\n')) {
-      const match = line.trim().match(/^(\S+)\s+(\S+)\s+\((fetch|push)\)$/);
-      if (!match) continue;
-      const name = match[1];
-      const url = match[2];
-      const type = match[3] as 'fetch' | 'push';
-      const entry = remotes.get(name) || {};
-      entry[type] = url;
-      remotes.set(name, entry);
-    }
-
-    const isGitHub = (url: string) => /github\.com[:/]/i.test(url);
-    const isAzure = (url: string) => /dev\.azure\.com|visualstudio\.com|ssh\.dev\.azure\.com/i.test(url);
-
-    const pickProvider = (url?: string): 'github' | 'azure_devops' | 'unknown' => {
-      if (!url) return 'unknown';
-      if (isGitHub(url)) return 'github';
-      if (isAzure(url)) return 'azure_devops';
-      return 'unknown';
-    };
+    const remotes = parseGitRemotes(result);
 
     if (remotes.size === 0) {
-      try {
-        const originUrl = execFileSync(getToolPath('git'), ['config', '--get', 'remote.origin.url'], {
-          cwd: projectPath,
-          encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }).trim();
-
-        if (originUrl) {
-          return {
-            provider: pickProvider(originUrl),
-            remoteName: 'origin',
-            remoteUrl: originUrl
-          };
-        }
-      } catch {
-        // Ignore and fall through to unknown
-      }
-
-      return { provider: 'unknown' };
+      const fallbackResult = tryGetOriginFallback(projectPath);
+      return fallbackResult || createProviderResult('unknown', 'origin');
     }
 
-    const origin = remotes.get('origin');
-    if (origin) {
-      const url = origin.fetch || origin.push;
-      const provider = pickProvider(url);
-      if (provider !== 'unknown') {
-        return {
-          provider,
-          remoteName: 'origin',
-          remoteUrl: url
-        };
-      }
+    const knownProviderResult = findKnownProvider(remotes);
+    if (knownProviderResult) {
+      return knownProviderResult;
     }
 
-    for (const [name, urls] of remotes.entries()) {
-      const url = urls.fetch || urls.push;
-      const provider = pickProvider(url);
-      if (provider !== 'unknown') {
-        return { provider, remoteName: name, remoteUrl: url };
-      }
-    }
-
-    if (origin) {
-      const url = origin.fetch || origin.push;
-      return {
-        provider: 'unknown',
-        remoteName: 'origin',
-        remoteUrl: url
-      };
-    }
-
-    const firstEntry = remotes.entries().next().value;
-    if (!firstEntry) {
-      return {
-        provider: 'unknown',
-        remoteName: 'origin',
-        remoteUrl: undefined
-      };
-    }
-    const [firstName, firstUrls] = firstEntry;
-    return {
-      provider: 'unknown',
-      remoteName: firstName,
-      remoteUrl: firstUrls.fetch || firstUrls.push
-    };
+    return getFallbackResult(remotes);
   } catch {
-    return { provider: 'unknown' };
+    return createProviderResult('unknown', 'origin');
   }
 }
 
@@ -322,7 +341,8 @@ function detectMainBranch(projectPath: string): string | null {
     });
     const ref = result.trim();
     // Extract branch name from refs/remotes/origin/main
-    const match = ref.match(/refs\/remotes\/origin\/(.+)/);
+    const regex = /refs\/remotes\/origin\/(.+)/;
+    const match = regex.exec(ref);
     if (match && branches.includes(match[1])) {
       return match[1];
     }

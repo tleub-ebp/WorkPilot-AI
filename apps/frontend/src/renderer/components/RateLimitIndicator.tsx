@@ -33,17 +33,10 @@ export function RateLimitIndicator() {
 
   return (
     <div className="mx-3 mb-3">
-      <div
-        className="relative flex items-start gap-2 rounded-lg border border-warning/50 bg-warning/10 p-3 cursor-pointer hover:bg-warning/20 transition-colors"
+      <button
+        type="button"
+        className="relative flex items-start gap-2 rounded-lg border border-warning/50 bg-warning/10 p-3 cursor-pointer hover:bg-warning/20 transition-colors w-full text-left"
         onClick={reopenRateLimitModal}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            reopenRateLimitModal();
-          }
-        }}
       >
         <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
         <div className="flex-1 min-w-0">
@@ -73,7 +66,7 @@ export function RateLimitIndicator() {
           <X className="h-3 w-3" />
           <span className="sr-only">{t('labels.dismiss')}</span>
         </Button>
-      </div>
+      </button>
     </div>
   );
 }

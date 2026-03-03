@@ -17,15 +17,13 @@ import { Input } from './ui/input';
  */
 interface QueueSettingsModalProps {
   /** Whether the modal is currently open */
-  open: boolean;
+  readonly open: boolean;
   /** Callback to control modal open state */
-  onOpenChange: (open: boolean) => void;
-  /** The project ID to update settings for */
-  projectId: string;
+  readonly onOpenChange: (open: boolean) => void;
   /** Current maximum parallel tasks setting (default: 3) */
-  currentMaxParallel?: number;
+  readonly currentMaxParallel?: number;
   /** Callback when user saves the new max parallel value */
-  onSave: (maxParallel: number) => void;
+  readonly onSave: (maxParallel: number) => void;
 }
 
 /**
@@ -37,7 +35,6 @@ interface QueueSettingsModalProps {
 export function QueueSettingsModal({
   open,
   onOpenChange,
-  projectId,
   currentMaxParallel = 3,
   onSave
 }: QueueSettingsModalProps) {
@@ -92,7 +89,7 @@ export function QueueSettingsModal({
       return;
     }
 
-    const value = parseInt(inputValue, 10);
+    const value = Number.parseInt(inputValue, 10);
     if (!Number.isNaN(value)) {
       setMaxParallel(value);
       setError(null);

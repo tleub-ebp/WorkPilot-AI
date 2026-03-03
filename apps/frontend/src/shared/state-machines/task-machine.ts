@@ -126,12 +126,14 @@ export const taskMachine = createMachine(
         on: {
           CREATE_PR: 'creating_pr',
           MARK_DONE: 'done',
-          USER_RESUMED: { target: 'coding', actions: 'clearReviewReason' }
+          USER_RESUMED: { target: 'coding', actions: 'clearReviewReason' },
+          USER_STOPPED: { target: 'backlog', actions: 'clearReviewReason' }
         }
       },
       error: {
         on: {
           USER_RESUMED: { target: 'coding', actions: 'clearReviewReason' },
+          USER_STOPPED: { target: 'backlog', actions: 'clearReviewReason' },
           MARK_DONE: 'done'
         }
       },

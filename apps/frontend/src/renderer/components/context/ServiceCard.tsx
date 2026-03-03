@@ -16,8 +16,8 @@ import {
 } from './service-sections';
 
 interface ServiceCardProps {
-  name: string;
-  service: ServiceInfo;
+  readonly name: string;
+  readonly service: ServiceInfo;
 }
 
 export function ServiceCard({ name, service }: ServiceCardProps) {

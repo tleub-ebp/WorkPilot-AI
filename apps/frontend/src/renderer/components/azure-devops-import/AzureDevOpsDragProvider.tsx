@@ -3,7 +3,7 @@
  * Provides drag and drop context for Azure DevOps work items
  */
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useMemo } from 'react';
 import type { AzureDevOpsWorkItem } from '../../../shared/types/integrations';
 
 interface AzureDevOpsDragContextType {
@@ -13,16 +13,18 @@ interface AzureDevOpsDragContextType {
 const AzureDevOpsDragContext = createContext<AzureDevOpsDragContextType | null>(null);
 
 interface AzureDevOpsDragProviderProps {
-  children: ReactNode;
-  onWorkItemsImported: (workItems: AzureDevOpsWorkItem[], targetStatus: string) => Promise<void>;
+  readonly children: ReactNode;
+  readonly onWorkItemsImported: (workItems: AzureDevOpsWorkItem[], targetStatus: string) => Promise<void>;
 }
 
 export function AzureDevOpsDragProvider({ 
   children, 
   onWorkItemsImported 
 }: AzureDevOpsDragProviderProps) {
+  const contextValue = useMemo(() => ({ onWorkItemsImported }), [onWorkItemsImported]);
+  
   return (
-    <AzureDevOpsDragContext.Provider value={{ onWorkItemsImported }}>
+    <AzureDevOpsDragContext.Provider value={contextValue}>
       {children}
     </AzureDevOpsDragContext.Provider>
   );

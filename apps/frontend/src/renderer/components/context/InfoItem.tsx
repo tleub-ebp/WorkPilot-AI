@@ -1,6 +1,6 @@
 interface InfoItemProps {
-  label: string;
-  value: string;
+  readonly label: string;
+  readonly value: string;
 }
 
 export function InfoItem({ label, value }: InfoItemProps) {

@@ -9,7 +9,7 @@ import {
 import type { ServiceInfo } from '../../../../shared/types';
 
 interface APIRoutesSectionProps {
-  api: ServiceInfo['api'];
+  readonly api: ServiceInfo['api'];
 }
 
 export function APIRoutesSection({ api }: APIRoutesSectionProps) {
@@ -33,8 +33,8 @@ export function APIRoutesSection({ api }: APIRoutesSectionProps) {
         {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-2 space-y-1.5">
-        {api.routes.slice(0, 10).map((route, idx) => (
-          <div key={idx} className="flex items-start gap-2 text-xs">
+        {api.routes.slice(0, 10).map((route) => (
+          <div key={`${route.methods.join('-')}-${route.path}`} className="flex items-start gap-2 text-xs">
             <div className="flex gap-1 shrink-0">
               {route.methods.map(method => (
                 <Badge key={method} variant="secondary" className="text-xs">

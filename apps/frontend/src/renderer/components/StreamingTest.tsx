@@ -5,13 +5,19 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Play, Wifi, WifiOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { ipcRenderer } from 'electron';
 import { IPC_CHANNELS } from '../../shared/constants';
-import type { Task } from '../../shared/types';
+import type { ElectronAPI, Task } from '../../shared/types';
+
+// Extend global interface for electronAPI
+declare global {
+  interface Window {
+    electronAPI: ElectronAPI;
+  }
+}
 
 interface StreamingTestProps {
-  tasks: Task[];
-  onTaskStart?: (taskId: string, options?: any) => void;
+  readonly tasks: Task[];
+  readonly onTaskStart?: (taskId: string, options?: any) => void;
 }
 
 export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
@@ -27,6 +33,7 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
       const response = await fetch('http://localhost:8765/health');
       setIsStreamingServerRunning(response.ok);
     } catch (error) {
+      console.error('Failed to check streaming server health:', error);
       setIsStreamingServerRunning(false);
     }
   };
@@ -34,7 +41,7 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
   // Start streaming server
   const startStreamingServer = async () => {
     try {
-      await ipcRenderer.invoke('streaming-server-start', { port: 8765 });
+      await globalThis.electronAPI.invoke('streaming-server-start', { port: 8765 });
       setIsStreamingServerRunning(true);
     } catch (error) {
       console.error('Failed to start streaming server:', error);
@@ -43,7 +50,7 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
 
   // Generate a unique session ID
   const generateSessionId = () => {
-    const id = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const id = `session-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
     setSessionId(id);
     return id;
   };
@@ -51,7 +58,7 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
   // Start task with streaming
   const startTaskWithStreaming = () => {
     if (!selectedTaskId) {
-      alert('Please select a task');
+      alert(t('streaming:test.pleaseSelectTask'));
       return;
     }
 
@@ -64,7 +71,7 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
       });
     } else {
       // Fallback: direct IPC call
-      ipcRenderer.invoke(IPC_CHANNELS.TASK_START, selectedTaskId, {
+      globalThis.electronAPI.invoke(IPC_CHANNELS.TASK_START, selectedTaskId, {
         enableStreaming: true,
         streamingSessionId: streamingSessionId,
       });
@@ -85,6 +92,7 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
         setIsConnected(false);
       };
     } catch (error) {
+      console.error('Failed to establish WebSocket connection:', error);
       setIsConnected(false);
     }
   };
@@ -109,18 +117,18 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
     <Card className="p-6">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Streaming Test</h3>
+          <h3 className="text-lg font-semibold">{t('streaming:test.title')}</h3>
           <div className="flex items-center gap-2">
             <Badge variant={isStreamingServerRunning ? "default" : "secondary"}>
               {isStreamingServerRunning ? (
                 <>
                   <Wifi className="w-3 h-3 mr-1" />
-                  Server Running
+                  {t('streaming:test.serverRunning')}
                 </>
               ) : (
                 <>
                   <WifiOff className="w-3 h-3 mr-1" />
-                  Server Stopped
+                  {t('streaming:test.serverStopped')}
                 </>
               )}
             </Badge>
@@ -130,41 +138,45 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Session ID</label>
+              <label htmlFor="session-id" className="block text-sm font-medium mb-2">{t('streaming:test.sessionId')}</label>
               <div className="flex gap-2">
                 <Input
+                  id="session-id"
                   value={sessionId}
                   onChange={(e) => setSessionId(e.target.value)}
-                  placeholder="Auto-generated or enter custom"
+                  placeholder={t('streaming:test.sessionIdPlaceholder')}
                 />
                 <Button
                   variant="outline"
                   onClick={generateSessionId}
                   disabled={!isStreamingServerRunning}
                 >
-                  Generate
+                  {t('streaming:test.generate')}
                 </Button>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Connection Status</label>
+              <div className="block text-sm font-medium mb-2" role="status" aria-live="polite">
+                {t('streaming:test.connectionStatus')}
+              </div>
               <Badge variant={isConnected ? "default" : "secondary"}>
-                {isConnected ? 'Connected' : 'Disconnected'}
+                {isConnected ? t('streaming:test.connected') : t('streaming:test.disconnected')}
               </Badge>
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Select Task</label>
+              <label htmlFor="task-select" className="block text-sm font-medium mb-2">{t('streaming:test.selectTask')}</label>
               <select
+                id="task-select"
                 value={selectedTaskId}
                 onChange={(e) => setSelectedTaskId(e.target.value)}
                 className="w-full p-2 border rounded-md"
                 disabled={availableTasks.length === 0}
               >
-                <option value="">Select a task...</option>
+                <option value="">{t('streaming:test.selectTaskPlaceholder')}</option>
                 {availableTasks.map(task => (
                   <option key={task.id} value={task.id}>
                     {task.title} ({task.id})
@@ -179,7 +191,7 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
               className="w-full"
             >
               <Play className="w-4 h-4 mr-2" />
-              Start Task with Streaming
+              {t('streaming:test.startTaskWithStreaming')}
             </Button>
           </div>
         </div>
@@ -187,19 +199,19 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
         {!isStreamingServerRunning && (
           <div className="text-center py-4">
             <Button onClick={startStreamingServer} variant="outline">
-              Start Streaming Server
+              {t('streaming:test.startStreamingServer')}
             </Button>
           </div>
         )}
 
         <div className="text-xs text-muted-foreground">
-          <p>Instructions:</p>
+          <p>{t('streaming:test.instructions')}</p>
           <ol className="list-decimal list-inside space-y-1">
-            <li>Start the streaming server if not running</li>
-            <li>Generate or enter a session ID</li>
-            <li>Select a task from backlog/queue</li>
-            <li>Click "Start Task with Streaming"</li>
-            <li>The task will execute with live streaming events</li>
+            <li>{t('streaming:test.instruction1')}</li>
+            <li>{t('streaming:test.instruction2')}</li>
+            <li>{t('streaming:test.instruction3')}</li>
+            <li>{t('streaming:test.instruction4')}</li>
+            <li>{t('streaming:test.instruction5')}</li>
           </ol>
         </div>
       </div>

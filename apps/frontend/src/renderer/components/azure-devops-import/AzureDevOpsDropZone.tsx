@@ -11,10 +11,10 @@ import type { TaskStatus } from '../../../shared/types';
 import type { AzureDevOpsWorkItem } from '../../../shared/types/integrations';
 
 interface AzureDevOpsDropZoneProps {
-  columnStatus: TaskStatus;
-  onWorkItemsImported: (workItems: AzureDevOpsWorkItem[], targetStatus: TaskStatus) => void;
-  children: React.ReactNode;
-  className?: string;
+  readonly columnStatus: TaskStatus;
+  readonly onWorkItemsImported: (workItems: AzureDevOpsWorkItem[], targetStatus: TaskStatus) => void;
+  readonly children: React.ReactNode;
+  readonly className?: string;
 }
 
 export function AzureDevOpsDropZone({ 
@@ -67,7 +67,7 @@ export function AzureDevOpsDropZone({
     try {
       const parsed = JSON.parse(items);
       if (parsed.type === 'azure-devops-workitems' && parsed.workItems?.length > 0) {
-        await onWorkItemsImported(parsed.workItems, columnStatus);
+        onWorkItemsImported(parsed.workItems, columnStatus);
       }
     } catch (error) {
       console.error('Failed to parse dropped items:', error);
@@ -81,13 +81,14 @@ export function AzureDevOpsDropZone({
   const hasItems = draggedWorkItems.length > 0;
 
   return (
-    <div
+    <section
       className={cn('relative flex-1', className)}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       data-column-status={columnStatus}
       style={{ zIndex: 100 }}
+      aria-label={t('azureDevOpsImport.dropZoneAriaLabel', { status: columnStatus })}
     >
       {children}
       
@@ -137,6 +138,6 @@ export function AzureDevOpsDropZone({
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

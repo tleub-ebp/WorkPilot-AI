@@ -16,12 +16,7 @@ export interface CanonicalProvider {
   description: string;
 }
 
-export const API_BASE =
-  typeof import.meta !== "undefined" &&
-  import.meta.env &&
-  import.meta.env.VITE_BACKEND_URL
-    ? import.meta.env.VITE_BACKEND_URL
-    : "";
+export const API_BASE = import.meta?.env?.VITE_BACKEND_URL ?? "";
 
 export interface ProvidersResponse {
   providers: CanonicalProvider[];
@@ -51,10 +46,19 @@ export async function getStaticProviders(profiles: APIProfile[] = []): Promise<P
   // Check Windsurf status from backend
   let windsurfStatus = false;
   try {
-    const response = await fetch(`${API_BASE}/providers/windsurf/status`);
+    // Use API_BASE but ensure it's a complete URL
+    let apiUrl = API_BASE;
+    if (!apiUrl.startsWith('http')) {
+      apiUrl = `http://localhost:9000`;
+    }
+    const url = `${apiUrl}/providers/windsurf/status`;
+    const response = await fetch(url);
     if (response.ok) {
-      const data = await response.json();
-      windsurfStatus = data.available && data.authenticated;
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        const data = await response.json();
+        windsurfStatus = data.available && data.authenticated;
+      }
     }
   } catch (error) {
     console.warn('Failed to fetch Windsurf status:', error);

@@ -27,13 +27,13 @@ import type { GraphitiMemoryStatus, GraphitiMemoryState, MemoryEpisode } from '.
 type FilterCategory = keyof typeof memoryFilterCategories;
 
 interface MemoriesTabProps {
-  memoryStatus: GraphitiMemoryStatus | null;
-  memoryState: GraphitiMemoryState | null;
-  recentMemories: MemoryEpisode[];
-  memoriesLoading: boolean;
-  searchResults: Array<{ type: string; content: string; score: number }>;
-  searchLoading: boolean;
-  onSearch: (query: string) => void;
+  readonly memoryStatus: GraphitiMemoryStatus | null;
+  readonly memoryState: GraphitiMemoryState | null;
+  readonly recentMemories: MemoryEpisode[];
+  readonly memoriesLoading: boolean;
+  readonly searchResults: Array<{ type: string; content: string; score: number }>;
+  readonly searchLoading: boolean;
+  readonly onSearch: (query: string) => void;
 }
 
 // Helper to check if memory is a PR review (by type or content)
@@ -215,10 +215,10 @@ export function MemoriesTab({
           {searchResults.length > 0 && (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                {searchResults.length} {t('context:memories.result')}{searchResults.length !== 1 ? 's' : ''} {t('context:memories.found')}
+                {searchResults.length} {t('context:memories.result')}{searchResults.length === 1 ? '' : 's'} {t('context:memories.found')}
               </p>
               {searchResults.map((result, idx) => (
-                <Card key={idx} className="bg-muted/50">
+                <Card key={`${result.type}-${result.score}-${idx}`} className="bg-muted/50">
                   <CardContent className="pt-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Badge variant="outline" className="text-xs capitalize">

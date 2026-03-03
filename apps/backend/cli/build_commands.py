@@ -328,11 +328,10 @@ def handle_build_command(
             verbose=verbose,
         )
     except Exception as e:
-        print(f"\nFatal error: {e}")
-        if verbose:
-            import traceback
+        import traceback
 
-            traceback.print_exc()
+        print(f"\nFatal error: {e}")
+        traceback.print_exc()
         sys.exit(1)
 
 

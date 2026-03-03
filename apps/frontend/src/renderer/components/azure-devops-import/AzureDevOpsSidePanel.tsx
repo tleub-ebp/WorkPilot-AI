@@ -3,7 +3,7 @@
  * Provides a sliding panel for importing Azure DevOps work items with drag & drop
  */
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Download, Search, RefreshCw, X, ChevronRight, GripVertical, ChevronLeft, Settings } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -22,13 +22,14 @@ import {
 import { cn } from '@/lib/utils';
 import type { AzureDevOpsWorkItem, AzureDevOpsSyncStatus } from '../../../shared/types/integrations';
 import type { TaskStatus } from '../../../shared/types';
+import { rendererLog } from '../../services/renderer-logger';
 
 interface AzureDevOpsSidePanelProps {
-  projectId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onWorkItemsImported?: (workItems: AzureDevOpsWorkItem[], targetStatus: TaskStatus) => void;
-  onOpenSettings?: () => void;
+  readonly projectId: string;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onWorkItemsImported?: (workItems: AzureDevOpsWorkItem[], targetStatus: TaskStatus) => void;
+  readonly onOpenSettings?: () => void;
 }
 
 interface AzureDevOpsFilters {
@@ -57,7 +58,7 @@ export function AzureDevOpsSidePanel({
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       // Don't close if clicking inside the panel
-      if (panelRef.current && panelRef.current.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
       // Don't close if clicking inside a dialog/alert dialog (e.g., ImportConfirmDialog portal)
       const targetEl = target instanceof Element ? target : target.parentElement;
       if (targetEl?.closest('[role="alertdialog"], [role="dialog"], [data-radix-portal]')) return;
@@ -91,14 +92,14 @@ export function AzureDevOpsSidePanel({
       try {
         const savedWidth = localStorage.getItem(`azure-devops-panel-width-${projectId}`);
         if (savedWidth) {
-          const width = parseInt(savedWidth, 10);
-          if (!isNaN(width) && width >= 320 && width <= 800) {
+          const width = Number.parseInt(savedWidth, 10);
+          if (!Number.isNaN(width) && width >= 320 && width <= 800) {
             setPanelWidth(width);
             setIsCollapsed(width <= 320);
           }
         }
       } catch (error) {
-        console.debug('[AzureDevOps] Failed to load saved panel width:', error);
+        rendererLog.azure.debug('[AzureDevOps] Failed to load saved panel width:', error);
       }
     };
 
@@ -113,7 +114,7 @@ export function AzureDevOpsSidePanel({
       try {
         localStorage.setItem(`azure-devops-panel-width-${projectId}`, panelWidth.toString());
       } catch (error) {
-        console.debug('[AzureDevOps] Failed to save panel width:', error);
+        rendererLog.azure.debug('[AzureDevOps] Failed to save panel width:', error);
       }
     }
   }, [panelWidth, projectId, isCollapsed]);
@@ -136,7 +137,7 @@ export function AzureDevOpsSidePanel({
         const cachedTime = localStorage.getItem(cacheTimeKey);
         
         if (cachedData && cachedTime) {
-          const cacheTime = parseInt(cachedTime, 10);
+          const cacheTime = Number.parseInt(cachedTime, 10);
           const now = Date.now();
           const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
           
@@ -145,12 +146,12 @@ export function AzureDevOpsSidePanel({
             const workItems = JSON.parse(cachedData);
             setWorkItems(workItems);
             setLastCacheTime(cacheTime);
-            console.debug('[AzureDevOps] Using cached work items');
+            rendererLog.azure.debug('[AzureDevOps] Using cached work items');
             return;
           }
         }
       } catch (error) {
-        console.debug('[AzureDevOps] Failed to load cached work items:', error);
+        rendererLog.azure.debug('[AzureDevOps] Failed to load cached work items:', error);
       }
     };
 
@@ -169,14 +170,14 @@ export function AzureDevOpsSidePanel({
       if (!lastCacheTime || now - lastCacheTime > CACHE_DURATION) {
         loadWorkItems();
       } else {
-        console.debug('[AzureDevOps] Using recent cache, skipping refresh');
+        rendererLog.azure.debug('[AzureDevOps] Using recent cache, skipping refresh');
       }
     }
   }, [open, syncStatus?.connected, lastCacheTime]);
 
   const loadConnectionStatus = async () => {
     try {
-      const result = await window.electronAPI.checkAzureDevOpsConnection(projectId);
+      const result = await globalThis.electronAPI.checkAzureDevOpsConnection(projectId);
       if (result.success) {
         setSyncStatus(result.data ?? null);
         if (!result.data?.connected) {
@@ -196,7 +197,7 @@ export function AzureDevOpsSidePanel({
       const now = Date.now();
       const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
       if (now - lastCacheTime < CACHE_DURATION) {
-        console.debug('[AzureDevOps] Using recent cache, skipping load');
+        rendererLog.azure.debug('[AzureDevOps] Using recent cache, skipping load');
         return;
       }
     }
@@ -204,7 +205,7 @@ export function AzureDevOpsSidePanel({
     setIsLoadingItems(true);
     setError(null);
     try {
-      const result = await window.electronAPI.getAzureDevOpsWorkItems(
+      const result = await globalThis.electronAPI.getAzureDevOpsWorkItems(
         projectId,
         undefined, // Use default project from config
         undefined, // Use default item types (Bug, Task, User Story)
@@ -225,9 +226,9 @@ export function AzureDevOpsSidePanel({
           localStorage.setItem(cacheTimeKey, now.toString());
           setLastCacheTime(now);
           
-          console.debug('[AzureDevOps] Work items cached successfully');
+          rendererLog.azure.debug('[AzureDevOps] Work items cached successfully');
         } catch (cacheError) {
-          console.debug('[AzureDevOps] Failed to cache work items:', cacheError);
+          rendererLog.azure.debug('[AzureDevOps] Failed to cache work items:', cacheError);
         }
       } else {
         setError(result.error || t('azureDevOpsImport.errorLoadWorkItemsFailed'));
@@ -264,7 +265,7 @@ export function AzureDevOpsSidePanel({
         const matchesSearch =
           item.title.toLowerCase().includes(query) ||
           item.id.toString().includes(query) ||
-          (item.description && item.description.toLowerCase().includes(query));
+          (item.description?.toLowerCase().includes(query));
         if (!matchesSearch) return false;
       }
 
@@ -284,11 +285,11 @@ export function AzureDevOpsSidePanel({
 
   // Get unique values for filters
   const uniqueTypes = useMemo(() => {
-    return Array.from(new Set(workItems.map((item) => item.workItemType))).sort();
+    return Array.from(new Set(workItems.map((item) => item.workItemType))).sort((a, b) => a.localeCompare(b));
   }, [workItems]);
 
   const uniqueStates = useMemo(() => {
-    return Array.from(new Set(workItems.map((item) => item.state))).sort();
+    return Array.from(new Set(workItems.map((item) => item.state))).sort((a, b) => a.localeCompare(b));
   }, [workItems]);
 
   // Selection handlers
@@ -343,13 +344,13 @@ export function AzureDevOpsSidePanel({
       try {
         const savedWidth = localStorage.getItem(`azure-devops-panel-width-${projectId}`);
         if (savedWidth) {
-          const width = parseInt(savedWidth, 10);
-          if (!isNaN(width) && width >= 320 && width <= 800) {
+          const width = Number.parseInt(savedWidth, 10);
+          if (!Number.isNaN(width) && width >= 320 && width <= 800) {
             restoredWidth = width;
           }
         }
       } catch (error) {
-        console.debug('[AzureDevOps] Failed to load saved panel width for restore:', error);
+        rendererLog.azure.debug('[AzureDevOps] Failed to load saved panel width for restore:', error);
       }
       
       setPanelWidth(restoredWidth);
@@ -359,7 +360,7 @@ export function AzureDevOpsSidePanel({
       try {
         localStorage.setItem(`azure-devops-panel-width-${projectId}`, panelWidth.toString());
       } catch (error) {
-        console.debug('[AzureDevOps] Failed to save panel width before collapse:', error);
+        rendererLog.azure.debug('[AzureDevOps] Failed to save panel width before collapse:', error);
       }
       
       setPanelWidth(320); // Collapse to minimum width
@@ -397,7 +398,7 @@ export function AzureDevOpsSidePanel({
     // Marquer le panel comme étant en cours de drag
     const panelElement = panelRef.current;
     if (panelElement) {
-      panelElement.setAttribute('data-dragging', 'true');
+      panelElement.dataset.dragging = 'true';
     }
     
     // Also dispatch custom event for better compatibility
@@ -415,7 +416,7 @@ export function AzureDevOpsSidePanel({
     // Nettoyer l'attribut data-dragging
     const panelElement = panelRef.current;
     if (panelElement) {
-      panelElement.removeAttribute('data-dragging');
+      delete panelElement.dataset.dragging;
     }
     
     // Dispatch custom event for KanbanBoard to detect
@@ -450,17 +451,11 @@ export function AzureDevOpsSidePanel({
         return;
       }
     } catch (error) {
-      // Not our data, ignore
+      // Invalid JSON data, ignore and let it fall through
+      rendererLog.azure.debug('[AzureDevOps] Invalid drag data format:', error);
       return;
     }
   }, []);
-
-  // Handle work items drop from Kanban columns
-  const handleWorkItemsDrop = useCallback((workItems: AzureDevOpsWorkItem[], targetStatus: TaskStatus) => {
-    if (onWorkItemsImported) {
-      onWorkItemsImported(workItems, targetStatus);
-    }
-  }, [onWorkItemsImported]);
 
   // Get color for work item type badge
   const getTypeColor = (type: string): string => {
@@ -482,18 +477,30 @@ export function AzureDevOpsSidePanel({
 
   const selectedWorkItems = workItems.filter(item => selectedIds.has(item.id));
 
+  // Get refresh icon classes based on state
+  const getRefreshIconClasses = (): string => {
+    if (isRefreshing) {
+      return 'animate-spin text-primary';
+    }
+    if (isLoadingItems) {
+      return 'animate-spin';
+    }
+    return '';
+  };
+
   if (!open) return null;
 
   return (
     <>
       {/* Panel seulement - pas de conteneur qui bloque l'écran */}
-      <div 
+      <section 
         ref={panelRef}
         className="fixed right-0 top-0 h-full bg-background border-l border-border shadow-2xl flex flex-col z-300"
         style={{ width: `${panelWidth}px` }}
         data-side-panel="azure-devops"
         onDragOver={handlePanelDragOver}
         onDrop={handlePanelDrop}
+        aria-label={t('azureDevOpsImport.sidePanelAriaLabel')}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
@@ -655,7 +662,7 @@ export function AzureDevOpsSidePanel({
                   disabled={isLoadingItems || isRefreshing}
                   title={isRefreshing ? "Rafraîchissement forcé..." : "Rafraîchir (contourne le cache)"}
                 >
-                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin text-primary' : isLoadingItems ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`h-4 w-4 ${getRefreshIconClasses()}`} />
                 </Button>
               </div>
             )}
@@ -664,24 +671,29 @@ export function AzureDevOpsSidePanel({
 
         {/* Work Items List */}
         <ScrollArea className="flex-1">
-          {isLoadingItems ? (
+          {isLoadingItems && (
             <div className="flex items-center justify-center py-12">
               <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : filteredItems.length === 0 ? (
+          )}
+          
+          {!isLoadingItems && filteredItems.length === 0 && (
             <div className="text-center py-12 text-muted-foreground px-4">
               <p>{t('azureDevOpsImport.emptyTitle')}</p>
               {(searchQuery || filters.workItemType !== 'all' || filters.state !== 'all') && (
                 <p className="text-sm mt-2">{t('azureDevOpsImport.emptySubtitle')}</p>
               )}
             </div>
-          ) : (
+          )}
+          
+          {!isLoadingItems && filteredItems.length > 0 && (
             <div className="p-4 space-y-2">
               {filteredItems.map((item) => (
-                <div
+                <button
                   key={item.id}
+                  type="button"
                   className={cn(
-                    "flex items-start gap-3 p-3 rounded-md border transition-all cursor-pointer",
+                    "flex items-start gap-3 p-3 rounded-md border transition-all cursor-pointer w-full text-left",
                     "hover:bg-muted/50",
                     "select-none", // Empêche la sélection de texte
                     selectedIds.has(item.id) && "bg-primary/10 border-primary/30 cursor-grab",
@@ -699,6 +711,8 @@ export function AzureDevOpsSidePanel({
                     }
                   }}
                   onDragEnd={handleDragEnd}
+                  aria-label={`${t('azureDevOpsImport.workItemLabel', { id: item.id, title: item.title })} ${selectedIds.has(item.id) ? t('azureDevOpsImport.selected') : ''}`}
+                  aria-pressed={selectedIds.has(item.id)}
                 >
                   <Checkbox
                     checked={selectedIds.has(item.id)}
@@ -736,8 +750,8 @@ export function AzureDevOpsSidePanel({
                     )}
                     {item.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
-                        {item.tags.slice(0, 3).map((tag, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs select-none">
+                        {item.tags.slice(0, 3).map((tag) => (
+                          <Badge key={`${item.id}-${tag}`} variant="secondary" className="text-xs select-none">
                             {tag}
                           </Badge>
                         ))}
@@ -749,7 +763,7 @@ export function AzureDevOpsSidePanel({
                       </div>
                     )}
                   </div>
-                </div>
+                  </button>
               ))}
             </div>
           )}
@@ -781,15 +795,17 @@ export function AzureDevOpsSidePanel({
         )}
 
         {/* Resize handle */}
-        <div
-          className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/20 transition-colors"
+        <button
+          type="button"
+          className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/20 transition-colors border-0 bg-transparent p-0"
           onMouseDown={handleResizeStart}
           title="Redimensionner"
+          aria-label={t('azureDevOpsImport.resizeHandleAriaLabel')}
         >
           {/* Wider invisible hit area for easier grabbing */}
-          <div className="absolute inset-y-0 -left-2 -right-2" />
-        </div>
-      </div>
+          <span className="absolute inset-y-0 -left-2 -right-2" />
+        </button>
+      </section>
       </>
   );
 }

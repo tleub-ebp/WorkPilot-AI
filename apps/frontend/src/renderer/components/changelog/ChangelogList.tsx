@@ -6,19 +6,19 @@ import { TaskCard, CommitCard } from './ChangelogEntry';
 import type { ChangelogTask, ChangelogSourceMode, GitCommit as GitCommitType } from '../../../shared/types';
 
 interface ChangelogListProps {
-  sourceMode: ChangelogSourceMode;
+  readonly sourceMode: ChangelogSourceMode;
   // Task mode
-  doneTasks: ChangelogTask[];
-  selectedTaskIds: string[];
-  onToggleTask: (taskId: string) => void;
-  onSelectAll: () => void;
-  onDeselectAll: () => void;
+  readonly doneTasks: ChangelogTask[];
+  readonly selectedTaskIds: string[];
+  readonly onToggleTask: (taskId: string) => void;
+  readonly onSelectAll: () => void;
+  readonly onDeselectAll: () => void;
   // Git mode
-  previewCommits: GitCommitType[];
-  isLoadingCommits: boolean;
+  readonly previewCommits: GitCommitType[];
+  readonly isLoadingCommits: boolean;
   // Continue
-  onContinue: () => void;
-  canContinue: boolean;
+  readonly onContinue: () => void;
+  readonly canContinue: boolean;
 }
 
 export function ChangelogList({
@@ -113,32 +113,44 @@ export function ChangelogList({
 
           {/* Commit list */}
           <ScrollArea className="flex-1 p-6">
-            {isLoadingCommits ? (
-              <div className="flex h-full items-center justify-center">
-                <div className="text-center py-12">
-                  <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
-                  <p className="mt-4 text-sm text-muted-foreground">{t('changelog:gitHistory.loadingCommits')}</p>
+            {(() => {
+              if (isLoadingCommits) {
+                return (
+                  <div className="flex h-full items-center justify-center">
+                    <div className="text-center py-12">
+                      <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
+                      <p className="mt-4 text-sm text-muted-foreground">{t('changelog:gitHistory.loadingCommits')}</p>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (previewCommits.length === 0) {
+                const noCommitsMessage = sourceMode === 'git-history'
+                  ? t('errors:noCommitsGitHistory')
+                  : t('errors:noCommitsBranchDiff');
+
+                return (
+                  <div className="flex h-full items-center justify-center">
+                    <div className="text-center py-12">
+                      <GitCommit className="mx-auto h-12 w-12 text-muted-foreground/30" />
+                      <h3 className="mt-4 text-lg font-medium">{t('changelog:gitHistory.noCommits')}</h3>
+                      <p className="mt-2 text-sm text-muted-foreground max-w-md">
+                        {noCommitsMessage}
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-2">
+                  {previewCommits.map((commit) => (
+                    <CommitCard key={commit.fullHash} commit={commit} />
+                  ))}
                 </div>
-              </div>
-            ) : previewCommits.length === 0 ? (
-              <div className="flex h-full items-center justify-center">
-                <div className="text-center py-12">
-                  <GitCommit className="mx-auto h-12 w-12 text-muted-foreground/30" />
-                  <h3 className="mt-4 text-lg font-medium">{t('changelog:gitHistory.noCommits')}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground max-w-md">
-                    {sourceMode === 'git-history'
-                      ? t('errors:noCommitsGitHistory')
-                      : t('errors:noCommitsBranchDiff')}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {previewCommits.map((commit) => (
-                  <CommitCard key={commit.fullHash} commit={commit} />
-                ))}
-              </div>
-            )}
+              );
+            })()}
           </ScrollArea>
         </>
       )}
