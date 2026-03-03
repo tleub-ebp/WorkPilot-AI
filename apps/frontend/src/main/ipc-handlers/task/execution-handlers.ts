@@ -256,6 +256,10 @@ export function registerTaskExecutionHandlers(
         // XState says human_review or error - send USER_RESUMED
         console.warn('[TASK_START] XState:', currentXState, '-> coding via USER_RESUMED');
         taskStateManager.handleUiEvent(taskId, { type: 'USER_RESUMED' }, task, project);
+      } else if (currentXState === 'backlog') {
+        // XState actor exists and is in backlog (normal fresh start with existing actor)
+        console.warn('[TASK_START] XState: backlog -> planning via PLANNING_STARTED');
+        taskStateManager.handleUiEvent(taskId, { type: 'PLANNING_STARTED' }, task, project);
       } else if (currentXState) {
         // XState actor exists but in another state (coding, planning, qa_review, etc.)
         // Clear the stale actor and restart fresh from backlog
