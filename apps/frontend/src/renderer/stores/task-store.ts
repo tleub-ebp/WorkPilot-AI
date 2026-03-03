@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { arrayMove } from '@dnd-kit/sortable';
-import type { Task, TaskStatus, SubtaskStatus, ImplementationPlan, Subtask, TaskMetadata, ExecutionProgress, ExecutionPhase, ReviewReason, TaskDraft, ImageAttachment, TaskOrderState } from '../../shared/types';
+import type { Task, TaskStatus, ImplementationPlan, Subtask, TaskMetadata, ExecutionProgress, ExecutionPhase, ReviewReason, TaskDraft, ImageAttachment, TaskOrderState } from '../../shared/types';
 import { debugLog, debugWarn } from '../../shared/utils/debug-logger';
 
 interface TaskState {
@@ -134,7 +134,7 @@ function validatePlanData(plan: ImplementationPlan): boolean {
   // Validate each phase has subtasks array
   for (let i = 0; i < plan.phases.length; i++) {
     const phase = plan.phases[i];
-    if (!phase || !phase.subtasks || !Array.isArray(phase.subtasks)) {
+    if (!phase?.subtasks || !Array.isArray(phase.subtasks)) {
       console.warn(`[validatePlanData] Invalid phase ${i}: missing or invalid subtasks array`);
       return false;
     }
@@ -208,7 +208,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       if (task.logs && task.logs.length > 0) {
         debugLog(`[TaskStore.setTasks] Task ${task.id} has ${task.logs.length} logs:`, {
           firstLogPreview: task.logs[0]?.substring(0, 100),
-          lastLogPreview: task.logs[task.logs.length - 1]?.substring(0, 100)
+          lastLogPreview: task.logs.at(-1)?.substring(0, 100)
         });
       }
     });
@@ -351,60 +351,103 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         return state;
       }
 
+      // Helper function to create a subtask with proper validation
+      const createSubtaskFromPlan = (subtask: any): Subtask => {
+        // Ensure all required fields have valid values to prevent UI issues
+        // Use crypto.randomUUID() for stronger randomness when available
+        const id = subtask.id || (typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `subtask-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`);
+        // Defensive fallback: validatePlanData() ensures description exists, but kept for safety
+        const description = subtask.description || 'No description available';
+        const title = description; // Title and description are the same for subtasks
+        const status = subtask.status || 'pending';
+
+        return {
+          id,
+          title,
+          description,
+          status,
+          files: [],
+          verification: subtask.verification as Subtask['verification']
+        };
+      };
+
+      // Helper function to process individual phases
+      const processPhase = (phase: any) => 
+        phase.subtasks.map(createSubtaskFromPlan);
+
+      // Helper function to create subtasks from plan phases
+      const createSubtasksFromPlan = (plan: ImplementationPlan): Subtask[] => 
+        plan.phases.flatMap(processPhase);
+
+      // Helper function to map subtask for logging
+      const mapSubtask = (s: Subtask) => ({
+        id: s.id,
+        title: s.title,
+        status: s.status
+      });
+
+      // Helper function to create subtask summary for logging
+      const createSubtaskSummary = (subtasks: Subtask[]) => 
+        subtasks.map(mapSubtask);
+
+      // Helper function to update task with plan data
+      const updateTaskWithPlan = (task: Task, plan: ImplementationPlan, taskId: string): Task => {
+        const subtasks = createSubtasksFromPlan(plan);
+
+        debugLog('[updateTaskFromPlan] Created subtasks:', {
+          taskId,
+          subtaskCount: subtasks.length,
+          subtasks: createSubtaskSummary(subtasks)
+        });
+
+        // NOTE: We do NOT update status from plan anymore.
+        // XState is the source of truth for status - it emits TASK_STATUS_CHANGE.
+        // Plan updates only update subtasks, title, and other non-status fields.
+        // This prevents race conditions where a stale plan overwrites XState status.
+
+        return {
+          ...task,
+          title: plan.feature || task.title,
+          subtasks,
+          // Keep existing status and reviewReason - XState manages these via TASK_STATUS_CHANGE
+          updatedAt: new Date()
+        };
+      };
+
       return {
-        tasks: updateTaskAtIndex(state.tasks, index, (t) => {
-          const subtasks: Subtask[] = plan.phases.flatMap((phase) =>
-            phase.subtasks.map((subtask) => {
-              // Ensure all required fields have valid values to prevent UI issues
-              // Use crypto.randomUUID() for stronger randomness when available
-              const id = subtask.id || (typeof crypto !== 'undefined' && crypto.randomUUID
-                ? crypto.randomUUID()
-                : `subtask-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
-              // Defensive fallback: validatePlanData() ensures description exists, but kept for safety
-              const description = subtask.description || 'No description available';
-              const title = description; // Title and description are the same for subtasks
-              const status = (subtask.status as SubtaskStatus) || 'pending';
-
-              return {
-                id,
-                title,
-                description,
-                status,
-                files: [],
-                verification: subtask.verification as Subtask['verification']
-              };
-            })
-          );
-
-          debugLog('[updateTaskFromPlan] Created subtasks:', {
-            taskId,
-            subtaskCount: subtasks.length,
-            subtasks: subtasks.map(s => ({
-              id: s.id,
-              title: s.title,
-              status: s.status
-            }))
-          });
-
-          // NOTE: We do NOT update status from plan anymore.
-          // XState is the source of truth for status - it emits TASK_STATUS_CHANGE.
-          // Plan updates only update subtasks, title, and other non-status fields.
-          // This prevents race conditions where a stale plan overwrites XState status.
-
-          return {
-            ...t,
-            title: plan.feature || t.title,
-            subtasks,
-            // Keep existing status and reviewReason - XState manages these via TASK_STATUS_CHANGE
-            updatedAt: new Date()
-          };
-        })
+        tasks: updateTaskAtIndex(state.tasks, index, (task) =>
+          updateTaskWithPlan(task, plan, taskId)
+        )
       };
     }),
 
   updateExecutionProgress: (taskId, progress) => {
     // Record activity for stuck detection (outside of set() to avoid triggering extra renders)
     recordTaskActivity(taskId);
+
+    // Helper function to validate sequence numbers
+    const isValidSequence = (seq: number) => seq < 1000000;
+    
+    // Helper function to handle sequence validation and logging
+    const handleSequenceValidation = (incomingSeq: number, currentSeq: number, taskId: string, progress: any, existingProgress: any) => {
+      const normalizedCurrentSeq = isValidSequence(currentSeq) ? currentSeq : 0;
+      
+      if (incomingSeq > 0 && normalizedCurrentSeq > 0 && incomingSeq < normalizedCurrentSeq) {
+        console.warn('[updateExecutionProgress] Dropping out-of-order update:', {
+          taskId,
+          incomingSeq,
+          currentSeq: normalizedCurrentSeq,
+          originalCurrentSeq: currentSeq,
+          incomingPhase: progress.phase,
+          currentPhase: existingProgress.phase
+        });
+        return { shouldSkip: true, normalizedCurrentSeq };
+      }
+      
+      return { shouldSkip: false, normalizedCurrentSeq };
+    };
 
     set((state) => {
       const index = findTaskIndex(state.tasks, taskId);
@@ -421,17 +464,22 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
           const incomingSeq = progress.sequenceNumber ?? 0;
           const currentSeq = existingProgress.sequenceNumber ?? 0;
-          if (incomingSeq > 0 && currentSeq > 0 && incomingSeq < currentSeq) {
-            // FIX (ACS-55): Log when updates are dropped due to sequence numbers
-            // This helps debug phase transition issues
-            console.warn('[updateExecutionProgress] Dropping out-of-order update:', {
-              taskId,
-              incomingSeq,
-              currentSeq,
-              incomingPhase: progress.phase,
-              currentPhase: existingProgress.phase
-            });
+          
+          const { shouldSkip } = handleSequenceValidation(
+            incomingSeq, 
+            currentSeq, 
+            taskId, 
+            progress, 
+            existingProgress
+          );
+          
+          if (shouldSkip) {
             return t; // Skip out-of-order update
+          }
+          
+          // If current sequence is invalid (timestamp), reset it with incoming sequence
+          if (!isValidSequence(currentSeq) && incomingSeq > 0) {
+            progress.sequenceNumber = incomingSeq;
           }
 
           // Only update updatedAt on phase transitions (not on every progress tick)
@@ -571,41 +619,52 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   loadTaskOrder: (projectId) => {
+    // Helper function to validate column values are string arrays
+    const isValidColumnArray = (val: unknown): val is string[] =>
+      Array.isArray(val) && val.every(item => typeof item === 'string');
+
+    // Helper function to validate and merge task order data
+    const validateAndMergeOrder = (parsed: Record<string, unknown>): TaskOrderState => {
+      const emptyOrder = createEmptyTaskOrder();
+      
+      return {
+        backlog: isValidColumnArray(parsed.backlog) ? parsed.backlog : emptyOrder.backlog,
+        queue: isValidColumnArray(parsed.queue) ? parsed.queue : emptyOrder.queue,
+        in_progress: isValidColumnArray(parsed.in_progress) ? parsed.in_progress : emptyOrder.in_progress,
+        ai_review: isValidColumnArray(parsed.ai_review) ? parsed.ai_review : emptyOrder.ai_review,
+        human_review: isValidColumnArray(parsed.human_review) ? parsed.human_review : emptyOrder.human_review,
+        done: isValidColumnArray(parsed.done) ? parsed.done : emptyOrder.done,
+        pr_created: isValidColumnArray(parsed.pr_created) ? parsed.pr_created : emptyOrder.pr_created,
+        error: isValidColumnArray(parsed.error) ? parsed.error : emptyOrder.error
+      };
+    };
+
+    // Helper function to handle parsed data
+    const handleParsedData = (parsed: unknown) => {
+      // Validate structure before assigning
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        debugWarn('[TaskStore.loadTaskOrder] Invalid task order data in localStorage, resetting to empty');
+        set({ taskOrder: createEmptyTaskOrder() });
+        return;
+      }
+
+      const validatedOrder = validateAndMergeOrder(parsed as Record<string, unknown>);
+
+      debugLog('[TaskStore.loadTaskOrder] Loaded task order:', {
+        projectId,
+        columnCounts: Object.entries(validatedOrder).map(([col, ids]) => ({ col, count: ids.length }))
+      });
+      set({ taskOrder: validatedOrder });
+    };
+
     try {
       const key = getTaskOrderKey(projectId);
       debugLog('[TaskStore.loadTaskOrder] Loading task order:', { projectId, key });
       const stored = localStorage.getItem(key);
+      
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Validate structure before assigning - type assertion is compile-time only
-        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-          debugWarn('[TaskStore.loadTaskOrder] Invalid task order data in localStorage, resetting to empty');
-          set({ taskOrder: createEmptyTaskOrder() });
-          return;
-        }
-
-        // Helper to validate column values are string arrays
-        const isValidColumnArray = (val: unknown): val is string[] =>
-          Array.isArray(val) && val.every(item => typeof item === 'string');
-
-        // Merge with empty order to handle partial data and validate each column
-        const emptyOrder = createEmptyTaskOrder();
-        const validatedOrder: TaskOrderState = {
-          backlog: isValidColumnArray(parsed.backlog) ? parsed.backlog : emptyOrder.backlog,
-          queue: isValidColumnArray(parsed.queue) ? parsed.queue : emptyOrder.queue,
-          in_progress: isValidColumnArray(parsed.in_progress) ? parsed.in_progress : emptyOrder.in_progress,
-          ai_review: isValidColumnArray(parsed.ai_review) ? parsed.ai_review : emptyOrder.ai_review,
-          human_review: isValidColumnArray(parsed.human_review) ? parsed.human_review : emptyOrder.human_review,
-          done: isValidColumnArray(parsed.done) ? parsed.done : emptyOrder.done,
-          pr_created: isValidColumnArray(parsed.pr_created) ? parsed.pr_created : emptyOrder.pr_created,
-          error: isValidColumnArray(parsed.error) ? parsed.error : emptyOrder.error
-        };
-
-        debugLog('[TaskStore.loadTaskOrder] Loaded task order:', {
-          projectId,
-          columnCounts: Object.entries(validatedOrder).map(([col, ids]) => ({ col, count: ids.length }))
-        });
-        set({ taskOrder: validatedOrder });
+        handleParsedData(parsed);
       } else {
         debugLog('[TaskStore.loadTaskOrder] No stored task order found, using empty order');
         set({ taskOrder: createEmptyTaskOrder() });
@@ -680,7 +739,7 @@ export async function loadTasks(projectId: string, options?: { forceRefresh?: bo
   });
 
   try {
-    const result = await window.electronAPI.getTasks(projectId, options);
+    const result = await globalThis.electronAPI.getTasks(projectId, options);
 
     debugLog('[TaskStore.loadTasks] Received result from IPC:', {
       success: result.success,
@@ -720,7 +779,7 @@ export async function createTask(
   const store = useTaskStore.getState();
 
   try {
-    const result = await window.electronAPI.createTask(projectId, title, description, metadata);
+    const result = await globalThis.electronAPI.createTask(projectId, title, description, metadata);
     if (result.success && result.data) {
       store.addTask(result.data);
       return result.data;
@@ -738,14 +797,14 @@ export async function createTask(
  * Start a task
  */
 export function startTask(taskId: string, options?: { parallel?: boolean; workers?: number }): void {
-  window.electronAPI.startTask(taskId, options);
+  globalThis.electronAPI.startTask(taskId, options);
 }
 
 /**
  * Stop a task
  */
 export function stopTask(taskId: string): void {
-  window.electronAPI.stopTask(taskId);
+  globalThis.electronAPI.stopTask(taskId);
 }
 
 /**
@@ -758,7 +817,7 @@ export async function submitReview(
   images?: ImageAttachment[]
 ): Promise<boolean> {
   try {
-    const result = await window.electronAPI.submitReview(taskId, approved, feedback, images);
+    const result = await globalThis.electronAPI.submitReview(taskId, approved, feedback, images);
     if (result.success) {
       return true;
     }
@@ -791,7 +850,7 @@ export async function persistTaskStatus(
 
   try {
     // Persist to file first (don't optimistically update for 'done' status)
-    const result = await window.electronAPI.updateTaskStatus(taskId, status, options);
+    const result = await globalThis.electronAPI.updateTaskStatus(taskId, status, options);
 
     if (!result.success) {
       // Check if this is a worktree exists case
@@ -837,7 +896,7 @@ export async function persistUpdateTask(
 
   try {
     // Call the IPC to persist changes to spec files
-    const result = await window.electronAPI.updateTask(taskId, updates);
+    const result = await globalThis.electronAPI.updateTask(taskId, updates);
 
     if (result.success && result.data) {
       // Update local state with the returned task data
@@ -863,7 +922,7 @@ export async function persistUpdateTask(
  */
 export async function checkTaskRunning(taskId: string): Promise<boolean> {
   try {
-    const result = await window.electronAPI.checkTaskRunning(taskId);
+    const result = await globalThis.electronAPI.checkTaskRunning(taskId);
     return result.success && result.data === true;
   } catch (error) {
     console.error('Error checking task running status:', error);
@@ -878,10 +937,10 @@ export async function checkTaskRunning(taskId: string): Promise<boolean> {
  */
 export async function recoverStuckTask(
   taskId: string,
-  options: { targetStatus?: TaskStatus; autoRestart?: boolean } = { autoRestart: true }
+  options?: { targetStatus?: TaskStatus; autoRestart?: boolean }
 ): Promise<{ success: boolean; message: string; autoRestarted?: boolean }> {
   try {
-    const result = await window.electronAPI.recoverStuckTask(taskId, options);
+    const result = await globalThis.electronAPI.recoverStuckTask(taskId, { autoRestart: true, ...options });
 
     if (result.success && result.data) {
       return {
@@ -913,7 +972,7 @@ export async function deleteTask(
   const store = useTaskStore.getState();
 
   try {
-    const result = await window.electronAPI.deleteTask(taskId);
+    const result = await globalThis.electronAPI.deleteTask(taskId);
 
     if (result.success) {
       // Remove from local state
@@ -971,7 +1030,7 @@ export async function restoreTask(taskId: string): Promise<{ success: boolean; e
     }
     
     // Recreate the task in the backend using createTask API
-    const result = await window.electronAPI.createTask(
+    const result = await globalThis.electronAPI.createTask(
       projectId,
       backup.task.title,
       backup.task.description || '',
@@ -1031,7 +1090,7 @@ export async function deleteTasks(
 
     // Delete tasks one by one (API only supports single delete)
     for (const taskId of taskIds) {
-      const result = await window.electronAPI.deleteTask(taskId);
+      const result = await globalThis.electronAPI.deleteTask(taskId);
       if (!result.success) {
         failedIds.push(taskId);
         // Remove backup for failed deletion
@@ -1076,7 +1135,7 @@ export async function archiveTasks(
   version?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const result = await window.electronAPI.archiveTasks(projectId, taskIds, version);
+    const result = await globalThis.electronAPI.archiveTasks(projectId, taskIds, version);
 
     if (result.success) {
       // Reload tasks to update the UI (archived tasks will be filtered out by default)

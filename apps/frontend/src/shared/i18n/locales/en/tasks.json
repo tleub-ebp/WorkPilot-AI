@@ -372,7 +372,8 @@
       "startTask": "Start Task",
       "deleteTask": "Delete Task",
       "close": "Close",
-      "watchLive": "Watch Live"
+      "watchLive": "Watch Live",
+      "activating": "Activating..."
     },
     "badges": {
       "stuck": "Stuck",

@@ -597,6 +597,7 @@ export interface TaskStartOptions {
   workers?: number;
   model?: string;
   baseBranch?: string; // Override base branch for worktree creation
-  enableStreaming?: boolean; // Enable streaming mode for this task
-  streamingSessionId?: string; // Streaming session ID for live coding
+  enableStreaming?: boolean; // Enable streaming mode for live coding
+  streamingSessionId?: string; // Session ID for streaming
+  projectPath?: string; // Project path for streaming
 }

@@ -7,7 +7,7 @@ Provides real-time event broadcasting to frontend clients.
 import json
 import logging
 import time
-import subprocess
+import os
 import psutil
 import socket
 from typing import Any, Optional
@@ -26,82 +26,131 @@ from .streaming_manager import get_streaming_manager
 logger = logging.getLogger(__name__)
 
 
-def kill_processes_on_port(port: int) -> bool:
-    """Kill all processes using the specified port. Only targets processes actually listening on this specific port."""
+def _is_port_available(port: int) -> bool:
+    """Check if port is available."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        # Check if port is available first
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         result = sock.connect_ex(('localhost', port))
+        return result != 0
+    finally:
         sock.close()
+
+
+def _should_kill_process(pid: int, name: str, cmdline: list, create_time: float, port: int) -> tuple[bool, str]:
+    """Determine if a process should be killed."""
+    current_pid = os.getpid()
+    
+    # NEVER kill our own process
+    if pid == current_pid:
+        return False, "Skipping our own process"
+    
+    process_age = time.time() - create_time
+    cmdline_str = ' '.join(cmdline).lower()
+    
+    # Check for stale WebSocket server processes
+    is_stale_websocket = (
+        'websocket_server.py' in cmdline_str and
+        process_age > 30 and
+        'auto-claude' not in cmdline_str.lower()
+    )
+    
+    # Check for orphaned processes
+    is_orphaned = (
+        name.lower().startswith('python') and
+        process_age > 300 and  # 5 minutes
+        port == 8765
+    )
+    
+    if is_stale_websocket:
+        return True, f"Killing stale WebSocket process (age: {process_age:.1f}s)"
+    elif is_orphaned:
+        return True, f"Killing orphaned process (age: {process_age:.1f}s)"
+    else:
+        return False, f"Preserving active process (age: {process_age:.1f}s)"
+
+
+def _kill_process_safely(proc: psutil.Process, pid: int, name: str) -> None:
+    """Kill a process safely with graceful termination."""
+    logger.info(f"Terminating process {pid} ({name})")
+    proc.terminate()
+    
+    # Wait for graceful termination
+    time.sleep(1)
+    
+    # Force kill if still running
+    if proc.is_running():
+        logger.warning(f"Force killing process {pid}")
+        proc.kill()
+
+
+def _is_target_connection(conn, port: int) -> bool:
+    """Check if connection matches our target port and IP criteria."""
+    return (conn.status == 'LISTEN' and 
+            conn.laddr.port == port and 
+            (conn.laddr.ip == '127.0.0.1' or conn.laddr.ip == '0.0.0.0' or conn.laddr.ip == '::1'))
+
+
+def _process_single_process(proc, port: int) -> bool:
+    """Process a single process and return True if it was killed."""
+    try:
+        connections = proc.connections()
+        for conn in connections:
+            if not _is_target_connection(conn, port):
+                continue
         
-        if result != 0:
+        pid = proc.info['pid']
+        name = proc.info['name']
+        cmdline = proc.info.get('cmdline', [])
+        create_time = proc.info.get('create_time', 0)
+        
+        should_kill, reason = _should_kill_process(pid, name, cmdline, create_time, port)
+        logger.info(f"Process {pid} ({name}): {reason}")
+        
+        if should_kill:
+            _kill_process_safely(proc, pid, name)
+            return True
+        return False
+        
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        return False
+
+
+def _handle_post_kill_cleanup(port: int) -> bool:
+    """Handle cleanup after killing processes."""
+    # Wait for processes to fully terminate
+    time.sleep(2)
+    
+    if not _is_port_available(port):
+        logger.error(f"Port {port} is still occupied after killing stale processes")
+        return False
+    else:
+        logger.info(f"Port {port} is now available after cleaning stale processes")
+        return True
+
+
+def kill_processes_on_port(port: int) -> bool:
+    """Kill only stale WebSocket server processes, preserving active live coding sessions."""
+    try:
+        if _is_port_available(port):
             logger.info(f"Port {port} is already available")
             return True
             
-        logger.warning(f"Port {port} is occupied, attempting to kill processes...")
+        logger.warning(f"Port {port} is occupied, checking for stale processes...")
         
-        # Find processes using the port - be very specific
         killed_any = False
-        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-            try:
-                connections = proc.connections()
-                for conn in connections:
-                    # Be very specific: only kill processes LISTENING on the exact port
-                    if (conn.status == 'LISTEN' and 
-                        conn.laddr.port == port and 
-                        (conn.laddr.ip == '127.0.0.1' or conn.laddr.ip == '0.0.0.0' or conn.laddr.ip == '::1')):
-                        
-                        pid = proc.info['pid']
-                        name = proc.info['name']
-                        cmdline = proc.info.get('cmdline', [])
-                        
-                        # Additional safety: only kill processes that are actually WebSocket-related
-                        # or Python processes that are clearly using this port
-                        is_websocket_process = (
-                            'websocket' in ' '.join(cmdline).lower() or
-                            'ws_server' in ' '.join(cmdline).lower() or
-                            port == 8765  # We know this is our WebSocket port
-                        )
-                        
-                        if is_websocket_process:
-                            logger.info(f"Killing WebSocket process {pid} ({name}) using port {port}")
-                            proc.terminate()
-                            killed_any = True
-                            
-                            # Wait a bit for graceful termination
-                            time.sleep(1)
-                            
-                            # Force kill if still running
-                            if proc.is_running():
-                                logger.warning(f"Force killing WebSocket process {pid}")
-                                proc.kill()
-                        else:
-                            logger.info(f"Skipping non-WebSocket process {pid} ({name}) on port {port}")
-                        
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                continue
+        
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline', 'create_time']):
+            if _process_single_process(proc, port):
+                killed_any = True
                 
         if killed_any:
-            # Wait for processes to fully terminate
-            time.sleep(2)
-            
-            # Verify port is now available
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            result = sock.connect_ex(('localhost', port))
-            sock.close()
-            
-            if result == 0:
-                logger.error(f"Port {port} is still occupied after killing processes")
-                return False
-            else:
-                logger.info(f"Port {port} is now available after killing processes")
-                return True
+            return _handle_post_kill_cleanup(port)
         else:
-            logger.warning(f"No processes found using port {port}, but port is occupied")
-            return False
+            logger.info(f"No stale processes found on port {port}, preserving existing processes")
+            return True
             
     except Exception as e:
-        logger.error(f"Error killing processes on port {port}: {e}")
+        logger.error(f"Error checking processes on port {port}: {e}")
         return False
 
 
@@ -163,12 +212,95 @@ class StreamingWebSocketServer:
             await self._server.wait_closed()
             logger.info("Streaming WebSocket server stopped")
             
-    async def _process_request(self, path, request_headers):
+    def _process_request(self, path, request_headers):
         """Process incoming WebSocket connection requests."""
         # Store the path for later use in the handler
         # We'll use the connection's ID to store the path
         logger.info(f"WebSocket connection request to path: {path}")
         return None
+
+    def _extract_websocket_path(self, websocket: WebSocketServerProtocol) -> str:
+        """Extract path from websocket connection."""
+        path = "/stream/default"  # Default fallback
+        
+        try:
+            # Method 1: Check if path attribute exists
+            if hasattr(websocket, 'path'):
+                path = websocket.path
+                logger.info(f"Found path via websocket.path: {path}")
+            # Method 2: Check if request_headers has path info
+            elif hasattr(websocket, 'request_headers'):
+                logger.info(f"Request headers: {dict(websocket.request_headers)}")
+            # Method 3: Check if there's a scope attribute (ASGI style)
+            elif hasattr(websocket, 'scope'):
+                scope = websocket.scope
+                if scope and 'path' in scope:
+                    path = scope['path']
+                    logger.info(f"Found path via scope: {path}")
+            # Method 4: Check connection attributes
+            elif hasattr(websocket, 'local_address') and hasattr(websocket, 'remote_address'):
+                logger.info(f"Connection: {websocket.local_address} <-> {websocket.remote_address}")
+        except Exception as e:
+            logger.error(f"Error extracting path: {e}")
+            
+        return path
+
+    def _extract_session_id(self, path: str, websocket: WebSocketServerProtocol) -> str:
+        """Extract session ID from path and websocket."""
+        connection_id = id(websocket)
+        session_id = f"session-{connection_id}"
+        
+        # Try to extract a more meaningful session ID if possible
+        if path != "/stream/default":
+            path_parts = path.strip("/").split("/")
+            if len(path_parts) >= 2 and path_parts[0] == "stream":
+                session_id = path_parts[1]
+                
+        return session_id
+
+    async def _setup_session(self, session_id: str) -> None:
+        """Setup streaming session if it doesn't exist."""
+        session_info = self.streaming_manager.get_session_info(session_id)
+        if not session_info:
+            await self.streaming_manager.start_session(session_id, {
+                "session_id": session_id,
+                "task": "Live Coding Session",
+                "project_path": "unknown",
+                "auto_created": True,
+                "status": "watching"
+            })
+            logger.info(f"Auto-created session {session_id} for client connection")
+
+    async def _register_client(self, session_id: str, websocket: WebSocketServerProtocol) -> None:
+        """Register client with session and streaming manager."""
+        if session_id not in self._clients:
+            self._clients[session_id] = set()
+        self._clients[session_id].add(websocket)
+        await self.streaming_manager.subscribe(session_id, websocket)
+        logger.info(f"Client connected to session {session_id}")
+
+    async def _send_welcome_message(self, session_id: str, websocket: WebSocketServerProtocol, session_info) -> None:
+        """Send welcome message to client."""
+        try:
+            welcome_event = {
+                "event_type": "session_start",
+                "timestamp": time.time(),
+                "data": {
+                    "session_id": session_id,
+                    "message": "Connected to streaming session",
+                    "auto_created": session_info is None
+                },
+                "session_id": session_id,
+            }
+            await websocket.send(json.dumps(welcome_event))
+        except Exception as e:
+            logger.warning(f"Failed to send welcome message: {e}")
+
+    async def _cleanup_client(self, session_id: str, websocket: WebSocketServerProtocol) -> None:
+        """Clean up client connection."""
+        self._clients[session_id].discard(websocket)
+        await self.streaming_manager.unsubscribe(session_id, websocket)
+        logger.info(f"Client cleanup completed for session {session_id}")
 
     async def _handle_client(self, websocket: WebSocketServerProtocol):
         """Handle a client connection."""
@@ -178,94 +310,25 @@ class StreamingWebSocketServer:
             logger.info(f" Local address: {websocket.local_address}")
             logger.info(f" Remote address: {websocket.remote_address}")
                     
-            # In websockets v16, we need to extract the path from the websocket object
-            # Let's try different approaches to get the path
-            
-            path = "/stream/default"  # Default fallback
-            
-            # Try to get path from websocket attributes
-            try:
-                # Method 1: Check if path attribute exists
-                if hasattr(websocket, 'path'):
-                    path = websocket.path
-                    logger.info(f"Found path via websocket.path: {path}")
-                # Method 2: Check if request_headers has path info
-                elif hasattr(websocket, 'request_headers'):
-                    # The path might be in the request headers or connection info
-                    logger.info(f"Request headers: {dict(websocket.request_headers)}")
-                # Method 3: Check if there's a scope attribute (ASGI style)
-                elif hasattr(websocket, 'scope'):
-                    scope = websocket.scope
-                    if scope and 'path' in scope:
-                        path = scope['path']
-                        logger.info(f"Found path via scope: {path}")
-                # Method 4: Check connection attributes
-                elif hasattr(websocket, 'local_address') and hasattr(websocket, 'remote_address'):
-                    # We can't get the path from these, but we can log the connection info
-                    logger.info(f"Connection: {websocket.local_address} <-> {websocket.remote_address}")
-            except Exception as e:
-                logger.error(f"Error extracting path: {e}")
-            
-            # For now, we'll use a simple approach: extract session ID from a message
-            # or use a default session
+            # Extract path and session ID
+            path = self._extract_websocket_path(websocket)
             logger.info(f"Using path: {path}")
             
-            # For testing, let's use the full path if we can determine it from the connection
-            # Otherwise, we'll create a session based on the connection ID
-            
-            # Use connection ID as session identifier for now
-            connection_id = id(websocket)
-            session_id = f"session-{connection_id}"
-            
-            # Try to extract a more meaningful session ID if possible
-            if path != "/stream/default":
-                path_parts = path.strip("/").split("/")
-                if len(path_parts) >= 2 and path_parts[0] == "stream":
-                    session_id = path_parts[1]
-            
+            session_id = self._extract_session_id(path, websocket)
             logger.info(f"Client connecting with session ID: {session_id}")
             
-            # Check if session exists, if not, create a default one
-            session_info = self.streaming_manager.get_session_info(session_id)
-            if not session_info:
-                # Auto-create a session for watching purposes
-                await self.streaming_manager.start_session(session_id, {
-                    "session_id": session_id,
-                    "task": "Live Coding Session",
-                    "project_path": "unknown",
-                    "auto_created": True,
-                    "status": "watching"
-                })
-                logger.info(f"Auto-created session {session_id} for client connection")
+            # Setup session if needed
+            await self._setup_session(session_id)
             
             # Register client
-            if session_id not in self._clients:
-                self._clients[session_id] = set()
-            self._clients[session_id].add(websocket)
-            
-            # Subscribe to streaming manager
-            await self.streaming_manager.subscribe(session_id, websocket)
-            
-            logger.info(f"Client connected to session {session_id}")
+            await self._register_client(session_id, websocket)
             
             # Send welcome message
-            try:
-                welcome_event = {
-                    "event_type": "session_start",
-                    "timestamp": time.time(),
-                    "data": {
-                        "session_id": session_id,
-                        "message": "Connected to streaming session",
-                        "auto_created": session_info is None
-                    },
-                    "session_id": session_id,
-                }
-                await websocket.send(json.dumps(welcome_event))
-            except Exception as e:
-                logger.warning(f"Failed to send welcome message: {e}")
+            session_info = self.streaming_manager.get_session_info(session_id)
+            await self._send_welcome_message(session_id, websocket, session_info)
             
+            # Handle incoming messages
             try:
-                # Handle incoming messages
                 async for message in websocket:
                     await self._handle_message(session_id, websocket, message)
             except websockets.exceptions.ConnectionClosed:
@@ -279,18 +342,14 @@ class StreamingWebSocketServer:
             except Exception as e:
                 logger.error(f"Unexpected error in client handler for session {session_id}: {e}")
             finally:
-                # Unregister client
-                self._clients[session_id].discard(websocket)
-                await self.streaming_manager.unsubscribe(session_id, websocket)
-                logger.info(f"Client cleanup completed for session {session_id}")
+                await self._cleanup_client(session_id, websocket)
                 
         except Exception as e:
             logger.error(f"Critical error in _handle_client: {e}")
             # Ensure cleanup even if connection fails early
             try:
                 if 'session_id' in locals():
-                    self._clients[session_id].discard(websocket)
-                    await self.streaming_manager.unsubscribe(session_id, websocket)
+                    await self._cleanup_client(session_id, websocket)
             except Exception as cleanup_error:
                 logger.error(f"Error during cleanup: {cleanup_error}")
             

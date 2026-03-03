@@ -378,7 +378,8 @@
       "startTask": "Démarrer la tâche",
       "deleteTask": "Supprimer la tâche",
       "close": "Fermer",
-      "watchLive": "Regarder en direct"
+      "watchLive": "Regarder en direct",
+      "activating": "Activation..."
     },
     "badges": {
       "stuck": "Bloqué",
