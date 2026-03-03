@@ -40,7 +40,9 @@
     "codePlayground": "Code Playground",
     "dependencySentinel": "Dependency Sentinel",
     "conflictPredictor": "Conflict Predictor",
-    "naturalLanguageGit": "Natural Language Git"
+    "naturalLanguageGit": "Natural Language Git",
+    "contextAwareSnippets": "Context-Aware Snippets",
+    "voiceControl": "Voice Control"
   },
   "actions": {
     "settings": "Settings",
