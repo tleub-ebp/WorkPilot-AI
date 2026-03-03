@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from core.client import create_client
+from core.workflow_logger import workflow_logger
 from linear_updater import (
     LinearTaskState,
     is_linear_enabled,

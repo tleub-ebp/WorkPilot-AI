@@ -25,16 +25,16 @@ import { Button } from './ui/button';
 import type { ScreenshotSource } from '../../shared/types/screenshot';
 
 interface ScreenshotCaptureProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCapture: (imageData: string) => void; // base64 encoded PNG
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onCapture: (imageData: string) => void; // base64 encoded PNG
 }
 
 /**
  * Get the appropriate paste keyboard shortcut based on platform
  */
 const getPasteShortcut = (): string => {
-  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const isMac = navigator.platform.toUpperCase().includes('MAC');
   return isMac ? 'Cmd+V' : 'Ctrl+V';
 };
 
@@ -56,7 +56,7 @@ export function ScreenshotCapture({ open, onOpenChange, onCapture }: ScreenshotC
     setIsDevMode(false);
     setSelectedSource(null);
     try {
-      const result = await window.electronAPI.getSources();
+      const result = await globalThis.electronAPI.getSources();
 
       // Check if running in dev mode (screenshot capture unavailable)
       if (result.devMode) {
@@ -93,7 +93,7 @@ export function ScreenshotCapture({ open, onOpenChange, onCapture }: ScreenshotC
     setIsCapturing(true);
     setError(null);
     try {
-      const result = await window.electronAPI.capture({ sourceId: selectedSource });
+      const result = await globalThis.electronAPI.capture({ sourceId: selectedSource });
       if (result.success && result.data) {
         onCapture(result.data);
         onOpenChange(false);
@@ -115,7 +115,7 @@ export function ScreenshotCapture({ open, onOpenChange, onCapture }: ScreenshotC
   const isScreenSource = (source: ScreenshotSource): boolean => {
     return source.name.toLowerCase().includes('screen') ||
            source.name.toLowerCase().includes('display') ||
-           source.name.match(/^\d+:/) !== null;
+           /^\d+:/.exec(source.name) !== null;
   };
 
   return (
@@ -132,7 +132,7 @@ export function ScreenshotCapture({ open, onOpenChange, onCapture }: ScreenshotC
           {/* Dev Mode Info State */}
           {isDevMode && (
             <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg mb-4">
-              <Info className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
+              <Info className="h-5 w-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
               <div className="flex-1 space-y-2">
                 <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
                   {t('tasks:screenshot.devMode.title')}
@@ -150,7 +150,7 @@ export function ScreenshotCapture({ open, onOpenChange, onCapture }: ScreenshotC
           {/* Error State */}
           {error && !isDevMode && (
             <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/30 rounded-lg mb-4">
-              <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+              <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
               <div className="flex-1">
                 <p className="text-sm text-destructive">{error}</p>
               </div>

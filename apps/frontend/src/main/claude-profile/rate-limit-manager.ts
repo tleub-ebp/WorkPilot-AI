@@ -35,7 +35,7 @@ export function recordRateLimitEvent(
 export function isProfileRateLimited(
   profile: ClaudeProfile
 ): { limited: boolean; type?: 'session' | 'weekly'; resetAt?: Date } {
-  if (!profile || !profile.rateLimitEvents?.length) {
+  if (!profile?.rateLimitEvents?.length) {
     return { limited: false };
   }
 

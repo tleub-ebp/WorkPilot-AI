@@ -1,5 +1,9 @@
 import { create } from 'zustand';
 
+// Type aliases for better maintainability
+export type PlaygroundType = 'html' | 'react' | 'vanilla-js' | 'python' | 'node';
+export type SandboxType = 'iframe' | 'docker' | 'webworker';
+
 /**
  * Result of code playground generation
  */
@@ -30,19 +34,19 @@ interface CodePlaygroundState {
   error: string | null;
   isOpen: boolean;
   initialIdea: string;
-  playgroundType: 'html' | 'react' | 'vanilla-js' | 'python' | 'node';
-  sandboxType: 'iframe' | 'docker' | 'webworker';
+  playgroundType: PlaygroundType;
+  sandboxType: SandboxType;
 
   // Actions
-  openDialog: (idea: string, playgroundType?: 'html' | 'react' | 'vanilla-js' | 'python' | 'node', sandboxType?: 'iframe' | 'docker' | 'webworker') => void;
+  openDialog: (idea: string, playgroundType?: PlaygroundType, sandboxType?: SandboxType) => void;
   closeDialog: () => void;
   setPhase: (phase: CodePlaygroundPhase) => void;
   setStatus: (status: string) => void;
   appendStreamingOutput: (chunk: string) => void;
   setResult: (result: PlaygroundResult) => void;
   setError: (error: string) => void;
-  setPlaygroundType: (playgroundType: 'html' | 'react' | 'vanilla-js' | 'python' | 'node') => void;
-  setSandboxType: (sandboxType: 'iframe' | 'docker' | 'webworker') => void;
+  setPlaygroundType: (playgroundType: PlaygroundType) => void;
+  setSandboxType: (sandboxType: SandboxType) => void;
   reset: () => void;
 }
 
@@ -121,8 +125,8 @@ export function startPlayground(projectId: string, idea: string, playgroundType:
   store.setPhase('generating');
   store.setStatus('Starting playground generation...');
   
-  if (window.electronAPI?.startCodePlayground) {
-    window.electronAPI.startCodePlayground(projectId, idea, playgroundType, sandboxType);
+  if (globalThis.electronAPI && typeof globalThis.electronAPI.startCodePlayground === 'function') {
+    globalThis.electronAPI.startCodePlayground(projectId, idea, playgroundType, sandboxType);
   }
 }
 
@@ -135,32 +139,40 @@ export function setupCodePlaygroundListeners() {
   const store = () => useCodePlaygroundStore.getState();
 
   // Listen for streaming chunks
-  const unsubChunk = window.electronAPI.onCodePlaygroundStreamChunk((chunk: string) => {
-    store().appendStreamingOutput(chunk);
-  });
+  const unsubChunk = globalThis.electronAPI && typeof globalThis.electronAPI.onCodePlaygroundStreamChunk === 'function'
+    ? globalThis.electronAPI.onCodePlaygroundStreamChunk((chunk: string) => {
+        store().appendStreamingOutput(chunk);
+      })
+    : null;
 
   // Listen for status updates
-  const unsubStatus = window.electronAPI.onCodePlaygroundStatus((status: string) => {
-    store().setStatus(status);
-  });
+  const unsubStatus = globalThis.electronAPI && typeof globalThis.electronAPI.onCodePlaygroundStatus === 'function'
+    ? globalThis.electronAPI.onCodePlaygroundStatus((status: string) => {
+        store().setStatus(status);
+      })
+    : null;
 
   // Listen for errors
-  const unsubError = window.electronAPI.onCodePlaygroundError((error: string) => {
-    store().setError(error);
-  });
+  const unsubError = globalThis.electronAPI && typeof globalThis.electronAPI.onCodePlaygroundError === 'function'
+    ? globalThis.electronAPI.onCodePlaygroundError((error: string) => {
+        store().setError(error);
+      })
+    : null;
 
   // Listen for completion with structured result
-  const unsubComplete = window.electronAPI.onCodePlaygroundComplete(
-    (result: PlaygroundResult) => {
-      store().setResult(result);
-    }
-  );
+  const unsubComplete = globalThis.electronAPI && typeof globalThis.electronAPI.onCodePlaygroundComplete === 'function'
+    ? globalThis.electronAPI.onCodePlaygroundComplete(
+        (result: PlaygroundResult) => {
+          store().setResult(result);
+        }
+      )
+    : null;
 
   return () => {
-    unsubChunk();
-    unsubStatus();
-    unsubError();
-    unsubComplete();
+    unsubChunk?.();
+    unsubStatus?.();
+    unsubError?.();
+    unsubComplete?.();
   };
 }
 

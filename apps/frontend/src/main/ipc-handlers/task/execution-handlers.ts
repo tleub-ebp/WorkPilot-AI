@@ -239,7 +239,16 @@ export function registerTaskExecutionHandlers(
       const currentXState = taskStateManager.getCurrentState(taskId);
       console.warn('[TASK_START] Current XState:', currentXState, '| Task status:', task.status, task.reviewReason);
 
-      if (currentXState === 'plan_review') {
+      if (currentXState === 'done') {
+        // Task reached final state (done) - destroy the stopped actor and create a fresh one
+        // This happens when restarting a completed/failed task
+        console.warn('[TASK_START] XState in final state "done" - clearing actor and restarting fresh');
+        taskStateManager.clearTask(taskId);
+        // Pass a modified task with reset status so the new actor starts from 'backlog' not 'done'
+        // 'backlog' is the only state that accepts PLANNING_STARTED event
+        const resetTask = { ...task, status: 'backlog' as TaskStatus, reviewReason: undefined, executionProgress: undefined };
+        taskStateManager.handleUiEvent(taskId, { type: 'PLANNING_STARTED' }, resetTask, project);
+      } else if (currentXState === 'plan_review') {
         // XState says plan_review - send PLAN_APPROVED
         console.warn('[TASK_START] XState: plan_review -> coding via PLAN_APPROVED');
         taskStateManager.handleUiEvent(taskId, { type: 'PLAN_APPROVED' }, task, project);

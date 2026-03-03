@@ -14,6 +14,11 @@ _PARENT_DIR = Path(__file__).parent.parent
 if str(_PARENT_DIR) not in sys.path:
     sys.path.insert(0, str(_PARENT_DIR))
 
+# Ensure project root is in path for src.connectors imports (e.g. src.connectors.llm_config)
+_PROJECT_ROOT = _PARENT_DIR.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 from core.auth import get_auth_token, get_auth_token_source
 from core.dependency_validator import validate_platform_dependencies
 
@@ -84,6 +89,11 @@ def setup_environment() -> Path:
     # Add auto-claude directory to path for imports
     script_dir = Path(__file__).parent.parent.resolve()
     sys.path.insert(0, str(script_dir))
+
+    # Add project root to path for src.connectors imports (e.g. src.connectors.llm_config)
+    project_root = script_dir.parent.parent.resolve()
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
 
     # Load .env file - check both auto-claude/ and dev/auto-claude/ locations
     env_file = script_dir / ".env"

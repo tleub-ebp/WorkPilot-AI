@@ -12,9 +12,9 @@
  */
 
 import { app } from 'electron';
-import { join } from 'path';
-import { mkdir } from 'fs/promises';
-import { homedir } from 'os';
+import { join } from 'node:path';
+import { mkdir } from 'node:fs/promises';
+import { homedir } from 'node:os';
 import type {
   ClaudeProfile,
   ClaudeProfileSettings,
@@ -59,8 +59,8 @@ import {
  * Each profile points to a separate Claude config directory.
  */
 export class ClaudeProfileManager {
-  private storePath: string;
-  private configDir: string;
+  private readonly storePath: string;
+  private readonly configDir: string;
   private data: ProfileStoreData;
   private initialized: boolean = false;
 

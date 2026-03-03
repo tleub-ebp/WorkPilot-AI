@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Copy, Loader2, Play, RotateCcw, X, Code, Zap, Monitor, FolderTree } from 'lucide-react';
-
+import { Check, Copy, Loader2, Play, RotateCcw, Code, Zap, Monitor, FolderTree } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -22,13 +21,12 @@ import {
 } from '../ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-
-import { useCodePlaygroundStore, setupCodePlaygroundListeners, startPlayground } from '@/stores/code-playground-store';
-import type { PlaygroundResult } from '@/stores/code-playground-store';
+import { useCodePlaygroundStore, setupCodePlaygroundListeners, startPlayground, type PlaygroundType, type SandboxType, type PlaygroundResult } from '@/stores/code-playground-store';
 import { useProjectStore } from '@/stores/project-store';
 
-const PLAYGROUND_TYPES = ['html', 'react', 'vanilla-js', 'python', 'node'] as const;
-const SANDBOX_TYPES = ['iframe', 'docker', 'webworker'] as const;
+// Create arrays from the type aliases for UI components
+const PLAYGROUND_TYPES: PlaygroundType[] = ['html', 'react', 'vanilla-js', 'python', 'node'];
+const SANDBOX_TYPES: SandboxType[] = ['iframe', 'docker', 'webworker'];
 
 /**
  * CodePlaygroundDialog — AI-powered code playground dialog.
@@ -42,7 +40,7 @@ const SANDBOX_TYPES = ['iframe', 'docker', 'webworker'] as const;
  */
 interface CodePlaygroundDialogProps {
   /** Called when the user clicks "Integrate to Project" with the generated code */
-  onIntegrate?: (result: PlaygroundResult) => void;
+  readonly onIntegrate?: (result: PlaygroundResult) => void;
 }
 
 export function CodePlaygroundDialog({ onIntegrate }: CodePlaygroundDialogProps) {
@@ -375,10 +373,10 @@ function CodeView({
   onCopy,
   t,
 }: {
-  result: PlaygroundResult;
-  copied: boolean;
-  onCopy: (text: string) => void;
-  t: (key: string) => string;
+  readonly result: PlaygroundResult;
+  readonly copied: boolean;
+  readonly onCopy: (text: string) => void;
+  readonly t: (key: string) => string;
 }) {
   return (
     <div className="space-y-4">
@@ -492,9 +490,9 @@ function PreviewView({
   previewRef,
   t,
 }: {
-  result: PlaygroundResult;
-  previewRef: React.RefObject<HTMLIFrameElement | null>;
-  t: (key: string) => string;
+  readonly result: PlaygroundResult;
+  readonly previewRef: React.RefObject<HTMLIFrameElement | null>;
+  readonly t: (key: string) => string;
 }) {
   if (!result.html) {
     return (
@@ -527,8 +525,8 @@ function FilesView({
   result,
   t,
 }: {
-  result: PlaygroundResult;
-  t: (key: string) => string;
+  readonly result: PlaygroundResult;
+  readonly t: (key: string) => string;
 }) {
   return (
     <div className="space-y-4">
@@ -545,9 +543,9 @@ function FilesView({
         <CardContent>
           {result.files && result.files.length > 0 ? (
             <div className="space-y-2">
-              {result.files.map((file, index) => (
+              {result.files.map((file) => (
                 <div
-                  key={index}
+                  key={file.path}
                   className="flex items-center gap-2 p-2 bg-muted/30 rounded"
                 >
                   <Code className="h-4 w-4 text-primary" />

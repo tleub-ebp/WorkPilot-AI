@@ -1,5 +1,5 @@
-import { spawn } from 'child_process';
-import * as os from 'os';
+import { spawn } from 'node:child_process';
+import * as os from 'node:os';
 import type { GitCommit } from '../../shared/types';
 import { getBestAvailableProfileEnv } from '../rate-limit-detector';
 import { parsePythonCommand } from '../python-detector';
@@ -17,12 +17,12 @@ interface VersionSuggestion {
  * Analyzes commits to intelligently suggest semantic version bumps
  */
 export class VersionSuggester {
-  private debugEnabled: boolean;
+  private readonly debugEnabled: boolean;
 
   constructor(
-    private pythonPath: string,
-    private claudePath: string,
-    private autoBuildSourcePath: string,
+    private readonly pythonPath: string,
+    private readonly claudePath: string,
+    private readonly autoBuildSourcePath: string,
     debugEnabled: boolean
   ) {
     this.debugEnabled = debugEnabled;
@@ -134,14 +134,14 @@ Respond with ONLY a JSON object in this exact format (no markdown, no extra text
   private createAnalysisScript(prompt: string): string {
     // Escape the prompt for Python string literal
     const escapedPrompt = prompt
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/\n/g, '\\n');
+      .replaceAll('\\', String.raw`\\`)
+      .replaceAll('"', String.raw`\\"`)
+      .replaceAll('\n', String.raw`\\n`);
 
     // Escape the claude path for Python string (handle Windows backslashes)
     const escapedClaudePath = this.claudePath
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"');
+      .replaceAll('\\', String.raw`\\`)
+      .replaceAll('"', String.raw`\\"`);
 
     // Detect if this is a Windows batch file (.cmd or .bat)
     // These require shell=True in subprocess.run() because they need cmd.exe to execute
@@ -178,7 +178,8 @@ except Exception as e:
    */
   private parseAIResponse(output: string, currentVersion: string): VersionSuggestion {
     // Extract JSON from output (Claude might wrap it in markdown or other text)
-    const jsonMatch = output.match(/\{[\s\S]*"bumpType"[\s\S]*"reason"[\s\S]*\}/);
+    const jsonRegex = /\{[\s\S]*"bumpType"[\s\S]*"reason"[\s\S]*\}/;
+    const jsonMatch = jsonRegex.exec(output);
     if (!jsonMatch) {
       throw new Error('No JSON found in AI response');
     }

@@ -13,18 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from './ui/alert-dialog';
-import { createPortal } from 'react-dom';
 import {cn, sanitizeMarkdownForDisplay} from '../lib/utils';
 import { PhaseProgressIndicator } from './PhaseProgressIndicator';
 import { StreamingSessionButton } from './streaming/StreamingSessionButton';

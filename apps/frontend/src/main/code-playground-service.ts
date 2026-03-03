@@ -1,8 +1,9 @@
-import { spawn, ChildProcess } from 'child_process';
-import { existsSync } from 'fs';
-import path from 'path';
-import { EventEmitter } from 'events';
+import { spawn, ChildProcess } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { EventEmitter } from 'node:events';
 import { app } from 'electron';
+import type { PlaygroundType, SandboxType } from '../renderer/stores/code-playground-store';
 import { MODEL_ID_MAP } from '../shared/constants';
 import type { AppSettings } from '../shared/types';
 
@@ -31,8 +32,8 @@ export interface PlaygroundResult {
 export interface CodePlaygroundRequest {
   projectDir: string;
   idea: string;
-  playgroundType: 'html' | 'react' | 'vanilla-js' | 'python' | 'node';
-  sandboxType: 'iframe' | 'docker' | 'webworker';
+  playgroundType: PlaygroundType;
+  sandboxType: SandboxType;
   model?: string;
   thinkingLevel?: string;
 }
@@ -152,7 +153,7 @@ export class CodePlaygroundService extends EventEmitter {
     try {
       const settingsPath = path.join(app.getPath('userData'), 'settings.json');
       if (existsSync(settingsPath)) {
-        const { readFileSync } = require('fs');
+        const { readFileSync } = require('node:fs');
         const settings: AppSettings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
         if (settings.globalClaudeOAuthToken) {
           processEnv.CLAUDE_OAUTH_TOKEN = settings.globalClaudeOAuthToken;
@@ -220,17 +221,7 @@ export class CodePlaygroundService extends EventEmitter {
 
       if (code === 0 && playgroundResult) {
         this.emit('complete', playgroundResult);
-      } else if (code !== 0) {
-        // Check for common error patterns
-        const combinedOutput = fullOutput + stderrOutput;
-        if (combinedOutput.includes('rate_limit') || combinedOutput.includes('Rate limit')) {
-          this.emit('error', 'Rate limit reached. Please try again in a few moments.');
-        } else if (combinedOutput.includes('authentication') || combinedOutput.includes('CLAUDE_OAUTH_TOKEN')) {
-          this.emit('error', 'Authentication error. Please check your Claude credentials in Settings.');
-        } else {
-          this.emit('error', `Playground generation failed (exit code ${code}). ${stderrOutput.slice(-500)}`);
-        }
-      } else {
+      } else if (code === 0) {
         // Process completed but no structured result found
         // Try to use the raw output as HTML content
         if (fullOutput.trim()) {
@@ -242,6 +233,16 @@ export class CodePlaygroundService extends EventEmitter {
           } as PlaygroundResult);
         } else {
           this.emit('error', 'Playground generation completed but produced no output.');
+        }
+      } else {
+        // Check for common error patterns
+        const combinedOutput = fullOutput + stderrOutput;
+        if (combinedOutput.includes('rate_limit') || combinedOutput.includes('Rate limit')) {
+          this.emit('error', 'Rate limit reached. Please try again in a few moments.');
+        } else if (combinedOutput.includes('authentication') || combinedOutput.includes('CLAUDE_OAUTH_TOKEN')) {
+          this.emit('error', 'Authentication error. Please check your Claude credentials in Settings.');
+        } else {
+          this.emit('error', `Playground generation failed (exit code ${code}). ${stderrOutput.slice(-500)}`);
         }
       }
     });

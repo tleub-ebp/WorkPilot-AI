@@ -1,5 +1,10 @@
+// React
 import { useState, useEffect, useMemo, useRef } from 'react';
+
+// i18n
 import { useTranslation } from 'react-i18next';
+
+// Icons
 import {
   Plus,
   Settings,
@@ -26,7 +31,6 @@ import {
   BookOpenCheck,
   Coins,
   History,
-  ChevronDown,
   ChevronRight,
   Code,
   Target,
@@ -34,45 +38,68 @@ import {
   Layers,
   Brain,
   Database,
-  ArrowRight,
   Mic,
   Zap,
   Shield,
   TestTube,
-  WandSparkles,
-  TrendingUp,
+  WandSparkles
 } from 'lucide-react';
+
+// UI
 import { Button } from './ui/button';
-import { ScrollArea } from '@/components/ui';
 import { Separator } from './ui/separator';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from './ui/tooltip';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from './ui/dialog';
+import { ScrollArea } from '@/components/ui';
+
+// Utils
 import { cn } from '@/lib/utils';
+
+// Stores
 import {
-  useProjectStore,
-  initializeProject
+  useProjectStore
 } from '@/stores/project-store';
-import { useSettingsStore } from '@/stores/settings-store';
-import { useProjectEnvStore, loadProjectEnvConfig, clearProjectEnvConfig } from '@/stores/project-env-store';
-import { saveSettings } from '@/stores/settings-store';
-import { useTestGenerationStore, openTestGenerationDialog } from '@/stores/test-generation-store';
-import { usePromptOptimizerStore, openPromptOptimizerDialog } from '@/stores/prompt-optimizer-store';
-import { useCodePlaygroundStore, openCodePlaygroundDialog } from '@/stores/code-playground-store';
-import { useNaturalLanguageGitStore, openNaturalLanguageGitDialog } from '@/stores/natural-language-git-store';
-import { useConflictPredictorStore, openConflictPredictorDialog } from '@/stores/conflict-predictor-store';
-import { useContextAwareSnippetsStore, openContextAwareSnippetsDialog } from '@/stores/context-aware-snippets-store';
+
+import {
+  useSettingsStore,
+  saveSettings,
+} from '@/stores/settings-store';
+
+import {
+  useProjectEnvStore,
+  loadProjectEnvConfig,
+  clearProjectEnvConfig,
+} from '@/stores/project-env-store';
+
+import {
+  openTestGenerationDialog
+} from '@/stores/test-generation-store';
+
+import {
+  openPromptOptimizerDialog
+} from '@/stores/prompt-optimizer-store';
+
+import {
+  openCodePlaygroundDialog
+} from '@/stores/code-playground-store';
+
+import {
+  openConflictPredictorDialog,
+} from '@/stores/conflict-predictor-store';
+
+import {
+  openContextAwareSnippetsDialog,
+} from '@/stores/context-aware-snippets-store';
+
+import {
+  openDependencySentinelDialog
+} from '@/stores/dependency-sentinel-store';
+
+// Modals & Components
 import { AddProjectModal } from './AddProjectModal';
 import { GitSetupModal } from './GitSetupModal';
 import { AzureDevOpsSetupModal } from './AzureDevOpsSetupModal';
@@ -81,22 +108,26 @@ import { RateLimitIndicator } from './RateLimitIndicator';
 import { ClaudeCodeStatusBadge } from './ClaudeCodeStatusBadge';
 import { CopilotCliStatusBadge } from './CopilotCliStatusBadge';
 import { UpdateBanner } from './UpdateBanner';
+
 import { TestGenerationDialog } from './test-generation/TestGenerationDialog';
 import { PromptOptimizerDialog } from './prompt-optimizer/PromptOptimizerDialog';
 import { CodePlaygroundDialog } from './code-playground/CodePlaygroundDialog';
 import { NaturalLanguageGitDialog } from './natural-language-git/NaturalLanguageGitDialog';
 import { ConflictPredictorDialog } from './conflict-predictor/ConflictPredictorDialog';
 import { ContextAwareSnippetsDialog } from './context-aware-snippets/ContextAwareSnippetsDialog';
+import { DependencySentinelDialog } from './dependency-sentinel/DependencySentinelDialog';
 import { VoiceControlDialog } from './voice-control/VoiceControlDialog';
+
+// Types
 import type { Project, GitStatus } from '@shared/types';
 
 export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets';
 
 interface SidebarProps {
-  onSettingsClick: () => void;
-  onNewTaskClick: () => void;
-  activeView?: SidebarView;
-  onViewChange?: (view: SidebarView) => void;
+  readonly onSettingsClick: () => void;
+  readonly onNewTaskClick: () => void;
+  readonly activeView?: SidebarView;
+  readonly onViewChange?: (view: SidebarView) => void;
 }
 
 interface NavItem {
@@ -227,7 +258,6 @@ export function Sidebar({
   const [showGitSetupModal, setShowGitSetupModal] = useState(false);
   const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
   const [pendingProject, setPendingProject] = useState<Project | null>(null);
-  const [isInitializing, setIsInitializing] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['core'])); // Core group expanded by default
 
   const [showGitHubSetup, setShowGitHubSetup] = useState(false);
@@ -235,12 +265,7 @@ export function Sidebar({
   const [showAzureDevOpsSetup, setShowAzureDevOpsSetup] = useState(false);
   const [azureDevOpsSetupProject, setAzureDevOpsSetupProject] = useState<Project | null>(null);
 
-  // AI Tools states
-  const [showTestGenerationDialog, setShowTestGenerationDialog] = useState(false);
-  const [showPromptOptimizerDialog, setShowPromptOptimizerDialog] = useState(false);
-  const [showContextAwareSnippetsDialog, setShowContextAwareSnippetsDialog] = useState(false);
-  const [showCodePlaygroundDialog, setShowCodePlaygroundDialog] = useState(false);
-  const [showConflictPredictorDialog, setShowConflictPredictorDialog] = useState(false);
+  // AI Tools states - managed by individual stores
   const [showNaturalLanguageGitDialog, setShowNaturalLanguageGitDialog] = useState(false);
   const [showVoiceControlDialog, setShowVoiceControlDialog] = useState(false);
 
@@ -343,8 +368,8 @@ export function Sidebar({
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    globalThis.addEventListener('keydown', handleKeyDown);
+    return () => globalThis.removeEventListener('keydown', handleKeyDown);
   }, [selectedProjectId, onViewChange, visibleNavItems]);
 
   // Check git status when a project changes
@@ -352,7 +377,7 @@ export function Sidebar({
     const checkGit = async () => {
       if (selectedProject) {
         try {
-          const result = await window.electronAPI.checkGitStatus(selectedProject.path);
+          const result = await globalThis.electronAPI.checkGitStatus(selectedProject.path);
           if (result.success && result.data) {
             setGitStatus(result.data);
             // Show git setup modal if a project is not a git repo or has no commits
@@ -384,11 +409,11 @@ export function Sidebar({
     }
 
     try {
-      const envResult = await window.electronAPI.getProjectEnv(project.id);
+      const envResult = await globalThis.electronAPI.getProjectEnv(project.id);
       const envConfig = envResult.success ? envResult.data : null;
       const hasProvider = !!(envConfig?.githubEnabled || envConfig?.azureDevOpsEnabled);
       if (!hasProvider) {
-        const detectionResult = await window.electronAPI.detectRepoProvider(project.path);
+        const detectionResult = await globalThis.electronAPI.detectRepoProvider(project.path);
         const rawProvider = detectionResult.success ? (detectionResult.data?.provider ?? 'unknown') : 'unknown';
         const provider = inferProviderFromRemote(rawProvider, detectionResult.data?.remoteUrl);
 
@@ -417,49 +442,11 @@ export function Sidebar({
     }
   };
 
-  const handleInitialize = async () => {
-    if (!pendingProject) return;
-
-    const projectId = pendingProject.id;
-    setIsInitializing(true);
-    try {
-      const result = await initializeProject(projectId);
-      if (result?.success) {
-        const updatedProject = useProjectStore.getState().projects.find(p => p.id === projectId) || pendingProject;
-
-        // Clear pendingProject FIRST before closing dialog
-        // This prevents onOpenChange from triggering skip logic
-        setPendingProject(null);
-
-        if (updatedProject) {
-          const detectionResult = await window.electronAPI.detectRepoProvider(updatedProject.path);
-          const rawProvider = detectionResult.success ? (detectionResult.data?.provider ?? 'unknown') : 'unknown';
-          const provider = inferProviderFromRemote(rawProvider, detectionResult.data?.remoteUrl);
-
-          setShowGitHubSetup(false);
-          setGitHubSetupProject(null);
-          setShowAzureDevOpsSetup(false);
-          setAzureDevOpsSetupProject(null);
-
-          if (provider === 'github') {
-            setGitHubSetupProject(updatedProject);
-            setShowGitHubSetup(true);
-          } else if (provider === 'azure_devops') {
-            setAzureDevOpsSetupProject(updatedProject);
-            setShowAzureDevOpsSetup(true);
-          }
-        }
-      }
-    } finally {
-      setIsInitializing(false);
-    }
-  };
-
   const handleGitInitialized = async () => {
     // Refresh git status after initialization
     if (selectedProject) {
       try {
-        const result = await window.electronAPI.checkGitStatus(selectedProject.path);
+        const result = await globalThis.electronAPI.checkGitStatus(selectedProject.path);
         if (result.success && result.data) {
           setGitStatus(result.data);
         }
@@ -478,7 +465,7 @@ export function Sidebar({
     if (!gitHubSetupProject) return;
 
     try {
-      await window.electronAPI.updateProjectEnv(gitHubSetupProject.id, {
+      await globalThis.electronAPI.updateProjectEnv(gitHubSetupProject.id, {
         githubEnabled: true,
         githubToken: settings.githubToken,
         githubRepo: settings.githubRepo,
@@ -486,7 +473,7 @@ export function Sidebar({
         azureDevOpsEnabled: false
       });
 
-      await window.electronAPI.updateProjectSettings(gitHubSetupProject.id, {
+      await globalThis.electronAPI.updateProjectSettings(gitHubSetupProject.id, {
         mainBranch: settings.mainBranch
       });
     } catch (error) {
@@ -534,6 +521,10 @@ export function Sidebar({
       openConflictPredictorDialog();
       return;
     }
+    if (view === 'dependency-sentinel') {
+      openDependencySentinelDialog();
+      return;
+    }
     if (view === 'natural-language-git') {
       setShowNaturalLanguageGitDialog(true);
       return;
@@ -563,6 +554,17 @@ const toggleGroupExpansion = (groupId: string) => {
     const isActive = activeView === item.id;
     const Icon = item.icon;
 
+    // Determine CSS classes based on collapsed state and sub-item status
+    const getLayoutClasses = () => {
+      if (isCollapsed) {
+        return 'justify-center px-2 py-2';
+      }
+      if (isSubItem) {
+        return 'gap-3 px-3 py-1.5 ml-6';
+      }
+      return 'gap-3 px-3 py-2';
+    };
+
     const button = (
       <button
         key={item.id}
@@ -574,7 +576,7 @@ const toggleGroupExpansion = (groupId: string) => {
           'hover:bg-accent hover:text-accent-foreground',
           'disabled:pointer-events-none disabled:opacity-50',
           isActive && 'bg-accent text-accent-foreground',
-          isCollapsed ? 'justify-center px-2 py-2' : isSubItem ? 'gap-3 px-3 py-1.5 ml-6' : 'gap-3 px-3 py-2'
+          getLayoutClasses()
         )}
       >
         <Icon className="h-4 w-4 shrink-0" />
@@ -797,7 +799,7 @@ const toggleGroupExpansion = (groupId: string) => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => window.open('https://github.com/thomas-leub/Auto-Claude_EBP/issues', '_blank')}
+                  onClick={() => globalThis.open('https://github.com/thomas-leub/Auto-Claude_EBP/issues', '_blank')}
                   aria-label={t('tooltips.help')}
                 >
                   <HelpCircle className="h-4 w-4" />
@@ -871,13 +873,14 @@ const toggleGroupExpansion = (groupId: string) => {
       />
 
       {/* AI Tools Dialogs */}
-      {showTestGenerationDialog && <TestGenerationDialog />}
-      {showPromptOptimizerDialog && <PromptOptimizerDialog />}
-      {showContextAwareSnippetsDialog && <ContextAwareSnippetsDialog />}
-      {showCodePlaygroundDialog && <CodePlaygroundDialog />}
-      {showConflictPredictorDialog && <ConflictPredictorDialog />}
-      {showNaturalLanguageGitDialog && <NaturalLanguageGitDialog />}
-      {showVoiceControlDialog && <VoiceControlDialog />}
+      <TestGenerationDialog />
+      <PromptOptimizerDialog />
+      <ContextAwareSnippetsDialog />
+      <CodePlaygroundDialog />
+      <ConflictPredictorDialog />
+      <DependencySentinelDialog />
+      <NaturalLanguageGitDialog />
+      <VoiceControlDialog />
     </TooltipProvider>
   );
 }

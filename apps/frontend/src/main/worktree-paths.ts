@@ -5,8 +5,8 @@
  * and ensure consistent path handling across the application.
  */
 
-import path from 'path';
-import { existsSync } from 'fs';
+import * as path from 'node:path';
+import { existsSync } from 'node:fs';
 
 // Path constants for worktree directories
 export const TASK_WORKTREE_DIR = '.auto-claude/worktrees/tasks';

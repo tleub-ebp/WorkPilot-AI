@@ -1,4 +1,4 @@
-import path from 'path';
+import * as path from 'node:path';
 import { getAugmentedEnv, getAugmentedEnvAsync } from './env-utils';
 import { getToolPath, getToolPathAsync } from './cli-tool-manager';
 import { isWindows, getPathDelimiter } from './platform';

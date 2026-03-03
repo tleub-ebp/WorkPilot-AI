@@ -34,10 +34,21 @@ import socket
 import io
 import os
 import importlib.util
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Charger les variables d'environnement à partir du fichier .env
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+
+# Ensure apps/backend is in path for core/cli/agents imports
+_BACKEND_DIR = Path(__file__).parent.resolve()
+if str(_BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(_BACKEND_DIR))
+
+# Ensure project root is in path for src.connectors imports (e.g. src.connectors.llm_config)
+_PROJECT_ROOT = _BACKEND_DIR.parent.parent.resolve()
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
 # Python version check - must be before any imports using 3.10+ syntax
 if sys.version_info < (3, 10):  # noqa: UP036

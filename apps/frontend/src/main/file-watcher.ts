@@ -1,7 +1,7 @@
 import chokidar, { FSWatcher } from 'chokidar';
-import { readFileSync, existsSync } from 'fs';
-import path from 'path';
-import { EventEmitter } from 'events';
+import { readFileSync, existsSync } from 'node:fs';
+import path from 'node:path';
+import { EventEmitter } from 'node:events';
 import type { ImplementationPlan } from '../shared/types';
 
 interface WatcherInfo {
@@ -14,7 +14,7 @@ interface WatcherInfo {
  * Watches implementation_plan.json files for real-time progress updates
  */
 export class FileWatcher extends EventEmitter {
-  private watchers: Map<string, WatcherInfo> = new Map();
+  private readonly watchers: Map<string, WatcherInfo> = new Map();
 
   /**
    * Start watching a task's implementation plan
