@@ -1,6 +1,6 @@
 import type { BrowserWindow } from "electron";
-import path from "path";
-import { existsSync, readFileSync } from "fs";
+import path from "node:path";
+import { existsSync, readFileSync } from "node:fs";
 import { IPC_CHANNELS, AUTO_BUILD_PATHS, getSpecsDir } from "../../shared/constants";
 import type {
   SDKRateLimitInfo,
@@ -19,6 +19,141 @@ import { findTaskAndProject } from "./task/shared";
 import { safeSendToRenderer } from "./utils";
 import { getClaudeProfileManager } from "../claude-profile-manager";
 import { taskStateManager } from "../task-state-manager";
+
+/**
+ * Validate that an implementation plan has proper structure with phases and subtasks
+ * Returns true if valid, false if invalid
+ */
+function isValidImplementationPlan(plan: ImplementationPlan): boolean {
+  if (!Array.isArray(plan.phases) || plan.phases.length === 0) {
+    return false;
+  }
+  
+  return plan.phases.every(phase => 
+    phase && 
+    Array.isArray(phase.subtasks) && 
+    phase.subtasks.length > 0 &&
+    phase.subtasks.every(subtask => 
+      subtask && 
+      typeof subtask === 'object' && 
+      subtask.description && 
+      typeof subtask.description === 'string' && 
+      subtask.description.trim() !== ''
+    )
+  );
+}
+
+/**
+ * Log debug information about why a plan validation failed
+ */
+function logInvalidPlanDetails(taskId: string, plan: ImplementationPlan): void {
+  console.debug(`[agent-events-handlers] Skipping invalid plan update for ${taskId}: missing or invalid phases/subtasks`, {
+    hasPhasesArray: Array.isArray(plan.phases),
+    phasesLength: plan.phases?.length || 0,
+    phases: plan.phases
+  });
+}
+
+/**
+ * Re-stamp XState status fields on plan files if the backend overwrote them
+ * This prevents tasks from snapping back to backlog on refresh
+ */
+function restampXStateStatusIfNeeded(
+  taskId: string,
+  plan: ImplementationPlan,
+  hasValidPhases: boolean,
+  task: any,
+  project: any
+): void {
+  const planWithStatus = plan as { xstateState?: string; executionPhase?: string; status?: string; phases?: unknown[] };
+  const currentXState = taskStateManager.getCurrentState(taskId);
+  
+  if (currentXState && !planWithStatus.xstateState && hasValidPhases && task && project) {
+    console.debug(`[agent-events-handlers] Re-stamping XState status on plan file for ${taskId} (state: ${currentXState})`);
+    const mainPlanPath = getPlanPath(project, task);
+    const { status, reviewReason } = mapStateToLegacy(currentXState);
+    const phase = XSTATE_TO_PHASE[currentXState] || 'idle';
+    persistPlanStatusAndReasonSync(mainPlanPath, status, reviewReason, project.id, currentXState, phase);
+
+    // Also re-stamp worktree copy if it exists
+    const worktreePath = findTaskWorktree(project.path, task.specId);
+    if (worktreePath) {
+      const specsBaseDir = getSpecsDir(project.autoBuildPath);
+      const worktreePlanPath = path.join(
+        worktreePath,
+        specsBaseDir,
+        task.specId,
+        AUTO_BUILD_PATHS.IMPLEMENTATION_PLAN
+      );
+      if (existsSync(worktreePlanPath)) {
+        persistPlanStatusAndReasonSync(worktreePlanPath, status, reviewReason, project.id, currentXState, phase);
+      }
+    }
+  } else if (currentXState && !planWithStatus.xstateState && !hasValidPhases) {
+    console.debug(`[agent-events-handlers] Skipping re-stamp for ${taskId}: plan has no phases (stub/empty). Backend planner will populate it.`);
+  }
+}
+
+/**
+ * Log detailed information for CODING_FAILED events
+ */
+function logCodingFailedEvent(taskId: string, event: any, projectId?: string): void {
+  console.error(`[agent-events-handlers] CODING_FAILED RECEIVED FROM BACKEND:`, {
+    taskId,
+    projectId,
+    event,
+    timestamp: new Date().toISOString(),
+    stackTrace: new Error('CODING_FAILED event stack trace').stack
+  });
+}
+
+/**
+ * Initialize task sequence from plan file if not already set
+ */
+function initializeTaskSequenceIfNeeded(taskId: string, projectId?: string): void {
+  if (taskStateManager.getLastSequence(taskId) !== undefined) {
+    return; // Already initialized
+  }
+
+  const { task, project } = findTaskAndProject(taskId, projectId);
+  if (!task || !project) {
+    return;
+  }
+
+  try {
+    const planPath = getPlanPath(project, task);
+    const planContent = readFileSync(planPath, "utf-8");
+    const plan = JSON.parse(planContent);
+    const lastSeq = plan?.lastEvent?.sequence;
+    if (typeof lastSeq === "number" && lastSeq >= 0) {
+      taskStateManager.setLastSequence(taskId, lastSeq);
+    }
+  } catch {
+    // Ignore missing/invalid plan files
+  }
+}
+
+/**
+ * Persist last event to both main and worktree plan files
+ */
+function persistLastEventToAllPlans(taskId: string, event: any, task: any, project: any): void {
+  const mainPlanPath = getPlanPath(project, task);
+  persistPlanLastEventSync(mainPlanPath, event);
+
+  const worktreePath = findTaskWorktree(project.path, task.specId);
+  if (worktreePath) {
+    const specsBaseDir = getSpecsDir(project.autoBuildPath);
+    const worktreePlanPath = path.join(
+      worktreePath,
+      specsBaseDir,
+      task.specId,
+      AUTO_BUILD_PATHS.IMPLEMENTATION_PLAN
+    );
+    if (existsSync(worktreePlanPath)) {
+      persistPlanLastEventSync(worktreePlanPath, event);
+    }
+  }
+}
 
 /**
  * Register all agent-events-related IPC handlers
@@ -130,33 +265,13 @@ export function registerAgenteventsHandlers(
   agentManager.on("task-event", (taskId: string, event, projectId?: string) => {
     console.debug(`[agent-events-handlers] Received task-event for ${taskId}:`, event.type, event);
     
-    // Log détaillé pour les événements CODING_FAILED
+    // Log detailed information for CODING_FAILED events
     if (event.type === 'CODING_FAILED') {
-      console.error(`[agent-events-handlers] CODING_FAILED RECEIVED FROM BACKEND:`, {
-        taskId,
-        projectId,
-        event,
-        timestamp: new Date().toISOString(),
-        stackTrace: new Error().stack
-      });
+      logCodingFailedEvent(taskId, event, projectId);
     }
 
-    if (taskStateManager.getLastSequence(taskId) === undefined) {
-      const { task, project } = findTaskAndProject(taskId, projectId);
-      if (task && project) {
-        try {
-          const planPath = getPlanPath(project, task);
-          const planContent = readFileSync(planPath, "utf-8");
-          const plan = JSON.parse(planContent);
-          const lastSeq = plan?.lastEvent?.sequence;
-          if (typeof lastSeq === "number" && lastSeq >= 0) {
-            taskStateManager.setLastSequence(taskId, lastSeq);
-          }
-        } catch {
-          // Ignore missing/invalid plan files
-        }
-      }
-    }
+    // Initialize task sequence if needed
+    initializeTaskSequenceIfNeeded(taskId, projectId);
 
     const { task, project } = findTaskAndProject(taskId, projectId);
     if (!task || !project) {
@@ -172,26 +287,13 @@ export function registerAgenteventsHandlers(
 
     const accepted = taskStateManager.handleTaskEvent(taskId, event, task, project);
     console.debug(`[agent-events-handlers] Event ${event.type} accepted: ${accepted}`);
+    
     if (!accepted) {
       return;
     }
 
-    const mainPlanPath = getPlanPath(project, task);
-    persistPlanLastEventSync(mainPlanPath, event);
-
-    const worktreePath = findTaskWorktree(project.path, task.specId);
-    if (worktreePath) {
-      const specsBaseDir = getSpecsDir(project.autoBuildPath);
-      const worktreePlanPath = path.join(
-        worktreePath,
-        specsBaseDir,
-        task.specId,
-        AUTO_BUILD_PATHS.IMPLEMENTATION_PLAN
-      );
-      if (existsSync(worktreePlanPath)) {
-        persistPlanLastEventSync(worktreePlanPath, event);
-      }
-    }
+    // Persist last event to both main and worktree plan files
+    persistLastEventToAllPlans(taskId, event, task, project);
   });
 
   agentManager.on("execution-progress", (taskId: string, progress: ExecutionProgressData, projectId?: string) => {
@@ -268,44 +370,19 @@ export function registerAgenteventsHandlers(
   fileWatcher.on("progress", (taskId: string, plan: ImplementationPlan) => {
     // File watcher events don't carry projectId — fall back to lookup
     const { task, project } = findTaskAndProject(taskId);
-    safeSendToRenderer(getMainWindow, IPC_CHANNELS.TASK_PROGRESS, taskId, plan, project?.id);
+    
+    // Validate plan data before sending to frontend to prevent validation errors
+    const hasValidPhases = isValidImplementationPlan(plan);
+    
+    if (hasValidPhases) {
+      safeSendToRenderer(getMainWindow, IPC_CHANNELS.TASK_PROGRESS, taskId, plan, project?.id);
+    } else {
+      logInvalidPlanDetails(taskId, plan);
+    }
 
-    // Re-stamp XState status fields if the backend overwrote the plan file without them.
-    // The planner agent writes implementation_plan.json via the Write tool, which replaces
-    // the entire file and strips the frontend's status/xstateState/executionPhase fields.
-    // This causes tasks to snap back to backlog on refresh.
-    //
-    // GUARD: Only re-stamp plans that have REAL content (phases with subtasks).
-    // During the spec creation pipeline, the backend may delete stub plan files
-    // before the planner agent runs. If we re-stamp a stub (no phases), we would
-    // recreate the file that the backend just deleted, causing the planner validator
-    // to find an empty plan and fail with "No phases defined".
-    const planWithStatus = plan as { xstateState?: string; executionPhase?: string; status?: string; phases?: unknown[] };
-    const currentXState = taskStateManager.getCurrentState(taskId);
-    const hasRealContent = Array.isArray(planWithStatus.phases) && planWithStatus.phases.length > 0;
-    if (currentXState && !planWithStatus.xstateState && hasRealContent && task && project) {
-      console.debug(`[agent-events-handlers] Re-stamping XState status on plan file for ${taskId} (state: ${currentXState})`);
-      const mainPlanPath = getPlanPath(project, task);
-      const { status, reviewReason } = mapStateToLegacy(currentXState);
-      const phase = XSTATE_TO_PHASE[currentXState] || 'idle';
-      persistPlanStatusAndReasonSync(mainPlanPath, status, reviewReason, project.id, currentXState, phase);
-
-      // Also re-stamp worktree copy if it exists
-      const worktreePath = findTaskWorktree(project.path, task.specId);
-      if (worktreePath) {
-        const specsBaseDir = getSpecsDir(project.autoBuildPath);
-        const worktreePlanPath = path.join(
-          worktreePath,
-          specsBaseDir,
-          task.specId,
-          AUTO_BUILD_PATHS.IMPLEMENTATION_PLAN
-        );
-        if (existsSync(worktreePlanPath)) {
-          persistPlanStatusAndReasonSync(worktreePlanPath, status, reviewReason, project.id, currentXState, phase);
-        }
-      }
-    } else if (currentXState && !planWithStatus.xstateState && !hasRealContent) {
-      console.debug(`[agent-events-handlers] Skipping re-stamp for ${taskId}: plan has no phases (stub/empty). Backend planner will populate it.`);
+    // Re-stamp XState status fields if the backend overwrote the plan file without them
+    if (task && project) {
+      restampXStateStatusIfNeeded(taskId, plan, hasValidPhases, task, project);
     }
   });
 
