@@ -40,7 +40,9 @@
     "codePlayground": "Bac à sable de code",
     "dependencySentinel": "Sentinelle de dépendances",
     "conflictPredictor": "Prédicteur de conflits",
-    "naturalLanguageGit": "Git en langage naturel"
+    "naturalLanguageGit": "Git en langage naturel",
+    "contextAwareSnippets": "Extraits contextuels",
+    "voiceControl": "Contrôle vocal"
   },
   "actions": {
     "settings": "Paramètres",
