@@ -1,5 +1,14 @@
 ﻿/**
- * Streaming Session Button - Launch streaming mode for a task
+ * Streaming Session Button - Open the streaming viewer for a running task.
+ *
+ * IMPORTANT: This button must NOT send TASK_START. The task is already running
+ * and streaming is enabled by default (enableStreaming ?? true in execution-handlers).
+ * Sending TASK_START again would kill the running backend process and spawn a new
+ * one, causing a cascade of process restarts where no process survives long enough
+ * to produce output.
+ *
+ * This button simply opens the StreamingSession dialog which connects to the
+ * existing WebSocket stream for the running task.
  */
 
 import { useState } from 'react';
@@ -18,12 +27,19 @@ export function StreamingSessionButton({ taskId, projectPath }: StreamingSession
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation(['tasks', 'streaming']);
 
+  const handleWatchLive = () => {
+    // Just open the streaming dialog — do NOT restart the task.
+    // Streaming is already enabled by default when the task was started.
+    console.log(`[StreamingSessionButton] Opening streaming viewer for task: ${taskId}`);
+    setIsOpen(true);
+  };
+
   return (
     <>
       <Button
         variant="outline"
         size="sm"
-        onClick={() => setIsOpen(true)}
+        onClick={handleWatchLive}
         className="gap-2"
       >
         <Film className="w-4 h-4" />

@@ -82,8 +82,6 @@ def handle_build_command(
         enable_streaming: Enable streaming mode for this build
         streaming_session_id: Streaming session ID for live coding
     """
-    print(f"[build] Starting build for spec: {spec_dir.name}", flush=True)
-
     # Lazy imports to avoid loading heavy modules
     from agent import run_autonomous_agent, sync_spec_to_source
     from debug import (
@@ -244,7 +242,6 @@ def handle_build_command(
 
     try:
         debug("run.py", "Starting agent execution")
-        print(f"[build] Workspace ready. Launching autonomous agent (model={model}, working_dir={working_dir})...", flush=True)
 
         asyncio.run(
             run_autonomous_agent(

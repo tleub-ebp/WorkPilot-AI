@@ -1,9 +1,9 @@
 import { ipcMain, BrowserWindow } from 'electron';
 import { IPC_CHANNELS, AUTO_BUILD_PATHS, getSpecsDir } from '../../../shared/constants';
 import type { IPCResult, TaskStartOptions, TaskStatus, ImageAttachment } from '../../../shared/types';
-import path from 'path';
+import path from 'node:path';
 import { existsSync, readFileSync, writeFileSync, renameSync, unlinkSync, mkdirSync } from 'fs';
-import { spawnSync, execFileSync } from 'child_process';
+import { spawnSync, execFileSync } from 'node:child_process';
 import { getToolPath } from '../../cli-tool-manager';
 import { AgentManager } from '../../agent';
 import { fileWatcher } from '../../file-watcher';
@@ -19,7 +19,7 @@ import {
 import { findTaskWorktree } from '../../worktree-paths';
 import { projectStore } from '../../project-store';
 import { getAppLanguage } from '../../app-language';
-import { getIsolatedGitEnv, detectWorktreeBranch } from '../../utils/git-isolation';
+import { getIsolatedGitEnv } from '../../utils/git-isolation';
 import { pythonEnvManager } from '../../python-env-manager';
 import { appLog } from '../../app-logger';
 
@@ -163,8 +163,8 @@ export function registerTaskExecutionHandlers(
    */
   ipcMain.on(
     IPC_CHANNELS.TASK_START,
-    async (_, taskId: string, _options?: TaskStartOptions) => {
-      console.warn('[TASK_START] Received request for taskId:', taskId);
+    async (_, taskId: string, options?: TaskStartOptions) => {
+      console.warn('[TASK_START] Received request for taskId:', taskId, 'with options:', options);
       const mainWindow = getMainWindow();
       if (!mainWindow) {
         console.warn('[TASK_START] No main window found');
@@ -366,8 +366,8 @@ export function registerTaskExecutionHandlers(
             baseBranch,
             useWorktree: task.metadata?.useWorktree,
             useLocalBranch: task.metadata?.useLocalBranch,
-            enableStreaming: _options?.enableStreaming ?? true,
-            streamingSessionId: _options?.streamingSessionId ?? taskId,
+            enableStreaming: options?.enableStreaming ?? true,
+            streamingSessionId: options?.streamingSessionId ?? taskId,
           },
           project.id
         );
@@ -386,8 +386,8 @@ export function registerTaskExecutionHandlers(
             baseBranch,
             useWorktree: task.metadata?.useWorktree,
             useLocalBranch: task.metadata?.useLocalBranch,
-            enableStreaming: _options?.enableStreaming ?? true,
-            streamingSessionId: _options?.streamingSessionId ?? taskId,
+            enableStreaming: options?.enableStreaming ?? true,
+            streamingSessionId: options?.streamingSessionId ?? taskId,
           },
           project.id
         );
