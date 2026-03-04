@@ -294,6 +294,73 @@ async def wait_for_auth_resume(
         logger.debug(f"Error cleaning up pause file {pause_file} after timeout: {e}")
 
 
+def _parse_relative_time(message: str) -> int | None:
+    """Parse 'in X minutes/hours' pattern from message."""
+    in_time_match = re.search(r"in\s+(\d+)\s*(minute|hour|min|hr)s?", message, re.I)
+    if not in_time_match:
+        return None
+    
+    amount = int(in_time_match.group(1))
+    unit = in_time_match.group(2).lower()
+    
+    if unit.startswith("hour") or unit.startswith("hr"):
+        delta = timedelta(hours=amount)
+    else:
+        delta = timedelta(minutes=amount)
+    
+    return int((datetime.now() + delta).timestamp())
+
+
+def _validate_time_values(hour: int, minute: int) -> bool:
+    """Validate hour and minute ranges."""
+    return 0 <= hour <= 23 and 0 <= minute <= 59
+
+
+def _convert_meridiem_to_24h(hour: int, meridiem: str) -> int:
+    """Convert 12-hour format with meridiem to 24-hour format."""
+    if meridiem.lower() == "pm" and hour < 12:
+        return hour + 12
+    elif meridiem.lower() == "am" and hour == 12:
+        return 0
+    return hour
+
+
+def _validate_meridiem_hour(hour: int, meridiem: str) -> bool:
+    """Validate hour range when meridiem is present (should be 1-12)."""
+    return 1 <= hour <= 12
+
+
+def _parse_absolute_time(message: str) -> int | None:
+    """Parse 'at HH:MM' pattern from message."""
+    at_time_match = re.search(r"at\s+(\d{1,2}):(\d{2})(?:\s*(am|pm))?", message, re.I)
+    if not at_time_match:
+        return None
+    
+    try:
+        hour = int(at_time_match.group(1))
+        minute = int(at_time_match.group(2))
+        meridiem = at_time_match.group(3)
+
+        # Validate hour range when meridiem is present
+        if meridiem and not _validate_meridiem_hour(hour, meridiem):
+            return None
+
+        if meridiem:
+            hour = _convert_meridiem_to_24h(hour, meridiem)
+
+        # Validate final hour and minute ranges
+        if not _validate_time_values(hour, minute):
+            return None
+
+        now = datetime.now()
+        reset_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if reset_time <= now:
+            reset_time += timedelta(days=1)
+        return int(reset_time.timestamp())
+    except ValueError:
+        return None
+
+
 def parse_rate_limit_reset_time(error_info: dict | None) -> int | None:
     """
     Parse rate limit reset time from error info.
@@ -319,51 +386,17 @@ def parse_rate_limit_reset_time(error_info: dict | None) -> int | None:
 
     message = error_info.get("message", "")
 
-    # Try to find patterns like "resets at 3:00 PM" or "in 5 minutes"
-    # Pattern: "in X minutes/hours" (timezone-safe - relative time)
-    in_time_match = re.search(r"in\s+(\d+)\s*(minute|hour|min|hr)s?", message, re.I)
-    if in_time_match:
-        amount = int(in_time_match.group(1))
-        unit = in_time_match.group(2).lower()
-        if unit.startswith("hour") or unit.startswith("hr"):
-            delta = timedelta(hours=amount)
-        else:
-            delta = timedelta(minutes=amount)
-        return int((datetime.now() + delta).timestamp())
+    # Try relative time pattern first
+    reset_time = _parse_relative_time(message)
+    if reset_time:
+        return reset_time
 
-    # Pattern: "at HH:MM" (12 or 24 hour)
-    at_time_match = re.search(r"at\s+(\d{1,2}):(\d{2})(?:\s*(am|pm))?", message, re.I)
-    if at_time_match:
-        try:
-            hour = int(at_time_match.group(1))
-            minute = int(at_time_match.group(2))
-            meridiem = at_time_match.group(3)
+    # Try absolute time pattern
+    reset_time = _parse_absolute_time(message)
+    if reset_time:
+        return reset_time
 
-            # Validate hour range when meridiem is present
-            # Hours should be 1-12 for AM/PM format
-            if meridiem and not (1 <= hour <= 12):
-                return None
-
-            if meridiem:
-                if meridiem.lower() == "pm" and hour < 12:
-                    hour += 12
-                elif meridiem.lower() == "am" and hour == 12:
-                    hour = 0
-
-            # Validate hour and minute ranges
-            if not (0 <= hour <= 23 and 0 <= minute <= 59):
-                return None
-
-            now = datetime.now()
-            reset_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-            if reset_time <= now:
-                reset_time += timedelta(days=1)
-            return int(reset_time.timestamp())
-        except ValueError:
-            # Invalid time values - return None to fall back to standard retry
-            return None
-
-    # No pattern matched - return None to let caller decide retry behavior
+    # No pattern matched
     return None
 
 
