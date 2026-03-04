@@ -829,7 +829,8 @@ async def run_autonomous_agent(
                 await streaming_wrapper.emit_agent_thinking(f"Starting {agent_type} session {iteration} for subtask {subtask_id or 'planning'}")
 
             status, response, error_info = await run_agent_session(
-                client, prompt, spec_dir, verbose=verbose, phase=current_log_phase
+                client, prompt, spec_dir, verbose=verbose, phase=current_log_phase,
+                streaming_wrapper=streaming_wrapper,
             )
 
             # Emit agent response event
