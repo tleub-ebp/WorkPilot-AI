@@ -2,12 +2,12 @@ import { AlertTriangle, Play, RotateCcw, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 
 interface TaskWarningsProps {
-  isStuck: boolean;
-  isIncomplete: boolean;
-  isRecovering: boolean;
-  taskProgress: { completed: number; total: number };
-  onRecover: () => void;
-  onResume: () => void;
+  readonly isStuck: boolean;
+  readonly isIncomplete: boolean;
+  readonly isRecovering: boolean;
+  readonly taskProgress: { completed: number; total: number };
+  readonly onRecover: () => void;
+  readonly onResume: () => void;
 }
 
 export function TaskWarnings({

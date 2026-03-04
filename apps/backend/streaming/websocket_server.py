@@ -214,32 +214,19 @@ class StreamingWebSocketServer:
             
     def _process_request(self, path, request_headers):
         """Process incoming WebSocket connection requests."""
-        # Store the path for later use in the handler
-        # We'll use the connection's ID to store the path
-        logger.info(f"WebSocket connection request to path: {path}")
         return None
 
     def _extract_websocket_path(self, websocket: WebSocketServerProtocol) -> str:
         """Extract path from websocket connection."""
         path = "/stream/default"  # Default fallback
-        
+
         try:
-            # Method 1: Check if path attribute exists
             if hasattr(websocket, 'path'):
                 path = websocket.path
-                logger.info(f"Found path via websocket.path: {path}")
-            # Method 2: Check if request_headers has path info
-            elif hasattr(websocket, 'request_headers'):
-                logger.info(f"Request headers: {dict(websocket.request_headers)}")
-            # Method 3: Check if there's a scope attribute (ASGI style)
             elif hasattr(websocket, 'scope'):
                 scope = websocket.scope
                 if scope and 'path' in scope:
                     path = scope['path']
-                    logger.info(f"Found path via scope: {path}")
-            # Method 4: Check connection attributes
-            elif hasattr(websocket, 'local_address') and hasattr(websocket, 'remote_address'):
-                logger.info(f"Connection: {websocket.local_address} <-> {websocket.remote_address}")
         except Exception as e:
             logger.error(f"Error extracting path: {e}")
             

@@ -13,8 +13,8 @@ import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 
 interface ClaudeOAuthFlowProps {
-  onSuccess: () => void;
-  onCancel?: () => void;
+  readonly onSuccess: () => void;
+  readonly onCancel?: () => void;
 }
 
 /**
@@ -48,7 +48,7 @@ export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
 
     try {
       // Get the active profile ID
-      const profilesResult = await window.electronAPI.getClaudeProfiles();
+      const profilesResult = await globalThis.electronAPI.getClaudeProfiles();
 
       if (!profilesResult.success || !profilesResult.data) {
         throw new Error('Failed to get Claude profiles');
@@ -58,7 +58,7 @@ export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
       console.warn('[ClaudeOAuth] Authenticating profile:', activeProfileId);
 
       // Open visible terminal for authentication
-      const result = await window.electronAPI.authenticateClaudeProfile(activeProfileId);
+      const result = await globalThis.electronAPI.authenticateClaudeProfile(activeProfileId);
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to open terminal for authentication');
@@ -84,7 +84,7 @@ export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
     setError(null);
 
     try {
-      const result = await window.electronAPI.verifyClaudeProfileAuth(authenticatingProfileId);
+      const result = await globalThis.electronAPI.verifyClaudeProfileAuth(authenticatingProfileId);
       console.warn('[ClaudeOAuth] Verification result:', result);
 
       if (result.success && result.data?.authenticated) {

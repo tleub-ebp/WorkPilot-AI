@@ -257,7 +257,7 @@ class OptimizedCopilotRuntime(TokenAwareAgentBase):
         
         This method maintains compatibility with the original interface.
         """
-        logger.info(f"Running optimized Copilot session")
+        logger.info("Running optimized Copilot session")
         
         # Create a task for internal tracking
         task = Task(
@@ -305,7 +305,6 @@ class OptimizedCopilotRuntime(TokenAwareAgentBase):
         """
         # For streaming, we'll use the original runtime directly
         # but still track token usage
-        logger.info(f"Streaming optimized Copilot session")
         
         # Estimate and record token usage
         estimated_tokens = len(prompt) // 4 + 350  # Approximate

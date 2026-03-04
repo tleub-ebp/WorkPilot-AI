@@ -14,13 +14,13 @@ import type { Project, GitStatus } from '@shared/types';
 import { useToast } from '@/hooks/use-toast';
 
 interface GitSetupModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  project: Project | null;
-  gitStatus: GitStatus | null;
-  onGitInitialized: () => void;
-  onSkip?: () => void;
-  remoteConfig?: { url?: string; name?: string };
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly project: Project | null;
+  readonly gitStatus: GitStatus | null;
+  readonly onGitInitialized: () => void;
+  readonly onSkip?: () => void;
+  readonly remoteConfig?: { url?: string; name?: string };
 }
 
 export function GitSetupModal({
@@ -58,7 +58,7 @@ export function GitSetupModal({
 
     try {
       // Call the backend to initialize git with remote config if available
-      const result = await window.electronAPI.initializeGit(project.path, storedRemoteConfig);
+      const result = await globalThis.electronAPI.initializeGit(project.path, storedRemoteConfig);
 
       if (result.success) {
         setStep('success');

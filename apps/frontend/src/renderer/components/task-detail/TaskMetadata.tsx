@@ -16,8 +16,7 @@ import {
   ListChecks,
   Clock,
   ExternalLink,
-  ChevronDown,
-  ChevronUp
+  ChevronDown
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -94,17 +93,50 @@ const CategoryIcon: Record<TaskCategory, typeof Target> = {
 };
 
 interface TaskMetadataProps {
-  task: Task;
+  readonly task: Task;
 }
 
 // Height threshold for collapsing long descriptions (~8 lines)
 const COLLAPSED_HEIGHT = 200;
 
+// Custom code component for ReactMarkdown
+const CustomCodeComponent = (props: any) => {
+  const { children, className, node, ...rest } = props;
+  const match = /language-(\w+)/.exec(className || '');
+  const isInline = !match;
+  
+  if (isInline) {
+    return (
+      <code className={className} {...rest}>
+        {children}
+      </code>
+    );
+  }
+  return (
+    <pre className="overflow-x-auto">
+      <code className={className} {...rest}>
+        {children}
+      </code>
+    </pre>
+  );
+};
+
+// Custom table component for ReactMarkdown
+const CustomTableComponent = (props: any) => {
+  const { children, ...rest } = props;
+  return (
+    <div className="overflow-x-auto my-4">
+      <table {...rest}>{children}</table>
+    </div>
+  );
+};
+
 export function TaskMetadata({ task }: TaskMetadataProps) {
   const { t } = useTranslation(['tasks', 'errors']);
   const formatRelativeTime = useFormatRelativeTime();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true); // Start expanded by default
   const [hasOverflow, setHasOverflow] = useState(false);
+  const [userManuallyExpanded, setUserManuallyExpanded] = useState(false); // Track user's manual choice
   const contentRef = useRef<HTMLDivElement>(null);
   const contentId = useId();
 
@@ -137,18 +169,18 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
         let newStyle = style;
         
         // Remplacer les couleurs noires par la couleur du texte du thème
-        newStyle = newStyle.replace(/color:\s*#000000?/gi, 'color: hsl(var(--foreground))');
-        newStyle = newStyle.replace(/color:\s*rgb\(0,\s*0,\s*0\)/gi, 'color: hsl(var(--foreground))');
-        newStyle = newStyle.replace(/color:\s*black/gi, 'color: hsl(var(--foreground))');
+        newStyle = newStyle.replaceAll(/color:\s*#000000?/gi, 'color: hsl(var(--foreground))');
+        newStyle = newStyle.replaceAll(/color:\s*rgb\(0,\s*0,\s*0\)/gi, 'color: hsl(var(--foreground))');
+        newStyle = newStyle.replaceAll(/color:\s*black/gi, 'color: hsl(var(--foreground))');
         
         // Remplacer les backgrounds blancs par transparent ou muted
-        newStyle = newStyle.replace(/background-color:\s*#ffffff?/gi, 'background-color: transparent');
-        newStyle = newStyle.replace(/background-color:\s*rgb\(255,\s*255,\s*255\)/gi, 'background-color: transparent');
-        newStyle = newStyle.replace(/background-color:\s*white/gi, 'background-color: transparent');
+        newStyle = newStyle.replaceAll(/background-color:\s*#ffffff?/gi, 'background-color: transparent');
+        newStyle = newStyle.replaceAll(/background-color:\s*rgb\(255,\s*255,\s*255\)/gi, 'background-color: transparent');
+        newStyle = newStyle.replaceAll(/background-color:\s*white/gi, 'background-color: transparent');
         
         // Simplifier les margins et paddings excessifs
-        newStyle = newStyle.replace(/margin-top:\s*\d+pt/gi, 'margin-top: 0.75rem');
-        newStyle = newStyle.replace(/margin-bottom:\s*\d+pt/gi, 'margin-bottom: 0.75rem');
+        newStyle = newStyle.replaceAll(/margin-top:\s*\d+pt/gi, 'margin-top: 0.75rem');
+        newStyle = newStyle.replaceAll(/margin-bottom:\s*\d+pt/gi, 'margin-bottom: 0.75rem');
         
         element.setAttribute('style', newStyle);
       }
@@ -174,7 +206,7 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
           break;
         case 'span':
           // Conserver les spans avec style inline mais ajouter classe pour couleur par défaut
-          if (!style || !style.includes('color')) {
+          if (!style?.includes('color')) {
             element.setAttribute('class', `${existingClass} text-foreground`.trim());
           }
           break;
@@ -211,16 +243,79 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
 
   // Detect if content overflows the collapsed height
   // Re-check when description changes (content height depends on rendered description)
-  // Reset expand state when switching tasks to avoid stale expanded state
+  // Start expanded, but auto-collapse if content exceeds threshold
   // biome-ignore lint/correctness/useExhaustiveDependencies: task.description triggers re-render which changes content height
   useLayoutEffect(() => {
-    setIsExpanded(false);
-    const element = contentRef.current;
-    if (element) {
-      const hasContentOverflow = element.scrollHeight > COLLAPSED_HEIGHT;
-      setHasOverflow(hasContentOverflow);
+    const checkOverflow = () => {
+      const element = contentRef.current;
+      if (element) {
+        // Temporarily remove max-height to get natural height
+        const originalMaxHeight = element.style.maxHeight;
+        element.style.maxHeight = 'none';
+        
+        // Force a reflow to get accurate measurements
+        element.getBoundingClientRect();
+        
+        const scrollHeight = element.scrollHeight;
+        const clientHeight = element.clientHeight;
+        const hasContentOverflow = scrollHeight > COLLAPSED_HEIGHT;
+        
+        // Restore original max-height
+        element.style.maxHeight = originalMaxHeight;
+        
+        console.log('[TaskMetadata] Overflow check:', {
+          scrollHeight,
+          clientHeight,
+          COLLAPSED_HEIGHT,
+          hasContentOverflow,
+          userManuallyExpanded,
+          taskId: task.id
+        });
+        
+        setHasOverflow(hasContentOverflow);
+        
+        // Only auto-collapse if user hasn't manually expanded
+        if (!userManuallyExpanded) {
+          setIsExpanded(!hasContentOverflow);
+        }
+      }
+    };
+
+    // Initial check
+    checkOverflow();
+
+    // Re-check after a short delay to ensure content is fully rendered
+    const timeoutId = setTimeout(checkOverflow, 100);
+
+    // Additional check after images and other elements might have loaded
+    const timeoutId2 = setTimeout(checkOverflow, 500);
+
+    // Set up ResizeObserver to detect content size changes, but with debouncing
+    let resizeObserver: ResizeObserver | null = null;
+    let resizeTimeout: NodeJS.Timeout | null = null;
+    
+    if (contentRef.current && typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        // Debounce resize events to prevent immediate re-collapse
+        if (resizeTimeout) {
+          clearTimeout(resizeTimeout);
+        }
+        resizeTimeout = setTimeout(checkOverflow, 50);
+      });
+      resizeObserver.observe(contentRef.current);
     }
-  }, [task.id, task.description]);
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearTimeout(timeoutId2);
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    };
+  }, [task.id, task.description, userManuallyExpanded]);
 
   const hasClassification = task.metadata && (
     task.metadata.category ||
@@ -245,7 +340,7 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
                 className={cn('text-xs', TASK_CATEGORY_COLORS[task.metadata.category])}
               >
                 {CategoryIcon[task.metadata.category] && (() => {
-                  const Icon = CategoryIcon[task.metadata.category!];
+                  const Icon = CategoryIcon[task.metadata.category];
                   return <Icon className="h-3 w-3 mr-1" />;
                 })()}
                 {TASK_CATEGORY_LABELS[task.metadata.category]}
@@ -391,35 +486,9 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
                   rehypePlugins={[rehypeRaw, [rehypeSanitize, customSanitizeSchema]]}
                   components={{
                     // Personnaliser le rendu des blocs de code
-                    code: (props) => {
-                      const { children, className, node, ...rest } = props as any;
-                      const match = /language-(\w+)/.exec(className || '');
-                      const isInline = !match;
-                      
-                      if (isInline) {
-                        return (
-                          <code className={className} {...rest}>
-                            {children}
-                          </code>
-                        );
-                      }
-                      return (
-                        <pre className="overflow-x-auto">
-                          <code className={className} {...rest}>
-                            {children}
-                          </code>
-                        </pre>
-                      );
-                    },
+                    code: CustomCodeComponent,
                     // Améliorer le rendu des tableaux
-                    table: (props) => {
-                      const { children, ...rest } = props;
-                      return (
-                        <div className="overflow-x-auto my-4">
-                          <table {...rest}>{children}</table>
-                        </div>
-                      );
-                    },
+                    table: CustomTableComponent,
                   }}
                 >
                   {displayDescription}
@@ -434,27 +503,21 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
           </div>
 
           {/* Expand/Collapse button */}
-          {hasOverflow && (
+          {hasOverflow && !isExpanded && (
             <div className="flex justify-center mt-2">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={() => {
+                  setIsExpanded(true);
+                  setUserManuallyExpanded(true);
+                }}
                 className="text-muted-foreground hover:text-foreground"
                 aria-expanded={isExpanded}
                 aria-controls={contentId}
               >
-                {isExpanded ? (
-                  <>
-                    <ChevronUp className="h-4 w-4 mr-1" aria-hidden="true" />
-                    {t('tasks:metadata.showLess')}
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-4 w-4 mr-1" aria-hidden="true" />
-                    {t('tasks:metadata.showMore')}
-                  </>
-                )}
+                <ChevronDown className="h-4 w-4 mr-1" aria-hidden="true" />
+                {t('tasks:metadata.showMore')}
               </Button>
             </div>
           )}
@@ -505,8 +568,8 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
                 {t('tasks:metadata.dependencies')}
               </h3>
               <ul className="text-sm text-foreground/80 list-disc list-inside space-y-0.5">
-                {task.metadata.dependencies.map((dep, idx) => (
-                  <li key={idx}>{dep}</li>
+                {task.metadata.dependencies.map((dep) => (
+                  <li key={dep}>{dep}</li>
                 ))}
               </ul>
             </div>
@@ -523,7 +586,7 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
                 type="button"
                 onClick={() => {
                   if (task.metadata?.prUrl) {
-                    window.electronAPI.openExternal(task.metadata.prUrl);
+                    globalThis.electronAPI.openExternal(task.metadata.prUrl);
                   }
                 }}
                 className="text-sm text-info hover:underline flex items-center gap-1.5 bg-transparent border-none cursor-pointer p-0 text-left"
@@ -542,8 +605,8 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
                 {t('tasks:metadata.acceptanceCriteria')}
               </h3>
               <ul className="text-sm text-foreground/80 list-disc list-inside space-y-0.5">
-                {task.metadata.acceptanceCriteria.map((criteria, idx) => (
-                  <li key={idx}>{criteria}</li>
+                {task.metadata.acceptanceCriteria.map((criteria) => (
+                  <li key={criteria.trim()}>{criteria}</li>
                 ))}
               </ul>
             </div>
@@ -557,8 +620,8 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
                 {t('tasks:metadata.affectedFiles')}
               </h3>
               <div className="flex flex-wrap gap-1">
-                {task.metadata.affectedFiles.map((file, idx) => (
-                  <Tooltip key={idx}>
+                {task.metadata.affectedFiles.map((file) => (
+                  <Tooltip key={file}>
                     <TooltipTrigger asChild>
                       <Badge variant="secondary" className="text-xs font-mono cursor-help">
                         {file.split('/').pop()}

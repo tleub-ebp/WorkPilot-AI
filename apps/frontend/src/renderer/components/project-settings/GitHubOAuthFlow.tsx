@@ -15,8 +15,8 @@ import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 
 interface GitHubOAuthFlowProps {
-  onSuccess: (token: string, username?: string) => void;
-  onCancel?: () => void;
+  readonly onSuccess: (token: string, username?: string) => void;
+  readonly onCancel?: () => void;
 }
 
 // Debug logging helper - logs when DEBUG env var is set or in development
@@ -121,7 +121,7 @@ export function GitHubOAuthFlow({ onSuccess, onCancel }: GitHubOAuthFlowProps) {
     debugLog('Setting up device code event listener');
 
     // Listen for device code from main process (sent immediately when extracted)
-    const cleanup = window.electronAPI.onGitHubAuthDeviceCode((data) => {
+    const cleanup = globalThis.electronAPI.onGitHubAuthDeviceCode((data) => {
       debugLog('Received device code from main process:', {
         hasCode: !!data.deviceCode,
         authUrl: data.authUrl,
@@ -151,7 +151,7 @@ export function GitHubOAuthFlow({ onSuccess, onCancel }: GitHubOAuthFlowProps) {
     try {
       // Check if gh CLI is installed
       debugLog('Calling checkGitHubCli...');
-      const cliResult = await window.electronAPI.checkGitHubCli();
+      const cliResult = await globalThis.electronAPI.checkGitHubCli();
       debugLog('checkGitHubCli result:', cliResult);
 
       if (!cliResult.success) {
@@ -174,7 +174,7 @@ export function GitHubOAuthFlow({ onSuccess, onCancel }: GitHubOAuthFlowProps) {
 
       // Check if already authenticated
       debugLog('Calling checkGitHubAuth...');
-      const authResult = await window.electronAPI.checkGitHubAuth();
+      const authResult = await globalThis.electronAPI.checkGitHubAuth();
       debugLog('checkGitHubAuth result:', authResult);
 
       if (authResult.success && authResult.data?.authenticated) {
@@ -197,7 +197,7 @@ export function GitHubOAuthFlow({ onSuccess, onCancel }: GitHubOAuthFlowProps) {
     debugLog('fetchAndNotifyToken() called');
     try {
       debugLog('Calling getGitHubToken...');
-      const tokenResult = await window.electronAPI.getGitHubToken();
+      const tokenResult = await globalThis.electronAPI.getGitHubToken();
       debugLog('getGitHubToken result:', {
         success: tokenResult.success,
         hasToken: !!tokenResult.data?.token,
@@ -241,7 +241,7 @@ export function GitHubOAuthFlow({ onSuccess, onCancel }: GitHubOAuthFlowProps) {
 
     try {
       debugLog('Calling startGitHubAuth...');
-      const result = await window.electronAPI.startGitHubAuth();
+      const result = await globalThis.electronAPI.startGitHubAuth();
       debugLog('startGitHubAuth result:', result);
 
       // Clear timeout since we got a response

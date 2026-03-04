@@ -10,7 +10,7 @@ import os
 import time as time_module
 from pathlib import Path
 
-from core.client import create_client
+from core.client import create_agent_client, create_client
 from core.task_event import TaskEventEmitter
 from debug import debug, debug_error, debug_section, debug_success, debug_warning
 from linear_updater import (

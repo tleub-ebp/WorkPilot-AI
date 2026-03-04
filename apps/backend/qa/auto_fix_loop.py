@@ -40,9 +40,11 @@ except ImportError:
     TestDiscovery = None
 
 try:
-    from core.client import create_client
+    from core.client import create_agent_client, create_client
 except ImportError:
     def create_client(*args, **kwargs):
+        return None
+    def create_agent_client(*args, **kwargs):
         return None
 
 try:
