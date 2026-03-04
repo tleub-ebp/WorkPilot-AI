@@ -339,6 +339,41 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Share session
+  const shareSession = useCallback(async () => {
+    const recording = {
+      session_id: sessionId,
+      events: events,
+      stats: sessionStats,
+      project_path: projectPath,
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      // Try to use Web Share API if available
+      if (navigator.share) {
+        const shareData = {
+          title: `Streaming Session - ${sessionId}`,
+          text: `Session duration: ${formatDuration(sessionStats.duration)}, Files changed: ${sessionStats.filesChanged}`,
+          url: globalThis.location?.href || '',
+        };
+        
+        await navigator.share(shareData);
+      } else {
+        // Fallback: copy session data to clipboard
+        const sessionText = JSON.stringify(recording, null, 2);
+        await navigator.clipboard.writeText(sessionText);
+        
+        // Show toast notification (if toast is available)
+        console.log('Session data copied to clipboard');
+      }
+    } catch (error) {
+      console.error('Error sharing session:', error);
+      // Fallback: download the file
+      downloadRecording();
+    }
+  }, [sessionId, events, sessionStats, projectPath, formatDuration, downloadRecording]);
+
   // Update duration every second
   useEffect(() => {
     const interval = setInterval(() => {
@@ -399,7 +434,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
             <Download className="w-4 h-4 mr-2" />
             {t('streaming:header.saveRecording')}
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={shareSession}>
             <Share2 className="w-4 h-4 mr-2" />
             {t('streaming:header.share')}
           </Button>
@@ -562,7 +597,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
       </div>
 
       {/* Bottom: Controls */}
-      <div className="flex items-center justify-center gap-4 px-6 py-4 border-t bg-muted/20">
+      <div className="flex items-center justify-center gap-4 px-6 py-0 border-t bg-muted/20">
         <Button 
           variant="outline" 
           size="lg" 
