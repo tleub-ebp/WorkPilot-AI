@@ -99,6 +99,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
 
       case 'command':
       case 'command_run':
+        setCurrentStatus(`⚡ ${event.data.command?.slice(0, 60) || 'Running command...'}`);
         setSessionStats(prev => ({
           ...prev,
           commandsRun: prev.commandsRun + 1,
@@ -106,6 +107,11 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         break;
 
       case 'command_output':
+        // Show command output in the code view
+        if (event.data.output) {
+          setCurrentFile('Terminal output');
+          setCurrentCode(event.data.output);
+        }
         break;
 
       case 'test_run':
@@ -118,8 +124,12 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
       case 'test_result':
         break;
 
+      case 'tool_use':
+        setCurrentStatus(`🔧 ${event.data.tool_name}${event.data.tool_input ? `: ${event.data.tool_input}` : ''}`);
+        break;
+
       case 'agent_thinking':
-        setCurrentStatus(t('streaming:status.thinking', { thought: event.data.thinking.slice(0, 50) }));
+        setCurrentStatus(event.data.thinking?.slice(0, 80) || t('streaming:status.thinking', { thought: '...' }));
         break;
 
       case 'agent_response':
@@ -196,7 +206,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         const streamEvent: StreamingEvent = JSON.parse(event.data);
         handleStreamingEvent(streamEvent);
       } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
+        console.error('[StreamingSession] Error parsing WebSocket message:', error);
       }
     };
 
@@ -339,7 +349,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
   }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-full bg-background">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b">
         <div className="flex items-center gap-4">
@@ -432,7 +442,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
 
         {/* Right: Tabs (Chat, Events, Timeline) */}
         <div className="w-96 flex flex-col border-l">
-          <Tabs defaultValue="chat" className="flex-1 flex flex-col">
+          <Tabs defaultValue="events" className="flex-1 flex flex-col">
             <TabsList className="w-full rounded-none border-b">
               <TabsTrigger value="chat" className="flex-1">
                 <MessageSquare className="w-4 h-4 mr-2" />

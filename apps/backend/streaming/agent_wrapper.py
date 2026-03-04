@@ -1,55 +1,165 @@
-﻿"""
+"""
 Agent Wrapper for Streaming Mode.
 
-Wraps the agent execution to emit streaming events in real-time.
+Connects to the streaming WebSocket server as a client to publish events.
+The WebSocket server (a separate process) then broadcasts these events to
+all frontend subscribers.
+
+Architecture:
+  Agent process  --ws-->  WebSocket server process  --ws-->  Frontend clients
+  (this wrapper)          (websocket_server.py)              (StreamingSession.tsx)
 """
 
+import asyncio
+import json
 import logging
+import time
 from typing import Any, Optional
 
 from .session_recorder import SessionRecorder
-from .streaming_manager import get_streaming_manager
 
 logger = logging.getLogger(__name__)
+
+# Try to import websockets for client connection
+try:
+    import websockets
+    WEBSOCKETS_AVAILABLE = True
+except ImportError:
+    WEBSOCKETS_AVAILABLE = False
 
 
 class StreamingAgentWrapper:
     """
-    Wraps agent execution to broadcast events for streaming mode.
-    
-    This wrapper intercepts agent operations and emits real-time events
-    that can be consumed by the frontend streaming UI.
+    Wraps agent execution to publish events to the streaming WebSocket server.
+
+    Instead of using the in-process StreamingManager (which has no subscribers
+    since the frontend connects to the separate WebSocket server process),
+    this wrapper connects to the WebSocket server as a client and sends events
+    through it.
     """
-    
-    def __init__(self, session_id: str, enable_recording: bool = True):
+
+    def __init__(self, session_id: str, enable_recording: bool = True,
+                 ws_host: str = "localhost", ws_port: int = 8765):
         self.session_id = session_id
-        self.streaming_manager = get_streaming_manager()
         self.enable_recording = enable_recording
         self.recorder = SessionRecorder() if enable_recording else None
         self._is_active = False
-        
+        self._ws_host = ws_host
+        self._ws_port = ws_port
+        self._ws: Optional[Any] = None
+        self._connected = False
+        logger.info(f"Streaming wrapper created for session {session_id} (ws://{ws_host}:{ws_port})")
+
+    async def _connect(self) -> bool:
+        """Connect to the WebSocket server, trying multiple addresses."""
+        if not WEBSOCKETS_AVAILABLE:
+            logger.warning("websockets package not installed, streaming unavailable")
+            return False
+
+        # Try multiple URLs in case of IPv4/IPv6 issues
+        urls_to_try = [
+            f"ws://{self._ws_host}:{self._ws_port}/stream/{self.session_id}",
+            f"ws://127.0.0.1:{self._ws_port}/stream/{self.session_id}",
+            f"ws://[::1]:{self._ws_port}/stream/{self.session_id}",
+        ]
+
+        for url in urls_to_try:
+            try:
+                logger.debug(f"Trying to connect to {url}...")
+                self._ws = await asyncio.wait_for(
+                    websockets.connect(
+                        url,
+                        ping_interval=20,
+                        ping_timeout=10,
+                        close_timeout=5,
+                    ),
+                    timeout=5.0,
+                )
+                # Send init_session to subscribe to the correct session
+                await self._ws.send(json.dumps({
+                    "type": "init_session",
+                    "session_id": self.session_id,
+                    "role": "agent",
+                }))
+                self._connected = True
+                logger.info(f"Connected to streaming server at {url}")
+                return True
+            except asyncio.TimeoutError:
+                logger.debug(f"Connection timed out: {url}")
+            except Exception as e:
+                logger.debug(f"Failed to connect to {url}: {e}")
+
+        logger.warning("Could not connect to streaming server on any address")
+        self._ws = None
+        self._connected = False
+        return False
+
+    async def _disconnect(self):
+        """Disconnect from the WebSocket server."""
+        if self._ws:
+            try:
+                await self._ws.close()
+            except Exception:
+                pass
+            self._ws = None
+            self._connected = False
+
+    async def _send_event(self, event_type: str, data: dict[str, Any]):
+        """Send an event to the WebSocket server for broadcasting."""
+        if not self._connected or not self._ws:
+            return
+
+        try:
+            message = {
+                "type": "agent_event",
+                "event": {
+                    "event_type": event_type,
+                    "timestamp": time.time(),
+                    "data": data,
+                    "session_id": self.session_id,
+                },
+            }
+            await self._ws.send(json.dumps(message))
+        except Exception as e:
+            logger.warning(f"Failed to send streaming event: {e}")
+            self._connected = False
+
     async def start_session(self, metadata: dict[str, Any]):
         """Start a streaming session."""
         self._is_active = True
-        await self.streaming_manager.start_session(self.session_id, metadata)
-        
+
+        # Connect to WebSocket server
+        connected = await self._connect()
+        if not connected:
+            logger.warning(f"Session {self.session_id} started but WebSocket not connected")
+
+        # Send session_start event
+        await self._send_event("session_start", {
+            "session_id": self.session_id,
+            "metadata": metadata,
+        })
+
         if self.recorder:
             self.recorder.start_recording(self.session_id, metadata)
-            
-        logger.info(f"Started streaming session {self.session_id}")
-        
+
+        logger.info(f"Streaming session started: {self.session_id} (connected={connected})")
+
     async def end_session(self):
         """End a streaming session."""
         self._is_active = False
-        await self.streaming_manager.end_session(self.session_id)
-        
+
+        await self._send_event("session_end", {
+            "session_id": self.session_id,
+        })
+
         if self.recorder:
             recording = self.recorder.stop_recording(self.session_id)
             if recording:
                 logger.info(f"Session recording saved: {recording.session_id}")
-                
+
+        await self._disconnect()
         logger.info(f"Ended streaming session {self.session_id}")
-        
+
     async def emit_file_change(
         self,
         file_path: str,
@@ -59,78 +169,63 @@ class StreamingAgentWrapper:
         """Emit a file change event."""
         if not self._is_active:
             return
-            
-        await self.streaming_manager.emit_file_operation(
-            session_id=self.session_id,
-            operation=operation,
-            file_path=file_path,
-            content=content,
-        )
-        
+        await self._send_event(f"file_{operation}", {
+            "file_path": file_path,
+            "content": content,
+        })
+
     async def emit_command(self, command: str, cwd: Optional[str] = None):
         """Emit a command execution event."""
         if not self._is_active:
             return
-            
-        await self.streaming_manager.emit_command(
-            session_id=self.session_id,
-            command=command,
-            cwd=cwd,
-        )
-        
+        await self._send_event("command_run", {
+            "command": command,
+            "cwd": cwd,
+        })
+
     async def emit_command_output(self, output: str, is_error: bool = False):
         """Emit command output event."""
         if not self._is_active:
             return
-            
-        await self.streaming_manager.emit_command_output(
-            session_id=self.session_id,
-            output=output,
-            is_error=is_error,
-        )
-        
+        await self._send_event("command_output", {
+            "output": output,
+            "is_error": is_error,
+        })
+
     async def emit_agent_thinking(self, thinking: str):
         """Emit agent thinking/reasoning event."""
         if not self._is_active:
             return
-            
-        await self.streaming_manager.emit_agent_thinking(
-            session_id=self.session_id,
-            thinking=thinking,
-        )
-        
+        await self._send_event("agent_thinking", {
+            "thinking": thinking,
+        })
+
     async def emit_agent_response(self, response: str, tokens_used: Optional[int] = None):
         """Emit agent response event."""
         if not self._is_active:
             return
-            
-        await self.streaming_manager.emit_agent_response(
-            session_id=self.session_id,
-            response=response,
-            tokens_used=tokens_used,
-        )
-        
+        await self._send_event("agent_response", {
+            "response": response,
+            "tokens_used": tokens_used,
+        })
+
     async def emit_test_run(self, test_command: str):
         """Emit test run event."""
         if not self._is_active:
             return
-            
-        await self.streaming_manager.emit_test_run(
-            session_id=self.session_id,
-            test_command=test_command,
-        )
-        
+        await self._send_event("test_run", {
+            "test_command": test_command,
+        })
+
     async def emit_test_result(self, success: bool, details: Optional[str] = None):
         """Emit test result event."""
         if not self._is_active:
             return
-            
-        await self.streaming_manager.emit_test_result(
-            session_id=self.session_id,
-            success=success,
-            details=details,
-        )
-        
+        await self._send_event("test_result", {
+            "success": success,
+            "details": details,
+        })
+
     async def emit_progress(
         self,
         progress: float,
@@ -140,14 +235,21 @@ class StreamingAgentWrapper:
         """Emit progress update event."""
         if not self._is_active:
             return
-            
-        await self.streaming_manager.emit_progress(
-            session_id=self.session_id,
-            progress=progress,
-            status=status,
-            current_step=current_step,
-        )
-        
+        await self._send_event("progress_update", {
+            "progress": progress,
+            "status": status,
+            "current_step": current_step,
+        })
+
+    async def emit_tool_use(self, tool_name: str, tool_input: Optional[str] = None):
+        """Emit a tool use event for real-time activity display."""
+        if not self._is_active:
+            return
+        await self._send_event("tool_use", {
+            "tool_name": tool_name,
+            "tool_input": tool_input,
+        })
+
     async def emit_chat_message(
         self,
         message: str,
@@ -157,13 +259,11 @@ class StreamingAgentWrapper:
         """Emit a chat message from the agent."""
         if not self._is_active:
             return
-            
-        await self.streaming_manager.emit_chat_message(
-            session_id=self.session_id,
-            message=message,
-            author=author,
-            author_type=author_type,
-        )
+        await self._send_event("chat_message", {
+            "message": message,
+            "author": author,
+            "author_type": author_type,
+        })
 
 
 # Convenience function to create a wrapper

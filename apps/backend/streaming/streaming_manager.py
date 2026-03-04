@@ -32,6 +32,9 @@ class EventType(str, Enum):
     CHAT_MESSAGE = "chat_message"
     INTERVENTION = "intervention"
     PROGRESS_UPDATE = "progress_update"
+    TOOL_USE = "tool_use"
+    SESSION_CONFIRMED = "session_confirmed"
+    FILE_OPERATION = "file_operation"
 
 
 @dataclass

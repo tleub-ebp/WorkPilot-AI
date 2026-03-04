@@ -437,6 +437,7 @@ async def run_agent_session(
     spec_dir: Path,
     verbose: bool = False,
     phase: LogPhase = LogPhase.CODING,
+    streaming_wrapper: Any = None,
 ) -> tuple[str, str, dict]:
     """
     Run a single agent session using Claude Agent SDK or any AgentClient provider.
@@ -464,7 +465,7 @@ async def run_agent_session(
     """
     # If client is an AgentClient, delegate to the provider-agnostic session runner
     if isinstance(client, AgentClient):
-        return await _run_agent_client_session(client, message, spec_dir, verbose, phase)
+        return await _run_agent_client_session(client, message, spec_dir, verbose, phase, streaming_wrapper=streaming_wrapper)
 
     debug_section("session", f"Agent Session - {phase.value}")
     debug(
@@ -517,6 +518,12 @@ async def run_agent_session(
                                 phase,
                                 print_to_console=False,
                             )
+                        # Stream agent thinking to live view
+                        if streaming_wrapper and block.text.strip():
+                            try:
+                                await streaming_wrapper.emit_agent_thinking(block.text[:300])
+                            except Exception:
+                                pass
                     elif block_type == "ToolUseBlock" and hasattr(block, "name"):
                         tool_name = block.name
                         tool_input_display = None
@@ -567,6 +574,21 @@ async def run_agent_session(
                             else:
                                 print(f"   Input: {input_str}", flush=True)
                         current_tool = tool_name
+
+                        # Stream tool use events to live view
+                        if streaming_wrapper and inp:
+                            try:
+                                await streaming_wrapper.emit_tool_use(tool_name, tool_input_display)
+                                if tool_name in ("Edit", "Write") and inp.get("file_path"):
+                                    content = inp.get("content") or inp.get("new_string", "")
+                                    await streaming_wrapper.emit_file_change(
+                                        inp["file_path"], "update",
+                                        content[:2000] if content else None,
+                                    )
+                                elif tool_name == "Bash" and inp.get("command"):
+                                    await streaming_wrapper.emit_command(inp["command"][:500])
+                            except Exception:
+                                pass
 
             # Handle UserMessage (tool results)
             elif msg_type == "UserMessage" and hasattr(msg, "content"):
@@ -647,6 +669,16 @@ async def run_agent_session(
                                     detail=detail_content,
                                     phase=phase,
                                 )
+
+                        # Stream command output to live view
+                        if streaming_wrapper and current_tool:
+                            try:
+                                if current_tool == "Bash":
+                                    await streaming_wrapper.emit_command_output(
+                                        str(result_content)[:1000], is_error=is_error
+                                    )
+                            except Exception:
+                                pass
 
                         current_tool = None
 
@@ -739,6 +771,7 @@ async def _run_agent_client_session(
     spec_dir: Path,
     verbose: bool = False,
     phase: LogPhase = LogPhase.CODING,
+    streaming_wrapper: Any = None,
 ) -> tuple[str, str, dict]:
     """
     Run a single agent session using any AgentClient provider.
@@ -800,6 +833,12 @@ async def _run_agent_client_session(
                             phase,
                             print_to_console=False,
                         )
+                    # Stream agent thinking to live view
+                    if streaming_wrapper and block.text.strip():
+                        try:
+                            await streaming_wrapper.emit_agent_thinking(block.text[:300])
+                        except Exception:
+                            pass
 
                 elif block.type == ContentBlockType.TOOL_USE:
                     tool_name = block.tool_name or ""
@@ -846,6 +885,21 @@ async def _run_agent_client_session(
                         else:
                             print(f"   Input: {input_str}", flush=True)
                     current_tool = tool_name
+
+                    # Stream tool use events to live view
+                    if streaming_wrapper and inp:
+                        try:
+                            await streaming_wrapper.emit_tool_use(tool_name, tool_input_display)
+                            if tool_name in ("Edit", "Write") and inp.get("file_path"):
+                                content = inp.get("content") or inp.get("new_string", "")
+                                await streaming_wrapper.emit_file_change(
+                                    inp["file_path"], "update",
+                                    content[:2000] if content else None,
+                                )
+                            elif tool_name == "Bash" and inp.get("command"):
+                                await streaming_wrapper.emit_command(inp["command"][:500])
+                        except Exception:
+                            pass
 
                 elif block.type == ContentBlockType.TOOL_RESULT:
                     is_error = block.is_error
@@ -905,6 +959,16 @@ async def _run_agent_client_session(
                                 detail=detail_content,
                                 phase=phase,
                             )
+
+                    # Stream command output to live view
+                    if streaming_wrapper and current_tool:
+                        try:
+                            if current_tool == "Bash":
+                                await streaming_wrapper.emit_command_output(
+                                    str(result_content)[:1000], is_error=is_error
+                                )
+                        except Exception:
+                            pass
 
                     current_tool = None
 
