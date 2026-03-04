@@ -32,7 +32,7 @@ import {
   JSON_ERROR_PREFIX,
   JSON_ERROR_TITLE_SUFFIX
 } from '../../shared/constants';
-import { startTask, stopTask, checkTaskRunning, recoverStuckTask, isIncompleteHumanReview, archiveTasks, hasRecentActivity, deleteTasks } from '../stores/task-store';
+import { startTask, stopTask, checkTaskRunning, recoverStuckTask, isIncompleteHumanReview, archiveTasks, hasRecentActivity } from '../stores/task-store';
 import { useProjectStore } from '../stores/project-store';
 import type { Task, TaskCategory, ReviewReason, TaskStatus } from '../../shared/types';
 import {useFormatRelativeTime} from "@/hooks/useFormatRelativeTime";
@@ -69,6 +69,408 @@ interface TaskCardProps {
   // Optional PR files viewer handler
   onViewPRFiles?: (prUrl: string, taskId: string) => void;
 }
+
+// Metadata badges component - extracted to reduce complexity
+interface MetadataBadgesProps {
+  task: Task;
+  isStuck: boolean;
+  isIncomplete: boolean;
+  hasActiveExecution?: boolean;
+  executionPhase?: string;
+  reviewReasonInfo: { label: string; variant: 'success' | 'destructive' | 'warning' } | null;
+  t: any;
+}
+
+const MetadataBadges: React.FC<MetadataBadgesProps> = ({
+  task,
+  isStuck,
+  isIncomplete,
+  hasActiveExecution,
+  executionPhase,
+  reviewReasonInfo,
+  t
+}) => {
+  // Extract status badge variant and label for non-done tasks
+  let statusBadgeVariant: "default" | "destructive" | "outline" | "secondary" | "success" | "warning" | "info" | "purple" | "muted";
+  let statusBadgeLabel: string;
+
+  if (isStuck) {
+    statusBadgeVariant = 'warning';
+    statusBadgeLabel = t('labels.needsRecovery');
+  } else if (isIncomplete) {
+    statusBadgeVariant = 'warning';
+    statusBadgeLabel = t('labels.needsResume');
+  } else {
+    statusBadgeVariant = getStatusBadgeVariant(task.status);
+    statusBadgeLabel = getStatusLabel(task.status, t);
+  }
+
+  if (!task.metadata && !isStuck && !isIncomplete && !hasActiveExecution && !reviewReasonInfo) {
+    return null;
+  }
+
+  return (
+    <div className="mt-2.5 flex flex-wrap gap-1.5">
+      {/* Stuck indicator - highest priority */}
+      {isStuck && (
+        <Badge
+          variant="outline"
+          className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-warning/10 text-warning border-warning/30 badge-priority-urgent"
+        >
+          <AlertTriangle className="h-2.5 w-2.5" />
+          {t('labels.stuck')}
+        </Badge>
+      )}
+      
+      {/* Incomplete indicator - task in human_review but no subtasks completed */}
+      {isIncomplete && !isStuck && (
+        <Badge
+          variant="outline"
+          className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-orange-500/10 text-orange-400 border-orange-500/30"
+        >
+          <AlertTriangle className="h-2.5 w-2.5" />
+          {t('labels.incomplete')}
+        </Badge>
+      )}
+      
+      {/* Archived indicator - task has been released */}
+      {task.metadata?.archivedAt && (
+        <Badge
+          variant="outline"
+          className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-muted text-muted-foreground border-border"
+        >
+          <Archive className="h-2.5 w-2.5" />
+          {t('status.archived')}
+        </Badge>
+      )}
+      
+      {/* Execution phase badge - shown when actively running */}
+      {hasActiveExecution && executionPhase && !isStuck && !isIncomplete && (
+        <Badge
+          variant="outline"
+          className={cn(
+            'text-[10px] px-1.5 py-0.5 flex items-center gap-1',
+            EXECUTION_PHASE_BADGE_COLORS[executionPhase]
+          )}
+        >
+          <Loader2 className="h-2.5 w-2.5 animate-spin" />
+          {EXECUTION_PHASE_LABELS[executionPhase]}
+        </Badge>
+      )}
+      
+      {/* Status badge - hide when execution phase badge is showing */}
+      {!hasActiveExecution && (
+        task.status === 'done' ? (
+          <Badge
+            variant={getStatusBadgeVariant(task.status)}
+            className="text-[10px] px-1.5 py-0.5"
+          >
+            {getStatusLabel(task.status, t)}
+          </Badge>
+        ) : (
+          <Badge
+            variant={statusBadgeVariant}
+            className="text-[10px] px-1.5 py-0.5"
+          >
+            {statusBadgeLabel}
+          </Badge>
+        )
+      )}
+      
+      {/* Review reason badge - explains why task needs human review */}
+      {reviewReasonInfo && !isStuck && !isIncomplete && (
+        <Badge
+          variant={reviewReasonInfo.variant}
+          className="text-[10px] px-1.5 py-0.5"
+        >
+          {reviewReasonInfo.label}
+        </Badge>
+      )}
+      
+      {/* Category badge with icon */}
+      {task.metadata?.category && (
+        <Badge
+          variant="outline"
+          className={cn('text-[10px] px-1.5 py-0', TASK_CATEGORY_COLORS[task.metadata.category])}
+        >
+          {CategoryIcon[task.metadata.category] && (
+            (() => {
+              const Icon = CategoryIcon[task.metadata.category];
+              return <Icon className="h-2.5 w-2.5 mr-0.5" />;
+            })()
+          )}
+          {TASK_CATEGORY_LABELS[task.metadata.category]}
+        </Badge>
+      )}
+      
+      {/* Impact badge - high visibility for important tasks */}
+      {task.metadata?.impact && (task.metadata.impact === 'high' || task.metadata.impact === 'critical') && (
+        <Badge
+          variant="outline"
+          className={cn('text-[10px] px-1.5 py-0', TASK_IMPACT_COLORS[task.metadata.impact])}
+        >
+          {TASK_IMPACT_LABELS[task.metadata.impact]}
+        </Badge>
+      )}
+      
+      {/* Complexity badge */}
+      {task.metadata?.complexity && (
+        <Badge
+          variant="outline"
+          className={cn('text-[10px] px-1.5 py-0', TASK_COMPLEXITY_COLORS[task.metadata.complexity])}
+        >
+          {TASK_COMPLEXITY_LABELS[task.metadata.complexity]}
+        </Badge>
+      )}
+      
+      {/* Priority badge - only show urgent/high */}
+      {task.metadata?.priority && (task.metadata.priority === 'urgent' || task.metadata.priority === 'high') && (
+        <Badge
+          variant="outline"
+          className={cn('text-[10px] px-1.5 py-0', TASK_PRIORITY_COLORS[task.metadata.priority])}
+        >
+          {TASK_PRIORITY_LABELS[task.metadata.priority]}
+        </Badge>
+      )}
+      
+      {/* Security severity - always show */}
+      {task.metadata?.securitySeverity && (
+        <Badge
+          variant="outline"
+          className={cn('text-[10px] px-1.5 py-0', TASK_IMPACT_COLORS[task.metadata.securitySeverity])}
+        >
+          {task.metadata.securitySeverity} {t('metadata.severity')}
+        </Badge>
+      )}
+    </div>
+  );
+};
+
+// Action buttons component - extracted to reduce complexity
+interface ActionButtonsProps {
+  isStuck: boolean;
+  isRecovering: boolean;
+  isIncomplete: boolean;
+  isRunning: boolean;
+  task: Task;
+  currentProject?: any;
+  onViewPRFiles?: (prUrl: string, taskId: string) => void;
+  handleRecover: (e: React.MouseEvent) => void;
+  handleStartStop: (e: React.MouseEvent) => void;
+  handleViewPR: (e: React.MouseEvent) => void;
+  handleArchive: (e: React.MouseEvent) => void;
+  statusMenuItems: React.ReactNode;
+  t: any;
+}
+
+const ActionButtons: React.FC<ActionButtonsProps> = ({
+  isStuck,
+  isRecovering,
+  isIncomplete,
+  isRunning,
+  task,
+  currentProject,
+  onViewPRFiles,
+  handleRecover,
+  handleStartStop,
+  handleViewPR,
+  handleArchive,
+  statusMenuItems,
+  t
+}) => {
+  if (isStuck) {
+    return (
+      <Button
+        variant="warning"
+        size="sm"
+        className="h-7 px-2.5"
+        onClick={handleRecover}
+        disabled={isRecovering}
+      >
+        {isRecovering ? (
+          <>
+            <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+            {t('labels.recovering')}
+          </>
+        ) : (
+          <>
+            <RotateCcw className="mr-1.5 h-3 w-3" />
+            {t('actions.recover')}
+          </>
+        )}
+      </Button>
+    );
+  }
+
+  if (isIncomplete) {
+    return (
+      <Button
+        variant="default"
+        size="sm"
+        className="h-7 px-2.5"
+        onClick={handleStartStop}
+      >
+        <Play className="mr-1.5 h-3 w-3" />
+        {t('actions.resume')}
+      </Button>
+    );
+  }
+
+  if (task.status === 'done' && task.metadata?.prUrl) {
+    return (
+      <div className="flex gap-1">
+        {task.metadata?.prUrl && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 cursor-pointer"
+            onClick={handleViewPR}
+            title={t('tooltips.viewPR')}
+          >
+            <GitPullRequest className="h-3 w-3" />
+          </Button>
+        )}
+        {task.metadata?.prUrl && onViewPRFiles && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 hover:bg-primary/10 transition-colors"
+            onClick={() => onViewPRFiles(task.metadata!.prUrl!, task.id)}
+            title={t('tooltips.viewPRFiles')}
+          >
+            <FileText className="h-3 w-3 mr-1" />
+            {t('tasks:prFiles.short')}
+          </Button>
+        )}
+        {!task.metadata?.archivedAt && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 cursor-pointer"
+            onClick={handleArchive}
+            title={t('tooltips.archiveTask')}
+          >
+            <Archive className="h-3 w-3" />
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  if (task.status === 'done' && !task.metadata?.archivedAt) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 px-2.5 hover:bg-muted-foreground/10"
+        onClick={handleArchive}
+        title={t('tooltips.archiveTask')}
+      >
+        <Archive className="mr-1.5 h-3 w-3" />
+        {t('actions.archive')}
+      </Button>
+    );
+  }
+
+  if (task.status === 'backlog' || task.status === 'queue' || task.status === 'in_progress') {
+    return (
+      <>
+        {isRunning && !isStuck && currentProject?.path && (
+          <StreamingSessionButton
+            taskId={task.id}
+            projectPath={currentProject.path}
+          />
+        )}
+        <Button
+          variant={isRunning ? 'destructive' : 'default'}
+          size="sm"
+          className="h-7 px-2.5"
+          onClick={handleStartStop}
+        >
+          {isRunning ? (
+            <>
+              <Square className="mr-1.5 h-3 w-3" />
+              {t('actions.stop')}
+            </>
+          ) : (
+            <>
+              <Play className="mr-1.5 h-3 w-3" />
+              {t('actions.start')}
+            </>
+          )}
+        </Button>
+      </>
+    );
+  }
+
+  return null;
+};
+
+// Utility functions - moved outside component to reduce complexity
+const getStatusBadgeVariant = (status: string): "default" | "destructive" | "outline" | "secondary" | "success" | "warning" | "info" | "purple" | "muted" => {
+  switch (status) {
+    case 'in_progress':
+      return 'info';
+    case 'ai_review':
+      return 'warning';
+    case 'human_review':
+      return 'purple';
+    case 'done':
+      return 'success';
+    default:
+      return 'secondary';
+  }
+};
+
+const getReviewReasonLabel = (reason?: ReviewReason, t?: any): { label: string; variant: 'success' | 'destructive' | 'warning' } | null => {
+  if (!reason || !t) return null;
+  switch (reason) {
+    case 'completed':
+      return { label: t('reviewReason.completed'), variant: 'success' };
+    case 'errors':
+      return { label: t('reviewReason.hasErrors'), variant: 'destructive' };
+    case 'qa_rejected':
+      return { label: t('reviewReason.qaIssues'), variant: 'warning' };
+    case 'plan_review':
+      return { label: t('reviewReason.approvePlan'), variant: 'warning' };
+    case 'stopped':
+      return { label: t('reviewReason.stopped'), variant: 'warning' };
+    default:
+      return null;
+  }
+};
+
+const getStatusLabel = (status: string, t?: any): string => {
+  if (!t) return status;
+  switch (status) {
+    case 'in_progress':
+      return t('labels.running');
+    case 'ai_review':
+      return t('labels.aiReview');
+    case 'human_review':
+      return t('labels.needsReview');
+    case 'done':
+      return t('status.complete');
+    default:
+      return t('labels.pending');
+  }
+};
+
+const isDeleteAreaClick = (e: React.MouseEvent, rect: DOMRect): boolean => {
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const deleteArea = { x: rect.width - 32, y: 0, width: 32, height: 32 };
+  return x >= deleteArea.x && x <= deleteArea.x + deleteArea.width &&
+         y >= deleteArea.y && y <= deleteArea.y + deleteArea.height;
+};
+
+const isDeleteAreaMouseDown = (e: React.MouseEvent, rect: DOMRect): boolean => {
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const deleteArea = { x: rect.width - 50, y: 0, width: 50, height: 40 };
+  return x >= deleteArea.x && x <= deleteArea.x + deleteArea.width &&
+         y >= deleteArea.y && y <= deleteArea.y + deleteArea.height;
+};
 
 // Custom comparator for React.memo - only re-render when relevant task data changes
 function taskCardPropsAreEqual(prevProps: TaskCardProps, nextProps: TaskCardProps): boolean {
@@ -117,7 +519,7 @@ function taskCardPropsAreEqual(prevProps: TaskCardProps, nextProps: TaskCardProp
   );
 
   // Only log when actually re-rendering (reduces noise significantly)
-  if (window.DEBUG && !isEqual) {
+  if ((globalThis as any).DEBUG && !isEqual) {
     const changes: string[] = [];
     if (prevTask.status !== nextTask.status) changes.push(`status: ${prevTask.status} -> ${nextTask.status}`);
     if (prevTask.executionProgress?.phase !== nextTask.executionProgress?.phase) {
@@ -146,7 +548,6 @@ export const TaskCard = memo(function TaskCard({
   const formatRelativeTime = useFormatRelativeTime();
   const [isStuck, setIsStuck] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const stuckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const deleteButtonRef = useRef<HTMLButtonElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -272,15 +673,8 @@ export const TaskCard = memo(function TaskCard({
 
   const handleViewPR = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (task.metadata?.prUrl && window.electronAPI?.openExternal) {
-      window.electronAPI.openExternal(task.metadata.prUrl);
-    }
-  };
-
-  const handleViewPRFiles = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (task.metadata?.prUrl && onViewPRFiles) {
-      onViewPRFiles(task.metadata.prUrl, task.id);
+    if (task.metadata?.prUrl && (globalThis as any).electronAPI?.openExternal) {
+      (globalThis as any).electronAPI.openExternal(task.metadata.prUrl);
     }
   };
 
@@ -296,74 +690,20 @@ export const TaskCard = memo(function TaskCard({
     if (onDelete) {
       // Get the click coordinates relative to the card
       const rect = cardRef.current?.getBoundingClientRect();
-      if (rect) {
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        // Define a 32x32px area in the top-right corner where clicks should trigger delete
-        const deleteArea = { x: rect.width - 32, y: 0, width: 32, height: 32 };
-        if (x >= deleteArea.x && x <= deleteArea.x + deleteArea.width &&
-            y >= deleteArea.y && y <= deleteArea.y + deleteArea.height) {
-          return; // Don't open the task if clicking in the delete area
-        }
+      if (rect && isDeleteAreaClick(e, rect)) {
+        return; // Don't open the task if clicking in the delete area
       }
     }
     // Open task details on click
     onClick();
   };
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'in_progress':
-        return 'info';
-      case 'ai_review':
-        return 'warning';
-      case 'human_review':
-        return 'purple';
-      case 'done':
-        return 'success';
-      default:
-        return 'secondary';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'in_progress':
-        return t('labels.running');
-      case 'ai_review':
-        return t('labels.aiReview');
-      case 'human_review':
-        return t('labels.needsReview');
-      case 'done':
-        return t('status.complete');
-      default:
-        return t('labels.pending');
-    }
-  };
-
-  const getReviewReasonLabel = (reason?: ReviewReason): { label: string; variant: 'success' | 'destructive' | 'warning' } | null => {
-    if (!reason) return null;
-    switch (reason) {
-      case 'completed':
-        return { label: t('reviewReason.completed'), variant: 'success' };
-      case 'errors':
-        return { label: t('reviewReason.hasErrors'), variant: 'destructive' };
-      case 'qa_rejected':
-        return { label: t('reviewReason.qaIssues'), variant: 'warning' };
-      case 'plan_review':
-        return { label: t('reviewReason.approvePlan'), variant: 'warning' };
-      case 'stopped':
-        return { label: t('reviewReason.stopped'), variant: 'warning' };
-      default:
-        return null;
-    }
-  };
 
   // When executionPhase is 'complete', always show 'completed' badge regardless of reviewReason
   // This ensures the user sees "Complete" when the task finished successfully
   const effectiveReviewReason: ReviewReason | undefined =
     executionPhase === 'complete' ? 'completed' : task.reviewReason;
-  const reviewReasonInfo = task.status === 'human_review' ? getReviewReasonLabel(effectiveReviewReason) : null;
+  const reviewReasonInfo = task.status === 'human_review' ? getReviewReasonLabel(effectiveReviewReason, t) : null;
 
   const isArchived = !!task.metadata?.archivedAt;
   
@@ -371,13 +711,13 @@ export const TaskCard = memo(function TaskCard({
   const isFromAzureDevOps = !!(task.metadata?.azureDevOpsIdentifier || task.metadata?.azureDevOpsUrl);
   
   // Debug: log to console to check detection
-  if (isFromAzureDevOps && window.DEBUG) {
+  if (isFromAzureDevOps && (globalThis as any).DEBUG) {
     console.log('[TaskCard] Azure DevOps task detected:', task.id, task.metadata);
   }
 
   return (
     <Card
-      role="article"
+      role="option"
       aria-label={displayTitle}
       aria-selected={isSelectable ? isSelected : undefined}
       tabIndex={0}
@@ -402,22 +742,9 @@ export const TaskCard = memo(function TaskCard({
         // Additional mouse down handler to catch events early
         if (onDelete) {
           const rect = cardRef.current?.getBoundingClientRect();
-          if (rect) {
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            // If click is in the top-right corner area (where delete button is), don't open task
-            const deleteArea = {
-              x: rect.width - 50,  // 50px from right edge
-              y: 0,               // from top
-              width: 50,
-              height: 40
-            };
-
-            if (x >= deleteArea.x && x <= deleteArea.x + deleteArea.width &&
-                y >= deleteArea.y && y <= deleteArea.y + deleteArea.height) {
-              e.preventDefault();
-              e.stopPropagation();
-            }
+          if (rect && isDeleteAreaMouseDown(e, rect)) {
+            e.preventDefault();
+            e.stopPropagation();
           }
         }
       }}
@@ -470,131 +797,15 @@ export const TaskCard = memo(function TaskCard({
         )}
 
         {/* Metadata badges */}
-        {(task.metadata || isStuck || isIncomplete || hasActiveExecution || reviewReasonInfo) && (
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
-            {/* Stuck indicator - highest priority */}
-            {isStuck && (
-              <Badge
-                variant="outline"
-                className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-warning/10 text-warning border-warning/30 badge-priority-urgent"
-              >
-                <AlertTriangle className="h-2.5 w-2.5" />
-                {t('labels.stuck')}
-              </Badge>
-            )}
-            {/* Incomplete indicator - task in human_review but no subtasks completed */}
-            {isIncomplete && !isStuck && (
-              <Badge
-                variant="outline"
-                className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-orange-500/10 text-orange-400 border-orange-500/30"
-              >
-                <AlertTriangle className="h-2.5 w-2.5" />
-                {t('labels.incomplete')}
-              </Badge>
-            )}
-            {/* Archived indicator - task has been released */}
-            {task.metadata?.archivedAt && (
-              <Badge
-                variant="outline"
-                className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-muted text-muted-foreground border-border"
-              >
-                <Archive className="h-2.5 w-2.5" />
-                {t('status.archived')}
-              </Badge>
-            )}
-            {/* Execution phase badge - shown when actively running */}
-            {hasActiveExecution && executionPhase && !isStuck && !isIncomplete && (
-              <Badge
-                variant="outline"
-                className={cn(
-                  'text-[10px] px-1.5 py-0.5 flex items-center gap-1',
-                  EXECUTION_PHASE_BADGE_COLORS[executionPhase]
-                )}
-              >
-                <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                {EXECUTION_PHASE_LABELS[executionPhase]}
-              </Badge>
-            )}
-             {/* Status badge - hide when execution phase badge is showing */}
-             {!hasActiveExecution && (
-               task.status === 'done' ? (
-                    <Badge
-                      variant={getStatusBadgeVariant(task.status)}
-                      className="text-[10px] px-1.5 py-0.5"
-                    >
-                      {getStatusLabel(task.status)}
-                    </Badge>
-                  ) : (
-                   <Badge
-                     variant={isStuck ? 'warning' : isIncomplete ? 'warning' : getStatusBadgeVariant(task.status)}
-                     className="text-[10px] px-1.5 py-0.5"
-                   >
-                     {isStuck ? t('labels.needsRecovery') : isIncomplete ? t('labels.needsResume') : getStatusLabel(task.status)}
-                   </Badge>
-                 )
-             )}
-            {/* Review reason badge - explains why task needs human review */}
-            {reviewReasonInfo && !isStuck && !isIncomplete && (
-              <Badge
-                variant={reviewReasonInfo.variant}
-                className="text-[10px] px-1.5 py-0.5"
-              >
-                {reviewReasonInfo.label}
-              </Badge>
-            )}
-            {/* Category badge with icon */}
-            {task.metadata?.category && (
-              <Badge
-                variant="outline"
-                className={cn('text-[10px] px-1.5 py-0', TASK_CATEGORY_COLORS[task.metadata.category])}
-              >
-                {CategoryIcon[task.metadata.category] && (
-                  (() => {
-                    const Icon = CategoryIcon[task.metadata.category!];
-                    return <Icon className="h-2.5 w-2.5 mr-0.5" />;
-                  })()
-                )}
-                {TASK_CATEGORY_LABELS[task.metadata.category]}
-              </Badge>
-            )}
-            {/* Impact badge - high visibility for important tasks */}
-            {task.metadata?.impact && (task.metadata.impact === 'high' || task.metadata.impact === 'critical') && (
-              <Badge
-                variant="outline"
-                className={cn('text-[10px] px-1.5 py-0', TASK_IMPACT_COLORS[task.metadata.impact])}
-              >
-                {TASK_IMPACT_LABELS[task.metadata.impact]}
-              </Badge>
-            )}
-            {/* Complexity badge */}
-            {task.metadata?.complexity && (
-              <Badge
-                variant="outline"
-                className={cn('text-[10px] px-1.5 py-0', TASK_COMPLEXITY_COLORS[task.metadata.complexity])}
-              >
-                {TASK_COMPLEXITY_LABELS[task.metadata.complexity]}
-              </Badge>
-            )}
-            {/* Priority badge - only show urgent/high */}
-            {task.metadata?.priority && (task.metadata.priority === 'urgent' || task.metadata.priority === 'high') && (
-              <Badge
-                variant="outline"
-                className={cn('text-[10px] px-1.5 py-0', TASK_PRIORITY_COLORS[task.metadata.priority])}
-              >
-                {TASK_PRIORITY_LABELS[task.metadata.priority]}
-              </Badge>
-            )}
-            {/* Security severity - always show */}
-            {task.metadata?.securitySeverity && (
-              <Badge
-                variant="outline"
-                className={cn('text-[10px] px-1.5 py-0', TASK_IMPACT_COLORS[task.metadata.securitySeverity])}
-              >
-                {task.metadata.securitySeverity} {t('metadata.severity')}
-              </Badge>
-            )}
-          </div>
-        )}
+        <MetadataBadges
+          task={task}
+          isStuck={isStuck}
+          isIncomplete={isIncomplete}
+          hasActiveExecution={hasActiveExecution}
+          executionPhase={executionPhase}
+          reviewReasonInfo={reviewReasonInfo}
+          t={t}
+        />
 
         {/* Progress section - Phase-aware with animations */}
         {(task.subtasks.length > 0 || hasActiveExecution || isRunning || isStuck) && (
@@ -617,116 +828,21 @@ export const TaskCard = memo(function TaskCard({
           </div>
 
           <div className="flex items-center gap-1.5">
-            {/* Action buttons */}
-            {isStuck ? (
-              <Button
-                variant="warning"
-                size="sm"
-                className="h-7 px-2.5"
-                onClick={handleRecover}
-                disabled={isRecovering}
-              >
-                {isRecovering ? (
-                  <>
-                    <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-                    {t('labels.recovering')}
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw className="mr-1.5 h-3 w-3" />
-                    {t('actions.recover')}
-                  </>
-                )}
-              </Button>
-            ) : isIncomplete ? (
-              <Button
-                variant="default"
-                size="sm"
-                className="h-7 px-2.5"
-                onClick={handleStartStop}
-              >
-                <Play className="mr-1.5 h-3 w-3" />
-                {t('actions.resume')}
-              </Button>
-            ) : task.status === 'done' && task.metadata?.prUrl ? (
-              <div className="flex gap-1">
-                {task.metadata?.prUrl && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 cursor-pointer"
-                    onClick={handleViewPR}
-                    title={t('tooltips.viewPR')}
-                  >
-                    <GitPullRequest className="h-3 w-3" />
-                  </Button>
-                )}
-                {task.metadata?.prUrl && onViewPRFiles && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 px-2 hover:bg-primary/10 transition-colors"
-                      onClick={handleViewPRFiles}
-                      title={t('tooltips.viewPRFiles')}
-                    >
-                      <FileText className="h-3 w-3 mr-1" />
-                      {t('tasks:prFiles.short')}
-                    </Button>
-                  </>
-                )}
-                {!task.metadata?.archivedAt && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 cursor-pointer"
-                    onClick={handleArchive}
-                    title={t('tooltips.archiveTask')}
-                  >
-                    <Archive className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
-            ) : task.status === 'done' && !task.metadata?.archivedAt ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2.5 hover:bg-muted-foreground/10"
-                onClick={handleArchive}
-                title={t('tooltips.archiveTask')}
-              >
-                <Archive className="mr-1.5 h-3 w-3" />
-                {t('actions.archive')}
-              </Button>
-            ) : (task.status === 'backlog' || task.status === 'queue' || task.status === 'in_progress') && (
-              <>
-                {/* Streaming button - only show when task is running and project path is available */}
-                {isRunning && !isStuck && currentProject?.path && (
-                  <StreamingSessionButton
-                    taskId={task.id}
-                    projectPath={currentProject.path}
-                  />
-                )}
-                <Button
-                  variant={isRunning ? 'destructive' : 'default'}
-                  size="sm"
-                  className="h-7 px-2.5"
-                  onClick={handleStartStop}
-                >
-                  {isRunning ? (
-                    <>
-                      <Square className="mr-1.5 h-3 w-3" />
-                      {t('actions.stop')}
-                    </>
-                  ) : (
-                    <>
-                      <Play className="mr-1.5 h-3 w-3" />
-                      {t('actions.start')}
-                    </>
-                  )}
-                </Button>
-              </>
-            )}
+            <ActionButtons
+              isStuck={isStuck}
+              isRecovering={isRecovering}
+              isIncomplete={isIncomplete}
+              isRunning={isRunning}
+              task={task}
+              currentProject={currentProject}
+              onViewPRFiles={onViewPRFiles}
+              handleRecover={handleRecover}
+              handleStartStop={handleStartStop}
+              handleViewPR={handleViewPR}
+              handleArchive={handleArchive}
+              statusMenuItems={statusMenuItems}
+              t={t}
+            />
 
             {/* Move to menu for keyboard accessibility */}
             {statusMenuItems && (
