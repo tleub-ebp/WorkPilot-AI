@@ -29,15 +29,14 @@ interface StreamingEvent {
 }
 
 interface StreamingSessionProps {
-  sessionId: string;
-  projectPath: string;
-  onClose?: () => void;
+  readonly sessionId: string;
+  readonly projectPath: string;
+  readonly onClose?: () => void;
 }
 
 export function StreamingSession({ sessionId, projectPath, onClose }: StreamingSessionProps) {
   const { t } = useTranslation(['streaming']);
   const [isConnected, setIsConnected] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [events, setEvents] = useState<StreamingEvent[]>([]);
   const [chatMessages, setChatMessages] = useState<Array<{
@@ -124,9 +123,11 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
       case 'test_result':
         break;
 
-      case 'tool_use':
-        setCurrentStatus(`🔧 ${event.data.tool_name}${event.data.tool_input ? `: ${event.data.tool_input}` : ''}`);
+      case 'tool_use': {
+        const toolInput = event.data.tool_input ? `: ${event.data.tool_input}` : '';
+        setCurrentStatus(`🔧 ${event.data.tool_name}${toolInput}`);
         break;
+      }
 
       case 'agent_thinking':
         setCurrentStatus(event.data.thinking?.slice(0, 80) || t('streaming:status.thinking', { thought: '...' }));
@@ -247,16 +248,18 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
     connectWebSocket();
   }, [connectWebSocket]);
 
+  const initializeConnection = useCallback(() => {
+    if (isMountedRef.current) {
+      connectWebSocket();
+    }
+  }, [connectWebSocket]);
+
   // Initial WebSocket connection
   useEffect(() => {
     isMountedRef.current = true;
 
     // Wait a bit before connecting to ensure dialog is fully rendered
-    const initialTimeout = setTimeout(() => {
-      if (isMountedRef.current) {
-        connectWebSocket();
-      }
-    }, 500);
+    const initialTimeout = setTimeout(initializeConnection, 500);
 
     return () => {
       isMountedRef.current = false;
@@ -266,7 +269,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         wsRef.current.close(1000, 'Component unmounted');
       }
     };
-  }, [sessionId, connectWebSocket]);
+  }, [sessionId, connectWebSocket, initializeConnection]);
 
   // Send chat message
   const sendChatMessage = useCallback(() => {
@@ -348,8 +351,30 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
     return () => clearInterval(interval);
   }, []);
 
+  const getStatusBadgeContent = () => {
+    if (isConnected) {
+      return (
+        <>
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2" />
+          {t('streaming:status.live')}
+        </>
+      );
+    }
+    
+    if (isRetrying) {
+      return (
+        <>
+          <RefreshCw className="w-3 h-3 mr-2 animate-spin" />
+          {t('streaming:status.connecting')}
+        </>
+      );
+    }
+    
+    return t('streaming:status.offline');
+  };
+
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-background min-h-0">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b">
         <div className="flex items-center gap-4">
@@ -359,19 +384,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
             <p className="text-sm text-muted-foreground">{projectPath}</p>
           </div>
           <Badge variant={isConnected ? "default" : "secondary"}>
-            {isConnected ? (
-              <>
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2" />
-                {t('streaming:status.live')}
-              </>
-            ) : isRetrying ? (
-              <>
-                <RefreshCw className="w-3 h-3 mr-2 animate-spin" />
-                {t('streaming:status.connecting')}
-              </>
-            ) : (
-              t('streaming:status.offline')
-            )}
+            {getStatusBadgeContent()}
           </Badge>
           {!isConnected && !isRetrying && retryCount > MAX_AUTO_RETRIES && (
             <Button variant="outline" size="sm" onClick={handleReconnect} className="gap-1">
@@ -425,7 +438,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Left: Code View */}
         <div className="flex-1 flex flex-col border-r">
           <div className="px-4 py-2 border-b bg-muted/20">
@@ -441,9 +454,9 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         </div>
 
         {/* Right: Tabs (Chat, Events, Timeline) */}
-        <div className="w-96 flex flex-col border-l">
+        <div className="w-96 flex flex-col border-l" style={{ height: 'calc(95vh - 200px)' }}>
           <Tabs defaultValue="events" className="flex-1 flex flex-col">
-            <TabsList className="w-full rounded-none border-b">
+            <TabsList className="w-full rounded-none border-b shrink-0">
               <TabsTrigger value="chat" className="flex-1">
                 <MessageSquare className="w-4 h-4 mr-2" />
                 {t('streaming:tabs.chat')}
@@ -457,13 +470,13 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
             </TabsList>
 
             {/* Chat Tab */}
-            <TabsContent value="chat" className="flex-1 flex flex-col m-0">
+            <TabsContent value="chat" className="flex-1 flex flex-col m-0 min-h-0">
               <ScrollArea className="flex-1 p-4" ref={chatScrollRef}>
                 <div className="space-y-3">
                   <AnimatePresence>
-                    {chatMessages.map((msg, idx) => (
+                    {chatMessages.map((msg) => (
                       <motion.div
-                        key={idx}
+                        key={`${msg.timestamp}-${msg.author}`}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className={cn(
@@ -494,7 +507,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
                     type="text"
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+                    onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
                     placeholder={t('streaming:chat.placeholder')}
                     className="flex-1 px-3 py-2 text-sm border rounded-md bg-background"
                   />
@@ -507,10 +520,14 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
 
             {/* Events Tab */}
             <TabsContent value="events" className="flex-1 m-0">
-              <ScrollArea className="h-full p-4" ref={eventScrollRef}>
+              <div 
+                className="p-4 overflow-y-auto" 
+                ref={eventScrollRef}
+                style={{ height: 'calc(95vh - 280px)' }}
+              >
                 <div className="space-y-2">
-                  {events.map((event, idx) => (
-                    <Card key={idx} className="p-3">
+                  {events.map((event) => (
+                    <Card key={`${event.timestamp}-${event.event_type}`} className="p-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
@@ -521,7 +538,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
                               {new Date(event.timestamp * 1000).toLocaleTimeString()}
                             </span>
                           </div>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground wrap-break-word">
                             {JSON.stringify(event.data || {}).slice(0, 100)}...
                           </p>
                         </div>
@@ -529,11 +546,11 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
                     </Card>
                   ))}
                 </div>
-              </ScrollArea>
+              </div>
             </TabsContent>
 
             {/* Timeline Tab */}
-            <TabsContent value="timeline" className="flex-1 m-0 p-4">
+            <TabsContent value="timeline" className="flex-1 m-0 p-4 min-h-0">
               <div className="text-sm text-muted-foreground text-center mt-8">
                 <Film className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
                 <p>{t('streaming:timeline.comingSoon')}</p>
@@ -554,13 +571,9 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
           title={isPaused ? t('streaming:controls.resume') : t('streaming:controls.pause')}
         >
           {isPaused ? (
-            <>
-              <Play className="w-5 h-5" />
-            </>
+            <Play className="w-5 h-5" />
           ) : (
-            <>
-              <Pause className="w-5 h-5" />
-            </>
+            <Pause className="w-5 h-5" />
           )}
         </Button>
         <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">

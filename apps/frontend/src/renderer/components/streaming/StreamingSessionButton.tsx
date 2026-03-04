@@ -19,8 +19,8 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dia
 import { StreamingSession } from './StreamingSession';
 
 interface StreamingSessionButtonProps {
-  taskId: string;
-  projectPath: string;
+  readonly taskId: string;
+  readonly projectPath: string;
 }
 
 export function StreamingSessionButton({ taskId, projectPath }: StreamingSessionButtonProps) {
@@ -47,7 +47,7 @@ export function StreamingSessionButton({ taskId, projectPath }: StreamingSession
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-[95vw] h-[95vh] p-0" aria-describedby={undefined}>
+        <DialogContent className="max-w-[95vw] h-[95vh] max-h-[95vh] p-0 overflow-hidden" aria-describedby={undefined}>
           <DialogTitle className="sr-only">{t('streaming:dialogTitle')}</DialogTitle>
           <DialogDescription className="sr-only">{t('streaming:dialogDescription')}</DialogDescription>
           <StreamingSession
