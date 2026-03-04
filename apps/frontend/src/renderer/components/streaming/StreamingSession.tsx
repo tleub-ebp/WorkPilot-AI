@@ -59,6 +59,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
   const [chatInput, setChatInput] = useState('');
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<StreamingEvent | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -69,6 +70,22 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
 
   const MAX_AUTO_RETRIES = 5;
   const RETRY_DELAY_MS = 3000;
+
+  // Handle event selection
+  const handleEventSelect = useCallback((event: StreamingEvent) => {
+    setSelectedEvent(event);
+  }, []);
+
+  // Format event content for display
+  const formatEventContent = useCallback((event: StreamingEvent): string => {
+    const { event_type, data, timestamp } = event;
+    
+    let content = `Event Type: ${event_type}\n`;
+    content += `Timestamp: ${new Date(timestamp * 1000).toLocaleString()}\n\n`;
+    content += `Data:\n${JSON.stringify(data, null, 2)}`;
+    
+    return content;
+  }, []);
 
   // Handle streaming events - defined before connectWebSocket since it's referenced in ws.onmessage
   const handleStreamingEvent = useCallback((event: StreamingEvent) => {
@@ -474,16 +491,24 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden min-h-0">
-        {/* Left: Code View */}
+        {/* Left: Code/Event View */}
         <div className="flex-1 flex flex-col border-r">
           <div className="px-4 py-2 border-b bg-muted/20">
             <p className="text-sm font-mono text-muted-foreground truncate">
-              {currentFile || t('streaming:codeView.noFile')}
+              {selectedEvent 
+                ? `Event: ${selectedEvent.event_type} - ${new Date(selectedEvent.timestamp * 1000).toLocaleTimeString()}`
+                : currentFile || t('streaming:codeView.noFile')
+              }
             </p>
           </div>
           <ScrollArea className="flex-1 p-4">
             <pre className="text-sm font-mono">
-              <code>{currentCode || t('streaming:codeView.waitingForChanges')}</code>
+              <code>
+                {selectedEvent 
+                  ? formatEventContent(selectedEvent)
+                  : currentCode || t('streaming:codeView.waitingForChanges')
+                }
+              </code>
             </pre>
           </ScrollArea>
         </div>
@@ -562,7 +587,16 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
               >
                 <div className="space-y-2">
                   {events.map((event) => (
-                    <Card key={`${event.timestamp}-${event.event_type}`} className="p-3">
+                    <Card 
+                      key={`${event.timestamp}-${event.event_type}`} 
+                      className={cn(
+                        "p-3 cursor-pointer transition-colors hover:bg-muted/50",
+                        selectedEvent?.timestamp === event.timestamp && selectedEvent?.event_type === event.event_type
+                          ? "bg-primary/10 border-primary/30"
+                          : ""
+                      )}
+                      onClick={() => handleEventSelect(event)}
+                    >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
@@ -572,6 +606,11 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
                             <span className="text-xs text-muted-foreground">
                               {new Date(event.timestamp * 1000).toLocaleTimeString()}
                             </span>
+                            {selectedEvent?.timestamp === event.timestamp && selectedEvent?.event_type === event.event_type && (
+                              <Badge variant="default" className="text-xs">
+                                Selected
+                              </Badge>
+                            )}
                           </div>
                           <p className="text-xs text-muted-foreground wrap-break-word">
                             {JSON.stringify(event.data || {}).slice(0, 100)}...
