@@ -12,7 +12,7 @@ import { StreamingSession } from '../streaming/StreamingSession';
 
 // Mock WebSocket
 class MockWebSocket {
-  static instances: MockWebSocket[] = [];
+  static readonly instances: MockWebSocket[] = [];
   url: string;
   onopen: ((event: Event) => void) | null = null;
   onmessage: ((event: MessageEvent) => void) | null = null;
@@ -70,7 +70,7 @@ class MockWebSocket {
   }
 
   static clearInstances(): void {
-    MockWebSocket.instances = [];
+    MockWebSocket.instances.length = 0;
   }
 }
 
@@ -411,7 +411,7 @@ describe('StreamingSession', () => {
     const ws = MockWebSocket.instances[0];
     
     // Simulate connection error
-    if (ws && ws.onerror) {
+    if (ws?.onerror) {
       ws.onerror(new Event('error'));
     }
 

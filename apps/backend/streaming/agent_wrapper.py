@@ -48,7 +48,6 @@ class StreamingAgentWrapper:
         self._ws_port = ws_port
         self._ws: Optional[Any] = None
         self._connected = False
-        logger.info(f"Streaming wrapper created for session {session_id} (ws://{ws_host}:{ws_port})")
 
     async def _connect(self) -> bool:
         """Connect to the WebSocket server, trying multiple addresses."""
@@ -65,7 +64,6 @@ class StreamingAgentWrapper:
 
         for url in urls_to_try:
             try:
-                logger.debug(f"Trying to connect to {url}...")
                 self._ws = await asyncio.wait_for(
                     websockets.connect(
                         url,
@@ -82,12 +80,11 @@ class StreamingAgentWrapper:
                     "role": "agent",
                 }))
                 self._connected = True
-                logger.info(f"Connected to streaming server at {url}")
                 return True
             except asyncio.TimeoutError:
-                logger.debug(f"Connection timed out: {url}")
-            except Exception as e:
-                logger.debug(f"Failed to connect to {url}: {e}")
+                pass
+            except Exception:
+                pass
 
         logger.warning("Could not connect to streaming server on any address")
         self._ws = None
@@ -142,7 +139,6 @@ class StreamingAgentWrapper:
         if self.recorder:
             self.recorder.start_recording(self.session_id, metadata)
 
-        logger.info(f"Streaming session started: {self.session_id} (connected={connected})")
 
     async def end_session(self):
         """End a streaming session."""
@@ -155,10 +151,10 @@ class StreamingAgentWrapper:
         if self.recorder:
             recording = self.recorder.stop_recording(self.session_id)
             if recording:
-                logger.info(f"Session recording saved: {recording.session_id}")
+                # Recording was saved successfully
+                pass
 
         await self._disconnect()
-        logger.info(f"Ended streaming session {self.session_id}")
 
     async def emit_file_change(
         self,

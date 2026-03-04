@@ -278,7 +278,6 @@ class PairProgrammingSession:
         self.started_at = datetime.now(timezone.utc).isoformat()
         self.ended_at: str | None = None
 
-        logger.info("PairProgrammingSession %s started (mode=%s)", self.session_id, self.mode.value)
         self._log_event("session_started", {"task": task, "mode": self.mode.value})
 
     # -- Plan management -----------------------------------------------------
