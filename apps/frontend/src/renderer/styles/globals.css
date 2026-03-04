@@ -1409,6 +1409,7 @@ body {
 /* Task card enhanced hover effect */
 .task-card-enhanced {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
 }
 
 .task-card-enhanced:hover {
@@ -1419,6 +1420,12 @@ body {
 
 .dark .task-card-enhanced:hover {
   box-shadow: 0 0 0 1px rgba(214, 216, 118, 0.15), 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Enhanced clickable area feedback */
+.task-card-enhanced:active {
+  transform: translateY(0px);
+  box-shadow: 0 0 0 1px rgba(214, 216, 118, 0.2), 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* Running task pulse animation */

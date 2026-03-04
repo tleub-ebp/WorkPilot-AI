@@ -110,7 +110,7 @@ const MetadataBadges: React.FC<MetadataBadgesProps> = ({
   }
 
   return (
-    <div className="mt-2.5 flex flex-wrap gap-1.5">
+    <div className="mt-2 flex flex-wrap gap-1">
       {/* Stuck indicator - highest priority */}
       {isStuck && (
         <Badge
@@ -749,7 +749,7 @@ export const TaskCard = memo(function TaskCard({
         }
       }}
     >
-      <CardContent className="p-4">
+      <CardContent className="p-3">
         {/* Delete button - positioned at the top right, outside the content flow */}
         {onDelete && (
           <Button
@@ -767,7 +767,9 @@ export const TaskCard = memo(function TaskCard({
             <X className="h-4 w-4" />
           </Button>
         )}
-        <div className={isSelectable ? 'flex gap-3' : undefined}>
+        <div className={cn(
+          isSelectable ? 'flex gap-2' : 'w-full'
+        )}>
           {/* Checkbox for selectable mode - stops event propagation */}
           {isSelectable && (
             <div className="shrink-0 pt-0.5">
@@ -780,7 +782,10 @@ export const TaskCard = memo(function TaskCard({
             </div>
           )}
 
-          <div className={isSelectable ? 'flex-1 min-w-0' : undefined}>
+          <div className={cn(
+            'flex-1 min-w-0',
+            !isSelectable && 'w-full'
+          )}>
             {/* Title - full width, no wrapper */}
             <h3
               className="font-semibold text-sm text-foreground line-clamp-2 leading-snug"
@@ -809,7 +814,7 @@ export const TaskCard = memo(function TaskCard({
 
         {/* Progress section - Phase-aware with animations */}
         {(task.subtasks.length > 0 || hasActiveExecution || isRunning || isStuck) && (
-          <div className="mt-4">
+          <div className="mt-3">
             <PhaseProgressIndicator
               phase={executionPhase}
               subtasks={task.subtasks}
@@ -821,7 +826,7 @@ export const TaskCard = memo(function TaskCard({
         )}
 
         {/* Footer */}
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-3 flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
             <span>{relativeTime}</span>
