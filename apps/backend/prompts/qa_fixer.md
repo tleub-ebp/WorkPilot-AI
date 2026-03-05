@@ -22,18 +22,20 @@ You must fix these issues so QA can approve.
 
 ## PHASE 0: LOAD CONTEXT (MANDATORY)
 
+**IMPORTANT**: All spec files are located in `{{SPEC_DIR}}/`.
+
 ```bash
 # 1. Read the QA fix request (YOUR PRIMARY TASK)
-cat QA_FIX_REQUEST.md
+cat {{SPEC_DIR}}/QA_FIX_REQUEST.md
 
 # 2. Read the QA report (full context on issues)
-cat qa_report.md 2>/dev/null || echo "No detailed report"
+cat {{SPEC_DIR}}/qa_report.md 2>/dev/null || echo "No detailed report"
 
 # 3. Read the spec (requirements)
-cat spec.md
+cat {{SPEC_DIR}}/spec.md
 
 # 4. Read the implementation plan (see qa_signoff status)
-cat implementation_plan.json
+cat {{SPEC_DIR}}/implementation_plan.json
 
 # 5. Check current state
 git status
@@ -348,7 +350,7 @@ QA Fix Session: [N]"
 
 ## PHASE 7: UPDATE IMPLEMENTATION PLAN
 
-Update `implementation_plan.json` to signal fixes are complete:
+Update `{{SPEC_DIR}}/implementation_plan.json` to signal fixes are complete:
 
 ```json
 {

@@ -601,9 +601,10 @@ export class ProjectStore {
     const completedCount = subtasks.filter(s => s.status === 'completed').length;
     const allCompleted = completedCount === subtasks.length;
 
-    // Only auto-correct if all subtasks are done and status is in an incomplete coding state.
-    // Preserve ai_review (QA in progress), error (needs investigation), human_review, done, pr_created.
-    if (!allCompleted || finalStatus === 'human_review' || finalStatus === 'done' || finalStatus === 'pr_created' || finalStatus === 'ai_review' || finalStatus === 'error') {
+    // Only auto-correct if all subtasks are done and status is in a stale state.
+    // Preserve in_progress (task is actively running — auto-correction would race with XState),
+    // ai_review (QA in progress), error (needs investigation), human_review, done, pr_created.
+    if (!allCompleted || finalStatus === 'in_progress' || finalStatus === 'human_review' || finalStatus === 'done' || finalStatus === 'pr_created' || finalStatus === 'ai_review' || finalStatus === 'error') {
       return { status: finalStatus, reviewReason: finalReviewReason };
     }
 

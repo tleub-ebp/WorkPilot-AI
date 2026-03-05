@@ -157,21 +157,35 @@ async def run_qa_validation_loop(
         qa_model = get_phase_model(spec_dir, "qa", model)
         fixer_thinking_budget = get_phase_thinking_budget(spec_dir, "qa")
 
-        fix_client = create_agent_client(
-            project_dir=project_dir,
-            spec_dir=spec_dir,
-            model=qa_model,
-            agent_type="qa_fixer",
-            max_thinking_tokens=fixer_thinking_budget,
-        )
-
-        async with fix_client:
-            fix_status, fix_response = await run_qa_fixer_session(
-                fix_client,
-                spec_dir,
-                0,
-                False,  # iteration 0 for human feedback
+        try:
+            fix_client = create_agent_client(
+                project_dir=project_dir,
+                spec_dir=spec_dir,
+                model=qa_model,
+                agent_type="qa_fixer",
+                max_thinking_tokens=fixer_thinking_budget,
             )
+        except Exception as e:
+            debug_error("qa_loop", f"Failed to create fixer client for human feedback: {e}")
+            print(f"\n❌ Failed to create fixer client: {e}")
+            task_event_emitter.emit(
+                "QA_AGENT_ERROR",
+                {"iteration": 0, "consecutiveErrors": 1},
+            )
+            return False
+
+        try:
+            async with fix_client:
+                fix_status, fix_response = await run_qa_fixer_session(
+                    fix_client,
+                    spec_dir,
+                    0,
+                    False,  # iteration 0 for human feedback
+                )
+        except Exception as e:
+            debug_error("qa_loop", f"Fixer session crashed during human feedback: {e}")
+            fix_status = "error"
+            fix_response = str(e)
 
         if fix_status == "error":
             debug_error("qa_loop", f"Fixer error: {fix_response[:200]}")
@@ -245,25 +259,43 @@ async def run_qa_validation_loop(
             model=qa_model,
             thinking_budget=qa_thinking_budget,
         )
-        client = create_agent_client(
-            project_dir=project_dir,
-            spec_dir=spec_dir,
-            model=qa_model,
-            agent_type="qa_reviewer",
-            max_thinking_tokens=qa_thinking_budget,
-        )
-
-        async with client:
-            debug("qa_loop", "Running QA reviewer agent session...")
-            status, response = await run_qa_agent_session(
-                client,
-                project_dir,  # Pass project_dir for capability-based tool injection
-                spec_dir,
-                qa_iteration,
-                MAX_QA_ITERATIONS,
-                verbose,
-                previous_error=last_error_context,  # Pass error context for self-correction
+        try:
+            client = create_agent_client(
+                project_dir=project_dir,
+                spec_dir=spec_dir,
+                model=qa_model,
+                agent_type="qa_reviewer",
+                max_thinking_tokens=qa_thinking_budget,
             )
+        except Exception as e:
+            debug_error("qa_loop", f"Failed to create QA reviewer client: {e}")
+            print(f"\n❌ Failed to create QA reviewer client: {e}")
+            task_event_emitter.emit(
+                "QA_AGENT_ERROR",
+                {
+                    "iteration": qa_iteration,
+                    "consecutiveErrors": 1,
+                },
+            )
+            return False
+
+        try:
+            async with client:
+                debug("qa_loop", "Running QA reviewer agent session...")
+                status, response = await run_qa_agent_session(
+                    client,
+                    project_dir,  # Pass project_dir for capability-based tool injection
+                    spec_dir,
+                    qa_iteration,
+                    MAX_QA_ITERATIONS,
+                    verbose,
+                    previous_error=last_error_context,  # Pass error context for self-correction
+                )
+        except Exception as e:
+            debug_error("qa_loop", f"QA reviewer session crashed: {e}")
+            print(f"\n❌ QA reviewer session error: {e}")
+            status = "error"
+            response = str(e)
 
         iteration_duration = time_module.time() - iteration_start
         debug(
@@ -440,18 +472,34 @@ async def run_qa_validation_loop(
             )
             print("\nRunning QA Fixer Agent...")
 
-            fix_client = create_agent_client(
-                project_dir=project_dir,
-                spec_dir=spec_dir,
-                model=qa_model,
-                agent_type="qa_fixer",
-                max_thinking_tokens=fixer_thinking_budget,
-            )
-
-            async with fix_client:
-                fix_status, fix_response = await run_qa_fixer_session(
-                    fix_client, spec_dir, qa_iteration, verbose
+            try:
+                fix_client = create_agent_client(
+                    project_dir=project_dir,
+                    spec_dir=spec_dir,
+                    model=qa_model,
+                    agent_type="qa_fixer",
+                    max_thinking_tokens=fixer_thinking_budget,
                 )
+            except Exception as e:
+                debug_error("qa_loop", f"Failed to create QA fixer client: {e}")
+                print(f"\n❌ Failed to create QA fixer client: {e}")
+                record_iteration(
+                    spec_dir,
+                    qa_iteration,
+                    "error",
+                    [{"title": "Fixer client error", "description": str(e)}],
+                )
+                break
+
+            try:
+                async with fix_client:
+                    fix_status, fix_response = await run_qa_fixer_session(
+                        fix_client, spec_dir, qa_iteration, verbose
+                    )
+            except Exception as e:
+                debug_error("qa_loop", f"QA fixer session crashed: {e}")
+                fix_status = "error"
+                fix_response = str(e)
 
             debug(
                 "qa_loop",

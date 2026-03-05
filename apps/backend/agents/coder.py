@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from core.client import create_agent_client
+from core.task_event import TaskEventEmitter
 from core.workflow_logger import workflow_logger
 from linear_updater import (
     LinearTaskState,
@@ -557,6 +558,18 @@ async def run_autonomous_agent(
         if is_build_complete(spec_dir):
             print_build_complete_banner(spec_dir)
             status_manager.update(state=BuildState.COMPLETE)
+            # Emit ALL_SUBTASKS_DONE so frontend XState transitions correctly
+            # Without this, the process may exit without a terminal event,
+            # causing handleProcessExited to incorrectly transition to error state
+            try:
+                completed, total = count_subtasks(spec_dir)
+                task_event_emitter = TaskEventEmitter.from_spec_dir(spec_dir)
+                task_event_emitter.emit(
+                    "ALL_SUBTASKS_DONE",
+                    {"totalCount": total},
+                )
+            except Exception:
+                pass  # Don't fail the return path for event emission
             return
 
         # Start/continue coding phase in task logger

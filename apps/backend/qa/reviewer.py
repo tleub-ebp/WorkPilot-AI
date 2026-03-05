@@ -24,7 +24,95 @@ from task_logger import (
     get_task_logger,
 )
 
-from .criteria import get_qa_signoff_status
+from .criteria import get_qa_signoff_status, load_implementation_plan, save_implementation_plan
+
+import re
+from datetime import datetime, timezone
+
+
+def _extract_verdict_from_response(response_text: str) -> str | None:
+    """
+    Parse the QA agent's response text to extract APPROVED/REJECTED verdict.
+
+    This is a fallback for when the agent doesn't properly update
+    implementation_plan.json. We look for clear verdict signals in the
+    agent's output text.
+
+    Returns: "approved", "rejected", or None if inconclusive.
+    """
+    if not response_text:
+        return None
+
+    text_upper = response_text.upper()
+
+    # Look for explicit sign-off patterns
+    # Pattern: "SIGN-OFF: APPROVED" or "Sign-off: REJECTED"
+    signoff_match = re.search(
+        r"SIGN[\-\s]*OFF\s*:\s*(APPROVED|REJECTED)",
+        text_upper,
+    )
+    if signoff_match:
+        return signoff_match.group(1).lower()
+
+    # Pattern: "Status: APPROVED" or "Status: REJECTED"
+    status_match = re.search(
+        r"STATUS\s*:\s*(APPROVED|REJECTED)",
+        text_upper,
+    )
+    if status_match:
+        return status_match.group(1).lower()
+
+    # Pattern: "QA VALIDATION COMPLETE" + "APPROVED ✓" or "REJECTED ✗"
+    if "QA VALIDATION COMPLETE" in text_upper:
+        if "APPROVED" in text_upper:
+            return "approved"
+        if "REJECTED" in text_upper:
+            return "rejected"
+
+    return None
+
+
+def _programmatic_qa_signoff(
+    spec_dir: Path,
+    verdict: str,
+    qa_session: int,
+) -> bool:
+    """
+    Programmatically write the qa_signoff to implementation_plan.json.
+
+    This is a fallback when the agent produces a clear verdict in its
+    response text but fails to update the file itself.
+
+    Returns True if successfully written.
+    """
+    plan = load_implementation_plan(spec_dir)
+    if not plan:
+        return False
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    if verdict == "approved":
+        plan["qa_signoff"] = {
+            "status": "approved",
+            "timestamp": now,
+            "qa_session": qa_session,
+            "report_file": "qa_report.md",
+            "tests_passed": {},
+            "verified_by": "qa_agent (auto-extracted from response)",
+        }
+    elif verdict == "rejected":
+        plan["qa_signoff"] = {
+            "status": "rejected",
+            "timestamp": now,
+            "qa_session": qa_session,
+            "issues_found": [],
+            "fix_request_file": "QA_FIX_REQUEST.md",
+        }
+    else:
+        return False
+
+    return save_implementation_plan(spec_dir, plan)
+
 
 # =============================================================================
 # QA REVIEWER SESSION
@@ -371,7 +459,39 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
             )
             return "rejected", response_text
         else:
-            # Agent didn't update the status properly - provide detailed error
+            # Agent didn't update the file - try to extract verdict from response
+            extracted_verdict = _extract_verdict_from_response(response_text)
+
+            if extracted_verdict:
+                debug(
+                    "qa_reviewer",
+                    f"Extracted verdict from response: {extracted_verdict}",
+                    message_count=message_count,
+                    tool_count=tool_count,
+                )
+                print(
+                    f"\n⚠️  Agent didn't update implementation_plan.json, "
+                    f"but verdict detected: {extracted_verdict.upper()}"
+                )
+
+                # Programmatically write the qa_signoff
+                if _programmatic_qa_signoff(spec_dir, extracted_verdict, qa_session):
+                    debug_success(
+                        "qa_reviewer",
+                        f"Programmatically wrote qa_signoff: {extracted_verdict}",
+                    )
+                    print(
+                        f"✅ Programmatically updated implementation_plan.json "
+                        f"with status: {extracted_verdict}"
+                    )
+                    return extracted_verdict, response_text
+                else:
+                    debug_error(
+                        "qa_reviewer",
+                        "Failed to programmatically write qa_signoff",
+                    )
+
+            # Agent didn't update the status and no clear verdict in response
             debug_error(
                 "qa_reviewer",
                 "QA agent did not update implementation_plan.json",
