@@ -1185,31 +1185,80 @@ class CLIToolManager {
           execFileSync(cmdExe, ['/d', '/s', '/c', cmdLine], execOptions)
         ).trim();
       } else {
-        // For .exe files and non-Windows, use execFileSync
-        version = normalizeExecOutput(
-          execFileSync(unquotedCmd, ['--version'], {
-            encoding: 'utf-8',
-            timeout: 5000,
-            windowsHide: true,
-            shell: false,
-            env,
-          })
-        ).trim();
+        // For .exe files and non-Windows, use execFileSync directly
+        try {
+          version = normalizeExecOutput(
+            execFileSync(unquotedCmd, ['--version'], {
+              encoding: 'utf-8',
+              timeout: 5000,
+              windowsHide: true,
+              shell: false,
+              env,
+            })
+          ).trim();
+        } catch (directError) {
+          // Fallback: on Windows, some executables (e.g., WinGet portable packages)
+          // may fail with direct execution in Electron. Retry via cmd.exe.
+          if (isWindows() && isSecurePath(unquotedCmd)) {
+            console.warn(`[Claude CLI] Direct exec failed, retrying via cmd.exe: ${directError instanceof Error ? directError.message : String(directError)}`);
+            const cmdExeFallback = process.env.ComSpec
+              || path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'cmd.exe');
+            const cmdLineFallback = `""${unquotedCmd}" --version"`;
+            const fallbackOptions: ExecFileSyncOptionsWithVerbatim = {
+              encoding: 'utf-8',
+              timeout: 5000,
+              windowsHide: true,
+              windowsVerbatimArguments: true,
+              env,
+            };
+            version = normalizeExecOutput(
+              execFileSync(cmdExeFallback, ['/d', '/s', '/c', cmdLineFallback], fallbackOptions)
+            ).trim();
+          } else {
+            throw directError;
+          }
+        }
       }
 
       // Claude CLI version output format: "claude-code version X.Y.Z" or similar
       const match = version.match(/(\d+\.\d+\.\d+)/);
       const versionStr = match ? match[1] : version.split('\n')[0];
 
+      console.warn(`[Claude CLI] Validation succeeded for "${claudeCmd}": version ${versionStr}`);
       return {
         valid: true,
         version: versionStr,
         message: `Claude CLI ${versionStr} is available`,
       };
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.warn(`[Claude CLI] Validation FAILED for "${claudeCmd}": ${errorMsg}`);
+
+      // Graceful fallback: if the executable physically exists on disk and passes
+      // security checks, trust it as a valid Claude CLI even when --version
+      // cannot be executed (common issue in Electron sandboxed environments,
+      // WinGet portable installs, etc.). Version will be fetched lazily later.
+      const trimmedCmdForCheck = claudeCmd.trim();
+      const unquotedCmdForCheck =
+        trimmedCmdForCheck.startsWith('"') && trimmedCmdForCheck.endsWith('"')
+          ? trimmedCmdForCheck.slice(1, -1)
+          : trimmedCmdForCheck;
+
+      if (existsSync(unquotedCmdForCheck)) {
+        // On Windows, also verify the path is secure
+        if (!isWindows() || isSecurePath(unquotedCmdForCheck)) {
+          console.warn(`[Claude CLI] File exists at "${unquotedCmdForCheck}" — accepting with unknown version (exec failed: ${errorMsg})`);
+          return {
+            valid: true,
+            version: 'unknown',
+            message: `Claude CLI found at ${unquotedCmdForCheck} (version detection failed)`,
+          };
+        }
+      }
+
       return {
         valid: false,
-        message: `Failed to validate Claude CLI: ${error instanceof Error ? error.message : String(error)}`,
+        message: `Failed to validate Claude CLI: ${errorMsg}`,
       };
     }
   }
@@ -1388,30 +1437,80 @@ class CLIToolManager {
         const result = await execFileAsync(cmdExe, ['/d', '/s', '/c', cmdLine], execOptions);
         stdout = result.stdout;
       } else {
-        // For .exe files and non-Windows, use execFileAsync
-        const result = await execFileAsync(unquotedCmd, ['--version'], {
-          encoding: 'utf-8',
-          timeout: 5000,
-          windowsHide: true,
-          shell: false,
-          env,
-        });
-        stdout = result.stdout;
+        // For .exe files and non-Windows, use execFileAsync directly
+        try {
+          const result = await execFileAsync(unquotedCmd, ['--version'], {
+            encoding: 'utf-8',
+            timeout: 5000,
+            windowsHide: true,
+            shell: false,
+            env,
+          });
+          stdout = result.stdout;
+        } catch (directError) {
+          // Fallback: on Windows, some executables (e.g., WinGet portable packages)
+          // may fail with direct execution in Electron. Retry via cmd.exe.
+          if (isWindows() && isSecurePath(unquotedCmd)) {
+            console.warn(`[Claude CLI] Async direct exec failed, retrying via cmd.exe: ${directError instanceof Error ? directError.message : String(directError)}`);
+            const cmdExeFallback = process.env.ComSpec
+              || path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'cmd.exe');
+            const cmdLineFallback = `""${unquotedCmd}" --version"`;
+            const result = await execFileAsync(cmdExeFallback, ['/d', '/s', '/c', cmdLineFallback], {
+              encoding: 'utf-8',
+              timeout: 5000,
+              windowsHide: true,
+              windowsVerbatimArguments: true,
+              env,
+            } as ExecFileAsyncOptionsWithVerbatim);
+            stdout = result.stdout;
+          } else {
+            throw directError;
+          }
+        }
       }
 
       const version = normalizeExecOutput(stdout).trim();
       const match = version.match(/(\d+\.\d+\.\d+)/);
       const versionStr = match ? match[1] : version.split('\n')[0];
 
+      console.warn(`[Claude CLI] Async validation succeeded for "${claudeCmd}": version ${versionStr}`);
       return {
         valid: true,
         version: versionStr,
         message: `Claude CLI ${versionStr} is available`,
       };
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.warn(`[Claude CLI] Async validation FAILED for "${claudeCmd}": ${errorMsg}`);
+
+      // Graceful fallback: if the executable physically exists on disk and passes
+      // security checks, trust it as a valid Claude CLI even when --version
+      // cannot be executed (common issue in Electron sandboxed environments,
+      // WinGet portable installs, etc.). Version will be fetched lazily later.
+      const trimmedCmdForCheck = claudeCmd.trim();
+      const unquotedCmdForCheck =
+        trimmedCmdForCheck.startsWith('"') && trimmedCmdForCheck.endsWith('"')
+          ? trimmedCmdForCheck.slice(1, -1)
+          : trimmedCmdForCheck;
+
+      try {
+        await fsPromises.access(unquotedCmdForCheck);
+        // File exists — on Windows, also verify the path is secure
+        if (!isWindows() || isSecurePath(unquotedCmdForCheck)) {
+          console.warn(`[Claude CLI] File exists at "${unquotedCmdForCheck}" — accepting with unknown version (exec failed: ${errorMsg})`);
+          return {
+            valid: true,
+            version: 'unknown',
+            message: `Claude CLI found at ${unquotedCmdForCheck} (version detection failed)`,
+          };
+        }
+      } catch {
+        // File doesn't exist, continue to return invalid
+      }
+
       return {
         valid: false,
-        message: `Failed to validate Claude CLI: ${error instanceof Error ? error.message : String(error)}`,
+        message: `Failed to validate Claude CLI: ${errorMsg}`,
       };
     }
   }
