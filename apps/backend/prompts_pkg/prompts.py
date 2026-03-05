@@ -483,6 +483,10 @@ def get_qa_reviewer_prompt(spec_dir: Path, project_dir: Path) -> str:
     # Replace {{BASE_BRANCH}} placeholder with the actual base branch
     base_prompt = base_prompt.replace("{{BASE_BRANCH}}", base_branch)
 
+    # Replace {{SPEC_DIR}} placeholder with the absolute spec directory path
+    # This ensures the QA agent uses correct paths for implementation_plan.json etc.
+    base_prompt = base_prompt.replace("{{SPEC_DIR}}", str(spec_dir))
+
     # Load project index and detect capabilities
     project_index = load_project_index(project_dir)
     capabilities = detect_project_capabilities(project_index)
@@ -583,6 +587,9 @@ def get_qa_fixer_prompt(spec_dir: Path, project_dir: Path) -> str:
         The QA fixer prompt content with paths injected
     """
     base_prompt = _load_prompt_file("qa_fixer.md")
+
+    # Replace {{SPEC_DIR}} placeholder with the absolute spec directory path
+    base_prompt = base_prompt.replace("{{SPEC_DIR}}", str(spec_dir))
 
     spec_context = f"""## SPEC LOCATION
 

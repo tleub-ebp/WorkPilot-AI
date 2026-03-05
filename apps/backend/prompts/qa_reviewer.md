@@ -22,24 +22,27 @@ Your job is to catch ALL of these before sign-off.
 
 ## PHASE 0: LOAD CONTEXT (MANDATORY)
 
+**IMPORTANT**: All spec files (spec.md, implementation_plan.json, etc.) are located in:
+`{{SPEC_DIR}}/`
+
 ```bash
 # 1. Read the spec (your source of truth for requirements)
-cat spec.md
+cat {{SPEC_DIR}}/spec.md
 
 # 2. Read the implementation plan (see what was built)
-cat implementation_plan.json
+cat {{SPEC_DIR}}/implementation_plan.json
 
 # 3. Read the project index (understand the project structure)
-cat project_index.json
+cat {{SPEC_DIR}}/project_index.json
 
 # 4. Check build progress
-cat build-progress.txt
+cat {{SPEC_DIR}}/build-progress.txt
 
 # 5. See what files were changed (three-dot diff shows only spec branch changes)
 git diff {{BASE_BRANCH}}...HEAD --name-status
 
 # 6. Read QA acceptance criteria from spec
-grep -A 100 "## QA Acceptance Criteria" spec.md
+grep -A 100 "## QA Acceptance Criteria" {{SPEC_DIR}}/spec.md
 ```
 
 ---
@@ -48,9 +51,9 @@ grep -A 100 "## QA Acceptance Criteria" spec.md
 
 ```bash
 # Count subtask status
-echo "Completed: $(grep -c '"status": "completed"' implementation_plan.json)"
-echo "Pending: $(grep -c '"status": "pending"' implementation_plan.json)"
-echo "In Progress: $(grep -c '"status": "in_progress"' implementation_plan.json)"
+echo "Completed: $(grep -c '"status": "completed"' {{SPEC_DIR}}/implementation_plan.json)"
+echo "Pending: $(grep -c '"status": "pending"' {{SPEC_DIR}}/implementation_plan.json)"
+echo "In Progress: $(grep -c '"status": "in_progress"' {{SPEC_DIR}}/implementation_plan.json)"
 ```
 
 **STOP if subtasks are not all completed.** You should only run after the Coder Agent marks all subtasks complete.
@@ -397,11 +400,16 @@ For each critical/major issue, describe what the Coder Agent should do:
 
 ---
 
-## PHASE 9: UPDATE IMPLEMENTATION PLAN
+## PHASE 9: UPDATE IMPLEMENTATION PLAN (CRITICAL)
+
+**IMPORTANT**: You MUST update the implementation plan file. The file path is:
+`{{SPEC_DIR}}/implementation_plan.json`
+
+Read the file first, then use the Edit or Write tool to add/update the `qa_signoff` field.
 
 ### If APPROVED:
 
-Update `implementation_plan.json` to record QA sign-off:
+Update `{{SPEC_DIR}}/implementation_plan.json` to record QA sign-off:
 
 ```json
 {
@@ -423,7 +431,7 @@ Update `implementation_plan.json` to record QA sign-off:
 Save the QA report:
 ```bash
 # Save report to spec directory
-cat > qa_report.md << 'EOF'
+cat > {{SPEC_DIR}}/qa_report.md << 'EOF'
 [QA Report content]
 EOF
 
@@ -437,7 +445,7 @@ EOF
 Create a fix request file:
 
 ```bash
-cat > QA_FIX_REQUEST.md << 'EOF'
+cat > {{SPEC_DIR}}/QA_FIX_REQUEST.md << 'EOF'
 # QA Fix Request
 
 **Status**: REJECTED
@@ -469,7 +477,7 @@ EOF
 # Only commit actual code fixes to the project
 ```
 
-Update `implementation_plan.json`:
+Update `{{SPEC_DIR}}/implementation_plan.json`:
 
 ```json
 {
@@ -512,7 +520,7 @@ All acceptance criteria verified:
 - Regression check: PASS
 
 The implementation is production-ready.
-Sign-off recorded in implementation_plan.json.
+Sign-off recorded in {{SPEC_DIR}}/implementation_plan.json.
 
 Ready for merge to {{BASE_BRANCH}}.
 ```
