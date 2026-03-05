@@ -75,21 +75,55 @@ async function validateClaudeCliAsync(cliPath: string): Promise<[boolean, string
       const result = await execFileAsync(cmdExe, ['/d', '/s', '/c', cmdLine], execOptions);
       stdout = result.stdout;
     } else {
-      const result = await execFileAsync(cliPath, ['--version'], {
-        encoding: 'utf-8',
-        timeout: 5000,
-        windowsHide: true,
-        env,
-      });
-      stdout = result.stdout;
+      // For .exe files, try direct execution first
+      try {
+        const result = await execFileAsync(cliPath, ['--version'], {
+          encoding: 'utf-8',
+          timeout: 5000,
+          windowsHide: true,
+          env,
+        });
+        stdout = result.stdout;
+      } catch (directError) {
+        // Fallback: on Windows, some executables (e.g., WinGet portable packages)
+        // may fail with direct execution in Electron. Retry via cmd.exe.
+        if (isWindows() && isSecurePath(cliPath)) {
+          console.warn('[Claude Code] Direct exec failed, retrying via cmd.exe:', directError instanceof Error ? directError.message : String(directError));
+          const cmdExeFallback = process.env.ComSpec
+            || path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'cmd.exe');
+          const cmdLineFallback = `""${cliPath}" --version"`;
+          const execOptionsFallback: ExecFileAsyncOptionsWithVerbatim = {
+            encoding: 'utf-8',
+            timeout: 5000,
+            windowsHide: true,
+            windowsVerbatimArguments: true,
+            env,
+          };
+          const result = await execFileAsync(cmdExeFallback, ['/d', '/s', '/c', cmdLineFallback], execOptionsFallback);
+          stdout = result.stdout;
+        } else {
+          throw directError;
+        }
+      }
     }
 
     const version = String(stdout).trim();
     const match = version.match(/(\d+\.\d+\.\d+)/);
     return [true, match ? match[1] : version.split('\n')[0]];
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
     // Log validation errors to help debug CLI detection issues
-    console.warn('[Claude Code] CLI validation failed for', cliPath, ':', error);
+    console.warn('[Claude Code] CLI validation failed for', cliPath, ':', errorMsg);
+
+    // Graceful fallback: if the executable physically exists on disk and passes
+    // security checks, trust it as a valid Claude CLI even when --version
+    // cannot be executed (common issue in Electron sandboxed environments,
+    // WinGet portable installs, etc.). Version will be fetched lazily later.
+    if (existsSync(cliPath) && (!isWindows() || isSecurePath(cliPath))) {
+      console.warn(`[Claude Code] File exists at "${cliPath}" — accepting with unknown version (exec failed: ${errorMsg})`);
+      return [true, 'unknown'];
+    }
+
     return [false, null];
   }
 }
