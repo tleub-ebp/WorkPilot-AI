@@ -324,7 +324,7 @@ When adding new intent categories:
 
 ## 📄 License
 
-Same license as Auto-Claude project.
+Same license as WorkPilot AI project.
 
 ---
 

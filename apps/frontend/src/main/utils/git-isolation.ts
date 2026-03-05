@@ -48,7 +48,7 @@ export const GIT_ENV_VARS_TO_CLEAR = [
  * variables that can interfere with worktree operations.
  *
  * Also sets HUSKY=0 to disable the user's pre-commit hooks when
- * Auto-Claude manages commits, preventing double-hook execution
+ * WorkPilot AI manages commits, preventing double-hook execution
  * and potential conflicts.
  *
  * @param baseEnv - Optional base environment to start from. Defaults to process.env

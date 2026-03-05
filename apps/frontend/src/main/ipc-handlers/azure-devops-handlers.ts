@@ -574,7 +574,7 @@ except Exception as e:
                 category = 'task';
             }
 
-            // Map priority (Azure DevOps: 1=highest, 4=lowest -> Auto-Claude: high/medium/low)
+            // Map priority (Azure DevOps: 1=highest, 4=lowest -> WorkPilot AI: high/medium/low)
             let priority = 'medium';
             if (item.priority) {
               if (item.priority <= 1) priority = 'high';

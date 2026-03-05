@@ -417,7 +417,7 @@ export function registerSettingsHandlers(
 
   /**
    * Read ~/.claude.json to check if Claude Code onboarding is complete.
-   * This allows Auto-Claude to respect Claude Code's onboarding status and
+   * This allows WorkPilot AI to respect Claude Code's onboarding status and
    * avoid showing the onboarding wizard to users who have already completed it.
    */
   ipcMain.handle(

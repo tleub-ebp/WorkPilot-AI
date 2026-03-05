@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "status": "INCLUDED - NON-OPTIONAL",
     "implemented_date": "2026-02-09",
-    "description": "Comprehensive security scanning and compliance checking integrated into Auto-Claude core"
+    "description": "Comprehensive security scanning and compliance checking integrated into WorkPilot AI core"
   },
   
   "inclusion_status": {

@@ -2,7 +2,7 @@
 Learning Mode & Onboarding AI Module
 
 This module provides educational features to help developers learn from
-the codebase and understand what Auto-Claude is doing.
+the codebase and understand what WorkPilot AI is doing.
 """
 
 from .documentation_generator import DocType, DocumentationGenerator

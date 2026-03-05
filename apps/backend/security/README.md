@@ -4,7 +4,7 @@
 
 **Status**: ✅ **INCLUDED** | 🔒 **NON-OPTIONAL** | 🚀 **ALWAYS ACTIVE**
 
-The Security-First Features (Feature 8) are **core safety features** of Auto-Claude that **cannot be disabled**. This is by design to ensure maximum security for all users and projects.
+The Security-First Features (Feature 8) are **core safety features** of WorkPilot AI that **cannot be disabled**. This is by design to ensure maximum security for all users and projects.
 
 ---
 
@@ -15,7 +15,7 @@ Security is not a feature you can turn on or off—it's a fundamental requiremen
 1. **Prevents Accidental Exposure**: Automatically stops commits containing API keys, passwords, and secrets
 2. **Protects Production Systems**: Detects critical vulnerabilities before they reach deployment
 3. **Ensures Compliance**: Helps maintain GDPR, SOC2, and other regulatory requirements
-4. **Builds Trust**: Guarantees that Auto-Claude always operates with security-first principles
+4. **Builds Trust**: Guarantees that WorkPilot AI always operates with security-first principles
 
 ### What Does "Non-Optional" Mean?
 
@@ -246,7 +246,7 @@ git push --no-verify
 
 ## 📈 Security Metrics
 
-Auto-Claude tracks security metrics automatically:
+WorkPilot AI tracks security metrics automatically:
 
 - **Secrets Detected**: Count of secrets found and blocked
 - **Vulnerabilities Found**: Categorized by severity

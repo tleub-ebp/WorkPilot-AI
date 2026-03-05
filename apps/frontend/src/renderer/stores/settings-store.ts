@@ -319,7 +319,7 @@ async function migrateOnboardingCompleted(settings: AppSettings): Promise<AppSet
   }
 
   // NEW: Check ~/.claude.json for hasCompletedOnboarding
-  // This allows Auto-Claude to respect Claude Code's onboarding status
+  // This allows WorkPilot AI to respect Claude Code's onboarding status
   try {
     const claudeCodeResult = await window.electronAPI.getClaudeCodeOnboardingStatus();
     if (claudeCodeResult.success && claudeCodeResult.data?.hasCompletedOnboarding) {

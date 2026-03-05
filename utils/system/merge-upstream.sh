@@ -1,9 +1,9 @@
 ﻿﻿#!/bin/bash
 
 #
-# Merge upstream changes from Auto-Claude into your fork
+# Merge upstream changes from WorkPilot AI into your fork
 #
-# This script syncs your fork with the official Auto-Claude repository.
+# This script syncs your fork with the official WorkPilot AI upstream repository.
 # It handles multiple branches and includes safety checks.
 #
 # Usage:
@@ -102,7 +102,7 @@ invoke_git() {
 # Main execution
 echo ""
 echo -e "${CYAN}════════════════════════════════════════${RESET}"
-echo -e "${CYAN}  Auto-Claude Upstream Merge Tool${RESET}"
+echo -e "${CYAN}  WorkPilot AI Upstream Merge Tool${RESET}"
 echo -e "${CYAN}════════════════════════════════════════${RESET}"
 echo ""
 

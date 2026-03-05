@@ -3,7 +3,7 @@
 
 ## Project Configuration
 
-- **Project**: Auto-Claude_EBP
+- **Project**: WorkPilot AI
 - **User**: Thomas.leberre
 - **Communication Language**: WorkFlow AI
 - **Document Output Language**: English

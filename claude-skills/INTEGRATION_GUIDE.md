@@ -1,8 +1,8 @@
-# Guide d'Intégration des Skills Claude pour Auto-Claude EBP
+# Guide d'Intégration des Skills Claude pour WorkPilot AI
 
 ## Vue d'ensemble
 
-Ce guide explique comment les skills Claude Code ont été intégrés et adaptés pour le projet Auto-Claude EBP (Business Planning).
+Ce guide explique comment les skills Claude Code ont été intégrés et adaptés pour le projet WorkPilot AI (Business Planning).
 
 ## Skills Intégrés
 
@@ -204,4 +204,4 @@ Les skills EBP adaptés sont disponibles localement dans le projet:
 
 ---
 
-*Ce guide sera mis à jour régulièrement pour refléter les évolutions des skills et les besoins changeants du projet Auto-Claude EBP.*
+*Ce guide sera mis à jour régulièrement pour refléter les évolutions des skills et les besoins changeants du projet WorkPilot AI.*

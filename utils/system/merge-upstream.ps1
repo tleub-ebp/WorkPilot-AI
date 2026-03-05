@@ -2,10 +2,10 @@
 
 <#
 .SYNOPSIS
-    Merge upstream changes from Auto-Claude into your fork
+    Merge upstream changes from WorkPilot AI into your fork
     
 .DESCRIPTION
-    This script syncs your fork with the official Auto-Claude repository.
+    This script syncs your fork with the official WorkPilot AI upstream repository.
     It handles multiple branches and includes safety checks.
     
 .PARAMETER Branch
@@ -121,7 +121,7 @@ function Invoke-GitCommand {
 # Main execution
 Write-Host ""
 Write-Host "$Cyan════════════════════════════════════════$Reset"
-Write-Host "$Cyan  Auto-Claude Upstream Merge Tool$Reset"
+Write-Host "$Cyan  WorkPilot AI Upstream Merge Tool$Reset"
 Write-Host "$Cyan════════════════════════════════════════$Reset"
 Write-Host ""
 

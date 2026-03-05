@@ -2,7 +2,7 @@
 Security Module for Auto-Build Framework
 =========================================
 
-Provides comprehensive security features for the Auto-Claude framework:
+Provides comprehensive security features for the WorkPilot AI framework:
 
 1. Command Validation - Dynamic allowlists for bash commands
 2. Vulnerability Scanning - Multi-tool security scanning (Bandit, Semgrep, etc.)

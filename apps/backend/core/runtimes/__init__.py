@@ -11,8 +11,6 @@ sys.path.insert(0, str(project_root))
 from src.connectors.llm_config import ProviderConfig
 from core.runtimes.litellm_runtime import LiteLLMRuntime
 from core.runtimes.copilot_runtime import CopilotRuntime
-# from core.runtimes.claude_sdk_runtime import ClaudeSDKRuntime  # Non disponible dans ce workspace
-
 
 def create_agent_runtime(spec_dir, phase, project_dir, agent_type, cli_provider=None, cli_model=None, cli_thinking=None, config=None):
     """

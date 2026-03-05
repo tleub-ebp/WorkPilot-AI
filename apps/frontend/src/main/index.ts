@@ -512,7 +512,7 @@ pythonEnvManager.initialize(backendSourcePath).then((status) => {
 // Initialize the application
 app.whenReady().then(async () => {
   // Set app user model id for Windows
-  electronApp.setAppUserModelId('com.autoclaude.ui');
+  electronApp.setAppUserModelId('com.workpilotai.app');
 
   // Clear cache on Windows to prevent permission errors from stale cache
   if (isWindows()) {

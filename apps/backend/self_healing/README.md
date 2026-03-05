@@ -515,7 +515,7 @@ python -m apps.backend.self_healing report -o weekly-health.md
 
 ## 📦 Installation
 
-The self-healing system is included in Auto-Claude backend.
+The self-healing system is included in WorkPilot AI backend.
 
 ```bash
 cd apps/backend

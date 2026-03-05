@@ -20,7 +20,7 @@ const fs = require('fs');
 const isWindows = os.platform() === 'win32';
 const rootDir = path.resolve(__dirname, '..');
 
-console.log('\n🚀 Auto-Claude Upstream Merge Tool\n');
+console.log('\n🚀 WorkPilot AI Upstream Merge Tool\n');
 
 // Determine which script to run
 let scriptPath;

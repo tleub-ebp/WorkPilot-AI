@@ -1,7 +1,7 @@
 """
 Azure DevOps Integration Manager.
 
-Manages synchronization between Auto-Claude tasks and Azure DevOps work items.
+Manages synchronization between WorkPilot AI tasks and Azure DevOps work items.
 Provides a high-level interface for importing work items as tasks.
 
 The integration is OPTIONAL - if AZURE_DEVOPS_PAT is not set, all operations
@@ -39,11 +39,11 @@ logger = logging.getLogger(__name__)
 
 class AzureDevOpsManager:
     """
-    Manages Azure DevOps integration for an Auto-Claude project.
+    Manages Azure DevOps integration for a WorkPilot AI project.
 
     This class provides a high-level interface for:
     - Fetching work items from Azure DevOps
-    - Importing work items as Auto-Claude tasks
+    - Importing work items as WorkPilot AI tasks
     - Managing connection state
 
     All operations are graceful and handle Azure DevOps being unavailable.

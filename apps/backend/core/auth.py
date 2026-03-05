@@ -943,7 +943,7 @@ def get_sdk_env_vars() -> dict[str, str]:
     # Explicitly unset PYTHONPATH in SDK subprocess environment to prevent
     # pollution of agent subprocess environments. This fixes ACS-251 where
     # external projects with different Python versions would fail due to
-    # inheriting Auto-Claude's PYTHONPATH (which points to Python 3.12 packages).
+    # inheriting WorkPilot AI's PYTHONPATH (which points to Python 3.12 packages).
     #
     # The SDK merges os.environ with the env dict we provide, so setting
     # PYTHONPATH to an empty string here overrides any inherited value.

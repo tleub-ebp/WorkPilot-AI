@@ -192,7 +192,7 @@ async function fetchLatestCopilotVersion(): Promise<string> {
         'https://api.github.com/repos/github/copilot-cli/releases',
         {
           headers: {
-            'User-Agent': 'Auto-Claude-EBP',
+            'User-Agent': 'WorkPilot-AI',
             'Accept': 'application/vnd.github.v3+json',
           },
           timeout: 10000,

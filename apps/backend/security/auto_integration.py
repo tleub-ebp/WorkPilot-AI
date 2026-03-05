@@ -3,7 +3,7 @@
 Security Auto-Integration
 =========================
 
-Automatic security integration for Auto-Claude.
+Automatic security integration for WorkPilot AI.
 This module is ALWAYS LOADED and provides automatic security scanning.
 
 Feature 8: Security-First Features is INCLUDED and NON-OPTIONAL.
@@ -194,7 +194,7 @@ def auto_install_git_hooks() -> bool:
     # Check if our hooks are already installed
     if pre_commit_hook.exists():
         content = pre_commit_hook.read_text()
-        if "Auto-Claude Security Scanner" in content:
+        if "WorkPilot AI Security Scanner" in content:
             return True  # Already installed
 
     # Auto-install hooks

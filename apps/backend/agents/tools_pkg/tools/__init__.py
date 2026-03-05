@@ -1,5 +1,5 @@
 """
-Auto-Claude MCP Tools
+WorkPilot AI MCP Tools
 =====================
 
 Individual tool implementations organized by functionality.

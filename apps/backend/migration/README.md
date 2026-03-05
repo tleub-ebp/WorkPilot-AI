@@ -36,7 +36,7 @@ The Auto-Migration Engine enables **automatic technology stack migration** while
 
 ## Installation
 
-The migration engine is part of Auto-Claude. No additional installation needed.
+The migration engine is part of WorkPilot AI. No additional installation needed.
 
 ## Quick Start
 

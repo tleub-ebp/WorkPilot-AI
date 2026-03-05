@@ -34,7 +34,7 @@ export const GIT_BRANCH_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9._/-]*[a-zA-Z0-9]$|^[a-zA
  *
  * Why `auto-claude/` prefix is considered safe:
  * - All task worktrees use branches named `auto-claude/{specId}`
- * - This pattern is controlled by Auto-Claude, not user input
+ * - This pattern is controlled by WorkPilot AI, not user input
  * - If detected branch matches this pattern, it's a valid task branch
  * - If it doesn't match (e.g., `main`, `develop`, `feature/xxx`), it's likely
  *   the main project's branch being incorrectly detected from a corrupted worktree

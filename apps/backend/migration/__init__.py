@@ -4,7 +4,7 @@ Automatic technology stack migration with business logic preservation.
 """
 
 __version__ = "1.0.0"
-__author__ = "Auto-Claude Team"
+__author__ = "WorkPilot AI Team"
 
 from .models import (
     StackInfo,

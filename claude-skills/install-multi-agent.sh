@@ -9,7 +9,7 @@ echo "=================================="
 
 # Vérifier si nous sommes dans le bon répertoire
 if [ ! -d "claude-skills" ]; then
-    echo "❌ Erreur: Exécutez ce script depuis le répertoire racine d'Auto-Claude_EBP"
+    echo "❌ Erreur: Exécutez ce script depuis le répertoire racine de WorkPilot AI"
     exit 1
 fi
 

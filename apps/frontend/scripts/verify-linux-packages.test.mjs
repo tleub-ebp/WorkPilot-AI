@@ -48,9 +48,9 @@ describe('verify-linux-packages', () => {
     it('should identify all three Linux package types', () => {
       // Test that findPackages correctly identifies .AppImage, .deb, and .flatpak files
       const mockFiles = [
-        'Auto-Claude-2.7.5-linux-x86_64.AppImage',
+        'WorkPilot-AI-2.7.5-linux-x86_64.AppImage',
         'auto-claude_2.7.5_amd64.deb',
-        'com.autoclaude.ui_2.7.5_linux_x86_64.flatpak',
+        'com.workpilotai.app_2.7.5_linux_x86_64.flatpak',
         'latest-mac.yml',
         'latest.yml',
       ];
@@ -66,9 +66,9 @@ describe('verify-linux-packages', () => {
         const result = findPackages(distDir);
 
         // Verify the expected results
-        assert.equal(result.appImage, '/test/dist/Auto-Claude-2.7.5-linux-x86_64.AppImage');
+        assert.equal(result.appImage, '/test/dist/WorkPilot-AI-2.7.5-linux-x86_64.AppImage');
         assert.equal(result.deb, '/test/dist/auto-claude_2.7.5_amd64.deb');
-        assert.equal(result.flatpak, '/test/dist/com.autoclaude.ui_2.7.5_linux_x86_64.flatpak');
+        assert.equal(result.flatpak, '/test/dist/com.workpilotai.app_2.7.5_linux_x86_64.flatpak');
       } finally {
         existsSync.mock.restore();
         readdirSync.mock.restore();
@@ -116,11 +116,11 @@ describe('verify-linux-packages', () => {
     it('should warn about duplicate packages', () => {
       // Test behavior when multiple packages of same type exist
       const mockFiles = [
-        'Auto-Claude-2.7.5-linux-x86_64.AppImage',
-        'Auto-Claude-2.7.5-linux-x86_64.AppImage', // Duplicate
+        'WorkPilot-AI-2.7.5-linux-x86_64.AppImage',
+        'WorkPilot-AI-2.7.5-linux-x86_64.AppImage', // Duplicate
         'auto-claude_2.7.5_amd64.deb',
         'auto-claude_2.7.5_amd64.deb', // Duplicate
-        'com.autoclaude.ui_2.7.5_linux_x86_64.flatpak',
+        'com.workpilotai.app_2.7.5_linux_x86_64.flatpak',
       ];
       const distDir = '/test/dist';
 
@@ -131,9 +131,9 @@ describe('verify-linux-packages', () => {
         const result = findPackages(distDir);
 
         // Should still find packages, using first occurrence
-        assert.equal(result.appImage, '/test/dist/Auto-Claude-2.7.5-linux-x86_64.AppImage');
+        assert.equal(result.appImage, '/test/dist/WorkPilot-AI-2.7.5-linux-x86_64.AppImage');
         assert.equal(result.deb, '/test/dist/auto-claude_2.7.5_amd64.deb');
-        assert.equal(result.flatpak, '/test/dist/com.autoclaude.ui_2.7.5_linux_x86_64.flatpak');
+        assert.equal(result.flatpak, '/test/dist/com.workpilotai.app_2.7.5_linux_x86_64.flatpak');
       } finally {
         existsSync.mock.restore();
         readdirSync.mock.restore();
@@ -342,7 +342,7 @@ describe('verify-linux-packages', () => {
   });
 
   describe('AppImage verification', () => {
-    const appImagePath = '/test/Auto-Claude-2.7.5-linux-x86_64.AppImage';
+    const appImagePath = '/test/WorkPilot-AI-2.7.5-linux-x86_64.AppImage';
 
     it('should successfully verify valid AppImage', () => {
       const mockFiles = [
