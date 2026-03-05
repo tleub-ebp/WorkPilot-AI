@@ -137,7 +137,7 @@ WorkPilot AI uses Git worktrees for isolated builds:
 
 ```bash
 # Test the feature in the isolated workspace
-cd .worktrees/auto-claude/
+cd .worktrees/workpilot-ai/
 npm run dev  # or your project's run command
 
 # Return to backend directory to run management commands

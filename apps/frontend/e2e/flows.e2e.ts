@@ -13,7 +13,7 @@ import { mkdirSync, rmSync, existsSync, writeFileSync, readFileSync } from 'fs';
 import path from 'path';
 
 // Test data directory
-const TEST_DATA_DIR = '/tmp/auto-claude-ui-e2e';
+const TEST_DATA_DIR = '/tmp/workpilot-ai-e2e';
 const TEST_PROJECT_DIR = path.join(TEST_DATA_DIR, 'test-project');
 
 // Setup test environment
@@ -123,7 +123,7 @@ test.describe('Add Project Flow', () => {
     await app.evaluate(({ dialog }) => {
       dialog.showOpenDialog = async () => ({
         canceled: false,
-        filePaths: ['/tmp/auto-claude-ui-e2e/test-project']
+        filePaths: ['/tmp/workpilot-ai-e2e/test-project']
       });
     });
 

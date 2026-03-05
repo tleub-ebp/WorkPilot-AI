@@ -72,7 +72,7 @@ if all_correct:
     print("✅ TOUTES LES CONFIGURATIONS SONT CORRECTES!")
     print()
     print("Prochaines étapes:")
-    print("1. Fermez COMPLÈTEMENT l'application Auto-Claude")
+    print("1. Fermez COMPLÈTEMENT l'application WorkPilot AI")
     print("2. Redémarrez l'application")
     print("3. Ouvrez le projet 'WorkPilot AI' (pas workpilot-ai)")
     print("4. Essayez d'importer des work items Azure DevOps")

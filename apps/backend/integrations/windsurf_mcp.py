@@ -1,5 +1,5 @@
 """
-Intégration MCP Windsurf dans le backend Auto-Claude EBP
+Intégration MCP Windsurf dans le backend WorkPilot AI
 """
 
 import asyncio

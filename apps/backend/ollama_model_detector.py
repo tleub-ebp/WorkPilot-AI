@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Ollama Model Detector for auto-claude-ui.
+Ollama Model Detector for WorkPilot AI.
 
 Queries the Ollama API to detect available models, specifically focusing on
 embedding models for semantic search functionality.
@@ -527,7 +527,7 @@ def cmd_pull_model(args) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Detect and list Ollama models for auto-claude-ui"
+        description="Detect and list Ollama models for WorkPilot AI"
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 

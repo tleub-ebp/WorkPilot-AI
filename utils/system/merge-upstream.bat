@@ -1,5 +1,5 @@
 ﻿﻿@echo off
-REM Merge upstream changes from Auto-Claude into your fork
+REM Merge upstream changes from WorkPilot AI into your fork
 REM This is a wrapper script that calls the PowerShell version
 REM 
 REM Usage:

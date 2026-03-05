@@ -1,6 +1,6 @@
-# Claude Skills pour Auto-Claude EBP
+# Claude Skills pour WorkPilot AI
 
-Ce répertoire contient les skills Claude Code adaptés pour le projet Auto-Claude EBP (Business Planning).
+Ce répertoire contient les skills Claude Code adaptés pour le projet WorkPilot AI (Business Planning).
 
 ## Skills disponibles
 

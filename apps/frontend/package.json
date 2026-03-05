@@ -38,9 +38,9 @@
     "package:flatpak": "node scripts/package-with-python.cjs --linux flatpak",
     "verify:linux": "node scripts/verify-linux-packages.cjs dist",
     "test:verify-linux": "node --test scripts/verify-linux-packages.test.mjs",
-    "start:packaged:mac": "open dist/mac-arm64/Auto-Claude.app || open dist/mac/Auto-Claude.app",
-    "start:packaged:win": "start \"\" \"dist\\win-unpacked\\Auto-Claude.exe\"",
-    "start:packaged:linux": "./dist/linux-unpacked/auto-claude",
+    "start:packaged:mac": "open dist/mac-arm64/WorkPilot\\ AI.app || open dist/mac/WorkPilot\\ AI.app",
+    "start:packaged:win": "start \"\" \"dist\\win-unpacked\\WorkPilot AI.exe\"",
+    "start:packaged:linux": "./dist/linux-unpacked/workpilot-ai",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -149,15 +149,15 @@
     "@electron/rebuild": "4.0.2"
   },
   "build": {
-    "appId": "com.autoclaude.ui",
-    "productName": "Auto-Claude",
+    "appId": "com.workpilotai.app",
+    "productName": "WorkPilot AI",
     "npmRebuild": false,
-    "artifactName": "${productName}-${version}-${platform}-${arch}.${ext}",
+    "artifactName": "WorkPilot-AI-${version}-${platform}-${arch}.${ext}",
     "publish": [
       {
         "provider": "github",
-        "owner": "AndyMik90",
-        "repo": "Auto-Claude"
+        "owner": "tleub-ebp",
+        "repo": "Auto-Claude_EBP"
       }
     ],
     "directories": {

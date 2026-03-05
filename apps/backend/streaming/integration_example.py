@@ -15,7 +15,7 @@ class StreamingEnabledAgent:
     """
     Example of how to wrap an existing agent with streaming capabilities.
     
-    This pattern can be applied to any agent/task execution in Auto-Claude.
+    This pattern can be applied to any agent/task execution in WorkPilot AI.
     """
     
     def __init__(self, task_id: str, enable_streaming: bool = False):

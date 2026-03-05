@@ -404,7 +404,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Auto-Claude Security Scanner - Feature 8: Security-First"
+        description="WorkPilot AI Security Scanner - Feature 8: Security-First"
     )
     parser.add_argument(
         "--project-path",

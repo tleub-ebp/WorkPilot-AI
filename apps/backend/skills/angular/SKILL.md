@@ -4,7 +4,7 @@ description: Angular framework development, migration, and component generation.
 triggers: ["angular", "@angular", "ng", "angular-cli", "angular upgrade", "angular component", "angular migration"]
 category: development
 version: "1.0.0"
-author: "Auto-Claude EBP Team"
+author: "WorkPilot AI Team"
 ---
 
 # Angular Development Skill

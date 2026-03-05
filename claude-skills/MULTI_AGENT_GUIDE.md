@@ -1,4 +1,4 @@
-# Guide Multi-Agents pour Skills Auto-Claude EBP
+# Guide Multi-Agents pour Skills WorkPilot AI
 
 ## Vue d'ensemble
 

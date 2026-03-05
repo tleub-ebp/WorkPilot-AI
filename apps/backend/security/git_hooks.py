@@ -84,7 +84,7 @@ class GitHookManager:
             if hook_path.exists():
                 # Check if it's our hook
                 content = hook_path.read_text()
-                if "Auto-Claude Security Scanner" in content:
+                if "WorkPilot AI Security Scanner" in content:
                     hook_path.unlink()
                     print(f"✅ Removed {hook_name} hook")
                 else:
@@ -107,7 +107,7 @@ class GitHookManager:
         # Create hook script
         hook_script = """#!/usr/bin/env python3
 \"\"\"
-Auto-Claude Security Scanner - Pre-Commit Hook
+WorkPilot AI Security Scanner - Pre-Commit Hook
 ================================================
 
 Scans staged files for secrets before commit.
@@ -127,7 +127,7 @@ def get_staged_files():
     return [f for f in result.stdout.strip().split("\\n") if f]
 
 def main():
-    print("🔒 Running Auto-Claude security scan on staged files...")
+    print("🔒 Running WorkPilot AI security scan on staged files...")
     
     staged_files = get_staged_files()
     if not staged_files:
@@ -189,7 +189,7 @@ if __name__ == "__main__":
         # Create hook script
         hook_script = """#!/usr/bin/env python3
 \"\"\"
-Auto-Claude Security Scanner - Pre-Push Hook
+WorkPilot AI Security Scanner - Pre-Push Hook
 ============================================
 
 Runs full security scan before push.
@@ -200,7 +200,7 @@ import sys
 from pathlib import Path
 
 def main():
-    print("🔒 Running Auto-Claude full security scan before push...")
+    print("🔒 Running WorkPilot AI full security scan before push...")
     print("(This may take a minute...)")
     print()
     
@@ -255,7 +255,7 @@ def run_ci_scan() -> int:
         Exit code (0 for success, 1 for failure)
     """
     print("=" * 80)
-    print("Auto-Claude Security Scanner - CI/CD Mode")
+    print("WorkPilot AI Security Scanner - CI/CD Mode")
     print("=" * 80)
     print()
 
@@ -342,7 +342,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Auto-Claude Security Scanner - Git Hooks"
+        description="WorkPilot AI Security Scanner - Git Hooks"
     )
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 

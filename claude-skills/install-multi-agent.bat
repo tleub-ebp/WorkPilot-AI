@@ -7,7 +7,7 @@ echo ==================================
 
 REM Vérifier si nous sommes dans le bon répertoire
 if not exist "claude-skills" (
-    echo ❌ Erreur: Exécutez ce script depuis le répertoire racine d'Auto-Claude_EBP
+    echo ❌ Erreur: Exécutez ce script depuis le répertoire racine de WorkPilot AI
     pause
     exit /b 1
 )

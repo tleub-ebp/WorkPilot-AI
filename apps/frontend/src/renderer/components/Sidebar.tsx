@@ -800,7 +800,7 @@ const toggleGroupExpansion = (groupId: string) => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => globalThis.open('https://github.com/thomas-leub/Auto-Claude_EBP/issues', '_blank')}
+                  onClick={() => globalThis.open('https://github.com/tleub-ebp/Auto-Claude_EBP/issues', '_blank')}
                   aria-label={t('tooltips.help')}
                 >
                   <HelpCircle className="h-4 w-4" />

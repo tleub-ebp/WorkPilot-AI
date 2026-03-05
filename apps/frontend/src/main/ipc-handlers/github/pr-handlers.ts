@@ -109,7 +109,7 @@ async function githubGraphQL<T>(
     headers: {
       "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
-      "User-Agent": "Auto-Claude-UI",
+      "User-Agent": "WorkPilot-AI",
     },
     body: JSON.stringify({ query, variables }),
   });

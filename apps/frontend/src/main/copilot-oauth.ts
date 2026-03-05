@@ -137,7 +137,7 @@ async function getGitHubUserProfile(accessToken: string): Promise<{
   const response = await fetch('https://api.github.com/user', {
     headers: {
       'Authorization': `token ${accessToken}`,
-      'User-Agent': 'Auto-Claude-Copilot',
+      'User-Agent': 'WorkPilot-AI',
     },
   });
 
@@ -157,7 +157,7 @@ async function checkCopilotAccess(accessToken: string): Promise<boolean> {
     const response = await fetch('https://api.github.com/copilot', {
       headers: {
         'Authorization': `token ${accessToken}`,
-        'User-Agent': 'Auto-Claude-Copilot',
+        'User-Agent': 'WorkPilot-AI',
       },
     });
 

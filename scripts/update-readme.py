@@ -86,7 +86,7 @@ def update_readme(version: str, is_prerelease: bool) -> bool:
             "<!-- BETA_DOWNLOADS -->",
             "<!-- BETA_DOWNLOADS_END -->",
             [
-                (rf"Auto-Claude-{semver}", f"Auto-Claude-{version}"),
+                (rf"WorkPilot-AI-{semver}", f"WorkPilot-AI-{version}"),
                 (rf"download/v{semver}/", f"download/v{version}/"),
             ],
         )
@@ -123,7 +123,7 @@ def update_readme(version: str, is_prerelease: bool) -> bool:
             "<!-- STABLE_DOWNLOADS -->",
             "<!-- STABLE_DOWNLOADS_END -->",
             [
-                (rf"Auto-Claude-{semver}", f"Auto-Claude-{version}"),
+                (rf"WorkPilot-AI-{semver}", f"WorkPilot-AI-{version}"),
                 (rf"download/v{semver}/", f"download/v{version}/"),
             ],
         )

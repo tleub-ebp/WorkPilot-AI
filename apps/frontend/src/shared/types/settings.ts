@@ -335,7 +335,7 @@ export interface AppSettings {
   providerSearchQuery?: string;
 }
 
-// Auto-Claude Source Environment Configuration (for auto-claude repo .env)
+// WorkPilot AI Source Environment Configuration
 export interface SourceEnvConfig {
   // Claude Authentication (required for ideation, roadmap generation, etc.)
   hasClaudeToken: boolean;

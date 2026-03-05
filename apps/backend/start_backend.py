@@ -101,7 +101,7 @@ def main():
     sys.path.insert(0, src_dir)
     
     # Messages colorés de démarrage
-    log('🚀 Starting Auto-Claude EBP Backend Services', 'bright')
+    log('🚀 Starting WorkPilot AI Backend Services', 'bright')
     log('=============================================', 'cyan')
     
     try:
