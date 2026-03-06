@@ -11,12 +11,9 @@ import {
   Target,
   RefreshCw,
   Loader2,
-  Calendar,
   Activity,
   DollarSign,
-  GitBranch,
   Bug,
-  Shield,
   Code,
   TestTube
 } from 'lucide-react';
@@ -106,7 +103,7 @@ interface DashboardOverview {
 }
 
 interface AnalyticsDashboardProps {
-  className?: string;
+  readonly className?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -161,15 +158,15 @@ const getStatusIcon = (status: string) => {
 // ---------------------------------------------------------------------------
 
 interface KpiCardProps {
-  title: string;
-  value: string | number;
-  subtitle?: string;
-  icon: React.ReactNode;
-  trend?: {
-    value: number;
-    isPositive: boolean;
+  readonly title: string;
+  readonly value: string | number;
+  readonly subtitle?: string;
+  readonly icon: React.ReactNode;
+  readonly trend?: {
+    readonly value: number;
+    readonly isPositive: boolean;
   };
-  className?: string;
+  readonly className?: string;
 }
 
 function KpiCard({ title, value, subtitle, icon, trend, className }: KpiCardProps) {
