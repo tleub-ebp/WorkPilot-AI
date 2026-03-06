@@ -209,6 +209,12 @@ export class UsageMonitor extends EventEmitter {
   private apiFailureTimestamps: Map<string, number> = new Map();
   private static API_FAILURE_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes cooldown before API retry
 
+  // Per-profile 429 rate limit tracking with exponential backoff
+  // Map<profileId, { lastHit: timestamp, consecutiveHits: number }>
+  private rateLimitBackoff: Map<string, { lastHit: number; consecutiveHits: number }> = new Map();
+  private static RATE_LIMIT_BASE_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes base cooldown on 429
+  private static RATE_LIMIT_MAX_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes max cooldown
+
   // Swap loop protection: track profiles that recently failed auth
   private authFailedProfiles: Map<string, number> = new Map(); // profileId -> timestamp
   private static AUTH_FAILURE_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes cooldown
@@ -256,7 +262,8 @@ export class UsageMonitor extends EventEmitter {
    * Note: Usage monitoring always runs to display the usage badge.
    * Proactive account swapping only occurs if enabled in settings.
    *
-   * Update interval: 30 seconds (30000ms) to keep usage stats accurate
+   * Update interval: 60 seconds (60000ms) to keep usage stats accurate
+   * while avoiding API rate limits (429 errors).
    */
   start(): void {
     if (this.intervalId) {
@@ -266,9 +273,9 @@ export class UsageMonitor extends EventEmitter {
 
     const profileManager = getClaudeProfileManager();
     const settings = profileManager.getAutoSwitchSettings();
-    const interval = settings.usageCheckInterval || 30000; // 30 seconds for accurate usage tracking
+    const interval = settings.usageCheckInterval || 60000; // 60 seconds — balanced between freshness and rate limits
 
-    this.debugLog('[UsageMonitor] Starting with interval: ' + interval + ' ms (30-second updates for accurate usage stats)');
+    this.debugLog('[UsageMonitor] Starting with interval: ' + interval + ' ms');
 
     // Check immediately but suppress errors during startup
     this.checkUsageAndSwap(true); // true = suppressErrors
@@ -1081,6 +1088,21 @@ export class UsageMonitor extends EventEmitter {
    * @returns true if API should be tried, false if CLI should be used
    */
   private shouldUseApiMethod(profileId: string): boolean {
+    // Check 429 rate limit backoff first (longer cooldown with exponential backoff)
+    const backoffState = this.rateLimitBackoff.get(profileId);
+    if (backoffState) {
+      const cooldown = Math.min(
+        UsageMonitor.RATE_LIMIT_BASE_COOLDOWN_MS * Math.pow(2, backoffState.consecutiveHits - 1),
+        UsageMonitor.RATE_LIMIT_MAX_COOLDOWN_MS
+      );
+      const elapsed = Date.now() - backoffState.lastHit;
+      if (elapsed < cooldown) {
+        this.debugLog(`[UsageMonitor] Rate limit backoff active for ${profileId}: ${Math.round((cooldown - elapsed) / 1000)}s remaining`);
+        return false;
+      }
+      // Cooldown expired — allow retry but keep backoff state in case it 429s again
+    }
+
     const lastFailure = this.apiFailureTimestamps.get(profileId);
     if (!lastFailure) return true; // No previous failure, try API
     // Check if cooldown has expired (use >= to allow retry at exact boundary)
@@ -1698,6 +1720,23 @@ export class UsageMonitor extends EventEmitter {
       });
 
       if (!response.ok) {
+        // Handle 429 rate limiting with exponential backoff — suppress log spam
+        if (response.status === 429) {
+          const backoffState = this.rateLimitBackoff.get(profileId) || { lastHit: 0, consecutiveHits: 0 };
+          backoffState.consecutiveHits += 1;
+          backoffState.lastHit = Date.now();
+          this.rateLimitBackoff.set(profileId, backoffState);
+
+          const cooldown = Math.min(
+            UsageMonitor.RATE_LIMIT_BASE_COOLDOWN_MS * Math.pow(2, backoffState.consecutiveHits - 1),
+            UsageMonitor.RATE_LIMIT_MAX_COOLDOWN_MS
+          );
+          // Always use debugLog for 429 — this is expected rate limiting, not an error worth spamming
+          this.debugLog(`[UsageMonitor] Rate limited (429) for ${profileId} — backing off ${Math.round(cooldown / 1000)}s (attempt #${backoffState.consecutiveHits})`);
+          this.apiFailureTimestamps.set(profileId, Date.now());
+          return null;
+        }
+
         const logMethod = suppressErrors ? this.debugLog.bind(this) : console.error;
         logMethod('[UsageMonitor] API error:', response.status, response.statusText, {
           provider,
@@ -1761,6 +1800,9 @@ export class UsageMonitor extends EventEmitter {
         this.apiFailureTimestamps.set(profileId, Date.now());
         return null;
       }
+
+      // Success — clear rate limit backoff state for this profile
+      this.rateLimitBackoff.delete(profileId);
 
       this.debugLog('[UsageMonitor:API_FETCH] API response received successfully:', {
         provider,
