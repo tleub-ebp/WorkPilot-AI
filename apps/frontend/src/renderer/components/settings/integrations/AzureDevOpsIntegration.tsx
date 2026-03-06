@@ -17,22 +17,22 @@ import {
 import type { ProjectEnvConfig, AzureDevOpsSyncStatus, AzureDevOpsRepository } from '../../../../shared/types';
 
 interface AzureDevOpsIntegrationProps {
-  envConfig: ProjectEnvConfig | null;
-  updateEnvConfig: (updates: Partial<ProjectEnvConfig>) => void;
-  showAzureDevOpsPat: boolean;
-  setShowAzureDevOpsPat: React.Dispatch<React.SetStateAction<boolean>>;
-  azureDevOpsConnectionStatus: AzureDevOpsSyncStatus | null;
-  isCheckingAzureDevOps: boolean;
-  onOpenAzureDevOpsImport: () => void;
-  projectId: string;
+  readonly envConfig: ProjectEnvConfig | null;
+  readonly updateEnvConfig: (updates: Partial<ProjectEnvConfig>) => void;
+  readonly showAzureDevOpsPat: boolean;
+  readonly setShowAzureDevOpsPat: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly azureDevOpsConnectionStatus: AzureDevOpsSyncStatus | null;
+  readonly isCheckingAzureDevOps: boolean;
+  readonly onOpenAzureDevOpsImport: () => void;
+  readonly projectId: string;
 }
 
 interface RepositorySelectProps {
-  projectId: string;
-  value: string | undefined;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-  t: TFunction;
+  readonly projectId: string;
+  readonly value: string | undefined;
+  readonly onChange: (value: string) => void;
+  readonly disabled?: boolean;
+  readonly t: TFunction;
 }
 
 function RepositorySelect({
@@ -50,7 +50,7 @@ function RepositorySelect({
     setIsLoading(true);
     setError(null);
     try {
-      const result = await window.electronAPI.listAzureDevOpsRepositories(projectId);
+      const result = await globalThis.electronAPI.listAzureDevOpsRepositories(projectId);
       if (result.success && result.data) {
         setRepositories(result.data);
       } else {
@@ -74,14 +74,10 @@ function RepositorySelect({
         return;
       }
       
-      try {
-        const result = await window.electronAPI.detectAzureDevOpsRepository(projectId);
-        
-        if (result.success && result.data?.repository) {
-          onChange(result.data.repository);
-        } else {
-        }
-      } catch (err) {
+      const result = await globalThis.electronAPI.detectAzureDevOpsRepository(projectId);
+      
+      if (result.success && result.data?.repository) {
+        onChange(result.data.repository);
       }
     };
 
@@ -152,6 +148,39 @@ export function AzureDevOpsIntegration({
 
   if (!envConfig) return null;
 
+  // Helper function to extract organization from Azure DevOps URL
+  const getOrganizationFromUrl = (url: string): string | null => {
+    if (!url) return null;
+    
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname;
+      
+      // Handle different Azure DevOps URL formats
+      if (hostname === 'dev.azure.com') {
+        // Format: https://dev.azure.com/organization/
+        const pathParts = urlObj.pathname.split('/');
+        return pathParts.find((part, index) => index === 1 && part) || null;
+      } else if (hostname.endsWith('.visualstudio.com')) {
+        // Format: https://organization.visualstudio.com/
+        return hostname.replace('.visualstudio.com', '');
+      }
+    } catch (error) {
+      console.error('Invalid Azure DevOps URL:', error);
+    }
+    
+    return null;
+  };
+
+  // Generate the correct PAT link with organization
+  const patLink = (() => {
+    const organization = getOrganizationFromUrl(envConfig.azureDevOpsOrgUrl || '');
+    if (organization) {
+      return `https://dev.azure.com/${organization}/_usersSettings/tokens`;
+    }
+    return 'https://dev.azure.com/_usersettings/tokens';
+  })();
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -199,7 +228,7 @@ export function AzureDevOpsIntegration({
             <p className="text-xs text-muted-foreground">
               {t('azureDevOps.patDescriptionPrefix')}{' '}
               <a
-                href="https://dev.azure.com/_usersettings/tokens"
+                href={patLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-info hover:underline"
@@ -288,9 +317,9 @@ export function AzureDevOpsIntegration({
 }
 
 interface ConnectionStatusProps {
-  isChecking: boolean;
-  connectionStatus: AzureDevOpsSyncStatus | null;
-  t: TFunction;
+  readonly isChecking: boolean;
+  readonly connectionStatus: AzureDevOpsSyncStatus | null;
+  readonly t: TFunction;
 }
 
 function ConnectionStatus({
@@ -298,15 +327,31 @@ function ConnectionStatus({
   connectionStatus,
   t,
 }: ConnectionStatusProps) {
-  const statusText = isChecking
-    ? t('azureDevOps.connectionChecking')
-    : connectionStatus?.connected
-      ? connectionStatus.projectName
-        ? t('azureDevOps.connectionConnectedProject', {
-            projectName: connectionStatus.projectName,
-          })
-        : t('azureDevOps.connectionConnected')
-      : connectionStatus?.error || t('azureDevOps.connectionNotConnected');
+  let statusText: string;
+  
+  if (isChecking) {
+    statusText = t('azureDevOps.connectionChecking');
+  } else if (connectionStatus?.connected) {
+    if (connectionStatus.projectName) {
+      statusText = t('azureDevOps.connectionConnectedProject', {
+        projectName: connectionStatus.projectName,
+      });
+    } else {
+      statusText = t('azureDevOps.connectionConnected');
+    }
+  } else {
+    statusText = connectionStatus?.error || t('azureDevOps.connectionNotConnected');
+  }
+
+  let statusIcon: React.ReactNode;
+  
+  if (isChecking) {
+    statusIcon = <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+  } else if (connectionStatus?.connected) {
+    statusIcon = <CheckCircle2 className="h-4 w-4 text-success" />;
+  } else {
+    statusIcon = <AlertCircle className="h-4 w-4 text-warning" />;
+  }
 
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-3">
@@ -327,21 +372,15 @@ function ConnectionStatus({
               </p>
             )}
         </div>
-        {isChecking ? (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        ) : connectionStatus?.connected ? (
-          <CheckCircle2 className="h-4 w-4 text-success" />
-        ) : (
-          <AlertCircle className="h-4 w-4 text-warning" />
-        )}
+        {statusIcon}
       </div>
     </div>
   );
 }
 
 interface ImportTasksPromptProps {
-  onOpenAzureDevOpsImport: () => void;
-  t: TFunction;
+  readonly onOpenAzureDevOpsImport: () => void;
+  readonly t: TFunction;
 }
 
 function ImportTasksPrompt({ onOpenAzureDevOpsImport, t }: ImportTasksPromptProps) {
@@ -372,9 +411,9 @@ function ImportTasksPrompt({ onOpenAzureDevOpsImport, t }: ImportTasksPromptProp
 }
 
 interface AutoSyncToggleProps {
-  enabled: boolean;
-  onToggle: (checked: boolean) => void;
-  t: TFunction;
+  readonly enabled: boolean;
+  readonly onToggle: (checked: boolean) => void;
+  readonly t: TFunction;
 }
 
 function AutoSyncToggle({ enabled, onToggle, t }: AutoSyncToggleProps) {
@@ -393,7 +432,11 @@ function AutoSyncToggle({ enabled, onToggle, t }: AutoSyncToggleProps) {
   );
 }
 
-function AutoSyncInfo({ t }: { t: TFunction }) {
+interface AutoSyncInfoProps {
+  readonly t: TFunction;
+}
+
+function AutoSyncInfo({ t }: AutoSyncInfoProps) {
   return (
     <div className="rounded-lg border border-warning/30 bg-warning/5 p-3">
       <p className="text-xs text-muted-foreground">
