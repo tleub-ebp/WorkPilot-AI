@@ -2380,13 +2380,11 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
               queueSettingsProjectIdRef.current = null;
             }
           }}
-          projectId={queueSettingsProjectIdRef.current || projectId || ''}
           currentMaxParallel={maxParallelTasks}
           onSave={handleSaveQueueSettings}
         />
       )}
 
-      {/* Bulk PR creation dialog */}
       <BulkPRDialog
         open={bulkPRDialogOpen}
         tasks={selectedTasks}

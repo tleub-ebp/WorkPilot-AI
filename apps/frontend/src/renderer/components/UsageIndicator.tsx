@@ -667,8 +667,8 @@ export function UsageIndicator() {
             <div className="space-y-1">
               <p className="font-medium">{t('common:usage.dataUnavailable')}</p>
               <p className="text-muted-foreground text-[10px]">
-                {selectedProvider === 'anthropic' 
-                  ? "Les données d'usage Anthropic ne sont pas disponibles dans cette version. L'authentification OAuth fonctionne correctement."
+                {selectedProvider === 'anthropic'
+                  ? t('common:usage.dataUnavailableAnthropic')
                   : t('common:usage.dataUnavailableDescription')
                 }
               </p>

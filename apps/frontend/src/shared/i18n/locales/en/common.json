@@ -448,6 +448,7 @@
   "usage": {
     "dataUnavailable": "Usage data unavailable",
     "dataUnavailableDescription": "The usage monitoring endpoint for this provider is not available or not supported.",
+    "dataUnavailableAnthropic": "Anthropic usage data is not available. OAuth authentication is working correctly.",
     "activeAccount": "Active Account",
     "usageAlert": "Usage Alert",
     "accountExceedsThreshold": "Account usage exceeds 90% threshold",
