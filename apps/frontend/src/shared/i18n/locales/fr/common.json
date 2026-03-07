@@ -448,6 +448,7 @@
   "usage": {
     "dataUnavailable": "Données d'utilisation indisponibles",
     "dataUnavailableDescription": "Le point de terminaison de surveillance d'utilisation pour ce fournisseur n'est pas disponible ou n'est pas pris en charge.",
+    "dataUnavailableAnthropic": "Les données d'usage Anthropic ne sont pas disponibles. L'authentification OAuth fonctionne correctement.",
     "activeAccount": "Compte actif",
     "usageAlert": "Alerte d'utilisation",
     "accountExceedsThreshold": "L'utilisation du compte dépasse le seuil de 90%",

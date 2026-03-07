@@ -533,6 +533,11 @@ export function registerTerminalHandlers(
         let usage: UsageSnapshot | null;
 
         if (providerName) {
+          // Only reset caches when the provider actually changed (not on every
+          // 30s poll or initial mount for the same provider).  This ensures
+          // fresh data after a real provider switch while keeping caches intact
+          // for normal polling.
+          monitor.onProviderRequestIfChanged(providerName);
           // Use getUsageForProvider for specific provider requests
           usage = await monitor.getUsageForProvider(providerName);
         } else {

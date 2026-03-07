@@ -21,6 +21,7 @@ import type { BrowserWindow } from 'electron';
 import { setUpdateChannel, setUpdateChannelWithDowngradeCheck } from '../app-updater';
 import { getSettingsPath, readSettingsFile } from '../settings-utils';
 import { configureTools, getToolPath, getToolInfo, isPathFromWrongPlatform, preWarmToolCache } from '../cli-tool-manager';
+import { getUsageMonitor } from '../claude-profile/usage-monitor';
 import { parseEnvFile } from './utils';
 
 const settingsPath = getSettingsPath();
@@ -178,6 +179,12 @@ export function registerSettingsHandlers(
         
         if (result.success && result.data) {
           console.log(`[IPC:PROVIDER_SELECT] Successfully selected provider: ${provider}`);
+          // Notify UsageMonitor to clear stale caches and fetch fresh usage data
+          try {
+            getUsageMonitor().onProviderSwitch(provider);
+          } catch (e) {
+            console.warn('[IPC:PROVIDER_SELECT] Failed to notify UsageMonitor:', e);
+          }
           return { success: true, data: result.data.selected };
         } else {
           console.error(`[IPC:PROVIDER_SELECT] Failed to select provider ${provider}:`, result.error);

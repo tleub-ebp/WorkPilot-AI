@@ -11,7 +11,7 @@
 
 import { EventEmitter } from 'node:events';
 import { homedir } from 'node:os';
-import { getClaudeProfileManager } from '../claude-profile-manager';
+import { getClaudeProfileManager, initializeClaudeProfileManager } from '../claude-profile-manager';
 import { UsageSnapshot, ProfileUsageSummary, AllProfilesUsage } from '@shared/types';
 import { loadProfilesFile } from '../services/profile';
 import type { APIProfile } from '@shared/types/profile';
@@ -226,6 +226,21 @@ export class UsageMonitor extends EventEmitter {
   // Cache for all profiles' usage data
   // Map<profileId, { usage: ProfileUsageSummary, fetchedAt: number }>
   private allProfilesUsageCache: Map<string, { usage: ProfileUsageSummary; fetchedAt: number }> = new Map();
+
+  /** Tracks the last provider name requested via getUsageForProvider / USAGE_REQUEST.
+   *  Used to detect actual provider switches vs. repeated polling for the same provider. */
+  private lastRequestedProvider: string | null = null;
+
+  /** In-flight getUsageForProvider promises keyed by providerName.
+   *  Prevents concurrent duplicate requests that cause 429 rate-limiting. */
+  private pendingProviderFetch: Map<string, Promise<UsageSnapshot | null>> = new Map();
+
+  /** Short-lived cache for API fetch results, shared across ALL code paths
+   *  (getUsageForProvider, checkUsageAndSwap, fetchUsage, fetchUsageViaAPI).
+   *  Key: "profileId:provider".  Prevents redundant API calls that cause 429. */
+  private apiResultCache: Map<string, { snapshot: UsageSnapshot; fetchedAt: number }> = new Map();
+  private static API_RESULT_CACHE_TTL_MS = 15_000; // 15 seconds
+
   private static PROFILE_USAGE_CACHE_TTL_MS = 60 * 1000; // 1 minute cache for inactive profiles
 
   // Debug flag for verbose logging
@@ -277,8 +292,14 @@ export class UsageMonitor extends EventEmitter {
 
     this.debugLog('[UsageMonitor] Starting with interval: ' + interval + ' ms');
 
-    // Check immediately but suppress errors during startup
-    this.checkUsageAndSwap(true); // true = suppressErrors
+    // Delay the initial check by 10 seconds so the renderer's useEffect
+    // calls (via getUsageForProvider) can complete first.  Without this
+    // delay, checkUsageAndSwap fires at the same time as 6+ renderer
+    // requests, all competing for the same Anthropic usage API and
+    // causing 429 "Too Many Requests" on every single one.
+    // The apiResultCache in fetchUsageViaAPI also protects against this,
+    // but the delay ensures the UI gets first crack at a clean API call.
+    setTimeout(() => this.checkUsageAndSwap(true), 10000);
 
     // Then check periodically
     this.intervalId = setInterval(() => {
@@ -359,6 +380,73 @@ export class UsageMonitor extends EventEmitter {
     this.checkUsageAndSwap().catch(error => {
       console.error('[UsageMonitor] Immediate check failed:', error);
     });
+  }
+
+  /**
+   * Reset usage monitoring state after a provider switch.
+   *
+   * Clears all stale caches, failure cooldowns, and rate limit backoffs so that
+   * the next usage fetch for the new provider starts fresh.
+   * Called from USAGE_REQUEST and PROVIDER_SELECT IPC handlers.
+   *
+   * Does NOT trigger an immediate background check — the caller is expected to
+   * follow up with getUsageForProvider() or similar. This avoids redundant
+   * concurrent fetches.
+   *
+   * @param providerName - The provider being switched to (e.g., 'anthropic', 'openai')
+   */
+  onProviderSwitch(providerName: string): void {
+    this.debugLog('[UsageMonitor] Provider switch detected, resetting state for:', providerName);
+
+    // Clear all failure cooldowns and rate limit backoffs
+    // These are keyed by profileId, so clear them all to avoid blocking the new provider
+    this.apiFailureTimestamps.clear();
+    this.rateLimitBackoff.clear();
+
+    // Clear the all-profiles usage cache (stale from previous provider context)
+    this.allProfilesUsageCache.clear();
+
+    // Clear API result cache so the new provider gets a fresh fetch
+    this.apiResultCache.clear();
+
+    // Clear currentUsage so stale data from the old provider is not used as fallback
+    this.currentUsage = null;
+    this.currentUsageProfileId = null;
+
+    // Clear keychain cache to ensure fresh credentials are fetched
+    clearKeychainCache();
+
+    // Update tracking so subsequent requests for the same provider don't re-clear
+    this.lastRequestedProvider = providerName;
+  }
+
+  /**
+   * Called on every USAGE_REQUEST with a providerName.
+   * Only performs the full cache reset when the provider actually changed
+   * compared to the last request. This avoids clearing caches on every
+   * 30-second polling cycle or initial mount for the same provider.
+   *
+   * @param providerName - The provider being requested
+   * @returns true if a reset was performed, false if same provider as before
+   */
+  onProviderRequestIfChanged(providerName: string): boolean {
+    if (this.lastRequestedProvider === providerName) {
+      return false; // Same provider — no reset needed
+    }
+
+    // First request ever (initial app load): just record the provider,
+    // do NOT clear caches — there is nothing stale to clear and
+    // clearKeychainCache() would destroy credentials loaded during startup.
+    if (this.lastRequestedProvider === null) {
+      this.debugLog(`[UsageMonitor] Initial provider request: ${providerName} (no reset)`);
+      this.lastRequestedProvider = providerName;
+      return false;
+    }
+
+    // Actual provider switch — clear stale state
+    this.debugLog(`[UsageMonitor] Provider changed from ${this.lastRequestedProvider} to ${providerName}`);
+    this.onProviderSwitch(providerName);
+    return true;
   }
 
   /**
@@ -1546,6 +1634,18 @@ export class UsageMonitor extends EventEmitter {
       activeProfile?: ActiveProfileResult,
       suppressErrors?: boolean
   ): Promise<UsageSnapshot | null> {
+    // ── Short-lived result cache ────────────────────────────────────────
+    // Multiple code paths (getUsageForProvider, checkUsageAndSwap, polling)
+    // can call this method nearly simultaneously at startup.  The Anthropic
+    // usage API aggressively rate-limits (429) concurrent requests.
+    // Return a recently fetched result instead of hitting the API again.
+    const cacheKey = profileId;
+    const cached = this.apiResultCache.get(cacheKey);
+    if (cached && (Date.now() - cached.fetchedAt) < UsageMonitor.API_RESULT_CACHE_TTL_MS) {
+      this.debugLog('[UsageMonitor:API_FETCH] Returning cached result for ' + profileId + ' (age: ' + Math.round((Date.now() - cached.fetchedAt) / 1000) + 's)');
+      return cached.snapshot;
+    }
+
     this.debugLog('[UsageMonitor:API_FETCH] Starting API fetch for usage:', {
       profileId,
       profileName,
@@ -1720,6 +1820,7 @@ export class UsageMonitor extends EventEmitter {
       });
 
       if (!response.ok) {
+        this.debugLog('[UsageMonitor:fetchUsageViaAPI] API error: ' + response.status + ' ' + response.statusText + ' for ' + usageEndpoint);
         // Handle 429 rate limiting with exponential backoff — suppress log spam
         if (response.status === 429) {
           const backoffState = this.rateLimitBackoff.get(profileId) || { lastHit: 0, consecutiveHits: 0 };
@@ -1858,6 +1959,11 @@ export class UsageMonitor extends EventEmitter {
         limitType: normalizedUsage.limitType
       });
       this.debugLog('[UsageMonitor:API_FETCH] API fetch completed successfully');
+
+      // Cache the successful result so concurrent/near-concurrent calls
+      // (e.g. checkUsageAndSwap + getUsageForProvider at startup) reuse
+      // it instead of hitting the API again and getting 429.
+      this.apiResultCache.set(cacheKey, { snapshot: normalizedUsage, fetchedAt: Date.now() });
 
       return normalizedUsage;
     } catch (error: any) {
@@ -2527,7 +2633,50 @@ export class UsageMonitor extends EventEmitter {
    * to find a profile matching the requested provider, then fetches fresh usage data.
    */
   async getUsageForProvider(providerName: string): Promise<UsageSnapshot | null> {
-    this.debugLog('[UsageMonitor:getUsageForProvider] Fetching usage for provider:', providerName);
+    // ── Deduplication ──────────────────────────────────────────────────
+    // Multiple useEffects in the renderer fire requestUsageUpdate() at
+    // nearly the same time on startup (mount, OAuth check, polling setup,
+    // providerChanged event…).  Without deduplication each call hits the
+    // Anthropic usage API concurrently, causing 429 "Too Many Requests"
+    // on ALL of them — and the UI shows "N/D" because every fetch fails.
+    //
+    // Fix: if a fetch for the same provider is already in-flight, piggy-
+    // back on its promise instead of sending another HTTP request.
+    const pending = this.pendingProviderFetch.get(providerName);
+    if (pending) {
+      this.debugLog('[UsageMonitor:getUsageForProvider] Reusing in-flight request for: ' + providerName);
+      return pending;
+    }
+
+    const fetchPromise = this._getUsageForProviderImpl(providerName);
+    this.pendingProviderFetch.set(providerName, fetchPromise);
+
+    try {
+      return await fetchPromise;
+    } finally {
+      this.pendingProviderFetch.delete(providerName);
+    }
+  }
+
+  /**
+   * Internal implementation — always called through getUsageForProvider()
+   * which handles deduplication of concurrent requests.
+   */
+  private async _getUsageForProviderImpl(providerName: string): Promise<UsageSnapshot | null> {
+    this.debugLog('[UsageMonitor:getUsageForProvider] Fetching usage for provider: ' + providerName);
+
+    // Ensure the ClaudeProfileManager is fully initialized before we look up
+    // OAuth profiles.  On app startup the renderer fires USAGE_REQUEST before
+    // initializeClaudeProfileManager() resolves, so the default (empty) profile
+    // data would be used, causing the OAuth lookup to silently fail.
+    // initializeClaudeProfileManager is idempotent and returns instantly when
+    // already initialized, so this adds zero overhead on subsequent calls.
+    try {
+      await initializeClaudeProfileManager();
+    } catch (e) {
+      this.debugLog('[UsageMonitor:getUsageForProvider] ClaudeProfileManager init failed: ' + e);
+      // Continue anyway — getClaudeProfileManager() will return best-effort data
+    }
 
     // Copilot special case — uses gh CLI, not a traditional API profile in profiles.json
     // Fetch directly from our FastAPI backend without requiring a matching profile
@@ -2645,12 +2794,6 @@ export class UsageMonitor extends EventEmitter {
         const oauthProfile = profileManager.getProfilesSortedByAvailability()?.[0];
 
         if (oauthProfile) {
-          this.debugLog('[UsageMonitor:getUsageForProvider] Found OAuth profile:', {
-            profileId: oauthProfile.id,
-            profileName: oauthProfile.name
-          });
-
-          // Get credential directly for THIS specific profile (not the generic active profile)
           const credential = await this.getCredentialForProfile(oauthProfile);
           if (credential) {
             const activeProfileResult: ActiveProfileResult = {
@@ -2669,23 +2812,13 @@ export class UsageMonitor extends EventEmitter {
                 oauthProfile.email,
                 activeProfileResult
             );
-
             if (snapshot) {
-              this.debugLog('[UsageMonitor:getUsageForProvider] Got OAuth usage snapshot:', {
-                sessionPercent: snapshot.sessionPercent,
-                weeklyPercent: snapshot.weeklyPercent
-              });
               return snapshot;
             }
-            this.debugLog('[UsageMonitor:getUsageForProvider] fetchUsageViaAPI returned null for OAuth');
-          } else {
-            this.debugLog('[UsageMonitor:getUsageForProvider] No credential obtained for OAuth profile:', oauthProfile.name);
           }
-        } else {
-          this.debugLog('[UsageMonitor:getUsageForProvider] No OAuth profiles found in ClaudeProfileManager');
         }
       } catch (error) {
-        console.error('[UsageMonitor:getUsageForProvider] Step 2 OAuth lookup failed:', error);
+        this.debugLog('[UsageMonitor:getUsageForProvider] Step 2 OAuth lookup failed: ' + error);
       }
     }
 
@@ -2705,7 +2838,7 @@ export class UsageMonitor extends EventEmitter {
       return this.currentUsage;
     }
 
-    this.debugLog('[UsageMonitor:getUsageForProvider] No usage data found for provider:', providerName);
+    this.debugLog('[UsageMonitor:getUsageForProvider] No usage data found for provider: ' + providerName);
     return null;
   }
 
