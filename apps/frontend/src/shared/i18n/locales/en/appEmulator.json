@@ -1,0 +1,48 @@
+{
+  "title": "App Emulator",
+  "description": "Preview your application directly from WorkPilot",
+  "detecting": "Detecting project type...",
+  "starting": "Starting development server...",
+  "running": "Application is running",
+  "stopped": "Server stopped",
+  "idle": "Ready to start",
+  "actions": {
+    "start": "Start Server",
+    "stop": "Stop Server",
+    "refresh": "Refresh",
+    "openInBrowser": "Open in Browser",
+    "retry": "Retry",
+    "close": "Close",
+    "restart": "Restart"
+  },
+  "status": {
+    "detecting": "Analyzing project configuration...",
+    "installing": "Installing dependencies...",
+    "starting": "Launching development server...",
+    "waitingForPort": "Waiting for server to be ready on port {{port}}...",
+    "ready": "Server is running at {{url}}",
+    "stopped": "Server has been stopped",
+    "error": "An error occurred"
+  },
+  "projectInfo": {
+    "title": "Project Info",
+    "type": "Type",
+    "framework": "Framework",
+    "port": "Port",
+    "command": "Command",
+    "url": "URL"
+  },
+  "output": {
+    "title": "Server Output",
+    "noOutput": "No output yet"
+  },
+  "errors": {
+    "noProject": "Please select a project to use the App Emulator",
+    "scannedPath": "Scanned directory",
+    "detectionFailed": "Failed to detect project type. Make sure the project has a valid configuration file (package.json, requirements.txt, etc.)",
+    "serverFailed": "Failed to start the development server",
+    "portInUse": "Port {{port}} is already in use. Please stop the other server first.",
+    "processExited": "Server process exited with code {{code}}",
+    "generic": "An unexpected error occurred. Please try again."
+  }
+}

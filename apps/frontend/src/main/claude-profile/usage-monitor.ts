@@ -1801,6 +1801,7 @@ export class UsageMonitor extends EventEmitter {
 
       // Step 8: Build headers based on provider
       // Anthropic OAuth requires the 'anthropic-beta: oauth-2025-04-20' header
+      // and a claude-code User-Agent to access the /api/oauth/usage endpoint.
       // See: https://codelynx.dev/posts/claude-code-usage-limits-statusline
       const headers: Record<string, string> = {
         'Authorization': authHeader,
@@ -1808,9 +1809,10 @@ export class UsageMonitor extends EventEmitter {
       };
 
       if (provider === 'anthropic') {
-        // OAuth authentication requires the beta header
+        // OAuth authentication requires the beta header and claude-code User-Agent
         headers['anthropic-beta'] = 'oauth-2025-04-20';
         headers['anthropic-version'] = '2023-06-01';
+        headers['User-Agent'] = 'claude-code/1.0.0';
       }
       // OpenAI uses standard Authorization header - no special headers needed for usage endpoint
 

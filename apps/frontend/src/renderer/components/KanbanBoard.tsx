@@ -56,6 +56,7 @@ import type { ImportableWorkItem } from './azure-devops-import/ImportConfirmDial
 import { JiraSidePanel } from './jira-import/JiraSidePanel';
 import type { Task, TaskStatus, TaskOrderState } from '../../shared/types';
 import type { AzureDevOpsWorkItem, JiraWorkItem } from '../../shared/types/integrations';
+import { openAppEmulatorDialog } from '../stores/app-emulator-store';
 
 // Import logos
 import AzureDevOpsLogo from '../assets/logos/azure-devops.svg';
@@ -111,6 +112,7 @@ interface DroppableColumnProps {
   onToggleSelect?: (taskId: string) => void;
   onDeleteTask?: (taskId: string) => void;
   onViewPRFiles?: (prUrl: string, taskId: string) => void;
+  onPreviewApp?: (taskId: string) => void;
   // Collapse props
   isCollapsed?: boolean;
   onToggleCollapsed?: () => void;
@@ -179,6 +181,7 @@ function droppableColumnPropsAreEqual(
   if (prevProps.isLocked !== nextProps.isLocked) return false;
   if (prevProps.onToggleLocked !== nextProps.onToggleLocked) return false;
   if (prevProps.onViewPRFiles !== nextProps.onViewPRFiles) return false;
+  if (prevProps.onPreviewApp !== nextProps.onPreviewApp) return false;
 
   // Compare selection props
   const prevSelected = prevProps.selectedTaskIds;
@@ -249,7 +252,7 @@ const getEmptyStateContent = (status: TaskStatus, t: (key: string) => string): {
   }
 };
 
-const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskClick, onStatusChange, isOver, onAddClick, onArchiveAll, onQueueSettings, onQueueAll, maxParallelTasks, archivedCount, showArchived, onToggleArchived, selectedTaskIds, onSelectAll, onDeselectAll, onToggleSelect, onDeleteTask, onViewPRFiles, isCollapsed, onToggleCollapsed, columnWidth, isResizing, onResizeStart, onResizeEnd, isLocked, onToggleLocked }: DroppableColumnProps) {
+const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskClick, onStatusChange, isOver, onAddClick, onArchiveAll, onQueueSettings, onQueueAll, maxParallelTasks, archivedCount, showArchived, onToggleArchived, selectedTaskIds, onSelectAll, onDeselectAll, onToggleSelect, onDeleteTask, onViewPRFiles, onPreviewApp, isCollapsed, onToggleCollapsed, columnWidth, isResizing, onResizeStart, onResizeEnd, isLocked, onToggleLocked }: DroppableColumnProps) {
   const { t } = useTranslation(['tasks', 'common']);
   const { setNodeRef } = useDroppable({
     id: status
@@ -331,6 +334,16 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
     return handlers;
   }, [tasks, onViewPRFiles]);
 
+  // Create stable onPreviewApp handlers for each task
+  const onPreviewAppHandlers = useMemo(() => {
+    if (!onPreviewApp) return null;
+    const handlers = new Map<string, () => void>();
+    tasks.forEach((task) => {
+      handlers.set(task.id, () => onPreviewApp(task.id));
+    });
+    return handlers;
+  }, [tasks, onPreviewApp]);
+
   // Memoize task card elements to prevent recreation on every render
   const taskCards = useMemo(() => {
     if (tasks.length === 0) return null;
@@ -346,9 +359,10 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
         onToggleSelect={onToggleSelectHandlers?.get(task.id)}
         onDelete={onDeleteHandlers.get(task.id)}
         onViewPRFiles={onViewPRFilesHandlers?.get(task.id)}
+        onPreviewApp={onPreviewAppHandlers?.get(task.id)}
       />
     ));
-  }, [tasks, onClickHandlers, onStatusChangeHandlers, onToggleSelectHandlers, onDeleteHandlers, onViewPRFilesHandlers, selectedTaskIds]);
+  }, [tasks, onClickHandlers, onStatusChangeHandlers, onToggleSelectHandlers, onDeleteHandlers, onViewPRFilesHandlers, onPreviewAppHandlers, selectedTaskIds]);
 
   const getColumnBorderColor = (): string => {
     switch (status) {
@@ -1057,6 +1071,11 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     setSelectedPRUrl(prUrl);
     setSelectedTaskId(taskId);
     setPrFilesModalOpen(true);
+  }, []);
+
+  // Handle app preview for done tasks
+  const handlePreviewApp = useCallback((taskId: string) => {
+    openAppEmulatorDialog(taskId);
   }, []);
 
   const handleArchiveAll = useCallback(async () => {
@@ -2168,6 +2187,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
               onToggleSelect={toggleTaskSelection}
               onDeleteTask={handleDeleteTask}
               onViewPRFiles={handleViewPRFiles}
+              onPreviewApp={handlePreviewApp}
               isCollapsed={columnPreferences?.[status]?.isCollapsed}
               onToggleCollapsed={() => handleToggleColumnCollapsed(status)}
               columnWidth={columnPreferences?.[status]?.width}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play, Square, Clock, Zap, Target, Shield, Gauge, Palette, FileCode, Bug, Wrench, Loader2, AlertTriangle, RotateCcw, Archive, GitPullRequest, MoreVertical, X, FileText } from 'lucide-react';
+import { Play, Square, Clock, Zap, Target, Shield, Gauge, Palette, FileCode, Bug, Wrench, Loader2, AlertTriangle, RotateCcw, Archive, GitPullRequest, MoreVertical, X, FileText, Monitor } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -68,6 +68,8 @@ interface TaskCardProps {
   onDelete?: () => void;
   // Optional PR files viewer handler
   onViewPRFiles?: (prUrl: string, taskId: string) => void;
+  // Optional app preview handler for done tasks
+  onPreviewApp?: () => void;
 }
 
 // Metadata badges component - extracted to reduce complexity
@@ -255,6 +257,7 @@ interface ActionButtonsProps {
   task: Task;
   currentProject?: any;
   onViewPRFiles?: (prUrl: string, taskId: string) => void;
+  onPreviewApp?: () => void;
   handleRecover: (e: React.MouseEvent) => void;
   handleStartStop: (e: React.MouseEvent) => void;
   handleViewPR: (e: React.MouseEvent) => void;
@@ -271,6 +274,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   task,
   currentProject,
   onViewPRFiles,
+  onPreviewApp,
   handleRecover,
   handleStartStop,
   handleViewPR,
@@ -319,6 +323,17 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   if (task.status === 'done' && task.metadata?.prUrl) {
     return (
       <div className="flex gap-1">
+        {onPreviewApp && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); onPreviewApp(); }}
+            title={t('tooltips.previewApp')}
+          >
+            <Monitor className="h-3 w-3" />
+          </Button>
+        )}
         {task.metadata?.prUrl && (
           <Button
             variant="ghost"
@@ -359,16 +374,29 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
 
   if (task.status === 'done' && !task.metadata?.archivedAt) {
     return (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-7 px-2.5 hover:bg-muted-foreground/10"
-        onClick={handleArchive}
-        title={t('tooltips.archiveTask')}
-      >
-        <Archive className="mr-1.5 h-3 w-3" />
-        {t('actions.archive')}
-      </Button>
+      <div className="flex gap-1">
+        {onPreviewApp && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); onPreviewApp(); }}
+            title={t('tooltips.previewApp')}
+          >
+            <Monitor className="h-3 w-3" />
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2.5 hover:bg-muted-foreground/10"
+          onClick={handleArchive}
+          title={t('tooltips.archiveTask')}
+        >
+          <Archive className="mr-1.5 h-3 w-3" />
+          {t('actions.archive')}
+        </Button>
+      </div>
     );
   }
 
@@ -486,7 +514,8 @@ function taskCardPropsAreEqual(prevProps: TaskCardProps, nextProps: TaskCardProp
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.onToggleSelect === nextProps.onToggleSelect &&
     prevProps.onViewPRFiles === nextProps.onViewPRFiles &&
-    prevProps.onDelete === nextProps.onDelete
+    prevProps.onDelete === nextProps.onDelete &&
+    prevProps.onPreviewApp === nextProps.onPreviewApp
   ) {
     return true;
   }
@@ -542,7 +571,8 @@ export const TaskCard = memo(function TaskCard({
   isSelected,
   onToggleSelect,
   onDelete,
-  onViewPRFiles
+  onViewPRFiles,
+  onPreviewApp
 }: TaskCardProps) {
   const { t } = useTranslation(['tasks', 'errors']);
   const formatRelativeTime = useFormatRelativeTime();
@@ -841,6 +871,7 @@ export const TaskCard = memo(function TaskCard({
               task={task}
               currentProject={currentProject}
               onViewPRFiles={onViewPRFiles}
+              onPreviewApp={onPreviewApp}
               handleRecover={handleRecover}
               handleStartStop={handleStartStop}
               handleViewPR={handleViewPR}

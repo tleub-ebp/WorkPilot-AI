@@ -48,6 +48,7 @@ import { setupNaturalLanguageGitHandlers } from './natural-language-git-handlers
 import { setupSmartEstimationHandlers } from './smart-estimation-handlers';
 import { setupConflictPredictorHandlers } from './conflict-predictor-handlers';
 import { registerVoiceControlHandlers } from './voice-control-handlers';
+import { registerAppEmulatorHandlers } from './app-emulator-handlers';
 
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from './project-handlers';
@@ -86,6 +87,7 @@ export { setupNaturalLanguageGitHandlers } from './natural-language-git-handlers
 export { setupSmartEstimationHandlers } from './smart-estimation-handlers';
 export { setupConflictPredictorHandlers } from './conflict-predictor-handlers';
 export { registerVoiceControlHandlers } from './voice-control-handlers';
+export { registerAppEmulatorHandlers } from './app-emulator-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -211,6 +213,9 @@ export function setupIpcHandlers(
 
   // Voice Control handlers
   registerVoiceControlHandlers();
+
+  // App Emulator handlers
+  registerAppEmulatorHandlers(getMainWindow);
 
   console.warn('[IPC] All handler modules registered successfully');
 }

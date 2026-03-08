@@ -672,6 +672,16 @@ export function UsageIndicator() {
                   : t('common:usage.dataUnavailableDescription')
                 }
               </p>
+              {selectedProvider === 'anthropic' && (
+                <a
+                  href="https://claude.ai/settings"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-primary font-medium underline hover:text-primary/80 block mt-1"
+                >
+                  claude.ai/settings
+                </a>
+              )}
             </div>
           </TooltipContent>
         </Tooltip>

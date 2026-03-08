@@ -21,7 +21,8 @@
     "viewPR": "View PR",
     "moveTo": "Move to",
     "taskActions": "Task actions",
-    "selectTask": "Select task: {{title}}"
+    "selectTask": "Select task: {{title}}",
+    "preview": "Preview"
   },
   "confirmDelete": {
     "title": "Delete Task",
@@ -54,7 +55,8 @@
     "archiveTask": "Archive task",
     "archiveAllDone": "Archive all done tasks",
     "viewPR": "Open pull request in browser",
-    "viewPRFiles": "View modified files"
+    "viewPRFiles": "View modified files",
+    "previewApp": "Preview application"
   },
   "prFiles": {
     "short": "Files"
