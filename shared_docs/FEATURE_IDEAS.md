@@ -530,6 +530,47 @@ L'App Emulator est maintenant disponible directement depuis les cartes de tâche
 - **Python** : Recherche `app.py`, `main.py`, ou Flask/Django
 - **Desktop** : Détecte Electron, Tauri, ou applications natives
 
+**Langages et frameworks supportés**
+- **Frontend** : TypeScript/JavaScript, React, Vue.js, Angular, Svelte
+- **Backend** : Python (Flask, Django, FastAPI), Node.js, Go, Rust, .NET (ASP.NET Core, C#)
+- **Mobile** : React Native, Flutter (Dart), Swift, Kotlin, .NET MAUI
+- **Desktop** : Electron, Python (Tkinter, PyQt), Tauri (Rust), .NET WPF/WinUI
+- **Web** : HTML5/CSS3, WebAssembly, PWA, Blazor
+- **Base de données** : SQLite, PostgreSQL, MongoDB, Redis, SQL Server, Entity Framework
+- **DevOps** : Docker, Docker Compose, Kubernetes
+
+**Agents BMAD recommandés par type de projet**
+
+**Frontend (React/Vue/Angular)**
+- **Architecte** : Pour la conception de l'architecture des composants et des patterns
+- **Développeur** : Pour l'implémentation des composants et features
+- **UX Designer** : Pour l'interface utilisateur et l'expérience
+
+**Backend (API/Services)**
+- **Architecte** : Pour la conception de l'architecture microservices et des APIs
+- **Développeur** : Pour l'implémentation des endpoints et logique métier
+- **QA** : Pour les tests d'API et validation des services
+
+**Applications Full-Stack**
+- **Architecte** : Pour l'architecture globale et intégration frontend/backend
+- **Développeur** (Frontend + Backend) : Pour l'implémentation complète
+- **QA** : Pour les tests end-to-end et validation
+
+**Mobile (React Native/Flutter)**
+- **Architecte** : Pour l'architecture mobile et patterns natifs
+- **Développeur** : Pour l'implémentation des écrans et fonctionnalités
+- **UX Designer** : Pour l'interface mobile et navigation
+
+**Desktop (.NET/Electron)**
+- **Architecte** : Pour l'architecture desktop et patterns MVVM
+- **Développeur** : Pour l'implémentation des fenêtres et fonctionnalités
+- **Tech Writer** : Pour la documentation utilisateur
+
+**Projets Data/IA**
+- **Architecte** : Pour l'architecture data pipelines et ML
+- **Développeur** : Pour l'implémentation des algorithmes et modèles
+- **Analyst** : Pour l'analyse des données et validation
+
 **Configuration de l'émulation**
 - **Port auto** : Scan des ports disponibles (3000-9000)
 - **Environment** : Utilise les variables du projet actif
