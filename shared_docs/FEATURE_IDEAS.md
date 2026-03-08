@@ -802,7 +802,7 @@ L'agent fournit des métriques détaillées :
 - Utilisez les résultats pour améliorer les guidelines de code
 - Automatisez les corrections simples et récurrentes
 
-### 12. Pipeline Generator
+### 13. Pipeline Generator
 
 Génération automatique de CI/CD complète adaptée au projet.
 
@@ -811,7 +811,7 @@ Génération automatique de CI/CD complète adaptée au projet.
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Setup CI/CD en 30 secondes au lieu de 2 heures.
 
-### 13. Smart Estimation ✅ Implémenté
+### 14. Smart Estimation ✅ Implémenté
 
 Scores de complexité basés sur l'historique réel des builds passés.
 
@@ -947,7 +947,7 @@ La Smart Estimation suit le flux suivant :
 - Code source : `apps/backend/services/smart_estimation_service.py`
 - Composant UI : `apps/frontend/src/renderer/components/smart-estimation/SmartEstimationDialog.tsx`
 
-### 14. Natural Language Git ✅ Implémenté
+### 15. Natural Language Git ✅ Implémenté
 
 Manipuler git en langage naturel directement depuis l'interface.
 
@@ -963,7 +963,7 @@ Manipuler git en langage naturel directement depuis l'interface.
 - Support des commandes Git les plus courantes
 - Gestion d'erreurs et streaming en temps réel
 
-### 15. Context-Aware Snippets ✅ Implémenté
+### 16. Context-Aware Snippets ✅ Implémenté
 
 Snippets intelligents qui s'adaptent au style et aux conventions du projet.
 
@@ -1107,7 +1107,7 @@ npm test -- --run src/renderer/components/context-aware-snippets/__tests__/Conte
 
 ## Tier C — Nice to Have
 
-### 16. Team Knowledge Sync
+### 17. Team Knowledge Sync
 
 Memory System partagé entre tous les membres de l'équipe.
 
@@ -1116,7 +1116,7 @@ Memory System partagé entre tous les membres de l'équipe.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** L'expérience collective capitalise automatiquement. Onboarding d'un nouveau dev en quelques minutes.
 
-### 17. Environment Cloner
+### 18. Environment Cloner
 
 Reproduction d'environnements prod/staging en local pour debug.
 
@@ -1125,7 +1125,7 @@ Reproduction d'environnements prod/staging en local pour debug.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** "Ça marche en local mais pas en prod" disparaît.
 
-### 18. Architecture Visualizer
+### 19. Architecture Visualizer
 
 Génération automatique de diagrammes d'architecture depuis le code.
 
@@ -1134,7 +1134,7 @@ Génération automatique de diagrammes d'architecture depuis le code.
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La doc d'archi se génère et se maintient toute seule.
 
-### 19. Code Migration Agent
+### 20. Code Migration Agent
 
 Migration automatique entre frameworks, versions majeures ou langages.
 
@@ -1502,71 +1502,6 @@ Le Code Playground supporte :
 
 ---
 
-## Tier C — Nice to Have
-
-### 16. Team Knowledge Sync
-
-Memory System partagé entre tous les membres de l'équipe.
-
-- **Principe :** Le graphe Graphiti devient partagé (serveur centralisé ou sync P2P). Décisions architecturales, patterns découverts, pièges identifiés sont accessibles à toute l'équipe.
-- **Exploite :** Graphiti Memory System
-- **Effort :** Élevé
-- **Pourquoi c'est banger :** L'expérience collective capitalise automatiquement. Onboarding d'un nouveau dev en quelques minutes.
-
-### 17. Environment Cloner
-
-Reproduction d'environnements prod/staging en local pour debug.
-
-- **Principe :** Capture la config d'un environnement distant (variables d'env, versions de services, données de seed) et reproduit un équivalent local via Docker Compose ou scripts.
-- **Exploite :** Platform abstraction, terminal system
-- **Effort :** Élevé
-- **Pourquoi c'est banger :** "Ça marche en local mais pas en prod" disparaît.
-
-### 18. Architecture Visualizer
-
-Génération automatique de diagrammes d'architecture depuis le code.
-
-- **Principe :** Analyse le codebase et génère des diagrammes interactifs : dépendances entre modules, flux de données, hiérarchie de composants, schéma de base de données. Mis à jour automatiquement à chaque build.
-- **Exploite :** Context system, project analysis
-- **Effort :** Moyen
-- **Pourquoi c'est banger :** La doc d'archi se génère et se maintient toute seule.
-
-### 19. Code Migration Agent
-
-Migration automatique entre frameworks, versions majeures ou langages.
-
-- **Principe :** "Migre ce projet de React Class Components vers des Hooks", "Upgrade de Python 3.9 à 3.12", "Convertis ce module JS en TypeScript". L'agent analyse le code, planifie la migration, exécute par batch, et valide avec QA.
-- **Exploite :** Agent coder, worktree isolation, QA pipeline, context system
-- **Effort :** Élevé
-- **Pourquoi c'est banger :** Les migrations sont le cauchemar de tout dev. L'automatiser est un selling point énorme.
-
-### 20. Performance Profiler Agent
-
-Agent qui profile le code, identifie les bottlenecks et propose des optimisations.
-
-- **Principe :** Lance des benchmarks, analyse les résultats, identifie les hot paths et propose des optimisations concrètes (algorithme, caching, lazy loading, query optimization). Peut implémenter les fixes automatiquement.
-- **Exploite :** Agent coder, terminal system, QA pipeline
-- **Effort :** Élevé
-- **Pourquoi c'est banger :** L'app s'optimise toute seule. Plus besoin d'experts perf.
-
-### 21. Documentation Agent
-
-Génération et maintenance automatique de la documentation technique.
-
-- **Principe :** Analyse le code et génère/met à jour la documentation : API docs, README, guides de contribution, JSDoc/docstrings, diagrammes de séquence. Détecte la doc obsolète après chaque changement.
-- **Exploite :** Context system, project analysis, Memory (Graphiti)
-- **Effort :** Moyen
-- **Pourquoi c'est banger :** La doc n'est plus jamais outdated.
-
-### 22. Plugin Marketplace
-
-Écosystème de plugins communautaires pour étendre WorkPilot.
-
-- **Principe :** SDK pour créer des plugins : nouveaux agents, intégrations tierces, templates de specs, thèmes UI, custom prompts. Marketplace in-app avec installation en un clic.
-- **Exploite :** Architecture modulaire existante
-- **Effort :** Élevé
-- **Pourquoi c'est banger :** Effet réseau. La communauté étend le produit. Verrouille les utilisateurs dans l'écosystème.
-
 ### 23. Voice Control ✅ Implémenté
 
 Contrôler WorkPilot à la voix : décrire des tâches, naviguer dans l'UI, commander des builds.
@@ -1601,6 +1536,6 @@ Traduire du code entre langages tout en préservant la logique et les patterns i
 | Tier | # | Features | Impact |
 |------|---|----------|--------|
 | **S** | 4 | Agent Replay, Self-Healing, Incident Responder, Multi-Repo | Game changers — différenciateurs marché uniques |
-| **A** | 5 | Analytics ✅, Test Gen ✅, Dependency Sentinel ✅, AI Pair, Prompt Optimizer ✅, Conflict Predictor | Strong impact — features attendues par les power users |
+| **A** | 6 | Analytics ✅, Test Gen ✅, Dependency Sentinel ✅, AI Pair, Prompt Optimizer ✅, Conflict Predictor, App Emulator ✅ | Strong impact — features attendues par les power users |
 | **B** | 6 | Live Review, Auto-Refactor, Pipeline Gen, Smart Estimation ✅, NL Git ✅, Snippets | Solid value — améliorations significatives du quotidien |
-| **C** | 10 | Team Sync, Env Cloner, Arch Viz, Migration, Perf Profiler, Doc Agent, Marketplace, Voice ✅, Playground ✅, Cross-Lang | Nice to have — vision long terme |
+| **C** | 11 | Team Sync, Env Cloner, Arch Viz, Migration, Perf Profiler, Doc Agent, Marketplace, Voice ✅, Playground ✅, Cross-Lang | Nice to have — vision long terme |
