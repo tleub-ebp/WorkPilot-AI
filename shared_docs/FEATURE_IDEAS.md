@@ -485,7 +485,109 @@ Review en temps réel pendant que le dev code, pas après.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Shift-left ultime. Les problèmes sont détectés à l'écriture, pas à la review.
 
-### 11. Auto-Refactor Agent ✅ Implémenté
+### 12. App Emulator ✅ Implémenté
+
+Lancement et émulation de l'application directement depuis l'interface Kanban pour visualiser le rendu des tâches complétées.
+
+- **Principe :** Bouton "Preview" sur les tâches terminées qui lance l'application dans un environnement isolé (iframe, Docker, ou terminal intégré). Détecte automatiquement le type d'application (web, mobile, desktop) et adapte l'émulation. Permet de visualiser le résultat fonctionnel sans quitter l'interface WorkPilot.
+- **Exploite :** Worktree isolation, terminal system, project analysis
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** Vérification visuelle instantanée des features. Plus besoin de switcher entre IDE et navigateur pour tester.
+
+#### 🖥️ Comment utiliser l'App Emulator
+
+L'App Emulator est maintenant disponible directement depuis les cartes de tâches dans le Kanban ! Voici comment l'utiliser :
+
+##### 🚀 Accès à l'émulation
+
+**Depuis le Kanban Board**
+1. **Tâches complétées** : Les tâches avec statut "Done" affichent un bouton **"Preview"** (icône 👁️)
+2. **Lancement** : Cliquez sur "Preview" pour lancer l'émulation de l'application
+3. **Ouverture** : Une fenêtre modale s'ouvre avec l'application en cours d'exécution
+
+##### 📱 Types d'émulation supportés
+
+**Applications Web**
+- **Iframe intégré** : Preview direct dans l'interface WorkPilot
+- **Port automatique** : Détecte le serveur de développement (3000, 8000, 5000, etc.)
+- **Hot reload** : Les modifications sont visibles en temps réel
+
+**Applications Mobile**
+- **Simulateur** : Émulation iOS/Android selon la configuration du projet
+- **Responsive** : Test des différentes tailles d'écran
+- **Touch events** : Support des interactions tactiles
+
+**Applications Desktop**
+- **Terminal intégré** : Lancement des applications Electron/Python/etc.
+- **Capture d'écran** : Visualisation du rendu dans l'interface
+- **Logs en direct** : Affichage des logs de l'application
+
+##### ⚙️ Configuration automatique
+
+**Détection de projet**
+- **React/Vue/Angular** : Détecte `npm start` ou `yarn start`
+- **Node.js** : Identifie les scripts de démarrage dans package.json
+- **Python** : Recherche `app.py`, `main.py`, ou Flask/Django
+- **Desktop** : Détecte Electron, Tauri, ou applications natives
+
+**Configuration de l'émulation**
+- **Port auto** : Scan des ports disponibles (3000-9000)
+- **Environment** : Utilise les variables du projet actif
+- **Worktree** : Lance depuis le bon worktree si applicable
+
+##### 🎯 Fonctionnalités de l'émulateur
+
+**Contrôles intégrés**
+- **Refresh** : Recharger l'application
+- **Fullscreen** : Mode plein écran
+- **DevTools** : Outils de développement pour le debug
+- **Console** : Affichage des logs et erreurs
+
+**Navigation rapide**
+- **URL shortcuts** : Accès rapide aux différentes pages
+- **Bookmarks** : Signets pour les pages fréquentes
+- **History** : Navigation dans l'historique
+
+**Performance monitoring**
+- **Load time** : Temps de chargement des pages
+- **Network** : Requêtes réseau et performances
+- **Memory** : Utilisation mémoire de l'application
+
+##### 🛠️ Architecture technique
+
+L'App Emulator utilise :
+- **Détection automatique** : Analyse des fichiers de configuration
+- **Isolation** : Environnement isolé pour ne pas impacter le développement
+- **Streaming** : Affichage en temps réel de l'application
+- **Worktree integration** : Support des branches multiples
+
+##### 💡 Tips d'utilisation
+
+**Pour les développeurs web**
+- Utilisez l'émulateur pour tester rapidement les modifications
+- Bénéficiez du hot reload sans quitter WorkPilot
+- Testez les responsive designs directement
+
+**Pour les développeurs mobile**
+- Vérifiez le rendu sur différentes tailles d'écran
+- Testez les interactions tactiles
+- Validez les layouts mobiles
+
+**Pour les développeurs desktop**
+- Lancez les applications Electron depuis WorkPilot
+- Visualisez les interfaces desktop rapidement
+- Déboguez avec les logs intégrés
+
+##### 🧪 Tests
+
+Pour tester l'App Emulator :
+
+1. **Créez une tâche** et complétez-la
+2. **Cliquez sur "Preview"** dans la carte de tâche
+3. **Vérifiez** que l'application se lance correctement
+4. **Testez** les différentes fonctionnalités de l'émulateur
+
+### 13. Auto-Refactor Agent ✅ Implémenté
 
 Détection continue de code smells, dette technique et patterns obsolètes avec refactoring autonome.
 
