@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 // Import English translation resources
+import enAppEmulator from './locales/en/appEmulator.json';
 import enAnalytics from './locales/en/analytics.json';
 import enChangelog from './locales/en/changelog.json';
 import enCodePlayground from './locales/en/codePlayground.json';
@@ -35,6 +36,7 @@ import enVisualProgramming from './locales/en/visualProgramming.json';
 import enWelcome from './locales/en/welcome.json';
 
 // Import French translation resources
+import frAppEmulator from './locales/fr/appEmulator.json';
 import frAnalytics from './locales/fr/analytics.json';
 import frChangelog from './locales/fr/changelog.json';
 import frCodePlayground from './locales/fr/codePlayground.json';
@@ -71,6 +73,7 @@ export const defaultNS = 'common';
 
 export const resources = {
   en: {
+    appEmulator: enAppEmulator,
     analytics: enAnalytics,
     changelog: enChangelog,
     codePlayground: enCodePlayground,
@@ -104,6 +107,7 @@ export const resources = {
     welcome: enWelcome
   },
   fr: {
+    appEmulator: frAppEmulator,
     analytics: frAnalytics,
     changelog: frChangelog,
     codePlayground: frCodePlayground,
@@ -146,6 +150,7 @@ i18n
     fallbackLng: 'en',
     defaultNS,
     ns: [
+      'appEmulator',
       'analytics',
       'changelog',
       'codePlayground',

@@ -21,7 +21,8 @@
     "viewPR": "Voir la PR",
     "moveTo": "Déplacer vers",
     "taskActions": "Actions de la tâche",
-    "selectTask": "Sélectionner la tâche : {{title}}"
+    "selectTask": "Sélectionner la tâche : {{title}}",
+    "preview": "Aperçu"
   },
   "confirmDelete": {
     "title": "Supprimer la tâche",
@@ -54,7 +55,8 @@
     "archiveTask": "Archiver la tâche",
     "archiveAllDone": "Archiver toutes les tâches terminées",
     "viewPR": "Ouvrir la pull request dans le navigateur",
-    "viewPRFiles": "Voir les fichiers modifiés"
+    "viewPRFiles": "Voir les fichiers modifiés",
+    "previewApp": "Prévisualiser l'application"
   },
   "prFiles": {
     "short": "Fichiers"

@@ -28,6 +28,8 @@ import { createAutoRefactorAPI } from './modules/auto-refactor-api';
 import { type SmartEstimationAPI, createSmartEstimationAPI } from './modules/smart-estimation-api';
 import type { ContextAwareSnippetsAPI } from './modules/context-aware-snippets-api';
 import { createContextAwareSnippetsAPI } from './modules/context-aware-snippets-api';
+import type { AppEmulatorAPI } from './modules/app-emulator-api';
+import { createAppEmulatorAPI } from './modules/app-emulator-api';
 import { invokeIpc } from './modules/ipc-utils';
 import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
@@ -56,7 +58,8 @@ export interface ElectronAPI extends
   ConflictPredictorAPI,
   VoiceControlAPI,
   SmartEstimationAPI,
-  ContextAwareSnippetsAPI {
+  ContextAwareSnippetsAPI,
+  AppEmulatorAPI {
   github: GitHubAPI;
   /** Queue routing API for rate limit recovery */
   queue: QueueAPI;
@@ -96,6 +99,7 @@ export const createElectronAPI = (): ElectronAPI => {
     ...createVoiceControlAPI(),
     ...createSmartEstimationAPI(),
     ...createContextAwareSnippetsAPI(),
+    ...createAppEmulatorAPI(),
     github: createGitHubAPI(),
     queue: createQueueAPI(),  // Queue routing for rate limit recovery
     quality: createQualityAPI(),  // Code quality analysis
@@ -134,6 +138,7 @@ export { createConflictPredictorAPI } from './modules/conflict-predictor-api';
 export { createSmartEstimationAPI } from './modules/smart-estimation-api';
 export { createContextAwareSnippetsAPI } from './modules/context-aware-snippets-api';
 export { createVoiceControlAPI } from './modules/voice-control-api';
+export { createAppEmulatorAPI } from './modules/app-emulator-api';
 
 export type { ProjectAPI } from './project-api';
 export type { TerminalAPI } from './terminal-api';
@@ -155,3 +160,4 @@ export type { NaturalLanguageGitAPI } from './natural-language-git-api';
 export type { SmartEstimationAPI } from './modules/smart-estimation-api';
 export type { ContextAwareSnippetsAPI } from './modules/context-aware-snippets-api';
 export type { VoiceControlAPI } from './modules/voice-control-api';
+export type { AppEmulatorAPI } from './modules/app-emulator-api';

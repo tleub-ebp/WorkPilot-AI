@@ -42,7 +42,8 @@ import {
   Zap,
   Shield,
   TestTube,
-  WandSparkles
+  WandSparkles,
+  Monitor
 } from 'lucide-react';
 
 // UI
@@ -101,6 +102,10 @@ import {
 
 import { useNaturalLanguageGitStore } from '@/stores/natural-language-git-store';
 
+import {
+  openAppEmulatorDialog
+} from '@/stores/app-emulator-store';
+
 // Modals & Components
 import { AddProjectModal } from './AddProjectModal';
 import { GitSetupModal } from './GitSetupModal';
@@ -119,11 +124,12 @@ import { ConflictPredictorDialog } from './conflict-predictor/ConflictPredictorD
 import { ContextAwareSnippetsDialog } from './context-aware-snippets/ContextAwareSnippetsDialog';
 import { DependencySentinelDialog } from './dependency-sentinel/DependencySentinelDialog';
 import { VoiceControlDialog } from './voice-control/VoiceControlDialog';
+import { AppEmulatorDialog } from './app-emulator/AppEmulatorDialog';
 
 // Types
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator';
 
 interface SidebarProps {
   readonly onSettingsClick: () => void;
@@ -185,6 +191,7 @@ const navGroups: NavGroup[] = [
       { id: 'dependency-sentinel', labelKey: 'navigation:items.dependencySentinel', icon: Shield, shortcut: 'D' },
       { id: 'conflict-predictor', labelKey: 'navigation:items.conflictPredictor', icon: GitMerge, shortcut: 'C' },
       { id: 'natural-language-git', labelKey: 'navigation:items.naturalLanguageGit', icon: GitBranch, shortcut: 'G' },
+      { id: 'app-emulator', labelKey: 'navigation:items.appEmulator', icon: Monitor, shortcut: 'E' },
     ],
     defaultExpanded: false
   },
@@ -532,6 +539,10 @@ export function Sidebar({
     }
     if (view === 'voice-control') {
       setShowVoiceControlDialog(true);
+      return;
+    }
+    if (view === 'app-emulator') {
+      openAppEmulatorDialog();
       return;
     }
     
@@ -882,6 +893,7 @@ const toggleGroupExpansion = (groupId: string) => {
       <DependencySentinelDialog />
       <NaturalLanguageGitDialog />
       <VoiceControlDialog />
+      <AppEmulatorDialog />
     </TooltipProvider>
   );
 }

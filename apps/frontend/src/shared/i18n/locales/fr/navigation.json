@@ -42,7 +42,8 @@
     "conflictPredictor": "Prédicteur de conflits",
     "naturalLanguageGit": "Git en langage naturel",
     "contextAwareSnippets": "Extraits contextuels",
-    "voiceControl": "Contrôle vocal"
+    "voiceControl": "Contrôle vocal",
+    "appEmulator": "Émulateur d'application"
   },
   "actions": {
     "settings": "Paramètres",

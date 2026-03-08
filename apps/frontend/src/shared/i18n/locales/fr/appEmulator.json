@@ -1,0 +1,48 @@
+{
+  "title": "Émulateur d'application",
+  "description": "Prévisualisez votre application directement depuis WorkPilot",
+  "detecting": "Détection du type de projet...",
+  "starting": "Démarrage du serveur de développement...",
+  "running": "L'application est en cours d'exécution",
+  "stopped": "Serveur arrêté",
+  "idle": "Prêt à démarrer",
+  "actions": {
+    "start": "Démarrer le serveur",
+    "stop": "Arrêter le serveur",
+    "refresh": "Actualiser",
+    "openInBrowser": "Ouvrir dans le navigateur",
+    "retry": "Réessayer",
+    "close": "Fermer",
+    "restart": "Redémarrer"
+  },
+  "status": {
+    "detecting": "Analyse de la configuration du projet...",
+    "installing": "Installation des dépendances...",
+    "starting": "Lancement du serveur de développement...",
+    "waitingForPort": "En attente du serveur sur le port {{port}}...",
+    "ready": "Le serveur fonctionne sur {{url}}",
+    "stopped": "Le serveur a été arrêté",
+    "error": "Une erreur est survenue"
+  },
+  "projectInfo": {
+    "title": "Informations du projet",
+    "type": "Type",
+    "framework": "Framework",
+    "port": "Port",
+    "command": "Commande",
+    "url": "URL"
+  },
+  "output": {
+    "title": "Sortie du serveur",
+    "noOutput": "Aucune sortie pour le moment"
+  },
+  "errors": {
+    "noProject": "Veuillez sélectionner un projet pour utiliser l'émulateur d'application",
+    "scannedPath": "Répertoire analysé",
+    "detectionFailed": "Impossible de détecter le type de projet. Assurez-vous que le projet contient un fichier de configuration valide (package.json, requirements.txt, etc.)",
+    "serverFailed": "Échec du démarrage du serveur de développement",
+    "portInUse": "Le port {{port}} est déjà utilisé. Veuillez d'abord arrêter l'autre serveur.",
+    "processExited": "Le processus serveur s'est terminé avec le code {{code}}",
+    "generic": "Une erreur inattendue s'est produite. Veuillez réessayer."
+  }
+}
