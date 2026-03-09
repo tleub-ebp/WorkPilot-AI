@@ -42,7 +42,7 @@ Un seul spec qui orchestre des modifications sur plusieurs repositories simultan
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Personne ne fait ça. Les architectures modernes sont multi-repo — WorkPilot serait le seul à les supporter nativement.
 
-### 5. Autonomous Agent Learning Loop
+### 5. Autonomous Agent Learning Loop ✅ Implémenté
 
 Les agents s'améliorent automatiquement en analysant leurs succès et échecs passés — système auto-évolutif.
 
@@ -50,6 +50,162 @@ Les agents s'améliorent automatiquement en analysant leurs succès et échecs p
 - **Exploite :** Agent events, build analytics, Memory (Graphiti), prompt optimizer, QA reports
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** WorkPilot devient plus intelligent à chaque build. Les agents ne font jamais deux fois la même erreur. Aucun concurrent n'a un système d'apprentissage continu sur les agents de code. USP ultime.
+
+#### 🧠 Comment utiliser l'Autonomous Agent Learning Loop
+
+L'Autonomous Agent Learning Loop est maintenant intégré dans WorkPilot AI ! Le système fonctionne automatiquement en arrière-plan et peut être consulté via l'interface dédiée.
+
+##### 🔄 Fonctionnement automatique
+
+**Après chaque build**
+- L'agent analyse automatiquement les décisions prises pendant le build
+- Extrait les patterns de succès et d'échec
+- Stocke les apprentissages pour les builds futurs
+- Injecte le contexte d'apprentissage dans les prochains prompts
+
+**Types de patterns appris**
+- **Séquences d'outils** : Combinaisons d'outils qui fonctionnent bien
+- **Stratégies de prompts** : Formulations qui donnent de meilleurs résultats
+- **Résolution d'erreurs** : Solutions qui ont fonctionné par le passé
+- **Patterns QA** : Approches de test efficaces
+- **Structure de code** : Patterns architecturaux réussis
+
+##### 📊 Accès au dashboard d'apprentissage
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"🧠 Learning Loop"** dans le groupe "Tools"
+2. **Ouverture** : Le dashboard s'ouvre avec les patterns appris et les statistiques
+
+##### 📈 Fonctionnalités du dashboard
+
+**Vue d'ensemble**
+- **Patterns totaux** : Nombre de patterns extraits de tous les builds
+- **Patterns activés** : Nombre de patterns actuellement activés
+- **Confiance moyenne** : Score de confiance moyen des patterns
+- **Builds analysés** : Nombre de builds ayant contribué à l'apprentissage
+
+**Gestion des patterns**
+- **Activation/Désactivation** : Activez ou désactivez individuellement chaque pattern
+- **Suppression** : Supprimez les patterns non pertinents
+- **Expansion** : Voyez les détails de chaque pattern
+- **Confiance** : Évaluez la fiabilité de chaque pattern
+
+**Analyse manuelle**
+- **Lancer une analyse** : Déclenchez une analyse complète sur tous les builds
+- **Streaming en direct** : Suivez l'analyse en temps réel
+- **Rapports détaillés** : Obtenez des rapports complets sur les patterns trouvés
+
+##### 🎯 Catégories de patterns
+
+**🔧 Outils & Séquences (tool_sequence)**
+- Combinaisons d'outils efficaces
+- Ordres d'opérations optimaux
+- Workflow patterns
+
+**📝 Stratégies de Prompts (prompt_strategy)**
+- Formulations réussies
+- Contextes efficaces
+- Patterns d'instructions
+
+**🚨 Résolution d'Erreurs (error_resolution)**
+- Solutions éprouvées
+- Patterns de débogage
+- Approches de correction
+
+**✅ Patterns QA (qa_pattern)**
+- Stratégies de test
+- Approches de validation
+- Patterns de couverture
+
+**🏗️ Structure de Code (code_structure)**
+- Patterns architecturaux
+- Conventions réussies
+- Organisation efficace
+
+##### ⚙️ Configuration avancée
+
+Le modèle IA et le niveau de réflexion utilisés par le Learning Loop sont configurables :
+1. Allez dans **Paramètres** (⚙️)
+2. Section **"Feature Model Configuration"**
+3. Modifiez les réglages pour **"Learning Loop"** :
+   - **Modèle** : Choisissez le modèle LLM (Sonnet, Opus, Haiku, etc.)
+   - **Niveau de réflexion** : None, Low, Medium, High, ou Ultrathink
+
+##### 🔄 Intégration avec les agents
+
+**Injection automatique de contexte**
+- Les agents de planning reçoivent le contexte des patterns réussis
+- Les agents de coding bénéficient des leçons apprises
+- Les agents QA utilisent les patterns de test efficaces
+
+**Cycle d'amélioration continue**
+1. **Build** → Agent exécute la tâche
+2. **Analyse** → Post-build analyse les résultats
+3. **Extraction** → Patterns sont identifiés et stockés
+4. **Injection** → Contexte enrichi pour le prochain build
+5. **Amélioration** → Agents performent mieux
+
+##### 📊 Métriques et suivi
+
+**Pour chaque pattern**
+- **Confiance** : Score de 0 à 1 basé sur les succès
+- **Occurrences** : Nombre de fois que le pattern a été identifié
+- **Applications** : Nombre de fois que le pattern a été utilisé
+- **Efficacité** : Taux de succès when appliqué
+- **Source** : Build d'origine du pattern
+
+**Pour le projet**
+- **Évolution** : Performance au fil du temps
+- **Tendances** : Patterns émergents
+- **Optimisation** : Suggestions d'amélioration
+
+##### 🛠️ Architecture technique
+
+**Backend Service**
+- **LearningLoopService** : Orchestrateur principal
+- **PatternExtractor** : Extraction utilisant Claude Agent SDK
+- **PatternStorage** : Persistance des patterns
+- **PatternApplicator** : Application sélective des patterns
+
+**Frontend Interface**
+- **LearningLoopDialog** : Dashboard principal
+- **Pattern Cards** : Visualisation individuelle des patterns
+- **Real-time Streaming** : Suivi des analyses en direct
+
+**Integration Points**
+- **Post-build Hook** : Analyse automatique après chaque build
+- **Prompt Injection** : Enrichissement des prompts existants
+- **Agent SDK** : Utilisation de Claude pour l'analyse
+
+##### 🧪 Tests
+
+Pour exécuter les tests du Learning Loop :
+
+```bash
+# Tests backend (Python)
+cd apps/backend
+.venv/bin/pytest tests/learning_loop/ -v
+
+# Tests frontend (Vitest)
+cd apps/frontend
+npm test -- --run src/renderer/stores/__tests__/learning-loop-store.test.ts
+```
+
+##### 💡 Tips d'utilisation
+
+**Pour les développeurs**
+- Consultez régulièrement le dashboard pour voir les apprentissages
+- Désactivez les patterns non pertinents pour votre contexte
+- Lancez une analyse complète après des changements importants
+
+**Pour optimiser l'apprentissage**
+- Assurez-vous d'avoir suffisamment de builds historiques
+- Utilisez des modèles de haute qualité pour l'analyse
+- Revoyez périodiquement les patterns actifs
+
+**Pour le debugging**
+- Vérifiez les logs du Learning Loop en cas d'échec
+- Consultez les builds sources des patterns problématiques
+- Ajustez les seuils de confiance si nécessaire
 
 ---
 
