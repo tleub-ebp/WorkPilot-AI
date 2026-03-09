@@ -346,6 +346,16 @@ Before marking complete, verify:
     # Note: Linear updates are now handled by Python orchestrator via linear_updater.py
     # Agents no longer need to call Linear MCP tools directly
 
+    # Learning Loop: inject insights from previous builds
+    try:
+        from learning_loop.prompt_injection import get_learning_context
+
+        learning_context = get_learning_context(project_dir, "coding")
+        if learning_context:
+            sections.append(learning_context)
+    except Exception:
+        pass
+
     return "\n".join(sections)
 
 
@@ -411,6 +421,16 @@ not in the spec directory.
 """
     # Note: Linear task creation and updates are now handled by Python orchestrator
     # via linear_updater.py - agents no longer need Linear instructions in prompts
+
+    # Learning Loop: inject insights from previous builds
+    try:
+        from learning_loop.prompt_injection import get_learning_context
+
+        learning_context = get_learning_context(project_dir, "planning")
+        if learning_context:
+            prompt += "\n" + learning_context
+    except Exception:
+        pass
 
     return header + prompt
 
