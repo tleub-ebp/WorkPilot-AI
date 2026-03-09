@@ -30,6 +30,8 @@ import type { ContextAwareSnippetsAPI } from './modules/context-aware-snippets-a
 import { createContextAwareSnippetsAPI } from './modules/context-aware-snippets-api';
 import type { AppEmulatorAPI } from './modules/app-emulator-api';
 import { createAppEmulatorAPI } from './modules/app-emulator-api';
+import type { LearningLoopAPI } from './modules/learning-loop-api';
+import { createLearningLoopAPI } from './modules/learning-loop-api';
 import { invokeIpc } from './modules/ipc-utils';
 import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
@@ -59,7 +61,8 @@ export interface ElectronAPI extends
   VoiceControlAPI,
   SmartEstimationAPI,
   ContextAwareSnippetsAPI,
-  AppEmulatorAPI {
+  AppEmulatorAPI,
+  LearningLoopAPI {
   github: GitHubAPI;
   /** Queue routing API for rate limit recovery */
   queue: QueueAPI;
@@ -100,6 +103,7 @@ export const createElectronAPI = (): ElectronAPI => {
     ...createSmartEstimationAPI(),
     ...createContextAwareSnippetsAPI(),
     ...createAppEmulatorAPI(),
+    ...createLearningLoopAPI(),
     github: createGitHubAPI(),
     queue: createQueueAPI(),  // Queue routing for rate limit recovery
     quality: createQualityAPI(),  // Code quality analysis
