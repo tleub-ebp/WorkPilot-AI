@@ -42,6 +42,15 @@ Un seul spec qui orchestre des modifications sur plusieurs repositories simultan
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Personne ne fait ça. Les architectures modernes sont multi-repo — WorkPilot serait le seul à les supporter nativement.
 
+### 5. Autonomous Agent Learning Loop
+
+Les agents s'améliorent automatiquement en analysant leurs succès et échecs passés — système auto-évolutif.
+
+- **Principe :** Après chaque build, un méta-agent analyse les décisions prises (prompts, outils utilisés, itérations QA, corrections nécessaires) et extrait des patterns de réussite/échec. Ces patterns alimentent un feedback loop qui optimise automatiquement les prompts, la sélection d'outils, et les stratégies de résolution pour les builds suivants. Le système évolue avec chaque utilisation.
+- **Exploite :** Agent events, build analytics, Memory (Graphiti), prompt optimizer, QA reports
+- **Effort :** Élevé
+- **Pourquoi c'est banger :** WorkPilot devient plus intelligent à chaque build. Les agents ne font jamais deux fois la même erreur. Aucun concurrent n'a un système d'apprentissage continu sur les agents de code. USP ultime.
+
 ---
 
 ## Tier A — Strong Impact
@@ -471,6 +480,33 @@ Le Conflict Predictor utilise :
 - **Suivez les recommandations** : L'ordre de fusion suggéré minimise les risques
 - **Documentez les conflits** : Utilisez "Copy Report" pour traçabilité
 - **Anticipez** : L'analyse avant de commencer gros travaux prévient les blocages
+
+### 11. Cost Intelligence Engine
+
+Routage intelligent entre modèles selon la complexité + tracking granulaire des coûts par agent/phase/spec.
+
+- **Principe :** Analyse la complexité de chaque sous-tâche et route automatiquement vers le modèle le plus adapté (Haiku pour les tâches simples, Sonnet pour le standard, Opus pour le complexe). Tracking token-to-USD par agent, par phase, et par spec avec alertes budgétaires. Dashboard de coût intégré dans les analytics. Économies potentielles de 50-70% sur la facture IA.
+- **Exploite :** Phase config, agent events, build analytics, provider abstraction, profile scorer
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** ROI immédiat et mesurable. Les utilisateurs voient exactement où va leur argent et le système l'optimise automatiquement. Argument commercial massif.
+
+### 12. AI Code Review Agent
+
+Review de PR/MR intelligente avec contexte profond du codebase — comme un senior dev qui connaît tout le projet.
+
+- **Principe :** Quand un agent termine une PR, ou quand un dev externe ouvre une PR, l'agent de review analyse les changements avec le contexte complet : architecture existante, conventions du projet, patterns récurrents, historique des bugs. Produit une review structurée avec severity levels, suggestions d'amélioration concrètes, et détection de régressions potentielles. Intégré dans GitHub/GitLab.
+- **Exploite :** Context system, GitHub/GitLab integration, Memory (Graphiti), security system
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** Les PR reviews manuelles prennent des heures. Un reviewer IA avec contexte profond change la donne. Combine la rapidité de l'IA avec la connaissance contextuelle du projet.
+
+### 13. Architecture Enforcement Agent
+
+Gardien automatique de l'architecture — détecte et bloque les violations architecturales avant qu'elles n'atteignent le codebase.
+
+- **Principe :** Définit les patterns architecturaux du projet (layered, DDD, clean architecture, etc.) et valide chaque changement contre ces contraintes. Détecte les imports interdits (ex: une couche presentation qui importe du data layer), les dépendances circulaires, les violations de bounded contexts. S'intègre dans le pipeline QA comme validation pre-merge.
+- **Exploite :** Context system, QA pipeline, pattern discovery, project analysis
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** L'architecture se dégrade silencieusement build après build. Un gardien automatique maintient la qualité structurelle sans effort. Essentiel pour les projets d'entreprise.
 
 ---
 
@@ -1103,6 +1139,42 @@ npm test -- --run src/renderer/components/context-aware-snippets/__tests__/Conte
 - **Vérifiez les imports** : Le snippet utilisera les imports et patterns de votre projet
 - **Itérez si nécessaire** : N'hésitez pas à affiner la description pour obtenir exactement ce que vous voulez
 
+### 19. Spec Templates Library
+
+Templates de spec réutilisables par domaine pour accélérer la création de tâches récurrentes.
+
+- **Principe :** Bibliothèque de templates de spec pour les patterns courants : CRUD API, authentification, dashboard, formulaire, migration DB, refactoring, intégration tierce. Chaque template pré-remplit les sections du spec (requirements, fichiers impactés, critères QA) et s'adapte au contexte du projet. Les utilisateurs peuvent créer et partager leurs propres templates.
+- **Exploite :** Spec pipeline, context system, project analysis
+- **Effort :** Faible
+- **Pourquoi c'est banger :** Quick win énorme. Les specs récurrentes passent de 5 minutes à 30 secondes. Réduit la friction d'adoption.
+
+### 20. Dependency Graph Intelligence
+
+Analyse des dépendances inter-fichiers et inter-modules pour un contexte agent drastiquement amélioré.
+
+- **Principe :** Construit et cache un graphe de dépendances du projet (import graphs, call graphs, type dependencies). Quand un agent travaille sur un fichier, il reçoit automatiquement les fichiers liés pertinents. Détecte les dépendances circulaires, les modules orphelins, et les couplages excessifs. Alimente le Conflict Predictor avec des données de dépendance réelles.
+- **Exploite :** Context system, pattern discovery, project analysis, conflict predictor
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** Le contexte agent passe de "recherche par mots-clés" à "compréhension structurelle". Les agents produisent du code qui s'intègre mieux car ils voient les relations réelles.
+
+### 21. QA Security Scanner
+
+Intégration de scans de sécurité SAST/DAST dans le pipeline QA pour chaque build.
+
+- **Principe :** Avant le merge, le QA reviewer lance automatiquement des analyses de sécurité : détection d'injections SQL/XSS/CSRF, secrets exposés, dépendances vulnérables, configurations dangereuses. Les findings sont intégrés dans le QA report avec severity et suggestion de fix. L'agent QA fixer peut résoudre automatiquement les issues critiques.
+- **Exploite :** Security system (vulnerability_scanner, compliance_analyzer), QA pipeline, agent fixer
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** La sécurité n'est plus une afterthought. Chaque build est scanné automatiquement. Argument imparable pour les clients enterprise.
+
+### 22. Agent Decision Logger
+
+Journal structuré léger des décisions de chaque agent — version simplifiée d'Agent Replay.
+
+- **Principe :** Chaque agent enregistre ses décisions clés dans un format structuré : fichiers lus, outils utilisés, raisonnements principaux, alternatives considérées. Consultable dans un timeline simple dans l'UI (pas de replay visuel complet). Permet de comprendre pourquoi un agent a fait un choix sans le coût d'un système de replay complet.
+- **Exploite :** Agent events, workflow logger, agent state
+- **Effort :** Faible
+- **Pourquoi c'est banger :** 80% de la valeur d'Agent Replay à 20% de l'effort. Transparence immédiate sur les décisions IA. Stepping stone vers le full replay.
+
 ---
 
 ## Tier C — Nice to Have
@@ -1500,27 +1572,7 @@ Le Code Playground supporte :
 - **Anglais** : Support natif complet
 - **Code** : Support universel des langages de programmation
 
----
-
-### 23. Voice Control ✅ Implémenté
-
-Contrôler WorkPilot à la voix : décrire des tâches, naviguer dans l'UI, commander des builds.
-
-- **Principe :** Whisper/Deepgram pour le speech-to-text. "Lance un build sur le spec 42", "Montre-moi le kanban", "Crée une tâche pour refactorer le module auth". Feedback audio optionnel sur les résultats.
-- **Exploite :** Insights chat, terminal system, agent queue
-- **Effort :** Moyen
-- **Pourquoi c'est banger :** Effet wow en démo. Hands-free coding.
-
-### 24. AI Code Playground ✅ Implémenté
-
-Sandbox interactive pour prototyper rapidement des idées avec l'IA avant de les intégrer au projet.
-
-- **Principe :** Environnement isolé (sandbox Docker ou iframe) pour tester du code généré par l'IA. Preview live, hot reload, et bouton "Intégrer au projet" qui crée automatiquement un spec + worktree.
-- **Exploite :** Worktree isolation, agent coder, terminal system
-- **Effort :** Moyen
-- **Pourquoi c'est banger :** Prototypage instantané sans polluer le projet. Test avant d'investir.
-
-### 25. Cross-Language Translation
+### 27. Cross-Language Translation
 
 Traduire du code entre langages tout en préservant la logique et les patterns idiomatiques.
 
@@ -1529,13 +1581,49 @@ Traduire du code entre langages tout en préservant la logique et les patterns i
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Les migrations de stack deviennent triviales.
 
+### 28. Spec Approval Workflow
+
+Circuit de validation collaborative des specs avant implémentation — peer review pour les specs.
+
+- **Principe :** Avant qu'un spec ne passe en build, il peut être soumis à un workflow d'approbation : review par un lead technique, validation par un PM, ou approbation par un stakeholder. Notifications in-app, commentaires inline sur le spec, et historique des approbations. Intégré avec Slack/Teams pour les notifications externes.
+- **Exploite :** Spec pipeline, notification system, GitHub/GitLab integration
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** Gouvernance légère mais efficace. Les specs critiques ne passent plus sans review humaine. Essential pour les équipes.
+
+### 29. Memory Lifecycle Manager
+
+Gestion intelligente du cycle de vie de la mémoire Graphiti — pruning automatique, politiques de rétention, contrôle de la fraîcheur.
+
+- **Principe :** La mémoire Graphiti grossit sans limite actuellement. Ce système ajoute : expiration automatique des connaissances obsolètes (patterns remplacés, fichiers supprimés), consolidation des entrées redondantes, scoring de pertinence basé sur la fréquence d'accès, et politiques de rétention configurables. Option d'export/import pour migration entre projets.
+- **Exploite :** Graphiti Memory System, project analysis
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** Sans pruning, la mémoire devient bruitée et dégrade la qualité des agents. Un système de rétention intelligent garde la mémoire utile et pertinente.
+
+### 30. CI/CD Deployment Triggers
+
+Déclenchement automatique de pipelines CI/CD après la création d'une PR par un agent.
+
+- **Principe :** Quand un agent crée une PR (après build + QA validé), le système peut automatiquement déclencher un pipeline de déploiement : preview deployment (Vercel, Netlify, staging), smoke tests externes, et notification du résultat dans l'UI WorkPilot. Boucle complète de la spec au déploiement.
+- **Exploite :** GitHub/GitLab integration, agent events, terminal system
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** La boucle spec → code → test → deploy est complète. Du "j'ai une idée" à "c'est en preview" sans intervention.
+
+### 31. Intelligent Context Caching
+
+Cache sémantique du contexte agent pour accélérer les builds répétitifs et similaires.
+
+- **Principe :** Quand un agent construit du contexte pour une tâche, les résultats (fichiers pertinents, patterns détectés, dépendances) sont cachés avec un score de fraîcheur. Les tâches similaires réutilisent le cache existant au lieu de re-scanner tout le codebase. Invalidation intelligente basée sur les commits git récents.
+- **Exploite :** Context system, project analysis, pattern discovery, git integration
+- **Effort :** Faible
+- **Pourquoi c'est banger :** Les builds similaires passent de 2 minutes à 30 secondes pour la phase de contexte. Quick win performance.
+
 ---
 
 ## Résumé par Tier
 
 | Tier | # | Features | Impact |
 |------|---|----------|--------|
-| **S** | 4 | Agent Replay, Self-Healing, Incident Responder, Multi-Repo | Game changers — différenciateurs marché uniques |
-| **A** | 6 | Analytics ✅, Test Gen ✅, Dependency Sentinel ✅, AI Pair, Prompt Optimizer ✅, Conflict Predictor, App Emulator ✅ | Strong impact — features attendues par les power users |
-| **B** | 6 | Live Review, Auto-Refactor, Pipeline Gen, Smart Estimation ✅, NL Git ✅, Snippets | Solid value — améliorations significatives du quotidien |
-| **C** | 11 | Team Sync, Env Cloner, Arch Viz, Migration, Perf Profiler, Doc Agent, Marketplace, Voice ✅, Playground ✅, Cross-Lang | Nice to have — vision long terme |
+| **S** | 5 | Agent Replay, Self-Healing, Incident Responder, Multi-Repo, **🆕 Agent Learning Loop** | Game changers — différenciateurs marché uniques |
+| **A** | 10 | Analytics ✅, Test Gen ✅, Dependency Sentinel ✅, AI Pair, Prompt Optimizer ✅, Conflict Predictor ✅, App Emulator ✅, **🆕 Cost Intelligence**, **🆕 Code Review Agent**, **🆕 Architecture Enforcement** | Strong impact — features attendues par les power users |
+| **B** | 10 | Live Review, Auto-Refactor ✅, Pipeline Gen, Smart Estimation ✅, NL Git ✅, Snippets ✅, **🆕 Spec Templates**, **🆕 Dependency Graph**, **🆕 QA Security Scanner**, **🆕 Agent Decision Logger** | Solid value — améliorations significatives du quotidien |
+| **C** | 15 | Team Sync, Env Cloner, Arch Viz, Migration, Perf Profiler, Doc Agent, Marketplace, Voice ✅, Playground ✅, Cross-Lang, **🆕 Spec Approval Workflow**, **🆕 Memory Lifecycle**, **🆕 CI/CD Triggers**, **🆕 Context Caching** | Nice to have — vision long terme |
