@@ -106,6 +106,10 @@ import {
   openAppEmulatorDialog
 } from '@/stores/app-emulator-store';
 
+import {
+  openLearningLoopDialog
+} from '@/stores/learning-loop-store';
+
 // Modals & Components
 import { AddProjectModal } from './AddProjectModal';
 import { GitSetupModal } from './GitSetupModal';
@@ -125,11 +129,12 @@ import { ContextAwareSnippetsDialog } from './context-aware-snippets/ContextAwar
 import { DependencySentinelDialog } from './dependency-sentinel/DependencySentinelDialog';
 import { VoiceControlDialog } from './voice-control/VoiceControlDialog';
 import { AppEmulatorDialog } from './app-emulator/AppEmulatorDialog';
+import { LearningLoopDialog } from './learning-loop/LearningLoopDialog';
 
 // Types
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop';
 
 interface SidebarProps {
   readonly onSettingsClick: () => void;
@@ -192,6 +197,7 @@ const navGroups: NavGroup[] = [
       { id: 'conflict-predictor', labelKey: 'navigation:items.conflictPredictor', icon: GitMerge, shortcut: 'C' },
       { id: 'natural-language-git', labelKey: 'navigation:items.naturalLanguageGit', icon: GitBranch, shortcut: 'G' },
       { id: 'app-emulator', labelKey: 'navigation:items.appEmulator', icon: Monitor, shortcut: 'E' },
+      { id: 'learning-loop', labelKey: 'navigation:items.learningLoop', icon: Brain, shortcut: 'L' },
     ],
     defaultExpanded: false
   },
@@ -545,7 +551,11 @@ export function Sidebar({
       openAppEmulatorDialog();
       return;
     }
-    
+    if (view === 'learning-loop') {
+      openLearningLoopDialog();
+      return;
+    }
+
     // Handle regular view changes
     onViewChange?.(view);
   };
@@ -894,6 +904,7 @@ const toggleGroupExpansion = (groupId: string) => {
       <NaturalLanguageGitDialog />
       <VoiceControlDialog />
       <AppEmulatorDialog />
+      <LearningLoopDialog />
     </TooltipProvider>
   );
 }

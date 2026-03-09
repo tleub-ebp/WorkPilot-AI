@@ -18,6 +18,7 @@ import enErrors from './locales/en/errors.json';
 import enGitlab from './locales/en/gitlab.json';
 import enInitDialog from './locales/en/initDialog.json';
 import enInsights from './locales/en/insights.json';
+import enLearningLoop from './locales/en/learningLoop.json';
 import enMigrationWizard from './locales/en/migration-wizard.json';
 import enNaturalLanguageGit from './locales/en/naturalLanguageGit.json';
 import enNavigation from './locales/en/navigation.json';
@@ -52,6 +53,7 @@ import frErrors from './locales/fr/errors.json';
 import frGitlab from './locales/fr/gitlab.json';
 import frInitDialog from './locales/fr/initDialog.json';
 import frInsights from './locales/fr/insights.json';
+import frLearningLoop from './locales/fr/learningLoop.json';
 import frMigrationWizard from './locales/fr/migration-wizard.json';
 import frNaturalLanguageGit from './locales/fr/naturalLanguageGit.json';
 import frNavigation from './locales/fr/navigation.json';
@@ -89,6 +91,7 @@ export const resources = {
     gitlab: enGitlab,
     initDialog: enInitDialog,
     insights: enInsights,
+    learningLoop: enLearningLoop,
     migrationWizard: enMigrationWizard,
     naturalLanguageGit: enNaturalLanguageGit,
     navigation: enNavigation,
@@ -123,6 +126,7 @@ export const resources = {
     gitlab: frGitlab,
     initDialog: frInitDialog,
     insights: frInsights,
+    learningLoop: frLearningLoop,
     migrationWizard: frMigrationWizard,
     naturalLanguageGit: frNaturalLanguageGit,
     navigation: frNavigation,
@@ -166,6 +170,7 @@ i18n
       'gitlab',
       'initDialog',
       'insights',
+      'learningLoop',
       'migrationWizard',
       'naturalLanguageGit',
       'navigation',

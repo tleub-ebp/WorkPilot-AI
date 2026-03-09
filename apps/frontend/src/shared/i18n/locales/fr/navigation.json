@@ -43,7 +43,8 @@
     "naturalLanguageGit": "Git en langage naturel",
     "contextAwareSnippets": "Extraits contextuels",
     "voiceControl": "Contrôle vocal",
-    "appEmulator": "Émulateur d'application"
+    "appEmulator": "Émulateur d'application",
+    "learningLoop": "Boucle d'apprentissage"
   },
   "actions": {
     "settings": "Paramètres",
