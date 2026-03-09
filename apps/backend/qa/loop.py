@@ -307,7 +307,6 @@ async def run_qa_validation_loop(
         )
 
         if status == "approved":
-            emit_phase(ExecutionPhase.COMPLETE, "QA validation passed")
             # Reset error tracking on success
             consecutive_errors = 0
             last_error_context = None
@@ -320,38 +319,142 @@ async def run_qa_validation_loop(
                 duration=f"{iteration_duration:.1f}s",
             )
             record_iteration(spec_dir, qa_iteration, "approved", [], iteration_duration)
-            qa_status = get_qa_signoff_status(spec_dir) or {}
-            task_event_emitter.emit(
-                "QA_PASSED",
-                {
-                    "iteration": qa_iteration,
-                    "testsRun": qa_status.get("tests_passed", {}),
-                },
-            )
 
-            print("\n" + "=" * 70)
-            print("  ✅ QA APPROVED")
-            print("=" * 70)
-            print("\nAll acceptance criteria verified.")
-            print("The implementation is production-ready.")
-            print("\nNext steps:")
-            print("  1. Review the auto-claude/* branch")
-            print("  2. Create a PR and merge to main")
-
-            # End validation phase successfully
-            if task_logger:
-                task_logger.end_phase(
-                    LogPhase.VALIDATION,
-                    success=True,
-                    message="QA validation passed - all criteria met",
+            # === Architecture Enforcement Gate ===
+            # After QA reviewer approves, run architecture validation
+            # Deterministic analysis first (fast), AI review second (optional)
+            try:
+                from architecture.validator import (
+                    run_architecture_validation,
+                    write_architecture_fix_request,
                 )
 
-            # Update Linear: QA approved, awaiting human review
-            if linear_task and linear_task.task_id:
-                await linear_qa_approved(spec_dir)
-                print("\nLinear: Task marked as QA approved, awaiting human review")
+                debug_section("qa_loop", "Running Architecture Enforcement Gate")
+                emit_phase(
+                    ExecutionPhase.QA_REVIEW,
+                    "Architecture validation",
+                )
 
-            return True
+                arch_passed, arch_report = await run_architecture_validation(
+                    project_dir=project_dir,
+                    spec_dir=spec_dir,
+                    model=qa_model,
+                    verbose=verbose,
+                )
+
+                # Save architecture report to implementation_plan
+                from .criteria import load_implementation_plan, save_implementation_plan
+
+                plan = load_implementation_plan(spec_dir)
+                if plan:
+                    plan["architecture_enforcement"] = arch_report
+                    save_implementation_plan(spec_dir, plan)
+
+                if not arch_passed:
+                    # Architecture violations found — treat like a QA rejection
+                    arch_violations = arch_report.get("violations", [])
+                    debug_warning(
+                        "qa_loop",
+                        "Architecture violations found",
+                        violation_count=len(arch_violations),
+                    )
+                    print(
+                        f"\n🏗️  Architecture enforcement found {len(arch_violations)} violation(s)"
+                    )
+
+                    emit_phase(
+                        ExecutionPhase.QA_FIXING,
+                        "Fixing architecture violations",
+                    )
+                    task_event_emitter.emit(
+                        "QA_FAILED",
+                        {
+                            "iteration": qa_iteration,
+                            "issueCount": len(arch_violations),
+                            "issues": [
+                                v.get("description", "")
+                                for v in arch_violations[:5]
+                            ],
+                        },
+                    )
+
+                    # Write architecture fix request for the fixer agent
+                    write_architecture_fix_request(spec_dir, arch_report)
+
+                    # Override status to rejected so the fixer loop handles it
+                    status = "rejected"
+                    # Record this as a rejection due to architecture
+                    arch_issues = [
+                        {
+                            "title": f"Architecture: {v.get('type', 'violation')}",
+                            "description": v.get("description", ""),
+                            "type": "architecture_violation",
+                        }
+                        for v in arch_violations
+                    ]
+                    record_iteration(
+                        spec_dir,
+                        qa_iteration,
+                        "rejected",
+                        arch_issues,
+                        iteration_duration,
+                    )
+
+                    # Fall through to the rejected handler below
+                    # (which will run the fixer)
+
+            except ImportError:
+                # architecture package not available — skip gracefully
+                debug_warning(
+                    "qa_loop",
+                    "Architecture enforcement package not available, skipping",
+                )
+            except Exception as e:
+                # Architecture validation should not block the QA pipeline
+                debug_warning(
+                    "qa_loop",
+                    f"Architecture validation error (non-blocking): {e}",
+                )
+
+            # === End Architecture Enforcement Gate ===
+
+            # Only proceed to final approval if architecture passed (status still "approved")
+            if status == "approved":
+                emit_phase(ExecutionPhase.COMPLETE, "QA validation passed")
+
+                qa_status = get_qa_signoff_status(spec_dir) or {}
+                task_event_emitter.emit(
+                    "QA_PASSED",
+                    {
+                        "iteration": qa_iteration,
+                        "testsRun": qa_status.get("tests_passed", {}),
+                    },
+                )
+
+                print("\n" + "=" * 70)
+                print("  ✅ QA APPROVED + ARCHITECTURE CLEAN")
+                print("=" * 70)
+                print("\nAll acceptance criteria verified.")
+                print("Architecture validation passed.")
+                print("The implementation is production-ready.")
+                print("\nNext steps:")
+                print("  1. Review the auto-claude/* branch")
+                print("  2. Create a PR and merge to main")
+
+                # End validation phase successfully
+                if task_logger:
+                    task_logger.end_phase(
+                        LogPhase.VALIDATION,
+                        success=True,
+                        message="QA validation passed - all criteria met, architecture clean",
+                    )
+
+                # Update Linear: QA approved, awaiting human review
+                if linear_task and linear_task.task_id:
+                    await linear_qa_approved(spec_dir)
+                    print("\nLinear: Task marked as QA approved, awaiting human review")
+
+                return True
 
         elif status == "rejected":
             # Reset error tracking on valid response (rejected is a valid response)

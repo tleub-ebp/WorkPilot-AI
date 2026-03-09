@@ -20,6 +20,20 @@ You must fix these issues so QA can approve.
 
 ---
 
+## ARCHITECTURE VIOLATIONS
+
+If the `QA_FIX_REQUEST.md` mentions **architecture violations**, these are
+**structural issues**, NOT functional bugs. They require refactoring, not patching:
+
+- **Layer violations**: An import crosses a forbidden layer boundary. Fix by moving the import to use a proper abstraction, or relocate the code to the correct layer.
+- **Circular dependencies**: Two or more modules import each other in a cycle. Fix by extracting a shared interface, using dependency inversion, or moving shared types to a common module.
+- **Forbidden imports**: A file imports a module that is explicitly banned for its layer/context (e.g., UI importing database code). Fix by replacing the direct import with an API call, service layer, or proper abstraction.
+- **Bounded context violations**: Code from one domain context directly references another context's internals. Fix by using events, shared interfaces, or moving the code to the correct context.
+
+**Key rule**: Fix architecture issues by **refactoring** (moving code, extracting interfaces, adjusting imports), NOT by changing the architecture rules or configuration.
+
+---
+
 ## PHASE 0: LOAD CONTEXT (MANDATORY)
 
 **IMPORTANT**: All spec files are located in `{{SPEC_DIR}}/`.

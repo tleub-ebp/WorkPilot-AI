@@ -33,8 +33,10 @@ from .auto_fix_loop import (
 # Configuration constants
 # Criteria & status
 from .criteria import (
+    get_architecture_status,
     get_qa_iteration_count,
     get_qa_signoff_status,
+    is_architecture_approved,
     is_fixes_applied,
     is_qa_approved,
     is_qa_rejected,
@@ -95,6 +97,9 @@ __all__ = [
     "should_run_qa",
     "should_run_fixes",
     "print_qa_status",
+    # Architecture enforcement
+    "get_architecture_status",
+    "is_architecture_approved",
     # Report & tracking
     "get_iteration_history",
     "record_iteration",
