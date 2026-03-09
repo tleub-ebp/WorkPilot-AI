@@ -86,6 +86,33 @@ def get_qa_iteration_count(spec_dir: Path) -> int:
 
 
 # =============================================================================
+# ARCHITECTURE ENFORCEMENT STATUS
+# =============================================================================
+
+
+def get_architecture_status(spec_dir: Path) -> dict | None:
+    """Get the architecture enforcement status from implementation plan."""
+    plan = load_implementation_plan(spec_dir)
+    if not plan:
+        return None
+    return plan.get("architecture_enforcement")
+
+
+def is_architecture_approved(spec_dir: Path) -> bool:
+    """
+    Check if architecture validation has passed.
+
+    Returns True if:
+    - No architecture enforcement was configured (no rules = pass)
+    - Architecture validation explicitly approved
+    """
+    status = get_architecture_status(spec_dir)
+    if not status:
+        return True  # No architecture enforcement = pass by default
+    return status.get("status") == "approved"
+
+
+# =============================================================================
 # QA READINESS CHECKS
 # =============================================================================
 

@@ -605,3 +605,33 @@ The project root is: `{project_dir}`
 
 """
     return spec_context + base_prompt
+
+
+def get_architecture_reviewer_prompt(
+    spec_dir: Path,
+    project_dir: Path,
+    architecture_rules: str,
+    deterministic_report: str,
+) -> str:
+    """
+    Load the architecture reviewer prompt with context injected.
+
+    Args:
+        spec_dir: Directory containing the spec files
+        project_dir: Root directory of the project
+        architecture_rules: Serialized architecture rules string
+        deterministic_report: Serialized deterministic analysis results
+
+    Returns:
+        The architecture reviewer prompt with context injected
+    """
+    base_prompt = _load_prompt_file("architecture_reviewer.md")
+    base_branch = _detect_base_branch(spec_dir, project_dir)
+
+    base_prompt = base_prompt.replace("{{SPEC_DIR}}", str(spec_dir))
+    base_prompt = base_prompt.replace("{{BASE_BRANCH}}", base_branch)
+    base_prompt = base_prompt.replace("{{PROJECT_DIR}}", str(project_dir))
+    base_prompt = base_prompt.replace("{{ARCHITECTURE_RULES}}", architecture_rules)
+    base_prompt = base_prompt.replace("{{DETERMINISTIC_REPORT}}", deterministic_report)
+
+    return base_prompt
