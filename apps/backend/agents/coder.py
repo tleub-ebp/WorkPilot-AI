@@ -986,6 +986,20 @@ async def run_autonomous_agent(
                 await linear_build_complete(spec_dir)
                 print_status("Linear notified: build complete, ready for QA", "success")
 
+            # Learning Loop: extract patterns from this build
+            try:
+                from learning_loop.service import LearningLoopService
+
+                learning_service = LearningLoopService(project_dir)
+                report = await learning_service.run_post_build_analysis(spec_dir)
+                if report.patterns_found:
+                    print_status(
+                        f"Learning loop: {len(report.patterns_found)} pattern(s) extracted",
+                        "success",
+                    )
+            except Exception as e:
+                logger.debug(f"Learning loop post-build analysis skipped: {e}")
+
             break
 
         elif status == "continue":

@@ -622,5 +622,19 @@ export const IPC_CHANNELS = {
   PROMPT_OPTIMIZER_STREAM_CHUNK: 'promptOptimizer:streamChunk', // Streaming text chunk (main -> renderer)
   PROMPT_OPTIMIZER_STATUS: 'promptOptimizer:status',            // Status update (main -> renderer)
   PROMPT_OPTIMIZER_ERROR: 'promptOptimizer:error',              // Error event (main -> renderer)
-  PROMPT_OPTIMIZER_COMPLETE: 'promptOptimizer:complete'         // Optimization complete (main -> renderer)
+  PROMPT_OPTIMIZER_COMPLETE: 'promptOptimizer:complete',         // Optimization complete (main -> renderer)
+
+  // Learning Loop operations
+  LEARNING_LOOP_GET_PATTERNS: 'learningLoop:getPatterns',
+  LEARNING_LOOP_GET_SUMMARY: 'learningLoop:getSummary',
+  LEARNING_LOOP_RUN_ANALYSIS: 'learningLoop:runAnalysis',
+  LEARNING_LOOP_STOP_ANALYSIS: 'learningLoop:stopAnalysis',
+  LEARNING_LOOP_DELETE_PATTERN: 'learningLoop:deletePattern',
+  LEARNING_LOOP_TOGGLE_PATTERN: 'learningLoop:togglePattern',
+
+  // Learning Loop events (main -> renderer)
+  LEARNING_LOOP_STATUS: 'learningLoop:status',
+  LEARNING_LOOP_STREAM_CHUNK: 'learningLoop:streamChunk',
+  LEARNING_LOOP_COMPLETE: 'learningLoop:complete',
+  LEARNING_LOOP_ERROR: 'learningLoop:error'
 } as const;
