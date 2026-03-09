@@ -1,0 +1,42 @@
+{
+  "title": "Learning Loop",
+  "description": "Autonomous agent improvement through build pattern analysis. Patterns are extracted from past builds and injected into future agent prompts.",
+  "summary": {
+    "totalPatterns": "Total Patterns",
+    "enabled": "Active",
+    "avgConfidence": "Avg Confidence",
+    "buildsAnalyzed": "Builds Analyzed"
+  },
+  "patterns": {
+    "title": "Learned Patterns ({{count}})",
+    "instruction": "Actionable Instruction",
+    "applied": "Applied {{count}} time(s)",
+    "effectiveness": "{{rate}}% effective",
+    "source": "Source"
+  },
+  "categories": {
+    "tool_sequence": "Tool Sequence",
+    "prompt_strategy": "Prompt Strategy",
+    "error_resolution": "Error Resolution",
+    "qa_pattern": "QA Pattern",
+    "code_structure": "Code Structure"
+  },
+  "status": {
+    "analyzing": "Analyzing build history...",
+    "complete": "Analysis complete. Patterns updated."
+  },
+  "actions": {
+    "analyze": "Analyze Builds",
+    "reanalyze": "Re-analyze Builds",
+    "enable": "Enable pattern",
+    "disable": "Disable pattern",
+    "delete": "Delete pattern"
+  },
+  "empty": {
+    "title": "No patterns extracted yet",
+    "description": "Run an analysis to extract learning patterns from your build history."
+  },
+  "errors": {
+    "noProject": "Please select a project to analyze."
+  }
+}

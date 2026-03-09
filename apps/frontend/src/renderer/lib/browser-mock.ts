@@ -412,7 +412,36 @@ const browserMockAPI: ElectronAPI = {
   }),
 
   // User directory operations
-  getUserHome: () => '/mock/user/home'
+  getUserHome: () => '/mock/user/home',
+
+  // Learning Loop Operations
+  getLearningPatterns: async () => ({ success: true, data: [] }),
+  getLearningSummary: async () => ({
+    success: true,
+    data: {
+      total_patterns: 0,
+      by_category: {},
+      by_phase: {},
+      by_type: {},
+      average_confidence: 0,
+      total_builds_analyzed: 0,
+      last_analyzed_at: null,
+      improvement_metrics: null,
+      enabled_count: 0,
+      disabled_count: 0,
+    },
+  }),
+  runLearningAnalysis: () => {},
+  stopLearningAnalysis: async () => ({ success: true, cancelled: false }),
+  deleteLearningPattern: async () => ({ success: false, error: 'Not available in browser mode' }),
+  toggleLearningPattern: async () => ({ success: false, error: 'Not available in browser mode' }),
+  onLearningLoopStatus: () => () => {},
+  onLearningLoopStreamChunk: () => () => {},
+  onLearningLoopError: () => () => {},
+  onLearningLoopComplete: () => () => {},
+
+  // Test GitHub connection
+  testGitHubConnection: async () => ({ success: false, error: 'Not available in browser mode' })
 };
 
 /**

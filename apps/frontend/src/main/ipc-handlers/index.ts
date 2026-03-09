@@ -49,6 +49,7 @@ import { setupSmartEstimationHandlers } from './smart-estimation-handlers';
 import { setupConflictPredictorHandlers } from './conflict-predictor-handlers';
 import { registerVoiceControlHandlers } from './voice-control-handlers';
 import { registerAppEmulatorHandlers } from './app-emulator-handlers';
+import { registerLearningLoopHandlers } from './learning-loop-handlers';
 
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from './project-handlers';
@@ -88,6 +89,7 @@ export { setupSmartEstimationHandlers } from './smart-estimation-handlers';
 export { setupConflictPredictorHandlers } from './conflict-predictor-handlers';
 export { registerVoiceControlHandlers } from './voice-control-handlers';
 export { registerAppEmulatorHandlers } from './app-emulator-handlers';
+export { registerLearningLoopHandlers } from './learning-loop-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -216,6 +218,9 @@ export function setupIpcHandlers(
 
   // App Emulator handlers
   registerAppEmulatorHandlers(getMainWindow);
+
+  // Learning Loop handlers (Autonomous Agent Learning Loop)
+  registerLearningLoopHandlers(getMainWindow);
 
   console.warn('[IPC] All handler modules registered successfully');
 }
