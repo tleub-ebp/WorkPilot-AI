@@ -273,9 +273,9 @@ export function AzureDevOpsIntegration({
             </p>
             <RepositorySelect
               projectId={projectId}
-              value={envConfig.azureDevOpsProject}
+              value={envConfig.azureDevOpsRepository}
               onChange={(value) =>
-                updateEnvConfig({ azureDevOpsProject: value })
+                updateEnvConfig({ azureDevOpsRepository: value })
               }
               t={t}
             />

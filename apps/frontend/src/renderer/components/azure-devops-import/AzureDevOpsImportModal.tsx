@@ -19,7 +19,6 @@ import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
-import { ScrollArea } from '../ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -73,7 +72,7 @@ export function AzureDevOpsImportModal({
 
   const loadConnectionStatus = async () => {
     try {
-      const result = await window.electronAPI.checkAzureDevOpsConnection(projectId);
+      const result = await globalThis.electronAPI.checkAzureDevOpsConnection(projectId);
       if (result.success) {
         setSyncStatus(result.data ?? null);
         if (!result.data?.connected) {
@@ -91,7 +90,7 @@ export function AzureDevOpsImportModal({
     setIsLoadingItems(true);
     setError(null);
     try {
-      const result = await window.electronAPI.getAzureDevOpsWorkItems(
+      const result = await globalThis.electronAPI.getAzureDevOpsWorkItems(
         projectId,
         undefined, // Use default project from config
         undefined, // Use default item types (Bug, Task, User Story)
@@ -128,7 +127,7 @@ export function AzureDevOpsImportModal({
     setError(null);
 
     try {
-      const result = await window.electronAPI.importAzureDevOpsWorkItems(
+      const result = await globalThis.electronAPI.importAzureDevOpsWorkItems(
         projectId,
         Array.from(selectedIds),
         requireReviewBeforeCoding ? { requireReviewBeforeCoding: true } : undefined
@@ -160,7 +159,7 @@ export function AzureDevOpsImportModal({
         const matchesSearch =
           item.title.toLowerCase().includes(query) ||
           item.id.toString().includes(query) ||
-          (item.description && item.description.toLowerCase().includes(query));
+          (item.description?.toLowerCase().includes(query));
         if (!matchesSearch) return false;
       }
 
@@ -180,11 +179,11 @@ export function AzureDevOpsImportModal({
 
   // Get unique values for filters
   const uniqueTypes = useMemo(() => {
-    return Array.from(new Set(workItems.map((item) => item.workItemType))).sort();
+    return Array.from(new Set(workItems.map((item) => item.workItemType))).sort((a, b) => a.localeCompare(b));
   }, [workItems]);
 
   const uniqueStates = useMemo(() => {
-    return Array.from(new Set(workItems.map((item) => item.state))).sort();
+    return Array.from(new Set(workItems.map((item) => item.state))).sort((a, b) => a.localeCompare(b));
   }, [workItems]);
 
   // Selection handlers
@@ -225,6 +224,87 @@ export function AzureDevOpsImportModal({
     onOpenChange(newOpen);
   };
 
+  const renderWorkItemsContent = () => {
+    if (isLoadingItems) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      );
+    }
+
+    if (filteredItems.length === 0) {
+      return (
+        <div className="text-center py-12 text-muted-foreground">
+          <p>{t('settings:azureDevOpsImport.emptyTitle')}</p>
+          {(searchQuery || filters.workItemType !== 'all' || filters.state !== 'all') && (
+            <p className="text-sm mt-2">{t('settings:azureDevOpsImport.emptySubtitle')}</p>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2 w-full">
+        {filteredItems.map((item) => (
+          <div
+            key={item.id}
+            className="flex items-start gap-3 p-3 rounded-md border hover:bg-muted/50 cursor-pointer transition-colors w-full overflow-x-hidden"
+            onClick={() => toggleItem(item.id)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleItem(item.id);
+              }
+            }}
+          >
+            <Checkbox
+              checked={selectedIds.has(item.id)}
+              onCheckedChange={() => toggleItem(item.id)}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <span className="font-mono text-xs text-muted-foreground shrink-0">
+                  #{item.id}
+                </span>
+                <Badge variant="outline" className={getTypeColor(item.workItemType) + " shrink-0"}>
+                  {item.workItemType}
+                </Badge>
+                <Badge variant="outline" className="shrink-0">{item.state}</Badge>
+                {item.priority !== undefined && (
+                  <Badge variant="outline" className="shrink-0">P{item.priority}</Badge>
+                )}
+              </div>
+              <h4 className="font-medium text-sm mb-1 wrap-break-words">{item.title}</h4>
+              {item.description && (
+                <p className="text-xs text-muted-foreground line-clamp-2 wrap-break-words">
+                  {item.description}
+                </p>
+              )}
+              {item.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {item.tags.slice(0, 3).map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-xs shrink-0">
+                      {tag}
+                    </Badge>
+                  ))}
+                  {item.tags.length > 3 && (
+                    <Badge variant="secondary" className="text-xs shrink-0">
+                      +{item.tags.length - 3}
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const successMessage = importResult?.success
     ? t('settings:azureDevOpsImport.successCount', { count: importResult.imported })
     : '';
@@ -252,7 +332,7 @@ export function AzureDevOpsImportModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[85vh] flex flex-col">
+      <DialogContent className="sm:max-w-[900px] md:max-w-[1000px] h-[85vh] max-h-[85vh] flex flex-col w-full">
         <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2 text-foreground">
             <Download className="h-5 w-5" />
@@ -263,38 +343,40 @@ export function AzureDevOpsImportModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Import Success Banner */}
-        {importResult?.success && (
-          <div className="bg-green-500/10 border border-green-500/20 rounded-md p-4">
-            <h4 className="font-semibold text-green-500 mb-2">
-              {t('settings:azureDevOpsImport.successTitle')}
-            </h4>
-            <p className="text-sm text-foreground/70">
-              {`${successMessage}${failedSuffix}`}
-            </p>
-          </div>
-        )}
+        {/* Variable Content */}
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden" style={{ maxHeight: 'calc(85vh - 200px)' }}>
+          {/* Import Success Banner */}
+          {importResult?.success && (
+            <div className="bg-green-500/10 border border-green-500/20 rounded-md p-4 shrink-0">
+              <h4 className="font-semibold text-green-500 mb-2">
+                {t('settings:azureDevOpsImport.successTitle')}
+              </h4>
+              <p className="text-sm text-foreground/70">
+                {`${successMessage}${failedSuffix}`}
+              </p>
+            </div>
+          )}
 
-        {/* Error Banner */}
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-md p-4">
-            <p className="text-sm text-red-500">{error}</p>
-          </div>
-        )}
+          {/* Error Banner */}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-md p-4 shrink-0">
+              <p className="text-sm text-red-500">{error}</p>
+            </div>
+          )}
 
-        {/* Main Content */}
-        {!importResult?.success && syncStatus?.connected && (
-          <>
+          {/* Main Content */}
+          {!importResult?.success && syncStatus?.connected && (
+          <div className="flex-1 min-h-0 flex flex-col">
             {/* Connection Info */}
             {syncStatus.projectName && (
-              <div className="text-sm text-foreground/70 bg-muted/50 p-3 rounded-md">
+              <div className="text-sm text-foreground/70 bg-muted/50 p-3 rounded-md shrink-0">
                 <strong>{t('settings:azureDevOpsImport.projectLabel')}</strong>{' '}
                 {syncStatus.projectName}
               </div>
             )}
 
             {/* Search Bar */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={t('settings:azureDevOpsImport.searchPlaceholder')}
@@ -305,7 +387,7 @@ export function AzureDevOpsImportModal({
             </div>
 
             {/* Filters */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 shrink-0">
               <div>
                 <Label className="text-xs text-foreground/70 mb-1 block">
                   {t('settings:azureDevOpsImport.filterTypeLabel')}
@@ -361,7 +443,7 @@ export function AzureDevOpsImportModal({
 
             {/* Selection Controls */}
             {filteredItems.length > 0 && (
-              <div className="flex items-center justify-between py-2 border-t border-b">
+              <div className="flex items-center justify-between py-2 border-t border-b shrink-0">
                 <div className="flex items-center gap-2">
                   <Checkbox
                     checked={isAllSelected}
@@ -393,96 +475,38 @@ export function AzureDevOpsImportModal({
             )}
 
             {/* Work Items List */}
-            <ScrollArea className="flex-1 -mx-6 px-6">
-              {isLoadingItems ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : filteredItems.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <p>{t('settings:azureDevOpsImport.emptyTitle')}</p>
-                  {(searchQuery || filters.workItemType !== 'all' || filters.state !== 'all') && (
-                    <p className="text-sm mt-2">{t('settings:azureDevOpsImport.emptySubtitle')}</p>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {filteredItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-start gap-3 p-3 rounded-md border hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() => toggleItem(item.id)}
-                    >
-                      <Checkbox
-                        checked={selectedIds.has(item.id)}
-                        onCheckedChange={() => toggleItem(item.id)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-mono text-xs text-muted-foreground">
-                            #{item.id}
-                          </span>
-                          <Badge variant="outline" className={getTypeColor(item.workItemType)}>
-                            {item.workItemType}
-                          </Badge>
-                          <Badge variant="outline">{item.state}</Badge>
-                          {item.priority !== undefined && (
-                            <Badge variant="outline">P{item.priority}</Badge>
-                          )}
-                        </div>
-                        <h4 className="font-medium text-sm mb-1">{item.title}</h4>
-                        {item.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {item.description}
-                          </p>
-                        )}
-                        {item.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {item.tags.slice(0, 3).map((tag, idx) => (
-                              <Badge key={idx} variant="secondary" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                            {item.tags.length > 3 && (
-                              <Badge variant="secondary" className="text-xs">
-                                +{item.tags.length - 3}
-                              </Badge>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </>
-        )}
-
-        {/* Review Requirement Toggle */}
-        {!importResult?.success && syncStatus?.connected && (
-          <div className="flex items-start gap-3 p-4 rounded-lg border border-border bg-muted/30 shrink-0">
-            <Checkbox
-              id="modal-require-review"
-              checked={requireReviewBeforeCoding}
-              onCheckedChange={(checked) => setRequireReviewBeforeCoding(checked === true)}
-              disabled={isImporting}
-              className="mt-0.5"
-            />
-            <div className="flex-1 space-y-1">
-              <Label
-                htmlFor="modal-require-review"
-                className="text-sm font-medium text-foreground cursor-pointer"
-              >
-                {t('tasks:form.requireReviewLabel')}
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                {t('tasks:form.requireReviewDescription')}
-              </p>
+            <div className="flex-1 min-h-0 overflow-hidden border-t border-border">
+              <div className="h-full w-full overflow-y-auto overflow-x-hidden px-3 py-2">
+                {renderWorkItemsContent()}
+              </div>
             </div>
+
+            {/* Review Requirement Toggle */}
+            {!importResult?.success && syncStatus?.connected && (
+              <div className="flex items-start gap-3 p-4 rounded-lg border border-border bg-muted/30 shrink-0 mt-4">
+                <Checkbox
+                  id="modal-require-review"
+                  checked={requireReviewBeforeCoding}
+                  onCheckedChange={(checked) => setRequireReviewBeforeCoding(checked === true)}
+                  disabled={isImporting}
+                  className="mt-0.5"
+                />
+                <div className="flex-1 space-y-1">
+                  <Label
+                    htmlFor="modal-require-review"
+                    className="text-sm font-medium text-foreground cursor-pointer"
+                  >
+                    {t('tasks:form.requireReviewLabel')}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    {t('tasks:form.requireReviewDescription')}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
+        </div>
 
         <DialogFooter className="shrink-0">
           <Button variant="outline" onClick={() => handleOpenChange(false)}>

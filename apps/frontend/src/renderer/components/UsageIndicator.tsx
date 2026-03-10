@@ -95,6 +95,9 @@ export function UsageIndicator() {
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const tickIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Deduplication: track in-flight fetch to prevent concurrent API calls (429 rate limits)
+  const pendingFetchRef = useRef<Promise<void> | null>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { selectedProvider } = useProviderContext();
 
   /**
@@ -148,6 +151,51 @@ export function UsageIndicator() {
       });
       window.dispatchEvent(event);
     }, 100);
+  }, []);
+
+  /**
+   * Centralized, deduplicated usage fetch with retry.
+   * Prevents multiple concurrent API calls that trigger 429 rate limits.
+   * If the fetch returns null, retries once after a short delay.
+   */
+  const fetchUsageDeduplicated = useCallback(async (provider: string, retryCount = 0): Promise<void> => {
+    // If a fetch is already in-flight, piggyback on it instead of firing a new one
+    if (pendingFetchRef.current) {
+      return pendingFetchRef.current;
+    }
+
+    const doFetch = async () => {
+      try {
+        const result = await window.electronAPI.requestUsageUpdate(provider);
+        if (result.success && result.data) {
+          if (provider && result.data.providerName && result.data.providerName !== provider) return;
+          setUsage(result.data);
+          setIsAvailable(true);
+          setIsLoading(false);
+        } else if (retryCount < 2) {
+          // API returned null (429 rate limit, token refresh failure, etc.)
+          // Retry after a short backoff instead of immediately showing "N/D"
+          await new Promise<void>((resolve) => {
+            retryTimeoutRef.current = setTimeout(resolve, 3000 * (retryCount + 1));
+          });
+          pendingFetchRef.current = null; // Allow the retry to create a new fetch
+          return fetchUsageDeduplicated(provider, retryCount + 1);
+        } else {
+          // All retries exhausted — only set unavailable if we never had data
+          setIsLoading(false);
+          // Keep existing data if we have it (stale-while-revalidate)
+          setIsAvailable((prev) => prev); // No-op: don't clear if we had data before
+        }
+      } catch (error) {
+        console.warn('[UsageIndicator] Failed to fetch usage data:', error);
+        setIsLoading(false);
+      } finally {
+        pendingFetchRef.current = null;
+      }
+    };
+
+    pendingFetchRef.current = doFetch();
+    return pendingFetchRef.current;
   }, []);
 
   /**
@@ -321,10 +369,10 @@ export function UsageIndicator() {
             
             if (oauthProfile) {
               setClaudeProfile(oauthProfile);
-              
-              // For OAuth profiles, try to fetch usage data
-              // This will trigger the usage monitoring system to use OAuth tokens
-              await window.electronAPI.requestUsageUpdate(selectedProvider);
+
+              // For OAuth profiles, trigger usage fetch via deduplicated function
+              // to avoid concurrent 429 rate limit issues
+              fetchUsageDeduplicated(selectedProvider);
             } else {
               setClaudeProfile(null);
             }
@@ -339,7 +387,7 @@ export function UsageIndicator() {
     } else {
       setClaudeProfile(null);
     }
-  }, [selectedProvider]);
+  }, [selectedProvider, fetchUsageDeduplicated]);
 
   // Tick every 30s to keep "last update" time display fresh
   useEffect(() => {
@@ -365,6 +413,9 @@ export function UsageIndicator() {
       if (tickIntervalRef.current) {
         clearInterval(tickIntervalRef.current);
       }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -375,19 +426,9 @@ export function UsageIndicator() {
       clearInterval(pollingIntervalRef.current);
     }
 
-    // Helper to fetch and apply fresh usage data
+    // Helper to fetch and apply fresh usage data (uses deduplicated fetch)
     const fetchAndApplyUsage = async () => {
-      try {
-        const result = await window.electronAPI.requestUsageUpdate(selectedProvider);
-        if (result.success && result.data) {
-          if (selectedProvider && result.data.providerName && result.data.providerName !== selectedProvider) return;
-          setUsage(result.data);
-          setIsAvailable(true);
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.warn('[UsageIndicator] Failed to refresh usage data:', error);
-      }
+      await fetchUsageDeduplicated(selectedProvider);
 
       try {
         const allResult = await window.electronAPI.requestAllProfilesUsage?.();
@@ -430,7 +471,7 @@ export function UsageIndicator() {
         pollingIntervalRef.current = null;
       }
     };
-  }, [selectedProvider]);
+  }, [selectedProvider, fetchUsageDeduplicated]);
 
   // Get formatted reset times (calculated dynamically from timestamps)
   const sessionResetTime = usage?.sessionResetTimestamp
@@ -456,27 +497,15 @@ export function UsageIndicator() {
     const handleProviderChange = (event: CustomEvent) => {
       const { provider } = event.detail;
       if (provider !== selectedProvider) return;
-      
-      // Reset states immediately for visual feedback
+
+      // Show loading indicator but DON'T clear existing usage data.
+      // Stale-while-revalidate: keep showing last known data until new data arrives.
+      // This prevents the "N/D" flash when the fetch takes time or fails temporarily.
       setIsLoading(true);
-      setUsage(null);
-      setIsAvailable(false);
       setActiveProfileNeedsReauth(false);
-      
-      // Force immediate refresh of usage data for the new provider
-      window.electronAPI.requestUsageUpdate(provider).then((result) => {
-        setIsLoading(false);
-        if (result.success && result.data) {
-          setUsage(result.data);
-          setIsAvailable(true);
-        } else {
-          setIsAvailable(false);
-        }
-      }).catch((error) => {
-        console.warn('[UsageIndicator] Failed to fetch usage after provider change:', error);
-        setIsLoading(false);
-        setIsAvailable(false);
-      });
+
+      // Fetch fresh data using deduplicated fetch (with retry on failure)
+      fetchUsageDeduplicated(provider);
     };
 
     window.addEventListener('providerChanged', handleProviderChange as EventListener);
@@ -491,21 +520,15 @@ export function UsageIndicator() {
       setActiveProfileNeedsReauth(activeProfile?.needsReauthentication ?? false);
     });
 
-    // Request initial usage on mount for the selected provider
-    window.electronAPI.requestUsageUpdate(selectedProvider).then((result) => {
+    // Request initial usage on mount for the selected provider (deduplicated with retry)
+    if (selectedProvider && KNOWN_PROVIDERS.has(selectedProvider.toLowerCase())) {
+      fetchUsageDeduplicated(selectedProvider);
+    } else if (selectedProvider) {
+      // Provider is set but not a known/supported provider — stop loading
       setIsLoading(false);
-      if (result.success && result.data) {
-        if (selectedProvider && result.data.providerName && result.data.providerName !== selectedProvider) return;
-        setUsage(result.data);
-        setIsAvailable(true);
-      } else {
-        setIsAvailable(false);
-      }
-    }).catch((error) => {
-      console.warn('[UsageIndicator] Failed to fetch initial usage:', error);
-      setIsLoading(false);
-      setIsAvailable(false);
-    });
+    }
+    // When selectedProvider is empty (''), keep isLoading=true to avoid
+    // flashing "N/D" while ProviderContext resolves the real provider
 
     // Request all profiles usage immediately on mount (so other accounts show right away)
     window.electronAPI.requestAllProfilesUsage?.().then((result) => {
@@ -525,7 +548,7 @@ export function UsageIndicator() {
       unsubscribeAllProfiles?.();
       window.removeEventListener('providerChanged', handleProviderChange as EventListener);
     };
-  }, [selectedProvider]);
+  }, [selectedProvider, fetchUsageDeduplicated]);
 
   // Show loading state
   if (isLoading) {

@@ -12,7 +12,19 @@ interface ProviderContextProviderProps {
 }
 
 export const ProviderContextProvider: React.FC<ProviderContextProviderProps> = ({ children }) => {
-  const [selectedProvider, setSelectedProvider] = useState<string>('');
+  // Initialize from localStorage to avoid the empty-provider window on mount.
+  // ProviderSelector persists the selection to localStorage on change,
+  // so this gives UsageIndicator a valid provider immediately instead of ''
+  // which would cause a brief "N/D" flash before the context is populated.
+  const [selectedProvider, setSelectedProvider] = useState<string>(
+    () => {
+      try {
+        return localStorage.getItem('selectedProvider') || '';
+      } catch {
+        return '';
+      }
+    }
+  );
 
   const contextValue = useMemo(() => ({
     selectedProvider,

@@ -778,8 +778,8 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   // Capture projectId at resize start to avoid stale closure if project changes during resize
   const resizeProjectIdRef = useRef<string | null>(null);
 
-  // Get projectId from first task
-  const projectId = tasks[0]?.projectId;
+  // Get projectId from first task, fallback to selectedProjectId
+  const projectId = tasks[0]?.projectId || selectedProjectId;
   const project = selectedProjectId ? projects.find((p) => p.id === selectedProjectId) : undefined;
   const maxParallelTasks = project?.settings?.maxParallelTasks ?? 3;
 
@@ -789,6 +789,35 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       loadProjectEnvConfig(selectedProjectId);
     }
   }, [selectedProjectId]);
+
+  // Check Azure DevOps connection status when enabled
+  useEffect(() => {
+    if (selectedProjectId && envConfig?.azureDevOpsEnabled) {
+      globalThis.electronAPI.checkAzureDevOpsConnection(selectedProjectId).then((result) => {
+        setAzureDevOpsConnected(result.success && result.data?.connected === true);
+        setAzureDevOpsProjectName(result.data?.projectName || null);
+      }).catch(() => {
+        setAzureDevOpsConnected(false);
+        setAzureDevOpsProjectName(null);
+      });
+    } else {
+      setAzureDevOpsConnected(null);
+      setAzureDevOpsProjectName(null);
+    }
+  }, [selectedProjectId, envConfig?.azureDevOpsEnabled]);
+
+  // Check Jira connection status when enabled
+  useEffect(() => {
+    if (selectedProjectId && envConfig?.jiraEnabled) {
+      globalThis.electronAPI.checkJiraConnection(selectedProjectId).then((result) => {
+        setJiraConnected(result.success && result.data?.connected === true);
+      }).catch(() => {
+        setJiraConnected(false);
+      });
+    } else {
+      setJiraConnected(null);
+    }
+  }, [selectedProjectId, envConfig?.jiraEnabled]);
 
   // Queue settings modal state
   const [showQueueSettings, setShowQueueSettings] = useState(false);
@@ -844,9 +873,12 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
 
   // Azure DevOps import panel state
   const [azureDevOpsPanelOpen, setAzureDevOpsPanelOpen] = useState(false);
+  const [azureDevOpsConnected, setAzureDevOpsConnected] = useState<boolean | null>(null);
+  const [azureDevOpsProjectName, setAzureDevOpsProjectName] = useState<string | null>(null);
 
   // Jira import panel state
   const [jiraPanelOpen, setJiraPanelOpen] = useState(false);
+  const [jiraConnected, setJiraConnected] = useState<boolean | null>(null);
 
   // Azure DevOps drag state
   const [isDraggingAzureDevOps, setIsDraggingAzureDevOps] = useState(false);
@@ -2129,24 +2161,50 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setAzureDevOpsPanelOpen(true)}
+              onClick={() => {
+                // If not configured at all (no PAT/org URL), redirect to settings
+                if (!envConfig?.azureDevOpsPat && !envConfig?.azureDevOpsOrgUrl && onOpenAzureDevOpsSettings) {
+                  onOpenAzureDevOpsSettings();
+                } else {
+                  setAzureDevOpsPanelOpen(true);
+                }
+              }}
               className="gap-2 text-muted-foreground hover:text-foreground"
-              title="Import Azure DevOps Issues"
+              title={azureDevOpsConnected === false ? t('tasks:kanban.azureDevOpsNotConnected') : 'Import Azure DevOps Issues'}
             >
               <img src={AzureDevOpsLogo} alt="Azure DevOps" className="h-4 w-4" />
-              {envConfig?.azureDevOpsProject || 'Azure DevOps'}
+              {envConfig?.azureDevOpsRepository || 'Azure DevOps'}
+              {azureDevOpsConnected === true && (
+                <span className="h-2 w-2 rounded-full bg-green-500 shrink-0" />
+              )}
+              {azureDevOpsConnected === false && (
+                <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
+              )}
             </Button>
           )}
           {selectedProjectId && envConfig?.jiraEnabled && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setJiraPanelOpen(true)}
+              onClick={() => {
+                // If not configured at all (no instance URL/token), redirect to settings
+                if (!envConfig?.jiraInstanceUrl && !envConfig?.jiraApiToken && onOpenJiraSettings) {
+                  onOpenJiraSettings();
+                } else {
+                  setJiraPanelOpen(true);
+                }
+              }}
               className="gap-2 text-muted-foreground hover:text-foreground"
-              title="Import Jira Issues"
+              title={jiraConnected === false ? t('tasks:kanban.jiraNotConnected') : 'Import Jira Issues'}
             >
               <img src={JiraLogo} alt="Jira" className="h-4 w-4" />
               {envConfig?.jiraProjectKey || 'Jira'}
+              {jiraConnected === true && (
+                <span className="h-2 w-2 rounded-full bg-green-500 shrink-0" />
+              )}
+              {jiraConnected === false && (
+                <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
+              )}
             </Button>
           )}
         </div>

@@ -122,22 +122,26 @@ try:
     # Get credentials from environment
     pat = os.getenv('AZURE_DEVOPS_PAT')
     org_url = os.getenv('AZURE_DEVOPS_ORG_URL')
-    project = os.getenv('AZURE_DEVOPS_PROJECT')
-    
+    project_env = os.getenv('AZURE_DEVOPS_PROJECT')  # May be project name or repo name (legacy)
+    repository_env = os.getenv('AZURE_DEVOPS_REPOSITORY')  # Explicit repository name
+
     if not pat or not org_url:
         print(json.dumps({'error': 'Azure DevOps not configured'}))
         sys.exit(1)
-    
-    # Auto-detect project from Git remote if not configured
-    if not project and has_git_provider:
+
+    # Always auto-detect project name from Git remote (most reliable source)
+    project = None
+    if has_git_provider:
         try:
             project_dir = Path('${projectPath.replace(/\\/g, '\\\\')}')
-            detected_project = extract_azure_devops_project(project_dir)
-            if detected_project:
-                project = detected_project
+            project = extract_azure_devops_project(project_dir)
         except Exception:
-            pass  # Fallback to None if auto-detection fails
-    
+            pass
+
+    # Fallback: use env variable if auto-detection fails
+    if not project:
+        project = project_env
+
     settings = Settings(pat=pat, organization_url=org_url, project=project)
     connector = AzureDevOpsConnector(settings)
     connector.connect()
@@ -146,7 +150,7 @@ try:
     params = ${JSON.stringify(params)}
     
     if operation == 'list_work_items':
-        project_name = params.get('project') or project
+        project_name = project  # Use auto-detected project name
         item_types = params.get('item_types')
         max_items = params.get('max_items', 100)
         items = connector.list_backlog_items(project_name, item_types, max_items)
@@ -167,7 +171,7 @@ try:
         print(json.dumps({'data': result}))
     
     elif operation == 'list_repositories':
-        project_name = params.get('project') or project
+        project_name = project  # Use auto-detected project name
         if not project_name:
             print(json.dumps({'error': 'Project name is required to list repositories'}))
             sys.exit(1)
@@ -182,8 +186,23 @@ try:
         print(json.dumps({'data': result}))
     
     elif operation == 'test_connection':
-        # Just connecting is enough to test
+        # Test auth connection
         info = connector.get_connection_info()
+
+        # Also validate the project exists if one is configured
+        if project:
+            try:
+                core_client = connector._client._connection.clients.get_core_client()
+                core_client.get_project(project)
+            except Exception as proj_err:
+                error_msg = str(proj_err)
+                if 'TF200016' in error_msg or 'does not exist' in error_msg.lower():
+                    print(json.dumps({'error': f'Project not found: \\'{project}\\'. Verify the project name matches exactly (case-sensitive) on your Azure DevOps organization.'}))
+                    sys.exit(1)
+                # Other errors (permissions, etc.)
+                print(json.dumps({'error': f'Cannot access project \\'{project}\\': {error_msg}'}))
+                sys.exit(1)
+
         print(json.dumps({'data': info}))
     
     else:
@@ -270,12 +289,15 @@ except Exception as e:
           envOverrides
         )) as Record<string, string>;
 
+        // Use the project name returned by Python (auto-detected from git remote)
+        const detectedProjectName = info?.project || normalizeProjectName(config.projectName);
+
         return {
           success: true,
           data: {
             connected: true,
             organizationUrl: config.orgUrl,
-            projectName: normalizeProjectName(config.projectName),
+            projectName: detectedProjectName,
           },
         };
       } catch (error: unknown) {
@@ -304,6 +326,7 @@ except Exception as e:
       const envOverrides: Record<string, string> = {};
       if (config.pat) envOverrides.AZURE_DEVOPS_PAT = config.pat;
       if (config.orgUrl) envOverrides.AZURE_DEVOPS_ORG_URL = config.orgUrl;
+      // Pass project name from env for fallback (Python auto-detects from git remote)
       const normalizedProject = normalizeProjectName(config.projectName);
       if (normalizedProject) envOverrides.AZURE_DEVOPS_PROJECT = normalizedProject;
 
@@ -314,19 +337,12 @@ except Exception as e:
         };
       }
 
-      if (!config.projectName) {
-        return {
-          success: false,
-          error: 'Azure DevOps project name not configured',
-        };
-      }
-
       try {
         const projectPath = path.join(project.path, project.autoBuildPath || '');
         const repos = (await callAzureDevOpsPython(
           projectPath,
           'list_repositories',
-          { project: normalizeProjectName(config.projectName) },
+          {},  // Project name is auto-detected in Python from git remote
           envOverrides
         )) as import('../../shared/types').AzureDevOpsRepository[];
 
@@ -450,11 +466,8 @@ except Exception as e:
 
       try {
         const projectPath = path.join(project.path, project.autoBuildPath || '');
-        
-        const projectToUse = normalizeProjectName(azureProject || config.projectName);
 
         const items = (await callAzureDevOpsPython(projectPath, 'list_work_items', {
-          project: projectToUse,
           item_types: itemTypes,
           max_items: maxItems || 100,
         }, envOverrides)) as AzureDevOpsWorkItem[];
@@ -495,9 +508,8 @@ except Exception as e:
       try {
         const projectPath = path.join(project.path, project.autoBuildPath || '');
 
-        // Get work items details
+        // Get work items details (project name auto-detected in Python)
         const items = (await callAzureDevOpsPython(projectPath, 'list_work_items', {
-          project: normalizeProjectName(config.projectName),
           max_items: 1000,
         }, envOverrides)) as AzureDevOpsWorkItem[];
 

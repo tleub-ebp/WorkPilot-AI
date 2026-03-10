@@ -550,7 +550,7 @@ export function AzureDevOpsSidePanel({
         {error && (
           <div className="mx-4 mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-md">
             <p className="text-sm text-red-500 mb-3">{error}</p>
-            {error.includes('not configured') && onOpenSettings && (
+            {onOpenSettings && (
               <Button
                 variant="outline"
                 size="sm"

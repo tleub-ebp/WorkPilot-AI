@@ -19,10 +19,10 @@ export interface AzureDevOpsWorkItem {
 }
 
 export interface AzureDevOpsImportModalProps {
-  projectId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onImportComplete?: () => void;
+  readonly projectId: string;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onImportComplete?: () => void;
 }
 
 export interface AzureDevOpsFilters {
