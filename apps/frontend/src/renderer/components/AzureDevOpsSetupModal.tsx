@@ -75,15 +75,31 @@ export function AzureDevOpsSetupModal({
     setError(null);
 
     try {
-      await globalThis.electronAPI.updateProjectEnv(project.id, {
+      console.log('[AzureDevOpsSetupModal] Saving configuration:', {
+        azureDevOpsEnabled: true,
+        azureDevOpsOrgUrl: trimmedOrgUrl,
+        azureDevOpsPat: '[REDACTED]',
+        githubEnabled: false
+      });
+      
+      const result = await globalThis.electronAPI.updateProjectEnv(project.id, {
         azureDevOpsEnabled: true,
         azureDevOpsOrgUrl: trimmedOrgUrl,
         azureDevOpsPat: trimmedPat,
         githubEnabled: false
       });
+      
+      if (!result.success) {
+        console.error('[AzureDevOpsSetupModal] Save failed:', result.error);
+        setError(result.error || 'Failed to save Azure DevOps settings');
+        return;
+      }
+      
+      console.log('[AzureDevOpsSetupModal] Save successful');
       onComplete();
       onOpenChange(false);
     } catch (err) {
+      console.error('[AzureDevOpsSetupModal] Save error:', err);
       setError(err instanceof Error ? err.message : 'Failed to save Azure DevOps settings');
     } finally {
       setIsSaving(false);
