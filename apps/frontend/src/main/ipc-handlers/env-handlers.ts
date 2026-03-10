@@ -4,7 +4,7 @@ import { IPC_CHANNELS, DEFAULT_APP_SETTINGS } from '../../shared/constants';
 import type { IPCResult, ProjectEnvConfig, ClaudeAuthResult, AppSettings } from '../../shared/types';
 import path from 'path';
 import { app } from 'electron';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { spawn } from 'child_process';
 import { projectStore } from '../project-store';
 import { parseEnvFile } from './utils';
@@ -712,6 +712,12 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
 
         // Generate new content
         const newContent = generateEnvContent(config, existingContent);
+
+        // Ensure parent directory exists (handles case where .auto-claude was deleted or not created)
+        const envDir = path.dirname(envPath);
+        if (!existsSync(envDir)) {
+          mkdirSync(envDir, { recursive: true });
+        }
 
         // Write to file
         writeFileSync(envPath, newContent, 'utf-8');
