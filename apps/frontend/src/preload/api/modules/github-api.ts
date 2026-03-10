@@ -385,6 +385,20 @@ export interface PRReviewResult {
   hasPostedFindings?: boolean;
   postedFindingIds?: string[];
   postedAt?: string;
+  // Deep codebase context metadata
+  deepContext?: {
+    projectPatterns: Record<string, string>;
+    projectConventions: string[];
+    relatedCode: Array<{ path: string; reason: string }>;
+    historicalInsights: Array<Record<string, unknown>>;
+    pastBugsInArea: Array<Record<string, unknown>>;
+    regressionRisks: string[];
+    architectureStyle: string;
+    architectureLayers: Array<{ name: string; patterns: string[]; allowedImports: string[] }>;
+    architectureViolations: Array<{ type: string; severity: string; file: string; description: string; suggestion?: string }>;
+    gatheringDurationMs: number;
+    contextAvailable: boolean;
+  };
 }
 
 /**

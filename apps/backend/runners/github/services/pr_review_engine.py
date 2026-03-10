@@ -193,6 +193,17 @@ class PRReviewEngine:
             diff_content = diff_content[:50000]
             diff_truncated_warning = f"\n⚠️ **WARNING**: Diff truncated from {diff_size} to 50,000 characters. Review may be incomplete.\n"
 
+        # Build deep context section if available
+        deep_context_section = ""
+        if hasattr(context, "deep_context") and context.deep_context:
+            try:
+                from .deep_context_provider import DeepContext
+
+                dc = DeepContext.from_dict(context.deep_context)
+                deep_context_section = dc.to_prompt_section()
+            except Exception:
+                pass
+
         pr_context = f"""
 ## Pull Request #{context.pr_number}
 
@@ -206,7 +217,7 @@ class PRReviewEngine:
 
 ### Files Changed
 {files_str}
-{related_files_str}{commits_str}
+{related_files_str}{commits_str}{deep_context_section}
 ### Diff
 ```diff
 {diff_content}
@@ -636,6 +647,17 @@ class PRReviewEngine:
                     patches.append(file.patch)
             diff_content = "\n".join(patches)
 
+        # Build deep context section if available
+        deep_context_section = ""
+        if hasattr(context, "deep_context") and context.deep_context:
+            try:
+                from .deep_context_provider import DeepContext
+
+                dc = DeepContext.from_dict(context.deep_context)
+                deep_context_section = "\n" + dc.to_prompt_section()
+            except Exception:
+                pass
+
         return f"""
 ## Pull Request #{context.pr_number}
 
@@ -650,7 +672,7 @@ class PRReviewEngine:
 
 ### Files Changed
 {files_str}
-
+{deep_context_section}
 ### Full Diff
 ```diff
 {diff_content[:100000]}

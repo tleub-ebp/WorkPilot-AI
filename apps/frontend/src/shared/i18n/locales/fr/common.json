@@ -413,6 +413,22 @@
       "agentActivity": "Activité de l'agent",
       "showMore": "Afficher {{count}} de plus",
       "hideMore": "Masquer {{count}} de plus"
+    },
+    "deepContext": {
+      "title": "Contexte profond du codebase",
+      "architecture": "Architecture du projet",
+      "architectureStyle": "Style d'architecture",
+      "layers": "Couches",
+      "violations": "Violations d'architecture",
+      "patterns": "Patterns de code",
+      "conventions": "Conventions",
+      "relatedCode": "Code relié",
+      "historicalInsights": "Insights historiques",
+      "pastBugs": "Bugs passés dans cette zone",
+      "regressionRisks": "Risques de régression",
+      "gatheringTime": "Contexte collecté en {{ms}}ms",
+      "noContext": "Pas de contexte profond disponible",
+      "canImportFrom": "Peut importer depuis : {{imports}}"
     }
   },
   "downloads": {

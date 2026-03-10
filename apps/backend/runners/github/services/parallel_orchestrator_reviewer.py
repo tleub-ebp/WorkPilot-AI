@@ -753,6 +753,17 @@ Found {len(context.ai_bot_comments)} comments from AI tools.
         related_files_section = ""
         import_graph_section = ""
 
+        # Build deep context section if available
+        deep_context_section = ""
+        if context.deep_context:
+            try:
+                from .deep_context_provider import DeepContext
+
+                dc = DeepContext.from_dict(context.deep_context)
+                deep_context_section = dc.to_prompt_section()
+            except Exception:
+                pass
+
         pr_context = f"""
 ---
 
@@ -770,7 +781,7 @@ Found {len(context.ai_bot_comments)} comments from AI tools.
 
 ### All Changed Files
 {chr(10).join(files_list)}
-{related_files_section}{import_graph_section}{commits_section}{ai_comments_section}
+{related_files_section}{import_graph_section}{commits_section}{ai_comments_section}{deep_context_section}
 ### Code Changes
 ```diff
 {diff_content}
@@ -781,6 +792,7 @@ Found {len(context.ai_bot_comments)} comments from AI tools.
 Now analyze this PR and delegate to the appropriate specialist agents.
 Remember: YOU decide which agents to invoke based on YOUR analysis.
 The SDK will run invoked agents in parallel automatically.
+Use the Deep Codebase Context (if provided above) to review like a senior dev who knows the project.
 """
 
         return base_prompt + pr_context

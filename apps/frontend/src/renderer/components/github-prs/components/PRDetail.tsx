@@ -31,6 +31,7 @@ import { CollapsibleCard } from './CollapsibleCard';
 import { ReviewStatusTree } from './ReviewStatusTree';
 import { PRHeader } from './PRHeader';
 import { ReviewFindings } from './ReviewFindings';
+import { DeepContextInsights } from './DeepContextInsights';
 import { PRLogs } from './PRLogs';
 import { QualityScorePanel } from '../../QualityScorePanel';
 import { useQualityScore } from '../../../hooks/use-quality-score';
@@ -1209,6 +1210,11 @@ ${t('prReview.blockedStatusMessageFooter')}`;
               />
             </div>
           </CollapsibleCard>
+        )}
+
+        {/* Deep Codebase Context */}
+        {reviewResult?.success && reviewResult.deepContext?.contextAvailable && (
+          <DeepContextInsights deepContext={reviewResult.deepContext} />
         )}
 
         {/* Review Error */}

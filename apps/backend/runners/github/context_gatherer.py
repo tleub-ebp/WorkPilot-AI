@@ -228,6 +228,8 @@ class PRContext:
     merge_state_status: str = (
         ""  # BEHIND, BLOCKED, CLEAN, DIRTY, HAS_HOOKS, UNKNOWN, UNSTABLE
     )
+    # Deep codebase context (architecture, patterns, memory)
+    deep_context: dict = field(default_factory=dict)
 
 
 class PRContextGatherer:
