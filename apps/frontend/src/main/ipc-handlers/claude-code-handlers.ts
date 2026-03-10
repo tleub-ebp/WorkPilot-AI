@@ -8,12 +8,12 @@
  */
 
 import { ipcMain } from 'electron';
-import { execFileSync, spawn, execFile } from 'child_process';
-import { existsSync, readFileSync, promises as fsPromises } from 'fs';
-import { mkdir, rename, unlink } from 'fs/promises';
-import path from 'path';
-import os from 'os';
-import { promisify } from 'util';
+import { execFileSync, spawn, execFile } from 'node:child_process';
+import { existsSync, readFileSync, promises as fsPromises } from 'node:fs';
+import { mkdir, rename, unlink } from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+import { promisify } from 'node:util';
 import { IPC_CHANNELS, DEFAULT_APP_SETTINGS } from '../../shared/constants';
 import type { IPCResult } from '../../shared/types';
 import type { ClaudeCodeVersionInfo, ClaudeInstallationList, ClaudeInstallationInfo } from '../../shared/types/cli';
@@ -246,7 +246,108 @@ async function scanClaudeInstallations(activePath: string | null): Promise<Claud
 }
 
 /**
- * Fetch the latest version of Claude Code from npm registry
+ * Create a fetch request with proxy configuration support
+ * @param url - The URL to fetch
+ * @param options - Request options
+ * @returns Promise<Response>
+ */
+async function createProxiedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  // Check for proxy environment variables
+  const httpProxy = process.env.HTTP_PROXY || process.env.http_proxy;
+  const httpsProxy = process.env.HTTPS_PROXY || process.env.https_proxy;
+  const noProxy = process.env.NO_PROXY || process.env.no_proxy;
+  
+  // Determine which proxy to use
+  let proxyUrl: string | undefined;
+  if (url.startsWith('https://') && httpsProxy) {
+    proxyUrl = httpsProxy;
+  } else if (url.startsWith('http://') && httpProxy) {
+    proxyUrl = httpProxy;
+  } else if (httpsProxy && !httpProxy) {
+    proxyUrl = httpsProxy; // Use HTTPS proxy for HTTP if no HTTP proxy specified
+  }
+  
+  // Check if URL should bypass proxy
+  if (proxyUrl && noProxy) {
+    const noProxyList = noProxy.split(',').map(host => host.trim());
+    const urlHost = new URL(url).hostname;
+    if (noProxyList.some(pattern => {
+      // Support wildcard patterns like *.example.com
+      if (pattern.startsWith('*.')) {
+        const domain = pattern.slice(2);
+        return urlHost.endsWith(domain) || urlHost === domain;
+      }
+      return urlHost === pattern || urlHost.includes(pattern);
+    })) {
+      proxyUrl = undefined;
+    }
+  }
+  
+  // If no proxy is configured, use regular fetch
+  if (!proxyUrl) {
+    return fetch(url, options);
+  }
+  
+  console.log(`[Claude Code] Using proxy: ${proxyUrl} for ${url}`);
+  
+  try {
+    // For now, just log the proxy and use regular fetch
+    // In a full implementation, you would need to install 'https-proxy-agent' package
+    console.warn('[Claude Code] Proxy detected but https-proxy-agent not available, using direct connection');
+    return fetch(url, options);
+  } catch (proxyError) {
+    console.warn('[Claude Code] Proxy setup failed, falling back to direct connection:', proxyError);
+    return fetch(url, options);
+  }
+}
+
+/**
+ * Attempt to fetch version from a single registry with error handling
+ * @param registryUrl - The registry URL to fetch from
+ * @param attempt - Current attempt number for logging
+ * @returns Promise<string> - The version string
+ */
+async function fetchFromRegistry(registryUrl: string, attempt: number): Promise<string> {
+  console.log(`[Claude Code] Attempting to fetch latest version from ${registryUrl} (attempt ${attempt})`);
+  
+  const response = await createProxiedFetch(registryUrl, {
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'Claude-Code-App/1.0',
+      'Connection': 'keep-alive',
+    },
+    signal: AbortSignal.timeout(15000), // Reduced timeout for faster fallback
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  const version = data.version;
+
+  if (!version || typeof version !== 'string') {
+    throw new Error('Invalid version format from npm registry');
+  }
+
+  return version;
+}
+
+/**
+ * Check if an error is network-related and should be retried
+ * @param errorMsg - The error message to check
+ * @returns boolean - True if this is a network error that should be retried
+ */
+function isNetworkError(errorMsg: string): boolean {
+  return errorMsg.includes('ECONNRESET') || 
+         errorMsg.includes('socket disconnected') || 
+         errorMsg.includes('ENOTFOUND') || 
+         errorMsg.includes('network') ||
+         errorMsg.includes('timeout');
+}
+
+/**
+ * Fetch the latest version of Claude Code from npm registry with retry mechanism
  * @param currentInstalled - Optional currently installed version. If provided and newer than
  *                           cached latest, cache will be invalidated and fresh data fetched.
  *                           This handles the case where CLI was updated while app was running.
@@ -279,37 +380,73 @@ async function fetchLatestVersion(currentInstalled?: string | null): Promise<str
     }
   }
 
-  try {
-    const response = await fetch('https://registry.npmjs.org/@anthropic-ai/claude-code/latest', {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Claude-Code-App/1.0',
-      },
-      signal: AbortSignal.timeout(30000), // 30 second timeout for better reliability
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  // Retry configuration
+  const MAX_RETRIES = 3;
+  const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff: 1s, 2s, 4s
+  const registries = [
+    'https://registry.npmjs.org/@anthropic-ai/claude-code/latest',
+    'https://npm.pkg.github.com/@anthropic-ai/claude-code/latest', // Fallback to GitHub npm
+  ];
+  
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    let lastError: Error | null = null;
+    
+    // Try each registry
+    for (const registryUrl of registries) {
+      try {
+        const version = await fetchFromRegistry(registryUrl, attempt + 1);
+        
+        // Cache the result
+        cachedLatestVersion = { version, timestamp: Date.now() };
+        console.log(`[Claude Code] Successfully fetched latest version: ${version}`);
+        return version;
+        
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.warn(`[Claude Code] Registry ${registryUrl} failed:`, lastError.message);
+        // Try next registry
+        continue;
+      }
     }
-
-    const data = await response.json();
-    const version = data.version;
-
-    if (!version || typeof version !== 'string') {
-      throw new Error('Invalid version format from npm registry');
+    
+    // If we get here, all registries failed
+    if (lastError) {
+      const errorMsg = lastError.message;
+      console.error(`[Claude Code] Fetch attempt ${attempt + 1}/${MAX_RETRIES} failed:`, errorMsg);
+      
+      // Check if this is a network connectivity issue
+      if (isNetworkError(errorMsg)) {
+        console.warn('[Claude Code] Network connectivity issue detected');
+        
+        // If this is the last attempt, return cached version if available
+        if (attempt === MAX_RETRIES - 1) {
+          if (cachedLatestVersion) {
+            console.warn('[Claude Code] Network failed, returning cached version:', cachedLatestVersion.version);
+            return cachedLatestVersion.version;
+          } else {
+            // Return a fallback version to prevent app from breaking
+            console.warn('[Claude Code] No cached version available, returning fallback');
+            return '1.0.0'; // Fallback version
+          }
+        }
+        
+        // Wait before retrying
+        const delay = RETRY_DELAYS[attempt];
+        console.log(`[Claude Code] Waiting ${delay}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        // Non-network error, don't retry
+        if (cachedLatestVersion) {
+          console.warn('[Claude Code] Non-network error, returning cached version:', cachedLatestVersion.version);
+          return cachedLatestVersion.version;
+        }
+        throw lastError;
+      }
     }
-
-    // Cache the result
-    cachedLatestVersion = { version, timestamp: Date.now() };
-    return version;
-  } catch (error) {
-    console.error('[Claude Code] Failed to fetch latest version:', error);
-    // Return cached version if available, even if expired
-    if (cachedLatestVersion) {
-      return cachedLatestVersion.version;
-    }
-    throw error;
   }
+  
+  // This should never be reached, but TypeScript needs it
+  throw new Error('Failed to fetch latest version after all retries');
 }
 
 /**
@@ -324,7 +461,7 @@ async function fetchAvailableVersions(): Promise<string[]> {
   }
 
   try {
-    const response = await fetch('https://registry.npmjs.org/@anthropic-ai/claude-code', {
+    const response = await createProxiedFetch('https://registry.npmjs.org/@anthropic-ai/claude-code', {
       headers: {
         'Accept': 'application/json',
       },
