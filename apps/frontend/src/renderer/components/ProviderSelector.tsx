@@ -194,6 +194,9 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
     if (!selected && providers.length > 0) {
       const defaultProvider = providers.find((p: CanonicalProvider) => p.name === 'anthropic') ?? providers[0];
       setSelected(defaultProvider.name);
+      // Persist default selection so ProviderContext can restore it on next mount
+      // (without this, the default is lost on every page reload until the user explicitly selects)
+      localStorage.setItem('selectedProvider', defaultProvider.name);
     }
   }, [providers, selected, setSelected]);
 

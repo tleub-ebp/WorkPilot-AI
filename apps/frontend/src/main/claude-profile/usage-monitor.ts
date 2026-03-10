@@ -2665,6 +2665,11 @@ export class UsageMonitor extends EventEmitter {
    * which handles deduplication of concurrent requests.
    */
   private async _getUsageForProviderImpl(providerName: string): Promise<UsageSnapshot | null> {
+    // Normalize provider aliases: 'claude' is an alias for 'anthropic'
+    if (providerName === 'claude') {
+      providerName = 'anthropic';
+    }
+
     this.debugLog('[UsageMonitor:getUsageForProvider] Fetching usage for provider: ' + providerName);
 
     // Ensure the ClaudeProfileManager is fully initialized before we look up
@@ -2793,7 +2798,8 @@ export class UsageMonitor extends EventEmitter {
     if (providerName === 'anthropic') {
       try {
         const profileManager = getClaudeProfileManager();
-        const oauthProfile = profileManager.getProfilesSortedByAvailability()?.[0];
+        const allOauthProfiles = profileManager.getProfilesSortedByAvailability();
+        const oauthProfile = allOauthProfiles?.[0];
 
         if (oauthProfile) {
           const credential = await this.getCredentialForProfile(oauthProfile);
@@ -2817,10 +2823,15 @@ export class UsageMonitor extends EventEmitter {
             if (snapshot) {
               return snapshot;
             }
+            console.warn('[UsageMonitor:getUsageForProvider] Step 2: fetchUsageViaAPI returned null for OAuth profile:', oauthProfile.name);
+          } else {
+            console.warn('[UsageMonitor:getUsageForProvider] Step 2: No credential found for OAuth profile:', oauthProfile.name, '— user may need to re-authenticate');
           }
+        } else {
+          console.warn('[UsageMonitor:getUsageForProvider] Step 2: No OAuth profiles found in ClaudeProfileManager (total profiles:', allOauthProfiles?.length ?? 0, ')');
         }
       } catch (error) {
-        this.debugLog('[UsageMonitor:getUsageForProvider] Step 2 OAuth lookup failed: ' + error);
+        console.warn('[UsageMonitor:getUsageForProvider] Step 2 OAuth lookup failed:', error);
       }
     }
 
@@ -2840,7 +2851,7 @@ export class UsageMonitor extends EventEmitter {
       return this.currentUsage;
     }
 
-    this.debugLog('[UsageMonitor:getUsageForProvider] No usage data found for provider: ' + providerName);
+    console.warn('[UsageMonitor:getUsageForProvider] No usage data found for provider:', providerName, '— UI will show N/D');
     return null;
   }
 
