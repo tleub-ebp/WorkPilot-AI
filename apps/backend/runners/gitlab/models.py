@@ -129,6 +129,9 @@ class MRReviewResult:
     has_posted_findings: bool = False
     posted_finding_ids: list[str] = field(default_factory=list)
 
+    # Deep codebase context metadata
+    deep_context: dict = field(default_factory=dict)
+
     def to_dict(self) -> dict:
         return {
             "mr_iid": self.mr_iid,
@@ -150,6 +153,7 @@ class MRReviewResult:
             "new_findings_since_last_review": self.new_findings_since_last_review,
             "has_posted_findings": self.has_posted_findings,
             "posted_finding_ids": self.posted_finding_ids,
+            "deep_context": self.deep_context,
         }
 
     @classmethod
@@ -176,6 +180,7 @@ class MRReviewResult:
             ),
             has_posted_findings=data.get("has_posted_findings", False),
             posted_finding_ids=data.get("posted_finding_ids", []),
+            deep_context=data.get("deep_context", {}),
         )
 
     def save(self, gitlab_dir: Path) -> None:
@@ -238,6 +243,9 @@ class MRContext:
     total_deletions: int = 0
     commits: list[dict] = field(default_factory=list)
     head_sha: str | None = None
+
+    # Deep codebase context (architecture, patterns, memory)
+    deep_context: dict = field(default_factory=dict)
 
 
 @dataclass

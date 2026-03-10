@@ -25,6 +25,7 @@ try:
         MRReviewResult,
     )
     from .services import MRReviewEngine
+    from ..github.services.deep_context_provider import DeepContextProvider, store_review_learnings
 except ImportError:
     # Fallback for direct script execution (not as a module)
     from glab_client import GitLabClient, GitLabConfig
@@ -35,6 +36,11 @@ except ImportError:
         MRReviewResult,
     )
     from services import MRReviewEngine
+    try:
+        from services.deep_context_provider import DeepContextProvider, store_review_learnings
+    except ImportError:
+        DeepContextProvider = None
+        store_review_learnings = None
 
 # Import safe_print for BrokenPipeError handling
 try:
@@ -98,6 +104,9 @@ class GitLabOrchestrator:
             project_dir=self.project_dir,
             config=self.gitlab_config,
         )
+
+        # Initialize deep context provider (shared with GitHub)
+        self.deep_context_provider = DeepContextProvider(project_dir=self.project_dir) if DeepContextProvider else None
 
         # Initialize review engine
         self.review_engine = MRReviewEngine(
@@ -215,6 +224,29 @@ class GitLabOrchestrator:
                 f"({len(context.changed_files)} files, {context.total_additions}+/{context.total_deletions}-)"
             )
 
+            # Gather deep codebase context (non-blocking)
+            if self.deep_context_provider:
+                try:
+                    changed_paths = [
+                        f.get("new_path", f.get("old_path", ""))
+                        for f in context.changed_files
+                        if f.get("new_path") or f.get("old_path")
+                    ]
+                    deep_ctx = await self.deep_context_provider.gather_deep_context(
+                        pr_title=context.title,
+                        pr_description=context.description or "",
+                        changed_file_paths=changed_paths,
+                        timeout=20.0,
+                    )
+                    context.deep_context = deep_ctx.to_dict()
+                    safe_print(
+                        f"[GitLab] Deep context: patterns={len(deep_ctx.project_patterns)}, "
+                        f"insights={len(deep_ctx.historical_insights)}, "
+                        f"arch_violations={len(deep_ctx.architecture_violations)}"
+                    )
+                except Exception as e:
+                    safe_print(f"[GitLab] Deep context gathering failed (non-blocking): {e}")
+
             self._report_progress(
                 "analyzing", 30, "Running AI review...", mr_iid=mr_iid
             )
@@ -255,10 +287,29 @@ class GitLabOrchestrator:
                 verdict_reasoning=summary,
                 blockers=blockers,
                 reviewed_commit_sha=context.head_sha,
+                deep_context=context.deep_context,
             )
 
             # Save result
             result.save(self.gitlab_dir)
+
+            # Store review learnings to Graphiti memory (non-blocking)
+            if store_review_learnings and findings:
+                try:
+                    changed_paths = [
+                        f.get("new_path", f.get("old_path", ""))
+                        for f in context.changed_files
+                        if f.get("new_path") or f.get("old_path")
+                    ]
+                    await store_review_learnings(
+                        project_dir=self.project_dir,
+                        pr_number=mr_iid,
+                        findings=[f.to_dict() for f in findings],
+                        pr_title=context.title,
+                        changed_files=changed_paths,
+                    )
+                except Exception as e:
+                    safe_print(f"[GitLab] Failed to store review learnings (non-blocking): {e}")
 
             self._report_progress("complete", 100, "Review complete!", mr_iid=mr_iid)
 

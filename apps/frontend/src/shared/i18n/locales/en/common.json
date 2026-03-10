@@ -413,6 +413,22 @@
       "agentActivity": "Agent Activity",
       "showMore": "Show {{count}} more",
       "hideMore": "Hide {{count}} more"
+    },
+    "deepContext": {
+      "title": "Deep Codebase Context",
+      "architecture": "Project Architecture",
+      "architectureStyle": "Architecture Style",
+      "layers": "Layers",
+      "violations": "Architecture Violations",
+      "patterns": "Code Patterns",
+      "conventions": "Conventions",
+      "relatedCode": "Related Code",
+      "historicalInsights": "Historical Insights",
+      "pastBugs": "Past Bugs in Area",
+      "regressionRisks": "Regression Risks",
+      "gatheringTime": "Context gathered in {{ms}}ms",
+      "noContext": "No deep context available",
+      "canImportFrom": "Can import from: {{imports}}"
     }
   },
   "downloads": {

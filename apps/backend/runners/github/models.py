@@ -545,6 +545,9 @@ class PRReviewResult:
     # NEW: Quick scan summary preserved
     quick_scan_summary: dict = field(default_factory=dict)
 
+    # Deep codebase context metadata
+    deep_context: dict = field(default_factory=dict)
+
     # Follow-up review tracking
     reviewed_commit_sha: str | None = None  # HEAD SHA at time of review
     reviewed_file_blobs: dict[str, str] = field(
@@ -586,6 +589,7 @@ class PRReviewResult:
             "structural_issues": [s.to_dict() for s in self.structural_issues],
             "ai_comment_triages": [t.to_dict() for t in self.ai_comment_triages],
             "quick_scan_summary": self.quick_scan_summary,
+            "deep_context": self.deep_context,
             # Follow-up review fields
             "reviewed_commit_sha": self.reviewed_commit_sha,
             "reviewed_file_blobs": self.reviewed_file_blobs,
@@ -631,6 +635,7 @@ class PRReviewResult:
                 AICommentTriage.from_dict(t) for t in data.get("ai_comment_triages", [])
             ],
             quick_scan_summary=data.get("quick_scan_summary", {}),
+            deep_context=data.get("deep_context", {}),
             # Follow-up review fields
             reviewed_commit_sha=data.get("reviewed_commit_sha"),
             reviewed_file_blobs=data.get("reviewed_file_blobs", {}),

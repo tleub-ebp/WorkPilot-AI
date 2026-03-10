@@ -47,6 +47,7 @@ try:
         TriageEngine,
     )
     from .services.io_utils import safe_print
+    from .services.deep_context_provider import DeepContextProvider, store_review_learnings
 except (ImportError, ValueError, SystemError):
     # When imported directly (runner.py adds github dir to path)
     from bot_detection import BotDetector
@@ -76,6 +77,7 @@ except (ImportError, ValueError, SystemError):
         TriageEngine,
     )
     from services.io_utils import safe_print
+    from services.deep_context_provider import DeepContextProvider, store_review_learnings
 
 
 @dataclass
@@ -183,6 +185,10 @@ class GitHubOrchestrator:
             github_dir=self.github_dir,
             config=self.config,
             progress_callback=self.progress_callback,
+        )
+
+        self.deep_context_provider = DeepContextProvider(
+            project_dir=self.project_dir,
         )
 
     def _report_progress(
@@ -349,6 +355,30 @@ class GitHubOrchestrator:
                 f"({len(pr_context.changed_files)} files, {len(pr_context.related_files)} related)",
                 flush=True,
             )
+
+            # Gather deep codebase context (runs in parallel, non-blocking)
+            safe_print("[DEBUG orchestrator] Gathering deep codebase context...", flush=True)
+            try:
+                changed_paths = [f.path for f in pr_context.changed_files]
+                deep_context = await self.deep_context_provider.gather_deep_context(
+                    pr_title=pr_context.title,
+                    pr_description=pr_context.description,
+                    changed_file_paths=changed_paths,
+                    timeout=20.0,
+                )
+                pr_context.deep_context = deep_context.to_dict()
+                safe_print(
+                    f"[DEBUG orchestrator] Deep context gathered: "
+                    f"{len(deep_context.project_patterns)} patterns, "
+                    f"{len(deep_context.historical_insights)} insights, "
+                    f"{len(deep_context.architecture_violations)} arch violations",
+                    flush=True,
+                )
+            except Exception as e:
+                safe_print(
+                    f"[DEBUG orchestrator] Deep context gathering failed (non-blocking): {e}",
+                    flush=True,
+                )
 
             # Bot detection check
             pr_data = {"author": {"login": pr_context.author}}
@@ -536,6 +566,7 @@ class GitHubOrchestrator:
                 reviewed_commit_sha=head_sha,
                 # Track file blobs for rebase-resistant follow-up reviews
                 reviewed_file_blobs=file_blobs,
+                deep_context=pr_context.deep_context,
             )
 
             # Post review if configured
@@ -562,6 +593,21 @@ class GitHubOrchestrator:
 
             # Save result
             await result.save(self.github_dir)
+
+            # Store review learnings to memory for future reviews
+            try:
+                await store_review_learnings(
+                    project_dir=self.project_dir,
+                    pr_number=pr_number,
+                    findings=[f.to_dict() for f in findings],
+                    pr_title=pr_context.title,
+                    changed_files=[f.path for f in pr_context.changed_files],
+                )
+            except Exception as e:
+                safe_print(
+                    f"[DEBUG orchestrator] Failed to store review learnings: {e}",
+                    flush=True,
+                )
 
             # Note: PR review memory is now saved by the Electron app after the review completes
             # This ensures memory is saved to the embedded LadybugDB managed by the app
