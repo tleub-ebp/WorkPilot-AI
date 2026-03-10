@@ -7,6 +7,7 @@ import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Switch } from '../../ui/switch';
 import { Separator } from '../../ui/separator';
+import { cn } from '../../../lib/utils';
 import {
   Select,
   SelectContent,
@@ -245,21 +246,35 @@ export function AzureDevOpsIntegration({
                 onChange={(e) =>
                   updateEnvConfig({ azureDevOpsPat: e.target.value })
                 }
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() =>
-                  setShowAzureDevOpsPat(!showAzureDevOpsPat)
-                }
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showAzureDevOpsPat ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
+                className={cn(
+                  "pr-20",
+                  isCheckingAzureDevOps && "border-primary/50 bg-primary/5"
                 )}
-              </button>
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                {isCheckingAzureDevOps && (
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                )}
+                {azureDevOpsConnectionStatus?.connected && !isCheckingAzureDevOps && (
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                )}
+                {azureDevOpsConnectionStatus?.connected === false && !isCheckingAzureDevOps && (
+                  <AlertCircle className="h-4 w-4 text-destructive" />
+                )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowAzureDevOpsPat(!showAzureDevOpsPat)
+                  }
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  {showAzureDevOpsPat ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 

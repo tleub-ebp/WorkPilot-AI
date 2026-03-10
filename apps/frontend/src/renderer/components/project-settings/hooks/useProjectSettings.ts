@@ -418,44 +418,45 @@ export function useProjectSettings(
 
     const newConfig = { ...baseConfig, ...updates };
 
-    // Debug: log Jira-specific updates
-    const jiraKeys = Object.keys(updates).filter(k => k.startsWith('jira'));
-    if (jiraKeys.length > 0) {
-      console.log('[useProjectSettings] Jira update:', jiraKeys.map(k => `${k}=${(updates as any)[k]}`).join(', '));
+    // Debug: log Azure DevOps-specific updates
+    const azureKeys = Object.keys(updates).filter(k => k.startsWith('azureDevOps'));
+    if (azureKeys.length > 0) {
+      console.log('[useProjectSettings] Azure DevOps update:', azureKeys.map(k => `${k}=${(updates as any)[k]}`).join(', '));
     }
 
+    // OPTIMISTIC UPDATES: Update local state IMMEDIATELY for responsive UI
+    // This ensures the user sees their changes reflected instantly
+    setEnvConfig(newConfig);
+    
     // Update the ref BEFORE the await (optimistically) to prevent race conditions
     // If two calls happen rapidly, the second will see the first's changes in the ref
     committedEnvConfigRef.current = newConfig;
 
-    // Save to backend
+    // Update the shared store so other components (like Sidebar) can react immediately
+    setProjectEnvConfig(project.id, newConfig);
+
+    // Save to backend asynchronously
     try {
       const result = await window.electronAPI.updateProjectEnv(project.id, newConfig);
       if (!result.success) {
         console.error('[useProjectSettings] Failed to auto-save env config:', result.error);
         setEnvError(result.error || 'Failed to save environment config');
-        // Note: We don't rollback the ref here because another concurrent call may have
+        // Note: We don't rollback the optimistic update because another concurrent call may have
         // already updated it. The error is shown to the user who can retry.
         return;
       }
-      if (jiraKeys.length > 0) {
-        console.log('[useProjectSettings] Jira save SUCCESS');
+      if (azureKeys.length > 0) {
+        console.log('[useProjectSettings] Azure DevOps save SUCCESS');
       }
     } catch (err) {
       console.error('[useProjectSettings] Error auto-saving env config:', err);
       setEnvError(err instanceof Error ? err.message : 'Failed to save environment config');
-      // Note: We don't rollback the ref here for the same reason as above.
+      // Note: We don't rollback the optimistic update for the same reason as above.
       return;
     }
 
     // Clear any previous error on successful save
     setEnvError(null);
-
-    // Update local state after successful backend save
-    setEnvConfig(newConfig);
-
-    // Update the shared store so other components (like Sidebar) can react immediately
-    setProjectEnvConfig(project.id, newConfig);
   };
 
   return {

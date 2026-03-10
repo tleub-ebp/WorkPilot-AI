@@ -1,11 +1,9 @@
-import { ipcMain } from 'electron';
-import type { BrowserWindow } from 'electron';
+import { ipcMain, type BrowserWindow, app } from '../electron-utils';
 import { IPC_CHANNELS, DEFAULT_APP_SETTINGS } from '../../shared/constants';
 import type { IPCResult, ProjectEnvConfig, ClaudeAuthResult, AppSettings } from '../../shared/types';
-import path from 'path';
-import { app } from 'electron';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
-import { spawn } from 'child_process';
+import path from 'node:path';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 import { projectStore } from '../project-store';
 import { parseEnvFile } from './utils';
 import { getClaudeCliInvocation, getClaudeCliInvocationAsync } from '../claude-cli-utils';
@@ -308,19 +306,19 @@ ${existingVars['AUTO_BUILD_MODEL'] ? `AUTO_BUILD_MODEL=${existingVars['AUTO_BUIL
 ${existingVars['LINEAR_API_KEY'] ? `LINEAR_API_KEY=${existingVars['LINEAR_API_KEY']}` : '# LINEAR_API_KEY='}
 ${existingVars['LINEAR_TEAM_ID'] ? `LINEAR_TEAM_ID=${existingVars['LINEAR_TEAM_ID']}` : '# LINEAR_TEAM_ID='}
 ${existingVars['LINEAR_PROJECT_ID'] ? `LINEAR_PROJECT_ID=${existingVars['LINEAR_PROJECT_ID']}` : '# LINEAR_PROJECT_ID='}
-${existingVars['LINEAR_REALTIME_SYNC'] !== undefined ? `LINEAR_REALTIME_SYNC=${existingVars['LINEAR_REALTIME_SYNC']}` : '# LINEAR_REALTIME_SYNC=false'}
+${existingVars['LINEAR_REALTIME_SYNC'] ? `LINEAR_REALTIME_SYNC=${existingVars['LINEAR_REALTIME_SYNC']}` : '# LINEAR_REALTIME_SYNC=false'}
 
 # =============================================================================
 # GITHUB INTEGRATION (OPTIONAL)
 # =============================================================================
 ${existingVars['GITHUB_TOKEN'] ? `GITHUB_TOKEN=${existingVars['GITHUB_TOKEN']}` : '# GITHUB_TOKEN='}
 ${existingVars['GITHUB_REPO'] ? `GITHUB_REPO=${existingVars['GITHUB_REPO']}` : '# GITHUB_REPO=owner/repo'}
-${existingVars['GITHUB_AUTO_SYNC'] !== undefined ? `GITHUB_AUTO_SYNC=${existingVars['GITHUB_AUTO_SYNC']}` : '# GITHUB_AUTO_SYNC=false'}
+${existingVars['GITHUB_AUTO_SYNC'] ? `GITHUB_AUTO_SYNC=${existingVars['GITHUB_AUTO_SYNC']}` : '# GITHUB_AUTO_SYNC=false'}
 
 # =============================================================================
 # GITLAB INTEGRATION (OPTIONAL)
 # =============================================================================
-${existingVars[GITLAB_ENV_KEYS.ENABLED] !== undefined ? `${GITLAB_ENV_KEYS.ENABLED}=${existingVars[GITLAB_ENV_KEYS.ENABLED]}` : `# ${GITLAB_ENV_KEYS.ENABLED}=true`}
+${existingVars[GITLAB_ENV_KEYS.ENABLED] ? `${GITLAB_ENV_KEYS.ENABLED}=${existingVars[GITLAB_ENV_KEYS.ENABLED]}` : `# ${GITLAB_ENV_KEYS.ENABLED}=true`}
 ${envLine(existingVars, GITLAB_ENV_KEYS.INSTANCE_URL, 'https://gitlab.com')}
 ${envLine(existingVars, GITLAB_ENV_KEYS.TOKEN)}
 ${envLine(existingVars, GITLAB_ENV_KEYS.PROJECT, 'group/project')}
@@ -330,22 +328,22 @@ ${envLine(existingVars, GITLAB_ENV_KEYS.AUTO_SYNC, 'false')}
 # =============================================================================
 # AZURE DEVOPS INTEGRATION (OPTIONAL)
 # =============================================================================
-${existingVars[AZURE_DEVOPS_ENV_KEYS.ENABLED] !== undefined ? `${AZURE_DEVOPS_ENV_KEYS.ENABLED}=${existingVars[AZURE_DEVOPS_ENV_KEYS.ENABLED]}` : `# ${AZURE_DEVOPS_ENV_KEYS.ENABLED}=true`}
+${existingVars[AZURE_DEVOPS_ENV_KEYS.ENABLED] ? `${AZURE_DEVOPS_ENV_KEYS.ENABLED}=${existingVars[AZURE_DEVOPS_ENV_KEYS.ENABLED]}` : `# ${AZURE_DEVOPS_ENV_KEYS.ENABLED}=true`}
 ${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.ORG_URL, 'https://dev.azure.com/your-org')}
 ${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.PAT)}
 ${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.PROJECT, 'MyProject')}
 ${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.REPOSITORY, 'MyRepository')}
-${existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC] !== undefined ? `${AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC}=${existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC]}` : `# ${AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC}=false`}
+${existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC] ? `${AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC}=${existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC]}` : `# ${AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC}=false`}
 
 # =============================================================================
 # JIRA INTEGRATION (OPTIONAL)
 # =============================================================================
-${existingVars[JIRA_ENV_KEYS.ENABLED] !== undefined ? `${JIRA_ENV_KEYS.ENABLED}=${existingVars[JIRA_ENV_KEYS.ENABLED]}` : `# ${JIRA_ENV_KEYS.ENABLED}=false`}
+${existingVars[JIRA_ENV_KEYS.ENABLED] ? `${JIRA_ENV_KEYS.ENABLED}=${existingVars[JIRA_ENV_KEYS.ENABLED]}` : `# ${JIRA_ENV_KEYS.ENABLED}=false`}
 ${envLine(existingVars, JIRA_ENV_KEYS.INSTANCE_URL, 'https://your-domain.atlassian.net')}
 ${envLine(existingVars, JIRA_ENV_KEYS.EMAIL)}
 ${envLine(existingVars, JIRA_ENV_KEYS.API_TOKEN)}
 ${envLine(existingVars, JIRA_ENV_KEYS.PROJECT_KEY, 'PROJ')}
-${envLine(existingVars, JIRA_ENV_KEYS.AUTO_SYNC, 'false')}
+${existingVars[JIRA_ENV_KEYS.AUTO_SYNC] ? `${JIRA_ENV_KEYS.AUTO_SYNC}=${existingVars[JIRA_ENV_KEYS.AUTO_SYNC]}` : `# ${JIRA_ENV_KEYS.AUTO_SYNC}=false`}
 
 # =============================================================================
 # GIT/WORKTREE SETTINGS (OPTIONAL)
@@ -357,19 +355,19 @@ ${existingVars['DEFAULT_BRANCH'] ? `DEFAULT_BRANCH=${existingVars['DEFAULT_BRANC
 # =============================================================================
 # UI SETTINGS (OPTIONAL)
 # =============================================================================
-${existingVars['ENABLE_FANCY_UI'] !== undefined ? `ENABLE_FANCY_UI=${existingVars['ENABLE_FANCY_UI']}` : '# ENABLE_FANCY_UI=true'}
+${existingVars['ENABLE_FANCY_UI'] ? `ENABLE_FANCY_UI=${existingVars['ENABLE_FANCY_UI']}` : '# ENABLE_FANCY_UI=true'}
 
 # =============================================================================
 # MCP SERVER CONFIGURATION (per-project overrides)
 # =============================================================================
 # Context7 documentation lookup (default: enabled)
-${existingVars['CONTEXT7_ENABLED'] !== undefined ? `CONTEXT7_ENABLED=${existingVars['CONTEXT7_ENABLED']}` : '# CONTEXT7_ENABLED=true'}
+${existingVars['CONTEXT7_ENABLED'] ? `CONTEXT7_ENABLED=${existingVars['CONTEXT7_ENABLED']}` : '# CONTEXT7_ENABLED=true'}
 # Linear MCP integration (default: follows LINEAR_API_KEY)
-${existingVars['LINEAR_MCP_ENABLED'] !== undefined ? `LINEAR_MCP_ENABLED=${existingVars['LINEAR_MCP_ENABLED']}` : '# LINEAR_MCP_ENABLED=true'}
+${existingVars['LINEAR_MCP_ENABLED'] ? `LINEAR_MCP_ENABLED=${existingVars['LINEAR_MCP_ENABLED']}` : '# LINEAR_MCP_ENABLED=true'}
 # Electron desktop automation - QA agents only (default: disabled)
-${existingVars['ELECTRON_MCP_ENABLED'] !== undefined ? `ELECTRON_MCP_ENABLED=${existingVars['ELECTRON_MCP_ENABLED']}` : '# ELECTRON_MCP_ENABLED=false'}
+${existingVars['ELECTRON_MCP_ENABLED'] ? `ELECTRON_MCP_ENABLED=${existingVars['ELECTRON_MCP_ENABLED']}` : '# ELECTRON_MCP_ENABLED=false'}
 # Puppeteer browser automation - QA agents only (default: disabled)
-${existingVars['PUPPETEER_MCP_ENABLED'] !== undefined ? `PUPPETEER_MCP_ENABLED=${existingVars['PUPPETEER_MCP_ENABLED']}` : '# PUPPETEER_MCP_ENABLED=false'}
+${existingVars['PUPPETEER_MCP_ENABLED'] ? `PUPPETEER_MCP_ENABLED=${existingVars['PUPPETEER_MCP_ENABLED']}` : '# PUPPETEER_MCP_ENABLED=false'}
 
 # =============================================================================
 # PER-AGENT MCP OVERRIDES
@@ -636,7 +634,7 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
           // Ollama Embeddings
           ollamaBaseUrl: vars['OLLAMA_BASE_URL'],
           ollamaEmbeddingModel: vars['OLLAMA_EMBEDDING_MODEL'],
-          ollamaEmbeddingDim: vars['OLLAMA_EMBEDDING_DIM'] ? parseInt(vars['OLLAMA_EMBEDDING_DIM'], 10) : undefined,
+          ollamaEmbeddingDim: vars['OLLAMA_EMBEDDING_DIM'] ? Number.parseInt(vars['OLLAMA_EMBEDDING_DIM'], 10) : undefined,
           // LadybugDB
           database: vars['GRAPHITI_DATABASE'],
           dbPath: vars['GRAPHITI_DB_PATH'],
@@ -699,6 +697,12 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
 
       const envPath = path.join(project.path, project.autoBuildPath, '.env');
 
+      // Debug: Log Azure DevOps specific updates
+      const azureKeys = Object.keys(config).filter(k => k.startsWith('azureDevOps'));
+      if (azureKeys.length > 0) {
+        console.log('[ENV_UPDATE] Azure DevOps config update:', azureKeys.map(k => `${k}=${(config as any)[k] === 'string' && (config as any)[k].includes('token') ? '[REDACTED]' : (config as any)[k]}`).join(', '));
+      }
+
       try {
         // Read existing content if file exists (atomic read, no TOCTOU)
         let existingContent: string | undefined;
@@ -708,7 +712,6 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
           if ((readErr as NodeJS.ErrnoException).code !== 'ENOENT') throw readErr;
           // File doesn't exist yet - existingContent stays undefined
         }
-
 
         // Generate new content
         const newContent = generateEnvContent(config, existingContent);
@@ -722,9 +725,13 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
         // Write to file
         writeFileSync(envPath, newContent, 'utf-8');
 
+        if (azureKeys.length > 0) {
+          console.log('[ENV_UPDATE] Azure DevOps config saved successfully to:', envPath);
+        }
 
         return { success: true };
       } catch (error) {
+        console.error('[ENV_UPDATE] Error updating .env file:', error);
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Failed to update .env file'
@@ -732,6 +739,75 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
       }
     }
   );
+
+  // Helper function to check Claude CLI availability
+  const checkClaudeCliAvailability = (claudeCmd: string, claudeEnv: Record<string, string>, projectPath: string): Promise<ClaudeAuthResult> => {
+    return new Promise((resolve) => {
+      const proc = spawn(getSpawnCommand(claudeCmd), ['--version'], getSpawnOptions(claudeCmd, {
+        cwd: projectPath,
+        env: claudeEnv,
+      }));
+
+      let _stdout = '';
+      let _stderr = '';
+
+      proc.stdout?.on('data', (data: Buffer) => {
+        _stdout += data.toString('utf-8');
+      });
+
+      proc.stderr?.on('data', (data: Buffer) => {
+        _stderr += data.toString('utf-8');
+      });
+
+      proc.on('close', (code: number | null) => {
+        if (code === 0) {
+          checkClaudeAuthentication(claudeCmd, claudeEnv, projectPath, resolve);
+        } else {
+          resolve({
+            success: false,
+            authenticated: false,
+            error: 'Claude CLI not found. Please install it first.'
+          });
+        }
+      });
+
+      proc.on('error', () => {
+        resolve({
+          success: false,
+          authenticated: false,
+          error: 'Claude CLI not found. Please install it first.'
+        });
+      });
+    });
+  };
+
+  // Helper function to check Claude authentication
+  const checkClaudeAuthentication = (
+    claudeCmd: string, 
+    claudeEnv: Record<string, string>, 
+    projectPath: string,
+    resolve: (value: ClaudeAuthResult) => void
+  ): void => {
+    const authCheck = spawn(getSpawnCommand(claudeCmd), ['api', '--help'], getSpawnOptions(claudeCmd, {
+      cwd: projectPath,
+      env: claudeEnv,
+    }));
+
+    authCheck.on('close', (authCode: number | null) => {
+      resolve({
+        success: true,
+        authenticated: authCode === 0
+      });
+    });
+
+    authCheck.on('error', () => {
+      resolve({
+        success: true,
+        authenticated: false,
+        error: 'Could not verify authentication'
+      });
+    });
+  };
 
   ipcMain.handle(
     IPC_CHANNELS.ENV_CHECK_CLAUDE_AUTH,
@@ -751,63 +827,7 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
 
       try {
         // Check if Claude CLI is available and authenticated
-        const result = await new Promise<ClaudeAuthResult>((resolve) => {
-          const proc = spawn(getSpawnCommand(claudeCmd), ['--version'], getSpawnOptions(claudeCmd, {
-            cwd: project.path,
-            env: claudeEnv,
-          }));
-
-          let _stdout = '';
-          let _stderr = '';
-
-          proc.stdout?.on('data', (data: Buffer) => {
-            _stdout += data.toString('utf-8');
-          });
-
-          proc.stderr?.on('data', (data: Buffer) => {
-            _stderr += data.toString('utf-8');
-          });
-
-          proc.on('close', (code: number | null) => {
-            if (code === 0) {
-              // Claude CLI is available, check if authenticated
-              // Run a simple command that requires auth
-              const authCheck = spawn(getSpawnCommand(claudeCmd), ['api', '--help'], getSpawnOptions(claudeCmd, {
-                cwd: project.path,
-                env: claudeEnv,
-              }));
-
-              authCheck.on('close', (authCode: number | null) => {
-                resolve({
-                  success: true,
-                  authenticated: authCode === 0
-                });
-              });
-
-              authCheck.on('error', () => {
-                resolve({
-                  success: true,
-                  authenticated: false,
-                  error: 'Could not verify authentication'
-                });
-              });
-            } else {
-              resolve({
-                success: false,
-                authenticated: false,
-                error: 'Claude CLI not found. Please install it first.'
-              });
-            }
-          });
-
-          proc.on('error', () => {
-            resolve({
-              success: false,
-              authenticated: false,
-              error: 'Claude CLI not found. Please install it first.'
-            });
-          });
-        });
+        const result = await checkClaudeCliAvailability(claudeCmd, claudeEnv, project.path);
 
         if (!result.success) {
           return { success: false, error: result.error || 'Failed to check Claude auth' };

@@ -689,9 +689,8 @@ export function AzureDevOpsSidePanel({
           {!isLoadingItems && filteredItems.length > 0 && (
             <div className="p-4 space-y-2">
               {filteredItems.map((item) => (
-                <button
+                <div
                   key={item.id}
-                  type="button"
                   className={cn(
                     "flex items-start gap-3 p-3 rounded-md border transition-all cursor-pointer w-full text-left",
                     "hover:bg-muted/50",
@@ -699,71 +698,84 @@ export function AzureDevOpsSidePanel({
                     selectedIds.has(item.id) && "bg-primary/10 border-primary/30 cursor-grab",
                     draggedIds.has(item.id) && "cursor-grabbing opacity-50"
                   )}
-                  onClick={() => toggleItem(item.id)}
-                  draggable={true} // Toujours draggable, pas seulement si sélectionné
-                  onDragStart={(e) => {
-                    // Si l'item est déjà sélectionné, dragger tous les items sélectionnés
-                    if (selectedIds.has(item.id)) {
-                      handleDragStart(e, Array.from(selectedIds));
-                    } else {
-                      // Sinon, dragger uniquement cet item
-                      handleDragStart(e, [item.id]);
-                    }
-                  }}
-                  onDragEnd={handleDragEnd}
-                  aria-label={`${t('azureDevOpsImport.workItemLabel', { id: item.id, title: item.title })} ${selectedIds.has(item.id) ? t('azureDevOpsImport.selected') : ''}`}
-                  aria-pressed={selectedIds.has(item.id)}
                 >
-                  <Checkbox
-                    checked={selectedIds.has(item.id)}
-                    onCheckedChange={() => toggleItem(item.id)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  
-                  {selectedIds.has(item.id) && (
-                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                  )}
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-mono text-xs text-muted-foreground select-none">
+                  <button
+                    type="button"
+                    className="flex items-start gap-3 w-full"
+                    onClick={() => toggleItem(item.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleItem(item.id);
+                      }
+                    }}
+                    draggable={true} // Toujours draggable, pas seulement si sélectionné
+                    onDragStart={(e) => {
+                      // Si l'item est déjà sélectionné, dragger tous les items sélectionnés
+                      if (selectedIds.has(item.id)) {
+                        handleDragStart(e, Array.from(selectedIds));
+                      } else {
+                        // Sinon, dragger uniquement cet item
+                        handleDragStart(e, [item.id]);
+                      }
+                    }}
+                    onDragEnd={handleDragEnd}
+                    aria-label={`${t('azureDevOpsImport.workItemLabel', { id: item.id, title: item.title })} ${selectedIds.has(item.id) ? t('azureDevOpsImport.selected') : ''}`}
+                    aria-pressed={selectedIds.has(item.id)}
+                  >
+                    <div className="flex items-start gap-3 w-full">
+                      <Checkbox
+                        checked={selectedIds.has(item.id)}
+                        onCheckedChange={() => toggleItem(item.id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      
+                      {selectedIds.has(item.id) && (
+                        <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
+                      )}
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-mono text-xs text-muted-foreground select-none">
                         #{item.id}
-                      </span>
-                      <Badge variant="outline" className={cn(getTypeColor(item.workItemType), "select-none")}>
+                          </span>
+                          <Badge variant="outline" className={cn(getTypeColor(item.workItemType), "select-none")}>
                         {item.workItemType}
-                      </Badge>
-                      <Badge variant="outline" className="select-none">{item.state}</Badge>
-                      {item.priority !== undefined && (
-                        <Badge variant="outline" className="select-none">P{item.priority}</Badge>
-                      )}
-                      {item.repository && (
-                        <Badge variant="secondary" className="text-xs select-none">
-                          📁 {item.repository}
-                        </Badge>
-                      )}
-                    </div>
-                    <h4 className="font-medium text-sm mb-1 truncate select-none">{item.title}</h4>
-                    {item.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2 select-none">
+                          </Badge>
+                          <Badge variant="outline" className="select-none">{item.state}</Badge>
+                          {item.priority !== undefined && (
+                            <Badge variant="outline" className="select-none">P{item.priority}</Badge>
+                          )}
+                          {item.repository && (
+                            <Badge variant="secondary" className="text-xs select-none">
+                              📁 {item.repository}
+                            </Badge>
+                          )}
+                        </div>
+                        <h4 className="font-medium text-sm mb-1 truncate select-none">{item.title}</h4>
+                        {item.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-2 select-none">
                         {item.description}
-                      </p>
-                    )}
-                    {item.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {item.tags.slice(0, 3).map((tag) => (
+                          </p>
+                        )}
+                        {item.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {item.tags.slice(0, 3).map((tag) => (
                           <Badge key={`${item.id}-${tag}`} variant="secondary" className="text-xs select-none">
                             {tag}
                           </Badge>
-                        ))}
-                        {item.tags.length > 3 && (
-                          <Badge variant="secondary" className="text-xs select-none">
+                            ))}
+                            {item.tags.length > 3 && (
+                              <Badge variant="secondary" className="text-xs select-none">
                             +{item.tags.length - 3}
-                          </Badge>
+                              </Badge>
+                            )}
+                          </div>
                         )}
                       </div>
-                    )}
-                  </div>
+                    </div>
                   </button>
+                </div>
               ))}
             </div>
           )}
