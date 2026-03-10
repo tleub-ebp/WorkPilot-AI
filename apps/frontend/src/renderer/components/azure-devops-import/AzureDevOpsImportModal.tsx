@@ -15,7 +15,6 @@ import {
   DialogTitle,
 } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
@@ -373,16 +372,21 @@ export function AzureDevOpsImportModal({
             {/* Search Bar */}
             <div className="relative shrink-0">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
+              <input
+                type="text"
                 placeholder={t('settings:azureDevOpsImport.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 pr-3 py-2 w-full rounded-lg border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 transition-colors"
+                style={{
+                  '--tw-focus-border-color': '#facc15',
+                  borderColor: '#facc15'
+                } as React.CSSProperties}
               />
             </div>
 
             {/* Filters */}
-            <div className="grid grid-cols-2 gap-3 shrink-0 pt-4">
+            <div className="grid grid-cols-2 gap-3 shrink-0 pt-4 pb-6">
               <div>
                 <Label className="text-xs text-foreground/70 mb-1 block ml-3">
                   {t('settings:azureDevOpsImport.filterTypeLabel')}
