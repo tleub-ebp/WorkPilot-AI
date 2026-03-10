@@ -387,9 +387,9 @@ export function AzureDevOpsImportModal({
             </div>
 
             {/* Filters */}
-            <div className="grid grid-cols-2 gap-3 shrink-0">
+            <div className="grid grid-cols-2 gap-3 shrink-0 pt-4">
               <div>
-                <Label className="text-xs text-foreground/70 mb-1 block">
+                <Label className="text-xs text-foreground/70 mb-1 block ml-3">
                   {t('settings:azureDevOpsImport.filterTypeLabel')}
                 </Label>
                 <Select
@@ -415,7 +415,7 @@ export function AzureDevOpsImportModal({
               </div>
 
               <div>
-                <Label className="text-xs text-foreground/70 mb-1 block">
+                <Label className="text-xs text-foreground/70 mb-1 block ml-3">
                   {t('settings:azureDevOpsImport.filterStateLabel')}
                 </Label>
                 <Select
