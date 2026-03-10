@@ -650,8 +650,8 @@ Routage intelligent entre modèles selon la complexité + tracking granulaire de
 
 Review de PR/MR intelligente avec contexte profond du codebase — comme un senior dev qui connaît tout le projet.
 
-- **Principe :** Quand un agent termine une PR, ou quand un dev externe ouvre une PR, l'agent de review analyse les changements avec le contexte complet : architecture existante, conventions du projet, patterns récurrents, historique des bugs. Produit une review structurée avec severity levels, suggestions d'amélioration concrètes, et détection de régressions potentielles. Intégré dans GitHub/GitLab.
-- **Exploite :** Context system, GitHub/GitLab integration, Memory (Graphiti), security system
+- **Principe :** Quand un agent termine une PR, ou quand un dev externe ouvre une PR, l'agent de review analyse les changements avec le contexte complet : architecture existante, conventions du projet, patterns récurrents, historique des bugs. Produit une review structurée avec severity levels, suggestions d'amélioration concrètes, et détection de régressions potentielles. Intégré dans Azure DevOps/GitHub/GitLab.
+- **Exploite :** Context system, Azure DevOps/GitHub/GitLab integration, Memory (Graphiti), security system
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Les PR reviews manuelles prennent des heures. Un reviewer IA avec contexte profond change la donne. Combine la rapidité de l'IA avec la connaissance contextuelle du projet.
 
@@ -663,7 +663,7 @@ L'AI Code Review Agent est maintenant intégré dans WorkPilot AI et fonctionne 
 
 **Automatic Trigger**
 - L'agent se déclenche automatiquement lorsqu'une PR est créée ou mise à jour
-- Intégration native avec GitHub et GitLab
+- Intégration native avec Azure DevOps, GitHub et GitLab
 - Analyse en temps réel des changements proposés
 
 **Manual Trigger**
