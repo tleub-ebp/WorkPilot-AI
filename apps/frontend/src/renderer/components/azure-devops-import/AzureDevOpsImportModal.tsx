@@ -247,58 +247,53 @@ export function AzureDevOpsImportModal({
     return (
       <div className="space-y-2 w-full">
         {filteredItems.map((item) => (
-          <div
-            key={item.id}
-            className="flex items-start gap-3 p-3 rounded-md border hover:bg-muted/50 cursor-pointer transition-colors w-full overflow-x-hidden"
-            onClick={() => toggleItem(item.id)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                toggleItem(item.id);
-              }
-            }}
-          >
+          <div key={item.id} className="flex items-start gap-3 p-3 rounded-md border hover:bg-muted/50 transition-colors w-full overflow-x-hidden">
             <Checkbox
               checked={selectedIds.has(item.id)}
               onCheckedChange={() => toggleItem(item.id)}
               onClick={(e) => e.stopPropagation()}
             />
-            <div className="flex-1 min-w-0 overflow-hidden">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="font-mono text-xs text-muted-foreground shrink-0">
-                  #{item.id}
-                </span>
-                <Badge variant="outline" className={getTypeColor(item.workItemType) + " shrink-0"}>
-                  {item.workItemType}
-                </Badge>
-                <Badge variant="outline" className="shrink-0">{item.state}</Badge>
-                {item.priority !== undefined && (
-                  <Badge variant="outline" className="shrink-0">P{item.priority}</Badge>
-                )}
-              </div>
-              <h4 className="font-medium text-sm mb-1 wrap-break-words">{item.title}</h4>
-              {item.description && (
-                <p className="text-xs text-muted-foreground line-clamp-2 wrap-break-words">
-                  {item.description}
-                </p>
-              )}
-              {item.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {item.tags.slice(0, 3).map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs shrink-0">
-                      {tag}
-                    </Badge>
-                  ))}
-                  {item.tags.length > 3 && (
-                    <Badge variant="secondary" className="text-xs shrink-0">
-                      +{item.tags.length - 3}
-                    </Badge>
+            <button
+              type="button"
+              className="flex-1 min-w-0 overflow-hidden bg-transparent border-none cursor-pointer text-left p-0 m-0 flex items-start gap-3"
+              onClick={() => toggleItem(item.id)}
+              aria-label={`Select work item ${item.id}: ${item.title}`}
+            >
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="font-mono text-xs text-muted-foreground shrink-0">
+                    #{item.id}
+                  </span>
+                  <Badge variant="outline" className={getTypeColor(item.workItemType) + " shrink-0"}>
+                    {item.workItemType}
+                  </Badge>
+                  <Badge variant="outline" className="shrink-0">{item.state}</Badge>
+                  {item.priority !== undefined && (
+                    <Badge variant="outline" className="shrink-0">P{item.priority}</Badge>
                   )}
                 </div>
-              )}
-            </div>
+                <h4 className="font-medium text-sm mb-1 leading-tight">{item.title}</h4>
+                {item.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+                    {item.description}
+                  </p>
+                )}
+                {item.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {item.tags.slice(0, 3).map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-xs shrink-0">
+                        {tag}
+                      </Badge>
+                    ))}
+                    {item.tags.length > 3 && (
+                      <Badge variant="secondary" className="text-xs shrink-0">
+                        +{item.tags.length - 3}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </div>
+            </button>
           </div>
         ))}
       </div>
