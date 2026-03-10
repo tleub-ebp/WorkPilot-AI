@@ -698,37 +698,49 @@ export function AzureDevOpsSidePanel({
                     selectedIds.has(item.id) && "bg-primary/10 border-primary/30 cursor-grab",
                     draggedIds.has(item.id) && "cursor-grabbing opacity-50"
                   )}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => toggleItem(item.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      toggleItem(item.id);
+                    }
+                  }}
+                  draggable={true} // Toujours draggable, pas seulement si sélectionné
+                  onDragStart={(e) => {
+                    // Si l'item est déjà sélectionné, dragger tous les items sélectionnés
+                    if (selectedIds.has(item.id)) {
+                      handleDragStart(e, Array.from(selectedIds));
+                    } else {
+                      // Sinon, dragger uniquement cet item
+                      handleDragStart(e, [item.id]);
+                    }
+                  }}
+                  onDragEnd={handleDragEnd}
+                  aria-label={`${t('azureDevOpsImport.workItemLabel', { id: item.id, title: item.title })} ${selectedIds.has(item.id) ? t('azureDevOpsImport.selected') : ''}`}
+                  aria-pressed={selectedIds.has(item.id)}
                 >
-                  <button
-                    type="button"
-                    className="flex items-start gap-3 w-full"
-                    onClick={() => toggleItem(item.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        toggleItem(item.id);
-                      }
-                    }}
-                    draggable={true} // Toujours draggable, pas seulement si sélectionné
-                    onDragStart={(e) => {
-                      // Si l'item est déjà sélectionné, dragger tous les items sélectionnés
-                      if (selectedIds.has(item.id)) {
-                        handleDragStart(e, Array.from(selectedIds));
-                      } else {
-                        // Sinon, dragger uniquement cet item
-                        handleDragStart(e, [item.id]);
-                      }
-                    }}
-                    onDragEnd={handleDragEnd}
-                    aria-label={`${t('azureDevOpsImport.workItemLabel', { id: item.id, title: item.title })} ${selectedIds.has(item.id) ? t('azureDevOpsImport.selected') : ''}`}
-                    aria-pressed={selectedIds.has(item.id)}
-                  >
-                    <div className="flex items-start gap-3 w-full">
+                  <div className="flex items-start gap-3 w-full">
+                    <div
+                      className="flex items-center justify-center"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleItem(item.id);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Toggle selection for work item ${item.id}`}
+                    >
                       <Checkbox
                         checked={selectedIds.has(item.id)}
                         onCheckedChange={() => toggleItem(item.id)}
-                        onClick={(e) => e.stopPropagation()}
                       />
+                    </div>
                       
                       {selectedIds.has(item.id) && (
                         <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
@@ -774,7 +786,6 @@ export function AzureDevOpsSidePanel({
                         )}
                       </div>
                     </div>
-                  </button>
                 </div>
               ))}
             </div>

@@ -20,6 +20,7 @@ import { getCredentialsFromKeychain, clearKeychainCache } from './credential-uti
 import { reactiveTokenRefresh, ensureValidToken } from './token-refresh';
 import { isProfileRateLimited } from './rate-limit-manager';
 import { getOperationRegistry } from './operation-registry';
+import { frontendDebugLog } from '../../shared/utils/debug-logger';
 
 /**
  * Create a safe fingerprint of a credential for debug logging.
@@ -247,14 +248,14 @@ export class UsageMonitor extends EventEmitter {
   private readonly isDebug = process.env.DEBUG === 'true';
 
   /**
-   * Debug log helper - only logs when DEBUG=true
+   * Debug log helper - only logs when DEBUG=true with colored output and scope highlighting
    */
   private debugLog(message: string, data?: unknown): void {
     if (this.isDebug) {
       if (data !== undefined) {
-        console.warn(message, data);
+        frontendDebugLog(message, data);
       } else {
-        console.warn(message);
+        frontendDebugLog(message);
       }
     }
   }
@@ -1569,6 +1570,13 @@ export class UsageMonitor extends EventEmitter {
       return null;
     }
 
+    // Special case: For anthropic OAuth profiles, if we don't have credential, 
+    // try CLI directly since OAuth API might fail
+    if (providerName === 'anthropic' && !credential) {
+      this.debugLog('[UsageMonitor:FETCH] Anthropic OAuth profile without credential, trying CLI directly');
+      return await this.fetchUsageViaCLI(profileId, profileName);
+    }
+
     this.debugLog('[UsageMonitor:FETCH] Starting usage fetch:', {
       profileId,
       profileName,
@@ -2406,12 +2414,10 @@ export class UsageMonitor extends EventEmitter {
       },
       providerName: 'openai',
       openaiUsageDetails: {
-        lastUpdated: new Date().toISOString(),
-        periodDays: 30,
-        totalTokens: 0,
-        requestsCount: 0,
-        estimatedCost: 0,
-        currency: 'USD'
+        completions: null,
+        cost: null,
+        embeddings: null,
+        moderations: null
       }
     };
   }
@@ -2423,14 +2429,162 @@ export class UsageMonitor extends EventEmitter {
    * which is complex. For now, we rely on the API method.
    */
   private async fetchUsageViaCLI(
-      _profileId: string,
-      _profileName: string
+      profileId: string,
+      profileName: string
   ): Promise<UsageSnapshot | null> {
-    // CLI-based usage fetching is not implemented yet.
-    // The API method should handle most cases. If we need CLI fallback,
-    // we would need to spawn a Claude process with /usage command and parse the output.
-    this.debugLog('[UsageMonitor] CLI fallback not implemented, API method should be used');
-    return null;
+    this.debugLog('[UsageMonitor] CLI fallback - attempting to use claude usage command');
+    
+    try {
+      const { spawn } = await import('node:child_process');
+      
+      const result = await new Promise<{ stdout: string; stderr: string; code: number | null }>((resolve, reject) => {
+        this.debugLog('[UsageMonitor:CLI] Spawning claude usage process');
+        
+        // Try different approaches to find claude executable
+        const claudePath = 'claude'; // Let system find it in PATH
+        
+        const process = spawn(claudePath, ['usage'], {
+          shell: true,
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 15000 // 15 second timeout
+        });
+        
+        let stdout = '';
+        let stderr = '';
+        
+        process.stdout.on('data', (data) => {
+          stdout += data.toString();
+        });
+        
+        process.stderr.on('data', (data) => {
+          stderr += data.toString();
+        });
+        
+        process.on('close', (code) => {
+          this.debugLog('[UsageMonitor:CLI] Process closed with code:', code);
+          resolve({ stdout, stderr, code });
+        });
+
+        process.on('error', (error) => {
+          this.debugLog('[UsageMonitor:CLI] Process error:', error);
+          reject(error);
+        });
+      });
+      
+      this.debugLog('[UsageMonitor:CLI] Process completed:', {
+        code: result.code,
+        stdoutLength: result.stdout.length,
+        stderrLength: result.stderr.length,
+        hasOutput: !!result.stdout
+      });
+      
+      // Check if the command succeeded
+      if (result.code !== 0 && result.code !== null) {
+        this.debugLog('[UsageMonitor:CLI] Command failed with non-zero exit code:', {
+          code: result.code,
+          stderr: result.stderr
+        });
+        return null;
+      }
+      
+      if (!result.stdout || result.stdout.trim().length === 0) {
+        this.debugLog('[UsageMonitor:CLI] No stdout output received');
+        return null;
+      }
+      
+      this.debugLog('[UsageMonitor:CLI] claude usage output received (first 200 chars):', result.stdout.substring(0, 200));
+      
+      // Parse the CLI output to extract usage information
+      const output = result.stdout;
+      
+      // Look for usage patterns - the CLI shows percentages in various formats
+      // Try multiple patterns to catch different CLI output formats
+      const patterns = [
+        /(\d+)%\s+used.*?(5-hour|session|5h)/i,
+        /(\d+)%\s+used.*?(7-day|weekly|7d)/i,
+        /usage.*?(\d+)%.*?(5-hour|session)/i,
+        /usage.*?(\d+)%.*?(7-day|weekly)/i
+      ];
+      
+      let sessionPercent = 0;
+      let weeklyPercent = 0;
+      
+      // Try to find session usage
+      for (const pattern of patterns) {
+        const patternStr = pattern.toString();
+        if (patternStr.includes('session') || patternStr.includes('5-hour') || patternStr.includes('5h')) {
+          const match = pattern.exec(output);
+          if (match) {
+            sessionPercent = Number(match[1]);
+            this.debugLog('[UsageMonitor:CLI] Found session usage:', sessionPercent);
+            break;
+          }
+        }
+      }
+      
+      // Try to find weekly usage
+      for (const pattern of patterns) {
+        const patternStr = pattern.toString();
+        if (patternStr.includes('weekly') || patternStr.includes('7-day') || patternStr.includes('7d')) {
+          const match = pattern.exec(output);
+          if (match) {
+            weeklyPercent = Number(match[1]);
+            this.debugLog('[UsageMonitor:CLI] Found weekly usage:', weeklyPercent);
+            break;
+          }
+        }
+      }
+      
+      // If we still don't have values, try a more generic approach
+      if (sessionPercent === 0 && weeklyPercent === 0) {
+        if (output.includes("You've hit your limit")) {
+          sessionPercent = 100;
+          // Keep weeklyPercent as 0 since "hit your limit" usually refers to session limit
+          this.debugLog('[UsageMonitor:CLI] Detected session limit hit, setting session to 100%');
+        } else {
+          const percentagePattern = /(\d+)%/g;
+          let match;
+          const allPercentages: string[] = [];
+          
+          while ((match = percentagePattern.exec(output)) !== null) {
+            allPercentages.push(match[1]);
+          }
+          
+          if (allPercentages.length >= 1) {
+            // Assume first percentage is session, second is weekly (if available)
+            sessionPercent = Number(allPercentages[0]);
+            if (allPercentages.length >= 2) {
+              weeklyPercent = Number(allPercentages[1]);
+            }
+            this.debugLog('[UsageMonitor:CLI] Generic parsing found percentages:', { sessionPercent, weeklyPercent });
+          }
+        }
+      }
+      
+      this.debugLog('[UsageMonitor:CLI] Parsed usage from CLI:', {
+        sessionPercent,
+        weeklyPercent,
+        outputLength: output.length
+      });
+      
+      return {
+        sessionPercent,
+        weeklyPercent,
+        profileId,
+        profileName,
+        profileEmail: undefined, // CLI doesn't provide email in usage output
+        fetchedAt: new Date(),
+        limitType: weeklyPercent > sessionPercent ? 'weekly' : 'session',
+        usageWindows: {
+          sessionWindowLabel: 'common:usage.window5Hour',
+          weeklyWindowLabel: 'common:usage.window7Day'
+        }
+      };
+      
+    } catch (error) {
+      this.debugLog('[UsageMonitor:CLI] CLI fallback failed:', error);
+      return null;
+    }
   }
 
   /**
@@ -2802,31 +2956,27 @@ export class UsageMonitor extends EventEmitter {
         const oauthProfile = allOauthProfiles?.[0];
 
         if (oauthProfile) {
+          this.debugLog('[UsageMonitor:getUsageForProvider] Step 2: Found OAuth profile, attempting fetch with fallback');
+          
+          // Get credential for the OAuth profile
           const credential = await this.getCredentialForProfile(oauthProfile);
-          if (credential) {
-            const activeProfileResult: ActiveProfileResult = {
-              profileId: oauthProfile.id,
-              profileName: oauthProfile.name,
-              profileEmail: oauthProfile.email,
-              isAPIProfile: false,
-              baseUrl: 'https://api.anthropic.com',
-              credential
-            };
-
-            const snapshot = await this.fetchUsageViaAPI(
-                credential,
-                oauthProfile.id,
-                oauthProfile.name,
-                oauthProfile.email,
-                activeProfileResult
-            );
-            if (snapshot) {
-              return snapshot;
-            }
-            console.warn('[UsageMonitor:getUsageForProvider] Step 2: fetchUsageViaAPI returned null for OAuth profile:', oauthProfile.name);
-          } else {
+          if (!credential) {
             console.warn('[UsageMonitor:getUsageForProvider] Step 2: No credential found for OAuth profile:', oauthProfile.name, '— user may need to re-authenticate');
+            return null;
           }
+          
+          // Use the complete fetchUsage method which includes CLI fallback
+          const snapshot = await this.fetchUsage(
+              oauthProfile.id,
+              credential,
+              undefined, // activeProfile - will be determined inside fetchUsage
+              'anthropic', // providerName
+              true // suppressErrors - Step 2 is also a best-effort attempt
+          );
+          if (snapshot) {
+            return snapshot;
+          }
+          console.warn('[UsageMonitor:getUsageForProvider] Step 2: fetchUsage returned null for OAuth profile:', oauthProfile.name);
         } else {
           console.warn('[UsageMonitor:getUsageForProvider] Step 2: No OAuth profiles found in ClaudeProfileManager (total profiles:', allOauthProfiles?.length ?? 0, ')');
         }

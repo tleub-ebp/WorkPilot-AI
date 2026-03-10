@@ -1,7 +1,16 @@
 /**
  * Debug Logger
  * Only logs when DEBUG=true in environment
+ * 
+ * Enhanced with colored logs and scope-based coloring for better readability.
  */
+
+// Import colored logging functions
+import { 
+  frontendDebugLog,
+  frontendWarningLog,
+  frontendErrorLog
+} from './frontend-colored-logs';
 
 export const isDebugEnabled = (): boolean => {
   if (typeof process !== 'undefined' && process.env) {
@@ -12,18 +21,21 @@ export const isDebugEnabled = (): boolean => {
 
 export const debugLog = (...args: unknown[]): void => {
   if (isDebugEnabled()) {
-    console.warn(...args);
+    frontendDebugLog(args[0] as string, ...args.slice(1));
   }
 };
 
 export const debugWarn = (...args: unknown[]): void => {
   if (isDebugEnabled()) {
-    console.warn(...args);
+    frontendWarningLog(args[0] as string, ...args.slice(1));
   }
 };
 
 export const debugError = (...args: unknown[]): void => {
   if (isDebugEnabled()) {
-    console.error(...args);
+    frontendErrorLog(args[0] as string, ...args.slice(1));
   }
 };
+
+// Export colored logging functions for direct use
+export { frontendDebugLog, frontendWarningLog, frontendErrorLog } from './frontend-colored-logs';
