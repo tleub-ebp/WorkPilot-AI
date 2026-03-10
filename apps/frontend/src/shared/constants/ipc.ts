@@ -247,6 +247,12 @@ export const IPC_CHANNELS = {
   AZURE_DEVOPS_LIST_REPOSITORIES: 'azureDevOps:listRepositories',
   AZURE_DEVOPS_DETECT_REPOSITORY: 'azureDevOps:detectRepository',
 
+  // Azure DevOps PR Review
+  AZURE_DEVOPS_PR_REVIEW: 'azureDevOps:prReview',
+  AZURE_DEVOPS_PR_GET_REVIEW: 'azureDevOps:prGetReview',
+  AZURE_DEVOPS_PR_REVIEW_CANCEL: 'azureDevOps:prReviewCancel',
+  AZURE_DEVOPS_PR_POST_COMMENT: 'azureDevOps:prPostComment',
+
   // Jira integration
   JIRA_GET_ISSUES: 'jira:getIssues',
   JIRA_CHECK_CONNECTION: 'jira:checkConnection',

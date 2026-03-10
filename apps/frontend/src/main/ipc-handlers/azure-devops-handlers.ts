@@ -688,4 +688,252 @@ except Exception as e:
       }
     }
   );
+
+  // ============================================
+  // Azure DevOps PR Review Operations
+  // ============================================
+
+  // Track running review processes
+  const runningPRReviews = new Map<string, ReturnType<typeof spawn>>();
+
+  /**
+   * Run AI-powered PR review using the azure_devops runner
+   */
+  ipcMain.handle(
+    IPC_CHANNELS.AZURE_DEVOPS_PR_REVIEW,
+    async (_event, projectId: string, prId: number, repositoryId?: string) => {
+      try {
+        const project = projectStore.getProject(projectId);
+        if (!project) {
+          return { success: false, error: 'Project not found' };
+        }
+
+        const azConfig = getAzureDevOpsConfig(project);
+        if (!azConfig.pat || !azConfig.orgUrl || !azConfig.projectName) {
+          return { success: false, error: 'Azure DevOps not configured for this project' };
+        }
+
+        const repoId = repositoryId || '';
+        const runnerPath = path.resolve(backendPath, 'runners', 'azure_devops', 'runner.py');
+        const pythonArgs = [
+          runnerPath,
+          'review-pr',
+          prId.toString(),
+          '--project', sanitizeText(normalizeProjectName(azConfig.projectName) || '', 200),
+          '--repo', sanitizeText(repoId, 200),
+          '--project-dir', project.path,
+        ];
+
+        const env = {
+          ...process.env,
+          AZURE_DEVOPS_PAT: azConfig.pat,
+          AZURE_DEVOPS_ORG_URL: azConfig.orgUrl,
+          AZURE_DEVOPS_PROJECT: azConfig.projectName,
+          PYTHONPATH: backendPath,
+        };
+
+        return new Promise<IPCResult>((resolve) => {
+          let stdout = '';
+          let stderr = '';
+
+          const child = spawn('python', pythonArgs, {
+            cwd: backendPath,
+            env,
+            stdio: ['pipe', 'pipe', 'pipe'],
+          });
+
+          const reviewKey = `${projectId}:${prId}`;
+          runningPRReviews.set(reviewKey, child);
+
+          child.stdout?.on('data', (data: Buffer) => {
+            stdout += data.toString();
+          });
+
+          child.stderr?.on('data', (data: Buffer) => {
+            stderr += data.toString();
+          });
+
+          child.on('close', (code: number | null) => {
+            runningPRReviews.delete(reviewKey);
+
+            if (code !== 0) {
+              resolve({
+                success: false,
+                error: `Review process exited with code ${code}: ${stderr.slice(-500)}`,
+              });
+              return;
+            }
+
+            try {
+              const result = JSON.parse(stdout);
+              resolve({ success: true, data: result });
+            } catch {
+              resolve({
+                success: false,
+                error: `Failed to parse review result: ${stdout.slice(-200)}`,
+              });
+            }
+          });
+
+          child.on('error', (err: Error) => {
+            runningPRReviews.delete(reviewKey);
+            resolve({ success: false, error: err.message });
+          });
+        });
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        return { success: false, error: errorMessage };
+      }
+    }
+  );
+
+  /**
+   * Get a saved PR review result
+   */
+  ipcMain.handle(
+    IPC_CHANNELS.AZURE_DEVOPS_PR_GET_REVIEW,
+    async (_event, projectId: string, prId: number) => {
+      try {
+        const project = projectStore.getProject(projectId);
+        if (!project) {
+          return { success: false, error: 'Project not found' };
+        }
+
+        const reviewFile = path.join(
+          project.path,
+          '.auto-claude',
+          'azure-devops',
+          'pr',
+          `review_${prId}.json`
+        );
+
+        if (!existsSync(reviewFile)) {
+          return { success: true, data: null };
+        }
+
+        const content = readFileSync(reviewFile, 'utf-8');
+        return { success: true, data: JSON.parse(content) };
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        return { success: false, error: errorMessage };
+      }
+    }
+  );
+
+  /**
+   * Cancel a running PR review
+   */
+  ipcMain.handle(
+    IPC_CHANNELS.AZURE_DEVOPS_PR_REVIEW_CANCEL,
+    async (_event, projectId: string, prId: number) => {
+      const reviewKey = `${projectId}:${prId}`;
+      const child = runningPRReviews.get(reviewKey);
+
+      if (!child) {
+        return { success: false, error: 'No running review found' };
+      }
+
+      child.kill('SIGTERM');
+      setTimeout(() => {
+        if (!child.killed) {
+          child.kill('SIGKILL');
+        }
+      }, 5000);
+
+      runningPRReviews.delete(reviewKey);
+      return { success: true };
+    }
+  );
+
+  /**
+   * Post a comment on an Azure DevOps PR
+   */
+  ipcMain.handle(
+    IPC_CHANNELS.AZURE_DEVOPS_PR_POST_COMMENT,
+    async (_event, projectId: string, prId: number, content: string, repositoryId?: string) => {
+      try {
+        const project = projectStore.getProject(projectId);
+        if (!project) {
+          return { success: false, error: 'Project not found' };
+        }
+
+        const azConfig = getAzureDevOpsConfig(project);
+        if (!azConfig.pat || !azConfig.orgUrl || !azConfig.projectName) {
+          return { success: false, error: 'Azure DevOps not configured' };
+        }
+
+        // Use Python script to post comment via the connector
+        const sanitizedContent = sanitizeText(content, 5000);
+        const repoId = repositoryId || '';
+        const projectName = normalizeProjectName(azConfig.projectName) || '';
+
+        const pythonScript = `
+import sys, json, os
+from pathlib import Path
+sys.path.insert(0, '${backendPath.replace(/\\/g, '\\\\')}')
+sys.path.insert(0, str(Path('${connectorSrcPath.replace(/\\/g, '\\\\')}').parent))
+sys.path.insert(0, '${connectorSrcPath.replace(/\\/g, '\\\\')}')
+
+from src.config.settings import Settings
+from src.connectors.azure_devops.client import AzureDevOpsClient
+from src.connectors.azure_devops.repos import AzureReposClient
+
+settings = Settings(
+    pat=os.environ['AZURE_DEVOPS_PAT'],
+    organization_url=os.environ['AZURE_DEVOPS_ORG_URL'],
+    project='${projectName.replace(/'/g, "\\'")}',
+)
+client = AzureDevOpsClient.from_settings(settings)
+git_client = client.get_git_client()
+
+from azure.devops.v7_0.git.models import Comment, GitPullRequestCommentThread
+
+thread = GitPullRequestCommentThread(
+    comments=[Comment(content=${JSON.stringify(sanitizedContent)})],
+    status='active',
+)
+
+git_client.create_thread(
+    comment_thread=thread,
+    repository_id='${repoId.replace(/'/g, "\\'")}',
+    pull_request_id=${prId},
+    project='${projectName.replace(/'/g, "\\'")}',
+)
+print(json.dumps({'success': True}))
+`;
+
+        return new Promise<IPCResult>((resolve) => {
+          const child = spawn('python', ['-c', pythonScript], {
+            cwd: backendPath,
+            env: {
+              ...process.env,
+              AZURE_DEVOPS_PAT: azConfig.pat || '',
+              AZURE_DEVOPS_ORG_URL: azConfig.orgUrl || '',
+              PYTHONPATH: backendPath,
+            },
+          });
+
+          let stdout = '';
+          let stderr = '';
+
+          child.stdout?.on('data', (data: Buffer) => { stdout += data.toString(); });
+          child.stderr?.on('data', (data: Buffer) => { stderr += data.toString(); });
+
+          child.on('close', (code: number | null) => {
+            if (code !== 0) {
+              resolve({ success: false, error: `Failed to post comment: ${stderr.slice(-300)}` });
+            } else {
+              resolve({ success: true });
+            }
+          });
+        });
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        return { success: false, error: errorMessage };
+      }
+    }
+  );
 }
