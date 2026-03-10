@@ -211,7 +211,7 @@ npm test -- --run src/renderer/stores/__tests__/learning-loop-store.test.ts
 
 ## Tier A — Strong Impact
 
-### 5. Build Analytics Dashboard ✅ Implémenté
+### 6. Build Analytics Dashboard ✅ Implémenté
 
 Métriques complètes sur les agents : taux de succès QA, coût tokens par phase, patterns d'échec, évolution dans le temps.
 
@@ -302,7 +302,7 @@ Le dashboard est alimenté par le système de collecte automatique qui :
 
 Les données sont stockées dans une base SQLite locale (`analytics.db`) et accessibles via l'API REST `/analytics/*`.
 
-### 6. Test Generation Agent ✅ Implémenté
+### 7. Test Generation Agent ✅ Implémenté
 
 Agent IA spécialisé dans la génération automatique de tests et l'analyse de couverture de code.
 
@@ -402,7 +402,7 @@ cd apps/frontend
 npm test -- --run src/renderer/stores/__tests__/test-generation-store.test.ts
 ```
 
-### 7. Dependency Sentinel ✅ Implémenté
+### 8. Dependency Sentinel ✅ Implémenté
 
 Surveillance proactive 24/7 des dépendances : CVE, mises à jour breaking, licences incompatibles, avec PR automatique.
 
@@ -411,7 +411,7 @@ Surveillance proactive 24/7 des dépendances : CVE, mises à jour breaking, lice
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Valeur immédiate, continue, et silencieuse. Le projet reste sain sans effort.
 
-### 8. AI Pair Programming Mode
+### 9. AI Pair Programming Mode
 
 Mode collaboratif temps réel où l'IA code en parallèle du développeur sur le même worktree.
 
@@ -420,7 +420,7 @@ Mode collaboratif temps réel où l'IA code en parallèle du développeur sur le
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Le vrai pair programming avec une IA. Pas du copilot inline, du vrai travail parallèle coordonné.
 
-### 9. AI Prompt Optimizer ✅ Implémenté 
+### 10. AI Prompt Optimizer ✅ Implémenté 
 
 Amélioration automatique des prompts utilisateurs pour garantir les meilleurs résultats possibles des agents IA.
 
@@ -513,7 +513,7 @@ cd apps/frontend
 npm test -- --run src/renderer/stores/__tests__/prompt-optimizer-store.test.ts
 ```
 
-### 10. Conflict Predictor ✅ Implémenté
+### 11. Conflict Predictor ✅ Implémenté
 
 Détection proactive des conflits potentiels entre branches/worktrees actifs avant qu'ils ne surviennent.
 
@@ -637,7 +637,7 @@ Le Conflict Predictor utilise :
 - **Documentez les conflits** : Utilisez "Copy Report" pour traçabilité
 - **Anticipez** : L'analyse avant de commencer gros travaux prévient les blocages
 
-### 11. Cost Intelligence Engine
+### 12. Cost Intelligence Engine
 
 Routage intelligent entre modèles selon la complexité + tracking granulaire des coûts par agent/phase/spec.
 
@@ -646,7 +646,7 @@ Routage intelligent entre modèles selon la complexité + tracking granulaire de
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** ROI immédiat et mesurable. Les utilisateurs voient exactement où va leur argent et le système l'optimise automatiquement. Argument commercial massif.
 
-### 12. AI Code Review Agent
+### 13. AI Code Review Agent ✅ Implémenté
 
 Review de PR/MR intelligente avec contexte profond du codebase — comme un senior dev qui connaît tout le projet.
 
@@ -655,7 +655,154 @@ Review de PR/MR intelligente avec contexte profond du codebase — comme un seni
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Les PR reviews manuelles prennent des heures. Un reviewer IA avec contexte profond change la donne. Combine la rapidité de l'IA avec la connaissance contextuelle du projet.
 
-### 13. Architecture Enforcement Agent ✅ Implémenté
+#### 🔍 Comment utiliser l'AI Code Review Agent
+
+L'AI Code Review Agent est maintenant intégré dans WorkPilot AI et fonctionne automatiquement lors des pull requests !
+
+##### 🚀 Accès au Code Review Agent
+
+**Automatic Trigger**
+- L'agent se déclenche automatiquement lorsqu'une PR est créée ou mise à jour
+- Intégration native avec GitHub et GitLab
+- Analyse en temps réel des changements proposés
+
+**Manual Trigger**
+1. **Navigation** : Dans la barre latérale, cliquez sur **"Code Review"** dans le groupe "Tools" (icône 🔍)
+2. **Ouverture** : Une boîte de dialogue modale s'ouvre avec les options de review
+3. **Sélection** : Choisissez la PR ou les fichiers à analyser
+
+##### 📋 Types d'analyse
+
+**🏗️ Architecture Review**
+- Validation des patterns architecturaux
+- Détection des violations de couches
+- Analyse des dépendances et imports
+- Vérification des conventions de structure
+
+**🔒 Security Analysis**
+- Détection des vulnérabilités potentielles
+- Analyse des permissions et accès
+- Validation des pratiques de sécurité
+- Scan des secrets et credentials exposés
+
+**📝 Code Quality**
+- Analyse des code smells et anti-patterns
+- Vérification des conventions de nommage
+- Détection de la duplication de code
+- Évaluation de la complexité cyclomatique
+
+**🧪 Testing Coverage**
+- Analyse de la couverture de test
+- Identification des zones non testées
+- Validation des patterns de test
+- Suggestions de tests manquants
+
+##### 🎯 Ce que l'agent analyse
+
+**Contexte du projet**
+- **Architecture existante** : Comprend la structure et les patterns du projet
+- **Conventions** : Respecte le style et les règles établies
+- **Historique** : Apprend des reviews et bugs précédents
+- **Dependencies** : Analyse l'impact sur les autres modules
+
+**Changements proposés**
+- **Fichiers modifiés** : Analyse ligne par ligne les changements
+- **Impact cross-fichier** : Évalue les effets de bord potentiels
+- **Régressions** : Détecte les introductions de bugs anciens
+- **Performance** : Identifie les régressions de performance
+
+##### 📊 Résultats de la review
+
+**Structure de la review**
+- **🔴 Critical** : Problèmes qui doivent être résolus avant merge
+- **🟠 High** : Suggestions importantes fortement recommandées
+- **🟡 Medium** : Améliorations recommandées pour la qualité
+- **🟢 Low** : Suggestions mineures et optimisations
+
+**Détails par issue**
+- **Localisation** : Fichier et ligne exacte du problème
+- **Description** : Explication claire du problème et de son impact
+- **Suggestion** : Solution concrète avec exemple de code
+- **Contexte** : Pourquoi c'est important pour le projet
+
+##### ⚙️ Configuration avancée
+
+Le modèle IA et le niveau de réflexion utilisés par le Code Review Agent sont configurables :
+1. Allez dans **Paramètres** (⚙️)
+2. Section **"Feature Model Configuration"**
+3. Modifiez les réglages pour **"Code Review Agent"** :
+   - **Modèle** : Choisissez le modèle LLM (Sonnet, Opus, Haiku, etc.)
+   - **Niveau de réflexion** : None, Low, Medium, High, ou Ultrathink
+
+##### 🔧 Intégration avec les plateformes
+
+**GitHub Integration**
+- **Comments** : Poste automatiquement les reviews sur les PRs
+- **Status Checks** : Met à jour le statut de la PR
+- **Merge Blocking** : Peut bloquer le merge sur issues critiques
+- **Webhooks** : Réagit aux événements de PR en temps réel
+
+**GitLab Integration**
+- **Merge Requests** : Analyse les MRs automatiquement
+- **Approvals** : Intégration avec le système d'approbation
+- **Pipelines** : S'intègre dans les CI/CD pipelines
+- **Discussions** : Participe aux discussions de MR
+
+##### 📈 Metrics et suivi
+
+**Quality Metrics**
+- **Review Score** : Score global de qualité du code
+- **Issues Found** : Nombre et types de problèmes détectés
+- **Fix Rate** : Pourcentage de suggestions acceptées
+- **Time Saved** : Temps économisé vs review manuelle
+
+**Team Analytics**
+- **Top Issues** : Problèmes les plus fréquents dans le projet
+- **Developer Patterns** : Patterns par développeur
+- **Evolution** : Amélioration de la qualité au fil du temps
+- **Hotspots** : Fichiers et zones les plus problématiques
+
+##### 🛠️ Architecture technique
+
+L'agent utilise :
+- **Context Engine** : Compréhension profonde du codebase
+- **Pattern Recognition** : Identification des conventions et patterns
+- **Semantic Analysis** : Analyse sémantique du code et changements
+- **Security Scanner** : Intégration avec des outils de sécurité
+- **Quality Metrics** : Calcul de métriques de qualité objectives
+
+##### 🧪 Tests
+
+Pour exécuter les tests du Code Review Agent :
+
+```bash
+# Tests backend (Python)
+cd apps/backend
+.venv/bin/pytest tests/code_review_service.py -v
+
+# Tests frontend (Vitest)
+cd apps/frontend
+npm test -- --run src/renderer/stores/__tests__/code-review-store.test.ts
+```
+
+##### 💡 Tips d'utilisation
+
+**Pour les développeurs**
+- **Consultez les reviews** : Prenez le temps de lire les suggestions détaillées
+- **Apprenez des patterns** : Utilisez les reviews pour améliorer vos pratiques
+- **Discutez les issues** : Commentez les suggestions que vous ne comprenez pas
+
+**Pour les maintainers**
+- **Configurez les seuils** : Ajustez les niveaux de sévérité selon vos besoins
+- **Personnalisez les règles** : Adaptez les règles de review à votre contexte
+- **Suivez les métriques** : Utilisez les analytics pour améliorer la qualité globale
+
+**Pour l'équipe**
+- **Partagez les connaissances** : Utilisez les reviews comme base de discussion
+- **Standardisez les pratiques** : Alignez tout le monde sur les mêmes standards
+- **Formez les nouveaux** : Les reviews aident les nouveaux à comprendre les conventions
+
+### 14. Architecture Enforcement Agent ✅ Implémenté
 
 Gardien automatique de l'architecture — détecte et bloque les violations architecturales avant qu'elles n'atteignent le codebase.
 
@@ -668,7 +815,7 @@ Gardien automatique de l'architecture — détecte et bloque les violations arch
 
 ## Tier B — Solid Value
 
-### 11. Live Code Review AI
+### 15. Live Code Review AI
 
 Review en temps réel pendant que le dev code, pas après.
 
@@ -677,7 +824,7 @@ Review en temps réel pendant que le dev code, pas après.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Shift-left ultime. Les problèmes sont détectés à l'écriture, pas à la review.
 
-### 12. App Emulator ✅ Implémenté
+### 16. App Emulator ✅ Implémenté
 
 Lancement et émulation de l'application directement depuis l'interface Kanban pour visualiser le rendu des tâches complétées.
 
@@ -820,7 +967,7 @@ Pour tester l'App Emulator :
 3. **Vérifiez** que l'application se lance correctement
 4. **Testez** les différentes fonctionnalités de l'émulateur
 
-### 13. Auto-Refactor Agent ✅ Implémenté
+### 17. Auto-Refactor Agent ✅ Implémenté
 
 Détection continue de code smells, dette technique et patterns obsolètes avec refactoring autonome.
 
@@ -994,7 +1141,7 @@ L'agent fournit des métriques détaillées :
 - Utilisez les résultats pour améliorer les guidelines de code
 - Automatisez les corrections simples et récurrentes
 
-### 13. Pipeline Generator
+### 18. Pipeline Generator
 
 Génération automatique de CI/CD complète adaptée au projet.
 
@@ -1003,7 +1150,7 @@ Génération automatique de CI/CD complète adaptée au projet.
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Setup CI/CD en 30 secondes au lieu de 2 heures.
 
-### 14. Smart Estimation ✅ Implémenté
+### 19. Smart Estimation ✅ Implémenté
 
 Scores de complexité basés sur l'historique réel des builds passés.
 
@@ -1139,7 +1286,7 @@ La Smart Estimation suit le flux suivant :
 - Code source : `apps/backend/services/smart_estimation_service.py`
 - Composant UI : `apps/frontend/src/renderer/components/smart-estimation/SmartEstimationDialog.tsx`
 
-### 15. Natural Language Git ✅ Implémenté
+### 20. Natural Language Git ✅ Implémenté
 
 Manipuler git en langage naturel directement depuis l'interface.
 
@@ -1155,7 +1302,7 @@ Manipuler git en langage naturel directement depuis l'interface.
 - Support des commandes Git les plus courantes
 - Gestion d'erreurs et streaming en temps réel
 
-### 16. Context-Aware Snippets ✅ Implémenté
+### 21. Context-Aware Snippets ✅ Implémenté
 
 Snippets intelligents qui s'adaptent au style et aux conventions du projet.
 
@@ -1295,7 +1442,7 @@ npm test -- --run src/renderer/components/context-aware-snippets/__tests__/Conte
 - **Vérifiez les imports** : Le snippet utilisera les imports et patterns de votre projet
 - **Itérez si nécessaire** : N'hésitez pas à affiner la description pour obtenir exactement ce que vous voulez
 
-### 19. Spec Templates Library
+### 22. Spec Templates Library
 
 Templates de spec réutilisables par domaine pour accélérer la création de tâches récurrentes.
 
@@ -1304,7 +1451,7 @@ Templates de spec réutilisables par domaine pour accélérer la création de t�
 - **Effort :** Faible
 - **Pourquoi c'est banger :** Quick win énorme. Les specs récurrentes passent de 5 minutes à 30 secondes. Réduit la friction d'adoption.
 
-### 20. Dependency Graph Intelligence
+### 23. Dependency Graph Intelligence
 
 Analyse des dépendances inter-fichiers et inter-modules pour un contexte agent drastiquement amélioré.
 
@@ -1313,7 +1460,7 @@ Analyse des dépendances inter-fichiers et inter-modules pour un contexte agent 
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Le contexte agent passe de "recherche par mots-clés" à "compréhension structurelle". Les agents produisent du code qui s'intègre mieux car ils voient les relations réelles.
 
-### 21. QA Security Scanner
+### 24. QA Security Scanner
 
 Intégration de scans de sécurité SAST/DAST dans le pipeline QA pour chaque build.
 
@@ -1322,7 +1469,7 @@ Intégration de scans de sécurité SAST/DAST dans le pipeline QA pour chaque bu
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La sécurité n'est plus une afterthought. Chaque build est scanné automatiquement. Argument imparable pour les clients enterprise.
 
-### 22. Agent Decision Logger
+### 25. Agent Decision Logger
 
 Journal structuré léger des décisions de chaque agent — version simplifiée d'Agent Replay.
 
@@ -1335,7 +1482,7 @@ Journal structuré léger des décisions de chaque agent — version simplifiée
 
 ## Tier C — Nice to Have
 
-### 17. Team Knowledge Sync
+### 26. Team Knowledge Sync
 
 Memory System partagé entre tous les membres de l'équipe.
 
@@ -1344,7 +1491,7 @@ Memory System partagé entre tous les membres de l'équipe.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** L'expérience collective capitalise automatiquement. Onboarding d'un nouveau dev en quelques minutes.
 
-### 18. Environment Cloner
+### 27. Environment Cloner
 
 Reproduction d'environnements prod/staging en local pour debug.
 
@@ -1353,7 +1500,7 @@ Reproduction d'environnements prod/staging en local pour debug.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** "Ça marche en local mais pas en prod" disparaît.
 
-### 19. Architecture Visualizer
+### 28. Architecture Visualizer
 
 Génération automatique de diagrammes d'architecture depuis le code.
 
@@ -1362,7 +1509,7 @@ Génération automatique de diagrammes d'architecture depuis le code.
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La doc d'archi se génère et se maintient toute seule.
 
-### 20. Code Migration Agent
+### 29. Code Migration Agent
 
 Migration automatique entre frameworks, versions majeures ou langages.
 
@@ -1371,7 +1518,7 @@ Migration automatique entre frameworks, versions majeures ou langages.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Les migrations sont le cauchemar de tout dev. L'automatiser est un selling point énorme.
 
-### 20. Performance Profiler Agent
+### 30. Performance Profiler Agent
 
 Agent qui profile le code, identifie les bottlenecks et propose des optimisations.
 
@@ -1380,7 +1527,7 @@ Agent qui profile le code, identifie les bottlenecks et propose des optimisation
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** L'app s'optimise toute seule. Plus besoin d'experts perf.
 
-### 21. Documentation Agent
+### 31. Documentation Agent
 
 Génération et maintenance automatique de la documentation technique.
 
@@ -1389,7 +1536,7 @@ Génération et maintenance automatique de la documentation technique.
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La doc n'est plus jamais outdated.
 
-### 22. Plugin Marketplace
+### 32. Plugin Marketplace
 
 Écosystème de plugins communautaires pour étendre WorkPilot.
 
@@ -1398,7 +1545,7 @@ Génération et maintenance automatique de la documentation technique.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Effet réseau. La communauté étend le produit. Verrouille les utilisateurs dans l'écosystème.
 
-### 23. Voice Control ✅ Implémenté
+### 33. Voice Control ✅ Implémenté
 
 Contrôler WorkPilot à la voix : décrire des tâches, naviguer dans l'UI, commander des builds.
 
@@ -1553,7 +1700,7 @@ Le Voice Control supporte plusieurs langues :
 - **Adaptation** : Apprend des patterns de commandes utilisateur
 - **Cache** : Mémorisation des commandes fréquentes pour accélération
 
-### 24. AI Code Playground ✅ Implémenté
+### 34. AI Code Playground ✅ Implémenté
 
 Sandbox interactive pour prototyper rapidement des idées avec l'IA avant de les intégrer au projet.
 
