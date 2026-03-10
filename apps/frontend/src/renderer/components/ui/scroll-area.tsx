@@ -3,7 +3,7 @@ import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area';
 import { cn } from '../../lib/utils';
 
 const ScrollArea = React.forwardRef<
-  React.ElementRef<typeof ScrollAreaPrimitive.Root>,
+  HTMLDivElement,
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> & {
     viewportClassName?: string;
     onViewportRef?: (element: HTMLDivElement | null) => void;
@@ -24,7 +24,7 @@ const ScrollArea = React.forwardRef<
     >
       <ScrollAreaPrimitive.Viewport
         ref={viewportRef}
-        className={cn('h-full w-full rounded-[inherit] pr-2', viewportClassName)}
+        className={cn('h-full w-full rounded-[inherit]', viewportClassName)}
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
@@ -36,7 +36,7 @@ const ScrollArea = React.forwardRef<
 ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
 
 const ScrollBar = React.forwardRef<
-  React.ElementRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>,
+  HTMLDivElement,
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>
 >(({ className, orientation = 'vertical', ...props }, ref) => (
   <ScrollAreaPrimitive.ScrollAreaScrollbar

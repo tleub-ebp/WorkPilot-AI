@@ -28,6 +28,7 @@ const AZURE_DEVOPS_ENV_KEYS = {
   PAT: 'AZURE_DEVOPS_PAT',
   ORG_URL: 'AZURE_DEVOPS_ORG_URL',
   PROJECT: 'AZURE_DEVOPS_PROJECT',
+  REPOSITORY: 'AZURE_DEVOPS_REPOSITORY',
   AUTO_SYNC: 'AZURE_DEVOPS_AUTO_SYNC'
 } as const;
 
@@ -171,6 +172,9 @@ export function registerEnvHandlers(
     }
     if (config.azureDevOpsProject !== undefined) {
       existingVars[AZURE_DEVOPS_ENV_KEYS.PROJECT] = config.azureDevOpsProject;
+    }
+    if (config.azureDevOpsRepository !== undefined) {
+      existingVars[AZURE_DEVOPS_ENV_KEYS.REPOSITORY] = config.azureDevOpsRepository;
     }
     if (config.azureDevOpsAutoSync !== undefined) {
       existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC] = config.azureDevOpsAutoSync ? 'true' : 'false';
@@ -330,6 +334,7 @@ ${existingVars[AZURE_DEVOPS_ENV_KEYS.ENABLED] !== undefined ? `${AZURE_DEVOPS_EN
 ${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.ORG_URL, 'https://dev.azure.com/your-org')}
 ${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.PAT)}
 ${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.PROJECT, 'MyProject')}
+${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.REPOSITORY, 'MyRepository')}
 ${existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC] !== undefined ? `${AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC}=${existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC]}` : `# ${AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC}=false`}
 
 # =============================================================================
@@ -543,6 +548,15 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
       }
       if (vars[AZURE_DEVOPS_ENV_KEYS.PROJECT]) {
         config.azureDevOpsProject = vars[AZURE_DEVOPS_ENV_KEYS.PROJECT];
+      }
+      if (vars[AZURE_DEVOPS_ENV_KEYS.REPOSITORY]) {
+        config.azureDevOpsRepository = vars[AZURE_DEVOPS_ENV_KEYS.REPOSITORY];
+      }
+      // Backward compat: if REPOSITORY is not set but PROJECT looks like a repo name
+      // (contains spaces or doesn't match project name), treat it as repository
+      if (!config.azureDevOpsRepository && config.azureDevOpsProject) {
+        // Will be overridden once project name is auto-detected
+        config.azureDevOpsRepository = config.azureDevOpsProject;
       }
       // Auto-sync defaults to true if Azure DevOps is enabled and not explicitly set
       if (vars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC] !== undefined) {
