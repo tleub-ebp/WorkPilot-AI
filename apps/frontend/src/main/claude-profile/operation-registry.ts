@@ -35,6 +35,23 @@ export type OperationType =
   | 'other';
 
 /**
+ * Default capacity estimates per operation type (% points per hour).
+ * Used when no explicit estimate is provided during registration.
+ */
+const DEFAULT_CAPACITY_ESTIMATES: Record<OperationType, number> = {
+  'task-execution': 5,
+  'spec-creation': 2,
+  'pr-review': 1,
+  'mr-review': 1,
+  'insights': 3,
+  'roadmap': 2,
+  'changelog': 1,
+  'ideation': 2,
+  'triage': 1,
+  'other': 1,
+};
+
+/**
  * Registered operation entry
  *
  * IMPORTANT: Object reference stability during restarts
@@ -88,6 +105,11 @@ export interface RegisteredOperation {
    * Called before restart if provided.
    */
   stopFn?: () => void | Promise<void>;
+  /**
+   * Estimated capacity consumption per hour (% points).
+   * Used by the profile scorer to factor in reserved capacity when selecting profiles.
+   */
+  estimatedCapacityPerHour?: number;
 }
 
 /**
@@ -179,6 +201,7 @@ class ClaudeOperationRegistry extends EventEmitter {
     options?: {
       stopFn?: RegisteredOperation['stopFn'];
       metadata?: Record<string, unknown>;
+      estimatedCapacityPerHour?: number;
     }
   ): void {
     const operation: RegisteredOperation = {
@@ -190,6 +213,7 @@ class ClaudeOperationRegistry extends EventEmitter {
       restartFn,
       stopFn: options?.stopFn,
       metadata: options?.metadata,
+      estimatedCapacityPerHour: options?.estimatedCapacityPerHour ?? DEFAULT_CAPACITY_ESTIMATES[type],
     };
 
     this.operations.set(id, operation);
@@ -271,6 +295,21 @@ class ClaudeOperationRegistry extends EventEmitter {
    */
   getOperationCount(): number {
     return this.operations.size;
+  }
+
+  /**
+   * Get total reserved capacity for a profile (sum of estimatedCapacityPerHour
+   * across all operations running on this profile).
+   * Used by profile scorer to avoid overloading a profile with new operations.
+   */
+  getReservedCapacity(profileId: string): number {
+    let total = 0;
+    for (const op of this.operations.values()) {
+      if (op.profileId === profileId && op.estimatedCapacityPerHour) {
+        total += op.estimatedCapacityPerHour;
+      }
+    }
+    return total;
   }
 
   /**

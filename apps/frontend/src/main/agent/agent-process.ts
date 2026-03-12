@@ -14,6 +14,7 @@ import { ProcessType, ExecutionProgressData } from './types';
 import type { CompletablePhase } from '../../shared/constants/phase-protocol';
 import { parseTaskEvent } from './task-event-parser';
 import { detectRateLimit, createSDKRateLimitInfo, getBestAvailableProfileEnv, detectAuthFailure } from '../rate-limit-detector';
+import { getProfileSelectionLock } from '../claude-profile/profile-selection-lock';
 import { getAPIProfileEnv } from '../services/profile';
 import { projectStore } from '../project-store';
 import { getClaudeProfileManager } from '../claude-profile-manager';
@@ -276,7 +277,7 @@ export class AgentProcessManager {
     }
 
     const currentProfileId = rateLimitDetection.profileId;
-    const bestProfile = profileManager.getBestAvailableProfile(currentProfileId);
+    let bestProfile = profileManager.getBestAvailableProfile(currentProfileId);
 
     appLog.info('[AgentProcess] Best available profile:', bestProfile ? {
       id: bestProfile.id,
@@ -292,8 +293,26 @@ export class AgentProcessManager {
       return false;
     }
 
+    // Try to acquire selection lock to prevent multiple agents switching to the same profile
+    const lock = getProfileSelectionLock();
+    if (!lock.tryAcquire(bestProfile.id, taskId)) {
+      appLog.info('[AgentProcess] Profile locked by another swap, trying next-best:', bestProfile.id);
+      // The best profile is being selected by another concurrent operation
+      // Try to find next-best, excluding both current and locked profiles
+      bestProfile = profileManager.getBestAvailableProfile(currentProfileId);
+      if (!bestProfile || lock.isLocked(bestProfile.id)) {
+        appLog.info('[AgentProcess] No unlocked alternative profile available');
+        return false;
+      }
+      if (!lock.tryAcquire(bestProfile.id, taskId)) {
+        appLog.info('[AgentProcess] Second-best also locked, giving up');
+        return false;
+      }
+    }
+
     appLog.info('[AgentProcess] AUTO-SWAP: Switching from', currentProfileId, 'to', bestProfile.id);
     profileManager.setActiveProfile(bestProfile.id);
+    lock.release(bestProfile.id);
 
     const source = processType === 'spec-creation' ? 'roadmap' : 'task';
     const rateLimitInfo = createSDKRateLimitInfo(source, rateLimitDetection, { taskId });

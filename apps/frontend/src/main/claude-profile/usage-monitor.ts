@@ -20,6 +20,9 @@ import { getCredentialsFromKeychain, clearKeychainCache } from './credential-uti
 import { reactiveTokenRefresh, ensureValidToken } from './token-refresh';
 import { isProfileRateLimited } from './rate-limit-manager';
 import { getOperationRegistry } from './operation-registry';
+import { calculateProfileScore } from './profile-scorer';
+import { getVelocityTracker } from './velocity-tracker';
+import { getProfileSelectionLock } from './profile-selection-lock';
 import { frontendDebugLog } from '../../shared/utils/debug-logger';
 
 /**
@@ -244,6 +247,15 @@ export class UsageMonitor extends EventEmitter {
 
   private static PROFILE_USAGE_CACHE_TTL_MS = 60 * 1000; // 1 minute cache for inactive profiles
 
+  // Proactive swap cooldown: prevents cascading swaps (A→B→C→A loops)
+  private lastProactiveSwapAt = 0;
+  private static readonly PROACTIVE_SWAP_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes between proactive swaps
+
+  // Recent swap chain for loop detection
+  private recentSwapChain: Array<{ from: string; to: string; at: number }> = [];
+  private static readonly MAX_SWAP_CHAIN_LENGTH = 5;
+  private static readonly SWAP_CHAIN_WINDOW_MS = 10 * 60 * 1000; // 10 minute window
+
   // Debug flag for verbose logging
   private readonly isDebug = process.env.DEBUG === 'true';
 
@@ -344,6 +356,9 @@ export class UsageMonitor extends EventEmitter {
       this.currentUsageProfileId = null;
     }
 
+    // Clear velocity data to avoid stale predictions
+    getVelocityTracker().clearProfile(profileId);
+
     this.debugLog('[UsageMonitor] Cleared usage cache for profile:', {
       profileId,
       wasInCache: deleted,
@@ -413,6 +428,9 @@ export class UsageMonitor extends EventEmitter {
     // Clear currentUsage so stale data from the old provider is not used as fallback
     this.currentUsage = null;
     this.currentUsageProfileId = null;
+
+    // Clear all velocity tracking data (stale from previous provider)
+    getVelocityTracker().clear();
 
     // Clear keychain cache to ensure fresh credentials are fetched
     clearKeychainCache();
@@ -612,13 +630,13 @@ export class UsageMonitor extends EventEmitter {
           isAuthenticated: profile.isAuthenticated ?? false,
           isRateLimited: rateLimitStatus.limited,
           rateLimitType: rateLimitStatus.type,
-          availabilityScore: this.calculateAvailabilityScore(
+          availabilityScore: calculateProfileScore({
               sessionPercent,
               weeklyPercent,
-              rateLimitStatus.limited,
-              rateLimitStatus.type,
-              profile.isAuthenticated ?? false
-          ),
+              isRateLimited: rateLimitStatus.limited,
+              rateLimitType: rateLimitStatus.type,
+              isAuthenticated: profile.isAuthenticated ?? false,
+          }),
           isActive: profile.id === activeProfileId,
           lastFetchedAt: inactiveUsage?.fetchedAt?.toISOString() ?? profile.usage?.lastUpdated?.toISOString(),
           needsReauthentication: this.needsReauthProfiles.has(profile.id)
@@ -768,6 +786,8 @@ export class UsageMonitor extends EventEmitter {
           sessionPercent: usage.sessionPercent,
           weeklyPercent: usage.weeklyPercent
         });
+        // Record velocity data point for inactive profile predictions
+        getVelocityTracker().recordDataPoint(profile.id, usage.sessionPercent, usage.weeklyPercent);
       }
 
       return usage;
@@ -799,57 +819,17 @@ export class UsageMonitor extends EventEmitter {
       isAuthenticated: profile.isAuthenticated ?? true,
       isRateLimited: rateLimitStatus.limited,
       rateLimitType: rateLimitStatus.type,
-      availabilityScore: this.calculateAvailabilityScore(
-          usage.sessionPercent,
-          usage.weeklyPercent,
-          rateLimitStatus.limited,
-          rateLimitStatus.type,
-          profile.isAuthenticated ?? true
-      ),
+      availabilityScore: calculateProfileScore({
+          sessionPercent: usage.sessionPercent,
+          weeklyPercent: usage.weeklyPercent,
+          isRateLimited: rateLimitStatus.limited,
+          rateLimitType: rateLimitStatus.type,
+          isAuthenticated: profile.isAuthenticated ?? true,
+      }),
       isActive: usage.profileId === profileManager.getActiveProfile()?.id,
       lastFetchedAt: usage.fetchedAt?.toISOString(),
       needsReauthentication: this.needsReauthProfiles.has(profile.id)
     };
-  }
-
-  /**
-   * Calculate availability score for a profile (higher = more available)
-   *
-   * Scoring algorithm:
-   * - Base score: 100
-   * - Rate limited: -500 (session) or -1000 (weekly)
-   * - Unauthenticated: -500
-   * - Weekly usage penalty: -(weeklyPercent * 0.5)
-   * - Session usage penalty: -(sessionPercent * 0.2)
-   */
-  private calculateAvailabilityScore(
-      sessionPercent: number,
-      weeklyPercent: number,
-      isRateLimited: boolean,
-      rateLimitType?: 'session' | 'weekly',
-      isAuthenticated: boolean = true
-  ): number {
-    let score = 100;
-
-    // Penalize rate-limited profiles
-    if (isRateLimited) {
-      if (rateLimitType === 'weekly') {
-        score -= 1000; // Weekly limit is worse (takes longer to reset)
-      } else {
-        score -= 500; // Session limit resets sooner
-      }
-    }
-
-    // Penalize unauthenticated profiles
-    if (!isAuthenticated) {
-      score -= 500;
-    }
-
-    // Penalize based on current usage (weekly more important)
-    score -= weeklyPercent * 0.5;
-    score -= sessionPercent * 0.2;
-
-    return Math.round(score * 100) / 100; // Round to 2 decimal places
   }
 
   /**
@@ -1099,6 +1079,9 @@ export class UsageMonitor extends EventEmitter {
       this.currentUsage = usage;
       this.currentUsageProfileId = profileId; // Track which profile this usage belongs to
 
+      // Step 2.4: Record velocity data point for predictive switching
+      getVelocityTracker().recordDataPoint(profileId, usage.sessionPercent, usage.weeklyPercent);
+
       // Step 2.5: Persist usage to profile for caching (so other profiles can display cached usage)
       const profileManager = getClaudeProfileManager();
       profileManager.updateProfileUsageFromAPI(profileId, usage.sessionPercent, usage.weeklyPercent);
@@ -1122,15 +1105,26 @@ export class UsageMonitor extends EventEmitter {
           return;
         }
 
+        // Get velocity data for predictive switching
+        const velocityTracker = getVelocityTracker();
+        const velocityData = velocityTracker.getVelocity(profileId);
+        const timeToLimit = velocityData
+          ? velocityTracker.getEstimatedTimeToLimit(
+              profileId,
+              settings.sessionThreshold ?? 95,
+              settings.weeklyThreshold ?? 99
+            )
+          : undefined;
+
         const thresholds = this.checkThresholdsExceeded(usage, settings);
 
+        // Determine swap reason: threshold exceeded or velocity-predicted
+        let shouldSwap = false;
+        let swapReason: 'session' | 'weekly' = 'session';
+
         if (thresholds.anyExceeded) {
-          this.debugLog('[UsageMonitor:TRACE] Threshold exceeded', {
-            sessionPercent: usage.sessionPercent,
-            weekPercent: usage.weeklyPercent,
-            activeProfile: profileId,
-            hasCredential: !!credential
-          });
+          shouldSwap = true;
+          swapReason = thresholds.sessionExceeded ? 'session' : 'weekly';
 
           this.debugLog('[UsageMonitor] Threshold exceeded:', {
             sessionPercent: usage.sessionPercent,
@@ -1138,12 +1132,40 @@ export class UsageMonitor extends EventEmitter {
             weeklyPercent: usage.weeklyPercent,
             weeklyThreshold: settings.weeklyThreshold ?? 99
           });
+        } else if (velocityData && velocityData.confidence !== 'low' && timeToLimit) {
+          // Velocity-based early switch: predicted to hit limit soon
+          if (timeToLimit.sessionMinutesRemaining !== null && timeToLimit.sessionMinutesRemaining < 5) {
+            shouldSwap = true;
+            swapReason = 'session';
+            this.debugLog('[UsageMonitor] Velocity-predicted session limit in ~' +
+              Math.round(timeToLimit.sessionMinutesRemaining) + ' min', {
+              velocity: velocityData.sessionVelocity.toFixed(2) + '%/min',
+              confidence: velocityData.confidence
+            });
+          } else if (timeToLimit.weeklyMinutesRemaining !== null && timeToLimit.weeklyMinutesRemaining < 30) {
+            shouldSwap = true;
+            swapReason = 'weekly';
+            this.debugLog('[UsageMonitor] Velocity-predicted weekly limit in ~' +
+              Math.round(timeToLimit.weeklyMinutesRemaining) + ' min', {
+              velocity: velocityData.weeklyVelocity.toFixed(2) + '%/min',
+              confidence: velocityData.confidence
+            });
+          }
+        }
 
-          // Attempt proactive swap
-          await this.performProactiveSwap(
-              profileId,
-              thresholds.sessionExceeded ? 'session' : 'weekly'
-          );
+        if (shouldSwap) {
+          // Check cooldown before proactive swap (prevents cascading swaps)
+          const timeSinceLastSwap = Date.now() - this.lastProactiveSwapAt;
+          if (timeSinceLastSwap < UsageMonitor.PROACTIVE_SWAP_COOLDOWN_MS) {
+            this.debugLog('[UsageMonitor] Proactive swap on cooldown, skipping', {
+              remainingMs: UsageMonitor.PROACTIVE_SWAP_COOLDOWN_MS - timeSinceLastSwap
+            });
+          } else if (this.detectSwapLoop(profileId)) {
+            this.debugLog('[UsageMonitor] Swap loop detected, suppressing proactive swap');
+          } else {
+            // Attempt proactive swap
+            await this.performProactiveSwap(profileId, swapReason);
+          }
         } else {
           this.debugLog('[UsageMonitor:TRACE] Usage OK', {
             sessionPercent: usage.sessionPercent,
@@ -2588,6 +2610,32 @@ export class UsageMonitor extends EventEmitter {
   }
 
   /**
+   * Detect if we're about to create a swap loop (A→B→A or A→B→C→A).
+   * Only applies to proactive swaps — reactive swaps (actual 429) always proceed.
+   */
+  private detectSwapLoop(currentProfileId: string): boolean {
+    const recent = this.recentSwapChain.filter(
+      s => Date.now() - s.at < UsageMonitor.SWAP_CHAIN_WINDOW_MS
+    );
+    if (recent.length < 2) return false;
+
+    // Check for A→B→A cycle: we just swapped TO this profile and now want to swap FROM it
+    const lastSwap = recent[recent.length - 1];
+    if (lastSwap.to === currentProfileId) {
+      return true;
+    }
+
+    // Check for longer loops: same profile appears as "from" multiple times
+    const fromProfiles = recent.map(s => s.from);
+    const uniqueFroms = new Set(fromProfiles);
+    if (uniqueFroms.size < fromProfiles.length) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
    * Perform proactive profile swap
    * @param currentProfileId - The profile to switch from
    * @param limitType - The type of limit that triggered the swap
@@ -2676,7 +2724,20 @@ export class UsageMonitor extends EventEmitter {
     });
 
     // Use the best available from unified accounts
-    const bestAccount = unifiedAccounts[0];
+    // Try to acquire a lock to prevent race conditions with concurrent swaps
+    const lock = getProfileSelectionLock();
+    let bestAccount = unifiedAccounts[0];
+
+    if (!lock.tryAcquire(bestAccount.id, 'proactive-swap')) {
+      // First choice is locked by another concurrent swap — try next available
+      this.debugLog('[UsageMonitor] Profile locked, trying next candidate:', bestAccount.id);
+      const fallback = unifiedAccounts.find(a => lock.tryAcquire(a.id, 'proactive-swap'));
+      if (!fallback) {
+        this.debugLog('[UsageMonitor] All candidate profiles are locked, skipping proactive swap');
+        return;
+      }
+      bestAccount = fallback;
+    }
 
     this.debugLog('[UsageMonitor] Proactive swap:', {
       from: currentProfileId,
@@ -2700,9 +2761,22 @@ export class UsageMonitor extends EventEmitter {
         await setActiveAPIProfile(bestAccount.id);
       } catch (error) {
         console.error('[UsageMonitor] Failed to set active API profile:', error);
+        lock.release(bestAccount.id);
         return;
       }
     }
+
+    // Release the selection lock now that the swap is committed
+    lock.release(bestAccount.id);
+
+    // Record swap for cooldown and loop detection
+    this.lastProactiveSwapAt = Date.now();
+    this.recentSwapChain.push({ from: currentProfileId, to: bestAccount.id, at: Date.now() });
+    // Prune old entries
+    const swapCutoff = Date.now() - UsageMonitor.SWAP_CHAIN_WINDOW_MS;
+    this.recentSwapChain = this.recentSwapChain
+      .filter(s => s.at >= swapCutoff)
+      .slice(-UsageMonitor.MAX_SWAP_CHAIN_LENGTH);
 
     // Get the "from" profile name
     let fromProfileName: string | undefined;

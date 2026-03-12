@@ -5,6 +5,8 @@
 
 import { getClaudeProfileManager } from './claude-profile-manager';
 import { getUsageMonitor } from './claude-profile/usage-monitor';
+import { classifyRateLimitType } from './claude-profile/usage-parser';
+import { getProfileSelectionLock } from './claude-profile/profile-selection-lock';
 
 /**
  * Regex patterns to detect Claude Code rate limit messages.
@@ -181,18 +183,6 @@ export interface BillingFailureDetectionResult {
 }
 
 /**
- * Classify rate limit type based on reset time string
- */
-function classifyLimitType(resetTimeStr: string): 'session' | 'weekly' {
-  // Weekly limits mention specific dates like "Dec 17" or "Nov 1"
-  // Session limits are typically just times like "11:59pm"
-  const hasDate = /[A-Za-z]{3}\s+\d+/i.test(resetTimeStr);
-  const hasWeeklyIndicator = resetTimeStr.toLowerCase().includes('week');
-
-  return (hasDate || hasWeeklyIndicator) ? 'weekly' : 'session';
-}
-
-/**
  * Detect rate limit from output (stdout + stderr combined)
  */
 export function detectRateLimit(
@@ -207,7 +197,7 @@ export function detectRateLimit(
     const match = output.match(primaryPattern);
     if (match) {
       const resetTime = match[1].trim();
-      const limitType = classifyLimitType(resetTime);
+      const limitType = classifyRateLimitType(resetTime);
 
       // Record the rate limit event in the profile manager
       const profileManager = getClaudeProfileManager();
@@ -531,10 +521,11 @@ export function getBestAvailableProfileEnv(): BestProfileEnvResult {
       });
     }
 
-    // Try to find a better profile
+    // Try to find a better profile (with lock to prevent concurrent swaps to same target)
     const bestProfile = profileManager.getBestAvailableProfile(activeProfile.id);
+    const lock = getProfileSelectionLock();
 
-    if (bestProfile) {
+    if (bestProfile && lock.tryAcquire(bestProfile.id, 'env-swap')) {
       if (process.env.DEBUG === 'true') {
         console.warn('[RateLimitDetector] Using alternative profile:', {
           originalProfile: activeProfile.name,
@@ -546,6 +537,7 @@ export function getBestAvailableProfileEnv(): BestProfileEnvResult {
       // Persist the swap by updating the active profile
       // This ensures the UI reflects which account is actually being used
       profileManager.setActiveProfile(bestProfile.id);
+      lock.release(bestProfile.id);
       console.warn('[RateLimitDetector] Switched active profile:', {
         from: activeProfile.name,
         to: bestProfile.name,
