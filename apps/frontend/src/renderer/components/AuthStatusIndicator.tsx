@@ -39,6 +39,7 @@ const PROVIDER_TRANSLATION_KEYS: Readonly<Record<ApiProvider, string>> = {
   ollama: 'common:usage.providerOllama',
   ollama_local: 'common:usage.providerOllamaLocal',
   copilot: 'common:usage.providerCopilot',
+  windsurf: 'common:usage.providerWindsurf',
   unknown: 'common:usage.providerUnknown'
 } as const;
 

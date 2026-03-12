@@ -11,7 +11,7 @@
  * API Provider type for usage monitoring
  * Determines which usage endpoint to query and how to normalize responses
  */
-export type ApiProvider = 'anthropic' | 'openai' | 'ollama' | 'ollama_local' | 'copilot' | 'unknown';
+export type ApiProvider = 'anthropic' | 'openai' | 'ollama' | 'ollama_local' | 'copilot' | 'windsurf' | 'unknown';
 
 /**
  * Provider detection patterns
@@ -42,6 +42,10 @@ const PROVIDER_PATTERNS: readonly ProviderPattern[] = [
   {
     provider: 'copilot',
     domainPatterns: ['github.com', 'api.github.com']
+  },
+  {
+    provider: 'windsurf',
+    domainPatterns: ['server.codeium.com', 'api.codeium.com', 'api.windsurf.com', 'windsurf.ai']
   }
 ] as const;
 
@@ -99,6 +103,8 @@ export function getProviderLabel(provider: ApiProvider): string {
       return 'Ollama (Local)';
     case 'copilot':
       return 'GitHub Copilot';
+    case 'windsurf':
+      return 'Windsurf (Codeium)';
     case 'unknown':
       return 'Unknown';
   }
@@ -122,6 +128,8 @@ export function getProviderBadgeColor(provider: ApiProvider): string {
       return 'bg-teal-500/10 text-teal-500 border-teal-500/20 hover:bg-teal-500/15';
     case 'copilot':
       return 'bg-purple-500/10 text-purple-500 border-purple-500/20 hover:bg-purple-500/15';
+    case 'windsurf':
+      return 'bg-teal-400/10 text-teal-400 border-teal-400/20 hover:bg-teal-400/15';
     case 'unknown':
       return 'bg-gray-500/10 text-gray-500 border-gray-500/20 hover:bg-gray-500/15';
   }

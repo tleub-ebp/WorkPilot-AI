@@ -46,6 +46,7 @@ function getCredentialFingerprint(credential: string | null | undefined): string
 const ALLOWED_USAGE_API_DOMAINS: ReadonlySet<string> = new Set([
   'api.anthropic.com',
   'api.openai.com',
+  'server.codeium.com',  // Windsurf/Codeium usage API
   'localhost',  // Allow localhost for our FastAPI backend
 ]);
 
@@ -1963,6 +1964,9 @@ export class UsageMonitor extends EventEmitter {
         case 'copilot':
           normalizedUsage = this.normalizeCopilotResponse(rawData, profileId, profileName, profileEmail);
           break;
+        case 'windsurf':
+          normalizedUsage = this.normalizeWindsurfResponse(rawData, profileId, profileName, profileEmail);
+          break;
         case 'openai':
         case 'ollama':
         case 'ollama_local':
@@ -2077,6 +2081,87 @@ export class UsageMonitor extends EventEmitter {
       usageWindows: {
         sessionWindowLabel: 'common:usage.window5Hour',
         weeklyWindowLabel: 'common:usage.window7Day'
+      }
+    };
+  }
+
+  /**
+   * Normalize Windsurf/Codeium GetTeamCreditBalance response to UsageSnapshot
+   *
+   * Windsurf API returns:
+   * - promptCreditsPerSeat: credits allocated per seat
+   * - numSeats: total team seats
+   * - addOnCreditsAvailable: remaining add-on credits
+   * - addOnCreditsUsed: consumed add-on credits
+   * - billingCycleStart: ISO 8601 billing cycle start
+   * - billingCycleEnd: ISO 8601 billing cycle end
+   *
+   * We convert this to percentage-based usage:
+   * - sessionPercent: % of total credits used (seat credits + add-on used / total available)
+   * - weeklyPercent: % of billing cycle elapsed (time-based progress)
+   */
+  private normalizeWindsurfResponse(
+      data: any,
+      profileId: string,
+      profileName: string,
+      profileEmail?: string
+  ): UsageSnapshot {
+    const promptCreditsPerSeat = data.promptCreditsPerSeat ?? 0;
+    const numSeats = data.numSeats ?? 1;
+    const addOnCreditsAvailable = data.addOnCreditsAvailable ?? 0;
+    const addOnCreditsUsed = data.addOnCreditsUsed ?? 0;
+
+    // Calculate total and used credits
+    const seatCreditsTotal = promptCreditsPerSeat * numSeats;
+    const totalCredits = seatCreditsTotal + addOnCreditsAvailable + addOnCreditsUsed;
+    const usedCredits = addOnCreditsUsed;
+
+    // Usage percentage: how much of the total credits have been consumed
+    let sessionPercent = 0;
+    if (totalCredits > 0) {
+      sessionPercent = Math.round((usedCredits / totalCredits) * 100);
+    }
+
+    // Billing cycle progress as "weekly" percentage
+    let weeklyPercent = 0;
+    const billingStart = data.billingCycleStart ? new Date(data.billingCycleStart).getTime() : 0;
+    const billingEnd = data.billingCycleEnd ? new Date(data.billingCycleEnd).getTime() : 0;
+    const now = Date.now();
+
+    if (billingEnd > billingStart && now >= billingStart) {
+      const cycleDuration = billingEnd - billingStart;
+      const elapsed = Math.min(now - billingStart, cycleDuration);
+      weeklyPercent = Math.round((elapsed / cycleDuration) * 100);
+    }
+
+    return {
+      sessionPercent,
+      weeklyPercent,
+      sessionResetTime: undefined,
+      weeklyResetTime: undefined,
+      sessionResetTimestamp: data.billingCycleEnd,
+      weeklyResetTimestamp: data.billingCycleEnd,
+      profileId,
+      profileName,
+      profileEmail,
+      providerName: 'windsurf',
+      fetchedAt: new Date(),
+      limitType: 'session',
+      usageWindows: {
+        sessionWindowLabel: 'common:usage.windowCredits',
+        weeklyWindowLabel: 'common:usage.windowBillingCycle'
+      },
+      // Store raw credit data for detailed display
+      windsurfCredits: {
+        totalCredits,
+        usedCredits,
+        remainingCredits: totalCredits - usedCredits,
+        seatCreditsTotal,
+        addOnCreditsAvailable,
+        addOnCreditsUsed,
+        numSeats,
+        billingCycleStart: data.billingCycleStart,
+        billingCycleEnd: data.billingCycleEnd
       }
     };
   }
@@ -2945,6 +3030,50 @@ export class UsageMonitor extends EventEmitter {
             available: false
           }, 'copilot', 'GitHub Copilot', undefined);
         }
+        return null;
+      }
+    }
+
+    // Windsurf/Codeium special case — uses POST with service key in body
+    // API: POST https://server.codeium.com/api/v1/GetTeamCreditBalance
+    if (providerName === 'windsurf') {
+      this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf provider — fetching credits from Codeium API');
+      try {
+        // Find the Windsurf API profile to get the service key
+        const profilesFile = await loadProfilesFile();
+        const windsurfProfile = profilesFile.profiles.find(p => {
+          const detected = detectProvider(p.baseUrl);
+          return detected === 'windsurf';
+        });
+
+        if (!windsurfProfile || !windsurfProfile.apiKey) {
+          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — no API profile with service key found');
+          return null;
+        }
+
+        const serviceKey = windsurfProfile.apiKey;
+        const resp = await fetch('https://server.codeium.com/api/v1/GetTeamCreditBalance', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ service_key: serviceKey }),
+          signal: AbortSignal.timeout(10000)
+        });
+
+        if (!resp.ok) {
+          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf backend returned error:', {
+            status: resp.status,
+            statusText: resp.statusText
+          });
+          return null;
+        }
+
+        const usageData = await resp.json();
+        this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf credits response:', usageData);
+        return this.normalizeWindsurfResponse(usageData, windsurfProfile.id, windsurfProfile.name, undefined);
+      } catch (e) {
+        this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf credits fetch failed:', e);
         return null;
       }
     }

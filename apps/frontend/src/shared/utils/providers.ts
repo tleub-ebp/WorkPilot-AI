@@ -28,7 +28,7 @@ export interface ProvidersResponse {
  * Determines auth status from the provided profiles list (a profile
  * for that provider means it is configured / authenticated).
  * Special handling for GitHub Copilot: checks gh CLI authentication.
- * Special handling for Windsurf: OAuth status from backend.
+ * Windsurf: detected from API profile presence (service key / PAT authentication).
  */
 export async function getStaticProviders(profiles: APIProfile[] = []): Promise<ProvidersResponse> {
   const allProviders = providerRegistry.getAllProviders()
@@ -42,33 +42,12 @@ export async function getStaticProviders(profiles: APIProfile[] = []): Promise<P
 
   // Determine which providers have a configured profile
   const status: Record<string, boolean> = {};
-  
-  // Check Windsurf status from backend
-  let windsurfStatus = false;
-  try {
-    // Use API_BASE but ensure it's a complete URL
-    let apiUrl = API_BASE;
-    if (!apiUrl.startsWith('http')) {
-      apiUrl = `http://localhost:9000`;
-    }
-    const url = `${apiUrl}/providers/windsurf/status`;
-    const response = await fetch(url);
-    if (response.ok) {
-      const contentType = response.headers.get('content-type');
-      if (contentType?.includes('application/json')) {
-        const data = await response.json();
-        windsurfStatus = data.available && data.authenticated;
-      }
-    }
-  } catch (error) {
-    console.warn('Failed to fetch Windsurf status:', error);
-  }
 
   for (const p of allProviders) {
     // Utiliser la même logique de détection que ProviderRegistry
     const hasProfile = profiles.some((prof) => {
       if (!prof.baseUrl) return false;
-      
+
       // Logique de détection identique à ProviderRegistry.detectProviderFromProfile
       if (p.name === 'anthropic') {
         return prof.baseUrl?.includes('anthropic.com') || prof.name?.toLowerCase().includes('claude');
@@ -89,18 +68,15 @@ export async function getStaticProviders(profiles: APIProfile[] = []): Promise<P
         return prof.baseUrl?.includes('deepseek.com') || prof.name?.toLowerCase().includes('deepseek');
       }
       if (p.name === 'windsurf') {
-        // Windsurf est OAuth-only, vérifier via le statut du backend
-        return false; // Le statut sera déterminé par le backend
+        return prof.baseUrl?.includes('codeium.com') || prof.baseUrl?.includes('windsurf.com') || prof.baseUrl?.includes('windsurf.ai') || prof.name?.toLowerCase().includes('windsurf');
       }
-      
+
       // Fallback sur detectProvider pour les autres
       return detectProvider(prof.baseUrl) === p.name;
     });
 
     if (p.name === 'copilot') {
       status[p.name] = true;
-    } else if (p.name === 'windsurf') {
-      status[p.name] = windsurfStatus;
     } else {
       status[p.name] = hasProfile;
     }

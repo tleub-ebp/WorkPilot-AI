@@ -355,7 +355,8 @@
       "openai": "OpenAI",
       "mistral": "Mistral AI",
       "grok": "Grok (xAI)",
-      "gemini": "Gemini (Google)"
+      "gemini": "Gemini (Google)",
+      "windsurf": "Windsurf (Codeium)"
     },
     "fields": {
       "name": "Nom",

@@ -106,6 +106,7 @@ export class CredentialManager extends EventEmitter {
     if (baseUrl.includes('api.mistral.ai')) return 'mistral';
     if (baseUrl.includes('generativelanguage.googleapis.com')) return 'google';
     if (baseUrl.includes('api.deepseek.com')) return 'deepseek';
+    if (baseUrl.includes('codeium.com') || baseUrl.includes('windsurf.com') || baseUrl.includes('windsurf.ai')) return 'windsurf';
     return 'custom';
   }
 
