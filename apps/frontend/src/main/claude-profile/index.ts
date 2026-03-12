@@ -38,8 +38,16 @@ export type { ProfileStoreData } from './profile-storage';
 export {
   getBestAvailableProfile,
   shouldProactivelySwitch,
-  getProfilesSortedByAvailability
+  getProfilesSortedByAvailability,
+  calculateProfileScore
 } from './profile-scorer';
+export type { VelocityData, TimeToLimitData, ProfileScoreParams } from './profile-scorer';
+
+// Velocity tracking (predictive switching)
+export { getVelocityTracker, resetVelocityTracker } from './velocity-tracker';
+
+// Profile selection lock (anti-race condition)
+export { getProfileSelectionLock, resetProfileSelectionLock } from './profile-selection-lock';
 
 // Profile utilities
 export {

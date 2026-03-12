@@ -251,7 +251,7 @@ async function scanClaudeInstallations(activePath: string | null): Promise<Claud
  * @param options - Request options
  * @returns Promise<Response>
  */
-async function createProxiedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+export async function createProxiedFetch(url: string, options: RequestInit = {}): Promise<Response> {
   // Check for proxy environment variables
   const httpProxy = process.env.HTTP_PROXY || process.env.http_proxy;
   const httpsProxy = process.env.HTTPS_PROXY || process.env.https_proxy;
@@ -269,17 +269,21 @@ async function createProxiedFetch(url: string, options: RequestInit = {}): Promi
   
   // Check if URL should bypass proxy
   if (proxyUrl && noProxy) {
-    const noProxyList = noProxy.split(',').map(host => host.trim());
-    const urlHost = new URL(url).hostname;
-    if (noProxyList.some(pattern => {
-      // Support wildcard patterns like *.example.com
-      if (pattern.startsWith('*.')) {
-        const domain = pattern.slice(2);
-        return urlHost.endsWith(domain) || urlHost === domain;
+    try {
+      const noProxyList = noProxy.split(',').map(host => host.trim());
+      const urlHost = new URL(url).hostname;
+      if (noProxyList.some(pattern => {
+        // Support wildcard patterns like *.example.com
+        if (pattern.startsWith('*.')) {
+          const domain = pattern.slice(2);
+          return urlHost.endsWith(domain) || urlHost === domain;
+        }
+        return urlHost === pattern || urlHost.includes(pattern);
+      })) {
+        proxyUrl = undefined;
       }
-      return urlHost === pattern || urlHost.includes(pattern);
-    })) {
-      proxyUrl = undefined;
+    } catch {
+      // Malformed URL — skip proxy bypass check and let fetch handle the error
     }
   }
   
@@ -338,7 +342,7 @@ async function fetchFromRegistry(registryUrl: string, attempt: number): Promise<
  * @param errorMsg - The error message to check
  * @returns boolean - True if this is a network error that should be retried
  */
-function isNetworkError(errorMsg: string): boolean {
+export function isNetworkError(errorMsg: string): boolean {
   return errorMsg.includes('ECONNRESET') || 
          errorMsg.includes('socket disconnected') || 
          errorMsg.includes('ENOTFOUND') || 
@@ -752,16 +756,16 @@ export async function openTerminalWithCommand(command: string): Promise<void> {
         // Detach from the child process so it runs independently
         child.unref();
 
-        const timer = setTimeout(() => {
-          child.removeListener('error', onError);
-          resolve();
-        }, SPAWN_WAIT_MS);
-
         const onError = (err: Error) => {
           console.error(`[Claude Code] Spawn error for ${executable}:`, err);
           clearTimeout(timer);
           reject(err);
         };
+
+        const timer = setTimeout(() => {
+          child.removeListener('error', onError);
+          resolve();
+        }, SPAWN_WAIT_MS);
 
         child.on('error', onError);
       });
