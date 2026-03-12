@@ -283,12 +283,27 @@ export function App() {
         
         for (const project of projectsToDetect) {
           try {
-            
-            // Skip if project already has a provider configured
+
+            // Skip if project already has a provider configured in settings
             if (project.settings?.provider) {
               continue;
             }
-            
+
+            // Also skip if Azure DevOps or GitHub is already configured in .env
+            // This prevents unnecessary writes on every startup
+            if (project.autoBuildPath) {
+              try {
+                const envResult = await globalThis.electronAPI.getProjectEnv(project.id);
+                if (envResult.success && envResult.data) {
+                  if (envResult.data.azureDevOpsEnabled || envResult.data.githubEnabled) {
+                    continue;
+                  }
+                }
+              } catch {
+                // If env check fails, proceed with detection
+              }
+            }
+
             await autoDetectAndUpdateProject(project);
           } catch (error) {
             console.error(`[App] Failed to auto-detect provider for project ${project.name}:`, error);

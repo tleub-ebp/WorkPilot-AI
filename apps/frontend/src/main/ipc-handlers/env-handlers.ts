@@ -42,9 +42,11 @@ const JIRA_ENV_KEYS = {
 
 /**
  * Helper to generate .env line (DRY)
+ * Uses explicit undefined/null check instead of truthiness to avoid
+ * commenting out values that are empty strings (e.g., from cleared inputs).
  */
 function envLine(vars: Record<string, string>, key: string, defaultVal: string = ''): string {
-  return vars[key] ? `${key}=${vars[key]}` : `# ${key}=${defaultVal}`;
+  return vars[key] != null && vars[key] !== '' ? `${key}=${vars[key]}` : `# ${key}=${defaultVal}`;
 }
 
 type ResolvedClaudeCliInvocation =
@@ -115,39 +117,42 @@ export function registerEnvHandlers(
     if (config.autoBuildModel !== undefined) {
       existingVars['AUTO_BUILD_MODEL'] = config.autoBuildModel;
     }
-    if (config.linearApiKey !== undefined) {
+    // Guard: don't overwrite existing non-empty values with empty strings
+    if (config.linearApiKey !== undefined && (config.linearApiKey || !existingVars['LINEAR_API_KEY'])) {
       existingVars['LINEAR_API_KEY'] = config.linearApiKey;
     }
-    if (config.linearTeamId !== undefined) {
+    if (config.linearTeamId !== undefined && (config.linearTeamId || !existingVars['LINEAR_TEAM_ID'])) {
       existingVars['LINEAR_TEAM_ID'] = config.linearTeamId;
     }
-    if (config.linearProjectId !== undefined) {
+    if (config.linearProjectId !== undefined && (config.linearProjectId || !existingVars['LINEAR_PROJECT_ID'])) {
       existingVars['LINEAR_PROJECT_ID'] = config.linearProjectId;
     }
     if (config.linearRealtimeSync !== undefined) {
       existingVars['LINEAR_REALTIME_SYNC'] = config.linearRealtimeSync ? 'true' : 'false';
     }
     // GitHub Integration
-    if (config.githubToken !== undefined) {
+    // Guard: don't overwrite existing non-empty values with empty strings
+    if (config.githubToken !== undefined && (config.githubToken || !existingVars['GITHUB_TOKEN'])) {
       existingVars['GITHUB_TOKEN'] = config.githubToken;
     }
-    if (config.githubRepo !== undefined) {
+    if (config.githubRepo !== undefined && (config.githubRepo || !existingVars['GITHUB_REPO'])) {
       existingVars['GITHUB_REPO'] = config.githubRepo;
     }
     if (config.githubAutoSync !== undefined) {
       existingVars['GITHUB_AUTO_SYNC'] = config.githubAutoSync ? 'true' : 'false';
     }
     // GitLab Integration
+    // Guard: don't overwrite existing non-empty values with empty strings
     if (config.gitlabEnabled !== undefined) {
       existingVars[GITLAB_ENV_KEYS.ENABLED] = config.gitlabEnabled ? 'true' : 'false';
     }
-    if (config.gitlabToken !== undefined) {
+    if (config.gitlabToken !== undefined && (config.gitlabToken || !existingVars[GITLAB_ENV_KEYS.TOKEN])) {
       existingVars[GITLAB_ENV_KEYS.TOKEN] = config.gitlabToken;
     }
-    if (config.gitlabInstanceUrl !== undefined) {
+    if (config.gitlabInstanceUrl !== undefined && (config.gitlabInstanceUrl || !existingVars[GITLAB_ENV_KEYS.INSTANCE_URL])) {
       existingVars[GITLAB_ENV_KEYS.INSTANCE_URL] = config.gitlabInstanceUrl;
     }
-    if (config.gitlabProject !== undefined) {
+    if (config.gitlabProject !== undefined && (config.gitlabProject || !existingVars[GITLAB_ENV_KEYS.PROJECT])) {
       existingVars[GITLAB_ENV_KEYS.PROJECT] = config.gitlabProject;
     }
     if (config.gitlabAutoSync !== undefined) {
@@ -155,6 +160,8 @@ export function registerEnvHandlers(
     }
 
     // Azure DevOps Integration
+    // Guard: don't overwrite existing non-empty values with empty strings.
+    // This prevents data loss when partial configs are sent (e.g., from auto-detection).
     if (config.azureDevOpsEnabled !== undefined) {
       existingVars[AZURE_DEVOPS_ENV_KEYS.ENABLED] = config.azureDevOpsEnabled ? 'true' : 'false';
       // Enable auto-sync by default when Azure DevOps is enabled
@@ -162,16 +169,16 @@ export function registerEnvHandlers(
         existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC] = 'true';
       }
     }
-    if (config.azureDevOpsPat !== undefined) {
+    if (config.azureDevOpsPat !== undefined && (config.azureDevOpsPat || !existingVars[AZURE_DEVOPS_ENV_KEYS.PAT])) {
       existingVars[AZURE_DEVOPS_ENV_KEYS.PAT] = config.azureDevOpsPat;
     }
-    if (config.azureDevOpsOrgUrl !== undefined) {
+    if (config.azureDevOpsOrgUrl !== undefined && (config.azureDevOpsOrgUrl || !existingVars[AZURE_DEVOPS_ENV_KEYS.ORG_URL])) {
       existingVars[AZURE_DEVOPS_ENV_KEYS.ORG_URL] = config.azureDevOpsOrgUrl;
     }
-    if (config.azureDevOpsProject !== undefined) {
+    if (config.azureDevOpsProject !== undefined && (config.azureDevOpsProject || !existingVars[AZURE_DEVOPS_ENV_KEYS.PROJECT])) {
       existingVars[AZURE_DEVOPS_ENV_KEYS.PROJECT] = config.azureDevOpsProject;
     }
-    if (config.azureDevOpsRepository !== undefined) {
+    if (config.azureDevOpsRepository !== undefined && (config.azureDevOpsRepository || !existingVars[AZURE_DEVOPS_ENV_KEYS.REPOSITORY])) {
       existingVars[AZURE_DEVOPS_ENV_KEYS.REPOSITORY] = config.azureDevOpsRepository;
     }
     if (config.azureDevOpsAutoSync !== undefined) {
@@ -179,19 +186,20 @@ export function registerEnvHandlers(
     }
 
     // Jira Integration
+    // Guard: don't overwrite existing non-empty values with empty strings
     if (config.jiraEnabled !== undefined) {
       existingVars[JIRA_ENV_KEYS.ENABLED] = config.jiraEnabled ? 'true' : 'false';
     }
-    if (config.jiraInstanceUrl !== undefined) {
+    if (config.jiraInstanceUrl !== undefined && (config.jiraInstanceUrl || !existingVars[JIRA_ENV_KEYS.INSTANCE_URL])) {
       existingVars[JIRA_ENV_KEYS.INSTANCE_URL] = config.jiraInstanceUrl;
     }
-    if (config.jiraEmail !== undefined) {
+    if (config.jiraEmail !== undefined && (config.jiraEmail || !existingVars[JIRA_ENV_KEYS.EMAIL])) {
       existingVars[JIRA_ENV_KEYS.EMAIL] = config.jiraEmail;
     }
-    if (config.jiraApiToken !== undefined) {
+    if (config.jiraApiToken !== undefined && (config.jiraApiToken || !existingVars[JIRA_ENV_KEYS.API_TOKEN])) {
       existingVars[JIRA_ENV_KEYS.API_TOKEN] = config.jiraApiToken;
     }
-    if (config.jiraProjectKey !== undefined) {
+    if (config.jiraProjectKey !== undefined && (config.jiraProjectKey || !existingVars[JIRA_ENV_KEYS.PROJECT_KEY])) {
       existingVars[JIRA_ENV_KEYS.PROJECT_KEY] = config.jiraProjectKey;
     }
     if (config.jiraAutoSync !== undefined) {
