@@ -49,5 +49,10 @@ export const API_PROVIDER_PRESETS: readonly ApiProviderPreset[] = [
     id: 'ollama',
     baseUrl: 'http://localhost:11434/v1',
     labelKey: 'settings:apiProfiles.presets.ollama'
+  },
+  {
+    id: 'windsurf',
+    baseUrl: 'https://server.codeium.com/api/v1',
+    labelKey: 'settings:apiProfiles.presets.windsurf'
   }
 ];

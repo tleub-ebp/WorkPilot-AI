@@ -1,8 +1,9 @@
 """
-Windsurf LLM Provider Connector
+Windsurf LLM Provider Connector (Codeium)
 
-Fournit l'accès aux modèles LLM via l'API Windsurf.
-Windsurf supporte les endpoints API compatibles OpenAI.
+Fournit l'accès aux modèles LLM via l'API Windsurf/Codeium.
+Utilise les endpoints API compatibles OpenAI sur server.codeium.com.
+Authentification via service key (Personal Access Token).
 """
 
 import logging
@@ -13,9 +14,13 @@ logger = logging.getLogger(__name__)
 
 
 class WindsurfProvider(BaseLLMProvider):
-    """Provider pour Windsurf AI."""
-    
-    def __init__(self, api_key: str, model: str = "windsurf-default", base_url: str = "https://api.windsurf.com/v1"):
+    """Provider pour Windsurf AI (Codeium).
+
+    Authentification via service key (Personal Access Token) depuis le dashboard Windsurf.
+    API: https://server.codeium.com/api/v1/
+    """
+
+    def __init__(self, api_key: str, model: str = "windsurf-default", base_url: str = "https://server.codeium.com/api/v1"):
         self.api_key = api_key
         self.model = model
         self.base_url = base_url
@@ -84,9 +89,9 @@ class WindsurfProvider(BaseLLMProvider):
     def get_config_schema(self) -> Dict[str, Any]:
         """Retourne le schéma de configuration pour Windsurf."""
         return {
-            "api_key": "str (required)",
+            "api_key": "str (required — service key / PAT from Windsurf dashboard)",
             "model": "str (optional, default: windsurf-default)",
-            "base_url": "str (optional, default: https://api.windsurf.com/v1)"
+            "base_url": "str (optional, default: https://server.codeium.com/api/v1)"
         }
 
     @classmethod

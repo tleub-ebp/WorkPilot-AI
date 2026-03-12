@@ -113,6 +113,31 @@ export interface UsageSnapshot {
     /** Dernière mise à jour */
     lastUpdated?: string;
   };
+
+  /**
+   * Détails Windsurf/Codeium Credit Balance
+   * Présent uniquement si providerName === 'windsurf'
+   */
+  windsurfCredits?: {
+    /** Total credits available (seat + add-on) */
+    totalCredits: number;
+    /** Credits consumed */
+    usedCredits: number;
+    /** Credits remaining */
+    remainingCredits: number;
+    /** Total seat-based credits */
+    seatCreditsTotal: number;
+    /** Add-on credits remaining */
+    addOnCreditsAvailable: number;
+    /** Add-on credits consumed */
+    addOnCreditsUsed: number;
+    /** Number of team seats */
+    numSeats: number;
+    /** Billing cycle start (ISO 8601) */
+    billingCycleStart?: string;
+    /** Billing cycle end (ISO 8601) */
+    billingCycleEnd?: string;
+  };
 }
 
 /**

@@ -346,7 +346,10 @@ class ProviderRegistry {
     if (profile.baseUrl?.includes('x.ai') || profile.name?.toLowerCase().includes('grok')) {
       return 'grok';
     }
-    
+    if (profile.baseUrl?.includes('codeium.com') || profile.baseUrl?.includes('windsurf.com') || profile.baseUrl?.includes('windsurf.ai') || profile.name?.toLowerCase().includes('windsurf')) {
+      return 'windsurf';
+    }
+
     return 'custom';
   }
 

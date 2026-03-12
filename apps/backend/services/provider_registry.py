@@ -251,14 +251,14 @@ class ProviderRegistry:
             ]
         )
         
-        # --- Windsurf AI ---
+        # --- Windsurf AI (Codeium) ---
         self._providers['windsurf'] = Provider(
             name='windsurf',
-            label='Windsurf AI',
-            description='Windsurf AI models via Windsurf platform - Enterprise Edition (OAuth only)',
+            label='Windsurf (Codeium)',
+            description='Windsurf AI models via Codeium platform - Service key / PAT authentication',
             category='special',
-            requires_api_key=False,  # Pas de clé API traditionnelle
-            requires_oauth=True,   # Uniquement OAuth
+            requires_api_key=True,   # Service key (Personal Access Token)
+            requires_oauth=False,    # Pas d'OAuth, utilise service key
             requires_cli=False,
             models=[
                 {'value': 'swe-1.5', 'label': 'SWE-1.5', 'tier': 'flagship', 'supportsThinking': True},
@@ -409,7 +409,9 @@ class ProviderRegistry:
             return 'ollama'
         if 'x.ai' in base_url or 'grok' in name:
             return 'grok'
-        
+        if 'codeium.com' in base_url or 'windsurf' in name or 'api.windsurf.com' in base_url:
+            return 'windsurf'
+
         return 'custom'
     
     def _check_oauth_status(self, provider_name: str) -> bool:
@@ -418,9 +420,6 @@ class ProviderRegistry:
         if provider_name == 'anthropic':
             # Vérifier le token Claude Code OAuth
             return bool(os.getenv("CLAUDE_CODE_OAUTH_TOKEN") or os.getenv("ANTHROPIC_API_KEY"))
-        elif provider_name == 'windsurf':
-            # Vérifier le token OAuth Windsurf
-            return bool(os.getenv("WINDSURF_OAUTH_TOKEN"))
         return False
     
     def add_provider(self, provider: Provider) -> None:
@@ -483,11 +482,6 @@ def get_provider_models(provider_name: str) -> List[Dict[str, Any]]:
     """Retourne les modèles pour un provider"""
     provider = provider_registry.get_provider(provider_name)
     return provider.models if provider else []
-
-# Debug
-print("DEBUG: CLAUDE_CODE_OAUTH_TOKEN =", os.getenv("CLAUDE_CODE_OAUTH_TOKEN"))
-print("DEBUG: ANTHROPIC_API_KEY =", os.getenv("ANTHROPIC_API_KEY"))
-print("DEBUG: OPENAI_API_KEY =", os.getenv("OPENAI_API_KEY"))
 
 if __name__ == "__main__":
     print("Providers disponibles :")
