@@ -790,7 +790,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     }
   }, [selectedProjectId]);
 
-  // Check Azure DevOps connection status when enabled
+  // Check Azure DevOps connection status when enabled or credentials change
   useEffect(() => {
     if (selectedProjectId && envConfig?.azureDevOpsEnabled) {
       globalThis.electronAPI.checkAzureDevOpsConnection(selectedProjectId).then((result) => {
@@ -804,7 +804,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       setAzureDevOpsConnected(null);
       setAzureDevOpsProjectName(null);
     }
-  }, [selectedProjectId, envConfig?.azureDevOpsEnabled]);
+  }, [selectedProjectId, envConfig?.azureDevOpsEnabled, envConfig?.azureDevOpsPat, envConfig?.azureDevOpsOrgUrl]);
 
   // Check Jira connection status when enabled
   useEffect(() => {
@@ -817,7 +817,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     } else {
       setJiraConnected(null);
     }
-  }, [selectedProjectId, envConfig?.jiraEnabled]);
+  }, [selectedProjectId, envConfig?.jiraEnabled, envConfig?.jiraApiToken, envConfig?.jiraInstanceUrl]);
 
   // Queue settings modal state
   const [showQueueSettings, setShowQueueSettings] = useState(false);
