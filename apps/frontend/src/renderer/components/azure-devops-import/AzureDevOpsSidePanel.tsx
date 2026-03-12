@@ -180,7 +180,10 @@ export function AzureDevOpsSidePanel({
       const result = await globalThis.electronAPI.checkAzureDevOpsConnection(projectId);
       if (result.success) {
         setSyncStatus(result.data ?? null);
-        if (!result.data?.connected) {
+        if (result.data?.connected) {
+          // Clear error when connection is successful
+          setError(null);
+        } else {
           setError(result.data?.error || t('azureDevOpsImport.errorNotConfigured'));
         }
       } else {
@@ -689,7 +692,8 @@ export function AzureDevOpsSidePanel({
           {!isLoadingItems && filteredItems.length > 0 && (
             <div className="p-4 space-y-2">
               {filteredItems.map((item) => (
-                <div
+                <button
+                  type="button"
                   key={item.id}
                   className={cn(
                     "flex items-start gap-3 p-3 rounded-md border transition-all cursor-pointer w-full text-left",
@@ -698,15 +702,7 @@ export function AzureDevOpsSidePanel({
                     selectedIds.has(item.id) && "bg-primary/10 border-primary/30 cursor-grab",
                     draggedIds.has(item.id) && "cursor-grabbing opacity-50"
                   )}
-                  role="button"
-                  tabIndex={0}
                   onClick={() => toggleItem(item.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      toggleItem(item.id);
-                    }
-                  }}
                   draggable={true} // Toujours draggable, pas seulement si sélectionné
                   onDragStart={(e) => {
                     // Si l'item est déjà sélectionné, dragger tous les items sélectionnés
@@ -722,25 +718,17 @@ export function AzureDevOpsSidePanel({
                   aria-pressed={selectedIds.has(item.id)}
                 >
                   <div className="flex items-start gap-3 w-full">
-                    <div
+                    <button
+                      type="button"
                       className="flex items-center justify-center"
                       onClick={(e) => e.stopPropagation()}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleItem(item.id);
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
                       aria-label={`Toggle selection for work item ${item.id}`}
                     >
                       <Checkbox
                         checked={selectedIds.has(item.id)}
                         onCheckedChange={() => toggleItem(item.id)}
                       />
-                    </div>
+                    </button>
                       
                       {selectedIds.has(item.id) && (
                         <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
@@ -786,7 +774,7 @@ export function AzureDevOpsSidePanel({
                         )}
                       </div>
                     </div>
-                </div>
+                </button>
               ))}
             </div>
           )}
