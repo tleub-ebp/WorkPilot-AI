@@ -7,5 +7,6 @@
   "azureConfig.patPlaceholder": "Personal Access Token",
   "azureConfig.save": "Save",
   "azureConfig.required": "All fields are required.",
-  "azureConfig.invalidUrl": "Invalid Azure DevOps URL."
+  "azureConfig.invalidUrl": "Invalid Azure DevOps URL.",
+  "providerSelector.label": "AI Provider"
 }
