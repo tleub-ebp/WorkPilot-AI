@@ -13,9 +13,9 @@ import { AddProjectModal } from '../AddProjectModal';
 import type { Project } from '../../../shared/types';
 
 interface ProjectSelectorProps {
-  selectedProjectId: string | null;
-  onProjectChange: (projectId: string | null) => void;
-  onProjectAdded?: (project: Project, needsInit: boolean) => void;
+  readonly selectedProjectId: string | null;
+  readonly onProjectChange: (projectId: string | null) => void;
+  readonly onProjectAdded?: (project: Project, needsInit: boolean) => void;
 }
 
 export function ProjectSelector({
@@ -47,7 +47,7 @@ export function ProjectSelector({
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
 
   return (
-    <>
+    <div className="w-full max-w-68">
       <Select
         value={selectedProjectId || ''}
         onValueChange={handleValueChange}
@@ -60,7 +60,13 @@ export function ProjectSelector({
             <SelectValue placeholder="Select a project..." className="truncate min-w-0 flex-1" />
           </div>
         </SelectTrigger>
-        <SelectContent className="min-w-(--radix-select-trigger-width) max-w-(--radix-select-trigger-width)">
+        <SelectContent 
+          className="w-80 min-w-0 max-w-68 overflow-hidden"
+          position="popper"
+          sideOffset={4}
+          collisionPadding={8}
+          avoidCollisions={true}
+        >
           {projects.length === 0 ? (
             <div className="px-2 py-4 text-center text-sm text-muted-foreground">
               <p>No projects yet</p>
@@ -68,8 +74,8 @@ export function ProjectSelector({
           ) : (
             projects.map((project) => (
               <div key={project.id} className="relative flex items-center">
-                <SelectItem value={project.id} className="flex-1 pr-10">
-                  <span className="truncate" title={`${project.name} - ${project.path}`}>
+                <SelectItem value={project.id} className="flex-1 pr-10 min-w-0">
+                  <span className="truncate block w-full" title={`${project.name} - ${project.path}`}>
                     {project.name}
                   </span>
                 </SelectItem>
@@ -116,6 +122,6 @@ export function ProjectSelector({
           onProjectAdded?.(project, needsInit);
         }}
       />
-    </>
+    </div>
   );
 }
