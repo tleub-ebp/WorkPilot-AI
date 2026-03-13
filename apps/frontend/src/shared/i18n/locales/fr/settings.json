@@ -558,6 +558,9 @@
     "reverseChronological": "Chronologique inverse (plus récent en premier)"
   },
   "general": {
+    "providerSelector": {
+      "label": "Fournisseur IA"
+    },
     "providerSection": "Fournisseur IA",
     "providerSectionDescription": "Choisissez le fournisseur IA utilisé pour les tâches autonomes. La liste des modèles ci-dessous se met à jour automatiquement.",
     "otherAgentSettings": "Autres paramètres de l'agent",

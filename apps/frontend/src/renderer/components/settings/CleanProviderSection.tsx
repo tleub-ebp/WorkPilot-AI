@@ -64,8 +64,8 @@ const providerCategories: Record<string, string> = {
 };
 
 export function CleanProviderSection({ 
-  settings, 
-  onSettingsChange, 
+  settings: propsSettings, 
+  onSettingsChange: propsOnSettingsChange, 
   isOpen 
 }: Readonly<CleanProviderSectionProps>) {
   const { t } = useTranslation('settings');
@@ -84,8 +84,17 @@ export function CleanProviderSection({
   const [profileUsageData, setProfileUsageData] = useState<Map<string, ProfileUsageSummary>>(new Map());
   const [providerTestResults, setProviderTestResults] = useState<Map<string, { date: string; success: boolean }>>(new Map());
 
-  // Utiliser les profiles comme le ProviderSelector
-  const { profiles } = useSettingsStore();
+  // Use store directly for real-time updates (like ProviderSelector)
+  const { profiles, settings: storeSettings, updateSettings } = useSettingsStore();
+  
+  // Create a unified settings object and onSettingsChange that updates both props and store
+  const settings = storeSettings;
+  const onSettingsChange = async (newSettings: any) => {
+    // Update props for backward compatibility
+    propsOnSettingsChange(newSettings);
+    // Update store for real-time sync across components
+    updateSettings(newSettings);
+  };
 
   // Load real data when section is opened (runs once when panel opens)
   useEffect(() => {
@@ -139,7 +148,7 @@ export function CleanProviderSection({
       Object.keys(settings).forEach(key => {
         if (key.startsWith('testResult_')) {
           const providerId = key.replace('testResult_', '');
-          const result = settings[key];
+          const result = (settings as any)[key];
           if (result?.date) {
             testResults.set(providerId, {
               date: result.date,
@@ -209,10 +218,10 @@ export function CleanProviderSection({
 
     // Check settings for API keys (for providers like OpenAI, etc.)
     const apiKeyField = getProviderApiKeyField(providerId);
-    if (apiKeyField && settings[apiKeyField]) {
+    if (apiKeyField && (settings as any)[apiKeyField]) {
       return {
         hasKey: true,
-        keyPreview: maskApiKey(settings[apiKeyField]),
+        keyPreview: maskApiKey((settings as any)[apiKeyField]),
         isOAuth: false,
         authMethod: 'api-key'
       };
@@ -378,7 +387,10 @@ export function CleanProviderSection({
 
       if (result.success) {
         // Mettre à jour le statut du provider pour indiquer qu'il fonctionne
-        // TODO: Mettre à jour le statut dans le store ou l'état local
+        setProviderStatus(prev => ({
+          ...prev,
+          [providerId]: true
+        }));
         
         // Afficher un toast de succès avec détails
         let description = t('sections.accounts.providerCard.testSuccessDescription', { 
