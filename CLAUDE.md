@@ -75,51 +75,51 @@ WorkPilot AI is a desktop application (+ CLI) where users describe a goal and AI
 
 WorkPilot_AI/
 ├── apps/
-│   ├── backend/                 # Python backend/CLI — ALL agent logic
-│   │   ├── core/                # client.py, auth.py, worktree.py, platform/, workflow_logger.py
-│   │   ├── security/            # Command allowlisting, validators, hooks
-│   │   ├── agents/              # planner, coder, session management
-│   │   ├── qa/                  # reviewer, fixer, loop, criteria
-│   │   ├── spec/                # Spec creation pipeline
-│   │   ├── skills/              # AI skills system with optimization
-│   │   ├── cli/                 # CLI commands (spec, build, workspace, QA)
-│   │   ├── context/             # Task context building, semantic search
-│   │   ├── runners/             # Standalone runners (spec, roadmap, insights, github)
-│   │   ├── services/            # Background services, recovery orchestration
-│   │   ├── integrations/        # graphiti/, linear, github
-│   │   ├── project/             # Project analysis, security profiles
-│   │   ├── merge/               # Intent-aware semantic merge for parallel agents
-│   │   └── prompts/             # Agent system prompts (.md)
-│   └── frontend/                # Electron desktop UI
+│   ├── backend/                      # Python backend/CLI — ALL agent logic
+│   │   ├── core/                     # client.py, auth.py, worktree.py, platform/, workflow_logger.py
+│   │   ├── security/                 # Command allowlisting, validators, hooks
+│   │   ├── agents/                   # planner, coder, session management
+│   │   ├── qa/                       # reviewer, fixer, loop, criteria
+│   │   ├── spec/                     # Spec creation pipeline
+│   │   ├── skills/                   # AI skills system with optimization
+│   │   ├── cli/                      # CLI commands (spec, build, workspace, QA)
+│   │   ├── context/                  # Task context building, semantic search
+│   │   ├── runners/                  # Standalone runners (spec, roadmap, insights, github)
+│   │   ├── services/                 # Background services, recovery orchestration
+│   │   ├── integrations/             # graphiti/, linear, github
+│   │   ├── project/                  # Project analysis, security profiles
+│   │   ├── merge/                    # Intent-aware semantic merge for parallel agents
+│   │   └── prompts/                  # Agent system prompts (.md)
+│   └── frontend/                     # Electron desktop UI
 │       └── src/
-│           ├── main/            # Electron main process
-│           │   ├── agent/       # Agent queue, process, state, events
-│           │   ├── claude-profile/ # Multi-profile credentials, token refresh, usage
-│           │   ├── terminal/    # PTY daemon, lifecycle, Claude integration
-│           │   ├── platform/    # Cross-platform abstraction
-│           │   ├── ipc-handlers/# 40+ handler modules by domain
-│           │   ├── services/    # SDK session recovery, profile service
-│           │   └── changelog/   # Changelog generation and formatting
-│           ├── preload/         # Electron preload scripts (electronAPI bridge)
-│           ├── renderer/        # React UI
-│           │   ├── components/  # UI components (onboarding, settings, task, terminal, github, etc.)
-│           │   ├── stores/      # 24+ Zustand state stores
-│           │   ├── contexts/    # React contexts (ViewStateContext)
-│           │   ├── hooks/       # Custom hooks (useIpc, useTerminal, etc.)
-│           │   ├── styles/      # CSS / Tailwind styles
-│           │   └── App.tsx      # Root component
-│           ├── shared/          # Shared types, i18n, constants, utils
-│           │   ├── i18n/locales/# en/*.json, fr/*.json
-│           │   ├── constants/   # themes.ts, etc.
-│           │   ├── types/       # 19+ type definition files
-│           │   └── utils/       # ANSI sanitizer, shell escape, provider detection
-│           └── types/           # TypeScript type definitions
-├── src/                         # Shared connectors and utilities
+│           ├── main/                 # Electron main process
+│           │   ├── agent/            # Agent queue, process, state, events
+│           │   ├── claude-profile/   # Multi-profile credentials, token refresh, usage
+│           │   ├── terminal/         # PTY daemon, lifecycle, Claude integration
+│           │   ├── platform/         # Cross-platform abstraction
+│           │   ├── ipc-handlers/     # 40+ handler modules by domain
+│           │   ├── services/         # SDK session recovery, profile service
+│           │   └── changelog/        # Changelog generation and formatting
+│           ├── preload/              # Electron preload scripts (electronAPI bridge)
+│           ├── renderer/             # React UI
+│           │   ├── components/       # UI components (onboarding, settings, task, terminal, github, etc.)
+│           │   ├── stores/           # 24+ Zustand state stores
+│           │   ├── contexts/         # React contexts (ViewStateContext)
+│           │   ├── hooks/            # Custom hooks (useIpc, useTerminal, etc.)
+│           │   ├── styles/           # CSS / Tailwind styles
+│           │   └── App.tsx           # Root component
+│           ├── shared/               # Shared types, i18n, constants, utils
+│           │   ├── i18n/locales/     # en/*.json, fr/*.json
+│           │   ├── constants/        # themes.ts, etc.
+│           │   ├── types/            # 20+ type definition files
+│           │   └── utils/            # ANSI sanitizer, shell escape, provider detection
+│           └── types/                # TypeScript type definitions
+├── src/                              # Shared connectors and utilities
 │   └── connectors/
-│       └── grepai/              # grepai semantic search integration
-├── guides/                      # Documentation
-├── tests/                       # Backend test suite
-└── scripts/                     # Build and utility scripts
+│       └── grepai/                   # grepai semantic search integration
+├── guides/                           # Documentation
+├── tests/                            # Backend test suite
+└── scripts/                          # Build and utility scripts
 
 ## Commands Quick Reference
 
