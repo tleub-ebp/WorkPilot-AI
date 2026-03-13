@@ -91,7 +91,7 @@ export function UsageIndicator() {
   const [providerProfile, setProviderProfile] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
-  const [, setTick] = useState(0); // Force re-render for "last update" time display
+  const [tick, setTick] = useState(0); // Force re-render for "last update" time display
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const tickIntervalRef = useRef<NodeJS.Timeout | null>(null);
