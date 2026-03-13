@@ -79,6 +79,8 @@ export interface ElectronAPI extends
   testGitHubConnection: (config: { repo: string; token: string }) => Promise<{ success: boolean; status?: number; error?: string }>;
   /** Detect Windsurf API key from local IDE installation (state.vscdb) */
   detectWindsurfToken: () => Promise<{ success: boolean; apiKey?: string; userName?: string; error?: string }>;
+  /** Check Claude OAuth status from CLI config files on disk */
+  checkClaudeOAuth: () => Promise<{ isAuthenticated: boolean; profileName?: string }>;
 }
 
 export const createElectronAPI = (): ElectronAPI => {
@@ -116,6 +118,7 @@ export const createElectronAPI = (): ElectronAPI => {
     getSelectedProvider: () => invokeIpc<IPCResult<string | null>>('provider:getSelected'),
     testGitHubConnection: (config: { repo: string; token: string }) => invokeIpc<{ success: boolean; status?: number; error?: string }>('github:testConnection', config),
     detectWindsurfToken: () => invokeIpc<{ success: boolean; apiKey?: string; userName?: string; error?: string }>('credential:detectWindsurfToken'),
+    checkClaudeOAuth: () => invokeIpc<{ isAuthenticated: boolean; profileName?: string }>('credential:checkClaudeOAuth'),
   };
 };
 

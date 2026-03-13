@@ -214,9 +214,20 @@ class ProviderServiceClass {
     let settings: Record<string, any> | undefined;
     try {
       const { useSettingsStore } = await import('@/stores/settings-store');
-      settings = useSettingsStore.getState().settings as Record<string, any>;
+      settings = { ...(useSettingsStore.getState().settings as Record<string, any>) };
     } catch {
       // settings store not available in some contexts
+    }
+    // Enrich settings with Claude OAuth status from CLI config files (main process)
+    try {
+      if (settings && globalThis.electronAPI?.checkClaudeOAuth) {
+        const oauthResult = await globalThis.electronAPI.checkClaudeOAuth();
+        if (oauthResult.isAuthenticated) {
+          settings.globalClaudeOAuthToken = oauthResult.profileName || 'oauth-authenticated';
+        }
+      }
+    } catch {
+      // IPC not available
     }
     return await getStaticProviders(profiles, settings);
   }

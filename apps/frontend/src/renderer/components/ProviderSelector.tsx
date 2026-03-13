@@ -174,7 +174,19 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
     const loadProviders = async () => {
       setIsLoading(true);
       try {
-        const data = await getStaticProviders(profiles, settings as Record<string, any>);
+        // Enrich settings with Claude OAuth status from CLI config files (main process)
+        const enrichedSettings = { ...(settings as Record<string, any>) };
+        try {
+          if (globalThis.electronAPI?.checkClaudeOAuth) {
+            const oauthResult = await globalThis.electronAPI.checkClaudeOAuth();
+            if (oauthResult.isAuthenticated) {
+              enrichedSettings.globalClaudeOAuthToken = oauthResult.profileName || 'oauth-authenticated';
+            }
+          }
+        } catch {
+          // IPC not available (e.g. in browser dev mode)
+        }
+        const data = await getStaticProviders(profiles, enrichedSettings);
         setProvidersData(data);
       } catch (error) {
         console.error('Failed to load providers:', error);

@@ -693,12 +693,41 @@ export class CredentialManager extends EventEmitter {
   /**
    * Vérifier le statut OAuth Claude
    * Checks multiple sources:
+   *   0. App's Claude Profile Manager (hasValidAuth) — checks ~/.claude-profiles/{name}
    *   1. Claude CLI config (Windows: %APPDATA%\claude, Unix: ~/.config/claude)
    *   2. App's own profiles.json for Anthropic API profiles
    *   3. Global settings for globalAnthropicApiKey
    */
   private async checkClaudeOAuthStatus(): Promise<{ isAuthenticated: boolean; profileName?: string }> {
     try {
+      // Source 0: Check app's Claude Profile Manager (primary source)
+      // This checks ~/.claude-profiles/{profileId}/.credentials.json and Keychain
+      try {
+        const { getClaudeProfileManager } = require('../claude-profile-manager');
+        const profileManager = getClaudeProfileManager();
+        if (profileManager) {
+          const activeProfile = profileManager.getActiveProfile();
+          if (activeProfile && profileManager.hasValidAuth(activeProfile.id)) {
+            return {
+              isAuthenticated: true,
+              profileName: activeProfile.email || activeProfile.name || 'Claude OAuth'
+            };
+          }
+          // Also check all profiles, not just active
+          const allProfiles = profileManager.getProfiles?.() || [];
+          for (const profile of allProfiles) {
+            if (profileManager.hasValidAuth(profile.id)) {
+              return {
+                isAuthenticated: true,
+                profileName: profile.email || profile.name || 'Claude OAuth'
+              };
+            }
+          }
+        }
+      } catch {
+        // Profile manager not initialized yet
+      }
+
       const fs = require('node:fs').promises;
       const path = require('node:path');
       const os = require('node:os');
@@ -772,6 +801,13 @@ export class CredentialManager extends EventEmitter {
       console.warn('[CredentialManager] Failed to check Claude OAuth status:', error);
       return { isAuthenticated: false };
     }
+  }
+
+  /**
+   * Public wrapper for checkClaudeOAuthStatus — used by IPC handlers
+   */
+  public async checkClaudeOAuthStatusPublic(): Promise<{ isAuthenticated: boolean; profileName?: string }> {
+    return this.checkClaudeOAuthStatus();
   }
 
   /**

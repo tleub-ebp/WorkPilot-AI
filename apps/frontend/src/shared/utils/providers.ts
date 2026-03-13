@@ -85,7 +85,26 @@ export async function getStaticProviders(profiles: APIProfile[] = [], settings?:
       const hasGlobalKey = !!(settings?.globalWindsurfApiKey && String(settings.globalWindsurfApiKey).trim());
       status[p.name] = hasProfile || hasGlobalKey;
     } else {
-      status[p.name] = hasProfile;
+      // Check global settings API keys for providers configured outside of profiles
+      const globalKeyMap: Record<string, string> = {
+        'anthropic': 'globalAnthropicApiKey',
+        'openai': 'globalOpenAIApiKey',
+        'google': 'globalGoogleDeepMindApiKey',
+        'meta': 'globalMetaApiKey',
+        'mistral': 'globalMistralApiKey',
+        'deepseek': 'globalDeepSeekApiKey',
+        'grok': 'globalGrokApiKey',
+        'cursor': 'globalCursorApiKey',
+        'aws': 'globalAwsAccessKey',
+        'ollama': 'globalOllamaUrl',
+      };
+      const globalSettingsKey = globalKeyMap[p.name];
+      const hasGlobalKey = !!(globalSettingsKey && settings?.[globalSettingsKey] && String(settings[globalSettingsKey]).trim());
+
+      // For Anthropic, also check Claude OAuth token
+      const hasOAuth = p.name === 'anthropic' && !!(settings?.globalClaudeOAuthToken && String(settings.globalClaudeOAuthToken).trim());
+
+      status[p.name] = hasProfile || hasGlobalKey || hasOAuth;
     }
   }
 
