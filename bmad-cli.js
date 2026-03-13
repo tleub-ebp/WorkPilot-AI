@@ -11,9 +11,8 @@
  *   bmad-party-mode "task description"
  */
 
-import { existsSync, mkdirSync, writeFileSync, readdirSync, statSync, readFileSync } from 'fs';
-import { join } from 'path';
-import { execSync } from 'child_process';
+import { existsSync, mkdirSync, writeFileSync, readdirSync, statSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 class BMADCLI {
     constructor() {
@@ -178,7 +177,7 @@ class BMADCLI {
                 value.forEach(item => {
                     if (typeof item === 'object') {
                         yaml += `${spaces}  -\n`;
-                        yaml += this.generateYAML(item, indent + 2).replace(/^  /, '    ');
+                        yaml += this.generateYAML(item, indent + 2).replace(/^ {2}/, '    ');
                     } else {
                         yaml += `${spaces}  - ${item}\n`;
                     }
@@ -310,23 +309,6 @@ For more information, see the documentation.
     async quickDev() {
         console.log('⚡ Quick Development Setup...');
         
-        // Quick configuration for development
-        const quickConfig = {
-            mode: 'development',
-            modules: ['autonomous', 'bmm'],
-            tools: ['claude-code'],
-            agents: {
-                active: ['bmad-net-architect', 'bmad-performance-analyst'],
-                parallel_execution: true,
-                memory_enabled: true
-            },
-            workflows: {
-                rapid_prototyping: true,
-                agile_validation: true,
-                performance_monitoring: true
-            }
-        };
-        
         await this.createConfiguration('autonomous,bmm', 'claude-code');
         
         console.log('🚀 Quick development environment ready!');
@@ -456,7 +438,7 @@ async function main() {
     const command = args[0];
     
     switch (command) {
-        case 'install':
+        case 'install': {
             const options = {};
             for (let i = 1; i < args.length; i++) {
                 if (args[i].startsWith('--modules=')) {
@@ -467,6 +449,7 @@ async function main() {
             }
             await cli.install(options);
             break;
+        }
             
         case 'help':
             await cli.help();
@@ -476,7 +459,7 @@ async function main() {
             await cli.quickDev();
             break;
             
-        case 'party-mode':
+        case 'party-mode': {
             const task = args[1];
             if (!task) {
                 console.error('❌ Please provide a task description');
@@ -484,6 +467,7 @@ async function main() {
             }
             await cli.partyMode(task);
             break;
+        }
             
         case 'status':
             await cli.status();
@@ -504,6 +488,11 @@ async function main() {
 export default { BMADCLI };
 
 // Run CLI if called directly
-if (require.main === module) {
-    main().catch(console.error);
+if (import.meta.url === `file://${process.argv[1]}`) {
+    try {
+        await main();
+    } catch (error) {
+        console.error(error);
+        process.exit(1);
+    }
 }
