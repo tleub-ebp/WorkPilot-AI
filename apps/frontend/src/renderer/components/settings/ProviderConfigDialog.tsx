@@ -50,6 +50,8 @@ interface AuthTerminalState {
   profileName: string;
 }
 
+type ActiveTab = 'api' | 'oauth' | 'github-copilot';
+
 export function ProviderConfigDialog({
   isOpen,
   onOpenChange,
@@ -169,7 +171,7 @@ export function ProviderConfigDialog({
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
-  const [activeTab, setActiveTab] = useState<'api' | 'oauth' | 'github-copilot'>('api');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('api');
   const [authTerminal, setAuthTerminal] = useState<AuthTerminalState | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [windsurfSsoToken, setWindsurfSsoToken] = useState('');
@@ -178,46 +180,59 @@ export function ProviderConfigDialog({
   const supportsOAuth = ['anthropic', 'claude', 'windsurf'].includes(provider?.id || '');
   const supportsGitHubCopilot = provider?.id === 'copilot';
 
-  useEffect(() => {
-    if (provider && providerConfig && isOpen) {
-      const initialData: Record<string, string> = {};
-      
-      if (providerConfig.apiKey && settings[providerConfig.apiKey]) {
-        initialData.apiKey = settings[providerConfig.apiKey];
-      }
-      if (providerConfig.apiUrl && settings[providerConfig.apiUrl]) {
-        initialData.apiUrl = settings[providerConfig.apiUrl];
-      }
-      if (providerConfig.model && settings[providerConfig.model]) {
-        initialData.model = settings[providerConfig.model];
-      }
-      
-      setFormData(initialData);
-      setTestResult(null);
-      
-      // Sélectionner l'onglet par défaut selon le provider
-      if (provider.id === 'copilot') {
-        setActiveTab('github-copilot');
-      } else if (provider.id === 'windsurf') {
-        // Windsurf defaults to API key tab (service key), SSO is secondary
-        setActiveTab('api');
-      } else if (supportsOAuth) {
-        setActiveTab('oauth');
-      } else {
-        setActiveTab('api');
-      }
+  const getDefaultActiveTab = (providerId: string, hasOAuthSupport: boolean): ActiveTab => {
+    if (providerId === 'copilot') return 'github-copilot';
+    if (providerId === 'windsurf') return 'api'; // Windsurf defaults to API key tab, SSO is secondary
+    if (hasOAuthSupport) return 'oauth';
+    return 'api';
+  };
+
+  const initializeFormData = (config: ProviderConfig, currentSettings: any): Record<string, string> => {
+    const initialData: Record<string, string> = {};
+    
+    if (config.apiKey && currentSettings[config.apiKey]) {
+      initialData.apiKey = currentSettings[config.apiKey];
     }
+    if (config.apiUrl && currentSettings[config.apiUrl]) {
+      initialData.apiUrl = currentSettings[config.apiUrl];
+    }
+    if (config.model && currentSettings[config.model]) {
+      initialData.model = currentSettings[config.model];
+    }
+    
+    return initialData;
+  };
+
+  useEffect(() => {
+    if (!provider || !providerConfig || !isOpen) return;
+
+    const initialData = initializeFormData(providerConfig, settings);
+    setFormData(initialData);
+    setTestResult(null);
+    setActiveTab(getDefaultActiveTab(provider.id, supportsOAuth));
   }, [provider, providerConfig, settings, isOpen, supportsOAuth]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!provider || !providerConfig) return;
 
     const newSettings = { ...settings };
 
     // For Anthropic/Claude on OAuth tab: persist OAuth state instead of API keys
     if ((provider.id === 'anthropic' || provider.id === 'claude') && activeTab === 'oauth') {
+      // Always persist OAuth token if auth succeeded (testResult) or if already set in settings
       if (testResult?.success) {
         newSettings.globalClaudeOAuthToken = testResult.message || 'oauth-authenticated';
+      } else if (!newSettings.globalClaudeOAuthToken) {
+        // Check IPC as fallback — the auth terminal may have written credentials to disk
+        // but the settings object doesn't reflect it yet
+        try {
+          const result = await globalThis.electronAPI?.checkClaudeOAuth?.();
+          if (result?.isAuthenticated) {
+            newSettings.globalClaudeOAuthToken = result.profileName || 'oauth-authenticated';
+          }
+        } catch {
+          // IPC not available
+        }
       }
       onSettingsChange(newSettings);
       onOpenChange(false);
@@ -240,12 +255,33 @@ export function ProviderConfigDialog({
   };
 
   const handleTest = async () => {
-    if (!provider || !onTest) return;
+    if (!provider) return;
 
     setIsTesting(true);
     setTestResult(null);
 
     try {
+      // On OAuth tab for Anthropic/Claude: check OAuth status directly via IPC
+      if (activeTab === 'oauth' && (provider.id === 'anthropic' || provider.id === 'claude')) {
+        const result = await globalThis.electronAPI?.checkClaudeOAuth?.();
+        if (result?.isAuthenticated) {
+          setTestResult({ 
+            success: true, 
+            message: result.profileName 
+              ? `Authentification OAuth active (${result.profileName})` 
+              : 'Authentification OAuth active' 
+          });
+        } else {
+          setTestResult({ 
+            success: false, 
+            message: 'Aucune authentification OAuth détectée. Veuillez vous connecter d\'abord.' 
+          });
+        }
+        return;
+      }
+
+      // Standard test via parent handler
+      if (!onTest) return;
       await onTest(provider.id);
       setTestResult({ success: true, message: t('sections.accounts.providerCard.testSuccess') });
     } catch (error) {
@@ -275,9 +311,53 @@ export function ProviderConfigDialog({
         newSettings[providerConfig.model] = '';
       }
 
+      // Also clear OAuth token for Anthropic/Claude
+      if (provider.id === 'anthropic' || provider.id === 'claude') {
+        newSettings.globalClaudeOAuthToken = '';
+      }
+
       onSettingsChange(newSettings);
       onOpenChange(false);
     }
+  };
+
+  const handleClaudeAuth = async (providerId: string, providerName: string) => {
+    try {
+      const profilesResult = await globalThis.electronAPI.getClaudeProfiles();
+      const activeProfileId = profilesResult.success && profilesResult.data
+        ? profilesResult.data.activeProfileId
+        : undefined;
+
+      if (!activeProfileId) {
+        console.error('[ProviderConfigDialog] No active Claude profile found');
+        setTestResult({ success: false, message: 'No Claude profile found. Please restart the application.' });
+        setIsAuthenticating(false);
+        return;
+      }
+
+      const result = await globalThis.electronAPI.authenticateClaudeProfile(activeProfileId);
+      if (result.success && result.data) {
+        setAuthTerminal({
+          terminalId: result.data.terminalId,
+          configDir: result.data.configDir,
+          profileName: providerName,
+        });
+      } else {
+        console.error('[ProviderConfigDialog] Failed to prepare Claude auth:', result.error);
+        setTestResult({ success: false, message: result.error || 'Failed to prepare authentication' });
+        setIsAuthenticating(false);
+      }
+    } catch (error) {
+      console.error('[ProviderConfigDialog] Error preparing Claude auth:', error);
+      setTestResult({ success: false, message: error instanceof Error ? error.message : 'Unknown error' });
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleFallbackAuth = (providerId: string, providerName: string) => {
+    const terminalId = `auth-${providerId}-${Date.now()}`;
+    const configDir = `claude-config-${providerId}`;
+    setAuthTerminal({ terminalId, configDir, profileName: providerName });
   };
 
   const handleOAuthAuth = async () => {
@@ -285,46 +365,10 @@ export function ProviderConfigDialog({
 
     setIsAuthenticating(true);
 
-    // For Anthropic/Claude, use the proper authenticateClaudeProfile API
-    // which generates the correct terminal ID (claude-login-{profileId}-{timestamp})
-    // and configDir — required for the main process to detect OAuth success
     if (provider.id === 'anthropic' || provider.id === 'claude') {
-      try {
-        // Get the active profile ID (not hardcoded — profile names vary)
-        const profilesResult = await window.electronAPI.getClaudeProfiles();
-        const activeProfileId = profilesResult.success && profilesResult.data
-          ? profilesResult.data.activeProfileId
-          : undefined;
-
-        if (!activeProfileId) {
-          console.error('[ProviderConfigDialog] No active Claude profile found');
-          setTestResult({ success: false, message: 'No Claude profile found. Please restart the application.' });
-          setIsAuthenticating(false);
-          return;
-        }
-
-        const result = await window.electronAPI.authenticateClaudeProfile(activeProfileId);
-        if (result.success && result.data) {
-          setAuthTerminal({
-            terminalId: result.data.terminalId,
-            configDir: result.data.configDir,
-            profileName: provider.name,
-          });
-        } else {
-          console.error('[ProviderConfigDialog] Failed to prepare Claude auth:', result.error);
-          setTestResult({ success: false, message: result.error || 'Failed to prepare authentication' });
-          setIsAuthenticating(false);
-        }
-      } catch (error) {
-        console.error('[ProviderConfigDialog] Error preparing Claude auth:', error);
-        setTestResult({ success: false, message: error instanceof Error ? error.message : 'Unknown error' });
-        setIsAuthenticating(false);
-      }
+      await handleClaudeAuth(provider.id, provider.name);
     } else {
-      // Fallback for other providers (e.g., Windsurf)
-      const terminalId = `auth-${provider.id}-${Date.now()}`;
-      const configDir = `claude-config-${provider.id}`;
-      setAuthTerminal({ terminalId, configDir, profileName: provider.name });
+      handleFallbackAuth(provider.id, provider.name);
     }
   };
 
@@ -847,7 +891,12 @@ export function ProviderConfigDialog({
               <Button
                 variant="outline"
                 onClick={handleTest}
-                disabled={(!formData.apiKey && !formData.apiUrl && !testResult?.success) || isTesting}
+                disabled={
+                  (activeTab === 'oauth'
+                    ? false
+                    : (!formData.apiKey && !formData.apiUrl))
+                  || isTesting
+                }
               >
                 {isTesting ? 'Test...' : 'Tester'}
               </Button>
