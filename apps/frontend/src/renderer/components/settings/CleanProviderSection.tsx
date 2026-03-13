@@ -15,6 +15,7 @@ import { useSettingsStore, saveSettings as saveSettingsToDisk } from '@/stores/s
 import { useToast } from '@/hooks/use-toast';
 import { ProviderService } from '@shared/services/providerService';
 import type { ProfileUsageSummary, AuthMethod } from '@shared/types/agent';
+import { useProviderContext } from '../ProviderContext';
 
 interface Provider {
   id: string;
@@ -85,6 +86,7 @@ export function CleanProviderSection({
 
   // Use store directly for real-time updates (like ProviderSelector)
   const { profiles, settings: storeSettings, updateSettings } = useSettingsStore();
+  const { setSelectedProvider: setContextProvider } = useProviderContext();
   
   // Create a unified settings object and onSettingsChange that updates both props and store
   const settings = storeSettings;
@@ -359,6 +361,25 @@ export function CleanProviderSection({
   useEffect(() => {
     setProvidersState(providers);
   }, [providers.length, providers.map(p => `${p.id}-${p.isConfigured}-${p.lastTested}`).join(',')]);
+
+  const handleProviderActivated = async (providerId: string) => {
+    // 1. Update ProviderContext so UI components (UsageIndicator, etc.) reflect the new provider
+    setContextProvider(providerId);
+    // 2. Persist to localStorage so ProviderSelector restores it on next mount
+    localStorage.setItem('selectedProvider', providerId);
+    // 3. Notify backend so SELECTED_LLM_PROVIDER is set for agent processes
+    try {
+      if (globalThis.electronAPI?.selectProvider) {
+        await globalThis.electronAPI.selectProvider(providerId);
+      }
+    } catch (err) {
+      console.error('[CleanProviderSection] Failed to select provider on backend:', err);
+    }
+    // 4. Dispatch event so other components (e.g. UsageIndicator) react immediately
+    globalThis.dispatchEvent(new CustomEvent('providerChanged', {
+      detail: { provider: providerId, timestamp: Date.now() }
+    }));
+  };
 
   const handleConfigure = (providerId: string) => {
     const provider = providers.find(p => p.id === providerId);
@@ -681,6 +702,7 @@ export function CleanProviderSection({
             onSettingsChange={onSettingsChange}
             onTest={handleTest}
             useSheet={true}
+            onProviderActivated={handleProviderActivated}
           />
         </DialogContent>
       </Dialog>
