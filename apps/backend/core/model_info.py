@@ -47,7 +47,7 @@ def get_current_model_info() -> Dict[str, str]:
             "model_label": model_info.get("model_label", model_info.get("model", "unknown"))
         }
         
-    except Exception as error:
+    except Exception:
         return {
             "provider": "error",
             "model": "error",
@@ -69,6 +69,8 @@ def _detect_provider_from_env() -> Optional[str]:
         return "grok"
     elif os.getenv("OLLAMA_BASE_URL"):
         return "ollama"
+    elif os.getenv("WINDSURF_API_KEY") or os.getenv("WINDSURF_OAUTH_TOKEN") or os.getenv("CODEIUM_API_KEY"):
+        return "windsurf"
     elif _is_copilot_available():
         return "copilot"
     
@@ -186,6 +188,24 @@ def _get_model_info_for_provider(provider: str) -> Dict[str, str]:
             "model_label": "GitHub Copilot"
         }
     
+    elif provider == "windsurf":
+        try:
+            from src.connectors.llm_config import load_provider_config
+            config = load_provider_config("windsurf")
+            if config and "model" in config:
+                return {
+                    "model": config["model"],
+                    "model_label": _format_windsurf_model_label(config["model"])
+                }
+        except ImportError:
+            pass
+        
+        model = os.getenv("WINDSURF_MODEL", "swe-1.5")
+        return {
+            "model": model,
+            "model_label": _format_windsurf_model_label(model)
+        }
+    
     # Default fallback
     return {
         "model": "unknown",
@@ -234,6 +254,24 @@ def _format_grok_model_label(model: str) -> str:
         "grok-1": "Grok 1",
     }
     return model_labels.get(model, f"Grok: {model}")
+
+
+def _format_windsurf_model_label(model: str) -> str:
+    """Format Windsurf model label for display."""
+    model_labels = {
+        "swe-1.5": "SWE-1.5",
+        "swe-1.5-fast": "SWE-1.5 Fast",
+        "claude-opus-4.6": "Claude Opus 4.6 (Windsurf)",
+        "claude-sonnet-4.6": "Claude Sonnet 4.6 (Windsurf)",
+        "claude-sonnet-4.5": "Claude Sonnet 4.5 (Windsurf)",
+        "gpt-5.4-low-thinking": "GPT-5.4 (Windsurf)",
+        "gpt-5.3-low-thinking": "GPT-5.3 (Windsurf)",
+        "windsurf-codestral": "Windsurf Codestral",
+        "windsurf-sonnet": "Windsurf Sonnet",
+        "windsurf-haiku": "Windsurf Haiku",
+        "windsurf-custom": "Windsurf Custom",
+    }
+    return model_labels.get(model, f"Windsurf: {model}")
 
 
 def get_model_info_string() -> str:

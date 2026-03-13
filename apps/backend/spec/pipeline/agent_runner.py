@@ -156,6 +156,13 @@ class AgentRunner:
             from provider_api import get_selected_provider
             selected_provider = get_selected_provider()
             debug("agent_runner", f"Selected provider from IPC: {selected_provider}")
+            if selected_provider and selected_provider.lower() == "windsurf":
+                debug(
+                    "agent_runner",
+                    "WARNING: Windsurf provider selected but agent_runner uses Claude SDK "
+                    "(create_client). This will consume Anthropic tokens, NOT Windsurf tokens. "
+                    "A native WindsurfAgentClient is needed to route through Codeium's API."
+                )
         except Exception as e:
             debug("agent_runner", f"Could not get selected provider: {e}")
         
@@ -276,12 +283,12 @@ class AgentRunner:
                         # handles the pause internally — we just log and continue.
                         if "rate_limit" in msg_subtype.lower():
                             print(
-                                f"\n⏳ Rate limit pause (CLI will retry automatically)...",
+                                "\n⏳ Rate limit pause (CLI will retry automatically)...",
                                 flush=True,
                             )
                             debug(
                                 "agent_runner",
-                                f"Rate limit event received (subtype={msg_subtype}), "
+                                "Rate limit event received (subtype=" + msg_subtype + "), "
                                 "session continues — CLI handles retry internally",
                             )
                         else:
