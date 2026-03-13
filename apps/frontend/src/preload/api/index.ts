@@ -77,6 +77,8 @@ export interface ElectronAPI extends
   getSelectedProvider: () => Promise<IPCResult<string | null>>;
   /** Test GitHub connection for remote configuration */
   testGitHubConnection: (config: { repo: string; token: string }) => Promise<{ success: boolean; status?: number; error?: string }>;
+  /** Detect Windsurf API key from local IDE installation (state.vscdb) */
+  detectWindsurfToken: () => Promise<{ success: boolean; apiKey?: string; userName?: string; error?: string }>;
 }
 
 export const createElectronAPI = (): ElectronAPI => {
@@ -113,6 +115,7 @@ export const createElectronAPI = (): ElectronAPI => {
     selectProvider: (provider: string) => invokeIpc<IPCResult<string>>('provider:select', provider),
     getSelectedProvider: () => invokeIpc<IPCResult<string | null>>('provider:getSelected'),
     testGitHubConnection: (config: { repo: string; token: string }) => invokeIpc<{ success: boolean; status?: number; error?: string }>('github:testConnection', config),
+    detectWindsurfToken: () => invokeIpc<{ success: boolean; apiKey?: string; userName?: string; error?: string }>('credential:detectWindsurfToken'),
   };
 };
 

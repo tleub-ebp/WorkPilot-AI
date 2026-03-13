@@ -59,14 +59,23 @@
       "providerConfig": {
         "title": "Configuration",
         "windsurfAuth": {
-          "description": "Windsurf AI uses OAuth authentication. The token is automatically detected from your Windsurf installation.",
-          "oauthDetected": "Windsurf OAuth authentication detected",
-          "tokenLoaded": "The Windsurf OAuth token has been automatically loaded from your environment.",
-          "noConfigRequired": "No manual configuration required.",
+          "description": "Automatically detect your Windsurf credentials from your local IDE installation.",
+          "oauthDetected": "Windsurf SSO authentication detected",
+          "tokenLoaded": "The Windsurf SSO token has been automatically loaded from your local IDE environment.",
+          "noConfigRequired": "No manual configuration required. Alternatively, use the API Key tab with a Service Key.",
           "claudeCodeAuth": "Use Claude Code OAuth authentication to easily connect with your Claude account.",
           "authenticating": "Authenticating...",
           "connectWithClaude": "Connect with Claude Code",
-          "terminalInstructions": "This will open a terminal where you can run the `/login` command to authenticate."
+          "terminalInstructions": "This will open a terminal where you can run the `/login` command to authenticate.",
+          "detectFromIDE": "Detect from Windsurf IDE",
+          "detecting": "Detecting...",
+          "detectSuccess": "Token detected for {{userName}}!",
+          "detectFailed": "Could not detect token. Make sure Windsurf IDE is installed and you are signed in.",
+          "orManual": "Or sign in manually:",
+          "openWindsurfLogin": "windsurf.com/account",
+          "tokenDetected": "API key detected",
+          "saveAndConnect": "Save & Connect",
+          "saveSuccess": "Windsurf connection saved successfully!"
         }
       },
       "providerCard": {

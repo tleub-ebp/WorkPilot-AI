@@ -28,9 +28,12 @@ export interface ProvidersResponse {
  * Determines auth status from the provided profiles list (a profile
  * for that provider means it is configured / authenticated).
  * Special handling for GitHub Copilot: checks gh CLI authentication.
- * Windsurf: detected from API profile presence (service key / PAT authentication).
+ * Windsurf: detected from API profile presence OR global settings key.
+ *
+ * @param profiles - API profiles from profiles.json
+ * @param settings - Optional global settings object to check for provider API keys (e.g., globalWindsurfApiKey)
  */
-export async function getStaticProviders(profiles: APIProfile[] = []): Promise<ProvidersResponse> {
+export async function getStaticProviders(profiles: APIProfile[] = [], settings?: Record<string, any>): Promise<ProvidersResponse> {
   const allProviders = providerRegistry.getAllProviders()
     .filter((p) => p.name !== 'claude' && p.name !== 'custom');
 
@@ -77,6 +80,10 @@ export async function getStaticProviders(profiles: APIProfile[] = []): Promise<P
 
     if (p.name === 'copilot') {
       status[p.name] = true;
+    } else if (p.name === 'windsurf') {
+      // Windsurf: check both API profiles and global settings key
+      const hasGlobalKey = !!(settings?.globalWindsurfApiKey && String(settings.globalWindsurfApiKey).trim());
+      status[p.name] = hasProfile || hasGlobalKey;
     } else {
       status[p.name] = hasProfile;
     }

@@ -7,6 +7,7 @@
 import { ipcMain } from 'electron';
 import { credentialManager } from '../services/credential-manager';
 import type { CredentialConfig, UsageData } from '../services/credential-manager';
+import { detectWindsurfLocalToken } from '../services/credential-manager';
 
 /**
  * Enregistrer tous les handlers IPC pour les credentials
@@ -29,9 +30,21 @@ export function registerCredentialHandlers(): void {
 
   /**
    * Obtenir les données d'usage pour un provider
+   * For windsurf: fetches on-demand from Codeium API if no cached data or stale (>5 min)
    */
-  ipcMain.handle('usage:getData', (event, provider: string): UsageData | null => {
-    return credentialManager.getUsageData(provider);
+  ipcMain.handle('usage:getData', async (event, provider: string): Promise<UsageData | null> => {
+    const cached = credentialManager.getUsageData(provider);
+
+    // For windsurf: fetch on-demand if no data or stale (>5 minutes)
+    if (provider === 'windsurf') {
+      const WINDSURF_TTL_MS = 5 * 60 * 1000; // 5 minutes
+      const isStale = cached && (Date.now() - cached.timestamp > WINDSURF_TTL_MS);
+      if (!cached || isStale) {
+        return await credentialManager.fetchWindsurfUsage();
+      }
+    }
+
+    return cached ?? null;
   });
 
   /**
@@ -123,6 +136,14 @@ export function registerCredentialHandlers(): void {
     event.sender.on('destroyed', () => {
       credentialManager.off('provider:switched', onSwitch);
     });
+  });
+
+  /**
+   * Détecter le token Windsurf depuis l'installation IDE locale
+   * Lit le state.vscdb de Windsurf pour extraire la clé API sk-ws-...
+   */
+  ipcMain.handle('credential:detectWindsurfToken', async (): Promise<{ success: boolean; apiKey?: string; userName?: string; error?: string }> => {
+    return await detectWindsurfLocalToken();
   });
 
   console.log('[CredentialHandlers] IPC handlers registered');

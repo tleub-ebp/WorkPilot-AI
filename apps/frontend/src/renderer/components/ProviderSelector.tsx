@@ -153,7 +153,7 @@ interface ProviderSelectorProps {
 export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: selectedProp = '', setSelected: setSelectedProp = () => {}, onOpenAccountsSettings = () => {} }) => {
   const { t } = useTranslation();
   const { selectedProvider, setSelectedProvider } = useProviderContext();
-  const { profiles, setActiveProfile } = useSettingsStore();
+  const { profiles, setActiveProfile, settings } = useSettingsStore();
   const { toast } = useToast();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [pendingProvider, setPendingProvider] = useState<string>('');
@@ -174,7 +174,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
     const loadProviders = async () => {
       setIsLoading(true);
       try {
-        const data = await getStaticProviders(profiles);
+        const data = await getStaticProviders(profiles, settings as Record<string, any>);
         setProvidersData(data);
       } catch (error) {
         console.error('Failed to load providers:', error);
@@ -185,7 +185,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
     };
 
     loadProviders();
-  }, [profiles]);
+  }, [profiles, settings]);
 
   const { providers, status } = providersData;
 

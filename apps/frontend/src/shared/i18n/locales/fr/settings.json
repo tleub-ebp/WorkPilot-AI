@@ -72,14 +72,23 @@
       "providerConfig": {
         "title": "Configuration",
         "windsurfAuth": {
-          "description": "Windsurf AI utilise l'authentification OAuth. Le token est automatiquement détecté depuis votre installation Windsurf.",
-          "oauthDetected": "Authentification OAuth Windsurf détectée",
-          "tokenLoaded": "Le token OAuth Windsurf a été automatiquement chargé depuis votre environnement.",
-          "noConfigRequired": "Pas de configuration manuelle requise.",
+          "description": "Détection automatique de vos identifiants Windsurf depuis votre installation IDE locale.",
+          "oauthDetected": "Authentification SSO Windsurf détectée",
+          "tokenLoaded": "Le token SSO Windsurf a été automatiquement chargé depuis votre environnement IDE local.",
+          "noConfigRequired": "Pas de configuration manuelle requise. Vous pouvez aussi utiliser l'onglet Clé API avec une Service Key.",
           "claudeCodeAuth": "Utilisez l'authentification OAuth Claude Code pour vous connecter facilement avec votre compte Claude.",
           "authenticating": "Authentification...",
           "connectWithClaude": "Se connecter avec Claude Code",
-          "terminalInstructions": "Cela ouvrira un terminal où vous pourrez exécuter la commande `/login` pour vous authentifier."
+          "terminalInstructions": "Cela ouvrira un terminal où vous pourrez exécuter la commande `/login` pour vous authentifier.",
+          "detectFromIDE": "Détecter depuis Windsurf IDE",
+          "detecting": "Détection...",
+          "detectSuccess": "Token détecté pour {{userName}} !",
+          "detectFailed": "Impossible de détecter le token. Vérifiez que Windsurf IDE est installé et que vous êtes connecté.",
+          "orManual": "Ou connectez-vous manuellement :",
+          "openWindsurfLogin": "windsurf.com/account",
+          "tokenDetected": "Clé API détectée",
+          "saveAndConnect": "Enregistrer et connecter",
+          "saveSuccess": "Connexion Windsurf enregistrée avec succès !"
         }
       },
       "providerCard": {

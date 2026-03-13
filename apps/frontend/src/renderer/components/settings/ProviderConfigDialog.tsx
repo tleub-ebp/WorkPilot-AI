@@ -14,7 +14,7 @@ import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { Textarea } from '../ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { AlertCircle, Key, Globe, Server, CheckCircle, X, Users, LogIn, Loader2, Github } from 'lucide-react';
+import { AlertCircle, Key, Globe, Server, CheckCircle, X, Users, LogIn, Loader2, Github, ExternalLink, ClipboardPaste } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 import { AuthTerminal } from './AuthTerminal';
 import { GitHubCopilotConfig } from './GitHubCopilotConfig';
@@ -138,9 +138,11 @@ export function ProviderConfigDialog({
       icon: <Key className="w-4 h-4" />
     },
     'windsurf': {
+      apiKey: 'globalWindsurfApiKey',
       description: t('sections.accounts.providers.windsurf'),
-      requiresApiKey: false,
-      icon: <LogIn className="w-4 h-4" />
+      requiresApiKey: true,
+      placeholder: 'windsurf-...',
+      icon: <Key className="w-4 h-4" />
     },
     'cursor': {
       apiKey: 'globalCursorApiKey',
@@ -172,6 +174,7 @@ export function ProviderConfigDialog({
   const [activeTab, setActiveTab] = useState<'api' | 'oauth' | 'github-copilot'>('api');
   const [authTerminal, setAuthTerminal] = useState<AuthTerminalState | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [windsurfSsoToken, setWindsurfSsoToken] = useState('');
 
   const providerConfig = provider ? providerFields[provider.id as keyof typeof providerFields] : null;
   const supportsOAuth = ['anthropic', 'claude', 'windsurf'].includes(provider?.id || '');
@@ -197,6 +200,9 @@ export function ProviderConfigDialog({
       // Sélectionner l'onglet par défaut selon le provider
       if (provider.id === 'copilot') {
         setActiveTab('github-copilot');
+      } else if (provider.id === 'windsurf') {
+        // Windsurf defaults to API key tab (service key), SSO is secondary
+        setActiveTab('api');
       } else if (supportsOAuth) {
         setActiveTab('oauth');
       } else {
@@ -328,7 +334,7 @@ export function ProviderConfigDialog({
             {supportsOAuth && (
               <TabsTrigger value="oauth" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
-                OAuth
+                {provider?.id === 'windsurf' ? 'SSO' : 'OAuth'}
               </TabsTrigger>
             )}
             {supportsGitHubCopilot && (
@@ -477,14 +483,96 @@ export function ProviderConfigDialog({
 
                 {provider?.id === 'windsurf' ? (
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-sm">
-                      <LogIn className="w-4 h-4 text-green-600" />
-                      <span className="text-green-600">{t('sections.accounts.providerConfig.windsurfAuth.oauthDetected')}</span>
+                    {/* Auto-detect from local Windsurf IDE */}
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      disabled={isAuthenticating}
+                      onClick={async () => {
+                        setIsAuthenticating(true);
+                        setTestResult(null);
+                        try {
+                          const result = await window.electronAPI.detectWindsurfToken();
+                          if (result.success && result.apiKey) {
+                            setWindsurfSsoToken(result.apiKey);
+                            setTestResult({
+                              success: true,
+                              message: t('sections.accounts.providerConfig.windsurfAuth.detectSuccess', { userName: result.userName || '' })
+                            });
+                          } else {
+                            setTestResult({
+                              success: false,
+                              message: result.error || t('sections.accounts.providerConfig.windsurfAuth.detectFailed')
+                            });
+                          }
+                        } catch {
+                          setTestResult({
+                            success: false,
+                            message: t('sections.accounts.providerConfig.windsurfAuth.detectFailed')
+                          });
+                        } finally {
+                          setIsAuthenticating(false);
+                        }
+                      }}
+                    >
+                      {isAuthenticating ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {t('sections.accounts.providerConfig.windsurfAuth.detecting')}
+                        </>
+                      ) : (
+                        <>
+                          <LogIn className="w-4 h-4 mr-2" />
+                          {t('sections.accounts.providerConfig.windsurfAuth.detectFromIDE')}
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Or open Windsurf login manually */}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>{t('sections.accounts.providerConfig.windsurfAuth.orManual')}</span>
+                      <button
+                        type="button"
+                        className="text-primary underline hover:no-underline"
+                        onClick={() => window.open('https://windsurf.com/account', '_blank')}
+                      >
+                        {t('sections.accounts.providerConfig.windsurfAuth.openWindsurfLogin')}
+                      </button>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      <p>{t('sections.accounts.providerConfig.windsurfAuth.tokenLoaded')}</p>
-                      <p>{t('sections.accounts.providerConfig.windsurfAuth.noConfigRequired')}</p>
-                    </div>
+
+                    {/* Token input (auto-filled or manual) */}
+                    {windsurfSsoToken && (
+                      <div className="space-y-2">
+                        <Label htmlFor="windsurfSsoToken" className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Key className="w-3 h-3" />
+                          {t('sections.accounts.providerConfig.windsurfAuth.tokenDetected')}
+                        </Label>
+                        <Input
+                          id="windsurfSsoToken"
+                          type="password"
+                          value={windsurfSsoToken}
+                          readOnly
+                          className="font-mono text-xs"
+                        />
+                      </div>
+                    )}
+
+                    {/* Save */}
+                    <Button
+                      className="w-full"
+                      disabled={!windsurfSsoToken.trim()}
+                      onClick={() => {
+                        if (!providerConfig?.apiKey) return;
+                        const newSettings = { ...settings };
+                        newSettings[providerConfig.apiKey] = windsurfSsoToken.trim();
+                        newSettings[`${providerConfig.apiKey}Enabled`] = true;
+                        onSettingsChange(newSettings);
+                        setTestResult({ success: true, message: t('sections.accounts.providerConfig.windsurfAuth.saveSuccess') });
+                      }}
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      {t('sections.accounts.providerConfig.windsurfAuth.saveAndConnect')}
+                    </Button>
                   </div>
                 ) : (
                   !authTerminal ? (
