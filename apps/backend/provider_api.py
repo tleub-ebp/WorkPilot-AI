@@ -80,36 +80,111 @@ app.add_middleware(
 _selected_provider: Optional[str] = None
 
 def get_env_provider_config(name: str) -> dict | None:
-    if name == "claude":
+    # Anthropic / Claude
+    if name in ("claude", "anthropic"):
         token = os.getenv("ANTHROPIC_API_KEY")
         if not token:
             from src.connectors.llm_config import get_claude_token_from_system
             token = get_claude_token_from_system()
         if token:
-            return {"api_key": token, "model": "opus-4.6"}
+            return {"api_key": token, "model": "claude-opus-4-6"}
         return None
+
+    # OpenAI
     if name == "openai" and os.getenv("OPENAI_API_KEY"):
-        return {"api_key": os.getenv("OPENAI_API_KEY"), "model": "gpt-5.2"}
-    if name == "ollama" and os.getenv("OLLAMA_BASE_URL"):
-        return {"model": "llama3", "base_url": os.getenv("OLLAMA_BASE_URL")}
+        return {
+            "api_key": os.getenv("OPENAI_API_KEY"),
+            "model": "gpt-5.2",
+            "base_url": os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+        }
+
+    # Google Gemini
     if name == "google" and os.getenv("GOOGLE_API_KEY"):
-        return {"api_key": os.getenv("GOOGLE_API_KEY"), "model": "gemini-3.0"}
+        return {"api_key": os.getenv("GOOGLE_API_KEY"), "model": "gemini-2.5-pro"}
+
+    # Mistral AI
+    if name == "mistral" and os.getenv("MISTRAL_API_KEY"):
+        return {
+            "api_key": os.getenv("MISTRAL_API_KEY"),
+            "model": "mistral-large-2",
+            "base_url": os.getenv("MISTRAL_BASE_URL", "https://api.mistral.ai/v1"),
+        }
+
+    # DeepSeek
+    if name == "deepseek" and os.getenv("DEEPSEEK_API_KEY"):
+        return {
+            "api_key": os.getenv("DEEPSEEK_API_KEY"),
+            "model": "deepseek-r2",
+            "base_url": os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
+        }
+
+    # Grok (xAI)
     if name == "grok" and os.getenv("GROK_API_KEY"):
         return {"api_key": os.getenv("GROK_API_KEY"), "model": "grok-2"}
-    if name == "windsurf" and os.getenv("WINDSURF_OAUTH_TOKEN"):
-        return {"oauth_token": os.getenv("WINDSURF_OAUTH_TOKEN"), "model": "windsurf-codestral"}
-    if name == "copilot":
-        # Pour Copilot, on vérifie juste l'authentification via gh CLI
-        # try:
-        #     result = run_secure(["gh", "auth", "status"], timeout=10)
-        #     if "Logged in to github.com" in result.output:
-        #         copilot_check = run_secure(["gh", "copilot", "--version"], timeout=5)
-        #         if copilot_check.success:
-        #             return {"authenticated": True, "model": "copilot"}
-        #     return None
-        # except (SubprocessSecurityError, Exception):
-        #     return None
+
+    # Meta (LLaMA) — via Together AI or Replicate
+    if name == "meta" and os.getenv("META_API_KEY"):
+        return {
+            "api_key": os.getenv("META_API_KEY"),
+            "model": "meta-llama/llama-4-scout",
+            "base_url": os.getenv("META_BASE_URL", "https://api.together.xyz/v1"),
+        }
+
+    # AWS Bedrock
+    if name == "aws":
+        access_key = os.getenv("AWS_ACCESS_KEY_ID")
+        secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+        if access_key and secret_key:
+            return {
+                "api_key": access_key,
+                "secret_key": secret_key,
+                "region": os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
+                "model": "anthropic.claude-opus-4-6-v1",
+            }
         return None
+
+    # Ollama (local)
+    if name == "ollama":
+        base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        # Vérifier si Ollama est accessible
+        try:
+            import urllib.request
+            req = urllib.request.Request(f"{base_url}/api/tags", method="GET")
+            with urllib.request.urlopen(req, timeout=2):
+                return {"model": "llama3.3", "base_url": base_url}
+        except Exception:
+            pass
+        return None
+
+    # GitHub Copilot (gh CLI)
+    if name == "copilot":
+        try:
+            import subprocess
+            result = subprocess.run(
+                ["gh", "auth", "status"],
+                capture_output=True, text=True, timeout=5
+            )
+            if "Logged in to github.com" in (result.stdout + result.stderr):
+                return {"authenticated": True, "model": "gpt-4o"}
+        except Exception:
+            pass
+        return None
+
+    # Windsurf (Codeium)
+    if name == "windsurf":
+        token = os.getenv("WINDSURF_API_KEY") or os.getenv("WINDSURF_OAUTH_TOKEN") or os.getenv("CODEIUM_API_KEY")
+        if token:
+            return {"api_key": token, "model": "swe-1.5"}
+        return None
+
+    # Cursor
+    if name == "cursor" and os.getenv("CURSOR_API_KEY"):
+        return {
+            "api_key": os.getenv("CURSOR_API_KEY"),
+            "model": "cursor-default",
+            "base_url": os.getenv("CURSOR_BASE_URL", "https://api.cursor.com/v1"),
+        }
+
     return None
 
 # Correction de la détection dynamique : n'afficher que les providers réellement implémentés
@@ -210,14 +285,13 @@ def get_providers():
             # Cas spécial pour Copilot : vérifier l'authentification gh CLI
             if name == "copilot":
                 try:
-                    # result = run_secure(["gh", "auth", "status"], timeout=10)
-                    # if "Logged in to github.com" in result.output:
-                    #     copilot_check = run_secure(["gh", "copilot", "--version"], timeout=5)
-                    #     status[name] = copilot_check.success
-                    # else:
-                    #     status[name] = False
-                    status[name] = False
-                except (SubprocessSecurityError, Exception):
+                    import subprocess
+                    result = subprocess.run(
+                        ["gh", "auth", "status"],
+                        capture_output=True, text=True, timeout=5
+                    )
+                    status[name] = "Logged in to github.com" in (result.stdout + result.stderr)
+                except Exception:
                     status[name] = False
             else:
                 status[name] = is_valid or (env_key is not None and env_key.strip() != "")
@@ -280,14 +354,53 @@ def test_provider(request: Request, provider: str):
 @app.post("/providers/test-key/{provider}")
 @limiter.limit("5/minute")
 async def test_provider_api_key(request: Request, provider: str, payload: dict):
+    """Test an API key for any supported provider."""
     api_key = payload.get("api_key")
     base_url = payload.get("base_url")
+
+    async def _test_bearer(url: str, key: str) -> dict:
+        """Helper: test a Bearer-authenticated /v1/models endpoint."""
+        try:
+            headers = {"Authorization": f"Bearer {key}"}
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(url, headers=headers, timeout=10)
+            if resp.status_code == 200:
+                set_validated(provider, key, True)
+                return {"success": True}
+            set_validated(provider, key, False)
+            return {"success": False, "error": resp.text}
+        except Exception as e:
+            set_validated(provider, key, False)
+            return {"success": False, "error": str(e)}
+
+    # --- Anthropic ---
+    if provider in ("anthropic", "claude"):
+        try:
+            headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01"}
+            async with httpx.AsyncClient() as client:
+                resp = await client.get("https://api.anthropic.com/v1/models", headers=headers, timeout=10)
+            if resp.status_code in (200, 403):
+                set_validated(provider, api_key, True)
+                return {"success": True}
+            set_validated(provider, api_key, False)
+            return {"success": False, "error": resp.text}
+        except Exception as e:
+            set_validated(provider, api_key, False)
+            return {"success": False, "error": str(e)}
+
+    # --- OpenAI ---
     if provider == "openai":
+        url = (base_url or "https://api.openai.com") + "/v1/models"
+        return await _test_bearer(url, api_key)
+
+    # --- Google Gemini ---
+    if provider == "google":
         try:
-            url = (base_url or "https://api.openai.com") + "/v1/models"
-            headers = {"Authorization": f"Bearer {api_key}"}
             async with httpx.AsyncClient() as client:
-                resp = await client.get(url, headers=headers, timeout=10)
+                resp = await client.get(
+                    f"https://generativelanguage.googleapis.com/v1/models?key={api_key}",
+                    timeout=10,
+                )
             if resp.status_code == 200:
                 set_validated(provider, api_key, True)
                 return {"success": True}
@@ -296,46 +409,50 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
         except Exception as e:
             set_validated(provider, api_key, False)
             return {"success": False, "error": str(e)}
-    elif provider == "grok":
-        try:
-            url = "https://api.x.ai/v1/models"
-            headers = {"Authorization": f"Bearer {api_key}"}
-            async with httpx.AsyncClient() as client:
-                resp = await client.get(url, headers=headers, timeout=10)
-            if resp.status_code == 200:
-                set_validated(provider, api_key, True)
-                return {"success": True}
-            set_validated(provider, api_key, False)
-            return {"success": False, "error": resp.text}
-        except Exception as e:
-            set_validated(provider, api_key, False)
-            return {"success": False, "error": str(e)}
-    elif provider == "windsurf":
-        # Pour Windsurf, on utilise oauth_token au lieu de api_key
+
+    # --- Mistral AI ---
+    if provider == "mistral":
+        url = (base_url or "https://api.mistral.ai") + "/v1/models"
+        return await _test_bearer(url, api_key)
+
+    # --- DeepSeek ---
+    if provider == "deepseek":
+        url = (base_url or "https://api.deepseek.com") + "/v1/models"
+        return await _test_bearer(url, api_key)
+
+    # --- Grok (xAI) ---
+    if provider == "grok":
+        return await _test_bearer("https://api.x.ai/v1/models", api_key)
+
+    # --- Meta (via Together AI / Replicate — OpenAI-compatible) ---
+    if provider == "meta":
+        url = (base_url or "https://api.together.xyz") + "/v1/models"
+        return await _test_bearer(url, api_key)
+
+    # --- Cursor ---
+    if provider == "cursor":
+        url = (base_url or "https://api.cursor.com") + "/v1/models"
+        return await _test_bearer(url, api_key)
+
+    # --- Windsurf (Codeium) ---
+    if provider == "windsurf":
         oauth_token = payload.get("oauth_token") or payload.get("api_key")
         if not oauth_token:
             return {"success": False, "error": "OAuth token required for Windsurf"}
-        
-        # Test via MCP si disponible, sinon fallback sur API directe
         try:
             from integrations.windsurf_mcp import get_windsurf_mcp
             mcp = await get_windsurf_mcp()
             status = await mcp.check_status()
-            
             if status.get("connected", False):
                 set_validated(provider, oauth_token, True)
                 return {"success": True, "method": "MCP"}
         except Exception as mcp_error:
             logging.warning(f"MCP test failed, trying direct API: {mcp_error}")
-        
-        # Fallback sur test API direct
         try:
             url = "https://server.codeium.com/api/v1/models"
             headers = {"Authorization": f"Bearer {oauth_token}"}
             async with httpx.AsyncClient() as client:
                 resp = await client.get(url, headers=headers, timeout=10)
-            
-            # 404 est attendu (endpoint /models n'existe pas), mais ça prouve la connexion
             if resp.status_code in [200, 404]:
                 set_validated(provider, oauth_token, True)
                 return {"success": True, "method": "direct_api"}
@@ -344,8 +461,34 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
         except Exception as e:
             set_validated(provider, oauth_token, False)
             return {"success": False, "error": str(e)}
-    # Ajoute ici d'autres providers si besoin
-    return {"success": False, "error": "Provider non supporté pour le test"}
+
+    # --- Copilot (gh CLI auth — no API key test) ---
+    if provider == "copilot":
+        try:
+            import subprocess
+            result = subprocess.run(
+                ["gh", "auth", "status"],
+                capture_output=True, text=True, timeout=5
+            )
+            if "Logged in to github.com" in (result.stdout + result.stderr):
+                return {"success": True, "method": "gh_cli"}
+            return {"success": False, "error": "GitHub CLI not authenticated. Run: gh auth login"}
+        except Exception as e:
+            return {"success": False, "error": f"GitHub CLI check failed: {e}"}
+
+    # --- Ollama (local — no key needed) ---
+    if provider == "ollama":
+        try:
+            url = (base_url or "http://localhost:11434") + "/api/tags"
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(url, timeout=5)
+            if resp.status_code == 200:
+                return {"success": True}
+            return {"success": False, "error": f"Ollama returned HTTP {resp.status_code}"}
+        except Exception as e:
+            return {"success": False, "error": f"Ollama not reachable: {e}"}
+
+    return {"success": False, "error": f"Provider '{provider}' non supporté pour le test"}
 
 @app.get("/providers/capabilities/{provider}")
 def get_provider_capabilities(provider: str):
@@ -393,83 +536,6 @@ def generate_with_provider(request: Request, provider: str, payload: Dict[str, A
         return {"result": result}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Generation failed: {e}")
-
-@app.post("/providers/force_claude_config")
-def force_claude_config():
-    force_claude_provider_config()
-    return {"status": "ok"}
-
-@app.get("/ping")
-def ping():
-    return {"pong": True}
-
-@app.get("/providers/models/{provider}")
-async def get_provider_models(provider: str = Path(..., description="Nom du provider LLM (ex: claude, anthropic, openai, etc.)")):
-    if provider == "openai":
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            return {"models": [], "provider": provider, "error": "Clé API OpenAI manquante."}
-        try:
-            headers = {"Authorization": f"Bearer {api_key}"}
-            async with httpx.AsyncClient() as client:
-                resp = await client.get("https://api.openai.com/v1/models", headers=headers, timeout=10)
-            resp.raise_for_status()
-            data = resp.json()
-            models = [m["id"] for m in data.get("data", [])]
-            return {"models": models, "provider": provider}
-        except Exception as e:
-            return {"models": [], "provider": provider, "error": str(e)}
-    if provider == "anthropic" or provider == "claude":
-        api_key = os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY")
-        if not api_key:
-            return {"models": [], "provider": provider, "error": "Clé API Anthropic manquante."}
-        try:
-            headers = {"x-api-key": api_key}
-            async with httpx.AsyncClient() as client:
-                resp = await client.get("https://api.anthropic.com/v1/models", headers=headers, timeout=10)
-            resp.raise_for_status()
-            data = resp.json()
-            models = data.get("models", [])
-            return {"models": models, "provider": provider}
-        except Exception as e:
-            # Fallback sur liste statique
-            claude_models = [
-                "claude-opus-4-5-20251101",
-                "claude-sonnet-4-5-20250929",
-                "claude-haiku-4-5-20251001",
-                "claude-opus-4-6"
-            ]
-            return {"models": claude_models, "provider": provider, "error": str(e)}
-    if provider == "windsurf":
-        api_key = os.getenv("WINDSURF_API_KEY")
-        if not api_key:
-            # Return static models if no API key
-            windsurf_models = [
-                "windsurf-codestral",
-                "windsurf-sonnet", 
-                "windsurf-haiku",
-                "windsurf-custom"
-            ]
-            return {"models": windsurf_models, "provider": provider}
-        try:
-            headers = {"Authorization": f"Bearer {api_key}"}
-            async with httpx.AsyncClient() as client:
-                resp = await client.get("https://api.windsurf.ai/v1/models", headers=headers, timeout=10)
-            resp.raise_for_status()
-            data = resp.json()
-            models = [m["id"] for m in data.get("data", [])]
-            return {"models": models, "provider": provider}
-        except Exception as e:
-            # Fallback sur liste statique
-            windsurf_models = [
-                "windsurf-codestral",
-                "windsurf-sonnet",
-                "windsurf-haiku", 
-                "windsurf-custom"
-            ]
-            return {"models": windsurf_models, "provider": provider, "error": str(e)}
-    # Fallback pour les autres providers
-    return {"models": [], "provider": provider, "error": f"Provider '{provider}' non supporté pour la récupération des modèles."}
 
 @app.post("/providers/validate/{provider}")
 @limiter.limit("5/minute")
@@ -526,7 +592,31 @@ async def validate_provider_key(request: Request, provider: str, api_key: str = 
             raise HTTPException(status_code=400, detail=f"API key validation failed: {e}")
     elif provider in ("windsurf",):
         try:
-            url = "https://api.windsurf.ai/v1/models"
+            url = "https://server.codeium.com/api/v1/models"
+            headers = {"Authorization": f"Bearer {api_key}"}
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(url, headers=headers, timeout=10)
+            if resp.status_code not in (200, 404):
+                set_validated(provider, api_key, False)
+                raise HTTPException(status_code=400, detail="API key validation failed: invalid key")
+        except httpx.HTTPError as e:
+            set_validated(provider, api_key, False)
+            raise HTTPException(status_code=400, detail=f"API key validation failed: {e}")
+    elif provider in ("mistral",):
+        try:
+            url = "https://api.mistral.ai/v1/models"
+            headers = {"Authorization": f"Bearer {api_key}"}
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(url, headers=headers, timeout=10)
+            if resp.status_code != 200:
+                set_validated(provider, api_key, False)
+                raise HTTPException(status_code=400, detail="API key validation failed: invalid key")
+        except httpx.HTTPError as e:
+            set_validated(provider, api_key, False)
+            raise HTTPException(status_code=400, detail=f"API key validation failed: {e}")
+    elif provider in ("deepseek",):
+        try:
+            url = "https://api.deepseek.com/v1/models"
             headers = {"Authorization": f"Bearer {api_key}"}
             async with httpx.AsyncClient() as client:
                 resp = await client.get(url, headers=headers, timeout=10)
@@ -537,9 +627,14 @@ async def validate_provider_key(request: Request, provider: str, api_key: str = 
             set_validated(provider, api_key, False)
             raise HTTPException(status_code=400, detail=f"API key validation failed: {e}")
     else:
+        # For providers without specific validation (meta, cursor, copilot, ollama, aws)
+        # Accept the key if it's non-empty
+        if api_key and api_key.strip():
+            set_validated(provider, api_key, True)
+            return {"status": "validated"}
         raise HTTPException(
             status_code=400,
-            detail=f"Provider '{provider}' does not support key validation via this endpoint",
+            detail=f"Provider '{provider}': API key is empty",
         )
 
     set_validated(provider, api_key, True)

@@ -33,13 +33,20 @@ import { useProviderContext } from './ProviderContext';
 /**
  * Type-safe mapping from ApiProvider to translation keys
  */
-const PROVIDER_TRANSLATION_KEYS: Readonly<Record<ApiProvider, string>> = {
+const PROVIDER_TRANSLATION_KEYS: Readonly<Partial<Record<ApiProvider, string>>> = {
   anthropic: 'common:usage.providerAnthropic',
   openai: 'common:usage.providerOpenAI',
   ollama: 'common:usage.providerOllama',
   ollama_local: 'common:usage.providerOllamaLocal',
   copilot: 'common:usage.providerCopilot',
   windsurf: 'common:usage.providerWindsurf',
+  google: 'common:usage.providerGoogle',
+  mistral: 'common:usage.providerMistral',
+  deepseek: 'common:usage.providerDeepSeek',
+  grok: 'common:usage.providerGrok',
+  meta: 'common:usage.providerMeta',
+  cursor: 'common:usage.providerCursor',
+  aws: 'common:usage.providerAWS',
   unknown: 'common:usage.providerUnknown'
 } as const;
 
@@ -193,9 +200,9 @@ export function AuthStatusIndicator() {
           badgeColor: getProviderBadgeColor(provider)
         };
       }
-      return OAUTH_FALLBACK;
     }
 
+    // Final fallback — use OAUTH_FALLBACK only for Anthropic, generic provider otherwise
     return OAUTH_FALLBACK;
   }, [selectedProvider, profiles, activeProfileId]);
 
