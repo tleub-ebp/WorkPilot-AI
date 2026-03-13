@@ -397,7 +397,7 @@ class ProviderRegistry:
                 )
                 return copilot_check.returncode == 0
             return False
-        except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+        except (subprocess.TimeoutExpired, FileNotFoundError):
             return False
     
     def _has_profile_for_provider(self, provider_name: str, profiles: List[Dict[str, Any]]) -> bool:
@@ -412,29 +412,33 @@ class ProviderRegistry:
         base_url = profile.get('baseUrl', '').lower()
         name = profile.get('name', '').lower()
         
-        # Logique de détection
-        if 'anthropic.com' in base_url or 'claude' in name:
-            return 'anthropic'
-        if 'openai.com' in base_url or 'openai' in name:
-            return 'openai'
-        if 'google.com' in base_url or 'gemini' in name:
-            return 'google'
-        if 'meta.com' in base_url or 'llama' in name:
-            return 'meta'
-        if 'mistral.ai' in base_url or 'mistral' in name:
-            return 'mistral'
-        if 'deepseek.com' in base_url or 'deepseek' in name:
-            return 'deepseek'
-        if 'aws.amazon.com' in base_url or 'bedrock' in name:
-            return 'aws'
-        if 'ollama' in base_url or 'ollama' in name:
-            return 'ollama'
-        if 'x.ai' in base_url or 'grok' in name:
-            return 'grok'
-        if 'codeium.com' in base_url or 'windsurf' in name or 'api.windsurf.com' in base_url:
-            return 'windsurf'
-
+        # Configuration de détection des providers
+        provider_patterns = [
+            ('anthropic', ['anthropic.com', 'claude']),
+            ('openai', ['openai.com', 'openai']),
+            ('google', ['google.com', 'gemini']),
+            ('meta', ['meta.com', 'llama']),
+            ('mistral', ['mistral.ai', 'mistral']),
+            ('deepseek', ['deepseek.com', 'deepseek']),
+            ('aws', ['aws.amazon.com', 'bedrock']),
+            ('ollama', ['ollama']),
+            ('grok', ['x.ai', 'grok']),
+            ('windsurf', ['codeium.com', 'windsurf', 'api.windsurf.com'])
+        ]
+        
+        # Recherche du provider correspondant
+        for provider_name, patterns in provider_patterns:
+            if self._matches_patterns(base_url, name, patterns):
+                return provider_name
+        
         return 'custom'
+    
+    def _matches_patterns(self, base_url: str, name: str, patterns: List[str]) -> bool:
+        """Vérifie si l'URL ou le nom correspond aux patterns du provider"""
+        for pattern in patterns:
+            if pattern in base_url or pattern in name:
+                return True
+        return False
     
     def _check_oauth_status(self, provider_name: str) -> bool:
         """Vérifie le statut OAuth/SSO pour un provider"""
