@@ -22,11 +22,42 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 
 # from security.secure_subprocess import run_secure, SubprocessSecurityError
 
-from src.connectors.llm_discovery import get_provider_by_name
-from src.connectors.llm_config import (
-    save_provider_config, load_provider_config, delete_provider_config, list_provider_configs,
-    force_claude_provider_config
-)
+# Lazy import: llm_discovery is only needed by endpoint functions, not at module init.
+# Importing it eagerly breaks other modules (agent_runner, client) that import
+# provider_api just for get_selected_provider() but don't have src.connectors on sys.path.
+def get_provider_by_name(name: str):
+    from src.connectors.llm_discovery import get_provider_by_name as _get_provider_by_name
+    return _get_provider_by_name(name)
+
+# Lazy imports for llm_config functions (same reason as llm_discovery above)
+def _get_llm_config():
+    from src.connectors.llm_config import (
+        save_provider_config, load_provider_config, delete_provider_config,
+        list_provider_configs, force_claude_provider_config
+    )
+    return {
+        'save_provider_config': save_provider_config,
+        'load_provider_config': load_provider_config,
+        'delete_provider_config': delete_provider_config,
+        'list_provider_configs': list_provider_configs,
+        'force_claude_provider_config': force_claude_provider_config,
+    }
+
+def save_provider_config(*args, **kwargs):
+    return _get_llm_config()['save_provider_config'](*args, **kwargs)
+
+def load_provider_config(*args, **kwargs):
+    return _get_llm_config()['load_provider_config'](*args, **kwargs)
+
+def delete_provider_config(*args, **kwargs):
+    return _get_llm_config()['delete_provider_config'](*args, **kwargs)
+
+def list_provider_configs(*args, **kwargs):
+    return _get_llm_config()['list_provider_configs'](*args, **kwargs)
+
+def force_claude_provider_config(*args, **kwargs):
+    return _get_llm_config()['force_claude_provider_config'](*args, **kwargs)
+
 from validated_keys_db import set_validated, is_validated
 
 @asynccontextmanager

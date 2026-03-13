@@ -927,7 +927,11 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
                 "ollama": "ollama",
                 "meta": "meta",
                 "mistral": "mistral",
-                "deepseek": "deepseek"
+                "deepseek": "deepseek",
+                "grok": "grok",
+                "aws": "aws",
+                "windsurf": "windsurf",
+                "custom": "custom"
             }
             mapped_provider = provider_mapping.get(selected_provider.lower(), selected_provider.lower())
             if mapped_provider:
@@ -938,7 +942,7 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
 
     # 2. Environment variable override
     env_provider = os.environ.get("AUTO_CLAUDE_PROVIDER", "").lower().strip()
-    if env_provider in ("claude", "copilot", "openai", "google", "ollama", "meta", "mistral", "deepseek"):
+    if env_provider in ("claude", "copilot", "openai", "google", "ollama", "meta", "mistral", "deepseek", "grok", "aws", "windsurf", "custom"):
         return env_provider
 
     # 3. Project-level setting from spec's parent project
@@ -959,7 +963,7 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
                         line = line.strip()
                         if line.startswith("AI_PROVIDER="):
                             value = line.split("=", 1)[1].strip().strip("\"'").lower()
-                            if value in ("claude", "copilot", "openai", "google", "ollama", "meta", "mistral", "deepseek"):
+                            if value in ("claude", "copilot", "openai", "google", "ollama", "meta", "mistral", "deepseek", "grok", "aws", "windsurf", "custom"):
                                 return value
             except Exception:
                 pass
@@ -1065,6 +1069,28 @@ def create_agent_client(
 
     elif provider == "claude":
         # Default: use existing create_client() and wrap in ClaudeAgentClient
+        sdk_client = create_client(
+            project_dir=project_dir,
+            spec_dir=spec_dir,
+            model=model,
+            agent_type=agent_type,
+            max_thinking_tokens=max_thinking_tokens,
+            output_format=output_format,
+            agents=agents,
+        )
+        return ClaudeAgentClient(sdk_client)
+
+    elif provider == "windsurf":
+        # Windsurf (Codeium) uses an OpenAI-compatible API at server.codeium.com.
+        # It does NOT support the Claude Agent SDK protocol.
+        # TODO: Implement a proper WindsurfAgentClient using the OpenAI-compatible API.
+        # For now, fall back to Claude SDK but log a clear warning.
+        logger.warning(
+            "Windsurf provider selected but no native WindsurfAgentClient exists yet. "
+            "Falling back to Claude SDK — this will consume Anthropic tokens, NOT Windsurf tokens. "
+            "To use Windsurf models, a dedicated WindsurfAgentClient using the OpenAI-compatible "
+            "API at https://server.codeium.com/api/v1 needs to be implemented."
+        )
         sdk_client = create_client(
             project_dir=project_dir,
             spec_dir=spec_dir,
