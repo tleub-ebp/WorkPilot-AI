@@ -1,8 +1,8 @@
 import { ipcMain, dialog, app, shell, session } from 'electron';
-import { existsSync, writeFileSync, mkdirSync, statSync, readFileSync } from 'fs';
+import { existsSync, writeFileSync, mkdirSync, statSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { is } from '@electron-toolkit/utils';
 
 // ESM-compatible __dirname
@@ -22,9 +22,270 @@ import { setUpdateChannel, setUpdateChannelWithDowngradeCheck } from '../app-upd
 import { getSettingsPath, readSettingsFile } from '../settings-utils';
 import { configureTools, getToolPath, getToolInfo, isPathFromWrongPlatform, preWarmToolCache } from '../cli-tool-manager';
 import { getUsageMonitor } from '../claude-profile/usage-monitor';
+import { credentialManager } from '../services/credential-manager';
 import { parseEnvFile } from './utils';
 
 const settingsPath = getSettingsPath();
+
+/**
+ * Get fallback spell check languages when preferred languages are not available
+ */
+function getFallbackLanguages(availableLanguages: string[]): string[] {
+  return availableLanguages.includes(DEFAULT_SPELL_CHECK_LANGUAGE)
+    ? [DEFAULT_SPELL_CHECK_LANGUAGE]
+    : [];
+}
+
+/**
+ * Opens terminal on Linux using available emulators
+ */
+function openLinuxTerminal(resolvedPath: string): IPCResult<void> {
+  const terminals: Array<{ cmd: string; args: string[]; useCwd?: boolean }> = [
+    { cmd: 'gnome-terminal', args: ['--working-directory', resolvedPath] },
+    { cmd: 'konsole', args: ['--workdir', resolvedPath] },
+    { cmd: 'xfce4-terminal', args: ['--working-directory', resolvedPath] },
+    { cmd: 'xterm', args: ['-e', 'bash'], useCwd: true }
+  ];
+
+  for (const { cmd, args, useCwd } of terminals) {
+    try {
+      execFileSync(cmd, args, {
+        stdio: 'ignore',
+        ...(useCwd ? { cwd: resolvedPath } : {})
+      });
+      return { success: true };
+    } catch {
+      // Continue to next terminal
+    }
+  }
+
+  return {
+    success: false,
+    error: 'No supported terminal emulator found. Please install gnome-terminal, konsole, xfce4-terminal, or xterm.'
+  };
+}
+
+/**
+ * Opens terminal based on platform
+ */
+function openTerminalForPlatform(resolvedPath: string): IPCResult<void> {
+  const platform = process.platform;
+
+  if (platform === 'darwin') {
+    // macOS: Use execFileSync with argument array to prevent injection
+    execFileSync('open', ['-a', 'Terminal', resolvedPath], { stdio: 'ignore' });
+    return { success: true };
+  } 
+  
+  if (platform === 'win32') {
+    // Windows: Use cmd.exe directly with argument array
+    // /C tells cmd to execute the command and terminate
+    // /K keeps the window open after executing cd
+    execFileSync('cmd.exe', ['/K', 'cd', '/d', resolvedPath], {
+      stdio: 'ignore',
+      windowsHide: false,
+      shell: false  // Explicitly disable shell to prevent injection
+    });
+    return { success: true };
+  }
+  
+  // Linux: Try common terminal emulators
+  return openLinuxTerminal(resolvedPath);
+}
+
+/**
+ * Validates a directory path for terminal opening
+ */
+function validateDirectoryPath(dirPath: string): IPCResult<string> {
+  // Validate dirPath input
+  if (!dirPath || typeof dirPath !== 'string' || dirPath.trim() === '') {
+    return {
+      success: false,
+      error: 'Directory path is required and must be a non-empty string'
+    };
+  }
+
+  // Resolve to absolute path
+  const resolvedPath = path.resolve(dirPath);
+
+  // Verify path exists
+  if (!existsSync(resolvedPath)) {
+    return {
+      success: false,
+      error: `Directory does not exist: ${resolvedPath}`
+    };
+  }
+
+  // Verify it's a directory
+  try {
+    if (!statSync(resolvedPath).isDirectory()) {
+      return {
+        success: false,
+        error: `Path is not a directory: ${resolvedPath}`
+      };
+    }
+  } catch (statError) {
+    return {
+      success: false,
+      error: `Cannot access path: ${resolvedPath} (${statError instanceof Error ? statError.message : String(statError)})`
+    };
+  }
+
+  return { success: true, data: resolvedPath };
+}
+
+/**
+ * Migration: Set agent profile to 'auto' for users who haven't made a selection
+ */
+function migrateAgentProfileToAuto(settings: AppSettings): boolean {
+  if (settings._migratedAgentProfileToAuto) {
+    return false;
+  }
+
+  // Only set 'auto' if user hasn't made a selection yet
+  if (!settings.selectedAgentProfile) {
+    settings.selectedAgentProfile = 'auto';
+  }
+  settings._migratedAgentProfileToAuto = true;
+  return true;
+}
+
+/**
+ * Migration: Sync defaultModel with selectedAgentProfile
+ */
+function migrateDefaultModelSync(settings: AppSettings): boolean {
+  if (settings._migratedDefaultModelSync) {
+    return false;
+  }
+
+  if (settings.selectedAgentProfile) {
+    const profile = DEFAULT_AGENT_PROFILES.find(p => p.id === settings.selectedAgentProfile);
+    if (profile) {
+      settings.defaultModel = profile.model;
+    }
+  }
+  settings._migratedDefaultModelSync = true;
+  return true;
+}
+
+/**
+ * Migration: Normalize agentFramework to 'auto-claude'
+ */
+function migrateAgentFramework(settings: AppSettings): boolean {
+  if (settings.agentFramework && settings.agentFramework !== 'auto-claude') {
+    settings.agentFramework = 'auto-claude';
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Migration: Clear CLI tool paths that are from a different platform
+ */
+function migratePlatformPaths(settings: AppSettings): boolean {
+  const pathFields = ['pythonPath', 'gitPath', 'githubCLIPath', 'gitlabCLIPath', 'claudePath', 'autoBuildPath'] as const;
+  let changed = false;
+
+  for (const field of pathFields) {
+    const pathValue = settings[field];
+    if (pathValue && isPathFromWrongPlatform(pathValue)) {
+      console.warn(
+        `[SETTINGS_GET] Clearing ${field} - path from different platform: ${pathValue}`
+      );
+      delete settings[field];
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+/**
+ * Auto-detect autoBuildPath if not set
+ */
+function setupAutoBuildPath(settings: AppSettings): void {
+  if (!settings.autoBuildPath) {
+    const detectedPath = detectAutoBuildSourcePath();
+    if (detectedPath) {
+      settings.autoBuildPath = detectedPath;
+    }
+  }
+}
+
+/**
+ * Execute a single backend request with timeout
+ */
+async function executeRequest<T>(url: string, options: RequestInit): Promise<{ success: boolean; data?: T; error?: string }> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`Backend responded with ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return { success: true, data };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
+/**
+ * Handle different types of request errors
+ */
+function handleRequestError(error: unknown, attempt: number, maxRetries: number, url: string): { shouldRetry: boolean; result?: { success: boolean; error?: string } } {
+  if (error instanceof Error && error.name === 'AbortError') {
+    console.warn(`[Backend Request] Attempt ${attempt} timed out for ${url}`);
+    if (attempt === maxRetries) {
+      return { 
+        shouldRetry: false,
+        result: { 
+          success: false, 
+          error: `Timeout: Le backend ne répond pas après ${maxRetries} tentatives.` 
+        }
+      };
+    }
+    return { shouldRetry: true };
+  }
+
+  if (error instanceof Error && error.message.includes('ECONNREFUSED')) {
+    return { 
+      shouldRetry: false,
+      result: { 
+        success: false, 
+        error: `Backend inaccessible: Veuillez vérifier que le backend est démarré.` 
+      }
+    };
+  }
+
+  console.error(`[Backend Request] Attempt ${attempt} failed for ${url}:`, error);
+  if (attempt === maxRetries) {
+    return { 
+      shouldRetry: false,
+      result: { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Request failed' 
+      }
+    };
+  }
+  return { shouldRetry: true };
+}
+
+/**
+ * Wait before retry with appropriate delay
+ */
+async function waitForRetry(attempt: number, isTimeout: boolean): Promise<void> {
+  const delay = isTimeout ? 1000 * attempt : 500 * attempt;
+  await new Promise(resolve => setTimeout(resolve, delay));
+}
 
 /**
  * Auto-detect the auto-claude source path relative to the app location.
@@ -102,51 +363,21 @@ async function makeBackendRequest<T>(
 ): Promise<{ success: boolean; data?: T; error?: string }> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout per attempt
-      
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        throw new Error(`Backend responded with ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      return { success: true, data };
-      
+      return await executeRequest<T>(url, options);
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        console.warn(`[Backend Request] Attempt ${attempt} timed out for ${url}`);
-        if (attempt === maxRetries) {
-          return { 
-            success: false, 
-            error: `Timeout: Le backend ne répond pas après ${maxRetries} tentatives.` 
-          };
-        }
-        // Wait before retry (exponential backoff)
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-        continue;
-      } else if (error instanceof Error && error.message.includes('ECONNREFUSED')) {
-        return { 
-          success: false, 
-          error: `Backend inaccessible: Veuillez vérifier que le backend est démarré.` 
-        };
-      } else {
-        console.error(`[Backend Request] Attempt ${attempt} failed for ${url}:`, error);
-        if (attempt === maxRetries) {
-          return { 
-            success: false, 
-            error: error instanceof Error ? error.message : 'Request failed' 
-          };
-        }
-        // Wait before retry
-        await new Promise(resolve => setTimeout(resolve, 500 * attempt));
+      const errorHandling = handleRequestError(error, attempt, maxRetries, url);
+      
+      if (errorHandling.result) {
+        return errorHandling.result;
       }
+      
+      if (!errorHandling.shouldRetry) {
+        break;
+      }
+      
+      // Wait before retry (timeout errors use exponential backoff)
+      const isTimeout = error instanceof Error && error.name === 'AbortError';
+      await waitForRetry(attempt, isTimeout);
     }
   }
   
@@ -184,6 +415,13 @@ export function registerSettingsHandlers(
             getUsageMonitor().onProviderSwitch(provider);
           } catch (e) {
             console.warn('[IPC:PROVIDER_SELECT] Failed to notify UsageMonitor:', e);
+          }
+          // Update CredentialManager so getEnvironmentVariables() injects the
+          // correct SELECTED_LLM_PROVIDER and provider-specific env vars
+          try {
+            await credentialManager.setActiveProvider(provider, 'oauth');
+          } catch (e) {
+            console.warn('[IPC:PROVIDER_SELECT] Failed to update CredentialManager:', e);
           }
           return { success: true, data: result.data.selected };
         } else {
@@ -238,62 +476,14 @@ export function registerSettingsHandlers(
       const settings: AppSettings = { ...DEFAULT_APP_SETTINGS, ...savedSettings };
       let needsSave = false;
 
-      // Migration: Set agent profile to 'auto' for users who haven't made a selection (one-time)
-      // This ensures new users get the optimized 'auto' profile as the default
-      // while preserving existing user preferences
-      if (!settings._migratedAgentProfileToAuto) {
-        // Only set 'auto' if user hasn't made a selection yet
-        if (!settings.selectedAgentProfile) {
-          settings.selectedAgentProfile = 'auto';
-        }
-        settings._migratedAgentProfileToAuto = true;
-        needsSave = true;
-      }
+      // Apply migrations in sequence
+      if (migrateAgentProfileToAuto(settings)) needsSave = true;
+      if (migrateDefaultModelSync(settings)) needsSave = true;
+      if (migrateAgentFramework(settings)) needsSave = true;
+      if (migratePlatformPaths(settings)) needsSave = true;
 
-      // Migration: Sync defaultModel with selectedAgentProfile (#414)
-      // Fixes bug where defaultModel was stuck at 'opus' regardless of profile selection
-      if (!settings._migratedDefaultModelSync) {
-        if (settings.selectedAgentProfile) {
-          const profile = DEFAULT_AGENT_PROFILES.find(p => p.id === settings.selectedAgentProfile);
-          if (profile) {
-            settings.defaultModel = profile.model;
-          }
-        }
-        settings._migratedDefaultModelSync = true;
-        needsSave = true;
-      }
-
-      // Migration: Normalize agentFramework to 'auto-claude' (replaces legacy 'claude-code' value)
-      // The UI section has been removed since only one framework is supported; ensure the stored
-      // value matches the sole valid option so downstream code is not confused by stale data.
-      if (settings.agentFramework && settings.agentFramework !== 'auto-claude') {
-        settings.agentFramework = 'auto-claude';
-        needsSave = true;
-      }
-
-      // Migration: Clear CLI tool paths that are from a different platform
-      // Fixes issue where Windows paths persisted on macOS (and vice versa)
-      // when settings were synced/transferred between platforms
-      // See: https://github.com/AndyMik90/Auto-Claude/issues/XXX
-      const pathFields = ['pythonPath', 'gitPath', 'githubCLIPath', 'gitlabCLIPath', 'claudePath', 'autoBuildPath'] as const;
-      for (const field of pathFields) {
-        const pathValue = settings[field];
-        if (pathValue && isPathFromWrongPlatform(pathValue)) {
-          console.warn(
-            `[SETTINGS_GET] Clearing ${field} - path from different platform: ${pathValue}`
-          );
-          delete settings[field];
-          needsSave = true;
-        }
-      }
-
-      // If no manual autoBuildPath is set, try to auto-detect
-      if (!settings.autoBuildPath) {
-        const detectedPath = detectAutoBuildSourcePath();
-        if (detectedPath) {
-          settings.autoBuildPath = detectedPath;
-        }
-      }
+      // Auto-detect autoBuildPath if not set
+      setupAutoBuildPath(settings);
 
       // Persist migration changes
       if (needsSave) {
@@ -319,7 +509,7 @@ export function registerSettingsHandlers(
         console.warn('[SETTINGS_GET] Failed to re-warm CLI cache:', error);
       });
 
-      return { success: true, data: settings as AppSettings };
+      return { success: true, data: settings };
     }
   );
 
@@ -504,10 +694,10 @@ export function registerSettingsHandlers(
         // Sanitize project name (convert to kebab-case, remove invalid chars)
         const sanitizedName = name
           .toLowerCase()
-          .replace(/\s+/g, '-')
-          .replace(/[^a-z0-9-_]/g, '')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, '');
+          .replaceAll(/\s+/g, '-')
+          .replaceAll(/[^a-z0-9-_]/g, '')
+          .replaceAll(/-+/g, '-')
+          .replaceAll(/^-|-$/g, '');
 
         if (!sanitizedName) {
           return { success: false, error: 'Invalid project name' };
@@ -616,90 +806,21 @@ export function registerSettingsHandlers(
     }
   );
 
-  ipcMain.handle(
+ipcMain.handle(
     IPC_CHANNELS.SHELL_OPEN_TERMINAL,
     async (_, dirPath: string): Promise<IPCResult<void>> => {
       try {
-        // Validate dirPath input
-        if (!dirPath || typeof dirPath !== 'string' || dirPath.trim() === '') {
+        // Validate directory path
+        const validation = validateDirectoryPath(dirPath);
+        if (!validation.success || !validation.data) {
           return {
             success: false,
-            error: 'Directory path is required and must be a non-empty string'
+            error: validation.error || 'Validation failed'
           };
         }
 
-        // Resolve to absolute path
-        const resolvedPath = path.resolve(dirPath);
-
-        // Verify path exists
-        if (!existsSync(resolvedPath)) {
-          return {
-            success: false,
-            error: `Directory does not exist: ${resolvedPath}`
-          };
-        }
-
-        // Verify it's a directory
-        try {
-          if (!statSync(resolvedPath).isDirectory()) {
-            return {
-              success: false,
-              error: `Path is not a directory: ${resolvedPath}`
-            };
-          }
-        } catch (_statError) {
-          return {
-            success: false,
-            error: `Cannot access path: ${resolvedPath}`
-          };
-        }
-
-        const platform = process.platform;
-
-        if (platform === 'darwin') {
-          // macOS: Use execFileSync with argument array to prevent injection
-          execFileSync('open', ['-a', 'Terminal', resolvedPath], { stdio: 'ignore' });
-        } else if (platform === 'win32') {
-          // Windows: Use cmd.exe directly with argument array
-          // /C tells cmd to execute the command and terminate
-          // /K keeps the window open after executing cd
-          execFileSync('cmd.exe', ['/K', 'cd', '/d', resolvedPath], {
-            stdio: 'ignore',
-            windowsHide: false,
-            shell: false  // Explicitly disable shell to prevent injection
-          });
-        } else {
-          // Linux: Try common terminal emulators with argument arrays
-          // Note: xterm uses cwd option to avoid shell injection vulnerabilities
-          const terminals: Array<{ cmd: string; args: string[]; useCwd?: boolean }> = [
-            { cmd: 'gnome-terminal', args: ['--working-directory', resolvedPath] },
-            { cmd: 'konsole', args: ['--workdir', resolvedPath] },
-            { cmd: 'xfce4-terminal', args: ['--working-directory', resolvedPath] },
-            { cmd: 'xterm', args: ['-e', 'bash'], useCwd: true }
-          ];
-
-          let opened = false;
-          for (const { cmd, args, useCwd } of terminals) {
-            try {
-              execFileSync(cmd, args, {
-                stdio: 'ignore',
-                ...(useCwd ? { cwd: resolvedPath } : {})
-              });
-              opened = true;
-              break;
-            } catch {
-            }
-          }
-
-          if (!opened) {
-            return {
-              success: false,
-              error: 'No supported terminal emulator found. Please install gnome-terminal, konsole, xfce4-terminal, or xterm.'
-            };
-          }
-        }
-
-        return { success: true };
+        // Open terminal for the platform
+        return openTerminalForPlatform(validation.data);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
         return {
@@ -857,9 +978,20 @@ export function registerSettingsHandlers(
         try {
           const content = readFileSync(envPath, 'utf-8');
           existingVars = parseEnvFile(content);
-        } catch (_readError) {
-          // File doesn't exist or can't be read - start with empty vars
-          // This is expected for first-time setup
+        } catch (error: any) {
+          if (error.code === 'ENOENT') {
+            // File doesn't exist - start with empty vars (expected for first-time setup)
+          } else if (error.code === 'EACCES') {
+            return {
+              success: false,
+              error: `Permission denied reading environment file: ${envPath}`
+            };
+          } else {
+            return {
+              success: false,
+              error: `Unexpected error reading environment file: ${error.message}`
+            };
+          }
         }
 
         // Update with new values
@@ -999,7 +1131,7 @@ export function registerSettingsHandlers(
         // Fallback to default if none of the preferred languages are available
         const languagesToSet = validLanguages.length > 0
           ? validLanguages
-          : (availableLanguages.includes(DEFAULT_SPELL_CHECK_LANGUAGE) ? [DEFAULT_SPELL_CHECK_LANGUAGE] : []);
+          : getFallbackLanguages(availableLanguages);
 
         if (languagesToSet.length > 0) {
           session.defaultSession.setSpellCheckerLanguages(languagesToSet);

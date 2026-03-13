@@ -32,6 +32,7 @@ interface ProviderConfigDialogProps {
   readonly onSettingsChange: (settings: any) => void;
   readonly onTest?: (providerId: string) => Promise<void>;
   readonly useSheet?: boolean; // Nouvelle prop pour savoir si on est dans un Sheet
+  readonly onProviderActivated?: (providerId: string) => void;
 }
 
 interface ProviderConfig {
@@ -59,7 +60,8 @@ export function ProviderConfigDialog({
   settings,
   onSettingsChange,
   onTest,
-  useSheet = false
+  useSheet = false,
+  onProviderActivated
 }: ProviderConfigDialogProps) {
   const { t } = useTranslation('settings');
   
@@ -235,6 +237,7 @@ export function ProviderConfigDialog({
         }
       }
       onSettingsChange(newSettings);
+      onProviderActivated?.(provider.id);
       onOpenChange(false);
       return;
     }
@@ -251,6 +254,7 @@ export function ProviderConfigDialog({
     }
 
     onSettingsChange(newSettings);
+    onProviderActivated?.(provider.id);
     onOpenChange(false);
   };
 
@@ -662,6 +666,7 @@ export function ProviderConfigDialog({
                                 newSettings[providerConfig.apiKey] = windsurfSsoToken.trim();
                                 newSettings[`${providerConfig.apiKey}Enabled`] = true;
                                 onSettingsChange(newSettings);
+                                onProviderActivated?.(provider.id);
                                 onOpenChange(false);
                               }}
                             >
