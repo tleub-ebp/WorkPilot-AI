@@ -1,22 +1,17 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  CheckCircle,
-  XCircle,
-  AlertCircle,
   Settings,
   Key,
   Eye,
   EyeOff,
-  ChevronDown,
-  ChevronUp,
   MoreHorizontal,
   Loader2
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Switch } from '../ui/switch';
 import { cn } from '@/lib/utils';
-import type { ProfileUsageSummary } from '@shared/types/agent';
+import type { ProfileUsageSummary, AuthMethod } from '@shared/types/agent';
 
 interface CleanProviderCardProps {
   provider: {
@@ -37,7 +32,7 @@ interface CleanProviderCardProps {
       keyPreview?: string;
       provider?: string;
       isOAuth?: boolean;
-      authMethod?: 'api-key' | 'oauth' | 'cli' | 'local';
+      authMethod?: AuthMethod;
     };
   };
   onConfigure?: (providerId: string) => void;
@@ -173,7 +168,7 @@ export function CleanProviderCard({
   className,
   isAutoSwitchingOpen = false,
   isTesting = false
-}: CleanProviderCardProps) {
+}: Readonly<CleanProviderCardProps>) {
   const { t, i18n } = useTranslation('settings');
   const [isExpanded, setIsExpanded] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
@@ -197,12 +192,6 @@ export function CleanProviderCard({
     }
   };
 
-  const handleRemove = () => {
-    if (onRemove) {
-      onRemove(provider.id);
-    }
-  };
-
   const ProviderIcon = providerIcons[provider.id] || <div className="w-4 h-4 bg-gray-400 rounded" />;
 
   const getStatusColor = () => {
@@ -212,19 +201,131 @@ export function CleanProviderCard({
   };
 
   const getStatusText = () => {
-    const statusText = !provider.isConfigured 
-      ? t('sections.accounts.providerCard.status.notConfigured')
-      : provider.isWorking === false 
-        ? t('sections.accounts.providerCard.status.error')
-        : t('sections.accounts.providerCard.status.active');
+    if (!provider.isConfigured) {
+      return t('sections.accounts.providerCard.status.notConfigured');
+    }
     
-    return statusText;
+    if (provider.isWorking === false) {
+      return t('sections.accounts.providerCard.status.error');
+    }
+    
+    return t('sections.accounts.providerCard.status.active');
   };
 
   const getCompactStatusText = () => {
     if (!provider.isConfigured) return "NC"; // Non Configuré
     if (provider.isWorking === false) return "ERR"; // Erreur  
     return "OK"; // Actif
+  };
+
+  const renderUsageSection = () => {
+    if (provider.realUsageData) {
+      return (
+        <div className="flex items-center justify-between text-xs text-gray-500">
+          <span>{t('sections.accounts.providerCard.usage')}</span>
+          <div className="text-right">
+            <div className="font-medium text-gray-700">
+              {provider.realUsageData.sessionPercent ? `${Math.round(provider.realUsageData.sessionPercent)}%` : 'N/A'}
+            </div>
+            {Boolean(provider.realUsageData.weeklyPercent) && (
+              <div className="text-gray-400 text-[10px]">
+                {t('sections.accounts.providerCard.week')}: {Math.round(provider.realUsageData.weeklyPercent)}%
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+    
+    if (provider.usageCount) {
+      return (
+        <div className="flex items-center justify-between text-xs text-gray-500">
+          <span>{t('sections.accounts.providerCard.usageThisMonth')}</span>
+          <span className="font-medium text-gray-700">{provider.usageCount}</span>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="flex items-center justify-between text-xs text-gray-400">
+        <span>{t('sections.accounts.providerCard.usage')}</span>
+        <span className="italic">{t('sections.accounts.providerCard.notAvailable')}</span>
+      </div>
+    );
+  };
+
+  const getAuthMethodText = () => {
+    const authMethod = provider.realApiKeyInfo?.authMethod;
+    
+    if (authMethod === 'cli') {
+      return t('sections.accounts.providerCard.authCli');
+    }
+    
+    if (authMethod === 'oauth') {
+      return t('sections.accounts.providerCard.authOauth');
+    }
+    
+    if (authMethod === 'local') {
+      return t('sections.accounts.providerCard.authLocal');
+    }
+    
+    return t('sections.accounts.providerCard.apiKey');
+  };
+
+  const renderAuthStatus = () => {
+    if (!provider.realApiKeyInfo?.hasKey) {
+      return <span className="text-gray-400 italic">{t('sections.accounts.providerCard.notConfigured')}</span>;
+    }
+    
+    const authMethod = provider.realApiKeyInfo?.authMethod;
+    
+    if (authMethod === 'cli') {
+      return (
+        <div className="px-2 py-1 bg-blue-50 rounded text-xs font-medium text-blue-700 border border-blue-200">
+          {t('sections.accounts.providerCard.cliAuthenticated')}
+        </div>
+      );
+    }
+    
+    if (authMethod === 'oauth') {
+      return (
+        <div className="px-2 py-1 bg-green-50 rounded text-xs font-medium text-green-700 border border-green-200">
+          {t('sections.accounts.providerCard.oauthConnected')}
+        </div>
+      );
+    }
+    
+    if (authMethod === 'local') {
+      return (
+        <div className="px-2 py-1 bg-purple-50 rounded text-xs font-medium text-purple-700 border border-purple-200">
+          {t('sections.accounts.providerCard.localRunning')}
+        </div>
+      );
+    }
+    
+    // Default case: API key with show/hide functionality
+    return (
+      <>
+        <code className="px-2 py-1 bg-gray-50 rounded text-xs font-mono text-gray-600 truncate min-w-0 flex-1">
+          {showApiKey && provider.realApiKeyInfo.keyPreview ?
+            provider.realApiKeyInfo.keyPreview :
+            'sk-...••••••••••••••••••••••••••••••••'
+          }
+        </code>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowApiKey(!showApiKey)}
+          className="h-5 w-5 p-0 shrink-0"
+        >
+          {showApiKey ? (
+            <EyeOff className="w-3 h-3" />
+          ) : (
+            <Eye className="w-3 h-3" />
+          )}
+        </Button>
+      </>
+    );
   };
 
   return (
@@ -268,7 +369,7 @@ export function CleanProviderCard({
               provider.isWorking === false && 'bg-destructive',
               provider.isConfigured && provider.isWorking !== false && 'bg-green-500'
             )} />
-            <span className={!isAutoSwitchingOpen ? "truncate" : "truncate max-w-[60px]"}>
+            <span className={isAutoSwitchingOpen ? "truncate max-w-[60px]" : "truncate"}>
               {isAutoSwitchingOpen ? getCompactStatusText() : getStatusText()}
             </span>
           </div>
@@ -287,17 +388,7 @@ export function CleanProviderCard({
       {/* Actions principales */}
       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
         <div className="flex items-center gap-2">
-          {!provider.isConfigured ? (
-            <Button
-              onClick={handleConfigure}
-              variant="outline"
-              size="sm"
-              className="h-7 px-3 text-xs"
-            >
-              <Key className="w-3 h-3 mr-1" />
-              {t('sections.accounts.providerCard.configure')}
-            </Button>
-          ) : (
+          {provider.isConfigured ? (
             <>
               <Button
                 onClick={handleTest}
@@ -325,6 +416,16 @@ export function CleanProviderCard({
                 {t('sections.accounts.providerCard.edit')}
               </Button>
             </>
+          ) : (
+            <Button
+              onClick={handleConfigure}
+              variant="outline"
+              size="sm"
+              className="h-7 px-3 text-xs"
+            >
+              <Key className="w-3 h-3 mr-1" />
+              {t('sections.accounts.providerCard.configure')}
+            </Button>
           )}
         </div>
 
@@ -345,53 +446,10 @@ export function CleanProviderCard({
           {/* Authentication method */}
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-500 shrink-0">
-              {provider.realApiKeyInfo?.authMethod === 'cli'
-                ? t('sections.accounts.providerCard.authCli')
-                : provider.realApiKeyInfo?.authMethod === 'oauth'
-                  ? t('sections.accounts.providerCard.authOauth')
-                  : provider.realApiKeyInfo?.authMethod === 'local'
-                    ? t('sections.accounts.providerCard.authLocal')
-                    : t('sections.accounts.providerCard.apiKey')}
+              {getAuthMethodText()}
             </span>
             <div className="flex items-center gap-2 min-w-0 flex-1 max-w-[60%]">
-              {provider.realApiKeyInfo?.hasKey ? (
-                provider.realApiKeyInfo?.authMethod === 'cli' ? (
-                    <div className="px-2 py-1 bg-blue-50 rounded text-xs font-medium text-blue-700 border border-blue-200">
-                      {t('sections.accounts.providerCard.cliAuthenticated')}
-                    </div>
-                  ) : provider.realApiKeyInfo?.authMethod === 'oauth' ? (
-                    <div className="px-2 py-1 bg-green-50 rounded text-xs font-medium text-green-700 border border-green-200">
-                      {t('sections.accounts.providerCard.oauthConnected')}
-                    </div>
-                  ) : provider.realApiKeyInfo?.authMethod === 'local' ? (
-                    <div className="px-2 py-1 bg-purple-50 rounded text-xs font-medium text-purple-700 border border-purple-200">
-                      {t('sections.accounts.providerCard.localRunning')}
-                    </div>
-                  ) : (
-                    <>
-                      <code className="px-2 py-1 bg-gray-50 rounded text-xs font-mono text-gray-600 truncate min-w-0 flex-1">
-                        {showApiKey && provider.realApiKeyInfo.keyPreview ?
-                          provider.realApiKeyInfo.keyPreview :
-                          'sk-...••••••••••••••••••••••••••••••••'
-                        }
-                      </code>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowApiKey(!showApiKey)}
-                        className="h-5 w-5 p-0 shrink-0"
-                      >
-                        {showApiKey ? (
-                          <EyeOff className="w-3 h-3" />
-                        ) : (
-                          <Eye className="w-3 h-3" />
-                        )}
-                      </Button>
-                    </>
-                  )
-              ) : (
-                <span className="text-gray-400 italic">{t('sections.accounts.providerCard.notConfigured')}</span>
-              )}
+              {renderAuthStatus()}
             </div>
           </div>
 
@@ -419,31 +477,7 @@ export function CleanProviderCard({
           )}
 
           {/* Utilisations */}
-          {provider.realUsageData ? (
-            <div className="flex items-center justify-between text-xs text-gray-500">
-              <span>{t('sections.accounts.providerCard.usage')}</span>
-              <div className="text-right">
-                <div className="font-medium text-gray-700">
-                  {provider.realUsageData.sessionPercent ? `${Math.round(provider.realUsageData.sessionPercent)}%` : 'N/A'}
-                </div>
-                {provider.realUsageData.weeklyPercent && (
-                  <div className="text-gray-400 text-[10px]">
-                    {t('sections.accounts.providerCard.week')}: {Math.round(provider.realUsageData.weeklyPercent)}%
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : provider.usageCount ? (
-            <div className="flex items-center justify-between text-xs text-gray-500">
-              <span>{t('sections.accounts.providerCard.usageThisMonth')}</span>
-              <span className="font-medium text-gray-700">{provider.usageCount}</span>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between text-xs text-gray-400">
-              <span>{t('sections.accounts.providerCard.usage')}</span>
-              <span className="italic">{t('sections.accounts.providerCard.notAvailable')}</span>
-            </div>
-          )}
+          {renderUsageSection()}
 
           {/* Provider source */}
           {provider.realApiKeyInfo?.provider && (

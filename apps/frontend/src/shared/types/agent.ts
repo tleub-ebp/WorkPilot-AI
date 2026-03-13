@@ -3,6 +3,15 @@
  */
 
 // ============================================
+// Authentication Types
+// ============================================
+
+/**
+ * Supported authentication methods for providers
+ */
+export type AuthMethod = 'api-key' | 'oauth' | 'cli' | 'local';
+
+// ============================================
 // Claude Profile Types (Multi-Account Support)
 // ============================================
 

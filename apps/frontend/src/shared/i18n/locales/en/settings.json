@@ -115,6 +115,7 @@
         "testSuccessDescription": "The {{providerName}} provider is working correctly",
         "testError": "Test failed",
         "testErrorDescription": "The {{providerName}} provider failed: {{error}}",
+        "deleteConfirm": "Are you sure you want to delete this provider configuration?",
         "testDetails": {
           "modelsAvailable": "{{count}} models available",
           "modelUsed": "Model used: {{model}}"
