@@ -849,21 +849,104 @@ export class CredentialManager extends EventEmitter {
         }
       }
 
+      // Source 3: Auto-detect from local Windsurf IDE (SSO enterprise users)
       if (!serviceKey) {
-        console.log('[CredentialManager] Windsurf — no service key found in profiles or settings');
+        try {
+          const detected = await detectWindsurfLocalToken();
+          if (detected.success && detected.apiKey) {
+            serviceKey = detected.apiKey;
+            profileName = detected.userName
+              ? `Windsurf (${detected.userName})`
+              : 'Windsurf (SSO)';
+            profileId = 'windsurf-sso';
+          }
+        } catch {
+          // Detection failed
+        }
+      }
+
+      if (!serviceKey) {
+        console.log('[CredentialManager] Windsurf — no service key found in profiles, settings, or local IDE');
         return null;
       }
 
-      const resp = await fetch('https://server.codeium.com/api/v1/GetTeamCreditBalance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ service_key: serviceKey }),
-        signal: AbortSignal.timeout(10000)
-      });
+      const isJWT = serviceKey.startsWith('eyJ');
+
+      // Strategy 1: service_key in body (standard for team service keys — skip for JWT)
+      let resp: Response | null = null;
+      if (!isJWT) {
+        resp = await fetch('https://server.codeium.com/api/v1/GetTeamCreditBalance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ service_key: serviceKey }),
+          signal: AbortSignal.timeout(10000)
+        });
+      }
+
+      // Strategy 2: Bearer header (works for both service keys and SSO/JWT tokens)
+      if (!resp || resp.status === 401) {
+        resp = await fetch('https://server.codeium.com/api/v1/GetTeamCreditBalance', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+          },
+          body: '{}',
+          signal: AbortSignal.timeout(10000)
+        });
+      }
 
       if (!resp.ok) {
+        // Strategy 3: For SSO, try GetTeamInfo
+        if (isJWT) {
+          try {
+            const teamResp = await fetch('https://server.codeium.com/exa.api_server_pb.ApiServerService/GetTeamInfo', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${serviceKey}`,
+              },
+              body: '{}',
+              signal: AbortSignal.timeout(10000)
+            });
+            if (teamResp.ok) {
+              const teamData = await teamResp.json();
+              if (teamData && (teamData.promptCreditsPerSeat || teamData.addOnCreditsUsed || teamData.numSeats)) {
+                // Normalize teamData the same way as credit balance response
+                const tPCS = teamData.promptCreditsPerSeat ?? 0;
+                const tNS = teamData.numSeats ?? 1;
+                const tACA = teamData.addOnCreditsAvailable ?? 0;
+                const tACU = teamData.addOnCreditsUsed ?? 0;
+                const tSeatTotal = tPCS * tNS;
+                const tTotal = tSeatTotal + tACA + tACU;
+                const tUsed = tACU;
+                let tPct = 0;
+                if (tTotal > 0) tPct = Math.round((tUsed / tTotal) * 100);
+                const usageResult: UsageData = {
+                  provider: 'windsurf', profileId, profileName,
+                  usage: { sessionPercent: tPct, weeklyPercent: 0, needsReauthentication: false },
+                  timestamp: Date.now()
+                };
+                this.usageData.set('windsurf', usageResult);
+                this.emit('usage:updated', usageResult);
+                return usageResult;
+              }
+            }
+          } catch {
+            // GetTeamInfo failed
+          }
+        }
         console.error('[CredentialManager] Windsurf credits API returned error:', resp.status, resp.statusText);
-        return null;
+        // Return a connected-but-no-usage snapshot to prevent Anthropic fallback
+        const fallbackResult: UsageData = {
+          provider: 'windsurf',
+          profileId,
+          profileName,
+          usage: { sessionPercent: 0, weeklyPercent: 0, needsReauthentication: false },
+          timestamp: Date.now()
+        };
+        this.usageData.set('windsurf', fallbackResult);
+        return fallbackResult;
       }
 
       const data = await resp.json();
@@ -1014,14 +1097,54 @@ export class CredentialManager extends EventEmitter {
    * Obtenir les variables d'environnement pour le processus Python
    */
   getEnvironmentVariables(): Record<string, string> {
+    const env: Record<string, string> = {};
+
+    // For Windsurf SSO enterprise users: even without an api_key credential,
+    // we must inject SELECTED_LLM_PROVIDER so the backend uses WindsurfAgentClient
+    // instead of silently falling back to Claude SDK.
+    // The backend's windsurf_proxy/auth.py will auto-detect the SSO token from
+    // the local Windsurf IDE's state.vscdb database.
+    if (this.activeCredential?.provider === 'windsurf') {
+      env.SELECTED_LLM_PROVIDER = 'windsurf';
+
+      if (this.activeCredential.type === 'api_key') {
+        const apiKey = this.activeCredential.credentials.apiKey || '';
+        const baseUrl = this.activeCredential.credentials.baseUrl || '';
+        if (apiKey) env.WINDSURF_API_KEY = apiKey;
+        if (baseUrl) env.WINDSURF_BASE_URL = baseUrl;
+      }
+      // For SSO/OAuth type: no WINDSURF_API_KEY needed — backend discovers it
+      // from the running Windsurf IDE via state.vscdb
+
+      // Filtrer les valeurs vides
+      return Object.fromEntries(
+        Object.entries(env).filter(([_, value]) => value.trim() !== '')
+      );
+    }
+
+    // Fallback: if activeCredential is not set but Windsurf is configured in settings.json
+    // (e.g., SSO token saved via ProviderConfigDialog "Save and Connect" button),
+    // inject SELECTED_LLM_PROVIDER=windsurf so the backend picks up the right provider.
     if (this.activeCredential?.type !== 'api_key') {
+      try {
+        const settings = readSettingsFile();
+        const windsurfKey = settings?.globalWindsurfApiKey as string | undefined;
+        if (windsurfKey?.trim()) {
+          env.SELECTED_LLM_PROVIDER = 'windsurf';
+          env.WINDSURF_API_KEY = windsurfKey.trim();
+          return Object.fromEntries(
+            Object.entries(env).filter(([_, value]) => value.trim() !== '')
+          );
+        }
+      } catch {
+        // settings file not available
+      }
       return {};
     }
 
     const provider = this.activeCredential.provider;
     const apiKey = this.activeCredential.credentials.apiKey || '';
     const baseUrl = this.activeCredential.credentials.baseUrl || '';
-    const env: Record<string, string> = {};
 
     switch (provider) {
       case 'anthropic':

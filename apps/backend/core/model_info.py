@@ -199,8 +199,8 @@ def _get_model_info_for_provider(provider: str) -> Dict[str, str]:
                 }
         except ImportError:
             pass
-        
-        model = os.getenv("WINDSURF_MODEL", "swe-1.5")
+
+        model = os.getenv("WINDSURF_MODEL", "claude-4-sonnet")
         return {
             "model": model,
             "model_label": _format_windsurf_model_label(model)
@@ -259,8 +259,40 @@ def _format_grok_model_label(model: str) -> str:
 def _format_windsurf_model_label(model: str) -> str:
     """Format Windsurf model label for display."""
     model_labels = {
+        # SWE models
         "swe-1.5": "SWE-1.5",
+        "swe-1.5-thinking": "SWE-1.5 Thinking",
+        "swe-1.5-slow": "SWE-1.5 Slow",
         "swe-1.5-fast": "SWE-1.5 Fast",
+        # Claude models
+        "claude-4-sonnet": "Claude 4 Sonnet (Windsurf)",
+        "claude-4-sonnet-thinking": "Claude 4 Sonnet Thinking (Windsurf)",
+        "claude-4-opus": "Claude 4 Opus (Windsurf)",
+        "claude-4-opus-thinking": "Claude 4 Opus Thinking (Windsurf)",
+        "claude-4.1-opus": "Claude 4.1 Opus (Windsurf)",
+        "claude-4.5-sonnet": "Claude 4.5 Sonnet (Windsurf)",
+        "claude-4.5-sonnet-thinking": "Claude 4.5 Sonnet Thinking (Windsurf)",
+        "claude-4.5-opus": "Claude 4.5 Opus (Windsurf)",
+        "claude-4.5-opus-thinking": "Claude 4.5 Opus Thinking (Windsurf)",
+        "claude-3.7-sonnet": "Claude 3.7 Sonnet (Windsurf)",
+        "claude-3.5-sonnet": "Claude 3.5 Sonnet (Windsurf)",
+        "claude-code": "Claude Code (Windsurf)",
+        # GPT models
+        "gpt-4o": "GPT-4o (Windsurf)",
+        "gpt-4.1": "GPT-4.1 (Windsurf)",
+        "gpt-5": "GPT-5 (Windsurf)",
+        "gpt-5.2-low": "GPT-5.2 Low (Windsurf)",
+        "gpt-5-codex": "GPT-5 Codex (Windsurf)",
+        # Reasoning
+        "o3": "O3 (Windsurf)",
+        "o3-mini": "O3 Mini (Windsurf)",
+        "o4-mini": "O4 Mini (Windsurf)",
+        # Other
+        "gemini-2.5-pro": "Gemini 2.5 Pro (Windsurf)",
+        "gemini-3-flash": "Gemini 3.0 Flash (Windsurf)",
+        "deepseek-r1": "DeepSeek R1 (Windsurf)",
+        "grok-3": "Grok 3 (Windsurf)",
+        # Legacy
         "claude-opus-4.6": "Claude Opus 4.6 (Windsurf)",
         "claude-sonnet-4.6": "Claude Sonnet 4.6 (Windsurf)",
         "claude-sonnet-4.5": "Claude Sonnet 4.5 (Windsurf)",

@@ -30,6 +30,7 @@ import { getAugmentedEnv } from '../env-utils';
 import { getToolInfo, getClaudeCliPathForSdk } from '../cli-tool-manager';
 import { killProcessGracefully, isWindows } from '../platform';
 import { appLog } from '../app-logger';
+import { credentialManager } from '../services/credential-manager';
 
 /**
  * Type for supported CLI tools
@@ -209,6 +210,10 @@ export class AgentProcessManager {
     const ghCliEnv = this.detectAndSetCliPath('gh');
     const glabCliEnv = this.detectAndSetCliPath('glab');
 
+    // Get active provider credentials (e.g., WINDSURF_API_KEY, SELECTED_LLM_PROVIDER)
+    // This ensures non-Claude providers get their credentials injected into the subprocess
+    const providerEnv = credentialManager.getEnvironmentVariables();
+
     return {
       ...augmentedEnv,
       ...gitBashEnv,
@@ -217,6 +222,7 @@ export class AgentProcessManager {
       ...glabCliEnv,
       ...extraEnv,
       ...profileEnv,
+      ...providerEnv,
       PYTHONUNBUFFERED: '1',
       PYTHONIOENCODING: 'utf-8',
       PYTHONUTF8: '1'
@@ -707,6 +713,10 @@ export class AgentProcessManager {
     // Get OAuth mode clearing vars (clears stale ANTHROPIC_* vars when in OAuth mode)
     const oauthModeClearVars = getOAuthModeClearVars(apiProfileEnv);
 
+    // Get provider-specific env vars (WINDSURF_API_KEY, SELECTED_LLM_PROVIDER, etc.)
+    // These must be injected regardless of OAuth mode since they are independent credentials
+    const providerSpecificEnv = credentialManager.getEnvironmentVariables();
+
     // Parse Python commandto handle space-separated commands like "py -3"
     const [pythonCommand, pythonBaseArgs] = parsePythonCommand(this.getPythonPath());
     let childProcess;
@@ -717,7 +727,8 @@ export class AgentProcessManager {
           ...env, // Already includes process.env, extraEnv, profileEnv, PYTHONUNBUFFERED, PYTHONUTF8
           ...pythonEnv, // Include Python environment (PYTHONPATH for bundled packages)
           ...oauthModeClearVars, // Clear stale ANTHROPIC_* vars when in OAuth mode
-          ...apiProfileEnv // Include active API profile config (highest priority for ANTHROPIC_* vars)
+          ...apiProfileEnv, // Include active API profile config (highest priority for ANTHROPIC_* vars)
+          ...providerSpecificEnv // Include provider credentials (WINDSURF_API_KEY, SELECTED_LLM_PROVIDER)
         }
       });
     } catch (err) {

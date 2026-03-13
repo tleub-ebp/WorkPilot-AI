@@ -940,6 +940,11 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
         # Fallback to other methods if IPC provider check fails
         pass
 
+    # 1.5. Check SELECTED_LLM_PROVIDER env var (set by frontend credential manager)
+    selected_env = os.environ.get("SELECTED_LLM_PROVIDER", "").lower().strip()
+    if selected_env and selected_env in provider_mapping:
+        return provider_mapping.get(selected_env, selected_env)
+
     # 2. Environment variable override
     env_provider = os.environ.get("AUTO_CLAUDE_PROVIDER", "").lower().strip()
     if env_provider in ("claude", "copilot", "openai", "google", "ollama", "meta", "mistral", "deepseek", "grok", "aws", "windsurf", "custom"):
@@ -1081,26 +1086,17 @@ def create_agent_client(
         return ClaudeAgentClient(sdk_client)
 
     elif provider == "windsurf":
-        # Windsurf (Codeium) uses an OpenAI-compatible API at server.codeium.com.
-        # It does NOT support the Claude Agent SDK protocol.
-        # TODO: Implement a proper WindsurfAgentClient using the OpenAI-compatible API.
-        # For now, fall back to Claude SDK but log a clear warning.
-        logger.warning(
-            "Windsurf provider selected but no native WindsurfAgentClient exists yet. "
-            "Falling back to Claude SDK — this will consume Anthropic tokens, NOT Windsurf tokens. "
-            "To use Windsurf models, a dedicated WindsurfAgentClient using the OpenAI-compatible "
-            "API at https://server.codeium.com/api/v1 needs to be implemented."
+        # Windsurf (Codeium) — dual-mode:
+        # Mode 1: gRPC to local Windsurf IDE language server (preferred)
+        # Mode 2: REST API to server.codeium.com (fallback when IDE not running)
+        from core.agent_client import WindsurfAgentClient
+
+        logger.info(
+            "[create_agent_client] Using WindsurfAgentClient "
+            "(gRPC proxy + REST fallback, model=%s)",
+            model,
         )
-        sdk_client = create_client(
-            project_dir=project_dir,
-            spec_dir=spec_dir,
-            model=model,
-            agent_type=agent_type,
-            max_thinking_tokens=max_thinking_tokens,
-            output_format=output_format,
-            agents=agents,
-        )
-        return ClaudeAgentClient(sdk_client)
+        return WindsurfAgentClient(model=model, max_turns=50)
 
     else:
         # For other providers (openai, google, ollama, etc.), fall back to Claude SDK
