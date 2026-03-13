@@ -33,7 +33,7 @@ describe('ProjectInitModal', () => {
     );
     expect(getByText('Initialisation du projet "MonProjetTest"')).toBeTruthy();
     expect(getByLabelText('Description du projet')).toBeTruthy();
-    expect(getByText('Modèle IA')).toBeTruthy();
+    expect(getByText('Fournisseur IA')).toBeTruthy();
     expect((getByTestId('provider-select') as HTMLSelectElement).value).toBe('anthropic');
     expect(getByText('Nom du projet:')).toBeTruthy();
     expect(getByText('Modèle sélectionné:')).toBeTruthy();

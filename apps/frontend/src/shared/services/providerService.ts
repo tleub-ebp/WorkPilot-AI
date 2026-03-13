@@ -210,7 +210,15 @@ class ProviderServiceClass {
   private async getProviderData() {
     const { getStaticProviders } = await import('@shared/utils/providers');
     const profiles = this.getCurrentProfiles();
-    return await getStaticProviders(profiles);
+    // Pass settings to detect providers configured via global keys (e.g., globalWindsurfApiKey)
+    let settings: Record<string, any> | undefined;
+    try {
+      const { useSettingsStore } = await import('@/stores/settings-store');
+      settings = useSettingsStore.getState().settings as Record<string, any>;
+    } catch {
+      // settings store not available in some contexts
+    }
+    return await getStaticProviders(profiles, settings);
   }
 
   /**
@@ -224,7 +232,11 @@ class ProviderServiceClass {
         details: { method: 'GitHub CLI' }
       };
     }
-    
+
+    if (providerName === 'windsurf') {
+      return { success: false, message: 'Provider windsurf not configured. Use SSO or provide an API key in settings.' };
+    }
+
     return { success: false, message: 'Provider not configured' };
   }
 
@@ -272,8 +284,10 @@ class ProviderServiceClass {
         return baseUrlLower.includes('googleapis.com') || baseUrlLower.includes('generativelanguage.googleapis.com');
       case 'mistral':
         return baseUrlLower.includes('mistral.ai') || baseUrlLower.includes('api.mistral.ai');
+      case 'windsurf':
+        return baseUrlLower.includes('codeium.com') || baseUrlLower.includes('windsurf.com') || baseUrlLower.includes('windsurf.ai');
       default:
-        return detectedProvider === providerName || 
+        return detectedProvider === providerName ||
                (providerName === 'claude' && detectedProvider === 'anthropic');
     }
   }

@@ -1121,8 +1121,8 @@ export function UsageIndicator() {
               <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
             </button>
 
-            {/* Other profiles section - sorted by availability */}
-            {otherProfiles.length > 0 && (
+            {/* Other profiles section - sorted by availability (only for Anthropic multi-account swap) */}
+            {otherProfiles.length > 0 && selectedProvider === 'anthropic' && (
                 <div className="pt-2 -mx-3 px-3 -mb-3 pb-3 space-y-1">
                   <div className="text-[10px] text-muted-foreground font-medium mb-1.5">
                     {t('common:usage.otherAccounts')}

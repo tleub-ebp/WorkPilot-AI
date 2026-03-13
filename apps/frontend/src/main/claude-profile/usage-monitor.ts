@@ -3046,12 +3046,53 @@ export class UsageMonitor extends EventEmitter {
           return detected === 'windsurf';
         });
 
-        if (!windsurfProfile || !windsurfProfile.apiKey) {
-          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — no API profile with service key found');
-          return null;
+        let serviceKey = windsurfProfile?.apiKey;
+        let wsProfileId = windsurfProfile?.id || 'windsurf-global';
+        let wsProfileName = windsurfProfile?.name || 'Windsurf (Codeium)';
+
+        // Fallback to global settings (globalWindsurfApiKey) for SSO users
+        if (!serviceKey) {
+          try {
+            const { readSettingsFile } = await import('../settings-utils');
+            const settings = readSettingsFile();
+            const globalKey = settings?.globalWindsurfApiKey as string | undefined;
+            if (globalKey?.trim()) {
+              serviceKey = globalKey.trim();
+              wsProfileId = 'windsurf-global';
+              wsProfileName = 'Windsurf (Codeium)';
+            }
+          } catch {
+            // Settings file not available
+          }
         }
 
-        const serviceKey = windsurfProfile.apiKey;
+        if (!serviceKey) {
+          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — no service key found in profiles or settings');
+          // Return a minimal snapshot so the UI shows Windsurf info instead of Anthropic
+          return {
+            sessionPercent: 0,
+            weeklyPercent: 0,
+            profileId: wsProfileId,
+            profileName: wsProfileName,
+            fetchedAt: new Date(),
+            providerName: 'windsurf',
+          } as UsageSnapshot;
+        }
+
+        // For SSO tokens (JWT), GetTeamCreditBalance won't work — return a basic snapshot
+        const isJWT = serviceKey.startsWith('eyJ');
+        if (isJWT) {
+          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf SSO token detected — credit balance API not available for SSO');
+          return {
+            sessionPercent: 0,
+            weeklyPercent: 0,
+            profileId: wsProfileId,
+            profileName: wsProfileName,
+            fetchedAt: new Date(),
+            providerName: 'windsurf',
+          } as UsageSnapshot;
+        }
+
         const resp = await fetch('https://server.codeium.com/api/v1/GetTeamCreditBalance', {
           method: 'POST',
           headers: {
@@ -3071,7 +3112,7 @@ export class UsageMonitor extends EventEmitter {
 
         const usageData = await resp.json();
         this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf credits response:', usageData);
-        return this.normalizeWindsurfResponse(usageData, windsurfProfile.id, windsurfProfile.name, undefined);
+        return this.normalizeWindsurfResponse(usageData, wsProfileId, wsProfileName, undefined);
       } catch (e) {
         this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf credits fetch failed:', e);
         return null;
