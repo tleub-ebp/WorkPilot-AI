@@ -383,7 +383,9 @@ export function ProviderConfigDialog({
       success: true, 
       message 
     });
-    setAuthTerminal(null);
+    // Don't close the terminal here — the user may still be in the onboarding
+    // step ("Press Enter to continue"). The terminal will close itself or the
+    // user can close it manually via the X button.
     setIsAuthenticating(false);
 
     // Persist OAuth state in settings so the provider shows as configured
