@@ -265,9 +265,9 @@ export class UsageMonitor extends EventEmitter {
    */
   private debugLog(message: string, data?: unknown): void {
     if (this.isDebug) {
-      if (data !== undefined && data) {
+      if (data) {
         frontendDebugLog(message, data);
-      } else if (data !== undefined) {
+      } else {
         frontendDebugLog(message);
       }
     }
