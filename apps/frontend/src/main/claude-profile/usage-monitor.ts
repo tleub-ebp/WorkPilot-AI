@@ -211,26 +211,26 @@ export class UsageMonitor extends EventEmitter {
 
   // Per-profile API failure tracking with cooldown-based retry
   // Map<profileId, lastFailureTimestamp> - stores when API last failed for this profile
-  private apiFailureTimestamps: Map<string, number> = new Map();
-  private static API_FAILURE_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes cooldown before API retry
+  private readonly apiFailureTimestamps: Map<string, number> = new Map();
+  private static readonly API_FAILURE_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes cooldown before API retry
 
   // Per-profile 429 rate limit tracking with exponential backoff
   // Map<profileId, { lastHit: timestamp, consecutiveHits: number }>
-  private rateLimitBackoff: Map<string, { lastHit: number; consecutiveHits: number }> = new Map();
-  private static RATE_LIMIT_BASE_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes base cooldown on 429
-  private static RATE_LIMIT_MAX_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes max cooldown
+  private readonly rateLimitBackoff: Map<string, { lastHit: number; consecutiveHits: number }> = new Map();
+  private static readonly RATE_LIMIT_BASE_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes base cooldown on 429
+  private static readonly RATE_LIMIT_MAX_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes max cooldown
 
   // Swap loop protection: track profiles that recently failed auth
-  private authFailedProfiles: Map<string, number> = new Map(); // profileId -> timestamp
-  private static AUTH_FAILURE_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes cooldown
+  private readonly authFailedProfiles: Map<string, number> = new Map(); // profileId -> timestamp
+  private static readonly AUTH_FAILURE_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes cooldown
 
   // Track profiles that need re-authentication (invalid refresh token)
   // These profiles have permanent auth failures that require manual re-auth
-  private needsReauthProfiles: Set<string> = new Set();
+  private readonly needsReauthProfiles: Set<string> = new Set();
 
   // Cache for all profiles' usage data
   // Map<profileId, { usage: ProfileUsageSummary, fetchedAt: number }>
-  private allProfilesUsageCache: Map<string, { usage: ProfileUsageSummary; fetchedAt: number }> = new Map();
+  private readonly allProfilesUsageCache: Map<string, { usage: ProfileUsageSummary; fetchedAt: number }> = new Map();
 
   /** Tracks the last provider name requested via getUsageForProvider / USAGE_REQUEST.
    *  Used to detect actual provider switches vs. repeated polling for the same provider. */
@@ -238,15 +238,15 @@ export class UsageMonitor extends EventEmitter {
 
   /** In-flight getUsageForProvider promises keyed by providerName.
    *  Prevents concurrent duplicate requests that cause 429 rate-limiting. */
-  private pendingProviderFetch: Map<string, Promise<UsageSnapshot | null>> = new Map();
+  private readonly pendingProviderFetch: Map<string, Promise<UsageSnapshot | null>> = new Map();
 
   /** Short-lived cache for API fetch results, shared across ALL code paths
    *  (getUsageForProvider, checkUsageAndSwap, fetchUsage, fetchUsageViaAPI).
    *  Key: "profileId:provider".  Prevents redundant API calls that cause 429. */
-  private apiResultCache: Map<string, { snapshot: UsageSnapshot; fetchedAt: number }> = new Map();
-  private static API_RESULT_CACHE_TTL_MS = 15_000; // 15 seconds
+  private readonly apiResultCache: Map<string, { snapshot: UsageSnapshot; fetchedAt: number }> = new Map();
+  private static readonly API_RESULT_CACHE_TTL_MS = 15_000; // 15 seconds
 
-  private static PROFILE_USAGE_CACHE_TTL_MS = 60 * 1000; // 1 minute cache for inactive profiles
+  private static readonly PROFILE_USAGE_CACHE_TTL_MS = 60 * 1000; // 1 minute cache for inactive profiles
 
   // Proactive swap cooldown: prevents cascading swaps (A→B→C→A loops)
   private lastProactiveSwapAt = 0;
@@ -265,9 +265,9 @@ export class UsageMonitor extends EventEmitter {
    */
   private debugLog(message: string, data?: unknown): void {
     if (this.isDebug) {
-      if (data !== undefined) {
+      if (data !== undefined && data) {
         frontendDebugLog(message, data);
-      } else {
+      } else if (data !== undefined) {
         frontendDebugLog(message);
       }
     }
@@ -1097,7 +1097,7 @@ export class UsageMonitor extends EventEmitter {
       }
 
       // Step 4: Check thresholds and perform proactive swap (OAuth profiles only)
-      if (!isAPIProfile) {
+      if (activeProfile.isAPIProfile === false) {
         const profileManager = getClaudeProfileManager();
         const settings = profileManager.getAutoSwitchSettings();
 
@@ -1137,7 +1137,6 @@ export class UsageMonitor extends EventEmitter {
           // Velocity-based early switch: predicted to hit limit soon
           if (timeToLimit.sessionMinutesRemaining !== null && timeToLimit.sessionMinutesRemaining < 5) {
             shouldSwap = true;
-            swapReason = 'session';
             this.debugLog('[UsageMonitor] Velocity-predicted session limit in ~' +
               Math.round(timeToLimit.sessionMinutesRemaining) + ' min', {
               velocity: velocityData.sessionVelocity.toFixed(2) + '%/min',
@@ -2173,7 +2172,7 @@ export class UsageMonitor extends EventEmitter {
   private async checkCopilotCliStatus(): Promise<{ available: boolean; isAuth?: boolean; username?: string }> {
     try {
       // Check if gh CLI is available
-      const { spawn } = await import('child_process');
+      const { spawn } = await import('node:child_process');
       
       const result = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
         const process = spawn('gh', ['auth', 'status'], {
@@ -2209,7 +2208,7 @@ export class UsageMonitor extends EventEmitter {
       // Extract username if authenticated
       let username: string | undefined;
       if (isAuth) {
-        const match = output.match(/Logged in to github\.com as ([^\s]+)/);
+        const match = /Logged in to github\.com as ([^\s]+)/.exec(output);
         username = match ? match[1] : undefined;
       }
       
@@ -2225,7 +2224,7 @@ export class UsageMonitor extends EventEmitter {
       // Even if gh auth status fails, if gh CLI exists, we should still return available
       // Let's try a simpler check
       try {
-        const { spawn } = await import('child_process');
+        const { spawn } = await import('node:child_process');
         await new Promise<void>((resolve, reject) => {
           const process = spawn('gh', ['--version'], {
             shell: true,
@@ -2705,8 +2704,8 @@ export class UsageMonitor extends EventEmitter {
     if (recent.length < 2) return false;
 
     // Check for A→B→A cycle: we just swapped TO this profile and now want to swap FROM it
-    const lastSwap = recent[recent.length - 1];
-    if (lastSwap.to === currentProfileId) {
+    const lastSwap = recent.at(-1);
+    if (lastSwap && lastSwap.to === currentProfileId) {
       return true;
     }
 
@@ -3016,10 +3015,10 @@ export class UsageMonitor extends EventEmitter {
             message: `Backend returned ${resp.status}: ${resp.statusText}`,
             provider: 'copilot',
             available: false
-          }, 'copilot', 'GitHub Copilot', undefined);
+          }, 'copilot', 'GitHub Copilot');
         }
         const usageData = await resp.json();
-        return this.normalizeCopilotResponse(usageData, 'copilot', 'GitHub Copilot', undefined);
+        return this.normalizeCopilotResponse(usageData, 'copilot', 'GitHub Copilot');
       } catch (e) {
         this.debugLog('[UsageMonitor:getUsageForProvider] Copilot backend fetch failed:', e);
         if (e instanceof Error && e.message.includes('ECONNREFUSED')) {
@@ -3028,7 +3027,7 @@ export class UsageMonitor extends EventEmitter {
             message: 'Backend FastAPI non démarré',
             provider: 'copilot',
             available: false
-          }, 'copilot', 'GitHub Copilot', undefined);
+          }, 'copilot', 'GitHub Copilot');
         }
         return null;
       }
@@ -3049,6 +3048,7 @@ export class UsageMonitor extends EventEmitter {
         let serviceKey = windsurfProfile?.apiKey;
         let wsProfileId = windsurfProfile?.id || 'windsurf-global';
         let wsProfileName = windsurfProfile?.name || 'Windsurf (Codeium)';
+        let keySource = serviceKey ? 'api-profile' : '';
 
         // Fallback to global settings (globalWindsurfApiKey) for SSO users
         if (!serviceKey) {
@@ -3060,14 +3060,26 @@ export class UsageMonitor extends EventEmitter {
               serviceKey = globalKey.trim();
               wsProfileId = 'windsurf-global';
               wsProfileName = 'Windsurf (Codeium)';
+              keySource = 'global-settings';
             }
           } catch {
             // Settings file not available
           }
         }
 
+        // Fallback to environment variables (WINDSURF_API_KEY, CODEIUM_API_KEY)
         if (!serviceKey) {
-          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — no service key found in profiles or settings');
+          const envKey = process.env.WINDSURF_API_KEY || process.env.CODEIUM_API_KEY;
+          if (envKey?.trim()) {
+            serviceKey = envKey.trim();
+            wsProfileId = 'windsurf-env';
+            wsProfileName = 'Windsurf (env)';
+            keySource = 'env-var';
+          }
+        }
+
+        if (!serviceKey) {
+          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — no service key found in profiles, settings, or env vars');
           // Return a minimal snapshot so the UI shows Windsurf info instead of Anthropic
           return {
             sessionPercent: 0,
@@ -3093,26 +3105,91 @@ export class UsageMonitor extends EventEmitter {
           } as UsageSnapshot;
         }
 
-        const resp = await fetch('https://server.codeium.com/api/v1/GetTeamCreditBalance', {
+        // Log key source and fingerprint for debugging auth issues
+        const keyFingerprint = serviceKey.length > 8
+          ? serviceKey.substring(0, 6) + '...' + serviceKey.substring(serviceKey.length - 4)
+          : '***';
+        this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — calling Codeium API', {
+          keySource,
+          keyFingerprint,
+          keyLength: serviceKey.length
+        });
+
+        // Strategy 1: service_key in body (standard for team service keys)
+        let resp = await fetch('https://server.codeium.com/api/v1/GetTeamCreditBalance', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ service_key: serviceKey }),
           signal: AbortSignal.timeout(10000)
         });
 
-        if (!resp.ok) {
-          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf backend returned error:', {
-            status: resp.status,
-            statusText: resp.statusText
+        // Strategy 2: Authorization Bearer header (required by some Codeium API versions)
+        if (resp.status === 401) {
+          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — strategy 1 failed (401), retrying with Bearer header');
+          resp = await fetch('https://server.codeium.com/api/v1/GetTeamCreditBalance', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${serviceKey}`,
+            },
+            body: '{}',
+            signal: AbortSignal.timeout(10000)
           });
-          return null;
         }
 
-        const usageData = await resp.json();
-        this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf credits response:', usageData);
-        return this.normalizeWindsurfResponse(usageData, wsProfileId, wsProfileName, undefined);
+        if (resp.ok) {
+          const usageData = await resp.json();
+          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf credits response:', usageData);
+          return this.normalizeWindsurfResponse(usageData, wsProfileId, wsProfileName);
+        }
+
+        // Strategy 3: If credit balance unavailable, try GetUser to validate key
+        // and return a basic "connected" snapshot so UI doesn't fall back to Anthropic
+        this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — credit balance unavailable, trying GetUser', {
+          status: resp.status,
+          statusText: resp.statusText,
+          keySource,
+          keyFingerprint
+        });
+
+        try {
+          const userResp = await fetch('https://server.codeium.com/exa.api_server_pb.ApiServerService/GetUser', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${serviceKey}`,
+            },
+            body: '{}',
+            signal: AbortSignal.timeout(10000)
+          });
+
+          if (userResp.ok) {
+            const userData = await userResp.json();
+            const userName = userData?.name || userData?.email || 'Windsurf User';
+            this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — key validated via GetUser:', { userName });
+            return {
+              sessionPercent: 0,
+              weeklyPercent: 0,
+              profileId: wsProfileId,
+              profileName: `${wsProfileName} (${userName})`,
+              fetchedAt: new Date(),
+              providerName: 'windsurf',
+            } as UsageSnapshot;
+          }
+        } catch {
+          // GetUser also failed — continue to return basic snapshot
+        }
+
+        // All strategies failed — still return a Windsurf snapshot to prevent Anthropic fallback
+        this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — all credit/user APIs failed, returning basic snapshot');
+        return {
+          sessionPercent: 0,
+          weeklyPercent: 0,
+          profileId: wsProfileId,
+          profileName: wsProfileName,
+          fetchedAt: new Date(),
+          providerName: 'windsurf',
+        } as UsageSnapshot;
       } catch (e) {
         this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf credits fetch failed:', e);
         return null;
@@ -3128,7 +3205,7 @@ export class UsageMonitor extends EventEmitter {
         return detected === providerName;
       });
 
-      if (apiProfile && apiProfile.apiKey) {
+      if (apiProfile?.apiKey) {
         this.debugLog('[UsageMonitor:getUsageForProvider] Found API profile for provider:', {
           providerName,
           profileId: apiProfile.id,
@@ -3158,6 +3235,11 @@ export class UsageMonitor extends EventEmitter {
               fetchedAt: new Date(),
             };
           } catch (e) {
+            this.debugLog('[UsageMonitor:getUsageForProvider] OpenAI usage fetch failed:', {
+              error: e instanceof Error ? e.message : String(e),
+              profileId: apiProfile.id,
+              profileName: apiProfile.name
+            });
             return null;
           }
         } else {

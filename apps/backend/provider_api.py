@@ -828,7 +828,7 @@ async def get_provider_usage(provider: str):
                     "linesAccepted": usage_data.get("total_lines_accepted", 0),
                     "lineAcceptanceRate": usage_data.get("line_acceptance_rate_percent", 0)
                 }
-            }
+            }  # Added closing bracket here
         except ImportError as e:
             return {"error": f"Module Copilot non disponible: {e}"}
         except Exception as e:
@@ -854,6 +854,69 @@ async def get_provider_usage(provider: str):
             return {"error": f"Module Anthropic usage non disponible: {e}"}
         except Exception as e:
             return {"error": f"Erreur lors de la récupération des métriques Anthropic: {e}"}
+    elif provider == "windsurf":
+        # Windsurf (Codeium) — multi-strategy auth for GetTeamCreditBalance
+        service_key = os.getenv("WINDSURF_API_KEY") or os.getenv("CODEIUM_API_KEY")
+        if not service_key:
+            return {
+                "provider": "windsurf",
+                "error": "Clé API Windsurf manquante. Définissez WINDSURF_API_KEY ou CODEIUM_API_KEY.",
+                "alternative": "Consultez le dashboard Windsurf pour obtenir votre service key."
+            }
+        try:
+            async with httpx.AsyncClient() as client:
+                # Strategy 1: service_key in body (standard for team service keys)
+                resp = await client.post(
+                    "https://server.codeium.com/api/v1/GetTeamCreditBalance",
+                    json={"service_key": service_key},
+                    timeout=10
+                )
+                # Strategy 2: Authorization Bearer header (some Codeium API versions)
+                if resp.status_code == 401:
+                    resp = await client.post(
+                        "https://server.codeium.com/api/v1/GetTeamCreditBalance",
+                        headers={"Authorization": f"Bearer {service_key}"},
+                        json={},
+                        timeout=10
+                    )
+            if resp.status_code == 200:
+                data = resp.json()
+                return {
+                    "provider": "windsurf",
+                    "available": True,
+                    "usage": data,
+                    "fetched_at": "now"
+                }
+            # Strategy 3: Validate key via GetUser if credit balance unavailable
+            try:
+                async with httpx.AsyncClient() as client:
+                    user_resp = await client.post(
+                        "https://server.codeium.com/exa.api_server_pb.ApiServerService/GetUser",
+                        headers={"Authorization": f"Bearer {service_key}", "Content-Type": "application/json"},
+                        json={},
+                        timeout=10
+                    )
+                if user_resp.status_code == 200:
+                    user_data = user_resp.json()
+                    return {
+                        "provider": "windsurf",
+                        "available": True,
+                        "usage": {"user": user_data, "note": "Credit balance unavailable — key validated via GetUser"},
+                        "fetched_at": "now"
+                    }
+            except Exception:
+                pass
+            return {
+                "provider": "windsurf",
+                "error": f"Erreur {resp.status_code}: {resp.text[:200]}",
+                "status_code": resp.status_code,
+                "note": "Vérifiez que votre service key Windsurf est valide."
+            }
+        except Exception as e:
+            return {
+                "provider": "windsurf",
+                "error": f"Impossible de récupérer l'usage Windsurf: {str(e)}"
+            }
     else:
         return {"error": f"Usage non supporté pour le provider '{provider}'"}
 
