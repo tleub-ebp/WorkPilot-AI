@@ -15,7 +15,7 @@ import { getClaudeProfileManager, initializeClaudeProfileManager } from '../clau
 import { UsageSnapshot, ProfileUsageSummary, AllProfilesUsage } from '@shared/types';
 import { loadProfilesFile } from '../services/profile';
 import type { APIProfile } from '@shared/types/profile';
-import { detectProvider as sharedDetectProvider, type ApiProvider } from '../../shared/utils/provider-detection';
+import { detectProvider as sharedDetectProvider, getProviderLabel, type ApiProvider } from '../../shared/utils/provider-detection';
 import { getCredentialsFromKeychain, clearKeychainCache } from './credential-utils';
 import { reactiveTokenRefresh, ensureValidToken } from './token-refresh';
 import { isProfileRateLimited } from './rate-limit-manager';
@@ -3183,7 +3183,19 @@ export class UsageMonitor extends EventEmitter {
           if (apiProfileSnapshot) {
             return apiProfileSnapshot;
           }
-          this.debugLog('[UsageMonitor:getUsageForProvider] Step 1: API profile returned no data, trying OAuth fallback');
+
+          // API fetch returned no data — return a minimal snapshot with correct
+          // provider info so the UI displays the right provider name/account
+          // instead of falling through to OAuth (which would show Anthropic data)
+          this.debugLog('[UsageMonitor:getUsageForProvider] Step 1: API profile returned no usage data, returning minimal snapshot for:', providerName);
+          return {
+            sessionPercent: 0,
+            weeklyPercent: 0,
+            profileId: apiProfile.id,
+            profileName: apiProfile.name,
+            providerName: providerName,
+            fetchedAt: new Date(),
+          } as UsageSnapshot;
         }
       } else {
         this.debugLog('[UsageMonitor:getUsageForProvider] Step 1: No API profile found for provider:', providerName);
@@ -3241,12 +3253,21 @@ export class UsageMonitor extends EventEmitter {
 
     // Step 3: Check if currentUsage matches the requested provider
     if (this.currentUsage?.providerName === providerName) {
-      this.debugLog('[UsageMonitor:getUsageForProvider] Returning currentUsage for provider:', providerName);
+      this.debugLog('[UsageMonitor:getUsageForProvider] Returning currentUsage for provider: ' + providerName);
       return this.currentUsage;
     }
 
-    console.warn('[UsageMonitor:getUsageForProvider] No usage data found for provider:', providerName, '— UI will show N/D');
-    return null;
+    // Step 4: Return a minimal snapshot with the correct provider name
+    // so the UI displays the right provider instead of stale data from another provider
+    this.debugLog('[UsageMonitor:getUsageForProvider] No usage data found for provider: ' + providerName + ' — returning minimal snapshot');
+    return {
+      sessionPercent: 0,
+      weeklyPercent: 0,
+      profileId: providerName,
+      profileName: getProviderLabel(providerName as any),
+      providerName: providerName,
+      fetchedAt: new Date(),
+    } as UsageSnapshot;
   }
 
   /**

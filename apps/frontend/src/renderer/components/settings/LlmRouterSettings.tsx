@@ -31,16 +31,16 @@ export function LlmRouterSettings() {
   const [strategy, setStrategy] = useState<RoutingStrategy>('best_performance');
 
   const [providers] = useState<ProviderEntry[]>([
-    { provider: 'Anthropic', model: 'claude-sonnet-4-20250514', capabilities: ['coding', 'planning', 'review'], priority: 1, isLocal: false, enabled: true },
-    { provider: 'OpenAI', model: 'gpt-4o', capabilities: ['coding', 'review'], priority: 2, isLocal: false, enabled: true },
-    { provider: 'Mistral', model: 'mistral-large', capabilities: ['coding', 'planning'], priority: 3, isLocal: false, enabled: false },
-    { provider: 'Ollama', model: 'llama3:8b', capabilities: ['quick_feedback', 'coding'], priority: 5, isLocal: true, enabled: true },
+    { provider: 'Anthropic', model: 'claude-sonnet-4-6', capabilities: ['coding', 'planning', 'review'], priority: 1, isLocal: false, enabled: true },
+    { provider: 'OpenAI', model: 'gpt-5.4', capabilities: ['coding', 'review'], priority: 2, isLocal: false, enabled: true },
+    { provider: 'Mistral', model: 'mistral-large-3', capabilities: ['coding', 'planning'], priority: 3, isLocal: false, enabled: false },
+    { provider: 'Ollama', model: 'llama3.3', capabilities: ['quick_feedback', 'coding'], priority: 5, isLocal: true, enabled: true },
   ]);
 
   const [fallbacks] = useState<FallbackChain[]>([
-    { taskType: 'coding', chain: ['Anthropic / claude-sonnet-4-20250514', 'OpenAI / gpt-4o', 'Ollama / llama3:8b'] },
-    { taskType: 'planning', chain: ['Anthropic / claude-sonnet-4-20250514', 'Mistral / mistral-large'] },
-    { taskType: 'review', chain: ['Anthropic / claude-sonnet-4-20250514', 'OpenAI / gpt-4o'] },
+    { taskType: 'coding', chain: ['Anthropic / claude-sonnet-4-6', 'OpenAI / gpt-5.4', 'Ollama / llama3.3'] },
+    { taskType: 'planning', chain: ['Anthropic / claude-sonnet-4-6', 'Mistral / mistral-large-3'] },
+    { taskType: 'review', chain: ['Anthropic / claude-sonnet-4-6', 'OpenAI / gpt-5.4'] },
   ]);
 
   const strategies: { id: RoutingStrategy; label: string; desc: string; icon: React.ReactNode }[] = [
@@ -156,7 +156,7 @@ export function LlmRouterSettings() {
                 <p className="text-xs font-semibold text-foreground mb-2 capitalize">{fb.taskType}</p>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   {fb.chain.map((entry, i) => (
-                    <span key={i} className="flex items-center gap-1.5">
+                    <span key={`${fb.taskType}-${entry}-${i}`} className="flex items-center gap-1.5">
                       <span className="rounded bg-accent px-2 py-0.5 text-[10px] font-mono">{entry}</span>
                       {i < fb.chain.length - 1 && <span className="text-muted-foreground text-xs">→</span>}
                     </span>

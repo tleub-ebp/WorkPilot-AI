@@ -149,7 +149,7 @@ export function UsageIndicator() {
       const event = new CustomEvent<AppSection>('open-app-settings', {
         detail: 'accounts'
       });
-      window.dispatchEvent(event);
+      globalThis.dispatchEvent(event);
     }, 100);
   }, []);
 
@@ -166,7 +166,7 @@ export function UsageIndicator() {
 
     const doFetch = async () => {
       try {
-        const result = await window.electronAPI.requestUsageUpdate(provider);
+        const result = await globalThis.electronAPI.requestUsageUpdate(provider);
         if (result.success && result.data) {
           if (provider && result.data.providerName && result.data.providerName !== provider) return;
           setUsage(result.data);
@@ -259,11 +259,11 @@ export function UsageIndicator() {
 
     try {
       // Actually switch the profile on the backend
-      const result = await window.electronAPI.setActiveClaudeProfile(profileId);
+      const result = await globalThis.electronAPI.setActiveClaudeProfile(profileId);
       if (result.success) {
         // Fetch fresh data in the background (will update via event listeners)
-        await window.electronAPI.requestUsageUpdate();
-        window.electronAPI.requestAllProfilesUsage?.();
+        await globalThis.electronAPI.requestUsageUpdate();
+        globalThis.electronAPI.requestAllProfilesUsage?.();
 
         // If the profile needs re-authentication, open Settings > Accounts
         // so the user can complete the re-auth flow
@@ -276,7 +276,7 @@ export function UsageIndicator() {
             const event = new CustomEvent<AppSection>('open-app-settings', {
               detail: 'accounts'
             });
-            window.dispatchEvent(event);
+            globalThis.dispatchEvent(event);
           }, 100);
         }
       } else {
@@ -357,7 +357,7 @@ export function UsageIndicator() {
     if (selectedProvider === 'anthropic') {
       const checkOAuthStatus = async () => {
         try {
-          const profilesResult = await window.electronAPI.invoke('claude:profilesGet');
+          const profilesResult = await globalThis.electronAPI.invoke('claude:profilesGet');
           
           if (profilesResult.success && profilesResult.data?.profiles) {
             const oauthProfile = profilesResult.data.profiles.find((profile: any) => 
@@ -427,7 +427,7 @@ export function UsageIndicator() {
       await fetchUsageDeduplicated(selectedProvider);
 
       try {
-        const allResult = await window.electronAPI.requestAllProfilesUsage?.();
+        const allResult = await globalThis.electronAPI.requestAllProfilesUsage?.();
         if (allResult?.success && allResult?.data) {
           const nonActiveProfiles = allResult.data.allProfiles.filter(p => !p.isActive);
           setOtherProfiles(nonActiveProfiles);
@@ -469,21 +469,34 @@ export function UsageIndicator() {
     };
   }, [selectedProvider, fetchUsageDeduplicated]);
 
+  // Helper function to get reset time with fallback logic
+  const getResetTime = (timestamp: string | undefined, fallbackTime: string | undefined) => {
+    if (timestamp) {
+      const formattedTime = formatTimeRemaining(timestamp, t);
+      return formattedTime ?? (hasHardcodedText(fallbackTime) ? undefined : fallbackTime);
+    }
+    return hasHardcodedText(fallbackTime) ? undefined : fallbackTime;
+  };
+
   // Get formatted reset times (calculated dynamically from timestamps)
-  const sessionResetTime = usage?.sessionResetTimestamp
-      ? (formatTimeRemaining(usage.sessionResetTimestamp, t) ??
-          (hasHardcodedText(usage?.sessionResetTime) ? undefined : usage?.sessionResetTime))
-      : (hasHardcodedText(usage?.sessionResetTime) ? undefined : usage?.sessionResetTime);
-  const weeklyResetTime = usage?.weeklyResetTimestamp
-      ? (formatTimeRemaining(usage.weeklyResetTimestamp, t) ??
-          (hasHardcodedText(usage?.weeklyResetTime) ? undefined : usage?.weeklyResetTime))
-      : (hasHardcodedText(usage?.weeklyResetTime) ? undefined : usage?.weeklyResetTime);
+  const sessionResetTime = getResetTime(usage?.sessionResetTimestamp, usage?.sessionResetTime);
+  const weeklyResetTime = getResetTime(usage?.weeklyResetTimestamp, usage?.weeklyResetTime);
 
   useEffect(() => {
+    // When selectedProvider changes, clear stale data from previous provider
+    // to prevent showing wrong provider's account/usage info
+    setUsage(null);
+    setOtherProfiles([]);
+    setIsAvailable(false);
+    setIsLoading(true);
+    setActiveProfileNeedsReauth(false);
+
     // Listen for usage updates from main process
-    const unsubscribe = window.electronAPI.onUsageUpdated((snapshot: UsageSnapshot) => {
-      // Si le provider du snapshot ne correspond pas au provider sélectionné, ignorer
-      if (selectedProvider && snapshot.providerName && snapshot.providerName !== selectedProvider) return;
+    const unsubscribe = globalThis.electronAPI.onUsageUpdated((snapshot: UsageSnapshot) => {
+      // Only accept snapshots that match the selected provider
+      // Reject snapshots from other providers AND snapshots without providerName
+      // (those are legacy Anthropic-only snapshots)
+      if (selectedProvider && snapshot.providerName !== selectedProvider) return;
       setUsage(snapshot);
       setIsAvailable(true);
       setIsLoading(false);
@@ -494,9 +507,10 @@ export function UsageIndicator() {
       const { provider } = event.detail;
       if (provider !== selectedProvider) return;
 
-      // Show loading indicator but DON'T clear existing usage data.
-      // Stale-while-revalidate: keep showing last known data until new data arrives.
-      // This prevents the "N/D" flash when the fetch takes time or fails temporarily.
+      // Clear stale data from previous provider and show loading
+      setUsage(null);
+      setOtherProfiles([]);
+      setIsAvailable(false);
       setIsLoading(true);
       setActiveProfileNeedsReauth(false);
 
@@ -504,10 +518,10 @@ export function UsageIndicator() {
       fetchUsageDeduplicated(provider);
     };
 
-    window.addEventListener('providerChanged', handleProviderChange as EventListener);
+    globalThis.addEventListener('providerChanged', handleProviderChange as EventListener);
 
     // Listen for all profiles usage updates (for multi-profile display)
-    const unsubscribeAllProfiles = window.electronAPI.onAllProfilesUsageUpdated?.((allProfilesUsage) => {
+    const unsubscribeAllProfiles = globalThis.electronAPI.onAllProfilesUsageUpdated?.((allProfilesUsage) => {
       // Filter out the active profile - we only want to show "other" profiles
       const nonActiveProfiles = allProfilesUsage.allProfiles.filter(p => !p.isActive);
       setOtherProfiles(nonActiveProfiles);
@@ -527,7 +541,7 @@ export function UsageIndicator() {
     // flashing "N/D" while ProviderContext resolves the real provider
 
     // Request all profiles usage immediately on mount (so other accounts show right away)
-    window.electronAPI.requestAllProfilesUsage?.().then((result) => {
+    globalThis.electronAPI.requestAllProfilesUsage?.().then((result) => {
       if (result.success && result.data) {
         const nonActiveProfiles = result.data.allProfiles.filter(p => !p.isActive);
         setOtherProfiles(nonActiveProfiles);
@@ -542,7 +556,7 @@ export function UsageIndicator() {
     return () => {
       unsubscribe();
       unsubscribeAllProfiles?.();
-      window.removeEventListener('providerChanged', handleProviderChange as EventListener);
+      globalThis.removeEventListener('providerChanged', handleProviderChange as EventListener);
     };
   }, [selectedProvider, fetchUsageDeduplicated]);
 
@@ -564,10 +578,10 @@ export function UsageIndicator() {
     // Debug OpenAI
     if (selectedProvider?.toLowerCase() === 'openai') {
       let debugProfiles = [];
-      if (typeof window !== 'undefined' && (window as any).debugProfiles) {
-        debugProfiles = (window as any).debugProfiles;
+      if (typeof globalThis !== 'undefined' && (globalThis as any).debugProfiles) {
+        debugProfiles = (globalThis as any).debugProfiles;
       }
-      const openaiError = typeof window !== 'undefined' ? (window as any).lastOpenAIUsageError : undefined;
+      const openaiError = typeof globalThis !== 'undefined' ? (globalThis as any).lastOpenAIUsageError : undefined;
       return (
         <TooltipProvider delayDuration={200}>
           <Tooltip>

@@ -7,18 +7,17 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { SortableProjectTab } from './SortableProjectTab';
 import { AuthStatusIndicator } from './AuthStatusIndicator';
 import { UsageIndicator } from './UsageIndicator';
-import type { Project } from '@shared/types';
-import type { UsageSnapshot } from '@shared/types';
+import { useProviderContext } from './ProviderContext';
+import type { Project, UsageSnapshot } from '@shared/types';
 
 interface ProjectTabBarProps {
-  projects: Project[];
-  activeProjectId: string | null;
-  onProjectSelect: (projectId: string) => void;
-  onProjectClose: (projectId: string) => void;
-  onAddProject: () => void;
-  className?: string;
-  // Control props for the active tab
-  onSettingsClick?: () => void;
+  readonly projects: Project[];
+  readonly activeProjectId: string | null;
+  readonly onProjectSelect: (projectId: string) => void;
+  readonly onProjectClose: (projectId: string) => void;
+  readonly onAddProject: () => void;
+  readonly className?: string;
+  readonly onSettingsClick?: () => void;
 }
 
 export function ProjectTabBar({
@@ -34,6 +33,7 @@ export function ProjectTabBar({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const { selectedProvider } = useProviderContext();
   
   // State for usage warning
   const [usage, setUsage] = useState<UsageSnapshot | null>(null);
@@ -80,11 +80,11 @@ export function ProjectTabBar({
     
     checkScrollPosition();
     container.addEventListener('scroll', checkScrollPosition);
-    window.addEventListener('resize', checkScrollPosition);
+    globalThis.addEventListener('resize', checkScrollPosition);
     
     return () => {
       container.removeEventListener('scroll', checkScrollPosition);
-      window.removeEventListener('resize', checkScrollPosition);
+      globalThis.removeEventListener('resize', checkScrollPosition);
     };
   }, [projects]);
 
@@ -134,18 +134,26 @@ export function ProjectTabBar({
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    globalThis.addEventListener('keydown', handleKeyDown);
+    return () => globalThis.removeEventListener('keydown', handleKeyDown);
   }, [projects, activeProjectId, onProjectSelect, onProjectClose]);
 
-  // Fetch usage data for warning badge
+  // Fetch usage data for warning badge — scoped to selected provider
   useEffect(() => {
+    // Clear stale data when provider changes
+    setUsage(null);
+    setIsLoadingUsage(true);
+
+    if (!selectedProvider) return;
+
     const fetchUsage = async () => {
       try {
-        setIsLoadingUsage(true);
-        const result = await window.electronAPI.requestUsageUpdate();
+        const result = await globalThis.electronAPI.requestUsageUpdate(selectedProvider);
         if (result.success && result.data) {
-          setUsage(result.data);
+          // Only accept data matching current provider
+          if (!result.data.providerName || result.data.providerName === selectedProvider) {
+            setUsage(result.data);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch usage snapshot:', error);
@@ -157,8 +165,9 @@ export function ProjectTabBar({
 
     fetchUsage();
 
-    // Subscribe to live usage updates
-    const unsubscribe = window.electronAPI.onUsageUpdated((snapshot: UsageSnapshot) => {
+    // Subscribe to live usage updates — only accept matching provider
+    const unsubscribe = globalThis.electronAPI.onUsageUpdated((snapshot: UsageSnapshot) => {
+      if (snapshot.providerName !== selectedProvider) return;
       setUsage(snapshot);
       setIsLoadingUsage(false);
     });
@@ -166,7 +175,7 @@ export function ProjectTabBar({
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [selectedProvider]);
 
   if (projects.length === 0) {
     return null;

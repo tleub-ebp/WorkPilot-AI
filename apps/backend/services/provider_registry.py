@@ -73,6 +73,8 @@ class ProviderRegistry:
             requires_cli=False,
             models=[
                 {'value': 'claude-opus-4-6', 'label': 'Claude Opus 4.6', 'tier': 'flagship', 'supportsThinking': True},
+                {'value': 'claude-sonnet-4-6', 'label': 'Claude Sonnet 4.6', 'tier': 'standard', 'supportsThinking': True},
+                {'value': 'claude-haiku-4-6', 'label': 'Claude Haiku 4.6', 'tier': 'fast', 'supportsThinking': False},
                 {'value': 'claude-opus-4-5-20251101', 'label': 'Claude Opus 4.5', 'tier': 'flagship', 'supportsThinking': True},
                 {'value': 'claude-sonnet-4-5-20250929', 'label': 'Claude Sonnet 4.5', 'tier': 'standard', 'supportsThinking': True},
                 {'value': 'claude-haiku-4-5-20251001', 'label': 'Claude Haiku 4.5', 'tier': 'fast', 'supportsThinking': False},
@@ -89,11 +91,15 @@ class ProviderRegistry:
             requires_oauth=False,
             requires_cli=False,
             models=[
+                {'value': 'gpt-5.4', 'label': 'GPT-5.4', 'tier': 'flagship'},
+                {'value': 'gpt-5.3', 'label': 'GPT-5.3', 'tier': 'flagship'},
                 {'value': 'gpt-5.2', 'label': 'GPT-5.2', 'tier': 'flagship'},
                 {'value': 'gpt-5', 'label': 'GPT-5', 'tier': 'flagship'},
+                {'value': 'o4', 'label': 'o4', 'tier': 'flagship', 'supportsThinking': True},
+                {'value': 'o4-mini', 'label': 'o4-mini', 'tier': 'standard', 'supportsThinking': True},
                 {'value': 'o3', 'label': 'o3', 'tier': 'flagship', 'supportsThinking': True},
-                {'value': 'gpt-4o', 'label': 'GPT-4o', 'tier': 'standard'},
                 {'value': 'o3-mini', 'label': 'o3-mini', 'tier': 'standard', 'supportsThinking': True},
+                {'value': 'gpt-4o', 'label': 'GPT-4o', 'tier': 'standard'},
                 {'value': 'gpt-4o-mini', 'label': 'GPT-4o mini', 'tier': 'fast'},
                 {'value': 'gpt-4-turbo', 'label': 'GPT-4 Turbo', 'tier': 'standard'},
             ]
@@ -109,8 +115,11 @@ class ProviderRegistry:
             requires_oauth=False,
             requires_cli=False,
             models=[
+                {'value': 'gemini-3.1-pro', 'label': 'Gemini 3.1 Pro', 'tier': 'flagship', 'supportsThinking': True},
+                {'value': 'gemini-3-flash', 'label': 'Gemini 3 Flash', 'tier': 'flagship'},
+                {'value': 'gemini-3.1-flash-lite', 'label': 'Gemini 3.1 Flash-Lite', 'tier': 'standard'},
                 {'value': 'gemini-2.5-pro', 'label': 'Gemini 2.5 Pro', 'tier': 'flagship', 'supportsThinking': True},
-                {'value': 'gemini-2.0-flash', 'label': 'Gemini 2.0 Flash', 'tier': 'fast'},
+                {'value': 'gemini-2.5-flash', 'label': 'Gemini 2.5 Flash', 'tier': 'fast'},
                 {'value': 'gemini-2.0-flash-thinking', 'label': 'Gemini 2.0 Flash Thinking', 'tier': 'standard', 'supportsThinking': True},
                 {'value': 'gemini-1.5-pro', 'label': 'Gemini 1.5 Pro', 'tier': 'standard'},
                 {'value': 'gemini-1.5-flash', 'label': 'Gemini 1.5 Flash', 'tier': 'fast'},
@@ -144,7 +153,10 @@ class ProviderRegistry:
             requires_oauth=False,
             requires_cli=False,
             models=[
-                {'value': 'mistral-large-2', 'label': 'Mistral Large 2', 'tier': 'flagship'},
+                {'value': 'mistral-large-3', 'label': 'Mistral Large 3', 'tier': 'flagship'},
+                {'value': 'ministral-3-14b', 'label': 'Ministral 3 14B', 'tier': 'standard'},
+                {'value': 'ministral-3-8b', 'label': 'Ministral 3 8B', 'tier': 'standard'},
+                {'value': 'ministral-3-3b', 'label': 'Ministral 3 3B', 'tier': 'fast'},
                 {'value': 'mistral-medium-3', 'label': 'Mistral Medium 3', 'tier': 'standard'},
                 {'value': 'mistral-small-3', 'label': 'Mistral Small 3', 'tier': 'fast'},
                 {'value': 'codestral', 'label': 'Codestral', 'tier': 'standard'},
@@ -162,6 +174,7 @@ class ProviderRegistry:
             requires_oauth=False,
             requires_cli=False,
             models=[
+                {'value': 'deepseek-v3.2', 'label': 'DeepSeek V3.2', 'tier': 'flagship'},
                 {'value': 'deepseek-r2', 'label': 'DeepSeek R2', 'tier': 'flagship', 'supportsThinking': True},
                 {'value': 'deepseek-v3', 'label': 'DeepSeek V3', 'tier': 'standard'},
                 {'value': 'deepseek-r1', 'label': 'DeepSeek R1', 'tier': 'standard', 'supportsThinking': True},
@@ -180,6 +193,7 @@ class ProviderRegistry:
             requires_cli=False,
             models=[
                 {'value': 'anthropic.claude-opus-4-6-v1', 'label': 'Claude Opus 4.6 (Bedrock)', 'tier': 'flagship', 'supportsThinking': True},
+                {'value': 'anthropic.claude-sonnet-4-6-v1', 'label': 'Claude Sonnet 4.6 (Bedrock)', 'tier': 'standard', 'supportsThinking': True},
                 {'value': 'anthropic.claude-sonnet-4-5-v1', 'label': 'Claude Sonnet 4.5 (Bedrock)', 'tier': 'standard', 'supportsThinking': True},
                 {'value': 'amazon.titan-text-premier-v1', 'label': 'Amazon Titan Premier', 'tier': 'standard'},
                 {'value': 'meta.llama3-70b-instruct-v1', 'label': 'Llama 3 70B (Bedrock)', 'tier': 'standard'},
@@ -199,8 +213,11 @@ class ProviderRegistry:
                 {'value': 'llama3.3', 'label': 'Llama 3.3', 'tier': 'local'},
                 {'value': 'llama3.2', 'label': 'Llama 3.2', 'tier': 'local'},
                 {'value': 'llama3.1', 'label': 'Llama 3.1', 'tier': 'local'},
+                {'value': 'mistral-large-3', 'label': 'Mistral Large 3', 'tier': 'local'},
                 {'value': 'mistral', 'label': 'Mistral', 'tier': 'local'},
                 {'value': 'mistral-large', 'label': 'Mistral Large', 'tier': 'local'},
+                {'value': 'deepseek-v3.2', 'label': 'DeepSeek V3.2', 'tier': 'local'},
+                {'value': 'deepseek-r2', 'label': 'DeepSeek R2', 'tier': 'local', 'supportsThinking': True},
                 {'value': 'deepseek-r1', 'label': 'DeepSeek R1', 'tier': 'local', 'supportsThinking': True},
                 {'value': 'deepseek-coder-v2', 'label': 'DeepSeek Coder V2', 'tier': 'local'},
                 {'value': 'qwen2.5-coder', 'label': 'Qwen 2.5 Coder', 'tier': 'local'},
@@ -228,9 +245,13 @@ class ProviderRegistry:
             requires_oauth=False,
             requires_cli=True,  # Requiert gh CLI
             models=[
-                {'value': 'gpt-4o', 'label': 'GPT-4o (Copilot)', 'tier': 'flagship'},
-                {'value': 'claude-3.5-sonnet', 'label': 'Claude 3.5 Sonnet (Copilot)', 'tier': 'standard'},
+                {'value': 'gpt-5.4', 'label': 'GPT-5.4 (Copilot)', 'tier': 'flagship'},
+                {'value': 'gpt-5.3', 'label': 'GPT-5.3 (Copilot)', 'tier': 'flagship'},
+                {'value': 'o4', 'label': 'o4 (Copilot)', 'tier': 'flagship', 'supportsThinking': True},
+                {'value': 'gpt-4o', 'label': 'GPT-4o (Copilot)', 'tier': 'standard'},
+                {'value': 'o4-mini', 'label': 'o4-mini (Copilot)', 'tier': 'standard', 'supportsThinking': True},
                 {'value': 'o3-mini', 'label': 'o3-mini (Copilot)', 'tier': 'standard', 'supportsThinking': True},
+                {'value': 'claude-sonnet-4.6', 'label': 'Claude Sonnet 4.6 (Copilot)', 'tier': 'standard', 'supportsThinking': True},
                 {'value': 'gpt-4o-mini', 'label': 'GPT-4o mini (Copilot)', 'tier': 'fast'},
             ]
         )
@@ -264,9 +285,10 @@ class ProviderRegistry:
                 {'value': 'swe-1.5', 'label': 'SWE-1.5', 'tier': 'flagship', 'supportsThinking': True},
                 {'value': 'claude-opus-4.6', 'label': 'Claude Opus 4.6', 'tier': 'flagship', 'supportsThinking': True},
                 {'value': 'claude-sonnet-4.6', 'label': 'Claude Sonnet 4.6', 'tier': 'standard', 'supportsThinking': True},
-                {'value': 'gpt-5.2-low-thinking', 'label': 'GPT-5.2 Low Thinking', 'tier': 'standard'},
+                {'value': 'gpt-5.4-low-thinking', 'label': 'GPT-5.4 Low Thinking', 'tier': 'standard'},
                 {'value': 'swe-1.5-fast', 'label': 'SWE-1.5 Fast', 'tier': 'fast'},
                 {'value': 'claude-sonnet-4.5', 'label': 'Claude Sonnet 4.5', 'tier': 'standard', 'supportsThinking': True},
+                {'value': 'gpt-5.3-low-thinking', 'label': 'GPT-5.3 Low Thinking', 'tier': 'standard'},
                 # Garder les modèles originaux pour compatibilité
                 {'value': 'windsurf-codestral', 'label': 'Windsurf Codestral', 'tier': 'flagship'},
                 {'value': 'windsurf-sonnet', 'label': 'Windsurf Sonnet', 'tier': 'standard'},
