@@ -7,7 +7,9 @@
 
 import { EventEmitter } from 'events';
 import { loadProfilesFile, saveProfilesFile } from '../utils/profile-manager';
+import { readSettingsFile } from '../settings-utils';
 import type { ProfilesFile, APIProfile } from '../../shared/types/profile';
+import { detectProvider } from '../../shared/utils/provider-detection';
 
 export interface CredentialConfig {
   provider: string;
@@ -368,6 +370,115 @@ export class CredentialManager extends EventEmitter {
   }
 
   /**
+   * Fetch usage data for Windsurf/Codeium provider.
+   * Uses POST to GetTeamCreditBalance with service key.
+   * Checks two sources for the service key:
+   *   1. API profiles (profiles.json) — Custom Endpoints
+   *   2. Global settings (settings.json) — Provider Accounts (globalWindsurfApiKey)
+   * Stores the result in the usageData cache and returns it.
+   */
+  async fetchWindsurfUsage(): Promise<UsageData | null> {
+    try {
+      let serviceKey: string | undefined;
+      let profileId = 'windsurf-global';
+      let profileName = 'Windsurf (Codeium)';
+
+      // Source 1: Check API profiles (profiles.json)
+      const profilesFile = await loadProfilesFile();
+      const windsurfProfile = profilesFile.profiles.find(p => {
+        return detectProvider(p.baseUrl) === 'windsurf';
+      });
+
+      if (windsurfProfile?.apiKey) {
+        serviceKey = windsurfProfile.apiKey;
+        profileId = windsurfProfile.id;
+        profileName = windsurfProfile.name;
+      }
+
+      // Source 2: Fallback to global settings (globalWindsurfApiKey)
+      if (!serviceKey) {
+        try {
+          const settings = readSettingsFile();
+          const globalKey = settings?.globalWindsurfApiKey as string | undefined;
+          if (globalKey && globalKey.trim()) {
+            serviceKey = globalKey.trim();
+          }
+        } catch {
+          // Settings file not available
+        }
+      }
+
+      if (!serviceKey) {
+        console.log('[CredentialManager] Windsurf — no service key found in profiles or settings');
+        return null;
+      }
+
+      const resp = await fetch('https://server.codeium.com/api/v1/GetTeamCreditBalance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service_key: serviceKey }),
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (!resp.ok) {
+        console.error('[CredentialManager] Windsurf credits API returned error:', resp.status, resp.statusText);
+        return null;
+      }
+
+      const data = await resp.json();
+
+      // Normalize Codeium response to UsageData format
+      const promptCreditsPerSeat = data.promptCreditsPerSeat ?? 0;
+      const numSeats = data.numSeats ?? 1;
+      const addOnCreditsAvailable = data.addOnCreditsAvailable ?? 0;
+      const addOnCreditsUsed = data.addOnCreditsUsed ?? 0;
+
+      const seatCreditsTotal = promptCreditsPerSeat * numSeats;
+      const totalCredits = seatCreditsTotal + addOnCreditsAvailable + addOnCreditsUsed;
+      const usedCredits = addOnCreditsUsed;
+
+      let sessionPercent = 0;
+      if (totalCredits > 0) {
+        sessionPercent = Math.round((usedCredits / totalCredits) * 100);
+      }
+
+      // Billing cycle progress
+      let weeklyPercent = 0;
+      const billingStart = data.billingCycleStart ? new Date(data.billingCycleStart).getTime() : 0;
+      const billingEnd = data.billingCycleEnd ? new Date(data.billingCycleEnd).getTime() : 0;
+      const now = Date.now();
+      if (billingEnd > billingStart && now >= billingStart) {
+        const cycleDuration = billingEnd - billingStart;
+        const elapsed = Math.min(now - billingStart, cycleDuration);
+        weeklyPercent = Math.round((elapsed / cycleDuration) * 100);
+      }
+
+      const usageResult: UsageData = {
+        provider: 'windsurf',
+        profileId,
+        profileName,
+        usage: {
+          sessionPercent,
+          weeklyPercent,
+          sessionResetTimestamp: billingEnd || undefined,
+          weeklyResetTimestamp: billingEnd || undefined,
+          needsReauthentication: false,
+        },
+        timestamp: Date.now()
+      };
+
+      // Cache it in the usageData Map
+      this.usageData.set('windsurf', usageResult);
+      this.emit('usage:updated', usageResult);
+
+      return usageResult;
+    } catch (error) {
+      console.error('[CredentialManager] Windsurf usage fetch failed:', error);
+      return null;
+    }
+  }
+
+  /**
    * Obtenir toutes les données d'usage
    */
   getAllUsageData(): Map<string, UsageData> {
@@ -441,3 +552,109 @@ export class CredentialManager extends EventEmitter {
 
 // Instance singleton
 export const credentialManager = new CredentialManager();
+
+/**
+ * Detect Windsurf API key from local IDE installation.
+ * Reads the state.vscdb SQLite database stored by Windsurf IDE
+ * to extract the sk-ws-... API key obtained after SSO login.
+ *
+ * Supported paths:
+ * - Windows: %APPDATA%/Windsurf/User/globalStorage/state.vscdb
+ * - macOS: ~/Library/Application Support/Windsurf/User/globalStorage/state.vscdb
+ * - Linux: ~/.config/Windsurf/User/globalStorage/state.vscdb
+ */
+export async function detectWindsurfLocalToken(): Promise<{ success: boolean; apiKey?: string; userName?: string; error?: string }> {
+  try {
+    const path = await import('path');
+    const fs = await import('fs');
+    const os = await import('os');
+    const { isWindows, isMacOS } = await import('../platform/index');
+    const { execSync } = await import('child_process');
+
+    // Determine the state.vscdb path based on platform
+    let dbPath: string;
+    if (isWindows()) {
+      dbPath = path.join(process.env.APPDATA || '', 'Windsurf', 'User', 'globalStorage', 'state.vscdb');
+    } else if (isMacOS()) {
+      dbPath = path.join(process.env.HOME || '', 'Library', 'Application Support', 'Windsurf', 'User', 'globalStorage', 'state.vscdb');
+    } else {
+      // Linux
+      dbPath = path.join(process.env.HOME || '', '.config', 'Windsurf', 'User', 'globalStorage', 'state.vscdb');
+    }
+
+    if (!fs.existsSync(dbPath)) {
+      return { success: false, error: 'Windsurf IDE not found. Install Windsurf and sign in first.' };
+    }
+
+    // Write a temp Python script file (avoids shell quoting issues on Windows)
+    const tmpDir = os.tmpdir();
+    const scriptPath = path.join(tmpDir, `_wp_windsurf_detect_${Date.now()}.py`);
+    // Use raw string for db_path to avoid backslash issues
+    const dbPathForPython = dbPath.replace(/\\/g, '\\\\');
+    const pythonScript = `import sqlite3, json, sys
+db_path = "${dbPathForPython}"
+try:
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute("SELECT value FROM ItemTable WHERE key = 'windsurfAuthStatus'")
+    row = cur.fetchone()
+    if row:
+        val = row[0]
+        if isinstance(val, bytes):
+            val = val.decode('utf-8', errors='replace')
+        data = json.loads(val)
+        api_key = data.get('apiKey', '')
+        cur.execute("SELECT value FROM ItemTable WHERE key = 'codeium.windsurf-windsurf_auth'")
+        name_row = cur.fetchone()
+        user_name = ''
+        if name_row:
+            user_name = name_row[0] if isinstance(name_row[0], str) else name_row[0].decode('utf-8', errors='replace')
+        print(json.dumps({'apiKey': api_key, 'userName': user_name}))
+    else:
+        print(json.dumps({'error': 'No auth data found. Sign in to Windsurf IDE first.'}))
+    conn.close()
+except Exception as e:
+    print(json.dumps({'error': str(e)}))
+`;
+
+    fs.writeFileSync(scriptPath, pythonScript, 'utf-8');
+
+    // Try python commands in order: python, python3, py
+    const pythonCmds = isWindows() ? ['python', 'python3', 'py'] : ['python3', 'python'];
+    let lastError = '';
+
+    for (const cmd of pythonCmds) {
+      try {
+        const result = execSync(`${cmd} "${scriptPath}"`, {
+          timeout: 10000,
+          encoding: 'utf-8',
+          windowsHide: true,
+        }).trim();
+
+        // Cleanup temp file
+        try { fs.unlinkSync(scriptPath); } catch { /* ignore */ }
+
+        const parsed = JSON.parse(result);
+        if (parsed.error) {
+          return { success: false, error: parsed.error };
+        }
+        if (parsed.apiKey) {
+          return { success: true, apiKey: parsed.apiKey, userName: parsed.userName || undefined };
+        }
+        return { success: false, error: 'No API key found in Windsurf auth data.' };
+
+      } catch (e: any) {
+        lastError = e.message || String(e);
+        continue; // Try next python command
+      }
+    }
+
+    // Cleanup temp file on failure
+    try { fs.unlinkSync(scriptPath); } catch { /* ignore */ }
+
+    return { success: false, error: `Could not read Windsurf database (tried ${pythonCmds.join(', ')}). Last error: ${lastError}` };
+
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Unknown error detecting Windsurf token' };
+  }
+}

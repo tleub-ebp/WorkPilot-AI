@@ -45,7 +45,7 @@ const PROVIDER_PATTERNS: readonly ProviderPattern[] = [
   },
   {
     provider: 'windsurf',
-    domainPatterns: ['server.codeium.com', 'api.codeium.com', 'api.windsurf.com', 'windsurf.ai']
+    domainPatterns: ['codeium.com', 'server.codeium.com', 'api.codeium.com', 'api.windsurf.com', 'windsurf.ai']
   }
 ] as const;
 

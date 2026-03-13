@@ -255,10 +255,10 @@ class ProviderRegistry:
         self._providers['windsurf'] = Provider(
             name='windsurf',
             label='Windsurf (Codeium)',
-            description='Windsurf AI models via Codeium platform - Service key / PAT authentication',
+            description='Windsurf AI models via Codeium platform - Service key or SSO authentication',
             category='special',
             requires_api_key=True,   # Service key (Personal Access Token)
-            requires_oauth=False,    # Pas d'OAuth, utilise service key
+            requires_oauth=True,     # Also supports SSO/OAuth authentication
             requires_cli=False,
             models=[
                 {'value': 'swe-1.5', 'label': 'SWE-1.5', 'tier': 'flagship', 'supportsThinking': True},
@@ -415,11 +415,14 @@ class ProviderRegistry:
         return 'custom'
     
     def _check_oauth_status(self, provider_name: str) -> bool:
-        """Vérifie le statut OAuth pour un provider"""
+        """Vérifie le statut OAuth/SSO pour un provider"""
         # Logique OAuth spécifique
         if provider_name == 'anthropic':
             # Vérifier le token Claude Code OAuth
             return bool(os.getenv("CLAUDE_CODE_OAUTH_TOKEN") or os.getenv("ANTHROPIC_API_KEY"))
+        if provider_name == 'windsurf':
+            # Windsurf SSO: check for Codeium OAuth token from local IDE installation
+            return bool(os.getenv("WINDSURF_OAUTH_TOKEN") or os.getenv("CODEIUM_API_KEY"))
         return False
     
     def add_provider(self, provider: Provider) -> None:
