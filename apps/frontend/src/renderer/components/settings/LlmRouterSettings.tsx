@@ -34,7 +34,7 @@ export function LlmRouterSettings() {
     { provider: 'Anthropic', model: 'claude-sonnet-4-6', capabilities: ['coding', 'planning', 'review'], priority: 1, isLocal: false, enabled: true },
     { provider: 'OpenAI', model: 'gpt-5.4', capabilities: ['coding', 'review'], priority: 2, isLocal: false, enabled: true },
     { provider: 'Mistral', model: 'mistral-large-3', capabilities: ['coding', 'planning'], priority: 3, isLocal: false, enabled: false },
-    { provider: 'Ollama', model: 'llama3.3', capabilities: ['quick_feedback', 'coding'], priority: 5, isLocal: true, enabled: true },
+    { provider: 'Ollama', model: 'llama3.3', capabilities: ['quick_feedback', 'coding'], priority: 4, isLocal: true, enabled: true },
   ]);
 
   const [fallbacks] = useState<FallbackChain[]>([

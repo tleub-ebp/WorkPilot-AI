@@ -361,11 +361,9 @@ export function CleanProviderSection({
     setTestingProviders(prev => new Set(prev).add(providerId));
     
     try {
-      // Vérifier si des profiles de test sont nécessaires et les ajouter
-      const updatedProfiles = await ensureTestProfiles();
-
-      // Passer les profiles mis à jour au ProviderService
-      ProviderService.setProfiles(updatedProfiles);
+      // Passer les profiles actuels au ProviderService
+      const currentProfiles = getCurrentProfiles();
+      ProviderService.setProfiles(currentProfiles);
 
       // Utiliser le vrai service de test du provider
       const result = await ProviderService.testProvider(providerId);
@@ -446,56 +444,10 @@ export function CleanProviderSection({
     }
   };
 
-  // Fonction pour s'assurer que les profiles de test existent
-  const ensureTestProfiles = async () => {
-    const { profiles, saveProfile } = useSettingsStore.getState();
-    
-    // Profiles de test à ajouter
-    const testProfiles = [
-      {
-        name: 'Anthropic Test',
-        baseUrl: 'https://api.anthropic.com',
-        apiKey: 'sk-ant-test-key-placeholder', // À remplacer par une vraie clé
-      },
-      {
-        name: 'Google Gemini Test',
-        baseUrl: 'https://generativelanguage.googleapis.com',
-        apiKey: 'test-google-key-placeholder', // À remplacer par une vraie clé
-      },
-      {
-        name: 'Mistral Test',
-        baseUrl: 'https://api.mistral.ai',
-        apiKey: 'test-mistral-key-placeholder', // À remplacer par une vraie clé
-      }
-    ];
-
-    let addedProfiles = [];
-    
-    for (const testProfile of testProfiles) {
-      const exists = profiles.some(p => 
-        p.baseUrl === testProfile.baseUrl || 
-        p.name === testProfile.name
-      );
-      
-      if (!exists) {
-        // Adding test profile
-        await saveProfile(testProfile);
-        addedProfiles.push(testProfile.name);
-      }
-    }
-    
-    // Si des profiles ont été ajoutés, informer l'utilisateur
-    if (addedProfiles.length > 0) {
-      toast({
-        title: 'Profiles de test ajoutés',
-        description: `${addedProfiles.join(', ')} ont été créés. Configurez vos clés API pour tester.`,
-        duration: 5000,
-      });
-    }
-    
-    // Rafraîchir les profiles après ajout
-    const { profiles: updatedProfiles } = useSettingsStore.getState();
-    return updatedProfiles;
+  // Récupérer les profiles actuels pour le test
+  const getCurrentProfiles = () => {
+    const { profiles } = useSettingsStore.getState();
+    return profiles;
   };
 
   const handleToggle = async (providerId: string, enabled: boolean) => {
@@ -530,11 +482,9 @@ export function CleanProviderSection({
       if (enabled) {
         // Enable provider: remove from disabled list
         updatedSettings.disabledAutoSwitchProviders = currentDisabled.filter((id: string) => id !== providerId);
-      } else {
+      } else if (!currentDisabled.includes(providerId)) {
         // Disable provider: add to disabled list if not already there
-        if (!currentDisabled.includes(providerId)) {
-          updatedSettings.disabledAutoSwitchProviders = [...currentDisabled, providerId];
-        }
+        updatedSettings.disabledAutoSwitchProviders = [...currentDisabled, providerId];
       }
 
       // Single atomic settings update

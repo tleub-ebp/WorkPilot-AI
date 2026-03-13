@@ -230,7 +230,6 @@ export class CredentialManager extends EventEmitter {
     try {
       // Cas spécial pour Copilot - utilise GitHub CLI auth
       if (provider === 'copilot') {
-        // Vérifier si GitHub CLI est disponible et authentifié
         const { exec } = require('node:child_process');
         const { promisify } = require('node:util');
         const execAsync = promisify(exec);
@@ -239,22 +238,42 @@ export class CredentialManager extends EventEmitter {
           // Tester si GitHub CLI est installé
           const { stdout: version } = await execAsync('gh --version', { timeout: 5000 });
           
-          // Tester si l'utilisateur est authentifié
-          const { stdout: authStatus } = await execAsync('gh auth status', { timeout: 5000 });
-          
-          const isAuthenticated = authStatus.includes('Logged in to github.com');
-          
-          if (isAuthenticated) {
-            return {
-              success: true,
-              message: 'GitHub Copilot authentication (CLI-based)',
-              details: { 
-                method: 'GitHub CLI',
-                version: version.trim(),
-                status: 'Authenticated'
-              }
-            };
-          } else {
+          // gh auth status outputs to stderr on Windows, so capture both
+          try {
+            const { stdout: authStdout, stderr: authStderr } = await execAsync('gh auth status 2>&1', { timeout: 5000 });
+            const authOutput = (authStdout || '') + (authStderr || '');
+            const isAuthenticated = authOutput.includes('Logged in to') || authOutput.includes('Token:');
+            
+            if (isAuthenticated) {
+              return {
+                success: true,
+                message: 'GitHub Copilot authentication (CLI-based)',
+                details: { 
+                  method: 'GitHub CLI',
+                  version: version.trim(),
+                  status: 'Authenticated'
+                }
+              };
+            } else {
+              return {
+                success: false,
+                message: 'GitHub CLI not authenticated. Run: gh auth login'
+              };
+            }
+          } catch (authError: any) {
+            // gh auth status exits with code 1 when not authenticated — check stderr
+            const output = (authError?.stdout || '') + (authError?.stderr || '');
+            if (output.includes('Logged in to') || output.includes('Token:')) {
+              return {
+                success: true,
+                message: 'GitHub Copilot authentication (CLI-based)',
+                details: { 
+                  method: 'GitHub CLI',
+                  version: version.trim(),
+                  status: 'Authenticated'
+                }
+              };
+            }
             return {
               success: false,
               message: 'GitHub CLI not authenticated. Run: gh auth login'
@@ -264,7 +283,7 @@ export class CredentialManager extends EventEmitter {
           console.warn('GitHub CLI check failed:', error instanceof Error ? error.message : error);
           return {
             success: false,
-            message: 'GitHub CLI not available or not authenticated. Install and run: gh auth login'
+            message: 'GitHub CLI not available. Install GitHub CLI and run: gh auth login'
           };
         }
       }
@@ -297,17 +316,18 @@ export class CredentialManager extends EventEmitter {
       }
 
       // Pour les autres providers (openai, mistral, google, deepseek, grok, ollama, etc.)
-      // Chercher d'abord un profil API dans profiles.json
+      // Source 1: Chercher un profil API dans profiles.json (Custom Endpoints)
       let apiKey: string | undefined;
       let baseUrl: string | undefined;
       let profileName: string | undefined;
+      let source = '';
 
       try {
         const profilesFile = await loadProfilesFile();
         const apiProfile = profilesFile.profiles.find(p => {
           return detectProvider(p.baseUrl) === provider;
         });
-        if (apiProfile?.apiKey) {
+        if (apiProfile?.apiKey && !apiProfile.apiKey.includes('placeholder')) {
           apiKey = apiProfile.apiKey;
           baseUrl = apiProfile.baseUrl;
           profileName = apiProfile.name;
@@ -316,7 +336,35 @@ export class CredentialManager extends EventEmitter {
         // profiles.json not available
       }
 
-      // Si pas trouvé dans profiles.json, vérifier le activeCredential
+      // Source 2: Chercher dans settings.json (clés API globales)
+      if (!apiKey) {
+        try {
+          const settings = readSettingsFile();
+          const globalKeyMap: Record<string, string> = {
+            'openai': 'globalOpenAIApiKey',
+            'google': 'globalGoogleDeepMindApiKey',
+            'gemini': 'globalGoogleApiKey',
+            'mistral': 'globalMistralApiKey',
+            'deepseek': 'globalDeepSeekApiKey',
+            'grok': 'globalGrokApiKey',
+            'meta': 'globalMetaApiKey',
+            'aws': 'globalAWSApiKey',
+            'cursor': 'globalCursorApiKey',
+          };
+          const settingsKey = globalKeyMap[provider];
+          if (settingsKey && settings) {
+            const globalKey = (settings as any)[settingsKey] as string | undefined;
+            if (globalKey?.trim()) {
+              apiKey = globalKey.trim();
+              profileName = provider;
+            }
+          }
+        } catch {
+          // settings file not available
+        }
+      }
+
+      // Source 3: Vérifier le activeCredential
       if (!apiKey && this.activeCredential?.provider === provider && this.activeCredential.credentials.apiKey) {
         apiKey = this.activeCredential.credentials.apiKey;
         baseUrl = this.activeCredential.credentials.baseUrl;
@@ -607,38 +655,79 @@ export class CredentialManager extends EventEmitter {
 
   /**
    * Vérifier le statut OAuth Claude
+   * Checks multiple sources:
+   *   1. Claude CLI config (Windows: %APPDATA%\claude, Unix: ~/.config/claude)
+   *   2. App's own profiles.json for Anthropic API profiles
+   *   3. Global settings for globalAnthropicApiKey
    */
   private async checkClaudeOAuthStatus(): Promise<{ isAuthenticated: boolean; profileName?: string }> {
     try {
-      // Dans le contexte backend, on ne peut pas utiliser window.electronAPI directement
-      // On utilise une approche différente - vérifier les profils Claude via le système de fichiers
-      
       const fs = require('node:fs').promises;
       const path = require('node:path');
       const os = require('node:os');
       
-      // Chemin vers les profils Claude CLI
-      const claudeConfigPath = path.join(os.homedir(), '.config', 'claude', 'profiles.json');
+      // Source 1: Check Claude CLI profiles — try multiple paths (Windows + Unix)
+      const candidatePaths = [
+        // Windows: %APPDATA%\claude\profiles.json
+        process.env.APPDATA ? path.join(process.env.APPDATA, 'claude', 'profiles.json') : null,
+        // Unix/macOS: ~/.config/claude/profiles.json
+        path.join(os.homedir(), '.config', 'claude', 'profiles.json'),
+        // Also check Claude Code config
+        process.env.APPDATA ? path.join(process.env.APPDATA, 'claude-code', 'profiles.json') : null,
+        path.join(os.homedir(), '.config', 'claude-code', 'profiles.json'),
+      ].filter(Boolean) as string[];
       
-      try {
-        const profilesData = await fs.readFile(claudeConfigPath, 'utf-8');
-        const profiles = JSON.parse(profilesData);
-        
-        if (profiles.profiles && Array.isArray(profiles.profiles)) {
-          const oauthProfile = profiles.profiles.find((profile: any) => 
-            profile.isAuthenticated === true
-          );
+      for (const configPath of candidatePaths) {
+        try {
+          const profilesData = await fs.readFile(configPath, 'utf-8');
+          const profiles = JSON.parse(profilesData);
           
-          if (oauthProfile) {
-            return {
-              isAuthenticated: true,
-              profileName: oauthProfile.name
-            };
+          if (profiles.profiles && Array.isArray(profiles.profiles)) {
+            const oauthProfile = profiles.profiles.find((profile: any) => 
+              profile.isAuthenticated === true
+            );
+            
+            if (oauthProfile) {
+              return {
+                isAuthenticated: true,
+                profileName: oauthProfile.name
+              };
+            }
           }
+        } catch {
+          // This path doesn't exist, try next
         }
-      } catch (fileError) {
-        // Le fichier n'existe pas ou est invalide
-        console.log('[CredentialManager] Claude profiles file not found or invalid:', fileError instanceof Error ? fileError.message : fileError);
+      }
+
+      // Source 2: Check app's own profiles.json for Anthropic API profile
+      try {
+        const profilesFile = await loadProfilesFile();
+        const anthropicProfile = profilesFile.profiles.find(p => {
+          const detected = detectProvider(p.baseUrl);
+          return detected === 'anthropic';
+        });
+        if (anthropicProfile?.apiKey && !anthropicProfile.apiKey.includes('placeholder')) {
+          return {
+            isAuthenticated: true,
+            profileName: anthropicProfile.name || 'Anthropic (API Key)'
+          };
+        }
+      } catch {
+        // profiles.json not available
+      }
+
+      // Source 3: Check global settings for globalAnthropicApiKey
+      try {
+        const settings = readSettingsFile();
+        const anthropicKey = (settings as any)?.globalAnthropicApiKey as string | undefined;
+        if (anthropicKey?.trim()) {
+          return {
+            isAuthenticated: true,
+            profileName: 'Anthropic (API Key)'
+          };
+        }
+      } catch {
+        // settings not available
       }
       
       return { isAuthenticated: false };
