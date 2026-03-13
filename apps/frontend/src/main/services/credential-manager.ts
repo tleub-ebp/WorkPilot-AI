@@ -231,8 +231,8 @@ export class CredentialManager extends EventEmitter {
       // Cas spécial pour Copilot - utilise GitHub CLI auth
       if (provider === 'copilot') {
         // Vérifier si GitHub CLI est disponible et authentifié
-        const { exec } = require('child_process');
-        const { promisify } = require('util');
+        const { exec } = require('node:child_process');
+        const { promisify } = require('node:util');
         const execAsync = promisify(exec);
         
         try {
@@ -647,13 +647,64 @@ export class CredentialManager extends EventEmitter {
 
     try {
       if (this.activeCredential.type === 'api_key') {
-        // Valider la clé API via une requête test
-        const response = await fetch(`${this.activeCredential.credentials.baseUrl}/v1/models`, {
-          headers: {
-            'x-api-key': this.activeCredential.credentials.apiKey!,
-            'anthropic-version': '2023-06-01'
-          }
-        });
+        const provider = this.activeCredential.provider;
+        const apiKey = this.activeCredential.credentials.apiKey!;
+        const baseUrl = this.activeCredential.credentials.baseUrl || '';
+        let response: Response;
+
+        switch (provider) {
+          case 'anthropic':
+          case 'claude':
+            response = await fetch(`${baseUrl || 'https://api.anthropic.com'}/v1/models`, {
+              headers: {
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01'
+              }
+            });
+            break;
+
+          case 'openai':
+            response = await fetch(`${baseUrl || 'https://api.openai.com'}/v1/models`, {
+              headers: { 'Authorization': `Bearer ${apiKey}` }
+            });
+            break;
+
+          case 'google':
+            response = await fetch(
+              `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`
+            );
+            break;
+
+          case 'mistral':
+            response = await fetch(`${baseUrl || 'https://api.mistral.ai'}/v1/models`, {
+              headers: { 'Authorization': `Bearer ${apiKey}` }
+            });
+            break;
+
+          case 'deepseek':
+            response = await fetch(`${baseUrl || 'https://api.deepseek.com'}/v1/models`, {
+              headers: { 'Authorization': `Bearer ${apiKey}` }
+            });
+            break;
+
+          case 'grok':
+            response = await fetch('https://api.x.ai/v1/models', {
+              headers: { 'Authorization': `Bearer ${apiKey}` }
+            });
+            break;
+
+          case 'ollama':
+            response = await fetch(`${baseUrl || 'http://localhost:11434'}/api/tags`);
+            break;
+
+          default:
+            // Pour les providers inconnus, on considère valide si la clé existe
+            if (apiKey && apiKey.trim() !== '') {
+              this.activeCredential.lastValidated = Date.now();
+              return true;
+            }
+            return false;
+        }
 
         const isValid = response.ok;
         if (isValid) {
@@ -662,8 +713,6 @@ export class CredentialManager extends EventEmitter {
         
         return isValid;
       } else if (this.activeCredential.type === 'oauth') {
-        // La validation OAuth dépend du provider
-        // Pour l'instant, on considère que si le token existe, il est valide
         return true;
       }
     } catch (error) {
@@ -682,10 +731,74 @@ export class CredentialManager extends EventEmitter {
       return {};
     }
 
-    const env: Record<string, string> = {
-      ANTHROPIC_BASE_URL: this.activeCredential.credentials.baseUrl || '',
-      ANTHROPIC_AUTH_TOKEN: this.activeCredential.credentials.apiKey || '',
-    };
+    const provider = this.activeCredential.provider;
+    const apiKey = this.activeCredential.credentials.apiKey || '';
+    const baseUrl = this.activeCredential.credentials.baseUrl || '';
+    const env: Record<string, string> = {};
+
+    switch (provider) {
+      case 'anthropic':
+      case 'claude':
+        env.ANTHROPIC_API_KEY = apiKey;
+        env.ANTHROPIC_AUTH_TOKEN = apiKey;
+        if (baseUrl) env.ANTHROPIC_BASE_URL = baseUrl;
+        break;
+
+      case 'openai':
+        env.OPENAI_API_KEY = apiKey;
+        if (baseUrl) env.OPENAI_BASE_URL = baseUrl;
+        break;
+
+      case 'google':
+        env.GOOGLE_API_KEY = apiKey;
+        break;
+
+      case 'mistral':
+        env.MISTRAL_API_KEY = apiKey;
+        if (baseUrl) env.MISTRAL_BASE_URL = baseUrl;
+        break;
+
+      case 'deepseek':
+        env.DEEPSEEK_API_KEY = apiKey;
+        if (baseUrl) env.DEEPSEEK_BASE_URL = baseUrl;
+        break;
+
+      case 'grok':
+        env.GROK_API_KEY = apiKey;
+        break;
+
+      case 'meta':
+        env.META_API_KEY = apiKey;
+        if (baseUrl) env.META_BASE_URL = baseUrl;
+        break;
+
+      case 'aws':
+        env.AWS_ACCESS_KEY_ID = apiKey;
+        if (baseUrl) env.AWS_BEDROCK_ENDPOINT = baseUrl;
+        break;
+
+      case 'ollama':
+        if (baseUrl) env.OLLAMA_BASE_URL = baseUrl;
+        break;
+
+      case 'windsurf':
+        env.WINDSURF_API_KEY = apiKey;
+        if (baseUrl) env.WINDSURF_BASE_URL = baseUrl;
+        break;
+
+      case 'cursor':
+        env.CURSOR_API_KEY = apiKey;
+        if (baseUrl) env.CURSOR_BASE_URL = baseUrl;
+        break;
+
+      default:
+        env.LLM_API_KEY = apiKey;
+        if (baseUrl) env.LLM_BASE_URL = baseUrl;
+        break;
+    }
+
+    // Toujours exporter le provider sélectionné pour que le backend sache lequel utiliser
+    env.SELECTED_LLM_PROVIDER = provider;
 
     // Filtrer les valeurs vides
     return Object.fromEntries(

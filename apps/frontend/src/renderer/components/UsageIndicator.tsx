@@ -88,7 +88,7 @@ export function UsageIndicator() {
   const [activeProfileNeedsReauth, setActiveProfileNeedsReauth] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
-  const [claudeProfile, setClaudeProfile] = useState<any>(null);
+  const [providerProfile, setProviderProfile] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
   const [, setTick] = useState(0); // Force re-render for "last update" time display
@@ -352,40 +352,36 @@ export function UsageIndicator() {
     }
   }, [selectedProvider]);
 
-  // Effect to check OAuth status for Anthropic provider (similar to AuthStatusIndicator)
+  // Effect to check OAuth status for the selected provider
   useEffect(() => {
     if (selectedProvider === 'anthropic') {
       const checkOAuthStatus = async () => {
         try {
+          const profilesResult = await window.electronAPI.invoke('claude:profilesGet');
           
-          // Vérifier directement le fichier de configuration Claude CLI
-          const claudeProfilesResult = await window.electronAPI.invoke('claude:profilesGet');
-          
-          if (claudeProfilesResult.success && claudeProfilesResult.data?.profiles) {
-            // Chercher un profil authentifié (OAuth)
-            const oauthProfile = claudeProfilesResult.data.profiles.find((profile: any) => 
+          if (profilesResult.success && profilesResult.data?.profiles) {
+            const oauthProfile = profilesResult.data.profiles.find((profile: any) => 
               profile.isAuthenticated === true
             );
             
             if (oauthProfile) {
-              setClaudeProfile(oauthProfile);
-
-              // For OAuth profiles, trigger usage fetch via deduplicated function
-              // to avoid concurrent 429 rate limit issues
+              setProviderProfile(oauthProfile);
               fetchUsageDeduplicated(selectedProvider);
             } else {
-              setClaudeProfile(null);
+              setProviderProfile(null);
             }
           }
         } catch (error) {
-          console.warn('[UsageIndicator] Failed to check Claude profiles:', error);
-          setClaudeProfile(null);
+          console.warn('[UsageIndicator] Failed to check provider profiles:', error);
+          setProviderProfile(null);
         }
       };
       
       checkOAuthStatus();
     } else {
-      setClaudeProfile(null);
+      // For non-Anthropic providers, clear the OAuth profile
+      // Usage data comes from the standard usage polling mechanism
+      setProviderProfile(null);
     }
   }, [selectedProvider, fetchUsageDeduplicated]);
 
@@ -1089,7 +1085,7 @@ export function UsageIndicator() {
                 <span className={`text-xs font-semibold ${
                     usage.needsReauthentication ? 'text-red-500' : 'text-primary'
                 }`}>
-                  {getInitials(claudeProfile ? claudeProfile.name : usage.profileName)}
+                  {getInitials(providerProfile ? providerProfile.name : usage.profileName)}
                 </span>
                 </div>
                 {/* Status dot for re-auth needed */}
@@ -1113,7 +1109,7 @@ export function UsageIndicator() {
                 <div className={`font-medium text-xs truncate ${
                   usage.needsReauthentication ? 'text-destructive' : 'text-primary'
                 }`}>
-                  {claudeProfile ? claudeProfile.email || claudeProfile.name : (usage.profileEmail || usage.profileName)}
+                  {providerProfile ? providerProfile.email || providerProfile.name : (usage.profileEmail || usage.profileName)}
                 </div>
               </div>
 
@@ -1121,8 +1117,8 @@ export function UsageIndicator() {
               <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
             </button>
 
-            {/* Other profiles section - sorted by availability (only for Anthropic multi-account swap) */}
-            {otherProfiles.length > 0 && selectedProvider === 'anthropic' && (
+            {/* Other profiles section - sorted by availability */}
+            {otherProfiles.length > 0 && (
                 <div className="pt-2 -mx-3 px-3 -mb-3 pb-3 space-y-1">
                   <div className="text-[10px] text-muted-foreground font-medium mb-1.5">
                     {t('common:usage.otherAccounts')}
