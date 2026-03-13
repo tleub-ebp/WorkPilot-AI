@@ -290,5 +290,26 @@
     "noVulnerabilitiesFound": "No vulnerabilities found matching your search",
     "noVulnerabilities": "No vulnerabilities found",
     "close": "Close"
+  },
+  "providerSelector": {
+    "label": "AI Provider",
+    "placeholder": "-- Choose a provider --",
+    "status": {
+      "ok": "OK",
+      "notAuthenticated": "Not authenticated"
+    },
+    "authDialog": {
+      "title": "Authentication Required",
+      "description": "The provider \"{{provider}}\" is not yet configured.",
+      "subDescription": "To use this provider, you must first add your API keys in the \"Accounts\" section.",
+      "cancel": "Cancel",
+      "confirm": "Go to Accounts"
+    },
+    "authRedirect": {
+      "title": "Redirect to Accounts",
+      "description": "Configuration of {{provider}} required"
+    },
+    "loading": "Loading...",
+    "noProvidersAvailable": "No providers available"
   }
 }

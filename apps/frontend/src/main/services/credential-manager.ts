@@ -291,6 +291,11 @@ export class CredentialManager extends EventEmitter {
         }
       }
 
+      // Cas spécial pour Windsurf — uses SSO token or service key stored in settings or detected locally
+      if (provider === 'windsurf') {
+        return await this.testWindsurfProvider();
+      }
+
       // Pour les autres providers, utiliser la logique existante
       if (!this.activeCredential || this.activeCredential?.provider !== provider) {
         return {
@@ -323,6 +328,154 @@ export class CredentialManager extends EventEmitter {
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Test failed'
+      };
+    }
+  }
+
+  /**
+   * Tester le provider Windsurf (SSO token ou service key)
+   * Checks globalWindsurfApiKey in settings, API profiles, and local IDE detection.
+   */
+  private async testWindsurfProvider(): Promise<{ success: boolean; message: string; details?: any }> {
+    try {
+      let serviceKey: string | undefined;
+      let source = '';
+
+      // Source 1: Check API profiles (profiles.json)
+      try {
+        const profilesFile = await loadProfilesFile();
+        const windsurfProfile = profilesFile.profiles.find(p => {
+          return detectProvider(p.baseUrl) === 'windsurf';
+        });
+        if (windsurfProfile?.apiKey) {
+          serviceKey = windsurfProfile.apiKey;
+          source = 'API profile';
+        }
+      } catch {
+        // profiles.json not available
+      }
+
+      // Source 2: Fallback to global settings (globalWindsurfApiKey)
+      if (!serviceKey) {
+        try {
+          const settings = readSettingsFile();
+          const globalKey = settings?.globalWindsurfApiKey as string | undefined;
+          if (globalKey?.trim()) {
+            serviceKey = globalKey.trim();
+            source = 'global settings';
+          }
+        } catch {
+          // Settings file not available
+        }
+      }
+
+      // Source 3: Try auto-detecting from local Windsurf IDE
+      if (!serviceKey) {
+        try {
+          const detected = await detectWindsurfLocalToken();
+          if (detected.success && detected.apiKey) {
+            serviceKey = detected.apiKey;
+            source = 'local IDE detection';
+          }
+        } catch {
+          // Detection failed
+        }
+      }
+
+      if (!serviceKey) {
+        return {
+          success: false,
+          message: 'No Windsurf token found. Configure via SSO or provide an API key.'
+        };
+      }
+
+      // Determine auth method based on token format
+      const isServiceKey = serviceKey.startsWith('sk-ws-') || serviceKey.startsWith('sk-');
+      const isJWT = serviceKey.startsWith('eyJ');
+
+      if (isServiceKey) {
+        // Test with GetTeamCreditBalance API (service key)
+        const resp = await fetch('https://server.codeium.com/api/v1/GetTeamCreditBalance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ service_key: serviceKey }),
+          signal: AbortSignal.timeout(10000)
+        });
+
+        if (resp.ok) {
+          return {
+            success: true,
+            message: 'Windsurf connection successful (service key)',
+            details: { method: 'Service Key', source, authType: 'api_key' }
+          };
+        }
+
+        return {
+          success: false,
+          message: `Windsurf API returned HTTP ${resp.status}: ${resp.statusText}`
+        };
+      }
+
+      // For SSO/JWT tokens, validate via a lightweight Codeium API call
+      if (isJWT || serviceKey.length > 40) {
+        try {
+          const resp = await fetch('https://server.codeium.com/exa.api_server_pb.ApiServerService/GetUser', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${serviceKey}`,
+            },
+            body: '{}',
+            signal: AbortSignal.timeout(10000)
+          });
+
+          if (resp.ok) {
+            return {
+              success: true,
+              message: 'Windsurf SSO connection successful',
+              details: { method: 'SSO/OAuth', source, authType: 'sso' }
+            };
+          }
+
+          // Even if GetUser fails, the token might still work for the proxy
+          // Accept it if it was detected from the local IDE (trusted source)
+          if (source === 'local IDE detection') {
+            return {
+              success: true,
+              message: 'Windsurf SSO token detected from local IDE',
+              details: { method: 'SSO (local IDE)', source, authType: 'sso' }
+            };
+          }
+
+          return {
+            success: false,
+            message: `Windsurf SSO validation returned HTTP ${resp.status}. Token may be expired — try re-authenticating in Windsurf IDE.`
+          };
+        } catch (e) {
+          // Network error on GetUser — still trust local IDE tokens
+          if (source === 'local IDE detection' || source === 'global settings') {
+            return {
+              success: true,
+              message: `Windsurf token found (${source})`,
+              details: { method: 'SSO', source, authType: 'sso', note: 'API validation unavailable' }
+            };
+          }
+          throw e;
+        }
+      }
+
+      // Generic token — trust it if it exists
+      return {
+        success: true,
+        message: `Windsurf token configured (${source})`,
+        details: { method: 'token', source }
+      };
+
+    } catch (error) {
+      console.error('[CredentialManager] Windsurf test failed:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Windsurf test failed'
       };
     }
   }

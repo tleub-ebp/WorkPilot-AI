@@ -290,5 +290,26 @@
     "noVulnerabilitiesFound": "Aucune vulnérabilité trouvée correspondant à votre recherche",
     "noVulnerabilities": "Aucune vulnérabilité trouvée",
     "close": "Fermer"
+  },
+  "providerSelector": {
+    "label": "Fournisseur IA",
+    "placeholder": "-- Choisir un fournisseur --",
+    "status": {
+      "ok": "OK",
+      "notAuthenticated": "Non authentifié"
+    },
+    "authDialog": {
+      "title": "Authentification requise",
+      "description": "Le fournisseur \"{{provider}}\" n'est pas encore configuré.",
+      "subDescription": "Pour utiliser ce fournisseur, vous devez d'abord ajouter vos clés d'API dans la section \"Comptes\".",
+      "cancel": "Annuler",
+      "confirm": "Aller aux comptes"
+    },
+    "authRedirect": {
+      "title": "Redirection vers les comptes",
+      "description": "Configuration de {{provider}} requise"
+    },
+    "loading": "Chargement...",
+    "noProvidersAvailable": "Aucun provider disponible"
   }
 }
