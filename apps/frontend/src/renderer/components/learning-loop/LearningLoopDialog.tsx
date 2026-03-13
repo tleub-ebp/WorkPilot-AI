@@ -233,7 +233,7 @@ export function LearningLoopDialog() {
               {streamingOutput && (
                 <pre
                   ref={streamOutputRef}
-                  className="bg-muted/50 rounded-lg p-3 text-xs font-mono max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
+                  className="bg-muted/50 rounded-lg p-3 text-xs font-mono max-h-[200px] overflow-y-auto whitespace-pre-wrap wrap-break-words"
                 >
                   {streamingOutput}
                 </pre>

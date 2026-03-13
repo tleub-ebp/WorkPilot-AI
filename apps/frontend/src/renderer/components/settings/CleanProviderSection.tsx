@@ -71,7 +71,6 @@ export function CleanProviderSection({
   const { t } = useTranslation('settings');
   const { t: tCommon } = useTranslation('common');
   const { toast } = useToast();
-  const [connectors, setConnectors] = useState<Array<{ id: string, label: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [testingProviders, setTestingProviders] = useState<Set<string>>(new Set());
@@ -112,12 +111,10 @@ export function CleanProviderSection({
     setIsLoading(true);
     setError(null);
     try {
-      const connectors = await getAllConnectors();
-      setConnectors(connectors);
+      await getAllConnectors();
     } catch (err) {
       console.error('Failed to load connectors:', err);
       setError(t('sections.accounts.providers.loadError'));
-      setConnectors([]);
     } finally {
       setIsLoading(false);
     }
