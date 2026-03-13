@@ -66,10 +66,36 @@ export class CredentialManager extends EventEmitter {
    */
   public async initialize(): Promise<void> {
     try {
+      await this.cleanupTestProfiles();
       await this.loadProfiles();
       this.setupEventHandlers();
     } catch (error) {
       console.error('[CredentialManager] Failed to initialize:', error);
+    }
+  }
+
+  /**
+   * Remove fake/test profiles from profiles.json that were created by ensureTestProfiles.
+   * These profiles have placeholder or test-* API keys that cause real API calls to fail.
+   */
+  private async cleanupTestProfiles(): Promise<void> {
+    try {
+      const profilesFile = await loadProfilesFile();
+      const before = profilesFile.profiles.length;
+      profilesFile.profiles = profilesFile.profiles.filter(p => {
+        const key = p.apiKey || '';
+        const isFake = key.includes('placeholder') || key.startsWith('test-') || (key.startsWith('sk-ant-test') && key.length < 20) || key.length < 20;
+        if (isFake) {
+          console.log(`[CredentialManager] Removing fake test profile: "${p.name}" (key: ${key.substring(0, 10)}...)`);
+        }
+        return !isFake;
+      });
+      if (profilesFile.profiles.length < before) {
+        await saveProfilesFile(profilesFile);
+        console.log(`[CredentialManager] Cleaned up ${before - profilesFile.profiles.length} fake test profile(s)`);
+      }
+    } catch {
+      // Non-critical — skip cleanup
     }
   }
 
@@ -327,36 +353,42 @@ export class CredentialManager extends EventEmitter {
         const apiProfile = profilesFile.profiles.find(p => {
           return detectProvider(p.baseUrl) === provider;
         });
-        if (apiProfile?.apiKey && !apiProfile.apiKey.includes('placeholder')) {
+        if (apiProfile?.apiKey && !apiProfile.apiKey.includes('placeholder') && !apiProfile.apiKey.startsWith('test-') && apiProfile.apiKey.length >= 20) {
           apiKey = apiProfile.apiKey;
           baseUrl = apiProfile.baseUrl;
           profileName = apiProfile.name;
+          source = 'API profile (' + (profileName || 'unnamed') + ')';
         }
       } catch {
         // profiles.json not available
       }
 
       // Source 2: Chercher dans settings.json (clés API globales)
+      // Try multiple possible settings keys for each provider
       if (!apiKey) {
         try {
           const settings = readSettingsFile();
-          const globalKeyMap: Record<string, string> = {
-            'openai': 'globalOpenAIApiKey',
-            'google': 'globalGoogleDeepMindApiKey',
-            'gemini': 'globalGoogleApiKey',
-            'mistral': 'globalMistralApiKey',
-            'deepseek': 'globalDeepSeekApiKey',
-            'grok': 'globalGrokApiKey',
-            'meta': 'globalMetaApiKey',
-            'aws': 'globalAWSApiKey',
-            'cursor': 'globalCursorApiKey',
+          const globalKeyOptions: Record<string, string[]> = {
+            'openai': ['globalOpenAIApiKey'],
+            'google': ['globalGoogleDeepMindApiKey', 'globalGoogleApiKey'],
+            'gemini': ['globalGoogleApiKey', 'globalGoogleDeepMindApiKey'],
+            'mistral': ['globalMistralApiKey'],
+            'deepseek': ['globalDeepSeekApiKey'],
+            'grok': ['globalGrokApiKey'],
+            'meta': ['globalMetaApiKey'],
+            'aws': ['globalAWSApiKey'],
+            'cursor': ['globalCursorApiKey'],
           };
-          const settingsKey = globalKeyMap[provider];
-          if (settingsKey && settings) {
-            const globalKey = (settings as any)[settingsKey] as string | undefined;
-            if (globalKey?.trim()) {
-              apiKey = globalKey.trim();
-              profileName = provider;
+          const settingsKeys = globalKeyOptions[provider] || [];
+          if (settings) {
+            for (const settingsKey of settingsKeys) {
+              const globalKey = (settings as any)[settingsKey] as string | undefined;
+              if (globalKey?.trim()) {
+                apiKey = globalKey.trim();
+                profileName = provider;
+                source = 'global settings (' + settingsKey + ')';
+                break;
+              }
             }
           }
         } catch {
@@ -369,6 +401,7 @@ export class CredentialManager extends EventEmitter {
         apiKey = this.activeCredential.credentials.apiKey;
         baseUrl = this.activeCredential.credentials.baseUrl;
         profileName = this.activeCredential.credentials.profileName;
+        source = 'active credential';
       }
 
       if (!apiKey) {
@@ -377,6 +410,10 @@ export class CredentialManager extends EventEmitter {
           message: `Provider ${provider} not configured. Add an API key in Custom Endpoints or provider settings.`
         };
       }
+
+      // Debug: log which source provided the key (mask most of the key for security)
+      const maskedKey = apiKey.length > 8 ? apiKey.substring(0, 8) + '...' : '***';
+      console.log(`[CredentialManager] testProvider(${provider}): key from ${source}, starts with "${maskedKey}", baseUrl=${baseUrl || 'default'}`);
 
       // Tester la connexion avec le endpoint approprié pour chaque provider
       try {
@@ -706,7 +743,7 @@ export class CredentialManager extends EventEmitter {
           const detected = detectProvider(p.baseUrl);
           return detected === 'anthropic';
         });
-        if (anthropicProfile?.apiKey && !anthropicProfile.apiKey.includes('placeholder')) {
+        if (anthropicProfile?.apiKey && !anthropicProfile.apiKey.includes('placeholder') && !anthropicProfile.apiKey.startsWith('test-') && anthropicProfile.apiKey.length >= 20) {
           return {
             isAuthenticated: true,
             profileName: anthropicProfile.name || 'Anthropic (API Key)'

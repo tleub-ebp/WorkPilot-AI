@@ -30,7 +30,7 @@
  * - Notification batching to prevent UI spam
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import type { BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '../../shared/constants';
 import { getClaudeProfileManager } from '../claude-profile-manager';
@@ -129,9 +129,9 @@ interface PendingNotification {
 export class SDKSessionRecoveryCoordinator extends EventEmitter {
   private static instance: SDKSessionRecoveryCoordinator | null = null;
 
-  private operations: Map<string, RegisteredOperation> = new Map();
-  private profileCooldowns: Map<string, ProfileCooldown> = new Map();
-  private config: RecoveryCoordinatorConfig;
+  private readonly operations: Map<string, RegisteredOperation> = new Map();
+  private readonly profileCooldowns: Map<string, ProfileCooldown> = new Map();
+  private readonly config: RecoveryCoordinatorConfig;
   private getMainWindow: (() => BrowserWindow | null) | null = null;
 
   // Notification batching
@@ -147,9 +147,7 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
    * Get the singleton instance
    */
   static getInstance(config?: Partial<RecoveryCoordinatorConfig>): SDKSessionRecoveryCoordinator {
-    if (!SDKSessionRecoveryCoordinator.instance) {
-      SDKSessionRecoveryCoordinator.instance = new SDKSessionRecoveryCoordinator(config);
-    }
+    SDKSessionRecoveryCoordinator.instance ??= new SDKSessionRecoveryCoordinator(config);
     return SDKSessionRecoveryCoordinator.instance;
   }
 
@@ -312,6 +310,40 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
   }
 
   /**
+   * Check if a profile is eligible for selection (not excluded, authenticated, not rate-limited, not in cooldown)
+   */
+  private isProfileEligible(
+    profile: { profileId: string; profileName: string; isAuthenticated: boolean; isRateLimited: boolean },
+    excludeProfileId: string | undefined,
+    now: Date
+  ): boolean {
+    if (excludeProfileId && profile.profileId === excludeProfileId) {
+      return false;
+    }
+
+    if (!profile.isAuthenticated || profile.isRateLimited) {
+      return false;
+    }
+
+    const cooldown = this.profileCooldowns.get(profile.profileId);
+    if (cooldown && cooldown.cooldownUntil > now) {
+      console.log(
+        `[RecoveryCoordinator] Profile ${profile.profileName} in cooldown until ${cooldown.cooldownUntil.toISOString()}`
+      );
+      return false;
+    }
+
+    if (cooldown && cooldown.rateLimitCount >= this.config.maxConsecutiveRateLimits) {
+      console.log(
+        `[RecoveryCoordinator] Profile ${profile.profileName} exceeded max rate limits (${cooldown.rateLimitCount})`
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * Select the best available profile for a new operation
    * Considers cooldowns, usage, and current load
    */
@@ -334,65 +366,24 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
 
     // Filter and score profiles
     const now = new Date();
-    const candidates: Array<{
-      profileId: string;
-      profileName: string;
-      score: number;
-    }> = [];
+    const candidates = allProfilesUsage.allProfiles
+      .filter((profile) => this.isProfileEligible(profile, excludeProfileId, now))
+      .map((profile) => {
+        const cooldown = this.profileCooldowns.get(profile.profileId);
+        const operationsOnProfile = this.getOperationsByProfile(profile.profileId).length;
 
-    for (const profile of allProfilesUsage.allProfiles) {
-      // Skip excluded profile
-      if (excludeProfileId && profile.profileId === excludeProfileId) {
-        continue;
-      }
+        // Calculate score:
+        // - Base: availability score (0-100)
+        // - Penalty: -15 per active operation
+        // - Penalty: -5 per previous rate limit
+        const score =
+          profile.availabilityScore -
+          operationsOnProfile * OPERATION_PENALTY_POINTS -
+          (cooldown?.rateLimitCount ?? 0) * RATE_LIMIT_PENALTY_POINTS;
 
-      // Skip unauthenticated profiles
-      if (!profile.isAuthenticated) {
-        continue;
-      }
-
-      // Skip rate-limited profiles
-      if (profile.isRateLimited) {
-        continue;
-      }
-
-      // Check cooldown
-      const cooldown = this.profileCooldowns.get(profile.profileId);
-      if (cooldown && cooldown.cooldownUntil > now) {
-        console.log(
-          `[RecoveryCoordinator] Profile ${profile.profileName} in cooldown until ${cooldown.cooldownUntil.toISOString()}`
-        );
-        continue;
-      }
-
-      // Check if profile has exceeded max consecutive rate limits
-      if (cooldown && cooldown.rateLimitCount >= this.config.maxConsecutiveRateLimits) {
-        console.log(
-          `[RecoveryCoordinator] Profile ${profile.profileName} exceeded max rate limits (${cooldown.rateLimitCount})`
-        );
-        continue;
-      }
-
-      // Count current operations on this profile
-      const operationsOnProfile = this.getOperationsByProfile(profile.profileId).length;
-
-      // Calculate score:
-      // - Base: availability score (0-100)
-      // - Penalty: -15 per active operation
-      // - Penalty: -5 per previous rate limit
-      let score = profile.availabilityScore;
-      score -= operationsOnProfile * OPERATION_PENALTY_POINTS;
-      score -= (cooldown?.rateLimitCount ?? 0) * RATE_LIMIT_PENALTY_POINTS;
-
-      candidates.push({
-        profileId: profile.profileId,
-        profileName: profile.profileName,
-        score,
-      });
-    }
-
-    // Sort by score (highest first)
-    candidates.sort((a, b) => b.score - a.score);
+        return { profileId: profile.profileId, profileName: profile.profileName, score };
+      })
+      .sort((a, b) => b.score - a.score);
 
     if (candidates.length === 0) {
       return null;
@@ -445,12 +436,10 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
     });
 
     // Start batch timer if not already running
-    if (!this.notificationBatchTimeout) {
-      this.notificationBatchTimeout = setTimeout(
-        () => this.flushNotifications(),
-        this.config.notificationBatchWindowMs
-      );
-    }
+    this.notificationBatchTimeout ??= setTimeout(
+      () => this.flushNotifications(),
+      this.config.notificationBatchWindowMs
+    );
   }
 
   /**
@@ -494,7 +483,7 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
       safeSendToRenderer(
         this.getMainWindow,
         IPC_CHANNELS.QUEUE_BLOCKED_NO_PROFILES,
-        blocked[blocked.length - 1].data
+        blocked.at(-1)!.data
       );
     }
 
