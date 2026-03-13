@@ -5,10 +5,10 @@
  * Fournit une interface unifiée pour le frontend via IPC
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { loadProfilesFile, saveProfilesFile } from '../utils/profile-manager';
 import { readSettingsFile } from '../settings-utils';
-import type { ProfilesFile, APIProfile } from '../../shared/types/profile';
+import type { ProfilesFile } from '../../shared/types/profile';
 import { detectProvider } from '../../shared/utils/provider-detection';
 
 export interface CredentialConfig {
@@ -54,7 +54,7 @@ export interface UsageData {
 export class CredentialManager extends EventEmitter {
   private profiles: ProfilesFile | null = null;
   private activeCredential: CredentialConfig | null = null;
-  private usageData: Map<string, UsageData> = new Map();
+  private readonly usageData: Map<string, UsageData> = new Map();
 
   constructor() {
     super();
@@ -261,6 +261,7 @@ export class CredentialManager extends EventEmitter {
             };
           }
         } catch (error) {
+          console.warn('GitHub CLI check failed:', error instanceof Error ? error.message : error);
           return {
             success: false,
             message: 'GitHub CLI not available or not authenticated. Install and run: gh auth login'
@@ -291,7 +292,7 @@ export class CredentialManager extends EventEmitter {
       }
 
       // Pour les autres providers, utiliser la logique existante
-      if (!this.activeCredential || this.activeCredential.provider !== provider) {
+      if (!this.activeCredential || this.activeCredential?.provider !== provider) {
         return {
           success: false,
           message: `Provider ${provider} not configured or not active`
@@ -334,9 +335,9 @@ export class CredentialManager extends EventEmitter {
       // Dans le contexte backend, on ne peut pas utiliser window.electronAPI directement
       // On utilise une approche différente - vérifier les profils Claude via le système de fichiers
       
-      const fs = require('fs').promises;
-      const path = require('path');
-      const os = require('os');
+      const fs = require('node:fs').promises;
+      const path = require('node:path');
+      const os = require('node:os');
       
       // Chemin vers les profils Claude CLI
       const claudeConfigPath = path.join(os.homedir(), '.config', 'claude', 'profiles.json');
@@ -359,7 +360,7 @@ export class CredentialManager extends EventEmitter {
         }
       } catch (fileError) {
         // Le fichier n'existe pas ou est invalide
-        console.log('[CredentialManager] Claude profiles file not found or invalid');
+        console.log('[CredentialManager] Claude profiles file not found or invalid:', fileError instanceof Error ? fileError.message : fileError);
       }
       
       return { isAuthenticated: false };
@@ -400,7 +401,7 @@ export class CredentialManager extends EventEmitter {
         try {
           const settings = readSettingsFile();
           const globalKey = settings?.globalWindsurfApiKey as string | undefined;
-          if (globalKey && globalKey.trim()) {
+          if (globalKey?.trim()) {
             serviceKey = globalKey.trim();
           }
         } catch {
@@ -524,7 +525,7 @@ export class CredentialManager extends EventEmitter {
    * Obtenir les variables d'environnement pour le processus Python
    */
   getEnvironmentVariables(): Record<string, string> {
-    if (!this.activeCredential || this.activeCredential.type !== 'api_key') {
+    if (this.activeCredential?.type !== 'api_key') {
       return {};
     }
 
@@ -555,8 +556,14 @@ export const credentialManager = new CredentialManager();
 
 /**
  * Detect Windsurf API key from local IDE installation.
- * Reads the state.vscdb SQLite database stored by Windsurf IDE
- * to extract the sk-ws-... API key obtained after SSO login.
+ * Uses better-sqlite3 (pure Node.js) to read the state.vscdb SQLite database
+ * stored by Windsurf IDE — no Python dependency required.
+ *
+ * Supports both standard accounts and SSO enterprise accounts by searching
+ * multiple keys in the database:
+ *   1. windsurfAuthStatus → { apiKey: "sk-ws-..." }
+ *   2. codeium.windsurf-windsurf_auth → user name / email
+ *   3. windsurf.authToken / codeium.apiKey → SSO enterprise fallback keys
  *
  * Supported paths:
  * - Windows: %APPDATA%/Windsurf/User/globalStorage/state.vscdb
@@ -565,11 +572,9 @@ export const credentialManager = new CredentialManager();
  */
 export async function detectWindsurfLocalToken(): Promise<{ success: boolean; apiKey?: string; userName?: string; error?: string }> {
   try {
-    const path = await import('path');
-    const fs = await import('fs');
-    const os = await import('os');
+    const path = await import('node:path');
+    const fs = await import('node:fs');
     const { isWindows, isMacOS } = await import('../platform/index');
-    const { execSync } = await import('child_process');
 
     // Determine the state.vscdb path based on platform
     let dbPath: string;
@@ -586,73 +591,144 @@ export async function detectWindsurfLocalToken(): Promise<{ success: boolean; ap
       return { success: false, error: 'Windsurf IDE not found. Install Windsurf and sign in first.' };
     }
 
-    // Write a temp Python script file (avoids shell quoting issues on Windows)
-    const tmpDir = os.tmpdir();
-    const scriptPath = path.join(tmpDir, `_wp_windsurf_detect_${Date.now()}.py`);
-    // Use raw string for db_path to avoid backslash issues
-    const dbPathForPython = dbPath.replace(/\\/g, '\\\\');
-    const pythonScript = `import sqlite3, json, sys
-db_path = "${dbPathForPython}"
-try:
-    conn = sqlite3.connect(db_path)
-    cur = conn.cursor()
-    cur.execute("SELECT value FROM ItemTable WHERE key = 'windsurfAuthStatus'")
-    row = cur.fetchone()
-    if row:
-        val = row[0]
-        if isinstance(val, bytes):
-            val = val.decode('utf-8', errors='replace')
-        data = json.loads(val)
-        api_key = data.get('apiKey', '')
-        cur.execute("SELECT value FROM ItemTable WHERE key = 'codeium.windsurf-windsurf_auth'")
-        name_row = cur.fetchone()
-        user_name = ''
-        if name_row:
-            user_name = name_row[0] if isinstance(name_row[0], str) else name_row[0].decode('utf-8', errors='replace')
-        print(json.dumps({'apiKey': api_key, 'userName': user_name}))
-    else:
-        print(json.dumps({'error': 'No auth data found. Sign in to Windsurf IDE first.'}))
-    conn.close()
-except Exception as e:
-    print(json.dumps({'error': str(e)}))
-`;
-
-    fs.writeFileSync(scriptPath, pythonScript, 'utf-8');
-
-    // Try python commands in order: python, python3, py
-    const pythonCmds = isWindows() ? ['python', 'python3', 'py'] : ['python3', 'python'];
-    let lastError = '';
-
-    for (const cmd of pythonCmds) {
-      try {
-        const result = execSync(`${cmd} "${scriptPath}"`, {
-          timeout: 10000,
-          encoding: 'utf-8',
-          windowsHide: true,
-        }).trim();
-
-        // Cleanup temp file
-        try { fs.unlinkSync(scriptPath); } catch { /* ignore */ }
-
-        const parsed = JSON.parse(result);
-        if (parsed.error) {
-          return { success: false, error: parsed.error };
-        }
-        if (parsed.apiKey) {
-          return { success: true, apiKey: parsed.apiKey, userName: parsed.userName || undefined };
-        }
-        return { success: false, error: 'No API key found in Windsurf auth data.' };
-
-      } catch (e: any) {
-        lastError = e.message || String(e);
-        continue; // Try next python command
-      }
+    // Use better-sqlite3 — pure Node.js, no Python dependency
+    let Database: typeof import('better-sqlite3');
+    try {
+      Database = require('better-sqlite3');
+    } catch (e: any) {
+      return { success: false, error: `better-sqlite3 module not available: ${e.message}` };
     }
 
-    // Cleanup temp file on failure
-    try { fs.unlinkSync(scriptPath); } catch { /* ignore */ }
+    let db: import('better-sqlite3').Database;
+    try {
+      db = new Database(dbPath, { readonly: true, fileMustExist: true });
+    } catch (e: any) {
+      return { success: false, error: `Could not open Windsurf database: ${e.message}` };
+    }
 
-    return { success: false, error: `Could not read Windsurf database (tried ${pythonCmds.join(', ')}). Last error: ${lastError}` };
+    try {
+      // Helper to read a key from the ItemTable
+      const readKey = (key: string): string | null => {
+        try {
+          const row = db.prepare('SELECT value FROM ItemTable WHERE key = ?').get(key) as { value: string | Buffer } | undefined;
+          if (!row) return null;
+          const val = row.value;
+          if (Buffer.isBuffer(val)) return val.toString('utf-8');
+          return typeof val === 'string' ? val : null;
+        } catch {
+          return null;
+        }
+      };
+
+      let apiKey: string | undefined;
+      let userName: string | undefined;
+
+      // Strategy 1: Standard auth — windsurfAuthStatus JSON blob with apiKey field
+      const authStatusRaw = readKey('windsurfAuthStatus');
+      if (authStatusRaw) {
+        try {
+          const authData = JSON.parse(authStatusRaw);
+          if (authData.apiKey) {
+            apiKey = authData.apiKey;
+          }
+          // SSO enterprise: the token may be stored as accessToken or token instead of apiKey
+          if (!apiKey && authData.accessToken) {
+            apiKey = authData.accessToken;
+          }
+          if (!apiKey && authData.token) {
+            apiKey = authData.token;
+          }
+          // Extract user info from authStatus if available
+          if (authData.userName) userName = authData.userName;
+          if (authData.email) userName = userName ? `${userName} (${authData.email})` : authData.email;
+          if (authData.name) userName = userName || authData.name;
+        } catch {
+          // Not valid JSON — treat as raw token string
+          if (authStatusRaw.startsWith('sk-') || authStatusRaw.startsWith('eyJ')) {
+            apiKey = authStatusRaw;
+          }
+        }
+      }
+
+      // Strategy 2: SSO enterprise fallback keys
+      if (!apiKey) {
+        // Try windsurf.authToken (used by some SSO enterprise setups)
+        const authToken = readKey('windsurf.authToken');
+        if (authToken) {
+          try {
+            const parsed = JSON.parse(authToken);
+            apiKey = parsed.apiKey || parsed.accessToken || parsed.token || parsed.key;
+          } catch {
+            if (authToken.startsWith('sk-') || authToken.startsWith('eyJ') || authToken.length > 40) {
+              apiKey = authToken;
+            }
+          }
+        }
+      }
+
+      if (!apiKey) {
+        // Try codeium.apiKey (direct key storage)
+        const codeiumKey = readKey('codeium.apiKey');
+        if (codeiumKey && codeiumKey.length > 10) {
+          apiKey = codeiumKey;
+        }
+      }
+
+      if (!apiKey) {
+        // Try service-auth/windsurf key pattern (SSO token exchange result)
+        const serviceAuth = readKey('service-auth/windsurf');
+        if (serviceAuth) {
+          try {
+            const parsed = JSON.parse(serviceAuth);
+            apiKey = parsed.apiKey || parsed.accessToken || parsed.token;
+          } catch {
+            if (serviceAuth.length > 40) apiKey = serviceAuth;
+          }
+        }
+      }
+
+      // Resolve user name from a separate key if not already found
+      if (!userName) {
+        const authUserRaw = readKey('codeium.windsurf-windsurf_auth');
+        if (authUserRaw) {
+          try {
+            const parsed = JSON.parse(authUserRaw);
+            userName = parsed.name || parsed.userName || parsed.email || authUserRaw;
+          } catch {
+            userName = authUserRaw;
+          }
+        }
+      }
+
+      db.close();
+
+      if (apiKey) {
+        return { success: true, apiKey, userName: userName || undefined };
+      }
+
+      // If we found nothing, list available keys for debugging (SSO troubleshooting)
+      let debugInfo = '';
+      try {
+        const reopenedDb = new Database(dbPath, { readonly: true, fileMustExist: true });
+        const rows = reopenedDb.prepare(
+          "SELECT key FROM ItemTable WHERE key LIKE '%windsurf%' OR key LIKE '%codeium%' OR key LIKE '%auth%' ORDER BY key"
+        ).all() as { key: string }[];
+        reopenedDb.close();
+
+        if (rows.length > 0) {
+          debugInfo = ` Found ${rows.length} related keys: ${rows.map(r => r.key).join(', ')}`;
+        }
+      } catch { /* ignore debug errors */ }
+
+      return {
+        success: false,
+        error: `No API key found in Windsurf auth data. Sign in to Windsurf IDE first.${debugInfo}`
+      };
+
+    } catch (queryError: any) {
+      try { db.close(); } catch { /* ignore */ }
+      return { success: false, error: `Error querying Windsurf database: ${queryError.message}` };
+    }
 
   } catch (error: any) {
     return { success: false, error: error.message || 'Unknown error detecting Windsurf token' };

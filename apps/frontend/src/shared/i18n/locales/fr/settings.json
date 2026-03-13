@@ -128,6 +128,7 @@
         "testSuccessDescription": "Le provider {{providerName}} fonctionne correctement",
         "testError": "Test échoué",
         "testErrorDescription": "Le provider {{providerName}} a échoué : {{error}}",
+        "deleteConfirm": "Êtes-vous sûr de vouloir supprimer la configuration de ce provider ?",
         "testDetails": {
           "modelsAvailable": "{{count}} modèles disponibles",
           "modelUsed": "Modèle utilisé : {{model}}"

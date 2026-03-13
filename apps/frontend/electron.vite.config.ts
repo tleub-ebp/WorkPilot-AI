@@ -59,8 +59,8 @@ export default defineConfig({
         input: {
           index: resolve(__dirname, 'src/main/index.ts')
         },
-        // Only node-pty needs to be external (native module rebuilt by electron-builder)
-        external: ['@lydell/node-pty']
+        // Native modules that must be external (rebuilt by electron-builder)
+        external: ['@lydell/node-pty', 'better-sqlite3']
       }
     }
   },

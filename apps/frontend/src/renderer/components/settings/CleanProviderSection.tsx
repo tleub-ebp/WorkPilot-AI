@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { SettingsSection } from './SettingsSection';
 import { CleanProviderGrid } from './CleanProviderGrid';
 import { getAllConnectors } from './multiconnector/utils';
-import { Loader2, AlertCircle, Info, X, Activity, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Info, X, Activity } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent } from '../ui/dialog';
@@ -14,8 +14,7 @@ import { getProvider as getRegistryProvider } from '@shared/services/providerReg
 import { useSettingsStore } from '@/stores/settings-store';
 import { useToast } from '@/hooks/use-toast';
 import { ProviderService } from '@shared/services/providerService';
-import type { APIProfile } from '@shared/types/profile';
-import type { ProfileUsageSummary } from '@shared/types/agent';
+import type { ProfileUsageSummary, AuthMethod } from '@shared/types/agent';
 
 interface Provider {
   id: string;
@@ -35,7 +34,7 @@ interface Provider {
     keyPreview?: string;
     provider?: string;
     isOAuth?: boolean;
-    authMethod?: 'api-key' | 'oauth' | 'cli' | 'local';
+    authMethod?: AuthMethod;
   };
 }
 
@@ -64,30 +63,11 @@ const providerCategories: Record<string, string> = {
   'azure-openai': 'microsoft',
 };
 
-const providerDescriptions: Record<string, string> = {
-  'anthropic': 'Modèles Claude d\'Anthropic',
-  'claude': 'Modèles Claude d\'Anthropic',
-  'openai': 'Modèles GPT-5 et autres modèles OpenAI',
-  'ollama': 'Modèles open-source locaux avec Ollama',
-  'gemini': 'Modèles Gemini de Google DeepMind',
-  'google': 'Accès aux API Google et Google DeepMind',
-  'meta-llama': 'Modèles Llama de Meta via Together.ai',
-  'meta': 'Modèles Meta AI officiels',
-  'mistral': 'Modèles Mistral AI (Mistral, Codéal, etc.)',
-  'deepseek': 'Modèles DeepSeek (DeepSeek-Coder, etc.)',
-  'grok': 'Modèles Grok xAI',
-  'windsurf': 'Provider Windsurf AI',
-  'cursor': 'Provider Cursor AI',
-  'copilot': 'GitHub Copilot',
-  'aws': 'AWS Bedrock et services Amazon',
-  'azure-openai': 'Modèles OpenAI via Azure',
-};
-
 export function CleanProviderSection({ 
   settings, 
   onSettingsChange, 
   isOpen 
-}: CleanProviderSectionProps) {
+}: Readonly<CleanProviderSectionProps>) {
   const { t } = useTranslation('settings');
   const { t: tCommon } = useTranslation('common');
   const { toast } = useToast();
@@ -105,7 +85,7 @@ export function CleanProviderSection({
   const [providerTestResults, setProviderTestResults] = useState<Map<string, { date: string; success: boolean }>>(new Map());
 
   // Utiliser les profiles comme le ProviderSelector
-  const { profiles, setActiveProfile } = useSettingsStore();
+  const { profiles } = useSettingsStore();
 
   // Load real data when section is opened (runs once when panel opens)
   useEffect(() => {
@@ -135,7 +115,7 @@ export function CleanProviderSection({
   // Load profile usage data
   const loadProfileUsageData = async () => {
     try {
-      const result = await window.electronAPI.requestAllProfilesUsage?.(true);
+      const result = await globalThis.electronAPI.requestAllProfilesUsage?.(true);
       if (result?.success && result.data) {
         const usageMap = new Map<string, ProfileUsageSummary>();
         result.data.allProfiles.forEach((profile: ProfileUsageSummary) => {
@@ -160,7 +140,7 @@ export function CleanProviderSection({
         if (key.startsWith('testResult_')) {
           const providerId = key.replace('testResult_', '');
           const result = settings[key];
-          if (result && result.date) {
+          if (result?.date) {
             testResults.set(providerId, {
               date: result.date,
               success: result.success || false
@@ -176,7 +156,7 @@ export function CleanProviderSection({
   };
 
   // Determine the auth method for a provider using providerRegistry as source of truth
-  const getProviderAuthMethod = (providerId: string): 'api-key' | 'oauth' | 'cli' | 'local' => {
+  const getProviderAuthMethod = (providerId: string): AuthMethod => {
     const registryProvider = getRegistryProvider(providerId);
     if (registryProvider) {
       if (registryProvider.requiresCLI) return 'cli';
@@ -186,14 +166,8 @@ export function CleanProviderSection({
     return 'api-key';
   };
 
-  // Helper function to check if provider uses OAuth or CLI authentication (non-API-key based)
-  const isProviderOAuth = (providerId: string): boolean => {
-    const authMethod = getProviderAuthMethod(providerId);
-    return authMethod === 'cli' || authMethod === 'oauth';
-  };
-
   // Get API key info for a provider
-  const getApiKeyInfo = (providerId: string): { hasKey: boolean; keyPreview?: string; provider?: string; isOAuth?: boolean; authMethod?: 'api-key' | 'oauth' | 'cli' | 'local' } => {
+  const getApiKeyInfo = (providerId: string): { hasKey: boolean; keyPreview?: string; provider?: string; isOAuth?: boolean; authMethod?: AuthMethod } => {
     // Determine auth method from registry
     const authMethod = getProviderAuthMethod(providerId);
     const isOAuthOrCLI = authMethod === 'cli' || authMethod === 'oauth';
@@ -223,7 +197,7 @@ export function CleanProviderSection({
              (providerId === 'google' && p.baseUrl.includes('googleapis.com'));
     });
 
-    if (profile && profile.apiKey) {
+    if (profile?.apiKey) {
       return {
         hasKey: true,
         keyPreview: maskApiKey(profile.apiKey),
@@ -293,6 +267,8 @@ export function CleanProviderSection({
       'mistral': 'globalMistralApiKey',
       'deepseek': 'globalDeepSeekApiKey',
       'grok': 'globalGrokApiKey',
+      'windsurf': 'globalWindsurfApiKey',
+      'cursor': 'globalCursorApiKey',
       'aws': 'globalAWSApiKey',
       'azure-openai': 'globalOpenAIApiKey',
     };
@@ -313,7 +289,7 @@ export function CleanProviderSection({
   useEffect(() => {
     const loadProviders = async () => {
       try {
-        const result = await getStaticProviders(profiles);
+        const result = await getStaticProviders(profiles, settings);
         setStaticProviders(result.providers);
         setProviderStatus(result.status);
       } catch (error) {
@@ -322,7 +298,7 @@ export function CleanProviderSection({
     };
     
     loadProviders();
-  }, [profiles]);
+  }, [profiles, settings]);
 
   // Transformer les providers statiques en providers pour la grille avec mémorisation
   const providers = useMemo(() => {
@@ -539,12 +515,14 @@ export function CleanProviderSection({
       // Note: providerPriorityOrder is now managed solely by ClaudeProfileManager
       const updatedSettings = { ...settings };
       const currentDisabled = updatedSettings.disabledAutoSwitchProviders || [];
-      if (!enabled) {
+      if (enabled) {
+        // Enable provider: remove from disabled list
+        updatedSettings.disabledAutoSwitchProviders = currentDisabled.filter((id: string) => id !== providerId);
+      } else {
+        // Disable provider: add to disabled list if not already there
         if (!currentDisabled.includes(providerId)) {
           updatedSettings.disabledAutoSwitchProviders = [...currentDisabled, providerId];
         }
-      } else {
-        updatedSettings.disabledAutoSwitchProviders = currentDisabled.filter((id: string) => id !== providerId);
       }
 
       // Single atomic settings update
@@ -572,13 +550,13 @@ export function CleanProviderSection({
     }
   };
 
-  const handleRemove = (providerId: string) => {
+  const handleRemove = () => {
     // Pour l'instant, on ne fait rien car on utilise les profiles
     // Remove provider
   };
 
   const handleRefresh = () => {
-    window.location.reload();
+    globalThis.location.reload();
   };
 
   if (isLoading) {
@@ -648,7 +626,7 @@ export function CleanProviderSection({
             </Alert>
           )}
 
-          {providersState.filter(p => p.isWorking === false).length > 0 && (
+          {providersState.some(p => p.isWorking === false) && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
@@ -676,18 +654,7 @@ export function CleanProviderSection({
 
           {/* Auto-switching settings - tiroir compact */}
           <div className={`${autoSwitchingOpen ? "flex-1" : "w-auto"} transition-all duration-300`}>
-            {!autoSwitchingOpen ? (
-              /* Bouton compact pour ouvrir */
-              <Button
-                onClick={() => setAutoSwitchingOpen(true)}
-                variant="outline"
-                size="sm"
-                className="h-8 px-3"
-              >
-                <Activity className="w-4 h-4 mr-2" />
-                {t('sections.accounts.autoSwitching.title')}
-              </Button>
-            ) : (
+            {autoSwitchingOpen ? (
               /* Contenu de l'auto-switching dans un tiroir */
               <div className="border rounded-lg p-4 space-y-4">
                 <div className="flex items-center justify-between">
@@ -714,6 +681,17 @@ export function CleanProviderSection({
                   />
                 </div>
               </div>
+            ) : (
+              /* Bouton compact pour ouvrir */
+              <Button
+                onClick={() => setAutoSwitchingOpen(true)}
+                variant="outline"
+                size="sm"
+                className="h-8 px-3"
+              >
+                <Activity className="w-4 h-4 mr-2" />
+                {t('sections.accounts.autoSwitching.title')}
+              </Button>
             )}
           </div>
         </div>
