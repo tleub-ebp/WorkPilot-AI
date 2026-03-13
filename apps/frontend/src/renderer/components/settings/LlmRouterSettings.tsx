@@ -31,16 +31,22 @@ export function LlmRouterSettings() {
   const [strategy, setStrategy] = useState<RoutingStrategy>('best_performance');
 
   const [providers] = useState<ProviderEntry[]>([
-    { provider: 'Anthropic', model: 'claude-sonnet-4-6', capabilities: ['coding', 'planning', 'review'], priority: 1, isLocal: false, enabled: true },
+    { provider: 'Anthropic', model: 'claude-opus-4-6', capabilities: ['coding', 'planning', 'review'], priority: 1, isLocal: false, enabled: true },
     { provider: 'OpenAI', model: 'gpt-5.4', capabilities: ['coding', 'review'], priority: 2, isLocal: false, enabled: true },
-    { provider: 'Mistral', model: 'mistral-large-3', capabilities: ['coding', 'planning'], priority: 3, isLocal: false, enabled: false },
-    { provider: 'Ollama', model: 'llama3.3', capabilities: ['quick_feedback', 'coding'], priority: 4, isLocal: true, enabled: true },
+    { provider: 'Google', model: 'gemini-3.1-pro', capabilities: ['coding', 'planning'], priority: 3, isLocal: false, enabled: true },
+    { provider: 'Mistral', model: 'mistral-large-3', capabilities: ['coding', 'planning'], priority: 4, isLocal: false, enabled: false },
+    { provider: 'DeepSeek', model: 'deepseek-v3.2', capabilities: ['coding', 'review'], priority: 5, isLocal: false, enabled: true },
+    { provider: 'GitHub Copilot', model: 'gpt-5.4', capabilities: ['coding', 'quick_feedback'], priority: 6, isLocal: false, enabled: true },
+    { provider: 'Grok', model: 'grok-2', capabilities: ['coding', 'planning'], priority: 7, isLocal: false, enabled: false },
+    { provider: 'Windsurf', model: 'swe-1.5', capabilities: ['coding', 'review'], priority: 8, isLocal: false, enabled: false },
+    { provider: 'Ollama', model: 'llama3.3', capabilities: ['quick_feedback', 'coding'], priority: 9, isLocal: true, enabled: true },
   ]);
 
   const [fallbacks] = useState<FallbackChain[]>([
-    { taskType: 'coding', chain: ['Anthropic / claude-sonnet-4-6', 'OpenAI / gpt-5.4', 'Ollama / llama3.3'] },
-    { taskType: 'planning', chain: ['Anthropic / claude-sonnet-4-6', 'Mistral / mistral-large-3'] },
-    { taskType: 'review', chain: ['Anthropic / claude-sonnet-4-6', 'OpenAI / gpt-5.4'] },
+    { taskType: 'coding', chain: ['Anthropic / claude-opus-4-6', 'OpenAI / gpt-5.4', 'DeepSeek / deepseek-v3.2', 'GitHub Copilot / gpt-5.4', 'Ollama / llama3.3'] },
+    { taskType: 'planning', chain: ['Anthropic / claude-opus-4-6', 'Google / gemini-3.1-pro', 'Grok / grok-2', 'Mistral / mistral-large-3'] },
+    { taskType: 'review', chain: ['Anthropic / claude-opus-4-6', 'OpenAI / gpt-5.4', 'DeepSeek / deepseek-v3.2', 'Windsurf / swe-1.5'] },
+    { taskType: 'quick_feedback', chain: ['GitHub Copilot / gpt-5.4', 'Ollama / llama3.3', 'DeepSeek / deepseek-v3.2'] },
   ]);
 
   const strategies: { id: RoutingStrategy; label: string; desc: string; icon: React.ReactNode }[] = [
