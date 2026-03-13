@@ -19,6 +19,7 @@ import { detectProvider as sharedDetectProvider, getProviderLabel, type ApiProvi
 import { getCredentialsFromKeychain, clearKeychainCache } from './credential-utils';
 import { reactiveTokenRefresh, ensureValidToken } from './token-refresh';
 import { isProfileRateLimited } from './rate-limit-manager';
+import { parseUsageOutput } from './usage-parser';
 import { getOperationRegistry } from './operation-registry';
 import { calculateProfileScore } from './profile-scorer';
 import { getVelocityTracker } from './velocity-tracker';
@@ -1627,10 +1628,23 @@ export class UsageMonitor extends EventEmitter {
       this.debugLog('[UsageMonitor] API method failed, recording failure timestamp for cooldown retry');
       this.debugLog('[UsageMonitor:FETCH] API fetch failed, will retry after cooldown');
       this.apiFailureTimestamps.set(profileId, Date.now());
-    } else if (isAnthropicApiKey) {
-      this.debugLog('[UsageMonitor:FETCH] Skipping API fetch for anthropic API key profile — OAuth endpoint requires OAuth token');
     } else if (!credential) {
       this.debugLog('[UsageMonitor:FETCH] No credential available, skipping API method');
+    } else if (isAnthropicApiKey) {
+      this.debugLog('[UsageMonitor:FETCH] Skipping API fetch for anthropic API key profile — OAuth endpoint requires OAuth token');
+    } else {
+      // API method skipped due to rate limit backoff — return cached result if available
+      // This prevents falling through to CLI fallback which may not work reliably
+      const cachedResult = this.apiResultCache.get(profileId);
+      if (cachedResult) {
+        this.debugLog(`[UsageMonitor:FETCH] API skipped (backoff), returning cached result (age: ${Math.round((Date.now() - cachedResult.fetchedAt) / 1000)}s)`);
+        return cachedResult.snapshot;
+      }
+      // Also check currentUsage as a last resort before CLI
+      if (this.currentUsage && this.currentUsageProfileId === profileId) {
+        this.debugLog('[UsageMonitor:FETCH] API skipped (backoff), returning currentUsage as fallback');
+        return this.currentUsage;
+      }
     }
 
     // Attempt 2: CLI /usage command (fallback)
@@ -1867,6 +1881,13 @@ export class UsageMonitor extends EventEmitter {
           // Always use debugLog for 429 — this is expected rate limiting, not an error worth spamming
           this.debugLog(`[UsageMonitor] Rate limited (429) for ${profileId} — backing off ${Math.round(cooldown / 1000)}s (attempt #${backoffState.consecutiveHits})`);
           this.apiFailureTimestamps.set(profileId, Date.now());
+
+          // Return last cached result if available — prevents showing 0% during backoff
+          const cached429 = this.apiResultCache.get(cacheKey);
+          if (cached429) {
+            this.debugLog(`[UsageMonitor] Returning stale cached result during 429 backoff for ${profileId} (age: ${Math.round((Date.now() - cached429.fetchedAt) / 1000)}s)`);
+            return cached429.snapshot;
+          }
           return null;
         }
 
@@ -2600,52 +2621,28 @@ export class UsageMonitor extends EventEmitter {
       
       this.debugLog('[UsageMonitor:CLI] claude usage output received (first 200 chars):', result.stdout.substring(0, 200));
       
-      // Parse the CLI output to extract usage information
-      const output = result.stdout;
+      // Strip ANSI escape codes before parsing (CLI output may contain color/progress bar sequences)
+      const output = result.stdout.replaceAll(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
       
-      // Look for usage patterns - the CLI shows percentages in various formats
-      // Try multiple patterns to catch different CLI output formats
-      const patterns = [
-        /(\d+)%\s+used.*?(5-hour|session|5h)/i,
-        /(\d+)%\s+used.*?(7-day|weekly|7d)/i,
-        /usage.*?(\d+)%.*?(5-hour|session)/i,
-        /usage.*?(\d+)%.*?(7-day|weekly)/i
-      ];
+      // Use the dedicated usage parser that handles the actual "claude usage" output format:
+      //   "Current session ████▌ 9% used Resets 11:59pm"
+      //   "Current week (all models) 79% used Resets Nov 1, 10:59am"
+      const parsed = parseUsageOutput(output);
       
-      let sessionPercent = 0;
-      let weeklyPercent = 0;
+      let sessionPercent = parsed.sessionUsagePercent;
+      let weeklyPercent = parsed.weeklyUsagePercent;
       
-      // Try to find session usage
-      for (const pattern of patterns) {
-        const patternStr = pattern.toString();
-        if (patternStr.includes('session') || patternStr.includes('5-hour') || patternStr.includes('5h')) {
-          const match = pattern.exec(output);
-          if (match) {
-            sessionPercent = Number(match[1]);
-            this.debugLog('[UsageMonitor:CLI] Found session usage:', sessionPercent);
-            break;
-          }
-        }
-      }
+      this.debugLog('[UsageMonitor:CLI] Parsed usage via parseUsageOutput:', {
+        sessionPercent,
+        weeklyPercent,
+        sessionResetTime: parsed.sessionResetTime,
+        weeklyResetTime: parsed.weeklyResetTime
+      });
       
-      // Try to find weekly usage
-      for (const pattern of patterns) {
-        const patternStr = pattern.toString();
-        if (patternStr.includes('weekly') || patternStr.includes('7-day') || patternStr.includes('7d')) {
-          const match = pattern.exec(output);
-          if (match) {
-            weeklyPercent = Number(match[1]);
-            this.debugLog('[UsageMonitor:CLI] Found weekly usage:', weeklyPercent);
-            break;
-          }
-        }
-      }
-      
-      // If we still don't have values, try a more generic approach
+      // Fallback: if parseUsageOutput found nothing, try generic percentage extraction
       if (sessionPercent === 0 && weeklyPercent === 0) {
         if (output.includes("You've hit your limit")) {
           sessionPercent = 100;
-          // Keep weeklyPercent as 0 since "hit your limit" usually refers to session limit
           this.debugLog('[UsageMonitor:CLI] Detected session limit hit, setting session to 100%');
         } else {
           const percentagePattern = /(\d+)%/g;
@@ -2657,7 +2654,6 @@ export class UsageMonitor extends EventEmitter {
           }
           
           if (allPercentages.length >= 1) {
-            // Assume first percentage is session, second is weekly (if available)
             sessionPercent = Number(allPercentages[0]);
             if (allPercentages.length >= 2) {
               weeklyPercent = Number(allPercentages[1]);
@@ -2667,7 +2663,7 @@ export class UsageMonitor extends EventEmitter {
         }
       }
       
-      this.debugLog('[UsageMonitor:CLI] Parsed usage from CLI:', {
+      this.debugLog('[UsageMonitor:CLI] Final parsed usage from CLI:', {
         sessionPercent,
         weeklyPercent,
         outputLength: output.length
@@ -2704,8 +2700,7 @@ export class UsageMonitor extends EventEmitter {
     if (recent.length < 2) return false;
 
     // Check for A→B→A cycle: we just swapped TO this profile and now want to swap FROM it
-    const lastSwap = recent.at(-1);
-    if (lastSwap && lastSwap.to === currentProfileId) {
+    if (recent.at(-1)?.to === currentProfileId) {
       return true;
     }
 
