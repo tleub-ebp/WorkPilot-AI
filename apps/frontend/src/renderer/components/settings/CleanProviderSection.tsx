@@ -11,7 +11,7 @@ import { GlobalAutoSwitching } from './GlobalAutoSwitching';
 import { ProviderConfigDialog } from './ProviderConfigDialog';
 import { getStaticProviders, type CanonicalProvider } from '@shared/utils/providers';
 import { getProvider as getRegistryProvider } from '@shared/services/providerRegistry';
-import { useSettingsStore } from '@/stores/settings-store';
+import { useSettingsStore, saveSettings as saveSettingsToDisk } from '@/stores/settings-store';
 import { useToast } from '@/hooks/use-toast';
 import { ProviderService } from '@shared/services/providerService';
 import type { ProfileUsageSummary, AuthMethod } from '@shared/types/agent';
@@ -94,6 +94,8 @@ export function CleanProviderSection({
     propsOnSettingsChange(newSettings);
     // Update store for real-time sync across components
     updateSettings(newSettings);
+    // Persist to disk so settings survive app restart
+    await saveSettingsToDisk(newSettings);
   };
 
   // Load real data when section is opened (runs once when panel opens)
