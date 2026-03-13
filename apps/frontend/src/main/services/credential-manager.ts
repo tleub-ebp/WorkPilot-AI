@@ -296,30 +296,60 @@ export class CredentialManager extends EventEmitter {
         return await this.testWindsurfProvider();
       }
 
-      // Pour les autres providers, utiliser la logique existante
-      if (!this.activeCredential || this.activeCredential?.provider !== provider) {
+      // Pour les autres providers (openai, mistral, google, deepseek, grok, ollama, etc.)
+      // Chercher d'abord un profil API dans profiles.json
+      let apiKey: string | undefined;
+      let baseUrl: string | undefined;
+      let profileName: string | undefined;
+
+      try {
+        const profilesFile = await loadProfilesFile();
+        const apiProfile = profilesFile.profiles.find(p => {
+          return detectProvider(p.baseUrl) === provider;
+        });
+        if (apiProfile?.apiKey) {
+          apiKey = apiProfile.apiKey;
+          baseUrl = apiProfile.baseUrl;
+          profileName = apiProfile.name;
+        }
+      } catch {
+        // profiles.json not available
+      }
+
+      // Si pas trouvé dans profiles.json, vérifier le activeCredential
+      if (!apiKey && this.activeCredential?.provider === provider && this.activeCredential.credentials.apiKey) {
+        apiKey = this.activeCredential.credentials.apiKey;
+        baseUrl = this.activeCredential.credentials.baseUrl;
+        profileName = this.activeCredential.credentials.profileName;
+      }
+
+      if (!apiKey) {
         return {
           success: false,
-          message: `Provider ${provider} not configured or not active`
+          message: `Provider ${provider} not configured. Add an API key in Custom Endpoints or provider settings.`
         };
       }
 
-      // Tester la connexion avec le credential actif
-      const isValid = await this.validateActiveCredentials();
-      
-      if (isValid) {
-        return {
-          success: true,
-          message: `${provider} connection successful`,
-          details: {
-            method: this.activeCredential.type,
-            profileName: this.activeCredential.credentials.profileName
-          }
-        };
-      } else {
+      // Tester la connexion avec le endpoint approprié pour chaque provider
+      try {
+        const testResult = await this.testApiKeyConnection(provider, apiKey, baseUrl);
+        if (testResult.success) {
+          return {
+            success: true,
+            message: `${provider} connection successful`,
+            details: {
+              method: 'API Key',
+              profileName: profileName || provider,
+              ...testResult.details
+            }
+          };
+        } else {
+          return testResult;
+        }
+      } catch (testError) {
         return {
           success: false,
-          message: `${provider} authentication failed`
+          message: testError instanceof Error ? testError.message : `${provider} connection test failed`
         };
       }
 
@@ -476,6 +506,101 @@ export class CredentialManager extends EventEmitter {
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Windsurf test failed'
+      };
+    }
+  }
+
+  /**
+   * Tester la connexion API pour un provider donné avec une clé API
+   * Utilise les endpoints spécifiques à chaque provider pour valider la connexion.
+   */
+  private async testApiKeyConnection(
+    provider: string,
+    apiKey: string,
+    baseUrl?: string
+  ): Promise<{ success: boolean; message: string; details?: any }> {
+    try {
+      let response: Response;
+      const timeout = AbortSignal.timeout(10000);
+
+      switch (provider) {
+        case 'openai':
+          response = await fetch(`${baseUrl || 'https://api.openai.com'}/v1/models`, {
+            headers: { 'Authorization': `Bearer ${apiKey}` },
+            signal: timeout
+          });
+          break;
+
+        case 'google':
+        case 'gemini':
+          response = await fetch(
+            `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`,
+            { signal: timeout }
+          );
+          break;
+
+        case 'mistral':
+          response = await fetch(`${baseUrl || 'https://api.mistral.ai'}/v1/models`, {
+            headers: { 'Authorization': `Bearer ${apiKey}` },
+            signal: timeout
+          });
+          break;
+
+        case 'deepseek':
+          response = await fetch(`${baseUrl || 'https://api.deepseek.com'}/v1/models`, {
+            headers: { 'Authorization': `Bearer ${apiKey}` },
+            signal: timeout
+          });
+          break;
+
+        case 'grok':
+          response = await fetch('https://api.x.ai/v1/models', {
+            headers: { 'Authorization': `Bearer ${apiKey}` },
+            signal: timeout
+          });
+          break;
+
+        case 'ollama':
+          response = await fetch(`${baseUrl || 'http://localhost:11434'}/api/tags`, {
+            signal: timeout
+          });
+          break;
+
+        default:
+          // Pour les providers inconnus, vérifier simplement que la clé existe
+          if (apiKey && apiKey.trim() !== '') {
+            return {
+              success: true,
+              message: `${provider} API key configured`,
+              details: { method: 'API Key (not validated)' }
+            };
+          }
+          return {
+            success: false,
+            message: `${provider} has no API key configured`
+          };
+      }
+
+      if (response.ok) {
+        const data = await response.json().catch(() => ({}));
+        return {
+          success: true,
+          message: `${provider} connection successful`,
+          details: {
+            status: response.status,
+            modelCount: data.data?.length || data.models?.length || undefined
+          }
+        };
+      } else {
+        return {
+          success: false,
+          message: `${provider} API returned HTTP ${response.status}: ${response.statusText}`
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : `${provider} connection test failed`
       };
     }
   }

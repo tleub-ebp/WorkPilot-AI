@@ -21,6 +21,8 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
   // ---- Anthropic (Claude) ----
   anthropic: [
     { value: 'claude-opus-4-6',           label: 'Claude Opus 4.6',        tier: 'flagship', supportsThinking: true },
+    { value: 'claude-sonnet-4-6',        label: 'Claude Sonnet 4.6',      tier: 'standard', supportsThinking: true },
+    { value: 'claude-haiku-4-6',         label: 'Claude Haiku 4.6',       tier: 'fast',     supportsThinking: false },
     { value: 'claude-opus-4-5-20251101',  label: 'Claude Opus 4.5',        tier: 'flagship', supportsThinking: true },
     { value: 'claude-sonnet-4-5-20250929',label: 'Claude Sonnet 4.5',      tier: 'standard', supportsThinking: true },
     { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5',       tier: 'fast',     supportsThinking: false },
@@ -28,33 +30,43 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
 
   // ---- GitHub Copilot ----
   copilot: [
+    { value: 'gpt-5.4',              label: 'GPT-5.4 (Copilot)',            tier: 'flagship' },
+    { value: 'gpt-5.3',              label: 'GPT-5.3 (Copilot)',            tier: 'flagship' },
+    { value: 'o4',                   label: 'o4 (Copilot)',                 tier: 'flagship', supportsThinking: true },
     { value: 'gpt-5.2',              label: 'GPT-5.2 (Copilot)',            tier: 'flagship' },
     { value: 'gpt-5',                label: 'GPT-5 (Copilot)',              tier: 'flagship' },
     { value: 'o3',                   label: 'o3 (Copilot)',                 tier: 'flagship', supportsThinking: true },
     { value: 'claude-opus-4-6',      label: 'Claude Opus 4.6 (Copilot)',    tier: 'flagship', supportsThinking: true },
-    { value: 'claude-sonnet-4-5',    label: 'Claude Sonnet 4.5 (Copilot)',  tier: 'standard', supportsThinking: true },
+    { value: 'claude-sonnet-4-6',    label: 'Claude Sonnet 4.6 (Copilot)',  tier: 'standard', supportsThinking: true },
     { value: 'gpt-4o',               label: 'GPT-4o (Copilot)',             tier: 'standard' },
+    { value: 'o4-mini',              label: 'o4-mini (Copilot)',            tier: 'standard', supportsThinking: true },
     { value: 'o3-mini',              label: 'o3-mini (Copilot)',            tier: 'standard', supportsThinking: true },
-    { value: 'claude-3.5-sonnet',    label: 'Claude 3.5 Sonnet (Copilot)',  tier: 'standard', supportsThinking: true },
-    { value: 'gpt-4o-mini',          label: 'GPT-4o mini (Copilot)',        tier: 'fast' },
+    { value: 'claude-sonnet-4-5',    label: 'Claude Sonnet 4.5 (Copilot)',  tier: 'standard', supportsThinking: true },
     { value: 'gpt-4o-mini',          label: 'GPT-4o mini (Copilot)',        tier: 'fast' },
   ],
 
   // ---- OpenAI ----
   openai: [
+    { value: 'gpt-5.4',       label: 'GPT-5.4',           tier: 'flagship' },
+    { value: 'gpt-5.3',       label: 'GPT-5.3',           tier: 'flagship' },
     { value: 'gpt-5.2',       label: 'GPT-5.2',           tier: 'flagship' },
     { value: 'gpt-5',         label: 'GPT-5',              tier: 'flagship' },
+    { value: 'o4',            label: 'o4',                  tier: 'flagship', supportsThinking: true },
+    { value: 'o4-mini',       label: 'o4-mini',            tier: 'standard', supportsThinking: true },
     { value: 'o3',            label: 'o3',                  tier: 'flagship', supportsThinking: true },
-    { value: 'gpt-4o',        label: 'GPT-4o',             tier: 'standard' },
     { value: 'o3-mini',       label: 'o3-mini',            tier: 'standard', supportsThinking: true },
+    { value: 'gpt-4o',        label: 'GPT-4o',             tier: 'standard' },
     { value: 'gpt-4o-mini',   label: 'GPT-4o mini',        tier: 'fast' },
     { value: 'gpt-4-turbo',   label: 'GPT-4 Turbo',        tier: 'standard' },
   ],
 
   // ---- Google Gemini ----
   google: [
+    { value: 'gemini-3.1-pro',        label: 'Gemini 3.1 Pro',         tier: 'flagship', supportsThinking: true },
+    { value: 'gemini-3-flash',         label: 'Gemini 3 Flash',          tier: 'flagship' },
+    { value: 'gemini-3.1-flash-lite',  label: 'Gemini 3.1 Flash-Lite',   tier: 'standard' },
     { value: 'gemini-2.5-pro',        label: 'Gemini 2.5 Pro',         tier: 'flagship', supportsThinking: true },
-    { value: 'gemini-2.0-flash',      label: 'Gemini 2.0 Flash',       tier: 'fast' },
+    { value: 'gemini-2.5-flash',      label: 'Gemini 2.5 Flash',       tier: 'fast' },
     { value: 'gemini-2.0-flash-thinking', label: 'Gemini 2.0 Flash Thinking', tier: 'standard', supportsThinking: true },
     { value: 'gemini-1.5-pro',        label: 'Gemini 1.5 Pro',         tier: 'standard' },
     { value: 'gemini-1.5-flash',      label: 'Gemini 1.5 Flash',       tier: 'fast' },
@@ -62,7 +74,10 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
 
   // ---- Mistral AI ----
   mistral: [
-    { value: 'mistral-large-2',   label: 'Mistral Large 2',     tier: 'flagship' },
+    { value: 'mistral-large-3',   label: 'Mistral Large 3',     tier: 'flagship' },
+    { value: 'ministral-3-14b',   label: 'Ministral 3 14B',      tier: 'standard' },
+    { value: 'ministral-3-8b',    label: 'Ministral 3 8B',       tier: 'standard' },
+    { value: 'ministral-3-3b',    label: 'Ministral 3 3B',       tier: 'fast' },
     { value: 'mistral-medium-3',  label: 'Mistral Medium 3',    tier: 'standard' },
     { value: 'mistral-small-3',   label: 'Mistral Small 3',     tier: 'fast' },
     { value: 'codestral',         label: 'Codestral',           tier: 'standard' },
@@ -71,6 +86,7 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
 
   // ---- DeepSeek ----
   deepseek: [
+    { value: 'deepseek-v3.2',            label: 'DeepSeek V3.2',            tier: 'flagship' },
     { value: 'deepseek-r2',            label: 'DeepSeek R2',            tier: 'flagship', supportsThinking: true },
     { value: 'deepseek-v3',            label: 'DeepSeek V3',            tier: 'standard' },
     { value: 'deepseek-r1',            label: 'DeepSeek R1',            tier: 'standard', supportsThinking: true },
@@ -95,6 +111,7 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
   // ---- AWS Bedrock ----
   aws: [
     { value: 'anthropic.claude-opus-4-6-v1',    label: 'Claude Opus 4.6 (Bedrock)',   tier: 'flagship', supportsThinking: true },
+    { value: 'anthropic.claude-sonnet-4-6-v1',  label: 'Claude Sonnet 4.6 (Bedrock)', tier: 'standard', supportsThinking: true },
     { value: 'anthropic.claude-sonnet-4-5-v1',  label: 'Claude Sonnet 4.5 (Bedrock)', tier: 'standard', supportsThinking: true },
     { value: 'amazon.titan-text-premier-v1',    label: 'Amazon Titan Premier',         tier: 'standard' },
     { value: 'meta.llama3-70b-instruct-v1',     label: 'Llama 3 70B (Bedrock)',        tier: 'standard' },
@@ -105,8 +122,11 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
     { value: 'llama3.3',         label: 'Llama 3.3',            tier: 'local' },
     { value: 'llama3.2',         label: 'Llama 3.2',            tier: 'local' },
     { value: 'llama3.1',         label: 'Llama 3.1',            tier: 'local' },
+    { value: 'mistral-large-3',  label: 'Mistral Large 3',     tier: 'local' },
     { value: 'mistral',          label: 'Mistral',              tier: 'local' },
     { value: 'mistral-large',    label: 'Mistral Large',        tier: 'local' },
+    { value: 'deepseek-v3.2',    label: 'DeepSeek V3.2',        tier: 'local' },
+    { value: 'deepseek-r2',      label: 'DeepSeek R2',          tier: 'local', supportsThinking: true },
     { value: 'deepseek-r1',      label: 'DeepSeek R1',          tier: 'local', supportsThinking: true },
     { value: 'deepseek-coder-v2', label: 'DeepSeek Coder V2',   tier: 'local' },
     { value: 'qwen2.5-coder',    label: 'Qwen 2.5 Coder',       tier: 'local' },
@@ -157,18 +177,22 @@ export function providerSupportsThinking(provider: string): boolean {
 // ============================================
 
 export const AVAILABLE_MODELS = [
-  { value: 'opus', label: 'Claude Opus 4.5' },
-  { value: 'sonnet', label: 'Claude Sonnet 4.5' },
-  { value: 'haiku', label: 'Claude Haiku 4.5' },
-  { value: 'opus-4-6', label: 'Claude Opus 4.6' }
+  { value: 'opus', label: 'Claude Opus 4.6' },
+  { value: 'sonnet', label: 'Claude Sonnet 4.6' },
+  { value: 'haiku', label: 'Claude Haiku 4.6' },
+  { value: 'opus-4-5', label: 'Claude Opus 4.5' },
+  { value: 'sonnet-4-5', label: 'Claude Sonnet 4.5' },
+  { value: 'haiku-4-5', label: 'Claude Haiku 4.5' },
 ] as const;
 
 // Maps model shorthand to actual Claude model IDs
 export const MODEL_ID_MAP: Record<string, string> = {
-  opus: 'claude-opus-4-5-20251101',
-  sonnet: 'claude-sonnet-4-5-20250929',
-  haiku: 'claude-haiku-4-5-20251001',
-  'opus-4-6': 'claude-opus-4-6'
+  opus: 'claude-opus-4-6',
+  sonnet: 'claude-sonnet-4-6',
+  haiku: 'claude-haiku-4-6',
+  'opus-4-5': 'claude-opus-4-5-20251101',
+  'sonnet-4-5': 'claude-sonnet-4-5-20250929',
+  'haiku-4-5': 'claude-haiku-4-5-20251001'
 } as const;
 
 // Maps thinking levels to budget tokens (null = no extended thinking)
@@ -271,16 +295,17 @@ export const DEFAULT_PHASE_THINKING: import('../types/settings').PhaseThinkingCo
 // Default feature model configuration (for insights, ideation, roadmap, github, utility).
 // Values must match the `value` field of entries in PROVIDER_MODELS_MAP['anthropic'].
 export const DEFAULT_FEATURE_MODELS: FeatureModelConfig = {
-  insights: 'claude-sonnet-4-5-20250929',   // Fast, responsive chat
+  insights: 'claude-sonnet-4-6',              // Fast, responsive chat with latest model
   ideation: 'claude-opus-4-6',              // Creative ideation benefits from Opus
   roadmap: 'claude-opus-4-6',              // Strategic planning benefits from Opus
-  'natural-language-git': 'claude-sonnet-4-5-20250929', // Natural language Git commands
+  'natural-language-git': 'claude-sonnet-4-6', // Natural language Git commands
   githubIssues: 'claude-opus-4-6',         // Issue triage and analysis benefits from Opus
   githubPrs: 'claude-opus-4-6',            // PR review benefits from thorough Opus analysis
-  utility: 'claude-haiku-4-5-20251001',    // Fast utility operations (commit messages, merge resolution)
-  promptOptimizer: 'claude-sonnet-4-5-20250929', // Balanced prompt optimization
-  testGenerator: 'claude-sonnet-4-5-20250929',  // Balanced test generation for comprehensive coverage
-  codeReview: 'claude-opus-4-6'            // Code review benefits from thorough Opus analysis
+  utility: 'claude-haiku-4-6',             // Fast utility operations (commit messages, merge resolution)
+  promptOptimizer: 'claude-sonnet-4-6',    // Balanced prompt optimization
+  testGenerator: 'claude-sonnet-4-6',     // Balanced test generation for comprehensive coverage
+  codeReview: 'claude-opus-4-6',          // Code review benefits from thorough Opus analysis
+  voiceControl: 'claude-haiku-4-6'        // Fast voice control operations
 };
 
 // Default feature thinking configuration
@@ -294,7 +319,8 @@ export const DEFAULT_FEATURE_THINKING: FeatureThinkingConfig = {
   utility: 'low',         // Fast thinking for utility operations
   promptOptimizer: 'medium', // Balanced thinking for prompt optimization
   testGenerator: 'medium',  // Balanced thinking for test generation
-  codeReview: 'medium'     // Balanced thinking for code review
+  codeReview: 'medium',    // Balanced thinking for code review
+  voiceControl: 'low'      // Fast thinking for voice control
 };
 
 // Feature labels for UI display
@@ -308,7 +334,8 @@ export const FEATURE_LABELS: Record<keyof FeatureModelConfig, { label: string; d
   utility: { label: 'Utility', description: 'Commit messages and merge conflict resolution' },
   promptOptimizer: { label: 'Prompt Optimizer', description: 'AI-powered prompt enhancement with project context' },
   testGenerator: { label: 'Test Generation Agent', description: 'AI-powered test generation and coverage analysis' },
-  codeReview: { label: 'Code Review Agent', description: 'AI-powered code review and quality analysis' }
+  codeReview: { label: 'Code Review Agent', description: 'AI-powered code review and quality analysis' },
+  voiceControl: { label: 'Voice Control', description: 'Voice-activated development commands' }
 };
 
 // Default agent profiles for preset model/thinking configurations
