@@ -298,7 +298,19 @@ export function CleanProviderSection({
   useEffect(() => {
     const loadProviders = async () => {
       try {
-        const result = await getStaticProviders(profiles, settings);
+        // Enrich settings with Claude OAuth status from CLI config files (main process)
+        const enrichedSettings = { ...settings };
+        try {
+          if (globalThis.electronAPI?.checkClaudeOAuth) {
+            const oauthResult = await globalThis.electronAPI.checkClaudeOAuth();
+            if (oauthResult.isAuthenticated) {
+              enrichedSettings.globalClaudeOAuthToken = oauthResult.profileName || 'oauth-authenticated';
+            }
+          }
+        } catch {
+          // IPC not available
+        }
+        const result = await getStaticProviders(profiles, enrichedSettings);
         setStaticProviders(result.providers);
         setProviderStatus(result.status);
       } catch (error) {

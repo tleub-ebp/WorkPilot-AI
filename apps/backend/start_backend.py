@@ -46,6 +46,7 @@ class ColoredFormatter(logging.Formatter):
 
 # Configuration du logging avec couleurs
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 # Appliquer le formatter coloré à tous les handlers

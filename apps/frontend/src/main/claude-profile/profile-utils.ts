@@ -90,12 +90,12 @@ export function isProfileAuthenticated(profile: ClaudeProfile): boolean {
           ? configDir.replace(/^~/, homedir())
           : configDir;
         const platformCreds = getCredentialsFromKeychain(expandedConfigDir);
-        if (!platformCreds.token) {
-          // .claude.json exists but credential store is missing tokens - NOT authenticated
-          console.warn(`[profile-utils] Profile has .claude.json but no platform credentials for: ${configDir}`);
-          return false;
+        if (platformCreds.token) {
+          return true;
         }
-        return true;
+        // .claude.json exists but platform credential store is empty —
+        // don't return false yet, fall through to check .credentials.json file
+        console.warn(`[profile-utils] Profile has .claude.json but no platform credentials for: ${configDir}, checking .credentials.json fallback...`);
       }
     } catch (error) {
       // Log parse errors for debugging, but fall through to legacy checks

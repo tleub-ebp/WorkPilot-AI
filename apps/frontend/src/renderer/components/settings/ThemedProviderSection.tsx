@@ -3,11 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { SettingsSection } from './SettingsSection';
 import { ThemedProviderGrid } from './ThemedProviderGrid';
 import { getAllConnectors } from './multiconnector/utils';
-import { useSettings } from './hooks/useSettings';
-import { Loader2, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { Loader2, AlertCircle, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
-import { cn } from '@/lib/utils';
 
 interface Provider {
   id: string;
@@ -72,7 +70,7 @@ export function ThemedProviderSection({
   settings, 
   onSettingsChange, 
   isOpen 
-}: ThemedProviderSectionProps) {
+}: Readonly<ThemedProviderSectionProps>) {
   const { t } = useTranslation('settings');
   const [connectors, setConnectors] = useState<Array<{ id: string, label: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -80,8 +78,30 @@ export function ThemedProviderSection({
   const [testingProviders, setTestingProviders] = useState<Set<string>>(new Set());
 
   // Vérifier si l'utilisateur est authentifié via OAuth (Claude Code CLI)
-  // Le token OAuth est stocké directement dans les settings globaux
-  const hasClaudeOAuth = Boolean(settings.globalClaudeOAuthToken);
+  // Check both settings AND CLI config files via IPC
+  const [hasClaudeOAuth, setHasClaudeOAuth] = useState(Boolean(settings.globalClaudeOAuthToken));
+
+  useEffect(() => {
+    const checkOAuth = async () => {
+      // First check settings
+      if (settings.globalClaudeOAuthToken) {
+        setHasClaudeOAuth(true);
+        return;
+      }
+      // Then check CLI config files via IPC
+      try {
+        if (globalThis.electronAPI?.checkClaudeOAuth) {
+          const result = await globalThis.electronAPI.checkClaudeOAuth();
+          if (result.isAuthenticated) {
+            setHasClaudeOAuth(true);
+          }
+        }
+      } catch {
+        // IPC not available
+      }
+    };
+    checkOAuth();
+  }, [settings.globalClaudeOAuthToken]);
 
   // Charger les connecteurs
   useEffect(() => {
@@ -209,7 +229,7 @@ export function ThemedProviderSection({
 
   const handleRemove = (providerId: string) => {
     const apiKeyField = getApiKeyField(providerId);
-    if (apiKeyField && window.confirm('Êtes-vous sûr de vouloir supprimer la configuration de ce provider ?')) {
+    if (apiKeyField && globalThis.confirm('Êtes-vous sûr de vouloir supprimer la configuration de ce provider ?')) {
       onSettingsChange({
         ...settings,
         [apiKeyField]: ''
@@ -223,7 +243,7 @@ export function ThemedProviderSection({
   };
 
   const handleRefresh = () => {
-    window.location.reload();
+    globalThis.location.reload();
   };
 
   if (isLoading) {
@@ -286,7 +306,7 @@ export function ThemedProviderSection({
           </Alert>
         )}
 
-        {providers.filter(p => p.isWorking === false).length > 0 && (
+        {providers.some(p => p.isWorking === false) && (
           <Alert className="border-yellow-200 bg-yellow-50">
             <AlertCircle className="h-4 w-4 text-yellow-600" />
             <AlertDescription className="text-yellow-700">

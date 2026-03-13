@@ -213,6 +213,16 @@ export function ProviderConfigDialog({
     if (!provider || !providerConfig) return;
 
     const newSettings = { ...settings };
+
+    // For Anthropic/Claude on OAuth tab: persist OAuth state instead of API keys
+    if ((provider.id === 'anthropic' || provider.id === 'claude') && activeTab === 'oauth') {
+      if (testResult?.success) {
+        newSettings.globalClaudeOAuthToken = testResult.message || 'oauth-authenticated';
+      }
+      onSettingsChange(newSettings);
+      onOpenChange(false);
+      return;
+    }
     
     if (providerConfig.apiKey) {
       newSettings[providerConfig.apiKey] = formData.apiKey || '';
@@ -270,15 +280,52 @@ export function ProviderConfigDialog({
     }
   };
 
-  const handleOAuthAuth = () => {
+  const handleOAuthAuth = async () => {
     if (!provider) return;
 
-    const terminalId = `auth-${provider.id}-${Date.now()}`;
-    const configDir = `claude-config-${provider.id}`;
-    const profileName = `${provider.name}-${Date.now()}`;
-
-    setAuthTerminal({ terminalId, configDir, profileName });
     setIsAuthenticating(true);
+
+    // For Anthropic/Claude, use the proper authenticateClaudeProfile API
+    // which generates the correct terminal ID (claude-login-{profileId}-{timestamp})
+    // and configDir — required for the main process to detect OAuth success
+    if (provider.id === 'anthropic' || provider.id === 'claude') {
+      try {
+        // Get the active profile ID (not hardcoded — profile names vary)
+        const profilesResult = await window.electronAPI.getClaudeProfiles();
+        const activeProfileId = profilesResult.success && profilesResult.data
+          ? profilesResult.data.activeProfileId
+          : undefined;
+
+        if (!activeProfileId) {
+          console.error('[ProviderConfigDialog] No active Claude profile found');
+          setTestResult({ success: false, message: 'No Claude profile found. Please restart the application.' });
+          setIsAuthenticating(false);
+          return;
+        }
+
+        const result = await window.electronAPI.authenticateClaudeProfile(activeProfileId);
+        if (result.success && result.data) {
+          setAuthTerminal({
+            terminalId: result.data.terminalId,
+            configDir: result.data.configDir,
+            profileName: provider.name,
+          });
+        } else {
+          console.error('[ProviderConfigDialog] Failed to prepare Claude auth:', result.error);
+          setTestResult({ success: false, message: result.error || 'Failed to prepare authentication' });
+          setIsAuthenticating(false);
+        }
+      } catch (error) {
+        console.error('[ProviderConfigDialog] Error preparing Claude auth:', error);
+        setTestResult({ success: false, message: error instanceof Error ? error.message : 'Unknown error' });
+        setIsAuthenticating(false);
+      }
+    } else {
+      // Fallback for other providers (e.g., Windsurf)
+      const terminalId = `auth-${provider.id}-${Date.now()}`;
+      const configDir = `claude-config-${provider.id}`;
+      setAuthTerminal({ terminalId, configDir, profileName: provider.name });
+    }
   };
 
   const handleAuthTerminalClose = () => {
@@ -294,6 +341,13 @@ export function ProviderConfigDialog({
     });
     setAuthTerminal(null);
     setIsAuthenticating(false);
+
+    // Persist OAuth state in settings so the provider shows as configured
+    if (provider && (provider.id === 'anthropic' || provider.id === 'claude')) {
+      const newSettings = { ...settings };
+      newSettings.globalClaudeOAuthToken = email || 'oauth-authenticated';
+      onSettingsChange(newSettings);
+    }
   };
 
   const handleAuthTerminalError = (error: string) => {
@@ -618,9 +672,51 @@ export function ProviderConfigDialog({
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      {t('sections.accounts.providerConfig.windsurfAuth.claudeCodeAuth')}
-                    </p>
+                    {/* Auth Content for Anthropic/Claude OAuth */}
+                    {(() => {
+                      // Show auth terminal when active
+                      if (authTerminal) {
+                        return (
+                          <div className="rounded-lg border border-primary/30 overflow-hidden" style={{ height: '320px' }}>
+                            <AuthTerminal
+                              terminalId={authTerminal.terminalId}
+                              configDir={authTerminal.configDir}
+                              profileName={authTerminal.profileName}
+                              onClose={handleAuthTerminalClose}
+                              onAuthSuccess={handleAuthTerminalSuccess}
+                              onAuthError={handleAuthTerminalError}
+                            />
+                          </div>
+                        );
+                      }
+
+                      // Show default auth button
+                      return (
+                        <div className="space-y-4">
+                          <Button
+                            onClick={handleOAuthAuth}
+                            disabled={isAuthenticating}
+                            className="w-full"
+                          >
+                            {isAuthenticating ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                {t('sections.accounts.providerConfig.windsurfAuth.authenticating')}
+                              </>
+                            ) : (
+                              <>
+                                <LogIn className="w-4 h-4 mr-2" />
+                                {t('sections.accounts.providerConfig.windsurfAuth.connectWithClaude')}
+                              </>
+                            )}
+                          </Button>
+                          
+                          <div className="text-xs text-muted-foreground">
+                            <p>{t('sections.accounts.providerConfig.windsurfAuth.terminalInstructions')}</p>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 
@@ -751,7 +847,7 @@ export function ProviderConfigDialog({
               <Button
                 variant="outline"
                 onClick={handleTest}
-                disabled={(!formData.apiKey && !formData.apiUrl) || isTesting}
+                disabled={(!formData.apiKey && !formData.apiUrl && !testResult?.success) || isTesting}
               >
                 {isTesting ? 'Test...' : 'Tester'}
               </Button>

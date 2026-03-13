@@ -146,5 +146,13 @@ export function registerCredentialHandlers(): void {
     return await detectWindsurfLocalToken();
   });
 
+  /**
+   * Vérifier le statut OAuth Claude (vérifie les fichiers config CLI sur le disque)
+   * Retourne si l'utilisateur est authentifié via OAuth Claude Code
+   */
+  ipcMain.handle('credential:checkClaudeOAuth', async (): Promise<{ isAuthenticated: boolean; profileName?: string }> => {
+    return await credentialManager.checkClaudeOAuthStatusPublic();
+  });
+
   console.log('[CredentialHandlers] IPC handlers registered');
 }
