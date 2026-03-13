@@ -40,6 +40,11 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+# =============================================================================
+# Constants
+# =============================================================================
+
+CONTENT_TYPE_JSON = "application/json"
 
 # =============================================================================
 # Message Types for provider-agnostic stream processing
@@ -156,9 +161,6 @@ class AgentClient(ABC):
             AgentMessage instances normalized from the provider's native format.
         """
         ...
-        # Make this a proper async generator
-        if False:  # pragma: no cover
-            yield  # type: ignore[misc]
 
     @abstractmethod
     def supports_subagents(self) -> bool:
@@ -414,7 +416,7 @@ class CopilotAgentClient(AgentClient):
         self._pending_query: str | None = None
         self._http_client: Any = None
 
-    async def _get_http_client(self):
+    def _get_http_client(self):
         """Lazy-init an aiohttp ClientSession."""
         if self._http_client is None:
             try:
@@ -423,8 +425,8 @@ class CopilotAgentClient(AgentClient):
                 self._http_client = aiohttp.ClientSession(
                     headers={
                         "Authorization": f"Bearer {self.github_token}",
-                        "Content-Type": "application/json",
-                        "Accept": "application/json",
+                        "Content-Type": CONTENT_TYPE_JSON,
+                        "Accept": CONTENT_TYPE_JSON,
                     }
                 )
             except ImportError:
@@ -462,7 +464,7 @@ class CopilotAgentClient(AgentClient):
         self._pending_query = None
 
         try:
-            session = await self._get_http_client()
+            session = self._get_http_client()
             payload = {
                 "model": self.model,
                 "messages": messages,
@@ -565,7 +567,7 @@ class CopilotAgentClient(AgentClient):
                 {"role": "user", "content": context_prompt},
             ]
 
-            session = await self._get_http_client()
+            session = self._get_http_client()
             payload = {
                 "model": defn.model if defn.model != "inherit" else self.model,
                 "messages": messages,
@@ -614,3 +616,244 @@ class CopilotAgentClient(AgentClient):
         if self._http_client is not None:
             await self._http_client.close()
             self._http_client = None
+
+
+# =============================================================================
+# Windsurf Agent Client — dual-mode (gRPC proxy + REST fallback)
+# =============================================================================
+
+
+class WindsurfAgentClient(AgentClient):
+    """Agent client backed by Windsurf/Codeium with dual-mode support.
+
+    Mode 1 (preferred): gRPC to local Windsurf IDE language server.
+        Requires Windsurf IDE to be running and authenticated.
+        Uses the approach from opencode-windsurf-auth.
+
+    Mode 2 (fallback): OpenAI-compatible REST API to server.codeium.com.
+        Uses stored API key or OAuth token. Works without the IDE.
+
+    Authentication:
+    - Mode 1: CSRF token + API key from running language server process
+    - Mode 2: WINDSURF_API_KEY or WINDSURF_OAUTH_TOKEN environment variable
+    """
+
+    def __init__(
+        self,
+        model: str = "claude-4-sonnet",
+        system_prompt: str | None = None,
+        max_turns: int = 50,
+    ):
+        import os as _os
+
+        self.model = model
+        self.system_prompt = system_prompt
+        self.max_turns = max_turns
+        self._credentials: Any = None  # WindsurfCredentials (Mode 1)
+        self._use_local_grpc = False
+        self._api_key: str | None = None  # For Mode 2
+        self._pending_query: str | None = None
+        self._http_client: Any = None
+        self._rest_base_url = _os.environ.get(
+            "WINDSURF_BASE_URL", "https://server.codeium.com/api/v1"
+        )
+
+    async def __aenter__(self):
+        import os as _os
+
+        from integrations.windsurf_proxy.auth import (
+            discover_credentials,
+            is_windsurf_running,
+        )
+
+        if is_windsurf_running():
+            try:
+                self._credentials = discover_credentials()
+                self._use_local_grpc = True
+                logger.info(
+                    f"[WindsurfAgent] Mode 1: gRPC proxy to localhost:{self._credentials.port} "
+                    f"(model={self.model})"
+                )
+                return self
+            except Exception as e:
+                logger.warning(f"[WindsurfAgent] gRPC discovery failed, trying REST fallback: {e}")
+
+        # Mode 2: REST fallback
+        self._api_key = (
+            _os.environ.get("WINDSURF_API_KEY")
+            or _os.environ.get("WINDSURF_OAUTH_TOKEN")
+            or _os.environ.get("CODEIUM_API_KEY")
+        )
+
+        # Fallback: try reading API key / SSO token from Windsurf's local state.vscdb
+        # This covers enterprise SSO users whose token isn't in env vars
+        if not self._api_key:
+            try:
+                from integrations.windsurf_proxy.auth import get_api_key
+                self._api_key = get_api_key()
+                logger.debug("[WindsurfAgent] Found API key/SSO token from local state.vscdb")
+            except Exception as e:
+                logger.debug(f"[WindsurfAgent] Local state.vscdb key lookup failed: {e}")
+
+        if self._api_key:
+            self._use_local_grpc = False
+            logger.info(
+                f"[WindsurfAgent] Mode 2: REST API to {self._rest_base_url} "
+                f"(model={self.model})"
+            )
+            return self
+
+        raise RuntimeError(
+            "Windsurf IDE not running and no WINDSURF_API_KEY available. "
+            "Please either start Windsurf IDE (and log in via SSO) or set "
+            "WINDSURF_API_KEY environment variable."
+        )
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self._http_client is not None:
+            await self._http_client.close()
+            self._http_client = None
+
+    async def query(self, prompt: str) -> None:
+        """Queue a prompt for the next receive_response() call."""
+        self._pending_query = prompt
+
+    async def receive_response(self) -> AsyncIterator[AgentMessage]:
+        """Execute the queued prompt against Windsurf.
+
+        Routes to gRPC (Mode 1) or REST (Mode 2) based on connection state.
+        """
+        if not self._pending_query:
+            return
+
+        prompt = self._pending_query
+        self._pending_query = None
+
+        if self._use_local_grpc:
+            yield await self._grpc_response(prompt)
+        else:
+            yield await self._rest_response(prompt)
+
+    async def _grpc_response(self, prompt: str) -> AgentMessage:
+        """Send prompt via gRPC to local Windsurf language server."""
+        from integrations.windsurf_proxy.grpc_client import stream_chat
+        from integrations.windsurf_proxy.models import resolve_model
+
+        model_enum, model_name = resolve_model(self.model)
+        messages = []
+
+        if self.system_prompt:
+            messages.append({"role": "system", "content": self.system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        text_parts: list[str] = []
+        try:
+            async for chunk in stream_chat(
+                credentials=self._credentials,
+                messages=messages,
+                model_enum=model_enum,
+                model_name=model_name,
+                system_prompt=self.system_prompt,
+            ):
+                text_parts.append(chunk)
+        except Exception as e:
+            logger.error(f"[WindsurfAgent] gRPC streaming error: {e}")
+            return AgentMessage(
+                role=MessageRole.SYSTEM,
+                content=[
+                    ContentBlock(
+                        type=ContentBlockType.TEXT,
+                        text=f"Windsurf gRPC error: {e}",
+                    )
+                ],
+            )
+
+        full_text = "".join(text_parts)
+        if not full_text:
+            full_text = "(Empty response from Windsurf)"
+
+        return AgentMessage(
+            role=MessageRole.ASSISTANT,
+            content=[ContentBlock(type=ContentBlockType.TEXT, text=full_text)],
+        )
+
+    async def _rest_response(self, prompt: str) -> AgentMessage:
+        """Send prompt via REST API to server.codeium.com (Mode 2 fallback)."""
+        try:
+            import aiohttp
+        except ImportError:
+            raise ImportError(
+                "aiohttp is required for WindsurfAgentClient REST mode. "
+                "Install with: pip install aiohttp"
+            )
+
+        if self._http_client is None:
+            self._http_client = aiohttp.ClientSession(
+                headers={
+                    "Authorization": f"Bearer {self._api_key}",
+                    "Content-Type": CONTENT_TYPE_JSON,
+                    "Accept": CONTENT_TYPE_JSON,
+                }
+            )
+
+        messages = []
+        if self.system_prompt:
+            messages.append({"role": "system", "content": self.system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": False,
+        }
+
+        url = f"{self._rest_base_url}/chat/completions"
+        try:
+            async with self._http_client.post(url, json=payload) as resp:
+                if resp.status != 200:
+                    error_text = await resp.text()
+                    return AgentMessage(
+                        role=MessageRole.SYSTEM,
+                        content=[
+                            ContentBlock(
+                                type=ContentBlockType.TEXT,
+                                text=f"Windsurf REST API error ({resp.status}): {error_text}",
+                            )
+                        ],
+                    )
+
+                data = await resp.json()
+                choices = data.get("choices", [])
+                if not choices:
+                    return AgentMessage(
+                        role=MessageRole.ASSISTANT,
+                        content=[
+                            ContentBlock(
+                                type=ContentBlockType.TEXT,
+                                text="(Empty response from Windsurf REST API)",
+                            )
+                        ],
+                    )
+
+                content = choices[0].get("message", {}).get("content", "")
+                return AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[ContentBlock(type=ContentBlockType.TEXT, text=content)],
+                )
+        except Exception as e:
+            logger.error(f"[WindsurfAgent] REST API error: {e}")
+            return AgentMessage(
+                role=MessageRole.SYSTEM,
+                content=[
+                    ContentBlock(
+                        type=ContentBlockType.TEXT,
+                        text=f"Windsurf REST API error: {e}",
+                    )
+                ],
+            )
+
+    def supports_subagents(self) -> bool:
+        return False
+
+    def provider_name(self) -> str:
+        return "windsurf"

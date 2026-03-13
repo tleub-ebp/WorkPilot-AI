@@ -3073,8 +3073,31 @@ export class UsageMonitor extends EventEmitter {
           }
         }
 
+        // Fallback to auto-detection from local Windsurf IDE (SSO enterprise users)
         if (!serviceKey) {
-          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — no service key found in profiles, settings, or env vars');
+          try {
+            const { detectWindsurfLocalToken } = await import('../services/credential-manager');
+            const detected = await detectWindsurfLocalToken();
+            if (detected.success && detected.apiKey) {
+              serviceKey = detected.apiKey;
+              wsProfileId = 'windsurf-sso';
+              wsProfileName = detected.userName
+                ? `Windsurf (${detected.userName})`
+                : 'Windsurf (SSO)';
+              keySource = 'local-ide-detection';
+              this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — SSO token detected from local IDE', {
+                userName: detected.userName,
+                keyLength: serviceKey.length,
+                isJWT: serviceKey.startsWith('eyJ')
+              });
+            }
+          } catch (e) {
+            this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — local IDE detection failed:', e);
+          }
+        }
+
+        if (!serviceKey) {
+          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — no service key found in profiles, settings, env vars, or local IDE');
           // Return a minimal snapshot so the UI shows Windsurf info instead of Anthropic
           return {
             sessionPercent: 0,
@@ -3086,19 +3109,7 @@ export class UsageMonitor extends EventEmitter {
           } as UsageSnapshot;
         }
 
-        // For SSO tokens (JWT), GetTeamCreditBalance won't work — return a basic snapshot
         const isJWT = serviceKey.startsWith('eyJ');
-        if (isJWT) {
-          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf SSO token detected — credit balance API not available for SSO');
-          return {
-            sessionPercent: 0,
-            weeklyPercent: 0,
-            profileId: wsProfileId,
-            profileName: wsProfileName,
-            fetchedAt: new Date(),
-            providerName: 'windsurf',
-          } as UsageSnapshot;
-        }
 
         // Log key source and fingerprint for debugging auth issues
         const keyFingerprint = serviceKey.length > 8
@@ -3107,20 +3118,24 @@ export class UsageMonitor extends EventEmitter {
         this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — calling Codeium API', {
           keySource,
           keyFingerprint,
-          keyLength: serviceKey.length
+          keyLength: serviceKey.length,
+          isJWT
         });
 
-        // Strategy 1: service_key in body (standard for team service keys)
-        let resp = await fetch('https://server.codeium.com/api/v1/GetTeamCreditBalance', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ service_key: serviceKey }),
-          signal: AbortSignal.timeout(10000)
-        });
+        // Strategy 1: service_key in body (standard for team service keys — skip for JWT)
+        let resp: Response | null = null;
+        if (!isJWT) {
+          resp = await fetch('https://server.codeium.com/api/v1/GetTeamCreditBalance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ service_key: serviceKey }),
+            signal: AbortSignal.timeout(10000)
+          });
+        }
 
-        // Strategy 2: Authorization Bearer header (required by some Codeium API versions)
-        if (resp.status === 401) {
-          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — strategy 1 failed (401), retrying with Bearer header');
+        // Strategy 2: Authorization Bearer header (works for both service keys and SSO/JWT tokens)
+        if (!resp || resp.status === 401) {
+          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — trying GetTeamCreditBalance with Bearer header (SSO/JWT compatible)');
           resp = await fetch('https://server.codeium.com/api/v1/GetTeamCreditBalance', {
             method: 'POST',
             headers: {
@@ -3138,8 +3153,7 @@ export class UsageMonitor extends EventEmitter {
           return this.normalizeWindsurfResponse(usageData, wsProfileId, wsProfileName);
         }
 
-        // Strategy 3: If credit balance unavailable, try GetUser to validate key
-        // and return a basic "connected" snapshot so UI doesn't fall back to Anthropic
+        // Strategy 3: Try GetUser to validate key and get user info
         this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — credit balance unavailable, trying GetUser', {
           status: resp.status,
           statusText: resp.statusText,
@@ -3147,6 +3161,7 @@ export class UsageMonitor extends EventEmitter {
           keyFingerprint
         });
 
+        let ssoUserName: string | undefined;
         try {
           const userResp = await fetch('https://server.codeium.com/exa.api_server_pb.ApiServerService/GetUser', {
             method: 'POST',
@@ -3160,28 +3175,53 @@ export class UsageMonitor extends EventEmitter {
 
           if (userResp.ok) {
             const userData = await userResp.json();
-            const userName = userData?.name || userData?.email || 'Windsurf User';
-            this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — key validated via GetUser:', { userName });
-            return {
-              sessionPercent: 0,
-              weeklyPercent: 0,
-              profileId: wsProfileId,
-              profileName: `${wsProfileName} (${userName})`,
-              fetchedAt: new Date(),
-              providerName: 'windsurf',
-            } as UsageSnapshot;
+            ssoUserName = userData?.name || userData?.email || 'Windsurf User';
+            this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — key validated via GetUser:', { ssoUserName });
           }
         } catch {
           // GetUser also failed — continue to return basic snapshot
         }
 
-        // All strategies failed — still return a Windsurf snapshot to prevent Anthropic fallback
-        this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — all credit/user APIs failed, returning basic snapshot');
+        // Strategy 4: For SSO enterprise, try GetTeamInfo to get actual usage quotas
+        if (isJWT) {
+          try {
+            const teamResp = await fetch('https://server.codeium.com/exa.api_server_pb.ApiServerService/GetTeamInfo', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${serviceKey}`,
+              },
+              body: '{}',
+              signal: AbortSignal.timeout(10000)
+            });
+
+            if (teamResp.ok) {
+              const teamData = await teamResp.json();
+              this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf SSO — GetTeamInfo response:', teamData);
+              // If team info contains credit/usage data, normalize it
+              if (teamData && (teamData.promptCreditsPerSeat || teamData.addOnCreditsUsed || teamData.numSeats)) {
+                const displayName = ssoUserName ? `${wsProfileName} (${ssoUserName})` : wsProfileName;
+                return this.normalizeWindsurfResponse(teamData, wsProfileId, displayName);
+              }
+            }
+          } catch {
+            // GetTeamInfo failed — continue to return connected snapshot
+          }
+        }
+
+        // Return a Windsurf snapshot to prevent Anthropic fallback
+        // For SSO enterprise: show as connected even if we can't get usage details
+        const displayName = ssoUserName ? `${wsProfileName} (${ssoUserName})` : wsProfileName;
+        this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — returning SSO connected snapshot', {
+          ssoUserName,
+          isJWT,
+          keySource
+        });
         return {
           sessionPercent: 0,
           weeklyPercent: 0,
           profileId: wsProfileId,
-          profileName: wsProfileName,
+          profileName: displayName,
           fetchedAt: new Date(),
           providerName: 'windsurf',
         } as UsageSnapshot;
