@@ -135,12 +135,30 @@ class AgentRunner:
                 print_to_console=True,
             )
 
-        # Lazy import to avoid circular import with core.client
-        # IMPORTANT: Use create_client (raw SDK client), NOT create_agent_client.
-        # create_agent_client wraps messages in AgentMessage objects, but this
-        # code checks for raw SDK type names ("AssistantMessage", "UserMessage").
-        # Using create_agent_client causes all messages to have type "AgentMessage",
-        # making the type checks below fail and resulting in "Agent session empty" errors.
+        # Determine which provider to use
+        from core.client import _get_active_provider
+        active_provider = _get_active_provider(self.spec_dir)
+        debug("agent_runner", f"Active provider resolved: {active_provider}")
+
+        if active_provider in ("windsurf", "copilot"):
+            # Non-Claude providers: use create_agent_client which routes to
+            # WindsurfAgentClient/CopilotAgentClient with tool execution loop
+            from core.client import create_agent_client
+            debug(
+                "agent_runner",
+                f"Using create_agent_client for provider '{active_provider}' "
+                f"(tokens will be consumed from {active_provider}, NOT Anthropic)"
+            )
+            client = create_agent_client(
+                project_dir=self.project_dir,
+                spec_dir=self.spec_dir,
+                model=self.model,
+                agent_type="spec_writer",
+            )
+            return await self._run_with_agent_client(client, prompt)
+
+        # Claude provider: use raw SDK client (create_client) for full
+        # SDK message type compatibility (AssistantMessage, ToolUseBlock, etc.)
         from core.client import create_client
 
         client = create_client(
@@ -150,21 +168,6 @@ class AgentRunner:
             agent_type="spec_writer",  # Use spec_writer type for spec creation
             max_thinking_tokens=thinking_budget,
         )
-
-        # Debug: Log which provider is being used
-        try:
-            from provider_api import get_selected_provider
-            selected_provider = get_selected_provider()
-            debug("agent_runner", f"Selected provider from IPC: {selected_provider}")
-            if selected_provider and selected_provider.lower() == "windsurf":
-                debug(
-                    "agent_runner",
-                    "WARNING: Windsurf provider selected but agent_runner uses Claude SDK "
-                    "(create_client). This will consume Anthropic tokens, NOT Windsurf tokens. "
-                    "A native WindsurfAgentClient is needed to route through Codeium's API."
-                )
-        except Exception as e:
-            debug("agent_runner", f"Could not get selected provider: {e}")
         
         # Debug: Check if input files exist for spec_writer
         if prompt_file == "spec_writer.md":
@@ -362,6 +365,139 @@ class AgentRunner:
                     self.task_logger.log_error(cap_msg, LogPhase.PLANNING)
                 return False, cap_msg
 
+            if self.task_logger:
+                self.task_logger.log_error(f"Agent error: {e}", LogPhase.PLANNING)
+            return False, str(e)
+
+    async def _run_with_agent_client(self, client, prompt: str) -> tuple[bool, str]:
+        """Run a spec creation agent session using an AgentClient (Windsurf/Copilot).
+
+        This processes AgentMessage objects from create_agent_client() instead of
+        raw Claude SDK messages. Used when the active provider is not Claude.
+
+        Args:
+            client: An AgentClient instance (WindsurfAgentClient, CopilotAgentClient)
+            prompt: The full prompt to send
+
+        Returns:
+            (success, response_text) tuple
+        """
+        from core.agent_client import ContentBlockType
+
+        current_tool = None
+        message_count = 0
+        tool_count = 0
+
+        try:
+            async with client:
+                provider = client.provider_name()
+                debug("agent_runner", f"Sending query to {provider} agent client...")
+                await client.query(prompt)
+                debug_success("agent_runner", f"Query sent to {provider}")
+
+                response_text = ""
+                debug("agent_runner", f"Receiving {provider} response stream...")
+
+                async for msg in client.receive_response():
+                    message_count += 1
+
+                    for block in msg.content:
+                        if block.type == ContentBlockType.TEXT and block.text:
+                            response_text += block.text
+                            print(block.text, end="", flush=True)
+                            if self.task_logger and block.text.strip():
+                                self.task_logger.log(
+                                    block.text,
+                                    LogEntryType.TEXT,
+                                    LogPhase.PLANNING,
+                                    print_to_console=False,
+                                )
+
+                        elif block.type == ContentBlockType.TOOL_USE:
+                            tool_name = block.tool_name or ""
+                            tool_count += 1
+                            tool_input_display = self._extract_tool_input_display(
+                                block.tool_input or {}
+                            )
+                            debug(
+                                "agent_runner",
+                                f"Tool call #{tool_count}: {tool_name}",
+                                tool_input=tool_input_display,
+                            )
+                            if self.task_logger:
+                                self.task_logger.tool_start(
+                                    tool_name,
+                                    tool_input_display,
+                                    LogPhase.PLANNING,
+                                    print_to_console=True,
+                                )
+                            else:
+                                print(f"\n[Tool: {tool_name}]", flush=True)
+                            current_tool = tool_name
+
+                        elif block.type == ContentBlockType.TOOL_RESULT:
+                            is_error = block.is_error
+                            result_content = block.result_content or ""
+                            if is_error:
+                                debug_error(
+                                    "agent_runner",
+                                    f"Tool error: {current_tool}",
+                                    error=str(result_content)[:200],
+                                )
+                            else:
+                                debug_detailed(
+                                    "agent_runner",
+                                    f"Tool success: {current_tool}",
+                                    result_length=len(str(result_content)),
+                                )
+                            if self.task_logger and current_tool:
+                                detail_content = self._get_tool_detail_content(
+                                    current_tool, result_content
+                                )
+                                self.task_logger.tool_end(
+                                    current_tool,
+                                    success=not is_error,
+                                    detail=detail_content,
+                                    phase=LogPhase.PLANNING,
+                                )
+                            current_tool = None
+
+                print()
+
+                # Detect empty sessions
+                if tool_count == 0 and len(response_text.strip()) < 50:
+                    provider = client.provider_name()
+                    debug_error(
+                        "agent_runner",
+                        f"[{provider}] Agent session empty: 0 tool calls, {len(response_text)}b",
+                    )
+                    if self.task_logger:
+                        self.task_logger.log_error(
+                            f"Agent session empty: 0 tool calls, {len(response_text)}b output "
+                            f"— provider: {provider}. Check {provider} credentials and API access.",
+                            LogPhase.PLANNING,
+                        )
+                    return False, (
+                        f"Agent session empty (0 tools, {len(response_text)}b output, "
+                        f"provider={provider}). Response: {response_text[:200]}"
+                    )
+
+                debug_success(
+                    "agent_runner",
+                    "Agent client session completed successfully",
+                    provider=client.provider_name(),
+                    message_count=message_count,
+                    tool_count=tool_count,
+                    response_length=len(response_text),
+                )
+                return True, response_text
+
+        except Exception as e:
+            debug_error(
+                "agent_runner",
+                f"Agent client session error: {e}",
+                exception_type=type(e).__name__,
+            )
             if self.task_logger:
                 self.task_logger.log_error(f"Agent error: {e}", LogPhase.PLANNING)
             return False, str(e)

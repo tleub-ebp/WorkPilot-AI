@@ -626,88 +626,189 @@ class CopilotAgentClient(AgentClient):
 class WindsurfAgentClient(AgentClient):
     """Agent client backed by Windsurf/Codeium with dual-mode support.
 
-    Mode 1 (preferred): gRPC to local Windsurf IDE language server.
+    Mode 2 (preferred for agentic use): OpenAI-compatible REST API to server.codeium.com.
+        Uses stored API key, SSO token, or OAuth token.
+        Supports full agentic tool execution via OpenAI function calling.
+        API key sourced from: env vars → state.vscdb → running IDE process.
+
+    Mode 1 (fallback, text-only): gRPC to local Windsurf IDE language server.
         Requires Windsurf IDE to be running and authenticated.
         Uses the approach from opencode-windsurf-auth.
-
-    Mode 2 (fallback): OpenAI-compatible REST API to server.codeium.com.
-        Uses stored API key or OAuth token. Works without the IDE.
+        WARNING: gRPC mode does NOT support tool execution.
 
     Authentication:
-    - Mode 1: CSRF token + API key from running language server process
-    - Mode 2: WINDSURF_API_KEY or WINDSURF_OAUTH_TOKEN environment variable
+    - REST mode: Bearer token from WINDSURF_API_KEY, state.vscdb, or IDE credentials
+    - gRPC mode: CSRF token + API key from running language server process
     """
+
+    # Anthropic model names → Windsurf-compatible model names
+    _MODEL_NAME_MAP: dict[str, str] = {
+        # Anthropic SDK format → Windsurf format
+        "claude-sonnet-4-5-20250929": "claude-4.5-sonnet",
+        "claude-sonnet-4-20250514": "claude-4-sonnet",
+        "claude-opus-4-20250514": "claude-4-opus",
+        "claude-3-7-sonnet-20250219": "claude-3.7-sonnet",
+        "claude-3-5-sonnet-20241022": "claude-3.5-sonnet",
+        "claude-3-5-sonnet-20240620": "claude-3.5-sonnet",
+        "claude-3-5-haiku-20241022": "claude-3.5-haiku",
+        "claude-3-opus-20240229": "claude-3-opus",
+        "claude-3-sonnet-20240229": "claude-3-sonnet",
+        "claude-3-haiku-20240307": "claude-3-haiku",
+        # Common aliases
+        "claude-sonnet-4": "claude-4-sonnet",
+        "claude-opus-4": "claude-4-opus",
+        "claude-sonnet-4.5": "claude-4.5-sonnet",
+        "claude-opus-4.5": "claude-4.5-opus",
+        "claude-sonnet-4.5": "claude-4.6-sonnet",
+        "claude-opus-4.5": "claude-4.6-opus",
+    }
 
     def __init__(
         self,
         model: str = "claude-4-sonnet",
         system_prompt: str | None = None,
         max_turns: int = 50,
+        project_dir: str | None = None,
+        agent_type: str = "coder",
     ):
         import os as _os
 
-        self.model = model
+        # Normalize model name to Windsurf-compatible format
+        original_model = model
+        self.model = self._MODEL_NAME_MAP.get(model, model)
+        if self.model != original_model:
+            logger.info(
+                f"[WindsurfAgent] Model name normalized: '{original_model}' → '{self.model}'"
+            )
+
         self.system_prompt = system_prompt
         self.max_turns = max_turns
+        self._project_dir = project_dir
+        self._agent_type = agent_type
         self._credentials: Any = None  # WindsurfCredentials (Mode 1)
         self._use_local_grpc = False
         self._api_key: str | None = None  # For Mode 2
         self._pending_query: str | None = None
         self._http_client: Any = None
-        self._rest_base_url = _os.environ.get(
-            "WINDSURF_BASE_URL", "https://server.codeium.com/api/v1"
-        )
+        self._tool_executor: Any = None  # ToolExecutor instance
+        self._tool_definitions: list[dict[str, Any]] = []
+        # Ordered list of base URLs to try.  `server.codeium.com` is the
+        # documented base for analytics/billing, but chat completions may live
+        # elsewhere — or may not be exposed at all for sk-ws-* keys.
+        # An explicit WINDSURF_BASE_URL env-var overrides the probing list.
+        env_url = _os.environ.get("WINDSURF_BASE_URL")
+        if env_url:
+            self._rest_base_urls: list[str] = [env_url]
+        else:
+            self._rest_base_urls = [
+                "https://windsurf.com/api/v1",
+                "https://api.codeium.com/v1",
+                "https://server.codeium.com/api/v1",
+            ]
+        self._rest_base_url = self._rest_base_urls[0]
+        self._rest_url_probed = False  # True once we've found a working URL
 
     async def __aenter__(self):
         import os as _os
 
         from integrations.windsurf_proxy.auth import (
             discover_credentials,
+            get_api_key,
             is_windsurf_running,
         )
 
-        if is_windsurf_running():
-            try:
-                self._credentials = discover_credentials()
-                self._use_local_grpc = True
-                logger.info(
-                    f"[WindsurfAgent] Mode 1: gRPC proxy to localhost:{self._credentials.port} "
-                    f"(model={self.model})"
-                )
-                return self
-            except Exception as e:
-                logger.warning(f"[WindsurfAgent] gRPC discovery failed, trying REST fallback: {e}")
+        # =====================================================================
+        # Step 1: Discover API key from all sources
+        # =====================================================================
+        # For agentic sessions (project_dir set), we ALWAYS prefer REST mode
+        # because it supports OpenAI function calling (tool execution loop).
+        # gRPC mode is text-only and cannot do tool execution.
 
-        # Mode 2: REST fallback
+        # 1a. Check environment variables first
         self._api_key = (
             _os.environ.get("WINDSURF_API_KEY")
             or _os.environ.get("WINDSURF_OAUTH_TOKEN")
             or _os.environ.get("CODEIUM_API_KEY")
         )
+        if self._api_key:
+            logger.info("[WindsurfAgent] Found API key from environment variable")
 
-        # Fallback: try reading API key / SSO token from Windsurf's local state.vscdb
-        # This covers enterprise SSO users whose token isn't in env vars
+        # 1b. Try reading from Windsurf's local state.vscdb (SSO/enterprise tokens)
         if not self._api_key:
             try:
-                from integrations.windsurf_proxy.auth import get_api_key
                 self._api_key = get_api_key()
-                logger.debug("[WindsurfAgent] Found API key/SSO token from local state.vscdb")
+                logger.info("[WindsurfAgent] Found API key/SSO token from state.vscdb")
             except Exception as e:
-                logger.debug(f"[WindsurfAgent] Local state.vscdb key lookup failed: {e}")
+                logger.debug(f"[WindsurfAgent] state.vscdb key lookup failed: {e}")
+
+        # 1c. If Windsurf IDE is running, extract API key from its credentials
+        if not self._api_key and is_windsurf_running():
+            try:
+                creds = discover_credentials()
+                self._api_key = creds.api_key
+                logger.info(
+                    f"[WindsurfAgent] Extracted API key from running Windsurf IDE "
+                    f"(key={self._api_key[:8]}...)"
+                )
+            except Exception as e:
+                logger.warning(f"[WindsurfAgent] Failed to extract key from IDE: {e}")
+
+        # =====================================================================
+        # Step 2: Choose mode based on API key availability and needs
+        # =====================================================================
+        # Priority: REST mode (supports tools) > gRPC mode (text-only)
+
+        needs_tools = bool(self._project_dir)
 
         if self._api_key:
+            # REST mode: supports full tool execution via OpenAI function calling
             self._use_local_grpc = False
             logger.info(
-                f"[WindsurfAgent] Mode 2: REST API to {self._rest_base_url} "
-                f"(model={self.model})"
+                f"[WindsurfAgent] Mode 2 (REST): API to {self._rest_base_url} "
+                f"(model={self.model}, needs_tools={needs_tools}, "
+                f"key_prefix={self._api_key[:8]}...)"
             )
-            return self
+        elif is_windsurf_running():
+            # Fallback: gRPC mode (text-only, no tool execution)
+            try:
+                self._credentials = discover_credentials()
+                self._use_local_grpc = True
+                logger.warning(
+                    f"[WindsurfAgent] Mode 1 (gRPC): text-only proxy to "
+                    f"localhost:{self._credentials.port} — NO tool execution! "
+                    f"Agent sessions requiring tools will not work properly."
+                )
+            except Exception as e:
+                raise RuntimeError(
+                    f"Windsurf: no API key found and gRPC discovery failed: {e}. "
+                    "Please set WINDSURF_API_KEY or start Windsurf IDE."
+                )
+        else:
+            raise RuntimeError(
+                "Windsurf: no API key found (checked env vars, state.vscdb, running IDE). "
+                "Please either:\n"
+                "  1. Set WINDSURF_API_KEY environment variable, or\n"
+                "  2. Start Windsurf IDE and log in via SSO, or\n"
+                "  3. Set WINDSURF_OAUTH_TOKEN or CODEIUM_API_KEY env var."
+            )
 
-        raise RuntimeError(
-            "Windsurf IDE not running and no WINDSURF_API_KEY available. "
-            "Please either start Windsurf IDE (and log in via SSO) or set "
-            "WINDSURF_API_KEY environment variable."
-        )
+        # =====================================================================
+        # Step 3: Initialize tool execution support (REST mode only)
+        # =====================================================================
+        if self._project_dir and not self._use_local_grpc:
+            try:
+                from core.runtimes.tool_executor import ToolExecutor, get_tool_definitions
+
+                self._tool_executor = ToolExecutor(self._project_dir)
+                self._tool_definitions = get_tool_definitions(self._agent_type)
+                logger.info(
+                    f"[WindsurfAgent] Tool execution enabled: "
+                    f"{len(self._tool_definitions)} tools for agent_type={self._agent_type}"
+                )
+            except Exception as e:
+                logger.warning(f"[WindsurfAgent] Tool executor init failed (text-only mode): {e}")
+
+        return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self._http_client is not None:
@@ -722,6 +823,7 @@ class WindsurfAgentClient(AgentClient):
         """Execute the queued prompt against Windsurf.
 
         Routes to gRPC (Mode 1) or REST (Mode 2) based on connection state.
+        REST mode uses a full tool execution loop with OpenAI function calling.
         """
         if not self._pending_query:
             return
@@ -732,7 +834,8 @@ class WindsurfAgentClient(AgentClient):
         if self._use_local_grpc:
             yield await self._grpc_response(prompt)
         else:
-            yield await self._rest_response(prompt)
+            async for msg in self._rest_response_with_tools(prompt):
+                yield msg
 
     async def _grpc_response(self, prompt: str) -> AgentMessage:
         """Send prompt via gRPC to local Windsurf language server."""
@@ -777,17 +880,32 @@ class WindsurfAgentClient(AgentClient):
             content=[ContentBlock(type=ContentBlockType.TEXT, text=full_text)],
         )
 
-    async def _rest_response(self, prompt: str) -> AgentMessage:
-        """Send prompt via REST API to server.codeium.com (Mode 2 fallback)."""
-        try:
-            import aiohttp
-        except ImportError:
-            raise ImportError(
-                "aiohttp is required for WindsurfAgentClient REST mode. "
-                "Install with: pip install aiohttp"
-            )
+    def _get_openai_tools(self) -> list[dict[str, Any]]:
+        """Convert internal tool definitions to OpenAI function calling format."""
+        if not self._tool_definitions:
+            return []
+        return [
+            {
+                "type": "function",
+                "function": {
+                    "name": td["name"],
+                    "description": td.get("description", ""),
+                    "parameters": td.get("parameters", {"type": "object", "properties": {}}),
+                },
+            }
+            for td in self._tool_definitions
+        ]
 
+    def _ensure_http_client(self):
+        """Lazy-init an aiohttp ClientSession for REST mode."""
         if self._http_client is None:
+            try:
+                import aiohttp
+            except ImportError:
+                raise ImportError(
+                    "aiohttp is required for WindsurfAgentClient REST mode. "
+                    "Install with: pip install aiohttp"
+                )
             self._http_client = aiohttp.ClientSession(
                 headers={
                     "Authorization": f"Bearer {self._api_key}",
@@ -795,62 +913,272 @@ class WindsurfAgentClient(AgentClient):
                     "Accept": CONTENT_TYPE_JSON,
                 }
             )
+        return self._http_client
 
-        messages = []
+    async def _rest_response_with_tools(
+        self, prompt: str
+    ) -> AsyncIterator[AgentMessage]:
+        """Execute prompt via REST API with full tool execution loop.
+
+        Implements OpenAI-compatible function calling:
+        1. Send messages + tool definitions to API
+        2. If response contains tool_calls → execute each tool, add results, continue
+        3. If no tool_calls → yield final text response and stop
+        4. Repeat up to max_turns
+        """
+        import json as _json
+
+        session = self._ensure_http_client()
+
+        messages: list[dict[str, Any]] = []
         if self.system_prompt:
             messages.append({"role": "system", "content": self.system_prompt})
         messages.append({"role": "user", "content": prompt})
 
-        payload = {
-            "model": self.model,
-            "messages": messages,
-            "stream": False,
-        }
-
+        tools = self._get_openai_tools()
         url = f"{self._rest_base_url}/chat/completions"
-        try:
-            async with self._http_client.post(url, json=payload) as resp:
-                if resp.status != 200:
-                    error_text = await resp.text()
-                    return AgentMessage(
-                        role=MessageRole.SYSTEM,
-                        content=[
-                            ContentBlock(
-                                type=ContentBlockType.TEXT,
-                                text=f"Windsurf REST API error ({resp.status}): {error_text}",
-                            )
-                        ],
-                    )
 
-                data = await resp.json()
-                choices = data.get("choices", [])
-                if not choices:
-                    return AgentMessage(
+        # Log initial request details for debugging
+        logger.info(
+            f"[WindsurfAgent] REST request: url={url}, model={self.model}, "
+            f"tools={len(tools)}, prompt_len={len(prompt)}, "
+            f"key_prefix={self._api_key[:12] if self._api_key else 'None'}..."
+        )
+        print(
+            f"[WindsurfAgent] Sending REST API request to {url} "
+            f"(model={self.model}, {len(tools)} tools)",
+            flush=True,
+        )
+
+        for turn in range(self.max_turns):
+            payload: dict[str, Any] = {
+                "model": self.model,
+                "messages": messages,
+                "stream": False,
+            }
+            if tools:
+                payload["tools"] = tools
+                payload["tool_choice"] = "auto"
+
+            logger.info(
+                f"[WindsurfAgent] Turn {turn + 1}/{self.max_turns}: "
+                f"sending {len(messages)} messages to API..."
+            )
+
+            # ----------------------------------------------------------
+            # URL probing:  On the first request, try each base URL in
+            # turn until one returns a non-404/non-502 status.  Once a
+            # working URL is found it is cached for subsequent turns.
+            # ----------------------------------------------------------
+            urls_to_try: list[str]
+            if not self._rest_url_probed:
+                urls_to_try = [f"{base}/chat/completions" for base in self._rest_base_urls]
+            else:
+                urls_to_try = [url]
+
+            data: dict[str, Any] | None = None
+            last_error_status: int = 0
+            last_error_text: str = ""
+
+            for try_url in urls_to_try:
+                try:
+                    async with session.post(try_url, json=payload) as resp:
+                        resp_status = resp.status
+                        if resp_status == 200:
+                            data = await resp.json()
+                            # Cache the working base URL
+                            if not self._rest_url_probed:
+                                base = try_url.removesuffix("/chat/completions")
+                                self._rest_base_url = base
+                                url = try_url
+                                self._rest_url_probed = True
+                                logger.info(f"[WindsurfAgent] ✅ Found working endpoint: {try_url}")
+                                print(f"[WindsurfAgent] ✅ Working endpoint: {try_url}", flush=True)
+                            break  # success
+                        else:
+                            error_text = await resp.text()
+                            logger.warning(
+                                f"[WindsurfAgent] Endpoint {try_url} returned HTTP {resp_status}: {error_text[:200]}"
+                            )
+                            last_error_status = resp_status
+                            last_error_text = error_text
+                            # 404/502 → try next URL; other errors → stop probing
+                            if resp_status not in (404, 502, 503):
+                                break
+                except Exception as probe_err:
+                    logger.warning(f"[WindsurfAgent] Endpoint {try_url} failed: {probe_err}")
+                    last_error_status = 0
+                    last_error_text = str(probe_err)
+
+            if data is None:
+                # All URLs failed
+                self._rest_url_probed = True  # don't re-probe
+                error_msg = (
+                    f"Windsurf REST API error ({last_error_status}): {last_error_text}"
+                    if last_error_status
+                    else f"Windsurf REST API error: {last_error_text}"
+                )
+                logger.error(f"[WindsurfAgent] {error_msg}")
+                print(f"[WindsurfAgent] ❌ All endpoints failed: {error_msg[:200]}", flush=True)
+                yield AgentMessage(
+                    role=MessageRole.SYSTEM,
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TEXT,
+                            text=error_msg,
+                        )
+                    ],
+                )
+                return
+
+            logger.info(
+                f"[WindsurfAgent] Turn {turn + 1}: API responded 200 OK "
+                f"(keys={list(data.keys())})"
+            )
+
+            # Parse usage from response (for logging)
+            usage = data.get("usage", {})
+            if usage:
+                logger.info(
+                    f"[WindsurfAgent] Token usage: "
+                    f"prompt={usage.get('prompt_tokens', '?')}, "
+                    f"completion={usage.get('completion_tokens', '?')}, "
+                    f"total={usage.get('total_tokens', '?')}"
+                )
+
+            choices = data.get("choices", [])
+            if not choices:
+                logger.warning(f"[WindsurfAgent] Empty choices in response: {data}")
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TEXT,
+                            text="(Empty response from Windsurf REST API)",
+                        )
+                    ],
+                )
+                return
+
+            message = choices[0].get("message", {})
+            content = message.get("content", "")
+            tool_calls = message.get("tool_calls", [])
+            finish_reason = choices[0].get("finish_reason", "")
+
+            logger.info(
+                f"[WindsurfAgent] Turn {turn + 1}: "
+                f"content_len={len(content or '')}, "
+                f"tool_calls={len(tool_calls)}, "
+                f"finish_reason={finish_reason}"
+            )
+
+            # Yield text content if present
+            if content:
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[ContentBlock(type=ContentBlockType.TEXT, text=content)],
+                )
+
+            # No tool calls → done
+            if not tool_calls:
+                if not content:
+                    yield AgentMessage(
                         role=MessageRole.ASSISTANT,
                         content=[
                             ContentBlock(
                                 type=ContentBlockType.TEXT,
-                                text="(Empty response from Windsurf REST API)",
+                                text="(No response from Windsurf)",
                             )
                         ],
                     )
-
-                content = choices[0].get("message", {}).get("content", "")
-                return AgentMessage(
-                    role=MessageRole.ASSISTANT,
-                    content=[ContentBlock(type=ContentBlockType.TEXT, text=content)],
+                logger.info(
+                    f"[WindsurfAgent] Session complete after {turn + 1} turn(s) "
+                    f"(finish_reason={finish_reason})"
                 )
-        except Exception as e:
-            logger.error(f"[WindsurfAgent] REST API error: {e}")
-            return AgentMessage(
-                role=MessageRole.SYSTEM,
-                content=[
-                    ContentBlock(
-                        type=ContentBlockType.TEXT,
-                        text=f"Windsurf REST API error: {e}",
-                    )
-                ],
-            )
+                return
+
+            # Add assistant message (with tool_calls) to conversation history
+            assistant_msg: dict[str, Any] = {"role": "assistant"}
+            if content:
+                assistant_msg["content"] = content
+            assistant_msg["tool_calls"] = tool_calls
+            messages.append(assistant_msg)
+
+            # Execute each tool call
+            for tc in tool_calls:
+                func = tc.get("function", {})
+                tool_name = func.get("name", "")
+                tool_id = tc.get("id", f"call_{turn}_{tool_name}")
+
+                try:
+                    args = _json.loads(func.get("arguments", "{}"))
+                except (_json.JSONDecodeError, TypeError):
+                    args = {}
+
+                logger.info(
+                    f"[WindsurfAgent] Turn {turn + 1}: tool_call {tool_name}({list(args.keys())})"
+                )
+                print(f"[WindsurfAgent] 🔧 Tool: {tool_name}", flush=True)
+
+                # Yield TOOL_USE block so session handler counts it
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TOOL_USE,
+                            tool_name=tool_name,
+                            tool_id=tool_id,
+                            tool_input=args,
+                        )
+                    ],
+                )
+
+                # Execute tool
+                result_text = ""
+                is_error = False
+                if self._tool_executor:
+                    try:
+                        result = await self._tool_executor.execute(tool_name, args)
+                        result_text = str(result) if result is not None else ""
+                    except Exception as e:
+                        result_text = f"Tool error: {e}"
+                        is_error = True
+                        logger.warning(
+                            f"[WindsurfAgent] Tool {tool_name} failed: {e}"
+                        )
+                else:
+                    result_text = "Tool executor not available (no project_dir)"
+                    is_error = True
+
+                # Yield TOOL_RESULT block so session handler logs it
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TOOL_RESULT,
+                            tool_use_id=tool_id,
+                            is_error=is_error,
+                            result_content=result_text,
+                        )
+                    ],
+                )
+
+                # Add tool result to conversation for next API call
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_id,
+                    "content": result_text[:10000],  # Truncate large results
+                })
+
+            # Continue loop — next turn will send updated messages with tool results
+
+        logger.warning(
+            f"[WindsurfAgent] Reached max_turns ({self.max_turns}) — stopping tool loop"
+        )
+        print(
+            f"[WindsurfAgent] ⚠️ Reached max turns ({self.max_turns})",
+            flush=True,
+        )
 
     def supports_subagents(self) -> bool:
         return False

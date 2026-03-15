@@ -69,6 +69,12 @@ function detectProviderFromEnv(): { provider: string; modelLabel: string } {
     return { provider: 'grok', modelLabel: 'Grok' };
   } else if (env.OLLAMA_BASE_URL) {
     return { provider: 'ollama', modelLabel: 'Ollama' };
+  } else if (env.WINDSURF_API_KEY || env.WINDSURF_OAUTH_TOKEN || env.CODEIUM_API_KEY) {
+    return { provider: 'windsurf', modelLabel: 'Windsurf (Codeium)' };
+  } else if (env.SELECTED_LLM_PROVIDER) {
+    // Catch-all: honor the explicit provider selection from UI
+    const p = env.SELECTED_LLM_PROVIDER.toLowerCase();
+    return { provider: p, modelLabel: p.charAt(0).toUpperCase() + p.slice(1) };
   } else {
     // Default to copilot since we're in Claude Code environment
     return { provider: 'copilot', modelLabel: 'GitHub Copilot' };

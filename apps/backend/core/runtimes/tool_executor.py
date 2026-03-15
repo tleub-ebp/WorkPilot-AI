@@ -44,6 +44,8 @@ class ToolExecutor:
             return await self._list_files(arguments.get("directory", "."))
         elif tool_name == "run_command":
             return await self._run_command(arguments.get("command"), arguments.get("cwd"))
+        elif tool_name == "create_directory":
+            return await self._create_directory(arguments.get("path"))
         else:
             raise ValueError(f"Unknown tool: {tool_name}")
     
@@ -101,6 +103,18 @@ class ToolExecutor:
         except Exception as e:
             raise RuntimeError(f"Error listing files in {directory}: {e}")
     
+    async def _create_directory(self, path: Optional[str]) -> str:
+        """Create a directory (and parents)."""
+        if not path:
+            raise ValueError("Path is required for create_directory")
+
+        dir_path = self.project_dir / path
+        try:
+            dir_path.mkdir(parents=True, exist_ok=True)
+            return f"Successfully created directory {path}"
+        except Exception as e:
+            raise RuntimeError(f"Error creating directory {path}: {e}")
+
     async def _run_command(self, command: Optional[str], cwd: Optional[str] = None) -> str:
         """Run a shell command."""
         if not command:
@@ -111,17 +125,18 @@ class ToolExecutor:
         try:
             process = await asyncio.create_subprocess_shell(
                 command,
-                cwd=work_dir,
+                cwd=str(work_dir),
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                text=True
             )
-            
-            stdout, stderr = await process.communicate()
-            
+
+            stdout_bytes, stderr_bytes = await process.communicate()
+            stdout = stdout_bytes.decode("utf-8", errors="replace") if stdout_bytes else ""
+            stderr = stderr_bytes.decode("utf-8", errors="replace") if stderr_bytes else ""
+
             if process.returncode != 0:
                 raise RuntimeError(f"Command failed with code {process.returncode}: {stderr}")
-            
+
             return stdout
         except Exception as e:
             raise RuntimeError(f"Error running command {command}: {e}")
