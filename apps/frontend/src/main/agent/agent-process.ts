@@ -213,6 +213,13 @@ export class AgentProcessManager {
     // Get active provider credentials (e.g., WINDSURF_API_KEY, SELECTED_LLM_PROVIDER)
     // This ensures non-Claude providers get their credentials injected into the subprocess
     const providerEnv = credentialManager.getEnvironmentVariables();
+    appLog.info('[AgentProcess] Provider env vars from CredentialManager:', {
+      SELECTED_LLM_PROVIDER: providerEnv.SELECTED_LLM_PROVIDER || '(not set)',
+      hasWindsurfApiKey: !!providerEnv.WINDSURF_API_KEY,
+      hasWindsurfBaseUrl: !!providerEnv.WINDSURF_BASE_URL,
+      activeCredential: credentialManager.getActiveCredential()?.provider || '(none)',
+      keys: Object.keys(providerEnv),
+    });
 
     return {
       ...augmentedEnv,
@@ -639,44 +646,58 @@ export class AgentProcessManager {
       spawnId
     });
 
-    // CRITICAL: Force-refresh OAuth token BEFORE reading credentials for env setup.
-    //
-    // Why forceRefresh: true?
-    // A token can be revoked on Anthropic's side while its local expiresAt timestamp
-    // still says it's valid. This happens when:
-    // - The UsageMonitor previously refreshed the token mid-run (Bug #8, now fixed)
-    // - The user authenticated from another device/session
-    // - Any other process called the refresh endpoint
-    //
-    // By force-refreshing, we exchange the refresh_token for a guaranteed-fresh access_token
-    // BEFORE the agent process starts. This eliminates the "revoked but not expired" gap.
-    //
-    // If the refresh_token is also revoked (invalid_grant), the error code is propagated
-    // and the UI should prompt re-authentication.
-    try {
-      const profileManager = getClaudeProfileManager();
-      const activeProfile = profileManager.getActiveProfile();
-      if (activeProfile?.configDir) {
-        const tokenResult = await ensureValidToken(activeProfile.configDir, undefined, { forceRefresh: true });
-        if (tokenResult.wasRefreshed) {
-          // Clear credential cache so getProfileEnv() reads the fresh token, not a stale cached one
-          clearKeychainCache(activeProfile.configDir);
-          appLog.warn('[AgentProcess] Force-refreshed OAuth token before agent spawn for profile:', activeProfile.name,
-            '| new fingerprint:', tokenResult.token ? `${tokenResult.token.slice(0, 8)}...${tokenResult.token.slice(-4)}` : '(none)');
-        } else if (tokenResult.errorCode === 'invalid_grant' || tokenResult.errorCode === 'invalid_client') {
-          // Permanent error — the refresh_token is also revoked. User must re-authenticate.
-          appLog.error('[AgentProcess] PERMANENT TOKEN ERROR:', tokenResult.error,
-            '- the refresh token is revoked. User must re-authenticate from the Accounts page.');
-          // Still proceed — will fail with 401, but the error handling will surface the re-auth prompt
-        } else if (tokenResult.error) {
-          appLog.warn('[AgentProcess] Token refresh warning:', tokenResult.error, '- proceeding with existing credentials');
+    // Skip Claude OAuth token refresh when a non-Claude provider is active.
+    // For providers like Windsurf, the backend handles its own authentication
+    // (SSO token from state.vscdb or API key) and doesn't need Claude OAuth tokens.
+    // Use getEnvironmentVariables() as the source of truth since it handles all
+    // fallback paths (activeCredential, globalWindsurfApiKey in settings, etc.)
+    const providerCheck = credentialManager.getEnvironmentVariables();
+    const selectedLlmProvider = providerCheck.SELECTED_LLM_PROVIDER?.toLowerCase();
+    const isNonClaudeProvider = selectedLlmProvider &&
+      !['anthropic', 'claude'].includes(selectedLlmProvider);
+
+    if (isNonClaudeProvider) {
+      appLog.info('[AgentProcess] Skipping Claude OAuth token refresh — active provider is:', selectedLlmProvider);
+    } else {
+      // CRITICAL: Force-refresh OAuth token BEFORE reading credentials for env setup.
+      //
+      // Why forceRefresh: true?
+      // A token can be revoked on Anthropic's side while its local expiresAt timestamp
+      // still says it's valid. This happens when:
+      // - The UsageMonitor previously refreshed the token mid-run (Bug #8, now fixed)
+      // - The user authenticated from another device/session
+      // - Any other process called the refresh endpoint
+      //
+      // By force-refreshing, we exchange the refresh_token for a guaranteed-fresh access_token
+      // BEFORE the agent process starts. This eliminates the "revoked but not expired" gap.
+      //
+      // If the refresh_token is also revoked (invalid_grant), the error code is propagated
+      // and the UI should prompt re-authentication.
+      try {
+        const profileManager = getClaudeProfileManager();
+        const activeProfile = profileManager.getActiveProfile();
+        if (activeProfile?.configDir) {
+          const tokenResult = await ensureValidToken(activeProfile.configDir, undefined, { forceRefresh: true });
+          if (tokenResult.wasRefreshed) {
+            // Clear credential cache so getProfileEnv() reads the fresh token, not a stale cached one
+            clearKeychainCache(activeProfile.configDir);
+            appLog.warn('[AgentProcess] Force-refreshed OAuth token before agent spawn for profile:', activeProfile.name,
+              '| new fingerprint:', tokenResult.token ? `${tokenResult.token.slice(0, 8)}...${tokenResult.token.slice(-4)}` : '(none)');
+          } else if (tokenResult.errorCode === 'invalid_grant' || tokenResult.errorCode === 'invalid_client') {
+            // Permanent error — the refresh_token is also revoked. User must re-authenticate.
+            appLog.error('[AgentProcess] PERMANENT TOKEN ERROR:', tokenResult.error,
+              '- the refresh token is revoked. User must re-authenticate from the Accounts page.');
+            // Still proceed — will fail with 401, but the error handling will surface the re-auth prompt
+          } else if (tokenResult.error) {
+            appLog.warn('[AgentProcess] Token refresh warning:', tokenResult.error, '- proceeding with existing credentials');
+          }
         }
+      } catch (error) {
+        // Non-fatal: if refresh fails, we still try with the existing token.
+        // The backend may succeed if it has its own refresh mechanism, or the error
+        // will be caught and reported as a 401 by the normal error handling flow.
+        appLog.warn('[AgentProcess] Pre-spawn token refresh failed (non-fatal):', error instanceof Error ? error.message : String(error));
       }
-    } catch (error) {
-      // Non-fatal: if refresh fails, we still try with the existing token.
-      // The backend may succeed if it has its own refresh mechanism, or the error
-      // will be caught and reported as a 401 by the normal error handling flow.
-      appLog.warn('[AgentProcess] Pre-spawn token refresh failed (non-fatal):', error instanceof Error ? error.message : String(error));
     }
 
     const env = this.setupProcessEnvironment(extraEnv);

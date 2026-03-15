@@ -1038,8 +1038,14 @@ export class UsageMonitor extends EventEmitter {
       isAPIProfile = activeProfile.isAPIProfile;
 
       // Step 2: Fetch current usage (pass activeProfile for consistency)
-      const credential = await this.getCredential();
       const provider = detectProvider(activeProfile.baseUrl);
+
+      // Skip OAuth credential fetch for non-Anthropic providers — they manage their own
+      // credentials internally (e.g., Windsurf uses getUsageForProvider which fetches its own key).
+      // This avoids unnecessary Claude OAuth token refresh when Windsurf/Copilot is active.
+      const credential = (provider === 'windsurf' || provider === 'copilot')
+        ? undefined
+        : await this.getCredential();
       let usage = await this.fetchUsage(profileId, credential, activeProfile, provider, suppressErrors);
 
       // For anthropic API key profiles, if weekly data is missing (0%), try OAuth as well
@@ -1265,19 +1271,64 @@ export class UsageMonitor extends EventEmitter {
       this.debugLog('[UsageMonitor:TRACE] Failed to load API profiles, falling back to OAuth:', error);
     }
 
-    // Check if the selected provider is Copilot (CLI-based provider)
+    // Check if a non-Claude provider (Windsurf, Copilot) is selected
+    // This prevents fetching Anthropic usage when another provider is active
     const profileManager = getClaudeProfileManager();
     const settings = profileManager.getSettings();
-    
-    // Check if Copilot is configured as a provider
+
+    // Check if Windsurf is the active provider — multiple detection methods:
+    // 1. selectedProvider in settings.json (persisted by CredentialManager.setActiveProvider)
+    // 2. globalWindsurfApiKey in settings.json (user configured Windsurf key in settings)
+    // 3. CredentialManager's active credential is windsurf-type
+    try {
+      const { readSettingsFile } = await import('../settings-utils');
+      const appSettings = readSettingsFile();
+      const selectedProvider = appSettings?.selectedProvider as string | undefined;
+      const globalWindsurfKey = appSettings?.globalWindsurfApiKey as string | undefined;
+
+      if (selectedProvider === 'windsurf' || (globalWindsurfKey && globalWindsurfKey.trim())) {
+        const reason = selectedProvider === 'windsurf'
+          ? 'settings.selectedProvider'
+          : 'settings.globalWindsurfApiKey present';
+        this.debugLog(`[UsageMonitor:TRACE] Active provider is Windsurf (${reason})`, {
+          selectedProvider,
+          hasGlobalWindsurfKey: !!globalWindsurfKey,
+        });
+
+        // Auto-persist selectedProvider if it was detected via globalWindsurfApiKey fallback
+        // so future checks are faster and the CredentialManager also picks it up
+        if (!selectedProvider && globalWindsurfKey && appSettings) {
+          try {
+            const { writeSettingsFile } = await import('../settings-utils');
+            appSettings.selectedProvider = 'windsurf';
+            writeSettingsFile(appSettings as Record<string, unknown>);
+            this.debugLog('[UsageMonitor] Auto-persisted selectedProvider=windsurf from globalWindsurfApiKey');
+          } catch (e) {
+            this.debugLog('[UsageMonitor] Failed to auto-persist selectedProvider:', e);
+          }
+        }
+
+        return {
+          profileId: 'windsurf-provider',
+          profileName: 'Windsurf (Codeium)',
+          profileEmail: undefined,
+          isAPIProfile: false,
+          baseUrl: 'https://server.codeium.com'
+        };
+      }
+    } catch (error) {
+      this.debugLog('[UsageMonitor] Failed to read selectedProvider from settings:', error);
+    }
+
+    // Check if Copilot or Windsurf is configured via API profiles
     if (settings.activeProfileId) {
       try {
         const currentProfilesFile = await loadProfilesFile();
         const activeProfile = currentProfilesFile.profiles.find((p: any) => p.id === settings.activeProfileId);
         if (activeProfile) {
           const provider = detectProvider(activeProfile.baseUrl);
-          if (provider === 'copilot') {
-            this.debugLog('[UsageMonitor:TRACE] Active provider is Copilot (CLI-based)', {
+          if (provider === 'copilot' || provider === 'windsurf') {
+            this.debugLog(`[UsageMonitor:TRACE] Active provider is ${provider} (from API profile)`, {
               profileId: activeProfile.id,
               profileName: activeProfile.name,
               baseUrl: activeProfile.baseUrl
@@ -1292,7 +1343,7 @@ export class UsageMonitor extends EventEmitter {
           }
         }
       } catch (error) {
-        this.debugLog('[UsageMonitor] Failed to check Copilot provider status:', error);
+        this.debugLog('[UsageMonitor] Failed to check provider status:', error);
       }
     }
 
@@ -1475,6 +1526,13 @@ export class UsageMonitor extends EventEmitter {
     // This fixes the bug where API profile names were incorrectly shown for OAuth profiles
     let profileName: string | undefined;
     let profileEmail: string | undefined;
+
+    // Special handling for Windsurf provider — route to getUsageForProvider()
+    // which has the full Codeium API integration (GetTeamCreditBalance, GetUser, etc.)
+    if (providerName === 'windsurf') {
+      this.debugLog('[UsageMonitor:fetchUsage] Windsurf provider detected — routing to getUsageForProvider("windsurf")');
+      return await this.getUsageForProvider('windsurf');
+    }
 
     // Special handling for CLI-based providers like Copilot
     if (providerName === 'copilot') {
@@ -2182,6 +2240,81 @@ export class UsageMonitor extends EventEmitter {
         numSeats,
         billingCycleStart: data.billingCycleStart,
         billingCycleEnd: data.billingCycleEnd
+      }
+    };
+  }
+
+  /**
+   * Normalize Windsurf cached plan info (from local IDE database) to UsageSnapshot
+   *
+   * The Windsurf IDE caches plan info in its local SQLite database with detailed
+   * usage data: messages (prompts) used/remaining and flow actions used/remaining.
+   *
+   * We map:
+   *   - sessionPercent → % of messages (prompts) used
+   *   - weeklyPercent  → % of billing cycle elapsed (time-based)
+   */
+  private normalizeWindsurfCachedPlanInfo(
+      planInfo: import('../services/credential-manager').WindsurfCachedPlanInfo,
+      profileId: string,
+      profileName: string,
+  ): UsageSnapshot {
+    const { usage, startTimestamp, endTimestamp } = planInfo;
+
+    // Messages (prompts) usage percentage
+    let sessionPercent = 0;
+    if (usage.messages > 0) {
+      sessionPercent = Math.round((usage.usedMessages / usage.messages) * 100);
+    }
+
+    // Billing cycle progress as "weekly" percentage
+    let weeklyPercent = 0;
+    const now = Date.now();
+    if (endTimestamp > startTimestamp && now >= startTimestamp) {
+      const cycleDuration = endTimestamp - startTimestamp;
+      const elapsed = Math.min(now - startTimestamp, cycleDuration);
+      weeklyPercent = Math.round((elapsed / cycleDuration) * 100);
+    }
+
+    // Windsurf/Codeium stores credit counts in hundredths (fixed-point × 100).
+    // E.g. a 500-credit plan stores messages=50000, usedMessages=33600 → 336 credits used.
+    // Detect this by checking if the total is a clean multiple of 100 (e.g. 50000, 100000).
+    // If so, scale down for human-readable display values.
+    const scale = (usage.messages >= 1000 && usage.messages % 100 === 0) ? 100 : 1;
+    const displayTotal = Math.round(usage.messages / scale);
+    const displayUsed = Math.round(usage.usedMessages / scale);
+    const displayRemaining = Math.max(0, displayTotal - displayUsed);
+
+    return {
+      sessionPercent,
+      weeklyPercent,
+      sessionResetTime: undefined,
+      weeklyResetTime: undefined,
+      sessionResetTimestamp: new Date(endTimestamp).toISOString(),
+      weeklyResetTimestamp: new Date(endTimestamp).toISOString(),
+      profileId,
+      profileName,
+      profileEmail: undefined,
+      providerName: 'windsurf',
+      fetchedAt: new Date(),
+      limitType: 'session',
+      // Show "used / total" credits below the session progress bar
+      sessionUsageValue: displayUsed,
+      sessionUsageLimit: displayTotal,
+      usageWindows: {
+        sessionWindowLabel: 'common:usage.windowCredits',
+        weeklyWindowLabel: 'common:usage.windowBillingCycle'
+      },
+      windsurfCredits: {
+        totalCredits: displayTotal,
+        usedCredits: displayUsed,
+        remainingCredits: displayRemaining,
+        seatCreditsTotal: displayTotal,
+        addOnCreditsAvailable: Math.round(usage.flowActions / scale),
+        addOnCreditsUsed: Math.round(usage.usedFlowActions / scale),
+        numSeats: 1,
+        billingCycleStart: new Date(startTimestamp).toISOString(),
+        billingCycleEnd: new Date(endTimestamp).toISOString()
       }
     };
   }
@@ -3028,10 +3161,46 @@ export class UsageMonitor extends EventEmitter {
       }
     }
 
-    // Windsurf/Codeium special case — uses POST with service key in body
-    // API: POST https://server.codeium.com/api/v1/GetTeamCreditBalance
+    // Windsurf/Codeium special case
+    // Strategy priority:
+    //   1. Read cached plan info from local Windsurf IDE database (no API call needed)
+    //   2. Fall back to Codeium API with service key (Enterprise only)
     if (providerName === 'windsurf') {
-      this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf provider — fetching credits from Codeium API');
+      this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf provider — fetching credits');
+
+      // Strategy 0: Read cached plan info from local Windsurf IDE
+      // This is the most reliable source for Pro/Teams plan users, since the
+      // billing API (GetTeamCreditBalance) requires Enterprise service keys.
+      try {
+        const { readWindsurfCachedPlanInfo } = await import('../services/credential-manager');
+        const cached = await readWindsurfCachedPlanInfo();
+        if (cached.success && cached.planInfo) {
+          const rawMsgs = cached.planInfo.usage;
+          const scl = (rawMsgs.messages >= 1000 && rawMsgs.messages % 100 === 0) ? 100 : 1;
+          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — using local IDE cached plan info', {
+            planName: cached.planInfo.planName,
+            userName: cached.userName,
+            messagesRaw: `${rawMsgs.usedMessages}/${rawMsgs.messages}`,
+            creditsDisplay: `${Math.round(rawMsgs.usedMessages / scl)}/${Math.round(rawMsgs.messages / scl)}`,
+            usagePercent: rawMsgs.messages > 0 ? `${Math.round((rawMsgs.usedMessages / rawMsgs.messages) * 100)}%` : 'N/A',
+            flowActions: `${rawMsgs.usedFlowActions}/${rawMsgs.flowActions}`,
+            isStale: cached.planInfo.isStale ?? false,
+            billingStart: new Date(cached.planInfo.startTimestamp).toISOString(),
+            billingEnd: new Date(cached.planInfo.endTimestamp).toISOString(),
+          });
+          return this.normalizeWindsurfCachedPlanInfo(
+            cached.planInfo,
+            'windsurf-local',
+            cached.userName ? `Windsurf (${cached.userName})` : 'Windsurf (Codeium)',
+          );
+        }
+        this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — local IDE cache unavailable:', cached.error);
+      } catch (e) {
+        this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — local IDE cache read failed:', e);
+      }
+
+      // Strategy 1+: Try Codeium API with service key (Enterprise only)
+      this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — falling back to Codeium API');
       try {
         // Find the Windsurf API profile to get the service key
         const profilesFile = await loadProfilesFile();

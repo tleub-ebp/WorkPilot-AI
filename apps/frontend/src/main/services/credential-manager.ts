@@ -7,7 +7,7 @@
 
 import { EventEmitter } from 'node:events';
 import { loadProfilesFile, saveProfilesFile } from '../utils/profile-manager';
-import { readSettingsFile } from '../settings-utils';
+import { readSettingsFile, writeSettingsFile } from '../settings-utils';
 import type { ProfilesFile } from '../../shared/types/profile';
 import { detectProvider } from '../../shared/utils/provider-detection';
 
@@ -104,7 +104,7 @@ export class CredentialManager extends EventEmitter {
    */
   private async loadProfiles(): Promise<void> {
     this.profiles = await loadProfilesFile();
-    
+
     // Déterminer le credential actif basé sur le profil actif
     if (this.profiles?.activeProfileId) {
       const activeProfile = this.profiles.profiles.find(p => p.id === this.profiles?.activeProfileId);
@@ -121,7 +121,42 @@ export class CredentialManager extends EventEmitter {
           isActive: true,
           lastValidated: Date.now()
         };
+        return;
       }
+    }
+
+    // No active API profile — check settings.json for a previously selected provider
+    // or a saved Windsurf API key (globalWindsurfApiKey).
+    // This ensures the provider selection survives app restarts for SSO/enterprise users.
+    try {
+      const settings = readSettingsFile();
+      const savedProvider = settings?.selectedProvider as string | undefined;
+      const windsurfKey = (settings?.globalWindsurfApiKey as string | undefined)?.trim();
+
+      if (savedProvider && savedProvider !== 'anthropic' && savedProvider !== 'claude') {
+        console.log(`[CredentialManager] Restoring saved provider from settings: ${savedProvider}`);
+        this.activeCredential = {
+          provider: savedProvider,
+          type: windsurfKey && savedProvider === 'windsurf' ? 'api_key' : 'oauth',
+          credentials: windsurfKey && savedProvider === 'windsurf'
+            ? { apiKey: windsurfKey }
+            : {},
+          isActive: true,
+          lastValidated: Date.now()
+        };
+      } else if (windsurfKey) {
+        // No selectedProvider saved, but globalWindsurfApiKey exists — user configured Windsurf
+        console.log('[CredentialManager] Restoring windsurf provider from globalWindsurfApiKey');
+        this.activeCredential = {
+          provider: 'windsurf',
+          type: 'api_key',
+          credentials: { apiKey: windsurfKey },
+          isActive: true,
+          lastValidated: Date.now()
+        };
+      }
+    } catch {
+      // settings file not available — no restoration needed
     }
   }
 
@@ -214,6 +249,18 @@ export class CredentialManager extends EventEmitter {
           isActive: true,
           lastValidated: Date.now()
         };
+      }
+
+      // Persist selected provider to settings.json so it survives app restarts.
+      // This is critical for SSO/enterprise users (e.g., Windsurf) who don't have
+      // an API profile in profiles.json — without this, the provider selection is lost.
+      try {
+        const settings = readSettingsFile() || {};
+        settings.selectedProvider = provider;
+        writeSettingsFile(settings);
+        console.log(`[CredentialManager] Persisted selectedProvider to settings.json: ${provider}`);
+      } catch (e) {
+        console.warn('[CredentialManager] Failed to persist selectedProvider to settings.json:', e);
       }
 
       this.emit('credential:updated', this.activeCredential);
@@ -1408,5 +1455,310 @@ export async function detectWindsurfLocalToken(): Promise<{ success: boolean; ap
 
   } catch (error: any) {
     return { success: false, error: error.message || 'Unknown error detecting Windsurf token' };
+  }
+}
+
+/**
+ * Read cached plan info from the local Windsurf IDE database.
+ *
+ * The Windsurf IDE caches plan/usage data in its SQLite database (state.vscdb)
+ * under the key `windsurf.settings.cachedPlanInfo`. This gives us usage data
+ * without needing an API call (which requires Enterprise service keys).
+ *
+ * Returns the cached plan info if available, or null if Windsurf IDE is not
+ * installed or the cache is not available.
+ */
+export interface WindsurfCachedPlanInfo {
+  planName: string;
+  startTimestamp: number;
+  endTimestamp: number;
+  /** True if the cached data is from a previous billing cycle (stale) */
+  isStale?: boolean;
+  usage: {
+    duration: number;
+    messages: number;
+    flowActions: number;
+    flexCredits: number;
+    usedMessages: number;
+    usedFlowActions: number;
+    usedFlexCredits: number;
+    remainingMessages: number;
+    remainingFlowActions: number;
+    remainingFlexCredits: number;
+  };
+  hasBillingWritePermissions: boolean;
+  gracePeriodStatus: number;
+}
+
+/**
+ * Decode a varint from a Buffer at the given position.
+ * Returns [value, newPosition].
+ */
+function decodeVarint(buf: Buffer, pos: number): [number, number] {
+  let result = 0;
+  let shift = 0;
+  while (pos < buf.length) {
+    const b = buf[pos];
+    result |= (b & 0x7f) << shift;
+    pos++;
+    if (!(b & 0x80)) break;
+    shift += 7;
+  }
+  return [result, pos];
+}
+
+/**
+ * Extract the current billing cycle timestamps from the userStatusProtoBinaryBase64
+ * field in windsurfAuthStatus. The protobuf structure is:
+ *   - root field 13 (plan info sub-message):
+ *     - sub-field 2 (billing start): nested varint at field 1
+ *     - sub-field 3 (billing end): nested varint at field 1
+ *     - sub-field 8: total messages
+ *     - sub-field 9: total flow actions
+ */
+function extractBillingCycleFromProtobuf(protoB64: string): { startSeconds: number; endSeconds: number; totalMessages: number; totalFlowActions: number; usedMessages: number; usedFlowActions: number } | null {
+  try {
+    const data = Buffer.from(protoB64, 'base64');
+    let pos = 0;
+
+    // Find field 13 in root message
+    while (pos < data.length) {
+      const [tag, newPos] = decodeVarint(data, pos);
+      const fieldNum = tag >> 3;
+      const wireType = tag & 0x7;
+      pos = newPos;
+
+      if (wireType === 0) {
+        // varint — skip
+        const [, p] = decodeVarint(data, pos);
+        pos = p;
+      } else if (wireType === 2) {
+        // length-delimited
+        const [length, p] = decodeVarint(data, pos);
+        pos = p;
+        if (fieldNum === 13) {
+          // Parse the plan sub-message
+          const sub = data.subarray(pos, pos + length);
+          let sp = 0;
+          let startSeconds = 0;
+          let endSeconds = 0;
+          let totalMessages = 0;
+          let totalFlowActions = 0;
+          let usedMessages = 0;
+          let usedFlowActions = 0;
+
+          while (sp < sub.length) {
+            const [stag, sp2] = decodeVarint(sub, sp);
+            const sfn = stag >> 3;
+            const swt = stag & 0x7;
+            sp = sp2;
+
+            if (swt === 0) {
+              const [sv, sp3] = decodeVarint(sub, sp);
+              sp = sp3;
+              if (sfn === 6) usedMessages = sv;
+              if (sfn === 7) usedFlowActions = sv;
+              if (sfn === 8) totalMessages = sv;
+              if (sfn === 9) totalFlowActions = sv;
+            } else if (swt === 2) {
+              const [sl, sp3] = decodeVarint(sub, sp);
+              sp = sp3;
+              const sv = sub.subarray(sp, sp + sl);
+              sp += sl;
+
+              // Sub-fields 2 and 3 contain nested messages with a varint at field 1
+              if ((sfn === 2 || sfn === 3) && sl > 0) {
+                try {
+                  const [innerTag, ip2] = decodeVarint(sv, 0);
+                  const innerFn = innerTag >> 3;
+                  const innerWt = innerTag & 0x7;
+                  if (innerFn === 1 && innerWt === 0) {
+                    const [ts] = decodeVarint(sv, ip2);
+                    if (sfn === 2) startSeconds = ts;
+                    if (sfn === 3) endSeconds = ts;
+                  }
+                } catch { /* skip malformed */ }
+              }
+            } else if (swt === 5) {
+              sp += 4;
+            } else if (swt === 1) {
+              sp += 8;
+            } else {
+              break;
+            }
+          }
+
+          if (startSeconds > 0 && endSeconds > 0) {
+            return { startSeconds, endSeconds, totalMessages, totalFlowActions, usedMessages, usedFlowActions };
+          }
+          return null;
+        }
+        pos += length;
+      } else if (wireType === 5) {
+        pos += 4;
+      } else if (wireType === 1) {
+        pos += 8;
+      } else {
+        break;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function readWindsurfCachedPlanInfo(): Promise<{ success: boolean; planInfo?: WindsurfCachedPlanInfo; userName?: string; error?: string }> {
+  try {
+    const path = await import('node:path');
+    const fs = await import('node:fs');
+    const { isWindows, isMacOS } = await import('../platform/index');
+
+    // Determine the state.vscdb path based on platform
+    let dbPath: string;
+    if (isWindows()) {
+      dbPath = path.join(process.env.APPDATA || '', 'Windsurf', 'User', 'globalStorage', 'state.vscdb');
+    } else if (isMacOS()) {
+      dbPath = path.join(process.env.HOME || '', 'Library', 'Application Support', 'Windsurf', 'User', 'globalStorage', 'state.vscdb');
+    } else {
+      dbPath = path.join(process.env.HOME || '', '.config', 'Windsurf', 'User', 'globalStorage', 'state.vscdb');
+    }
+
+    if (!fs.existsSync(dbPath)) {
+      return { success: false, error: 'Windsurf IDE not installed' };
+    }
+
+    let Database: typeof import('better-sqlite3');
+    try {
+      Database = require('better-sqlite3');
+    } catch (e: any) {
+      return { success: false, error: `better-sqlite3 not available: ${e.message}` };
+    }
+
+    let db: import('better-sqlite3').Database;
+    try {
+      db = new Database(dbPath, { readonly: true, fileMustExist: true });
+    } catch (e: any) {
+      return { success: false, error: `Could not open Windsurf database: ${e.message}` };
+    }
+
+    try {
+      const readKey = (key: string): string | null => {
+        try {
+          const row = db.prepare('SELECT value FROM ItemTable WHERE key = ?').get(key) as { value: string | Buffer } | undefined;
+          if (!row) return null;
+          const val = row.value;
+          if (Buffer.isBuffer(val)) return val.toString('utf-8');
+          return typeof val === 'string' ? val : null;
+        } catch {
+          return null;
+        }
+      };
+
+      // Read cached plan info
+      const planInfoRaw = readKey('windsurf.settings.cachedPlanInfo');
+      if (!planInfoRaw) {
+        db.close();
+        return { success: false, error: 'No cached plan info in Windsurf IDE' };
+      }
+
+      const planInfo = JSON.parse(planInfoRaw) as WindsurfCachedPlanInfo;
+
+      // Check if the cached plan info is stale (from a previous billing cycle)
+      // by comparing with the current billing cycle in the protobuf data.
+      // The userStatusProtoBinaryBase64 is refreshed on each IDE session and
+      // contains the authoritative billing cycle dates.
+      const authStatusRaw = readKey('windsurfAuthStatus');
+      if (authStatusRaw) {
+        try {
+          const authData = JSON.parse(authStatusRaw);
+          if (authData.userStatusProtoBinaryBase64) {
+            const billing = extractBillingCycleFromProtobuf(authData.userStatusProtoBinaryBase64);
+            if (billing) {
+              const protoStartMs = billing.startSeconds * 1000;
+              const protoEndMs = billing.endSeconds * 1000;
+
+              // The cachedPlanInfo is stale if its endTimestamp <= the protobuf's startTimestamp
+              // (meaning it's from the previous billing cycle)
+              if (planInfo.endTimestamp <= protoStartMs) {
+                console.log('[readWindsurfCachedPlanInfo] Cached plan info is from previous billing cycle, updating from protobuf');
+                planInfo.startTimestamp = protoStartMs;
+                planInfo.endTimestamp = protoEndMs;
+                planInfo.isStale = true;
+
+                // Update totals from protobuf if available
+                if (billing.totalMessages > 0) {
+                  planInfo.usage.messages = billing.totalMessages;
+                }
+                if (billing.totalFlowActions > 0) {
+                  planInfo.usage.flowActions = billing.totalFlowActions;
+                }
+
+                // Use current usage counters from protobuf (field 6 = used messages, field 7 = used flow actions)
+                // The protobuf userStatus is refreshed on each IDE session and contains
+                // the authoritative current-cycle usage data.
+                planInfo.usage.usedMessages = billing.usedMessages;
+                planInfo.usage.remainingMessages = Math.max(0, planInfo.usage.messages - billing.usedMessages);
+                planInfo.usage.usedFlowActions = billing.usedFlowActions;
+                planInfo.usage.remainingFlowActions = Math.max(0, planInfo.usage.flowActions - billing.usedFlowActions);
+                planInfo.usage.usedFlexCredits = 0;
+                planInfo.usage.remainingFlexCredits = planInfo.usage.flexCredits;
+
+                console.log('[readWindsurfCachedPlanInfo] Updated from protobuf:', {
+                  totalMessages: planInfo.usage.messages,
+                  usedMessages: planInfo.usage.usedMessages,
+                  remainingMessages: planInfo.usage.remainingMessages,
+                  totalFlowActions: planInfo.usage.flowActions,
+                  usedFlowActions: planInfo.usage.usedFlowActions,
+                  remainingFlowActions: planInfo.usage.remainingFlowActions,
+                });
+              } else {
+                // Cache is current — but still cross-check with protobuf usage if available.
+                // The protobuf may be more up-to-date than cachedPlanInfo if the IDE
+                // refreshed userStatus after the last cachedPlanInfo write.
+                if (billing.usedMessages > 0 && billing.usedMessages !== planInfo.usage.usedMessages) {
+                  console.log('[readWindsurfCachedPlanInfo] Cross-check: protobuf usedMessages differs from cache, using protobuf value', {
+                    cached: planInfo.usage.usedMessages,
+                    protobuf: billing.usedMessages,
+                  });
+                  planInfo.usage.usedMessages = billing.usedMessages;
+                  planInfo.usage.remainingMessages = Math.max(0, planInfo.usage.messages - billing.usedMessages);
+                }
+                if (billing.usedFlowActions > 0 && billing.usedFlowActions !== planInfo.usage.usedFlowActions) {
+                  planInfo.usage.usedFlowActions = billing.usedFlowActions;
+                  planInfo.usage.remainingFlowActions = Math.max(0, planInfo.usage.flowActions - billing.usedFlowActions);
+                }
+              }
+            }
+          }
+        } catch {
+          // Failed to parse protobuf — use cached data as-is
+        }
+      }
+
+      // Read user name from auth data
+      let userName: string | undefined;
+      const authUserRaw = readKey('codeium.windsurf-windsurf_auth');
+      if (authUserRaw) {
+        try {
+          const parsed = JSON.parse(authUserRaw);
+          userName = parsed.name || parsed.userName || parsed.email;
+        } catch {
+          // If it's not JSON, it's likely the user name string directly
+          if (authUserRaw.length > 0 && authUserRaw.length < 200) {
+            userName = authUserRaw;
+          }
+        }
+      }
+
+      db.close();
+      return { success: true, planInfo, userName };
+
+    } catch (e: any) {
+      try { db.close(); } catch { /* ignore */ }
+      return { success: false, error: `Error reading Windsurf plan info: ${e.message}` };
+    }
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Unknown error reading Windsurf plan info' };
   }
 }

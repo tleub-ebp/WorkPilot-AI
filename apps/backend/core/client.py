@@ -912,27 +912,28 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
     Returns:
         Provider identifier string: "claude", "copilot", "openai", etc.
     """
+    # Provider name mapping (shared across all resolution strategies)
+    provider_mapping = {
+        "anthropic": "claude",
+        "claude": "claude",
+        "copilot": "copilot",
+        "openai": "openai",
+        "google": "google",
+        "ollama": "ollama",
+        "meta": "meta",
+        "mistral": "mistral",
+        "deepseek": "deepseek",
+        "grok": "grok",
+        "aws": "aws",
+        "windsurf": "windsurf",
+        "custom": "custom"
+    }
+
     # 1. Check provider selected via IPC (from frontend UI)
     try:
         from provider_api import get_selected_provider
         selected_provider = get_selected_provider()
         if selected_provider:
-            # Map provider names to internal format
-            provider_mapping = {
-                "anthropic": "claude",
-                "claude": "claude", 
-                "copilot": "copilot",
-                "openai": "openai",
-                "google": "google",
-                "ollama": "ollama",
-                "meta": "meta",
-                "mistral": "mistral",
-                "deepseek": "deepseek",
-                "grok": "grok",
-                "aws": "aws",
-                "windsurf": "windsurf",
-                "custom": "custom"
-            }
             mapped_provider = provider_mapping.get(selected_provider.lower(), selected_provider.lower())
             if mapped_provider:
                 return mapped_provider
@@ -943,7 +944,9 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
     # 1.5. Check SELECTED_LLM_PROVIDER env var (set by frontend credential manager)
     selected_env = os.environ.get("SELECTED_LLM_PROVIDER", "").lower().strip()
     if selected_env and selected_env in provider_mapping:
-        return provider_mapping.get(selected_env, selected_env)
+        resolved = provider_mapping.get(selected_env, selected_env)
+        logger.info(f"[_get_active_provider] Resolved provider from SELECTED_LLM_PROVIDER env var: '{selected_env}' -> '{resolved}'")
+        return resolved
 
     # 2. Environment variable override
     env_provider = os.environ.get("AUTO_CLAUDE_PROVIDER", "").lower().strip()
@@ -1087,16 +1090,92 @@ def create_agent_client(
 
     elif provider == "windsurf":
         # Windsurf (Codeium) — dual-mode:
-        # Mode 1: gRPC to local Windsurf IDE language server (preferred)
-        # Mode 2: REST API to server.codeium.com (fallback when IDE not running)
+        # Mode 1: gRPC to local Windsurf IDE language server (preferred, text-only)
+        # Mode 2: REST API to server.codeium.com (with full tool execution via function calling)
+        #
+        # IMPORTANT: Windsurf sk-ws-* API keys are designed for use within the
+        # Windsurf IDE only.  Codeium does NOT currently expose a public
+        # OpenAI-compatible chat completions endpoint for these keys.
+        # If no WINDSURF_BASE_URL env-var is set, we probe several known
+        # candidate URLs; if none respond 200, the WindsurfAgentClient will
+        # emit an error per turn.
+        #
+        # As a pragmatic fallback we check whether the key looks like a
+        # per-user IDE key (sk-ws-*) with no explicit WINDSURF_BASE_URL
+        # override.  In that scenario the REST endpoint is almost certainly
+        # unavailable, so we fall back to the Claude SDK client which will
+        # use the user's existing Claude Code OAuth / API key instead.
+        import os as _os_ws
+
+        windsurf_key = (
+            _os_ws.environ.get("WINDSURF_API_KEY")
+            or _os_ws.environ.get("CODEIUM_API_KEY")
+            or ""
+        )
+
+        # If no key in env vars, also try to detect from local Windsurf IDE
+        if not windsurf_key:
+            try:
+                from integrations.windsurf_proxy.auth import get_api_key
+                windsurf_key = get_api_key() or ""
+            except Exception:
+                pass
+
+        # Detect sk-ws-* keys: these are per-user IDE keys that do NOT support
+        # the OpenAI-compatible chat completions endpoint on ANY Codeium server.
+        # Even if WINDSURF_BASE_URL is set (e.g., the default API profile sets
+        # it to server.codeium.com/api/v1), these keys simply cannot be used for
+        # programmatic chat completions — they only work inside the Windsurf IDE.
+        is_ide_only_key = windsurf_key.startswith("sk-ws-")
+
+        if is_ide_only_key:
+            logger.warning(
+                "[create_agent_client] Windsurf sk-ws-* key detected — "
+                "Codeium does not expose a public chat completions endpoint "
+                "for these keys.  Falling back to Claude SDK (Claude Code "
+                "OAuth/API key) for agent operations."
+            )
+            sdk_client = create_client(
+                project_dir=project_dir,
+                spec_dir=spec_dir,
+                model=model,
+                agent_type=agent_type,
+                max_thinking_tokens=max_thinking_tokens,
+                output_format=output_format,
+                agents=agents,
+            )
+            return ClaudeAgentClient(sdk_client)
+
         from core.agent_client import WindsurfAgentClient
+
+        # Build system prompt (same pattern as CopilotAgentClient)
+        windsurf_system_prompt = (
+            f"You are an expert full-stack developer building production-quality software. "
+            f"Your working directory is: {project_dir.resolve()}\n"
+            f"Your filesystem access is RESTRICTED to this directory only. "
+            f"Use relative paths (starting with ./) for all file operations. "
+            f"Never use absolute paths or try to access files outside your working directory.\n\n"
+            f"You follow existing code patterns, write clean maintainable code, and verify "
+            f"your work through thorough testing. You communicate progress through Git commits "
+            f"and build-progress.txt updates.\n\n"
+            f"You MUST use the provided tools (read_file, write_file, list_files, run_command) "
+            f"to interact with the filesystem and execute commands. Do not just describe what to do — "
+            f"actually do it by calling the tools."
+        )
 
         logger.info(
             "[create_agent_client] Using WindsurfAgentClient "
-            "(gRPC proxy + REST fallback, model=%s)",
+            "(gRPC proxy + REST fallback, model=%s, agent_type=%s)",
             model,
+            agent_type,
         )
-        return WindsurfAgentClient(model=model, max_turns=50)
+        return WindsurfAgentClient(
+            model=model,
+            system_prompt=windsurf_system_prompt,
+            max_turns=50,
+            project_dir=str(project_dir),
+            agent_type=agent_type,
+        )
 
     else:
         # For other providers (openai, google, ollama, etc.), fall back to Claude SDK
