@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshCw, KeyRound, Loader2, CheckCircle2, AlertCircle, User, Lock, Globe, ChevronDown, GitBranch } from 'lucide-react';
-import { Github } from '@/lib/icons';
+import { LucideGithub } from '@/lib/icons';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Switch } from '../../ui/switch';
@@ -17,10 +17,10 @@ import type { ProjectEnvConfig, GitHubSyncStatus, ProjectSettings, GitBranchDeta
 const DEBUG = process.env.NODE_ENV === 'development' || process.env.DEBUG === 'true';
 function debugLog(message: string, data?: unknown) {
   if (DEBUG) {
-    if (data !== undefined) {
-      console.warn(`[GitHubIntegration] ${message}`, data);
-    } else {
+    if (data === undefined) {
       console.warn(`[GitHubIntegration] ${message}`);
+    } else {
+      console.warn(`[GitHubIntegration] ${message}`, data);
     }
   }
 }
@@ -32,16 +32,16 @@ interface GitHubRepo {
 }
 
 interface GitHubIntegrationProps {
-  envConfig: ProjectEnvConfig | null;
-  updateEnvConfig: (updates: Partial<ProjectEnvConfig>) => void;
-  showGitHubToken: boolean;
-  setShowGitHubToken: React.Dispatch<React.SetStateAction<boolean>>;
-  gitHubConnectionStatus: GitHubSyncStatus | null;
-  isCheckingGitHub: boolean;
-  projectPath?: string; // Project path for fetching git branches
+  readonly envConfig: ProjectEnvConfig | null;
+  readonly updateEnvConfig: (updates: Partial<ProjectEnvConfig>) => void;
+  readonly showGitHubToken: boolean;
+  readonly setShowGitHubToken: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly gitHubConnectionStatus: GitHubSyncStatus | null;
+  readonly isCheckingGitHub: boolean;
+  readonly projectPath?: string; // Project path for fetching git branches
   // Project settings for mainBranch (used by kanban tasks and terminal worktrees)
-  settings?: ProjectSettings;
-  setSettings?: React.Dispatch<React.SetStateAction<ProjectSettings>>;
+  readonly settings?: ProjectSettings;
+  readonly setSettings?: React.Dispatch<React.SetStateAction<ProjectSettings>>;
 }
 
 /**
@@ -125,7 +125,7 @@ export function GitHubIntegration({
 
     try {
       debugLog('fetchBranches: Calling getGitBranchesWithInfo...');
-      const result = await window.electronAPI.getGitBranchesWithInfo(projectPath);
+      const result = await globalThis.electronAPI.getGitBranchesWithInfo(projectPath);
       debugLog('fetchBranches: getGitBranchesWithInfo result:', { success: result.success, dataType: typeof result.data, dataLength: Array.isArray(result.data) ? result.data.length : 'N/A', error: result.error });
 
       // result.data is the GitBranchDetail[] array
@@ -137,7 +137,7 @@ export function GitHubIntegration({
         // Priority: settings.mainBranch > envConfig.defaultBranch > auto-detect
         if (!settings?.mainBranch && !envConfig?.defaultBranch) {
           debugLog('fetchBranches: No branch set, auto-detecting...');
-          const detectResult = await window.electronAPI.detectMainBranch(projectPath);
+          const detectResult = await globalThis.electronAPI.detectMainBranch(projectPath);
           debugLog('fetchBranches: detectMainBranch result:', detectResult);
           if (detectResult.success && detectResult.data) {
             debugLog('fetchBranches: Auto-detected default branch:', detectResult.data);
@@ -162,7 +162,7 @@ export function GitHubIntegration({
     setReposError(null);
 
     try {
-      const result = await window.electronAPI.listGitHubUserRepos();
+      const result = await globalThis.electronAPI.listGitHubUserRepos();
       debugLog('listGitHubUserRepos result:', result);
 
       if (result.success && result.data?.repos) {
@@ -422,13 +422,13 @@ export function GitHubIntegration({
 }
 
 interface RepositoryDropdownProps {
-  repos: GitHubRepo[];
-  selectedRepo: string;
-  isLoading: boolean;
-  error: string | null;
-  onSelect: (repoFullName: string) => void;
-  onRefresh: () => void;
-  onManualEntry: () => void;
+  readonly repos: GitHubRepo[];
+  readonly selectedRepo: string;
+  readonly isLoading: boolean;
+  readonly error: string | null;
+  readonly onSelect: (repoFullName: string) => void;
+  readonly onRefresh: () => void;
+  readonly onManualEntry: () => void;
 }
 
 function RepositoryDropdown({
@@ -449,6 +449,36 @@ function RepositoryDropdown({
   );
 
   const selectedRepoData = repos.find(r => r.fullName === selectedRepo);
+  
+  // Extract the repo icon logic to avoid nested ternary
+  const repoIcon = selectedRepoData?.isPrivate ? (
+    <Lock className="h-3 w-3 text-muted-foreground" />
+  ) : (
+    <Globe className="h-3 w-3 text-muted-foreground" />
+  );
+
+  // Extract the button content logic to improve readability
+  let buttonContent: React.ReactNode;
+  
+  if (isLoading) {
+    buttonContent = (
+      <span className="flex items-center gap-2 text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading repositories...
+      </span>
+    );
+  } else if (selectedRepo) {
+    buttonContent = (
+      <span className="flex items-center gap-2">
+        {repoIcon}
+        {selectedRepo}
+      </span>
+    );
+  } else {
+    buttonContent = (
+      <span className="text-muted-foreground">Select a repository...</span>
+    );
+  }
 
   return (
     <div className="space-y-2">
@@ -489,23 +519,7 @@ function RepositoryDropdown({
           disabled={isLoading}
           className="w-full flex items-center justify-between px-3 py-2 text-sm border border-input rounded-md bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
         >
-          {isLoading ? (
-            <span className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Loading repositories...
-            </span>
-          ) : selectedRepo ? (
-            <span className="flex items-center gap-2">
-              {selectedRepoData?.isPrivate ? (
-                <Lock className="h-3 w-3 text-muted-foreground" />
-              ) : (
-                <Globe className="h-3 w-3 text-muted-foreground" />
-              )}
-              {selectedRepo}
-            </span>
-          ) : (
-            <span className="text-muted-foreground">Select a repository...</span>
-          )}
+          {buttonContent}
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
 
@@ -571,8 +585,8 @@ function RepositoryDropdown({
 }
 
 interface RepositoryInputProps {
-  value: string;
-  onChange: (value: string) => void;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
 }
 
 function RepositoryInput({ value, onChange }: RepositoryInputProps) {
@@ -592,50 +606,71 @@ function RepositoryInput({ value, onChange }: RepositoryInputProps) {
 }
 
 interface ConnectionStatusProps {
-  isChecking: boolean;
-  connectionStatus: GitHubSyncStatus | null;
+  readonly isChecking: boolean;
+  readonly connectionStatus: GitHubSyncStatus | null;
 }
 
 function ConnectionStatus({ isChecking, connectionStatus }: ConnectionStatusProps) {
   const { t } = useTranslation('settings');
+  
+  // Extract the status icon logic to improve readability
+  let statusIcon: React.ReactNode;
+  
+  if (isChecking) {
+    statusIcon = <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+  } else if (connectionStatus?.connected) {
+    statusIcon = <CheckCircle2 className="h-4 w-4 text-success" />;
+  } else {
+    statusIcon = <AlertCircle className="h-4 w-4 text-warning" />;
+  }
+
+  // Extract the status text logic to improve readability
+  let statusText: string;
+  
+  if (isChecking) {
+    statusText = 'Checking connection...';
+  } else if (connectionStatus?.connected) {
+    statusText = 'Connected to GitHub';
+  } else {
+    statusText = 'Not connected to GitHub';
+  }
+
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-3">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-foreground">{t('projectSections.github.connectionStatus', { ns: 'settings' })}</p>
           <p className="text-xs text-muted-foreground">
-            {isChecking ? t('projectSections.github.checking', { ns: 'settings' }) :
-              connectionStatus?.connected
-                ? t('projectSections.github.connectedTo', { ns: 'settings', repo: connectionStatus.repoFullName })
-                : connectionStatus?.error || t('projectSections.github.notConnected', { ns: 'settings' })}
+            {statusText}
           </p>
-          {connectionStatus?.connected && connectionStatus.repoDescription && (
-            <p className="text-xs text-muted-foreground mt-1 italic">
+          {connectionStatus?.repoFullName && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Repository: <span className="font-mono">{connectionStatus.repoFullName}</span>
+            </p>
+          )}
+          {connectionStatus?.repoDescription && (
+            <p className="text-xs text-muted-foreground mt-1">
               {connectionStatus.repoDescription}
             </p>
           )}
         </div>
-        {isChecking ? (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        ) : connectionStatus?.connected ? (
-          <CheckCircle2 className="h-4 w-4 text-success" />
-        ) : (
-          <AlertCircle className="h-4 w-4 text-warning" />
-        )}
+        {statusIcon}
       </div>
     </div>
   );
 }
 
 function IssuesAvailableInfo() {
+  const { t } = useTranslation('settings');
+  
   return (
     <div className="rounded-lg border border-info/30 bg-info/5 p-3">
       <div className="flex items-start gap-3">
-        <Github className="h-5 w-5 text-info mt-0.5" />
+        <LucideGithub className="h-5 w-5 text-info mt-0.5" />
         <div className="flex-1">
-          <p className="text-sm font-medium text-foreground">Issues Available</p>
+          <p className="text-sm font-medium text-foreground">{t('projectSections.github.issuesAvailable')}</p>
           <p className="text-xs text-muted-foreground mt-1">
-            Access GitHub Issues from the sidebar to view, investigate, and create tasks from issues.
+            {t('projectSections.github.issuesAvailableDescription')}
           </p>
         </div>
       </div>
@@ -644,24 +679,25 @@ function IssuesAvailableInfo() {
 }
 
 interface AutoSyncToggleProps {
-  enabled: boolean;
-  onToggle: (checked: boolean) => void;
+  readonly enabled: boolean;
+  readonly onToggle: (checked: boolean) => void;
 }
 
 function AutoSyncToggle({ enabled, onToggle }: AutoSyncToggleProps) {
+  const { t } = useTranslation('settings');
+  
   return (
     <div className="flex items-center justify-between">
       <div className="space-y-0.5">
         <div className="flex items-center gap-2">
           <RefreshCw className="h-4 w-4 text-info" />
-          <Label className="font-normal text-foreground">Auto-Sync on Load</Label>
+          <Label className="font-normal text-foreground">{t('projectSections.github.autoSyncOnLoad')}</Label>
         </div>
         <p className="text-xs text-muted-foreground pl-6">
-          Automatically fetch issues when the project loads
+          {t('projectSections.github.autoSyncDescription')}
         </p>
       </div>
       <Switch checked={enabled} onCheckedChange={onToggle} />
     </div>
   );
 }
-
