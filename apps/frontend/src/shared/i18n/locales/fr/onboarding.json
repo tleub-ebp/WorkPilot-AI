@@ -119,16 +119,16 @@
       "google": "Google AI",
       "azure": "Azure OpenAI"
     },
-    "baseUrl": "[TO_REVIEW] Base URL",
-    "checking": "[TO_REVIEW] Checking...",
-    "connected": "[TO_REVIEW] Connected",
-    "embeddingDim": "[TO_REVIEW] Embedding Dimension",
-    "embeddingDimDescription": "[TO_REVIEW] Required for Ollama embeddings (e.g., 768 for nomic-embed-text)",
-    "embeddingModel": "[TO_REVIEW] Embedding Model",
-    "modelRecommendation": "[TO_REVIEW] Recommended: qwen3-embedding:4b (balanced), :8b (quality), :0.6b (fast)",
-    "notRunning": "[TO_REVIEW] Not running",
-    "ollamaConfig": "[TO_REVIEW] Ollama Configuration",
-    "voyageEmbeddingModel": "[TO_REVIEW] Embedding Model"
+    "baseUrl": "URL de base",
+    "checking": "Vérification...",
+    "connected": "Connecté",
+    "embeddingDim": "Dimension d'embedding",
+    "embeddingDimDescription": "Requise pour les embeddings Ollama (ex : 768 pour nomic-embed-text)",
+    "embeddingModel": "Modèle d'embedding",
+    "modelRecommendation": "Recommandé : qwen3-embedding:4b (équilibré), :8b (qualité), :0.6b (rapide)",
+    "notRunning": "Non démarré",
+    "ollamaConfig": "Configuration Ollama",
+    "voyageEmbeddingModel": "Modèle d'embedding"
   },
   "completion": {
     "title": "Vous êtes prêt !",
