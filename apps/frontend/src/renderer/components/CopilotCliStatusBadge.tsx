@@ -48,6 +48,7 @@ type StatusType = "loading" | "installed" | "outdated" | "not-found" | "gh-missi
 
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const VERSION_RECHECK_DELAY_MS = 5000;
+const UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000; // Check for updates every 5 minutes when outdated
 
 /**
  * GitHub Copilot icon (simplified SVG)
@@ -99,6 +100,8 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
   const [installationsError, setInstallationsError] = useState<string | null>(null);
   const [selectedInstallation, setSelectedInstallation] = useState<string | null>(null);
   const [showPathChangeWarning, setShowPathChangeWarning] = useState(false);
+  const [autoUpdateDetected, setAutoUpdateDetected] = useState(false);
+  const [updateDialogShown, setUpdateDialogShown] = useState(false);
 
   // Check Copilot CLI version
   const checkVersion = useCallback(async () => {
@@ -121,8 +124,16 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
           setStatus("not-found");
         } else if (result.data.isOutdated) {
           setStatus("outdated");
+          // Auto-show update dialog if not already shown
+          if (!updateDialogShown) {
+            setAutoUpdateDetected(true);
+            setShowInstallWarning(true);
+            setUpdateDialogShown(true);
+          }
         } else {
           setStatus("installed");
+          // Reset update dialog state when version is current
+          setUpdateDialogShown(false);
         }
       } else {
         setStatus("error");
@@ -177,8 +188,18 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
       checkVersion();
     }, CHECK_INTERVAL_MS);
 
-    return () => clearInterval(interval);
-  }, [checkVersion, checkAuth]);
+    // Additional interval for update checking when outdated
+    const updateInterval = setInterval(() => {
+      if (status === "outdated" && !updateDialogShown) {
+        checkVersion();
+      }
+    }, UPDATE_CHECK_INTERVAL_MS);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(updateInterval);
+    };
+  }, [checkVersion, checkAuth, status, updateDialogShown]);
 
   // Fetch installations when popover opens
   useEffect(() => {
@@ -187,11 +208,21 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
     }
   }, [isOpen, installations.length, fetchInstallations]);
 
+  // Reset auto-update detection when dialog closes
+  useEffect(() => {
+    if (!showInstallWarning) {
+      setAutoUpdateDetected(false);
+    }
+  }, [showInstallWarning]);
+
   // Helper function for delay
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   // Update command for GitHub Copilot CLI
   const COPILOT_UPDATE_COMMAND = "# Update GitHub Copilot CLI based on installation method\necho 'Checking installation method...'\nif command -v npm &> /dev/null && npm list -g @github/copilot &> /dev/null; then\n  echo 'Updating via npm...'\n  npm update -g @github/copilot\nelif command -v brew &> /dev/null && brew list copilot-cli &> /dev/null; then\n  echo 'Updating via Homebrew...'\n  brew upgrade copilot-cli\nelif command -v winget &> /dev/null; then\n  echo 'Updating via WinGet...'\n  winget upgrade GitHub.Copilot\nelse\n  echo 'Installing via script...'\n  curl -fsSL https://gh.io/copilot-install | bash\nfi\n";
+
+  // Windows-specific update command for GitHub CLI (which includes Copilot)
+  const WINDOWS_UPDATE_COMMAND = "# Update GitHub CLI (includes Copilot CLI)\necho 'Updating GitHub CLI...'\nif command -v winget &> /dev/null; then\n  echo 'Updating via WinGet...'\n  winget upgrade GitHub.Cli\nelif command -v choco &> /dev/null; then\n  echo 'Updating via Chocolatey...'\n  choco upgrade gh-cli\nelif command -v scoop &> /dev/null; then\n  echo 'Updating via Scoop...'\n  scoop update gh\nelse\n  echo 'Manual download required. Please visit https://cli.github.com/'\nfi\n";
 
   // Helper function to send terminal commands with delays
   const sendTerminalCommandsWithDelay = async (terminalId: string, commands: Array<{cmd: string; delay: number}>) => {
@@ -208,7 +239,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
     const commands = [
       { cmd: "clear\n", delay: 0 },
       { cmd: "echo 'Updating GitHub Copilot CLI...'\n", delay: 50 },
-      { cmd: COPILOT_UPDATE_COMMAND, delay: 50 }
+      { cmd: isUpdate ? WINDOWS_UPDATE_COMMAND : COPILOT_UPDATE_COMMAND, delay: 50 }
     ];
     
     await sendTerminalCommandsWithDelay(terminalId, commands);
@@ -661,9 +692,17 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
       <AlertDialog open={showInstallWarning} onOpenChange={setShowInstallWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("settings:copilot.updateCopilotCli")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {autoUpdateDetected 
+                ? t("settings:copilot.updateAvailable", "Copilot CLI Update Available")
+                : t("settings:copilot.updateCopilotCli")
+              }
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("settings:copilot.updateDescription")}
+              {autoUpdateDetected 
+                ? t("settings:copilot.autoUpdateDescription", "A new version of GitHub Copilot CLI is available. Would you like to open a terminal and update it automatically?")
+                : t("settings:copilot.updateDescription")
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
