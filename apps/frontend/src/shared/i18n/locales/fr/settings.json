@@ -1451,7 +1451,7 @@
     "active": "Actif",
     "viewCopilotCliDocs": "Voir la documentation Copilot CLI",
     "updateCopilotCli": "Mettre à jour Copilot CLI ?",
-    "updateDescription": "Cela mettra à niveau l'extension gh-copilot. Un nouveau terminal s'ouvrira dans la page \"Terminaux Agent\" pour exécuter la commande de mise à niveau.",
+    "updateDescription": "Cela mettra à niveau le GitHub Copilot CLI. Un nouveau terminal s'ouvrira dans la page \"Terminaux Agent\" pour exécuter la commande de mise à niveau.",
     "openTerminalAndUpdate": "Ouvrir le terminal et mettre à jour",
     "switchGhCliInstallation": "Changer l'installation gh CLI ?",
     "switchDescription": "Le changement d'installation utilisera un autre binaire gh pour Copilot CLI.",

@@ -9,15 +9,16 @@ import {
   DialogTitle,
 } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { AlertCircle, Key, Globe, Server, CheckCircle, X, Users, LogIn, Loader2, Github } from 'lucide-react';
-import { Alert, AlertDescription } from '../ui/alert';
-import { AuthTerminal } from './AuthTerminal';
+import { Key, Users, Github, CheckCircle, AlertCircle } from 'lucide-react';
 import { GitHubCopilotConfig } from './GitHubCopilotConfig';
 import { VisuallyHidden } from '../ui/visually-hidden';
 import { cn } from '@/lib/utils';
+import { getProviderFields, type ProviderConfig } from './providerConfig';
+import { ApiKeyConfigContent } from './ApiKeyConfigContent';
+import { OAuthAuthContent } from './OAuthAuthContent';
+import { useProviderAuth } from './useProviderAuth';
+import { DialogFooterActions } from './DialogFooterActions';
 
 interface ProviderConfigDialogProps {
   readonly isOpen: boolean;
@@ -31,24 +32,8 @@ interface ProviderConfigDialogProps {
   readonly settings: any;
   readonly onSettingsChange: (settings: any) => void;
   readonly onTest?: (providerId: string) => Promise<void>;
-  readonly useSheet?: boolean; // Nouvelle prop pour savoir si on est dans un Sheet
+  readonly useSheet?: boolean;
   readonly onProviderActivated?: (providerId: string) => void;
-}
-
-interface ProviderConfig {
-  apiKey?: string;
-  apiUrl?: string;
-  model?: string;
-  description: string;
-  requiresApiKey: boolean;
-  placeholder?: string;
-  icon: React.ReactNode;
-}
-
-interface AuthTerminalState {
-  terminalId: string;
-  configDir: string;
-  profileName: string;
 }
 
 type ActiveTab = 'api' | 'oauth' | 'github-copilot';
@@ -66,122 +51,28 @@ export function ProviderConfigDialog({
   const { t } = useTranslation('settings');
   
   // Mémoriser providerFields pour éviter les recréations infinies
-  const providerFields: Record<string, ProviderConfig> = useMemo(() => ({
-    'openai': {
-      apiKey: 'globalOpenAIApiKey',
-      apiUrl: 'globalOpenAIApiBaseUrl',
-      model: 'globalOpenAIModel',
-      description: t('sections.accounts.providers.openai'),
-      requiresApiKey: true,
-      placeholder: 'sk-...',
-      icon: <Key className="w-4 h-4" />
-    },
-    'anthropic': {
-      apiKey: 'globalAnthropicApiKey',
-      description: t('sections.accounts.providers.anthropic'),
-      requiresApiKey: true,
-      placeholder: 'sk-ant...',
-      icon: <Key className="w-4 h-4" />
-    },
-    'claude': {
-      apiKey: 'globalAnthropicApiKey',
-      description: t('sections.accounts.providers.anthropic'),
-      requiresApiKey: true,
-      placeholder: 'sk-ant...',
-      icon: <Key className="w-4 h-4" />
-    },
-    'gemini': {
-      apiKey: 'globalGoogleDeepMindApiKey',
-      description: t('sections.accounts.providers.google'),
-      requiresApiKey: true,
-      placeholder: 'AIza...',
-      icon: <Key className="w-4 h-4" />
-    },
-    'google': {
-      apiKey: 'globalGoogleDeepMindApiKey',
-      description: t('sections.accounts.providers.google'),
-      requiresApiKey: true,
-      placeholder: 'AIza...',
-      icon: <Key className="w-4 h-4" />
-    },
-    'meta-llama': {
-      apiKey: 'globalMetaApiKey',
-      description: t('sections.accounts.providers.meta'),
-      requiresApiKey: true,
-      placeholder: 'META-...',
-      icon: <Key className="w-4 h-4" />
-    },
-    'meta': {
-      apiKey: 'globalMetaApiKey',
-      description: t('sections.accounts.providers.meta'),
-      requiresApiKey: true,
-      placeholder: 'META-...',
-      icon: <Key className="w-4 h-4" />
-    },
-    'mistral': {
-      apiKey: 'globalMistralApiKey',
-      description: t('sections.accounts.providers.mistral'),
-      requiresApiKey: true,
-      placeholder: 'MISTRAL-...',
-      icon: <Key className="w-4 h-4" />
-    },
-    'deepseek': {
-      apiKey: 'globalDeepSeekApiKey',
-      description: t('sections.accounts.providers.deepseek'),
-      requiresApiKey: true,
-      placeholder: 'sk-...',
-      icon: <Key className="w-4 h-4" />
-    },
-    'grok': {
-      apiKey: 'globalGrokApiKey',
-      description: t('sections.accounts.providers.grok'),
-      requiresApiKey: true,
-      placeholder: 'xai-...',
-      icon: <Key className="w-4 h-4" />
-    },
-    'windsurf': {
-      apiKey: 'globalWindsurfApiKey',
-      description: t('sections.accounts.providers.windsurf'),
-      requiresApiKey: true,
-      placeholder: 'windsurf-...',
-      icon: <Key className="w-4 h-4" />
-    },
-    'cursor': {
-      apiKey: 'globalCursorApiKey',
-      description: t('sections.accounts.providers.cursor'),
-      requiresApiKey: true,
-      placeholder: 'crsr-...',
-      icon: <Key className="w-4 h-4" />
-    },
-    'azure-openai': {
-      apiKey: 'globalAzureApiKey',
-      apiUrl: 'globalAzureApiBaseUrl',
-      description: t('sections.accounts.providers.aws'),
-      requiresApiKey: true,
-      placeholder: 'Azure API Key...',
-      icon: <Server className="w-4 h-4" />
-    },
-    'ollama': {
-      apiUrl: 'globalOllamaApiUrl',
-      description: t('sections.accounts.providers.ollama'),
-      requiresApiKey: false,
-      placeholder: 'http://localhost:11434',
-      icon: <Server className="w-4 h-4" />
-    }
-  }), [t]);
+  const providerFields: Record<string, ProviderConfig> = useMemo(() => getProviderFields(t), [t]);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('api');
-  const [authTerminal, setAuthTerminal] = useState<AuthTerminalState | null>(null);
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
-  const [windsurfSsoToken, setWindsurfSsoToken] = useState('');
-  const [windsurfAccountInfo, setWindsurfAccountInfo] = useState<{
-    userName?: string;
-    planName?: string;
-    usageInfo?: { usedMessages: number; totalMessages: number; usedFlowActions: number; totalFlowActions: number };
-  } | null>(null);
+  
+  const {
+    isAuthenticating,
+    authTerminal,
+    windsurfSsoToken,
+    windsurfAccountInfo,
+    handleOAuthAuth,
+    handleAuthTerminalClose,
+    handleAuthTerminalSuccess,
+    handleAuthTerminalError,
+    handleWindsurfDetect,
+    handleWindsurfSave,
+    loadWindsurfAccountInfo,
+    setWindsurfSsoToken,
+    setWindsurfAccountInfo
+  } = useProviderAuth();
 
   const providerConfig = provider ? providerFields[provider.id] : null;
   const supportsOAuth = ['anthropic', 'claude', 'windsurf'].includes(provider?.id || '');
@@ -220,16 +111,8 @@ export function ProviderConfigDialog({
     setActiveTab(getDefaultActiveTab(provider.id, supportsOAuth));
 
     // Auto-load Windsurf account info when dialog opens
-    if (provider.id === 'windsurf' && globalThis.electronAPI?.detectWindsurfToken) {
-      globalThis.electronAPI.detectWindsurfToken().then((result: { success: boolean; userName?: string; planName?: string; usageInfo?: { usedMessages: number; totalMessages: number; usedFlowActions: number; totalFlowActions: number } }) => {
-        if (result.success && (result.userName || result.planName)) {
-          setWindsurfAccountInfo({
-            userName: result.userName,
-            planName: result.planName,
-            usageInfo: result.usageInfo,
-          });
-        }
-      }).catch(() => { /* silent */ });
+    if (provider.id === 'windsurf') {
+      loadWindsurfAccountInfo();
     }
   }, [provider, providerConfig, settings, isOpen, supportsOAuth]);
 
@@ -344,89 +227,6 @@ export function ProviderConfigDialog({
     }
   };
 
-  const handleClaudeAuth = async (providerId: string, providerName: string) => {
-    try {
-      const profilesResult = await globalThis.electronAPI.getClaudeProfiles();
-      const activeProfileId = profilesResult.success && profilesResult.data
-        ? profilesResult.data.activeProfileId
-        : undefined;
-
-      if (!activeProfileId) {
-        console.error('[ProviderConfigDialog] No active Claude profile found');
-        setTestResult({ success: false, message: 'No Claude profile found. Please restart the application.' });
-        setIsAuthenticating(false);
-        return;
-      }
-
-      const result = await globalThis.electronAPI.authenticateClaudeProfile(activeProfileId);
-      if (result.success && result.data) {
-        setAuthTerminal({
-          terminalId: result.data.terminalId,
-          configDir: result.data.configDir,
-          profileName: providerName,
-        });
-      } else {
-        console.error('[ProviderConfigDialog] Failed to prepare Claude auth:', result.error);
-        setTestResult({ success: false, message: result.error || 'Failed to prepare authentication' });
-        setIsAuthenticating(false);
-      }
-    } catch (error) {
-      console.error('[ProviderConfigDialog] Error preparing Claude auth:', error);
-      setTestResult({ success: false, message: error instanceof Error ? error.message : 'Unknown error' });
-      setIsAuthenticating(false);
-    }
-  };
-
-  const handleFallbackAuth = (providerId: string, providerName: string) => {
-    const terminalId = `auth-${providerId}-${Date.now()}`;
-    const configDir = `claude-config-${providerId}`;
-    setAuthTerminal({ terminalId, configDir, profileName: providerName });
-  };
-
-  const handleOAuthAuth = async () => {
-    if (!provider) return;
-
-    setIsAuthenticating(true);
-
-    if (provider.id === 'anthropic' || provider.id === 'claude') {
-      await handleClaudeAuth(provider.id, provider.name);
-    } else {
-      handleFallbackAuth(provider.id, provider.name);
-    }
-  };
-
-  const handleAuthTerminalClose = () => {
-    setAuthTerminal(null);
-    setIsAuthenticating(false);
-  };
-
-  const handleAuthTerminalSuccess = (email?: string) => {
-    const message = email ? `Authentification réussie pour ${email} !` : 'Authentification réussie !';
-    setTestResult({ 
-      success: true, 
-      message 
-    });
-    // Don't close the terminal here — the user may still be in the onboarding
-    // step ("Press Enter to continue"). The terminal will close itself or the
-    // user can close it manually via the X button.
-    setIsAuthenticating(false);
-
-    // Persist OAuth state in settings so the provider shows as configured
-    if (provider && (provider.id === 'anthropic' || provider.id === 'claude')) {
-      const newSettings = { ...settings };
-      newSettings.globalClaudeOAuthToken = email || 'oauth-authenticated';
-      onSettingsChange(newSettings);
-    }
-  };
-
-  const handleAuthTerminalError = (error: string) => {
-    setTestResult({ 
-      success: false, 
-      message: `Échec de l'authentification: ${error}` 
-    });
-    setAuthTerminal(null);
-    setIsAuthenticating(false);
-  };
 
   if (!provider || !providerConfig) return null;
 
@@ -468,129 +268,16 @@ export function ProviderConfigDialog({
           </TabsList>
 
           <TabsContent value="api" className="space-y-6 py-4">
-            <div className="space-y-6">
-              {providerConfig.requiresApiKey && provider?.id !== 'copilot' && (
-                <div className="space-y-2">
-                  <Label htmlFor="apiKey" className="flex items-center gap-2">
-                    <Key className="w-4 h-4" />
-                    {t('sections.accounts.form.apiKey')}
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="apiKey"
-                      type={showApiKey ? 'text' : 'password'}
-                      placeholder={providerConfig.placeholder}
-                      value={formData.apiKey || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
-                      className="pr-10"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                    >
-                      {showApiKey ? <X className="w-3 h-3" /> : <Key className="w-3 h-3" />}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* GitHub Copilot Token Configuration */}
-              {provider?.id === 'copilot' && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="copilot-token" className="flex items-center gap-2">
-                      <Key className="w-4 h-4" />
-                      {t('githubCopilot.token.label')}
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="copilot-token"
-                        type={showApiKey ? 'text' : 'password'}
-                        placeholder={t('githubCopilot.token.placeholder')}
-                        className="font-mono pr-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-                        onClick={() => setShowApiKey(!showApiKey)}
-                      >
-                        {showApiKey ? <X className="w-3 h-3" /> : <Key className="w-3 h-3" />}
-                      </Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {t('githubCopilot.token.description')}
-                    </p>
-                  </div>
-
-                  {/* Token Actions */}
-                  <div className="flex gap-2">
-                    <Button>
-                      {t('common.save')}
-                    </Button>
-                    <Button variant="outline">
-                      {t('common.remove')}
-                    </Button>
-                  </div>
-
-                  {/* Token Status */}
-                  <Alert>
-                    <CheckCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      {t('githubCopilot.token.configured')}
-                    </AlertDescription>
-                  </Alert>
-                </div>
-              )}
-
-              {providerConfig.apiUrl && (
-                <div className="space-y-2">
-                  <Label htmlFor="apiUrl" className="flex items-center gap-2">
-                    <Globe className="w-4 h-4" />
-                    URL de l'API
-                  </Label>
-                  <Input
-                    id="apiUrl"
-                    placeholder={providerConfig.placeholder}
-                    value={formData.apiUrl || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, apiUrl: e.target.value }))}
-                  />
-                </div>
-              )}
-
-              {providerConfig.model && (
-                <div className="space-y-2">
-                  <Label htmlFor="model">Modèle par défaut</Label>
-                  <Input
-                    id="model"
-                    placeholder="gpt-4, claude-3-sonnet, etc."
-                    value={formData.model || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, model: e.target.value }))}
-                  />
-                </div>
-              )}
-
-              {testResult && (
-                <Alert className={cn(
-                  testResult.success 
-                    ? 'border-green-200 bg-green-50 text-green-800' 
-                    : 'border-red-200 bg-red-50 text-red-800'
-                )}>
-                  {testResult.success ? (
-                    <CheckCircle className="h-4 w-4" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4" />
-                  )}
-                  <AlertDescription>
-                    {testResult.message}
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
+            <ApiKeyConfigContent
+              providerConfig={providerConfig}
+              providerId={provider.id}
+              formData={formData}
+              showApiKey={showApiKey}
+              testResult={testResult}
+              t={t}
+              onFormDataChange={setFormData}
+              onToggleShowApiKey={() => setShowApiKey(!showApiKey)}
+            />
           </TabsContent>
 
           <TabsContent value="oauth" className="space-y-6 py-4">
@@ -603,255 +290,52 @@ export function ProviderConfigDialog({
                   }
                 </p>
 
-                {provider?.id === 'windsurf' ? (
-                  <div className="space-y-4">
-                    {/* Windsurf account info card */}
-                    {windsurfAccountInfo && (windsurfAccountInfo.userName || windsurfAccountInfo.planName) && (
-                      <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-2">
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                          <Users className="w-4 h-4 text-primary" />
-                          {t('sections.accounts.providerConfig.windsurfAuth.accountInfo')}
-                        </div>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                          {windsurfAccountInfo.userName && (
-                            <>
-                              <span className="text-muted-foreground">{t('sections.accounts.providerConfig.windsurfAuth.accountName')}</span>
-                              <span className="font-medium">{windsurfAccountInfo.userName}</span>
-                            </>
-                          )}
-                          {windsurfAccountInfo.planName && (
-                            <>
-                              <span className="text-muted-foreground">{t('sections.accounts.providerConfig.windsurfAuth.accountPlan')}</span>
-                              <span className="font-medium">{windsurfAccountInfo.planName}</span>
-                            </>
-                          )}
-                          {windsurfAccountInfo.usageInfo && windsurfAccountInfo.usageInfo.totalMessages > 0 && (
-                            <>
-                              <span className="text-muted-foreground">{t('sections.accounts.providerConfig.windsurfAuth.accountCredits')}</span>
-                              <span className="font-medium">
-                                {Math.round(windsurfAccountInfo.usageInfo.usedMessages / 100)}/{Math.round(windsurfAccountInfo.usageInfo.totalMessages / 100)}
-                              </span>
-                            </>
-                          )}
-                          {windsurfAccountInfo.usageInfo && windsurfAccountInfo.usageInfo.totalFlowActions > 0 && (
-                            <>
-                              <span className="text-muted-foreground">{t('sections.accounts.providerConfig.windsurfAuth.accountFlowActions')}</span>
-                              <span className="font-medium">
-                                {Math.round(windsurfAccountInfo.usageInfo.usedFlowActions / 100).toLocaleString()}/{Math.round(windsurfAccountInfo.usageInfo.totalFlowActions / 100).toLocaleString()}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Auto-detect from local Windsurf IDE */}
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      disabled={isAuthenticating}
-                      onClick={async () => {
-                        setIsAuthenticating(true);
-                        setTestResult(null);
-                        try {
-                          const result = await globalThis.electronAPI.detectWindsurfToken();
-                          if (result.success && result.apiKey) {
-                            setWindsurfSsoToken(result.apiKey);
-                            if (result.userName || result.planName) {
-                              setWindsurfAccountInfo({
-                                userName: result.userName,
-                                planName: result.planName,
-                                usageInfo: result.usageInfo,
-                              });
-                            }
-                            setTestResult({
-                              success: true,
-                              message: t('sections.accounts.providerConfig.windsurfAuth.detectSuccess', { userName: result.userName || '' })
-                            });
-                          } else {
-                            setTestResult({
-                              success: false,
-                              message: result.error || t('sections.accounts.providerConfig.windsurfAuth.detectFailed')
-                            });
-                          }
-                        } catch {
-                          setTestResult({
-                            success: false,
-                            message: t('sections.accounts.providerConfig.windsurfAuth.detectFailed')
-                          });
-                        } finally {
-                          setIsAuthenticating(false);
-                        }
-                      }}
-                    >
-                      {isAuthenticating ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          {t('sections.accounts.providerConfig.windsurfAuth.detecting')}
-                        </>
-                      ) : (
-                        <>
-                          <LogIn className="w-4 h-4 mr-2" />
-                          {t('sections.accounts.providerConfig.windsurfAuth.detectFromIDE')}
-                        </>
-                      )}
-                    </Button>
-
-                    {/* Or open Windsurf login manually */}
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{t('sections.accounts.providerConfig.windsurfAuth.orManual')}</span>
-                      <button
-                        type="button"
-                        className="text-primary underline hover:no-underline"
-                        onClick={() => window.open('https://windsurf.com/account', '_blank')}
-                      >
-                        {t('sections.accounts.providerConfig.windsurfAuth.openWindsurfLogin')}
-                      </button>
-                    </div>
-
-                    {/* Auth Content */}
-                    {(() => {
-                      // Show save form when SSO token is available
-                      if (windsurfSsoToken) {
-                        return (
-                          <div className="space-y-4">
-                            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                              <p className="text-sm text-green-800">
-                                {t('sections.accounts.providerConfig.windsurfAuth.tokenReceived')}
-                              </p>
-                              <p className="text-xs text-green-600 mt-1 font-mono break-all">
-                                {windsurfSsoToken.substring(0, 20)}...
-                              </p>
-                            </div>
-                            <Button
-                              className="w-full"
-                              disabled={!windsurfSsoToken.trim()}
-                              onClick={() => {
-                                if (!providerConfig?.apiKey) return;
-                                const newSettings = { ...settings };
-                                newSettings[providerConfig.apiKey] = windsurfSsoToken.trim();
-                                newSettings[`${providerConfig.apiKey}Enabled`] = true;
-                                onSettingsChange(newSettings);
-                                onProviderActivated?.(provider.id);
-                                onOpenChange(false);
-                              }}
-                            >
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              {t('sections.accounts.providerConfig.windsurfAuth.saveAndConnect')}
-                            </Button>
-                          </div>
-                        );
-                      }
-
-                      // Show auth terminal when active
-                      if (authTerminal) {
-                        return (
-                          <div className="rounded-lg border border-primary/30 overflow-hidden" style={{ height: '320px' }}>
-                            <AuthTerminal
-                              terminalId={authTerminal.terminalId}
-                              configDir={authTerminal.configDir}
-                              profileName={authTerminal.profileName}
-                              onClose={handleAuthTerminalClose}
-                              onAuthSuccess={handleAuthTerminalSuccess}
-                              onAuthError={handleAuthTerminalError}
-                            />
-                          </div>
-                        );
-                      }
-
-                      // Show default auth options
-                      return (
-                        <div className="space-y-4">
-                          <Button
-                            onClick={handleOAuthAuth}
-                            disabled={isAuthenticating}
-                            className="w-full"
-                          >
-                            {isAuthenticating ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                {t('sections.accounts.providerConfig.windsurfAuth.authenticating')}
-                              </>
-                            ) : (
-                              <>
-                                <LogIn className="w-4 h-4 mr-2" />
-                                {t('sections.accounts.providerConfig.windsurfAuth.connectWithClaude')}
-                              </>
-                            )}
-                          </Button>
-                          
-                          <div className="text-xs text-muted-foreground">
-                            <p>{t('sections.accounts.providerConfig.windsurfAuth.terminalInstructions')}</p>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {/* Auth Content for Anthropic/Claude OAuth */}
-                    {(() => {
-                      // Show auth terminal when active
-                      if (authTerminal) {
-                        return (
-                          <div className="rounded-lg border border-primary/30 overflow-hidden" style={{ height: '320px' }}>
-                            <AuthTerminal
-                              terminalId={authTerminal.terminalId}
-                              configDir={authTerminal.configDir}
-                              profileName={authTerminal.profileName}
-                              onClose={handleAuthTerminalClose}
-                              onAuthSuccess={handleAuthTerminalSuccess}
-                              onAuthError={handleAuthTerminalError}
-                            />
-                          </div>
-                        );
-                      }
-
-                      // Show default auth button
-                      return (
-                        <div className="space-y-4">
-                          <Button
-                            onClick={handleOAuthAuth}
-                            disabled={isAuthenticating}
-                            className="w-full"
-                          >
-                            {isAuthenticating ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                {t('sections.accounts.providerConfig.windsurfAuth.authenticating')}
-                              </>
-                            ) : (
-                              <>
-                                <LogIn className="w-4 h-4 mr-2" />
-                                {t('sections.accounts.providerConfig.windsurfAuth.connectWithClaude')}
-                              </>
-                            )}
-                          </Button>
-                          
-                          <div className="text-xs text-muted-foreground">
-                            <p>{t('sections.accounts.providerConfig.windsurfAuth.terminalInstructions')}</p>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
+                <OAuthAuthContent
+                  providerId={provider.id}
+                  providerName={provider.name}
+                  isAuthenticating={isAuthenticating}
+                  authTerminal={authTerminal}
+                  windsurfAccountInfo={windsurfAccountInfo}
+                  windsurfSsoToken={windsurfSsoToken}
+                  testResult={testResult}
+                  t={t}
+                  onOAuthAuth={() => handleOAuthAuth(provider.id, provider.name)}
+                  onAuthTerminalClose={handleAuthTerminalClose}
+                  onAuthTerminalSuccess={(email) => handleAuthTerminalSuccess(email, onSettingsChange, settings, provider.id)}
+                  onAuthTerminalError={handleAuthTerminalError}
+                  onWindsurfDetect={async () => {
+                    const result = await handleWindsurfDetect();
+                    setTestResult(result);
+                  }}
+                  onWindsurfSave={() => handleWindsurfSave(
+                    windsurfSsoToken,
+                    providerConfig,
+                    onSettingsChange,
+                    settings,
+                    onProviderActivated,
+                    provider.id,
+                    onOpenChange
+                  )}
+                />
 
                 {testResult && (
-                  <Alert className={cn(
-                    testResult.success 
-                      ? 'border-green-200 bg-green-50 text-green-800' 
-                      : 'border-red-200 bg-red-50 text-red-800'
-                  )}>
-                    {testResult.success ? (
-                      <CheckCircle className="h-4 w-4" />
-                    ) : (
-                      <AlertCircle className="h-4 w-4" />
-                    )}
-                    <AlertDescription>
-                      {testResult.message}
-                    </AlertDescription>
-                  </Alert>
+                  <div className="mt-4">
+                    <div className={cn(
+                      'p-3 rounded-lg border',
+                      testResult.success 
+                        ? 'border-green-200 bg-green-50 text-green-800' 
+                        : 'border-red-200 bg-red-50 text-red-800'
+                    )}>
+                      <div className="flex items-center gap-2">
+                        {testResult.success ? (
+                          <CheckCircle className="h-4 w-4" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4" />
+                        )}
+                        <span className="text-sm">{testResult.message}</span>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -871,117 +355,29 @@ export function ProviderConfigDialog({
           )}
         </Tabs>
       ) : (
-        <div className="space-y-6 py-4">
-          {providerConfig.requiresApiKey && (
-            <div className="space-y-2">
-              <Label htmlFor="apiKey" className="flex items-center gap-2">
-                <Key className="w-4 h-4" />
-                {t('sections.accounts.form.apiKey')}
-              </Label>
-              <div className="relative">
-                <Input
-                  id="apiKey"
-                  type={showApiKey ? 'text' : 'password'}
-                  placeholder={providerConfig.placeholder}
-                  value={formData.apiKey || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-                  onClick={() => setShowApiKey(!showApiKey)}
-                >
-                  {showApiKey ? <X className="w-3 h-3" /> : <Key className="w-3 h-3" />}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {providerConfig.apiUrl && (
-            <div className="space-y-2">
-              <Label htmlFor="apiUrl" className="flex items-center gap-2">
-                <Globe className="w-4 h-4" />
-                URL de l'API
-              </Label>
-              <Input
-                id="apiUrl"
-                placeholder={providerConfig.placeholder}
-                value={formData.apiUrl || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, apiUrl: e.target.value }))}
-              />
-            </div>
-          )}
-
-          {providerConfig.model && (
-            <div className="space-y-2">
-              <Label htmlFor="model">Modèle par défaut</Label>
-              <Input
-                id="model"
-                placeholder="gpt-4, claude-3-sonnet, etc."
-                value={formData.model || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, model: e.target.value }))}
-              />
-            </div>
-          )}
-
-          {testResult && (
-            <Alert className={cn(
-              testResult.success 
-                ? 'border-green-200 bg-green-50 text-green-800' 
-                : 'border-red-200 bg-red-50 text-red-800'
-            )}>
-              {testResult.success ? (
-                <CheckCircle className="h-4 w-4" />
-              ) : (
-                <AlertCircle className="h-4 w-4" />
-              )}
-              <AlertDescription>
-                {testResult.message}
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
+        <ApiKeyConfigContent
+          providerConfig={providerConfig}
+          providerId={provider.id}
+          formData={formData}
+          showApiKey={showApiKey}
+          testResult={testResult}
+          t={t}
+          onFormDataChange={setFormData}
+          onToggleShowApiKey={() => setShowApiKey(!showApiKey)}
+        />
       )}
 
       <DialogFooter className="flex gap-2">
-        {provider.isConfigured && (
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            className="mr-auto"
-          >
-            Supprimer
-          </Button>
-        )}
-        
-        <div className="flex gap-2 ml-auto">
-          {/* Hide Test/Save when on Windsurf SSO tab — it has its own save button */}
-          {!(provider?.id === 'windsurf' && activeTab === 'oauth') && (
-            <>
-              <Button
-                variant="outline"
-                onClick={handleTest}
-                disabled={
-                  (activeTab === 'oauth'
-                    ? false
-                    : (!formData.apiKey && !formData.apiUrl))
-                  || isTesting
-                }
-              >
-                {isTesting ? 'Test...' : 'Tester'}
-              </Button>
-              <Button onClick={handleSave}>
-                Enregistrer
-              </Button>
-            </>
-          )}
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Annuler
-          </Button>
-        </div>
+        <DialogFooterActions
+          provider={provider}
+          activeTab={activeTab}
+          isTesting={isTesting}
+          formData={formData}
+          onTest={handleTest}
+          onSave={handleSave}
+          onDelete={handleDelete}
+          onOpenChange={onOpenChange}
+        />
       </DialogFooter>
     </>
   );
