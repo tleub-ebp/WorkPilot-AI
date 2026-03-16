@@ -1,48 +1,84 @@
 # Feature Ideas
 
-> Idées de fonctionnalités pour WorkPilot AI. Triées par impact — les plus bangers en premier.
+> Idées de fonctionnalités pour WorkPilot AI. Triées par impact — les plus **bangers** en premier.
+>
+> 📊 **Analyse concurrentielle Mars 2026** : Cursor (IDE premium, 8 agents parallèles), Windsurf (best value, Arena Mode), Claude Code (meilleur cerveau, 1M contexte), Codex (cloud agents parallèles), Antigravity (multi-agent orchestration, built-in browser), Kiro (spec-driven, hooks event-driven), Devin (full autonome), Zencoder (spec-driven enterprise).
+>
+> 🎯 **Stratégie WorkPilot** : Aller là où personne ne va encore — l'orchestration complète du cycle de vie logiciel avec transparence totale, de l'idée au monitoring en production. Pas juste un IDE avec IA, mais **un OS pour le développement logiciel autonome**.
 
 ---
 
-## Tier S — Game Changers
+## 🔥 Tier S+ — Features BANGERS (Différenciateurs uniques sur le marché)
 
-### 1. Agent Replay & Debug Mode
+### 1. Mission Control — Multi-Agent Orchestration Hub
 
-Rejouer visuellement le raisonnement d'un agent step-by-step : décisions prises, fichiers lus, outils utilisés, tokens consommés.
+**Le Antigravity de Google mais en 10x mieux.** Surface de contrôle visuelle pour orchestrer plusieurs agents simultanément avec visibilité totale sur ce que fait chaque agent.
 
-- **Principe :** Enregistrement structuré de chaque session agent (tool calls, fichiers modifiés, raisonnement). Interface de replay avec timeline interactive, diff des fichiers à chaque étape, et arbre de décision. Mode debug pour poser des breakpoints sur les décisions de l'agent.
+- **Principe :** Dashboard type "Mission Control" NASA : chaque agent a son panneau avec statut, fichiers en cours, tokens consommés, raisonnement live. L'utilisateur peut assigner des modèles différents par agent (Opus pour l'archi, Sonnet pour le code, Haiku pour les tests). Pause/resume/redirect d'agents en cours. **Arbre de décision visuel** montrant le raisonnement de chaque agent en temps réel. Contrairement à Antigravity qui limite à Gemini/Claude/GPT, WorkPilot supporte **tous les providers** (Anthropic, OpenAI, Google, Grok, Ollama, local).
+- **Ce que les concurrents ont :** Antigravity a du multi-agent basique. Cursor a 8 agents en parallèle. Codex a des agents cloud.
+- **Ce que personne n'a :** Visibilité totale + contrôle granulaire + model mixing par agent + arbre de décision live.
+- **Exploite :** Agent process, agent events, agent state, provider abstraction, worktree isolation
+- **Effort :** Élevé
+- **Pourquoi c'est BANGER :** Killer feature démontrable en 30 secondes. "Regardez, j'ai 5 agents qui travaillent en parallèle et je vois exactement ce que fait chacun." Aucun concurrent n'offre ce niveau de contrôle + transparence.
+
+### 2. Agent Replay & Debug Mode — Le "DevTools" pour l'IA
+
+Rejouer visuellement le raisonnement d'un agent step-by-step : décisions prises, fichiers lus, outils utilisés, tokens consommés. **Le Chrome DevTools des agents IA.**
+
+- **Principe :** Enregistrement structuré de chaque session agent (tool calls, fichiers modifiés, raisonnement). Interface de replay avec timeline interactive, diff des fichiers à chaque étape, et arbre de décision. Mode debug pour poser des **breakpoints** sur les décisions de l'agent. **Comparaison A/B** : rejouer la même tâche avec deux configs différentes et comparer les résultats. **Heatmap** des fichiers les plus touchés par l'agent.
+- **Ce que les concurrents ont :** Antigravity a des "artifacts" basiques. Claude Code a des logs. Personne n'a de replay.
+- **Ce que personne n'a :** Replay interactif + breakpoints + comparaison A/B + heatmap.
 - **Exploite :** Agent process, agent events, agent state
 - **Effort :** Élevé
-- **Pourquoi c'est banger :** Aucun concurrent ne propose ça. Transparence totale sur l'IA = confiance utilisateur massive. Killer feature pour le marketing.
+- **Pourquoi c'est BANGER :** Aucun concurrent ne propose ça. Transparence totale sur l'IA = confiance utilisateur massive. Killer feature pour le marketing et l'enterprise (audit trail).
 
-### 2. Self-Healing Codebase
+### 3. Self-Healing Codebase + Incident Responder (fusionné)
 
-L'app surveille le repo en continu et corrige automatiquement les régressions détectées.
+**Le repo se répare tout seul ET l'IA maintient la prod.** Système unifié de surveillance, détection et correction automatique.
 
-- **Principe :** Hook sur `git push` / CI. Quand les tests cassent, un agent analyse le diff, identifie la régression, génère un fix dans un worktree isolé, lance le QA, et ouvre une PR de correction — le tout sans intervention humaine.
-- **Exploite :** Agent coder, worktree isolation, QA pipeline, GitHub/GitLab integration
+- **Principe :** 
+  - **Mode CI/CD** : Hook sur `git push` / CI. Quand les tests cassent, un agent analyse le diff, identifie la régression, génère un fix dans un worktree isolé, lance le QA, et ouvre une PR de correction — sans intervention humaine.
+  - **Mode Production** : Connecté à Sentry, Datadog, CloudWatch, New Relic, PagerDuty via **MCP servers**. L'agent détecte les erreurs en temps réel, corrèle avec le code source, identifie la root cause, génère un fix avec tests de régression.
+  - **Mode Proactif** : Analyse prédictive des zones fragiles du code (fonctions modifiées souvent, faible couverture de test, haute complexité cyclomatique) et génère des tests préventifs.
+- **Ce que les concurrents ont :** Rien. Zéro outil ne fait du self-healing + incident response intégré.
+- **Exploite :** Agent coder, worktree isolation, QA pipeline, GitHub/GitLab integration, MCP protocol
 - **Effort :** Élevé
-- **Pourquoi c'est banger :** Le repo se répare tout seul. Ça vend du rêve en démo.
+- **Pourquoi c'est BANGER :** On passe de "l'IA écrit du code" à "l'IA maintient la prod". Changement de paradigme complet.
 
-### 3. Incident Responder
+### 4. Design-to-Code Pipeline — Screenshot/Figma → Code fonctionnel
 
-Agent connecté aux sources de logs de production qui détecte les erreurs, identifie la root cause et génère un fix autonome.
+**De n'importe quel design visuel à du code production-ready en un clic.** L'agent qui tue le fossé entre designers et développeurs.
 
-- **Principe :** Connecté à Sentry, Datadog, CloudWatch, etc. L'agent détecte les erreurs en temps réel, corrèle avec le code source, identifie la cause probable, génère un fix dans un worktree isolé avec tests de régression, et ouvre une PR.
-- **Exploite :** Agent coder, worktree isolation, QA pipeline, GitHub/GitLab integration
+- **Principe :** Upload un screenshot, une maquette Figma, un wireframe dessiné à la main, ou même une photo d'un whiteboard. L'agent : 1) Analyse le design avec vision IA (GPT-4o, Claude Vision) 2) Génère un spec structuré avec composants, layout, interactions 3) Produit du code pixel-perfect adapté au framework du projet (React, Vue, Angular, Svelte) 4) Intègre les design tokens et le design system existant du projet 5) Génère les tests visuels (screenshot comparison). **Intégration Figma API** pour sync bidirectionnel.
+- **Ce que les concurrents ont :** Codex + Figma partnership (one-way). Builder.io fait du Figma-to-code basique. Anima aussi.
+- **Ce que personne n'a :** Pipeline complet bidirectionnel intégré dans un outil de dev autonome + adaptation au design system existant + tests visuels.
+- **Exploite :** Vision AI, agent coder, context system, worktree isolation, QA pipeline
 - **Effort :** Élevé
-- **Pourquoi c'est banger :** On passe de "l'IA écrit du code" à "l'IA maintient la prod". Changement de paradigme.
+- **Pourquoi c'est BANGER :** Killer feature pour les agences et startups. "J'upload une maquette, 5 minutes plus tard j'ai une PR avec du code production-ready qui respecte mon design system." Démonstration visuelle incroyable.
 
-### 4. Multi-Repo Orchestration
+### 5. Event-Driven Hooks System — L'automatisation intelligente
+
+**Le système de Hooks de Kiro (AWS) mais avec 100x plus de puissance.** Automatisation event-driven de tout le workflow.
+
+- **Principe :** Système d'événements programmable : définir des triggers (fichier sauvegardé, test échoué, PR ouverte, build terminé, dépendance obsolète détectée, pattern de code détecté) et des actions (lancer un agent, envoyer une notification, créer un spec, déclencher un pipeline). **Editor visuel de workflows** type n8n/Zapier intégré. Templates de hooks pré-configurés : "auto-lint on save", "generate tests after new function", "update docs after API change", "notify Slack on build failure", "auto-fix lint errors".
+- **Ce que les concurrents ont :** Kiro a des hooks basiques (file save, tool use). Personne d'autre.
+- **Ce que personne n'a :** Editor visuel + bibliothèque de templates + chaînage de hooks + hooks inter-projets.
+- **Exploite :** Agent events, spec pipeline, terminal system, MCP protocol, notification system
+- **Effort :** Moyen
+- **Pourquoi c'est BANGER :** Quick win avec effet "wow". Les devs adorent automatiser. Kiro a prouvé que le concept marche mais est limité à AWS. WorkPilot le rend universel et visuel.
+
+### 6. Multi-Repo Orchestration
 
 Un seul spec qui orchestre des modifications sur plusieurs repositories simultanément.
 
-- **Principe :** Une tâche peut cibler plusieurs repos (microservices, frontend + backend, shared libs). L'agent coordonne les modifications, gère les dépendances inter-repos, et crée des PR liées avec des tests cross-repo.
+- **Principe :** Une tâche peut cibler plusieurs repos (microservices, frontend + backend, shared libs). L'agent coordonne les modifications, gère les dépendances inter-repos, et crée des PR liées avec des tests cross-repo. **Visualisation du graphe de dépendances inter-repos.** Support des monorepos ET des polyrepos. Détection automatique des breaking changes cross-repo.
+- **Ce que les concurrents ont :** Codex peut travailler sur un repo à la fois. Cursor pareil. Personne ne fait du cross-repo.
 - **Exploite :** Worktree isolation, agent queue, GitHub/GitLab integration
 - **Effort :** Élevé
-- **Pourquoi c'est banger :** Personne ne fait ça. Les architectures modernes sont multi-repo — WorkPilot serait le seul à les supporter nativement.
+- **Pourquoi c'est BANGER :** Les architectures modernes sont multi-repo/microservices. WorkPilot serait le seul à les supporter nativement. Argument enterprise massif.
 
-### 5. Autonomous Agent Learning Loop ✅ Implémenté
+<details>
+<summary>### 7. Autonomous Agent Learning Loop ✅ Implémenté</summary>
 
 Les agents s'améliorent automatiquement en analysant leurs succès et échecs passés — système auto-évolutif.
 
@@ -207,11 +243,61 @@ npm test -- --run src/renderer/stores/__tests__/learning-loop-store.test.ts
 - Consultez les builds sources des patterns problématiques
 - Ajustez les seuils de confiance si nécessaire
 
+</details>
+
 ---
 
-## Tier A — Strong Impact
+## 🚀 Tier S — Game Changers (Avantage concurrentiel fort)
 
-### 6. Build Analytics Dashboard ✅ Implémenté
+### 8. Arena Mode — Comparaison A/B de Modèles à l'aveugle
+
+**L'Arena Mode de Windsurf mais appliqué à tout le pipeline.** Comparer les modèles IA en aveugle sur des tâches réelles pour trouver le meilleur rapport qualité/prix.
+
+- **Principe :** Lancer la même tâche sur 2+ modèles en parallèle, résultats anonymisés. L'utilisateur vote pour le meilleur résultat sans savoir quel modèle l'a produit. Agrégation des résultats par type de tâche (coding, review, test, planning). Dashboard d'analytics avec coût/token vs qualité perçue. **Auto-routing intelligent** : après suffisamment de données, le système route automatiquement chaque type de tâche vers le modèle le plus performant.
+- **Ce que les concurrents ont :** Windsurf a Arena Mode pour le chat/completions uniquement.
+- **Ce que personne n'a :** Arena Mode sur tout le pipeline (spec → code → test → review) + auto-routing basé sur les résultats.
+- **Exploite :** Provider abstraction, agent events, build analytics, Cost Intelligence
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** Data-driven model selection. Plus de débat "Claude vs GPT". Les données parlent. Feature virale sur les réseaux sociaux (benchmarks réels).
+
+### 9. AI Pair Programming Mode — Vrai travail parallèle coordonné
+
+Mode collaboratif temps réel où l'IA code en parallèle du développeur sur le même worktree.
+
+- **Principe :** Le dev travaille sur une partie du code, l'IA travaille simultanément sur une autre partie (fichiers différents). Coordination via le context system pour éviter les conflits. Split-view dans l'UI. **"Hey WorkPilot, pendant que je fais le frontend, écris-moi les tests d'intégration et l'API backend"**. L'agent demande des clarifications en temps réel via le chat sans bloquer le dev.
+- **Ce que les concurrents ont :** Cursor fait du "pair programming" mais c'est juste du chat. Claude Code aussi.
+- **Ce que personne n'a :** Du vrai travail parallèle coordonné avec split-view et communication bidirectionnelle.
+- **Exploite :** Agent terminals, worktree isolation, conflict predictor, agent queue
+- **Effort :** Élevé
+- **Pourquoi c'est banger :** Le vrai pair programming avec une IA. Pas du copilot inline, du vrai travail parallèle coordonné.
+
+### 10. MCP Marketplace — L'écosystème d'intégrations universel
+
+**Le "App Store" des intégrations MCP pour WorkPilot.** Connexion plug-and-play avec tous les outils de l'écosystème dev.
+
+- **Principe :** Le Model Context Protocol (MCP) est devenu le standard universel (97M+ SDK downloads, Linux Foundation). WorkPilot devient le **hub MCP le plus complet** : marketplace in-app de MCP servers (Slack, Jira, Figma, Sentry, Datadog, GitHub, GitLab, Azure DevOps, Confluence, Notion...). Installation en un clic. **Builder visuel** pour créer ses propres MCP servers sans code. Les agents utilisent automatiquement les MCP servers installés.
+- **Ce que les concurrents ont :** Cursor, Kiro, Claude Code supportent MCP. Antigravity et Codex non.
+- **Ce que personne n'a :** Marketplace visuelle + builder no-code + intégration automatique dans les agents.
+- **Exploite :** MCP protocol, agent events, plugin architecture
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** Effet réseau massif. Plus il y a de MCP servers, plus WorkPilot est puissant. Verrouille les utilisateurs dans l'écosystème. 5 des 7 outils leaders supportent MCP — WorkPilot doit être le meilleur.
+
+### 11. Cost Intelligence Engine
+
+Routage intelligent entre modèles selon la complexité + tracking granulaire des coûts par agent/phase/spec.
+
+- **Principe :** Analyse la complexité de chaque sous-tâche et route automatiquement vers le modèle le plus adapté (Haiku pour les tâches simples, Sonnet pour le standard, Opus pour le complexe). Tracking token-to-USD par agent, par phase, et par spec avec alertes budgétaires. Dashboard de coût intégré dans les analytics. **Budget caps par projet/par mois.** Économies potentielles de 50-70% sur la facture IA. **Comparaison de coûts avec les concurrents** (Cursor $20-200, Windsurf $15-60, Claude Code $20-200).
+- **Ce que les concurrents ont :** Aucun n'a de cost routing intelligent. Cursor montre juste un compteur de "fast requests".
+- **Exploite :** Phase config, agent events, build analytics, provider abstraction, profile scorer
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** ROI immédiat et mesurable. Argument commercial massif pour les entreprises qui gèrent des budgets IA.
+
+---
+
+## 💪 Tier A — Strong Impact (Features attendues par les power users)
+
+<details>
+<summary>### 12. Build Analytics Dashboard ✅ Implémenté</summary>
 
 Métriques complètes sur les agents : taux de succès QA, coût tokens par phase, patterns d'échec, évolution dans le temps.
 
@@ -302,7 +388,10 @@ Le dashboard est alimenté par le système de collecte automatique qui :
 
 Les données sont stockées dans une base SQLite locale (`analytics.db`) et accessibles via l'API REST `/analytics/*`.
 
-### 7. Test Generation Agent ✅ Implémenté
+</details>
+
+<details>
+<summary>### 13. Test Generation Agent ✅ Implémenté</summary>
 
 Agent IA spécialisé dans la génération automatique de tests et l'analyse de couverture de code.
 
@@ -402,7 +491,10 @@ cd apps/frontend
 npm test -- --run src/renderer/stores/__tests__/test-generation-store.test.ts
 ```
 
-### 8. Dependency Sentinel ✅ Implémenté
+</details>
+
+<details>
+<summary>### 14. Dependency Sentinel ✅ Implémenté</summary>
 
 Surveillance proactive 24/7 des dépendances : CVE, mises à jour breaking, licences incompatibles, avec PR automatique.
 
@@ -411,16 +503,10 @@ Surveillance proactive 24/7 des dépendances : CVE, mises à jour breaking, lice
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Valeur immédiate, continue, et silencieuse. Le projet reste sain sans effort.
 
-### 9. AI Pair Programming Mode
+</details>
 
-Mode collaboratif temps réel où l'IA code en parallèle du développeur sur le même worktree.
-
-- **Principe :** Le dev travaille sur une partie du code, l'IA travaille simultanément sur une autre partie (fichiers différents). Coordination via le context system pour éviter les conflits. Split-view dans l'UI pour voir les deux progressions.
-- **Exploite :** Agent terminals, worktree isolation, conflict predictor, agent queue
-- **Effort :** Élevé
-- **Pourquoi c'est banger :** Le vrai pair programming avec une IA. Pas du copilot inline, du vrai travail parallèle coordonné.
-
-### 10. AI Prompt Optimizer ✅ Implémenté 
+<details>
+<summary>### 15. AI Prompt Optimizer ✅ Implémenté</summary>
 
 Amélioration automatique des prompts utilisateurs pour garantir les meilleurs résultats possibles des agents IA.
 
@@ -513,7 +599,10 @@ cd apps/frontend
 npm test -- --run src/renderer/stores/__tests__/prompt-optimizer-store.test.ts
 ```
 
-### 11. Conflict Predictor ✅ Implémenté
+</details>
+
+<details>
+<summary>### 16. Conflict Predictor ✅ Implémenté</summary>
 
 Détection proactive des conflits potentiels entre branches/worktrees actifs avant qu'ils ne surviennent.
 
@@ -637,16 +726,10 @@ Le Conflict Predictor utilise :
 - **Documentez les conflits** : Utilisez "Copy Report" pour traçabilité
 - **Anticipez** : L'analyse avant de commencer gros travaux prévient les blocages
 
-### 12. Cost Intelligence Engine
+</details>
 
-Routage intelligent entre modèles selon la complexité + tracking granulaire des coûts par agent/phase/spec.
-
-- **Principe :** Analyse la complexité de chaque sous-tâche et route automatiquement vers le modèle le plus adapté (Haiku pour les tâches simples, Sonnet pour le standard, Opus pour le complexe). Tracking token-to-USD par agent, par phase, et par spec avec alertes budgétaires. Dashboard de coût intégré dans les analytics. Économies potentielles de 50-70% sur la facture IA.
-- **Exploite :** Phase config, agent events, build analytics, provider abstraction, profile scorer
-- **Effort :** Moyen
-- **Pourquoi c'est banger :** ROI immédiat et mesurable. Les utilisateurs voient exactement où va leur argent et le système l'optimise automatiquement. Argument commercial massif.
-
-### 13. AI Code Review Agent ✅ Implémenté
+<details>
+<summary>### 17. AI Code Review Agent ✅ Implémenté</summary>
 
 Review de PR/MR intelligente avec contexte profond du codebase — comme un senior dev qui connaît tout le projet.
 
@@ -802,7 +885,10 @@ npm test -- --run src/renderer/stores/__tests__/code-review-store.test.ts
 - **Standardisez les pratiques** : Alignez tout le monde sur les mêmes standards
 - **Formez les nouveaux** : Les reviews aident les nouveaux à comprendre les conventions
 
-### 14. Architecture Enforcement Agent ✅ Implémenté
+</details>
+
+<details>
+<summary>### 18. Architecture Enforcement Agent ✅ Implémenté</summary>
 
 Gardien automatique de l'architecture — détecte et bloque les violations architecturales avant qu'elles n'atteignent le codebase.
 
@@ -811,11 +897,35 @@ Gardien automatique de l'architecture — détecte et bloque les violations arch
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** L'architecture se dégrade silencieusement build après build. Un gardien automatique maintient la qualité structurelle sans effort. Essentiel pour les projets d'entreprise.
 
+</details>
+
 ---
 
-## Tier B — Solid Value
+## 🔧 Tier B — Solid Value (Améliorations significatives du quotidien)
 
-### 15. Live Code Review AI
+### 19. Built-in Browser Agent — Test visuel sans quitter WorkPilot
+
+**L'arme secrète d'Antigravity, mais intégrée dans WorkPilot.** Un navigateur intégré que les agents peuvent utiliser pour tester, scraper et valider visuellement.
+
+- **Principe :** Navigateur Chromium headless intégré dans WorkPilot. Les agents peuvent : rendre l'app, exécuter des tests E2E, capturer des screenshots, comparer visuellement avant/après, scraper des données pour alimenter le contexte. **Visual regression testing** automatique : chaque PR compare les screenshots avec la version précédente. Les devs voient instantanément l'impact visuel de leurs changements.
+- **Ce que les concurrents ont :** Antigravity a un built-in browser (unique sur le marché). Personne d'autre.
+- **Ce que personne n'a :** Visual regression testing intégré dans le pipeline agent + comparaison screenshot automatique dans les PRs.
+- **Exploite :** Agent coder, worktree isolation, QA pipeline, App Emulator existant
+- **Effort :** Moyen
+- **Pourquoi c'est banger :** Différenciateur fort. Les bugs visuels sont détectés avant le merge. L'App Emulator existant est la fondation parfaite.
+
+### 20. Steering Files — Convention Enforcement Intelligent
+
+**Les "Steering Files" de Kiro mais alimentées par le Learning Loop.** Fichiers de convention projet qui évoluent automatiquement.
+
+- **Principe :** Fichiers `.workpilot/conventions.md`, `.workpilot/architecture.md`, `.workpilot/patterns.md` qui définissent les règles du projet. Les agents les respectent systématiquement. **Innovation** : le Learning Loop analyse les builds réussis et **propose automatiquement de nouvelles conventions** basées sur les patterns qui fonctionnent. Les conventions sont versionnées et évoluent avec le projet.
+- **Ce que les concurrents ont :** Kiro a des "steering files". Claude Code a `CLAUDE.md`. Cursor a `.cursorrules`.
+- **Ce que personne n'a :** Des conventions auto-évolutives alimentées par un learning loop + versionnement intelligent.
+- **Exploite :** Learning Loop, context system, project analysis, pattern discovery
+- **Effort :** Faible
+- **Pourquoi c'est banger :** Quick win énorme. Résout le problème #1 des devs avec l'IA : "l'IA ne respecte pas mes conventions". Et ici, les conventions s'améliorent toutes seules.
+
+### 21. Live Code Review AI
 
 Review en temps réel pendant que le dev code, pas après.
 
@@ -824,7 +934,8 @@ Review en temps réel pendant que le dev code, pas après.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Shift-left ultime. Les problèmes sont détectés à l'écriture, pas à la review.
 
-### 16. App Emulator ✅ Implémenté
+<details>
+<summary>### 22. App Emulator ✅ Implémenté</summary>
 
 Lancement et émulation de l'application directement depuis l'interface Kanban pour visualiser le rendu des tâches complétées.
 
@@ -967,7 +1078,10 @@ Pour tester l'App Emulator :
 3. **Vérifiez** que l'application se lance correctement
 4. **Testez** les différentes fonctionnalités de l'émulateur
 
-### 17. Auto-Refactor Agent ✅ Implémenté
+</details>
+
+<details>
+<summary>### 23. Auto-Refactor Agent ✅ Implémenté</summary>
 
 Détection continue de code smells, dette technique et patterns obsolètes avec refactoring autonome.
 
@@ -1137,20 +1251,21 @@ L'agent fournit des métriques détaillées :
 - Profitez-en pour nettoyer la dette technique accumulée
 
 **Intégration CI/D**
-- Intégrez l'agent dans votre pipeline de build
+- **Intégrez l'agent dans votre pipeline de build
 - Utilisez les résultats pour améliorer les guidelines de code
 - Automatisez les corrections simples et récurrentes
 
-### 18. Pipeline Generator
+</details>
+
+### 24. Pipeline Generator
 
 Génération automatique de CI/CD complète adaptée au projet.
-
-- **Principe :** Analyse la stack, les tests, le linting, le build du projet et génère un fichier CI/CD (GitHub Actions, GitLab CI) complet et fonctionnel. Cache, matrix, deploy, notifications inclus.
 - **Exploite :** Project analysis, context system
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Setup CI/CD en 30 secondes au lieu de 2 heures.
 
-### 19. Smart Estimation ✅ Implémenté
+<details>
+<summary>### 25. Smart Estimation ✅ Implémenté</summary>
 
 Scores de complexité basés sur l'historique réel des builds passés.
 
@@ -1286,7 +1401,10 @@ La Smart Estimation suit le flux suivant :
 - Code source : `apps/backend/services/smart_estimation_service.py`
 - Composant UI : `apps/frontend/src/renderer/components/smart-estimation/SmartEstimationDialog.tsx`
 
-### 20. Natural Language Git ✅ Implémenté
+</details>
+
+<details>
+<summary>### 26. Natural Language Git ✅ Implémenté</summary>
 
 Manipuler git en langage naturel directement depuis l'interface.
 
@@ -1302,7 +1420,10 @@ Manipuler git en langage naturel directement depuis l'interface.
 - Support des commandes Git les plus courantes
 - Gestion d'erreurs et streaming en temps réel
 
-### 21. Context-Aware Snippets ✅ Implémenté
+</details>
+
+<details>
+<summary>### 27. Context-Aware Snippets ✅ Implémenté</summary>
 
 Snippets intelligents qui s'adaptent au style et aux conventions du projet.
 
@@ -1440,18 +1561,21 @@ npm test -- --run src/renderer/components/context-aware-snippets/__tests__/Conte
 - **Soyez spécifiques** : Plus votre description est détaillée, meilleur sera le résultat
 - **Utilisez l'auto-détection** : Laissez le système détecter le langage pour une meilleure adaptation
 - **Vérifiez les imports** : Le snippet utilisera les imports et patterns de votre projet
-- **Itérez si nécessaire** : N'hésitez pas à affiner la description pour obtenir exactement ce que vous voulez
+- Itérez si nécessaire : N'hésitez pas à affiner la description pour obtenir exactement ce que vous voulez
 
-### 22. Spec Templates Library
+</details>
+
+### 28. Spec Templates Library
 
 Templates de spec réutilisables par domaine pour accélérer la création de tâches récurrentes.
 
+### 27. Context-Aware Snippets 
 - **Principe :** Bibliothèque de templates de spec pour les patterns courants : CRUD API, authentification, dashboard, formulaire, migration DB, refactoring, intégration tierce. Chaque template pré-remplit les sections du spec (requirements, fichiers impactés, critères QA) et s'adapte au contexte du projet. Les utilisateurs peuvent créer et partager leurs propres templates.
 - **Exploite :** Spec pipeline, context system, project analysis
 - **Effort :** Faible
 - **Pourquoi c'est banger :** Quick win énorme. Les specs récurrentes passent de 5 minutes à 30 secondes. Réduit la friction d'adoption.
 
-### 23. Dependency Graph Intelligence
+### 29. Dependency Graph Intelligence
 
 Analyse des dépendances inter-fichiers et inter-modules pour un contexte agent drastiquement amélioré.
 
@@ -1460,7 +1584,7 @@ Analyse des dépendances inter-fichiers et inter-modules pour un contexte agent 
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Le contexte agent passe de "recherche par mots-clés" à "compréhension structurelle". Les agents produisent du code qui s'intègre mieux car ils voient les relations réelles.
 
-### 24. QA Security Scanner
+### 30. QA Security Scanner
 
 Intégration de scans de sécurité SAST/DAST dans le pipeline QA pour chaque build.
 
@@ -1469,7 +1593,7 @@ Intégration de scans de sécurité SAST/DAST dans le pipeline QA pour chaque bu
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La sécurité n'est plus une afterthought. Chaque build est scanné automatiquement. Argument imparable pour les clients enterprise.
 
-### 25. Agent Decision Logger
+### 31. Agent Decision Logger
 
 Journal structuré léger des décisions de chaque agent — version simplifiée d'Agent Replay.
 
@@ -1480,9 +1604,9 @@ Journal structuré léger des décisions de chaque agent — version simplifiée
 
 ---
 
-## Tier C — Nice to Have
+## 💡 Tier C — Nice to Have (Vision long terme)
 
-### 26. Team Knowledge Sync
+### 32. Team Knowledge Sync
 
 Memory System partagé entre tous les membres de l'équipe.
 
@@ -1491,7 +1615,7 @@ Memory System partagé entre tous les membres de l'équipe.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** L'expérience collective capitalise automatiquement. Onboarding d'un nouveau dev en quelques minutes.
 
-### 27. Environment Cloner
+### 33. Environment Cloner
 
 Reproduction d'environnements prod/staging en local pour debug.
 
@@ -1500,7 +1624,7 @@ Reproduction d'environnements prod/staging en local pour debug.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** "Ça marche en local mais pas en prod" disparaît.
 
-### 28. Architecture Visualizer
+### 34. Architecture Visualizer
 
 Génération automatique de diagrammes d'architecture depuis le code.
 
@@ -1509,7 +1633,7 @@ Génération automatique de diagrammes d'architecture depuis le code.
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La doc d'archi se génère et se maintient toute seule.
 
-### 29. Code Migration Agent
+### 35. Code Migration Agent
 
 Migration automatique entre frameworks, versions majeures ou langages.
 
@@ -1518,7 +1642,7 @@ Migration automatique entre frameworks, versions majeures ou langages.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Les migrations sont le cauchemar de tout dev. L'automatiser est un selling point énorme.
 
-### 30. Performance Profiler Agent
+### 36. Performance Profiler Agent
 
 Agent qui profile le code, identifie les bottlenecks et propose des optimisations.
 
@@ -1527,7 +1651,7 @@ Agent qui profile le code, identifie les bottlenecks et propose des optimisation
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** L'app s'optimise toute seule. Plus besoin d'experts perf.
 
-### 31. Documentation Agent
+### 37. Documentation Agent
 
 Génération et maintenance automatique de la documentation technique.
 
@@ -1536,7 +1660,7 @@ Génération et maintenance automatique de la documentation technique.
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La doc n'est plus jamais outdated.
 
-### 32. Plugin Marketplace
+### 38. Plugin Marketplace
 
 Écosystème de plugins communautaires pour étendre WorkPilot.
 
@@ -1545,7 +1669,8 @@ Génération et maintenance automatique de la documentation technique.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Effet réseau. La communauté étend le produit. Verrouille les utilisateurs dans l'écosystème.
 
-### 33. Voice Control ✅ Implémenté
+<details>
+<summary>### 39. Voice Control ✅ Implémenté</summary>
 
 Contrôler WorkPilot à la voix : décrire des tâches, naviguer dans l'UI, commander des builds.
 
@@ -1700,7 +1825,8 @@ Le Voice Control supporte plusieurs langues :
 - **Adaptation** : Apprend des patterns de commandes utilisateur
 - **Cache** : Mémorisation des commandes fréquentes pour accélération
 
-### 34. AI Code Playground ✅ Implémenté
+<details>
+<summary>### 40. AI Code Playground ✅ Implémenté</summary>
 
 Sandbox interactive pour prototyper rapidement des idées avec l'IA avant de les intégrer au projet.
 
@@ -1875,7 +2001,7 @@ Le Code Playground supporte :
 - **Anglais** : Support natif complet
 - **Code** : Support universel des langages de programmation
 
-### 27. Cross-Language Translation
+### 41. Cross-Language Translation
 
 Traduire du code entre langages tout en préservant la logique et les patterns idiomatiques.
 
@@ -1884,7 +2010,7 @@ Traduire du code entre langages tout en préservant la logique et les patterns i
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Les migrations de stack deviennent triviales.
 
-### 28. Spec Approval Workflow
+### 42. Spec Approval Workflow
 
 Circuit de validation collaborative des specs avant implémentation — peer review pour les specs.
 
@@ -1893,7 +2019,7 @@ Circuit de validation collaborative des specs avant implémentation — peer rev
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Gouvernance légère mais efficace. Les specs critiques ne passent plus sans review humaine. Essential pour les équipes.
 
-### 29. Memory Lifecycle Manager
+### 43. Memory Lifecycle Manager
 
 Gestion intelligente du cycle de vie de la mémoire Graphiti — pruning automatique, politiques de rétention, contrôle de la fraîcheur.
 
@@ -1902,7 +2028,7 @@ Gestion intelligente du cycle de vie de la mémoire Graphiti — pruning automat
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Sans pruning, la mémoire devient bruitée et dégrade la qualité des agents. Un système de rétention intelligent garde la mémoire utile et pertinente.
 
-### 30. CI/CD Deployment Triggers
+### 44. CI/CD Deployment Triggers
 
 Déclenchement automatique de pipelines CI/CD après la création d'une PR par un agent.
 
@@ -1911,7 +2037,10 @@ Déclenchement automatique de pipelines CI/CD après la création d'une PR par u
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La boucle spec → code → test → deploy est complète. Du "j'ai une idée" à "c'est en preview" sans intervention.
 
-### 31. Intelligent Context Caching ✅
+### 45. Intelligent Context Caching ✅
+
+<details>
+<summary>
 
 Cache sémantique du contexte agent pour accélérer les builds répétitifs et similaires.
 
@@ -2060,13 +2189,58 @@ integrator = ContextCacheIntegrator(project_path, config)
 - Compression des entrées de cache volumineuses
 - Backup/restore des données de cache
 
+</details>
+
 ---
 
-## Résumé par Tier
+## 📊 Résumé par Tier
 
-| Tier | # | Features | Impact |
-|------|---|----------|--------|
-| **S** | 5 | Agent Replay, Self-Healing, Incident Responder, Multi-Repo, **🆕 Agent Learning Loop** | Game changers — différenciateurs marché uniques |
-| **A** | 10 | Analytics ✅, Test Gen ✅, Dependency Sentinel ✅, AI Pair, Prompt Optimizer ✅, Conflict Predictor ✅, App Emulator ✅, **🆕 Cost Intelligence**, **🆕 Code Review Agent**, **🆕 Architecture Enforcement** | Strong impact — features attendues par les power users |
-| **B** | 10 | Live Review, Auto-Refactor ✅, Pipeline Gen, Smart Estimation ✅, NL Git ✅, Snippets ✅, **🆕 Spec Templates**, **🆕 Dependency Graph**, **🆕 QA Security Scanner**, **🆕 Agent Decision Logger** | Solid value — améliorations significatives du quotidien |
-| **C** | 15 | Team Sync, Env Cloner, Arch Viz, Migration, Perf Profiler, Doc Agent, Marketplace, Voice ✅, Playground ✅, Cross-Lang, **🆕 Spec Approval Workflow**, **🆕 Memory Lifecycle**, **🆕 CI/CD Triggers**, **🆕 Context Caching** | Nice to have — vision long terme |
+| Tier | # | Features | Impact | Statut |
+|------|---|----------|--------|--------|
+| **🔥 S+** | 7 | **🆕 Mission Control**, **🆕 Agent Replay & Debug**, **🆕 Self-Healing + Incident Responder**, **🆕 Design-to-Code Pipeline**, **🆕 Event-Driven Hooks**, **🆕 Multi-Repo Orchestration**, Agent Learning Loop ✅ | **BANGERS** — Différenciateurs uniques, aucun concurrent ne les a | 1/7 ✅ |
+| **🚀 S** | 4 | **🆕 Arena Mode**, **🆕 AI Pair Programming**, **🆕 MCP Marketplace**, **🆕 Cost Intelligence Engine** | Game changers — Avantage concurrentiel fort | 0/4 ✅ |
+| **💪 A** | 7 | Build Analytics ✅, Test Gen ✅, Dependency Sentinel ✅, Prompt Optimizer ✅, Conflict Predictor ✅, Code Review ✅, Architecture Enforcement ✅ | Strong impact — Features power users | **7/7 ✅** |
+| **🔧 B** | 13 | **🆕 Built-in Browser Agent**, **🆕 Steering Files**, Live Review, App Emulator ✅, Auto-Refactor ✅, Pipeline Gen, Smart Estimation ✅, NL Git ✅, Snippets ✅, Spec Templates, Dep Graph, QA Security, Agent Decision Logger | Solid value — Améliorations quotidiennes | 5/13 ✅ |
+| **💡 C** | 14 | Team Sync, Env Cloner, Arch Viz, Migration, Perf Profiler, Doc Agent, Plugin Marketplace, Voice ✅, Playground ✅, Cross-Lang, Spec Approval, Memory Lifecycle, CI/CD Triggers, Context Caching ✅ | Nice to have — Vision long terme | 3/14 ✅ |
+
+### 🏆 Score d'implémentation : 16/45 features (35%)
+
+### 🎯 Roadmap prioritaire recommandée
+
+**Phase 1 — Quick Wins à fort impact (1-2 mois)**
+1. **Event-Driven Hooks System** (S+) — Effort moyen, effet "wow" immédiat, Kiro a prouvé le concept
+2. **Steering Files** (B) — Effort faible, résout le pain point #1 des devs IA
+3. **Cost Intelligence Engine** (S) — Effort moyen, ROI immédiat et mesurable
+
+**Phase 2 — Différenciateurs clés (2-4 mois)**
+4. **Mission Control** (S+) — Le killer feature visuel, démontrable en 30s
+5. **Agent Replay & Debug** (S+) — Transparence totale = confiance enterprise
+6. **MCP Marketplace** (S) — Effet réseau, 97M+ SDK downloads, standard universel
+7. **Arena Mode** (S) — Feature virale, data-driven model selection
+
+**Phase 3 — Game Changers autonomes (4-8 mois)**
+8. **Self-Healing + Incident Responder** (S+) — Changement de paradigme
+9. **Design-to-Code Pipeline** (S+) — Killer demo pour agences/startups
+10. **AI Pair Programming** (S) — Vrai travail parallèle coordonné
+11. **Multi-Repo Orchestration** (S+) — Argument enterprise massif
+
+### 📈 Analyse concurrentielle — Positionnement WorkPilot vs Marché
+
+| Feature | WorkPilot | Cursor | Windsurf | Claude Code | Antigravity | Kiro | Codex |
+|---------|-----------|--------|----------|-------------|-------------|------|-------|
+| Multi-agent orchestration | 🔜 Mission Control | ✅ 8 agents | ✅ Cascade panes | ❌ | ✅ Native | ❌ | ✅ Cloud |
+| Agent replay/debug | 🔜 Full replay | ❌ | ❌ | ❌ | 🟡 Artifacts | ❌ | ❌ |
+| Self-healing codebase | 🔜 3 modes | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Design-to-code | 🔜 Full pipeline | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 Figma |
+| Event-driven hooks | 🔜 Visual editor | ❌ | ❌ | ❌ | ❌ | ✅ Basique | ❌ |
+| Spec-driven dev | ✅ Native | ❌ | ❌ | ❌ | ❌ | ✅ Native | ❌ |
+| Arena mode | 🔜 Full pipeline | ❌ | ✅ Chat only | ❌ | ❌ | ❌ | ❌ |
+| Built-in browser | 🔜 + visual regression | ❌ | ✅ Live preview | ❌ | ✅ Native | ❌ | ❌ |
+| MCP support | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Cost intelligence | 🔜 Auto-routing | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Learning loop | ✅ Unique | ❌ | 🟡 Memories | ❌ | ❌ | ❌ | ❌ |
+| Multi-repo | 🔜 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+> **Légende :** ✅ Disponible | 🔜 Planifié WorkPilot | 🟡 Partiel | ❌ Non disponible
+>
+> **Avantage WorkPilot** : 8 features uniques planifiées que PERSONNE n'a sur le marché (Agent Replay, Self-Healing, Design-to-Code full pipeline, Visual event hooks editor, Arena Mode full pipeline, Cost auto-routing, Multi-repo orchestration, Learning Loop). C'est la stratégie de différenciation.

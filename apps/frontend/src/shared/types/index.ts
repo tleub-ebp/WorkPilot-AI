@@ -19,5 +19,8 @@ export * from './integrations';
 export * from './app-update';
 export * from './cli';
 
+// MCP Marketplace types
+export * from './mcp-marketplace';
+
 // IPC types (must be last to use types from other modules)
 export * from './ipc';
