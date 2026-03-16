@@ -219,10 +219,20 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   // Update command for GitHub Copilot CLI
-  const COPILOT_UPDATE_COMMAND = "# Update GitHub Copilot CLI based on installation method\necho 'Checking installation method...'\nif command -v npm &> /dev/null && npm list -g @github/copilot &> /dev/null; then\n  echo 'Updating via npm...'\n  npm update -g @github/copilot\nelif command -v brew &> /dev/null && brew list copilot-cli &> /dev/null; then\n  echo 'Updating via Homebrew...'\n  brew upgrade copilot-cli\nelif command -v winget &> /dev/null; then\n  echo 'Updating via WinGet...'\n  winget upgrade GitHub.Copilot\nelse\n  echo 'Installing via script...'\n  curl -fsSL https://gh.io/copilot-install | bash\nfi\n";
+  const COPILOT_UPDATE_COMMAND = `# Update GitHub Copilot CLI based on installation method
+  echo '${t("copilot:checkingInstallationMethod", "Checking installation method...")}'\nif command -v npm &> /dev/null && npm list -g @github/copilot &> /dev/null; then
+  echo '${t("copilot:updatingViaNpm", "Updating via npm...")}'\n  npm update -g @github/copilot\nelif command -v brew &> /dev/null && brew list copilot-cli &> /dev/null; then
+  echo '${t("copilot:updatingViaHomebrew", "Updating via Homebrew...")}'\n  brew upgrade copilot-cli\nelif command -v winget &> /dev/null; then
+  echo '${t("copilot:updatingViaWinget", "Updating via WinGet...")}'\n  winget upgrade GitHub.Copilot\nelse
+  echo '${t("copilot:installingViaScript", "Installing via script...")}'\n  curl -fsSL https://gh.io/copilot-install | bash\nfi\n`;
 
   // Windows-specific update command for GitHub CLI (which includes Copilot)
-  const WINDOWS_UPDATE_COMMAND = "# Update GitHub CLI (includes Copilot CLI)\necho 'Updating GitHub CLI...'\nif command -v winget &> /dev/null; then\n  echo 'Updating via WinGet...'\n  winget upgrade GitHub.Cli\nelif command -v choco &> /dev/null; then\n  echo 'Updating via Chocolatey...'\n  choco upgrade gh-cli\nelif command -v scoop &> /dev/null; then\n  echo 'Updating via Scoop...'\n  scoop update gh\nelse\n  echo 'Manual download required. Please visit https://cli.github.com/'\nfi\n";
+  const WINDOWS_UPDATE_COMMAND = `# Update GitHub CLI (includes Copilot CLI)
+  echo '${t("copilot:updatingGitHubCli", "Updating GitHub CLI...")}'\nif command -v winget &> /dev/null; then
+  echo '${t("copilot:updatingViaWinget", "Updating via WinGet...")}'\n  winget upgrade GitHub.Cli\nelif command -v choco &> /dev/null; then
+  echo '${t("copilot:updatingViaChocolatey", "Updating via Chocolatey...")}'\n  choco upgrade gh-cli\nelif command -v scoop &> /dev/null; then
+  echo '${t("copilot:updatingViaScoop", "Updating via Scoop...")}'\n  scoop update gh\nelse
+  echo '${t("copilot:manualDownloadRequired", "Manual download required. Please visit https://cli.github.com/")}'\nfi\n`;
 
   // Helper function to send terminal commands with delays
   const sendTerminalCommandsWithDelay = async (terminalId: string, commands: Array<{cmd: string; delay: number}>) => {
@@ -238,7 +248,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
   const executeTerminalInstallation = async (terminalId: string, isUpdate: boolean) => {
     const commands = [
       { cmd: "clear\n", delay: 0 },
-      { cmd: "echo 'Updating GitHub Copilot CLI...'\n", delay: 50 },
+      { cmd: `echo '${t("copilot:updatingGitHubCopilotCli", "Updating GitHub Copilot CLI...")}'\n`, delay: 50 },
       { cmd: isUpdate ? WINDOWS_UPDATE_COMMAND : COPILOT_UPDATE_COMMAND, delay: 50 }
     ];
     
@@ -423,29 +433,29 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
   const getTooltipText = () => {
     switch (status) {
       case "loading":
-        return "Checking Copilot CLI...";
+        return t("copilot:checkingCopilotCli", "Checking Copilot CLI...");
       case "installed":
-        return "Copilot CLI is up to date";
+        return t("copilot:copilotCliUpToDate", "Copilot CLI is up to date");
       case "outdated":
-        return "Copilot CLI update available";
+        return t("copilot:copilotCliUpdateAvailable", "Copilot CLI update available");
       case "not-found":
-        return "Copilot CLI extension not installed";
+        return t("copilot:copilotCliExtensionNotInstalled", "Copilot CLI extension not installed");
       case "gh-missing":
-        return "GitHub CLI (gh) not found — required for Copilot";
+        return t("copilot:gitHubCliNotFound", "GitHub CLI (gh) not found — required for Copilot");
       case "error":
-        return "Error checking Copilot CLI";
+        return t("copilot:errorCheckingCopilotCli", "Error checking Copilot CLI");
     }
   };
 
   // Get select placeholder text
   const getSelectPlaceholder = () => {
     if (isLoadingInstallations) {
-      return "Loading installations...";
+      return t("copilot:loadingInstallations", "Loading installations...");
     }
     if (installationsError) {
-      return "Failed to load installations";
+      return t("copilot:failedToLoadInstallations", "Failed to load installations");
     }
-    return "Select installation";
+    return t("copilot:selectInstallation", "Select installation");
   };
 
   return (
@@ -501,12 +511,12 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
                 <h4 className="text-sm font-medium">Copilot CLI</h4>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   {getStatusIcon()}
-                  {status === "installed" && "Installed"}
-                  {status === "outdated" && "Update available"}
-                  {status === "not-found" && "Extension not installed"}
-                  {status === "gh-missing" && "GitHub CLI not found"}
-                  {status === "loading" && "Checking..."}
-                  {status === "error" && "Error"}
+                  {status === "installed" && t("copilot:installed", "Installed")}
+                  {status === "outdated" && t("copilot:updateAvailable", "Update available")}
+                  {status === "not-found" && t("copilot:extensionNotInstalled", "Extension not installed")}
+                  {status === "gh-missing" && t("copilot:gitHubCliNotFoundShort", "GitHub CLI not found")}
+                  {status === "loading" && t("copilot:checking", "Checking...")}
+                  {status === "error" && t("copilot:error", "Error")}
                 </p>
               </div>
             </div>
