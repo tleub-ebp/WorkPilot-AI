@@ -177,6 +177,11 @@ export function ProviderConfigDialog({
   const [authTerminal, setAuthTerminal] = useState<AuthTerminalState | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [windsurfSsoToken, setWindsurfSsoToken] = useState('');
+  const [windsurfAccountInfo, setWindsurfAccountInfo] = useState<{
+    userName?: string;
+    planName?: string;
+    usageInfo?: { usedMessages: number; totalMessages: number; usedFlowActions: number; totalFlowActions: number };
+  } | null>(null);
 
   const providerConfig = provider ? providerFields[provider.id] : null;
   const supportsOAuth = ['anthropic', 'claude', 'windsurf'].includes(provider?.id || '');
@@ -211,7 +216,21 @@ export function ProviderConfigDialog({
     const initialData = initializeFormData(providerConfig, settings);
     setFormData(initialData);
     setTestResult(null);
+    setWindsurfAccountInfo(null);
     setActiveTab(getDefaultActiveTab(provider.id, supportsOAuth));
+
+    // Auto-load Windsurf account info when dialog opens
+    if (provider.id === 'windsurf' && globalThis.electronAPI?.detectWindsurfToken) {
+      globalThis.electronAPI.detectWindsurfToken().then((result: { success: boolean; userName?: string; planName?: string; usageInfo?: { usedMessages: number; totalMessages: number; usedFlowActions: number; totalFlowActions: number } }) => {
+        if (result.success && (result.userName || result.planName)) {
+          setWindsurfAccountInfo({
+            userName: result.userName,
+            planName: result.planName,
+            usageInfo: result.usageInfo,
+          });
+        }
+      }).catch(() => { /* silent */ });
+    }
   }, [provider, providerConfig, settings, isOpen, supportsOAuth]);
 
   const handleSave = async () => {
@@ -586,6 +605,46 @@ export function ProviderConfigDialog({
 
                 {provider?.id === 'windsurf' ? (
                   <div className="space-y-4">
+                    {/* Windsurf account info card */}
+                    {windsurfAccountInfo && (windsurfAccountInfo.userName || windsurfAccountInfo.planName) && (
+                      <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <Users className="w-4 h-4 text-primary" />
+                          {t('sections.accounts.providerConfig.windsurfAuth.accountInfo')}
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                          {windsurfAccountInfo.userName && (
+                            <>
+                              <span className="text-muted-foreground">{t('sections.accounts.providerConfig.windsurfAuth.accountName')}</span>
+                              <span className="font-medium">{windsurfAccountInfo.userName}</span>
+                            </>
+                          )}
+                          {windsurfAccountInfo.planName && (
+                            <>
+                              <span className="text-muted-foreground">{t('sections.accounts.providerConfig.windsurfAuth.accountPlan')}</span>
+                              <span className="font-medium">{windsurfAccountInfo.planName}</span>
+                            </>
+                          )}
+                          {windsurfAccountInfo.usageInfo && windsurfAccountInfo.usageInfo.totalMessages > 0 && (
+                            <>
+                              <span className="text-muted-foreground">{t('sections.accounts.providerConfig.windsurfAuth.accountCredits')}</span>
+                              <span className="font-medium">
+                                {Math.round(windsurfAccountInfo.usageInfo.usedMessages / 100)}/{Math.round(windsurfAccountInfo.usageInfo.totalMessages / 100)}
+                              </span>
+                            </>
+                          )}
+                          {windsurfAccountInfo.usageInfo && windsurfAccountInfo.usageInfo.totalFlowActions > 0 && (
+                            <>
+                              <span className="text-muted-foreground">{t('sections.accounts.providerConfig.windsurfAuth.accountFlowActions')}</span>
+                              <span className="font-medium">
+                                {Math.round(windsurfAccountInfo.usageInfo.usedFlowActions / 100).toLocaleString()}/{Math.round(windsurfAccountInfo.usageInfo.totalFlowActions / 100).toLocaleString()}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Auto-detect from local Windsurf IDE */}
                     <Button
                       variant="outline"
@@ -598,6 +657,13 @@ export function ProviderConfigDialog({
                           const result = await globalThis.electronAPI.detectWindsurfToken();
                           if (result.success && result.apiKey) {
                             setWindsurfSsoToken(result.apiKey);
+                            if (result.userName || result.planName) {
+                              setWindsurfAccountInfo({
+                                userName: result.userName,
+                                planName: result.planName,
+                                usageInfo: result.usageInfo,
+                              });
+                            }
                             setTestResult({
                               success: true,
                               message: t('sections.accounts.providerConfig.windsurfAuth.detectSuccess', { userName: result.userName || '' })

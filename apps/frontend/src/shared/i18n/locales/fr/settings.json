@@ -88,7 +88,12 @@
           "openWindsurfLogin": "windsurf.com/account",
           "tokenDetected": "Clé API détectée",
           "saveAndConnect": "Enregistrer et connecter",
-          "saveSuccess": "Connexion Windsurf enregistrée avec succès !"
+          "saveSuccess": "Connexion Windsurf enregistrée avec succès !",
+          "accountInfo": "Compte authentifié",
+          "accountName": "Nom",
+          "accountPlan": "Plan",
+          "accountCredits": "Crédits",
+          "accountFlowActions": "Flow Actions"
         }
       },
       "providerCard": {
@@ -531,6 +536,7 @@
     "cancel": "Annuler",
     "configureButton": "Configurer Azure DevOps",
     "selectedItems": "{{count}} élément(s) sélectionné(s)",
+    "toggleSelection": "Basculer la sélection pour l'élément de travail {{id}}",
     "dragInstructions": "Sélectionnez des éléments puis faites-les glisser dans une colonne",
     "moreItems": "+{{count}} élément(s) supplémentaire(s)",
     "importing": "Import en cours...",

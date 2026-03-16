@@ -74,6 +74,14 @@ export function AuthStatusIndicator() {
   const [githubStatus, setGithubStatus] = useState<{ available: boolean; isAuth?: boolean; username?: string } | null>(null);
   const [isLoadingGithubStatus, setIsLoadingGithubStatus] = useState(false);
 
+  // Track Windsurf account info
+  const [windsurfAccount, setWindsurfAccount] = useState<{
+    userName?: string;
+    planName?: string;
+    usageInfo?: { usedMessages: number; totalMessages: number; usedFlowActions: number; totalFlowActions: number };
+  } | null>(null);
+  const [isLoadingWindsurfAccount, setIsLoadingWindsurfAccount] = useState(false);
+
   // Subscribe to live usage updates + refresh on provider/profile change
   useEffect(() => {
     setIsLoadingUsage(true);
@@ -127,6 +135,36 @@ export function AuthStatusIndicator() {
     } else {
       setGithubStatus(null);
       setIsLoadingGithubStatus(false);
+    }
+  }, [selectedProvider]);
+
+  // Fetch Windsurf account info when Windsurf provider is selected
+  useEffect(() => {
+    if (selectedProvider === 'windsurf') {
+      setIsLoadingWindsurfAccount(true);
+
+      window.electronAPI.detectWindsurfToken?.()
+        .then((result: { success: boolean; userName?: string; planName?: string; usageInfo?: { usedMessages: number; totalMessages: number; usedFlowActions: number; totalFlowActions: number } }) => {
+          if (result.success) {
+            setWindsurfAccount({
+              userName: result.userName,
+              planName: result.planName,
+              usageInfo: result.usageInfo,
+            });
+          } else {
+            setWindsurfAccount(null);
+          }
+        })
+        .catch((error: Error) => {
+          console.warn('[AuthStatusIndicator] Failed to fetch Windsurf account info:', error);
+          setWindsurfAccount(null);
+        })
+        .finally(() => {
+          setIsLoadingWindsurfAccount(false);
+        });
+    } else {
+      setWindsurfAccount(null);
+      setIsLoadingWindsurfAccount(false);
     }
   }, [selectedProvider]);
 
@@ -363,6 +401,77 @@ export function AuthStatusIndicator() {
                       <div className="text-[10px] text-muted-foreground mt-1">
                         <a href="https://github.com/settings/copilot" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
                           {t('common:usage.copilotDashboardLink')}
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ) : selectedProvider === 'windsurf' ? (
+                  // Windsurf-specific info with account details
+                  <div className="pt-2 border-t space-y-2">
+                    <div className="text-[10px] text-muted-foreground">
+                      {t('common:usage.windsurfAuthNote')}
+                    </div>
+
+                    {/* Windsurf Account Info */}
+                    {isLoadingWindsurfAccount ? (
+                      <div className="text-[10px] text-muted-foreground italic">
+                        {t('common:usage.checkingWindsurfStatus')}
+                      </div>
+                    ) : windsurfAccount ? (
+                      <div className="space-y-1">
+                        {/* User name */}
+                        {windsurfAccount.userName && (
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
+                              <Key className="h-3 w-3" />
+                              <span className="text-[10px]">{t('common:usage.activeAccount')}</span>
+                            </div>
+                            <span className="text-[10px] font-medium text-teal-500">
+                              {windsurfAccount.userName}
+                            </span>
+                          </div>
+                        )}
+                        {/* Plan */}
+                        {windsurfAccount.planName && (
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
+                              <Shield className="h-3 w-3" />
+                              <span className="text-[10px]">{t('common:usage.windsurfPlan')}</span>
+                            </div>
+                            <span className="text-[10px] font-medium">
+                              {windsurfAccount.planName}
+                            </span>
+                          </div>
+                        )}
+                        {/* Usage info */}
+                        {windsurfAccount.usageInfo && (
+                          <div className="space-y-1 pt-1 border-t">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] text-muted-foreground">{t('common:usage.windsurfCredits')}</span>
+                              <span className="text-[10px] font-medium">
+                                {Math.round(windsurfAccount.usageInfo.usedMessages / 100)}/{Math.round(windsurfAccount.usageInfo.totalMessages / 100)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] text-muted-foreground">{t('common:usage.windsurfFlowActions')}</span>
+                              <span className="text-[10px] font-medium">
+                                {Math.round(windsurfAccount.usageInfo.usedFlowActions / 100)}/{Math.round(windsurfAccount.usageInfo.totalFlowActions / 100)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-[10px] text-muted-foreground italic">
+                        {t('common:usage.windsurfNotDetected')}
+                      </div>
+                    )}
+
+                    {/* Dashboard link */}
+                    <div className="pt-1 border-t">
+                      <div className="text-[10px] text-muted-foreground mt-1">
+                        <a href="https://codeium.com/windsurf/membership" target="_blank" rel="noopener noreferrer" className="text-teal-500 underline">
+                          {t('common:usage.windsurfDashboardLink')}
                         </a>
                       </div>
                     </div>

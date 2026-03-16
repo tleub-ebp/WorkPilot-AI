@@ -7,7 +7,7 @@
 import { ipcMain } from 'electron';
 import { credentialManager } from '../services/credential-manager';
 import type { CredentialConfig, UsageData } from '../services/credential-manager';
-import { detectWindsurfLocalToken } from '../services/credential-manager';
+import { detectWindsurfLocalToken, readWindsurfCachedPlanInfo } from '../services/credential-manager';
 
 /**
  * Enregistrer tous les handlers IPC pour les credentials
@@ -141,9 +141,40 @@ export function registerCredentialHandlers(): void {
   /**
    * Détecter le token Windsurf depuis l'installation IDE locale
    * Lit le state.vscdb de Windsurf pour extraire la clé API sk-ws-...
+   * Enrichit la réponse avec les infos du plan (planName, usage) si disponibles.
    */
-  ipcMain.handle('credential:detectWindsurfToken', async (): Promise<{ success: boolean; apiKey?: string; userName?: string; error?: string }> => {
-    return await detectWindsurfLocalToken();
+  ipcMain.handle('credential:detectWindsurfToken', async (): Promise<{
+    success: boolean;
+    apiKey?: string;
+    userName?: string;
+    planName?: string;
+    usageInfo?: { usedMessages: number; totalMessages: number; usedFlowActions: number; totalFlowActions: number };
+    error?: string;
+  }> => {
+    const tokenResult = await detectWindsurfLocalToken();
+    if (!tokenResult.success) return tokenResult;
+
+    // Enrich with plan info (planName, usage) from cached plan data
+    try {
+      const planResult = await readWindsurfCachedPlanInfo();
+      if (planResult.success && planResult.planInfo) {
+        return {
+          ...tokenResult,
+          userName: planResult.userName || tokenResult.userName,
+          planName: planResult.planInfo.planName,
+          usageInfo: {
+            usedMessages: planResult.planInfo.usage.usedMessages,
+            totalMessages: planResult.planInfo.usage.messages,
+            usedFlowActions: planResult.planInfo.usage.usedFlowActions,
+            totalFlowActions: planResult.planInfo.usage.flowActions,
+          },
+        };
+      }
+    } catch (e) {
+      console.warn('[CredentialHandlers] Failed to enrich Windsurf token with plan info:', e);
+    }
+
+    return tokenResult;
   });
 
   /**
