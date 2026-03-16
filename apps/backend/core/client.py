@@ -1090,62 +1090,14 @@ def create_agent_client(
 
     elif provider == "windsurf":
         # Windsurf (Codeium) — dual-mode:
-        # Mode 1: gRPC to local Windsurf IDE language server (preferred, text-only)
-        # Mode 2: REST API to server.codeium.com (with full tool execution via function calling)
+        # Mode 1: gRPC to local Windsurf IDE language server (tool execution
+        #         via text-based tool calling — consumes Windsurf credits)
+        # Mode 2: REST API with OpenAI-compatible function calling
         #
-        # IMPORTANT: Windsurf sk-ws-* API keys are designed for use within the
-        # Windsurf IDE only.  Codeium does NOT currently expose a public
-        # OpenAI-compatible chat completions endpoint for these keys.
-        # If no WINDSURF_BASE_URL env-var is set, we probe several known
-        # candidate URLs; if none respond 200, the WindsurfAgentClient will
-        # emit an error per turn.
-        #
-        # As a pragmatic fallback we check whether the key looks like a
-        # per-user IDE key (sk-ws-*) with no explicit WINDSURF_BASE_URL
-        # override.  In that scenario the REST endpoint is almost certainly
-        # unavailable, so we fall back to the Claude SDK client which will
-        # use the user's existing Claude Code OAuth / API key instead.
-        import os as _os_ws
-
-        windsurf_key = (
-            _os_ws.environ.get("WINDSURF_API_KEY")
-            or _os_ws.environ.get("CODEIUM_API_KEY")
-            or ""
-        )
-
-        # If no key in env vars, also try to detect from local Windsurf IDE
-        if not windsurf_key:
-            try:
-                from integrations.windsurf_proxy.auth import get_api_key
-                windsurf_key = get_api_key() or ""
-            except Exception:
-                pass
-
-        # Detect sk-ws-* keys: these are per-user IDE keys that do NOT support
-        # the OpenAI-compatible chat completions endpoint on ANY Codeium server.
-        # Even if WINDSURF_BASE_URL is set (e.g., the default API profile sets
-        # it to server.codeium.com/api/v1), these keys simply cannot be used for
-        # programmatic chat completions — they only work inside the Windsurf IDE.
-        is_ide_only_key = windsurf_key.startswith("sk-ws-")
-
-        if is_ide_only_key:
-            logger.warning(
-                "[create_agent_client] Windsurf sk-ws-* key detected — "
-                "Codeium does not expose a public chat completions endpoint "
-                "for these keys.  Falling back to Claude SDK (Claude Code "
-                "OAuth/API key) for agent operations."
-            )
-            sdk_client = create_client(
-                project_dir=project_dir,
-                spec_dir=spec_dir,
-                model=model,
-                agent_type=agent_type,
-                max_thinking_tokens=max_thinking_tokens,
-                output_format=output_format,
-                agents=agents,
-            )
-            return ClaudeAgentClient(sdk_client)
-
+        # sk-ws-* keys are IDE session keys that work through the local
+        # Windsurf language server (gRPC).  WindsurfAgentClient automatically
+        # detects these keys and routes to gRPC mode with text-based tool
+        # execution so that Windsurf credits are consumed.
         from core.agent_client import WindsurfAgentClient
 
         # Build system prompt (same pattern as CopilotAgentClient)
@@ -1165,7 +1117,7 @@ def create_agent_client(
 
         logger.info(
             "[create_agent_client] Using WindsurfAgentClient "
-            "(gRPC proxy + REST fallback, model=%s, agent_type=%s)",
+            "(gRPC for sk-ws-* keys / REST for SSO keys, model=%s, agent_type=%s)",
             model,
             agent_type,
         )

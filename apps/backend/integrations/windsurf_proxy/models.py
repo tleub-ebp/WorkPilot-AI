@@ -274,24 +274,26 @@ def resolve_model(name: str) -> tuple[int, str]:
         name: Friendly model name (e.g., "claude-4-sonnet", "gpt-4o")
 
     Returns:
-        Tuple of (ChatModelType enum int, model name string for gRPC)
+        Tuple of (ChatModelType enum int, model name string for gRPC).
+        The model name string includes the ``MODEL_`` prefix required by
+        the Windsurf language server (e.g., ``MODEL_CLAUDE_4_SONNET``).
     """
     name_lower = name.lower().strip()
 
     if name_lower in MODEL_NAME_TO_ENUM:
         enum_val = MODEL_NAME_TO_ENUM[name_lower]
-        return (int(enum_val), enum_val.name)
+        return (int(enum_val), f"MODEL_{enum_val.name}")
 
     # Try fuzzy matching: remove common prefixes/suffixes
     for key, val in MODEL_NAME_TO_ENUM.items():
         if name_lower in key or key in name_lower:
             logger.debug(f"[WindsurfModels] Fuzzy matched '{name}' -> '{key}' ({val.name})")
-            return (int(val), val.name)
+            return (int(val), f"MODEL_{val.name}")
 
     # Fallback to default
     logger.warning(f"[WindsurfModels] Unknown model '{name}', falling back to {DEFAULT_MODEL}")
     default_enum = MODEL_NAME_TO_ENUM[DEFAULT_MODEL]
-    return (int(default_enum), default_enum.name)
+    return (int(default_enum), f"MODEL_{default_enum.name}")
 
 
 def get_available_models() -> list[str]:

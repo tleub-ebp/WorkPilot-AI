@@ -626,19 +626,21 @@ class CopilotAgentClient(AgentClient):
 class WindsurfAgentClient(AgentClient):
     """Agent client backed by Windsurf/Codeium with dual-mode support.
 
-    Mode 2 (preferred for agentic use): OpenAI-compatible REST API to server.codeium.com.
+    Mode 1 (gRPC, for sk-ws-* IDE keys): gRPC to local Windsurf IDE language server.
+        Routes through the running Windsurf IDE → Codeium cloud.
+        Consumes Windsurf credits.  Tool execution via text-based tool calling
+        (tool definitions in system prompt, ``<tool_call>`` XML tags parsed
+        from model output).
+        Requires Windsurf IDE to be running and authenticated.
+
+    Mode 2 (REST, for SSO/enterprise/API keys): OpenAI-compatible REST API.
         Uses stored API key, SSO token, or OAuth token.
         Supports full agentic tool execution via OpenAI function calling.
         API key sourced from: env vars → state.vscdb → running IDE process.
 
-    Mode 1 (fallback, text-only): gRPC to local Windsurf IDE language server.
-        Requires Windsurf IDE to be running and authenticated.
-        Uses the approach from opencode-windsurf-auth.
-        WARNING: gRPC mode does NOT support tool execution.
-
     Authentication:
-    - REST mode: Bearer token from WINDSURF_API_KEY, state.vscdb, or IDE credentials
     - gRPC mode: CSRF token + API key from running language server process
+    - REST mode: Bearer token from WINDSURF_API_KEY, state.vscdb, or IDE credentials
     """
 
     # Anthropic model names → Windsurf-compatible model names
@@ -754,55 +756,91 @@ class WindsurfAgentClient(AgentClient):
                 logger.warning(f"[WindsurfAgent] Failed to extract key from IDE: {e}")
 
         # =====================================================================
-        # Step 2: Choose mode based on API key availability and needs
+        # Step 2: Choose mode based on API key type and IDE availability
         # =====================================================================
-        # Priority: REST mode (supports tools) > gRPC mode (text-only)
+        # sk-ws-* keys → gRPC through local Windsurf IDE (consumes credits)
+        # Other keys (SSO/enterprise) → REST API with function calling
+        # No key but IDE running → gRPC through local IDE
 
-        needs_tools = bool(self._project_dir)
+        is_ide_key = bool(self._api_key and self._api_key.startswith("sk-ws-"))
 
-        if self._api_key:
-            # REST mode: supports full tool execution via OpenAI function calling
+        if is_ide_key:
+            # sk-ws-* keys only work through the local Windsurf IDE language
+            # server (gRPC).  They do NOT work with any REST chat completions
+            # endpoint.  Tool execution is handled via text-based tool calling.
+            if is_windsurf_running():
+                try:
+                    self._credentials = discover_credentials()
+                    self._use_local_grpc = True
+                    logger.info(
+                        f"[WindsurfAgent] Mode 1 (gRPC): sk-ws-* key → routing "
+                        f"through local Windsurf IDE at localhost:{self._credentials.port} "
+                        f"(model={self.model}, consumes Windsurf credits, "
+                        f"text-based tool execution)"
+                    )
+                    print(
+                        f"[WindsurfAgent] Using Windsurf IDE (gRPC) — credits will be consumed",
+                        flush=True,
+                    )
+                except Exception as e:
+                    raise RuntimeError(
+                        f"Windsurf: sk-ws-* key detected but gRPC credential "
+                        f"discovery failed: {e}.\n"
+                        "Please ensure Windsurf IDE is running and accessible."
+                    )
+            else:
+                raise RuntimeError(
+                    "Windsurf: sk-ws-* key detected but Windsurf IDE is not running.\n"
+                    "sk-ws-* keys only work through the local Windsurf IDE.\n"
+                    "Please start Windsurf IDE to use your Windsurf credits."
+                )
+        elif self._api_key:
+            # Non-IDE key (SSO/enterprise/API token): use REST mode
             self._use_local_grpc = False
             logger.info(
                 f"[WindsurfAgent] Mode 2 (REST): API to {self._rest_base_url} "
-                f"(model={self.model}, needs_tools={needs_tools}, "
+                f"(model={self.model}, "
                 f"key_prefix={self._api_key[:8]}...)"
             )
         elif is_windsurf_running():
-            # Fallback: gRPC mode (text-only, no tool execution)
+            # No key in env but IDE running: gRPC mode
             try:
                 self._credentials = discover_credentials()
                 self._use_local_grpc = True
-                logger.warning(
-                    f"[WindsurfAgent] Mode 1 (gRPC): text-only proxy to "
-                    f"localhost:{self._credentials.port} — NO tool execution! "
-                    f"Agent sessions requiring tools will not work properly."
+                logger.info(
+                    f"[WindsurfAgent] Mode 1 (gRPC): no explicit key, using "
+                    f"local Windsurf IDE at localhost:{self._credentials.port} "
+                    f"(model={self.model}, text-based tool execution)"
                 )
             except Exception as e:
                 raise RuntimeError(
-                    f"Windsurf: no API key found and gRPC discovery failed: {e}. "
+                    f"Windsurf: no API key found and gRPC discovery failed: {e}.\n"
                     "Please set WINDSURF_API_KEY or start Windsurf IDE."
                 )
         else:
             raise RuntimeError(
-                "Windsurf: no API key found (checked env vars, state.vscdb, running IDE). "
+                "Windsurf: no API key found (checked env vars, state.vscdb, running IDE).\n"
                 "Please either:\n"
-                "  1. Set WINDSURF_API_KEY environment variable, or\n"
-                "  2. Start Windsurf IDE and log in via SSO, or\n"
+                "  1. Start Windsurf IDE (for sk-ws-* key via gRPC), or\n"
+                "  2. Set WINDSURF_API_KEY environment variable, or\n"
                 "  3. Set WINDSURF_OAUTH_TOKEN or CODEIUM_API_KEY env var."
             )
 
         # =====================================================================
-        # Step 3: Initialize tool execution support (REST mode only)
+        # Step 3: Initialize tool execution support (both gRPC and REST)
         # =====================================================================
-        if self._project_dir and not self._use_local_grpc:
+        # gRPC mode uses text-based tool calling (tool definitions in prompt,
+        # tool calls parsed from text output).
+        # REST mode uses OpenAI function calling (native tool_calls).
+        if self._project_dir:
             try:
                 from core.runtimes.tool_executor import ToolExecutor, get_tool_definitions
 
                 self._tool_executor = ToolExecutor(self._project_dir)
                 self._tool_definitions = get_tool_definitions(self._agent_type)
+                mode_label = "gRPC text-based" if self._use_local_grpc else "REST function calling"
                 logger.info(
-                    f"[WindsurfAgent] Tool execution enabled: "
+                    f"[WindsurfAgent] Tool execution enabled ({mode_label}): "
                     f"{len(self._tool_definitions)} tools for agent_type={self._agent_type}"
                 )
             except Exception as e:
@@ -832,13 +870,21 @@ class WindsurfAgentClient(AgentClient):
         self._pending_query = None
 
         if self._use_local_grpc:
-            yield await self._grpc_response(prompt)
+            if self._tool_executor and self._tool_definitions:
+                async for msg in self._grpc_response_with_tools(prompt):
+                    yield msg
+            else:
+                yield await self._grpc_response(prompt)
         else:
             async for msg in self._rest_response_with_tools(prompt):
                 yield msg
 
+    # =================================================================
+    # gRPC mode (text-based tool calling through local Windsurf IDE)
+    # =================================================================
+
     async def _grpc_response(self, prompt: str) -> AgentMessage:
-        """Send prompt via gRPC to local Windsurf language server."""
+        """Send prompt via gRPC to local Windsurf language server (no tools)."""
         from integrations.windsurf_proxy.grpc_client import stream_chat
         from integrations.windsurf_proxy.models import resolve_model
 
@@ -879,6 +925,303 @@ class WindsurfAgentClient(AgentClient):
             role=MessageRole.ASSISTANT,
             content=[ContentBlock(type=ContentBlockType.TEXT, text=full_text)],
         )
+
+    def _build_tool_prompt_text(self) -> str:
+        """Format tool definitions as text for the gRPC system prompt.
+
+        In gRPC mode the model doesn't have native function calling, so we
+        describe the tools in the system prompt and ask it to emit structured
+        ``<tool_call>`` XML tags that we parse client-side.
+        """
+        if not self._tool_definitions:
+            return ""
+
+        lines = [
+            "\n\n## Available Tools",
+            "",
+            "You can use the following tools. To call a tool, output a "
+            "`<tool_call>` XML tag containing a JSON object with `name` and "
+            "`arguments` keys:",
+            "",
+            "```",
+            "<tool_call>",
+            '{"name": "tool_name", "arguments": {"param": "value"}}',
+            "</tool_call>",
+            "```",
+            "",
+            "You may make multiple tool calls in a single response. After each "
+            "tool call I will provide the result in `<tool_result>` tags. "
+            "Continue working based on the results.",
+            "",
+            "When you are finished and have no more tool calls, provide your "
+            "final answer WITHOUT any `<tool_call>` tags.",
+            "",
+            "### Tool Definitions",
+            "",
+        ]
+
+        for td in self._tool_definitions:
+            name = td["name"]
+            desc = td.get("description", "")
+            params = td.get("parameters", {})
+            props = params.get("properties", {})
+            required = params.get("required", [])
+
+            lines.append(f"**{name}** — {desc}")
+            if props:
+                for pname, pinfo in props.items():
+                    req_marker = " (required)" if pname in required else ""
+                    pdesc = pinfo.get("description", "")
+                    ptype = pinfo.get("type", "string")
+                    lines.append(f"  - `{pname}` ({ptype}{req_marker}): {pdesc}")
+            lines.append("")
+
+        return "\n".join(lines)
+
+    @staticmethod
+    def _parse_tool_calls_from_text(text: str) -> tuple[str, list[dict[str, Any]]]:
+        """Parse ``<tool_call>`` blocks from model text output.
+
+        Returns:
+            (clean_text, tool_calls) where *clean_text* is the response with
+            ``<tool_call>`` blocks removed and *tool_calls* is a list of dicts
+            with ``name`` and ``arguments`` keys.
+        """
+        import json as _json
+        import re as _re
+
+        tool_calls: list[dict[str, Any]] = []
+        clean_parts: list[str] = []
+        last_end = 0
+
+        for match in _re.finditer(
+            r"<tool_call>\s*(.*?)\s*</tool_call>", text, _re.DOTALL
+        ):
+            clean_parts.append(text[last_end : match.start()])
+            last_end = match.end()
+
+            raw = match.group(1).strip()
+            try:
+                parsed = _json.loads(raw)
+                if isinstance(parsed, dict) and "name" in parsed:
+                    tool_calls.append({
+                        "name": parsed["name"],
+                        "arguments": parsed.get("arguments", {}),
+                    })
+                else:
+                    logger.warning(
+                        f"[WindsurfAgent] Skipping malformed tool_call (no 'name'): {raw[:200]}"
+                    )
+            except _json.JSONDecodeError as e:
+                logger.warning(
+                    f"[WindsurfAgent] Skipping unparseable tool_call JSON: {e} — {raw[:200]}"
+                )
+
+        clean_parts.append(text[last_end:])
+        clean_text = "".join(clean_parts).strip()
+        return clean_text, tool_calls
+
+    async def _grpc_response_with_tools(
+        self, prompt: str
+    ) -> AsyncIterator[AgentMessage]:
+        """Execute prompt via gRPC with text-based tool execution loop.
+
+        The Windsurf language server (gRPC) does not support OpenAI function
+        calling.  Instead we:
+        1. Include tool definitions in the system prompt as structured text
+        2. Parse ``<tool_call>`` XML blocks from the model's text response
+        3. Execute tools locally via ``ToolExecutor``
+        4. Feed results back as a new user message with ``<tool_result>`` tags
+        5. Repeat until the model responds without tool calls (or max_turns)
+
+        This consumes Windsurf credits because all inference goes through
+        the local Windsurf IDE language server → Codeium cloud.
+        """
+        import json as _json
+
+        from integrations.windsurf_proxy.grpc_client import stream_chat
+        from integrations.windsurf_proxy.models import resolve_model
+
+        model_enum, model_name = resolve_model(self.model)
+
+        # Build system prompt with tool definitions appended
+        tool_prompt = self._build_tool_prompt_text()
+        full_system_prompt = (self.system_prompt or "") + tool_prompt
+
+        # Conversation history for multi-turn
+        messages: list[dict[str, str]] = []
+        if full_system_prompt:
+            messages.append({"role": "system", "content": full_system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        logger.info(
+            f"[WindsurfAgent] gRPC+tools: starting (model={self.model}, "
+            f"tools={len(self._tool_definitions)}, prompt_len={len(prompt)})"
+        )
+        print(
+            f"[WindsurfAgent] 🔌 gRPC request via local Windsurf IDE "
+            f"(model={self.model}, {len(self._tool_definitions)} tools, "
+            f"consumes Windsurf credits)",
+            flush=True,
+        )
+
+        for turn in range(self.max_turns):
+            logger.info(
+                f"[WindsurfAgent] gRPC turn {turn + 1}/{self.max_turns}: "
+                f"sending {len(messages)} messages..."
+            )
+
+            # Send to Windsurf via gRPC
+            text_parts: list[str] = []
+            try:
+                async for chunk in stream_chat(
+                    credentials=self._credentials,
+                    messages=messages,
+                    model_enum=model_enum,
+                    model_name=model_name,
+                    system_prompt=full_system_prompt,
+                ):
+                    text_parts.append(chunk)
+            except Exception as e:
+                logger.error(f"[WindsurfAgent] gRPC streaming error (turn {turn + 1}): {e}")
+                yield AgentMessage(
+                    role=MessageRole.SYSTEM,
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TEXT,
+                            text=f"Windsurf gRPC error: {e}",
+                        )
+                    ],
+                )
+                return
+
+            full_text = "".join(text_parts)
+            if not full_text:
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TEXT,
+                            text="(Empty response from Windsurf)",
+                        )
+                    ],
+                )
+                return
+
+            # Parse tool calls from text
+            clean_text, tool_calls = self._parse_tool_calls_from_text(full_text)
+
+            logger.info(
+                f"[WindsurfAgent] gRPC turn {turn + 1}: "
+                f"text_len={len(clean_text)}, tool_calls={len(tool_calls)}"
+            )
+
+            # Yield text content (the non-tool-call part)
+            if clean_text:
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[ContentBlock(type=ContentBlockType.TEXT, text=clean_text)],
+                )
+
+            # No tool calls → done
+            if not tool_calls:
+                if not clean_text:
+                    yield AgentMessage(
+                        role=MessageRole.ASSISTANT,
+                        content=[
+                            ContentBlock(
+                                type=ContentBlockType.TEXT,
+                                text="(No response from Windsurf)",
+                            )
+                        ],
+                    )
+                logger.info(
+                    f"[WindsurfAgent] gRPC session complete after {turn + 1} turn(s)"
+                )
+                return
+
+            # Add assistant message to conversation history
+            messages.append({"role": "assistant", "content": full_text})
+
+            # Execute each tool call and collect results
+            result_parts: list[str] = []
+            for i, tc in enumerate(tool_calls):
+                tool_name = tc["name"]
+                tool_args = tc["arguments"]
+                tool_id = f"grpc_{turn}_{i}_{tool_name}"
+
+                logger.info(
+                    f"[WindsurfAgent] gRPC turn {turn + 1}: "
+                    f"tool_call {tool_name}({list(tool_args.keys())})"
+                )
+                print(f"[WindsurfAgent] 🔧 Tool: {tool_name}", flush=True)
+
+                # Yield TOOL_USE block
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TOOL_USE,
+                            tool_name=tool_name,
+                            tool_id=tool_id,
+                            tool_input=tool_args,
+                        )
+                    ],
+                )
+
+                # Execute tool
+                result_text = ""
+                is_error = False
+                try:
+                    result = await self._tool_executor.execute(tool_name, tool_args)
+                    result_text = str(result) if result is not None else ""
+                except Exception as e:
+                    result_text = f"Error: {e}"
+                    is_error = True
+                    logger.warning(f"[WindsurfAgent] Tool {tool_name} failed: {e}")
+
+                # Yield TOOL_RESULT block
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TOOL_RESULT,
+                            tool_use_id=tool_id,
+                            is_error=is_error,
+                            result_content=result_text,
+                        )
+                    ],
+                )
+
+                # Format result for next gRPC message
+                status = "error" if is_error else "success"
+                # Truncate large results to avoid overwhelming the context
+                truncated = result_text[:8000]
+                if len(result_text) > 8000:
+                    truncated += f"\n... (truncated, {len(result_text)} chars total)"
+                result_parts.append(
+                    f'<tool_result name="{tool_name}" status="{status}">\n'
+                    f"{truncated}\n"
+                    f"</tool_result>"
+                )
+
+            # Add tool results as a user message for the next turn
+            results_message = "\n\n".join(result_parts)
+            messages.append({"role": "user", "content": results_message})
+
+            # Continue loop — next turn sends updated conversation
+
+        logger.warning(
+            f"[WindsurfAgent] gRPC reached max_turns ({self.max_turns}) — stopping"
+        )
+        print(
+            f"[WindsurfAgent] ⚠️ Reached max turns ({self.max_turns})",
+            flush=True,
+        )
+
+    # =================================================================
+    # REST mode (OpenAI-compatible function calling)
+    # =================================================================
 
     def _get_openai_tools(self) -> list[dict[str, Any]]:
         """Convert internal tool definitions to OpenAI function calling format."""

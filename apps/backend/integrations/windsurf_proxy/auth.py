@@ -91,27 +91,45 @@ def _get_language_server_pattern() -> str:
     return _LANGUAGE_SERVER_PATTERNS.get(_SYSTEM, "language_server")
 
 
+_PROCESS_CACHE: tuple[str | None, float] | None = None
+_PROCESS_CACHE_TTL = 10.0  # seconds
+
+
 def _get_language_server_process() -> str | None:
-    """Get the language server process listing."""
+    """Get the language server process listing.
+
+    Results are cached for 10 seconds to avoid spawning multiple wmic/ps
+    subprocesses during a single credential discovery flow.
+    """
+    import time as _time
+
+    global _PROCESS_CACHE
+
+    now = _time.monotonic()
+    if _PROCESS_CACHE is not None:
+        cached_value, cached_at = _PROCESS_CACHE
+        if now - cached_at < _PROCESS_CACHE_TTL:
+            return cached_value
+
+    result = _discover_language_server_process()
+    _PROCESS_CACHE = (result, now)
+    return result
+
+
+def _discover_language_server_process() -> str | None:
+    """Actually discover the language server process (uncached)."""
     pattern = _get_language_server_pattern()
 
     try:
         if _SYSTEM == "Windows":
-            output = subprocess.check_output(
-                ["wmic", "process", "where", f"name like '%{pattern}%'", "get", "CommandLine", "/format:list"],
-                encoding="utf-8",
-                timeout=5,
-                stderr=subprocess.DEVNULL,
-            )
-            if not output.strip():
-                # Try alternative: tasklist + wmic with ProcessId
-                output = subprocess.check_output(
-                    ["wmic", "process", "where", f"commandline like '%{pattern}%'", "get", "CommandLine,ProcessId", "/format:list"],
-                    encoding="utf-8",
-                    timeout=5,
-                    stderr=subprocess.DEVNULL,
-                )
-            return output if output.strip() else None
+            # Try PowerShell first (wmic is deprecated on Windows 11)
+            output = _discover_via_powershell(pattern)
+            if output:
+                return output
+
+            # Fallback: wmic (still works on many Windows versions)
+            output = _discover_via_wmic(pattern)
+            return output
         else:
             output = subprocess.check_output(
                 ["ps", "aux"],
@@ -122,7 +140,56 @@ def _get_language_server_process() -> str | None:
             # Filter lines containing the pattern
             lines = [line for line in output.splitlines() if pattern in line and "grep" not in line]
             return "\n".join(lines) if lines else None
-    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError):
+    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError, UnicodeDecodeError):
+        return None
+
+
+def _discover_via_powershell(pattern: str) -> str | None:
+    """Discover language server process via PowerShell (preferred on Windows 11+)."""
+    try:
+        # Use PowerShell to get both ProcessId and CommandLine.
+        # The backtick-n in PowerShell is a newline escape; we pass it literally.
+        ps_cmd = (
+            "Get-CimInstance Win32_Process -Filter "
+            f"\"name like '%{pattern}%'\" "
+            "| ForEach-Object { "
+            "'ProcessId=' + [string]$_.ProcessId + \"`n\" + "
+            "'CommandLine=' + $_.CommandLine "
+            "}"
+        )
+        output = subprocess.check_output(
+            ["powershell", "-NoProfile", "-Command", ps_cmd],
+            encoding="utf-8",
+            errors="replace",
+            timeout=10,
+            stderr=subprocess.DEVNULL,
+        )
+        return output if output.strip() else None
+    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError, UnicodeDecodeError):
+        return None
+
+
+def _discover_via_wmic(pattern: str) -> str | None:
+    """Discover language server process via wmic (legacy fallback)."""
+    try:
+        output = subprocess.check_output(
+            ["wmic", "process", "where", f"name like '%{pattern}%'", "get", "CommandLine", "/format:list"],
+            encoding="utf-8",
+            errors="replace",
+            timeout=5,
+            stderr=subprocess.DEVNULL,
+        )
+        if not output.strip():
+            # Try alternative with ProcessId
+            output = subprocess.check_output(
+                ["wmic", "process", "where", f"commandline like '%{pattern}%'", "get", "CommandLine,ProcessId", "/format:list"],
+                encoding="utf-8",
+                errors="replace",
+                timeout=5,
+                stderr=subprocess.DEVNULL,
+            )
+        return output if output.strip() else None
+    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError, UnicodeDecodeError):
         return None
 
 
@@ -131,9 +198,109 @@ def _get_language_server_process() -> str | None:
 # =============================================================================
 
 
+def _get_csrf_token_from_state_db() -> str | None:
+    """Get CSRF token from state.vscdb (for newer Windsurf versions).
+
+    Newer Windsurf versions (1.9500+) pass the CSRF token via
+    --stdin_initial_metadata instead of --csrf_token CLI argument.
+    The token is still stored in state.vscdb under the key
+    'codeium.windsurf-windsurf_auth-'.
+    """
+    state_path = _VSCDB_PATHS.get(_SYSTEM)
+    if not state_path or not state_path.exists():
+        return None
+
+    try:
+        conn = sqlite3.connect(str(state_path))
+        cursor = conn.execute(
+            "SELECT value FROM ItemTable WHERE key = 'codeium.windsurf-windsurf_auth-'"
+        )
+        row = cursor.fetchone()
+        conn.close()
+
+        if row and row[0]:
+            value = row[0].strip()
+            # Validate it looks like a UUID/CSRF token (hex chars and dashes)
+            if re.match(r"^[a-f0-9-]{8,}$", value):
+                logger.debug("[WindsurfAuth] Found CSRF token from state.vscdb")
+                return value
+    except sqlite3.Error as e:
+        logger.debug(f"[WindsurfAuth] Failed to read CSRF from state.vscdb: {e}")
+
+    return None
+
+
+def _get_csrf_token_from_process_env() -> str | None:
+    """Read WINDSURF_CSRF_TOKEN from the running language server process env.
+
+    Newer Windsurf versions (1.9500+) pass the CSRF token via
+    --stdin_initial_metadata at startup.  The language server stores it
+    as the environment variable ``WINDSURF_CSRF_TOKEN``.  Reading it via
+    psutil is the most reliable approach because state.vscdb may contain
+    a stale token from a previous session.
+    """
+    try:
+        import psutil
+    except ImportError:
+        logger.debug("[WindsurfAuth] psutil not available for process env CSRF discovery")
+        return None
+
+    pattern = _get_language_server_pattern()
+
+    for proc in psutil.process_iter(["pid", "name", "cmdline"]):
+        try:
+            name = proc.info.get("name", "") or ""
+            cmdline = proc.info.get("cmdline") or []
+            cmdline_str = " ".join(cmdline)
+
+            # Match the language server process
+            if pattern not in name.lower() and pattern not in cmdline_str.lower():
+                continue
+            if "windsurf" not in cmdline_str.lower() and "codeium" not in cmdline_str.lower():
+                continue
+
+            env = proc.environ()
+            csrf = env.get("WINDSURF_CSRF_TOKEN")
+            if csrf and re.match(r"^[a-f0-9-]{8,}$", csrf):
+                logger.debug(
+                    f"[WindsurfAuth] Found CSRF from process env (PID {proc.pid}): {csrf[:8]}..."
+                )
+                return csrf
+        except (psutil.AccessDenied, psutil.NoSuchProcess, psutil.ZombieProcess):
+            continue
+        except Exception as e:
+            logger.debug(f"[WindsurfAuth] Error reading process env: {e}")
+            continue
+
+    return None
+
+
 def get_csrf_token() -> str:
-    """Extract CSRF token from running Windsurf language server process."""
+    """Extract CSRF token from running Windsurf language server process.
+
+    Discovery order:
+    1. --csrf_token CLI argument (older Windsurf versions)
+    2. Process environment WINDSURF_CSRF_TOKEN (preferred for newer versions)
+    3. state.vscdb 'codeium.windsurf-windsurf_auth-' key (fallback, may be stale)
+    """
     process_info = _get_language_server_process()
+
+    # 1. Try command-line argument (older Windsurf versions)
+    if process_info:
+        match = re.search(r"--csrf_token\s+([a-f0-9-]+)", process_info)
+        if match:
+            return match.group(1)
+
+    # 2. Read from process environment (most reliable for newer versions)
+    csrf = _get_csrf_token_from_process_env()
+    if csrf:
+        return csrf
+
+    # 3. Fallback: read from state.vscdb (may be stale but still useful)
+    csrf = _get_csrf_token_from_state_db()
+    if csrf:
+        logger.debug("[WindsurfAuth] Using state.vscdb CSRF (process env not available)")
+        return csrf
 
     if not process_info:
         raise WindsurfError(
@@ -141,12 +308,8 @@ def get_csrf_token() -> str:
             WindsurfErrorCode.NOT_RUNNING,
         )
 
-    match = re.search(r"--csrf_token\s+([a-f0-9-]+)", process_info)
-    if match:
-        return match.group(1)
-
     raise WindsurfError(
-        "CSRF token not found in Windsurf process arguments.",
+        "CSRF token not found in process arguments, process env, or state.vscdb.",
         WindsurfErrorCode.CSRF_MISSING,
     )
 
@@ -175,18 +338,23 @@ def _extract_extension_port(process_info: str) -> int | None:
 
 def _get_listening_ports(pid: str) -> list[int]:
     """Get listening ports for the given PID using platform-specific tools."""
+    if not pid:
+        return []
+
     try:
         if _SYSTEM == "Windows":
+            # Use errors='replace' to handle Windows locale-specific encodings
             output = subprocess.check_output(
                 ["netstat", "-ano"],
                 encoding="utf-8",
+                errors="replace",
                 timeout=15,
                 stderr=subprocess.DEVNULL,
             )
             # Filter for PID and LISTENING
             port_matches = re.findall(
                 rf":(\d+)\s+\S+\s+LISTENING\s+{pid}",
-                output,
+                output or "",
             )
         else:
             output = subprocess.check_output(
@@ -195,10 +363,10 @@ def _get_listening_ports(pid: str) -> list[int]:
                 timeout=15,
                 stderr=subprocess.DEVNULL,
             )
-            port_matches = re.findall(r":(\d+)\s+\(LISTEN\)", output)
+            port_matches = re.findall(r":(\d+)\s+\(LISTEN\)", output or "")
 
         return [int(p) for p in port_matches]
-    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError):
+    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError, UnicodeDecodeError):
         return []
 
 
@@ -457,10 +625,26 @@ def discover_credentials() -> WindsurfCredentials:
 
 
 def is_windsurf_running() -> bool:
-    """Check if Windsurf is running and accessible."""
+    """Check if Windsurf is running and accessible.
+
+    Checks both the language server process and credential availability
+    (CSRF token from CLI args or state.vscdb, plus a discoverable port).
+    """
     try:
         get_csrf_token()
         get_port()
         return True
-    except WindsurfError:
-        return False
+    except Exception:
+        pass
+
+    # Fallback: process exists even if CSRF/port discovery failed
+    # (e.g. newer Windsurf versions with different argument format)
+    try:
+        process_info = _get_language_server_process()
+        if process_info and _get_csrf_token_from_state_db():
+            logger.debug("[WindsurfAuth] Windsurf detected via process + state.vscdb CSRF")
+            return True
+    except Exception:
+        pass
+
+    return False
