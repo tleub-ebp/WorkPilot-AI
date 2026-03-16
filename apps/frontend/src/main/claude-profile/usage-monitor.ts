@@ -72,6 +72,10 @@ const PROVIDER_USAGE_ENDPOINTS: readonly ProviderUsageEndpoint[] = [
   {
     provider: 'copilot',
     usagePath: '/cli/info'  // Special endpoint for CLI-based providers
+  },
+  {
+    provider: 'windsurf',
+    usagePath: '/api/v1/GetTeamCreditBalance'  // Windsurf/Codeium credit balance API
   }
 ] as const;
 

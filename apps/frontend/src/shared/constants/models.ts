@@ -150,6 +150,14 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
     { value: 'custom-model-3', label: 'Custom Model 3', tier: 'fast' },
     { value: 'custom', label: 'Autre (saisie libre)', tier: 'local', supportsThinking: true },
   ],
+
+  // ---- Windsurf (Codeium) ----
+  windsurf: [
+    { value: 'windsurf-codestral', label: 'Windsurf Codestral', tier: 'flagship' },
+    { value: 'windsurf-sonnet', label: 'Windsurf Sonnet', tier: 'standard' },
+    { value: 'windsurf-haiku', label: 'Windsurf Haiku', tier: 'fast' },
+    { value: 'windsurf-custom', label: 'Windsurf Custom', tier: 'standard' },
+  ],
 };
 
 // Alias for legacy providers listed in provider_api.py
@@ -169,7 +177,7 @@ export function getDefaultModelForProvider(provider: string): string {
 
 /** Returns whether the selected provider supports extended thinking */
 export function providerSupportsThinking(provider: string): boolean {
-  return ['anthropic', 'openai', 'google', 'deepseek', 'mistral', 'ollama', 'copilot', 'custom', 'grok'].includes(provider);
+  return ['anthropic', 'openai', 'google', 'deepseek', 'mistral', 'ollama', 'copilot', 'custom', 'grok', 'windsurf'].includes(provider);
 }
 
 // ============================================
