@@ -32,6 +32,8 @@ import type { AppEmulatorAPI } from './modules/app-emulator-api';
 import { createAppEmulatorAPI } from './modules/app-emulator-api';
 import type { LearningLoopAPI } from './modules/learning-loop-api';
 import { createLearningLoopAPI } from './modules/learning-loop-api';
+import type { MultiRepoAPI } from './modules/multi-repo-api';
+import { createMultiRepoAPI } from './modules/multi-repo-api';
 import { invokeIpc } from './modules/ipc-utils';
 import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
@@ -62,7 +64,8 @@ export interface ElectronAPI extends
   SmartEstimationAPI,
   ContextAwareSnippetsAPI,
   AppEmulatorAPI,
-  LearningLoopAPI {
+  LearningLoopAPI,
+  MultiRepoAPI {
   github: GitHubAPI;
   /** Queue routing API for rate limit recovery */
   queue: QueueAPI;
@@ -108,6 +111,7 @@ export const createElectronAPI = (): ElectronAPI => {
     ...createContextAwareSnippetsAPI(),
     ...createAppEmulatorAPI(),
     ...createLearningLoopAPI(),
+    ...createMultiRepoAPI(),
     github: createGitHubAPI(),
     queue: createQueueAPI(),  // Queue routing for rate limit recovery
     quality: createQualityAPI(),  // Code quality analysis
@@ -171,3 +175,5 @@ export type { SmartEstimationAPI } from './modules/smart-estimation-api';
 export type { ContextAwareSnippetsAPI } from './modules/context-aware-snippets-api';
 export type { VoiceControlAPI } from './modules/voice-control-api';
 export type { AppEmulatorAPI } from './modules/app-emulator-api';
+export type { MultiRepoAPI } from './modules/multi-repo-api';
+export { createMultiRepoAPI } from './modules/multi-repo-api';

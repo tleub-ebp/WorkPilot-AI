@@ -29,3 +29,4 @@ export * from './copilot-oauth-api';
 export * from './mcp-api';
 export * from './natural-language-git-api';
 export * from './quality-api';
+export * from './multi-repo-api';

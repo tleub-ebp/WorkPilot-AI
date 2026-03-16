@@ -51,6 +51,7 @@ import { registerVoiceControlHandlers } from './voice-control-handlers';
 import { registerAppEmulatorHandlers } from './app-emulator-handlers';
 import { registerLearningLoopHandlers } from './learning-loop-handlers';
 import { registerMcpMarketplaceHandlers } from './mcp-marketplace-handlers';
+import { registerMultiRepoHandlers } from './multi-repo-handlers';
 
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from './project-handlers';
@@ -92,6 +93,7 @@ export { registerVoiceControlHandlers } from './voice-control-handlers';
 export { registerAppEmulatorHandlers } from './app-emulator-handlers';
 export { registerLearningLoopHandlers } from './learning-loop-handlers';
 export { registerMcpMarketplaceHandlers } from './mcp-marketplace-handlers';
+export { registerMultiRepoHandlers } from './multi-repo-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -226,6 +228,9 @@ export function setupIpcHandlers(
 
   // MCP Marketplace handlers (catalog, install, builder)
   registerMcpMarketplaceHandlers();
+
+  // Multi-Repo Orchestration handlers
+  registerMultiRepoHandlers(agentManager, getMainWindow);
 
   console.warn('[IPC] All handler modules registered successfully');
 }

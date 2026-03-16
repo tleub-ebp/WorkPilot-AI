@@ -22,5 +22,8 @@ export * from './cli';
 // MCP Marketplace types
 export * from './mcp-marketplace';
 
+// Multi-Repo Orchestration types
+export * from './multi-repo';
+
 // IPC types (must be last to use types from other modules)
 export * from './ipc';
