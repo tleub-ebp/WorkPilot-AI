@@ -1157,6 +1157,10 @@
   "azureDevOps": {
     "enableSyncLabel": "Enable Azure DevOps Sync",
     "enableSyncDescription": "Automatically manage work items from Azure DevOps backlog",
+    "autoSyncLabel": "Auto Sync",
+    "autoSyncDescription": "Automatically sync work items from Azure DevOps",
+    "autoSyncNoteLabel": "Note:",
+    "autoSyncNoteDescription": "Auto sync runs hourly and imports new work items.",
     "orgUrlLabel": "Organization URL",
     "orgUrlDescription": "Your Azure DevOps organization URL (e.g., https://dev.azure.com/your-org)",
     "orgUrlPlaceholder": "https://dev.azure.com/your-org",
