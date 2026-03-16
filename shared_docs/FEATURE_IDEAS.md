@@ -945,7 +945,7 @@ npm test -- --run src/renderer/stores/__tests__/learning-loop-store.test.ts
 
 ## 🚀 Tier S — Game Changers (Avantage concurrentiel fort)
 
-### 8. Arena Mode — Comparaison A/B de Modèles à l'aveugle
+### 9. Arena Mode — Comparaison A/B de Modèles à l'aveugle
 
 **L'Arena Mode de Windsurf mais appliqué à tout le pipeline.** Comparer les modèles IA en aveugle sur des tâches réelles pour trouver le meilleur rapport qualité/prix.
 
@@ -956,7 +956,7 @@ npm test -- --run src/renderer/stores/__tests__/learning-loop-store.test.ts
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Data-driven model selection. Plus de débat "Claude vs GPT". Les données parlent. Feature virale sur les réseaux sociaux (benchmarks réels).
 
-### 9. AI Pair Programming Mode — Vrai travail parallèle coordonné
+### 10. AI Pair Programming Mode — Vrai travail parallèle coordonné
 
 Mode collaboratif temps réel où l'IA code en parallèle du développeur sur le même worktree.
 
@@ -1168,7 +1168,7 @@ npm test -- --run src/renderer/stores/__tests__/mcp-marketplace-store.test.ts
 
 </details>
 
-### 11. Cost Intelligence Engine
+### 12. Cost Intelligence Engine
 
 Routage intelligent entre modèles selon la complexité + tracking granulaire des coûts par agent/phase/spec.
 
@@ -1789,7 +1789,7 @@ Gardien automatique de l'architecture — détecte et bloque les violations arch
 
 ## 🔧 Tier B — Solid Value (Améliorations significatives du quotidien)
 
-### 19. Built-in Browser Agent — Test visuel sans quitter WorkPilot
+### 20. Built-in Browser Agent — Test visuel sans quitter WorkPilot
 
 **L'arme secrète d'Antigravity, mais intégrée dans WorkPilot.** Un navigateur intégré que les agents peuvent utiliser pour tester, scraper et valider visuellement.
 
@@ -1800,7 +1800,7 @@ Gardien automatique de l'architecture — détecte et bloque les violations arch
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Différenciateur fort. Les bugs visuels sont détectés avant le merge. L'App Emulator existant est la fondation parfaite.
 
-### 20. Steering Files — Convention Enforcement Intelligent
+### 21. Steering Files — Convention Enforcement Intelligent
 
 **Les "Steering Files" de Kiro mais alimentées par le Learning Loop.** Fichiers de convention projet qui évoluent automatiquement.
 
@@ -1811,7 +1811,7 @@ Gardien automatique de l'architecture — détecte et bloque les violations arch
 - **Effort :** Faible
 - **Pourquoi c'est banger :** Quick win énorme. Résout le problème #1 des devs avec l'IA : "l'IA ne respecte pas mes conventions". Et ici, les conventions s'améliorent toutes seules.
 
-### 21. Live Code Review AI
+### 22. Live Code Review AI
 
 Review en temps réel pendant que le dev code, pas après.
 
@@ -1821,7 +1821,7 @@ Review en temps réel pendant que le dev code, pas après.
 - **Pourquoi c'est banger :** Shift-left ultime. Les problèmes sont détectés à l'écriture, pas à la review.
 
 <details>
-<summary>### 22. App Emulator ✅ Implémenté</summary>
+<summary>### 23. App Emulator ✅ Implémenté</summary>
 
 Lancement et émulation de l'application directement depuis l'interface Kanban pour visualiser le rendu des tâches complétées.
 
@@ -2143,7 +2143,7 @@ L'agent fournit des métriques détaillées :
 
 </details>
 
-### 24. Pipeline Generator
+### 25. Pipeline Generator
 
 Génération automatique de CI/CD complète adaptée au projet.
 - **Exploite :** Project analysis, context system
@@ -2451,17 +2451,17 @@ npm test -- --run src/renderer/components/context-aware-snippets/__tests__/Conte
 
 </details>
 
-### 28. Spec Templates Library
+### 29. Spec Templates Library
 
 Templates de spec réutilisables par domaine pour accélérer la création de tâches récurrentes.
 
-### 27. Context-Aware Snippets 
+### 30. Context-Aware Snippets 
 - **Principe :** Bibliothèque de templates de spec pour les patterns courants : CRUD API, authentification, dashboard, formulaire, migration DB, refactoring, intégration tierce. Chaque template pré-remplit les sections du spec (requirements, fichiers impactés, critères QA) et s'adapte au contexte du projet. Les utilisateurs peuvent créer et partager leurs propres templates.
 - **Exploite :** Spec pipeline, context system, project analysis
 - **Effort :** Faible
 - **Pourquoi c'est banger :** Quick win énorme. Les specs récurrentes passent de 5 minutes à 30 secondes. Réduit la friction d'adoption.
 
-### 29. Dependency Graph Intelligence
+### 31. Dependency Graph Intelligence
 
 Analyse des dépendances inter-fichiers et inter-modules pour un contexte agent drastiquement amélioré.
 
@@ -2470,7 +2470,7 @@ Analyse des dépendances inter-fichiers et inter-modules pour un contexte agent 
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Le contexte agent passe de "recherche par mots-clés" à "compréhension structurelle". Les agents produisent du code qui s'intègre mieux car ils voient les relations réelles.
 
-### 30. QA Security Scanner
+### 32. QA Security Scanner
 
 Intégration de scans de sécurité SAST/DAST dans le pipeline QA pour chaque build.
 
@@ -2479,7 +2479,7 @@ Intégration de scans de sécurité SAST/DAST dans le pipeline QA pour chaque bu
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La sécurité n'est plus une afterthought. Chaque build est scanné automatiquement. Argument imparable pour les clients enterprise.
 
-### 31. Agent Decision Logger
+### 33. Agent Decision Logger
 
 Journal structuré léger des décisions de chaque agent — version simplifiée d'Agent Replay.
 
@@ -2492,7 +2492,7 @@ Journal structuré léger des décisions de chaque agent — version simplifiée
 
 ## 💡 Tier C — Nice to Have (Vision long terme)
 
-### 32. Team Knowledge Sync
+### 34. Team Knowledge Sync
 
 Memory System partagé entre tous les membres de l'équipe.
 
@@ -2501,7 +2501,7 @@ Memory System partagé entre tous les membres de l'équipe.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** L'expérience collective capitalise automatiquement. Onboarding d'un nouveau dev en quelques minutes.
 
-### 33. Environment Cloner
+### 35. Environment Cloner
 
 Reproduction d'environnements prod/staging en local pour debug.
 
@@ -2510,7 +2510,7 @@ Reproduction d'environnements prod/staging en local pour debug.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** "Ça marche en local mais pas en prod" disparaît.
 
-### 34. Architecture Visualizer
+### 36. Architecture Visualizer
 
 Génération automatique de diagrammes d'architecture depuis le code.
 
@@ -2519,7 +2519,7 @@ Génération automatique de diagrammes d'architecture depuis le code.
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La doc d'archi se génère et se maintient toute seule.
 
-### 35. Code Migration Agent
+### 37. Code Migration Agent
 
 Migration automatique entre frameworks, versions majeures ou langages.
 
@@ -2528,7 +2528,7 @@ Migration automatique entre frameworks, versions majeures ou langages.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Les migrations sont le cauchemar de tout dev. L'automatiser est un selling point énorme.
 
-### 36. Performance Profiler Agent
+### 38. Performance Profiler Agent
 
 Agent qui profile le code, identifie les bottlenecks et propose des optimisations.
 
@@ -2537,7 +2537,7 @@ Agent qui profile le code, identifie les bottlenecks et propose des optimisation
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** L'app s'optimise toute seule. Plus besoin d'experts perf.
 
-### 37. Documentation Agent
+### 39. Documentation Agent
 
 Génération et maintenance automatique de la documentation technique.
 
@@ -2546,7 +2546,7 @@ Génération et maintenance automatique de la documentation technique.
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La doc n'est plus jamais outdated.
 
-### 38. Plugin Marketplace
+### 40. Plugin Marketplace
 
 Écosystème de plugins communautaires pour étendre WorkPilot.
 
@@ -2556,7 +2556,7 @@ Génération et maintenance automatique de la documentation technique.
 - **Pourquoi c'est banger :** Effet réseau. La communauté étend le produit. Verrouille les utilisateurs dans l'écosystème.
 
 <details>
-<summary>### 39. Voice Control ✅ Implémenté</summary>
+<summary>### 41. Voice Control ✅ Implémenté</summary>
 
 Contrôler WorkPilot à la voix : décrire des tâches, naviguer dans l'UI, commander des builds.
 
@@ -2887,7 +2887,7 @@ Le Code Playground supporte :
 - **Anglais** : Support natif complet
 - **Code** : Support universel des langages de programmation
 
-### 41. Cross-Language Translation
+### 43. Cross-Language Translation
 
 Traduire du code entre langages tout en préservant la logique et les patterns idiomatiques.
 
@@ -2896,7 +2896,7 @@ Traduire du code entre langages tout en préservant la logique et les patterns i
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Les migrations de stack deviennent triviales.
 
-### 42. Spec Approval Workflow
+### 44. Spec Approval Workflow
 
 Circuit de validation collaborative des specs avant implémentation — peer review pour les specs.
 
@@ -2905,7 +2905,7 @@ Circuit de validation collaborative des specs avant implémentation — peer rev
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Gouvernance légère mais efficace. Les specs critiques ne passent plus sans review humaine. Essential pour les équipes.
 
-### 43. Memory Lifecycle Manager
+### 45. Memory Lifecycle Manager
 
 Gestion intelligente du cycle de vie de la mémoire Graphiti — pruning automatique, politiques de rétention, contrôle de la fraîcheur.
 
@@ -2914,7 +2914,7 @@ Gestion intelligente du cycle de vie de la mémoire Graphiti — pruning automat
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Sans pruning, la mémoire devient bruitée et dégrade la qualité des agents. Un système de rétention intelligent garde la mémoire utile et pertinente.
 
-### 44. CI/CD Deployment Triggers
+### 46. CI/CD Deployment Triggers
 
 Déclenchement automatique de pipelines CI/CD après la création d'une PR par un agent.
 
@@ -2923,7 +2923,7 @@ Déclenchement automatique de pipelines CI/CD après la création d'une PR par u
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La boucle spec → code → test → deploy est complète. Du "j'ai une idée" à "c'est en preview" sans intervention.
 
-### 45. Intelligent Context Caching ✅
+### 47. Intelligent Context Caching ✅
 
 <details>
 <summary>
