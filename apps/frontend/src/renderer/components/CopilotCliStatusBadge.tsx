@@ -190,6 +190,9 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
   // Helper function for delay
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+  // Update command for GitHub Copilot CLI
+  const COPILOT_UPDATE_COMMAND = "# Update GitHub Copilot CLI based on installation method\necho 'Checking installation method...'\nif command -v npm &> /dev/null && npm list -g @github/copilot &> /dev/null; then\n  echo 'Updating via npm...'\n  npm update -g @github/copilot\nelif command -v brew &> /dev/null && brew list copilot-cli &> /dev/null; then\n  echo 'Updating via Homebrew...'\n  brew upgrade copilot-cli\nelif command -v winget &> /dev/null; then\n  echo 'Updating via WinGet...'\n  winget upgrade GitHub.Copilot\nelse\n  echo 'Installing via script...'\n  curl -fsSL https://gh.io/copilot-install | bash\nfi\n";
+
   // Helper function to send terminal commands with delays
   const sendTerminalCommandsWithDelay = async (terminalId: string, commands: Array<{cmd: string; delay: number}>) => {
     if (!globalThis.electronAPI?.sendTerminalInput) return;
@@ -204,11 +207,8 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
   const executeTerminalInstallation = async (terminalId: string, isUpdate: boolean) => {
     const commands = [
       { cmd: "clear\n", delay: 0 },
-      { cmd: "echo 'Installing Copilot CLI extension...'\n", delay: 50 },
-      { 
-        cmd: isUpdate ? "gh extension upgrade gh-copilot\n" : "gh extension install github/gh-copilot\n", 
-        delay: 50 
-      }
+      { cmd: "echo 'Updating GitHub Copilot CLI...'\n", delay: 50 },
+      { cmd: COPILOT_UPDATE_COMMAND, delay: 50 }
     ];
     
     await sendTerminalCommandsWithDelay(terminalId, commands);
@@ -661,9 +661,9 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
       <AlertDialog open={showInstallWarning} onOpenChange={setShowInstallWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("copilot:updateCopilotCli", "Update Copilot CLI?")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("copilot:updateCopilotCli", "Update GitHub Copilot CLI?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("copilot:updateDescription", "This will upgrade the gh-copilot extension. A new terminal will open in the \"Terminaux Agent\" page to run the upgrade command.")}
+              {t("copilot:updateDescription", "This will update the GitHub Copilot CLI tool. A new terminal will open in the \"Terminaux Agent\" page to run the update command.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
