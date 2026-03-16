@@ -2,7 +2,7 @@
   "wizard": {
     "title": "Assistant de configuration",
     "description": "Configurez votre environnement WorkPilot AI en quelques étapes simples",
-    "helpText": "Cet assistant vous aidera à configurer votre environnement en quelques étapes. Vous pouvez configurer votre token OAuth Claude, activer les fonctionnalités de mémoire et créer votre première tâche."
+    "helpText": "Cet assistant vous aidera à configurer votre environnement en quelques étapes. Vous pouvez configurer vos tokens de fournisseur IA, activer les fonctionnalités de mémoire et créer votre première tâche."
   },
   "welcome": {
     "title": "Bienvenue sur WorkPilot AI",
@@ -12,7 +12,7 @@
     "features": {
       "aiPowered": {
         "title": "Développement assisté par IA",
-        "description": "Générez du code et construisez des fonctionnalités avec les agents Claude Code"
+        "description": "Générez du code et construisez des fonctionnalités avec des agents IA"
       },
       "specDriven": {
         "title": "Workflow basé sur les specs",
@@ -29,11 +29,11 @@
     }
   },
   "oauth": {
-    "title": "Authentification Claude",
-    "description": "Connectez votre compte Claude pour activer les fonctionnalités IA",
-    "configureTitle": "Configurer l'authentification Claude",
-    "addAccountsDesc": "Ajoutez vos comptes Claude pour activer les fonctionnalités IA",
-    "multiAccountInfo": "Ajoutez plusieurs abonnements Claude pour basculer automatiquement entre eux lorsque vous atteignez les limites.",
+    "title": "Authentification IA",
+    "description": "Connectez votre compte de fournisseur IA pour activer les fonctionnalités IA",
+    "configureTitle": "Configurer l'authentification IA",
+    "addAccountsDesc": "Ajoutez vos comptes de fournisseur IA pour activer les fonctionnalités IA",
+    "multiAccountInfo": "Ajoutez plusieurs abonnements de fournisseurs IA pour basculer automatiquement entre eux lorsque vous atteignez les limites.",
     "noAccountsYet": "Aucun compte configuré",
     "badges": {
       "default": "Par défaut",
@@ -157,7 +157,7 @@
     "welcome": "Bienvenue",
     "authChoice": "Méthode d'auth",
     "auth": "Auth",
-    "claudeCode": "CLI",
+    "cli": "CLI",
     "devtools": "Outils dev",
     "privacy": "Confidentialité",
     "memory": "Mémoire",
@@ -184,13 +184,13 @@
       "description": "Aidez-nous à identifier et corriger les problèmes"
     }
   },
-  "claudeCode": {
-    "title": "Claude Code CLI",
-    "description": "Installez ou mettez à jour le CLI Claude Code pour activer les fonctionnalités IA",
-    "detecting": "Vérification de l'installation de Claude Code...",
+  "cli": {
+    "title": "CLI IA",
+    "description": "Installez ou mettez à jour le CLI IA pour activer les fonctionnalités IA",
+    "detecting": "Vérification de l'installation du CLI IA...",
     "info": {
-      "title": "Qu'est-ce que Claude Code ?",
-      "description": "Claude Code est le CLI officiel d'Anthropic qui alimente les fonctionnalités IA d'WorkPilot AI. Il fournit une authentification sécurisée et un accès direct aux modèles Claude."
+      "title": "Qu'est-ce que le CLI IA ?",
+      "description": "Le CLI IA est l'interface officielle qui alimente les fonctionnalités IA d'WorkPilot AI. Il fournit une authentification sécurisée et un accès direct aux modèles IA."
     },
     "status": {
       "installed": "Installé",
@@ -202,13 +202,13 @@
       "latest": "Dernière version"
     },
     "install": {
-      "button": "Installer Claude Code",
-      "updating": "Mettre à jour Claude Code",
+      "button": "Installer le CLI IA",
+      "updating": "Mettre à jour le CLI IA",
       "inProgress": "Installation...",
       "success": "Commande d'installation envoyée au terminal. Veuillez terminer l'installation là-bas.",
       "instructions": "L'installateur s'ouvrira dans votre terminal. Suivez les instructions pour terminer l'installation."
     },
-    "learnMore": "En savoir plus sur Claude Code"
+    "learnMore": "En savoir plus sur le CLI IA"
   },
   "devtools": {
     "title": "Outils de développement",

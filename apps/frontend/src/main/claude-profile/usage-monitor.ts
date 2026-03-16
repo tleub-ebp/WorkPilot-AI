@@ -1290,7 +1290,7 @@ export class UsageMonitor extends EventEmitter {
       const selectedProvider = appSettings?.selectedProvider as string | undefined;
       const globalWindsurfKey = appSettings?.globalWindsurfApiKey as string | undefined;
 
-      if (selectedProvider === 'windsurf' || (globalWindsurfKey && globalWindsurfKey.trim())) {
+      if (selectedProvider === 'windsurf' || globalWindsurfKey?.trim()) {
         const reason = selectedProvider === 'windsurf'
           ? 'settings.selectedProvider'
           : 'settings.globalWindsurfApiKey present';
@@ -1305,7 +1305,7 @@ export class UsageMonitor extends EventEmitter {
           try {
             const { writeSettingsFile } = await import('../settings-utils');
             appSettings.selectedProvider = 'windsurf';
-            writeSettingsFile(appSettings as Record<string, unknown>);
+            writeSettingsFile(appSettings);
             this.debugLog('[UsageMonitor] Auto-persisted selectedProvider=windsurf from globalWindsurfApiKey');
           } catch (e) {
             this.debugLog('[UsageMonitor] Failed to auto-persist selectedProvider:', e);
@@ -1747,6 +1747,7 @@ export class UsageMonitor extends EventEmitter {
     // Return a recently fetched result instead of hitting the API again.
     const cacheKey = profileId;
     const cached = this.apiResultCache.get(cacheKey);
+    
     if (cached && (Date.now() - cached.fetchedAt) < UsageMonitor.API_RESULT_CACHE_TTL_MS) {
       this.debugLog('[UsageMonitor:API_FETCH] Returning cached result for ' + profileId + ' (age: ' + Math.round((Date.now() - cached.fetchedAt) / 1000) + 's)');
       return cached.snapshot;
@@ -1798,6 +1799,17 @@ export class UsageMonitor extends EventEmitter {
         isAPIProfile,
         profileId
       });
+
+      // ── Cache check with provider-specific TTL ───────────────────────────────
+      // For Windsurf, use much shorter cache since data comes from local IDE cache (instant)
+      // For other providers, use standard 15s cache to avoid API rate limits
+      if (cached) {
+        const cacheTTL = provider === 'windsurf' ? 1000 : UsageMonitor.API_RESULT_CACHE_TTL_MS; // 1s for Windsurf, 15s for others
+        if (Date.now() - cached.fetchedAt < cacheTTL) {
+          this.debugLog('[UsageMonitor:API_FETCH] Returning cached result for ' + profileId + ' (age: ' + Math.round((Date.now() - cached.fetchedAt) / 1000) + 's, provider: ' + provider + ')');
+          return cached.snapshot;
+        }
+      }
 
       // Step 3: Handle API providers via our FastAPI backend (OpenAI, Copilot)
       if (provider === 'openai' || provider === 'copilot') {
@@ -2217,23 +2229,19 @@ export class UsageMonitor extends EventEmitter {
     }
 
     return {
-      sessionPercent,
-      weeklyPercent,
-      sessionResetTime: undefined,
-      weeklyResetTime: undefined,
-      sessionResetTimestamp: data.billingCycleEnd,
-      weeklyResetTimestamp: data.billingCycleEnd,
       profileId,
       profileName,
       profileEmail,
-      providerName: 'windsurf',
+      sessionPercent,
+      weeklyPercent,
+      sessionResetTimestamp: data.billingCycleEnd ? new Date(data.billingCycleEnd).toISOString() : undefined,
+      weeklyResetTimestamp: data.billingCycleEnd ? new Date(data.billingCycleEnd).toISOString() : undefined,
       fetchedAt: new Date(),
-      limitType: 'session',
+      limitType: weeklyPercent > sessionPercent ? 'weekly' : 'session',
       usageWindows: {
-        sessionWindowLabel: 'common:usage.windowCredits',
-        weeklyWindowLabel: 'common:usage.windowBillingCycle'
+        sessionWindowLabel: 'common:usage.windowCredits',     // "Crédits utilisés"
+        weeklyWindowLabel: 'common:usage.windowBillingCycle'  // "Cycle de facturation"
       },
-      // Store raw credit data for detailed display
       windsurfCredits: {
         totalCredits,
         usedCredits,
@@ -3182,21 +3190,28 @@ export class UsageMonitor extends EventEmitter {
           const rawMsgs = cached.planInfo.usage;
           const scl = (rawMsgs.messages >= 1000 && rawMsgs.messages % 100 === 0) ? 100 : 1;
           this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — using local IDE cached plan info', {
-            planName: cached.planInfo.planName,
-            userName: cached.userName,
-            messagesRaw: `${rawMsgs.usedMessages}/${rawMsgs.messages}`,
-            creditsDisplay: `${Math.round(rawMsgs.usedMessages / scl)}/${Math.round(rawMsgs.messages / scl)}`,
-            usagePercent: rawMsgs.messages > 0 ? `${Math.round((rawMsgs.usedMessages / rawMsgs.messages) * 100)}%` : 'N/A',
-            flowActions: `${rawMsgs.usedFlowActions}/${rawMsgs.flowActions}`,
-            isStale: cached.planInfo.isStale ?? false,
-            billingStart: new Date(cached.planInfo.startTimestamp).toISOString(),
-            billingEnd: new Date(cached.planInfo.endTimestamp).toISOString(),
-          });
-          return this.normalizeWindsurfCachedPlanInfo(
-            cached.planInfo,
-            'windsurf-local',
-            cached.userName ? `Windsurf (${cached.userName})` : 'Windsurf (Codeium)',
-          );
+           planName: cached.planInfo.planName,
+           userName: cached.userName,
+           messagesRaw: `${rawMsgs.usedMessages}/${rawMsgs.messages}`,
+           creditsDisplay: `${Math.round(rawMsgs.usedMessages / scl)}/${Math.round(rawMsgs.messages / scl)}`,
+           usagePercent: rawMsgs.messages > 0 ? `${Math.round((rawMsgs.usedMessages / rawMsgs.messages) * 100)}%` : 'N/A',
+           flowActions: `${rawMsgs.usedFlowActions}/${rawMsgs.flowActions}`,
+           isStale: cached.planInfo.isStale ?? false,
+           billingStart: new Date(cached.planInfo.startTimestamp).toISOString(),
+           billingEnd: new Date(cached.planInfo.endTimestamp).toISOString(),
+         });
+         const result = this.normalizeWindsurfCachedPlanInfo(
+           cached.planInfo,
+           'windsurf-local',
+           cached.userName ? `Windsurf (${cached.userName})` : 'Windsurf (Codeium)',
+         );
+         this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf normalized result:', {
+           sessionPercent: result.sessionPercent,
+           weeklyPercent: result.weeklyPercent,
+           usageWindows: result.usageWindows,
+           windsurfCredits: result.windsurfCredits
+         });
+         return result;
         }
         this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — local IDE cache unavailable:', cached.error);
       } catch (e) {
