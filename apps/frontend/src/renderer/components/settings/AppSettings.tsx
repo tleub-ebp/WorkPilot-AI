@@ -13,7 +13,6 @@ import {
   Zap,
   Github,
   Database,
-  Sparkles,
   Monitor,
   Globe,
   Code,
@@ -21,11 +20,12 @@ import {
   Terminal,
   Users,
   Cloud,
-  RefreshCw,
   Shield,
   ShieldAlert,
   Router,
-  CalendarClock
+  CalendarClock,
+  Sparkles,
+  ChevronRight
 } from 'lucide-react';
 import {
   FullScreenDialog,
@@ -48,94 +48,165 @@ import { AdvancedSettings } from './AdvancedSettings';
 import { DevToolsSettings } from './DevToolsSettings';
 import { DebugSettings } from './DebugSettings';
 import { TerminalFontSettings } from '@/components/settings/terminal-font-settings';
-import { ProjectSelector } from './ProjectSelector';
-import { ProjectSettingsContent, ProjectSettingsSection } from './ProjectSettingsContent';
+import { ProjectSettingsContent } from './ProjectSettingsContent';
 import { useProjectStore } from '@/stores/project-store';
 import type { UseProjectSettingsReturn } from '@/components/project-settings';
 import { CleanProviderSection } from './CleanProviderSection';
-import { GlobalAutoSwitching } from './GlobalAutoSwitching';
-import { getAllConnectors } from './multiconnector/utils';
-import { SettingsSection } from './SettingsSection';
 import { SandboxSettings } from './SandboxSettings';
 import { AnomalyDetectionSettings } from './AnomalyDetectionSettings';
 import { LlmRouterSettings } from './LlmRouterSettings';
 import { SchedulerSettings } from './SchedulerSettings';
 
 // GitLab icon component (lucide-react doesn't have one)
-function GitLabIcon({ className }: { className?: string }) {
+function GitLabIcon({ className }: { readonly className?: string }) {
   return (
-      <svg className={className} viewBox="0 0 24 24" fill="currentColor" role="img" aria-labelledby="gitlab-icon-title">
-        <title id="gitlab-icon-title">GitLab</title>
-        <path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 4.82 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0 1 18.6 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.51L23 13.45a.84.84 0 0 1-.35.94z"/>
-      </svg>
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-label="GitLab">
+      <title>GitLab</title>
+      <path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 4.82 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0 1 18.6 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.51L23 13.45a.84.84 0 0 1-.35.94z"/>
+    </svg>
   );
 }
 
 // Jira icon component (lucide-react doesn't include one)
-function JiraIcon({ className }: { className?: string }) {
+function JiraIcon({ className }: { readonly className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" role="img" aria-labelledby="jira-icon-title">
-      <title id="jira-icon-title">Jira</title>
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-label="Jira">
+      <title>Jira</title>
       <path d="M11.53 2c0 2.4 1.97 4.35 4.35 4.35h1.78v1.7c0 2.4 1.94 4.34 4.34 4.35V2.84a.84.84 0 0 0-.84-.84h-9.63zM6.77 6.8a4.36 4.36 0 0 0 4.34 4.34h1.8v1.72a4.36 4.36 0 0 0 4.34 4.34V7.63a.84.84 0 0 0-.83-.83H6.77zM2 11.6a4.35 4.35 0 0 0 4.34 4.34h1.8v1.72a4.35 4.35 0 0 0 4.34 4.34v-9.57a.84.84 0 0 0-.84-.84H2z"/>
     </svg>
   );
 }
 
 interface AppSettingsDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  initialSection?: AppSection;
-  initialProjectSection?: ProjectSettingsSection;
-  initialProjectId?: string; // <-- Ajouté
-  onRerunWizard?: () => void;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly initialSection?: AppSection;
+  readonly initialProjectSection?: ProjectSettingsSection;
+  readonly initialProjectId?: string;
+  readonly onRerunWizard?: () => void;
 }
 
-// App-level settings sections
-export type AppSection = 'appearance' | 'display' | 'language' | 'devtools' | 'terminal-fonts' | 'agent' | 'paths' | 'integrations' | 'accounts' | 'api-profiles' | 'updates' | 'notifications' | 'debug' | 'sandbox' | 'anomaly-detection' | 'llm-router' | 'scheduler';
+// Types de sections thématiques
+export type AppSection = 
+  // Projet (priorité 1)
+  | 'project'
+  // Intégrations & Connexions (priorité 2)  
+  | 'integrations' | 'accounts'
+  // Interface & Apparence
+  | 'appearance' | 'display' | 'language' | 'terminal-fonts'
+  // Développement & Outils
+  | 'devtools' | 'paths' | 'agent'
+  // Sécurité & Performance
+  | 'sandbox' | 'anomaly-detection' | 'memory'
+  // Système & Maintenance
+  | 'updates' | 'notifications' | 'debug' | 'scheduler' | 'llm-router';
 
-interface NavItemConfig<T extends string> {
-  id: T;
-  icon: React.ElementType;
-}
+export type ProjectSettingsSection = 'general' | 'azure-devops' | 'jira' | 'github' | 'gitlab' | 'linear' | 'memory';
 
-const appNavItemsConfig: NavItemConfig<AppSection>[] = [
-  { id: 'appearance', icon: Palette },
-  { id: 'display', icon: Monitor },
-  { id: 'language', icon: Globe },
-  { id: 'devtools', icon: Code },
-  { id: 'terminal-fonts', icon: Terminal },
-  { id: 'agent', icon: Bot },
-  { id: 'paths', icon: FolderOpen },
-  { id: 'accounts', icon: Users },
-  { id: 'updates', icon: Package },
-  { id: 'notifications', icon: Bell },
-  { id: 'debug', icon: Bug },
-  { id: 'sandbox', icon: Shield },
-  { id: 'anomaly-detection', icon: ShieldAlert },
-  { id: 'llm-router', icon: Router },
-  { id: 'scheduler', icon: CalendarClock }
-];
+export type SettingsTheme = 
+  | 'project'           // Projet
+  | 'integrations'      // Intégrations & Connexions
+  | 'interface'         // Interface & Apparence
+  | 'development'       // Développement & Outils
+  | 'security'          // Sécurité & Performance
+  | 'system';           // Système & Maintenance
 
-const projectNavItemsConfig: NavItemConfig<ProjectSettingsSection>[] = [
-  { id: 'general', icon: Settings2 },
-  { id: 'linear', icon: Zap },
-  { id: 'github', icon: Github },
-  { id: 'gitlab', icon: GitLabIcon },
-  { id: 'azure-devops', icon: Cloud },
-  { id: 'jira', icon: JiraIcon },
-  { id: 'memory', icon: Database }
-];
+// Configuration des thèmes de paramètres avec leurs sections
+const SETTINGS_THEMES: Record<SettingsTheme, { 
+  title: string; 
+  icon: React.ElementType; 
+  color: string;
+  sections: Array<{ id: string; icon: React.ElementType; label: string; type: 'app' | 'project' }>;
+  description: string;
+  priority: number;
+}> = {
+  project: {
+    title: 'Projet',
+    icon: Settings2,
+    color: 'text-blue-600',
+    sections: [
+      { id: 'general', icon: Settings2, label: 'Général', type: 'project' }
+    ],
+    description: 'Configuration du projet actuel',
+    priority: 1
+  },
+  integrations: {
+    title: 'Intégrations & Connexions',
+    icon: Users,
+    color: 'text-purple-600',
+    sections: [
+      { id: 'accounts', icon: Users, label: 'Comptes IA', type: 'app' },
+      { id: 'azure-devops', icon: Cloud, label: 'Azure DevOps', type: 'project' },
+      { id: 'jira', icon: JiraIcon, label: 'Jira', type: 'project' },
+      { id: 'github', icon: Github, label: 'GitHub', type: 'project' },
+      { id: 'gitlab', icon: GitLabIcon, label: 'GitLab', type: 'project' },
+      { id: 'linear', icon: Zap, label: 'Linear', type: 'project' }
+    ],
+    description: 'Comptes IA et intégrations externes',
+    priority: 2
+  },
+  interface: {
+    title: 'Interface & Apparence',
+    icon: Palette,
+    color: 'text-pink-600',
+    sections: [
+      { id: 'appearance', icon: Palette, label: 'Apparence', type: 'app' },
+      { id: 'display', icon: Monitor, label: 'Affichage', type: 'app' },
+      { id: 'language', icon: Globe, label: 'Langue', type: 'app' },
+      { id: 'terminal-fonts', icon: Terminal, label: 'Polices terminal', type: 'app' }
+    ],
+    description: 'Personnalisation de l\'interface',
+    priority: 3
+  },
+  development: {
+    title: 'Développement & Outils',
+    icon: Code,
+    color: 'text-green-600',
+    sections: [
+      { id: 'devtools', icon: Code, label: 'Outils de développement', type: 'app' },
+      { id: 'paths', icon: FolderOpen, label: 'Chemins', type: 'app' },
+      { id: 'agent', icon: Bot, label: 'Agent', type: 'app' }
+    ],
+    description: 'Outils de développement et configuration',
+    priority: 4
+  },
+  security: {
+    title: 'Sécurité & Performance',
+    icon: Shield,
+    color: 'text-orange-600',
+    sections: [
+      { id: 'sandbox', icon: Shield, label: 'Sandbox', type: 'app' },
+      { id: 'anomaly-detection', icon: ShieldAlert, label: 'Détection anomalies', type: 'app' },
+      { id: 'memory', icon: Database, label: 'Mémoire', type: 'project' }
+    ],
+    description: 'Sécurité et performance du système',
+    priority: 5
+  },
+  system: {
+    title: 'Système & Maintenance',
+    icon: Package,
+    color: 'text-gray-600',
+    sections: [
+      { id: 'updates', icon: Package, label: 'Mises à jour', type: 'app' },
+      { id: 'notifications', icon: Bell, label: 'Notifications', type: 'app' },
+      { id: 'debug', icon: Bug, label: 'Debug', type: 'app' },
+      { id: 'scheduler', icon: CalendarClock, label: 'Planification', type: 'app' },
+      { id: 'llm-router', icon: Router, label: 'Routage LLM', type: 'app' }
+    ],
+    description: 'Maintenance et système',
+    priority: 6
+  }
+};
 
 /**
  * Main application settings dialog container
  * Coordinates app and project settings sections
  */
-export function AppSettingsDialog({ open, onOpenChange, initialSection, initialProjectSection, initialProjectId, onRerunWizard, debugOpen }: AppSettingsDialogProps & { debugOpen?: boolean }) {
+export function AppSettingsDialog(props: AppSettingsDialogProps) {
+  const { open, onOpenChange, initialSection, initialProjectSection, initialProjectId, onRerunWizard } = props;
   const { t } = useTranslation('settings');
   const { settings, setSettings, isSaving, error, saveSettings, revertTheme, commitTheme } = useSettings();
   const [version, setVersion] = useState<string>('');
-  const [connectors, setConnectors] = useState<Array<{ id: string, label: string }>>([]);
-  const [isLoadingConnectors, setIsLoadingConnectors] = useState<boolean>(true);
 
   // Project state (déclaré avant tout usage)
   const projects = useProjectStore((state) => state.projects);
@@ -147,11 +218,26 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
   const [activeTopLevel, setActiveTopLevel] = useState<'app' | 'project'>('app');
   const [appSection, setAppSection] = useState<AppSection>(initialSection || 'appearance');
   const [projectSection, setProjectSection] = useState<ProjectSettingsSection>('general');
+  const [isNavigationCollapsed, setIsNavigationCollapsed] = useState(false);
+  const [collapsedThemes, setCollapsedThemes] = useState<Set<SettingsTheme>>(new Set());
 
   // Function to navigate to accounts section
   const handleOpenAccountsSettings = () => {
     setActiveTopLevel('app');
     setAppSection('accounts');
+  };
+
+  // Function to toggle theme collapse
+  const toggleThemeCollapse = (themeKey: SettingsTheme) => {
+    setCollapsedThemes(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(themeKey)) {
+        newSet.delete(themeKey);
+      } else {
+        newSet.add(themeKey);
+      }
+      return newSet;
+    });
   };
 
   // Navigate to the initial section when dialog opens with a specific section
@@ -188,7 +274,7 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
 
   // Load app version on mount
   useEffect(() => {
-    window.electronAPI.getAppVersion().then(setVersion);
+    globalThis.electronAPI.getAppVersion().then(setVersion);
   }, []);
 
   // Memoize the callback to avoid infinite loops
@@ -199,24 +285,6 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
     } else {
       setProjectError(null);
     }
-  }, []);
-
-  // Load connectors on mount
-  useEffect(() => {
-    const loadConnectors = async () => {
-      setIsLoadingConnectors(true);
-      try {
-        const connectors = await getAllConnectors();
-        setConnectors(connectors);
-      } catch (error) {
-        // Fallback: set empty array to prevent infinite loading
-        setConnectors([]);
-      } finally {
-        setIsLoadingConnectors(false);
-      }
-    };
-    
-    loadConnectors();
   }, []);
 
   const handleSave = async () => {
@@ -243,10 +311,6 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
   const handleCancel = () => {
     // onOpenChange handler will revert theme changes
     onOpenChange(false);
-  };
-
-  const handleProjectChange = (projectId: string | null) => {
-    selectProject(projectId);
   };
 
   const renderAppSection = () => {
@@ -303,9 +367,6 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
     );
   };
 
-  // Determine if project nav items should be disabled
-  const projectNavDisabled = !selectedProjectId;
-
   // Correction : on force le dialog à s'ouvrir si forceDialogOpen est true
   const dialogOpen = typeof open === 'boolean' ? open : false;
 
@@ -329,120 +390,178 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
         <FullScreenDialogBody>
           <div className="flex h-full">
             {/* Navigation sidebar */}
-            <nav className="w-80 border-r border-border bg-muted/30 p-4">
+            <nav className={cn(
+              'border-r border-border bg-muted/30 transition-all duration-300',
+              isNavigationCollapsed ? 'w-16 p-2' : 'w-80 p-4'
+            )}>
               <ScrollArea className="h-full">
-                <div className="space-y-6">
-                  {/* APPLICATION Section */}
-                  <div>
-                    <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      {t('tabs.app')}
-                    </h3>
-                    <div className="space-y-1">
-                      {appNavItemsConfig.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = activeTopLevel === 'app' && appSection === item.id;
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => {
-                              setActiveTopLevel('app');
-                              setAppSection(item.id);
-                            }}
-                            className={cn(
-                              'w-full flex items-start gap-3 p-3 rounded-lg text-left transition-all',
-                              isActive
-                                ? 'bg-accent text-accent-foreground'
-                                : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
-                            )}
-                          >
-                            <Icon className="h-5 w-5 mt-0.5 shrink-0" />
-                            <div className="min-w-0">
-                              <div className="font-medium text-sm">{t(`sections.${item.id}.title`)}</div>
-                              <div className="text-xs text-muted-foreground truncate">{t(`sections.${item.id}.description`)}</div>
-                            </div>
-                          </button>
-                        );
-                      })}
+                <div className="space-y-4">
+                  {/* Toggle button */}
+                  <button
+                    onClick={() => setIsNavigationCollapsed(!isNavigationCollapsed)}
+                    className={cn(
+                      'w-full flex items-center justify-center p-2 rounded-lg transition-all',
+                      'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    <ChevronRight className={cn(
+                      'h-4 w-4 transition-transform duration-300',
+                      isNavigationCollapsed ? 'rotate-0' : 'rotate-180'
+                    )} />
+                  </button>
 
-                      {/* Re-run Wizard button */}
-                      {onRerunWizard && (
-                        <button
-                          onClick={() => {
-                            onOpenChange(false);
-                            onRerunWizard();
-                          }}
-                          className={cn(
-                            'w-full flex items-start gap-3 p-3 rounded-lg text-left transition-all mt-2',
-                            'border border-dashed border-muted-foreground/30',
-                            'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
-                          )}
-                        >
-                          <Sparkles className="h-5 w-5 mt-0.5 shrink-0" />
-                          <div className="min-w-0">
-                            <div className="font-medium text-sm">{t('actions.rerunWizard')}</div>
-                            <div className="text-xs text-muted-foreground truncate">{t('actions.rerunWizardDescription')}</div>
-                          </div>
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                  {/* Thematic Navigation */}
+                  {Object.entries(SETTINGS_THEMES)
+                    .sort(([, a], [, b]) => a.priority - b.priority)
+                    .map(([themeKey, theme]) => {
+                      const Icon = theme.icon;
+                      const isThemeActive = theme.sections.some(section => {
+                        if (section.type === 'app') {
+                          return activeTopLevel === 'app' && appSection === section.id;
+                        } else {
+                          return activeTopLevel === 'project' && projectSection === section.id;
+                        }
+                      });
 
-                  {/* PROJECT Section */}
-                  <div>
-                    <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      {t('tabs.project')}
-                    </h3>
-
-                    {/* Project Selector */}
-                    <div className="px-1 mb-3">
-                      <ProjectSelector
-                        selectedProjectId={selectedProjectId}
-                        onProjectChange={handleProjectChange}
-                      />
-                    </div>
-
-                    {/* Project Nav Items */}
-                    <div className="space-y-1">
-                      {projectNavItemsConfig.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = activeTopLevel === 'project' && projectSection === item.id;
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => {
-                              setActiveTopLevel('project');
-                              setProjectSection(item.id);
-                            }}
-                            disabled={projectNavDisabled}
-                            className={cn(
-                              'w-full flex items-start gap-3 p-3 rounded-lg text-left transition-all',
-                              isActive
-                                ? 'bg-accent text-accent-foreground'
-                                : projectNavDisabled
-                                  ? 'opacity-50 cursor-not-allowed text-muted-foreground'
+                      return (
+                        <div key={themeKey} className="space-y-1">
+                          {/* Theme Header */}
+                          {isNavigationCollapsed ? (
+                            <button
+                              onClick={() => {
+                                if (theme.sections.length === 1) {
+                                  const section = theme.sections[0];
+                                  if (section.type === 'app') {
+                                    setActiveTopLevel('app');
+                                    setAppSection(section.id as AppSection);
+                                  } else {
+                                    setActiveTopLevel('project');
+                                    setProjectSection(section.id as ProjectSettingsSection);
+                                  }
+                                } else {
+                                  // Si plusieurs sections, on pourrait développer ou afficher un menu
+                                  // Pour l'instant, on navigue vers la première section
+                                  const firstSection = theme.sections[0];
+                                  if (firstSection.type === 'app') {
+                                    setActiveTopLevel('app');
+                                    setAppSection(firstSection.id as AppSection);
+                                  } else {
+                                    setActiveTopLevel('project');
+                                    setProjectSection(firstSection.id as ProjectSettingsSection);
+                                  }
+                                }
+                              }}
+                              className={cn(
+                                'w-full flex flex-col items-center justify-center p-2 rounded-lg transition-all',
+                                isThemeActive
+                                  ? 'bg-accent text-accent-foreground'
                                   : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
-                            )}
-                          >
-                            <Icon className="h-5 w-5 mt-0.5 shrink-0" />
-                            <div className="min-w-0">
-                              <div className="font-medium text-sm">{t(`projectSections.${item.id}.title`)}</div>
-                              <div className="text-xs text-muted-foreground truncate">{t(`projectSections.${item.id}.description`)}</div>
+                              )}
+                              title={theme.title}
+                            >
+                              <Icon className={cn('h-5 w-5', theme.color)} />
+                            </button>
+                          ) : (
+                            <div className="px-3 py-2">
+                              <button
+                                onClick={() => toggleThemeCollapse(themeKey as SettingsTheme)}
+                                className={cn(
+                                  'w-full flex items-center justify-between text-sm font-medium transition-all',
+                                  isThemeActive ? 'text-foreground' : 'text-muted-foreground',
+                                  'hover:text-foreground'
+                                )}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Icon className={cn('h-4 w-4', theme.color)} />
+                                  {theme.title}
+                                </div>
+                                <ChevronRight className={cn(
+                                  'h-3 w-3 transition-transform duration-200',
+                                  collapsedThemes.has(themeKey as SettingsTheme) ? 'rotate-0' : 'rotate-90'
+                                )} />
+                              </button>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {theme.description}
+                              </div>
                             </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
+                          )}
 
-                {/* Version at bottom */}
-                {version && (
-                  <div className="mt-8 pt-4 border-t border-border">
-                    <p className="text-xs text-muted-foreground text-center">
-                      {t('updates.version')} {version}
-                    </p>
-                  </div>
-                )}
+                          {/* Theme Sections - seulement si non replié ET thème non replié */}
+                          {!isNavigationCollapsed && !collapsedThemes.has(themeKey as SettingsTheme) && (
+                            <div className="space-y-1 ml-2">
+                              {theme.sections.map((section) => {
+                                const SectionIcon = section.icon;
+                                const isActive = section.type === 'app' 
+                                  ? activeTopLevel === 'app' && appSection === section.id
+                                  : activeTopLevel === 'project' && projectSection === section.id;
+                                
+                                const isDisabled = section.type === 'project' && !selectedProjectId;
+
+                                let activeOrDisabledClassName: string;
+                                if (isActive) {
+                                  activeOrDisabledClassName = 'bg-accent text-accent-foreground';
+                                } else if (isDisabled) {
+                                  activeOrDisabledClassName = 'opacity-50 cursor-not-allowed text-muted-foreground';
+                                } else {
+                                  activeOrDisabledClassName = 'hover:bg-accent/50 text-muted-foreground hover:text-foreground';
+                                }
+
+                                const buttonClassName = cn(
+                                  'w-full flex items-center gap-3 p-2 rounded-md text-left transition-all',
+                                  activeOrDisabledClassName
+                                );
+
+                                return (
+                                  <button
+                                    key={section.id}
+                                    onClick={() => {
+                                      if (section.type === 'app') {
+                                        setActiveTopLevel('app');
+                                        setAppSection(section.id as AppSection);
+                                      } else {
+                                        setActiveTopLevel('project');
+                                        setProjectSection(section.id as ProjectSettingsSection);
+                                      }
+                                    }}
+                                    disabled={isDisabled}
+                                    className={buttonClassName}
+                                  >
+                                    <SectionIcon className="h-4 w-4 shrink-0" />
+                                    <div className="min-w-0">
+                                      <div className="font-medium text-xs">{section.label}</div>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                  {/* Re-run Wizard button - seulement si non replié */}
+                  {!isNavigationCollapsed && onRerunWizard && (
+                    <div className="pt-4 border-t border-border">
+                      <button
+                        onClick={() => {
+                          onOpenChange(false);
+                          onRerunWizard();
+                        }}
+                        className={cn(
+                          'w-full flex items-start gap-3 p-3 rounded-lg text-left transition-all',
+                          'border border-dashed border-muted-foreground/30',
+                          'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        <Sparkles className="h-5 w-5 mt-0.5 shrink-0" />
+                        <div className="min-w-0">
+                          <div className="font-medium text-sm">{t('actions.rerunWizard')}</div>
+                          <div className="text-xs text-muted-foreground truncate">{t('actions.rerunWizardDescription')}</div>
+                        </div>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </ScrollArea>
             </nav>
 
@@ -450,8 +569,8 @@ export function AppSettingsDialog({ open, onOpenChange, initialSection, initialP
             <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">
                 <div className={cn(
-              appSection === 'accounts' ? 'p-8' : 'p-8 max-w-2xl'
-            )}>
+                  appSection === 'accounts' ? 'p-8' : 'p-8 max-w-2xl'
+                )}>
                   {renderContent()}
                 </div>
               </ScrollArea>
