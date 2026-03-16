@@ -43,7 +43,8 @@ import {
   Shield,
   TestTube,
   WandSparkles,
-  Monitor
+  Monitor,
+  Store
 } from 'lucide-react';
 
 // UI
@@ -134,7 +135,7 @@ import { LearningLoopDialog } from './learning-loop/LearningLoopDialog';
 // Types
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace';
 
 interface SidebarProps {
   readonly onSettingsClick: () => void;
@@ -207,6 +208,7 @@ const navGroups: NavGroup[] = [
     icon: GitFork,
     items: [
       { id: 'worktrees', labelKey: 'navigation:items.worktrees', icon: GitBranch, shortcut: 'W' },
+      { id: 'mcp-marketplace', labelKey: 'navigation:items.mcpMarketplace', icon: Store, shortcut: 'X' },
     ],
     defaultExpanded: false
   },

@@ -50,6 +50,7 @@ import { setupConflictPredictorHandlers } from './conflict-predictor-handlers';
 import { registerVoiceControlHandlers } from './voice-control-handlers';
 import { registerAppEmulatorHandlers } from './app-emulator-handlers';
 import { registerLearningLoopHandlers } from './learning-loop-handlers';
+import { registerMcpMarketplaceHandlers } from './mcp-marketplace-handlers';
 
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from './project-handlers';
@@ -90,6 +91,7 @@ export { setupConflictPredictorHandlers } from './conflict-predictor-handlers';
 export { registerVoiceControlHandlers } from './voice-control-handlers';
 export { registerAppEmulatorHandlers } from './app-emulator-handlers';
 export { registerLearningLoopHandlers } from './learning-loop-handlers';
+export { registerMcpMarketplaceHandlers } from './mcp-marketplace-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -221,6 +223,9 @@ export function setupIpcHandlers(
 
   // Learning Loop handlers (Autonomous Agent Learning Loop)
   registerLearningLoopHandlers(getMainWindow);
+
+  // MCP Marketplace handlers (catalog, install, builder)
+  registerMcpMarketplaceHandlers();
 
   console.warn('[IPC] All handler modules registered successfully');
 }

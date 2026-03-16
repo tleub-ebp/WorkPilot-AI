@@ -44,7 +44,8 @@
     "contextAwareSnippets": "Extraits contextuels",
     "voiceControl": "Contrôle vocal",
     "appEmulator": "Émulateur d'application",
-    "learningLoop": "Boucle d'apprentissage"
+    "learningLoop": "Boucle d'apprentissage",
+    "mcpMarketplace": "Marketplace MCP"
   },
   "actions": {
     "settings": "Paramètres",

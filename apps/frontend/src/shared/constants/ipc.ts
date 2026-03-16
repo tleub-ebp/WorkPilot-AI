@@ -599,6 +599,21 @@ export const IPC_CHANNELS = {
   MCP_CHECK_HEALTH: 'mcp:checkHealth',           // Quick connectivity check
   MCP_TEST_CONNECTION: 'mcp:testConnection',     // Full MCP protocol test
 
+  // MCP Marketplace operations
+  MCP_MARKETPLACE_GET_CATALOG: 'mcpMarketplace:getCatalog',           // Get full server catalog
+  MCP_MARKETPLACE_GET_SERVER: 'mcpMarketplace:getServer',             // Get single server details
+  MCP_MARKETPLACE_INSTALL: 'mcpMarketplace:install',                  // Install a server
+  MCP_MARKETPLACE_UNINSTALL: 'mcpMarketplace:uninstall',              // Uninstall a server
+  MCP_MARKETPLACE_GET_INSTALLED: 'mcpMarketplace:getInstalled',       // Get installed servers
+  MCP_MARKETPLACE_UPDATE_SERVER: 'mcpMarketplace:updateServer',       // Update server config
+  MCP_MARKETPLACE_TOGGLE_SERVER: 'mcpMarketplace:toggleServer',       // Enable/disable server
+  MCP_MARKETPLACE_HEALTH_CHECK: 'mcpMarketplace:healthCheck',         // Health check installed server
+  MCP_MARKETPLACE_HEALTH_CHECK_ALL: 'mcpMarketplace:healthCheckAll',  // Health check all installed
+  MCP_MARKETPLACE_SAVE_BUILDER: 'mcpMarketplace:saveBuilder',         // Save builder project
+  MCP_MARKETPLACE_GET_BUILDER_PROJECTS: 'mcpMarketplace:getBuilderProjects', // List builder projects
+  MCP_MARKETPLACE_DELETE_BUILDER: 'mcpMarketplace:deleteBuilder',     // Delete builder project
+  MCP_MARKETPLACE_EXPORT_BUILDER: 'mcpMarketplace:exportBuilder',     // Export builder as MCP server
+
   // Sentry error reporting
   SENTRY_STATE_CHANGED: 'sentry:state-changed',  // Notify main process when setting changes
   GET_SENTRY_DSN: 'sentry:get-dsn',              // Get DSN from main process (env var)
