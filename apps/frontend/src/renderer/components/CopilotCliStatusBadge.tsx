@@ -36,8 +36,12 @@ import type { CopilotCliVersionInfo, CopilotInstallationInfo } from "@shared/typ
 import { useProjectStore } from "@/stores/project-store";
 
 interface CopilotCliStatusBadgeProps {
-  className?: string;
-  onNavigateToTerminals?: () => void;
+  readonly className?: string;
+  readonly onNavigateToTerminals?: () => void;
+}
+
+interface CopilotIconProps {
+  readonly className?: string;
 }
 
 type StatusType = "loading" | "installed" | "outdated" | "not-found" | "gh-missing" | "error";
@@ -48,7 +52,7 @@ const VERSION_RECHECK_DELAY_MS = 5000;
 /**
  * GitHub Copilot icon (simplified SVG)
  */
-function CopilotIcon({ className }: { className?: string }) {
+function CopilotIcon({ className }: CopilotIconProps) {
   return (
     <svg
       className={className}
@@ -99,12 +103,12 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
   // Check Copilot CLI version
   const checkVersion = useCallback(async () => {
     try {
-      if (!window.electronAPI?.checkCopilotCliVersion) {
+      if (!globalThis.electronAPI?.checkCopilotCliVersion) {
         setStatus("error");
         return;
       }
 
-      const result = await window.electronAPI.checkCopilotCliVersion();
+      const result = await globalThis.electronAPI.checkCopilotCliVersion();
 
       if (result.success && result.data) {
         setVersionInfo(result.data);
@@ -132,8 +136,8 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
   // Check auth status
   const checkAuth = useCallback(async () => {
     try {
-      if (!window.electronAPI?.checkCopilotAuth) return;
-      const result = await window.electronAPI.checkCopilotAuth();
+      if (!globalThis.electronAPI?.checkCopilotAuth) return;
+      const result = await globalThis.electronAPI.checkCopilotAuth();
       if (result.success && result.data) {
         setAuthStatus(result.data);
       }
@@ -144,13 +148,13 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
 
   // Fetch CLI installations
   const fetchInstallations = useCallback(async () => {
-    if (!window.electronAPI?.getCopilotCliInstallations) return;
+    if (!globalThis.electronAPI?.getCopilotCliInstallations) return;
 
     setIsLoadingInstallations(true);
     setInstallationsError(null);
 
     try {
-      const result = await window.electronAPI.getCopilotCliInstallations();
+      const result = await globalThis.electronAPI.getCopilotCliInstallations();
       if (result.success && result.data) {
         setInstallations(result.data.installations);
       } else {
@@ -183,22 +187,58 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
     }
   }, [isOpen, installations.length, fetchInstallations]);
 
+  // Helper function for delay
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  // Helper function to send terminal commands with delays
+  const sendTerminalCommandsWithDelay = async (terminalId: string, commands: Array<{cmd: string; delay: number}>) => {
+    if (!globalThis.electronAPI?.sendTerminalInput) return;
+    
+    for (const {cmd, delay: ms} of commands) {
+      await delay(ms);
+      globalThis.electronAPI.sendTerminalInput(terminalId, cmd);
+    }
+  };
+
+  // Helper function to execute terminal installation
+  const executeTerminalInstallation = async (terminalId: string, isUpdate: boolean) => {
+    const commands = [
+      { cmd: "clear\n", delay: 0 },
+      { cmd: "echo 'Installing Copilot CLI extension...'\n", delay: 50 },
+      { 
+        cmd: isUpdate ? "gh extension upgrade gh-copilot\n" : "gh extension install github/gh-copilot\n", 
+        delay: 50 
+      }
+    ];
+    
+    await sendTerminalCommandsWithDelay(terminalId, commands);
+  };
+
+  // Helper function to execute terminal auth
+  const executeTerminalAuth = async (terminalId: string) => {
+    const commands = [
+      { cmd: "gh auth login\n", delay: 0 }
+    ];
+    
+    await sendTerminalCommandsWithDelay(terminalId, commands);
+  };
+
   // Perform install/update
   const performInstall = async () => {
     setIsInstalling(true);
     setShowInstallWarning(false);
     setInstallError(null);
     try {
-      if (!window.electronAPI?.installCopilotCli) {
+      if (!globalThis.electronAPI?.installCopilotCli) {
         setInstallError("Installation not available");
         setIsInstalling(false);
         return;
       }
 
       // Create a terminal in the app
-      if (window.electronAPI?.createTerminal) {
+      if (globalThis.electronAPI?.createTerminal) {
         const terminalId = `copilot-cli-install-${Date.now()}`;
-        const terminalResult = await window.electronAPI.createTerminal({
+        const terminalResult = await globalThis.electronAPI.createTerminal({
           id: terminalId,
           cwd: projectPath,
           cols: 80,
@@ -207,40 +247,22 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
         });
 
         if (terminalResult.success) {
-          setTimeout(() => {
-            if (window.electronAPI?.sendTerminalInput) {
-              const isUpdate = status === "outdated";
-              const cmd = isUpdate
-                ? "gh extension upgrade gh-copilot"
-                : "gh extension install github/gh-copilot";
-              window.electronAPI.sendTerminalInput(terminalId, "clear\n");
-              setTimeout(() => {
-                window.electronAPI.sendTerminalInput(terminalId, `echo 'Installing Copilot CLI extension...'\n`);
-                setTimeout(() => {
-                  window.electronAPI.sendTerminalInput(terminalId, `${cmd}\n`);
-                }, 50);
-              }, 50);
-            }
-
-            setTimeout(() => {
-              setIsOpen(false);
-              if (onNavigateToTerminals) {
-                onNavigateToTerminals();
-              }
-            }, 200);
-          }, 100);
+          await delay(100);
+          
+          const isUpdate = status === "outdated";
+          await executeTerminalInstallation(terminalId, isUpdate);
+          
+          await delay(200);
+          setIsOpen(false);
+          if (onNavigateToTerminals) {
+            onNavigateToTerminals();
+          }
         }
       }
 
-      const result = await window.electronAPI.installCopilotCli();
-
-      if (result.success) {
-        setTimeout(() => {
-          checkVersion();
-        }, VERSION_RECHECK_DELAY_MS);
-      } else {
-        setInstallError(result.error || "Installation failed");
-      }
+      // Don't call the external installCopilotCli - we're using the internal terminal
+      await delay(VERSION_RECHECK_DELAY_MS);
+      checkVersion();
     } catch (err) {
       console.error("Failed to install Copilot CLI:", err);
       setInstallError(err instanceof Error ? err.message : "Installation failed");
@@ -252,11 +274,11 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
   // Start gh auth login
   const startAuth = async () => {
     try {
-      if (!window.electronAPI?.startCopilotAuth) return;
+      if (!globalThis.electronAPI?.startCopilotAuth) return;
 
-      if (window.electronAPI?.createTerminal) {
+      if (globalThis.electronAPI?.createTerminal) {
         const terminalId = `copilot-auth-${Date.now()}`;
-        const terminalResult = await window.electronAPI.createTerminal({
+        const terminalResult = await globalThis.electronAPI.createTerminal({
           id: terminalId,
           cwd: projectPath,
           cols: 80,
@@ -265,21 +287,18 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
         });
 
         if (terminalResult.success) {
-          setTimeout(() => {
-            if (window.electronAPI?.sendTerminalInput) {
-              window.electronAPI.sendTerminalInput(terminalId, "gh auth login\n");
-            }
-            setTimeout(() => {
-              setIsOpen(false);
-              if (onNavigateToTerminals) {
-                onNavigateToTerminals();
-              }
-            }, 200);
-          }, 100);
+          await delay(100);
+          await executeTerminalAuth(terminalId);
+          
+          await delay(200);
+          setIsOpen(false);
+          if (onNavigateToTerminals) {
+            onNavigateToTerminals();
+          }
         }
       }
 
-      await window.electronAPI.startCopilotAuth();
+      await globalThis.electronAPI.startCopilotAuth();
     } catch (err) {
       console.error("Failed to start Copilot auth:", err);
     }
@@ -294,12 +313,12 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
     setInstallError(null);
 
     try {
-      if (!window.electronAPI?.setCopilotCliActivePath) {
+      if (!globalThis.electronAPI?.setCopilotCliActivePath) {
         setInstallError("Path switching not available");
         return;
       }
 
-      const result = await window.electronAPI.setCopilotCliActivePath(selectedInstallation);
+      const result = await globalThis.electronAPI.setCopilotCliActivePath(selectedInstallation);
 
       if (result.success) {
         setTimeout(() => {
@@ -387,6 +406,17 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
     }
   };
 
+  // Get select placeholder text
+  const getSelectPlaceholder = () => {
+    if (isLoadingInstallations) {
+      return "Loading installations...";
+    }
+    if (installationsError) {
+      return "Failed to load installations";
+    }
+    return "Select installation";
+  };
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <Tooltip>
@@ -459,7 +489,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
                 Install from{" "}
                 <button
                   className="underline text-primary"
-                  onClick={() => window.electronAPI?.openExternal?.("https://cli.github.com")}
+                  onClick={() => globalThis.electronAPI?.openExternal?.("https://cli.github.com")}
                 >
                   cli.github.com
                 </button>
@@ -571,9 +601,9 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
           {/* CLI Installation selector - show when multiple installations are found */}
           {installations.length > 1 && (
             <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground">
-                Switch Installation
-              </label>
+              <div className="text-xs text-muted-foreground">
+                {t("copilot:switchInstallation", "Switch Installation")}
+              </div>
               <Select
                 value={selectedInstallation || ""}
                 onValueChange={handleInstallationSelect}
@@ -581,13 +611,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
               >
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue
-                    placeholder={
-                      isLoadingInstallations
-                        ? "Loading installations..."
-                        : installationsError
-                          ? "Failed to load installations"
-                          : "Select installation"
-                    }
+                    placeholder={getSelectPlaceholder()}
                   />
                 </SelectTrigger>
                 <SelectContent>
@@ -603,10 +627,10 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
                           {installation.path.split(/[/\\]/).slice(-2).join('/') || installation.path}
                         </span>
                         <span className="text-muted-foreground text-[9px]">
-                          {installation.version ? `copilot v${installation.version}` : "version unknown"}
+                          {installation.version ? `copilot v${installation.version}` : t("copilot:versionUnknown", "version unknown")}
                           {installation.ghVersion ? ` (gh ${installation.ghVersion})` : ""}
                           {" "}({installation.source})
-                          {installation.isActive && " - Active"}
+                          {installation.isActive && ` - ${t("copilot:active", "Active")}`}
                         </span>
                       </div>
                     </SelectItem>
@@ -622,12 +646,12 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
             size="sm"
             className="w-full text-xs text-muted-foreground gap-1"
             onClick={() =>
-              window.electronAPI?.openExternal?.(
+              globalThis.electronAPI?.openExternal?.(
                 "https://docs.github.com/en/copilot/github-copilot-in-the-cli"
               )
             }
           >
-            View Copilot CLI Docs
+            {t("copilot:viewCopilotCliDocs", "View Copilot CLI Docs")}
             <ExternalLink className="h-3 w-3" />
           </Button>
         </div>
@@ -637,15 +661,15 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
       <AlertDialog open={showInstallWarning} onOpenChange={setShowInstallWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Update Copilot CLI?</AlertDialogTitle>
+            <AlertDialogTitle>{t("copilot:updateCopilotCli", "Update Copilot CLI?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will upgrade the gh-copilot extension. A terminal window will open to run the upgrade command.
+              {t("copilot:updateDescription", "This will upgrade the gh-copilot extension. A new terminal will open in the \"Terminaux Agent\" page to run the upgrade command.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common:cancel", "Cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={performInstall}>
-              Open Terminal & Update
+              {t("copilot:openTerminalAndUpdate", "Open Terminal & Update")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -655,9 +679,10 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
       <AlertDialog open={showPathChangeWarning} onOpenChange={setShowPathChangeWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Switch gh CLI installation?</AlertDialogTitle>
+            <AlertDialogTitle>{t("copilot:switchGhCliInstallation", "Switch gh CLI installation?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Switching installations will use a different gh binary for Copilot CLI.
+              {t("copilot:switchDescription", "Switching installations will use a different gh binary for Copilot CLI.")}
+              {" "}
               <span className="block mt-2 font-mono text-xs break-all">
                 {selectedInstallation}
               </span>
@@ -668,7 +693,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
               {t("common:cancel", "Cancel")}
             </AlertDialogCancel>
             <AlertDialogAction onClick={performPathSwitch}>
-              Switch
+              {t("copilot:switch", "Switch")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

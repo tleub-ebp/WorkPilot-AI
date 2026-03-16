@@ -1435,14 +1435,26 @@
       "total": "{{count}} total",
       "configured": "{{count}} configured",
       "errors": "{{count}} errors"
-    },
-    "actions": {
-      "refresh": "Refresh",
-      "add": "Add"
-    }
+  },
+  "actions": {
+    "refresh": "Refresh",
+    "add": "Add"
+  }
   },
   "collaboration": {
     "title": "Collaboration",
     "description": "Multi-user collaboration settings"
+  },
+  "copilot": {
+    "switchInstallation": "Switch Installation",
+    "versionUnknown": "version unknown",
+    "active": "Active",
+    "viewCopilotCliDocs": "View Copilot CLI Docs",
+    "updateCopilotCli": "Update Copilot CLI?",
+    "updateDescription": "This will upgrade the gh-copilot extension. A new terminal will open in the \"Terminaux Agent\" page to run the upgrade command.",
+    "openTerminalAndUpdate": "Open Terminal & Update",
+    "switchGhCliInstallation": "Switch gh CLI installation?",
+    "switchDescription": "Switching installations will use a different gh binary for Copilot CLI.",
+    "switch": "Switch"
   }
 }
