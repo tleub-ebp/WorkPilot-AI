@@ -91,10 +91,8 @@ export function UsageIndicator() {
   const [providerProfile, setProviderProfile] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
-  const [tick, setTick] = useState(0); // Force re-render for "last update" time display
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const tickIntervalRef = useRef<NodeJS.Timeout | null>(null);
   // Deduplication: track in-flight fetch to prevent concurrent API calls (429 rate limits)
   const pendingFetchRef = useRef<Promise<void> | null>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -385,17 +383,6 @@ export function UsageIndicator() {
     }
   }, [selectedProvider, fetchUsageDeduplicated]);
 
-  // Tick every 30s to keep "last update" time display fresh
-  useEffect(() => {
-    tickIntervalRef.current = setInterval(() => {
-      setTick(prev => prev + 1);
-    }, 30000);
-    return () => {
-      if (tickIntervalRef.current) {
-        clearInterval(tickIntervalRef.current);
-      }
-    };
-  }, []);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -405,9 +392,6 @@ export function UsageIndicator() {
       }
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
-      }
-      if (tickIntervalRef.current) {
-        clearInterval(tickIntervalRef.current);
       }
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
@@ -935,6 +919,299 @@ export function UsageIndicator() {
     );
   };
 
+  // Render functions for different usage content types
+  const renderReauthContent = () => (
+    <div className="py-2 space-y-3">
+      <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-destructive/10 border border-destructive/20">
+        <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-destructive">
+            {t('common:usage.reauthRequired')}
+          </p>
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            {t('common:usage.reauthRequiredDescription')}
+          </p>
+        </div>
+      </div>
+      <button
+          type="button"
+          onClick={handleOpenAccounts}
+          className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors text-xs font-medium"
+      >
+        <LogIn className="h-3.5 w-3.5" />
+        {t('common:usage.reauthButton')}
+      </button>
+    </div>
+  );
+
+  const renderOpenAIContent = () => (
+    <div className="py-2 space-y-3">
+      <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-primary/10 border border-primary/20">
+        <TrendingUp className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-primary">
+            {t('common:usage.openaiCostLabel', 'Coût OpenAI (mois en cours)')}
+          </p>
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            {t('common:usage.openaiCostDescription', 'Le coût affiché correspond à la consommation OpenAI du mois en cours (estimation).')}<br />
+            <a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer" className="underline text-primary">{t('common:usage.openaiDashboard', 'Voir le dashboard OpenAI')}</a>
+          </p>
+          <div className="mt-2 text-lg font-bold text-primary">
+            ${formatUsageValue(usage.weeklyUsageValue)}
+          </div>
+        </div>
+      </div>
+      {/* Section détaillée OpenAI Usage */}
+      {usage.openaiUsageDetails && (
+        <div className="bg-muted/30 rounded p-2 text-[11px]">
+          <div className="font-semibold mb-1">{t('common:usage.openaiDetailTitle')}</div>
+          {usage.openaiUsageDetails.completions && (
+            <div className="mb-1">
+              <div className="font-medium">{t('common:usage.completionsLabel')}</div>
+              <ul>
+                {usage.openaiUsageDetails.completions.data && usage.openaiUsageDetails.completions.data.length > 0 ? (
+                  usage.openaiUsageDetails.completions.data.map((item: any, idx: number) => (
+                    <li key={`completions-${item.model || idx}`}>
+                      {item.model}: {item.n_input_tokens_total || 0} in, {item.n_output_tokens_total || 0} out
+                    </li>
+                  ))
+                ) : (
+                  <li>{t('common:usage.noData')}</li>
+                )}
+              </ul>
+            </div>
+          )}
+          {usage.openaiUsageDetails.cost && (
+            <div className="mb-1">
+              <div className="font-medium">{t('common:usage.costByModelLabel')}</div>
+              <ul>
+                {usage.openaiUsageDetails.cost.data && usage.openaiUsageDetails.cost.data.length > 0 ? (
+                  usage.openaiUsageDetails.cost.data.map((item: any, idx: number) => (
+                    <li key={`cost-${item.model || idx}`}>
+                      {item.model}: ${item.cost_usd ? (Math.round(item.cost_usd * 100) / 100).toFixed(2) : '0.00'}
+                    </li>
+                  ))
+                ) : (
+                  <li>{t('common:usage.noData')}</li>
+                )}
+              </ul>
+            </div>
+          )}
+          {usage.openaiUsageDetails.embeddings && (
+            <div className="mb-1">
+              <div className="font-medium">{t('common:usage.embeddingsLabel')}</div>
+              <ul>
+                {usage.openaiUsageDetails.embeddings.data && usage.openaiUsageDetails.embeddings.data.length > 0 ? (
+                  usage.openaiUsageDetails.embeddings.data.map((item: any, idx: number) => (
+                    <li key={`embeddings-${item.model || idx}`}>
+                      {item.model}: {item.n_input_tokens_total || 0}
+                    </li>
+                  ))
+                ) : (
+                  <li>{t('common:usage.noData')}</li>
+                )}
+              </ul>
+            </div>
+          )}
+          {usage.openaiUsageDetails.moderations && (
+            <div className="mb-1">
+              <div className="font-medium">{t('common:usage.moderationsLabel')}</div>
+              <pre className="whitespace-pre-wrap text-[10px]">{JSON.stringify(usage.openaiUsageDetails.moderations, null, 2)}</pre>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderCopilotInsufficientPermissions = () => (
+    <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
+      <AlertCircle className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
+      <div className="space-y-1">
+        <p className="text-xs font-medium text-orange-500">
+          Permissions insuffisantes
+        </p>
+        <p className="text-[10px] text-muted-foreground leading-relaxed">
+          {(usage as any).errorMessage || 'Permissions insuffisantes pour accéder aux métriques Copilot.'}
+        </p>
+        <div className="text-[10px] text-muted-foreground">
+          <strong>Suggestions:</strong>
+          <ul className="list-disc list-inside space-y-0.5 mt-1">
+            <li>Exécutez: <code className="bg-muted px-1 rounded">gh auth refresh -h github.com -s admin:org</code></li>
+            <li>Assurez-vous d'être administrateur de l'organisation Copilot</li>
+            <li>Contactez votre administrateur GitHub pour obtenir les permissions nécessaires</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderCopilotBackendUnavailable = () => (
+    <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+      <AlertCircle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
+      <div className="space-y-1">
+        <p className="text-xs font-medium text-yellow-500">
+          Backend non disponible
+        </p>
+        <p className="text-[10px] text-muted-foreground leading-relaxed">
+          Le backend FastAPI n'est pas démarré. Veuillez démarrer le backend pour voir les métriques Copilot.
+        </p>
+      </div>
+    </div>
+  );
+
+  const renderCopilotMetrics = () => (
+    <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
+      <TrendingUp className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+      <div className="space-y-1">
+        <p className="text-xs font-medium text-blue-500">
+          Métriques GitHub Copilot
+        </p>
+        <p className="text-[10px] text-muted-foreground leading-relaxed">
+          Données d'utilisation GitHub Copilot pour les 28 derniers jours.
+        </p>
+        {usage.copilotUsageDetails && (
+          <div className="mt-2 space-y-1">
+            {usage.copilotUsageDetails.suggestionsCount !== undefined && (
+              <div className="flex justify-between text-[10px]">
+                <span>Suggestions:</span>
+                <span className="font-mono">{usage.copilotUsageDetails.suggestionsCount}</span>
+              </div>
+            )}
+            {usage.copilotUsageDetails.acceptancesCount !== undefined && (
+              <div className="flex justify-between text-[10px]">
+                <span>Acceptations:</span>
+                <span className="font-mono">{usage.copilotUsageDetails.acceptancesCount}</span>
+              </div>
+            )}
+            {usage.copilotUsageDetails.acceptanceRate !== undefined && (
+              <div className="flex justify-between text-[10px]">
+                <span>Taux d'acceptation:</span>
+                <span className="font-mono">{usage.copilotUsageDetails.acceptanceRate.toFixed(1)}%</span>
+              </div>
+            )}
+            {usage.copilotUsageDetails.totalTokens !== undefined && usage.copilotUsageDetails.totalTokens > 0 && (
+              <div className="flex justify-between text-[10px]">
+                <span>Tokens utilisés:</span>
+                <span className="font-mono">{usage.copilotUsageDetails.totalTokens}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderCopilotContent = () => (
+    <div className="py-2 space-y-3">
+      {renderCopilotErrorState()}
+    </div>
+  );
+
+  const renderCopilotErrorState = () => {
+    const error = (usage as any).error;
+    
+    if (error === 'INSUFFICIENT_PERMISSIONS') {
+      return renderCopilotInsufficientPermissions();
+    }
+    
+    if (error === 'BACKEND_UNAVAILABLE') {
+      return renderCopilotBackendUnavailable();
+    }
+    
+    return renderCopilotMetrics();
+  };
+
+  const renderDefaultUsageContent = () => (
+    <>
+      {/* Session/5-hour usage */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground font-medium text-[11px] flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {sessionLabel}
+          </span>
+          <span className={`font-semibold tabular-nums text-xs ${getColorClass(usage.sessionPercent).replace('500', '600')}`}>
+            {Math.round(usage.sessionPercent)}%
+          </span>
+        </div>
+        {sessionResetTime && (
+          <div className="text-[10px] text-muted-foreground pl-4 flex items-center gap-1">
+            <Info className="h-2.5 w-2.5" />
+            {sessionResetTime}
+          </div>
+        )}
+        <div className="h-2 bg-muted rounded-full overflow-hidden shadow-inner">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden ${getGradientClass(usage.sessionPercent)}`}
+            style={{ width: `${Math.min(usage.sessionPercent, 100)}%` }}
+          >
+            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent motion-safe:animate-pulse" />
+          </div>
+        </div>
+        {usage.sessionUsageValue != null && usage.sessionUsageLimit != null && (
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="text-muted-foreground">{t('common:usage.used')}</span>
+            <span className="font-medium tabular-nums">
+              {formatUsageValue(usage.sessionUsageValue)} <span className="text-muted-foreground mx-1">/</span> {formatUsageValue(usage.sessionUsageLimit)}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Weekly/Monthly usage */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground font-medium text-[11px] flex items-center gap-1">
+            <TrendingUp className="h-3 w-3" />
+            {weeklyLabel}
+          </span>
+          <span className={`font-semibold tabular-nums text-xs ${getColorClass(usage.weeklyPercent).replace('500', '600')}`}>
+            {Math.round(usage.weeklyPercent)}%
+          </span>
+        </div>
+        {weeklyResetTime && (
+          <div className="text-[10px] text-muted-foreground pl-4 flex items-center gap-1">
+            <Info className="h-2.5 w-2.5" />
+            {weeklyResetTime}
+          </div>
+        )}
+        <div className="h-2 bg-muted rounded-full overflow-hidden shadow-inner">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden ${getGradientClass(usage.weeklyPercent)}`}
+            style={{ width: `${Math.min(usage.weeklyPercent, 100)}%` }}
+          >
+            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent motion-safe:animate-pulse" />
+          </div>
+        </div>
+        {usage.weeklyUsageValue != null && usage.weeklyUsageLimit != null && (
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="text-muted-foreground">{t('common:usage.used')}</span>
+            <span className="font-medium tabular-nums">
+              {formatUsageValue(usage.weeklyUsageValue)} <span className="text-muted-foreground mx-1">/</span> {formatUsageValue(usage.weeklyUsageLimit)}
+            </span>
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  const renderUsageContent = () => {
+    if (usage.needsReauthentication) {
+      return renderReauthContent();
+    }
+    
+    if (isOpenAI) {
+      return renderOpenAIContent();
+    }
+    
+    if (isCopilot && selectedProvider === 'copilot') {
+      return renderCopilotContent();
+    }
+    
+    return renderDefaultUsageContent();
+  };
+
   // Après la récupération des labels et des valeurs d'usage
 
   return (
@@ -973,255 +1250,7 @@ export function UsageIndicator() {
             </div>
 
             {/* Re-auth required prompt - shown when active profile needs re-authentication */}
-            {usage.needsReauthentication ? (
-                <div className="py-2 space-y-3">
-                  <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-destructive/10 border border-destructive/20">
-                    <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                    <div className="space-y-1">
-                      <p className="text-xs font-medium text-destructive">
-                        {t('common:usage.reauthRequired')}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground leading-relaxed">
-                        {t('common:usage.reauthRequiredDescription')}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                      type="button"
-                      onClick={handleOpenAccounts}
-                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors text-xs font-medium"
-                  >
-                    <LogIn className="h-3.5 w-3.5" />
-                    {t('common:usage.reauthButton')}
-                  </button>
-                </div>
-            ) : isOpenAI ? (
-              <div className="py-2 space-y-3">
-                <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-primary/10 border border-primary/20">
-                  <TrendingUp className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-primary">
-                      {t('common:usage.openaiCostLabel', 'Coût OpenAI (mois en cours)')}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground leading-relaxed">
-                      {t('common:usage.openaiCostDescription', 'Le coût affiché correspond à la consommation OpenAI du mois en cours (estimation).')}<br />
-                      <a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer" className="underline text-primary">{t('common:usage.openaiDashboard', 'Voir le dashboard OpenAI')}</a>
-                    </p>
-                    <div className="mt-2 text-lg font-bold text-primary">
-                      ${formatUsageValue(usage.weeklyUsageValue)}
-                    </div>
-                  </div>
-                </div>
-                {/* Section détaillée OpenAI Usage */}
-                {usage.openaiUsageDetails && (
-                  <div className="bg-muted/30 rounded p-2 text-[11px]">
-                    <div className="font-semibold mb-1">{t('common:usage.openaiDetailTitle')}</div>
-                    {usage.openaiUsageDetails.completions && (
-                      <div className="mb-1">
-                        <div className="font-medium">{t('common:usage.completionsLabel')}</div>
-                        <ul>
-                          {usage.openaiUsageDetails.completions.data && usage.openaiUsageDetails.completions.data.length > 0 ? (
-                            usage.openaiUsageDetails.completions.data.map((item: any, idx: number) => (
-                              <li key={idx}>
-                                {item.model}: {item.n_input_tokens_total || 0} in, {item.n_output_tokens_total || 0} out
-                              </li>
-                            ))
-                          ) : (
-                            <li>{t('common:usage.noData')}</li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
-                    {usage.openaiUsageDetails.cost && (
-                      <div className="mb-1">
-                        <div className="font-medium">{t('common:usage.costByModelLabel')}</div>
-                        <ul>
-                          {usage.openaiUsageDetails.cost.data && usage.openaiUsageDetails.cost.data.length > 0 ? (
-                            usage.openaiUsageDetails.cost.data.map((item: any, idx: number) => (
-                              <li key={idx}>
-                                {item.model}: ${item.cost_usd ? (Math.round(item.cost_usd * 100) / 100).toFixed(2) : '0.00'}
-                              </li>
-                            ))
-                          ) : (
-                            <li>{t('common:usage.noData')}</li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
-                    {usage.openaiUsageDetails.embeddings && (
-                      <div className="mb-1">
-                        <div className="font-medium">{t('common:usage.embeddingsLabel')}</div>
-                        <ul>
-                          {usage.openaiUsageDetails.embeddings.data && usage.openaiUsageDetails.embeddings.data.length > 0 ? (
-                            usage.openaiUsageDetails.embeddings.data.map((item: any, idx: number) => (
-                              <li key={idx}>
-                                {item.model}: {item.n_input_tokens_total || 0}
-                              </li>
-                            ))
-                          ) : (
-                            <li>{t('common:usage.noData')}</li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
-                    {usage.openaiUsageDetails.moderations && (
-                      <div className="mb-1">
-                        <div className="font-medium">{t('common:usage.moderationsLabel')}</div>
-                        <pre className="whitespace-pre-wrap text-[10px]">{JSON.stringify(usage.openaiUsageDetails.moderations, null, 2)}</pre>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : isCopilot && selectedProvider === 'copilot' ? (
-              <div className="py-2 space-y-3">
-                {(usage as any).error === 'INSUFFICIENT_PERMISSIONS' ? (
-                  <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
-                    <AlertCircle className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
-                    <div className="space-y-1">
-                      <p className="text-xs font-medium text-orange-500">
-                        Permissions insuffisantes
-                      </p>
-                      <p className="text-[10px] text-muted-foreground leading-relaxed">
-                        {(usage as any).errorMessage || 'Permissions insuffisantes pour accéder aux métriques Copilot.'}
-                      </p>
-                      <div className="text-[10px] text-muted-foreground">
-                        <strong>Suggestions:</strong>
-                        <ul className="list-disc list-inside space-y-0.5 mt-1">
-                          <li>Exécutez: <code className="bg-muted px-1 rounded">gh auth refresh -h github.com -s admin:org</code></li>
-                          <li>Assurez-vous d'être administrateur de l'organisation Copilot</li>
-                          <li>Contactez votre administrateur GitHub pour obtenir les permissions nécessaires</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                ) : (usage as any).error === 'BACKEND_UNAVAILABLE' ? (
-                  <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-                    <AlertCircle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
-                    <div className="space-y-1">
-                      <p className="text-xs font-medium text-yellow-500">
-                        Backend non disponible
-                      </p>
-                      <p className="text-[10px] text-muted-foreground leading-relaxed">
-                        Le backend FastAPI n'est pas démarré. Veuillez démarrer le backend pour voir les métriques Copilot.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                    <TrendingUp className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
-                    <div className="space-y-1">
-                      <p className="text-xs font-medium text-blue-500">
-                        Métriques GitHub Copilot
-                      </p>
-                      <p className="text-[10px] text-muted-foreground leading-relaxed">
-                        Données d'utilisation GitHub Copilot pour les 28 derniers jours.
-                      </p>
-                      {usage.copilotUsageDetails && (
-                        <div className="mt-2 space-y-1">
-                          {usage.copilotUsageDetails.suggestionsCount !== undefined && (
-                            <div className="flex justify-between text-[10px]">
-                              <span>Suggestions:</span>
-                              <span className="font-mono">{usage.copilotUsageDetails.suggestionsCount}</span>
-                            </div>
-                          )}
-                          {usage.copilotUsageDetails.acceptancesCount !== undefined && (
-                            <div className="flex justify-between text-[10px]">
-                              <span>Acceptations:</span>
-                              <span className="font-mono">{usage.copilotUsageDetails.acceptancesCount}</span>
-                            </div>
-                          )}
-                          {usage.copilotUsageDetails.acceptanceRate !== undefined && (
-                            <div className="flex justify-between text-[10px]">
-                              <span>Taux d'acceptation:</span>
-                              <span className="font-mono">{usage.copilotUsageDetails.acceptanceRate.toFixed(1)}%</span>
-                            </div>
-                          )}
-                          {usage.copilotUsageDetails.totalTokens !== undefined && usage.copilotUsageDetails.totalTokens > 0 && (
-                            <div className="flex justify-between text-[10px]">
-                              <span>Tokens utilisés:</span>
-                              <span className="font-mono">{usage.copilotUsageDetails.totalTokens}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-                <>
-                  {/* Session/5-hour usage */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground font-medium text-[11px] flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {sessionLabel}
-                  </span>
-                      <span className={`font-semibold tabular-nums text-xs ${getColorClass(usage.sessionPercent).replace('500', '600')}`}>
-                    {Math.round(usage.sessionPercent)}%
-                  </span>
-                    </div>
-                    {sessionResetTime && (
-                        <div className="text-[10px] text-muted-foreground pl-4 flex items-center gap-1">
-                          <Info className="h-2.5 w-2.5" />
-                          {sessionResetTime}
-                        </div>
-                    )}
-                    <div className="h-2 bg-muted rounded-full overflow-hidden shadow-inner">
-                      <div
-                          className={`h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden ${getGradientClass(usage.sessionPercent)}`}
-                          style={{ width: `${Math.min(usage.sessionPercent, 100)}%` }}
-                      >
-                        <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent motion-safe:animate-pulse" />
-                      </div>
-                    </div>
-                    {usage.sessionUsageValue != null && usage.sessionUsageLimit != null && (
-                        <div className="flex items-center justify-between text-[10px]">
-                          <span className="text-muted-foreground">{t('common:usage.used')}</span>
-                          <span className="font-medium tabular-nums">
-                      {formatUsageValue(usage.sessionUsageValue)} <span className="text-muted-foreground mx-1">/</span> {formatUsageValue(usage.sessionUsageLimit)}
-                    </span>
-                        </div>
-                    )}
-                  </div>
-
-                  {/* Weekly/Monthly usage */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground font-medium text-[11px] flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    {weeklyLabel}
-                  </span>
-                      <span className={`font-semibold tabular-nums text-xs ${getColorClass(usage.weeklyPercent).replace('500', '600')}`}>
-                    {Math.round(usage.weeklyPercent)}%
-                  </span>
-                    </div>
-                    {weeklyResetTime && (
-                        <div className="text-[10px] text-muted-foreground pl-4 flex items-center gap-1">
-                          <Info className="h-2.5 w-2.5" />
-                          {weeklyResetTime}
-                        </div>
-                    )}
-                    <div className="h-2 bg-muted rounded-full overflow-hidden shadow-inner">
-                      <div
-                          className={`h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden ${getGradientClass(usage.weeklyPercent)}`}
-                          style={{ width: `${Math.min(usage.weeklyPercent, 100)}%` }}
-                      >
-                        <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent motion-safe:animate-pulse" />
-                      </div>
-                    </div>
-                    {usage.weeklyUsageValue != null && usage.weeklyUsageLimit != null && (
-                        <div className="flex items-center justify-between text-[10px]">
-                          <span className="text-muted-foreground">{t('common:usage.used')}</span>
-                          <span className="font-medium tabular-nums">
-                      {formatUsageValue(usage.weeklyUsageValue)} <span className="text-muted-foreground mx-1">/</span> {formatUsageValue(usage.weeklyUsageLimit)}
-                    </span>
-                        </div>
-                    )}
-                  </div>
-                </>
-            )}
+            {renderUsageContent()}
 
             {/* Active account footer - clickable to go to settings */}
             <button

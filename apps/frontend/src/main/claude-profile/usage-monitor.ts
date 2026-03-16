@@ -1801,10 +1801,10 @@ export class UsageMonitor extends EventEmitter {
       });
 
       // ── Cache check with provider-specific TTL ───────────────────────────────
-      // For Windsurf, use much shorter cache since data comes from local IDE cache (instant)
+      // For Windsurf, use 30s cache since data now comes from real-time API (GetUserStatus)
       // For other providers, use standard 15s cache to avoid API rate limits
       if (cached) {
-        const cacheTTL = provider === 'windsurf' ? 1000 : UsageMonitor.API_RESULT_CACHE_TTL_MS; // 1s for Windsurf, 15s for others
+        const cacheTTL = provider === 'windsurf' ? 30000 : UsageMonitor.API_RESULT_CACHE_TTL_MS; // 30s for Windsurf (real-time API call), 15s for others
         if (Date.now() - cached.fetchedAt < cacheTTL) {
           this.debugLog('[UsageMonitor:API_FETCH] Returning cached result for ' + profileId + ' (age: ' + Math.round((Date.now() - cached.fetchedAt) / 1000) + 's, provider: ' + provider + ')');
           return cached.snapshot;
@@ -3175,35 +3175,40 @@ export class UsageMonitor extends EventEmitter {
 
     // Windsurf/Codeium special case
     // Strategy priority:
-    //   1. Read cached plan info from local Windsurf IDE database (no API call needed)
-    //   2. Fall back to Codeium API with service key (Enterprise only)
+    //   1. Real-time API call (GetUserStatus) for accurate, up-to-date credits
+    //   2. Fall back to local IDE cached plan info (may be stale)
+    //   3. Fall back to Codeium API with service key (Enterprise only)
     if (providerName === 'windsurf') {
       this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf provider — fetching credits');
 
-      // Strategy 0: Read cached plan info from local Windsurf IDE
-      // This is the most reliable source for Pro/Teams plan users, since the
-      // billing API (GetTeamCreditBalance) requires Enterprise service keys.
+      // Strategy 0: Real-time API call to GetUserStatus
+      // The local SQLite cache is only refreshed when the Windsurf IDE starts a
+      // new session, so it can lag significantly behind actual usage.
+      // Call the same API the Windsurf IDE uses to get fresh data.
+      let usedRealTimeApi = false;
       try {
-        const { readWindsurfCachedPlanInfo } = await import('../services/credential-manager');
-        const cached = await readWindsurfCachedPlanInfo();
-        if (cached.success && cached.planInfo) {
-          const rawMsgs = cached.planInfo.usage;
+        const { fetchWindsurfRealTimeUsage } = await import('../services/credential-manager');
+        this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — trying real-time API (GetUserStatus)');
+        const realTime = await fetchWindsurfRealTimeUsage();
+        if (realTime.success && realTime.planInfo) {
+          usedRealTimeApi = true;
+          const rawMsgs = realTime.planInfo.usage;
           const scl = (rawMsgs.messages >= 1000 && rawMsgs.messages % 100 === 0) ? 100 : 1;
-          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — using local IDE cached plan info', {
-           planName: cached.planInfo.planName,
-           userName: cached.userName,
+          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — using real-time API data', {
+           planName: realTime.planInfo.planName,
+           userName: realTime.userName,
            messagesRaw: `${rawMsgs.usedMessages}/${rawMsgs.messages}`,
            creditsDisplay: `${Math.round(rawMsgs.usedMessages / scl)}/${Math.round(rawMsgs.messages / scl)}`,
            usagePercent: rawMsgs.messages > 0 ? `${Math.round((rawMsgs.usedMessages / rawMsgs.messages) * 100)}%` : 'N/A',
            flowActions: `${rawMsgs.usedFlowActions}/${rawMsgs.flowActions}`,
-           isStale: cached.planInfo.isStale ?? false,
-           billingStart: new Date(cached.planInfo.startTimestamp).toISOString(),
-           billingEnd: new Date(cached.planInfo.endTimestamp).toISOString(),
+           source: 'GetUserStatus API (real-time)',
+           billingStart: new Date(realTime.planInfo.startTimestamp).toISOString(),
+           billingEnd: new Date(realTime.planInfo.endTimestamp).toISOString(),
          });
          const result = this.normalizeWindsurfCachedPlanInfo(
-           cached.planInfo,
+           realTime.planInfo,
            'windsurf-local',
-           cached.userName ? `Windsurf (${cached.userName})` : 'Windsurf (Codeium)',
+           realTime.userName ? `Windsurf (${realTime.userName})` : 'Windsurf (Codeium)',
          );
          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf normalized result:', {
            sessionPercent: result.sessionPercent,
@@ -3213,9 +3218,49 @@ export class UsageMonitor extends EventEmitter {
          });
          return result;
         }
-        this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — local IDE cache unavailable:', cached.error);
+        this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — real-time API unavailable:', realTime.error);
       } catch (e) {
-        this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — local IDE cache read failed:', e);
+        this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — real-time API call failed:', e);
+      }
+
+      // Strategy 1: Fall back to local IDE cached plan info
+      // This is a reliable offline source but may show stale usage data.
+      if (!usedRealTimeApi) {
+        try {
+          const { readWindsurfCachedPlanInfo } = await import('../services/credential-manager');
+          const cached = await readWindsurfCachedPlanInfo();
+          if (cached.success && cached.planInfo) {
+            const rawMsgs = cached.planInfo.usage;
+            const scl = (rawMsgs.messages >= 1000 && rawMsgs.messages % 100 === 0) ? 100 : 1;
+            this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — falling back to local IDE cached plan info (may be stale)', {
+             planName: cached.planInfo.planName,
+             userName: cached.userName,
+             messagesRaw: `${rawMsgs.usedMessages}/${rawMsgs.messages}`,
+             creditsDisplay: `${Math.round(rawMsgs.usedMessages / scl)}/${Math.round(rawMsgs.messages / scl)}`,
+             usagePercent: rawMsgs.messages > 0 ? `${Math.round((rawMsgs.usedMessages / rawMsgs.messages) * 100)}%` : 'N/A',
+             flowActions: `${rawMsgs.usedFlowActions}/${rawMsgs.flowActions}`,
+             isStale: cached.planInfo.isStale ?? false,
+             source: 'local IDE cache (fallback)',
+             billingStart: new Date(cached.planInfo.startTimestamp).toISOString(),
+             billingEnd: new Date(cached.planInfo.endTimestamp).toISOString(),
+           });
+           const result = this.normalizeWindsurfCachedPlanInfo(
+             cached.planInfo,
+             'windsurf-local',
+             cached.userName ? `Windsurf (${cached.userName})` : 'Windsurf (Codeium)',
+           );
+           this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf normalized result:', {
+             sessionPercent: result.sessionPercent,
+             weeklyPercent: result.weeklyPercent,
+             usageWindows: result.usageWindows,
+             windsurfCredits: result.windsurfCredits
+           });
+           return result;
+          }
+          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — local IDE cache also unavailable:', cached.error);
+        } catch (e) {
+          this.debugLog('[UsageMonitor:getUsageForProvider] Windsurf — local IDE cache read failed:', e);
+        }
       }
 
       // Strategy 1+: Try Codeium API with service key (Enterprise only)

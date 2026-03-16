@@ -56,6 +56,7 @@ const CostEstimator = lazy(() => import('./components/CostEstimator').then(m => 
 const SessionHistory = lazy(() => import('./components/SessionHistory').then(m => ({ default: m.SessionHistory })));
 const McpMarketplace = lazy(() => import('./components/mcp-marketplace/McpMarketplace').then(m => ({ default: m.McpMarketplace })));
 const MissionControlDashboard = lazy(() => import('./components/mission-control/MissionControlDashboard').then(m => ({ default: m.MissionControlDashboard })));
+const AgentReplayDashboard = lazy(() => import('./components/agent-replay').then(m => ({ default: m.AgentReplayDashboard })));
 import { VersionWarningModal } from './components/VersionWarningModal';
 import { OnboardingWizard } from './components/onboarding';
 import { GitHubSetupModal } from './components/GitHubSetupModal';
@@ -1065,6 +1066,9 @@ export function App() {
                     )}
                     {activeView === 'mission-control' && (
                         <MissionControlDashboard />
+                    )}
+                    {activeView === 'agent-replay' && (
+                        <AgentReplayDashboard />
                     )}
                     {activeView === 'kanban' && !selectedProject && (
                               <>
