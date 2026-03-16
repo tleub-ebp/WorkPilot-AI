@@ -201,7 +201,13 @@
     "showMore": "Show more",
     "showLess": "Show less",
     "created": "Created",
-    "updated": "Updated"
+    "updated": "Updated",
+    "acceptanceCriteria": "Critères d'acceptation",
+    "affectedFiles": "Fichiers affectés",
+    "dependencies": "Dépendances",
+    "problemSolved": "Problème résolu",
+    "rationale": "Raison",
+    "targetAudience": "Public cible"
   },
   "images": {
     "removeImageAriaLabel": "Remove image {{filename}}",

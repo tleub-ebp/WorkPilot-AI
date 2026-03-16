@@ -1,1467 +1,1460 @@
-﻿{
-  "title": "Paramètres",
-  "tabs": {
-    "app": "Paramètres de l'app",
-    "project": "Paramètres du projet"
-  },
-  "sections": {
-    "appearance": {
-      "title": "Apparence",
-      "description": "Personnalisez l'apparence de WorkPilot AI"
-    },
-    "display": {
-      "title": "Affichage",
-      "description": "Ajustez la taille des éléments de l'interface"
-    },
-    "language": {
-      "title": "Langue",
-      "description": "Choisissez votre langue préférée"
-    },
-    "devtools": {
-      "title": "Outils de développement",
-      "description": "Préférences IDE et terminal"
-    },
-    "agent": {
-      "title": "Paramètres de l'agent",
-      "description": "Modèle par défaut et framework"
-    },
-    "paths": {
-      "title": "Chemins",
-      "description": "Outils CLI et chemins framework"
-    },
-    "accounts": {
-      "title": "Comptes",
-      "description": "Fournisseurs IA et comptes API",
-      "multiConnector": {
-        "title": "Gestion des fournisseurs IA",
-        "description": "Connectez et gérez plusieurs fournisseurs d'intelligence artificielle (Claude, OpenAI, Mistral, etc.).",
-        "stats": {
-          "total": "{{count}} total",
-          "configured": "{{count}} configurés",
-          "errors": "{{count}} erreurs"
-        },
-        "buttons": {
-          "refresh": "Actualiser",
-          "addProvider": "Ajouter un fournisseur"
-        }
-      },
-      "form": {
-        "addAccount": "Ajouter un compte {{provider}}",
-        "name": "Nom du compte",
-        "namePlaceholder": "Nom du compte",
-        "apiKey": "Clé API",
-        "apiKeyPlaceholder": "sk-...",
-        "baseUrl": "URL de base",
-        "baseUrlPlaceholder": "https://api.exemple.com",
-        "llmGatewayUrl": "URL Gateway LLM",
-        "llmGatewayUrlPlaceholder": "https://gateway.exemple.com",
-        "chooseModel": "-- Choisir un modèle --",
-        "save": "Enregistrer",
-        "cancel": "Annuler"
-      },
-      "autoSwitching": {
-        "globalTitle": "Basculement automatique des comptes",
-        "globalDescription": "Basculez automatiquement entre vos comptes selon l'utilisation et les limites de taux.",
-        "title": "Basculement automatique",
-        "providerAdded": "Provider ajouté à l'auto-switching",
-        "providerRemoved": "Provider retiré de l'auto-switching",
-        "providerDescription": "{{providerName}} a été {{action}} à la liste d'auto-switching",
-        "syncError": "Erreur de synchronisation",
-        "syncErrorDescription": "Impossible de synchroniser le provider avec l'auto-switching"
-      },
-      "providerConfig": {
-        "title": "Configuration",
-        "windsurfAuth": {
-          "description": "Détection automatique de vos identifiants Windsurf depuis votre installation IDE locale.",
-          "oauthDetected": "Authentification SSO Windsurf détectée",
-          "tokenLoaded": "Le token SSO Windsurf a été automatiquement chargé depuis votre environnement IDE local.",
-          "noConfigRequired": "Pas de configuration manuelle requise. Vous pouvez aussi utiliser l'onglet Clé API avec une Service Key.",
-          "claudeCodeAuth": "Utilisez l'authentification OAuth Claude Code pour vous connecter facilement avec votre compte Claude.",
-          "authenticating": "Authentification...",
-          "connectWithClaude": "Se connecter avec Claude Code",
-          "terminalInstructions": "Cela ouvrira un terminal où vous pourrez exécuter la commande `/login` pour vous authentifier.",
-          "detectFromIDE": "Détecter depuis Windsurf IDE",
-          "detecting": "Détection...",
-          "detectSuccess": "Token détecté pour {{userName}} !",
-          "detectFailed": "Impossible de détecter le token. Vérifiez que Windsurf IDE est installé et que vous êtes connecté.",
-          "orManual": "Ou connectez-vous manuellement :",
-          "openWindsurfLogin": "windsurf.com/account",
-          "tokenDetected": "Clé API détectée",
-          "saveAndConnect": "Enregistrer et connecter",
-          "saveSuccess": "Connexion Windsurf enregistrée avec succès !",
-          "accountInfo": "Compte authentifié",
-          "accountName": "Nom",
-          "accountPlan": "Plan",
-          "accountCredits": "Crédits",
-          "accountFlowActions": "Flow Actions"
-        }
-      },
-      "providerCard": {
-        "configure": "Configurer",
-        "test": "Tester",
-        "edit": "Modifier",
-        "apiKey": "Clé API",
-        "authentication": "Authentification",
-        "authCli": "Auth CLI",
-        "authOauth": "OAuth",
-        "authLocal": "Local",
-        "cliAuthenticated": "Authentifié via CLI",
-        "oauthConnected": "OAuth connecté",
-        "localRunning": "Instance locale",
-        "oauthCli": "OAuth (CLI)",
-        "notConfigured": "Non configurée",
-        "lastTest": "Dernier test",
-        "neverTested": "Jamais testé",
-        "usage": "Utilisations",
-        "usageThisMonth": "Utilisations ce mois",
-        "week": "semaine",
-        "notAvailable": "Non disponible",
-        "source": "Source",
-        "status": {
-          "notConfigured": "Non configuré",
-          "error": "Erreur",
-          "active": "Actif"
-        },
-        "rateLimited": "Limité par taux",
-        "needsReauth": "Requiert réauthentification",
-        "statusNested": {
-          "notConfigured": "Non configuré",
-          "error": "Erreur",
-          "active": "Actif"
-        },
-        "testSuccess": "Test réussi",
-        "testSuccessDescription": "Le provider {{providerName}} fonctionne correctement",
-        "testError": "Test échoué",
-        "testErrorDescription": "Le provider {{providerName}} a échoué : {{error}}",
-        "deleteConfirm": "Êtes-vous sûr de vouloir supprimer la configuration de ce provider ?",
-        "testDetails": {
-          "modelsAvailable": "{{count}} modèles disponibles",
-          "modelUsed": "Modèle utilisé : {{model}}"
-        },
-        "errors": {
-          "unknownError": "Erreur inconnue"
-        }
-      },
-      "providers": {
-        "meta": "Modèles Meta AI officiels",
-        "mistral": "Modèles Mistral AI (Mistral, Codéal, etc.)",
-        "deepseek": "Modèles DeepSeek (DeepSeek-Coder, etc.)",
-        "aws": "AWS Bedrock et services Amazon",
-        "copilot": "GitHub Copilot",
-        "grok": "Modèles Grok xAI",
-        "windsurf": "Provider Windsurf AI",
-        "cursor": "Provider Cursor AI",
-        "ollama": "Modèles open-source locaux avec Ollama",
-        "anthropic": "Modèles Claude d'Anthropic",
-        "google": "Accès aux API Google et Google DeepMind",
-        "openai": "Modèles GPT-5 et autres modèles OpenAI",
-        "loadError": "Impossible de charger la liste des providers"
-      },
-      "providerToggle": {
-        "enabled": "Provider activé",
-        "disabled": "Provider désactivé",
-        "description": "{{providerId}} a été {{action}} avec succès",
-        "error": "Erreur",
-        "errorDescription": "Impossible de {{action}} le provider {{providerId}}"
-      },
-      "alerts": {
-        "noProviders": "Aucun provider configuré. Configurez vos clés API pour commencer.",
-        "providerErrors": "{{count}} provider(s) en erreur"
-      },
-      "priorityOrder": {
-        "title": "Ordre de priorité des fournisseurs",
-        "up": "Monter",
-        "down": "Descendre"
-      },
-      "priority": {
-        "title": "Ordre de priorité des comptes",
-        "description": "Glissez pour réordonner. Le système utilisera le prochain compte disponible dans l'ordre.",
-        "noAccounts": "Aucun compte configuré. Ajoutez des comptes ci-dessus pour définir la priorité.",
-        "noEmail": "Pas d'email",
-        "active": "Actif",
-        "inUse": "En cours d'utilisation",
-        "next": "Suivant",
-        "unlimited": "Illimité",
-        "unavailable": "Indisponible",
-        "typeOAuth": "OAuth",
-        "typeAPI": "API",
-        "payPerUse": "Paiement à l'usage",
-        "needsAuth": "Non authentifié",
-        "duplicateUsage": "Utilisation dupliquée détectée",
-        "duplicateUsageHint": "Ce profil a une utilisation identique à un autre profil, ce qui suggère qu'ils pourraient être authentifiés sur le même compte Anthropic. Réauthentifiez-vous avec un compte différent.",
-        "needsReauth": "Réauthentification requise",
-        "needsReauthHint": "Le jeton d'actualisation de ce profil est invalide. Cliquez pour vous réauthentifier.",
-        "sessionUsage": "Utilisation de session (fenêtre de 5 heures)",
-        "weeklyUsage": "Utilisation hebdomadaire (fenêtre de 7 jours)",
-        "oauthSection": "Comptes Claude (utilisés en priorité)",
-        "apiSection": "Endpoints de secours (quand tous les comptes sont épuisés)",
-        "tipTitle": "Comment fonctionne la priorité",
-        "claudeAccountsDescription": "Ajoutez plusieurs abonnements Claude pour basculer automatiquement entre eux lorsque vous atteignez les limites de taux.",
-        "tipDescription": "Les comptes Claude sont inclus dans votre abonnement et seront utilisés en priorité. Les endpoints API facturent par requête et servent de secours quand tous les comptes Claude atteignent leurs limites.",
-        "providerAuth": "Authentifié via clé API",
-        "status": {
-          "healthy": "Sain",
-          "moderate": "Modéré",
-          "highUsage": "Utilisation élevée",
-          "nearLimit": "Proche de la limite",
-          "rateLimited": "Limite atteinte"
-        }
-      }
-    },
-    "updates": {
-      "title": "Mises à jour",
-      "description": "Mises à jour WorkPilot AI"
-    },
-    "notifications": {
-      "title": "Notifications",
-      "description": "Préférences d'alertes"
-    },
-    "debug": {
-      "title": "Debug & Logs",
-      "description": "Accéder aux journaux et informations de debug pour le dépannage",
-      "errorReporting": {
-        "label": "Rapport d'erreurs anonyme",
-        "description": "Envoyer des rapports de plantage pour aider à améliorer WorkPilot AI. Aucune donnée personnelle ou code n'est collecté."
-      },
-      "openLogsFolder": "Ouvrir le dossier des journaux",
-      "copyDebugInfo": "Copier les infos de debug",
-      "copied": "Copié !",
-      "loadInfo": "Charger les infos de debug",
-      "systemInfo": "Informations système",
-      "logsLocation": "Emplacement des journaux",
-      "recentErrors": "Erreurs récentes",
-      "noRecentErrors": "Aucune erreur récente",
-      "helpTitle": "Rapporter des problèmes",
-      "helpText": "Lors du signalement de bugs, cliquez sur \"Copier les infos de debug\" pour obtenir les informations système et les erreurs récentes qui nous aident à diagnostiquer le problème."
-    },
-    "projectSettings": {
-      "noProjectSelected": {
-        "title": "Aucun projet sélectionné",
-        "description": "Sélectionnez un projet dans la barre latérale pour configurer ses paramètres."
-      }
-    },
-    "mcp": {
-      "title": "Vue d'ensemble des serveurs MCP",
-      "titleWithProject": "Vue d'ensemble des serveurs MCP pour {{projectName}}",
-      "description": "Configurer quels serveurs MCP sont disponibles pour les agents dans ce projet",
-      "descriptionNoProject": "Sélectionnez un projet pour configurer les serveurs MCP",
-      "serversEnabled": "{{count}} serveurs activés",
-      "configuration": "Configuration des serveurs MCP",
-      "configurationHint": "Les serveurs désactivés réduisent l'utilisation du contexte et le temps de démarrage",
-      "noProjectSelected": "Aucun projet sélectionné",
-      "noProjectSelectedDescription": "Sélectionnez un projet dans le menu déroulant pour voir et configurer les serveurs MCP.",
-      "projectNotInitialized": "Projet non initialisé",
-      "projectNotInitializedDescription": "Initialisez WorkPilot AI pour ce projet pour configurer les serveurs MCP.",
-      "browserAutomation": "Automatisation du navigateur (agents QA uniquement)",
-      "alwaysEnabled": "toujours activé",
-      "addServer": "Ajouter un serveur",
-      "addMcpTo": "Ajouter un serveur MCP à {{agent}}",
-      "addMcpDescription": "Sélectionnez un serveur MCP à ajouter à cet agent",
-      "allMcpsAdded": "Tous les serveurs MCP disponibles sont déjà ajoutés",
-      "added": "ajouté",
-      "removed": "supprimé",
-      "remove": "Supprimer",
-      "restore": "Restaurer",
-      "noMcpServers": "Aucun serveur MCP",
-      "cannotRemove": "Impossible de supprimer (requis)",
-      "servers": {
-        "context7": {
-          "name": "Context7",
-          "description": "Recherche de documentation pour les bibliothèques"
-        },
-        "graphiti": {
-          "name": "Mémoire Graphiti",
-          "description": "Graphe de connaissances pour le contexte inter-sessions",
-          "notConfigured": "Nécessite une configuration mémoire (voir paramètres Mémoire)"
-        },
-        "linear": {
-          "name": "Linear",
-          "description": "Intégration gestion de projet",
-          "notConfigured": "Nécessite une intégration Linear (voir paramètres Linear)"
-        },
-        "electron": {
-          "name": "Electron",
-          "description": "Automatisation d'application de bureau via Chrome DevTools"
-        },
-        "puppeteer": {
-          "name": "Puppeteer",
-          "description": "Automatisation de navigateur web pour les tests"
-        },
-        "autoClaude": {
-          "name": "Outils WorkPilot AI",
-          "description": "Suivi des progrès de build"
-        }
-      },
-      "customServers": "Serveurs personnalisés",
-      "addCustomServer": "Ajouter un serveur personnalisé",
-      "editCustomServer": "Modifier un serveur personnalisé",
-      "customServerDescription": "Ajouter un serveur MCP basé sur commande ou HTTP",
-      "serverType": "Type de serveur",
-      "typeCommand": "Commande (npx/npm)",
-      "typeHttp": "HTTP",
-      "serverName": "Nom",
-      "serverNamePlaceholder": "Mon serveur MCP",
-      "serverDescription": "Description",
-      "serverDescriptionPlaceholder": "Ce que fait ce serveur",
-      "command": "Commande",
-      "args": "Arguments",
-      "argsHint": "Arguments séparés par des espaces",
-      "url": "URL",
-      "headers": "En-têtes",
-      "headerName": "Nom d'en-tête",
-      "headerValue": "Valeur d'en-tête",
-      "noCustomServers": "Aucun serveur personnalisé configuré. Ajoutez-en un pour utiliser avec vos agents.",
-      "errorNameRequired": "Le nom du serveur est requis",
-      "errorIdExists": "Un serveur avec cet ID existe déjà",
-      "errorCommandRequired": "La commande est requise pour les serveurs basés sur commande",
-      "errorUrlRequired": "L'URL est requise pour les serveurs basés sur HTTP",
-      "testConnection": "Tester",
-      "testing": "Test...",
-      "authToken": "Jeton d'authentification",
-      "authTokenPlaceholder": "Collez votre jeton API ou PAT ici",
-      "authTokenHint": "Utilisé comme jeton Bearer dans l'en-tête Authorization",
-      "advancedHeaders": "En-têtes supplémentaires",
-      "status": {
-        "healthy": "Le serveur répond",
-        "unhealthy": "Le serveur ne répond pas",
-        "needsAuth": "Authentification requise",
-        "checking": "Vérification...",
-        "unknown": "Statut inconnu"
-      },
-      "hints": {
-        "github": "Ceci ressemble à un serveur MCP GitHub. Vous aurez besoin d'un Personal Access Token avec les portées appropriées.",
-        "createGithubPat": "Créer un PAT GitHub",
-        "google": "Ceci ressemble à une API Google. Vous aurez besoin d'un jeton OAuth ou d'une clé API.",
-        "createGoogleToken": "Créer des identifiants Google",
-        "anthropic": "Ceci ressemble à une API Anthropic. Vous aurez besoin d'une clé API.",
-        "createAnthropicKey": "Créer une clé API Anthropic",
-        "openai": "Ceci ressemble à une API OpenAI. Vous aurez besoin d'une clé API.",
-        "createOpenaiKey": "Créer une clé API OpenAI"
-      }
-    },
-    "terminal-fonts": {
-      "title": "Polices de terminal",
-      "description": "Apparence des polices de terminal"
-    },
-    "sandbox": {
-      "title": "Sandbox",
-      "description": "Isolation d'exécution des agents & rollback"
-    },
-    "anomaly-detection": {
-      "title": "Détection d'anomalies",
-      "description": "Surveillance comportementale des agents"
-    },
-    "llm-router": {
-      "title": "Routeur LLM",
-      "description": "Routage intelligent de providers & tests A/B"
-    },
-    "scheduler": {
-      "title": "Planificateur",
-      "description": "Planification de tâches cron & chaînes"
-    }
-  },
-  "apiProfiles": {
-    "title": "Profils API",
-    "description": "Configurez des endpoints API compatibles Anthropic personnalisés",
-    "addButton": "Ajouter un profil",
-    "presets": {
-      "anthropic": "Anthropic (Claude)",
-      "copilot": "GitHub Copilot",
-      "openai": "OpenAI",
-      "mistral": "Mistral AI",
-      "grok": "Grok (xAI)",
-      "gemini": "Gemini (Google)",
-      "windsurf": "Windsurf (Codeium)"
-    },
-    "fields": {
-      "name": "Nom",
-      "preset": "Préréglage",
-      "baseUrl": "URL de base",
-      "apiKey": "Clé API"
-    },
-    "placeholders": {
-      "name": "Mon API personnalisée",
-      "preset": "Choisir un préréglage de fournisseur",
-      "baseUrl": "https://api.anthropic.com",
-      "apiKey": "sk-ant-..."
-    },
-    "hints": {
-      "preset": "Les préréglages remplissent l'URL de base ; vous devez toujours coller votre clé API.",
-      "baseUrl": "Exemple : https://api.anthropic.com ou http://localhost:8080"
-    },
-    "validation": {
-      "nameRequired": "Le nom est requis",
-      "baseUrlRequired": "L'URL de base est requise",
-      "baseUrlInvalid": "Format d'URL invalide (doit être http:// ou https://)",
-      "apiKeyRequired": "La clé API est requise",
-      "apiKeyInvalid": "Format de clé API invalide"
-    },
-    "actions": {
-      "save": "Enregistrer le profil",
-      "saving": "Enregistrement...",
-      "cancel": "Annuler",
-      "changeKey": "Modifier",
-      "cancelKeyChange": "Annuler"
-    },
-    "testConnection": {
-      "label": "Tester la connexion",
-      "testing": "Test en cours...",
-      "success": "Connexion réussie",
-      "failure": "Échec de la connexion"
-    },
-    "models": {
-      "title": "Optionnel : correspondance des noms de modèles",
-      "description": "Sélectionnez des modèles auprès de votre fournisseur d'API. Laissez vide pour utiliser les valeurs par défaut.",
-      "defaultLabel": "Modèle par défaut (optionnel)",
-      "haikuLabel": "Modèle Haiku (optionnel)",
-      "sonnetLabel": "Modèle Sonnet (optionnel)",
-      "opusLabel": "Modèle Opus (optionnel)",
-      "defaultPlaceholder": "ex. : claude-sonnet-4-5-20250929",
-      "haikuPlaceholder": "ex. : claude-haiku-4-5-20251001",
-      "sonnetPlaceholder": "ex. : claude-sonnet-4-5-20250929",
-      "opusPlaceholder": "ex. : claude-opus-4-5-20251101"
-    },
-    "empty": {
-      "title": "Aucun profil API configuré",
-      "description": "Créez un profil pour configurer des endpoints API personnalisés pour vos builds.",
-      "action": "Créer le premier profil"
-    },
-    "switchToOauth": {
-      "label": "Passer à OAuth",
-      "loading": "Basculement..."
-    },
-    "activeBadge": "Actif",
-    "customModels": "Modèles personnalisés : {{models}}",
-    "setActive": {
-      "label": "Définir comme actif",
-      "loading": "Activation..."
-    },
-    "tooltips": {
-      "edit": "Modifier le profil",
-      "deleteActive": "Passez à OAuth avant de supprimer",
-      "deleteInactive": "Supprimer le profil"
-    },
-    "deleteAriaLabel": "Supprimer le profil {{name}}",
-    "toast": {
-      "create": {
-        "title": "Profil créé",
-        "description": "\"{{name}}\" a été ajouté avec succès."
-      },
-      "update": {
-        "title": "Profil mis à jour",
-        "description": "\"{{name}}\" a été mis à jour avec succès."
-      },
-      "delete": {
-        "title": "Profil supprimé",
-        "description": "\"{{name}}\" a été supprimé.",
-        "errorTitle": "Échec de la suppression du profil",
-        "errorFallback": "Une erreur s'est produite lors de la suppression du profil."
-      },
-      "switch": {
-        "oauthTitle": "Passé à OAuth",
-        "oauthDescription": "Authentification OAuth utilisée",
-        "profileTitle": "Profil activé",
-        "profileDescription": "Utilisation de {{name}}",
-        "errorTitle": "Échec du changement d'authentification",
-        "errorFallback": "Une erreur s'est produite lors du changement de méthode d'authentification."
-      }
-    }
-  },
-  "modelSelect": {
-    "placeholder": "Sélectionner un modèle ou saisir manuellement",
-    "placeholderManual": "Saisir le nom du modèle (ex: claude-sonnet-4-5-20250929)",
-    "searchPlaceholder": "Rechercher des modèles...",
-    "noResults": "Aucun modèle ne correspond à votre recherche",
-    "discoveryNotAvailable": "Découverte de modèles indisponible. Saisissez le nom du modèle manuellement."
-  },
-  "azureDevOps": {
-    "enableSyncLabel": "Activer la synchronisation Azure DevOps",
-    "enableSyncDescription": "Gérer automatiquement les éléments de travail du backlog Azure DevOps",
-    "orgUrlLabel": "URL de l'organisation",
-    "orgUrlDescription": "URL de votre organisation Azure DevOps (ex. https://dev.azure.com/votre-org)",
-    "orgUrlPlaceholder": "https://dev.azure.com/votre-org",
-    "patLabel": "Jeton d'accès personnel (PAT)",
-    "patDescriptionPrefix": "Générez un PAT depuis",
-    "patDescriptionSuffix": "Portée requise : Work Items (Read & Write).",
-    "patLinkLabel": "Paramètres utilisateur Azure DevOps",
-    "patPlaceholder": "Saisissez votre PAT",
-    "repositoryLabel": "Dépôt",
-    "repositoryDescription": "Sélectionnez le dépôt Azure DevOps à utiliser pour ce projet",
-    "repositoryPlaceholder": "Sélectionner un dépôt...",
-    "repositoryLoading": "Chargement des dépôts...",
-    "repositoryError": "Erreur lors du chargement des dépôts",
-    "repositorySelectManual": "Saisir manuellement",
-    "repositoryRefresh": "Actualiser la liste",
-    "defaultProjectLabel": "Projet par défaut (optionnel)",
-    "defaultProjectDescription": "Laissez vide pour choisir lors de l'import, ou définissez un nom de projet par défaut",
-    "defaultProjectPlaceholder": "MonProjet",
-    "connectionStatusTitle": "État de la connexion",
-    "connectionChecking": "Vérification...",
-    "connectionConnected": "Connecté",
-    "connectionConnectedProject": "Connecté au projet {{projectName}}",
-    "connectionNotConnected": "Non connecté",
-    "connectionWorkItemCount": "{{count}}+ éléments de travail disponibles à l'import",
-    "importPromptTitle": "Importer des éléments de travail",
-    "importPromptDescription": "Sélectionnez et importez des éléments de travail depuis votre backlog Azure DevOps pour créer des tâches WorkPilot AI.",
-    "importPromptButton": "Sélectionner les éléments à importer",
-    "autoSyncLabel": "Synchronisation auto des éléments de travail",
-    "autoSyncDescription": "Importer automatiquement les nouveaux éléments de travail à l'ouverture du projet",
-    "autoSyncNoteLabel": "Note :",
-    "autoSyncNoteDescription": "La synchronisation auto récupère les nouveaux éléments de travail non résolus et les importe comme tâches en attente."
-  },
-  "azureDevOpsImport": {
-    "title": "Importer des éléments de travail Azure DevOps",
-    "description": "Sélectionnez des éléments de travail Azure DevOps à importer dans WorkPilot AI",
-    "importSuccess": "{{count}} élément(s) de travail importé(s) avec succès",
-    "successTitle": "Import réussi !",
-    "successCount": "Importé {{count}} élément de travail.",
-    "successCount_plural": "Importé {{count}} éléments de travail.",
-    "successFailedSuffix": "{{count}} en échec.",
-    "errorNotConfigured": "Azure DevOps non configuré",
-    "errorCheckConnectionFailed": "Échec de la vérification de la connexion",
-    "errorUnknown": "Erreur inconnue",
-    "errorLoadWorkItemsFailed": "Échec du chargement des éléments de travail",
-    "errorImportFailed": "Échec de l'import",
-    "errorNoProject": "Aucun projet sélectionné",
-    "projectLabel": "Projet :",
-    "searchPlaceholder": "Rechercher des éléments de travail...",
-    "filterTypeLabel": "Type d'élément de travail",
-    "filterTypeAll": "Tous les types",
-    "filterStateLabel": "État",
-    "filterStateAll": "Tous les états",
-    "selectionCount": "{{selected}} sur {{total}} sélectionnés",
-    "emptyTitle": "Aucun élément de travail trouvé",
-    "emptySubtitle": "Essayez d'ajuster vos filtres",
-    "done": "Terminé",
-    "cancel": "Annuler",
-    "configureButton": "Configurer Azure DevOps",
-    "selectedItems": "{{count}} élément(s) sélectionné(s)",
-    "toggleSelection": "Basculer la sélection pour l'élément de travail {{id}}",
-    "dragInstructions": "Sélectionnez des éléments puis faites-les glisser dans une colonne",
-    "moreItems": "+{{count}} élément(s) supplémentaire(s)",
-    "importing": "Import en cours...",
-    "importButton": "Importer Azure DevOps",
-    "noResults": "Aucun modèle ne correspond à votre recherche",
-    "discoveryNotAvailable": "Découverte de modèles indisponible. Saisissez le nom du modèle manuellement."
-  },
-  "language": {
-    "label": "Langue de l'interface",
-    "description": "Sélectionnez la langue de l'interface de l'application"
-  },
-  "scale": {
-    "presets": "Préréglages d'échelle",
-    "presetsDescription": "Options d'échelle rapides pour les préférences courantes",
-    "fineTune": "Ajustement fin",
-    "fineTuneDescription": "Ajustez de 75% à 200% par incréments de 5%",
-    "default": "Par défaut",
-    "comfortable": "Confortable",
-    "large": "Grand"
-  },
-  "logOrder": {
-    "label": "Ordre des journaux",
-    "description": "Choisir comment les journaux sont affichés dans la vue détaillée des tâches",
-    "chronological": "Chronologique (plus ancien en premier)",
-    "reverseChronological": "Chronologique inverse (plus récent en premier)"
-  },
-  "general": {
-    "providerSection": "Fournisseur IA",
-    "providerSectionDescription": "Choisissez le fournisseur IA utilisé pour les tâches autonomes. La liste des modèles ci-dessous se met à jour automatiquement.",
-    "otherAgentSettings": "Autres paramètres de l'agent",
-    "otherAgentSettingsDescription": "Options de configuration supplémentaires de l'agent",
-    "agentFramework": "Framework de l'agent",
-    "agentFrameworkDescription": "Le framework de codage utilisé pour les tâches autonomes",
-    "agentFrameworkAutoClaude": "WorkPilot AI",
-    "aiTerminalNaming": "Nommage IA des terminaux",
-    "aiTerminalNamingDescription": "Nommer automatiquement les terminaux en fonction des commandes",
-    "featureModelSettings": "Paramètres du modèle de fonctionnalité",
-    "featureModelSettingsDescription": "Modèle et niveau de réflexion pour Analyses, Idéation et Roadmap",
-    "model": "Modèle",
-    "thinkingLevel": "Niveau de réflexion",
-    "paths": "Chemins",
-    "pathsDescription": "Configurer les chemins des exécutables et du framework",
-    "pythonPath": "Chemin Python",
-    "pythonPathDescription": "Chemin vers l'exécutable Python (laisser vide pour détection automatique)",
-    "pythonPathPlaceholder": "python3 (par défaut)",
-    "gitPath": "Chemin Git",
-    "gitPathDescription": "Chemin vers l'exécutable Git (laisser vide pour détection automatique)",
-    "gitPathPlaceholder": "git (par défaut)",
-    "githubCLIPath": "Chemin GitHub CLI",
-    "githubCLIPathDescription": "Chemin vers l'exécutable GitHub CLI (gh) (laisser vide pour détection automatique)",
-    "githubCLIPathPlaceholder": "gh (par défaut)",
-    "gitlabCLIPath": "Chemin GitLab CLI",
-    "gitlabCLIPathDescription": "Chemin vers l'exécutable GitLab CLI (glab) (laisser vide pour détection automatique)",
-    "gitlabCLIPathPlaceholder": "glab (par défaut)",
-    "claudePath": "Chemin Claude CLI",
-    "claudePathDescription": "Chemin vers l'exécutable Claude CLI (laisser vide pour détection automatique)",
-    "claudePathPlaceholder": "claude (par défaut)",
-    "detectedPath": "Détecté automatiquement",
-    "detectedVersion": "Version",
-    "detectedSource": "Source",
-    "sourceUserConfig": "Configuration utilisateur",
-    "sourceVenv": "Environnement virtuel",
-    "sourceHomebrew": "Homebrew",
-    "sourceNvm": "NVM",
-    "sourceSystemPath": "PATH système",
-    "sourceBundled": "Intégré",
-    "sourceFallback": "Valeur par défaut",
-    "notDetected": "Non détecté",
-    "autoClaudePath": "Chemin WorkPilot AI",
-    "autoClaudePathDescription": "Chemin relatif vers le répertoire workpilot-ai dans les projets",
-    "autoClaudePathPlaceholder": "workpilot-ai (par défaut)",
-    "autoNameTerminals": "Nommer automatiquement les terminaux",
-    "autoNameTerminalsDescription": "Utiliser l'IA pour générer des noms descriptifs pour les onglets de terminal en fonction de leur activité"
-  },
-  "theme": {
-    "title": "Apparence",
-    "description": "Personnalisez l'apparence de WorkPilot AI",
-    "mode": "Mode",
-    "modeDescription": "Choisir entre les thèmes clair et sombre",
-    "light": "Clair",
-    "dark": "Sombre",
-    "system": "Système",
-    "colorTheme": "Thème de couleur",
-    "colorThemeDescription": "Choisissez votre palette de couleurs préférée"
-  },
-  "devtools": {
-    "title": "Outils de développement",
-    "description": "Configurez votre IDE, terminal et paramètres de police de terminal préférés",
-    "detecting": "Détection des outils installés...",
-    "detectAgain": "Détecter à nouveau",
-    "tabTools": "Outils",
-    "tabTerminalFonts": "Polices de terminal",
-    "ide": {
-      "label": "IDE préféré",
-      "description": "WorkPilot AI ouvrira les arbres de travail dans cet éditeur",
-      "placeholder": "Sélectionner un IDE...",
-      "customPath": "Chemin IDE personnalisé",
-      "customPathPlaceholder": "/chemin/vers/votre/ide"
-    },
-    "terminal": {
-      "label": "Terminal préféré",
-      "description": "WorkPilot AI ouvrira les sessions terminal ici",
-      "placeholder": "Sélectionner un terminal...",
-      "customPath": "Chemin terminal personnalisé",
-      "customPathPlaceholder": "/chemin/vers/votre/terminal"
-    },
-    "detected": "Détecté",
-    "notInstalled": "Non installé",
-    "detectedSummary": "Détecté sur votre système :",
-    "noToolsDetected": "Aucun outil supplémentaire détecté (VS Code et le terminal système seront utilisés)",
-    "autoNameClaude": {
-      "label": "Nommer automatiquement les terminaux Claude",
-      "description": "Utiliser l'IA pour générer un nom descriptif pour les terminaux Claude basé sur votre premier message"
-    },
-    "yoloMode": {
-      "label": "Mode YOLO",
-      "description": "Démarrer Claude avec le flag --dangerously-skip-permissions, contournant toutes les invites de sécurité. À utiliser avec une extrême prudence.",
-      "warning": "Ce mode contourne le système de permissions de Claude. N'activez que si vous faites entièrement confiance au code exécuté."
-    }
-  },
-  "updates": {
-    "title": "Mises à jour",
-    "description": "Gérer les mises à jour de WorkPilot AI",
-    "appUpdateReady": "Mise à jour de l'app prête",
-    "newVersion": "Nouvelle version",
-    "released": "Publiée le",
-    "downloading": "Téléchargement...",
-    "updateDownloaded": "Mise à jour téléchargée ! Cliquez sur Installer pour redémarrer et appliquer la mise à jour.",
-    "installAndRestart": "Installer et redémarrer",
-    "downloadUpdate": "Télécharger la mise à jour",
-    "version": "Version",
-    "loading": "Chargement...",
-    "checkingForUpdates": "Vérification des mises à jour...",
-    "newVersionAvailable": "Nouvelle version disponible :",
-    "latestVersion": "Vous utilisez la dernière version.",
-    "viewRelease": "Voir la version complète sur GitHub",
-    "unableToCheck": "Impossible de vérifier les mises à jour",
-    "checkForUpdates": "Vérifier les mises à jour",
-    "autoUpdateProjects": "Mise à jour automatique des projets",
-    "autoUpdateProjectsDescription": "Mettre à jour automatiquement WorkPilot AI dans les projets quand une nouvelle version est disponible",
-    "betaUpdates": "Mises à jour bêta",
-    "betaUpdatesDescription": "Recevoir les versions bêta pré-release avec de nouvelles fonctionnalités (peut être moins stable)",
-    "stableDowngradeAvailable": "Version stable disponible",
-    "stableDowngradeDescription": "Vous êtes actuellement sur une version bêta. Comme vous avez désactivé les mises à jour bêta, vous pouvez passer à la dernière version stable.",
-    "stableVersion": "Version stable",
-    "downloadStableVersion": "Télécharger la version stable",
-    "readOnlyVolumeTitle": "Impossible d'installer depuis l'image disque",
-    "readOnlyVolumeDescription": "WorkPilot AI s'exécute depuis une image disque en lecture seule (DMG). Veuillez glisser l'application dans votre dossier Applications et la relancer depuis cet emplacement pour installer les mises à jour.",
-    "downloadError": "Échec du téléchargement de la mise à jour"
-  },
-  "notifications": {
-    "title": "Notifications",
-    "description": "Configurer les préférences de notification par défaut",
-    "onTaskComplete": "À la fin d'une tâche",
-    "onTaskCompleteDescription": "Notifier quand une tâche se termine avec succès",
-    "onTaskFailed": "En cas d'échec",
-    "onTaskFailedDescription": "Notifier quand une tâche rencontre une erreur",
-    "onReviewNeeded": "Révision requise",
-    "onReviewNeededDescription": "Notifier quand le QA nécessite votre révision",
-    "sound": "Son",
-    "soundDescription": "Jouer un son avec les notifications"
-  },
-  "actions": {
-    "save": "Enregistrer les paramètres",
-    "rerunWizard": "Relancer l'assistant",
-    "rerunWizardDescription": "Redémarrer l'assistant de configuration"
-  },
-  "projectSections": {
-    "general": {
-      "title": "Général",
-      "description": "Auto-Build et configuration de l'agent",
-      "useClaudeMd": "Utiliser CLAUDE.md",
-      "useClaudeMdDescription": "Inclure les instructions CLAUDE.md dans le contexte de l'agent"
-    },
-    "claude": {
-      "title": "Auth Claude",
-      "description": "Authentification Claude"
-    },
-    "linear": {
-      "title": "Linear",
-      "description": "Intégration Linear",
-      "integrationTitle": "Intégration Linear",
-      "integrationDescription": "Se connecter à Linear pour le suivi des issues et l'import de tâches",
-      "syncDescription": "Synchroniser avec Linear pour le suivi des issues",
-      "connectionStatus": "État de la connexion",
-      "checking": "Vérification...",
-      "connectedTo": "Connecté à {{team}}",
-      "connected": "Connecté",
-      "notConnected": "Non connecté",
-      "tasksAvailable": "{{count}}+ tâches disponibles à l'import"
-    },
-    "github": {
-      "title": "GitHub",
-      "description": "Synchronisation issues GitHub",
-      "integrationTitle": "Intégration GitHub",
-      "integrationDescription": "Se connecter à GitHub pour le suivi des issues",
-      "syncDescription": "Synchroniser avec GitHub Issues",
-      "connectedViaCLI": "Connecté via GitHub CLI",
-      "authenticatedAs": "Authentifié en tant que {{username}}",
-      "useDifferentToken": "Utiliser un autre token",
-      "connectionStatus": "État de la connexion",
-      "checking": "Vérification...",
-      "connectedTo": "Connecté à {{repo}}",
-      "notConnected": "Non connecté",
-      "defaultBranch": {
-        "label": "Branche par défaut",
-        "description": "Branche de base pour créer les arbres de travail de tâches",
-        "autoDetect": "Détection automatique (main/master)",
-        "searchPlaceholder": "Rechercher des branches...",
-        "noBranchesFound": "Aucune branche trouvée",
-        "selectedBranchHelp": "Toutes les nouvelles tâches partiront de {{branch}}"
-      }
-    },
-    "azureDevOps": {
-      "title": "Azure DevOps",
-      "description": "Éléments de travail Azure DevOps",
-      "integrationTitle": "Intégration Azure DevOps",
-      "integrationDescription": "Se connecter à Azure DevOps pour la gestion des éléments de travail",
-      "syncDescription": "Synchroniser avec le backlog Azure DevOps",
-      "connectionStatus": "État de la connexion",
-      "checking": "Vérification...",
-      "connectedTo": "Connecté à {{organization}}",
-      "connected": "Connecté",
-      "notConnected": "Non connecté",
-      "tasksAvailable": "{{count}}+ éléments de travail disponibles à l'import"
-    },
-    "jira": {
-      "title": "Jira",
-      "description": "Intégration Jira"
-    },
-    "memory": {
-      "title": "Mémoire",
-      "description": "Backend mémoire Graphiti",
-      "integrationTitle": "Mémoire",
-      "integrationDescription": "Configurer la mémoire persistante inter-sessions pour les agents",
-      "syncDescription": "Configurer la mémoire persistante"
-    }
-  },
-  "agents": {
-    "pr_template_filler": {
-      "label": "Remplisseur de modèle PR",
-      "description": "Remplit intelligemment les modèles de PR GitHub à partir des changements de code"
-    }
-  },
-  "agentProfile": {
-    "label": "Profil Agent",
-    "title": "Profil Agent par défaut",
-    "sectionDescription": "Sélectionnez une configuration prédéfinie pour le modèle et le niveau de réflexion",
-    "profilesInfo": "Les profils Agent fournissent des configurations prédéfinies pour le modèle Claude et le niveau de réflexion. Lors de la création d'une nouvelle tâche, ces paramètres seront utilisés par défaut. Vous pouvez toujours les remplacer dans l'assistant de création de tâche.",
-    "custom": "Personnalisé",
-    "customConfiguration": "Configuration Personnalisée",
-    "customDescription": "Choisir modèle et niveau de réflexion",
-    "phaseConfiguration": "Configuration des Phases",
-    "phaseConfigurationDescription": "Personnaliser le modèle et le niveau de réflexion pour chaque phase",
-    "clickToCustomize": "Cliquer pour personnaliser",
-    "model": "Modèle",
-    "thinking": "Réflexion",
-    "thinkingLevel": "Niveau de Réflexion",
-    "selectModel": "Sélectionner un modèle",
-    "selectThinkingLevel": "Sélectionner le niveau de réflexion",
-    "perPhaseOptimization": "(optimisation par phase)",
-    "resetToDefaults": "Réinitialiser les valeurs par défaut",
-    "resetToProfileDefaults": "Réinitialiser aux valeurs de {{profile}}",
-    "customized": "Personnalisé",
-    "phaseConfigNote": "Ces paramètres seront utilisés par défaut lors de la création de nouvelles tâches avec ce profil. Vous pouvez les remplacer par tâche dans l'assistant de création de tâche.",
-    "phases": {
-      "spec": {
-        "label": "Création de spec",
-        "description": "Découverte, exigences, collecte de contexte"
-      },
-      "planning": {
-        "label": "Planification",
-        "description": "Planification et architecture de l'implémentation"
-      },
-      "coding": {
-        "label": "Codage",
-        "description": "Implémentation du code"
-      },
-      "qa": {
-        "label": "Revue QA",
-        "description": "Assurance qualité et validation"
-      }
-    }
-  },
-  "customProvider": {
-    "title": "Configuration du fournisseur personnalisé",
-    "description": "Configurez votre API d'entreprise ou serveur de modèles local",
-    "apiConfig": "Configuration API",
-    "apiUrl": "URL de l'API",
-    "apiKey": "Clé API",
-    "discoverModels": "Découvrir les modèles",
-    "discovering": "Découverte en cours...",
-    "discoveryFailed": "Échec de la découverte",
-    "discoveryFailedDesc": "Impossible de se connecter à l'API. Vérifiez l'URL et la clé API.",
-    "modelsDiscovered": "Modèles découverts",
-    "modelsDiscoveredDesc": "{{count}} modèles ont été découverts et ajoutés automatiquement.",
-    "noModelsFound": "Aucun modèle trouvé",
-    "noModelsFoundDesc": "L'API n'a retourné aucun modèle. Vérifiez le format de réponse.",
-    "urlRequired": "URL requise",
-    "urlRequiredDesc": "Veuillez entrer l'URL de votre API avant de découvrir les modèles.",
-    "manualModels": "Gestion manuelle des modèles",
-    "modelName": "Nom du modèle",
-    "modelId": "ID du modèle",
-    "modelTier": "Niveau",
-    "tierFlagship": "Phare",
-    "tierStandard": "Standard",
-    "tierFast": "Rapide",
-    "supportsThinking": "Supporte la réflexion",
-    "addModel": "Ajouter",
-    "availableModels": "Modèles disponibles",
-    "noModelsConfigured": "Aucun modèle configuré",
-    "addModelsDesc": "Ajoutez manuellement des modèles ou utilisez la découverte automatique",
-    "modelInfoRequired": "Informations requises",
-    "modelInfoRequiredDesc": "Veuillez entrer le nom et l'ID du modèle.",
-    "modelAdded": "Modèle ajouté",
-    "modelAddedDesc": "{{name}} a été ajouté à la liste des modèles disponibles.",
-    "modelRemoved": "Modèle supprimé",
-    "modelRemovedDesc": "Le modèle a été supprimé de la liste."
-  },
-  "autoSwitching": {
-    "title": "Auto-switching",
-    "enableLabel": "Activer l'auto-switching",
-    "enableDescription": "Basculez automatiquement entre les comptes selon l'utilisation",
-    "enabled": "Auto-switching activé",
-    "disabled": "Auto-switching désactivé",
-    "enabledDescription": "Les comptes basculeront automatiquement",
-    "disabledDescription": "Les comptes ne basculeront plus automatiquement",
-    "proactiveMonitoring": "Surveillance proactive",
-    "proactiveDescription": "Bascule avant d'atteindre les limites",
-    "sessionThreshold": "Seuil de session",
-    "sessionThresholdDescription": "Bascule quand l'utilisation atteint ce pourcentage",
-    "rateLimitSwitching": "Bascule sur limite de taux",
-    "rateLimitDescription": "Changez de compte en cas de limite atteinte",
-    "authFailureSwitching": "Bascule sur échec d'auth",
-    "authFailureDescription": "Changez de compte si l'authentification échoue",
-    "priorityOrder": {
-      "title": "Ordre de priorité des comptes",
-      "description": "Définissez l'ordre dans lequel les comptes seront utilisés pour l'auto-switching"
-    },
-    "debug": {
-      "accountsFound": "Debug: {{count}} compte(s) trouvé(s)"
-    },
-    "toast": {
-      "error": "Erreur",
-      "errorDescription": "Impossible de mettre à jour les paramètres"
-    }
-  },
-  "copilotOAuth": {
-    "title": "Authentification GitHub Copilot",
-    "description": "Authentification web via GitHub OAuth",
-    "descriptionNoCli": "Authentification web via GitHub OAuth (aucun CLI requis)",
-    "checkingStatus": "Vérification du statut d'authentification...",
-    "authenticated": "Authentifié",
-    "notAuthenticated": "Non authentifié",
-    "defaultUser": "Utilisateur GitHub",
-    "serverUnavailable": "Serveur OAuth indisponible",
-    "serverUnavailableHint": "Veuillez redémarrer l'application ou vérifier votre connexion réseau",
-    "authenticatedProfiles": "Profils authentifiés",
-    "addedDate": "Ajouté le {{date}}",
-    "readyToUse": "Prêt à utiliser GitHub Copilot",
-    "addProfile": "Ajouter un profil",
-    "noAuthFound": "Aucune authentification trouvée",
-    "noAuthFoundDesc": "Connectez-vous à GitHub Copilot via l'authentification OAuth",
-    "openingBrowser": "Ouverture du navigateur...",
-    "authenticating": "Authentification en cours...",
-    "authenticateButton": "S'authentifier avec GitHub",
-    "toast": {
-      "oauthStarted": "OAuth démarré",
-      "oauthStartedDesc": "Veuillez terminer l'authentification dans votre navigateur",
-      "authSuccess": "Authentification réussie",
-      "authSuccessDesc": "Authentifié avec succès en tant que {{username}}",
-      "authFailed": "Échec de l'authentification",
-      "authRevoked": "Authentification révoquée",
-      "authRevokedDesc": "Authentification révoquée avec succès pour {{username}}",
-      "revokeFailed": "Échec de la révocation"
-    }
-  },
-  "integrations": {
-    "title": "Intégrations",
-    "description": "Gérer les comptes Claude et les clés API",
-    "claudeAccounts": "Comptes Claude",
-    "claudeAccountsDescription": "Ajoutez plusieurs abonnements Claude pour basculer automatiquement entre eux lorsque vous atteignez les limites de taux.",
-    "claudeAccountsWarning": "Lors de l'authentification, assurez-vous d'être connecté au bon compte Claude dans votre navigateur. Chaque profil doit utiliser un abonnement différent.",
-    "noAccountsYet": "Aucun compte configuré pour le moment",
-    "default": "Par défaut",
-    "active": "Actif",
-    "authenticated": "Authentifié",
-    "needsAuth": "Authentification requise",
-    "authenticate": "S'authentifier",
-    "authenticating": "Authentification...",
-    "setActive": "Définir comme actif",
-    "manualTokenEntry": "Saisie manuelle du jeton",
-    "runSetupToken": "Exécutez claude et tapez /login pour vous authentifier",
-    "tokenPlaceholder": "sk-ant-oat01-...",
-    "emailPlaceholder": "E-mail (optionnel, pour l'affichage)",
-    "saveToken": "Sauvegarder le jeton",
-    "accountNamePlaceholder": "Nom du compte (ex: Travail, Personnel)",
-    "autoSwitching": "Basculement automatique des comptes",
-    "autoSwitchingDescription": "Basculez automatiquement entre les comptes Claude pour éviter les interruptions. Configurez la surveillance proactive pour basculer avant d'atteindre les limites.",
-    "enableAutoSwitching": "Activer le basculement automatique",
-    "masterSwitch": "Commutateur principal pour toutes les fonctions de basculement automatique",
-    "proactiveMonitoring": "Surveillance proactive",
-    "proactiveDescription": "Vérifiez régulièrement l'utilisation et basculez avant d'atteindre les limites",
-    "checkUsageEvery": "Vérifier l'utilisation toutes les",
-    "seconds15": "15 secondes",
-    "seconds30": "30 secondes (recommandé)",
-    "minute1": "1 minute",
-    "disabled": "Désactivé",
-    "sessionThreshold": "Seuil d'utilisation de session",
-    "sessionThresholdDescription": "Basculez lorsque l'utilisation de session atteint ce niveau (recommandé : 95%)",
-    "weeklyThreshold": "Seuil d'utilisation hebdomadaire",
-    "weeklyThresholdDescription": "Basculez lorsque l'utilisation hebdomadaire atteint ce niveau (recommandé : 99%)",
-    "reactiveRecovery": "Récupération réactive",
-    "reactiveDescription": "Basculement automatique en cas de limite de taux inattendue",
-    "autoSwitchOnAuthFailure": "Basculement automatique en cas d'échec d'authentification",
-    "autoSwitchOnAuthFailureDescription": "Basculez automatiquement vers un autre compte authentifié lorsque l'authentification échoue",
-    "apiKeys": "Clés API",
-    "apiKeysInfo": "Les clés définies ici sont utilisées par défaut. Les projets individuels peuvent les remplacer dans leurs paramètres.",
-    "openaiKey": "Clé API OpenAI",
-    "openaiKeyDescription": "Requise pour le backend de mémoire Graphiti (embeddings)",
-    "toast": {
-      "authSuccess": "Profil authentifié",
-      "authSuccessWithEmail": "Connecté en tant que {{email}}",
-      "authSuccessGeneric": "Authentification terminée. Vous pouvez maintenant utiliser ce profil.",
-      "authStartFailed": "Échec de l'authentification",
-      "addProfileFailed": "Échec de l'ajout du profil",
-      "loadProfilesFailed": "Échec du chargement des profils",
-      "deleteProfileFailed": "Échec de la suppression du profil",
-      "renameProfileFailed": "Échec du renommage du profil",
-      "setActiveProfileFailed": "Échec de la définition du profil actif",
-      "profileCreatedAuthFailed": "Profil créé - Authentification requise",
-      "profileCreatedAuthFailedDescription": "Le profil a été ajouté mais l'authentification n'a pas pu démarrer. Cliquez sur le bouton de connexion pour vous authentifier.",
-      "tokenSaved": "Jeton sauvegardé",
-      "tokenSavedDescription": "Votre jeton a été sauvegardé avec succès.",
-      "tokenSaveFailed": "Échec de la sauvegarde du jeton",
-      "settingsUpdateFailed": "Échec de la mise à jour des paramètres",
-      "tryAgain": "Veuillez réessayer.",
-      "terminalCreationFailed": "Échec de la création du terminal d'authentification",
-      "terminalCreationFailedDescription": "Impossible de démarrer le processus d'authentification. {{error}}",
-      "maxTerminalsReached": "Nombre maximum de terminaux atteint",
-      "maxTerminalsReachedDescription": "Veuillez fermer certains terminaux et réessayer. Vous pouvez avoir jusqu'à 12 terminaux ouverts.",
-      "terminalError": "Erreur de terminal",
-      "terminalErrorDescription": "Échec de la création du terminal : {{error}}",
-      "authProcessFailed": "Échec du démarrage du processus d'authentification",
-      "authProcessFailedDescription": "Le terminal d'authentification n'a pas pu être créé. Veuillez réessayer ou consulter les journaux pour plus de détails."
-    },
-    "alerts": {
-      "profileCreatedAuthFailed": "Profil créé mais échec de la préparation de l'authentification : {{error}}",
-      "authPrepareFailed": "Échec de la préparation de l'authentification : {{error}}",
-      "authStartFailedMessage": "Échec du démarrage de l'authentification. Veuillez réessayer."
-    }
-  },
+{
   "accounts": {
-    "title": "Comptes",
-    "description": "Gérer les comptes Claude et les endpoints API",
-    "tabs": {
-      "claudeCode": "Claude Code",
-      "llmProviders": "Providers LLM",
-      "customEndpoints": "Endpoints personnalisés"
+    "alerts": {
+      "authPrepareFailed": "[TO_REVIEW] Failed to prepare authentication: {{error}}",
+      "authStartFailedMessage": "[TO_REVIEW] Failed to start authentication. Please try again.",
+      "profileCreatedAuthFailed": "[TO_REVIEW] Profile created but failed to prepare authentication: {{error}}"
+    },
+    "autoSwitching": {
+      "autoSwitchOnAuthFailure": "[TO_REVIEW] Auto-switch on auth failure",
+      "autoSwitchOnAuthFailureDescription": "[TO_REVIEW] Automatically switch to another authenticated account when authentication fails",
+      "description": "[TO_REVIEW] Automatically switch between accounts to avoid interruptions. Configure proactive monitoring to switch before hitting limits.",
+      "enableAutoSwitching": "[TO_REVIEW] Enable automatic switching",
+      "masterSwitch": "[TO_REVIEW] Master switch for all auto-swap features",
+      "proactiveDescription": "[TO_REVIEW] Check usage regularly and swap before hitting limits",
+      "proactiveMonitoring": "[TO_REVIEW] Proactive Monitoring",
+      "reactiveDescription": "[TO_REVIEW] Auto-swap when unexpected rate limit is hit",
+      "reactiveRecovery": "[TO_REVIEW] Reactive Recovery",
+      "sessionThreshold": "[TO_REVIEW] Session usage threshold",
+      "sessionThresholdDescription": "[TO_REVIEW] Switch when session usage reaches this level (recommended: 95%)",
+      "title": "[TO_REVIEW] Automatic Account Switching",
+      "weeklyThreshold": "[TO_REVIEW] Weekly usage threshold",
+      "weeklyThresholdDescription": "[TO_REVIEW] Switch when weekly usage reaches this level (recommended: 99%)"
     },
     "claudeCode": {
-      "description": "Ajoutez plusieurs abonnements Claude pour basculer automatiquement entre eux lorsque vous atteignez les limites de taux.",
-      "noAccountsYet": "Aucun compte configuré pour le moment",
-      "default": "Par défaut",
-      "active": "Actif",
-      "authenticated": "Authentifié",
-      "needsAuth": "Authentification requise",
-      "authenticate": "S'authentifier",
-      "authenticating": "Authentification...",
-      "setActive": "Définir comme actif",
-      "manualTokenEntry": "Saisie manuelle du jeton",
-      "runSetupToken": "Exécutez claude et tapez /login pour vous authentifier",
-      "tokenPlaceholder": "sk-ant-oat01-...",
-      "emailPlaceholder": "E-mail (optionnel, pour l'affichage)",
-      "saveToken": "Sauvegarder le jeton",
-      "accountNamePlaceholder": "Nom du compte (ex: Travail, Personnel)"
+      "accountNamePlaceholder": "[TO_REVIEW] Account name (e.g., Work, Personal)",
+      "active": "[TO_REVIEW] Active",
+      "authenticate": "[TO_REVIEW] Authenticate",
+      "authenticated": "[TO_REVIEW] Authenticated",
+      "authenticating": "[TO_REVIEW] Authenticating...",
+      "default": "[TO_REVIEW] Default",
+      "description": "[TO_REVIEW] Add multiple Claude subscriptions to automatically switch between them when you hit rate limits.",
+      "emailPlaceholder": "[TO_REVIEW] Email (optional, for display)",
+      "manualTokenEntry": "[TO_REVIEW] Manual Token Entry",
+      "needsAuth": "[TO_REVIEW] Needs Auth",
+      "noAccountsYet": "[TO_REVIEW] No accounts configured yet",
+      "runSetupToken": "[TO_REVIEW] Run claude and type /login to authenticate",
+      "saveToken": "[TO_REVIEW] Save Token",
+      "setActive": "[TO_REVIEW] Set Active",
+      "tokenPlaceholder": "[TO_REVIEW] sk-ant-oat01-..."
     },
     "customEndpoints": {
-      "description": "Configurer des endpoints API compatibles Anthropic personnalisés",
-      "addButton": "Ajouter un profil",
-      "activeBadge": "Actif",
-      "customModels": "Modèles personnalisés : {{models}}",
-      "setActive": {
-        "label": "Définir comme actif",
-        "loading": "Activation..."
+      "activeBadge": "[TO_REVIEW] Active",
+      "addButton": "[TO_REVIEW] Add Profile",
+      "buttons": {
+        "activate": "[TO_REVIEW] Activate",
+        "activating": "[TO_REVIEW] Activating...",
+        "deactivate": "[TO_REVIEW] Use Claude Code",
+        "deactivating": "[TO_REVIEW] Switching...",
+        "delete": "[TO_REVIEW] Delete",
+        "edit": "[TO_REVIEW] Edit"
       },
-      "switchToOauth": {
-        "label": "Utiliser Claude Code",
-        "loading": "Basculement..."
+      "customModels": "[TO_REVIEW] Custom models: {{models}}",
+      "description": "[TO_REVIEW] Configure custom Anthropic-compatible API endpoints",
+      "dialog": {
+        "cancel": "[TO_REVIEW] Cancel",
+        "delete": "[TO_REVIEW] Delete",
+        "deleteDescription": "[TO_REVIEW] Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+        "deleteTitle": "[TO_REVIEW] Delete Profile",
+        "deleting": "[TO_REVIEW] Deleting..."
       },
       "empty": {
-        "title": "Aucun endpoint personnalisé",
-        "description": "Configurez des endpoints API compatibles Anthropic personnalisés pour utiliser des fournisseurs alternatifs.",
-        "action": "Ajouter un profil"
-      },
-      "dialog": {
-        "deleteTitle": "Supprimer le profil",
-        "deleteDescription": "Êtes-vous sûr de vouloir supprimer \"{{name}}\" ? Cette action est irréversible.",
-        "cancel": "Annuler",
-        "delete": "Supprimer",
-        "deleting": "Suppression..."
+        "action": "[TO_REVIEW] Add Profile",
+        "description": "[TO_REVIEW] Configure custom Anthropic-compatible API endpoints to use alternative providers.",
+        "title": "[TO_REVIEW] No Custom Endpoints"
       },
       "sections": {
         "customized": {
-          "title": "Endpoints personnalisés",
-          "description": "Configurez des endpoints API compatibles Anthropic personnalisés (OpenAI, Azure, etc.)",
-          "endpointCount": "{{count}} endpoint{{count > 1 ? 's' : ''}} configuré{{count > 1 ? 's' : ''}}",
-          "addButton": "Ajouter un endpoint",
+          "addButton": "[TO_REVIEW] Add Endpoint",
+          "description": "[TO_REVIEW] Configure custom Anthropic-compatible API endpoints (OpenAI, Azure, etc.)",
           "empty": {
-            "title": "Aucun endpoint configuré",
-            "description": "Ajoutez des endpoints API personnalisés pour étendre vos options LLM"
-          }
+            "description": "[TO_REVIEW] Add custom API endpoints to extend your LLM options",
+            "title": "[TO_REVIEW] No endpoints configured"
+          },
+          "endpointCount": "[TO_REVIEW] {{count}} endpoint{{count > 1 ? 's' : ''}} configured",
+          "title": "[TO_REVIEW] Custom Endpoints"
         },
         "standard": {
-          "title": "Providers standards",
-          "description": "Configurez les clés API pour les providers LLM standards (OpenAI, Google, Meta, etc.)",
-          "addButton": "Ajouter un compte"
+          "addButton": "[TO_REVIEW] Add Account",
+          "description": "[TO_REVIEW] Configure API keys for standard LLM providers (OpenAI, Google, Meta, etc.)",
+          "title": "[TO_REVIEW] Standard Providers"
         }
       },
-      "buttons": {
-        "activate": "Activer",
-        "activating": "Activation...",
-        "deactivate": "Utiliser Claude Code",
-        "deactivating": "Basculement...",
-        "edit": "Modifier",
-        "delete": "Supprimer"
+      "setActive": {
+        "label": "[TO_REVIEW] Set Active",
+        "loading": "[TO_REVIEW] Setting..."
+      },
+      "switchToOauth": {
+        "label": "[TO_REVIEW] Use Claude Code",
+        "loading": "[TO_REVIEW] Switching..."
       },
       "tooltips": {
-        "edit": "Modifier",
-        "deleteActive": "Impossible de supprimer l'endpoint actif",
-        "deleteInactive": "Supprimer"
+        "deleteActive": "[TO_REVIEW] Cannot delete active endpoint",
+        "deleteInactive": "[TO_REVIEW] Delete",
+        "edit": "[TO_REVIEW] Edit"
       }
     },
-    "autoSwitching": {
-      "title": "Basculement automatique des comptes",
-      "description": "Basculez automatiquement entre les comptes pour éviter les interruptions. Configurez la surveillance proactive pour basculer avant d'atteindre les limites.",
-      "enableAutoSwitching": "Activer le basculement automatique",
-      "masterSwitch": "Commutateur principal pour toutes les fonctions de basculement automatique",
-      "proactiveMonitoring": "Surveillance proactive",
-      "proactiveDescription": "Vérifiez régulièrement l'utilisation et basculez avant d'atteindre les limites",
-      "sessionThreshold": "Seuil d'utilisation de session",
-      "sessionThresholdDescription": "Basculez lorsque l'utilisation de session atteint ce niveau (recommandé : 95%)",
-      "weeklyThreshold": "Seuil d'utilisation hebdomadaire",
-      "weeklyThresholdDescription": "Basculez lorsque l'utilisation hebdomadaire atteint ce niveau (recommandé : 99%)",
-      "reactiveRecovery": "Récupération réactive",
-      "reactiveDescription": "Basculement automatique en cas de limite de taux inattendue",
-      "autoSwitchOnAuthFailure": "Basculement automatique en cas d'échec d'authentification",
-      "autoSwitchOnAuthFailureDescription": "Basculez automatiquement vers un autre compte authentifié lorsque l'authentification échoue"
+    "description": "[TO_REVIEW] Manage Claude accounts and API endpoints",
+    "form": {
+      "addAccount": "[TO_REVIEW] Add a {{provider}} account",
+      "apiKey": "[TO_REVIEW] API Key",
+      "apiKeyPlaceholder": "[TO_REVIEW] sk-...",
+      "baseUrl": "[TO_REVIEW] Base URL (optional)",
+      "baseUrlPlaceholder": "[TO_REVIEW] https://api.example.com",
+      "cancel": "[TO_REVIEW] Cancel",
+      "chooseModel": "[TO_REVIEW] -- Choose a model --",
+      "name": "[TO_REVIEW] Account name",
+      "namePlaceholder": "[TO_REVIEW] Account name",
+      "oauthToken": "[TO_REVIEW] OAuth Token",
+      "oauthTokenPlaceholder": "[TO_REVIEW] OAuth token (if required)",
+      "save": "[TO_REVIEW] Save"
+    },
+    "multiConnector": {
+      "buttons": {
+        "addProvider": "[TO_REVIEW] Add Provider",
+        "refresh": "[TO_REVIEW] Refresh"
+      },
+      "description": "[TO_REVIEW] Connect and manage multiple AI providers (Claude, OpenAI, Mistral, etc.).",
+      "stats": {
+        "configured": "[TO_REVIEW] {{count}} configured",
+        "errors": "[TO_REVIEW] {{count}} errors",
+        "total": "[TO_REVIEW] {{count}} total"
+      },
+      "title": "[TO_REVIEW] AI Provider Management"
     },
     "priority": {
-      "title": "Ordre de priorité des comptes",
-      "description": "Glissez pour réordonner. Le système utilisera le prochain compte disponible dans l'ordre.",
-      "noAccounts": "Aucun compte configuré. Ajoutez des comptes ci-dessus pour définir la priorité.",
-      "noEmail": "Pas d'e-mail",
-      "active": "Actif",
-      "inUse": "En cours d'utilisation",
-      "next": "Suivant",
-      "unlimited": "Illimité",
-      "unavailable": "Indisponible",
-      "typeOAuth": "OAuth",
-      "typeAPI": "API",
-      "payPerUse": "Paiement à l'usage",
-      "needsAuth": "Non authentifié",
-      "duplicateUsage": "Utilisation dupliquée détectée",
-      "duplicateUsageHint": "Ce profil a une utilisation identique à un autre profil, ce qui suggère qu'ils pourraient être authentifiés sur le même compte Anthropic. Réauthentifiez-vous avec un compte différent.",
-      "needsReauth": "Réauthentification requise",
-      "needsReauthHint": "Le jeton d'actualisation de ce profil est invalide. Cliquez pour vous réauthentifier.",
-      "sessionUsage": "Utilisation de session (fenêtre de 5 heures)",
-      "weeklyUsage": "Utilisation hebdomadaire (fenêtre de 7 jours)",
-      "oauthSection": "Comptes Claude (utilisés en priorité)",
-      "apiSection": "Endpoints de secours (quand tous les comptes sont épuisés)",
-      "tipTitle": "Comment fonctionne la priorité",
-      "tipDescription": "Les comptes Claude sont inclus dans votre abonnement et seront utilisés en priorité. Les endpoints API facturent par requête et servent de secours quand tous les comptes Claude atteignent leurs limites.",
+      "active": "[TO_REVIEW] Active",
+      "apiSection": "[TO_REVIEW] Fallback Endpoints (when all accounts exhausted)",
+      "description": "[TO_REVIEW] Drag to reorder. System will switch to the next available account in order.",
+      "duplicateUsage": "[TO_REVIEW] Duplicate usage detected",
+      "duplicateUsageHint": "[TO_REVIEW] This profile has identical usage to another profile, suggesting they may be authenticated to the same Anthropic account. Re-authenticate with a different account to fix.",
+      "inUse": "[TO_REVIEW] In Use",
+      "needsAuth": "[TO_REVIEW] Not authenticated",
+      "needsReauth": "[TO_REVIEW] Needs re-auth",
+      "needsReauthHint": "[TO_REVIEW] This profile's refresh token is invalid. Click to re-authenticate.",
+      "next": "[TO_REVIEW] Next",
+      "noAccounts": "[TO_REVIEW] No accounts configured. Add accounts above to set priority.",
+      "noEmail": "[TO_REVIEW] No email",
+      "oauthSection": "[TO_REVIEW] Claude Accounts (cycle through first)",
+      "payPerUse": "[TO_REVIEW] Pay-per-use",
+      "providerAuth": "[TO_REVIEW] Authenticated via API key",
+      "sessionUsage": "[TO_REVIEW] Session usage (5-hour window)",
       "status": {
-        "healthy": "Sain",
-        "moderate": "Modéré",
-        "highUsage": "Utilisation élevée",
-        "nearLimit": "Proche de la limite",
-        "rateLimited": "Limite atteinte"
+        "healthy": "[TO_REVIEW] Healthy",
+        "highUsage": "[TO_REVIEW] High usage",
+        "moderate": "[TO_REVIEW] Moderate",
+        "nearLimit": "[TO_REVIEW] Near limit",
+        "rateLimited": "[TO_REVIEW] Rate limited"
       },
-      "providerAuth": "Authentifié via clé API"
+      "tipDescription": "[TO_REVIEW] Claude accounts are included in your subscription and will be cycled through first. API endpoints charge per request and are used as fallbacks when all Claude accounts hit their limits.",
+      "tipTitle": "[TO_REVIEW] How priority works",
+      "title": "[TO_REVIEW] Account Priority Order",
+      "typeAPI": "[TO_REVIEW] API",
+      "typeOAuth": "[TO_REVIEW] OAuth",
+      "unavailable": "[TO_REVIEW] Unavailable",
+      "unlimited": "[TO_REVIEW] Unlimited",
+      "weeklyUsage": "[TO_REVIEW] Weekly usage (7-day window)"
     },
     "priorityOrder": {
-      "title": "Ordre de priorité des fournisseurs",
-      "up": "Monter",
-      "down": "Descendre"
+      "down": "[TO_REVIEW] Move down",
+      "title": "[TO_REVIEW] Provider priority order",
+      "up": "[TO_REVIEW] Move up"
     },
+    "tabs": {
+      "claudeCode": "[TO_REVIEW] Claude Code",
+      "customEndpoints": "[TO_REVIEW] Custom Endpoints",
+      "llmProviders": "[TO_REVIEW] LLM Providers"
+    },
+    "title": "[TO_REVIEW] Accounts",
     "toast": {
-      "loadProfilesFailed": "Échec du chargement des profils",
-      "addProfileFailed": "Échec de l'ajout du profil",
-      "deleteProfileFailed": "Échec de la suppression du profil",
-      "renameProfileFailed": "Échec du renommage du profil",
-      "setActiveProfileFailed": "Échec de la définition du profil actif",
-      "tokenSaved": "Jeton sauvegardé",
-      "tokenSavedDescription": "Votre jeton a été sauvegardé avec succès.",
-      "tokenSaveFailed": "Échec de la sauvegarde du jeton",
-      "settingsUpdateFailed": "Échec de la mise à jour des paramètres",
-      "tryAgain": "Veuillez réessayer."
-    },
-    "alerts": {
-      "profileCreatedAuthFailed": "Profil créé mais échec de la préparation de l'authentification : {{error}}",
-      "authPrepareFailed": "Échec de la préparation de l'authentification : {{error}}",
-      "authStartFailedMessage": "Échec du démarrage de l'authentification. Veuillez réessayer."
-    },
-    "form": {
-      "addAccount": "Ajouter un compte {{provider}}",
-      "name": "Nom du compte",
-      "namePlaceholder": "Nom du compte",
-      "apiKey": "Clé API",
-      "apiKeyPlaceholder": "sk-...",
-      "oauthToken": "Jeton OAuth",
-      "oauthTokenPlaceholder": "Jeton OAuth (si requis)",
-      "baseUrl": "URL de base (optionnel)",
-      "baseUrlPlaceholder": "https://api.example.com",
-      "chooseModel": "-- Choisir un modèle --",
-      "save": "Sauvegarder",
-      "cancel": "Annuler"
+      "addProfileFailed": "[TO_REVIEW] Failed to Add Profile",
+      "deleteProfileFailed": "[TO_REVIEW] Failed to Delete Profile",
+      "loadProfilesFailed": "[TO_REVIEW] Failed to Load Profiles",
+      "renameProfileFailed": "[TO_REVIEW] Failed to Rename Profile",
+      "setActiveProfileFailed": "[TO_REVIEW] Failed to Set Active Profile",
+      "settingsUpdateFailed": "[TO_REVIEW] Failed to Update Settings",
+      "tokenSaveFailed": "[TO_REVIEW] Failed to Save Token",
+      "tokenSaved": "[TO_REVIEW] Token Saved",
+      "tokenSavedDescription": "[TO_REVIEW] Your token has been saved successfully.",
+      "tryAgain": "[TO_REVIEW] Please try again."
     }
   },
-  "githubCopilot": {
-    "title": "GitHub Copilot",
-    "description": "Configurez GitHub Copilot pour l'assistance au codage IA directement dans votre éditeur",
-    "status": {
-      "notInstalled": "Non installé",
-      "installed": "Installé ({{version}})",
-      "notAuthenticated": "Non authentifié",
-      "authenticated": "Authentifié ({{username}})",
-      "authenticatedAs": "Authentifié en tant que {{username}}"
+  "actions": {
+    "rerunWizard": "[TO_REVIEW] Re-run Wizard",
+    "rerunWizardDescription": "[TO_REVIEW] Start the setup wizard again",
+    "save": "[TO_REVIEW] Save Settings"
+  },
+  "agents": {
+    "pr_template_filler": {
+      "description": "[TO_REVIEW] AI-fills GitHub PR templates from code changes",
+      "label": "[TO_REVIEW] PR Template Filler"
+    }
+  },
+  "apiProfiles": {
+    "actions": {
+      "cancel": "[TO_REVIEW] Cancel",
+      "cancelKeyChange": "[TO_REVIEW] Cancel",
+      "changeKey": "[TO_REVIEW] Change",
+      "save": "[TO_REVIEW] Save Profile",
+      "saving": "[TO_REVIEW] Saving..."
     },
-    "authenticate": "S'authentifier",
-    "authSuccess": "Authentification réussie",
-    "authSuccessDescription": "GitHub Copilot est maintenant configuré",
-    "authTerminalTitle": "Terminal GitHub Copilot",
-    "authCloseWarning": "Le terminal est en cours d'authentification. Êtes-vous sûr de vouloir fermer ?",
+    "activeBadge": "[TO_REVIEW] Active",
+    "addButton": "[TO_REVIEW] Add Profile",
+    "customModels": "[TO_REVIEW] Custom models: {{models}}",
+    "deleteAriaLabel": "[TO_REVIEW] Delete profile {{name}}",
+    "description": "[TO_REVIEW] Configure custom Anthropic-compatible API endpoints",
+    "dialog": {
+      "cancel": "[TO_REVIEW] Cancel",
+      "createTitle": "[TO_REVIEW] Add API Profile",
+      "delete": "[TO_REVIEW] Delete",
+      "deleteDescription": "[TO_REVIEW] Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+      "deleteTitle": "[TO_REVIEW] Delete Profile?",
+      "deleting": "[TO_REVIEW] Deleting...",
+      "description": "[TO_REVIEW] Configure a custom Anthropic-compatible API endpoint for your builds.",
+      "editTitle": "[TO_REVIEW] Edit Profile"
+    },
+    "empty": {
+      "action": "[TO_REVIEW] Create First Profile",
+      "description": "[TO_REVIEW] Create a profile to configure custom API endpoints for your builds.",
+      "title": "[TO_REVIEW] No API profiles configured"
+    },
+    "fields": {
+      "apiKey": "[TO_REVIEW] API Key",
+      "baseUrl": "[TO_REVIEW] Base URL",
+      "name": "[TO_REVIEW] Name",
+      "preset": "[TO_REVIEW] Preset"
+    },
+    "hints": {
+      "baseUrl": "[TO_REVIEW] Example: https://api.anthropic.com or http://localhost:8080",
+      "preset": "[TO_REVIEW] Presets fill the base URL; you still need to paste your API key."
+    },
+    "models": {
+      "defaultLabel": "[TO_REVIEW] Default Model (Optional)",
+      "defaultPlaceholder": "[TO_REVIEW] e.g., claude-sonnet-4-5-20250929",
+      "description": "[TO_REVIEW] Select models from your API provider. Leave blank to use defaults.",
+      "haikuLabel": "[TO_REVIEW] Haiku Model (Optional)",
+      "haikuPlaceholder": "[TO_REVIEW] e.g., claude-haiku-4-5-20251001",
+      "opusLabel": "[TO_REVIEW] Opus Model (Optional)",
+      "opusPlaceholder": "[TO_REVIEW] e.g., claude-opus-4-5-20251101",
+      "sonnetLabel": "[TO_REVIEW] Sonnet Model (Optional)",
+      "sonnetPlaceholder": "[TO_REVIEW] e.g., claude-sonnet-4-5-20250929",
+      "title": "[TO_REVIEW] Optional: Model Name Mappings"
+    },
+    "placeholders": {
+      "apiKey": "[TO_REVIEW] sk-ant-...",
+      "baseUrl": "[TO_REVIEW] https://api.anthropic.com",
+      "name": "[TO_REVIEW] My Custom API",
+      "preset": "[TO_REVIEW] Choose a provider preset"
+    },
+    "presets": {
+      "anthropic": "[TO_REVIEW] Anthropic (Claude)",
+      "copilot": "[TO_REVIEW] GitHub Copilot",
+      "gemini": "[TO_REVIEW] Gemini (Google)",
+      "grok": "[TO_REVIEW] Grok (xAI)",
+      "mistral": "[TO_REVIEW] Mistral AI",
+      "openai": "[TO_REVIEW] OpenAI",
+      "windsurf": "[TO_REVIEW] Windsurf (Codeium)"
+    },
+    "setActive": {
+      "label": "[TO_REVIEW] Set Active",
+      "loading": "[TO_REVIEW] Setting..."
+    },
+    "switchToOauth": {
+      "label": "[TO_REVIEW] Switch to OAuth",
+      "loading": "[TO_REVIEW] Switching..."
+    },
+    "testConnection": {
+      "failure": "[TO_REVIEW] Connection Failed",
+      "label": "[TO_REVIEW] Test Connection",
+      "success": "[TO_REVIEW] Connection Successful",
+      "testing": "[TO_REVIEW] Testing..."
+    },
+    "title": "[TO_REVIEW] API Profiles",
+    "toast": {
+      "create": {
+        "description": "[TO_REVIEW] \"{{name}}\" has been added successfully.",
+        "title": "[TO_REVIEW] Profile created"
+      },
+      "delete": {
+        "description": "[TO_REVIEW] \"{{name}}\" has been removed.",
+        "errorFallback": "[TO_REVIEW] An error occurred while deleting the profile.",
+        "errorTitle": "[TO_REVIEW] Failed to delete profile",
+        "title": "[TO_REVIEW] Profile deleted"
+      },
+      "switch": {
+        "errorFallback": "[TO_REVIEW] An error occurred while switching authentication method.",
+        "errorTitle": "[TO_REVIEW] Failed to switch authentication",
+        "oauthDescription": "[TO_REVIEW] Now using OAuth authentication",
+        "oauthTitle": "[TO_REVIEW] Switched to OAuth",
+        "profileDescription": "[TO_REVIEW] Now using {{name}}",
+        "profileTitle": "[TO_REVIEW] Profile activated"
+      },
+      "update": {
+        "description": "[TO_REVIEW] \"{{name}}\" has been updated successfully.",
+        "title": "[TO_REVIEW] Profile updated"
+      }
+    },
+    "tooltips": {
+      "deleteActive": "[TO_REVIEW] Switch to OAuth before deleting",
+      "deleteInactive": "[TO_REVIEW] Delete profile",
+      "edit": "[TO_REVIEW] Edit profile"
+    },
+    "validation": {
+      "apiKeyInvalid": "[TO_REVIEW] Invalid API Key format",
+      "apiKeyRequired": "[TO_REVIEW] API Key is required",
+      "baseUrlInvalid": "[TO_REVIEW] Invalid URL format (must be http:// or https://)",
+      "baseUrlRequired": "[TO_REVIEW] Base URL is required",
+      "nameRequired": "[TO_REVIEW] Name is required"
+    }
+  },
+  "autoSwitching": {
+    "authFailureDescription": "[TO_REVIEW] Change account if authentication fails",
+    "authFailureSwitching": "[TO_REVIEW] Switch on Auth Failure",
+    "debug": {
+      "accountsFound": "[TO_REVIEW] Debug: {{count}} account(s) found"
+    },
+    "disabled": "[TO_REVIEW] Auto-switching disabled",
+    "disabledDescription": "[TO_REVIEW] Accounts will no longer switch automatically",
+    "enableDescription": "[TO_REVIEW] Automatically switch between accounts based on usage",
+    "enableLabel": "[TO_REVIEW] Enable auto-switching",
+    "enabled": "[TO_REVIEW] Auto-switching enabled",
+    "enabledDescription": "[TO_REVIEW] Accounts will switch automatically",
+    "priorityOrder": {
+      "description": "[TO_REVIEW] Define the order in which accounts will be used for auto-switching",
+      "title": "[TO_REVIEW] Account Priority Order"
+    },
+    "proactiveDescription": "[TO_REVIEW] Switch before reaching limits",
+    "proactiveMonitoring": "[TO_REVIEW] Proactive Monitoring",
+    "rateLimitDescription": "[TO_REVIEW] Change account when rate limit is reached",
+    "rateLimitSwitching": "[TO_REVIEW] Switch on Rate Limit",
+    "sessionThreshold": "[TO_REVIEW] Session Threshold",
+    "sessionThresholdDescription": "[TO_REVIEW] Switch when usage reaches this percentage",
+    "title": "[TO_REVIEW] Auto-switching",
+    "toast": {
+      "error": "[TO_REVIEW] Error",
+      "errorDescription": "[TO_REVIEW] Unable to update settings"
+    }
+  },
+  "azureDevOps": {
+    "addModel": "[TO_REVIEW] Add",
+    "addModelsDesc": "[TO_REVIEW] Add models manually or use automatic discovery",
+    "apiKey": "[TO_REVIEW] API Key",
+    "availableModels": "[TO_REVIEW] Available Models",
+    "connectionChecking": "[TO_REVIEW] Checking...",
+    "connectionConnected": "[TO_REVIEW] Connected",
+    "connectionConnectedProject": "[TO_REVIEW] Connected to project {{projectName}}",
+    "connectionNotConnected": "[TO_REVIEW] Not connected",
+    "connectionStatusTitle": "[TO_REVIEW] Connection Status",
+    "connectionWorkItemCount": "[TO_REVIEW] {{count}}+ work items available to import",
+    "discoverModels": "[TO_REVIEW] Discover Models",
+    "discovering": "[TO_REVIEW] Discovering...",
+    "discoveryFailed": "[TO_REVIEW] Discovery Failed",
+    "discoveryFailedDesc": "[TO_REVIEW] Unable to connect to API. Check URL and API key.",
+    "enableSyncDescription": "[TO_REVIEW] Automatically manage work items from Azure DevOps backlog",
+    "enableSyncLabel": "[TO_REVIEW] Enable Azure DevOps Sync",
+    "importPromptButton": "[TO_REVIEW] Select Work Items to Import",
+    "importPromptDescription": "[TO_REVIEW] Select and import work items from your Azure DevOps backlog to create WorkPilot AI tasks.",
+    "importPromptTitle": "[TO_REVIEW] Import Work Items",
+    "manualModels": "[TO_REVIEW] Manual Model Management",
+    "modelAdded": "[TO_REVIEW] Model Added",
+    "modelAddedDesc": "[TO_REVIEW] {{name}} has been added to available models.",
+    "modelId": "[TO_REVIEW] Model ID",
+    "modelInfoRequired": "[TO_REVIEW] Information Required",
+    "modelInfoRequiredDesc": "[TO_REVIEW] Please enter model name and ID.",
+    "modelName": "[TO_REVIEW] Model Name",
+    "modelRemoved": "[TO_REVIEW] Model Removed",
+    "modelRemovedDesc": "[TO_REVIEW] Model has been removed from the list.",
+    "modelTier": "[TO_REVIEW] Tier",
+    "modelsDiscovered": "[TO_REVIEW] Models Discovered",
+    "modelsDiscoveredDesc": "[TO_REVIEW] {{count}} models have been discovered and added automatically.",
+    "noModelsConfigured": "[TO_REVIEW] No Models Configured",
+    "noModelsFound": "[TO_REVIEW] No Models Found",
+    "noModelsFoundDesc": "[TO_REVIEW] API returned no models. Check response format.",
+    "orgUrlDescription": "[TO_REVIEW] Your Azure DevOps organization URL (e.g., https://dev.azure.com/your-org)",
+    "orgUrlLabel": "[TO_REVIEW] Organization URL",
+    "orgUrlPlaceholder": "[TO_REVIEW] https://dev.azure.com/your-org",
+    "patDescriptionPrefix": "[TO_REVIEW] Generate a PAT from",
+    "patDescriptionSuffix": "[TO_REVIEW] Requires scope: Work Items (Read & Write).",
+    "patLabel": "[TO_REVIEW] Personal Access Token (PAT)",
+    "patLinkLabel": "[TO_REVIEW] Azure DevOps User Settings",
+    "patPlaceholder": "[TO_REVIEW] Enter your PAT",
+    "repositoryDescription": "[TO_REVIEW] Select the Azure DevOps repository to use for this project",
+    "repositoryError": "[TO_REVIEW] Error loading repositories",
+    "repositoryLabel": "[TO_REVIEW] Repository",
+    "repositoryLoading": "[TO_REVIEW] Loading repositories...",
+    "repositoryPlaceholder": "[TO_REVIEW] Select a repository...",
+    "repositoryRefresh": "[TO_REVIEW] Refresh list",
+    "repositorySelectManual": "[TO_REVIEW] Enter manually",
+    "supportsThinking": "[TO_REVIEW] Supports Thinking",
+    "tierFast": "[TO_REVIEW] Fast",
+    "tierFlagship": "[TO_REVIEW] Flagship",
+    "tierStandard": "[TO_REVIEW] Standard",
+    "urlRequired": "[TO_REVIEW] URL Required",
+    "urlRequiredDesc": "[TO_REVIEW] Please enter your API URL before discovering models."
+  },
+  "azureDevOpsImport": {
+    "cancel": "[TO_REVIEW] Cancel",
+    "configureButton": "[TO_REVIEW] Configure Azure DevOps",
+    "configureFirst": "[TO_REVIEW] Configure Azure DevOps in project settings",
+    "connectionError": "[TO_REVIEW] Azure DevOps connection error",
+    "description": "[TO_REVIEW] Select Azure DevOps work items to import into WorkPilot AI",
+    "done": "[TO_REVIEW] Done",
+    "dragInstructions": "[TO_REVIEW] Select items then drag them to a column",
+    "dropToColumn": "[TO_REVIEW] Drop to {{column}} column",
+    "dropZone": "[TO_REVIEW] Drop items here",
+    "dropZoneItems": "[TO_REVIEW] {{count}} item(s) to import",
+    "emptySubtitle": "[TO_REVIEW] Try adjusting your filters",
+    "emptyTitle": "[TO_REVIEW] No work items found",
+    "errorCheckConnectionFailed": "[TO_REVIEW] Connection check failed",
+    "errorImportFailed": "[TO_REVIEW] Import failed",
+    "errorLoadWorkItemsFailed": "[TO_REVIEW] Failed to load work items",
+    "errorNoProject": "[TO_REVIEW] No project selected",
+    "errorNotConfigured": "[TO_REVIEW] Azure DevOps not configured",
+    "errorUnknown": "[TO_REVIEW] Unknown error",
+    "filterStateAll": "[TO_REVIEW] All States",
+    "filterStateLabel": "[TO_REVIEW] State",
+    "filterTypeAll": "[TO_REVIEW] All Types",
+    "filterTypeLabel": "[TO_REVIEW] Work Item Type",
+    "importButton": "[TO_REVIEW] Import Work Items from Azure DevOps",
+    "importButton_plural": "[TO_REVIEW] Import {{count}} items",
+    "importConfirmButton": "[TO_REVIEW] Import {{count}} item(s)",
+    "importConfirmDescription": "[TO_REVIEW] The following items will be imported into the {{column}} column.",
+    "importConfirmTitle": "[TO_REVIEW] Import {{count}} work item(s)",
+    "importSuccess": "[TO_REVIEW] {{count}} work item(s) imported successfully",
+    "importing": "[TO_REVIEW] Importing...",
+    "loadingWorkItems": "[TO_REVIEW] Loading items...",
+    "moreItems": "[TO_REVIEW] +{{count}} more item(s)",
+    "noWorkItems": "[TO_REVIEW] No work items found",
+    "projectLabel": "[TO_REVIEW] Project:",
+    "searchPlaceholder": "[TO_REVIEW] Search work items...",
+    "selectedItems": "[TO_REVIEW] {{count}} item(s) selected",
+    "selectionCount": "[TO_REVIEW] {{selected}} of {{total}} selected",
+    "sidePanelDescription": "[TO_REVIEW] Drag and drop items into Kanban columns",
+    "sidePanelTitle": "[TO_REVIEW] Import from Azure DevOps",
+    "successCount": "[TO_REVIEW] Imported {{count}} work item.",
+    "successCount_plural": "[TO_REVIEW] Imported {{count}} work items.",
+    "successFailedSuffix": "[TO_REVIEW] {{count}} failed.",
+    "successTitle": "[TO_REVIEW] Import Successful!",
+    "title": "[TO_REVIEW] Import Azure DevOps Work Items",
+    "toggleSelection": "[TO_REVIEW] Toggle selection for work item {{id}}"
+  },
+  "collaboration": {
+    "description": "[TO_REVIEW] Multi-user collaboration settings",
+    "title": "[TO_REVIEW] Collaboration"
+  },
+  "copilotOAuth": {
+    "addProfile": "[TO_REVIEW] Add Profile",
+    "addedDate": "[TO_REVIEW] Added {{date}}",
+    "authenticateButton": "[TO_REVIEW] Authenticate with GitHub",
+    "authenticated": "[TO_REVIEW] Authenticated",
+    "authenticatedProfiles": "[TO_REVIEW] Authenticated Profiles",
+    "authenticating": "[TO_REVIEW] Authenticating...",
+    "checkingStatus": "[TO_REVIEW] Checking authentication status...",
+    "defaultUser": "[TO_REVIEW] GitHub User",
+    "description": "[TO_REVIEW] Web-based authentication using GitHub OAuth",
+    "descriptionNoCli": "[TO_REVIEW] Web-based authentication using GitHub OAuth (no CLI required)",
+    "noAuthFound": "[TO_REVIEW] No Authentication Found",
+    "noAuthFoundDesc": "[TO_REVIEW] Connect to GitHub Copilot using OAuth authentication",
+    "notAuthenticated": "[TO_REVIEW] Not Authenticated",
+    "openingBrowser": "[TO_REVIEW] Opening Browser...",
+    "readyToUse": "[TO_REVIEW] Ready to use GitHub Copilot",
+    "serverUnavailable": "[TO_REVIEW] OAuth server not available",
+    "serverUnavailableHint": "[TO_REVIEW] Please restart the application or check your network connection",
+    "title": "[TO_REVIEW] GitHub Copilot Authentication",
+    "toast": {
+      "authFailed": "[TO_REVIEW] Authentication Failed",
+      "authRevoked": "[TO_REVIEW] Authentication Revoked",
+      "authRevokedDesc": "[TO_REVIEW] Successfully revoked authentication for {{username}}",
+      "authSuccess": "[TO_REVIEW] Authentication Successful",
+      "authSuccessDesc": "[TO_REVIEW] Successfully authenticated as {{username}}",
+      "oauthStarted": "[TO_REVIEW] OAuth Started",
+      "oauthStartedDesc": "[TO_REVIEW] Please complete authentication in your browser",
+      "revokeFailed": "[TO_REVIEW] Revoke Failed"
+    }
+  },
+  "debug": {
+    "copied": "[TO_REVIEW] Copied!",
+    "copyDebugInfo": "[TO_REVIEW] Copy Debug Info",
+    "description": "[TO_REVIEW] Access logs and debug information for troubleshooting",
+    "errorReporting": {
+      "description": "[TO_REVIEW] Send crash reports to help improve WorkPilot AI. No personal data or code is collected.",
+      "label": "[TO_REVIEW] Anonymous Error Reporting"
+    },
+    "helpText": "[TO_REVIEW] When reporting bugs, click \"Copy Debug Info\" to get system information and recent errors that help us diagnose the issue.",
+    "helpTitle": "[TO_REVIEW] Reporting Issues",
+    "loadInfo": "[TO_REVIEW] Load Debug Info",
+    "logsLocation": "[TO_REVIEW] Logs Location",
+    "noRecentErrors": "[TO_REVIEW] No recent errors",
+    "openLogsFolder": "[TO_REVIEW] Open Logs Folder",
+    "recentErrors": "[TO_REVIEW] Recent Errors",
+    "systemInfo": "[TO_REVIEW] System Information",
+    "title": "[TO_REVIEW] Debug & Logs"
+  },
+  "devtools": {
+    "autoNameClaude": {
+      "description": "[TO_REVIEW] Use AI to generate a descriptive name for Claude terminals based on your first message",
+      "label": "[TO_REVIEW] Auto-name Claude terminals"
+    },
+    "description": "[TO_REVIEW] Configure your preferred IDE, terminal, and terminal font settings",
+    "detectAgain": "[TO_REVIEW] Detect Again",
+    "detected": "[TO_REVIEW] Detected",
+    "detectedSummary": "[TO_REVIEW] Detected on your system:",
+    "detecting": "[TO_REVIEW] Detecting installed tools...",
+    "ide": {
+      "customPath": "[TO_REVIEW] Custom IDE Path",
+      "customPathPlaceholder": "[TO_REVIEW] /path/to/your/ide",
+      "description": "[TO_REVIEW] WorkPilot AI will open worktrees in this editor",
+      "label": "[TO_REVIEW] Preferred IDE",
+      "placeholder": "[TO_REVIEW] Select IDE..."
+    },
+    "noToolsDetected": "[TO_REVIEW] No additional tools detected (VS Code and system terminal will be used)",
+    "notInstalled": "[TO_REVIEW] Not installed",
+    "tabTerminalFonts": "[TO_REVIEW] Terminal Fonts",
+    "tabTools": "[TO_REVIEW] Tools",
+    "terminal": {
+      "customPath": "[TO_REVIEW] Custom Terminal Path",
+      "customPathPlaceholder": "[TO_REVIEW] /path/to/your/terminal",
+      "description": "[TO_REVIEW] WorkPilot AI will open terminal sessions here",
+      "label": "[TO_REVIEW] Preferred Terminal",
+      "placeholder": "[TO_REVIEW] Select terminal..."
+    },
+    "title": "[TO_REVIEW] Developer Tools",
+    "yoloMode": {
+      "description": "[TO_REVIEW] Start Claude with --dangerously-skip-permissions flag, bypassing all safety prompts. Use with extreme caution.",
+      "label": "[TO_REVIEW] YOLO Mode",
+      "warning": "[TO_REVIEW] This mode bypasses Claude's permission system. Only enable if you fully trust the code being executed."
+    }
+  },
+  "general": {
+    "agentFramework": "[TO_REVIEW] Agent Framework",
+    "agentFrameworkAutoClaude": "[TO_REVIEW] WorkPilot AI",
+    "agentFrameworkDescription": "[TO_REVIEW] The coding framework used for autonomous tasks",
+    "aiTerminalNaming": "[TO_REVIEW] AI Terminal Naming",
+    "aiTerminalNamingDescription": "[TO_REVIEW] Automatically name terminals based on commands",
+    "autoClaudePath": "[TO_REVIEW] WorkPilot AI Path",
+    "autoClaudePathDescription": "[TO_REVIEW] Relative path to workpilot-ai directory in projects",
+    "autoClaudePathPlaceholder": "[TO_REVIEW] workpilot-ai (default)",
+    "autoNameTerminals": "[TO_REVIEW] Automatically name terminals",
+    "autoNameTerminalsDescription": "[TO_REVIEW] Use AI to generate descriptive names for terminal tabs based on their activity",
+    "claudePath": "[TO_REVIEW] Claude CLI Path",
+    "claudePathDescription": "[TO_REVIEW] Path to Claude CLI executable (leave empty for auto-detection)",
+    "claudePathPlaceholder": "[TO_REVIEW] claude (default)",
+    "detectedPath": "[TO_REVIEW] Auto-detected",
+    "detectedSource": "[TO_REVIEW] Source",
+    "detectedVersion": "[TO_REVIEW] Version",
+    "featureModelSettings": "[TO_REVIEW] Feature Model Settings",
+    "featureModelSettingsDescription": "[TO_REVIEW] Model and thinking level for Insights, Ideation, and Roadmap",
+    "gitPath": "[TO_REVIEW] Git Path",
+    "gitPathDescription": "[TO_REVIEW] Path to Git executable (leave empty for auto-detection)",
+    "gitPathPlaceholder": "[TO_REVIEW] git (default)",
+    "githubCLIPath": "[TO_REVIEW] GitHub CLI Path",
+    "githubCLIPathDescription": "[TO_REVIEW] Path to GitHub CLI (gh) executable (leave empty for auto-detection)",
+    "githubCLIPathPlaceholder": "[TO_REVIEW] gh (default)",
+    "gitlabCLIPath": "[TO_REVIEW] GitLab CLI Path",
+    "gitlabCLIPathDescription": "[TO_REVIEW] Path to GitLab CLI (glab) executable (leave empty for auto-detection)",
+    "gitlabCLIPathPlaceholder": "[TO_REVIEW] glab (default)",
+    "model": "[TO_REVIEW] Model",
+    "notDetected": "[TO_REVIEW] Not detected",
+    "otherAgentSettings": "[TO_REVIEW] Other Agent Settings",
+    "otherAgentSettingsDescription": "[TO_REVIEW] Additional agent configuration options",
+    "paths": "[TO_REVIEW] Paths",
+    "pathsDescription": "[TO_REVIEW] Configure executable and framework paths",
+    "providerSection": "[TO_REVIEW] AI Provider",
+    "providerSectionDescription": "[TO_REVIEW] Choose the AI provider to use for autonomous tasks. The model list below updates automatically.",
+    "pythonPath": "[TO_REVIEW] Python Path",
+    "pythonPathDescription": "[TO_REVIEW] Path to Python executable (leave empty for auto-detection)",
+    "pythonPathPlaceholder": "[TO_REVIEW] python3 (default)",
+    "sourceBundled": "[TO_REVIEW] Bundled",
+    "sourceFallback": "[TO_REVIEW] Fallback",
+    "sourceHomebrew": "[TO_REVIEW] Homebrew",
+    "sourceNvm": "[TO_REVIEW] NVM",
+    "sourceSystemPath": "[TO_REVIEW] System PATH",
+    "sourceUserConfig": "[TO_REVIEW] User Configuration",
+    "sourceVenv": "[TO_REVIEW] Virtual Environment",
+    "thinkingLevel": "[TO_REVIEW] Thinking Level"
+  },
+  "instructions": {
+    "authCloseWarning": "[TO_REVIEW] The terminal is authenticating. Are you sure you want to close?",
     "authTerminal": {
-      "connecting": "Connexion...",
-      "authenticate": "S'authentifier: {{profileName}}",
-      "completeSetup": "Terminer la configuration: {{profileName}}",
-      "authenticatedAs": "Authentifié en tant que {{username}}",
-      "authenticated": "Authentifié!",
-      "authError": "Erreur d'authentification"
+      "authError": "[TO_REVIEW] Authentication Error",
+      "authenticate": "[TO_REVIEW] Authenticate: {{profileName}}",
+      "authenticated": "[TO_REVIEW] Authenticated!",
+      "authenticatedAs": "[TO_REVIEW] Authenticated as {{username}}",
+      "completeSetup": "[TO_REVIEW] Complete setup: {{profileName}}",
+      "connecting": "[TO_REVIEW] Connecting..."
     },
+    "authTerminalTitle": "[TO_REVIEW] GitHub Copilot Authentication Terminal",
+    "authenticate": "[TO_REVIEW] Authenticate",
+    "authentication": {
+      "authenticated": "[TO_REVIEW] Authenticated ({{username}})",
+      "authenticatedAs": "[TO_REVIEW] Authenticated as {{username}}",
+      "installed": "[TO_REVIEW] Installed ({{version}})",
+      "notAuthenticated": "[TO_REVIEW] Not authenticated",
+      "step1": "[TO_REVIEW] Open a terminal and run 'gh auth login'",
+      "step2": "[TO_REVIEW] Follow the instructions in the browser that opens",
+      "step3": "[TO_REVIEW] Configure the necessary permissions",
+      "title": "[TO_REVIEW] Authentication"
+    },
+    "description": "[TO_REVIEW] GitHub Copilot authentication guide",
     "errors": {
-      "authFailed": "Échec de l'authentification",
-      "saveFailed": "Échec de la sauvegarde",
-      "removeFailed": "Échec de la suppression",
-      "logoutFailed": "Échec de la déconnexion",
-      "tokenRequired": "Token requis",
-      "tokenRequiredDescription": "Veuillez saisir un token GitHub Copilot valide",
-      "unknownError": "Erreur inconnue"
-    },
-    "logout": "Se déconnecter",
-    "logoutSuccess": "Déconnexion réussie",
-    "logoutSuccessDescription": "Vous avez été déconnecté de GitHub Copilot",
-    "testSuccess": "Test réussi",
-    "testFailed": "Test échoué",
-    "testError": "Erreur de test",
-    "tokenSaved": "Token sauvegardé",
-    "tokenSavedDescription": "Le token GitHub Copilot a été sauvegardé",
-    "tokenRemoved": "Token supprimé",
-    "tokenRemovedDescription": "Le token GitHub Copilot a été supprimé",
-    "token": {
-      "title": "Token GitHub Copilot",
-      "label": "Token GitHub Copilot pour l'authentification",
-      "placeholder": "ghp_...",
-      "description": "Token personnel GitHub pour l'authentification Copilot (commence par ghp_, gho_, ou ghu_)",
-      "configured": "Token configuré et prêt à être utilisé"
+      "authFailed": "[TO_REVIEW] Authentication failed",
+      "logoutFailed": "[TO_REVIEW] Logout failed",
+      "removeFailed": "[TO_REVIEW] Remove failed",
+      "saveFailed": "[TO_REVIEW] Save failed",
+      "tokenRequired": "[TO_REVIEW] Token required",
+      "tokenRequiredDescription": "[TO_REVIEW] Please enter a valid GitHub Copilot token",
+      "unknownError": "[TO_REVIEW] Unknown error"
     },
     "instructions": {
-      "title": "Instructions GitHub Copilot",
-      "description": "Guide d'authentification GitHub Copilot",
       "authentication": {
-        "title": "Authentification",
-        "step1": "Ouvrez un terminal et exécutez 'gh auth login'",
-        "step2": "Suivez les instructions dans le navigateur qui s'ouvrira",
-        "step3": "Configurez les permissions nécessaires"
+        "step1": "[TO_REVIEW] Open a terminal and run 'gh auth login'",
+        "step2": "[TO_REVIEW] Follow the instructions in the browser that opens",
+        "step3": "[TO_REVIEW] Configure the necessary permissions",
+        "title": "[TO_REVIEW] Authentication"
       },
+      "description": "[TO_REVIEW] GitHub Copilot authentication guide",
+      "title": "[TO_REVIEW] GitHub Copilot Instructions",
       "token": {
-        "title": "Token GitHub Copilot",
-        "step1": "Générez un token personnel GitHub depuis https://github.com/settings/tokens",
-        "step2": "Copiez le token (commence par ghp_, gho_, ou ghu_)",
-        "step3": "Configurez le token dans les paramètres"
+        "step1": "[TO_REVIEW] Generate a personal GitHub token from https://github.com/settings/tokens",
+        "step2": "[TO_REVIEW] Copy the token (starts with ghp_, gho_, or ghu_)",
+        "step3": "[TO_REVIEW] Configure the token in settings",
+        "title": "[TO_REVIEW] GitHub Copilot Token"
       }
+    },
+    "logout": "[TO_REVIEW] Logout",
+    "logoutSuccess": "[TO_REVIEW] Logout successful",
+    "logoutSuccessDescription": "[TO_REVIEW] You have been logged out from GitHub Copilot",
+    "testError": "[TO_REVIEW] Test error",
+    "testFailed": "[TO_REVIEW] Test failed",
+    "testSuccess": "[TO_REVIEW] Test successful",
+    "title": "[TO_REVIEW] GitHub Copilot Instructions",
+    "token": {
+      "configured": "[TO_REVIEW] Token configured and ready to use",
+      "description": "[TO_REVIEW] GitHub personal token for Copilot authentication (starts with ghp_, gho_, or ghu_)",
+      "label": "[TO_REVIEW] GitHub Copilot Token for authentication",
+      "placeholder": "[TO_REVIEW] ghp_...",
+      "title": "[TO_REVIEW] GitHub Copilot Token"
+    },
+    "tokenRemoved": "[TO_REVIEW] Token removed",
+    "tokenRemovedDescription": "[TO_REVIEW] GitHub Copilot token has been removed",
+    "tokenSaved": "[TO_REVIEW] Token saved",
+    "tokenSavedDescription": "[TO_REVIEW] GitHub Copilot token has been saved"
+  },
+  "integrations": {
+    "accountNamePlaceholder": "[TO_REVIEW] Account name (e.g., Work, Personal)",
+    "active": "[TO_REVIEW] Active",
+    "alerts": {
+      "authPrepareFailed": "[TO_REVIEW] Failed to prepare authentication: {{error}}",
+      "authStartFailedMessage": "[TO_REVIEW] Failed to start authentication. Please try again.",
+      "profileCreatedAuthFailed": "[TO_REVIEW] Profile created but failed to prepare authentication: {{error}}"
+    },
+    "apiKeys": "[TO_REVIEW] API Keys",
+    "apiKeysInfo": "[TO_REVIEW] Keys set here are used as defaults. Individual projects can override these in their settings.",
+    "authenticate": "[TO_REVIEW] Authenticate",
+    "authenticated": "[TO_REVIEW] Authenticated",
+    "authenticating": "[TO_REVIEW] Authenticating...",
+    "autoSwitchOnAuthFailure": "[TO_REVIEW] Auto-switch on auth failure",
+    "autoSwitchOnAuthFailureDescription": "[TO_REVIEW] Automatically switch to another authenticated account when authentication fails",
+    "autoSwitching": "[TO_REVIEW] Automatic Account Switching",
+    "autoSwitchingDescription": "[TO_REVIEW] Automatically switch between Claude accounts to avoid interruptions. Configure proactive monitoring to switch before hitting limits.",
+    "checkUsageEvery": "[TO_REVIEW] Check usage every",
+    "claudeAccounts": "[TO_REVIEW] Claude Accounts",
+    "claudeAccountsDescription": "[TO_REVIEW] Add multiple Claude subscriptions to automatically switch between them when you hit rate limits.",
+    "claudeAccountsWarning": "[TO_REVIEW] When authenticating, ensure you're logged into the correct Claude account in your browser. Each profile should use a different subscription.",
+    "default": "[TO_REVIEW] Default",
+    "description": "[TO_REVIEW] Manage Claude accounts and API keys",
+    "disabled": "[TO_REVIEW] Disabled",
+    "emailPlaceholder": "[TO_REVIEW] Email (optional, for display)",
+    "enableAutoSwitching": "[TO_REVIEW] Enable automatic switching",
+    "manualTokenEntry": "[TO_REVIEW] Manual Token Entry",
+    "masterSwitch": "[TO_REVIEW] Master switch for all auto-swap features",
+    "minute1": "[TO_REVIEW] 1 minute",
+    "needsAuth": "[TO_REVIEW] Needs Auth",
+    "noAccountsYet": "[TO_REVIEW] No accounts configured yet",
+    "openaiKey": "[TO_REVIEW] OpenAI API Key",
+    "openaiKeyDescription": "[TO_REVIEW] Required for Graphiti memory backend (embeddings)",
+    "proactiveDescription": "[TO_REVIEW] Check usage regularly and swap before hitting limits",
+    "proactiveMonitoring": "[TO_REVIEW] Proactive Monitoring",
+    "reactiveDescription": "[TO_REVIEW] Auto-swap when unexpected rate limit is hit",
+    "reactiveRecovery": "[TO_REVIEW] Reactive Recovery",
+    "runSetupToken": "[TO_REVIEW] Run claude and type /login to authenticate",
+    "saveToken": "[TO_REVIEW] Save Token",
+    "seconds15": "[TO_REVIEW] 15 seconds",
+    "seconds30": "[TO_REVIEW] 30 seconds (recommended)",
+    "sessionThreshold": "[TO_REVIEW] Session usage threshold",
+    "sessionThresholdDescription": "[TO_REVIEW] Switch when session usage reaches this level (recommended: 95%)",
+    "setActive": "[TO_REVIEW] Set Active",
+    "title": "[TO_REVIEW] Integrations",
+    "toast": {
+      "addProfileFailed": "[TO_REVIEW] Failed to Add Profile",
+      "authProcessFailed": "[TO_REVIEW] Authentication process failed to start",
+      "authProcessFailedDescription": "[TO_REVIEW] The authentication terminal could not be created. Please try again or check the logs for more details.",
+      "authStartFailed": "[TO_REVIEW] Authentication Failed",
+      "authSuccess": "[TO_REVIEW] Profile Authenticated",
+      "authSuccessGeneric": "[TO_REVIEW] Authentication complete. You can now use this profile.",
+      "authSuccessWithEmail": "[TO_REVIEW] Connected as {{email}}",
+      "deleteProfileFailed": "[TO_REVIEW] Failed to Delete Profile",
+      "loadProfilesFailed": "[TO_REVIEW] Failed to Load Profiles",
+      "maxTerminalsReached": "[TO_REVIEW] Maximum terminals reached",
+      "maxTerminalsReachedDescription": "[TO_REVIEW] Please close some terminals and try again. You can have up to 12 terminals open.",
+      "profileCreatedAuthFailed": "[TO_REVIEW] Profile Created - Authentication Needed",
+      "profileCreatedAuthFailedDescription": "[TO_REVIEW] Profile was added but authentication could not start. Click the login button to authenticate.",
+      "renameProfileFailed": "[TO_REVIEW] Failed to Rename Profile",
+      "setActiveProfileFailed": "[TO_REVIEW] Failed to Set Active Profile",
+      "settingsUpdateFailed": "[TO_REVIEW] Failed to Update Settings",
+      "terminalCreationFailed": "[TO_REVIEW] Failed to create authentication terminal",
+      "terminalCreationFailedDescription": "[TO_REVIEW] Unable to start the authentication process. {{error}}",
+      "terminalError": "[TO_REVIEW] Terminal Error",
+      "terminalErrorDescription": "[TO_REVIEW] Failed to create terminal: {{error}}",
+      "tokenSaveFailed": "[TO_REVIEW] Failed to Save Token",
+      "tokenSaved": "[TO_REVIEW] Token Saved",
+      "tokenSavedDescription": "[TO_REVIEW] Your token has been saved successfully.",
+      "tryAgain": "[TO_REVIEW] Please try again."
+    },
+    "tokenPlaceholder": "[TO_REVIEW] sk-ant-oat01-...",
+    "weeklyThreshold": "[TO_REVIEW] Weekly usage threshold",
+    "weeklyThresholdDescription": "[TO_REVIEW] Switch when weekly usage reaches this level (recommended: 99%)"
+  },
+  "jira": {
+    "apiToken": "[TO_REVIEW] API Token",
+    "apiTokenDescription": "[TO_REVIEW] Generate a token at",
+    "apiTokenLink": "[TO_REVIEW] Atlassian API Tokens",
+    "apiTokenPlaceholder": "[TO_REVIEW] Enter your Jira API token",
+    "authenticationFailed": "[TO_REVIEW] Authentication failed. Verify that your Jira email and API token are valid.",
+    "autoSync": "[TO_REVIEW] Auto-sync issues",
+    "autoSyncDescription": "[TO_REVIEW] Automatically sync Jira issues when the project is opened",
+    "connected": "[TO_REVIEW] Connected",
+    "connectionFailed": "[TO_REVIEW] Connection failed",
+    "description": "[TO_REVIEW] Configure and manage Jira Cloud issue synchronization",
+    "email": "[TO_REVIEW] Email",
+    "emailDescription": "[TO_REVIEW] The email address associated with your Atlassian account",
+    "emailPlaceholder": "[TO_REVIEW] user@example.com",
+    "enable": "[TO_REVIEW] Enable Jira Integration",
+    "enableDescription": "[TO_REVIEW] Sync issues with Jira Cloud for bidirectional task tracking",
+    "fillAllFields": "[TO_REVIEW] Please fill in all required fields (Instance URL, Email, API Token)",
+    "instance": "[TO_REVIEW] Instance",
+    "instanceUrl": "[TO_REVIEW] Jira Instance URL",
+    "instanceUrlDescription": "[TO_REVIEW] Your Jira Cloud instance URL (e.g., https://your-org.atlassian.net)",
+    "instanceUrlPlaceholder": "[TO_REVIEW] https://your-org.atlassian.net",
+    "projectKey": "[TO_REVIEW] Default Project Key",
+    "projectKeyDescription": "[TO_REVIEW] The Jira project key to sync issues from (e.g., PROJ, DEV, TEAM)",
+    "projectKeyPlaceholder": "[TO_REVIEW] PROJ",
+    "required": "[TO_REVIEW] *",
+    "testConnection": "[TO_REVIEW] Test Connection",
+    "title": "[TO_REVIEW] Jira Integration"
+  },
+  "jiraImport": {
+    "cancel": "[TO_REVIEW] Cancel",
+    "configureButton": "[TO_REVIEW] Configure Jira",
+    "configureFirst": "[TO_REVIEW] Configure Jira in project settings",
+    "connectionError": "[TO_REVIEW] Jira connection error",
+    "description": "[TO_REVIEW] Select Jira issues to import into WorkPilot AI",
+    "done": "[TO_REVIEW] Done",
+    "dragInstructions": "[TO_REVIEW] Select items then drag them to a column",
+    "dropToColumn": "[TO_REVIEW] Drop to {{column}} column",
+    "dropZone": "[TO_REVIEW] Drop items here",
+    "dropZoneItems": "[TO_REVIEW] {{count}} item(s) to import",
+    "emptySubtitle": "[TO_REVIEW] Try adjusting your filters",
+    "emptyTitle": "[TO_REVIEW] No issues found",
+    "errorCheckConnectionFailed": "[TO_REVIEW] Connection check failed",
+    "errorImportFailed": "[TO_REVIEW] Import failed",
+    "errorLoadIssuesFailed": "[TO_REVIEW] Failed to load issues",
+    "errorNoProject": "[TO_REVIEW] No project selected",
+    "errorNotConfigured": "[TO_REVIEW] Jira not configured",
+    "errorUnknown": "[TO_REVIEW] Unknown error",
+    "filterStateAll": "[TO_REVIEW] All States",
+    "filterStateLabel": "[TO_REVIEW] State",
+    "filterTypeAll": "[TO_REVIEW] All Types",
+    "filterTypeLabel": "[TO_REVIEW] Issue Type",
+    "importButton": "[TO_REVIEW] Import Issues from Jira",
+    "importButton_plural": "[TO_REVIEW] Import {{count}} items",
+    "importConfirmButton": "[TO_REVIEW] Import {{count}} item(s)",
+    "importConfirmDescription": "[TO_REVIEW] The following items will be imported into the {{column}} column.",
+    "importConfirmTitle": "[TO_REVIEW] Import {{count}} issue(s)",
+    "importSuccess": "[TO_REVIEW] {{count}} issue(s) imported successfully",
+    "importing": "[TO_REVIEW] Importing...",
+    "loadingIssues": "[TO_REVIEW] Loading items...",
+    "moreItems": "[TO_REVIEW] +{{count}} more item(s)",
+    "noIssues": "[TO_REVIEW] No issues found",
+    "projectLabel": "[TO_REVIEW] Project:",
+    "searchPlaceholder": "[TO_REVIEW] Search issues...",
+    "selectedItems": "[TO_REVIEW] {{count}} item(s) selected",
+    "selectionCount": "[TO_REVIEW] {{selected}} of {{total}} selected",
+    "sidePanelDescription": "[TO_REVIEW] Drag and drop items into Kanban columns",
+    "sidePanelTitle": "[TO_REVIEW] Import from Jira",
+    "successCount": "[TO_REVIEW] Imported {{count}} issue.",
+    "successCount_plural": "[TO_REVIEW] Imported {{count}} issues.",
+    "successFailedSuffix": "[TO_REVIEW] {{count}} failed.",
+    "successTitle": "[TO_REVIEW] Import Successful!",
+    "title": "[TO_REVIEW] Import Jira Issues"
+  },
+  "language": {
+    "description": "[TO_REVIEW] Select the language for the application interface",
+    "label": "[TO_REVIEW] Interface Language"
+  },
+  "logOrder": {
+    "chronological": "[TO_REVIEW] Chronological (oldest first)",
+    "description": "[TO_REVIEW] Choose how logs are displayed in the task detail view",
+    "label": "[TO_REVIEW] Log Order",
+    "reverseChronological": "[TO_REVIEW] Reverse-chronological (newest first)"
+  },
+  "mcp": {
+    "addCustomServer": "[TO_REVIEW] Add Custom Server",
+    "addMcpDescription": "[TO_REVIEW] Select an MCP server to add to this agent",
+    "addMcpTo": "[TO_REVIEW] Add MCP Server to {{agent}}",
+    "addServer": "[TO_REVIEW] Add Server",
+    "added": "[TO_REVIEW] added",
+    "advancedHeaders": "[TO_REVIEW] Additional Headers",
+    "allMcpsAdded": "[TO_REVIEW] All available MCP servers are already added",
+    "alwaysEnabled": "[TO_REVIEW] always enabled",
+    "args": "[TO_REVIEW] Arguments",
+    "argsHint": "[TO_REVIEW] Space-separated arguments",
+    "authToken": "[TO_REVIEW] Authentication Token",
+    "authTokenHint": "[TO_REVIEW] Used as Bearer token in the Authorization header",
+    "authTokenPlaceholder": "[TO_REVIEW] Paste your API token or PAT here",
+    "browserAutomation": "[TO_REVIEW] Browser Automation (QA agents only)",
+    "cannotRemove": "[TO_REVIEW] Cannot remove (required)",
+    "command": "[TO_REVIEW] Command",
+    "configuration": "[TO_REVIEW] MCP Server Configuration",
+    "configurationHint": "[TO_REVIEW] Disabled servers reduce context usage and startup time",
+    "customServerDescription": "[TO_REVIEW] Add a command-based or HTTP-based MCP server",
+    "customServers": "[TO_REVIEW] Custom Servers",
+    "description": "[TO_REVIEW] Configure which MCP servers are available for agents in this project",
+    "descriptionNoProject": "[TO_REVIEW] Select a project to configure MCP servers",
+    "editCustomServer": "[TO_REVIEW] Edit Custom Server",
+    "errorCommandRequired": "[TO_REVIEW] Command is required for command-based servers",
+    "errorIdExists": "[TO_REVIEW] A server with this ID already exists",
+    "errorNameRequired": "[TO_REVIEW] Server name is required",
+    "errorUrlRequired": "[TO_REVIEW] URL is required for HTTP-based servers",
+    "headerName": "[TO_REVIEW] Header Name",
+    "headerValue": "[TO_REVIEW] Header Value",
+    "headers": "[TO_REVIEW] Headers",
+    "hints": {
+      "anthropic": "[TO_REVIEW] This looks like an Anthropic API. You'll need an API key.",
+      "createAnthropicKey": "[TO_REVIEW] Create Anthropic API Key",
+      "createGithubPat": "[TO_REVIEW] Create GitHub PAT",
+      "createGoogleToken": "[TO_REVIEW] Create Google Credentials",
+      "createOpenaiKey": "[TO_REVIEW] Create OpenAI API Key",
+      "github": "[TO_REVIEW] This looks like a GitHub MCP server. You'll need a Personal Access Token with appropriate scopes.",
+      "google": "[TO_REVIEW] This looks like a Google API. You'll need an OAuth token or API key.",
+      "openai": "[TO_REVIEW] This looks like an OpenAI API. You'll need an API key."
+    },
+    "noCustomServers": "[TO_REVIEW] No custom servers configured. Add one to use with your agents.",
+    "noMcpServers": "[TO_REVIEW] No MCP servers",
+    "noProjectSelected": "[TO_REVIEW] No Project Selected",
+    "noProjectSelectedDescription": "[TO_REVIEW] Select a project from the dropdown to view and configure MCP servers.",
+    "projectNotInitialized": "[TO_REVIEW] Project Not Initialized",
+    "projectNotInitializedDescription": "[TO_REVIEW] Initialize WorkPilot AI for this project to configure MCP servers.",
+    "remove": "[TO_REVIEW] Remove",
+    "removed": "[TO_REVIEW] removed",
+    "restore": "[TO_REVIEW] Restore",
+    "serverDescription": "[TO_REVIEW] Description",
+    "serverDescriptionPlaceholder": "[TO_REVIEW] What this server does",
+    "serverName": "[TO_REVIEW] Name",
+    "serverNamePlaceholder": "[TO_REVIEW] My MCP Server",
+    "serverType": "[TO_REVIEW] Server Type",
+    "servers": {
+      "autoClaude": {
+        "description": "[TO_REVIEW] Build progress tracking",
+        "name": "[TO_REVIEW] WorkPilot AI Tools"
+      },
+      "context7": {
+        "description": "[TO_REVIEW] Documentation lookup for libraries",
+        "name": "[TO_REVIEW] Context7"
+      },
+      "electron": {
+        "description": "[TO_REVIEW] Desktop app automation via Chrome DevTools",
+        "name": "[TO_REVIEW] Electron"
+      },
+      "graphiti": {
+        "description": "[TO_REVIEW] Knowledge graph for cross-session context",
+        "name": "[TO_REVIEW] Graphiti Memory",
+        "notConfigured": "[TO_REVIEW] Requires memory configuration (see Memory settings)"
+      },
+      "linear": {
+        "description": "[TO_REVIEW] Project management integration",
+        "name": "[TO_REVIEW] Linear",
+        "notConfigured": "[TO_REVIEW] Requires Linear integration (see Linear settings)"
+      },
+      "puppeteer": {
+        "description": "[TO_REVIEW] Web browser automation for testing",
+        "name": "[TO_REVIEW] Puppeteer"
+      }
+    },
+    "serversEnabled": "[TO_REVIEW] {{count}} servers enabled",
+    "status": {
+      "checking": "[TO_REVIEW] Checking...",
+      "healthy": "[TO_REVIEW] Server is responding",
+      "needsAuth": "[TO_REVIEW] Authentication required",
+      "unhealthy": "[TO_REVIEW] Server is not responding",
+      "unknown": "[TO_REVIEW] Status unknown"
+    },
+    "testConnection": "[TO_REVIEW] Test",
+    "testing": "[TO_REVIEW] Testing...",
+    "title": "[TO_REVIEW] MCP Server Overview",
+    "titleWithProject": "[TO_REVIEW] MCP Server Overview for {{projectName}}",
+    "typeCommand": "[TO_REVIEW] Command (npx/npm)",
+    "typeHttp": "[TO_REVIEW] HTTP",
+    "url": "[TO_REVIEW] URL"
+  },
+  "modelSelect": {
+    "discoveryNotAvailable": "[TO_REVIEW] Model discovery not available. Enter model name manually.",
+    "noResults": "[TO_REVIEW] No models match your search",
+    "placeholder": "[TO_REVIEW] Select a model or type manually",
+    "placeholderManual": "[TO_REVIEW] Enter model name (e.g., claude-sonnet-4-5-20250929)",
+    "searchPlaceholder": "[TO_REVIEW] Search models..."
+  },
+  "notifications": {
+    "description": "[TO_REVIEW] Configure default notification preferences",
+    "onReviewNeeded": "[TO_REVIEW] On Review Needed",
+    "onReviewNeededDescription": "[TO_REVIEW] Notify when QA requires your review",
+    "onTaskComplete": "[TO_REVIEW] On Task Complete",
+    "onTaskCompleteDescription": "[TO_REVIEW] Notify when a task finishes successfully",
+    "onTaskFailed": "[TO_REVIEW] On Task Failed",
+    "onTaskFailedDescription": "[TO_REVIEW] Notify when a task encounters an error",
+    "sound": "[TO_REVIEW] Sound",
+    "soundDescription": "[TO_REVIEW] Play sound with notifications",
+    "title": "[TO_REVIEW] Notifications"
+  },
+  "projectSections": {
+    "activeProvider": "[TO_REVIEW] Active provider: {{provider}}",
+    "azure-devops": {
+      "description": "[TO_REVIEW] Azure DevOps work items",
+      "integrationDescription": "[TO_REVIEW] Connect to Azure DevOps for work item management",
+      "integrationTitle": "[TO_REVIEW] Azure DevOps Integration",
+      "syncDescription": "[TO_REVIEW] Sync with Azure DevOps Backlog",
+      "title": "[TO_REVIEW] Azure DevOps"
+    },
+    "claude": {
+      "description": "[TO_REVIEW] Claude authentication",
+      "title": "[TO_REVIEW] Claude Auth"
+    },
+    "customModelPlaceholder": "[TO_REVIEW] Enter model name (e.g. llama3.3:latest)",
+    "customized": "[TO_REVIEW] Customized",
+    "flagshipModel": "[TO_REVIEW] Flagship model: {{model}}",
+    "general": {
+      "description": "[TO_REVIEW] Auto-Build and agent config",
+      "title": "[TO_REVIEW] General",
+      "useClaudeMd": "[TO_REVIEW] Use CLAUDE.md",
+      "useClaudeMdDescription": "[TO_REVIEW] Include CLAUDE.md instructions in agent context"
+    },
+    "github": {
+      "authenticatedAs": "[TO_REVIEW] Authenticated as {{username}}",
+      "checking": "[TO_REVIEW] Checking...",
+      "connectedTo": "[TO_REVIEW] Connected to {{repo}}",
+      "connectedViaCLI": "[TO_REVIEW] Connected via GitHub CLI",
+      "connectionStatus": "[TO_REVIEW] Connection Status",
+      "connectionString": "[TO_REVIEW] https://api.github.com/graphql",
+      "defaultBranch": {
+        "autoDetect": "[TO_REVIEW] Auto-detect (main/master)",
+        "description": "[TO_REVIEW] Base branch for creating task worktrees",
+        "label": "[TO_REVIEW] Default Branch",
+        "noBranchesFound": "[TO_REVIEW] No branches found",
+        "searchPlaceholder": "[TO_REVIEW] Search branches...",
+        "selectedBranchHelp": "[TO_REVIEW] All new tasks will branch from {{branch}}"
+      },
+      "description": "[TO_REVIEW] GitHub issues sync",
+      "integrationDescription": "[TO_REVIEW] Connect to GitHub for issue tracking",
+      "integrationTitle": "[TO_REVIEW] GitHub Integration",
+      "notConnected": "[TO_REVIEW] Not connected",
+      "personalAccessToken": "[TO_REVIEW] YOUR_GITHUB_PERSONAL_ACCESS_TOKEN",
+      "syncDescription": "[TO_REVIEW] Sync with GitHub Issues",
+      "title": "[TO_REVIEW] GitHub",
+      "useDifferentToken": "[TO_REVIEW] Use Different Token"
+    },
+    "gitlab": {
+      "description": "[TO_REVIEW] GitLab issues sync",
+      "integrationDescription": "[TO_REVIEW] Connect to GitLab for issue tracking",
+      "integrationTitle": "[TO_REVIEW] GitLab Integration",
+      "syncDescription": "[TO_REVIEW] Sync with GitLab Issues",
+      "title": "[TO_REVIEW] GitLab"
+    },
+    "jira": {
+      "description": "[TO_REVIEW] Jira integration",
+      "title": "[TO_REVIEW] Jira"
+    },
+    "linear": {
+      "apiKey": "[TO_REVIEW] YOUR_LINEAR_API_KEY",
+      "checking": "[TO_REVIEW] Checking...",
+      "connected": "[TO_REVIEW] Connected",
+      "connectedTo": "[TO_REVIEW] Connected to {{team}}",
+      "connectionStatus": "[TO_REVIEW] Connection Status",
+      "connectionString": "[TO_REVIEW] https://api.linear.app/graphql",
+      "description": "[TO_REVIEW] Linear integration",
+      "integrationDescription": "[TO_REVIEW] Connect to Linear for issue tracking and task import",
+      "integrationTitle": "[TO_REVIEW] Linear Integration",
+      "notConnected": "[TO_REVIEW] Not connected",
+      "syncDescription": "[TO_REVIEW] Sync with Linear for issue tracking",
+      "tasksAvailable": "[TO_REVIEW] {{count}}+ tasks available to import",
+      "title": "[TO_REVIEW] Linear"
+    },
+    "memory": {
+      "description": "[TO_REVIEW] Graphiti memory backend",
+      "title": "[TO_REVIEW] Memory"
+    },
+    "phaseConfigNote": "[TO_REVIEW] These settings will be used as defaults when creating new tasks with this profile. You can override them per-task in the task creation wizard.",
+    "phaseConfigNoteProvider": "[TO_REVIEW] These model settings apply to the {{provider}} provider. They are saved independently and restored when you switch back to this provider.",
+    "phases": {
+      "coding": {
+        "description": "[TO_REVIEW] Actual code implementation",
+        "label": "[TO_REVIEW] Coding"
+      },
+      "planning": {
+        "description": "[TO_REVIEW] Implementation planning and architecture",
+        "label": "[TO_REVIEW] Planning"
+      },
+      "qa": {
+        "description": "[TO_REVIEW] Quality assurance and validation",
+        "label": "[TO_REVIEW] QA Review"
+      },
+      "spec": {
+        "description": "[TO_REVIEW] Discovery, requirements, context gathering",
+        "label": "[TO_REVIEW] Spec Creation"
+      }
+    },
+    "profilesInfoProvider": "[TO_REVIEW] Configure the model used for each pipeline phase. Settings are saved per provider and will be restored when you switch back.",
+    "resetToProviderDefaults": "[TO_REVIEW] Reset to provider defaults",
+    "supportsThinking": "[TO_REVIEW] Thinking",
+    "tierFlagship": "[TO_REVIEW] Flagship"
+  },
+  "projectSettings": {
+    "noProjectSelected": {
+      "description": "[TO_REVIEW] Select a project from the sidebar to configure its settings.",
+      "title": "[TO_REVIEW] No Project Selected"
     }
   },
   "providerGrid": {
-    "title": "Gestion des fournisseurs IA",
-    "description": "Connectez et gérez plusieurs fournisseurs d'intelligence artificielle",
-    "search": {
-      "placeholder": "Rechercher un fournisseur...",
-      "results": "{{count}} résultat{{count > 1 ? 's' : ''}} pour \"{{query}}\"",
-      "noResults": "Aucun fournisseur trouvé",
-      "noProviders": "Aucun fournisseur disponible",
-      "adjustCriteria": "Essayez d'ajuster vos critères de recherche.",
-      "addFirst": "Commencez par ajouter votre premier fournisseur.",
-      "addFirstButton": "Ajouter votre premier fournisseur"
+    "actions": {
+      "add": "[TO_REVIEW] Add",
+      "refresh": "[TO_REVIEW] Refresh"
     },
+    "description": "[TO_REVIEW] Connect and manage multiple AI providers",
     "filters": {
-      "placeholder": "Filtrer",
-      "all": "Tous",
-      "configured": "Configurés",
-      "unconfigured": "Non configurés",
-      "errors": "Avec erreurs"
+      "all": "[TO_REVIEW] All",
+      "configured": "[TO_REVIEW] Configured",
+      "errors": "[TO_REVIEW] With errors",
+      "placeholder": "[TO_REVIEW] Filter",
+      "unconfigured": "[TO_REVIEW] Unconfigured"
+    },
+    "search": {
+      "addFirst": "[TO_REVIEW] Start by adding your first provider.",
+      "addFirstButton": "[TO_REVIEW] Add your first provider",
+      "adjustCriteria": "[TO_REVIEW] Try adjusting your search criteria.",
+      "noProviders": "[TO_REVIEW] No providers available",
+      "noResults": "[TO_REVIEW] No providers found",
+      "placeholder": "[TO_REVIEW] Search for a provider...",
+      "results": "[TO_REVIEW] {{count}} result{{count > 1 ? 's' : ''}} for \"{{query}}\""
     },
     "sort": {
-      "placeholder": "Trier par",
-      "name": "Nom",
-      "category": "Catégorie",
-      "status": "Statut",
-      "usage": "Utilisation"
+      "category": "[TO_REVIEW] Category",
+      "name": "[TO_REVIEW] Name",
+      "placeholder": "[TO_REVIEW] Sort by",
+      "status": "[TO_REVIEW] Status",
+      "usage": "[TO_REVIEW] Usage"
     },
     "stats": {
-      "total": "{{count}} total",
-      "configured": "{{count}} configurés",
-      "errors": "{{count}} erreurs"
+      "configured": "[TO_REVIEW] {{count}} configured",
+      "errors": "[TO_REVIEW] {{count}} errors",
+      "total": "[TO_REVIEW] {{count}} total"
     },
-    "actions": {
-      "refresh": "Actualiser",
-      "add": "Ajouter"
+    "title": "[TO_REVIEW] AI Provider Management"
+  },
+  "scale": {
+    "comfortable": "[TO_REVIEW] Comfortable",
+    "default": "[TO_REVIEW] Default",
+    "fineTune": "[TO_REVIEW] Fine-tune Scale",
+    "fineTuneDescription": "[TO_REVIEW] Adjust from 75% to 200% in 5% increments",
+    "large": "[TO_REVIEW] Large",
+    "presets": "[TO_REVIEW] Scale Presets",
+    "presetsDescription": "[TO_REVIEW] Quick scale options for common preferences"
+  },
+  "sections": {
+    "accounts": {
+      "alerts": {
+        "noProviders": "[TO_REVIEW] No providers configured. Configure your API keys to get started.",
+        "providerErrors": "[TO_REVIEW] {{count}} provider(s) with errors"
+      },
+      "autoSwitching": {
+        "globalDescription": "[TO_REVIEW] Automatically switch between your accounts based on usage and rate limits.",
+        "globalTitle": "[TO_REVIEW] Automatic Account Switching",
+        "providerAdded": "[TO_REVIEW] Provider added to auto-switching",
+        "providerDescription": "[TO_REVIEW] {{providerName}} has been {{action}} to auto-switching list",
+        "providerRemoved": "[TO_REVIEW] Provider removed from auto-switching",
+        "syncError": "[TO_REVIEW] Sync Error",
+        "syncErrorDescription": "[TO_REVIEW] Failed to sync provider with auto-switching",
+        "title": "[TO_REVIEW] Auto-switching"
+      },
+      "description": "[TO_REVIEW] Accounts & API endpoints",
+      "form": {
+        "addAccount": "[TO_REVIEW] Add {{provider}} Account",
+        "apiKey": "[TO_REVIEW] API Key",
+        "apiKeyPlaceholder": "[TO_REVIEW] sk-...",
+        "baseUrl": "[TO_REVIEW] Base URL",
+        "baseUrlPlaceholder": "[TO_REVIEW] https://api.example.com",
+        "cancel": "[TO_REVIEW] Cancel",
+        "chooseModel": "[TO_REVIEW] -- Choose Model --",
+        "llmGatewayUrl": "[TO_REVIEW] LLM Gateway URL",
+        "llmGatewayUrlPlaceholder": "[TO_REVIEW] https://gateway.example.com",
+        "name": "[TO_REVIEW] Account Name",
+        "namePlaceholder": "[TO_REVIEW] Account Name",
+        "save": "[TO_REVIEW] Save"
+      },
+      "providerCard": {
+        "apiKey": "[TO_REVIEW] API Key",
+        "authCli": "[TO_REVIEW] CLI Auth",
+        "authLocal": "[TO_REVIEW] Local",
+        "authOauth": "[TO_REVIEW] OAuth",
+        "authentication": "[TO_REVIEW] Authentication",
+        "cliAuthenticated": "[TO_REVIEW] CLI authenticated",
+        "configure": "[TO_REVIEW] Configure",
+        "deleteConfirm": "[TO_REVIEW] Are you sure you want to delete this provider configuration?",
+        "edit": "[TO_REVIEW] Edit",
+        "errors": {
+          "unknownError": "[TO_REVIEW] Unknown error"
+        },
+        "lastTest": "[TO_REVIEW] Last test",
+        "localRunning": "[TO_REVIEW] Local instance",
+        "needsReauth": "[TO_REVIEW] Needs re-authentication",
+        "neverTested": "[TO_REVIEW] Never tested",
+        "notAvailable": "[TO_REVIEW] Not available",
+        "notConfigured": "[TO_REVIEW] Not configured",
+        "oauthCli": "[TO_REVIEW] OAuth (CLI)",
+        "oauthConnected": "[TO_REVIEW] OAuth connected",
+        "rateLimited": "[TO_REVIEW] Rate limited",
+        "source": "[TO_REVIEW] Source",
+        "status": {
+          "active": "[TO_REVIEW] Active",
+          "error": "[TO_REVIEW] Error",
+          "notConfigured": "[TO_REVIEW] Not configured"
+        },
+        "statusNested": {
+          "active": "[TO_REVIEW] Active",
+          "error": "[TO_REVIEW] Error",
+          "notConfigured": "[TO_REVIEW] Not configured"
+        },
+        "test": "[TO_REVIEW] Test",
+        "testDetails": {
+          "modelUsed": "[TO_REVIEW] Model used: {{model}}",
+          "modelsAvailable": "[TO_REVIEW] {{count}} models available"
+        },
+        "testError": "[TO_REVIEW] Test failed",
+        "testErrorDescription": "[TO_REVIEW] The {{providerName}} provider failed: {{error}}",
+        "testSuccess": "[TO_REVIEW] Test successful",
+        "testSuccessDescription": "[TO_REVIEW] The {{providerName}} provider is working correctly",
+        "usage": "[TO_REVIEW] Usage",
+        "usageThisMonth": "[TO_REVIEW] Usage this month",
+        "week": "[TO_REVIEW] week"
+      },
+      "providerConfig": {
+        "title": "[TO_REVIEW] Configuration",
+        "windsurfAuth": {
+          "accountCredits": "[TO_REVIEW] Credits",
+          "accountFlowActions": "[TO_REVIEW] Flow Actions",
+          "accountInfo": "[TO_REVIEW] Authenticated Account",
+          "accountName": "[TO_REVIEW] Name",
+          "accountPlan": "[TO_REVIEW] Plan",
+          "authenticating": "[TO_REVIEW] Authenticating...",
+          "claudeCodeAuth": "[TO_REVIEW] Use Claude Code OAuth authentication to easily connect with your Claude account.",
+          "connectWithClaude": "[TO_REVIEW] Connect with Claude Code",
+          "description": "[TO_REVIEW] Automatically detect your Windsurf credentials from your local IDE installation.",
+          "detectFailed": "[TO_REVIEW] Could not detect token. Make sure Windsurf IDE is installed and you are signed in.",
+          "detectFromIDE": "[TO_REVIEW] Detect from Windsurf IDE",
+          "detectSuccess": "[TO_REVIEW] Token detected for {{userName}}!",
+          "detecting": "[TO_REVIEW] Detecting...",
+          "noConfigRequired": "[TO_REVIEW] No manual configuration required. Alternatively, use the API Key tab with a Service Key.",
+          "oauthDetected": "[TO_REVIEW] Windsurf SSO authentication detected",
+          "openWindsurfLogin": "[TO_REVIEW] windsurf.com/account",
+          "orManual": "[TO_REVIEW] Or sign in manually:",
+          "saveAndConnect": "[TO_REVIEW] Save & Connect",
+          "saveSuccess": "[TO_REVIEW] Windsurf connection saved successfully!",
+          "terminalInstructions": "[TO_REVIEW] This will open a terminal where you can run the `/login` command to authenticate.",
+          "tokenDetected": "[TO_REVIEW] API key detected",
+          "tokenLoaded": "[TO_REVIEW] The Windsurf SSO token has been automatically loaded from your local IDE environment."
+        }
+      },
+      "providerToggle": {
+        "description": "[TO_REVIEW] {{providerId}} has been {{action}} successfully",
+        "disabled": "[TO_REVIEW] Provider disabled",
+        "enabled": "[TO_REVIEW] Provider enabled",
+        "error": "[TO_REVIEW] Error",
+        "errorDescription": "[TO_REVIEW] Failed to {{action}} provider {{providerId}}"
+      },
+      "providers": {
+        "anthropic": "[TO_REVIEW] Anthropic Claude models",
+        "aws": "[TO_REVIEW] AWS Bedrock and Amazon services",
+        "copilot": "[TO_REVIEW] GitHub Copilot",
+        "cursor": "[TO_REVIEW] Cursor AI Provider",
+        "deepseek": "[TO_REVIEW] DeepSeek models (DeepSeek-Coder, etc.)",
+        "google": "[TO_REVIEW] Google and Google DeepMind API access",
+        "grok": "[TO_REVIEW] Grok xAI models",
+        "loadError": "[TO_REVIEW] Failed to load provider list",
+        "meta": "[TO_REVIEW] Official Meta AI models",
+        "mistral": "[TO_REVIEW] Mistral AI models (Mistral, Codéal, etc.)",
+        "ollama": "[TO_REVIEW] Local open-source models with Ollama",
+        "openai": "[TO_REVIEW] GPT-5 and other OpenAI models",
+        "windsurf": "[TO_REVIEW] Windsurf AI Provider"
+      },
+      "title": "[TO_REVIEW] Accounts"
+    },
+    "agent": {
+      "description": "[TO_REVIEW] Default model and framework",
+      "title": "[TO_REVIEW] Agent Settings"
+    },
+    "anomaly-detection": {
+      "description": "[TO_REVIEW] Agent behavior monitoring & alerts",
+      "title": "[TO_REVIEW] Anomaly Detection"
+    },
+    "appearance": {
+      "description": "[TO_REVIEW] Customize how WorkPilot AI looks",
+      "title": "[TO_REVIEW] Appearance"
+    },
+    "debug": {
+      "description": "[TO_REVIEW] Troubleshooting tools",
+      "title": "[TO_REVIEW] Debug & Logs"
+    },
+    "devtools": {
+      "description": "[TO_REVIEW] IDE and terminal preferences",
+      "title": "[TO_REVIEW] Developer Tools"
+    },
+    "display": {
+      "description": "[TO_REVIEW] Adjust the size of UI elements",
+      "title": "[TO_REVIEW] Display"
+    },
+    "language": {
+      "description": "[TO_REVIEW] Choose your preferred language",
+      "title": "[TO_REVIEW] Language"
+    },
+    "llm-router": {
+      "description": "[TO_REVIEW] Intelligent provider routing & A/B tests",
+      "title": "[TO_REVIEW] LLM Router"
+    },
+    "notifications": {
+      "description": "[TO_REVIEW] Alert preferences",
+      "title": "[TO_REVIEW] Notifications"
+    },
+    "paths": {
+      "description": "[TO_REVIEW] CLI tools and framework paths",
+      "title": "[TO_REVIEW] Paths"
+    },
+    "sandbox": {
+      "description": "[TO_REVIEW] Agent execution isolation & rollback",
+      "title": "[TO_REVIEW] Sandbox"
+    },
+    "scheduler": {
+      "description": "[TO_REVIEW] Cron-like task scheduling & chains",
+      "title": "[TO_REVIEW] Scheduler"
+    },
+    "terminal-fonts": {
+      "description": "[TO_REVIEW] Customize terminal font appearance",
+      "title": "[TO_REVIEW] Terminal Fonts"
+    },
+    "updates": {
+      "description": "[TO_REVIEW] WorkPilot AI updates",
+      "title": "[TO_REVIEW] Updates"
     }
+  },
+  "tabs": {
+    "app": "[TO_REVIEW] App Settings",
+    "project": "[TO_REVIEW] Project Settings"
   },
   "terminalFonts": {
-    "title": "Polices de terminal",
-    "description": "Personnaliser l'apparence et le comportement des polices de terminal",
-    "configActions": "Configuration :",
-    "export": "Exporter JSON",
-    "import": "Importer JSON",
-    "copy": "Copier dans le presse-papiers",
-    "fontConfig": {
-      "title": "Configuration de la police",
-      "description": "Personnaliser la famille, taille, graisse, hauteur de ligne et espacement des caractères",
-      "fontFamily": "Famille de police",
-      "fontFamilyDescription": "Police monospace principale pour le texte du terminal",
-      "selectFont": "Sélectionner une police...",
-      "searchFont": "Rechercher des polices...",
-      "noFonts": "Aucune police trouvée",
-      "fontChain": "Chaîne de polices :",
-      "fontSize": "Taille de police",
-      "fontSizeDescription": "Taille de police de base en pixels (10-24px)",
-      "decreaseFontSize": "Réduire la taille de police de {{step}}px",
-      "increaseFontSize": "Augmenter la taille de police de {{step}}px",
-      "pixels": "pixels",
-      "fontWeight": "Graisse de police",
-      "fontWeightDescription": "Graisse de police de 100 (fin) à 900 (noir), par incréments de 100",
-      "commonWeights": "Courants : 400 (normal), 600 (semi-gras), 700 (gras)",
-      "decreaseFontWeight": "Réduire la graisse de police de {{step}}",
-      "increaseFontWeight": "Augmenter la graisse de police de {{step}}",
-      "lineHeight": "Hauteur de ligne",
-      "lineHeightDescription": "Hauteur de ligne comme multiple de la taille de police (1.0-2.0)",
-      "letterSpacing": "Espacement des caractères",
-      "letterSpacingDescription": "Espacement horizontal entre les caractères (-2 à 5px)"
-    },
+    "configActions": "[TO_REVIEW] Configuration:",
+    "copy": "[TO_REVIEW] Copy to Clipboard",
     "cursorConfig": {
-      "title": "Configuration du curseur",
-      "description": "Personnaliser le style, le comportement de clignotement et la couleur d'accent du curseur",
-      "cursorStyle": "Style de curseur",
-      "cursorStyleDescription": "Choisir l'apparence du curseur de terminal",
-      "selectStyle": "Sélectionner un style de curseur...",
-      "currentStyle": "Actuel :",
-      "styleBlock": "Bloc",
-      "styleBlockDescription": "Curseur en bloc complet",
-      "styleUnderline": "Souligné",
-      "styleUnderlineDescription": "Curseur souligné",
-      "styleBar": "Barre",
-      "styleBarDescription": "Curseur en barre verticale",
-      "cursorBlink": "Clignotement du curseur",
-      "cursorBlinkDescription": "Activer ou désactiver l'animation de clignotement du curseur",
-      "blinkStatus": "Statut :",
-      "enabled": "Activé",
-      "disabled": "Désactivé",
-      "cursorAccentColor": "Couleur d'accent du curseur",
-      "cursorAccentColorDescription": "Choisir la couleur du curseur de terminal",
-      "cursorColorLabel": "Couleur d'accent du curseur",
-      "cursorColorDescription": "Couleur actuelle : {{color}}",
-      "pickColor": "Cliquer pour choisir une couleur",
-      "resetColor": "Réinitialiser en noir",
-      "reset": "Réinitialiser",
-      "preview": "Aperçu :"
+      "blinkStatus": "[TO_REVIEW] Status:",
+      "currentStyle": "[TO_REVIEW] Current:",
+      "cursorAccentColor": "[TO_REVIEW] Cursor Accent Color",
+      "cursorAccentColorDescription": "[TO_REVIEW] Choose the color of the terminal cursor",
+      "cursorBlink": "[TO_REVIEW] Cursor Blink",
+      "cursorBlinkDescription": "[TO_REVIEW] Enable or disable cursor blinking animation",
+      "cursorColorDescription": "[TO_REVIEW] Current color: {{color}}",
+      "cursorColorLabel": "[TO_REVIEW] Cursor accent color",
+      "cursorStyle": "[TO_REVIEW] Cursor Style",
+      "cursorStyleDescription": "[TO_REVIEW] Choose the appearance of the terminal cursor",
+      "description": "[TO_REVIEW] Customize cursor style, blinking behavior, and accent color",
+      "disabled": "[TO_REVIEW] Disabled",
+      "enabled": "[TO_REVIEW] Enabled",
+      "pickColor": "[TO_REVIEW] Click to pick a color",
+      "preview": "[TO_REVIEW] Preview:",
+      "reset": "[TO_REVIEW] Reset",
+      "resetColor": "[TO_REVIEW] Reset to black",
+      "selectStyle": "[TO_REVIEW] Select cursor style...",
+      "styleBar": "[TO_REVIEW] Bar",
+      "styleBarDescription": "[TO_REVIEW] Vertical bar cursor",
+      "styleBlock": "[TO_REVIEW] Block",
+      "styleBlockDescription": "[TO_REVIEW] Full block cursor",
+      "styleUnderline": "[TO_REVIEW] Underline",
+      "styleUnderlineDescription": "[TO_REVIEW] Underline cursor",
+      "title": "[TO_REVIEW] Cursor Configuration"
+    },
+    "description": "[TO_REVIEW] Customize terminal font appearance and behavior",
+    "export": "[TO_REVIEW] Export JSON",
+    "fontConfig": {
+      "commonWeights": "[TO_REVIEW] Common: 400 (normal), 600 (semi-bold), 700 (bold)",
+      "decreaseFontSize": "[TO_REVIEW] Decrease font size by {{step}}px",
+      "decreaseFontWeight": "[TO_REVIEW] Decrease font weight by {{step}}",
+      "description": "[TO_REVIEW] Customize font family, size, weight, line height, and letter spacing",
+      "fontChain": "[TO_REVIEW] Font chain:",
+      "fontFamily": "[TO_REVIEW] Font Family",
+      "fontFamilyDescription": "[TO_REVIEW] Primary monospace font for terminal text",
+      "fontSize": "[TO_REVIEW] Font Size",
+      "fontSizeDescription": "[TO_REVIEW] Base font size in pixels (10-24px)",
+      "fontWeight": "[TO_REVIEW] Font Weight",
+      "fontWeightDescription": "[TO_REVIEW] Font weight from 100 (thin) to 900 (black), in steps of 100",
+      "increaseFontSize": "[TO_REVIEW] Increase font size by {{step}}px",
+      "increaseFontWeight": "[TO_REVIEW] Increase font weight by {{step}}",
+      "letterSpacing": "[TO_REVIEW] Letter Spacing",
+      "letterSpacingDescription": "[TO_REVIEW] Horizontal spacing between characters (-2 to 5px)",
+      "lineHeight": "[TO_REVIEW] Line Height",
+      "lineHeightDescription": "[TO_REVIEW] Line height as a multiple of font size (1.0-2.0)",
+      "noFonts": "[TO_REVIEW] No fonts found",
+      "pixels": "[TO_REVIEW] pixels",
+      "searchFont": "[TO_REVIEW] Search fonts...",
+      "selectFont": "[TO_REVIEW] Select a font...",
+      "title": "[TO_REVIEW] Font Configuration"
+    },
+    "import": "[TO_REVIEW] Import JSON",
+    "importExport": {
+      "copyFailed": "[TO_REVIEW] Failed to copy to clipboard",
+      "copySuccess": "[TO_REVIEW] Settings copied to clipboard",
+      "exportFailed": "[TO_REVIEW] Failed to export settings",
+      "exportSuccess": "[TO_REVIEW] Settings exported successfully",
+      "fileTooLarge": "[TO_REVIEW] Import file too large (max 10KB)",
+      "importFailed": "[TO_REVIEW] Failed to import settings: Invalid JSON format",
+      "importFailedRange": "[TO_REVIEW] Failed to import settings: Values out of valid range",
+      "importSuccess": "[TO_REVIEW] Settings imported successfully",
+      "readError": "[TO_REVIEW] Failed to read file"
     },
     "performanceConfig": {
-      "title": "Paramètres de performance",
-      "description": "Ajuster la limite de défilement et autres paramètres liés à la performance",
-      "presets": "Préréglages rapides",
-      "presetsDescription": "Limites de défilement courantes pour différents cas d'usage",
-      "scrollback": "Limite de défilement",
-      "scrollbackDescription": "Nombre maximum de lignes à conserver dans l'historique du terminal",
-      "scrollbackPresets": "Préréglages rapides",
-      "presetMinimal": "Minimal",
-      "presetMinimalDescription": "Historique minimal (1K lignes)",
-      "presetStandard": "Standard",
-      "presetStandardDescription": "Historique standard (10K lignes)",
-      "presetExtended": "Étendu",
-      "presetExtendedDescription": "Historique étendu (50K lignes)",
-      "presetMaximum": "Maximum",
-      "presetMaximumDescription": "Historique maximum (100K lignes)",
-      "decreaseScrollback": "Réduire le défilement de {{step}}",
-      "increaseScrollback": "Augmenter le défilement de {{step}}",
-      "lines": "lignes",
-      "kValue": "{{value}}K",
-      "scrollbackValue": "{{value}} lignes"
+      "decreaseScrollback": "[TO_REVIEW] Decrease scrollback by {{step}}",
+      "description": "[TO_REVIEW] Adjust scrollback limit and other performance-related settings",
+      "increaseScrollback": "[TO_REVIEW] Increase scrollback by {{step}}",
+      "kValue": "[TO_REVIEW] {{value}}K",
+      "lines": "[TO_REVIEW] lines",
+      "presetExtended": "[TO_REVIEW] Extended",
+      "presetExtendedDescription": "[TO_REVIEW] Extended history (50K lines)",
+      "presetMaximum": "[TO_REVIEW] Maximum",
+      "presetMaximumDescription": "[TO_REVIEW] Maximum history (100K lines)",
+      "presetMinimal": "[TO_REVIEW] Minimal",
+      "presetMinimalDescription": "[TO_REVIEW] Minimal history (1K lines)",
+      "presetStandard": "[TO_REVIEW] Standard",
+      "presetStandardDescription": "[TO_REVIEW] Standard history (10K lines)",
+      "presets": "[TO_REVIEW] Quick Presets",
+      "presetsDescription": "[TO_REVIEW] Common scrollback limits for different use cases",
+      "scrollback": "[TO_REVIEW] Scrollback Limit",
+      "scrollbackDescription": "[TO_REVIEW] Maximum number of lines to keep in terminal history",
+      "scrollbackPresets": "[TO_REVIEW] Quick Presets",
+      "scrollbackValue": "[TO_REVIEW] {{value}} lines",
+      "title": "[TO_REVIEW] Performance Settings"
     },
     "presets": {
-      "title": "Préréglages rapides",
-      "description": "Appliquer des préréglages de police de terminal configurés ou sauvegarder les vôtres",
-      "builtin": "Préréglages intégrés",
-      "builtinDescription": "Cliquer pour appliquer un préréglage configuré",
-      "vscode": "Consolas 14px, curseur bloc",
-      "vscodeName": "VS Code",
-      "intellij": "JetBrains Mono 13px, curseur bloc",
-      "intellijName": "IntelliJ IDEA",
-      "macos": "SF Mono 13px, curseur bloc",
-      "macosName": "Terminal macOS",
-      "ubuntu": "Ubuntu Mono 13px, curseur bloc",
-      "ubuntuName": "Terminal Ubuntu",
-      "reset": "Réinitialiser aux valeurs par défaut",
-      "resetDescription": "Restaurer les paramètres par défaut pour votre système d'exploitation",
-      "resetToOS": "Réinitialiser aux valeurs par défaut {{os}}",
-      "resetButton": "Réinitialiser aux valeurs par défaut du système d'exploitation",
-      "custom": "Préréglages personnalisés",
-      "customDescription": "Sauvegarder votre configuration actuelle comme un préréglage personnalisé",
-      "presetNamePlaceholder": "Nom du préréglage...",
-      "savePreset": "Sauvegarder la configuration actuelle comme un préréglage",
-      "applyPreset": "Appliquer ce préréglage",
-      "deletePreset": "Supprimer ce préréglage",
-      "noCustomPresets": "Aucun préréglage personnalisé pour le moment. Sauvegardez votre configuration actuelle pour commencer.",
-      "duplicateName": "Un préréglage avec ce nom existe déjà",
-      "saved": "Préréglage \"{{name}}\" sauvegardé",
-      "deleted": "Préréglage \"{{name}}\" supprimé",
-      "unknownFont": "Inconnu",
-      "applyFailed": "Échec de l'application du préréglage \"{{name}}\"",
-      "presetNameLabel": "Nom du préréglage",
-      "summary": "{{font}}, {{size}}px, curseur {{cursor}}"
+      "applyFailed": "[TO_REVIEW] Failed to apply preset \"{{name}}\"",
+      "applyPreset": "[TO_REVIEW] Apply this preset",
+      "builtin": "[TO_REVIEW] Built-in Presets",
+      "builtinDescription": "[TO_REVIEW] Click to apply a pre-configured preset",
+      "custom": "[TO_REVIEW] Custom Presets",
+      "customDescription": "[TO_REVIEW] Save your current configuration as a custom preset",
+      "deletePreset": "[TO_REVIEW] Delete this preset",
+      "deleted": "[TO_REVIEW] Preset \"{{name}}\" deleted",
+      "description": "[TO_REVIEW] Apply pre-configured terminal font settings or save your own",
+      "duplicateName": "[TO_REVIEW] A preset with this name already exists",
+      "intellij": "[TO_REVIEW] JetBrains Mono 13px, block cursor",
+      "intellijName": "[TO_REVIEW] IntelliJ IDEA",
+      "macos": "[TO_REVIEW] SF Mono 13px, block cursor",
+      "macosName": "[TO_REVIEW] macOS Terminal",
+      "noCustomPresets": "[TO_REVIEW] No custom presets yet. Save your current configuration to get started.",
+      "presetNameLabel": "[TO_REVIEW] Preset name",
+      "presetNamePlaceholder": "[TO_REVIEW] Preset name...",
+      "reset": "[TO_REVIEW] Reset to Defaults",
+      "resetButton": "[TO_REVIEW] Reset to OS Default",
+      "resetDescription": "[TO_REVIEW] Restore the default settings for your operating system",
+      "resetToOS": "[TO_REVIEW] Reset to {{os}} defaults",
+      "savePreset": "[TO_REVIEW] Save current configuration as a preset",
+      "saved": "[TO_REVIEW] Preset \"{{name}}\" saved",
+      "summary": "[TO_REVIEW] {{font}}, {{size}}px, {{cursor}} cursor",
+      "title": "[TO_REVIEW] Quick Presets",
+      "ubuntu": "[TO_REVIEW] Ubuntu Mono 13px, block cursor",
+      "ubuntuName": "[TO_REVIEW] Ubuntu Terminal",
+      "unknownFont": "[TO_REVIEW] Unknown",
+      "vscode": "[TO_REVIEW] Consolas 14px, block cursor",
+      "vscodeName": "[TO_REVIEW] VS Code"
     },
     "preview": {
-      "title": "Aperçu en direct",
-      "description": "Aperçu de vos paramètres de terminal en temps réel (mise à jour dans 300ms)",
-      "ariaLabel": "Aperçu de la police de terminal",
-      "infoText": "Cet aperçu se met à jour dans les 300ms suivant tout changement pour montrer l'apparence de vos paramètres dans les terminaux réels."
-    },
-    "importExport": {
-      "exportSuccess": "Paramètres exportés avec succès",
-      "exportFailed": "Échec de l'export des paramètres",
-      "importSuccess": "Paramètres importés avec succès",
-      "importFailed": "Échec de l'import des paramètres : format JSON invalide",
-      "importFailedRange": "Échec de l'import des paramètres : valeurs hors plage valide",
-      "copySuccess": "Paramètres copiés dans le presse-papiers",
-      "copyFailed": "Échec de la copie dans le presse-papiers",
-      "fileTooLarge": "Fichier d'import trop volumineux (max 10KB)",
-      "readError": "Échec de lecture du fichier"
+      "ariaLabel": "[TO_REVIEW] Terminal font preview",
+      "description": "[TO_REVIEW] Preview your terminal settings in real-time (updates within 300ms)",
+      "infoText": "[TO_REVIEW] This preview updates within 300ms of any change to show how your settings will look in actual terminals.",
+      "title": "[TO_REVIEW] Live Preview"
     },
     "slider": {
-      "decrease": "Réduire {{label}} de {{step}}",
-      "increase": "Augmenter {{label}} de {{step}}",
-      "currentValue": "Valeur actuelle : {{value}}"
+      "currentValue": "[TO_REVIEW] Current value: {{value}}",
+      "decrease": "[TO_REVIEW] Decrease {{label}} by {{step}}",
+      "increase": "[TO_REVIEW] Increase {{label}} by {{step}}"
+    },
+    "title": "[TO_REVIEW] Terminal Fonts"
+  },
+  "theme": {
+    "colorTheme": "[TO_REVIEW] Color Theme",
+    "colorThemeDescription": "[TO_REVIEW] Choose your preferred color palette",
+    "dark": "[TO_REVIEW] Dark",
+    "description": "[TO_REVIEW] Customize how WorkPilot AI looks",
+    "light": "[TO_REVIEW] Light",
+    "mode": "[TO_REVIEW] Mode",
+    "modeDescription": "[TO_REVIEW] Choose between light and dark themes",
+    "system": "[TO_REVIEW] System",
+    "title": "[TO_REVIEW] Appearance"
+  },
+  "title": "[TO_REVIEW] Settings",
+  "updates": {
+    "appUpdateReady": "[TO_REVIEW] App Update Ready",
+    "autoUpdateProjects": "[TO_REVIEW] Auto-Update Projects",
+    "autoUpdateProjectsDescription": "[TO_REVIEW] Automatically update WorkPilot AI in projects when a new version is available",
+    "betaUpdates": "[TO_REVIEW] Beta Updates",
+    "betaUpdatesDescription": "[TO_REVIEW] Receive pre-release beta versions with new features (may be less stable)",
+    "checkForUpdates": "[TO_REVIEW] Check for Updates",
+    "checkingForUpdates": "[TO_REVIEW] Checking for updates...",
+    "description": "[TO_REVIEW] Manage WorkPilot AI updates",
+    "downloadError": "[TO_REVIEW] Failed to download update",
+    "downloadStableVersion": "[TO_REVIEW] Download Stable Version",
+    "downloadUpdate": "[TO_REVIEW] Download Update",
+    "downloading": "[TO_REVIEW] Downloading...",
+    "installAndRestart": "[TO_REVIEW] Install and Restart",
+    "latestVersion": "[TO_REVIEW] You're running the latest version.",
+    "loading": "[TO_REVIEW] Loading...",
+    "newVersion": "[TO_REVIEW] New Version",
+    "newVersionAvailable": "[TO_REVIEW] New version available:",
+    "readOnlyVolumeDescription": "[TO_REVIEW] WorkPilot AI is running from a read-only disk image (DMG). Please drag the app to your Applications folder and relaunch it from there to install updates.",
+    "readOnlyVolumeTitle": "[TO_REVIEW] Cannot Install from Disk Image",
+    "released": "[TO_REVIEW] Released",
+    "stableDowngradeAvailable": "[TO_REVIEW] Stable Version Available",
+    "stableDowngradeDescription": "[TO_REVIEW] You're currently on a beta version. Since you've disabled beta updates, you can switch to the latest stable release.",
+    "stableVersion": "[TO_REVIEW] Stable Version",
+    "title": "[TO_REVIEW] Updates",
+    "unableToCheck": "[TO_REVIEW] Unable to check for updates",
+    "updateDownloaded": "[TO_REVIEW] Update downloaded! Click Install to restart and apply the update.",
+    "version": "[TO_REVIEW] Version",
+    "viewRelease": "[TO_REVIEW] View full release on GitHub"
+  },
+  "workspace": {
+    "roles": {
+      "apiGateway": "[TO_REVIEW] API Gateway",
+      "backend": "[TO_REVIEW] Backend",
+      "frontend": "[TO_REVIEW] Frontend",
+      "mobile": "[TO_REVIEW] Mobile",
+      "other": "[TO_REVIEW] Other",
+      "shared": "[TO_REVIEW] Shared",
+      "worker": "[TO_REVIEW] Worker"
     }
   },
-  "instructions": {
-    "title": "Instructions GitHub Copilot",
-    "description": "Guide d'authentification GitHub Copilot",
-    "authentication": {
-      "title": "Authentification",
-      "step1": "Ouvrez un terminal et exécutez 'gh auth login'",
-      "step2": "Suivez les instructions dans le navigateur qui s'ouvrira",
-      "step3": "Configurez les permissions nécessaires",
-      "installed": "Installé ({{version}})",
-      "notAuthenticated": "Non authentifié",
-      "authenticated": "Authentifié ({{username}})",
-      "authenticatedAs": "Authentifié en tant que {{username}}"
-    },
-    "authenticate": "S'authentifier",
-    "authTerminalTitle": "Terminal d'authentification GitHub Copilot",
-    "authCloseWarning": "Le terminal est en cours d'authentification. Êtes-vous sûr de vouloir fermer ?",
-    "authTerminal": {
-      "connecting": "Connexion...",
-      "authenticate": "S'authentifier: {{profileName}}",
-      "completeSetup": "Terminer la configuration: {{profileName}}",
-      "authenticatedAs": "Authentifié en tant que {{username}}",
-      "authenticated": "Authentifié !",
-      "authError": "Erreur d'authentification"
-    },
-    "errors": {
-      "authFailed": "Échec d'authentification",
-      "saveFailed": "Échec de sauvegarde",
-      "removeFailed": "Échec de suppression",
-      "logoutFailed": "Échec de déconnexion",
-      "tokenRequired": "Jeton requis",
-      "tokenRequiredDescription": "Veuillez saisir un jeton GitHub Copilot valide",
-      "unknownError": "Erreur inconnue"
-    },
-    "logout": "Se déconnecter",
-    "logoutSuccess": "Déconnexion réussie",
-    "logoutSuccessDescription": "Vous avez été déconnecté de GitHub Copilot",
-    "testSuccess": "Test réussi",
-    "testFailed": "Test échoué",
-    "testError": "Erreur de test",
-    "tokenSaved": "Jeton sauvegardé",
-    "tokenSavedDescription": "Le jeton GitHub Copilot a été sauvegardé",
-    "tokenRemoved": "Jeton supprimé",
-    "tokenRemovedDescription": "Le jeton GitHub Copilot a été supprimé",
-    "token": {
-      "title": "Jeton GitHub Copilot",
-      "label": "Jeton GitHub Copilot pour l'authentification",
-      "placeholder": "ghp_...",
-      "description": "Jeton personnel GitHub pour l'authentification Copilot (commence par ghp_, gho_, ou ghu_)",
-      "configured": "Jeton configuré et prêt à être utilisé"
-    },
-    "instructions": {
-      "title": "Instructions GitHub Copilot",
-      "description": "Guide d'authentification GitHub Copilot",
-      "authentication": {
-        "title": "Authentification",
-        "step1": "Ouvrez un terminal et exécutez 'gh auth login'",
-        "step2": "Suivez les instructions dans le navigateur qui s'ouvrira",
-        "step3": "Configurez les permissions nécessaires"
-      },
-      "token": {
-        "title": "Jeton GitHub Copilot",
-        "step1": "Générez un jeton personnel GitHub depuis https://github.com/settings/tokens",
-        "step2": "Copiez le jeton (commence par ghp_, gho_, ou ghu_)",
-        "step3": "Configurez le jeton dans les paramètres"
-      }
-    }
-  },
-  "collaboration": {
-    "title": "Collaboration",
-    "description": "Paramètres de collaboration multi-utilisateurs"
+  "copilot": {
+    "switchInstallation": "Changer d'installation",
+    "versionUnknown": "version inconnue",
+    "active": "Actif",
+    "viewCopilotCliDocs": "Voir la documentation Copilot CLI",
+    "updateCopilotCli": "Mettre à jour Copilot CLI ?",
+    "updateDescription": "Cela mettra à niveau l'extension gh-copilot. Un nouveau terminal s'ouvrira dans la page \"Terminaux Agent\" pour exécuter la commande de mise à niveau.",
+    "openTerminalAndUpdate": "Ouvrir le terminal et mettre à jour",
+    "switchGhCliInstallation": "Changer l'installation gh CLI ?",
+    "switchDescription": "Le changement d'installation utilisera un autre binaire gh pour Copilot CLI.",
+    "switch": "Changer"
   }
 }

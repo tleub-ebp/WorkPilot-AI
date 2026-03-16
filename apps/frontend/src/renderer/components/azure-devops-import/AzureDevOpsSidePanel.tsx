@@ -697,33 +697,30 @@ export function AzureDevOpsSidePanel({
                   className={cn(
                     "flex items-start gap-3 p-3 rounded-md border transition-all cursor-pointer w-full text-left",
                     "hover:bg-muted/50",
-                    "select-none", // Empêche la sélection de texte
+                    "select-none",
                     selectedIds.has(item.id) && "bg-primary/10 border-primary/30 cursor-grab",
                     draggedIds.has(item.id) && "cursor-grabbing opacity-50"
                   )}
-                  draggable={true} // Toujours draggable, pas seulement si sélectionné
+                  draggable={true}
                   onDragStart={(e) => {
-                    // Si l'item est déjà sélectionné, dragger tous les items sélectionnés
                     if (selectedIds.has(item.id)) {
                       handleDragStart(e, Array.from(selectedIds));
                     } else {
-                      // Sinon, dragger uniquement cet item
                       handleDragStart(e, [item.id]);
                     }
                   }}
                   onDragEnd={handleDragEnd}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => toggleItem(item.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      toggleItem(item.id);
-                    }
-                  }}
-                  aria-label={`${t('azureDevOpsImport.workItemLabel', { id: item.id, title: item.title })} ${selectedIds.has(item.id) ? t('azureDevOpsImport.selected') : ''}`}
-                  aria-pressed={selectedIds.has(item.id)}
                 >
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex items-start gap-3 w-full text-left bg-transparent border-none p-0 m-0 cursor-pointer",
+                      "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+                    )}
+                    onClick={() => toggleItem(item.id)}
+                    aria-label={`${t('azureDevOpsImport.workItemLabel', { id: item.id, title: item.title })} ${selectedIds.has(item.id) ? t('azureDevOpsImport.selected') : ''}`}
+                    aria-pressed={selectedIds.has(item.id)}
+                  >
                   <div className="flex items-start gap-3 w-full">
                     <div className="flex items-center justify-center">
                       <Checkbox
@@ -777,6 +774,7 @@ export function AzureDevOpsSidePanel({
                         )}
                       </div>
                     </div>
+                  </button>
                 </div>
               ))}
             </div>
