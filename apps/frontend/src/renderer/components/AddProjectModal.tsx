@@ -16,7 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { AzureDevOpsRemoteConfigModal } from './AzureDevOpsRemoteConfigModal';
 import { GitHubRemoteConfigModal } from './GitHubRemoteConfigModal';
 import { GitSetupModal } from './GitSetupModal';
-import { Github, Radio } from 'lucide-react';
+import { Radio } from 'lucide-react';
+import { GithubIcon } from '@/lib/icons';
 
 // Types explicites pour les props et états
 interface AddProjectModalProps {

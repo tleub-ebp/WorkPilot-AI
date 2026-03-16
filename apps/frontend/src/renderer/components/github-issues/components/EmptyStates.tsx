@@ -1,4 +1,5 @@
-import { Github, Settings2 } from 'lucide-react';
+import { Settings2 } from 'lucide-react';
+import { Github } from '@/lib/icons';
 import { Button } from '../../ui/button';
 import type { EmptyStateProps, NotConnectedStateProps } from '../types';
 

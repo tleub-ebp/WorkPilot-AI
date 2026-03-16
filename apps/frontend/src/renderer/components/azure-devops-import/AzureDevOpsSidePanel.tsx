@@ -692,8 +692,7 @@ export function AzureDevOpsSidePanel({
           {!isLoadingItems && filteredItems.length > 0 && (
             <div className="p-4 space-y-2">
               {filteredItems.map((item) => (
-                <button
-                  type="button"
+                <label
                   key={item.id}
                   className={cn(
                     "flex items-start gap-3 p-3 rounded-md border transition-all cursor-pointer w-full text-left",
@@ -701,7 +700,6 @@ export function AzureDevOpsSidePanel({
                     "select-none",
                     selectedIds.has(item.id) && "bg-primary/10 border-primary/30 cursor-grab",
                     draggedIds.has(item.id) && "cursor-grabbing opacity-50",
-                    "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
                     "bg-transparent border-none"
                   )}
                   draggable={true}
@@ -713,11 +711,7 @@ export function AzureDevOpsSidePanel({
                     }
                   }}
                   onDragEnd={handleDragEnd}
-                  onClick={() => toggleItem(item.id)}
-                  aria-label={`${t('azureDevOpsImport.workItemLabel', { id: item.id, title: item.title })} ${selectedIds.has(item.id) ? t('azureDevOpsImport.selected') : ''}`}
-                  aria-pressed={selectedIds.has(item.id)}
                 >
-                  <div className="flex items-start gap-3 w-full">
                     <div className="flex items-center justify-center">
                       <Checkbox
                         checked={selectedIds.has(item.id)}
@@ -769,8 +763,7 @@ export function AzureDevOpsSidePanel({
                           </div>
                         )}
                       </div>
-                    </div>
-                </button>
+                </label>
               ))}
             </div>
           )}

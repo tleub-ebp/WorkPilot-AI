@@ -7,8 +7,8 @@ import type { ColorTheme, AppSettings } from '../../../shared/types';
 import { CustomThemeEditor } from './CustomThemeEditor';
 
 interface ThemeSelectorProps {
-  settings: AppSettings;
-  onSettingsChange: (settings: AppSettings) => void;
+  readonly settings: AppSettings;
+  readonly onSettingsChange: (settings: AppSettings) => void;
 }
 
 /**
@@ -24,7 +24,7 @@ export function ThemeSelector({ settings, onSettingsChange }: ThemeSelectorProps
   const currentColorTheme = settings.colorTheme || 'default';
   const currentMode = settings.theme;
   const isDark = currentMode === 'dark' ||
-    (currentMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    (currentMode === 'system' && globalThis.matchMedia('(prefers-color-scheme: dark)').matches);
 
   const handleColorThemeChange = (themeId: ColorTheme) => {
     // Update local draft state
