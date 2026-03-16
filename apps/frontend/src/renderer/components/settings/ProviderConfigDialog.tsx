@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -8,7 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Key, Users, Github, CheckCircle, AlertCircle } from 'lucide-react';
 import { GitHubCopilotConfig } from './GitHubCopilotConfig';
@@ -70,7 +69,6 @@ export function ProviderConfigDialog({
     handleWindsurfDetect,
     handleWindsurfSave,
     loadWindsurfAccountInfo,
-    setWindsurfSsoToken,
     setWindsurfAccountInfo
   } = useProviderAuth();
 
