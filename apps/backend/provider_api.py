@@ -1231,7 +1231,7 @@ def get_pr_details(pr_url: Annotated[str, Query(...)]):
 
 # --- Test Generation Agent API ---
 @app.post("/api/test-generation/analyze-coverage")
-def analyze_test_coverage(file_path: Annotated[str, Body(...)], existing_test_path: Annotated[Optional[str], Body(None)]):
+def analyze_test_coverage(file_path: Annotated[str, Body(...)], existing_test_path: Annotated[Optional[str], Body()] = None):
     """Analyze test coverage gaps for a source file."""
     try:
         from agents.test_generator import TestGeneratorAgent
@@ -1262,15 +1262,15 @@ def analyze_test_coverage(file_path: Annotated[str, Body(...)], existing_test_pa
                 }
                 for gap in gaps
             ]
-        }  # Close the return statement properly
+        }  # added closing brace here
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": str(e)}  # added except block here
 
 @app.post("/api/test-generation/generate-unit-tests")
 def generate_unit_tests(
     file_path: Annotated[str, Body(...)], 
-    existing_test_path: Annotated[Optional[str], Body(None)],
-    max_tests_per_function: Annotated[int, Body(3)]
+    existing_test_path: Annotated[Optional[str], Body()] = None,
+    max_tests_per_function: int = 3
 ):
     """Generate unit tests for a source file."""
     try:
@@ -1422,7 +1422,7 @@ def run_post_build_test_generation(project_path: Annotated[str, Body(...)], modi
 
 # --- Event-Driven Hooks System API ---
 @app.get("/api/hooks")
-def list_hooks(project_id: Annotated[Optional[str], Query(None)]):
+def list_hooks(project_id: Annotated[Optional[str], Query()] = None):
     """List all hooks, optionally filtered by project."""
     try:
         from services.hooks.hook_service import HookService
@@ -1576,7 +1576,7 @@ async def emit_hook_event(body: Annotated[Dict[str, Any], Body(...)]):
         return {"success": False, "error": str(e)}
 
 @app.get("/api/hooks/executions/history")
-def get_hook_executions(hook_id: Annotated[Optional[str], Query(None)], limit: Annotated[int, Query(50)]):
+def get_hook_executions(hook_id: Annotated[Optional[str], Query()] = None, limit: Annotated[int, Query()] = 50):
     """Get execution history for hooks."""
     try:
         from services.hooks.hook_service import HookService
