@@ -647,7 +647,134 @@ python runners/multi_repo_runner.py \
 </details>
 
 <details>
-<summary>### 7. Autonomous Agent Learning Loop ✅ Implémenté</summary>
+<summary>### 7. Pixel Office — Visualisation d'agents en pixel art ✅ Implémenté</summary>
+
+**Le VS Code extension pixel-agents mais intégré dans WorkPilot avec synchronisation temps réel.** Transformez vos agents IA en personnages pixel art travaillant dans un bureau virtuel.
+
+- **Principe :** Chaque terminal agent devient un personnage pixel art assis à un bureau dans un bureau virtuel 24×16. Les personnages s'animent en temps réel selon l'activité réelle du terminal : typing (clavier bleu), running (terminal vert), waiting (points orange), idle (zzz). Mode Claude avec aura orange pulsante. Cliquez sur un personnage pour le sélectionner et naviguer vers son terminal. Toolbar avec zoom, grille, et son. Système de sprites procédural (pas d'assets externes) avec 6 palettes de personnages uniques, bureaux, sols, murs, et bulles de dialogue.
+- **Ce que les concurrents ont :** pixel-agents est une extension VS Code standalone. Personne n'a l'intégration native dans un outil autonome avec synchronisation temps réel.
+- **Ce que personne n'a :** Intégration native + sprites procéduraux + synchronisation avec terminal store + interface complète.
+- **Exploite :** Terminal store, canvas rendering, Zustand stores, i18n system
+- **Effort :** Moyen
+- **Pourquoi c'est BANGER :** Fun, visuel, et démontre la puissance de l'intégration WorkPilot. "Regardez, mes agents IA travaillent dans leur bureau." Parfait pour les démos et l'engagement utilisateur.
+
+#### 🎮 Comment utiliser Pixel Office
+
+Pixel Office est maintenant intégré dans WorkPilot AI ! Visualisez vos agents IA comme des personnages pixel art dans un bureau virtuel avec synchronisation temps réel.
+
+##### 🚀 Accès rapide
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"🏢 Pixel Office"** dans le groupe "Core"
+2. **Visualisation** : Les agents apparaissent automatiquement à leurs bureaux quand des terminaux sont ouverts
+3. **Interaction** : Cliquez sur un personnage pour le sélectionner, puis "Go to Terminal" pour basculer
+
+##### 🎨 Fonctionnalités visuelles
+
+**Personnages animés**
+- **6 apparences uniques** : Palettes de couleurs procédurales (cheveux, vêtements, peau)
+- **Animations d'activité** : Icons qui s'animent selon le statut du terminal
+- **Mode Claude** : Aura orange pulsante quand le terminal est en mode Claude
+- **Sélection visuelle** : Halo bleu autour du personnage sélectionné
+
+**Environnement de bureau**
+- **Grille 24×16** : Bureau virtuel avec sols, murs, et bureaux
+- **Sprites procéduraux** : Tout généré par canvas (pas d'assets externes)
+- **Éléments décoratifs** : Plantes, fenêtres, et objets de bureau
+- **Zoom contrôlable** : 1x à 6x avec toolbar
+
+##### 🎯 États d'activité
+
+| État terminal | Animation pixel | Description |
+|--------------|----------------|-------------|
+| **Typing** | ⌨️ Clavier bleu | `isClaudeBusy` = true |
+| **Running** | 💻 Terminal vert | `status` = 'running' |
+| **Waiting** | ⏮️ Points orange | Claude actif mais pas busy |
+| **Idle** | 💭 Zzz | État par défaut |
+| **Exited** | ❌ Croix rouge | `status` = 'exited' |
+
+##### 🛠️ Architecture technique
+
+**Store** (`apps/frontend/src/renderer/stores/pixel-office-store.ts`)
+- Synchronisation avec terminal store
+- Mapping terminals → personnages
+- Gestion sélection et settings (zoom, grille, son)
+
+**Sprites** (`apps/frontend/src/renderer/components/pixel-office/pixel-sprites.ts`)
+- Génération procédurale de 6 palettes de personnages
+- Dessin canvas pour bureaux, sols, murs, icons
+- Cache des sprites pour performance
+
+**Canvas** (`apps/frontend/src/renderer/components/pixel-office/PixelOfficeCanvas.tsx`)
+- Rendu 30fps avec requestAnimationFrame
+- Layout bureau 24×16 avec placement automatique
+- Click detection sur personnages
+- Animations fluides et transitions
+
+**Interface** (`apps/frontend/src/renderer/components/pixel-office/PixelOffice.tsx`)
+- Toolbar avec zoom, grille, son
+- Badge compte d'agents actifs
+- Panel détail avec "Go to Terminal"
+- Empty state avec instructions
+
+##### 🌐 Internationalisation
+
+**Support complet EN/FR**
+- `apps/frontend/src/shared/i18n/locales/en/pixelOffice.json`
+- `apps/frontend/src/shared/i18n/locales/fr/pixelOffice.json`
+- Traductions pour toolbar, états, messages
+
+##### 📊 Intégration système
+
+**Terminal Store Integration**
+- Écoute des changements de terminaux en temps réel
+- Mapping automatique des états : `TerminalStatus` → `PixelActivity`
+- Support de `isClaudeBusy` pour animation typing
+- Filtrage par `projectId` pour multi-projets
+
+**Navigation App**
+- Ajout dans `SidebarView` type union
+- Intégration lazy-loaded dans `App.tsx`
+- Raccourci clavier **P** dans le groupe Core
+- Icône `Building2` pour identification visuelle
+
+##### 🎮 Usage avancé
+
+**Multi-projets**
+- Les agents sont filtrés par projet actif
+- Support des terminaux sans projet (globaux)
+- Changement de projet met à jour automatiquement le bureau
+
+**Performance**
+- Sprites générés une seule fois puis cachés
+- Canvas optimisé avec dirty regions
+- 30fps cible avec requestAnimationFrame
+
+**Extensibilité**
+- Architecture modulaire pour nouveaux types de sprites
+- Support facile pour nouveaux états d'activité
+- Hook système pour animations personnalisées
+
+##### 💡 Tips d'utilisation
+
+**Pour commencer**
+- Ouvrez quelques terminaux agents pour voir le bureau s'animer
+- Utilisez le zoom pour voir les détails des personnages
+- Cliquez sur les personnages pour naviguer rapidement
+
+**Pour les démos**
+- Parfait pour présenter le multi-agent de WorkPilot
+- L'aspect visuel marque les esprits immédiatement
+- Montre l'intégration native vs extensions externes
+
+**Pour le debugging**
+- Visualisation immédiate de l'activité des agents
+- Identification rapide des agents inactifs
+- Surveillance de l'état global du système
+
+</details>
+
+<details>
+<summary>### 8. Autonomous Agent Learning Loop ✅ Implémenté</summary>
 
 Les agents s'améliorent automatiquement en analysant leurs succès et échecs passés — système auto-évolutif.
 

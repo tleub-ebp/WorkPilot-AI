@@ -1,0 +1,29 @@
+{
+  "title": "Pixel Office",
+  "description": "Visualisez vos agents IA sous forme de personnages pixel art dans un bureau virtuel",
+  "emptyState": {
+    "title": "Votre bureau est vide",
+    "description": "Ouvrez des terminaux agents pour voir vos travailleurs IA apparaître à leurs bureaux. Chaque terminal devient un personnage avec un suivi d'activité en temps réel."
+  },
+  "toolbar": {
+    "zoomIn": "Zoom avant",
+    "zoomOut": "Zoom arrière",
+    "toggleGrid": "Afficher/Masquer la grille",
+    "toggleSound": "Activer/Désactiver le son"
+  },
+  "agents": {
+    "count_one": "{{count}} agent",
+    "count_other": "{{count}} agents",
+    "active": "{{count}} actif(s)",
+    "goToTerminal": "Aller au terminal",
+    "claudeMode": "Mode Claude"
+  },
+  "activity": {
+    "idle": "Inactif",
+    "typing": "Saisie",
+    "reading": "Lecture",
+    "running": "Exécution",
+    "waiting": "En attente",
+    "exited": "Terminé"
+  }
+}
