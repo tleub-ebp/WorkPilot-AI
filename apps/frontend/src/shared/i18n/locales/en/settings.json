@@ -1469,6 +1469,8 @@
     "viewCopilotCliDocs": "View GitHub Copilot CLI Docs",
     "updateCopilotCli": "Update GitHub Copilot CLI?",
     "updateDescription": "This will update the GitHub Copilot CLI tool. A new terminal will open in the \"Terminaux Agent\" page to run the update command.",
+    "updateAvailable": "GitHub Copilot CLI Update Available",
+    "autoUpdateDescription": "A new version of GitHub Copilot CLI is available. Would you like to open a terminal and update it automatically?",
     "openTerminalAndUpdate": "Open Terminal & Update",
     "switchGhCliInstallation": "Switch gh CLI installation?",
     "switchDescription": "Switching installations will use a different gh binary for Copilot CLI.",
