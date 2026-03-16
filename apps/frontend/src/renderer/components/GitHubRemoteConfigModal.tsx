@@ -5,13 +5,13 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import { Github } from '@/lib/icons';
+import { LucideGithub } from '@/lib/icons';
 
 interface GitHubRemoteConfigModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (config: { repo: string; token: string }) => void;
-  initialConfig?: { repo?: string; token?: string };
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onSave: (config: { repo: string; token: string }) => void;
+  readonly initialConfig?: { readonly repo?: string; readonly token?: string };
 }
 
 export function GitHubRemoteConfigModal({ open, onOpenChange, onSave, initialConfig }: GitHubRemoteConfigModalProps) {
@@ -90,7 +90,7 @@ export function GitHubRemoteConfigModal({ open, onOpenChange, onSave, initialCon
 
     try {
       // Utiliser l'API backend pour tester la connexion GitHub
-      const result = await window.electronAPI.testGitHubConnection({
+      const result = await globalThis.electronAPI.testGitHubConnection({
         repo: repo.trim(),
         token: token.trim()
       });
@@ -117,6 +117,7 @@ export function GitHubRemoteConfigModal({ open, onOpenChange, onSave, initialCon
       }
     } catch (err) {
       setConnectionStatus('error');
+      console.error('GitHub connection test failed:', err);
       setConnectionMessage(t('githubSetup.networkError'));
     } finally {
       setIsValidating(false);
@@ -137,12 +138,37 @@ export function GitHubRemoteConfigModal({ open, onOpenChange, onSave, initialCon
     onOpenChange(false);
   };
 
+  const getStatusMessage = () => {
+    if (!repo.trim() || !token.trim()) {
+      return t('githubSetup.fillAllFields');
+    }
+    if (validationErrors.repo || validationErrors.token) {
+      return t('githubSetup.fixErrorsToContinue');
+    }
+    if (connectionStatus === 'success') {
+      return t('githubSetup.connectionVerified');
+    }
+    return t('githubSetup.readyToSave');
+  };
+
+  const getConnectionStatusClasses = () => {
+    switch (connectionStatus) {
+      case 'success':
+        return 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400';
+      case 'error':
+        return 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400';
+      case 'testing':
+      default:
+        return 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400';
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-2xl" onInteractOutside={e => e.preventDefault()} onEscapeKeyDown={e => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Github className="h-5 w-5 text-primary" />
+            <LucideGithub className="h-5 w-5 text-primary" />
             {t('githubSetup.title')}
           </DialogTitle>
           <DialogDescription>
@@ -224,11 +250,7 @@ export function GitHubRemoteConfigModal({ open, onOpenChange, onSave, initialCon
             )}
             
             {connectionStatus !== 'idle' && (
-              <div className={`flex items-center gap-2 text-sm p-2 rounded ${
-                connectionStatus === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
-                connectionStatus === 'error' ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400' :
-                'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-              }`}>
+              <div className={`flex items-center gap-2 text-sm p-2 rounded ${getConnectionStatusClasses()}`}>
                 {connectionStatus === 'success' && <CheckCircle2 className="h-4 w-4" />}
                 {connectionStatus === 'error' && <AlertCircle className="h-4 w-4" />}
                 {connectionStatus === 'testing' && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -241,10 +263,7 @@ export function GitHubRemoteConfigModal({ open, onOpenChange, onSave, initialCon
         </div>
         <DialogFooter className="flex justify-between items-center">
           <div className="text-sm text-muted-foreground">
-            {!repo.trim() || !token.trim() ? t('githubSetup.fillAllFields') :
-             validationErrors.repo || validationErrors.token ? t('githubSetup.fixErrorsToContinue') :
-             connectionStatus === 'success' ? t('githubSetup.connectionVerified') :
-             t('githubSetup.readyToSave')}
+            {getStatusMessage()}
           </div>
           <Button 
             onClick={handleSave} 
