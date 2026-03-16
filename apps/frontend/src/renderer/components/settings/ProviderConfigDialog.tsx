@@ -10,7 +10,7 @@ import {
 } from '../ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Key, Users, CheckCircle, AlertCircle } from 'lucide-react';
-import { GithubIcon } from '@/lib/icons';
+import { LucideGithub } from '@/lib/icons';
 import { GitHubCopilotConfig } from './GitHubCopilotConfig';
 import { VisuallyHidden } from '../ui/visually-hidden';
 import { cn } from '@/lib/utils';
@@ -260,7 +260,7 @@ export function ProviderConfigDialog({
             )}
             {supportsGitHubCopilot && (
               <TabsTrigger value="github-copilot" className="flex items-center gap-2">
-                <GithubIcon className="w-4 h-4" />
+                <LucideGithub className="w-4 h-4" />
                 OAuth GitHub Copilot
               </TabsTrigger>
             )}

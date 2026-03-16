@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { RefreshCw, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
-import { Github } from '@/lib/icons';
+import { LucideGithub } from '@/lib/icons';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
@@ -46,7 +46,7 @@ export function GitHubReleaseCard({
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
-          <Github className="h-5 w-5" />
+          <LucideGithub className="h-5 w-5" />
           <CardTitle className="text-base">Create GitHub Release</CardTitle>
         </div>
       </CardHeader>
@@ -90,7 +90,7 @@ export function GitHubReleaseCard({
                 </>
               ) : (
                 <>
-                  <Github className="mr-2 h-4 w-4" />
+                  <LucideGithub className="mr-2 h-4 w-4" />
                   Create Release {tag}
                 </>
               )}

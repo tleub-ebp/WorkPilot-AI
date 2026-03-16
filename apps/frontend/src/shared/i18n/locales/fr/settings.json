@@ -581,7 +581,15 @@
       "authenticated": "Authentifié !",
       "authenticatedAs": "Authentifié en tant que {{username}}",
       "completeSetup": "Terminer la configuration : {{profileName}}",
-      "connecting": "Connexion..."
+      "connecting": "Connexion...",
+      "authMethod": {
+        "title": "Méthode d'authentification",
+        "description": "Choisissez votre méthode d'authentification préférée pour GitHub Copilot",
+        "selectLabel": "Méthode d'authentification",
+        "selectPlaceholder": "Sélectionnez une méthode",
+        "terminal": "Terminal GitHub CLI",
+        "token": "Jeton manuel"
+      }
     },
     "authTerminalTitle": "Terminal d'authentification GitHub Copilot",
     "authenticate": "Authentifier",
@@ -630,9 +638,14 @@
     "title": "Instructions GitHub Copilot",
     "token": {
       "configured": "Jeton configuré et prêt à l'utilisation",
+      "currentStatus": "Statut actuel du jeton",
       "description": "Jeton personnel GitHub pour l'authentification Copilot (commence par ghp_, gho_ ou ghu_)",
+      "inputLabel": "Jeton GitHub Copilot",
+      "inputPlaceholder": "ghp_... ou gho_... ou ghu_...",
       "label": "Jeton GitHub Copilot pour l'authentification",
       "placeholder": "ghp_...",
+      "remove": "Supprimer le jeton",
+      "save": "Enregistrer le jeton",
       "title": "Jeton GitHub Copilot"
     },
     "tokenRemoved": "Jeton supprimé",
@@ -960,7 +973,11 @@
       "personalAccessToken": "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN",
       "syncDescription": "Synchroniser avec les issues GitHub",
       "title": "GitHub",
-      "useDifferentToken": "Utiliser un autre jeton"
+      "useDifferentToken": "Utiliser un autre jeton",
+      "issuesAvailable": "Problèmes disponibles",
+      "issuesAvailableDescription": "Accédez aux problèmes GitHub depuis la barre latérale pour les consulter, investiguer et créer des tâches.",
+      "autoSyncOnLoad": "Synchronisation automatique au chargement",
+      "autoSyncDescription": "Récupérer automatiquement les problèmes au chargement du projet"
     },
     "gitlab": {
       "description": "Synchronisation des issues GitLab",

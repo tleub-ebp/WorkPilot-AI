@@ -11,8 +11,9 @@ import { Label } from '../ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Badge } from '../ui/badge';
-import { Loader2, CheckCircle, XCircle, AlertCircle, LogIn, LogOut, Key } from 'lucide-react';
-import { Github } from '@/lib/icons';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Loader2, CheckCircle, XCircle, AlertCircle, LogIn, LogOut, Key, Settings } from 'lucide-react';
+import { LucideGithub } from '@/lib/icons';
 import { useTranslation } from 'react-i18next';
 import { useGitHubCopilot } from '../../hooks/useGitHubCopilot';
 import { useToast } from '@/hooks/use-toast';
@@ -34,7 +35,6 @@ export function GitHubCopilotConfig() {
     error,
     setToken,
     removeToken,
-    authenticate,
     logout,
     testConnection,
     refreshStatus,
@@ -43,7 +43,7 @@ export function GitHubCopilotConfig() {
 
   const [tokenInput, setTokenInput] = useState('');
   const [isTesting, setIsTesting] = useState(false);
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [authMethod, setAuthMethod] = useState<'terminal' | 'token'>('terminal');
   const { toast } = useToast();
 
   // Synchroniser le token input avec la configuration
@@ -203,7 +203,7 @@ export function GitHubCopilotConfig() {
       toast({
         variant: 'destructive',
         title: t('githubCopilot.testError'),
-        description: t('githubCopilot.errors.unknownError')
+        description: error instanceof Error ? error.message : t('githubCopilot.errors.unknownError')
       });
     } finally {
       setIsTesting(false);
@@ -239,14 +239,35 @@ export function GitHubCopilotConfig() {
     return <CheckCircle className="w-4 h-4" />;
   };
 
+  const renderTerminalActions = () => {
+    if (status.authenticated) {
+      return (
+        <Button variant="outline" size="sm" onClick={handleLogout} disabled={isLoading}>
+          <LogOut className="w-4 h-4 mr-1" />
+          {t('githubCopilot.logout')}
+        </Button>
+      );
+    }
+
+    return (
+      <Button size="sm" onClick={handleAuthenticate} disabled={isLoading}>
+        <LogIn className="w-4 h-4 mr-1" />
+        {isLoading ? t('common.loading') : t('githubCopilot.authenticate')}
+      </Button>
+    );
+  };
+
   return (
     <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-medium">{t('githubCopilot.title')}</h3>
+      </div>
 
       {/* Header */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div className="flex items-center space-x-2">
-            <Github className="w-5 h-5" />
+            <LucideGithub className="w-5 h-5" />
             <CardTitle className="text-lg">{t('githubCopilot.title')}</CardTitle>
           </div>
           <div className="flex items-center space-x-2">
@@ -281,16 +302,12 @@ export function GitHubCopilotConfig() {
           <div className="mt-4 flex flex-wrap gap-2">
             {status.installed && (
               <>
-                {status.authenticated ? (
-                  <Button variant="outline" size="sm" onClick={handleLogout} disabled={isAuthenticating}>
-                    <LogOut className="w-4 h-4 mr-1" />
-                    {t('githubCopilot.logout')}
-                  </Button>
+                {authMethod === 'terminal' ? (
+                  // Actions pour la méthode terminal
+                  renderTerminalActions()
                 ) : (
-                  <Button size="sm" onClick={handleAuthenticate} disabled={isAuthenticating}>
-                    <LogIn className="w-4 h-4 mr-1" />
-                    {isAuthenticating ? t('common.loading') : t('githubCopilot.authenticate')}
-                  </Button>
+                  // Actions pour la méthode token (gérées dans la section token)
+                  null
                 )}
                 <Button variant="outline" size="sm" onClick={handleTestConnection} disabled={isTesting}>
                   {isTesting ? t('common.testing') : t('common.test')}
@@ -329,6 +346,95 @@ export function GitHubCopilotConfig() {
         </Card>
       )}
 
+      {/* Sélecteur de méthode d'authentification */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Settings className="w-5 h-5" />
+            <span>{t('githubCopilot.authMethod.title')}</span>
+          </CardTitle>
+          <CardDescription>
+            {t('githubCopilot.authMethod.description')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="w-full max-w-sm">
+              <Label htmlFor="auth-method-select" className="text-sm font-medium">
+                {t('githubCopilot.authMethod.selectLabel')}
+              </Label>
+              <Select value={authMethod} onValueChange={(value: 'terminal' | 'token') => setAuthMethod(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t('githubCopilot.authMethod.selectPlaceholder')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="terminal">
+                    <div className="flex items-center space-x-2">
+                      <LogIn className="w-4 h-4" />
+                      <span>{t('githubCopilot.authMethod.terminal')}</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="token">
+                    <div className="flex items-center space-x-2">
+                      <Key className="w-4 h-4" />
+                      <span>{t('githubCopilot.authMethod.token')}</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Interface pour la méthode token */}
+            {authMethod === 'token' && (
+              <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                <div className="space-y-2">
+                  <Label htmlFor="token-input" className="text-sm font-medium">
+                    {t('githubCopilot.token.inputLabel')}
+                  </Label>
+                  <Input
+                    id="token-input"
+                    type="password"
+                    value={tokenInput}
+                    onChange={(e) => setTokenInput(e.target.value)}
+                    placeholder={t('githubCopilot.token.inputPlaceholder')}
+                    className="font-mono text-sm"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button 
+                    size="sm" 
+                    onClick={handleSaveToken}
+                    disabled={!tokenInput.trim() || isLoading}
+                  >
+                    <Key className="w-4 h-4 mr-1" />
+                    {t('githubCopilot.token.save')}
+                  </Button>
+                  {config.token && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleRemoveToken}
+                      disabled={isLoading}
+                    >
+                      <LogOut className="w-4 h-4 mr-1" />
+                      {t('githubCopilot.token.remove')}
+                    </Button>
+                  )}
+                </div>
+                {config.token && (
+                  <div className="text-sm text-muted-foreground">
+                    {t('githubCopilot.token.currentStatus')}{' '}
+                    <Badge variant="outline" className="text-xs">
+                      {t('githubCopilot.token.configured')}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Instructions */}
       <Card>
         <CardHeader>
@@ -336,23 +442,25 @@ export function GitHubCopilotConfig() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4 text-sm">
-            <div>
-              <h4 className="font-medium">{t('githubCopilot.instructions.authentication.title')}</h4>
-              <ol className="list-decimal list-inside space-y-1 ml-4">
-                <li>{t('githubCopilot.instructions.authentication.step1')}</li>
-                <li>{t('githubCopilot.instructions.authentication.step2')}</li>
-                <li>{t('githubCopilot.instructions.authentication.step3')}</li>
-              </ol>
-            </div>
-
-            <div>
-              <h4 className="font-medium">{t('githubCopilot.instructions.token.title')}</h4>
-              <ol className="list-decimal list-inside space-y-1 ml-4">
-                <li>{t('githubCopilot.instructions.token.step1')}</li>
-                <li>{t('githubCopilot.instructions.token.step2')}</li>
-                <li>{t('githubCopilot.instructions.token.step3')}</li>
-              </ol>
-            </div>
+            {authMethod === 'terminal' ? (
+              <div>
+                <h4 className="font-medium">{t('githubCopilot.instructions.authentication.title')}</h4>
+                <ol className="list-decimal list-inside space-y-1 ml-4">
+                  <li>{t('githubCopilot.instructions.authentication.step1')}</li>
+                  <li>{t('githubCopilot.instructions.authentication.step2')}</li>
+                  <li>{t('githubCopilot.instructions.authentication.step3')}</li>
+                </ol>
+              </div>
+            ) : (
+              <div>
+                <h4 className="font-medium">{t('githubCopilot.instructions.token.title')}</h4>
+                <ol className="list-decimal list-inside space-y-1 ml-4">
+                  <li>{t('githubCopilot.instructions.token.step1')}</li>
+                  <li>{t('githubCopilot.instructions.token.step2')}</li>
+                  <li>{t('githubCopilot.instructions.token.step3')}</li>
+                </ol>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
