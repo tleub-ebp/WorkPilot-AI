@@ -681,11 +681,11 @@
       }
     },
     "tabs": {
-      "claudeCode": "Claude Code",
+      "aiProvider": "AI Authentication",
       "llmProviders": "LLM Providers",
       "customEndpoints": "Custom Endpoints"
     },
-    "claudeCode": {
+    "aiProvider": {
       "description": "Add multiple Claude subscriptions to automatically switch between them when you hit rate limits.",
       "noAccountsYet": "No accounts configured yet",
       "default": "Default",
@@ -712,7 +712,7 @@
         "loading": "Setting..."
       },
       "switchToOauth": {
-        "label": "Use Claude Code",
+        "label": "Use AI Authentication",
         "loading": "Switching..."
       },
       "empty": {
@@ -747,7 +747,7 @@
       "buttons": {
         "activate": "Activate",
         "activating": "Activating...",
-        "deactivate": "Use Claude Code",
+        "deactivate": "Use AI Authentication",
         "deactivating": "Switching...",
         "edit": "Edit",
         "delete": "Delete"

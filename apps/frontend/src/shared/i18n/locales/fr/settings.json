@@ -21,7 +21,7 @@
       "weeklyThreshold": "Seuil d'utilisation hebdomadaire",
       "weeklyThresholdDescription": "Basculer lorsque l'utilisation hebdomadaire atteint ce niveau (recommandé : 99 %)"
     },
-    "claudeCode": {
+    "aiProvider": {
       "accountNamePlaceholder": "Nom du compte (ex : Travail, Personnel)",
       "active": "Actif",
       "authenticate": "Authentifier",
@@ -44,7 +44,7 @@
       "buttons": {
         "activate": "Activer",
         "activating": "Activation...",
-        "deactivate": "Utiliser Claude Code",
+        "deactivate": "Utiliser l'authentification IA",
         "deactivating": "Basculement...",
         "delete": "Supprimer",
         "edit": "Modifier"
@@ -85,7 +85,7 @@
         "loading": "Configuration..."
       },
       "switchToOauth": {
-        "label": "Utiliser Claude Code",
+        "label": "Utiliser l'authentification IA",
         "loading": "Basculement..."
       },
       "tooltips": {
@@ -161,7 +161,7 @@
       "up": "Monter"
     },
     "tabs": {
-      "claudeCode": "Claude Code",
+      "aiProvider": "Authentification IA",
       "customEndpoints": "Endpoints personnalisés",
       "llmProviders": "Fournisseurs LLM"
     },

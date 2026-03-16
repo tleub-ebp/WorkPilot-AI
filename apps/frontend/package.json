@@ -1,6 +1,6 @@
 {
   "name": "auto-claude-ui",
-  "version": "2.7.6-beta.2",
+  "version": "1.0.0",
   "type": "module",
   "description": "Desktop UI for WorkPilot AI autonomous coding framework",
   "homepage": "https://github.com/krovomi/WorkPilotAI",

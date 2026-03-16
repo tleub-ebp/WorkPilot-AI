@@ -19,5 +19,5 @@ Quick Start:
 See README.md for full documentation.
 """
 
-__version__ = "2.7.6-beta.2"
+__version__ = "1.0.0"
 __author__ = "WorkPilot AI Team"
