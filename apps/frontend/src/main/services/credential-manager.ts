@@ -1703,22 +1703,18 @@ export async function readWindsurfCachedPlanInfo(): Promise<{ success: boolean; 
                   usedFlowActions: planInfo.usage.usedFlowActions,
                   remainingFlowActions: planInfo.usage.remainingFlowActions,
                 });
-              } else {
-                // Cache is current — but still cross-check with protobuf usage if available.
-                // The protobuf may be more up-to-date than cachedPlanInfo if the IDE
-                // refreshed userStatus after the last cachedPlanInfo write.
-                if (billing.usedMessages > 0 && billing.usedMessages !== planInfo.usage.usedMessages) {
-                  console.log('[readWindsurfCachedPlanInfo] Cross-check: protobuf usedMessages differs from cache, using protobuf value', {
+              }
+              // Cache is current billing cycle — trust cachedPlanInfo usage counters.
+              // The protobuf userStatusProtoBinaryBase64 is only refreshed when the IDE
+              // starts a new session, so it can be OLDER than cachedPlanInfo which the
+              // IDE updates more frequently during active use. Do NOT override usage
+              // counters from protobuf as this causes stale data to overwrite fresh data.
+              if (billing.usedMessages > 0 && billing.usedMessages !== planInfo.usage.usedMessages) {
+                  console.log('[readWindsurfCachedPlanInfo] Cross-check: protobuf usedMessages differs from cache (protobuf may be stale)', {
                     cached: planInfo.usage.usedMessages,
                     protobuf: billing.usedMessages,
                   });
-                  planInfo.usage.usedMessages = billing.usedMessages;
-                  planInfo.usage.remainingMessages = Math.max(0, planInfo.usage.messages - billing.usedMessages);
-                }
-                if (billing.usedFlowActions > 0 && billing.usedFlowActions !== planInfo.usage.usedFlowActions) {
-                  planInfo.usage.usedFlowActions = billing.usedFlowActions;
-                  planInfo.usage.remainingFlowActions = Math.max(0, planInfo.usage.flowActions - billing.usedFlowActions);
-                }
+                  // Keep the cachedPlanInfo value — it's updated more frequently by the IDE
               }
             }
           }
@@ -1754,168 +1750,9 @@ export async function readWindsurfCachedPlanInfo(): Promise<{ success: boolean; 
   }
 }
 
-/**
- * Fetch real-time Windsurf usage by calling the Codeium GetUserStatus API.
- *
- * The local SQLite cache (userStatusProtoBinaryBase64) is only refreshed when
- * the Windsurf IDE starts a new session, so it can be significantly behind
- * actual usage. This function calls the same API the Windsurf IDE uses to get
- * fresh data directly from the server.
- *
- * Endpoint: POST https://server.codeium.com/exa.seat_management_pb.SeatManagementService/GetUserStatus
- * Auth: Bearer <apiKey> (the sk-ws-... key from windsurfAuthStatus)
- * Response: JSON with userStatus containing base64 protobuf (same format as
- *           userStatusProtoBinaryBase64 in the local DB)
- *
- * Returns updated WindsurfCachedPlanInfo if successful, or null if the API
- * call fails (in which case the caller should fall back to local cache).
- */
-export async function fetchWindsurfRealTimeUsage(): Promise<{
-  success: boolean;
-  planInfo?: WindsurfCachedPlanInfo;
-  userName?: string;
-  error?: string;
-}> {
-  try {
-    // First, get the apiKey and base plan info from local DB
-    const localResult = await readWindsurfCachedPlanInfo();
-
-    // We need the apiKey from the local Windsurf IDE DB
-    const tokenResult = await detectWindsurfLocalToken();
-    if (!tokenResult.success || !tokenResult.apiKey) {
-      return { success: false, error: 'No Windsurf API key available for real-time fetch' };
-    }
-
-    const apiKey = tokenResult.apiKey;
-
-    // Call GetUserStatus API — this is the same endpoint the Windsurf IDE uses
-    // to refresh user status including credit usage
-    let resp: Response;
-    try {
-      resp = await fetch('https://server.codeium.com/exa.seat_management_pb.SeatManagementService/GetUserStatus', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: '{}',
-        signal: AbortSignal.timeout(8000),
-      });
-    } catch (e: any) {
-      return { success: false, error: `GetUserStatus network error: ${e.message}` };
-    }
-
-    if (!resp.ok) {
-      return { success: false, error: `GetUserStatus returned ${resp.status}: ${resp.statusText}` };
-    }
-
-    const userData = await resp.json();
-
-    // The response contains a base64 protobuf in userStatusProtoBinaryBase64
-    // or directly in a nested structure. Try to extract the protobuf.
-    const protoB64 = userData?.userStatusProtoBinaryBase64
-      || userData?.user_status_proto_binary_base64;
-
-    if (protoB64 && typeof protoB64 === 'string') {
-      // Parse protobuf to extract billing cycle and usage data
-      const billing = extractBillingCycleFromProtobuf(protoB64);
-      if (billing && billing.startSeconds > 0 && billing.endSeconds > 0) {
-        // Build a WindsurfCachedPlanInfo from the fresh protobuf data
-        // Start from the local cached plan info if available (for planName, etc.)
-        const basePlan: WindsurfCachedPlanInfo = localResult.success && localResult.planInfo
-          ? { ...localResult.planInfo, usage: { ...localResult.planInfo.usage } }
-          : {
-              planName: 'Teams',
-              startTimestamp: billing.startSeconds * 1000,
-              endTimestamp: billing.endSeconds * 1000,
-              usage: {
-                duration: 0,
-                messages: billing.totalMessages,
-                flowActions: billing.totalFlowActions,
-                flexCredits: 0,
-                usedMessages: billing.usedMessages,
-                usedFlowActions: billing.usedFlowActions,
-                usedFlexCredits: 0,
-                remainingMessages: Math.max(0, billing.totalMessages - billing.usedMessages),
-                remainingFlowActions: Math.max(0, billing.totalFlowActions - billing.usedFlowActions),
-                remainingFlexCredits: 0,
-              },
-              hasBillingWritePermissions: false,
-              gracePeriodStatus: 0,
-            };
-
-        // Override with fresh data from API
-        basePlan.startTimestamp = billing.startSeconds * 1000;
-        basePlan.endTimestamp = billing.endSeconds * 1000;
-        basePlan.isStale = false;
-
-        if (billing.totalMessages > 0) {
-          basePlan.usage.messages = billing.totalMessages;
-        }
-        if (billing.totalFlowActions > 0) {
-          basePlan.usage.flowActions = billing.totalFlowActions;
-        }
-        basePlan.usage.usedMessages = billing.usedMessages;
-        basePlan.usage.remainingMessages = Math.max(0, basePlan.usage.messages - billing.usedMessages);
-        basePlan.usage.usedFlowActions = billing.usedFlowActions;
-        basePlan.usage.remainingFlowActions = Math.max(0, basePlan.usage.flowActions - billing.usedFlowActions);
-
-        console.log('[fetchWindsurfRealTimeUsage] Got fresh data from GetUserStatus API:', {
-          totalMessages: basePlan.usage.messages,
-          usedMessages: basePlan.usage.usedMessages,
-          remainingMessages: basePlan.usage.remainingMessages,
-          totalFlowActions: basePlan.usage.flowActions,
-          usedFlowActions: basePlan.usage.usedFlowActions,
-          remainingFlowActions: basePlan.usage.remainingFlowActions,
-        });
-
-        return {
-          success: true,
-          planInfo: basePlan,
-          userName: localResult.userName || tokenResult.userName,
-        };
-      }
-    }
-
-    // If the response contains JSON fields directly (some API versions)
-    // Try to extract from a nested planInfo or seats structure
-    if (userData?.seats || userData?.planInfo || userData?.plan_info) {
-      const plan = userData.planInfo || userData.plan_info;
-      if (plan) {
-        console.log('[fetchWindsurfRealTimeUsage] Got JSON plan info from GetUserStatus:', plan);
-        // Attempt to map JSON fields to our structure
-        const basePlan: WindsurfCachedPlanInfo = localResult.success && localResult.planInfo
-          ? { ...localResult.planInfo, usage: { ...localResult.planInfo.usage } }
-          : {
-              planName: plan.planName || 'Teams',
-              startTimestamp: plan.startTimestamp || Date.now(),
-              endTimestamp: plan.endTimestamp || Date.now() + 30 * 86400000,
-              usage: {
-                duration: 0,
-                messages: plan.usage?.messages || 0,
-                flowActions: plan.usage?.flowActions || 0,
-                flexCredits: 0,
-                usedMessages: plan.usage?.usedMessages || 0,
-                usedFlowActions: plan.usage?.usedFlowActions || 0,
-                usedFlexCredits: 0,
-                remainingMessages: plan.usage?.remainingMessages || 0,
-                remainingFlowActions: plan.usage?.remainingFlowActions || 0,
-                remainingFlexCredits: 0,
-              },
-              hasBillingWritePermissions: false,
-              gracePeriodStatus: 0,
-            };
-        basePlan.isStale = false;
-        return {
-          success: true,
-          planInfo: basePlan,
-          userName: localResult.userName || tokenResult.userName,
-        };
-      }
-    }
-
-    return { success: false, error: 'GetUserStatus response did not contain parseable usage data' };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Unknown error fetching real-time Windsurf usage' };
-  }
-}
+// NOTE: fetchWindsurfRealTimeUsage was removed because the Codeium API
+// (GetUserStatus) requires gRPC binary protocol, not REST/JSON. The fetch()
+// call always fails with HTTP 400. The root cause of stale credit data was
+// the protobuf cross-check in readWindsurfCachedPlanInfo overriding fresh
+// cachedPlanInfo values with stale protobuf data. That has been fixed above
+// by trusting windsurf.settings.cachedPlanInfo as the primary source.
