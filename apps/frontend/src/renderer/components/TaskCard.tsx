@@ -739,11 +739,6 @@ export const TaskCard = memo(function TaskCard({
   
   // Check if task was imported from Azure DevOps
   const isFromAzureDevOps = !!(task.metadata?.azureDevOpsIdentifier || task.metadata?.azureDevOpsUrl);
-  
-  // Debug: log to console to check detection
-  if (isFromAzureDevOps && (globalThis as any).DEBUG) {
-    console.log('[TaskCard] Azure DevOps task detected:', task.id, task.metadata);
-  }
 
   return (
     <Card
