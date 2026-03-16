@@ -77,8 +77,8 @@ export interface ElectronAPI extends
   getSelectedProvider: () => Promise<IPCResult<string | null>>;
   /** Test GitHub connection for remote configuration */
   testGitHubConnection: (config: { repo: string; token: string }) => Promise<{ success: boolean; status?: number; error?: string }>;
-  /** Detect Windsurf API key from local IDE installation (state.vscdb) */
-  detectWindsurfToken: () => Promise<{ success: boolean; apiKey?: string; userName?: string; error?: string }>;
+  /** Detect Windsurf API key from local IDE installation (state.vscdb) + account info */
+  detectWindsurfToken: () => Promise<{ success: boolean; apiKey?: string; userName?: string; planName?: string; usageInfo?: { usedMessages: number; totalMessages: number; usedFlowActions: number; totalFlowActions: number }; error?: string }>;
   /** Check Claude OAuth status from CLI config files on disk */
   checkClaudeOAuth: () => Promise<{ isAuthenticated: boolean; profileName?: string }>;
 }

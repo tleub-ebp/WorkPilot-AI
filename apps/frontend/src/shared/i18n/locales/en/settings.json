@@ -75,7 +75,12 @@
           "openWindsurfLogin": "windsurf.com/account",
           "tokenDetected": "API key detected",
           "saveAndConnect": "Save & Connect",
-          "saveSuccess": "Windsurf connection saved successfully!"
+          "saveSuccess": "Windsurf connection saved successfully!",
+          "accountInfo": "Authenticated Account",
+          "accountName": "Name",
+          "accountPlan": "Plan",
+          "accountCredits": "Credits",
+          "accountFlowActions": "Flow Actions"
         }
       },
       "providerCard": {
@@ -1142,7 +1147,8 @@
     "importConfirmTitle": "Import {{count}} work item(s)",
     "importConfirmDescription": "The following items will be imported into the {{column}} column.",
     "importConfirmButton": "Import {{count}} item(s)",
-    "selectedItems": "{{count}} item(s) selected"
+    "selectedItems": "{{count}} item(s) selected",
+    "toggleSelection": "Toggle selection for work item {{id}}"
   },
   "azureDevOps": {
     "enableSyncLabel": "Enable Azure DevOps Sync",

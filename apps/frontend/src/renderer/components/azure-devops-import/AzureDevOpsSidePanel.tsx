@@ -3,7 +3,7 @@
  * Provides a sliding panel for importing Azure DevOps work items with drag & drop
  */
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Download, Search, RefreshCw, X, ChevronRight, GripVertical, ChevronLeft, Settings } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -692,8 +692,7 @@ export function AzureDevOpsSidePanel({
           {!isLoadingItems && filteredItems.length > 0 && (
             <div className="p-4 space-y-2">
               {filteredItems.map((item) => (
-                <button
-                  type="button"
+                <div
                   key={item.id}
                   className={cn(
                     "flex items-start gap-3 p-3 rounded-md border transition-all cursor-pointer w-full text-left",
@@ -702,7 +701,6 @@ export function AzureDevOpsSidePanel({
                     selectedIds.has(item.id) && "bg-primary/10 border-primary/30 cursor-grab",
                     draggedIds.has(item.id) && "cursor-grabbing opacity-50"
                   )}
-                  onClick={() => toggleItem(item.id)}
                   draggable={true} // Toujours draggable, pas seulement si sélectionné
                   onDragStart={(e) => {
                     // Si l'item est déjà sélectionné, dragger tous les items sélectionnés
@@ -714,21 +712,26 @@ export function AzureDevOpsSidePanel({
                     }
                   }}
                   onDragEnd={handleDragEnd}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => toggleItem(item.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      toggleItem(item.id);
+                    }
+                  }}
                   aria-label={`${t('azureDevOpsImport.workItemLabel', { id: item.id, title: item.title })} ${selectedIds.has(item.id) ? t('azureDevOpsImport.selected') : ''}`}
                   aria-pressed={selectedIds.has(item.id)}
                 >
                   <div className="flex items-start gap-3 w-full">
-                    <button
-                      type="button"
-                      className="flex items-center justify-center"
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={`Toggle selection for work item ${item.id}`}
-                    >
+                    <div className="flex items-center justify-center">
                       <Checkbox
                         checked={selectedIds.has(item.id)}
                         onCheckedChange={() => toggleItem(item.id)}
+                        aria-label={t('azureDevOpsImport.toggleSelection', { id: item.id })}
                       />
-                    </button>
+                    </div>
                       
                       {selectedIds.has(item.id) && (
                         <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
@@ -774,7 +777,7 @@ export function AzureDevOpsSidePanel({
                         )}
                       </div>
                     </div>
-                </button>
+                </div>
               ))}
             </div>
           )}
