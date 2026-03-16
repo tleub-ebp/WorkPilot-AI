@@ -1569,6 +1569,12 @@ except ImportError as e:
     print(f"Warning: Could not import analytics router: {e}")
     # Continue without analytics if module is not available
 
+# --- Mission Control API ---
+try:
+    from mission_control.api import router as mission_control_router
+    app.include_router(mission_control_router)
+except ImportError as e:
+    print(f"Warning: Could not import mission control router: {e}")
 
 if __name__ == "__main__":
     import uvicorn

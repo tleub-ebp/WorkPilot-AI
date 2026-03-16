@@ -10,7 +10,8 @@
 
 ## 🔥 Tier S+ — Features BANGERS (Différenciateurs uniques sur le marché)
 
-### 1. Mission Control — Multi-Agent Orchestration Hub
+<details>
+<summary>### 1. Mission Control — Multi-Agent Orchestration Hub ✅ Implémenté</summary>
 
 **Le Antigravity de Google mais en 10x mieux.** Surface de contrôle visuelle pour orchestrer plusieurs agents simultanément avec visibilité totale sur ce que fait chaque agent.
 
@@ -20,6 +21,48 @@
 - **Exploite :** Agent process, agent events, agent state, provider abstraction, worktree isolation
 - **Effort :** Élevé
 - **Pourquoi c'est BANGER :** Killer feature démontrable en 30 secondes. "Regardez, j'ai 5 agents qui travaillent en parallèle et je vois exactement ce que fait chacun." Aucun concurrent n'offre ce niveau de contrôle + transparence.
+
+#### 🚀 Comment utiliser Mission Control
+
+Mission Control est maintenant intégré dans WorkPilot AI ! Orchestrez plusieurs agents IA simultanément avec visibilité totale.
+
+##### 🎯 Démarrage rapide
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"🚀 Mission Control"** dans le groupe "Core"
+2. **Lancer une session** : Cliquez sur **"Launch Mission Control"** pour démarrer
+3. **Ajouter des agents** : Cliquez sur **"+ Add Agent"** pour créer des agents avec rôle, provider et modèle
+4. **Contrôler** : Start/Pause/Resume/Stop chaque agent individuellement
+5. **Visualiser** : Sélectionnez un agent pour voir son arbre de décision en temps réel
+
+##### 🏗️ Architecture technique
+
+**Backend** (`apps/backend/mission_control/`) :
+- `orchestrator.py` — Orchestrateur principal gérant les sessions, agents, événements
+- `agent_slot.py` — Représentation d'un slot agent (statut, tokens, fichiers, thinking)
+- `decision_tree.py` — Arbre de décision pour le raisonnement visuel
+- `api.py` — Routes FastAPI (session CRUD, agent control, state updates, events)
+
+**Frontend** (`apps/frontend/src/renderer/components/mission-control/`) :
+- `MissionControlDashboard.tsx` — Dashboard principal avec stats globales et grille d'agents
+- `AgentPanel.tsx` — Panneau individuel par agent (statut, progress, contrôles)
+- `AddAgentDialog.tsx` — Dialog de création d'agent (rôle, provider, modèle)
+- `DecisionTreeViewer.tsx` — Visualisation hiérarchique de l'arbre de décision
+- `AgentEventLog.tsx` — Flux d'événements en temps réel
+
+**Store** (`mission-control-store.ts`) — Zustand store avec polling et actions async
+
+##### 🎨 Fonctionnalités clés
+
+- **Multi-Agent** : Créez autant d'agents que nécessaire, chacun avec un rôle dédié
+- **Model Mixing** : Assignez des providers/modèles différents par agent (Anthropic, OpenAI, Google, Grok, Ollama, Copilot)
+- **Rôles prédéfinis** : Architect, Coder, Tester, Reviewer, Documenter, Planner, Debugger, Custom
+- **Recommandation de modèle** : Sélection automatique du tier optimal selon le rôle (flagship/standard/fast)
+- **Decision Tree** : Visualisation en temps réel du raisonnement de chaque agent
+- **Event Log** : Journal chronologique de tous les événements de la session
+- **Contrôle granulaire** : Start, Pause, Resume, Stop par agent
+- **Stats globales** : Nombre d'agents, tokens totaux, coût estimé, temps écoulé
+
+</details>
 
 ### 2. Agent Replay & Debug Mode — Le "DevTools" pour l'IA
 
@@ -356,7 +399,8 @@ npm test -- --run src/renderer/stores/__tests__/hooks-store.test.ts
 
 </details>
 
-### 6. Multi-Repo Orchestration
+<details>
+<summary>### 6. Multi-Repo Orchestration ✅ Implémenté</summary>
 
 Un seul spec qui orchestre des modifications sur plusieurs repositories simultanément.
 
@@ -365,6 +409,178 @@ Un seul spec qui orchestre des modifications sur plusieurs repositories simultan
 - **Exploite :** Worktree isolation, agent queue, GitHub/GitLab integration
 - **Effort :** Élevé
 - **Pourquoi c'est BANGER :** Les architectures modernes sont multi-repo/microservices. WorkPilot serait le seul à les supporter nativement. Argument enterprise massif.
+
+#### 🔗 Comment utiliser Multi-Repo Orchestration
+
+Multi-Repo Orchestration est maintenant intégré dans WorkPilot AI ! Coordonnez des modifications sur plusieurs dépôts depuis une seule interface avec une orchestration complète.
+
+##### 🚀 Accès à la fonctionnalité
+
+**Depuis l'interface desktop :**
+- Cliquez sur le bouton **"🔀 Multi-Repo"** dans la barre de navigation principale
+- Ou ouvrez le dialog Multi-Repo Orchestration depuis le menu de création de tâche
+- Accès direct via la sidebar dans la section "Orchestration"
+
+**Depuis la CLI :**
+```bash
+cd apps/backend
+python runners/multi_repo_runner.py \
+  --task "Add authentication across services" \
+  --repos "/path/to/frontend,/path/to/backend,/path/to/shared-lib" \
+  --project-dir /path/to/workspace \
+  --model sonnet --fail-fast
+```
+
+##### 📋 Étapes d'utilisation
+
+**1. Ajouter les dépôts cibles**
+- Ajoutez au moins 2 repositories à l'orchestration via le sélecteur de repos
+- Spécifiez le nom du repo (ex: `owner/frontend`) et le chemin local
+- Support complet : monorepos (avec path scoping) et polyrepos
+- Détection automatique des monorepos (pnpm-workspace, lerna, nx, turbo, rush)
+
+**2. Décrire la tâche cross-repo**
+- Décrivez ce que vous souhaitez construire à travers les dépôts
+- Exemple : "Add user authentication with JWT tokens across frontend, backend API, and shared auth library"
+- L'IA analyse automatiquement les implications cross-repos
+
+**3. Analyse automatique**
+- L'orchestrateur analyse chaque repo (package.json, requirements.txt, etc.)
+- Construit le graphe de dépendances inter-repos avec visualisation SVG
+- Détermine l'ordre d'exécution (tri topologique : providers d'abord, consumers ensuite)
+- Détection automatique des types de dépendances : package, api, shared_types, database, event, monorepo_internal
+
+**4. Exécution coordonnée**
+- Chaque repo est traité dans l'ordre des dépendances
+- Le pipeline standard (planner → coder → QA) s'exécute par repo
+- Le contexte cross-repo est injecté dans les agents downstream
+- Monitoring temps réel de la progression par repo avec indicateurs visuels
+
+**5. Détection des breaking changes**
+- Analyse automatique après chaque repo complété
+- Détection des changements d'API, types partagés, exports, schémas
+- Classification par sévérité : error (garanti) ou warning (potentiel)
+- Suggestions automatiques de correction
+
+**6. PRs liées**
+- Des PRs sont créées dans chaque repo avec des cross-références
+- Le body de chaque PR inclut des liens vers les PRs des autres repos
+- Intégration GitHub/GitLab complète
+
+##### ⚙️ Options CLI avancées
+
+| Option | Description |
+|--------|-------------|
+| `--task` | Description de la tâche cross-repo (requis) |
+| `--repos` | Chemins des repos séparés par virgules (requis, min 2) |
+| `--project-dir` | Répertoire de base du projet |
+| `--model` | Modèle à utiliser (default: sonnet) |
+| `--thinking-level` | Niveau de réflexion: none, low, medium, high, ultrathink |
+| `--fail-fast` | Arrêter dès le premier échec d'un repo |
+
+##### 🎨 Interface utilisateur complète
+
+**Dialog principal Multi-Repo :**
+- Interface modale complète pour la configuration et le monitoring
+- Onglets : Configuration, Graphe, Exécution, Breaking Changes
+- Progression globale et par repo en temps réel
+- Indicateurs visuels d'état avec animations
+
+**Composants spécialisés :**
+- **RepoSelector** : Sélection intuitive des repos cibles avec autocomplete
+- **DependencyGraphView** : Visualisation SVG interactive du graphe de dépendances
+- **ExecutionMonitor** : Monitoring temps réel par repo avec barres de progression
+- **BreakingChangeBanner** : Alertes visuelles pour les breaking changes détectés
+
+##### 🏗️ Architecture technique complète
+
+**Backend :**
+- `apps/backend/orchestration/` — Module d'orchestration principal
+  - `orchestrator.py` — Moteur d'orchestration avec streaming temps réel
+  - `repo_graph.py` — Graphe de dépendances avec tri topologique
+  - `cross_repo_spec.py` — Gestion des specs master + sub-specs par repo
+  - `breaking_changes.py` — Détection intelligente des breaking changes
+- `apps/backend/runners/multi_repo_runner.py` — Point d'entrée CLI complet
+- `apps/backend/prompts/multi_repo_planner.md` — Prompt spécialisé pour le planning cross-repo
+- `apps/backend/prompts/breaking_change_detector.md` — Prompt pour la détection de breaking changes
+
+**Frontend :**
+- `apps/frontend/src/renderer/components/multi-repo/` — Composants UI complets
+  - `MultiRepoDialog.tsx` — Dialog principal (configuration + monitoring)
+  - `RepoSelector.tsx` — Sélection intelligente des repos cibles
+  - `DependencyGraphView.tsx` — Visualisation SVG du graphe de dépendances
+  - `ExecutionMonitor.tsx` — Suivi de progression par repo
+  - `BreakingChangeBanner.tsx` — Alertes pour les breaking changes
+- `apps/frontend/src/renderer/stores/multi-repo-store.ts` — Store Zustand complet
+- `apps/frontend/src/main/ipc-handlers/multi-repo-handlers.ts` — Handlers IPC
+- `apps/frontend/src/preload/api/modules/multi-repo-api.ts` — API preload
+- `apps/frontend/src/shared/types/multi-repo.ts` — Types TypeScript complets
+
+##### 🔍 Types de dépendances détectées
+
+| Type | Description |
+|------|-------------|
+| `package` | Dépendance npm/pip/cargo entre packages |
+| `api` | Consommation d'API HTTP/gRPC |
+| `shared_types` | Types partagés (interfaces, protobuf, GraphQL) |
+| `database` | Schéma de base de données partagé |
+| `event` | Contrat d'événements (Kafka, RabbitMQ) |
+| `monorepo_internal` | Dépendance interne monorepo workspace |
+
+##### 🚨 Détection des breaking changes
+
+**Types de changements détectés :**
+- **API endpoints** : Changements/removed endpoints, schémas modifiés, méthodes HTTP
+- **Types partagés** : Interfaces, enums, DTOs, messages protobuf, types GraphQL
+- **Exports de packages** : Removed/renamed exports, signatures modifiées
+- **Schéma de base de données** : Migrations affectant les tables partagées
+- **Contrats d'événements** : Payloads modifiés, topics renommés
+- **Configuration** : Variables d'environnement, schémas de config, feature flags
+
+**Sévérité :**
+- **error** : Garanti de casser les consumers downstream
+- **warning** : Potentiellement breaking selon l'utilisation
+
+##### 💡 Tips d'utilisation avancés
+
+**Pour commencer**
+- Commencez par 2-3 repos pour tester le flux
+- Utilisez le graphe de dépendances pour visualiser les relations
+- Le fail-fast mode est recommandé pour les premières orchestrations
+
+**Pour les monorepos**
+- Utilisez le path scoping pour cibler des packages spécifiques
+- Le système détecte automatiquement les monorepo indicators
+- Support des workspaces pnpm, lerna, nx, turbo, rush
+
+**Pour les breaking changes**
+- Les changements sont automatiquement détectés après chaque repo
+- Les suggestions de correction sont générées automatiquement
+- Les erreurs bloquent l'exécution, les avertissements sont signalés
+
+**Pour la performance**
+- Surveillez la progression globale et par repo
+- Utilisez les logs détaillés pour le debugging
+- Le streaming temps réel permet un suivi précis
+
+##### 🎯 Cas d'usage typiques
+
+**Microservices**
+- "Add user authentication across frontend, backend API, and shared auth library"
+- "Update API contracts and consumer services"
+- "Migrate shared database schema across services"
+
+**Frontend + Backend**
+- "Add new feature with API endpoint and frontend UI"
+- "Update shared component library and consuming apps"
+- "Implement real-time updates with WebSocket and client"
+
+**Libraries partagées**
+- "Breaking change in shared types with consumer updates"
+- "Version bump of shared library across all dependents"
+- "Add new utility to shared lib and update consumers"
+
+</details>
 
 <details>
 <summary>### 7. Autonomous Agent Learning Loop ✅ Implémenté</summary>

@@ -19,6 +19,7 @@ import enGitlab from './locales/en/gitlab.json';
 import enInitDialog from './locales/en/initDialog.json';
 import enInsights from './locales/en/insights.json';
 import enLearningLoop from './locales/en/learningLoop.json';
+import enMultiRepo from './locales/en/multiRepo.json';
 import enMigrationWizard from './locales/en/migration-wizard.json';
 import enNaturalLanguageGit from './locales/en/naturalLanguageGit.json';
 import enNavigation from './locales/en/navigation.json';
@@ -34,6 +35,7 @@ import enTasks from './locales/en/tasks.json';
 import enTerminal from './locales/en/terminal.json';
 import enTestGeneration from './locales/en/testGeneration.json';
 import enVisualProgramming from './locales/en/visualProgramming.json';
+import enMissionControl from './locales/en/missionControl.json';
 import enWelcome from './locales/en/welcome.json';
 
 // Import French translation resources
@@ -54,6 +56,7 @@ import frGitlab from './locales/fr/gitlab.json';
 import frInitDialog from './locales/fr/initDialog.json';
 import frInsights from './locales/fr/insights.json';
 import frLearningLoop from './locales/fr/learningLoop.json';
+import frMultiRepo from './locales/fr/multiRepo.json';
 import frMigrationWizard from './locales/fr/migration-wizard.json';
 import frNaturalLanguageGit from './locales/fr/naturalLanguageGit.json';
 import frNavigation from './locales/fr/navigation.json';
@@ -69,6 +72,7 @@ import frTasks from './locales/fr/tasks.json';
 import frTerminal from './locales/fr/terminal.json';
 import frTestGeneration from './locales/fr/testGeneration.json';
 import frVisualProgramming from './locales/fr/visualProgramming.json';
+import frMissionControl from './locales/fr/missionControl.json';
 import frWelcome from './locales/fr/welcome.json';
 
 export const defaultNS = 'common';
@@ -92,7 +96,9 @@ export const resources = {
     initDialog: enInitDialog,
     insights: enInsights,
     learningLoop: enLearningLoop,
+    multiRepo: enMultiRepo,
     migrationWizard: enMigrationWizard,
+    missionControl: enMissionControl,
     naturalLanguageGit: enNaturalLanguageGit,
     navigation: enNavigation,
     onboarding: enOnboarding,
@@ -127,7 +133,9 @@ export const resources = {
     initDialog: frInitDialog,
     insights: frInsights,
     learningLoop: frLearningLoop,
+    multiRepo: frMultiRepo,
     migrationWizard: frMigrationWizard,
+    missionControl: frMissionControl,
     naturalLanguageGit: frNaturalLanguageGit,
     navigation: frNavigation,
     onboarding: frOnboarding,
@@ -171,7 +179,9 @@ i18n
       'initDialog',
       'insights',
       'learningLoop',
+      'multiRepo',
       'migrationWizard',
+      'missionControl',
       'naturalLanguageGit',
       'navigation',
       'onboarding',

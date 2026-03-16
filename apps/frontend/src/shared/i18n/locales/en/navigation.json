@@ -46,7 +46,9 @@
     "appEmulator": "App Emulator",
     "learningLoop": "Learning Loop",
     "designToCode": "Design to Code",
-    "mcpMarketplace": "MCP Marketplace"
+    "mcpMarketplace": "MCP Marketplace",
+    "multiRepoOrchestration": "Multi-Repo",
+    "missionControl": "Mission Control"
   },
   "actions": {
     "settings": "Settings",

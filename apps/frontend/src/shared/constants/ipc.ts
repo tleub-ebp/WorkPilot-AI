@@ -657,5 +657,22 @@ export const IPC_CHANNELS = {
   LEARNING_LOOP_STATUS: 'learningLoop:status',
   LEARNING_LOOP_STREAM_CHUNK: 'learningLoop:streamChunk',
   LEARNING_LOOP_COMPLETE: 'learningLoop:complete',
-  LEARNING_LOOP_ERROR: 'learningLoop:error'
+  LEARNING_LOOP_ERROR: 'learningLoop:error',
+
+  // Multi-Repo Orchestration operations
+  MULTI_REPO_CREATE: 'multiRepo:create',
+  MULTI_REPO_GET: 'multiRepo:get',
+  MULTI_REPO_LIST: 'multiRepo:list',
+  MULTI_REPO_START: 'multiRepo:start',
+  MULTI_REPO_STOP: 'multiRepo:stop',
+  MULTI_REPO_GET_STATUS: 'multiRepo:getStatus',
+
+  // Multi-Repo events (main -> renderer)
+  MULTI_REPO_PROGRESS: 'multiRepo:progress',
+  MULTI_REPO_REPO_START: 'multiRepo:repoStart',
+  MULTI_REPO_REPO_COMPLETE: 'multiRepo:repoComplete',
+  MULTI_REPO_COMPLETE: 'multiRepo:complete',
+  MULTI_REPO_ERROR: 'multiRepo:error',
+  MULTI_REPO_BREAKING_CHANGE: 'multiRepo:breakingChange',
+  MULTI_REPO_GRAPH: 'multiRepo:graph'
 } as const;

@@ -1,0 +1,54 @@
+{
+  "title": "Multi-Repo Orchestration",
+  "dialog": {
+    "title": "Multi-Repo Orchestration",
+    "description": "Coordinate changes across multiple repositories simultaneously",
+    "stepRepos": "1. Target Repositories",
+    "stepTask": "2. Task Description",
+    "addRepo": "Add",
+    "removeRepo": "Remove",
+    "repoNamePlaceholder": "Repository name (e.g., owner/frontend)",
+    "repoPathPlaceholder": "Local path to repository",
+    "taskPlaceholder": "Describe what you want to build across these repositories...",
+    "noReposAdded": "Add at least 2 repositories to start a multi-repo orchestration",
+    "createOrchestration": "Create Orchestration",
+    "creating": "Creating...",
+    "startOrchestration": "Start Orchestration",
+    "cancel": "Cancel"
+  },
+  "status": {
+    "pending": "Pending",
+    "analyzing": "Analyzing repositories...",
+    "planning": "Planning cross-repo changes...",
+    "executing": "Executing per-repo pipelines...",
+    "creating_prs": "Creating linked PRs...",
+    "completed": "Orchestration complete",
+    "failed": "Orchestration failed"
+  },
+  "graph": {
+    "title": "Dependency Graph",
+    "noRepos": "No repositories configured",
+    "noEdges": "No dependencies detected between repos",
+    "executionOrder": "Execution order"
+  },
+  "breakingChanges": {
+    "title": "Breaking Changes Detected",
+    "severity": {
+      "warning": "Warning",
+      "error": "Error"
+    },
+    "noChanges": "No breaking changes detected"
+  },
+  "execution": {
+    "repoProgress": "{{repo}} progress",
+    "overall": "Overall progress"
+  },
+  "errors": {
+    "noRepos": "Please add at least two repositories",
+    "noDescription": "Please enter a task description",
+    "repoNotFound": "Repository not found: {{repo}}",
+    "circularDependency": "Circular dependency detected between repos",
+    "createFailed": "Failed to create orchestration",
+    "startFailed": "Failed to start orchestration"
+  }
+}

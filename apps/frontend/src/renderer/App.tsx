@@ -55,6 +55,7 @@ const DocumentationView = lazy(() => import('./components/DocumentationView').th
 const CostEstimator = lazy(() => import('./components/CostEstimator').then(m => ({ default: m.CostEstimator })));
 const SessionHistory = lazy(() => import('./components/SessionHistory').then(m => ({ default: m.SessionHistory })));
 const McpMarketplace = lazy(() => import('./components/mcp-marketplace/McpMarketplace').then(m => ({ default: m.McpMarketplace })));
+const MissionControlDashboard = lazy(() => import('./components/mission-control/MissionControlDashboard').then(m => ({ default: m.MissionControlDashboard })));
 import { VersionWarningModal } from './components/VersionWarningModal';
 import { OnboardingWizard } from './components/onboarding';
 import { GitHubSetupModal } from './components/GitHubSetupModal';
@@ -155,7 +156,6 @@ export function App() {
   const [isInitializing, setIsInitializing] = useState(false);
   const [initSuccess, setInitSuccess] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
-  const [skippedInitProjectId, setSkippedInitProjectId] = useState<string | null>(null);
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
 
   // GitHub setup state (shown after WorkPilot AI init)
@@ -1062,6 +1062,9 @@ export function App() {
                     <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
                     {activeView === 'mcp-marketplace' && (
                         <McpMarketplace />
+                    )}
+                    {activeView === 'mission-control' && (
+                        <MissionControlDashboard />
                     )}
                     {activeView === 'kanban' && !selectedProject && (
                               <>
