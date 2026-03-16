@@ -1457,23 +1457,47 @@
     "refresh": "Refresh",
     "add": "Add"
   }
-  },
-  "collaboration": {
-    "title": "Collaboration",
-    "description": "Multi-user collaboration settings"
-  },
-  "copilot": {
-    "switchInstallation": "Switch Installation",
-    "versionUnknown": "version unknown",
-    "active": "Active",
-    "viewCopilotCliDocs": "View GitHub Copilot CLI Docs",
-    "updateCopilotCli": "Update GitHub Copilot CLI?",
-    "updateDescription": "This will update the GitHub Copilot CLI tool. A new terminal will open in the \"Terminaux Agent\" page to run the update command.",
-    "updateAvailable": "GitHub Copilot CLI Update Available",
-    "autoUpdateDescription": "A new version of GitHub Copilot CLI is available. Would you like to open a terminal and update it automatically?",
-    "openTerminalAndUpdate": "Open Terminal & Update",
-    "switchGhCliInstallation": "Switch gh CLI installation?",
-    "switchDescription": "Switching installations will use a different gh binary for Copilot CLI.",
-    "switch": "Switch"
-  }
+},
+"collaboration": {
+  "title": "Collaboration",
+  "description": "Multi-user collaboration settings"
+},
+"copilot": {
+  "switchInstallation": "Switch Installation",
+  "versionUnknown": "version unknown",
+  "active": "Active",
+  "viewCopilotCliDocs": "View GitHub Copilot CLI Docs",
+  "updateCopilotCli": "Update GitHub Copilot CLI?",
+  "updateDescription": "This will update the GitHub Copilot CLI tool. A new terminal will open in the \"Terminaux Agent\" page to run the update command.",
+  "updateAvailable": "GitHub Copilot CLI Update Available",
+  "copilotCliUpdateAvailable": "Copilot CLI update available",
+  "autoUpdateDescription": "A new version of GitHub Copilot CLI is available. Would you like to open a terminal and update it automatically?",
+  "openTerminalAndUpdate": "Open Terminal & Update",
+  "switchGhCliInstallation": "Switch gh CLI installation?",
+  "switchDescription": "Switching installations will use a different gh binary for Copilot CLI.",
+  "switch": "Switch",
+  "checkingInstallationMethod": "Checking installation method...",
+  "updatingViaNpm": "Updating via npm...",
+  "updatingViaHomebrew": "Updating via Homebrew...",
+  "updatingViaWinget": "Updating via WinGet...",
+  "updatingViaChocolatey": "Updating via Chocolatey...",
+  "updatingViaScoop": "Updating via Scoop...",
+  "installingViaScript": "Installing via script...",
+  "updatingGitHubCli": "Updating GitHub CLI...",
+  "updatingGitHubCopilotCli": "Updating GitHub Copilot CLI...",
+  "manualDownloadRequired": "Manual download required. Please visit https://cli.github.com/",
+  "checkingCopilotCli": "Checking Copilot CLI...",
+  "copilotCliUpToDate": "Copilot CLI is up to date",
+  "copilotCliExtensionNotInstalled": "Copilot CLI extension not installed",
+  "gitHubCliNotFound": "GitHub CLI (gh) not found — required for Copilot",
+  "errorCheckingCopilotCli": "Error checking Copilot CLI",
+  "loadingInstallations": "Loading installations...",
+  "failedToLoadInstallations": "Failed to load installations",
+  "selectInstallation": "Select installation",
+  "installed": "Installed",
+  "extensionNotInstalled": "Extension not installed",
+  "gitHubCliNotFoundShort": "GitHub CLI not found",
+  "checking": "Checking...",
+  "error": "Error"
+}
 }
