@@ -314,6 +314,20 @@ def get_phase_model(
             provider = cli_provider or metadata.get("provider")
             return _resolve_provider_model(metadata["model"], provider)
 
+    # Complexity-based routing (Cost Intelligence Engine):
+    # When auto-profile is active but no explicit phaseModels were set,
+    # route to the cheapest adequate model based on task complexity.
+    if not metadata or metadata.get("isAutoProfile"):
+        try:
+            from scheduling.complexity_router import get_complexity_routing
+            routing = get_complexity_routing(spec_dir)
+            if routing.source != "default":
+                model = routing.phase_models.get(phase, DEFAULT_PHASE_MODELS[phase])
+                provider = cli_provider or (metadata.get("provider") if metadata else None)
+                return _resolve_provider_model(model, provider)
+        except ImportError:
+            pass
+
     # Fall back to provider-specific defaults if provider is known
     provider = cli_provider
     if not provider and metadata:
@@ -368,6 +382,16 @@ def get_phase_thinking(
         # Non-auto profile: use single thinking level
         if metadata.get("thinkingLevel"):
             return metadata["thinkingLevel"]
+
+    # Complexity-based thinking routing (Cost Intelligence Engine)
+    if not metadata or metadata.get("isAutoProfile"):
+        try:
+            from scheduling.complexity_router import get_complexity_routing
+            routing = get_complexity_routing(spec_dir)
+            if routing.source != "default":
+                return routing.phase_thinking.get(phase, DEFAULT_PHASE_THINKING[phase])
+        except ImportError:
+            pass
 
     # Fall back to default phase configuration
     return DEFAULT_PHASE_THINKING[phase]

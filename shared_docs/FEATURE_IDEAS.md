@@ -1168,7 +1168,12 @@ npm test -- --run src/renderer/stores/__tests__/mcp-marketplace-store.test.ts
 
 </details>
 
-### 12. Cost Intelligence Engine
+<details>
+<summary>
+
+### 12. Cost Intelligence Engine ✅ Implémenté
+
+</summary>
 
 Routage intelligent entre modèles selon la complexité + tracking granulaire des coûts par agent/phase/spec.
 
@@ -1177,6 +1182,52 @@ Routage intelligent entre modèles selon la complexité + tracking granulaire de
 - **Exploite :** Phase config, agent events, build analytics, provider abstraction, profile scorer
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** ROI immédiat et mesurable. Argument commercial massif pour les entreprises qui gèrent des budgets IA.
+
+#### 🚀 Comment utiliser Cost Intelligence Engine
+
+##### Routage intelligent par complexité
+
+Le routage est **automatique** lorsque le profil Auto est actif. Le Complexity Assessor évalue chaque tâche et le Cost Intelligence Engine sélectionne le modèle optimal :
+- **Simple** (typo, color change) → Haiku pour spec/planning/QA, Sonnet pour coding
+- **Standard** (new endpoint, component) → Sonnet partout
+- **Complex** (multi-service, integrations) → Opus pour spec/planning/QA, Sonnet pour coding
+
+##### Tracking des coûts
+
+```bash
+# Rapport de coûts mensuel (par agent, phase, spec)
+python run.py --cost-report monthly
+
+# Rapport hebdomadaire
+python run.py --cost-report weekly
+
+# Comparaison avec les concurrents
+python run.py --cost-compare
+
+# Gestion du budget
+python run.py --cost-budget 50.0 --budget-period monthly
+python run.py --cost-budget  # Voir le budget actuel
+```
+
+##### 📊 Métriques disponibles
+
+- **Par agent** : coût planner vs coder vs QA reviewer vs QA fixer
+- **Par phase** : spec vs planning vs coding vs QA
+- **Par spec** : coût total de chaque feature/tâche
+- **Par modèle** : répartition Haiku/Sonnet/Opus
+- **Budget** : alertes à 75% (warning), 90% (critical), 100% (exceeded)
+- **Comparaison** : vs Cursor Pro/Business, Windsurf, Claude Code Max, GitHub Copilot
+
+##### 🏗️ Architecture technique
+
+**Backend :**
+- `apps/backend/scheduling/complexity_router.py` — Routage complexité → modèle par phase
+- `apps/backend/scheduling/cost_estimator.py` — Tracking token-to-USD avec agrégation agent/phase/spec, budgets mensuels/hebdomadaires, persistance JSON
+- `apps/backend/scheduling/competitor_comparison.py` — Données de prix concurrents et comparaison
+- `apps/backend/phase_config.py` — Intégration du routage complexité (priorité 3.5)
+- `apps/backend/cli/cost_commands.py` — Commandes CLI --cost-report, --cost-compare, --cost-budget
+
+</details>
 
 ---
 
@@ -2485,7 +2536,12 @@ Memory System partagé entre tous les membres de l'équipe.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** L'expérience collective capitalise automatiquement. Onboarding d'un nouveau dev en quelques minutes.
 
-### 35. Environment Cloner
+<details>
+<summary>
+
+### 35. Environment Cloner ✅ Implémenté
+
+</summary>
 
 Reproduction d'environnements prod/staging en local pour debug.
 
@@ -2493,6 +2549,56 @@ Reproduction d'environnements prod/staging en local pour debug.
 - **Exploite :** Platform abstraction, terminal system
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** "Ça marche en local mais pas en prod" disparaît.
+
+#### 🚀 Comment utiliser Environment Cloner
+
+##### Démarrage rapide
+
+```bash
+# 1. Capturer l'environnement (auto-détecte docker-compose ou containers)
+python run.py --env-capture
+
+# 2. Capturer depuis docker-compose uniquement
+python run.py --env-capture --env-source compose
+
+# 3. Capturer depuis les containers en cours d'exécution
+python run.py --env-capture --env-source containers
+
+# 4. Générer les fichiers Docker Compose reproductibles
+python run.py --env-reproduce
+
+# 5. Valider que l'environnement cloné fonctionne
+python run.py --env-validate
+```
+
+##### 🎨 Fonctionnalités clés
+
+- **Capture multi-source** : Docker Compose files, containers en cours d'exécution, fichiers .env
+- **Sanitisation automatique** : les secrets (passwords, API keys, tokens) sont remplacés par `<REPLACE_ME>`
+- **Génération Docker Compose** : fichier `docker-compose.clone.yml` prêt à l'emploi
+- **Script de seed** : `seed.sh` avec stubs pour PostgreSQL, MySQL, MongoDB, Redis
+- **Validation** : vérification des services, ports, et health checks
+- **Cross-platform** : fonctionne sur Windows, macOS, Linux
+
+##### 📁 Fichiers générés
+
+Les fichiers sont créés dans `.auto-claude/environment/` :
+- `environment_capture.json` — Capture structurée de tous les services
+- `docker-compose.clone.yml` — Fichier Docker Compose reproductible
+- `.env.clone` — Variables d'environnement avec placeholders pour les secrets
+- `seed.sh` — Script de seeding des bases de données
+
+##### 🏗️ Architecture technique
+
+**Backend :**
+- `apps/backend/environment/capturer.py` — Capture depuis Docker Compose, containers, fichiers .env
+- `apps/backend/environment/generator.py` — Génération docker-compose.yml, .env, seed.sh
+- `apps/backend/environment/validator.py` — Validation services, ports, health checks
+- `apps/backend/runners/environment_cloner_runner.py` — Runner avec protocole stdout EVENT
+- `apps/backend/cli/env_commands.py` — Commandes CLI --env-capture, --env-reproduce, --env-validate
+- `apps/backend/prompts/environment_cloner.md` — Prompt agent pour analyse AI-driven
+
+</details>
 
 ### 36. Architecture Visualizer
 
