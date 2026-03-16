@@ -3,14 +3,18 @@
 Tracks token usage (input/output) per provider, calculates costs in real-time,
 manages project budgets with alerts, and suggests the cheapest model for a task.
 
-Feature 6.3 — Estimation et contrôle des coûts.
+Features:
+    - Feature 6.3 — Estimation et contrôle des coûts.
+    - Feature 12 — Cost Intelligence Engine: granular tracking per agent/phase/spec,
+      monthly/weekly budget periods, JSON persistence.
 
 Example:
     >>> from apps.backend.scheduling.cost_estimator import CostEstimator
     >>> estimator = CostEstimator()
-    >>> estimator.set_budget("my-project", 50.0, currency="USD")
+    >>> estimator.set_budget("my-project", 50.0, period="monthly")
     >>> usage = estimator.record_usage("my-project", "anthropic", "claude-sonnet-4-20250514",
-    ...     input_tokens=1500, output_tokens=500, task_id="task-1")
+    ...     input_tokens=1500, output_tokens=500, task_id="task-1",
+    ...     agent_type="coder", phase="coding", spec_id="001-feature")
     >>> print(f"Cost: ${usage.cost:.4f}")
     >>> report = estimator.get_project_report("my-project")
 """
@@ -21,6 +25,7 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -95,6 +100,9 @@ class TokenUsage:
         output_tokens: Number of output (completion) tokens.
         cost: The computed cost in USD.
         task_id: Optional task identifier.
+        agent_type: Agent type (planner, coder, qa_reviewer, qa_fixer).
+        phase: Execution phase (spec, planning, coding, qa).
+        spec_id: Spec identifier (e.g. '001-feature-name').
         timestamp: When the usage was recorded.
     """
     project_id: str
@@ -104,6 +112,9 @@ class TokenUsage:
     output_tokens: int
     cost: float
     task_id: str = ""
+    agent_type: str = ""
+    phase: str = ""
+    spec_id: str = ""
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> dict[str, Any]:
@@ -116,6 +127,9 @@ class TokenUsage:
             "output_tokens": self.output_tokens,
             "cost": self.cost,
             "task_id": self.task_id,
+            "agent_type": self.agent_type,
+            "phase": self.phase,
+            "spec_id": self.spec_id,
             "timestamp": self.timestamp.isoformat(),
         }
 
@@ -164,12 +178,14 @@ class ProjectBudget:
         currency: The currency for display (cost always computed in USD).
         warning_threshold: Percentage at which to send a WARNING alert.
         critical_threshold: Percentage at which to send a CRITICAL alert.
+        period: Budget period — ``'total'``, ``'monthly'``, or ``'weekly'``.
     """
     project_id: str
     limit: float
     currency: str = "USD"
     warning_threshold: float = 0.75
     critical_threshold: float = 0.90
+    period: str = "total"
 
 
 @dataclass
@@ -317,6 +333,9 @@ class CostEstimator:
         input_tokens: int,
         output_tokens: int,
         task_id: str = "",
+        agent_type: str = "",
+        phase: str = "",
+        spec_id: str = "",
     ) -> TokenUsage:
         """Record a token usage event and check budget.
 
@@ -327,6 +346,9 @@ class CostEstimator:
             input_tokens: Number of input tokens consumed.
             output_tokens: Number of output tokens produced.
             task_id: Optional task identifier.
+            agent_type: Agent type (planner, coder, qa_reviewer, qa_fixer).
+            phase: Execution phase (spec, planning, coding, qa).
+            spec_id: Spec identifier (e.g. '001-feature-name').
 
         Returns:
             The recorded TokenUsage instance.
@@ -340,6 +362,9 @@ class CostEstimator:
             output_tokens=output_tokens,
             cost=cost,
             task_id=task_id,
+            agent_type=agent_type,
+            phase=phase,
+            spec_id=spec_id,
         )
         self._usages.append(usage)
 
@@ -353,6 +378,9 @@ class CostEstimator:
         project_id: str | None = None,
         provider: str | None = None,
         task_id: str | None = None,
+        agent_type: str | None = None,
+        phase: str | None = None,
+        spec_id: str | None = None,
         since: datetime | None = None,
         until: datetime | None = None,
     ) -> list[TokenUsage]:
@@ -362,6 +390,9 @@ class CostEstimator:
             project_id: Filter by project.
             provider: Filter by provider.
             task_id: Filter by task.
+            agent_type: Filter by agent type.
+            phase: Filter by execution phase.
+            spec_id: Filter by spec identifier.
             since: Include only usages after this time.
             until: Include only usages before this time.
 
@@ -375,6 +406,12 @@ class CostEstimator:
             results = [u for u in results if u.provider == provider]
         if task_id:
             results = [u for u in results if u.task_id == task_id]
+        if agent_type:
+            results = [u for u in results if u.agent_type == agent_type]
+        if phase:
+            results = [u for u in results if u.phase == phase]
+        if spec_id:
+            results = [u for u in results if u.spec_id == spec_id]
         if since:
             results = [u for u in results if u.timestamp >= since]
         if until:
@@ -411,6 +448,7 @@ class CostEstimator:
         currency: str = "USD",
         warning_threshold: float = 0.75,
         critical_threshold: float = 0.90,
+        period: str = "total",
     ) -> ProjectBudget:
         """Set a budget limit for a project.
 
@@ -420,6 +458,7 @@ class CostEstimator:
             currency: Display currency.
             warning_threshold: Fraction of budget that triggers a warning (0-1).
             critical_threshold: Fraction of budget that triggers a critical alert (0-1).
+            period: Budget period — ``'total'``, ``'monthly'``, or ``'weekly'``.
 
         Returns:
             The created ProjectBudget.
@@ -430,6 +469,7 @@ class CostEstimator:
             currency=currency,
             warning_threshold=warning_threshold,
             critical_threshold=critical_threshold,
+            period=period,
         )
         self._budgets[project_id] = budget
         return budget
@@ -445,6 +485,24 @@ class CostEstimator:
         """
         return self._budgets.get(project_id)
 
+    def _get_budget_period_start(self, budget: ProjectBudget) -> datetime | None:
+        """Get the start of the current budget period.
+
+        Args:
+            budget: The project budget with period info.
+
+        Returns:
+            Start datetime for the period, or None for ``'total'``.
+        """
+        if budget.period == "monthly":
+            now = datetime.now(timezone.utc)
+            return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        elif budget.period == "weekly":
+            now = datetime.now(timezone.utc)
+            start = now - timedelta(days=now.weekday())
+            return start.replace(hour=0, minute=0, second=0, microsecond=0)
+        return None
+
     def _check_budget(self, project_id: str) -> BudgetAlert | None:
         """Check if the project is exceeding its budget and create alerts.
 
@@ -458,7 +516,8 @@ class CostEstimator:
         if not budget:
             return None
 
-        total_spend = self.get_total_cost(project_id=project_id)
+        since = self._get_budget_period_start(budget)
+        total_spend = self.get_total_cost(project_id=project_id, since=since)
         percentage = total_spend / budget.limit if budget.limit > 0 else 0.0
 
         alert = None
@@ -602,6 +661,71 @@ class CostEstimator:
     # Reporting
     # ------------------------------------------------------------------
 
+    # ------------------------------------------------------------------
+    # Granular aggregation (Cost Intelligence Engine)
+    # ------------------------------------------------------------------
+
+    def get_cost_by_agent_type(
+        self, project_id: str, since: datetime | None = None
+    ) -> dict[str, float]:
+        """Aggregate costs by agent type.
+
+        Args:
+            project_id: The project identifier.
+            since: Include only usages after this time.
+
+        Returns:
+            Dict mapping agent_type to total cost in USD.
+        """
+        usages = self.get_usages(project_id=project_id, since=since)
+        result: dict[str, float] = {}
+        for u in usages:
+            key = u.agent_type or "unknown"
+            result[key] = result.get(key, 0.0) + u.cost
+        return {k: round(v, 6) for k, v in result.items()}
+
+    def get_cost_by_phase(
+        self, project_id: str, since: datetime | None = None
+    ) -> dict[str, float]:
+        """Aggregate costs by execution phase.
+
+        Args:
+            project_id: The project identifier.
+            since: Include only usages after this time.
+
+        Returns:
+            Dict mapping phase to total cost in USD.
+        """
+        usages = self.get_usages(project_id=project_id, since=since)
+        result: dict[str, float] = {}
+        for u in usages:
+            key = u.phase or "unknown"
+            result[key] = result.get(key, 0.0) + u.cost
+        return {k: round(v, 6) for k, v in result.items()}
+
+    def get_cost_by_spec(
+        self, project_id: str, since: datetime | None = None
+    ) -> dict[str, float]:
+        """Aggregate costs by spec identifier.
+
+        Args:
+            project_id: The project identifier.
+            since: Include only usages after this time.
+
+        Returns:
+            Dict mapping spec_id to total cost in USD.
+        """
+        usages = self.get_usages(project_id=project_id, since=since)
+        result: dict[str, float] = {}
+        for u in usages:
+            key = u.spec_id or "unknown"
+            result[key] = result.get(key, 0.0) + u.cost
+        return {k: round(v, 6) for k, v in result.items()}
+
+    # ------------------------------------------------------------------
+    # Reporting
+    # ------------------------------------------------------------------
+
     def get_project_report(
         self,
         project_id: str,
@@ -617,14 +741,17 @@ class CostEstimator:
 
         Returns:
             A dict with ``'total_cost'``, ``'by_provider'``, ``'by_model'``,
-            ``'by_task'``, ``'total_tokens'``, ``'budget'``, ``'alerts'``,
-            ``'usage_count'``.
+            ``'by_task'``, ``'by_agent_type'``, ``'by_phase'``, ``'by_spec'``,
+            ``'total_tokens'``, ``'budget'``, ``'alerts'``, ``'usage_count'``.
         """
         usages = self.get_usages(project_id=project_id, since=since, until=until)
 
         by_provider: dict[str, float] = {}
         by_model: dict[str, float] = {}
         by_task: dict[str, float] = {}
+        by_agent_type: dict[str, float] = {}
+        by_phase: dict[str, float] = {}
+        by_spec: dict[str, float] = {}
         total_input = 0
         total_output = 0
 
@@ -634,16 +761,25 @@ class CostEstimator:
             by_model[model_key] = by_model.get(model_key, 0.0) + u.cost
             if u.task_id:
                 by_task[u.task_id] = by_task.get(u.task_id, 0.0) + u.cost
+            if u.agent_type:
+                by_agent_type[u.agent_type] = by_agent_type.get(u.agent_type, 0.0) + u.cost
+            if u.phase:
+                by_phase[u.phase] = by_phase.get(u.phase, 0.0) + u.cost
+            if u.spec_id:
+                by_spec[u.spec_id] = by_spec.get(u.spec_id, 0.0) + u.cost
             total_input += u.input_tokens
             total_output += u.output_tokens
 
         budget = self._budgets.get(project_id)
         budget_info = None
         if budget:
-            total = sum(u.cost for u in usages)
+            budget_since = self._get_budget_period_start(budget)
+            budget_usages = self.get_usages(project_id=project_id, since=budget_since)
+            total = sum(u.cost for u in budget_usages)
             budget_info = {
                 "limit": budget.limit,
                 "currency": budget.currency,
+                "period": budget.period,
                 "spent": round(total, 6),
                 "remaining": round(max(0, budget.limit - total), 6),
                 "percentage": round(total / budget.limit * 100, 1) if budget.limit > 0 else 0,
@@ -655,6 +791,9 @@ class CostEstimator:
             "by_provider": {k: round(v, 6) for k, v in by_provider.items()},
             "by_model": {k: round(v, 6) for k, v in by_model.items()},
             "by_task": {k: round(v, 6) for k, v in by_task.items()},
+            "by_agent_type": {k: round(v, 6) for k, v in by_agent_type.items()},
+            "by_phase": {k: round(v, 6) for k, v in by_phase.items()},
+            "by_spec": {k: round(v, 6) for k, v in by_spec.items()},
             "total_tokens": {"input": total_input, "output": total_output},
             "budget": budget_info,
             "alerts": [a.to_dict() for a in self.get_alerts(project_id=project_id)],
@@ -701,6 +840,87 @@ class CostEstimator:
             "providers_used": list(providers),
             "budgets_set": len(self._budgets),
         }
+
+
+    # ------------------------------------------------------------------
+    # Persistence
+    # ------------------------------------------------------------------
+
+    def save_to_file(self, path: Path) -> None:
+        """Persist all usage records and budgets to a JSON file.
+
+        Args:
+            path: File path for the JSON data.
+        """
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        data = {
+            "usages": [u.to_dict() for u in self._usages],
+            "budgets": {
+                pid: {
+                    "project_id": b.project_id,
+                    "limit": b.limit,
+                    "currency": b.currency,
+                    "warning_threshold": b.warning_threshold,
+                    "critical_threshold": b.critical_threshold,
+                    "period": b.period,
+                }
+                for pid, b in self._budgets.items()
+            },
+        }
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        logger.info("Cost data saved to %s (%d records)", path, len(self._usages))
+
+    def load_from_file(self, path: Path) -> None:
+        """Load persisted records from a JSON file.
+
+        Args:
+            path: File path to load from.
+        """
+        path = Path(path)
+        if not path.exists():
+            return
+        try:
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, OSError) as exc:
+            logger.warning("Failed to load cost data from %s: %s", path, exc)
+            return
+
+        for u in data.get("usages", []):
+            ts = u.get("timestamp", "")
+            try:
+                timestamp = datetime.fromisoformat(ts)
+            except (ValueError, TypeError):
+                timestamp = datetime.now(timezone.utc)
+            self._usages.append(
+                TokenUsage(
+                    project_id=u.get("project_id", ""),
+                    provider=u.get("provider", ""),
+                    model=u.get("model", ""),
+                    input_tokens=u.get("input_tokens", 0),
+                    output_tokens=u.get("output_tokens", 0),
+                    cost=u.get("cost", 0.0),
+                    task_id=u.get("task_id", ""),
+                    agent_type=u.get("agent_type", ""),
+                    phase=u.get("phase", ""),
+                    spec_id=u.get("spec_id", ""),
+                    timestamp=timestamp,
+                )
+            )
+
+        for pid, b in data.get("budgets", {}).items():
+            self._budgets[pid] = ProjectBudget(
+                project_id=b.get("project_id", pid),
+                limit=b.get("limit", 0.0),
+                currency=b.get("currency", "USD"),
+                warning_threshold=b.get("warning_threshold", 0.75),
+                critical_threshold=b.get("critical_threshold", 0.90),
+                period=b.get("period", "total"),
+            )
+
+        logger.info("Loaded %d cost records from %s", len(self._usages), path)
 
 
 def _infer_quality_tier(provider: str, model: str) -> str:

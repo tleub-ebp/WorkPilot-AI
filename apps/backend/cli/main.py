@@ -16,6 +16,16 @@ from .batch_commands import (
     handle_batch_status_command,
 )
 from .build_commands import handle_build_command
+from .cost_commands import (
+    handle_cost_budget_command,
+    handle_cost_compare_command,
+    handle_cost_report_command,
+)
+from .env_commands import (
+    handle_env_capture_command,
+    handle_env_reproduce_command,
+    handle_env_validate_command,
+)
 from .followup_commands import handle_followup_command
 from .qa_commands import (
     handle_auto_fix_command,
@@ -362,6 +372,62 @@ Environment Variables:
         help="JSON config for adding a new provider",
     )
 
+    # Cost Intelligence Engine commands
+    cost_group = parser.add_argument_group("Cost Intelligence")
+    cost_group.add_argument(
+        "--cost-report",
+        nargs="?",
+        const="monthly",
+        metavar="PERIOD",
+        help="Show cost report (period: weekly or monthly, default: monthly)",
+    )
+    cost_group.add_argument(
+        "--cost-compare",
+        action="store_true",
+        help="Compare costs to competitors (Cursor, Windsurf, Copilot, etc.)",
+    )
+    cost_group.add_argument(
+        "--cost-budget",
+        type=float,
+        nargs="?",
+        const=None,
+        default=-1,
+        metavar="AMOUNT",
+        help="Set budget limit in USD (no value = show current budget)",
+    )
+    cost_group.add_argument(
+        "--budget-period",
+        type=str,
+        default="monthly",
+        choices=["total", "monthly", "weekly"],
+        help="Budget period (default: monthly)",
+    )
+
+    # Environment Cloner commands
+    env_group = parser.add_argument_group("Environment Cloner")
+    env_group.add_argument(
+        "--env-capture",
+        action="store_true",
+        help="Capture environment configuration (Docker Compose, .env files, running containers)",
+    )
+    env_group.add_argument(
+        "--env-reproduce",
+        action="store_true",
+        help="Reproduce captured environment via Docker Compose",
+    )
+    env_group.add_argument(
+        "--env-validate",
+        action="store_true",
+        help="Validate that cloned environment is running correctly",
+    )
+    env_group.add_argument(
+        "--env-source",
+        type=str,
+        default="auto",
+        choices=["auto", "compose", "containers"],
+        help="Environment capture source (default: auto)",
+    )
+
     return parser.parse_args()
 
 
@@ -492,6 +558,34 @@ def _run_cli() -> None:
 
     if args.batch_cleanup:
         handle_batch_cleanup_command(str(project_dir), dry_run=not args.no_dry_run)
+        return
+
+    # Handle Cost Intelligence commands
+    if args.cost_report is not None:
+        handle_cost_report_command(project_dir, period=args.cost_report)
+        return
+
+    if args.cost_compare:
+        handle_cost_compare_command(project_dir)
+        return
+
+    if args.cost_budget != -1:
+        handle_cost_budget_command(
+            project_dir, limit=args.cost_budget, period=args.budget_period
+        )
+        return
+
+    # Handle Environment Cloner commands
+    if args.env_capture:
+        handle_env_capture_command(project_dir, source=args.env_source)
+        return
+
+    if args.env_reproduce:
+        handle_env_reproduce_command(project_dir)
+        return
+
+    if args.env_validate:
+        handle_env_validate_command(project_dir)
         return
 
     # Require --spec if not listing
