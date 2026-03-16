@@ -47,33 +47,33 @@ import {
 } from '../../stores/design-to-code-store';
 
 // Phase metadata for UI display
-const PHASE_CONFIG: Record<PipelinePhase, { icon: React.ElementType; label: string; color: string }> = {
-  idle: { icon: Play, label: 'Ready', color: 'text-muted-foreground' },
-  analyzing: { icon: Eye, label: 'Analyzing Design...', color: 'text-blue-500' },
-  spec_generation: { icon: Layout, label: 'Generating Spec...', color: 'text-purple-500' },
-  code_generation: { icon: Code, label: 'Generating Code...', color: 'text-green-500' },
-  design_token_integration: { icon: Palette, label: 'Integrating Tokens...', color: 'text-amber-500' },
-  visual_test_generation: { icon: TestTube, label: 'Generating Tests...', color: 'text-cyan-500' },
-  figma_sync: { icon: Figma, label: 'Syncing with Figma...', color: 'text-violet-500' },
-  complete: { icon: Check, label: 'Complete!', color: 'text-green-600' },
-  error: { icon: AlertTriangle, label: 'Error', color: 'text-red-500' },
+const PHASE_CONFIG: Record<PipelinePhase, { icon: React.ElementType; labelKey: string; color: string }> = {
+  idle: { icon: Play, labelKey: 'phases.idle', color: 'text-muted-foreground' },
+  analyzing: { icon: Eye, labelKey: 'phases.analyzing', color: 'text-blue-500' },
+  spec_generation: { icon: Layout, labelKey: 'phases.spec_generation', color: 'text-purple-500' },
+  code_generation: { icon: Code, labelKey: 'phases.code_generation', color: 'text-green-500' },
+  design_token_integration: { icon: Palette, labelKey: 'phases.design_token_integration', color: 'text-amber-500' },
+  visual_test_generation: { icon: TestTube, labelKey: 'phases.visual_test_generation', color: 'text-cyan-500' },
+  figma_sync: { icon: Figma, labelKey: 'phases.figma_sync', color: 'text-violet-500' },
+  complete: { icon: Check, labelKey: 'phases.complete', color: 'text-green-600' },
+  error: { icon: AlertTriangle, labelKey: 'phases.error', color: 'text-red-500' },
 };
 
-const FRAMEWORK_OPTIONS: { value: FrameworkType; label: string; icon: string }[] = [
-  { value: 'react', label: 'React', icon: '⚛️' },
-  { value: 'angular', label: 'Angular', icon: '🅰️' },
-  { value: 'vue', label: 'Vue.js', icon: '💚' },
-  { value: 'nextjs', label: 'Next.js', icon: '▲' },
-  { value: 'nuxt', label: 'Nuxt', icon: '💚' },
-  { value: 'svelte', label: 'Svelte', icon: '🔥' },
+const FRAMEWORK_OPTIONS: { value: FrameworkType; labelKey: string; icon: string }[] = [
+  { value: 'react', labelKey: 'frameworks.react', icon: '⚛️' },
+  { value: 'angular', labelKey: 'frameworks.angular', icon: '🅰️' },
+  { value: 'vue', labelKey: 'frameworks.vue', icon: '💚' },
+  { value: 'nextjs', labelKey: 'frameworks.nextjs', icon: '▲' },
+  { value: 'nuxt', labelKey: 'frameworks.nuxt', icon: '💚' },
+  { value: 'svelte', labelKey: 'frameworks.svelte', icon: '🔥' },
 ];
 
-const SOURCE_TYPE_OPTIONS: { value: DesignSourceType; label: string; icon: string }[] = [
-  { value: 'screenshot', label: 'Screenshot', icon: '📸' },
-  { value: 'figma', label: 'Figma', icon: '🎨' },
-  { value: 'wireframe', label: 'Wireframe', icon: '📐' },
-  { value: 'whiteboard', label: 'Whiteboard', icon: '📋' },
-  { value: 'photo', label: 'Photo', icon: '📷' },
+const SOURCE_TYPE_OPTIONS: { value: DesignSourceType; labelKey: string; icon: string }[] = [
+  { value: 'screenshot', labelKey: 'sourceTypes.screenshot', icon: '📸' },
+  { value: 'figma', labelKey: 'sourceTypes.figma', icon: '🎨' },
+  { value: 'wireframe', labelKey: 'sourceTypes.wireframe', icon: '📐' },
+  { value: 'whiteboard', labelKey: 'sourceTypes.whiteboard', icon: '📋' },
+  { value: 'photo', labelKey: 'sourceTypes.photo', icon: '📷' },
 ];
 
 const LANGUAGE_COLORS: Record<string, string> = {
@@ -96,6 +96,7 @@ const LANGUAGE_COLORS: Record<string, string> = {
  * generate production-ready code with visual tests in one click.
  */
 export function DesignToCodeDialog() {
+  const { t } = useTranslation('designToCode');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -221,10 +222,10 @@ export function DesignToCodeDialog() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Sparkles className="h-5 w-5 text-violet-500" />
-            Design-to-Code Pipeline
+            {t('title')}
           </DialogTitle>
           <DialogDescription>
-            Upload a design and generate production-ready code in one click.
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -261,7 +262,7 @@ export function DesignToCodeDialog() {
                 <div key={p} className="flex items-center flex-1">
                   <div className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-2 py-1 transition-all ${phaseStatusClass}`}>
                     {phaseIconElement}
-                    <span className="hidden sm:inline truncate">{config.label.replace('...', '')}</span>
+                    <span className="hidden sm:inline truncate">{t(config.labelKey).replace('...', '')}</span>
                   </div>
                   {i < phaseOrder.length - 2 && (
                     <div className={`flex-1 h-px mx-1 ${connectorClass}`} />
@@ -277,23 +278,23 @@ export function DesignToCodeDialog() {
           <TabsList className="grid grid-cols-5 w-full">
             <TabsTrigger value="upload" className="text-xs gap-1">
               <Upload className="h-3.5 w-3.5" />
-              Upload
+              {t('tabs.upload')}
             </TabsTrigger>
             <TabsTrigger value="spec" className="text-xs gap-1" disabled={!result?.design_spec}>
               <Layout className="h-3.5 w-3.5" />
-              Spec
+              {t('tabs.spec')}
             </TabsTrigger>
             <TabsTrigger value="code" className="text-xs gap-1" disabled={!result?.generated_files?.length}>
               <Code className="h-3.5 w-3.5" />
-              Code ({result?.generated_files?.length || 0})
+              {t('tabs.code')} ({result?.generated_files?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="tests" className="text-xs gap-1" disabled={!result?.visual_tests?.length}>
               <TestTube className="h-3.5 w-3.5" />
-              Tests ({result?.visual_tests?.length || 0})
+              {t('tabs.tests')} ({result?.visual_tests?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="tokens" className="text-xs gap-1" disabled={!result?.design_tokens_used?.length}>
               <Palette className="h-3.5 w-3.5" />
-              Tokens ({result?.design_tokens_used?.length || 0})
+              {t('tabs.tokens')} ({result?.design_tokens_used?.length || 0})
             </TabsTrigger>
           </TabsList>
 
@@ -348,12 +349,12 @@ export function DesignToCodeDialog() {
                           <ImageIcon className="h-8 w-8 text-violet-500" />
                         </div>
                         <div>
-                          <p className="text-base font-medium">Drop your design here</p>
+                          <p className="text-base font-medium">{t('upload.dropDesign')}</p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Screenshot, Figma export, wireframe, whiteboard photo
+                            {t('upload.dropDescription')}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            PNG, JPG, GIF, WebP, SVG — Max 20 MB
+                            {t('upload.dropFormats')}
                           </p>
                         </div>
                       </div>
@@ -364,23 +365,23 @@ export function DesignToCodeDialog() {
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium flex items-center gap-1.5">
                       <Figma className="h-4 w-4" />
-                      Figma URL (optional)
+                      {t('upload.figmaUrl')}
                     </label>
                     <input
                       type="text"
-                      placeholder="https://www.figma.com/design/FILE_KEY/..."
+                      placeholder={t('upload.figmaUrlPlaceholder')}
                       value={figmaUrl}
                       onChange={(e) => setFigmaUrl(e.target.value)}
                       className="w-full px-3 py-2 text-sm rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Paste a Figma file/node URL for bidirectional sync
+                      {t('upload.figmaUrlHelp')}
                     </p>
                   </div>
 
                   {/* Framework Selection */}
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium">Target Framework</label>
+                    <label className="text-sm font-medium">{t('upload.targetFramework')}</label>
                     <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                       {FRAMEWORK_OPTIONS.map((fw) => (
                         <button
@@ -394,7 +395,7 @@ export function DesignToCodeDialog() {
                           }`}
                         >
                           <span className="text-lg">{fw.icon}</span>
-                          {fw.label}
+                          {t(fw.labelKey)}
                         </button>
                       ))}
                     </div>
@@ -402,7 +403,7 @@ export function DesignToCodeDialog() {
 
                   {/* Source Type */}
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium">Source Type</label>
+                    <label className="text-sm font-medium">{t('upload.sourceType')}</label>
                     <div className="flex gap-2 flex-wrap">
                       {SOURCE_TYPE_OPTIONS.map((st) => (
                         <button
@@ -416,7 +417,7 @@ export function DesignToCodeDialog() {
                           }`}
                         >
                           <span>{st.icon}</span>
-                          {st.label}
+                          {t(st.labelKey)}
                         </button>
                       ))}
                     </div>
@@ -430,7 +431,7 @@ export function DesignToCodeDialog() {
                       className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <Settings2 className="h-4 w-4" />
-                      Advanced Settings
+                      {t('upload.advancedSettings')}
                       <ChevronRight className={`h-3 w-3 transition-transform ${showAdvanced ? 'rotate-90' : ''}`} />
                     </button>
 
@@ -438,10 +439,10 @@ export function DesignToCodeDialog() {
                       <div className="mt-3 space-y-3 pl-6 border-l-2 border-border">
                         {/* Design System Path */}
                         <div className="space-y-1">
-                          <label className="text-xs font-medium">Design System Path</label>
+                          <label className="text-xs font-medium">{t('upload.designSystemPath')}</label>
                           <input
                             type="text"
-                            placeholder="src/design-system or styles/tokens"
+                            placeholder={t('upload.designSystemPathPlaceholder')}
                             value={designSystemPath}
                             onChange={(e) => setDesignSystemPath(e.target.value)}
                             className="w-full px-3 py-1.5 text-sm rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-violet-500/50"
@@ -450,7 +451,7 @@ export function DesignToCodeDialog() {
 
                         {/* Visual Tests Toggle */}
                         <div className="flex items-center justify-between">
-                          <label className="text-xs font-medium">Generate Visual Tests</label>
+                          <label className="text-xs font-medium">{t('upload.generateVisualTests')}</label>
                           <button
                             type="button"
                             onClick={() => setGenerateTests(!generateTests)}
@@ -466,9 +467,9 @@ export function DesignToCodeDialog() {
 
                         {/* Custom Instructions */}
                         <div className="space-y-1">
-                          <label className="text-xs font-medium">Custom Instructions</label>
+                          <label className="text-xs font-medium">{t('upload.customInstructions')}</label>
                           <textarea
-                            placeholder="E.g.: Use Tailwind CSS, follow our BEM naming convention..."
+                            placeholder={t('upload.customInstructionsPlaceholder')}
                             value={customInstructions}
                             onChange={(e) => setCustomInstructions(e.target.value)}
                             rows={3}
@@ -499,11 +500,11 @@ export function DesignToCodeDialog() {
                     <div>
                       <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
                         <Layout className="h-4 w-4 text-violet-500" />
-                        Components ({result.design_spec.components.length})
+                        {t('spec.components')} ({result.design_spec.components.length})
                       </h3>
                       <div className="space-y-2">
                         {result.design_spec.components.map((comp, i) => (
-                          <div key={i} className="p-3 rounded-lg border bg-card">
+                          <div key={`${comp.type}-${comp.name}-${i}`} className="p-3 rounded-lg border bg-card">
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary" className="text-xs">{comp.type}</Badge>
                               <span className="text-sm font-medium">{comp.name}</span>
@@ -514,7 +515,7 @@ export function DesignToCodeDialog() {
                             {comp.children.length > 0 && (
                               <div className="mt-2 pl-4 border-l-2 border-border space-y-1">
                                 {comp.children.map((child, j) => (
-                                  <div key={j} className="flex items-center gap-1.5 text-xs">
+                                  <div key={`${child.type}-${child.name}-${j}`} className="flex items-center gap-1.5 text-xs">
                                     <ChevronRight className="h-3 w-3 text-muted-foreground" />
                                     <Badge variant="outline" className="text-[10px]">{child.type}</Badge>
                                     <span>{child.name}</span>
@@ -532,7 +533,7 @@ export function DesignToCodeDialog() {
                       <div>
                         <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
                           <Palette className="h-4 w-4 text-amber-500" />
-                          Color Palette
+                          {t('spec.colorPalette')}
                         </h3>
                         <div className="flex flex-wrap gap-2">
                           {Object.entries(result.design_spec.color_palette).map(([name, value]) => (
@@ -554,7 +555,7 @@ export function DesignToCodeDialog() {
                     {/* Typography */}
                     {Object.keys(result.design_spec.typography).length > 0 && (
                       <div>
-                        <h3 className="text-sm font-semibold mb-2">Typography</h3>
+                        <h3 className="text-sm font-semibold mb-2">{t('spec.typography')}</h3>
                         <div className="space-y-1">
                           {Object.entries(result.design_spec.typography).map(([name, props]) => (
                             <div key={name} className="flex items-center gap-3 px-3 py-1.5 rounded-lg border bg-card text-xs">
@@ -572,7 +573,7 @@ export function DesignToCodeDialog() {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                    Run the pipeline to see the design specification.
+                    {t('spec.emptyState')}
                   </div>
                 )}
               </ScrollArea>
@@ -588,7 +589,7 @@ export function DesignToCodeDialog() {
                       <div className="p-1 space-y-0.5">
                         {result.generated_files.map((file, i) => (
                           <button
-                            key={i}
+                            key={file.path}
                             type="button"
                             onClick={() => setSelectedFileIndex(i)}
                             className={`w-full text-left px-2.5 py-2 rounded-md text-xs transition-colors ${
@@ -631,9 +632,9 @@ export function DesignToCodeDialog() {
                             )}
                           >
                             {copiedFile === result.generated_files[selectedFileIndex].path ? (
-                              <><Check className="h-3 w-3 mr-1" /> Copied</>
+                              <><Check className="h-3 w-3 mr-1" /> {t('code.copied')}</>
                             ) : (
-                              <><Copy className="h-3 w-3 mr-1" /> Copy</>
+                              <><Copy className="h-3 w-3 mr-1" /> {t('code.copy')}</>
                             )}
                           </Button>
                         </div>
@@ -648,7 +649,7 @@ export function DesignToCodeDialog() {
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-[55vh] text-muted-foreground text-sm">
-                  Run the pipeline to see generated code.
+                  {t('code.emptyState')}
                 </div>
               )}
             </TabsContent>
@@ -661,20 +662,20 @@ export function DesignToCodeDialog() {
                     <div className="flex items-center gap-2 mb-2">
                       <TestTube className="h-4 w-4 text-cyan-500" />
                       <span className="text-sm font-semibold">
-                        Visual Regression Tests ({result.visual_tests.length})
+                        {t('tests.visualRegressionTests')} ({result.visual_tests.length})
                       </span>
                       <Badge variant="secondary" className="text-[10px]">Playwright</Badge>
                     </div>
 
                     <div className="flex gap-2 mb-3">
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Monitor className="h-3.5 w-3.5" /> Desktop
+                        <Monitor className="h-3.5 w-3.5" /> {t('tests.desktop')}
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Tablet className="h-3.5 w-3.5" /> Tablet
+                        <Tablet className="h-3.5 w-3.5" /> {t('tests.tablet')}
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Smartphone className="h-3.5 w-3.5" /> Mobile
+                        <Smartphone className="h-3.5 w-3.5" /> {t('tests.mobile')}
                       </div>
                     </div>
 
@@ -687,7 +688,7 @@ export function DesignToCodeDialog() {
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-[10px]">
-                              Threshold: {(test.threshold * 100).toFixed(0)}%
+                              {t('tests.threshold')}: {(test.threshold * 100).toFixed(0)}%
                             </Badge>
                             <Button
                               variant="ghost"
@@ -696,9 +697,9 @@ export function DesignToCodeDialog() {
                               onClick={() => handleCopyCode(test.test_code, test.name)}
                             >
                               {copiedFile === test.name ? (
-                                <><Check className="h-3 w-3 mr-1" /> Copied</>
+                                <><Check className="h-3 w-3 mr-1" /> {t('tests.copied')}</>
                               ) : (
-                                <><Copy className="h-3 w-3 mr-1" /> Copy</>
+                                <><Copy className="h-3 w-3 mr-1" /> {t('tests.copy')}</>
                               )}
                             </Button>
                           </div>
@@ -711,7 +712,7 @@ export function DesignToCodeDialog() {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                    Visual tests will appear here after the pipeline runs.
+                    {t('tests.emptyState')}
                   </div>
                 )}
               </ScrollArea>
@@ -725,7 +726,7 @@ export function DesignToCodeDialog() {
                     <div className="flex items-center gap-2 mb-2">
                       <Palette className="h-4 w-4 text-amber-500" />
                       <span className="text-sm font-semibold">
-                        Design Tokens Integrated ({result.design_tokens_used.length})
+                        {t('tokens.designTokensIntegrated')} ({result.design_tokens_used.length})
                       </span>
                     </div>
 
@@ -765,7 +766,7 @@ export function DesignToCodeDialog() {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                    Design tokens from your project will appear here.
+                    {t('tokens.emptyState')}
                   </div>
                 )}
               </ScrollArea>
@@ -780,7 +781,7 @@ export function DesignToCodeDialog() {
               <>
                 <Check className="h-3.5 w-3.5 text-green-500" />
                 <span>
-                  {result.generated_files.length} files • {result.visual_tests.length} tests • {result.duration_seconds.toFixed(1)}s
+                  {result.generated_files.length} {t('footer.files')} • {result.visual_tests.length} {t('footer.tests')} • {result.duration_seconds.toFixed(1)}s
                 </span>
               </>
             )}
@@ -796,7 +797,7 @@ export function DesignToCodeDialog() {
             {phase !== 'idle' && (
               <Button variant="outline" size="sm" onClick={handleReset} disabled={isRunning}>
                 <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                Reset
+                {t('footer.reset')}
               </Button>
             )}
             <Button
@@ -808,12 +809,12 @@ export function DesignToCodeDialog() {
               {isRunning ? (
                 <>
                   <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                  Processing...
+                  {t('footer.processing')}
                 </>
               ) : (
                 <>
                   <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                  Generate Code
+                  {t('footer.generateCode')}
                 </>
               )}
             </Button>

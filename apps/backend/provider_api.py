@@ -1395,6 +1395,172 @@ def run_post_build_test_generation(project_path: str = Body(...), modified_files
     except Exception as e:
         return {"success": False, "error": str(e)}
 
+# --- Event-Driven Hooks System API ---
+@app.get("/api/hooks")
+def list_hooks(project_id: Optional[str] = Query(None)):
+    """List all hooks, optionally filtered by project."""
+    try:
+        from services.hooks.hook_service import HookService
+        svc = HookService.get_instance()
+        hooks = svc.list_hooks(project_id)
+        return {"success": True, "hooks": hooks}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/hooks/stats")
+def get_hooks_stats():
+    """Get overall hook system statistics."""
+    try:
+        from services.hooks.hook_service import HookService
+        svc = HookService.get_instance()
+        stats = svc.get_stats()
+        return {"success": True, "stats": stats}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/hooks/templates")
+def get_hook_templates():
+    """Get all available hook templates."""
+    try:
+        from services.hooks.hook_service import HookService
+        svc = HookService.get_instance()
+        templates = svc.get_templates()
+        return {"success": True, "templates": templates}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/hooks/{hook_id}")
+def get_hook(hook_id: str = Path(...)):
+    """Get a single hook by ID."""
+    try:
+        from services.hooks.hook_service import HookService
+        svc = HookService.get_instance()
+        hook = svc.get_hook(hook_id)
+        if not hook:
+            raise HTTPException(status_code=404, detail="Hook not found")
+        return {"success": True, "hook": hook}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/hooks")
+def create_hook(body: Dict[str, Any] = Body(...)):
+    """Create a new hook."""
+    try:
+        from services.hooks.hook_service import HookService
+        svc = HookService.get_instance()
+        hook = svc.create_hook(body)
+        return {"success": True, "hook": hook}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.put("/api/hooks/{hook_id}")
+def update_hook(hook_id: str = Path(...), body: Dict[str, Any] = Body(...)):
+    """Update an existing hook."""
+    try:
+        from services.hooks.hook_service import HookService
+        svc = HookService.get_instance()
+        hook = svc.update_hook(hook_id, body)
+        if not hook:
+            raise HTTPException(status_code=404, detail="Hook not found")
+        return {"success": True, "hook": hook}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.delete("/api/hooks/{hook_id}")
+def delete_hook(hook_id: str = Path(...)):
+    """Delete a hook."""
+    try:
+        from services.hooks.hook_service import HookService
+        svc = HookService.get_instance()
+        deleted = svc.delete_hook(hook_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Hook not found")
+        return {"success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/hooks/{hook_id}/toggle")
+def toggle_hook(hook_id: str = Path(...)):
+    """Toggle a hook between active and paused."""
+    try:
+        from services.hooks.hook_service import HookService
+        svc = HookService.get_instance()
+        hook = svc.toggle_hook(hook_id)
+        if not hook:
+            raise HTTPException(status_code=404, detail="Hook not found")
+        return {"success": True, "hook": hook}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/hooks/{hook_id}/duplicate")
+def duplicate_hook(hook_id: str = Path(...)):
+    """Duplicate an existing hook."""
+    try:
+        from services.hooks.hook_service import HookService
+        svc = HookService.get_instance()
+        hook = svc.duplicate_hook(hook_id)
+        if not hook:
+            raise HTTPException(status_code=404, detail="Hook not found")
+        return {"success": True, "hook": hook}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/hooks/from-template")
+def create_hook_from_template(body: Dict[str, Any] = Body(...)):
+    """Create a hook from a template."""
+    try:
+        from services.hooks.hook_service import HookService
+        svc = HookService.get_instance()
+        template_id = body.get("template_id", "")
+        project_id = body.get("project_id")
+        hook = svc.create_from_template(template_id, project_id)
+        if not hook:
+            raise HTTPException(status_code=404, detail="Template not found")
+        return {"success": True, "hook": hook}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/hooks/emit")
+async def emit_hook_event(body: Dict[str, Any] = Body(...)):
+    """Emit an event to trigger matching hooks."""
+    try:
+        from services.hooks.hook_service import HookService
+        from services.hooks.models import HookEvent, TriggerType
+        svc = HookService.get_instance()
+        event = HookEvent(
+            type=TriggerType(body.get("type", "manual")),
+            data=body.get("data", {}),
+            project_id=body.get("project_id"),
+            source=body.get("source", "api"),
+        )
+        results = await svc.emit_event(event)
+        return {"success": True, "executions": results, "hooks_triggered": len(results)}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/hooks/executions/history")
+def get_hook_executions(hook_id: Optional[str] = Query(None), limit: int = Query(50)):
+    """Get execution history for hooks."""
+    try:
+        from services.hooks.hook_service import HookService
+        svc = HookService.get_instance()
+        executions = svc.get_executions(hook_id, limit)
+        return {"success": True, "executions": executions}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 # --- Analytics API ---
 try:
     from analytics.api_minimal import router as analytics_router
