@@ -581,7 +581,7 @@ export function UsageIndicator() {
       if (typeof globalThis !== 'undefined' && (globalThis as any).debugProfiles) {
         debugProfiles = (globalThis as any).debugProfiles;
       }
-      const openaiError = typeof globalThis !== 'undefined' ? (globalThis as any).lastOpenAIUsageError : undefined;
+      const openaiError = typeof globalThis === 'undefined' ? undefined : (globalThis as any).lastOpenAIUsageError;
       return (
         <TooltipProvider delayDuration={200}>
           <Tooltip>
@@ -618,8 +618,8 @@ export function UsageIndicator() {
                 <div className="mt-2 p-1 bg-muted/30 rounded text-[10px]">
                   <b>{t('common:usage.debugProfiles')}</b>
                   <ul>
-                    {debugProfiles.length > 0 ? debugProfiles.map((p: any, i: number) => (
-                      <li key={i}>{p.name} | {p.baseUrl} | provider: {p.detectedProvider}</li>
+                    {debugProfiles.length > 0 ? debugProfiles.map((p: any) => (
+                      <li key={`${p.name}-${p.baseUrl}`}>{p.name} | {p.baseUrl} | provider: {p.detectedProvider}</li>
                     )) : <li>{t('common:usage.noProfileDetected')}</li>}
                   </ul>
                   <div>{t('common:usage.selectedProvider', { provider: selectedProvider })}</div>
@@ -748,16 +748,192 @@ export function UsageIndicator() {
       'common:usage.weeklyDefault'
   );
 
+  // Debug logs for Windsurf labels
+  if (usage?.providerName === 'windsurf') {
+    console.log('[UsageIndicator] Windsurf usage data:', {
+      sessionWindowLabel: usage?.usageWindows?.sessionWindowLabel,
+      weeklyWindowLabel: usage?.usageWindows?.weeklyWindowLabel,
+      sessionLabel,
+      weeklyLabel,
+      sessionPercent: usage.sessionPercent,
+      weeklyPercent: usage.weeklyPercent
+    });
+  }
+
   const maxUsage = Math.max(usage.sessionPercent, usage.weeklyPercent);
   const isOpenAI = usage.providerName === 'openai';
   const isCopilot = usage.providerName === 'copilot';
-  // Show AlertCircle when re-auth needed or high usage
-  const hasCopilotError = isCopilot && (usage as any).error && (usage as any).error !== "NONE";
-  const Icon = usage.needsReauthentication ? AlertCircle :
-      (isCopilot && (usage as any).error && (usage as any).error !== "NONE") ? AlertCircle :
-      maxUsage >= THRESHOLD_WARNING ? AlertCircle :
-          maxUsage >= THRESHOLD_ELEVATED ? TrendingUp :
-              Activity;
+  
+  // Determine which icon to show based on usage and error states
+  const getUsageIcon = () => {
+    if (usage.needsReauthentication) {
+      return AlertCircle;
+    }
+    
+    if (isCopilot && (usage as any).error && (usage as any).error !== "NONE") {
+      return AlertCircle;
+    }
+    
+    if (maxUsage >= THRESHOLD_WARNING) {
+      return AlertCircle;
+    }
+    
+    if (maxUsage >= THRESHOLD_ELEVATED) {
+      return TrendingUp;
+    }
+    
+    return Activity;
+  };
+  
+  const Icon = getUsageIcon();
+
+  // Determine what content to display based on provider and auth state
+  const getUsageDisplay = () => {
+    if (usage.needsReauthentication) {
+      return (
+        <span className="text-xs font-semibold text-red-500" title={t('common:usage.needsReauth')}>
+          !
+        </span>
+      );
+    }
+    
+    if (isOpenAI) {
+      return (
+        <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
+          <span className="text-green-500" title="OpenAI Cost">
+            ${formatUsageValue(usage.weeklyUsageValue)}
+          </span>
+        </div>
+      );
+    }
+    
+    if (isCopilot) {
+      return (
+        <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
+          <span className="text-blue-500" title="Copilot Cost">
+            {formatUsageValue(usage.copilotUsageDetails?.totalTokens)}T
+          </span>
+        </div>
+      );
+    }
+    
+    // Default display for other providers
+    return (
+      <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
+        <span className={sessionColorClass} title={t('common:usage.sessionShort')}>
+          {Math.round(sessionPercent)}
+        </span>
+        <span className="text-muted-foreground/50">│</span>
+        <span className={weeklyColorClass} title={t('common:usage.weeklyShort')}>
+          {Math.round(weeklyPercent)}
+        </span>
+      </div>
+    );
+  };
+
+  // Determine refresh status display
+  const getRefreshStatusDisplay = () => {
+    if (isRefreshing) {
+      return (
+        <>
+          <Activity className="h-2.5 w-2.5 motion-safe:animate-spin" />
+          <span>{t('common:usage.updating')}</span>
+        </>
+      );
+    }
+    
+    if (lastRefreshTime) {
+      const minutesAgo = Math.floor((Date.now() - lastRefreshTime.getTime()) / 60000);
+      return (
+        <>
+          <Clock className="h-2.5 w-2.5" />
+          <span>{t('common:usage.lastUpdate', { minutes: minutesAgo })}</span>
+        </>
+      );
+    }
+    
+    return <span>{t('common:usage.realTime')}</span>;
+  };
+
+  // Get profile styling classes based on status
+  const getProfileClasses = (profile: any) => {
+    const hasError = profile.isRateLimited || profile.needsReauthentication;
+    
+    const getBgClass = () => {
+      if (hasError) return 'bg-red-500/10';
+      if (profile.isAuthenticated) return 'bg-muted/80';
+      return 'bg-muted';
+    };
+    
+    const getTextClass = () => {
+      if (hasError) return 'text-red-500';
+      if (profile.isAuthenticated) return 'text-foreground/70';
+      return 'text-muted-foreground';
+    };
+    
+    return { bgClasses: getBgClass(), textClasses: getTextClass() };
+  };
+
+  // Get profile usage display based on status
+  const getProfileUsageDisplay = (profile: any) => {
+    if (profile.isRateLimited) {
+      return (
+        <span className="text-[9px] text-red-500">
+          {profile.rateLimitType === 'weekly'
+            ? t('common:usage.weeklyLimitReached')
+            : t('common:usage.sessionLimitReached')}
+        </span>
+      );
+    }
+    
+    if (profile.needsReauthentication) {
+      return (
+        <span className="text-[9px] text-destructive">
+          {t('common:usage.needsReauth')}
+        </span>
+      );
+    }
+    
+    if (!profile.isAuthenticated) {
+      return (
+        <span className="text-[9px] text-muted-foreground">
+          {t('common:usage.notAuthenticated')}
+        </span>
+      );
+    }
+    
+    // Show usage bars for authenticated profiles
+    return (
+      <div className="flex items-center gap-2 mt-0.5">
+        {/* Session usage (short-term) */}
+        <div className="flex items-center gap-1">
+          <Clock className="h-2.5 w-2.5 text-muted-foreground/70" />
+          <div className="w-10 h-1 bg-muted rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full ${getBarColorClass(profile.sessionPercent)}`}
+              style={{ width: `${Math.min(profile.sessionPercent, 100)}%` }}
+            />
+          </div>
+          <span className={`text-[9px] tabular-nums w-6 ${getColorClass(profile.sessionPercent).replace('text-green-500', 'text-muted-foreground').replace('500', '600')}`}>
+            {Math.round(profile.sessionPercent)}%
+          </span>
+        </div>
+        {/* Weekly usage (long-term) */}
+        <div className="flex items-center gap-1">
+          <TrendingUp className="h-2.5 w-2.5 text-muted-foreground/70" />
+          <div className="w-10 h-1 bg-muted rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full ${getBarColorClass(profile.weeklyPercent)}`}
+              style={{ width: `${Math.min(profile.weeklyPercent, 100)}%` }}
+            />
+          </div>
+          <span className={`text-[9px] tabular-nums w-6 ${getColorClass(profile.weeklyPercent).replace('text-green-500', 'text-muted-foreground').replace('500', '600')}`}>
+            {Math.round(profile.weeklyPercent)}%
+          </span>
+        </div>
+      </div>
+    );
+  };
 
   // Après la récupération des labels et des valeurs d'usage
 
@@ -772,34 +948,8 @@ export function UsageIndicator() {
               onClick={handleTriggerClick}
           >
             <Icon className={`h-3.5 w-3.5 shrink-0 ${isRefreshing ? 'motion-safe:animate-spin' : ''}`} />
-            {/* Show "!" when re-auth needed, otherwise dual usage display */}
-            {usage.needsReauthentication ? (
-                <span className="text-xs font-semibold text-red-500" title={t('common:usage.needsReauth')}>
-              !
-            </span>
-            ) : isOpenAI ? (
-              <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
-                <span className="text-green-500" title="OpenAI Cost">
-                  ${formatUsageValue(usage.weeklyUsageValue)}
-                </span>
-              </div>
-            ) : isCopilot ? (
-              <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
-                <span className="text-blue-500" title="Copilot Cost">
-                  {formatUsageValue(usage.copilotUsageDetails?.totalTokens)}T
-                </span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
-                <span className={sessionColorClass} title={t('common:usage.sessionShort')}>
-                  {Math.round(sessionPercent)}
-                </span>
-                <span className="text-muted-foreground/50">│</span>
-                <span className={weeklyColorClass} title={t('common:usage.weeklyShort')}>
-                  {Math.round(weeklyPercent)}
-                </span>
-              </div>
-            )}
+            {/* Show usage display based on provider and auth state */}
+            {getUsageDisplay()}
           </button>
         </PopoverTrigger>
         <PopoverContent
@@ -818,19 +968,7 @@ export function UsageIndicator() {
               </div>
               {/* Real-time indicator */}
               <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                {isRefreshing ? (
-                  <>
-                    <Activity className="h-2.5 w-2.5 motion-safe:animate-spin" />
-                    <span>{t('common:usage.updating')}</span>
-                  </>
-                ) : lastRefreshTime ? (
-                  <>
-                    <Clock className="h-2.5 w-2.5" />
-                    <span>{t('common:usage.lastUpdate', { minutes: Math.floor((new Date().getTime() - lastRefreshTime.getTime()) / 60000) })}</span>
-                  </>
-                ) : (
-                  <span>{t('common:usage.realTime')}</span>
-                )}
+                {getRefreshStatusDisplay()}
               </div>
             </div>
 
@@ -1145,18 +1283,10 @@ export function UsageIndicator() {
                         {/* Initials Avatar with status indicator */}
                         <div className="relative">
                           <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
-                              profile.isRateLimited || profile.needsReauthentication
-                                  ? 'bg-red-500/10'
-                                  : !profile.isAuthenticated
-                                      ? 'bg-muted'
-                                      : 'bg-muted/80'
+                              getProfileClasses(profile).bgClasses
                           }`}>
                       <span className={`text-[10px] font-semibold ${
-                          profile.isRateLimited || profile.needsReauthentication
-                              ? 'text-red-500'
-                              : !profile.isAuthenticated
-                                  ? 'text-muted-foreground'
-                                  : 'text-foreground/70'
+                          getProfileClasses(profile).textClasses
                       }`}>
                         {getInitials(profile.profileName)}
                       </span>
@@ -1189,50 +1319,7 @@ export function UsageIndicator() {
                             )}
                           </div>
                           {/* Usage bars or status - show both session and weekly */}
-                          {profile.isRateLimited ? (
-                              <span className="text-[9px] text-red-500">
-                        {profile.rateLimitType === 'weekly'
-                            ? t('common:usage.weeklyLimitReached')
-                            : t('common:usage.sessionLimitReached')}
-                      </span>
-                          ) : profile.needsReauthentication ? (
-                              <span className="text-[9px] text-destructive">
-                        {t('common:usage.needsReauth')}
-                      </span>
-                          ) : !profile.isAuthenticated ? (
-                              <span className="text-[9px] text-muted-foreground">
-                        {t('common:usage.notAuthenticated')}
-                      </span>
-                          ) : (
-                              <div className="flex items-center gap-2 mt-0.5">
-                                {/* Session usage (short-term) */}
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-2.5 w-2.5 text-muted-foreground/70" />
-                                  <div className="w-10 h-1 bg-muted rounded-full overflow-hidden">
-                                    <div
-                                        className={`h-full rounded-full ${getBarColorClass(profile.sessionPercent)}`}
-                                        style={{ width: `${Math.min(profile.sessionPercent, 100)}%` }}
-                                    />
-                                  </div>
-                                  <span className={`text-[9px] tabular-nums w-6 ${getColorClass(profile.sessionPercent).replace('text-green-500', 'text-muted-foreground').replace('500', '600')}`}>
-                            {Math.round(profile.sessionPercent)}%
-                          </span>
-                                </div>
-                                {/* Weekly usage (long-term) */}
-                                <div className="flex items-center gap-1">
-                                  <TrendingUp className="h-2.5 w-2.5 text-muted-foreground/70" />
-                                  <div className="w-10 h-1 bg-muted rounded-full overflow-hidden">
-                                    <div
-                                        className={`h-full rounded-full ${getBarColorClass(profile.weeklyPercent)}`}
-                                        style={{ width: `${Math.min(profile.weeklyPercent, 100)}%` }}
-                                    />
-                                  </div>
-                                  <span className={`text-[9px] tabular-nums w-6 ${getColorClass(profile.weeklyPercent).replace('text-green-500', 'text-muted-foreground').replace('500', '600')}`}>
-                            {Math.round(profile.weeklyPercent)}%
-                          </span>
-                                </div>
-                              </div>
-                          )}
+                          {getProfileUsageDisplay(profile)}
                         </div>
                       </div>
                   ))}
@@ -1243,7 +1330,3 @@ export function UsageIndicator() {
       </Popover>
   );
 }
-
-
-
-
