@@ -48,7 +48,8 @@
     "designToCode": "Design to Code",
     "mcpMarketplace": "MCP Marketplace",
     "multiRepoOrchestration": "Multi-Repo",
-    "missionControl": "Mission Control"
+    "missionControl": "Mission Control",
+    "agentReplay": "Agent Replay"
   },
   "actions": {
     "settings": "Settings",

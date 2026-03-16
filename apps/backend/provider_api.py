@@ -4,7 +4,6 @@
 
 import logging
 import sys
-import asyncio
 from contextlib import asynccontextmanager
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
@@ -14,13 +13,33 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Annotated
 import os
 import json
 import httpx
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
-# from security.secure_subprocess import run_secure, SubprocessSecurityError
+# Import specific exception for provider validation failures
+try:
+    from integrations.graphiti.providers_pkg.exceptions import ProviderError
+except ImportError:
+    # Fallback if the module is not available
+    class ProviderError(Exception):
+        """Raised when a provider cannot be initialized or validated."""
+        pass
+
+# Constants
+PROVIDER_CONFIG_NOT_FOUND = "Provider config not found"
+PROVIDER_CLASS_NOT_FOUND = "Provider class not found"
+API_KEY_VALIDATION_FAILED_INVALID = "API key validation failed: invalid key"
+API_KEY_VALIDATION_FAILED_ERROR = "API key validation failed: {e}"
+HOOK_NOT_FOUND = "Hook not found"
+PROMPT_REQUIRED = "Prompt is required"
+PROVIDER_TEST_FAILED = "Provider test failed: {e}"
+GENERATION_FAILED = "Generation failed: {e}"
+TEMPLATE_NOT_FOUND = "Template not found"
+GITHUB_CLI_AUTH_SUCCESS = "Logged in to github.com"
+API_MODELS_ENDPOINT = "/v1/models"
 
 # Lazy import: llm_discovery is only needed by endpoint functions, not at module init.
 # Importing it eagerly breaks other modules (agent_runner, client) that import
@@ -195,7 +214,7 @@ def get_env_provider_config(name: str) -> dict | None:
                 ["gh", "auth", "status"],
                 capture_output=True, text=True, timeout=5
             )
-            if "Logged in to github.com" in (result.stdout + result.stderr):
+            if GITHUB_CLI_AUTH_SUCCESS in (result.stdout + result.stderr):
                 return {"authenticated": True, "model": "gpt-4o"}
         except Exception:
             pass
@@ -321,7 +340,7 @@ def get_providers():
                         ["gh", "auth", "status"],
                         capture_output=True, text=True, timeout=5
                     )
-                    status[name] = "Logged in to github.com" in (result.stdout + result.stderr)
+                    status[name] = GITHUB_CLI_AUTH_SUCCESS in (result.stdout + result.stderr)
                 except Exception:
                     status[name] = False
             else:
@@ -332,11 +351,11 @@ def get_providers():
 def get_provider_configs():
     return {"configs": list_provider_configs()}
 
-@app.get("/providers/config/{provider}")
+@app.get("/providers/config/{provider}", responses={404: {"description": PROVIDER_CONFIG_NOT_FOUND}})
 def get_provider_config(provider: str):
     config = load_provider_config(provider) or get_env_provider_config(provider)
     if not config:
-        raise HTTPException(status_code=404, detail="Provider config not found")
+        raise HTTPException(status_code=404, detail=PROVIDER_CONFIG_NOT_FOUND)
     return config
 
 @app.post("/providers/config/{provider}")
@@ -350,7 +369,7 @@ def delete_provider_config_api(provider: str):
     return {"status": "deleted"}
 
 @app.post("/providers/select")
-def select_provider(provider: str = Query(...)):
+def select_provider(provider: Annotated[str, Query(...)]):
     global _selected_provider
     _selected_provider = provider
     return {"selected": provider}
@@ -364,23 +383,23 @@ def get_selected_provider() -> Optional[str]:
     global _selected_provider
     return _selected_provider
 
-@app.post("/providers/test/{provider}")
+@app.post("/providers/test/{provider}", responses={404: {"description": PROVIDER_CONFIG_NOT_FOUND}, 400: {"description": "Provider test failed"}})
 @limiter.limit("5/minute")
 def test_provider(request: Request, provider: str):
     config = load_provider_config(provider)
     if not config:
-        raise HTTPException(status_code=404, detail="Provider config not found")
+        raise HTTPException(status_code=404, detail=PROVIDER_CONFIG_NOT_FOUND)
     provider_cls = get_provider_by_name(provider)
     if not provider_cls:
-        raise HTTPException(status_code=404, detail="Provider class not found")
+        raise HTTPException(status_code=404, detail=PROVIDER_CLASS_NOT_FOUND)
     try:
         instance = provider_cls(**config)
         instance.connect()
         if not instance.validate():
-            raise Exception("Validation failed")
+            raise ProviderError("Validation failed")
         return {"status": "ok"}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Provider test failed: {e}")
+        raise HTTPException(status_code=400, detail=PROVIDER_TEST_FAILED.format(e=e))
 
 @app.post("/providers/test-key/{provider}")
 @limiter.limit("5/minute")
@@ -390,7 +409,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
     base_url = payload.get("base_url")
 
     async def _test_bearer(url: str, key: str) -> dict:
-        """Helper: test a Bearer-authenticated /v1/models endpoint."""
+        """Helper: test a Bearer-authenticated API_MODELS_ENDPOINT endpoint."""
         try:
             headers = {"Authorization": f"Bearer {key}"}
             async with httpx.AsyncClient() as client:
@@ -409,7 +428,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
         try:
             headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01"}
             async with httpx.AsyncClient() as client:
-                resp = await client.get("https://api.anthropic.com/v1/models", headers=headers, timeout=10)
+                resp = await client.get("https://api.anthropic.comAPI_MODELS_ENDPOINT", headers=headers, timeout=10)
             if resp.status_code in (200, 403):
                 set_validated(provider, api_key, True)
                 return {"success": True}
@@ -421,7 +440,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
 
     # --- OpenAI ---
     if provider == "openai":
-        url = (base_url or "https://api.openai.com") + "/v1/models"
+        url = (base_url or "https://api.openai.com") + "API_MODELS_ENDPOINT"
         return await _test_bearer(url, api_key)
 
     # --- Google Gemini ---
@@ -429,7 +448,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
         try:
             async with httpx.AsyncClient() as client:
                 resp = await client.get(
-                    f"https://generativelanguage.googleapis.com/v1/models?key={api_key}",
+                    f"https://generativelanguage.googleapis.comAPI_MODELS_ENDPOINT?key={api_key}",
                     timeout=10,
                 )
             if resp.status_code == 200:
@@ -443,26 +462,26 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
 
     # --- Mistral AI ---
     if provider == "mistral":
-        url = (base_url or "https://api.mistral.ai") + "/v1/models"
+        url = (base_url or "https://api.mistral.ai") + "API_MODELS_ENDPOINT"
         return await _test_bearer(url, api_key)
 
     # --- DeepSeek ---
     if provider == "deepseek":
-        url = (base_url or "https://api.deepseek.com") + "/v1/models"
+        url = (base_url or "https://api.deepseek.com") + "API_MODELS_ENDPOINT"
         return await _test_bearer(url, api_key)
 
     # --- Grok (xAI) ---
     if provider == "grok":
-        return await _test_bearer("https://api.x.ai/v1/models", api_key)
+        return await _test_bearer("https://api.x.aiAPI_MODELS_ENDPOINT", api_key)
 
     # --- Meta (via Together AI / Replicate — OpenAI-compatible) ---
     if provider == "meta":
-        url = (base_url or "https://api.together.xyz") + "/v1/models"
+        url = (base_url or "https://api.together.xyz") + "API_MODELS_ENDPOINT"
         return await _test_bearer(url, api_key)
 
     # --- Cursor ---
     if provider == "cursor":
-        url = (base_url or "https://api.cursor.com") + "/v1/models"
+        url = (base_url or "https://api.cursor.com") + "API_MODELS_ENDPOINT"
         return await _test_bearer(url, api_key)
 
     # --- Windsurf (Codeium) ---
@@ -480,7 +499,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
         except Exception as mcp_error:
             logging.warning(f"MCP test failed, trying direct API: {mcp_error}")
         try:
-            url = "https://server.codeium.com/api/v1/models"
+            url = "https://server.codeium.com/apiAPI_MODELS_ENDPOINT"
             headers = {"Authorization": f"Bearer {oauth_token}"}
             async with httpx.AsyncClient() as client:
                 resp = await client.get(url, headers=headers, timeout=10)
@@ -496,14 +515,20 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
     # --- Copilot (gh CLI auth — no API key test) ---
     if provider == "copilot":
         try:
-            import subprocess
-            result = subprocess.run(
-                ["gh", "auth", "status"],
-                capture_output=True, text=True, timeout=5
+            import asyncio
+            proc = await asyncio.create_subprocess_exec(
+                "gh", "auth", "status",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
             )
-            if "Logged in to github.com" in (result.stdout + result.stderr):
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=5)
+            stdout_text = stdout.decode() if stdout else ""
+            stderr_text = stderr.decode() if stderr else ""
+            if GITHUB_CLI_AUTH_SUCCESS in (stdout_text + stderr_text):
                 return {"success": True, "method": "gh_cli"}
             return {"success": False, "error": "GitHub CLI not authenticated. Run: gh auth login"}
+        except asyncio.TimeoutError:
+            return {"success": False, "error": "GitHub CLI check timed out"}
         except Exception as e:
             return {"success": False, "error": f"GitHub CLI check failed: {e}"}
 
@@ -548,115 +573,115 @@ def get_provider_schema(provider: str):
     except Exception as e:
         return {"error": str(e)}
 
-@app.post("/providers/generate/{provider}")
+@app.post("/providers/generate/{provider}", responses={404: {"description": PROVIDER_CONFIG_NOT_FOUND}, 400: {"description": "Generation failed"}})
 @limiter.limit("30/minute")
 def generate_with_provider(request: Request, provider: str, payload: Dict[str, Any]):
     provider_cls = get_provider_by_name(provider)
     if not provider_cls:
-        raise HTTPException(status_code=404, detail="Provider class not found")
+        raise HTTPException(status_code=404, detail=PROVIDER_CLASS_NOT_FOUND)
     config = load_provider_config(provider)
     if not config:
-        raise HTTPException(status_code=404, detail="Provider config not found")
+        raise HTTPException(status_code=404, detail=PROVIDER_CONFIG_NOT_FOUND)
     prompt = payload.get("prompt")
     if not prompt:
-        raise HTTPException(status_code=400, detail="Prompt is required")
+        raise HTTPException(status_code=400, detail=PROMPT_REQUIRED)
     try:
         instance = provider_cls(**config)
         instance.connect()
         result = instance.generate(prompt, **payload.get("params", {}))
         return {"result": result}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Generation failed: {e}")
+        raise HTTPException(status_code=400, detail=GENERATION_FAILED.format(e=e))
 
-@app.post("/providers/validate/{provider}")
+@app.post("/providers/validate/{provider}", responses={400: {"description": "API key validation failed"}})
 @limiter.limit("5/minute")
-async def validate_provider_key(request: Request, provider: str, api_key: str = Body(..., embed=True)):
+async def validate_provider_key(request: Request, provider: str, api_key: Annotated[str, Body(..., embed=True)]):
     """Validate a provider API key by actually testing it before marking as valid."""
     # Actually test the key before marking it as validated
     if provider in ("openai",):
         try:
-            url = "https://api.openai.com/v1/models"
+            url = "https://api.openai.comAPI_MODELS_ENDPOINT"
             headers = {"Authorization": f"Bearer {api_key}"}
             async with httpx.AsyncClient() as client:
                 resp = await client.get(url, headers=headers, timeout=10)
             if resp.status_code != 200:
                 set_validated(provider, api_key, False)
-                raise HTTPException(status_code=400, detail="API key validation failed: invalid key")
+                raise HTTPException(status_code=400, detail=API_KEY_VALIDATION_FAILED_INVALID)
         except httpx.HTTPError as e:
             set_validated(provider, api_key, False)
-            raise HTTPException(status_code=400, detail=f"API key validation failed: {e}")
+            raise HTTPException(status_code=400, detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=e))
     elif provider in ("grok",):
         try:
-            url = "https://api.x.ai/v1/models"
+            url = "https://api.x.aiAPI_MODELS_ENDPOINT"
             headers = {"Authorization": f"Bearer {api_key}"}
             async with httpx.AsyncClient() as client:
                 resp = await client.get(url, headers=headers, timeout=10)
             if resp.status_code != 200:
                 set_validated(provider, api_key, False)
-                raise HTTPException(status_code=400, detail="API key validation failed: invalid key")
+                raise HTTPException(status_code=400, detail=API_KEY_VALIDATION_FAILED_INVALID)
         except httpx.HTTPError as e:
             set_validated(provider, api_key, False)
-            raise HTTPException(status_code=400, detail=f"API key validation failed: {e}")
+            raise HTTPException(status_code=400, detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=e))
     elif provider in ("anthropic", "claude"):
         try:
             headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01"}
             async with httpx.AsyncClient() as client:
-                resp = await client.get("https://api.anthropic.com/v1/models", headers=headers, timeout=10)
+                resp = await client.get("https://api.anthropic.comAPI_MODELS_ENDPOINT", headers=headers, timeout=10)
             if resp.status_code not in (200, 403):
                 set_validated(provider, api_key, False)
-                raise HTTPException(status_code=400, detail="API key validation failed: invalid key")
+                raise HTTPException(status_code=400, detail=API_KEY_VALIDATION_FAILED_INVALID)
         except httpx.HTTPError as e:
             set_validated(provider, api_key, False)
-            raise HTTPException(status_code=400, detail=f"API key validation failed: {e}")
+            raise HTTPException(status_code=400, detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=e))
     elif provider in ("google",):
         try:
             async with httpx.AsyncClient() as client:
                 resp = await client.get(
-                    f"https://generativelanguage.googleapis.com/v1/models?key={api_key}",
+                    f"https://generativelanguage.googleapis.comAPI_MODELS_ENDPOINT?key={api_key}",
                     timeout=10,
                 )
             if resp.status_code != 200:
                 set_validated(provider, api_key, False)
-                raise HTTPException(status_code=400, detail="API key validation failed: invalid key")
+                raise HTTPException(status_code=400, detail=API_KEY_VALIDATION_FAILED_INVALID)
         except httpx.HTTPError as e:
             set_validated(provider, api_key, False)
-            raise HTTPException(status_code=400, detail=f"API key validation failed: {e}")
+            raise HTTPException(status_code=400, detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=e))
     elif provider in ("windsurf",):
         try:
-            url = "https://server.codeium.com/api/v1/models"
+            url = "https://server.codeium.com/apiAPI_MODELS_ENDPOINT"
             headers = {"Authorization": f"Bearer {api_key}"}
             async with httpx.AsyncClient() as client:
                 resp = await client.get(url, headers=headers, timeout=10)
             if resp.status_code not in (200, 404):
                 set_validated(provider, api_key, False)
-                raise HTTPException(status_code=400, detail="API key validation failed: invalid key")
+                raise HTTPException(status_code=400, detail=API_KEY_VALIDATION_FAILED_INVALID)
         except httpx.HTTPError as e:
             set_validated(provider, api_key, False)
-            raise HTTPException(status_code=400, detail=f"API key validation failed: {e}")
+            raise HTTPException(status_code=400, detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=e))
     elif provider in ("mistral",):
         try:
-            url = "https://api.mistral.ai/v1/models"
+            url = "https://api.mistral.aiAPI_MODELS_ENDPOINT"
             headers = {"Authorization": f"Bearer {api_key}"}
             async with httpx.AsyncClient() as client:
                 resp = await client.get(url, headers=headers, timeout=10)
             if resp.status_code != 200:
                 set_validated(provider, api_key, False)
-                raise HTTPException(status_code=400, detail="API key validation failed: invalid key")
+                raise HTTPException(status_code=400, detail=API_KEY_VALIDATION_FAILED_INVALID)
         except httpx.HTTPError as e:
             set_validated(provider, api_key, False)
-            raise HTTPException(status_code=400, detail=f"API key validation failed: {e}")
+            raise HTTPException(status_code=400, detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=e))
     elif provider in ("deepseek",):
         try:
-            url = "https://api.deepseek.com/v1/models"
+            url = "https://api.deepseek.comAPI_MODELS_ENDPOINT"
             headers = {"Authorization": f"Bearer {api_key}"}
             async with httpx.AsyncClient() as client:
                 resp = await client.get(url, headers=headers, timeout=10)
             if resp.status_code != 200:
                 set_validated(provider, api_key, False)
-                raise HTTPException(status_code=400, detail="API key validation failed: invalid key")
+                raise HTTPException(status_code=400, detail=API_KEY_VALIDATION_FAILED_INVALID)
         except httpx.HTTPError as e:
             set_validated(provider, api_key, False)
-            raise HTTPException(status_code=400, detail=f"API key validation failed: {e}")
+            raise HTTPException(status_code=400, detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=e))
     else:
         # For providers without specific validation (meta, cursor, copilot, ollama, aws)
         # Accept the key if it's non-empty
@@ -967,7 +992,7 @@ def get_sessions(project_id: str):
 
 # --- 2.1 Refactoring Agent ---
 @app.post("/api/refactoring/detect-smells")
-def detect_smells(body: Dict[str, Any] = Body(...)):
+def detect_smells(body: Annotated[Dict[str, Any], Body(...)]):
     try:
         from agents.refactorer import RefactoringAgent
         agent = RefactoringAgent(thresholds=body.get("thresholds", {}))
@@ -978,7 +1003,7 @@ def detect_smells(body: Dict[str, Any] = Body(...)):
         return {"success": False, "error": str(e)}
 
 @app.post("/api/refactoring/propose")
-def propose_refactoring(body: Dict[str, Any] = Body(...)):
+def propose_refactoring(body: Annotated[Dict[str, Any], Body(...)]):
     try:
         from agents.refactorer import RefactoringAgent
         agent = RefactoringAgent(thresholds=body.get("thresholds", {}))
@@ -990,7 +1015,7 @@ def propose_refactoring(body: Dict[str, Any] = Body(...)):
 
 # --- 2.2 Documentation Agent ---
 @app.post("/api/documentation/coverage")
-def check_doc_coverage(body: Dict[str, Any] = Body(...)):
+def check_doc_coverage(body: Annotated[Dict[str, Any], Body(...)]):
     try:
         from agents.documenter import DocumentationAgent, DocFormat
         fmt = body.get("format", "google")
@@ -1002,7 +1027,7 @@ def check_doc_coverage(body: Dict[str, Any] = Body(...)):
         return {"success": False, "error": str(e)}
 
 @app.post("/api/documentation/generate-docstrings")
-def generate_docstrings(body: Dict[str, Any] = Body(...)):
+def generate_docstrings(body: Annotated[Dict[str, Any], Body(...)]):
     try:
         from agents.documenter import DocumentationAgent, DocFormat
         fmt = body.get("format", "google")
@@ -1014,7 +1039,7 @@ def generate_docstrings(body: Dict[str, Any] = Body(...)):
         return {"success": False, "error": str(e)}
 
 @app.post("/api/documentation/generate-readme")
-def generate_readme(body: Dict[str, Any] = Body(...)):
+def generate_readme(body: Annotated[Dict[str, Any], Body(...)]):
     try:
         from agents.documenter import DocumentationAgent, DocFormat
         fmt = body.get("format", "google")
@@ -1049,7 +1074,7 @@ def list_task_templates():
 
 # --- 3.3 AI Code Review ---
 @app.post("/api/code-review/analyze")
-def analyze_code_review(body: Dict[str, Any] = Body(...)):
+def analyze_code_review(body: Annotated[Dict[str, Any], Body(...)]):
     try:
         from review.ai_code_review import AICodeReview
         reviewer = AICodeReview()
@@ -1148,7 +1173,7 @@ def get_auto_detect_status():
 
 # --- 9.1 GitHub PR Details ---
 @app.get("/api/github/pr-details")
-def get_pr_details(pr_url: str = Query(...)):
+def get_pr_details(pr_url: Annotated[str, Query(...)]):
     """Get PR details including files and diffs from GitHub."""
     try:
         from runners.github.providers.github_provider import GitHubProvider
@@ -1206,7 +1231,7 @@ def get_pr_details(pr_url: str = Query(...)):
 
 # --- Test Generation Agent API ---
 @app.post("/api/test-generation/analyze-coverage")
-def analyze_test_coverage(file_path: str = Body(...), existing_test_path: Optional[str] = Body(None)):
+def analyze_test_coverage(file_path: Annotated[str, Body(...)], existing_test_path: Annotated[Optional[str], Body(None)]):
     """Analyze test coverage gaps for a source file."""
     try:
         from agents.test_generator import TestGeneratorAgent
@@ -1237,15 +1262,15 @@ def analyze_test_coverage(file_path: str = Body(...), existing_test_path: Option
                 }
                 for gap in gaps
             ]
-        }
+        }  # Close the return statement properly
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 @app.post("/api/test-generation/generate-unit-tests")
 def generate_unit_tests(
-    file_path: str = Body(...), 
-    existing_test_path: Optional[str] = Body(None),
-    max_tests_per_function: int = Body(3)
+    file_path: Annotated[str, Body(...)], 
+    existing_test_path: Annotated[Optional[str], Body(None)],
+    max_tests_per_function: Annotated[int, Body(3)]
 ):
     """Generate unit tests for a source file."""
     try:
@@ -1290,7 +1315,7 @@ def generate_unit_tests(
         return {"success": False, "error": str(e)}
 
 @app.post("/api/test-generation/generate-e2e-tests")
-def generate_e2e_tests(user_story: str = Body(...), target_module: str = Body(...)):
+def generate_e2e_tests(user_story: Annotated[str, Body(...)], target_module: Annotated[str, Body(...)]):
     """Generate E2E tests from a user story."""
     try:
         from agents.test_generator import TestGeneratorAgent
@@ -1322,7 +1347,7 @@ def generate_e2e_tests(user_story: str = Body(...), target_module: str = Body(..
         return {"success": False, "error": str(e)}
 
 @app.post("/api/test-generation/generate-tdd-tests")
-def generate_tdd_tests(spec: dict = Body(...)):
+def generate_tdd_tests(spec: Annotated[dict, Body(...)]):
     """Generate tests before implementation (TDD mode)."""
     try:
         from agents.test_generator import TestGeneratorAgent
@@ -1354,7 +1379,7 @@ def generate_tdd_tests(spec: dict = Body(...)):
         return {"success": False, "error": str(e)}
 
 @app.post("/api/test-generation/run-post-build")
-def run_post_build_test_generation(project_path: str = Body(...), modified_files: list[str] = Body(...)):
+def run_post_build_test_generation(project_path: Annotated[str, Body(...)], modified_files: Annotated[list[str], Body(...)]):
     """Run automatic test generation after a build (post-build hook)."""
     try:
         from agents.test_generator import TestGeneratorAgent
@@ -1397,7 +1422,7 @@ def run_post_build_test_generation(project_path: str = Body(...), modified_files
 
 # --- Event-Driven Hooks System API ---
 @app.get("/api/hooks")
-def list_hooks(project_id: Optional[str] = Query(None)):
+def list_hooks(project_id: Annotated[Optional[str], Query(None)]):
     """List all hooks, optionally filtered by project."""
     try:
         from services.hooks.hook_service import HookService
@@ -1429,15 +1454,15 @@ def get_hook_templates():
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-@app.get("/api/hooks/{hook_id}")
-def get_hook(hook_id: str = Path(...)):
+@app.get("/api/hooks/{hook_id}", responses={404: {"description": "Hook not found"}})
+def get_hook(hook_id: Annotated[str, Path(...)]):
     """Get a single hook by ID."""
     try:
         from services.hooks.hook_service import HookService
         svc = HookService.get_instance()
         hook = svc.get_hook(hook_id)
         if not hook:
-            raise HTTPException(status_code=404, detail="Hook not found")
+            raise HTTPException(status_code=404, detail=HOOK_NOT_FOUND)
         return {"success": True, "hook": hook}
     except HTTPException:
         raise
@@ -1445,7 +1470,7 @@ def get_hook(hook_id: str = Path(...)):
         return {"success": False, "error": str(e)}
 
 @app.post("/api/hooks")
-def create_hook(body: Dict[str, Any] = Body(...)):
+def create_hook(body: Annotated[Dict[str, Any], Body(...)]):
     """Create a new hook."""
     try:
         from services.hooks.hook_service import HookService
@@ -1455,68 +1480,68 @@ def create_hook(body: Dict[str, Any] = Body(...)):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-@app.put("/api/hooks/{hook_id}")
-def update_hook(hook_id: str = Path(...), body: Dict[str, Any] = Body(...)):
+@app.put("/api/hooks/{hook_id}", responses={404: {"description": HOOK_NOT_FOUND}})
+def update_hook(hook_id: Annotated[str, Path(...)], body: Annotated[Dict[str, Any], Body(...)]):
     """Update an existing hook."""
     try:
         from services.hooks.hook_service import HookService
         svc = HookService.get_instance()
         hook = svc.update_hook(hook_id, body)
         if not hook:
-            raise HTTPException(status_code=404, detail="Hook not found")
+            raise HTTPException(status_code=404, detail=HOOK_NOT_FOUND)
         return {"success": True, "hook": hook}
     except HTTPException:
         raise
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-@app.delete("/api/hooks/{hook_id}")
-def delete_hook(hook_id: str = Path(...)):
+@app.delete("/api/hooks/{hook_id}", responses={404: {"description": "Hook not found"}})
+def delete_hook(hook_id: Annotated[str, Path(...)]):
     """Delete a hook."""
     try:
         from services.hooks.hook_service import HookService
         svc = HookService.get_instance()
         deleted = svc.delete_hook(hook_id)
         if not deleted:
-            raise HTTPException(status_code=404, detail="Hook not found")
+            raise HTTPException(status_code=404, detail=HOOK_NOT_FOUND)
         return {"success": True}
     except HTTPException:
         raise
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-@app.post("/api/hooks/{hook_id}/toggle")
-def toggle_hook(hook_id: str = Path(...)):
+@app.post("/api/hooks/{hook_id}/toggle", responses={404: {"description": "Hook not found"}})
+def toggle_hook(hook_id: Annotated[str, Path(...)]):
     """Toggle a hook between active and paused."""
     try:
         from services.hooks.hook_service import HookService
         svc = HookService.get_instance()
         hook = svc.toggle_hook(hook_id)
         if not hook:
-            raise HTTPException(status_code=404, detail="Hook not found")
+            raise HTTPException(status_code=404, detail=HOOK_NOT_FOUND)
         return {"success": True, "hook": hook}
     except HTTPException:
         raise
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-@app.post("/api/hooks/{hook_id}/duplicate")
-def duplicate_hook(hook_id: str = Path(...)):
+@app.post("/api/hooks/{hook_id}/duplicate", responses={404: {"description": HOOK_NOT_FOUND}})
+def duplicate_hook(hook_id: Annotated[str, Path(...)]):
     """Duplicate an existing hook."""
     try:
         from services.hooks.hook_service import HookService
         svc = HookService.get_instance()
         hook = svc.duplicate_hook(hook_id)
         if not hook:
-            raise HTTPException(status_code=404, detail="Hook not found")
+            raise HTTPException(status_code=404, detail=HOOK_NOT_FOUND)
         return {"success": True, "hook": hook}
     except HTTPException:
         raise
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-@app.post("/api/hooks/from-template")
-def create_hook_from_template(body: Dict[str, Any] = Body(...)):
+@app.post("/api/hooks/from-template", responses={404: {"description": TEMPLATE_NOT_FOUND}})
+def create_hook_from_template(body: Annotated[Dict[str, Any], Body(...)]):
     """Create a hook from a template."""
     try:
         from services.hooks.hook_service import HookService
@@ -1525,7 +1550,7 @@ def create_hook_from_template(body: Dict[str, Any] = Body(...)):
         project_id = body.get("project_id")
         hook = svc.create_from_template(template_id, project_id)
         if not hook:
-            raise HTTPException(status_code=404, detail="Template not found")
+            raise HTTPException(status_code=404, detail=TEMPLATE_NOT_FOUND)
         return {"success": True, "hook": hook}
     except HTTPException:
         raise
@@ -1533,7 +1558,7 @@ def create_hook_from_template(body: Dict[str, Any] = Body(...)):
         return {"success": False, "error": str(e)}
 
 @app.post("/api/hooks/emit")
-async def emit_hook_event(body: Dict[str, Any] = Body(...)):
+async def emit_hook_event(body: Annotated[Dict[str, Any], Body(...)]):
     """Emit an event to trigger matching hooks."""
     try:
         from services.hooks.hook_service import HookService
@@ -1551,7 +1576,7 @@ async def emit_hook_event(body: Dict[str, Any] = Body(...)):
         return {"success": False, "error": str(e)}
 
 @app.get("/api/hooks/executions/history")
-def get_hook_executions(hook_id: Optional[str] = Query(None), limit: int = Query(50)):
+def get_hook_executions(hook_id: Annotated[Optional[str], Query(None)], limit: Annotated[int, Query(50)]):
     """Get execution history for hooks."""
     try:
         from services.hooks.hook_service import HookService
@@ -1576,6 +1601,13 @@ try:
 except ImportError as e:
     print(f"Warning: Could not import mission control router: {e}")
 
+# --- Agent Replay & Debug Mode API ---
+try:
+    from replay.api import router as replay_router
+    app.include_router(replay_router)
+except ImportError as e:
+    print(f"Warning: Could not import replay router: {e}")
+
 if __name__ == "__main__":
     import uvicorn
     try:
@@ -1584,4 +1616,4 @@ if __name__ == "__main__":
     except ImportError:
         pass
     port = int(os.getenv("BACKEND_PORT", 9000))
-    uvicorn.run("provider_api:app", host="0.0.0.0", port=port, reload=True, reload_excludes=[".venv"])
+    uvicorn.run("provider_api:app", host="127.0.0.1", port=port, reload=True, reload_excludes=[".venv"])

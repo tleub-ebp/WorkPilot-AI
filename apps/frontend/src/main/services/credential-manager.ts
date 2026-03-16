@@ -1278,6 +1278,22 @@ export class CredentialManager extends EventEmitter {
 export const credentialManager = new CredentialManager();
 
 /**
+ * Helper function to read a key from Windsurf's ItemTable database.
+ * Returns the value as a string or null if not found/error.
+ */
+function readWindsurfKey(db: import('better-sqlite3').Database, key: string): string | null {
+  try {
+    const row = db.prepare('SELECT value FROM ItemTable WHERE key = ?').get(key) as { value: string | Buffer } | undefined;
+    if (!row) return null;
+    const val = row.value;
+    if (Buffer.isBuffer(val)) return val.toString('utf-8');
+    return typeof val === 'string' ? val : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Detect Windsurf API key from local IDE installation.
  * Uses better-sqlite3 (pure Node.js) to read the state.vscdb SQLite database
  * stored by Windsurf IDE — no Python dependency required.
@@ -1330,24 +1346,11 @@ export async function detectWindsurfLocalToken(): Promise<{ success: boolean; ap
     }
 
     try {
-      // Helper to read a key from the ItemTable
-      const readKey = (key: string): string | null => {
-        try {
-          const row = db.prepare('SELECT value FROM ItemTable WHERE key = ?').get(key) as { value: string | Buffer } | undefined;
-          if (!row) return null;
-          const val = row.value;
-          if (Buffer.isBuffer(val)) return val.toString('utf-8');
-          return typeof val === 'string' ? val : null;
-        } catch {
-          return null;
-        }
-      };
-
       let apiKey: string | undefined;
       let userName: string | undefined;
 
       // Strategy 1: Standard auth — windsurfAuthStatus JSON blob with apiKey field
-      const authStatusRaw = readKey('windsurfAuthStatus');
+      const authStatusRaw = readWindsurfKey(db, 'windsurfAuthStatus');
       if (authStatusRaw) {
         try {
           const authData = JSON.parse(authStatusRaw);
@@ -1376,7 +1379,7 @@ export async function detectWindsurfLocalToken(): Promise<{ success: boolean; ap
       // Strategy 2: SSO enterprise fallback keys
       if (!apiKey) {
         // Try windsurf.authToken (used by some SSO enterprise setups)
-        const authToken = readKey('windsurf.authToken');
+        const authToken = readWindsurfKey(db, 'windsurf.authToken');
         if (authToken) {
           try {
             const parsed = JSON.parse(authToken);
@@ -1391,7 +1394,7 @@ export async function detectWindsurfLocalToken(): Promise<{ success: boolean; ap
 
       if (!apiKey) {
         // Try codeium.apiKey (direct key storage)
-        const codeiumKey = readKey('codeium.apiKey');
+        const codeiumKey = readWindsurfKey(db, 'codeium.apiKey');
         if (codeiumKey && codeiumKey.length > 10) {
           apiKey = codeiumKey;
         }
@@ -1399,7 +1402,7 @@ export async function detectWindsurfLocalToken(): Promise<{ success: boolean; ap
 
       if (!apiKey) {
         // Try service-auth/windsurf key pattern (SSO token exchange result)
-        const serviceAuth = readKey('service-auth/windsurf');
+        const serviceAuth = readWindsurfKey(db, 'service-auth/windsurf');
         if (serviceAuth) {
           try {
             const parsed = JSON.parse(serviceAuth);
@@ -1412,7 +1415,7 @@ export async function detectWindsurfLocalToken(): Promise<{ success: boolean; ap
 
       // Resolve user name from a separate key if not already found
       if (!userName) {
-        const authUserRaw = readKey('codeium.windsurf-windsurf_auth');
+        const authUserRaw = readWindsurfKey(db, 'codeium.windsurf-windsurf_auth');
         if (authUserRaw) {
           try {
             const parsed = JSON.parse(authUserRaw);
@@ -1643,20 +1646,8 @@ export async function readWindsurfCachedPlanInfo(): Promise<{ success: boolean; 
     }
 
     try {
-      const readKey = (key: string): string | null => {
-        try {
-          const row = db.prepare('SELECT value FROM ItemTable WHERE key = ?').get(key) as { value: string | Buffer } | undefined;
-          if (!row) return null;
-          const val = row.value;
-          if (Buffer.isBuffer(val)) return val.toString('utf-8');
-          return typeof val === 'string' ? val : null;
-        } catch {
-          return null;
-        }
-      };
-
       // Read cached plan info
-      const planInfoRaw = readKey('windsurf.settings.cachedPlanInfo');
+      const planInfoRaw = readWindsurfKey(db, 'windsurf.settings.cachedPlanInfo');
       if (!planInfoRaw) {
         db.close();
         return { success: false, error: 'No cached plan info in Windsurf IDE' };
@@ -1668,7 +1659,7 @@ export async function readWindsurfCachedPlanInfo(): Promise<{ success: boolean; 
       // by comparing with the current billing cycle in the protobuf data.
       // The userStatusProtoBinaryBase64 is refreshed on each IDE session and
       // contains the authoritative billing cycle dates.
-      const authStatusRaw = readKey('windsurfAuthStatus');
+      const authStatusRaw = readWindsurfKey(db, 'windsurfAuthStatus');
       if (authStatusRaw) {
         try {
           const authData = JSON.parse(authStatusRaw);
@@ -1738,7 +1729,7 @@ export async function readWindsurfCachedPlanInfo(): Promise<{ success: boolean; 
 
       // Read user name from auth data
       let userName: string | undefined;
-      const authUserRaw = readKey('codeium.windsurf-windsurf_auth');
+      const authUserRaw = readWindsurfKey(db, 'codeium.windsurf-windsurf_auth');
       if (authUserRaw) {
         try {
           const parsed = JSON.parse(authUserRaw);
@@ -1760,5 +1751,171 @@ export async function readWindsurfCachedPlanInfo(): Promise<{ success: boolean; 
     }
   } catch (error: any) {
     return { success: false, error: error.message || 'Unknown error reading Windsurf plan info' };
+  }
+}
+
+/**
+ * Fetch real-time Windsurf usage by calling the Codeium GetUserStatus API.
+ *
+ * The local SQLite cache (userStatusProtoBinaryBase64) is only refreshed when
+ * the Windsurf IDE starts a new session, so it can be significantly behind
+ * actual usage. This function calls the same API the Windsurf IDE uses to get
+ * fresh data directly from the server.
+ *
+ * Endpoint: POST https://server.codeium.com/exa.seat_management_pb.SeatManagementService/GetUserStatus
+ * Auth: Bearer <apiKey> (the sk-ws-... key from windsurfAuthStatus)
+ * Response: JSON with userStatus containing base64 protobuf (same format as
+ *           userStatusProtoBinaryBase64 in the local DB)
+ *
+ * Returns updated WindsurfCachedPlanInfo if successful, or null if the API
+ * call fails (in which case the caller should fall back to local cache).
+ */
+export async function fetchWindsurfRealTimeUsage(): Promise<{
+  success: boolean;
+  planInfo?: WindsurfCachedPlanInfo;
+  userName?: string;
+  error?: string;
+}> {
+  try {
+    // First, get the apiKey and base plan info from local DB
+    const localResult = await readWindsurfCachedPlanInfo();
+
+    // We need the apiKey from the local Windsurf IDE DB
+    const tokenResult = await detectWindsurfLocalToken();
+    if (!tokenResult.success || !tokenResult.apiKey) {
+      return { success: false, error: 'No Windsurf API key available for real-time fetch' };
+    }
+
+    const apiKey = tokenResult.apiKey;
+
+    // Call GetUserStatus API — this is the same endpoint the Windsurf IDE uses
+    // to refresh user status including credit usage
+    let resp: Response;
+    try {
+      resp = await fetch('https://server.codeium.com/exa.seat_management_pb.SeatManagementService/GetUserStatus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: '{}',
+        signal: AbortSignal.timeout(8000),
+      });
+    } catch (e: any) {
+      return { success: false, error: `GetUserStatus network error: ${e.message}` };
+    }
+
+    if (!resp.ok) {
+      return { success: false, error: `GetUserStatus returned ${resp.status}: ${resp.statusText}` };
+    }
+
+    const userData = await resp.json();
+
+    // The response contains a base64 protobuf in userStatusProtoBinaryBase64
+    // or directly in a nested structure. Try to extract the protobuf.
+    const protoB64 = userData?.userStatusProtoBinaryBase64
+      || userData?.user_status_proto_binary_base64;
+
+    if (protoB64 && typeof protoB64 === 'string') {
+      // Parse protobuf to extract billing cycle and usage data
+      const billing = extractBillingCycleFromProtobuf(protoB64);
+      if (billing && billing.startSeconds > 0 && billing.endSeconds > 0) {
+        // Build a WindsurfCachedPlanInfo from the fresh protobuf data
+        // Start from the local cached plan info if available (for planName, etc.)
+        const basePlan: WindsurfCachedPlanInfo = localResult.success && localResult.planInfo
+          ? { ...localResult.planInfo, usage: { ...localResult.planInfo.usage } }
+          : {
+              planName: 'Teams',
+              startTimestamp: billing.startSeconds * 1000,
+              endTimestamp: billing.endSeconds * 1000,
+              usage: {
+                duration: 0,
+                messages: billing.totalMessages,
+                flowActions: billing.totalFlowActions,
+                flexCredits: 0,
+                usedMessages: billing.usedMessages,
+                usedFlowActions: billing.usedFlowActions,
+                usedFlexCredits: 0,
+                remainingMessages: Math.max(0, billing.totalMessages - billing.usedMessages),
+                remainingFlowActions: Math.max(0, billing.totalFlowActions - billing.usedFlowActions),
+                remainingFlexCredits: 0,
+              },
+              hasBillingWritePermissions: false,
+              gracePeriodStatus: 0,
+            };
+
+        // Override with fresh data from API
+        basePlan.startTimestamp = billing.startSeconds * 1000;
+        basePlan.endTimestamp = billing.endSeconds * 1000;
+        basePlan.isStale = false;
+
+        if (billing.totalMessages > 0) {
+          basePlan.usage.messages = billing.totalMessages;
+        }
+        if (billing.totalFlowActions > 0) {
+          basePlan.usage.flowActions = billing.totalFlowActions;
+        }
+        basePlan.usage.usedMessages = billing.usedMessages;
+        basePlan.usage.remainingMessages = Math.max(0, basePlan.usage.messages - billing.usedMessages);
+        basePlan.usage.usedFlowActions = billing.usedFlowActions;
+        basePlan.usage.remainingFlowActions = Math.max(0, basePlan.usage.flowActions - billing.usedFlowActions);
+
+        console.log('[fetchWindsurfRealTimeUsage] Got fresh data from GetUserStatus API:', {
+          totalMessages: basePlan.usage.messages,
+          usedMessages: basePlan.usage.usedMessages,
+          remainingMessages: basePlan.usage.remainingMessages,
+          totalFlowActions: basePlan.usage.flowActions,
+          usedFlowActions: basePlan.usage.usedFlowActions,
+          remainingFlowActions: basePlan.usage.remainingFlowActions,
+        });
+
+        return {
+          success: true,
+          planInfo: basePlan,
+          userName: localResult.userName || tokenResult.userName,
+        };
+      }
+    }
+
+    // If the response contains JSON fields directly (some API versions)
+    // Try to extract from a nested planInfo or seats structure
+    if (userData?.seats || userData?.planInfo || userData?.plan_info) {
+      const plan = userData.planInfo || userData.plan_info;
+      if (plan) {
+        console.log('[fetchWindsurfRealTimeUsage] Got JSON plan info from GetUserStatus:', plan);
+        // Attempt to map JSON fields to our structure
+        const basePlan: WindsurfCachedPlanInfo = localResult.success && localResult.planInfo
+          ? { ...localResult.planInfo, usage: { ...localResult.planInfo.usage } }
+          : {
+              planName: plan.planName || 'Teams',
+              startTimestamp: plan.startTimestamp || Date.now(),
+              endTimestamp: plan.endTimestamp || Date.now() + 30 * 86400000,
+              usage: {
+                duration: 0,
+                messages: plan.usage?.messages || 0,
+                flowActions: plan.usage?.flowActions || 0,
+                flexCredits: 0,
+                usedMessages: plan.usage?.usedMessages || 0,
+                usedFlowActions: plan.usage?.usedFlowActions || 0,
+                usedFlexCredits: 0,
+                remainingMessages: plan.usage?.remainingMessages || 0,
+                remainingFlowActions: plan.usage?.remainingFlowActions || 0,
+                remainingFlexCredits: 0,
+              },
+              hasBillingWritePermissions: false,
+              gracePeriodStatus: 0,
+            };
+        basePlan.isStale = false;
+        return {
+          success: true,
+          planInfo: basePlan,
+          userName: localResult.userName || tokenResult.userName,
+        };
+      }
+    }
+
+    return { success: false, error: 'GetUserStatus response did not contain parseable usage data' };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Unknown error fetching real-time Windsurf usage' };
   }
 }

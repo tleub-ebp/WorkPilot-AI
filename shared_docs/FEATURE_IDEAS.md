@@ -64,7 +64,8 @@ Mission Control est maintenant intégré dans WorkPilot AI ! Orchestrez plusieur
 
 </details>
 
-### 2. Agent Replay & Debug Mode — Le "DevTools" pour l'IA
+<details>
+<summary>### 2. Agent Replay & Debug Mode — Le "DevTools" pour l'IA ✅ Implémenté</summary>
 
 Rejouer visuellement le raisonnement d'un agent step-by-step : décisions prises, fichiers lus, outils utilisés, tokens consommés. **Le Chrome DevTools des agents IA.**
 
@@ -74,6 +75,69 @@ Rejouer visuellement le raisonnement d'un agent step-by-step : décisions prises
 - **Exploite :** Agent process, agent events, agent state
 - **Effort :** Élevé
 - **Pourquoi c'est BANGER :** Aucun concurrent ne propose ça. Transparence totale sur l'IA = confiance utilisateur massive. Killer feature pour le marketing et l'enterprise (audit trail).
+
+#### 🚀 Comment utiliser Agent Replay & Debug Mode
+
+Agent Replay est maintenant intégré dans WorkPilot AI ! Rejouez, débuguez et comparez les sessions d'agents IA avec une transparence totale.
+
+##### 🎯 Démarrage rapide
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"⟲ Agent Replay"** dans le groupe "Core"
+2. **Liste des sessions** : Toutes les sessions enregistrées sont listées avec agent, tâche, tokens, coût, durée
+3. **Recherche** : Filtrez les sessions par nom d'agent, description de tâche ou modèle
+4. **Replay** : Cliquez sur une session pour ouvrir le lecteur de replay interactif
+5. **Playback** : Utilisez les contrôles Play/Pause/Step Forward/Step Backward avec vitesse réglable (0.25x à 4x)
+6. **Comparer** : Cliquez l'icône A/B sur une session, puis sélectionnez une seconde session pour la comparaison
+
+##### 🏗️ Architecture technique
+
+**Backend** (`apps/backend/replay/`) :
+- `models.py` — Modèles de données : ReplayStep, ReplaySession, Breakpoint, FileDiff, ABComparison
+- `recorder.py` — ReplayRecorder : enregistrement structuré des sessions, breakpoints, persistance disque, comparaison A/B
+- `api.py` — Routes FastAPI (sessions CRUD, steps, heatmap, token timeline, breakpoints, comparaison)
+
+**Frontend** (`apps/frontend/src/renderer/components/agent-replay/`) :
+- `AgentReplayDashboard.tsx` — Dashboard principal : liste sessions, lecteur replay, panels tabulés
+- `index.ts` — Export du module
+
+**Store** (`agent-replay-store.ts`) — Zustand store avec :
+- Gestion sessions (fetch, load, delete, close)
+- Contrôle playback (play, pause, stop, step, vitesse)
+- Breakpoints (add, remove, hit detection)
+- Comparaison A/B (compare, clear)
+- Heatmap et token timeline
+
+##### 🎨 Fonctionnalités clés
+
+- **Timeline interactive** : Liste de tous les steps avec icônes, couleurs par type, filtrage et recherche
+- **Lecteur de replay** : Play/Pause/Step avec slider de progression et vitesse configurable
+- **Détail par step** : Type, durée, tokens (input/output), coût, raisonnement, tool input/output, options considérées
+- **Diff viewer** : Visualisation des changements de fichiers à chaque étape (ajouts en vert, suppressions en rouge)
+- **File heatmap** : Visualisation colorée des fichiers les plus touchés par l'agent
+- **Token timeline** : Graphique de consommation de tokens par step avec curseur synchronisé
+- **Tool usage stats** : Statistiques d'utilisation des outils par l'agent
+- **Breakpoints** : Points d'arrêt configurables par type (tool_call, file_change, decision, error, token_threshold, step_index, pattern_match)
+- **Comparaison A/B** : Comparaison côte-à-côte de deux sessions (tokens, coût, durée, steps, tools, fichiers communs/uniques)
+- **Mode debug** : Pause automatique du replay aux breakpoints configurés
+- **Fullscreen** : Mode plein écran pour une immersion complète
+- **i18n** : Support anglais et français
+
+##### 📡 API Endpoints
+
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/replay/sessions` | Liste toutes les sessions |
+| GET | `/replay/sessions/{id}` | Détail d'une session avec tous les steps |
+| DELETE | `/replay/sessions/{id}` | Supprime une session |
+| GET | `/replay/sessions/{id}/steps` | Steps filtrés par type |
+| GET | `/replay/sessions/{id}/heatmap` | Heatmap des fichiers |
+| GET | `/replay/sessions/{id}/token-timeline` | Timeline des tokens |
+| GET | `/replay/sessions/{id}/tool-usage` | Stats d'utilisation des outils |
+| POST | `/replay/sessions/{id}/breakpoints` | Ajoute un breakpoint |
+| DELETE | `/replay/sessions/{id}/breakpoints/{bp_id}` | Supprime un breakpoint |
+| POST | `/replay/compare` | Comparaison A/B de deux sessions |
+
+</details>
 
 ### 3. Self-Healing Codebase + Incident Responder (fusionné)
 
