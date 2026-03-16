@@ -661,15 +661,15 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
       <AlertDialog open={showInstallWarning} onOpenChange={setShowInstallWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("copilot:updateCopilotCli", "Update GitHub Copilot CLI?")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("settings:copilot.updateCopilotCli")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("copilot:updateDescription", "This will update the GitHub Copilot CLI tool. A new terminal will open in the \"Terminaux Agent\" page to run the update command.")}
+              {t("settings:copilot.updateDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common:cancel", "Cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={performInstall}>
-              {t("copilot:openTerminalAndUpdate", "Open Terminal & Update")}
+              {t("settings:copilot.openTerminalAndUpdate")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -679,9 +679,9 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
       <AlertDialog open={showPathChangeWarning} onOpenChange={setShowPathChangeWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("copilot:switchGhCliInstallation", "Switch gh CLI installation?")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("copilot:switchGhCliInstallation")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("copilot:switchDescription", "Switching installations will use a different gh binary for Copilot CLI.")}
+              {t("settings:copilot.switchDescription")}
               {" "}
               <span className="block mt-2 font-mono text-xs break-all">
                 {selectedInstallation}
