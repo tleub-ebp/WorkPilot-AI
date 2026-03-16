@@ -71,7 +71,7 @@ export {
   Gauge,
   GitBranch,
   GitCommit,
-  Github,
+  GithubIcon,
   GitMerge,
   Globe,
   Grid2X2,

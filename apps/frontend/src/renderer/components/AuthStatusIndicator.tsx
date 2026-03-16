@@ -14,9 +14,8 @@
  * Usage data comes from UsageMonitor via IPC push events.
  */
 
-import React from 'react';
 import { useMemo, useState, useEffect } from 'react';
-import { AlertTriangle, Key, Lock, Shield, Server, Fingerprint, ExternalLink } from 'lucide-react';
+import { Key, Lock, Shield, Server, Fingerprint, ExternalLink } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -26,8 +25,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '@/stores/settings-store';
 import { detectProvider, getProviderLabel, getProviderBadgeColor, type ApiProvider } from '@shared/utils/provider-detection';
-import { formatTimeRemaining, localizeUsageWindowLabel, hasHardcodedText } from '@shared/utils/format-time';
-import type { UsageSnapshot } from '@shared/types';
 import { useProviderContext } from './ProviderContext';
 
 /**
@@ -66,10 +63,6 @@ export function AuthStatusIndicator() {
   const { t } = useTranslation(['common']);
   const { selectedProvider } = useProviderContext();
 
-  // Track usage data for warning badge
-  const [usage, setUsage] = useState<UsageSnapshot | null>(null);
-  const [isLoadingUsage, setIsLoadingUsage] = useState(true);
-
   // Track GitHub CLI status for Copilot provider
   const [githubStatus, setGithubStatus] = useState<{ available: boolean; isAuth?: boolean; username?: string } | null>(null);
   const [isLoadingGithubStatus, setIsLoadingGithubStatus] = useState(false);
@@ -82,34 +75,9 @@ export function AuthStatusIndicator() {
   } | null>(null);
   const [isLoadingWindsurfAccount, setIsLoadingWindsurfAccount] = useState(false);
 
-  // Subscribe to live usage updates + refresh on provider/profile change
+  // Subscribe to provider/profile change events
   useEffect(() => {
-    setIsLoadingUsage(true);
-    setUsage(null);
-
-    const unsubscribe = window.electronAPI.onUsageUpdated((snapshot: UsageSnapshot) => {
-      if (selectedProvider && snapshot.providerName && snapshot.providerName !== selectedProvider) return;
-      setUsage(snapshot);
-      setIsLoadingUsage(false);
-    });
-
-    window.electronAPI.requestUsageUpdate()
-      .then((result) => {
-        if (result.success && result.data) {
-          if (selectedProvider && result.data.providerName && result.data.providerName !== selectedProvider) return;
-          setUsage(result.data);
-        }
-      })
-      .catch((error) => {
-        console.warn('[AuthStatusIndicator] Failed to fetch usage:', error);
-      })
-      .finally(() => {
-        setIsLoadingUsage(false);
-      });
-
-    return () => {
-      unsubscribe();
-    };
+    // This effect can be used for future provider/profile change handling
   }, [selectedProvider, activeProfileId]);
 
   // Fetch GitHub CLI status when Copilot provider is selected
@@ -117,7 +85,7 @@ export function AuthStatusIndicator() {
     if (selectedProvider === 'copilot') {
       setIsLoadingGithubStatus(true);
 
-      window.electronAPI.getGithubCliStatus?.()
+      globalThis.electronAPI.getGithubCliStatus?.()
         .then((result: { success: boolean; data: { available: boolean; isAuth?: boolean; username?: string } }) => {
           if (result.success && result.data) {
             setGithubStatus(result.data);
@@ -143,7 +111,7 @@ export function AuthStatusIndicator() {
     if (selectedProvider === 'windsurf') {
       setIsLoadingWindsurfAccount(true);
 
-      window.electronAPI.detectWindsurfToken?.()
+      globalThis.electronAPI.detectWindsurfToken?.()
         .then((result: { success: boolean; userName?: string; planName?: string; usageInfo?: { usedMessages: number; totalMessages: number; usedFlowActions: number; totalFlowActions: number } }) => {
           if (result.success) {
             setWindsurfAccount({
@@ -167,26 +135,6 @@ export function AuthStatusIndicator() {
       setIsLoadingWindsurfAccount(false);
     }
   }, [selectedProvider]);
-
-  // Determine if usage warning badge should be shown
-  const shouldShowUsageWarning = usage && !isLoadingUsage && (
-    usage.sessionPercent >= 90 || usage.weeklyPercent >= 90
-  );
-
-  const warningBadgePercent = usage
-    ? Math.max(usage.sessionPercent, usage.weeklyPercent)
-    : 0;
-
-  // Get formatted reset times (calculated dynamically from timestamps)
-  let sessionResetTime: string | undefined;
-  if (usage?.sessionResetTimestamp) {
-    const formatted = formatTimeRemaining(usage.sessionResetTimestamp, t);
-    sessionResetTime = formatted !== undefined
-      ? formatted
-      : (!hasHardcodedText(usage?.sessionResetTime) ? usage?.sessionResetTime : undefined);
-  } else {
-    sessionResetTime = !hasHardcodedText(usage?.sessionResetTime) ? usage?.sessionResetTime : undefined;
-  }
 
   // Derive auth status purely from selectedProvider + profiles (no IPC calls)
   const authStatus = useMemo(() => {
@@ -244,15 +192,186 @@ export function AuthStatusIndicator() {
     return OAUTH_FALLBACK;
   }, [selectedProvider, profiles, activeProfileId]);
 
+  const isOAuth = authStatus.type === 'oauth';
+  const Icon = isOAuth ? Lock : Key;
+  const badgeLabel = getProviderLabel(authStatus.provider);
+
+  // Render provider-specific content based on selected provider
+  const providerSpecificContent = useMemo(() => {
+    if (selectedProvider === 'copilot') {
+      return (
+        <div className="pt-2 border-t space-y-2">
+          <div className="text-[10px] text-muted-foreground">
+            {t('common:usage.copilotAuthNote', { provider: 'GitHub Copilot' })}
+          </div>
+
+          {/* GitHub CLI Status */}
+          {(() => {
+            if (isLoadingGithubStatus) {
+              return (
+                <div className="text-[10px] text-muted-foreground italic">
+                  {t('common:usage.checkingGithubStatus')}
+                </div>
+              );
+            }
+
+            if (!githubStatus) {
+              return (
+                <div className="text-[10px] text-muted-foreground italic">
+                  {t('common:usage.cannotCheckGithubStatus')}
+                </div>
+              );
+            }
+
+            if (githubStatus.available) {
+              return (
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Shield className="h-3 w-3" />
+                      <span className="text-[10px]">{t('common:usage.githubStatus')}</span>
+                    </div>
+                    <span className={`text-[10px] font-medium ${githubStatus.isAuth ? 'text-green-500' : 'text-red-500'}`}>
+                      {githubStatus.isAuth ? t('common:usage.connected') : t('common:usage.notConnected')}
+                    </span>
+                  </div>
+                  {githubStatus.username && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Key className="h-3 w-3" />
+                        <span className="text-[10px]">{t('common:usage.activeAccount')}</span>
+                      </div>
+                      <span className="text-[10px] font-medium text-blue-500">
+                        @{githubStatus.username}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <div className="text-[10px] text-red-500">
+                {t('common:usage.githubCliNotAvailable')} <code className="bg-muted px-1 rounded">gh auth login</code>
+              </div>
+            );
+          })()}
+
+          {/* Note about missing usage data */}
+          <div className="pt-1 border-t">
+            <div className="text-[10px] text-muted-foreground italic">
+              {t('common:usage.dataUnavailable')}
+            </div>
+            <div className="text-[10px] text-muted-foreground italic">
+              {t('common:usage.dataUnavailableDescription')}
+            </div>
+            <div className="text-[10px] text-muted-foreground mt-1">
+              <a href="https://github.com/settings/copilot" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+                {t('common:usage.copilotDashboardLink')}
+              </a>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (selectedProvider === 'windsurf') {
+      return (
+        <div className="pt-2 border-t space-y-2">
+          <div className="text-[10px] text-muted-foreground">
+            {t('common:usage.windsurfAuthNote')}
+          </div>
+
+          {/* Windsurf Account Info */}
+          {(() => {
+            if (isLoadingWindsurfAccount) {
+              return (
+                <div className="text-[10px] text-muted-foreground italic">
+                  {t('common:usage.checkingWindsurfStatus')}
+                </div>
+              );
+            }
+
+            if (!windsurfAccount) {
+              return (
+                <div className="text-[10px] text-muted-foreground italic">
+                  {t('common:usage.windsurfNotDetected')}
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-1">
+                {/* User name */}
+                {windsurfAccount.userName && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Key className="h-3 w-3" />
+                      <span className="text-[10px]">{t('common:usage.activeAccount')}</span>
+                    </div>
+                    <span className="text-[10px] font-medium text-teal-500">
+                      {windsurfAccount.userName}
+                    </span>
+                  </div>
+                )}
+                {/* Plan */}
+                {windsurfAccount.planName && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Shield className="h-3 w-3" />
+                      <span className="text-[10px]">{t('common:usage.windsurfPlan')}</span>
+                    </div>
+                    <span className="text-[10px] font-medium">
+                      {windsurfAccount.planName}
+                    </span>
+                  </div>
+                )}
+                {/* Usage info */}
+                {windsurfAccount.usageInfo && (
+                  <div className="space-y-1 pt-1 border-t">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted-foreground">{t('common:usage.windsurfCredits')}</span>
+                      <span className="text-[10px] font-medium">
+                        {Math.round(windsurfAccount.usageInfo.usedMessages / 100)}/{Math.round(windsurfAccount.usageInfo.totalMessages / 100)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted-foreground">{t('common:usage.windsurfFlowActions')}</span>
+                      <span className="text-[10px] font-medium">
+                        {Math.round(windsurfAccount.usageInfo.usedFlowActions / 100)}/{Math.round(windsurfAccount.usageInfo.totalFlowActions / 100)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Dashboard link */}
+          <div className="pt-1 border-t">
+            <div className="text-[10px] text-muted-foreground mt-1">
+              <a href="https://windsurf.com/subscription/usage" target="_blank" rel="noopener noreferrer" className="text-teal-500 underline">
+                {t('common:usage.windsurfDashboardLink')}
+              </a>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Fallback when no profile configured for this provider
+    return (
+      <div className="pt-2 border-t text-[10px] text-muted-foreground">
+        {t('common:usage.noProfileForProvider', { provider: badgeLabel })}
+      </div>
+    );
+  }, [selectedProvider, isLoadingGithubStatus, githubStatus, isLoadingWindsurfAccount, windsurfAccount, t, badgeLabel]);
+
   // Helper function to get full ID for display
   const getFullId = (id: string | undefined): string => {
     if (!id) return '';
     return id;
   };
-
-  const isOAuth = authStatus.type === 'oauth';
-  const Icon = isOAuth ? Lock : Key;
-  const badgeLabel = getProviderLabel(authStatus.provider);
 
   return (
     <div className="flex items-center gap-2">
@@ -343,145 +462,7 @@ export function AuthStatusIndicator() {
                   )}
                 </div>
               ) : (
-                // Copilot-specific info with GitHub CLI status
-                selectedProvider === 'copilot' ? (
-                  <div className="pt-2 border-t space-y-2">
-                    <div className="text-[10px] text-muted-foreground">
-                      {t('common:usage.copilotAuthNote', { provider: 'GitHub Copilot' })}
-                    </div>
-
-                    {/* GitHub CLI Status */}
-                    {isLoadingGithubStatus ? (
-                      <div className="text-[10px] text-muted-foreground italic">
-                        {t('common:usage.checkingGithubStatus')}
-                      </div>
-                    ) : githubStatus ? (
-                      githubStatus.available ? (
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5 text-muted-foreground">
-                              <Shield className="h-3 w-3" />
-                              <span className="text-[10px]">{t('common:usage.githubStatus')}</span>
-                            </div>
-                            <span className={`text-[10px] font-medium ${githubStatus.isAuth ? 'text-green-500' : 'text-red-500'}`}>
-                              {githubStatus.isAuth ? t('common:usage.connected') : t('common:usage.notConnected')}
-                            </span>
-                          </div>
-                          {githubStatus.username && (
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1.5 text-muted-foreground">
-                                <Key className="h-3 w-3" />
-                                <span className="text-[10px]">{t('common:usage.activeAccount')}</span>
-                              </div>
-                              <span className="text-[10px] font-medium text-blue-500">
-                                @{githubStatus.username}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-[10px] text-red-500">
-                          {t('common:usage.githubCliNotAvailable')} <code className="bg-muted px-1 rounded">gh auth login</code>
-                        </div>
-                      )
-                    ) : (
-                      <div className="text-[10px] text-muted-foreground italic">
-                        {t('common:usage.cannotCheckGithubStatus')}
-                      </div>
-                    )}
-
-                    {/* Note about missing usage data */}
-                    <div className="pt-1 border-t">
-                      <div className="text-[10px] text-muted-foreground italic">
-                        {t('common:usage.dataUnavailable')}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground italic">
-                        {t('common:usage.dataUnavailableDescription')}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-1">
-                        <a href="https://github.com/settings/copilot" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
-                          {t('common:usage.copilotDashboardLink')}
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                ) : selectedProvider === 'windsurf' ? (
-                  // Windsurf-specific info with account details
-                  <div className="pt-2 border-t space-y-2">
-                    <div className="text-[10px] text-muted-foreground">
-                      {t('common:usage.windsurfAuthNote')}
-                    </div>
-
-                    {/* Windsurf Account Info */}
-                    {isLoadingWindsurfAccount ? (
-                      <div className="text-[10px] text-muted-foreground italic">
-                        {t('common:usage.checkingWindsurfStatus')}
-                      </div>
-                    ) : windsurfAccount ? (
-                      <div className="space-y-1">
-                        {/* User name */}
-                        {windsurfAccount.userName && (
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5 text-muted-foreground">
-                              <Key className="h-3 w-3" />
-                              <span className="text-[10px]">{t('common:usage.activeAccount')}</span>
-                            </div>
-                            <span className="text-[10px] font-medium text-teal-500">
-                              {windsurfAccount.userName}
-                            </span>
-                          </div>
-                        )}
-                        {/* Plan */}
-                        {windsurfAccount.planName && (
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5 text-muted-foreground">
-                              <Shield className="h-3 w-3" />
-                              <span className="text-[10px]">{t('common:usage.windsurfPlan')}</span>
-                            </div>
-                            <span className="text-[10px] font-medium">
-                              {windsurfAccount.planName}
-                            </span>
-                          </div>
-                        )}
-                        {/* Usage info */}
-                        {windsurfAccount.usageInfo && (
-                          <div className="space-y-1 pt-1 border-t">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-muted-foreground">{t('common:usage.windsurfCredits')}</span>
-                              <span className="text-[10px] font-medium">
-                                {Math.round(windsurfAccount.usageInfo.usedMessages / 100)}/{Math.round(windsurfAccount.usageInfo.totalMessages / 100)}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-muted-foreground">{t('common:usage.windsurfFlowActions')}</span>
-                              <span className="text-[10px] font-medium">
-                                {Math.round(windsurfAccount.usageInfo.usedFlowActions / 100)}/{Math.round(windsurfAccount.usageInfo.totalFlowActions / 100)}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-[10px] text-muted-foreground italic">
-                        {t('common:usage.windsurfNotDetected')}
-                      </div>
-                    )}
-
-                    {/* Dashboard link */}
-                    <div className="pt-1 border-t">
-                      <div className="text-[10px] text-muted-foreground mt-1">
-                        <a href="https://codeium.com/windsurf/membership" target="_blank" rel="noopener noreferrer" className="text-teal-500 underline">
-                          {t('common:usage.windsurfDashboardLink')}
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  // Fallback when no profile configured for this provider
-                  <div className="pt-2 border-t text-[10px] text-muted-foreground">
-                    {t('common:usage.noProfileForProvider', { provider: badgeLabel })}
-                  </div>
-                )
+                providerSpecificContent
               )}
             </div>
           </TooltipContent>

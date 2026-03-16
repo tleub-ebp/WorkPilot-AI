@@ -4,8 +4,8 @@ import { ThemeSelector } from './ThemeSelector';
 import type { AppSettings } from '../../../shared/types';
 
 interface ThemeSettingsProps {
-  settings: AppSettings;
-  onSettingsChange: (settings: AppSettings) => void;
+  readonly settings: AppSettings;
+  readonly onSettingsChange: (settings: AppSettings) => void;
 }
 
 /**

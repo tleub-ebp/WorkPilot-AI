@@ -20,7 +20,8 @@ import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { useTranslation } from 'react-i18next';
 import type { CustomMcpServer } from '../../shared/types';
-import { Terminal, Globe, X, Github, ExternalLink } from 'lucide-react';
+import { Terminal, Globe, X, ExternalLink } from 'lucide-react';
+import { Github } from '@/lib/icons';
 
 interface CustomMcpDialogProps {
   open: boolean;

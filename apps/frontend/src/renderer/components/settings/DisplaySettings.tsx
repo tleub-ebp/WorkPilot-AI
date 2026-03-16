@@ -10,8 +10,8 @@ import type { AppSettings } from '../../../shared/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface DisplaySettingsProps {
-  settings: AppSettings;
-  onSettingsChange: (settings: AppSettings) => void;
+  readonly settings: AppSettings;
+  readonly onSettingsChange: (settings: AppSettings) => void;
 }
 
 // Preset scale values with translation keys
@@ -180,7 +180,7 @@ export function DisplaySettings({ settings, onSettingsChange }: DisplaySettingsP
               max={UI_SCALE_MAX}
               step={UI_SCALE_STEP}
               value={displayScale}
-              onChange={(e) => handleSliderChange(parseInt(e.target.value, 10))}
+              onChange={(e) => handleSliderChange(Number.parseInt(e.target.value, 10))}
               className={cn(
                 'flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',

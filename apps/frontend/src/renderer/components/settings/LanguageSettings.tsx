@@ -8,8 +8,8 @@ import { AVAILABLE_LANGUAGES, type SupportedLanguage } from '../../../shared/con
 import type { AppSettings } from '../../../shared/types';
 
 interface LanguageSettingsProps {
-  settings: AppSettings;
-  onSettingsChange: (settings: AppSettings) => void;
+  readonly settings: AppSettings;
+  readonly onSettingsChange: (settings: AppSettings) => void;
 }
 
 /**
