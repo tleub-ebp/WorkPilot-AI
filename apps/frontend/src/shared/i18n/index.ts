@@ -36,6 +36,7 @@ import enTerminal from './locales/en/terminal.json';
 import enTestGeneration from './locales/en/testGeneration.json';
 import enVisualProgramming from './locales/en/visualProgramming.json';
 import enMissionControl from './locales/en/missionControl.json';
+import enPixelOffice from './locales/en/pixelOffice.json';
 import enWelcome from './locales/en/welcome.json';
 
 // Import French translation resources
@@ -58,6 +59,7 @@ import frInsights from './locales/fr/insights.json';
 import frLearningLoop from './locales/fr/learningLoop.json';
 import frMultiRepo from './locales/fr/multiRepo.json';
 import frMigrationWizard from './locales/fr/migration-wizard.json';
+import frMissionControl from './locales/fr/missionControl.json';
 import frNaturalLanguageGit from './locales/fr/naturalLanguageGit.json';
 import frNavigation from './locales/fr/navigation.json';
 import frOnboarding from './locales/fr/onboarding.json';
@@ -72,7 +74,7 @@ import frTasks from './locales/fr/tasks.json';
 import frTerminal from './locales/fr/terminal.json';
 import frTestGeneration from './locales/fr/testGeneration.json';
 import frVisualProgramming from './locales/fr/visualProgramming.json';
-import frMissionControl from './locales/fr/missionControl.json';
+import frPixelOffice from './locales/fr/pixelOffice.json';
 import frWelcome from './locales/fr/welcome.json';
 
 export const defaultNS = 'common';
@@ -99,6 +101,7 @@ export const resources = {
     multiRepo: enMultiRepo,
     migrationWizard: enMigrationWizard,
     missionControl: enMissionControl,
+    pixelOffice: enPixelOffice,
     naturalLanguageGit: enNaturalLanguageGit,
     navigation: enNavigation,
     onboarding: enOnboarding,
@@ -136,6 +139,7 @@ export const resources = {
     multiRepo: frMultiRepo,
     migrationWizard: frMigrationWizard,
     missionControl: frMissionControl,
+    pixelOffice: frPixelOffice,
     naturalLanguageGit: frNaturalLanguageGit,
     navigation: frNavigation,
     onboarding: frOnboarding,
@@ -182,6 +186,7 @@ i18n
       'multiRepo',
       'migrationWizard',
       'missionControl',
+      'pixelOffice',
       'naturalLanguageGit',
       'navigation',
       'onboarding',

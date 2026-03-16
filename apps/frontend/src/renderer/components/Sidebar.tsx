@@ -48,6 +48,7 @@ import {
   Image as ImageIcon,
   Rocket,
   RotateCcw,
+  Building2,
 } from 'lucide-react';
 
 // UI
@@ -143,7 +144,7 @@ import { DesignToCodeDialog } from './design-to-code/DesignToCodeDialog';
 // Types
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace' | 'design-to-code' | 'mission-control' | 'agent-replay';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace' | 'design-to-code' | 'mission-control' | 'agent-replay' | 'pixel-office';
 
 interface SidebarProps {
   readonly onSettingsClick: () => void;
@@ -178,6 +179,7 @@ const navGroups: NavGroup[] = [
       { id: 'terminals', labelKey: 'navigation:items.terminals', icon: Terminal, shortcut: 'A' },
       { id: 'insights', labelKey: 'navigation:items.insights', icon: Sparkles, shortcut: 'N' },
       { id: 'mission-control', labelKey: 'navigation:items.missionControl', icon: Rocket, shortcut: 'Q' },
+      { id: 'pixel-office', labelKey: 'navigation:items.pixelOffice', icon: Building2, shortcut: 'P' },
       { id: 'agent-replay', labelKey: 'navigation:items.agentReplay', icon: RotateCcw, shortcut: 'R' },
     ],
     defaultExpanded: true

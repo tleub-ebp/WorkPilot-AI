@@ -1704,23 +1704,76 @@ export async function readWindsurfCachedPlanInfo(): Promise<{ success: boolean; 
                   remainingFlowActions: planInfo.usage.remainingFlowActions,
                 });
               }
-              // Cache is current billing cycle — trust cachedPlanInfo usage counters.
-              // The protobuf userStatusProtoBinaryBase64 is only refreshed when the IDE
-              // starts a new session, so it can be OLDER than cachedPlanInfo which the
-              // IDE updates more frequently during active use. Do NOT override usage
-              // counters from protobuf as this causes stale data to overwrite fresh data.
-              if (billing.usedMessages > 0 && billing.usedMessages !== planInfo.usage.usedMessages) {
-                  console.log('[readWindsurfCachedPlanInfo] Cross-check: protobuf usedMessages differs from cache (protobuf may be stale)', {
-                    cached: planInfo.usage.usedMessages,
-                    protobuf: billing.usedMessages,
+              // Cache is current billing cycle — both sources may have been updated at
+              // different times. Since usage can only increase within a billing cycle,
+              // take the HIGHER value to avoid showing stale (lower) numbers.
+              if (billing.usedMessages > 0) {
+                  if (billing.usedMessages > planInfo.usage.usedMessages) {
+                    console.log('[readWindsurfCachedPlanInfo] Protobuf has higher usedMessages than cache — using protobuf value', {
+                      cached: planInfo.usage.usedMessages,
+                      protobuf: billing.usedMessages,
+                    });
+                    planInfo.usage.usedMessages = billing.usedMessages;
+                    planInfo.usage.remainingMessages = Math.max(0, planInfo.usage.messages - billing.usedMessages);
+                  } else if (billing.usedMessages < planInfo.usage.usedMessages) {
+                    console.log('[readWindsurfCachedPlanInfo] Cache has higher usedMessages than protobuf — keeping cache value', {
+                      cached: planInfo.usage.usedMessages,
+                      protobuf: billing.usedMessages,
+                    });
+                  }
+              }
+              if (billing.usedFlowActions > 0 && billing.usedFlowActions > planInfo.usage.usedFlowActions) {
+                  console.log('[readWindsurfCachedPlanInfo] Protobuf has higher usedFlowActions than cache — using protobuf value', {
+                    cached: planInfo.usage.usedFlowActions,
+                    protobuf: billing.usedFlowActions,
                   });
-                  // Keep the cachedPlanInfo value — it's updated more frequently by the IDE
+                  planInfo.usage.usedFlowActions = billing.usedFlowActions;
+                  planInfo.usage.remainingFlowActions = Math.max(0, planInfo.usage.flowActions - billing.usedFlowActions);
               }
             }
           }
         } catch {
           // Failed to parse protobuf — use cached data as-is
         }
+      }
+
+      // Source 3: Read codeium.windsurf → windsurf.state.cachedUserStatus (may be fresher)
+      // This is a separate protobuf snapshot stored inside a large JSON blob.
+      // It can sometimes have more recent usage data than windsurfAuthStatus.
+      try {
+        const codeiumWindsurfRaw = readWindsurfKey(db, 'codeium.windsurf');
+        if (codeiumWindsurfRaw) {
+          const codeiumBlob = JSON.parse(codeiumWindsurfRaw);
+          const cachedUserStatusB64 = codeiumBlob?.['windsurf.state.cachedUserStatus'];
+          if (cachedUserStatusB64 && typeof cachedUserStatusB64 === 'string') {
+            const billing3 = extractBillingCycleFromProtobuf(cachedUserStatusB64);
+            if (billing3) {
+              // Only use if it's from the same or newer billing cycle
+              const proto3StartMs = billing3.startSeconds * 1000;
+              if (proto3StartMs >= planInfo.startTimestamp) {
+                // Take the max of all sources for usage counters
+                if (billing3.usedMessages > planInfo.usage.usedMessages) {
+                  console.log('[readWindsurfCachedPlanInfo] cachedUserStatus has higher usedMessages — using it', {
+                    current: planInfo.usage.usedMessages,
+                    cachedUserStatus: billing3.usedMessages,
+                  });
+                  planInfo.usage.usedMessages = billing3.usedMessages;
+                  planInfo.usage.remainingMessages = Math.max(0, planInfo.usage.messages - billing3.usedMessages);
+                }
+                if (billing3.usedFlowActions > planInfo.usage.usedFlowActions) {
+                  console.log('[readWindsurfCachedPlanInfo] cachedUserStatus has higher usedFlowActions — using it', {
+                    current: planInfo.usage.usedFlowActions,
+                    cachedUserStatus: billing3.usedFlowActions,
+                  });
+                  planInfo.usage.usedFlowActions = billing3.usedFlowActions;
+                  planInfo.usage.remainingFlowActions = Math.max(0, planInfo.usage.flowActions - billing3.usedFlowActions);
+                }
+              }
+            }
+          }
+        }
+      } catch {
+        // Failed to parse codeium.windsurf blob — continue with existing data
       }
 
       // Read user name from auth data
@@ -1750,9 +1803,19 @@ export async function readWindsurfCachedPlanInfo(): Promise<{ success: boolean; 
   }
 }
 
-// NOTE: fetchWindsurfRealTimeUsage was removed because the Codeium API
-// (GetUserStatus) requires gRPC binary protocol, not REST/JSON. The fetch()
-// call always fails with HTTP 400. The root cause of stale credit data was
-// the protobuf cross-check in readWindsurfCachedPlanInfo overriding fresh
-// cachedPlanInfo values with stale protobuf data. That has been fixed above
-// by trusting windsurf.settings.cachedPlanInfo as the primary source.
+// NOTE: For personal Windsurf Pro accounts, there is NO public REST API to
+// get real-time usage. The GetTeamCreditBalance API is Teams/Enterprise only
+// (requires a service key with "Billing Read" permissions). The gRPC
+// GetUserStatus endpoint requires unknown request fields and returns
+// INVALID_ARGUMENT with the sk-ws-* IDE key.
+//
+// The ONLY reliable data source is the Windsurf IDE's local SQLite cache.
+// readWindsurfCachedPlanInfo reads THREE sources and takes the MAX of
+// usedMessages/usedFlowActions (since usage only increases within a cycle):
+//   1. windsurf.settings.cachedPlanInfo (JSON, may be from previous cycle)
+//   2. windsurfAuthStatus → userStatusProtoBinaryBase64 (protobuf)
+//   3. codeium.windsurf → windsurf.state.cachedUserStatus (protobuf)
+//
+// These caches are refreshed when the Windsurf IDE starts/refreshes a session.
+// If the user hasn't restarted Windsurf IDE recently, the data may lag behind
+// the real-time usage shown on https://codeium.com/plan.

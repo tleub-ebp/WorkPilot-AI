@@ -1,0 +1,29 @@
+{
+  "title": "Pixel Office",
+  "description": "Visualize your AI agents as pixel art characters in a virtual office",
+  "emptyState": {
+    "title": "Your office is empty",
+    "description": "Open agent terminals to see your AI workers appear at their desks. Each terminal becomes a character with live activity tracking."
+  },
+  "toolbar": {
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "toggleGrid": "Toggle Grid",
+    "toggleSound": "Toggle Sound"
+  },
+  "agents": {
+    "count_one": "{{count}} agent",
+    "count_other": "{{count}} agents",
+    "active": "{{count}} active",
+    "goToTerminal": "Go to Terminal",
+    "claudeMode": "Claude Mode"
+  },
+  "activity": {
+    "idle": "Idle",
+    "typing": "Typing",
+    "reading": "Reading",
+    "running": "Running",
+    "waiting": "Waiting",
+    "exited": "Exited"
+  }
+}

@@ -57,6 +57,7 @@ const SessionHistory = lazy(() => import('./components/SessionHistory').then(m =
 const McpMarketplace = lazy(() => import('./components/mcp-marketplace/McpMarketplace').then(m => ({ default: m.McpMarketplace })));
 const MissionControlDashboard = lazy(() => import('./components/mission-control/MissionControlDashboard').then(m => ({ default: m.MissionControlDashboard })));
 const AgentReplayDashboard = lazy(() => import('./components/agent-replay').then(m => ({ default: m.AgentReplayDashboard })));
+const PixelOffice = lazy(() => import('./components/pixel-office').then(m => ({ default: m.PixelOffice })));
 import { VersionWarningModal } from './components/VersionWarningModal';
 import { OnboardingWizard } from './components/onboarding';
 import { GitHubSetupModal } from './components/GitHubSetupModal';
@@ -1069,6 +1070,9 @@ export function App() {
                     )}
                     {activeView === 'agent-replay' && (
                         <AgentReplayDashboard />
+                    )}
+                    {activeView === 'pixel-office' && (
+                        <PixelOffice projectId={selectedProject?.path || ''} />
                     )}
                     {activeView === 'kanban' && !selectedProject && (
                               <>
