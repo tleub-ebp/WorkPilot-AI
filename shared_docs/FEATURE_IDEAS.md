@@ -271,7 +271,8 @@ Mode collaboratif temps réel où l'IA code en parallèle du développeur sur le
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Le vrai pair programming avec une IA. Pas du copilot inline, du vrai travail parallèle coordonné.
 
-### 10. MCP Marketplace — L'écosystème d'intégrations universel
+<details>
+<summary>### 10. MCP Marketplace — L'écosystème d'intégrations universel ✅ Implémenté</summary>
 
 **Le "App Store" des intégrations MCP pour WorkPilot.** Connexion plug-and-play avec tous les outils de l'écosystème dev.
 
@@ -281,6 +282,195 @@ Mode collaboratif temps réel où l'IA code en parallèle du développeur sur le
 - **Exploite :** MCP protocol, agent events, plugin architecture
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Effet réseau massif. Plus il y a de MCP servers, plus WorkPilot est puissant. Verrouille les utilisateurs dans l'écosystème. 5 des 7 outils leaders supportent MCP — WorkPilot doit être le meilleur.
+
+#### 🏪 Comment utiliser le MCP Marketplace
+
+Le MCP Marketplace est maintenant disponible dans l'interface WorkPilot AI ! Il offre trois fonctionnalités principales : le catalogue de serveurs MCP, la gestion des serveurs installés, et le builder no-code pour créer vos propres serveurs.
+
+##### 🚀 Accès au MCP Marketplace
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"MCP Marketplace"** dans le groupe "Tools" (icône 🏪)
+2. **Ouverture** : Le Marketplace s'ouvre avec trois onglets : **Catalog**, **Installed**, et **Builder**
+
+##### 📦 Onglet Catalog — Parcourir et installer des serveurs MCP
+
+**Étape 1 — Parcourir le catalogue**
+- Le catalogue affiche une grille de serveurs MCP disponibles avec leur nom, description, statistiques et outils fournis
+- Chaque carte montre : nom, tagline, nombre de téléchargements, note, type de transport (stdio/HTTP), et version
+- Les serveurs vérifiés sont marqués avec un badge ✅
+
+**Étape 2 — Filtrer et rechercher**
+- **Recherche** : Utilisez la barre de recherche pour trouver un serveur par nom, description ou tags
+- **Catégorie** : Filtrez par catégorie (Communication, Project Management, Design, Monitoring, Version Control, Documentation, Database, Cloud, Security, Analytics, AI)
+- **Tri** : Triez par popularité, note, date d'ajout ou nom
+- **Vérifiés uniquement** : Activez le filtre pour n'afficher que les serveurs officiels/vérifiés
+
+**Étape 3 — Installer un serveur**
+- Cliquez sur le bouton **"Install"** sur la carte du serveur
+- **Sans configuration** : Le serveur s'installe directement en un clic
+- **Avec configuration** : Si le serveur nécessite des clés API ou variables d'environnement, une boîte de dialogue s'ouvre pour les configurer :
+  - Remplissez les variables requises (marquées avec *)
+  - Les variables secrètes sont masquées par défaut (cliquez sur l'icône 👁️ pour les révéler)
+  - Des liens d'aide sont disponibles pour obtenir les clés API nécessaires
+  - Remplissez optionnellement les variables supplémentaires
+  - Cliquez sur **"Install"** pour confirmer
+
+**Étape 4 — Voir les détails**
+- Cliquez sur **"Show details"** sur une carte pour voir la description complète, les tags, et la configuration requise
+- Un lien vers la page d'accueil du serveur est disponible
+
+##### 📋 Serveurs MCP disponibles dans le catalogue
+
+**Communication**
+- **Slack** : Intégration complète avec Slack (messages, channels, users)
+- **Discord** : Bot Discord pour la gestion de serveurs
+
+**Project Management**
+- **Jira** : Gestion de projets et tickets Jira
+- **Linear** : Gestion de projets Linear
+- **Notion** : Accès aux bases de données et pages Notion
+
+**Design**
+- **Figma** : Intégration Figma pour l'accès aux designs
+
+**Monitoring**
+- **Sentry** : Surveillance des erreurs et performance
+- **Datadog** : Monitoring et observabilité
+
+**Version Control**
+- **GitHub** : Intégration complète GitHub (repos, PRs, issues)
+- **GitLab** : Intégration GitLab (projets, MRs, pipelines)
+
+**Documentation**
+- **Confluence** : Gestion de documentation Confluence
+
+**Database**
+- **PostgreSQL** : Accès aux bases PostgreSQL
+- **SQLite** : Gestion de bases SQLite locales
+
+**Cloud**
+- **AWS** : Intégration services AWS
+
+**Analytics**
+- **Google Analytics** : Données analytics web
+
+**AI**
+- **Fetch** : Récupération de contenu web en markdown
+
+##### ⚡ Onglet Installed — Gérer les serveurs installés
+
+**Vue d'ensemble**
+- Liste tous les serveurs MCP actuellement installés
+- Chaque serveur affiche : nom, statut (actif/erreur/désactivé), type de transport, version, date d'installation
+- Les serveurs custom (créés avec le Builder) sont marqués avec un badge "Custom"
+
+**Gestion des serveurs**
+- **Activer/Désactiver** : Utilisez le toggle switch pour activer ou désactiver un serveur sans le désinstaller
+- **Désinstaller** : Cliquez sur l'icône 🗑️ pour supprimer un serveur
+- **Statut de santé** : Indicateurs visuels (✅ actif, ❌ erreur, ⚠️ désactivé)
+
+**Compteur**
+- Le nombre de serveurs installés est affiché en badge dans l'en-tête du Marketplace
+
+##### 🔧 Onglet Builder — Créer des serveurs MCP sans code
+
+Le Builder permet de créer des serveurs MCP personnalisés sans écrire de code.
+
+**Étape 1 — Créer un nouveau projet**
+- Cliquez sur **"New Project"** pour démarrer
+- L'interface se divise en deux panneaux : configuration à gauche, éditeur d'outil à droite
+
+**Étape 2 — Configurer le serveur**
+- **Nom du serveur** : Donnez un nom à votre serveur MCP
+- **Description** : Décrivez ce que fait votre serveur
+- **URL de base** : L'URL de l'API que votre serveur va consommer (ex: `https://api.example.com`)
+- **Couleur** : Choisissez une couleur de marque pour identifier votre serveur
+
+**Étape 3 — Définir les outils**
+- Cliquez sur **"+"** pour ajouter un nouvel outil
+- Pour chaque outil, configurez :
+  - **Nom** : Nom de l'outil en snake_case (ex: `get_users`)
+  - **Description** : Ce que fait l'outil
+  - **Type d'action** :
+    - **HTTP Request** : Configure une requête HTTP (méthode GET/POST/PUT/PATCH/DELETE, URL endpoint, template de body)
+    - **Transform** : Template de transformation de données
+  - **Paramètres** : Ajoutez les paramètres d'entrée avec nom, type (string/number/boolean/array/object) et description
+
+**Étape 4 — Sauvegarder et exporter**
+- Cliquez sur **"Save"** pour sauvegarder votre projet Builder
+- Le serveur peut être exporté et installé comme un serveur MCP custom
+- Les serveurs custom apparaissent dans l'onglet "Installed" avec le badge "Custom"
+
+**Gestion des projets Builder**
+- Créez plusieurs projets Builder
+- Éditez les projets existants en cliquant dessus dans la liste
+- Supprimez les projets non nécessaires
+
+##### 🔄 Intégration avec les agents
+
+**Utilisation automatique**
+- Les agents WorkPilot utilisent automatiquement les MCP servers installés et activés
+- Les outils fournis par chaque serveur sont disponibles pendant les builds
+- Pas besoin de configuration supplémentaire après l'installation
+
+**Exemples d'utilisation par les agents**
+- **GitHub MCP** : L'agent peut créer des PRs, lire des issues, gérer les branches
+- **Slack MCP** : L'agent peut envoyer des notifications de build dans un channel
+- **Jira MCP** : L'agent peut créer et mettre à jour des tickets automatiquement
+- **Sentry MCP** : L'agent peut analyser les erreurs de production pour le debugging
+- **PostgreSQL MCP** : L'agent peut explorer le schéma de base de données pour la génération de code
+
+##### 🛠️ Architecture technique
+
+**Frontend**
+- **McpMarketplace** : Composant principal avec les 3 onglets (Catalog, Installed, Builder)
+- **McpServerCard** : Carte individuelle de serveur dans le catalogue avec dialog d'installation
+- **McpInstalledList** : Liste des serveurs installés avec toggle et gestion
+- **McpBuilder** : Interface no-code de création de serveurs MCP
+
+**Store (Zustand)**
+- **mcp-marketplace-store** : Gestion d'état pour le catalogue, les serveurs installés, les projets builder, filtres et UI
+
+**Backend (IPC Handlers)**
+- **Catalog** : Catalogue intégré de serveurs MCP populaires
+- **Installation** : Gestion des installations avec persistance sur disque
+- **Configuration** : Stockage sécurisé des variables d'environnement et clés API
+- **Builder** : Sauvegarde et export des projets custom
+- **Health Check** : Vérification de l'état de santé des serveurs
+
+**Persistance**
+- Les serveurs installés sont persistés sur disque au format JSON
+- Les projets Builder sont sauvegardés séparément
+- Les configurations et clés API sont stockées de manière sécurisée
+
+##### 🧪 Tests
+
+Pour exécuter les tests du MCP Marketplace :
+
+```bash
+# Tests frontend (Vitest)
+cd apps/frontend
+npm test -- --run src/renderer/stores/__tests__/mcp-marketplace-store.test.ts
+```
+
+##### 💡 Tips d'utilisation
+
+**Pour démarrer rapidement**
+- Commencez par installer les serveurs correspondant à vos outils quotidiens (GitHub, Slack, Jira...)
+- Utilisez le filtre "Verified" pour ne voir que les serveurs officiels
+- Consultez les détails de chaque serveur pour comprendre les outils fournis
+
+**Pour le Builder**
+- Commencez par des outils simples (GET requests) avant de passer aux plus complexes
+- Utilisez les templates de body avec des placeholders `{{param_name}}` pour les requêtes POST
+- Testez votre serveur custom en l'exportant et en vérifiant son fonctionnement dans l'onglet Installed
+
+**Pour l'équipe**
+- Standardisez les MCP servers installés sur tous les postes de l'équipe
+- Partagez les projets Builder pour des intégrations custom communes
+- Documentez les clés API nécessaires dans votre wiki interne
+
+</details>
 
 ### 11. Cost Intelligence Engine
 
