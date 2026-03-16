@@ -131,7 +131,8 @@ Le pipeline utilise les Vision AI pour l'analyse :
 
 </details>
 
-### 5. Event-Driven Hooks System — L'automatisation intelligente
+<details>
+<summary>### 5. Event-Driven Hooks System — L'automatisation intelligente ✅ Implémenté</summary>
 
 **Le système de Hooks de Kiro (AWS) mais avec 100x plus de puissance.** Automatisation event-driven de tout le workflow.
 
@@ -141,6 +142,219 @@ Le pipeline utilise les Vision AI pour l'analyse :
 - **Exploite :** Agent events, spec pipeline, terminal system, MCP protocol, notification system
 - **Effort :** Moyen
 - **Pourquoi c'est BANGER :** Quick win avec effet "wow". Les devs adorent automatiser. Kiro a prouvé que le concept marche mais est limité à AWS. WorkPilot le rend universel et visuel.
+
+#### 🪝 Comment utiliser l'Event-Driven Hooks System
+
+L'Event-Driven Hooks System est maintenant intégré dans WorkPilot AI ! Automatisez votre workflow de développement avec des triggers et actions personnalisés.
+
+##### 🚀 Accès au système de Hooks
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"🪝 Hooks"** dans le groupe "Automation"
+2. **Ouverture** : L'interface des hooks s'ouvre avec deux onglets : **Hooks** et **Templates**
+
+##### 📋 Onglet Hooks — Gérer vos hooks personnalisés
+
+**Vue d'ensemble**
+- Liste tous les hooks configurés avec leur statut (actif/inactif)
+- Pour chaque hook : nom, trigger, action, date de création, et nombre d'exécutions
+- Indicateurs visuels : ✅ actif, ⏸️ inactif, ❌ erreur
+
+**Créer un nouveau hook**
+1. Cliquez sur **"New Hook"**
+2. Configurez les sections :
+   - **Nom** : Donnez un nom explicite à votre hook
+   - **Description** : Décrivez ce que fait le hook
+   - **Trigger** : Choisissez l'événement qui déclenche le hook
+   - **Action** : Définissez ce qui se passe quand le trigger se produit
+   - **Conditions** : (Optionnel) Ajoutez des conditions supplémentaires
+
+##### 🎯 Triggers disponibles
+
+**Événements Fichier**
+- **File Created** : Un nouveau fichier est créé
+- **File Modified** : Un fichier existant est modifié
+- **File Deleted** : Un fichier est supprimé
+- **Pattern Match** : Un pattern spécifique est détecté dans un fichier
+
+**Événements Build**
+- **Build Started** : Un build commence
+- **Build Completed** : Un build se termine avec succès
+- **Build Failed** : Un build échoue
+- **Test Failed** : Un ou plusieurs tests échouent
+
+**Événements Git**
+- **Commit Pushed** : Un commit est poussé
+- **PR Opened** : Une Pull Request est ouverte
+- **PR Merged** : Une Pull Request est mergée
+- **Branch Created** : Une nouvelle branche est créée
+
+**Événements Système**
+- **Dependency Outdated** : Une dépendance est obsolète
+- **Security Issue** : Une faille de sécurité est détectée
+- **Performance Issue** : Un problème de performance est identifié
+- **Custom Event** : Événement personnalisé via API
+
+##### ⚡ Actions disponibles
+
+**Actions Agent**
+- **Launch Agent** : Démarre un agent spécifique (planning, coding, QA)
+- **Run Pipeline** : Exécute un pipeline complet
+- **Generate Spec** : Crée un spec à partir d'un fichier
+
+**Actions Notification**
+- **Send Slack** : Envoie une notification Slack
+- **Send Email** : Envoie un email
+- **Desktop Notification** : Notification bureau
+- **Webhook** : Appelle un webhook externe
+
+**Actions Code**
+- **Run Linting** : Exécute le linting automatique
+- **Run Tests** : Lance les tests
+- **Auto-fix** : Applique des corrections automatiques
+- **Update Docs** : Met à jour la documentation
+
+**Actions Git**
+- **Create PR** : Crée une Pull Request
+- **Add Comment** : Ajoute un commentaire sur une PR/issue
+- **Update Branch** : Met à jour une branche
+- **Create Tag** : Crée un tag
+
+##### 🎨 Onglet Templates — Hooks pré-configurés
+
+**Templates populaires**
+- **Auto-lint on save** : Lance le linting quand un fichier est sauvegardé
+- **Generate tests after new function** : Crée des tests quand une nouvelle fonction est détectée
+- **Update docs after API change** : Met à jour la documentation quand l'API change
+- **Notify Slack on build failure** : Envoie une notification Slack en cas d'échec
+- **Auto-fix lint errors** : Corrige automatiquement les erreurs de linting
+- **Security scan on commit** : Lance une analyse sécurité sur chaque commit
+- **Performance check on PR** : Vérifie la performance sur les PRs
+- **Dependency update check** : Vérifie les mises à jour de dépendances
+
+**Utilisation des templates**
+1. Parcourez la liste des templates disponibles
+2. Cliquez sur **"Use Template"** pour l'appliquer
+3. Personnalisez les paramètres selon vos besoins
+4. Activez le hook
+
+##### 🔧 Configuration avancée
+
+**Conditions**
+- **File Path** : Limite le hook à certains chemins de fichiers
+- **File Pattern** : Pattern regex pour les types de fichiers
+- **Time Range** : Plage horaire d'activation
+- **Branch Filter** : Filtre par branches Git
+
+**Options d'exécution**
+- **Delay** : Délai d'attente avant exécution (en secondes)
+- **Retry Count** : Nombre de tentatives en cas d'échec
+- **Priority** : Priorité d'exécution (Low, Medium, High)
+- **Concurrency** : Gestion de l'exécution simultanée
+
+**Variables dynamiques**
+- **{{file_path}}** : Chemin du fichier concerné
+- **{{branch_name}}** : Nom de la branche Git
+- **{{commit_hash}}** : Hash du commit
+- **{{build_id}}** : ID du build
+- **{{timestamp}}** : Timestamp de l'événement
+
+##### 📊 Monitoring et logs
+
+**Historique d'exécution**
+- Liste de toutes les exécutions avec timestamp
+- Statut de chaque exécution (succès/échec)
+- Logs détaillés pour le debugging
+- Performance et durée d'exécution
+
+**Métriques**
+- Nombre d'exécutions par hook
+- Taux de succès
+- Temps d'exécution moyen
+- Erreurs fréquentes
+
+##### 🔄 Exemples de workflows
+
+**Workflow 1 : Auto-QA sur nouvelle fonction**
+```
+Trigger: Pattern Match (function.*\{) dans fichiers .py
+Action: 
+  1. Generate Tests (crée tests unitaires)
+  2. Run Tests (exécute les nouveaux tests)
+  3. Send Slack (notification si succès)
+```
+
+**Workflow 2 : Sécurité automatique**
+```
+Trigger: Commit Pushed
+Condition: File Pattern = .*\.py
+Action:
+  1. Run Security Scan (analyse sécurité)
+  2. If Issue Found → Create PR avec corrections
+  3. Send Email notification à l'équipe
+```
+
+**Workflow 3 : Performance monitoring**
+```
+Trigger: Build Completed
+Condition: Build Duration > 5 minutes
+Action:
+  1. Performance Analysis (analyse perf)
+  2. Update Documentation (métriques perf)
+  3. Desktop Notification (alerte perf)
+```
+
+##### 🛠️ Architecture technique
+
+**Backend Service**
+- **HooksService** : Gestion des hooks et exécution
+- **TriggerEngine** : Détection des événements
+- **ActionExecutor** : Exécution des actions
+- **TemplateEngine** : Gestion des templates
+
+**Frontend Interface**
+- **HooksDialog** : Interface principale de gestion
+- **HookEditor** : Éditeur de hooks avec formulaire
+- **TemplatesList** : Liste des templates disponibles
+- **ExecutionLogs** : Visualisation des logs d'exécution
+
+**Event System**
+- **File Watcher** : Surveillance des modifications de fichiers
+- **Build Events** : Intégration avec le système de build
+- **Git Events** : Hooks Git pour les événements repository
+- **System Events** : Événements système personnalisés
+
+##### 🧪 Tests
+
+Pour exécuter les tests du Hooks System :
+
+```bash
+# Tests backend (Python)
+cd apps/backend
+.venv/bin/pytest tests/hooks/ -v
+
+# Tests frontend (Vitest)
+cd apps/frontend
+npm test -- --run src/renderer/stores/__tests__/hooks-store.test.ts
+```
+
+##### 💡 Tips d'utilisation
+
+**Pour commencer**
+- Commencez avec les templates pré-configurés
+- Testez les hooks sur des projets simples d'abord
+- Utilisez les logs pour debugger les hooks
+
+**Pour la performance**
+- Évitez les hooks trop fréquents (ex: chaque sauvegarde)
+- Utilisez les conditions pour limiter les exécutions
+- Surveillez la performance des hooks
+
+**Pour l'équipe**
+- Documentez les hooks utilisés par l'équipe
+- Partagez les hooks custom via Git
+- Standardisez les hooks pour la cohérence
+
+</details>
 
 ### 6. Multi-Repo Orchestration
 

@@ -1,0 +1,86 @@
+{
+  "title": "Design-to-Code Pipeline",
+  "description": "Upload a design and generate production-ready code in one click.",
+  "tabs": {
+    "upload": "Upload",
+    "spec": "Spec",
+    "code": "Code",
+    "tests": "Tests",
+    "tokens": "Tokens"
+  },
+  "phases": {
+    "idle": "Ready",
+    "analyzing": "Analyzing Design...",
+    "spec_generation": "Generating Spec...",
+    "code_generation": "Generating Code...",
+    "design_token_integration": "Integrating Tokens...",
+    "visual_test_generation": "Generating Tests...",
+    "figma_sync": "Syncing with Figma...",
+    "complete": "Complete!",
+    "error": "Error"
+  },
+  "upload": {
+    "dropDesign": "Drop your design here",
+    "dropDescription": "Screenshot, Figma export, wireframe, whiteboard photo",
+    "dropFormats": "PNG, JPG, GIF, WebP, SVG — Max 20 MB",
+    "designPreviewAlt": "Design preview",
+    "figmaUrl": "Figma URL (optional)",
+    "figmaUrlPlaceholder": "https://www.figma.com/design/FILE_KEY/...",
+    "figmaUrlHelp": "Paste a Figma file/node URL for bidirectional sync",
+    "targetFramework": "Target Framework",
+    "sourceType": "Source Type",
+    "advancedSettings": "Advanced Settings",
+    "designSystemPath": "Design System Path",
+    "designSystemPathPlaceholder": "src/design-system or styles/tokens",
+    "generateVisualTests": "Generate Visual Tests",
+    "customInstructions": "Custom Instructions",
+    "customInstructionsPlaceholder": "E.g.: Use Tailwind CSS, follow our BEM naming convention..."
+  },
+  "spec": {
+    "components": "Components",
+    "colorPalette": "Color Palette",
+    "typography": "Typography",
+    "emptyState": "Run the pipeline to see the design specification."
+  },
+  "code": {
+    "emptyState": "Run the pipeline to see generated code.",
+    "copied": "Copied",
+    "copy": "Copy"
+  },
+  "tests": {
+    "visualRegressionTests": "Visual Regression Tests",
+    "desktop": "Desktop",
+    "tablet": "Tablet",
+    "mobile": "Mobile",
+    "threshold": "Threshold",
+    "emptyState": "Visual tests will appear here after the pipeline runs.",
+    "copied": "Copied",
+    "copy": "Copy"
+  },
+  "tokens": {
+    "designTokensIntegrated": "Design Tokens Integrated",
+    "emptyState": "Design tokens from your project will appear here."
+  },
+  "footer": {
+    "files": "files",
+    "tests": "tests",
+    "reset": "Reset",
+    "processing": "Processing...",
+    "generateCode": "Generate Code"
+  },
+  "sourceTypes": {
+    "screenshot": "Screenshot",
+    "figma": "Figma",
+    "wireframe": "Wireframe",
+    "whiteboard": "Whiteboard",
+    "photo": "Photo"
+  },
+  "frameworks": {
+    "react": "React",
+    "angular": "Angular",
+    "vue": "Vue.js",
+    "nextjs": "Next.js",
+    "nuxt": "Nuxt",
+    "svelte": "Svelte"
+  }
+}

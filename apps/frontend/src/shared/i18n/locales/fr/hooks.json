@@ -1,0 +1,164 @@
+{
+  "title": "Hooks Événementiels",
+  "description": "Système d'automatisation événementiel programmable. Définissez des déclencheurs et des actions pour automatiser votre workflow.",
+  "tabs": {
+    "hooks": "Mes Hooks",
+    "templates": "Modèles",
+    "history": "Historique",
+    "editor": "Éditeur"
+  },
+  "stats": {
+    "totalHooks": "Total Hooks",
+    "activeHooks": "Actifs",
+    "pausedHooks": "En pause",
+    "totalExecutions": "Exécutions",
+    "totalErrors": "Erreurs",
+    "successRate": "Taux de réussite"
+  },
+  "hookList": {
+    "empty": "Aucun hook configuré.",
+    "emptyDescription": "Créez votre premier hook ou utilisez un modèle pour commencer.",
+    "createNew": "Nouveau Hook",
+    "search": "Rechercher des hooks...",
+    "status": {
+      "active": "Actif",
+      "paused": "En pause",
+      "disabled": "Désactivé",
+      "error": "Erreur"
+    },
+    "triggers": "déclencheur(s)",
+    "actions": "action(s)",
+    "lastTriggered": "Dernier déclenchement",
+    "never": "Jamais",
+    "executions": "exécutions",
+    "errors": "erreurs"
+  },
+  "templates": {
+    "title": "Modèles de Hooks",
+    "description": "Hooks pré-configurés prêts à l'emploi. Installez en un clic.",
+    "categories": {
+      "all": "Tous",
+      "automation": "Automatisation",
+      "quality": "Qualité",
+      "notification": "Notification",
+      "ci_cd": "CI/CD",
+      "documentation": "Documentation"
+    },
+    "install": "Installer",
+    "installed": "Installé",
+    "popularity": "popularité"
+  },
+  "history": {
+    "title": "Historique d'Exécution",
+    "description": "Exécutions récentes des hooks avec statut et détails.",
+    "empty": "Aucune exécution pour le moment.",
+    "status": {
+      "pending": "En attente",
+      "running": "En cours",
+      "success": "Succès",
+      "failed": "Échoué",
+      "skipped": "Ignoré",
+      "timeout": "Délai dépassé"
+    },
+    "duration": "Durée",
+    "triggeredBy": "Déclenché par",
+    "actionsExecuted": "actions exécutées"
+  },
+  "editor": {
+    "title": "Éditeur Visuel de Hooks",
+    "description": "Glissez-déposez des déclencheurs et des actions pour construire votre workflow d'automatisation.",
+    "hookName": "Nom du Hook",
+    "hookNamePlaceholder": "Mon hook d'automatisation...",
+    "hookDescription": "Description",
+    "hookDescriptionPlaceholder": "Que fait ce hook ?",
+    "addTrigger": "Ajouter un Déclencheur",
+    "addAction": "Ajouter une Action",
+    "save": "Enregistrer le Hook",
+    "cancel": "Annuler",
+    "crossProject": "Inter-projets",
+    "crossProjectDesc": "Ce hook s'applique à tous les projets",
+    "tags": "Tags",
+    "tagsPlaceholder": "Ajouter des tags...",
+    "triggerTypes": {
+      "file_saved": "Fichier Sauvegardé",
+      "file_created": "Fichier Créé",
+      "file_deleted": "Fichier Supprimé",
+      "test_failed": "Test Échoué",
+      "test_passed": "Test Réussi",
+      "pr_opened": "PR Ouverte",
+      "pr_merged": "PR Fusionnée",
+      "pr_review_requested": "Review PR Demandée",
+      "build_started": "Build Démarré",
+      "build_completed": "Build Terminé",
+      "build_failed": "Build Échoué",
+      "dependency_outdated": "Dépendance Obsolète",
+      "code_pattern_detected": "Pattern de Code Détecté",
+      "lint_error": "Erreur de Lint",
+      "branch_created": "Branche Créée",
+      "commit_pushed": "Commit Poussé",
+      "agent_completed": "Agent Terminé",
+      "agent_failed": "Agent Échoué",
+      "schedule": "Planification (Cron)",
+      "manual": "Déclenchement Manuel",
+      "webhook": "Webhook",
+      "custom": "Personnalisé"
+    },
+    "actionTypes": {
+      "run_agent": "Lancer un Agent",
+      "send_notification": "Envoyer une Notification",
+      "create_spec": "Créer un Spec",
+      "trigger_pipeline": "Déclencher un Pipeline",
+      "run_command": "Exécuter une Commande",
+      "run_lint": "Lancer le Lint",
+      "run_tests": "Lancer les Tests",
+      "generate_tests": "Générer des Tests",
+      "update_docs": "Mettre à jour la Doc",
+      "create_pr": "Créer une PR",
+      "send_slack": "Envoyer sur Slack",
+      "send_webhook": "Envoyer un Webhook",
+      "log_event": "Logger l'Événement",
+      "chain_hook": "Chaîner un Hook",
+      "custom": "Action Personnalisée"
+    },
+    "conditions": {
+      "title": "Conditions",
+      "addCondition": "Ajouter une Condition",
+      "field": "Champ",
+      "operator": "Opérateur",
+      "value": "Valeur",
+      "operators": {
+        "equals": "Égal à",
+        "contains": "Contient",
+        "matches": "Correspond (regex)",
+        "startsWith": "Commence par",
+        "endsWith": "Se termine par",
+        "glob": "Pattern glob",
+        "not_equals": "Différent de",
+        "not_contains": "Ne contient pas"
+      }
+    },
+    "connections": {
+      "always": "Toujours",
+      "on_success": "En cas de succès",
+      "on_failure": "En cas d'échec"
+    }
+  },
+  "actions": {
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "duplicate": "Dupliquer",
+    "toggle": "Basculer",
+    "pause": "Mettre en pause",
+    "resume": "Reprendre",
+    "viewHistory": "Voir l'historique"
+  },
+  "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce hook ?",
+  "notifications": {
+    "created": "Hook créé avec succès",
+    "updated": "Hook mis à jour avec succès",
+    "deleted": "Hook supprimé avec succès",
+    "duplicated": "Hook dupliqué avec succès",
+    "templateInstalled": "Modèle installé avec succès",
+    "eventEmitted": "Événement émis avec succès"
+  }
+}
