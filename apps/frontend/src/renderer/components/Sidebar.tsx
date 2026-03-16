@@ -44,7 +44,8 @@ import {
   TestTube,
   WandSparkles,
   Monitor,
-  Store
+  Store,
+  Image as ImageIcon
 } from 'lucide-react';
 
 // UI
@@ -111,6 +112,10 @@ import {
   openLearningLoopDialog
 } from '@/stores/learning-loop-store';
 
+import {
+  openDesignToCodeDialog
+} from '@/stores/design-to-code-store';
+
 // Modals & Components
 import { AddProjectModal } from './AddProjectModal';
 import { GitSetupModal } from './GitSetupModal';
@@ -131,11 +136,12 @@ import { DependencySentinelDialog } from './dependency-sentinel/DependencySentin
 import { VoiceControlDialog } from './voice-control/VoiceControlDialog';
 import { AppEmulatorDialog } from './app-emulator/AppEmulatorDialog';
 import { LearningLoopDialog } from './learning-loop/LearningLoopDialog';
+import { DesignToCodeDialog } from './design-to-code/DesignToCodeDialog';
 
 // Types
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace' | 'design-to-code';
 
 interface SidebarProps {
   readonly onSettingsClick: () => void;
@@ -199,6 +205,7 @@ const navGroups: NavGroup[] = [
       { id: 'natural-language-git', labelKey: 'navigation:items.naturalLanguageGit', icon: GitBranch, shortcut: 'G' },
       { id: 'app-emulator', labelKey: 'navigation:items.appEmulator', icon: Monitor, shortcut: 'E' },
       { id: 'learning-loop', labelKey: 'navigation:items.learningLoop', icon: Brain, shortcut: 'L' },
+      { id: 'design-to-code', labelKey: 'navigation:items.designToCode', icon: ImageIcon, shortcut: 'Y' },
     ],
     defaultExpanded: false
   },
@@ -557,6 +564,10 @@ export function Sidebar({
       openLearningLoopDialog();
       return;
     }
+    if (view === 'design-to-code') {
+      openDesignToCodeDialog();
+      return;
+    }
 
     // Handle regular view changes
     onViewChange?.(view);
@@ -907,6 +918,7 @@ const toggleGroupExpansion = (groupId: string) => {
       <VoiceControlDialog />
       <AppEmulatorDialog />
       <LearningLoopDialog />
+      <DesignToCodeDialog />
     </TooltipProvider>
   );
 }
