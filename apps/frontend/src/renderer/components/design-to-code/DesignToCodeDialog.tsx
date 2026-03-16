@@ -61,11 +61,11 @@ const PHASE_CONFIG: Record<PipelinePhase, { icon: React.ElementType; label: stri
 
 const FRAMEWORK_OPTIONS: { value: FrameworkType; label: string; icon: string }[] = [
   { value: 'react', label: 'React', icon: '⚛️' },
-  { value: 'vue', label: 'Vue.js', icon: '💚' },
   { value: 'angular', label: 'Angular', icon: '🅰️' },
-  { value: 'svelte', label: 'Svelte', icon: '🔥' },
+  { value: 'vue', label: 'Vue.js', icon: '💚' },
   { value: 'nextjs', label: 'Next.js', icon: '▲' },
   { value: 'nuxt', label: 'Nuxt', icon: '💚' },
+  { value: 'svelte', label: 'Svelte', icon: '🔥' },
 ];
 
 const SOURCE_TYPE_OPTIONS: { value: DesignSourceType; label: string; icon: string }[] = [
@@ -459,7 +459,7 @@ export function DesignToCodeDialog() {
                             }`}
                           >
                             <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                              generateTests ? 'translate-x-5' : 'translate-x-0.5'
+                              generateTests ? '-translate-x-5' : 'translate-x-0.5'
                             }`} />
                           </button>
                         </div>
