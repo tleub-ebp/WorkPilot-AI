@@ -732,18 +732,7 @@ export function UsageIndicator() {
       'common:usage.weeklyDefault'
   );
 
-  // Debug logs for Windsurf labels
-  if (usage?.providerName === 'windsurf') {
-    console.log('[UsageIndicator] Windsurf usage data:', {
-      sessionWindowLabel: usage?.usageWindows?.sessionWindowLabel,
-      weeklyWindowLabel: usage?.usageWindows?.weeklyWindowLabel,
-      sessionLabel,
-      weeklyLabel,
-      sessionPercent: usage.sessionPercent,
-      weeklyPercent: usage.weeklyPercent
-    });
-  }
-
+  
   const maxUsage = Math.max(usage.sessionPercent, usage.weeklyPercent);
   const isOpenAI = usage.providerName === 'openai';
   const isCopilot = usage.providerName === 'copilot';
