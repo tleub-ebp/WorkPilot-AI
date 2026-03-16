@@ -45,7 +45,8 @@ Rejouer visuellement le raisonnement d'un agent step-by-step : décisions prises
 - **Effort :** Élevé
 - **Pourquoi c'est BANGER :** On passe de "l'IA écrit du code" à "l'IA maintient la prod". Changement de paradigme complet.
 
-### 4. Design-to-Code Pipeline — Screenshot/Figma → Code fonctionnel
+<details>
+<summary>### 4. Design-to-Code Pipeline — Screenshot/Figma → Code fonctionnel ✅ Implémenté</summary>
 
 **De n'importe quel design visuel à du code production-ready en un clic.** L'agent qui tue le fossé entre designers et développeurs.
 
@@ -55,6 +56,80 @@ Rejouer visuellement le raisonnement d'un agent step-by-step : décisions prises
 - **Exploite :** Vision AI, agent coder, context system, worktree isolation, QA pipeline
 - **Effort :** Élevé
 - **Pourquoi c'est BANGER :** Killer feature pour les agences et startups. "J'upload une maquette, 5 minutes plus tard j'ai une PR avec du code production-ready qui respecte mon design system." Démonstration visuelle incroyable.
+
+#### 🎨 Comment utiliser le Design-to-Code Pipeline
+
+Le Design-to-Code Pipeline est maintenant intégré dans WorkPilot AI ! Convertissez n'importe quel design visuel en code production-ready en quelques clics.
+
+##### 🚀 Démarrage rapide
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"🖼️ Design to Code"** dans le groupe "AI Tools"
+2. **Upload** : Glissez-déposez ou sélectionnez une image (screenshot, export Figma, wireframe, photo de whiteboard)
+3. **Configuration** : Choisissez le framework cible (React, Vue, Angular, Svelte, Next.js, Nuxt)
+4. **Génération** : Cliquez sur **"Generate Code"** et suivez la progression en temps réel
+
+##### 📋 Phases du pipeline
+
+Le pipeline exécute automatiquement 6 phases :
+
+1. **🔍 Analyse Vision IA** — Analyse le design avec Claude Vision ou GPT-4o
+2. **📋 Génération de Spec** — Produit une spécification structurée (composants, layout, couleurs, typo)
+3. **💻 Génération de Code** — Génère du code pixel-perfect adapté au framework
+4. **🎨 Intégration Design Tokens** — Mappe les tokens du design system existant du projet
+5. **🧪 Tests Visuels** — Génère des tests de régression visuelle Playwright
+6. **🔄 Sync Figma** — Synchronisation bidirectionnelle avec Figma (optionnel)
+
+##### 🎯 Sources de design supportées
+
+- **📸 Screenshot** — Capture d'écran d'un site web ou d'une application
+- **🎨 Figma** — Export Figma ou URL Figma directe (sync bidirectionnel)
+- **📐 Wireframe** — Wireframe haute ou basse fidélité
+- **📋 Whiteboard** — Photo d'un dessin sur tableau blanc
+- **📷 Photo** — Photo d'une maquette papier ou d'un sketch
+
+##### 🖥️ Frameworks supportés
+
+- **React** (JSX/TSX) avec CSS Modules ou Tailwind
+- **Vue.js** (SFC .vue) avec Composition API
+- **Angular** (Component + Template + Styles)
+- **Svelte** (SFC .svelte)
+- **Next.js** (App Router, Server Components)
+- **Nuxt** (Auto-imports, composables)
+
+##### ⚙️ Options avancées
+
+- **Design System Path** : Chemin vers les tokens de votre design system (JSON, CSS, SCSS)
+- **Figma URL** : URL d'un fichier/nœud Figma pour la synchronisation bidirectionnelle
+- **Generate Visual Tests** : Active/désactive la génération de tests Playwright
+- **Custom Instructions** : Instructions personnalisées (ex: "Utiliser Tailwind CSS", "Suivre la convention BEM")
+
+##### 🔑 Configuration des clés API
+
+Le pipeline utilise les Vision AI pour l'analyse :
+- **ANTHROPIC_API_KEY** : Pour Claude Vision (recommandé)
+- **OPENAI_API_KEY** : Pour GPT-4o Vision (alternative)
+- **FIGMA_ACCESS_TOKEN** : Pour la synchronisation Figma (optionnel)
+
+> **Note** : Sans clé API, le pipeline fonctionne en mode mock pour le développement.
+
+##### 📁 Fichiers du pipeline
+
+- **Backend Service** : `apps/backend/services/design_to_code_service.py`
+- **Figma Connector** : `src/connectors/figma_connector.py`
+- **Backend Runner** : `apps/backend/runners/design_to_code_runner.py`
+- **Frontend Store** : `apps/frontend/src/renderer/stores/design-to-code-store.ts`
+- **Frontend Dialog** : `apps/frontend/src/renderer/components/design-to-code/DesignToCodeDialog.tsx`
+- **Tests** : `tests/services/test_design_to_code_service.py`
+
+##### 📊 Onglets de résultat
+
+- **Upload** — Zone de drop, configuration du framework et options
+- **Spec** — Spécification extraite : composants, palette de couleurs, typographie
+- **Code** — Fichiers générés avec preview de code et copie
+- **Tests** — Tests de régression visuelle Playwright générés
+- **Tokens** — Design tokens du projet intégrés dans le code
+
+</details>
 
 ### 5. Event-Driven Hooks System — L'automatisation intelligente
 
