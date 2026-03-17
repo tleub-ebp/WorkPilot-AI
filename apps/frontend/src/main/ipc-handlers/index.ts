@@ -63,6 +63,7 @@ import { registerPairProgrammingHandlers } from './pair-programming-handlers';
 import { registerPipelineGeneratorHandlers, setupPipelineGeneratorEventForwarding } from './pipeline-generator-handlers';
 import { registerTeamSyncHandlers } from './team-sync-handlers';
 import { registerPluginMarketplaceHandlers } from './plugin-marketplace-handlers';
+import { registerArenaHandlers } from './arena-handlers';
 
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from './project-handlers';
@@ -116,6 +117,7 @@ export { registerPairProgrammingHandlers } from './pair-programming-handlers';
 export { registerPipelineGeneratorHandlers, setupPipelineGeneratorEventForwarding } from './pipeline-generator-handlers';
 export { registerTeamSyncHandlers } from './team-sync-handlers';
 export { registerPluginMarketplaceHandlers } from './plugin-marketplace-handlers';
+export { registerArenaHandlers } from './arena-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -292,6 +294,9 @@ export function setupIpcHandlers(
 
   // Plugin Marketplace handlers (Feature 37)
   registerPluginMarketplaceHandlers();
+
+  // Arena Mode handlers (Feature 9) — Blind A/B model comparison
+  registerArenaHandlers(getMainWindow);
 
   console.warn('[IPC] All handler modules registered successfully');
 }

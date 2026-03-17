@@ -55,7 +55,8 @@
     "browserAgent": "Browser Agent",
     "pairProgramming": "Pair Programming",
     "pipelineGenerator": "Pipeline Generator",
-    "pluginMarketplace": "Plugin Marketplace"
+    "pluginMarketplace": "Plugin Marketplace",
+    "arenaMode": "Arena Mode"
   },
   "actions": {
     "settings": "Settings",

@@ -50,6 +50,8 @@ import type { PipelineGeneratorAPI } from './modules/pipeline-generator-api';
 import { createPipelineGeneratorAPI } from './modules/pipeline-generator-api';
 import type { TeamSyncAPI } from './modules/team-sync-api';
 import { createTeamSyncAPI } from './modules/team-sync-api';
+import type { ArenaAPI } from './modules/arena-api';
+import { createArenaAPI } from './modules/arena-api';
 import { invokeIpc } from './modules/ipc-utils';
 import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
@@ -89,7 +91,8 @@ export interface ElectronAPI extends
   DecisionLoggerAPI,
   PairProgrammingAPI,
   PipelineGeneratorAPI,
-  TeamSyncAPI {
+  TeamSyncAPI,
+  ArenaAPI {
   github: GitHubAPI;
   /** Queue routing API for rate limit recovery */
   queue: QueueAPI;
@@ -146,6 +149,7 @@ export const createElectronAPI = (): ElectronAPI => {
     ...createPairProgrammingAPI(),
     ...createPipelineGeneratorAPI(),
     ...createTeamSyncAPI(),
+    ...createArenaAPI(),
     github: createGitHubAPI(),
     queue: createQueueAPI(),  // Queue routing for rate limit recovery
     quality: createQualityAPI(),  // Code quality analysis
@@ -224,3 +228,5 @@ export type { DocumentationAgentAPI } from './modules/documentation-agent-api';
 export type { DecisionLoggerAPI } from './modules/decision-logger-api';
 export { createPairProgrammingAPI } from './modules/pair-programming-api';
 export type { PairProgrammingAPI } from './modules/pair-programming-api';
+export { createArenaAPI } from './modules/arena-api';
+export type { ArenaAPI } from './modules/arena-api';

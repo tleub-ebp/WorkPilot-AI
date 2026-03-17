@@ -1,0 +1,73 @@
+{
+  "title": "Arena Mode",
+  "subtitle": "Blind A/B model comparison — let the data speak",
+  "tabs": {
+    "battle": "Battle",
+    "history": "History",
+    "analytics": "Analytics",
+    "routing": "Auto-Routing"
+  },
+  "taskTypes": {
+    "coding": "Coding",
+    "review": "Code Review",
+    "test": "Test Generation",
+    "planning": "Planning",
+    "spec": "Specification",
+    "insights": "Insights"
+  },
+  "battle": {
+    "taskType": "Task Type",
+    "selectModels": "Select Models",
+    "selectModelHint": "2 to 4 models",
+    "prompt": "Prompt",
+    "promptPlaceholder": "Describe the task you want all models to perform…",
+    "startBattle": "Start Battle",
+    "model": "Model",
+    "voteForThis": "Vote for this",
+    "votePrompt": "Both models have finished — which response is better? Your vote is anonymous.",
+    "winner": "Winner",
+    "newBattle": "New Battle",
+    "statusRunning": "Running…",
+    "statusVoting": "Vote now",
+    "statusCompleted": "Completed",
+    "waitingForStart": "Waiting to start…",
+    "generating": "Generating…",
+    "noOutput": "No output"
+  },
+  "history": {
+    "loading": "Loading history…",
+    "empty": "No battles yet",
+    "battles": "battles",
+    "clearAll": "Clear All",
+    "awaitingVote": "Awaiting vote"
+  },
+  "analytics": {
+    "loading": "Computing analytics…",
+    "noData": "No analytics data yet",
+    "noDataHint": "Run battles and vote to see stats",
+    "totalBattles": "Total Battles",
+    "totalVotes": "Votes Cast",
+    "modelsCompared": "Models Compared",
+    "modelRankings": "Model Rankings",
+    "winRate": "Win Rate",
+    "winsTotal": "W/Total",
+    "avgCost": "Avg Cost"
+  },
+  "routing": {
+    "autoRouting": "Auto-Routing",
+    "autoRoutingDesc": "Automatically route each task type to the best-performing model",
+    "recommendations": "Current Recommendations",
+    "noRecommendations": "No recommendations yet",
+    "noRecommendationsHint": "Run at least 5 battles per task type",
+    "needMoreData": "Run {{count}} more battle(s) to improve recommendation confidence",
+    "confidence": {
+      "low": "Low confidence",
+      "medium": "Medium confidence",
+      "high": "High confidence"
+    }
+  },
+  "errors": {
+    "startFailed": "Failed to start battle",
+    "voteFailed": "Failed to submit vote"
+  }
+}
