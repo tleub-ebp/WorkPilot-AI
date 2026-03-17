@@ -1062,7 +1062,8 @@ npm test -- --run src/renderer/stores/__tests__/learning-loop-store.test.ts
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Data-driven model selection. Plus de débat "Claude vs GPT". Les données parlent. Feature virale sur les réseaux sociaux (benchmarks réels).
 
-### 10. AI Pair Programming Mode — Vrai travail parallèle coordonné
+<details>
+<summary>### 10. AI Pair Programming Mode — Vrai travail parallèle coordonné ✅ Implémenté</summary>
 
 Mode collaboratif temps réel où l'IA code en parallèle du développeur sur le même worktree.
 
@@ -1072,6 +1073,57 @@ Mode collaboratif temps réel où l'IA code en parallèle du développeur sur le
 - **Exploite :** Agent terminals, worktree isolation, conflict predictor, agent queue
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Le vrai pair programming avec une IA. Pas du copilot inline, du vrai travail parallèle coordonné.
+
+#### 🚀 Comment utiliser AI Pair Programming
+
+Le Pair Programming IA est maintenant intégré dans WorkPilot AI ! Travaillez en parallèle avec l'IA sur des parties complémentaires de votre codebase.
+
+##### 🎯 Démarrage rapide
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"Pair Programming"** dans le groupe "Development Tools"
+2. **Configurer la session** : Définissez l'objectif, votre périmètre (ce que vous ferez) et le périmètre de l'IA
+3. **Lancer** : Cliquez sur **"Start Pair Programming"** — l'IA commence immédiatement à travailler sur son périmètre
+4. **Coordonner** : Utilisez le chat central pour envoyer des messages à l'IA sans bloquer votre travail
+5. **Suivre** : Le panneau droit affiche en temps réel ce que fait l'IA (fichiers créés/modifiés, commandes)
+
+##### 🏗️ Architecture technique
+
+**Backend** (`apps/backend/runners/pair_programming_runner.py`) :
+- Runner Python spawné par Electron qui utilise le Claude SDK
+- Sortie JSON-line vers stdout : `status`, `stream`, `action`, `question`, `conflict`, `done`
+- File de messages bidirectionnelle via un fichier temporaire (l'IA lit les messages dev entre les étapes)
+- Détection automatique des conflits de périmètre
+
+**Frontend** :
+- `apps/frontend/src/renderer/components/PairProgramming.tsx` — Split-view 3 panneaux
+- `apps/frontend/src/renderer/stores/pair-programming-store.ts` — Zustand store avec IPC listeners
+- `apps/frontend/src/main/ipc-handlers/pair-programming-handlers.ts` — Spawn + event forwarding
+- `apps/frontend/src/preload/api/modules/pair-programming-api.ts` — API preload typée
+
+##### 🎨 Interface split-view
+
+```
+┌─────────────────┬──────────────────┬──────────────────┐
+│  Your Work      │  Coordination    │  AI Work         │
+│  (votre scope)  │  Chat            │  (live progress) │
+│                 │                  │                   │
+│  Scope décrit   │  Chat            │  ▶ Streaming...  │
+│  par l'user     │  bidirectionnel  │  ✓ file_created  │
+│                 │  sans blocage    │  ✓ file_modified  │
+└─────────────────┴──────────────────┴──────────────────┘
+```
+
+##### ✨ Fonctionnalités clés
+
+- **Split-view 3 panneaux** : Scope dev | Chat de coordination | Travail IA live
+- **Streaming temps réel** : L'output de l'IA s'affiche caractère par caractère
+- **Journal d'actions** : Chaque fichier créé/modifié apparaît instantanément
+- **Chat non-bloquant** : Envoyez des messages à l'IA sans interrompre son travail
+- **Détection de conflits** : Alertes si l'IA touche des fichiers dans votre périmètre
+- **File de messages** : Les messages dev sont injectés dans le contexte IA entre les étapes
+- **Mode démo** : Fonctionne même sans Claude SDK configuré (simulation)
+
+</details>
 
 <details>
 <summary>### 11. MCP Marketplace — L'écosystème d'intégrations universel ✅ Implémenté</summary>
@@ -2363,12 +2415,60 @@ L'agent fournit des métriques détaillées :
 
 </details>
 
-### 23. Pipeline Generator
+<details>
+<summary>### 23. Pipeline Generator ✅ Implémenté</summary>
 
 Génération automatique de CI/CD complète adaptée au projet.
-- **Exploite :** Project analysis, context system
+
+- **Principe :** Analyse le stack du projet (langages, frameworks, gestionnaires de paquets, Dockerfile, runners de tests, configs CI existantes) et génère des pipelines CI/CD complets et prêts pour la production pour GitHub Actions, GitLab CI/CD et CircleCI en quelques secondes.
+- **Exploite :** Project analysis, context system, Claude SDK
 - **Effort :** Moyen
-- **Pourquoi c'est banger :** Setup CI/CD en 30 secondes au lieu de 2 heures.
+- **Pourquoi c'est banger :** Setup CI/CD en 30 secondes au lieu de 2 heures. L'IA détecte automatiquement le stack, génère le build, test, lint, Docker et deploy stages avec caching optimisé.
+
+#### 🚀 Comment utiliser le Pipeline Generator
+
+Le Pipeline Generator est maintenant disponible dans WorkPilot AI ! Voici comment l'utiliser :
+
+##### 🎯 Accès au Pipeline Generator
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"Pipeline Generator"** dans le groupe "AI Tools" (raccourci clavier : `I`)
+2. **Sélection des plateformes** : Cochez les plateformes CI/CD souhaitées (GitHub Actions, GitLab CI/CD, CircleCI)
+3. **Générer** : Cliquez sur **"Generate Pipelines"** — l'IA analyse votre projet et génère les pipelines
+4. **Visualiser** : Parcourez les YAML générés par plateforme dans le panneau principal
+5. **Copier** : Utilisez le bouton "Copy YAML" pour copier la configuration
+
+##### 🏗️ Architecture technique
+
+**Backend** (`apps/backend/runners/pipeline_generator_runner.py`) :
+- `detect_project_stack()` — Détection du stack (langages, frameworks, Docker, CI existant)
+- `build_generation_prompt()` — Prompt structuré pour générer les YAML par plateforme
+- `generate_pipelines()` — Orchestration async avec Claude SDK
+- `save_pipelines()` — Sauvegarde dans `.auto-claude/pipelines/` (et optionnellement dans le projet)
+
+**Frontend** :
+- `pipeline-generator-service.ts` — Service main process (spawn Python runner, forward events)
+- `pipeline-generator-handlers.ts` — IPC handlers (generate, cancel, configure)
+- `pipeline-generator-api.ts` — Preload API bridge
+- `pipeline-generator-store.ts` — Zustand store avec listeners IPC
+- `PipelineGenerator.tsx` — Composant React avec sélecteur de plateformes et viewer YAML
+
+##### 🎨 Fonctionnalités clés
+
+- **Détection automatique** : Langages, frameworks, package managers, Dockerfile, test runners, CI existants
+- **Multi-plateformes** : Génération simultanée GitHub Actions, GitLab CI/CD, CircleCI
+- **Pipelines complets** : Build → Test → Lint → Docker → Deploy (avec placeholders secrets)
+- **Caching optimisé** : node_modules, pip, cargo registry selon le stack détecté
+- **Branch protection** : Pipeline complet sur main/master, allégé sur feature branches
+- **Output en temps réel** : Streaming du log d'analyse et génération
+- **Copie en 1 clic** : YAML prêt à coller dans votre repo
+
+##### 💡 Cas d'usage typiques
+
+- **Nouveau projet** : Générez un pipeline CI/CD complet en 30 secondes
+- **Migration** : Générez des configs pour plusieurs plateformes et comparez
+- **Audit** : Comparez votre CI actuel avec ce qu'un expert DevOps recommanderait
+
+</details>
 
 <details>
 <summary>### 24. Smart Estimation ✅ Implémenté</summary>

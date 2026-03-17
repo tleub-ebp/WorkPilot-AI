@@ -47,6 +47,7 @@ import enIdeation from './locales/en/ideation.json';
 import enCostEstimator from './locales/en/costEstimator.json';
 import enDashboard from './locales/en/dashboard.json';
 import enWelcome from './locales/en/welcome.json';
+import enPairProgramming from './locales/en/pairProgramming.json';
 
 // Import French translation resources
 import frAppEmulator from './locales/fr/appEmulator.json';
@@ -94,6 +95,7 @@ import frIdeation from './locales/fr/ideation.json';
 import frCostEstimator from './locales/fr/costEstimator.json';
 import frDashboard from './locales/fr/dashboard.json';
 import frWelcome from './locales/fr/welcome.json';
+import frPairProgramming from './locales/fr/pairProgramming.json';
 
 export const defaultNS = 'common';
 
@@ -143,7 +145,8 @@ export const resources = {
     terminal: enTerminal,
     testGeneration: enTestGeneration,
     visualProgramming: enVisualProgramming,
-    welcome: enWelcome
+    welcome: enWelcome,
+    pairProgramming: enPairProgramming
   },
   fr: {
     appEmulator: frAppEmulator,
@@ -190,7 +193,8 @@ export const resources = {
     terminal: frTerminal,
     testGeneration: frTestGeneration,
     visualProgramming: frVisualProgramming,
-    welcome: frWelcome
+    welcome: frWelcome,
+    pairProgramming: frPairProgramming
   }
 } as const;
 
@@ -246,7 +250,8 @@ i18n
       'terminal',
       'testGeneration',
       'visualProgramming',
-      'welcome'
+      'welcome',
+      'pairProgramming'
     ],
     interpolation: {
       escapeValue: false 

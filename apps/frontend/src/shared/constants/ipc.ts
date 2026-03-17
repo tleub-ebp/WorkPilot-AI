@@ -759,4 +759,27 @@ export const IPC_CHANNELS = {
   DOCUMENTATION_AGENT_STREAM_CHUNK: 'documentationAgent:streamChunk',
   DOCUMENTATION_AGENT_ERROR: 'documentationAgent:error',
   DOCUMENTATION_AGENT_COMPLETE: 'documentationAgent:complete',
+
+  // Pipeline Generator (Feature 23) — AI-powered CI/CD pipeline generation
+  PIPELINE_GENERATOR_GENERATE: 'pipelineGenerator:generate',
+  PIPELINE_GENERATOR_CANCEL: 'pipelineGenerator:cancel',
+  PIPELINE_GENERATOR_CONFIGURE: 'pipelineGenerator:configure',
+  // Pipeline Generator events (main -> renderer)
+  PIPELINE_GENERATOR_STATUS: 'pipelineGenerator:status',
+  PIPELINE_GENERATOR_STREAM_CHUNK: 'pipelineGenerator:streamChunk',
+  PIPELINE_GENERATOR_ERROR: 'pipelineGenerator:error',
+  PIPELINE_GENERATOR_COMPLETE: 'pipelineGenerator:complete',
+
+  // AI Pair Programming (Feature 10) — Real parallel coordinated work
+  PAIR_PROGRAMMING_START: 'pairProgramming:start',
+  PAIR_PROGRAMMING_STOP: 'pairProgramming:stop',
+  PAIR_PROGRAMMING_SEND_MESSAGE: 'pairProgramming:sendMessage',
+  PAIR_PROGRAMMING_GET_SESSION: 'pairProgramming:getSession',
+  // Pair Programming events (main -> renderer)
+  PAIR_PROGRAMMING_STREAM_CHUNK: 'pairProgramming:streamChunk',
+  PAIR_PROGRAMMING_STATUS: 'pairProgramming:status',
+  PAIR_PROGRAMMING_AI_ACTION: 'pairProgramming:aiAction',
+  PAIR_PROGRAMMING_CONFLICT: 'pairProgramming:conflict',
+  PAIR_PROGRAMMING_ERROR: 'pairProgramming:error',
+  PAIR_PROGRAMMING_COMPLETE: 'pairProgramming:complete',
 } as const;

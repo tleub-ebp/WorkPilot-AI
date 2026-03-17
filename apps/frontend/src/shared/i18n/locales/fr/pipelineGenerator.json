@@ -1,0 +1,35 @@
+{
+  "title": "Générateur de Pipeline",
+  "description": "Générez automatiquement des pipelines CI/CD complets adaptés à votre projet en quelques secondes.",
+  "platforms": "Plateformes CI/CD",
+  "viewPipeline": "Voir le Pipeline",
+  "detectedStack": "Stack Détecté",
+  "lines": "lignes",
+  "savedTo": "Enregistré dans",
+  "stackInfo": {
+    "languages": "Langages",
+    "frameworks": "Frameworks",
+    "dockerDetected": "Docker détecté"
+  },
+  "status": {
+    "analyzing": "Analyse du stack projet...",
+    "generating": "Génération des pipelines CI/CD par IA...",
+    "saving": "Enregistrement des pipelines...",
+    "complete": "Pipelines générés avec succès"
+  },
+  "errors": {
+    "noProject": "Aucun projet sélectionné. Veuillez sélectionner un projet avant de continuer.",
+    "generic": "Une erreur s'est produite lors de la génération. Veuillez réessayer."
+  },
+  "actions": {
+    "generate": "Générer les Pipelines",
+    "regenerate": "Régénérer",
+    "cancel": "Annuler",
+    "copy": "Copier le YAML",
+    "copySuccess": "Copié !"
+  },
+  "emptyState": {
+    "title": "Générateur de Pipeline",
+    "description": "Sélectionnez les plateformes CI/CD et cliquez sur \"Générer les Pipelines\" pour analyser automatiquement votre projet et générer des configurations de pipeline prêtes pour la production."
+  }
+}

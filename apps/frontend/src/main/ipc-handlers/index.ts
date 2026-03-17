@@ -47,7 +47,7 @@ import { registerGitHubCopilotHandlers } from './github-copilot-handlers';
 import { setupNaturalLanguageGitHandlers } from './natural-language-git-handlers';
 import { setupSmartEstimationHandlers } from './smart-estimation-handlers';
 import { setupConflictPredictorHandlers } from './conflict-predictor-handlers';
-import { registerVoiceControlHandlers } from './voice-control-handlers';
+import { registerVoiceControlHandlers, setupVoiceControlEvents } from './voice-control-handlers';
 import { registerAppEmulatorHandlers } from './app-emulator-handlers';
 import { registerLearningLoopHandlers } from './learning-loop-handlers';
 import { registerMcpMarketplaceHandlers } from './mcp-marketplace-handlers';
@@ -59,6 +59,8 @@ import { registerCodeMigrationHandlers, setupCodeMigrationEventForwarding } from
 import { registerPerformanceProfilerHandlers, setupPerformanceProfilerEventForwarding } from './performance-profiler-handlers';
 import { registerDocumentationAgentHandlers, setupDocumentationAgentEventForwarding } from './documentation-agent-handlers';
 import { registerDecisionLoggerHandlers } from './decision-logger-handlers';
+import { registerPairProgrammingHandlers } from './pair-programming-handlers';
+import { registerPipelineGeneratorHandlers, setupPipelineGeneratorEventForwarding } from './pipeline-generator-handlers';
 
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from './project-handlers';
@@ -108,6 +110,8 @@ export { registerCodeMigrationHandlers, setupCodeMigrationEventForwarding } from
 export { registerPerformanceProfilerHandlers, setupPerformanceProfilerEventForwarding } from './performance-profiler-handlers';
 export { registerDocumentationAgentHandlers, setupDocumentationAgentEventForwarding } from './documentation-agent-handlers';
 export { registerDecisionLoggerHandlers } from './decision-logger-handlers';
+export { registerPairProgrammingHandlers } from './pair-programming-handlers';
+export { registerPipelineGeneratorHandlers, setupPipelineGeneratorEventForwarding } from './pipeline-generator-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -233,6 +237,7 @@ export function setupIpcHandlers(
 
   // Voice Control handlers
   registerVoiceControlHandlers();
+  setupVoiceControlEvents();
 
   // App Emulator handlers
   registerAppEmulatorHandlers(getMainWindow);
@@ -270,6 +275,13 @@ export function setupIpcHandlers(
 
   // Agent Decision Logger handlers (Feature 30)
   registerDecisionLoggerHandlers();
+
+  // AI Pair Programming handlers (Feature 10)
+  registerPairProgrammingHandlers(getMainWindow);
+
+  // Pipeline Generator handlers (Feature 23)
+  registerPipelineGeneratorHandlers();
+  setupPipelineGeneratorEventForwarding(getMainWindow);
 
   console.warn('[IPC] All handler modules registered successfully');
 }

@@ -1,0 +1,75 @@
+{
+  "title": "AI Pair Programming",
+  "subtitle": "Real parallel coordinated development with AI",
+  "startSession": "Start Pair Session",
+  "stopSession": "Stop Session",
+  "newSession": "New Session",
+  "sendMessage": "Send",
+  "messagePlaceholder": "Message your AI partner...",
+  "sections": {
+    "yourWork": "Your Work",
+    "chat": "Coordination Chat",
+    "aiWork": "AI Work"
+  },
+  "setup": {
+    "title": "Configure Pair Programming Session",
+    "goalLabel": "Session Goal",
+    "goalPlaceholder": "e.g. Add user authentication with JWT tokens",
+    "devScopeLabel": "Your Scope (what you'll work on)",
+    "devScopePlaceholder": "e.g. Frontend login/register components and Redux store",
+    "aiScopeLabel": "AI Scope (what the AI will work on)",
+    "aiScopePlaceholder": "e.g. Backend auth API, JWT middleware, and integration tests",
+    "startButton": "Start Pair Programming",
+    "hint": "The AI will work on its scope in parallel while you focus on yours. You can chat to coordinate in real time."
+  },
+  "status": {
+    "idle": "Ready to pair",
+    "planning": "Planning...",
+    "active": "Working in parallel",
+    "paused": "Paused",
+    "completed": "Session complete",
+    "error": "Error"
+  },
+  "aiWork": {
+    "waiting": "Waiting to start...",
+    "planning": "Analyzing project and planning implementation...",
+    "active": "Working on your scope...",
+    "actionLog": "AI Actions",
+    "noActions": "No actions yet"
+  },
+  "actions": {
+    "file_created": "Created",
+    "file_modified": "Modified",
+    "file_deleted": "Deleted",
+    "command_run": "Ran",
+    "thinking": "Thinking"
+  },
+  "chat": {
+    "you": "You",
+    "ai": "AI Partner",
+    "question": "AI is asking",
+    "empty": "No messages yet. Send a message to coordinate with your AI partner.",
+    "sessionComplete": "Session complete."
+  },
+  "devWork": {
+    "scope": "Your scope",
+    "reminder": "Focus on your scope while the AI handles its portion.",
+    "conflictWarning": "Potential conflict"
+  },
+  "conflicts": {
+    "title": "Scope Conflicts",
+    "description": "The AI may have touched files in your scope. Please review."
+  },
+  "empty": {
+    "title": "AI Pair Programming",
+    "description": "Work in parallel with AI on complementary parts of your codebase. You focus on one area, the AI handles another — coordinated in real time.",
+    "feature1": "Parallel work on different file sets",
+    "feature2": "Real-time chat for coordination",
+    "feature3": "Conflict detection to avoid overlap",
+    "cta": "Start a Pair Session"
+  },
+  "errors": {
+    "startFailed": "Failed to start pair programming session",
+    "noProject": "Please select a project first"
+  }
+}

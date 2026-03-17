@@ -63,13 +63,13 @@ class VoiceControlProcessor:
     def setup_client(self):
         """Setup Claude SDK client"""
         if not SDK_AVAILABLE:
-            debug_error("Claude SDK not available")
+            debug_error("VoiceControl", "Claude SDK not available")
             return
 
         try:
             token = get_auth_token()
             if not token:
-                debug_error("No authentication token available")
+                debug_error("VoiceControl", "No authentication token available")
                 return
 
             options = ClaudeAgentOptions(
@@ -79,9 +79,9 @@ class VoiceControlProcessor:
             self.client = ClaudeSDKClient(options)
             debug_success("Claude SDK client initialized")
         except Exception as e:
-            debug_error(f"Failed to setup Claude client: {e}")
+            debug_error("VoiceControl", f"Failed to setup Claude client: {e}")
 
-    async def record_and_process(self, language: str = "en") -> Dict[str, Any]:
+    async def record_and_process(self) -> Dict[str, Any]:
         """Record audio and process voice command"""
         try:
             # Simulate audio recording with progress
@@ -89,7 +89,7 @@ class VoiceControlProcessor:
             
             # Simulate recording duration and audio levels
             duration = 0.0
-            for i in range(30):  # 3 seconds of recording
+            for _ in range(30):  # 3 seconds of recording
                 duration += 0.1
                 # Emit audio level (simulate varying levels)
                 audio_level = 0.3 + 0.4 * abs(time.time() % 1.0 - 0.5)
@@ -100,7 +100,7 @@ class VoiceControlProcessor:
             debug("Recording completed, processing speech...")
             
             # Simulate speech-to-text processing
-            transcript = await self.speech_to_text(language)
+            transcript = await self.speech_to_text()
             debug(f"Transcript: {transcript}")
             
             # Process command with AI
@@ -108,7 +108,7 @@ class VoiceControlProcessor:
             return result
             
         except Exception as e:
-            debug_error(f"Error in voice recording: {e}")
+            debug_error("VoiceControl", f"Error in voice recording: {e}")
             return {
                 "transcript": "",
                 "command": "",
@@ -118,7 +118,7 @@ class VoiceControlProcessor:
                 "error": str(e)
             }
 
-    async def speech_to_text(self, language: str) -> str:
+    async def speech_to_text(self) -> str:
         """Convert speech to text (simulated)"""
         # In a real implementation, this would use Whisper or Deepgram
         # For now, we'll simulate with a sample command
@@ -141,7 +141,7 @@ class VoiceControlProcessor:
     async def process_command(self, transcript: str) -> Dict[str, Any]:
         """Process voice command with AI"""
         if not self.client:
-            debug_error("No client available for command processing")
+            debug_error("VoiceControl", "No client available for command processing")
             return {
                 "transcript": transcript,
                 "command": transcript,
@@ -176,7 +176,7 @@ Example response:
 }}"""
 
             debug("Processing command with AI...")
-            print(f"__TOOL_START__:{{\"tool\":\"claude_sdk\",\"action\":\"process_command\"}}")
+            print("__TOOL_START__:{{\"tool\":\"claude_sdk\",\"action\":\"process_command\"}}")
             
             # Process with Claude SDK
             response = await self.client.process_message_async(
@@ -184,7 +184,7 @@ Example response:
                 user_message=user_prompt
             )
             
-            print(f"__TOOL_END__:{{\"tool\":\"claude_sdk\"}}")
+            print("__TOOL_END__:{{\"tool\":\"claude_sdk\"}}")
             
             # Parse the response
             result = self._parse_ai_response(response.content, transcript)
@@ -193,7 +193,7 @@ Example response:
             return result
             
         except Exception as e:
-            debug_error(f"Error processing command: {e}")
+            debug_error("VoiceControl", f"Error processing command: {e}")
             return {
                 "transcript": transcript,
                 "command": transcript,
@@ -259,11 +259,11 @@ Always respond with valid JSON. If you cannot understand the command, set action
                 
                 return result
             else:
-                debug_error("No JSON found in AI response")
+                debug_error("VoiceControl", "No JSON found in AI response")
                 raise ValueError("Invalid response format")
                 
         except Exception as e:
-            debug_error(f"Error parsing AI response: {e}")
+            debug_error("VoiceControl", f"Error parsing AI response: {e}")
             # Fallback response
             return {
                 "transcript": transcript,
@@ -288,7 +288,7 @@ async def main():
     # Validate authentication
     token = ensure_claude_code_oauth_token()
     if not token:
-        debug_error("Authentication required. Please run: claude-code auth")
+        debug_error("VoiceControl", "Authentication required. Please run: claude-code auth")
         sys.exit(1)
     
     # Resolve model configuration
@@ -310,13 +310,13 @@ async def main():
     )
     
     if not processor.client:
-        debug_error("Failed to initialize voice processor")
+        debug_error("VoiceControl", "Failed to initialize voice processor")
         sys.exit(1)
     
     # Execute command
     if args.command == "record":
         try:
-            result = await processor.record_and_process(args.language)
+            result = await processor.record_and_process()
             
             # Output structured result
             print(f"__VOICE_RESULT__:{json.dumps(result)}")
@@ -326,10 +326,10 @@ async def main():
             debug("Voice control interrupted")
             sys.exit(0)
         except Exception as e:
-            debug_error(f"Voice control failed: {e}")
+            debug_error("VoiceControl", f"Voice control failed: {e}")
             sys.exit(1)
     else:
-        debug_error(f"Unknown command: {args.command}")
+        debug_error("VoiceControl", f"Unknown command: {args.command}")
         sys.exit(1)
 
 
