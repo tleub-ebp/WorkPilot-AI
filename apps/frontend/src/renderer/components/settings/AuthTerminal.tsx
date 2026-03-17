@@ -217,6 +217,71 @@ export function AuthTerminal({
     const unsubOutput = globalThis.electronAPI.onTerminalOutput((id, data) => {
       if (id === terminalId && xterm) {
         xterm.write(data);
+        
+        // Detect Codex CLI authentication success messages
+        const isCodexAuth = terminalId.startsWith('auth-codex-');
+        if (isCodexAuth && statusRef.current === 'ready') {
+          const output = data.toLowerCase();
+          
+          // Check for various Codex CLI success indicators
+          const successIndicators = [
+            'authentication successful',
+            'successfully authenticated',
+            'logged in successfully',
+            'login successful',
+            'auth success',
+            'you are now logged in',
+            'authentication complete',
+            'tokens saved',
+            'credentials saved',
+            'authentication stored',
+            'login credentials saved',
+            'openai api key configured',
+            'codex cli configured',
+            'authentication token received',
+            'oauth token saved',
+            'successfully logged in to openai',
+            // Additional common success patterns
+            'authentication: success',
+            'login: success',
+            'auth: ok',
+            'token: saved',
+            'ready to use',
+            'setup complete'
+          ];
+          
+          const hasSuccessIndicator = successIndicators.some(indicator => 
+            output.includes(indicator)
+          );
+          
+          // Additional check for email/user info extraction
+          const emailRegex = /(?:email|user|account):\s*([^\s\r\n]+)/i;
+          const emailMatch = emailRegex.exec(data);
+          const extractedEmail = emailMatch ? emailMatch[1] : 'Codex CLI User';
+          
+          if (hasSuccessIndicator) {
+            debugLog('Detected Codex CLI authentication success from terminal output', { 
+              terminalId, 
+              output: data.trim(),
+              extractedEmail
+            });
+            
+            // Mark authentication as completed
+            authCompletedRef.current = true;
+            setAuthEmail(extractedEmail);
+            setStatus('success');
+            onAuthSuccess?.(extractedEmail);
+            
+            // Auto-close after showing success briefly
+            successTimeoutRef.current = setTimeout(() => {
+              if (isCreatedRef.current) {
+                globalThis.electronAPI.destroyTerminal(terminalId).catch(console.error);
+                isCreatedRef.current = false;
+              }
+              onClose();
+            }, 2000);
+          }
+        }
       }
     });
     cleanupFnsRef.current.push(unsubOutput);
@@ -282,6 +347,10 @@ export function AuthTerminal({
           loginSent: loginSentRef.current,
           willTransitionToSuccess: statusRef.current === 'onboarding' && exitCode === 0
         });
+        
+        // Special handling for Codex CLI terminals
+        const isCodexAuth = terminalId.startsWith('auth-codex-');
+        
         // If we were in onboarding status and terminal exits with code 0,
         // that means the user completed the onboarding successfully
         if (statusRef.current === 'onboarding' && exitCode === 0) {
@@ -292,6 +361,15 @@ export function AuthTerminal({
             authCompletedRef.current = true;
             onAuthSuccess?.(authEmailRef.current);
           }
+        }
+        // For Codex CLI: if terminal exits with code 0 and we haven't completed auth yet,
+        // assume authentication was successful (Codex CLI often exits immediately after auth)
+        else if (isCodexAuth && exitCode === 0 && statusRef.current === 'ready' && !authCompletedRef.current) {
+          debugLog('Codex CLI terminal exited with code 0, assuming authentication success', { terminalId });
+          authCompletedRef.current = true;
+          setAuthEmail('Codex CLI User');
+          setStatus('success');
+          onAuthSuccess?.('Codex CLI User');
         }
         // Don't close automatically - let user see any error messages
       }

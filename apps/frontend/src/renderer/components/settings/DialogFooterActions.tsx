@@ -37,8 +37,8 @@ export function DialogFooterActions({
       )}
       
       <div className="flex gap-2 ml-auto">
-        {/* Hide Test/Save when on Windsurf SSO tab — it has its own save button */}
-        {!(provider?.id === 'windsurf' && activeTab === 'oauth') && (
+        {/* Hide Test/Save on Windsurf SSO tab and OpenAI Codex OAuth tab — auth auto-saves */}
+        {!((provider?.id === 'windsurf' || provider?.id === 'openai') && activeTab === 'oauth') && (
           <>
             <Button
               variant="outline"
