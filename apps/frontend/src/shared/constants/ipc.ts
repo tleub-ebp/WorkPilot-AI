@@ -712,4 +712,46 @@ export const IPC_CHANNELS = {
   BROWSER_AGENT_PROGRESS: 'browserAgent:progress',
   BROWSER_AGENT_TEST_COMPLETE: 'browserAgent:testComplete',
   BROWSER_AGENT_SCREENSHOT_READY: 'browserAgent:screenshotReady',
+
+  // Architecture Visualizer
+  ARCHITECTURE_VISUALIZER_GENERATE: 'architectureVisualizer:generate',
+  ARCHITECTURE_VISUALIZER_CANCEL: 'architectureVisualizer:cancel',
+  ARCHITECTURE_VISUALIZER_CONFIGURE: 'architectureVisualizer:configure',
+  // Architecture Visualizer events (main -> renderer)
+  ARCHITECTURE_VISUALIZER_STATUS: 'architectureVisualizer:status',
+  ARCHITECTURE_VISUALIZER_STREAM_CHUNK: 'architectureVisualizer:streamChunk',
+  ARCHITECTURE_VISUALIZER_ERROR: 'architectureVisualizer:error',
+  ARCHITECTURE_VISUALIZER_COMPLETE: 'architectureVisualizer:complete',
+
+  // Code Migration Agent
+  CODE_MIGRATION_START: 'codeMigration:start',
+  CODE_MIGRATION_CANCEL: 'codeMigration:cancel',
+  CODE_MIGRATION_CONFIGURE: 'codeMigration:configure',
+  // Code Migration events (main -> renderer)
+  CODE_MIGRATION_STATUS: 'codeMigration:status',
+  CODE_MIGRATION_STREAM_CHUNK: 'codeMigration:streamChunk',
+  CODE_MIGRATION_ERROR: 'codeMigration:error',
+  CODE_MIGRATION_COMPLETE: 'codeMigration:complete',
+  CODE_MIGRATION_TASK_PROGRESS: 'codeMigration:taskProgress',
+
+  // Performance Profiler Agent
+  PERFORMANCE_PROFILER_START: 'performanceProfiler:start',
+  PERFORMANCE_PROFILER_CANCEL: 'performanceProfiler:cancel',
+  PERFORMANCE_PROFILER_CONFIGURE: 'performanceProfiler:configure',
+  // Performance Profiler events (main -> renderer)
+  PERFORMANCE_PROFILER_STATUS: 'performanceProfiler:status',
+  PERFORMANCE_PROFILER_STREAM_CHUNK: 'performanceProfiler:streamChunk',
+  PERFORMANCE_PROFILER_ERROR: 'performanceProfiler:error',
+  PERFORMANCE_PROFILER_COMPLETE: 'performanceProfiler:complete',
+  PERFORMANCE_PROFILER_IMPLEMENTATION_COMPLETE: 'performanceProfiler:implementationComplete',
+
+  // Documentation Agent
+  DOCUMENTATION_AGENT_GENERATE: 'documentationAgent:generate',
+  DOCUMENTATION_AGENT_CANCEL: 'documentationAgent:cancel',
+  DOCUMENTATION_AGENT_CONFIGURE: 'documentationAgent:configure',
+  // Documentation Agent events (main -> renderer)
+  DOCUMENTATION_AGENT_STATUS: 'documentationAgent:status',
+  DOCUMENTATION_AGENT_STREAM_CHUNK: 'documentationAgent:streamChunk',
+  DOCUMENTATION_AGENT_ERROR: 'documentationAgent:error',
+  DOCUMENTATION_AGENT_COMPLETE: 'documentationAgent:complete',
 } as const;

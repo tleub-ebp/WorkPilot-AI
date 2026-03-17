@@ -54,6 +54,10 @@ import { registerMcpMarketplaceHandlers } from './mcp-marketplace-handlers';
 import { registerMultiRepoHandlers } from './multi-repo-handlers';
 import { registerSelfHealingHandlers } from './self-healing-handlers';
 import { registerBrowserAgentHandlers } from './browser-agent-handlers';
+import { registerArchitectureVisualizerHandlers, setupArchitectureVisualizerEventForwarding } from './architecture-visualizer-handlers';
+import { registerCodeMigrationHandlers, setupCodeMigrationEventForwarding } from './code-migration-handlers';
+import { registerPerformanceProfilerHandlers, setupPerformanceProfilerEventForwarding } from './performance-profiler-handlers';
+import { registerDocumentationAgentHandlers, setupDocumentationAgentEventForwarding } from './documentation-agent-handlers';
 
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from './project-handlers';
@@ -98,6 +102,10 @@ export { registerMcpMarketplaceHandlers } from './mcp-marketplace-handlers';
 export { registerMultiRepoHandlers } from './multi-repo-handlers';
 export { registerSelfHealingHandlers } from './self-healing-handlers';
 export { registerBrowserAgentHandlers } from './browser-agent-handlers';
+export { registerArchitectureVisualizerHandlers, setupArchitectureVisualizerEventForwarding } from './architecture-visualizer-handlers';
+export { registerCodeMigrationHandlers, setupCodeMigrationEventForwarding } from './code-migration-handlers';
+export { registerPerformanceProfilerHandlers, setupPerformanceProfilerEventForwarding } from './performance-profiler-handlers';
+export { registerDocumentationAgentHandlers, setupDocumentationAgentEventForwarding } from './documentation-agent-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -241,6 +249,22 @@ export function setupIpcHandlers(
 
   // Browser Agent handlers (built-in browser for testing and visual validation)
   registerBrowserAgentHandlers(getMainWindow);
+
+  // Architecture Visualizer handlers
+  registerArchitectureVisualizerHandlers();
+  setupArchitectureVisualizerEventForwarding(getMainWindow);
+
+  // Code Migration Agent handlers
+  registerCodeMigrationHandlers();
+  setupCodeMigrationEventForwarding(getMainWindow);
+
+  // Performance Profiler Agent handlers
+  registerPerformanceProfilerHandlers();
+  setupPerformanceProfilerEventForwarding(getMainWindow);
+
+  // Documentation Agent handlers
+  registerDocumentationAgentHandlers();
+  setupDocumentationAgentEventForwarding(getMainWindow);
 
   console.warn('[IPC] All handler modules registered successfully');
 }

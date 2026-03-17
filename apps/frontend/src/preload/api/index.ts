@@ -34,6 +34,14 @@ import type { LearningLoopAPI } from './modules/learning-loop-api';
 import { createLearningLoopAPI } from './modules/learning-loop-api';
 import type { MultiRepoAPI } from './modules/multi-repo-api';
 import { createMultiRepoAPI } from './modules/multi-repo-api';
+import type { ArchitectureVisualizerAPI } from './modules/architecture-visualizer-api';
+import { createArchitectureVisualizerAPI } from './modules/architecture-visualizer-api';
+import type { CodeMigrationAPI } from './modules/code-migration-api';
+import { createCodeMigrationAPI } from './modules/code-migration-api';
+import type { PerformanceProfilerAPI } from './modules/performance-profiler-api';
+import { createPerformanceProfilerAPI } from './modules/performance-profiler-api';
+import type { DocumentationAgentAPI } from './modules/documentation-agent-api';
+import { createDocumentationAgentAPI } from './modules/documentation-agent-api';
 import { invokeIpc } from './modules/ipc-utils';
 import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
@@ -65,7 +73,11 @@ export interface ElectronAPI extends
   ContextAwareSnippetsAPI,
   AppEmulatorAPI,
   LearningLoopAPI,
-  MultiRepoAPI {
+  MultiRepoAPI,
+  ArchitectureVisualizerAPI,
+  CodeMigrationAPI,
+  PerformanceProfilerAPI,
+  DocumentationAgentAPI {
   github: GitHubAPI;
   /** Queue routing API for rate limit recovery */
   queue: QueueAPI;
@@ -112,6 +124,10 @@ export const createElectronAPI = (): ElectronAPI => {
     ...createAppEmulatorAPI(),
     ...createLearningLoopAPI(),
     ...createMultiRepoAPI(),
+    ...createArchitectureVisualizerAPI(),
+    ...createCodeMigrationAPI(),
+    ...createPerformanceProfilerAPI(),
+    ...createDocumentationAgentAPI(),
     github: createGitHubAPI(),
     queue: createQueueAPI(),  // Queue routing for rate limit recovery
     quality: createQualityAPI(),  // Code quality analysis
@@ -177,3 +193,11 @@ export type { VoiceControlAPI } from './modules/voice-control-api';
 export type { AppEmulatorAPI } from './modules/app-emulator-api';
 export type { MultiRepoAPI } from './modules/multi-repo-api';
 export { createMultiRepoAPI } from './modules/multi-repo-api';
+export { createArchitectureVisualizerAPI } from './modules/architecture-visualizer-api';
+export { createCodeMigrationAPI } from './modules/code-migration-api';
+export { createPerformanceProfilerAPI } from './modules/performance-profiler-api';
+export { createDocumentationAgentAPI } from './modules/documentation-agent-api';
+export type { ArchitectureVisualizerAPI } from './modules/architecture-visualizer-api';
+export type { CodeMigrationAPI } from './modules/code-migration-api';
+export type { PerformanceProfilerAPI } from './modules/performance-profiler-api';
+export type { DocumentationAgentAPI } from './modules/documentation-agent-api';
