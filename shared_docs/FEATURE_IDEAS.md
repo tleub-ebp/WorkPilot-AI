@@ -3289,7 +3289,76 @@ Génération et maintenance automatique de la documentation technique.
 </details>
 
 <details>
-<summary>### 38. Voice Control ✅ Implémenté</summary>
+<summary>### 38. Local LLM avec Ollama ✅ Implémenté</summary>
+
+Utiliser des modèles IA open-source en local via Ollama — zéro coût, zéro cloud, zéro API key.
+
+- **Principe :** Intégration native d'Ollama comme provider LLM. WorkPilot détecte automatiquement si Ollama tourne en local (`http://localhost:11434`), l'affiche comme provider "disponible" dans la liste, et permet de l'utiliser pour les agents, terminaux et la mémoire Graphiti. L'utilisateur peut configurer une URL personnalisée et choisir son modèle par défaut.
+- **Ce que les concurrents ont :** Cursor/Windsurf supportent Ollama via des hacks manuels. Personne ne l'intègre nativement dans le workflow agent.
+- **Ce que WorkPilot offre :** Détection automatique, configuration via l'UI, test de connexion en un clic, support Graphiti (embedding + LLM), et modèles LLM pour les agents (coder, planner, QA).
+- **Exploite :** `providerRegistry`, `getStaticProviders`, `providerService`, Graphiti embedder/LLM providers
+- **Effort :** Faible (infrastructure déjà en place)
+- **Pourquoi c'est banger :** Confidentialité totale, coût zéro, modèles spécialisés (DeepSeek-Coder, Qwen, Llama). Killer feature pour les équipes en environnement air-gapped ou soucieuses de la confidentialité.
+
+#### 🚀 Comment utiliser Ollama avec WorkPilot
+
+##### Prérequis
+
+1. Installer Ollama : [https://ollama.com](https://ollama.com) (ou via l'UI WorkPilot → Settings → Providers → Ollama)
+2. Lancer Ollama : `ollama serve` (ou via l'app Ollama desktop)
+3. Télécharger un modèle : `ollama pull deepseek-r1:7b`
+
+##### Configuration dans WorkPilot
+
+1. **Ouvrir Settings → Fournisseur IA**
+2. **Cliquer sur "Ollama (Local)"** — le provider apparaît comme disponible automatiquement si Ollama tourne
+3. **Cliquer "Configurer"** pour :
+   - Changer l'URL si Ollama tourne sur une autre machine (ex. `http://192.168.1.10:11434`)
+   - Définir le modèle par défaut (ex. `deepseek-r1:7b`, `llama3.2`, `qwen2.5-coder`)
+4. **Cliquer "Tester la connexion"** pour vérifier que WorkPilot peut joindre Ollama et voir les modèles disponibles
+
+##### Utilisation avec la mémoire Graphiti
+
+Pour utiliser Ollama comme backend LLM/embedding pour la mémoire :
+
+```env
+# apps/backend/.env
+GRAPHITI_ENABLED=true
+GRAPHITI_LLM_PROVIDER=ollama
+GRAPHITI_EMBEDDING_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_LLM_MODEL=deepseek-r1:7b
+OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+```
+
+##### Architecture technique
+
+**Frontend :**
+- `apps/frontend/src/shared/utils/providers.ts` — Détection automatique Ollama (toujours `available: true` si local)
+- `apps/frontend/src/renderer/components/settings/providerConfig.ts` — Config UI (URL + modèle par défaut)
+- `apps/frontend/src/shared/services/providerService.ts` — Test de connexion via `GET /api/tags`
+- `apps/frontend/src/main/ipc-handlers/memory-handlers.ts` — Handlers IPC (check install, status, list models, pull model)
+- `apps/frontend/src/renderer/components/onboarding/OllamaModelSelector.tsx` — Sélecteur de modèles avec téléchargement
+
+**Backend :**
+- `apps/backend/integrations/graphiti/providers_pkg/llm_providers/ollama_llm.py` — Provider LLM Ollama (interface OpenAI-compatible)
+- `apps/backend/integrations/graphiti/providers_pkg/embedder_providers/ollama_embedder.py` — Provider embedding (auto-détection de dimension)
+- `apps/backend/ollama_model_detector.py` — Script de détection des modèles disponibles
+
+**Modèles recommandés :**
+
+| Usage | Modèle | Taille |
+|-------|--------|--------|
+| Code (flagship) | `deepseek-r1:14b` | 9 GB |
+| Code (standard) | `deepseek-r1:7b` | 4.7 GB |
+| Code (rapide) | `qwen2.5-coder:3b` | 2 GB |
+| Embedding | `nomic-embed-text` | 274 MB |
+| Embedding (qualité) | `qwen3-embedding:4b` | 2.6 GB |
+
+</details>
+
+<details>
+<summary>### 39. Voice Control ✅ Implémenté</summary>
 
 Contrôler WorkPilot à la voix : décrire des tâches, naviguer dans l'UI, commander des builds.
 
@@ -3445,7 +3514,7 @@ Le Voice Control supporte plusieurs langues :
 - **Cache** : Mémorisation des commandes fréquentes pour accélération
 
 <details>
-<summary>### 39. AI Code Playground ✅ Implémenté</summary>
+<summary>### 40. AI Code Playground ✅ Implémenté</summary>
 
 Sandbox interactive pour prototyper rapidement des idées avec l'IA avant de les intégrer au projet.
 
@@ -3620,7 +3689,7 @@ Le Code Playground supporte :
 - **Anglais** : Support natif complet
 - **Code** : Support universel des langages de programmation
 
-### 40. Cross-Language Translation
+### 41. Cross-Language Translation
 
 Traduire du code entre langages tout en préservant la logique et les patterns idiomatiques.
 
@@ -3629,7 +3698,7 @@ Traduire du code entre langages tout en préservant la logique et les patterns i
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Les migrations de stack deviennent triviales.
 
-### 41. Spec Approval Workflow
+### 42. Spec Approval Workflow
 
 Circuit de validation collaborative des specs avant implémentation — peer review pour les specs.
 
@@ -3638,7 +3707,7 @@ Circuit de validation collaborative des specs avant implémentation — peer rev
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Gouvernance légère mais efficace. Les specs critiques ne passent plus sans review humaine. Essential pour les équipes.
 
-### 42. Memory Lifecycle Manager
+### 43. Memory Lifecycle Manager
 
 Gestion intelligente du cycle de vie de la mémoire Graphiti — pruning automatique, politiques de rétention, contrôle de la fraîcheur.
 
@@ -3647,7 +3716,7 @@ Gestion intelligente du cycle de vie de la mémoire Graphiti — pruning automat
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Sans pruning, la mémoire devient bruitée et dégrade la qualité des agents. Un système de rétention intelligent garde la mémoire utile et pertinente.
 
-### 43. CI/CD Deployment Triggers
+### 44. CI/CD Deployment Triggers
 
 Déclenchement automatique de pipelines CI/CD après la création d'une PR par un agent.
 
@@ -3656,7 +3725,7 @@ Déclenchement automatique de pipelines CI/CD après la création d'une PR par u
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La boucle spec → code → test → deploy est complète. Du "j'ai une idée" à "c'est en preview" sans intervention.
 
-### 44. Intelligent Context Caching ✅
+### 45. Intelligent Context Caching ✅
 
 <details>
 <summary>

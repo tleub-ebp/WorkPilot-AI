@@ -108,6 +108,7 @@ export const getProviderFields = (t: any): Record<string, ProviderConfig> => ({
   },
   'ollama': {
     apiUrl: 'globalOllamaApiUrl',
+    model: 'globalOllamaModel',
     description: t('sections.accounts.providers.ollama'),
     requiresApiKey: false,
     placeholder: 'http://localhost:11434',
