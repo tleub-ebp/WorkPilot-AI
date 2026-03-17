@@ -63,6 +63,7 @@ const SelfHealingDashboard = lazy(() => import('./components/self-healing').then
 const BrowserAgentDashboard = lazy(() => import('./components/browser-agent').then(m => ({ default: m.BrowserAgentDashboard })));
 const PairProgramming = lazy(() => import('./components/PairProgramming').then(m => ({ default: m.PairProgramming })));
 const PipelineGeneratorView = lazy(() => import('./components/pipeline-generator/PipelineGenerator').then(m => ({ default: m.PipelineGenerator })));
+const PluginMarketplace = lazy(() => import('./components/plugin-marketplace/PluginMarketplace').then(m => ({ default: m.PluginMarketplace })));
 import { VersionWarningModal } from './components/VersionWarningModal';
 import { OnboardingWizard } from './components/onboarding';
 import { GitHubSetupModal } from './components/GitHubSetupModal';
@@ -1069,6 +1070,9 @@ export function App() {
                     <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
                     {activeView === 'mcp-marketplace' && (
                         <McpMarketplace />
+                    )}
+                    {activeView === 'plugin-marketplace' && (
+                        <PluginMarketplace />
                     )}
                     {activeView === 'mission-control' && (
                         <MissionControlDashboard />

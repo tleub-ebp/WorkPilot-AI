@@ -45,6 +45,7 @@ import {
   WandSparkles,
   Monitor,
   Store,
+  Puzzle,
   Image as ImageIcon,
   Rocket,
   RotateCcw,
@@ -154,7 +155,7 @@ import { DesignToCodeDialog } from './design-to-code/DesignToCodeDialog';
 // Types
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace' | 'design-to-code' | 'mission-control' | 'agent-replay' | 'pixel-office' | 'self-healing' | 'browser-agent' | 'pair-programming' | 'pipeline-generator';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace' | 'design-to-code' | 'mission-control' | 'agent-replay' | 'pixel-office' | 'self-healing' | 'browser-agent' | 'pair-programming' | 'pipeline-generator' | 'plugin-marketplace';
 
 interface SidebarProps {
   readonly onSettingsClick: () => void;
@@ -236,6 +237,7 @@ const navGroups: NavGroup[] = [
     items: [
       { id: 'worktrees', labelKey: 'navigation:items.worktrees', icon: GitBranch, shortcut: 'W' },
       { id: 'mcp-marketplace', labelKey: 'navigation:items.mcpMarketplace', icon: Store, shortcut: 'X' },
+      { id: 'plugin-marketplace', labelKey: 'navigation:items.pluginMarketplace', icon: Puzzle, shortcut: 'J' },
     ],
     defaultExpanded: false
   },

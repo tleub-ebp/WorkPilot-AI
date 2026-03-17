@@ -48,6 +48,8 @@ import type { PairProgrammingAPI } from './modules/pair-programming-api';
 import { createPairProgrammingAPI } from './modules/pair-programming-api';
 import type { PipelineGeneratorAPI } from './modules/pipeline-generator-api';
 import { createPipelineGeneratorAPI } from './modules/pipeline-generator-api';
+import type { TeamSyncAPI } from './modules/team-sync-api';
+import { createTeamSyncAPI } from './modules/team-sync-api';
 import { invokeIpc } from './modules/ipc-utils';
 import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
@@ -86,7 +88,8 @@ export interface ElectronAPI extends
   DocumentationAgentAPI,
   DecisionLoggerAPI,
   PairProgrammingAPI,
-  PipelineGeneratorAPI {
+  PipelineGeneratorAPI,
+  TeamSyncAPI {
   github: GitHubAPI;
   /** Queue routing API for rate limit recovery */
   queue: QueueAPI;
@@ -142,6 +145,7 @@ export const createElectronAPI = (): ElectronAPI => {
     ...createDecisionLoggerAPI(),
     ...createPairProgrammingAPI(),
     ...createPipelineGeneratorAPI(),
+    ...createTeamSyncAPI(),
     github: createGitHubAPI(),
     queue: createQueueAPI(),  // Queue routing for rate limit recovery
     quality: createQualityAPI(),  // Code quality analysis

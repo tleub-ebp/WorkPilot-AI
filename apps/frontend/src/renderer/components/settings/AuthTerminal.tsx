@@ -183,9 +183,19 @@ export function AuthTerminal({
               loginSentRef.current = true;
               debugLog('Sending command pre-fill NOW', { terminalId });
               
-              // Check if this is an OpenAI Codex authentication terminal
+              // Check if this is an OpenAI Codex or GitHub Copilot authentication terminal
               const isCodexAuth = terminalId.startsWith('auth-codex-');
-              const command = isCodexAuth ? 'codex' : 'claude /login';
+              const isCopilotAuth = terminalId.startsWith('auth-copilot-');
+
+              // Determine the appropriate command based on terminal type
+              let command: string;
+              if (isCodexAuth) {
+                command = 'codex';
+              } else if (isCopilotAuth) {
+                command = 'copilot update';
+              } else {
+                command = 'claude /login';
+              }
               
               globalThis.electronAPI.sendTerminalInput(terminalId, command);
             }

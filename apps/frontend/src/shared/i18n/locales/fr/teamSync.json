@@ -1,0 +1,85 @@
+{
+  "title": "Team Knowledge Sync",
+  "subtitle": "Partagez décisions d'architecture, patterns et pièges avec toute votre équipe",
+  "status": {
+    "enabled": "Synchronisation activée",
+    "disabled": "Synchronisation non configurée",
+    "serverRunning": "Serveur HTTP actif sur le port {{port}}",
+    "serverStopped": "Serveur HTTP arrêté"
+  },
+  "config": {
+    "title": "Configuration",
+    "mode": "Mode de synchronisation",
+    "modeDirectory": "Dossier partagé (recommandé)",
+    "modeHttp": "Serveur HTTP",
+    "modeDirectoryHint": "Utilisez un lecteur réseau, un dossier synchronisé (OneDrive, Dropbox) ou un chemin suivi par git",
+    "modeHttpHint": "Démarrez un serveur REST local ; vos coéquipiers se connectent à votre machine via le réseau",
+    "syncPath": "Chemin du dossier partagé",
+    "syncPathPlaceholder": "/mnt/partage/team-memory  ou  //serveur/partage/workpilot",
+    "serverUrl": "URL du serveur distant",
+    "serverUrlPlaceholder": "http://pc-alice:7749",
+    "serverHost": "Adresse d'écoute du serveur",
+    "serverPort": "Port du serveur",
+    "teamId": "Identifiant d'équipe",
+    "teamIdPlaceholder": "mon-equipe",
+    "memberId": "Votre nom de membre",
+    "memberIdPlaceholder": "alice (par défaut : nom d'utilisateur OS)",
+    "autoSyncInterval": "Intervalle de synchro automatique (minutes, 0 = désactivé)",
+    "autoPush": "Pousser automatiquement après chaque tâche",
+    "save": "Enregistrer la configuration",
+    "saved": "Configuration enregistrée"
+  },
+  "actions": {
+    "push": "Pousser ma connaissance",
+    "pushShort": "Pousser",
+    "pull": "Récupérer la connaissance d'équipe",
+    "pullShort": "Récupérer",
+    "startServer": "Démarrer le serveur HTTP",
+    "stopServer": "Arrêter le serveur",
+    "refresh": "Actualiser"
+  },
+  "stats": {
+    "localEpisodes": "Épisodes locaux",
+    "importedEpisodes": "Épisodes importés",
+    "peers": "Membres de l'équipe"
+  },
+  "peers": {
+    "title": "Membres de l'équipe",
+    "nopeers": "Aucun snapshot de coéquipier trouvé. Demandez à votre équipe de pousser leur connaissance.",
+    "you": "(vous)",
+    "episodes": "{{count}} épisodes",
+    "lastExport": "Dernier export : {{date}}",
+    "neverExported": "Pas encore exporté",
+    "viewEpisodes": "Voir les épisodes"
+  },
+  "episodes": {
+    "title": "Épisodes de {{member}}",
+    "empty": "Aucun épisode importé de ce membre pour l'instant.",
+    "types": {
+      "session_insight": "Insight de session",
+      "pattern": "Pattern",
+      "gotcha": "Piège",
+      "codebase_discovery": "Découverte",
+      "task_outcome": "Résultat de tâche",
+      "qa_result": "Résultat QA",
+      "historical_context": "Contexte"
+    }
+  },
+  "feedback": {
+    "pushSuccess": "{{count}} épisodes poussés vers l'emplacement partagé",
+    "pushError": "Échec du push : {{error}}",
+    "pullSuccess": "{{count}} nouveaux épisodes importés depuis {{peers}} pair(s)",
+    "pullNone": "Aucun nouvel épisode à importer",
+    "pullError": "Échec du pull : {{error}}",
+    "serverStarted": "Serveur démarré sur le port {{port}}",
+    "serverStopped": "Serveur arrêté",
+    "serverError": "Impossible de démarrer le serveur : {{error}}"
+  },
+  "help": {
+    "title": "Comment ça fonctionne",
+    "step1": "Configurez un chemin de dossier partagé accessible à tous les membres",
+    "step2": "Cliquez sur « Pousser » pour exporter votre snapshot mémoire local",
+    "step3": "Cliquez sur « Récupérer » pour importer la connaissance de vos coéquipiers",
+    "step4": "Décisions d'architecture, patterns et pièges sont fusionnés automatiquement"
+  }
+}

@@ -2951,14 +2951,104 @@ logger.log_decision("Use PostgreSQL", alternatives=["SQLite", "MySQL"], selected
 
 ## 💡 Tier C — Nice to Have (Vision long terme)
 
-### 31. Team Knowledge Sync
+<details>
+<summary>### 31. Team Knowledge Sync — Mémoire Graphiti partagée entre tous les membres ✅ Implémenté</summary>
 
 Memory System partagé entre tous les membres de l'équipe.
 
-- **Principe :** Le graphe Graphiti devient partagé (serveur centralisé ou sync P2P). Décisions architecturales, patterns découverts, pièges identifiés sont accessibles à toute l'équipe.
-- **Exploite :** Graphiti Memory System
+- **Principe :** Le graphe Graphiti devient partagé (dossier réseau partagé ou serveur HTTP centralisé). Décisions architecturales, patterns découverts, pièges identifiés sont exportés sous forme de snapshots JSON et importés par chaque coéquipier. La déduplication garantit qu'un épisode n'est importé qu'une seule fois.
+  - **Mode Dossier partagé** : Chaque membre exporte un snapshot `{membre}_snapshot.json` dans un dossier commun (lecteur réseau, OneDrive, Dropbox, git-tracked path). Les coéquipiers importent automatiquement tous les autres snapshots.
+  - **Mode Serveur HTTP** : Un membre démarre un serveur FastAPI local (port 7749 par défaut) et les coéquipiers se connectent à son URL pour pull/push leurs snapshots.
+  - **Auto-push** : Option pour exporter automatiquement après chaque tâche complétée.
+  - **Déduplication** : Identifiant SHA-256 par épisode pour éviter les doublons lors des imports répétés.
+- **Exploite :** Graphiti Memory System, FastAPI, file-based memory fallback
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** L'expérience collective capitalise automatiquement. Onboarding d'un nouveau dev en quelques minutes.
+
+#### 🚀 Comment utiliser Team Knowledge Sync
+
+##### Démarrage rapide — Mode dossier partagé (recommandé)
+
+```bash
+# 1. Configurer via l'UI WorkPilot (Settings → Team Knowledge Sync)
+#    ou via variables d'environnement dans apps/backend/.env :
+TEAM_SYNC_MODE=directory
+TEAM_SYNC_PATH=/mnt/shared/team-memory    # Dossier accessible à tous
+TEAM_SYNC_TEAM_ID=mon-equipe
+TEAM_SYNC_MEMBER_ID=alice
+
+# 2. Exporter votre snapshot local
+python runners/team_sync_runner.py --push --project /path/to/project
+
+# 3. Importer les snapshots de vos coéquipiers
+python runners/team_sync_runner.py --pull --project /path/to/project
+
+# 4. Voir le statut et les membres de l'équipe
+python runners/team_sync_runner.py --status --project /path/to/project
+```
+
+##### Démarrage rapide — Mode serveur HTTP
+
+```bash
+# Sur la machine hôte (alice), démarrer le serveur
+TEAM_SYNC_SERVER_HOST=0.0.0.0 TEAM_SYNC_SERVER_PORT=7749 \
+python runners/team_sync_runner.py --serve --project /path/to/project
+
+# Sur les machines des coéquipiers, se connecter au serveur d'alice
+TEAM_SYNC_MODE=http TEAM_SYNC_SERVER_URL=http://alice-pc:7749 \
+python runners/team_sync_runner.py --pull --project /path/to/project
+```
+
+#### 🏗️ Architecture technique
+
+**Backend** (`apps/backend/integrations/graphiti/team_sync/`) :
+- `config.py` — `TeamSyncConfig` : mode, sync_path, team_id, member_id, server settings
+- `sync_manager.py` — `TeamSyncManager` : export/import de snapshots, déduplication, liste des peers
+- `http_server.py` — Serveur FastAPI minimal : `/status`, `/snapshots`, `/push`
+
+**Runner CLI** (`apps/backend/runners/team_sync_runner.py`) :
+- `--push` : Exporte le snapshot local vers l'emplacement partagé
+- `--pull` : Importe les snapshots des coéquipiers
+- `--status` : Affiche la configuration et les membres disponibles
+- `--serve` : Démarre le serveur HTTP
+
+**Frontend** :
+- `src/main/ipc-handlers/team-sync-handlers.ts` — Handlers IPC (get status, push, pull, list peers, configure, start/stop server)
+- `src/renderer/components/memory/TeamSyncPanel.tsx` — UI complète avec config, actions, liste des peers, visualisation des épisodes
+- `src/preload/api/modules/team-sync-api.ts` — API preload bridge
+- `src/shared/i18n/locales/{en,fr}/teamSync.json` — Traductions
+
+#### 🎨 Fonctionnalités clés
+
+- **Deux modes de sync** : dossier partagé (réseau, cloud) ou serveur HTTP centralisé
+- **Snapshot JSON** : format portable contenant tous les épisodes mémoire (session insights, patterns, gotchas, découvertes)
+- **Déduplication SHA-256** : chaque épisode n'est importé qu'une seule fois
+- **Liste des peers** : visualisation de tous les membres avec date du dernier export et nombre d'épisodes
+- **Visualisation par type** : épisodes colorés par catégorie (pattern, gotcha, découverte, insight…)
+- **Auto-push configurable** : export automatique après chaque tâche
+- **Serveur HTTP** : API REST `/status`, `/snapshots`, `/push` pour le mode serveur centralisé
+- **Compatible file-based fallback** : fonctionne même sans Graphiti configuré
+- **i18n** : support anglais et français
+
+#### 📁 Fichiers générés
+
+Les épisodes importés sont stockés dans `.auto-claude/team_sync/peers/{member_id}/imported_episodes.json`
+
+#### 📡 Variables d'environnement
+
+| Variable | Description | Défaut |
+|----------|-------------|--------|
+| `TEAM_SYNC_MODE` | `directory` ou `http` | `directory` |
+| `TEAM_SYNC_PATH` | Chemin du dossier partagé | — |
+| `TEAM_SYNC_TEAM_ID` | Identifiant d'équipe | `default` |
+| `TEAM_SYNC_MEMBER_ID` | Nom du membre | nom d'utilisateur OS |
+| `TEAM_SYNC_SERVER_URL` | URL du serveur distant (mode http) | — |
+| `TEAM_SYNC_SERVER_HOST` | Adresse d'écoute du serveur | `0.0.0.0` |
+| `TEAM_SYNC_SERVER_PORT` | Port du serveur | `7749` |
+| `TEAM_SYNC_AUTO_SYNC_INTERVAL` | Intervalle auto-sync en minutes | `30` |
+| `TEAM_SYNC_AUTO_PUSH` | Push auto après chaque tâche | `true` |
+
+</details>
 
 <details>
 <summary>### 32. Environment Cloner ✅ Implémenté</summary>
@@ -3102,7 +3192,8 @@ Génération et maintenance automatique de la documentation technique.
 
 </details>
 
-### 37. Plugin Marketplace
+<details>
+<summary>### 37. Plugin Marketplace ✅ Implémenté</summary>
 
 Écosystème de plugins communautaires pour étendre WorkPilot.
 
@@ -3110,6 +3201,21 @@ Génération et maintenance automatique de la documentation technique.
 - **Exploite :** Architecture modulaire existante
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Effet réseau. La communauté étend le produit. Verrouille les utilisateurs dans l'écosystème.
+
+**Implémentation :**
+- Types : `apps/frontend/src/shared/types/plugin-marketplace.ts` — `MarketplacePlugin`, `InstalledPlugin`, `PluginType` (agent, integration, spec-template, theme, custom-prompt)
+- IPC handlers : `apps/frontend/src/main/ipc-handlers/plugin-marketplace-handlers.ts` — catalogue intégré (14 plugins), install/uninstall/toggle persistés dans `userData/plugin-marketplace/`
+- Store : `apps/frontend/src/renderer/stores/plugin-marketplace-store.ts` — Zustand avec filtres, recherche, tri
+- UI : `apps/frontend/src/renderer/components/plugin-marketplace/` :
+  - `PluginMarketplace.tsx` — Vue principale avec 3 tabs
+  - `PluginCatalogView.tsx` — Grille de plugins avec filtres par type, recherche, tri
+  - `PluginCard.tsx` — Carte plugin avec stats (rating, downloads), type badge, action install/uninstall
+  - `InstalledPluginsView.tsx` — Gestion des plugins installés avec toggle enable/disable
+  - `PluginSDKView.tsx` — Documentation SDK pour créer et publier des plugins
+- Navigation : groupe Integration & Git, raccourci `J`
+- i18n : clés `pluginMarketplace.*` en EN et FR
+
+</details>
 
 <details>
 <summary>### 38. Voice Control ✅ Implémenté</summary>
@@ -3643,9 +3749,9 @@ integrator = ContextCacheIntegrator(project_path, config)
 | **🚀 S** | 4 | **🆕 Arena Mode**, **🆕 AI Pair Programming**, **🆕 MCP Marketplace**, **🆕 Cost Intelligence Engine** | Game changers — Avantage concurrentiel fort | 0/4 ✅ |
 | **💪 A** | 7 | Build Analytics ✅, Test Gen ✅, Dependency Sentinel ✅, Prompt Optimizer ✅, Conflict Predictor ✅, Code Review ✅, Architecture Enforcement ✅ | Strong impact — Features power users | **7/7 ✅** |
 | **🔧 B** | 13 | **🆕 Built-in Browser Agent**, **🆕 Steering Files**, Live Review, App Emulator ✅, Auto-Refactor ✅, Pipeline Gen, Smart Estimation ✅, NL Git ✅, Snippets ✅, Spec Templates, Dep Graph, QA Security, Agent Decision Logger | Solid value — Améliorations quotidiennes | 5/13 ✅ |
-| **💡 C** | 14 | Team Sync, Env Cloner, Arch Viz, Migration, Perf Profiler, Doc Agent, Plugin Marketplace, Voice ✅, Playground ✅, Cross-Lang, Spec Approval, Memory Lifecycle, CI/CD Triggers, Context Caching ✅ | Nice to have — Vision long terme | 3/14 ✅ |
+| **💡 C** | 14 | Team Sync, Env Cloner, Arch Viz, Migration, Perf Profiler, Doc Agent, Plugin Marketplace ✅, Voice ✅, Playground ✅, Cross-Lang, Spec Approval, Memory Lifecycle, CI/CD Triggers, Context Caching ✅ | Nice to have — Vision long terme | 4/14 ✅ |
 
-### 🏆 Score d'implémentation : 17/45 features (37%)
+### 🏆 Score d'implémentation : 18/45 features (40%)
 
 ### 🎯 Roadmap prioritaire recommandée
 

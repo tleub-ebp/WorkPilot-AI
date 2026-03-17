@@ -884,5 +884,68 @@
     "genericError": "Une erreur s'est produite",
     "noUsageData": "Aucune donnée d'utilisation disponible",
     "providerGeneric": "Générique"
+  },
+  "pluginMarketplace": {
+    "title": "Marketplace de Plugins",
+    "subtitle": "Étendez WorkPilot avec des agents, intégrations et plus créés par la communauté",
+    "installedBadge": "{{count}} installé(s)",
+    "searchPlaceholder": "Rechercher des plugins...",
+    "noResults": "Aucun plugin ne correspond à votre recherche",
+    "resultsCount": "{{count}} plugins",
+    "noInstalledPlugins": "Aucun plugin installé",
+    "browseToInstall": "Parcourez le catalogue pour installer votre premier plugin",
+    "installedCount": "{{count}} plugins installés",
+    "installedOn": "Installé le {{date}}",
+    "tabs": {
+      "catalog": "Catalogue",
+      "installed": "Installés",
+      "sdk": "Créer un Plugin"
+    },
+    "types": {
+      "agent": "Agent",
+      "integration": "Intégration",
+      "specTemplate": "Modèle de Spec",
+      "theme": "Thème",
+      "customPrompt": "Prompt Personnalisé"
+    },
+    "filters": {
+      "all": "Tous",
+      "verified": "Vérifiés uniquement"
+    },
+    "sort": {
+      "popular": "Les plus populaires",
+      "rating": "Mieux notés",
+      "newest": "Les plus récents",
+      "name": "A–Z"
+    },
+    "actions": {
+      "install": "Installer",
+      "installing": "Installation...",
+      "uninstall": "Désinstaller",
+      "enable": "Activer",
+      "disable": "Désactiver"
+    },
+    "sdk": {
+      "title": "SDK de Plugins",
+      "description": "Créez et publiez vos propres plugins pour étendre WorkPilot AI. Le SDK prend en charge les agents, intégrations, modèles de spec, thèmes et prompts personnalisés.",
+      "readDocs": "Lire la documentation",
+      "viewExamples": "Voir les exemples",
+      "gettingStarted": "Démarrage rapide",
+      "gettingStartedDesc": "Installez le SDK WorkPilot Plugin et créez votre premier plugin en quelques minutes.",
+      "pluginStructure": "Structure d'un plugin",
+      "pluginStructureDesc": "Un plugin est un répertoire avec un fichier de configuration et des ressources optionnelles. Le SDK gère l'empaquetage et la validation.",
+      "publishing": "Publication sur le Marketplace",
+      "publishingDesc": "Validez et publiez votre plugin sur le registre de plugins WorkPilot pour que la communauté le découvre.",
+      "testingLocally": "Test en local",
+      "testingLocallyDesc": "Chargez des plugins locaux en mode développement sans les publier sur le registre.",
+      "pluginTypes": "Types de plugins disponibles",
+      "typeDesc": {
+        "agent": "Agents IA personnalisés avec des prompts système et accès aux outils",
+        "integration": "Intégrations de services tiers via webhooks ou APIs",
+        "specTemplate": "Modèles de spec réutilisables pour les patterns de projets courants",
+        "theme": "Thèmes de couleurs UI personnalisés et styles visuels",
+        "customPrompt": "Packs de prompts pour des tâches spécialisées"
+      }
+    }
   }
 }

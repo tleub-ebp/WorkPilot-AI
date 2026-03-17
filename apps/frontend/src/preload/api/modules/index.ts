@@ -35,3 +35,4 @@ export * from './code-migration-api';
 export * from './performance-profiler-api';
 export * from './documentation-agent-api';
 export * from './pipeline-generator-api';
+export * from './team-sync-api';

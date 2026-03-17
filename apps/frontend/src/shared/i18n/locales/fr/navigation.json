@@ -54,7 +54,8 @@
     "selfHealing": "Auto-Guérison",
     "browserAgent": "Agent Navigateur",
     "pairProgramming": "Pair Programming IA",
-    "pipelineGenerator": "Générateur de Pipeline"
+    "pipelineGenerator": "Générateur de Pipeline",
+    "pluginMarketplace": "Marketplace de Plugins"
   },
   "actions": {
     "settings": "Paramètres",

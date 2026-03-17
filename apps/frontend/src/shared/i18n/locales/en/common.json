@@ -884,5 +884,68 @@
     "genericError": "An error occurred",
     "noUsageData": "No usage data available",
     "providerGeneric": "Generic"
+  },
+  "pluginMarketplace": {
+    "title": "Plugin Marketplace",
+    "subtitle": "Extend WorkPilot with community-built agents, integrations, and more",
+    "installedBadge": "{{count}} installed",
+    "searchPlaceholder": "Search plugins...",
+    "noResults": "No plugins match your search",
+    "resultsCount": "{{count}} plugins",
+    "noInstalledPlugins": "No plugins installed yet",
+    "browseToInstall": "Browse the catalog to install your first plugin",
+    "installedCount": "{{count}} plugins installed",
+    "installedOn": "Installed on {{date}}",
+    "tabs": {
+      "catalog": "Catalog",
+      "installed": "Installed",
+      "sdk": "Build a Plugin"
+    },
+    "types": {
+      "agent": "Agent",
+      "integration": "Integration",
+      "specTemplate": "Spec Template",
+      "theme": "Theme",
+      "customPrompt": "Custom Prompt"
+    },
+    "filters": {
+      "all": "All",
+      "verified": "Verified only"
+    },
+    "sort": {
+      "popular": "Most Popular",
+      "rating": "Top Rated",
+      "newest": "Newest",
+      "name": "A–Z"
+    },
+    "actions": {
+      "install": "Install",
+      "installing": "Installing...",
+      "uninstall": "Uninstall",
+      "enable": "Enable",
+      "disable": "Disable"
+    },
+    "sdk": {
+      "title": "Plugin SDK",
+      "description": "Build and publish your own plugins to extend WorkPilot AI. The SDK supports agents, integrations, spec templates, themes, and custom prompts.",
+      "readDocs": "Read the Docs",
+      "viewExamples": "View Examples",
+      "gettingStarted": "Getting Started",
+      "gettingStartedDesc": "Install the WorkPilot Plugin SDK and scaffold your first plugin in minutes.",
+      "pluginStructure": "Plugin Structure",
+      "pluginStructureDesc": "A plugin is a directory with a config file and optional assets. The SDK handles packaging and validation.",
+      "publishing": "Publishing to Marketplace",
+      "publishingDesc": "Validate and publish your plugin to the WorkPilot plugin registry for the community to discover.",
+      "testingLocally": "Testing Locally",
+      "testingLocallyDesc": "Load local plugins in development mode without publishing to the registry.",
+      "pluginTypes": "Available Plugin Types",
+      "typeDesc": {
+        "agent": "Custom AI agents with system prompts and tool access",
+        "integration": "Third-party service integrations via webhooks or APIs",
+        "specTemplate": "Reusable spec templates for common project patterns",
+        "theme": "Custom UI color themes and visual styling",
+        "customPrompt": "Curated prompt packs for specialized tasks"
+      }
+    }
   }
 }
