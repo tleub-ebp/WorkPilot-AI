@@ -25,7 +25,6 @@ import {
   ChevronDown,
   ChevronRight,
   RefreshCw,
-  Activity,
   AlertCircle,
   Server,
   Globe,
@@ -35,14 +34,13 @@ import {
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Switch } from '../ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
 import { cn } from '../../lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../ui/tooltip';
 import { SettingsSection } from './SettingsSection';
 import { AuthTerminal } from './AuthTerminal';
 import { ProfileEditDialog } from './ProfileEditDialog';
-import { AccountPriorityList, type UnifiedAccount } from './AccountPriorityList';
+import { type UnifiedAccount } from './AccountPriorityList';
 import { CopilotOAuthAuth } from './CopilotOAuthAuth';
 import { maskApiKey } from '../../lib/profile-utils';
 import { loadClaudeProfiles as loadGlobalClaudeProfiles } from '../../stores/claude-profile-store';
@@ -65,14 +63,14 @@ import { useProviderRefreshStore } from '../../stores/provider-refresh-store';
 import { ProviderService } from '../../../shared/services/providerService';
 
 interface AccountSettingsProps {
-  settings: AppSettings;
-  onSettingsChange: (settings: AppSettings) => void;
-  isOpen: boolean;
-  connector: {
-    id: string;
-    label: string;
+  readonly settings: AppSettings;
+  readonly onSettingsChange: (settings: AppSettings) => void;
+  readonly isOpen: boolean;
+  readonly connector: {
+    readonly id: string;
+    readonly label: string;
   };
-  showAutoSwitching?: boolean;
+  readonly showAutoSwitching?: boolean;
 }
 
 /**
@@ -154,7 +152,6 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
 
   // Providers LLM state
   const [providers, setProviders] = useState<CanonicalProvider[]>([]);
-  const [providersError, setProvidersError] = useState<string>("");
 
   // Gestion dynamique des connecteurs LLM (hors Claude)
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
@@ -182,7 +179,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
 
       // Check Copilot via GitHub CLI
       try {
-        const copilotResult = await window.electronAPI.checkCopilotAuth();
+        const copilotResult = await globalThis.electronAPI.checkCopilotAuth();
         if (copilotResult.success && copilotResult.data?.authenticated) {
           provs.push({ id: 'copilot', name: 'copilot', label: 'GitHub Copilot', isAuthenticated: true, username: copilotResult.data.username });
         }
@@ -401,7 +398,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
   // Force refresh to get fresh data when Settings opens (bypasses 1-minute cache)
   const loadProfileUsageData = useCallback(async (forceRefresh: boolean = false) => {
     try {
-      const result = await window.electronAPI.requestAllProfilesUsage?.(forceRefresh);
+      const result = await globalThis.electronAPI.requestAllProfilesUsage?.(forceRefresh);
       if (result?.success && result.data) {
         const usageMap = new Map<string, ProfileUsageSummary>();
         result.data.allProfiles.forEach((profile: ProfileUsageSummary) => {
@@ -499,7 +496,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
   // Load priority order from settings
   const loadPriorityOrder = async () => {
     try {
-      const result = await window.electronAPI.getAccountPriorityOrder();
+      const result = await globalThis.electronAPI.getAccountPriorityOrder();
       if (result.success && result.data) {
         setPriorityOrder(result.data);
       }
@@ -513,7 +510,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
     setPriorityOrder(newOrder);
     setIsSavingPriority(true);
     try {
-      await window.electronAPI.setAccountPriorityOrder(newOrder);
+      await globalThis.electronAPI.setAccountPriorityOrder(newOrder);
     } catch (err) {
       console.warn('[AccountSettings] Failed to save priority order:', err);
       toast({
@@ -541,7 +538,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
 
   // Subscribe to usage updates for real-time data
   useEffect(() => {
-    const unsubscribe = window.electronAPI.onAllProfilesUsageUpdated?.((allProfilesUsage) => {
+    const unsubscribe = globalThis.electronAPI.onAllProfilesUsageUpdated?.((allProfilesUsage) => {
       const usageMap = new Map<string, ProfileUsageSummary>();
       allProfilesUsage.allProfiles.forEach(profile => {
         usageMap.set(profile.profileId, profile);
@@ -560,7 +557,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
   const loadClaudeProfiles = async () => {
     setIsLoadingProfiles(true);
     try {
-      const result = await window.electronAPI.getClaudeProfiles();
+      const result = await globalThis.electronAPI.getClaudeProfiles();
       if (result.success && result.data) {
         setClaudeProfiles(result.data.profiles);
         setActiveClaudeProfileId(result.data.activeProfileId);
@@ -590,9 +587,9 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
     setIsAddingProfile(true);
     try {
       const profileName = newProfileName.trim();
-      const profileSlug = profileName.toLowerCase().replace(/\s+/g, '-');
+      const profileSlug = profileName.toLowerCase().replaceAll(/\s+/g, '-');
 
-      const result = await window.electronAPI.saveClaudeProfile({
+      const result = await globalThis.electronAPI.saveClaudeProfile({
         id: `profile-${Date.now()}`,
         name: profileName,
         configDir: `~/.claude-profiles/${profileSlug}`,
@@ -604,7 +601,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
         await loadClaudeProfiles();
         setNewProfileName('');
 
-        const authResult = await window.electronAPI.authenticateClaudeProfile(result.data.id);
+        const authResult = await globalThis.electronAPI.authenticateClaudeProfile(result.data.id);
         if (authResult.success && authResult.data) {
           setAuthenticatingProfileId(result.data.id);
           setAuthTerminal({
@@ -635,7 +632,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
   const handleDeleteClaudeProfile = async (profileId: string) => {
     setDeletingProfileId(profileId);
     try {
-      const result = await window.electronAPI.deleteClaudeProfile(profileId);
+      const result = await globalThis.electronAPI.deleteClaudeProfile(profileId);
       if (result.success) {
         await loadClaudeProfiles();
         // Remove from priority order
@@ -676,7 +673,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
     if (!editingProfileId || !editingProfileName.trim()) return;
 
     try {
-      const result = await window.electronAPI.renameClaudeProfile(editingProfileId, editingProfileName.trim());
+      const result = await globalThis.electronAPI.renameClaudeProfile(editingProfileId, editingProfileName.trim());
       if (result.success) {
         await loadClaudeProfiles();
       } else {
@@ -706,7 +703,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
         await setActiveApiProfile(null);
       }
 
-      const result = await window.electronAPI.setActiveClaudeProfile(profileId);
+      const result = await globalThis.electronAPI.setActiveClaudeProfile(profileId);
       if (result.success) {
         setActiveClaudeProfileId(profileId);
         await loadGlobalClaudeProfiles();
@@ -732,7 +729,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
 
     setAuthenticatingProfileId(profileId);
     try {
-      const result = await window.electronAPI.authenticateClaudeProfile(profileId);
+      const result = await globalThis.electronAPI.authenticateClaudeProfile(profileId);
       if (!result.success || !result.data) {
         toast({
           variant: 'destructive',
@@ -794,7 +791,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
 
     setSavingTokenProfileId(profileId);
     try {
-      const result = await window.electronAPI.setClaudeProfileToken(
+      const result = await globalThis.electronAPI.setClaudeProfileToken(
           profileId,
           manualToken.trim(),
           manualTokenEmail.trim() || undefined
@@ -903,7 +900,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
   const loadAutoSwitchSettings = async () => {
     setIsLoadingAutoSwitch(true);
     try {
-      const result = await window.electronAPI.getAutoSwitchSettings();
+      const result = await globalThis.electronAPI.getAutoSwitchSettings();
       if (result.success && result.data) {
         setAutoSwitchSettings(result.data);
       }
@@ -917,7 +914,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
   const handleUpdateAutoSwitch = async (updates: Partial<ClaudeAutoSwitchSettings>) => {
     setIsLoadingAutoSwitch(true);
     try {
-      const result = await window.electronAPI.updateAutoSwitchSettings(updates);
+      const result = await globalThis.electronAPI.updateAutoSwitchSettings(updates);
       if (result.success) {
         await loadAutoSwitchSettings();
       } else {
@@ -938,14 +935,14 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
     }
   };
 
-  // Calculate total accounts for auto-switch visibility
-  const totalAccounts = claudeProfiles.length + apiProfiles.length;
-
   // Load providers on open
   useEffect(() => {
     if (isOpen) {
-      const response = getStaticProviders();
-      setProviders(response.providers || []);
+      const loadProviders = async () => {
+        const response = await getStaticProviders();
+        setProviders(response.providers || []);
+      };
+      loadProviders();
     }
   }, [isOpen]);
 

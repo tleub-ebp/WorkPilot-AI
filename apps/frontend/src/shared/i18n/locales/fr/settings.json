@@ -1,4 +1,194 @@
 {
+  "title": "Paramètres",
+  "tabs": {
+    "app": "Paramètres de l'application",
+    "project": "Paramètres du projet"
+  },
+  "sections": {
+    "accounts": {
+      "alerts": {
+        "noProviders": "Aucun fournisseur configuré. Configurez vos clés API pour commencer.",
+        "providerErrors": "{{count}} fournisseur(s) avec erreurs"
+      },
+      "autoSwitching": {
+        "globalDescription": "Basculer automatiquement entre vos comptes selon l'utilisation et les limites de débit.",
+        "globalTitle": "Basculement automatique de compte",
+        "providerAdded": "Fournisseur ajouté au basculement auto",
+        "providerDescription": "{{providerName}} a été {{action}} à la liste de basculement auto",
+        "providerRemoved": "Fournisseur retiré du basculement auto",
+        "syncError": "Erreur de synchronisation",
+        "syncErrorDescription": "Échec de la synchronisation du fournisseur avec le basculement auto",
+        "title": "Basculement auto"
+      },
+      "description": "Comptes & endpoints API",
+      "form": {
+        "addAccount": "Ajouter un compte {{provider}}",
+        "apiKey": "Clé API",
+        "apiKeyPlaceholder": "sk-...",
+        "baseUrl": "URL de base",
+        "baseUrlPlaceholder": "https://api.example.com",
+        "cancel": "Annuler",
+        "chooseModel": "-- Choisir un modèle --",
+        "llmGatewayUrl": "URL de la passerelle LLM",
+        "llmGatewayUrlPlaceholder": "https://gateway.example.com",
+        "name": "Nom du compte",
+        "namePlaceholder": "Nom du compte",
+        "save": "Enregistrer"
+      },
+      "providerCard": {
+        "apiKey": "Clé API",
+        "authCli": "Auth CLI",
+        "authLocal": "Local",
+        "authOauth": "OAuth",
+        "authentication": "Authentification",
+        "cliAuthenticated": "CLI authentifié",
+        "configure": "Configurer",
+        "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette configuration de fournisseur ?",
+        "edit": "Modifier",
+        "errors": {
+          "unknownError": "Erreur inconnue"
+        },
+        "lastTest": "Dernier test",
+        "localRunning": "Instance locale",
+        "needsReauth": "Ré-authentification requise",
+        "neverTested": "Jamais testé",
+        "notAvailable": "Non disponible",
+        "notConfigured": "Non configuré",
+        "oauthCli": "OAuth (CLI)",
+        "oauthConnected": "OAuth connecté",
+        "rateLimited": "Limite de débit atteinte",
+        "source": "Source",
+        "status": {
+          "active": "Actif",
+          "error": "Erreur",
+          "notConfigured": "Non configuré"
+        },
+        "statusNested": {
+          "active": "Actif",
+          "error": "Erreur",
+          "notConfigured": "Non configuré"
+        },
+        "test": "Tester",
+        "testDetails": {
+          "modelUsed": "Modèle utilisé : {{model}}",
+          "modelsAvailable": "{{count}} modèles disponibles"
+        },
+        "testError": "Échec du test",
+        "testErrorDescription": "Le fournisseur {{providerName}} a échoué : {{error}}",
+        "testSuccess": "Test réussi",
+        "testSuccessDescription": "Le fournisseur {{providerName}} fonctionne correctement",
+        "usage": "Utilisation",
+        "usageThisMonth": "Utilisation ce mois",
+        "week": "semaine"
+      },
+      "providerConfig": {
+        "title": "Configuration",
+        "windsurfAuth": {
+          "accountCredits": "Crédits",
+          "accountFlowActions": "Flow Actions",
+          "accountInfo": "Compte authentifié",
+          "accountName": "Nom",
+          "accountPlan": "Plan",
+          "authenticating": "Authentification...",
+          "claudeCodeAuth": "Utilisez l'authentification OAuth Claude Code pour vous connecter facilement à votre compte Claude.",
+          "connectWithClaude": "Se connecter avec Claude Code",
+          "description": "Détecter automatiquement vos identifiants Windsurf depuis votre installation locale de l'IDE.",
+          "detectFailed": "Impossible de détecter le jeton. Assurez-vous que Windsurf IDE est installé et que vous êtes connecté.",
+          "detectFromIDE": "Détecter depuis Windsurf IDE",
+          "detectSuccess": "Jeton détecté pour {{userName}} !",
+          "detecting": "Détection...",
+          "noConfigRequired": "Aucune configuration manuelle requise. Vous pouvez aussi utiliser l'onglet Clé API avec une Service Key.",
+          "oauthDetected": "Authentification SSO Windsurf détectée",
+          "openWindsurfLogin": "windsurf.com/account",
+          "orManual": "Ou connectez-vous manuellement :",
+          "saveAndConnect": "Enregistrer et connecter",
+          "saveSuccess": "Connexion Windsurf enregistrée avec succès !",
+          "terminalInstructions": "Cela ouvrira un terminal où vous pourrez exécuter la commande `/login` pour vous authentifier.",
+          "tokenDetected": "Clé API détectée",
+          "tokenLoaded": "Le jeton SSO Windsurf a été automatiquement chargé depuis votre environnement IDE local."
+        }
+      },
+      "providerToggle": {
+        "description": "{{providerId}} a été {{action}} avec succès",
+        "disabled": "Fournisseur désactivé",
+        "enabled": "Fournisseur activé",
+        "error": "Erreur",
+        "errorDescription": "Échec de {{action}} du fournisseur {{providerId}}"
+      },
+      "providers": {
+        "anthropic": "Modèles Anthropic Claude",
+        "aws": "AWS Bedrock et services Amazon",
+        "copilot": "GitHub Copilot",
+        "cursor": "Fournisseur IA Cursor",
+        "deepseek": "Modèles DeepSeek (DeepSeek-Coder, etc.)",
+        "google": "Accès API Google et Google DeepMind",
+        "grok": "Modèles Grok xAI",
+        "loadError": "Échec du chargement de la liste des fournisseurs",
+        "meta": "Modèles officiels Meta AI",
+        "mistral": "Modèles Mistral AI (Mistral, Codéal, etc.)",
+        "ollama": "Modèles open-source locaux avec Ollama",
+        "openai": "GPT-5 et autres modèles OpenAI",
+        "windsurf": "Fournisseur IA Windsurf"
+      },
+      "title": "Comptes"
+    },
+    "agent": {
+      "description": "Modèle par défaut et framework",
+      "title": "Paramètres d'agent"
+    },
+    "anomaly-detection": {
+      "description": "Surveillance du comportement des agents et alertes",
+      "title": "Détection d'anomalies"
+    },
+    "appearance": {
+      "description": "Personnaliser l'apparence de WorkPilot AI",
+      "title": "Apparence"
+    },
+    "debug": {
+      "description": "Outils de dépannage",
+      "title": "Debug & Logs"
+    },
+    "devtools": {
+      "description": "Préférences IDE et terminal",
+      "title": "Outils de développement"
+    },
+    "display": {
+      "description": "Ajuster la taille des éléments de l'interface",
+      "title": "Affichage"
+    },
+    "language": {
+      "description": "Choisir votre langue préférée",
+      "title": "Langue"
+    },
+    "llm-router": {
+      "description": "Routage intelligent des fournisseurs et tests A/B",
+      "title": "Routeur LLM"
+    },
+    "notifications": {
+      "description": "Préférences d'alertes",
+      "title": "Notifications"
+    },
+    "paths": {
+      "description": "Chemins des outils CLI et frameworks",
+      "title": "Chemins"
+    },
+    "sandbox": {
+      "description": "Isolation de l'exécution des agents et rollback",
+      "title": "Sandbox"
+    },
+    "scheduler": {
+      "description": "Planification de tâches de type cron et chaînes",
+      "title": "Planificateur"
+    },
+    "terminal-fonts": {
+      "description": "Personnaliser l'apparence des polices du terminal",
+      "title": "Polices de terminal"
+    },
+    "updates": {
+      "description": "Mises à jour de WorkPilot AI",
+      "title": "Mises à jour"
+    }
+  },
   "accounts": {
     "alerts": {
       "authPrepareFailed": "Échec de la préparation de l'authentification : {{error}}",
@@ -110,17 +300,17 @@
       "save": "Enregistrer"
     },
     "multiConnector": {
+      "title": "Gestion des fournisseurs IA",
+      "description": "Connectez et gérez plusieurs fournisseurs IA (Claude, OpenAI, Mistral, etc...).",
       "buttons": {
         "addProvider": "Ajouter un fournisseur",
         "refresh": "Actualiser"
       },
-      "description": "Connectez et gérez plusieurs fournisseurs IA (Claude, OpenAI, Mistral, etc.).",
       "stats": {
         "configured": "{{count}} configuré(s)",
         "errors": "{{count}} erreur(s)",
         "total": "{{count}} au total"
-      },
-      "title": "Gestion des fournisseurs IA"
+      }
     },
     "priority": {
       "active": "Actif",
@@ -935,6 +1125,16 @@
   },
   "projectSections": {
     "activeProvider": "Fournisseur actif : {{provider}}",
+    "agentConfiguration": {
+      "title": "Configuration de l'agent",
+      "description": "Configurer le modèle et les paramètres de l'agent"
+    },
+    "autoBuild": {
+      "title": "Intégration Auto-Build",
+      "description": "Configurer l'intégration de build automatique",
+      "initialized": "Initialisé",
+      "notInitialized": "Non initialisé"
+    },
     "azure-devops": {
       "description": "Éléments de travail Azure DevOps",
       "integrationDescription": "Connecter à Azure DevOps pour la gestion des éléments de travail",
@@ -1049,7 +1249,7 @@
       "add": "Ajouter",
       "refresh": "Actualiser"
     },
-    "description": "Connecter et gérer plusieurs fournisseurs IA",
+    "description": "Connectez et gérez plusieurs fournisseurs IA (Claude, OpenAI, Mistral, etc...).",
     "filters": {
       "all": "Tous",
       "configured": "Configurés",
@@ -1088,195 +1288,6 @@
     "large": "Grand",
     "presets": "Presets d'échelle",
     "presetsDescription": "Options d'échelle rapides pour les préférences courantes"
-  },
-  "sections": {
-    "accounts": {
-      "alerts": {
-        "noProviders": "Aucun fournisseur configuré. Configurez vos clés API pour commencer.",
-        "providerErrors": "{{count}} fournisseur(s) avec erreurs"
-      },
-      "autoSwitching": {
-        "globalDescription": "Basculer automatiquement entre vos comptes selon l'utilisation et les limites de débit.",
-        "globalTitle": "Basculement automatique de compte",
-        "providerAdded": "Fournisseur ajouté au basculement auto",
-        "providerDescription": "{{providerName}} a été {{action}} à la liste de basculement auto",
-        "providerRemoved": "Fournisseur retiré du basculement auto",
-        "syncError": "Erreur de synchronisation",
-        "syncErrorDescription": "Échec de la synchronisation du fournisseur avec le basculement auto",
-        "title": "Basculement auto"
-      },
-      "description": "Comptes & endpoints API",
-      "form": {
-        "addAccount": "Ajouter un compte {{provider}}",
-        "apiKey": "Clé API",
-        "apiKeyPlaceholder": "sk-...",
-        "baseUrl": "URL de base",
-        "baseUrlPlaceholder": "https://api.example.com",
-        "cancel": "Annuler",
-        "chooseModel": "-- Choisir un modèle --",
-        "llmGatewayUrl": "URL de la passerelle LLM",
-        "llmGatewayUrlPlaceholder": "https://gateway.example.com",
-        "name": "Nom du compte",
-        "namePlaceholder": "Nom du compte",
-        "save": "Enregistrer"
-      },
-      "providerCard": {
-        "apiKey": "Clé API",
-        "authCli": "Auth CLI",
-        "authLocal": "Local",
-        "authOauth": "OAuth",
-        "authentication": "Authentification",
-        "cliAuthenticated": "CLI authentifié",
-        "configure": "Configurer",
-        "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette configuration de fournisseur ?",
-        "edit": "Modifier",
-        "errors": {
-          "unknownError": "Erreur inconnue"
-        },
-        "lastTest": "Dernier test",
-        "localRunning": "Instance locale",
-        "needsReauth": "Ré-authentification requise",
-        "neverTested": "Jamais testé",
-        "notAvailable": "Non disponible",
-        "notConfigured": "Non configuré",
-        "oauthCli": "OAuth (CLI)",
-        "oauthConnected": "OAuth connecté",
-        "rateLimited": "Limite de débit atteinte",
-        "source": "Source",
-        "status": {
-          "active": "Actif",
-          "error": "Erreur",
-          "notConfigured": "Non configuré"
-        },
-        "statusNested": {
-          "active": "Actif",
-          "error": "Erreur",
-          "notConfigured": "Non configuré"
-        },
-        "test": "Tester",
-        "testDetails": {
-          "modelUsed": "Modèle utilisé : {{model}}",
-          "modelsAvailable": "{{count}} modèles disponibles"
-        },
-        "testError": "Échec du test",
-        "testErrorDescription": "Le fournisseur {{providerName}} a échoué : {{error}}",
-        "testSuccess": "Test réussi",
-        "testSuccessDescription": "Le fournisseur {{providerName}} fonctionne correctement",
-        "usage": "Utilisation",
-        "usageThisMonth": "Utilisation ce mois",
-        "week": "semaine"
-      },
-      "providerConfig": {
-        "title": "Configuration",
-        "windsurfAuth": {
-          "accountCredits": "Crédits",
-          "accountFlowActions": "Flow Actions",
-          "accountInfo": "Compte authentifié",
-          "accountName": "Nom",
-          "accountPlan": "Plan",
-          "authenticating": "Authentification...",
-          "claudeCodeAuth": "Utilisez l'authentification OAuth Claude Code pour vous connecter facilement à votre compte Claude.",
-          "connectWithClaude": "Se connecter avec Claude Code",
-          "description": "Détecter automatiquement vos identifiants Windsurf depuis votre installation locale de l'IDE.",
-          "detectFailed": "Impossible de détecter le jeton. Assurez-vous que Windsurf IDE est installé et que vous êtes connecté.",
-          "detectFromIDE": "Détecter depuis Windsurf IDE",
-          "detectSuccess": "Jeton détecté pour {{userName}} !",
-          "detecting": "Détection...",
-          "noConfigRequired": "Aucune configuration manuelle requise. Vous pouvez aussi utiliser l'onglet Clé API avec une Service Key.",
-          "oauthDetected": "Authentification SSO Windsurf détectée",
-          "openWindsurfLogin": "windsurf.com/account",
-          "orManual": "Ou connectez-vous manuellement :",
-          "saveAndConnect": "Enregistrer et connecter",
-          "saveSuccess": "Connexion Windsurf enregistrée avec succès !",
-          "terminalInstructions": "Cela ouvrira un terminal où vous pourrez exécuter la commande `/login` pour vous authentifier.",
-          "tokenDetected": "Clé API détectée",
-          "tokenLoaded": "Le jeton SSO Windsurf a été automatiquement chargé depuis votre environnement IDE local."
-        }
-      },
-      "providerToggle": {
-        "description": "{{providerId}} a été {{action}} avec succès",
-        "disabled": "Fournisseur désactivé",
-        "enabled": "Fournisseur activé",
-        "error": "Erreur",
-        "errorDescription": "Échec de {{action}} du fournisseur {{providerId}}"
-      },
-      "providers": {
-        "anthropic": "Modèles Anthropic Claude",
-        "aws": "AWS Bedrock et services Amazon",
-        "copilot": "GitHub Copilot",
-        "cursor": "Fournisseur IA Cursor",
-        "deepseek": "Modèles DeepSeek (DeepSeek-Coder, etc.)",
-        "google": "Accès API Google et Google DeepMind",
-        "grok": "Modèles Grok xAI",
-        "loadError": "Échec du chargement de la liste des fournisseurs",
-        "meta": "Modèles officiels Meta AI",
-        "mistral": "Modèles Mistral AI (Mistral, Codéal, etc.)",
-        "ollama": "Modèles open-source locaux avec Ollama",
-        "openai": "GPT-5 et autres modèles OpenAI",
-        "windsurf": "Fournisseur IA Windsurf"
-      },
-      "title": "Comptes"
-    },
-    "agent": {
-      "description": "Modèle par défaut et framework",
-      "title": "Paramètres d'agent"
-    },
-    "anomaly-detection": {
-      "description": "Surveillance du comportement des agents et alertes",
-      "title": "Détection d'anomalies"
-    },
-    "appearance": {
-      "description": "Personnaliser l'apparence de WorkPilot AI",
-      "title": "Apparence"
-    },
-    "debug": {
-      "description": "Outils de dépannage",
-      "title": "Debug & Logs"
-    },
-    "devtools": {
-      "description": "Préférences IDE et terminal",
-      "title": "Outils de développement"
-    },
-    "display": {
-      "description": "Ajuster la taille des éléments de l'interface",
-      "title": "Affichage"
-    },
-    "language": {
-      "description": "Choisir votre langue préférée",
-      "title": "Langue"
-    },
-    "llm-router": {
-      "description": "Routage intelligent des fournisseurs et tests A/B",
-      "title": "Routeur LLM"
-    },
-    "notifications": {
-      "description": "Préférences d'alertes",
-      "title": "Notifications"
-    },
-    "paths": {
-      "description": "Chemins des outils CLI et frameworks",
-      "title": "Chemins"
-    },
-    "sandbox": {
-      "description": "Isolation de l'exécution des agents et rollback",
-      "title": "Sandbox"
-    },
-    "scheduler": {
-      "description": "Planification de tâches de type cron et chaînes",
-      "title": "Planificateur"
-    },
-    "terminal-fonts": {
-      "description": "Personnaliser l'apparence des polices du terminal",
-      "title": "Polices de terminal"
-    },
-    "updates": {
-      "description": "Mises à jour de WorkPilot AI",
-      "title": "Mises à jour"
-    }
-  },
-  "tabs": {
-    "app": "Paramètres de l'application",
-    "project": "Paramètres du projet"
   },
   "terminalFonts": {
     "configActions": "Configuration :",
@@ -1424,7 +1435,6 @@
     "system": "Système",
     "title": "Apparence"
   },
-  "title": "Paramètres",
   "updates": {
     "appUpdateReady": "Mise à jour prête",
     "autoUpdateProjects": "Mise à jour auto des projets",

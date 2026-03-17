@@ -61,6 +61,7 @@ import { registerDocumentationAgentHandlers, setupDocumentationAgentEventForward
 import { registerDecisionLoggerHandlers } from './decision-logger-handlers';
 import { registerPairProgrammingHandlers } from './pair-programming-handlers';
 import { registerPipelineGeneratorHandlers, setupPipelineGeneratorEventForwarding } from './pipeline-generator-handlers';
+import { registerTeamSyncHandlers } from './team-sync-handlers';
 
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from './project-handlers';
@@ -112,6 +113,7 @@ export { registerDocumentationAgentHandlers, setupDocumentationAgentEventForward
 export { registerDecisionLoggerHandlers } from './decision-logger-handlers';
 export { registerPairProgrammingHandlers } from './pair-programming-handlers';
 export { registerPipelineGeneratorHandlers, setupPipelineGeneratorEventForwarding } from './pipeline-generator-handlers';
+export { registerTeamSyncHandlers } from './team-sync-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -282,6 +284,9 @@ export function setupIpcHandlers(
   // Pipeline Generator handlers (Feature 23)
   registerPipelineGeneratorHandlers();
   setupPipelineGeneratorEventForwarding(getMainWindow);
+
+  // Team Knowledge Sync handlers (Feature 31)
+  registerTeamSyncHandlers();
 
   console.warn('[IPC] All handler modules registered successfully');
 }
