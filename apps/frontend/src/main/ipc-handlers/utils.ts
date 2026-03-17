@@ -54,6 +54,16 @@ function recordWarning(channel: string): void {
 }
 
 /**
+ * Log a warning with cooldown protection
+ */
+function logWarningWithCooldown(message: string, channel: string): void {
+  if (!isWithinCooldown(channel)) {
+    console.warn(message);
+    recordWarning(channel);
+  }
+}
+
+/**
  * Safely send IPC message to renderer with frame disposal checks
  *
  * This prevents "Render frame was disposed" errors that occur when:
@@ -82,27 +92,19 @@ export function safeSendToRenderer(
 ): boolean {
   try {
     const mainWindow = getMainWindow();
-
     if (!mainWindow) {
       return false;
     }
 
-    // Check if window or webContents is destroyed
-    // isDestroyed() returns true if the window has been closed and destroyed
+    // Check if window is destroyed
     if (mainWindow.isDestroyed()) {
-      if (!isWithinCooldown(channel)) {
-        console.warn(`[safeSendToRenderer] Skipping send to destroyed window: ${channel}`);
-        recordWarning(channel);
-      }
+      logWarningWithCooldown(`[safeSendToRenderer] Skipping send to destroyed window: ${channel}`, channel);
       return false;
     }
 
-    // Check if webContents is destroyed (can happen independently of window)
+    // Check if webContents is destroyed
     if (!mainWindow.webContents || mainWindow.webContents.isDestroyed()) {
-      if (!isWithinCooldown(channel)) {
-        console.warn(`[safeSendToRenderer] Skipping send to destroyed webContents: ${channel}`);
-        recordWarning(channel);
-      }
+      logWarningWithCooldown(`[safeSendToRenderer] Skipping send to destroyed webContents: ${channel}`, channel);
       return false;
     }
 
@@ -110,15 +112,11 @@ export function safeSendToRenderer(
     mainWindow.webContents.send(channel, ...args);
     return true;
   } catch (error) {
-    // Catch any disposal errors that might occur between our checks and the actual send
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    // Only log disposal errors once per channel to avoid log spam
+    // Handle disposal errors with cooldown protection
     if (errorMessage.includes("disposed") || errorMessage.includes("destroyed")) {
-      if (!isWithinCooldown(channel)) {
-        console.warn(`[safeSendToRenderer] Frame disposed, skipping send: ${channel}`);
-        recordWarning(channel);
-      }
+      logWarningWithCooldown(`[safeSendToRenderer] Frame disposed, skipping send: ${channel}`, channel);
     } else {
       console.error(`[safeSendToRenderer] Error sending to renderer:`, error);
     }
