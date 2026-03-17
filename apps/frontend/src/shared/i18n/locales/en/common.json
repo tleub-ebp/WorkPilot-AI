@@ -864,6 +864,16 @@
       "welcomeHint": "Create custom MCP servers visually. Define tools, parameters, and HTTP actions without writing code."
     }
   },
+  "terminalGrid": {
+    "history": "History",
+    "restoreSessions": "Restore sessions from...",
+    "invokeClaudeAll": "Invoke Claude All",
+    "newTerminal": "New Terminal",
+    "files": "Files",
+    "agentTerminals": "Agent Terminals",
+    "emptyDescription": "Spawn multiple terminals to run Claude agents in parallel. Use Ctrl+T to create a new terminal.",
+    "count": "{{count}} / 12 terminals"
+  },
   "agnosticUsage": {
     "loadFailed": "Failed to load usage data",
     "unsupportedAuthMethod": "Provider {{provider}} does not support {{authMethod}} authentication",

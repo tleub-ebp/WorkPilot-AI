@@ -1,0 +1,17 @@
+{
+  "emptyState": {
+    "title": "No Ideas Yet",
+    "description": "Generate AI-powered feature ideas based on your project's context, existing patterns, and target audience.",
+    "enabledTypes": "Enabled Ideation Types",
+    "generateIdeas": "Generate Ideas",
+    "tokenMissing": "Claude token not configured. You'll be prompted to enter it when generating."
+  },
+  "types": {
+    "code_improvements": "Code Improvements",
+    "ui_ux_improvements": "UI/UX Improvements",
+    "documentation_gaps": "Documentation",
+    "security_hardening": "Security",
+    "performance_optimizations": "Performance",
+    "code_quality": "Code Quality"
+  }
+}

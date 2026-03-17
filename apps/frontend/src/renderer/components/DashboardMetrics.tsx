@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   BarChart3,
   CheckCircle2,
@@ -96,8 +97,9 @@ function KpiCard({
 // ---------------------------------------------------------------------------
 
 function StatusBar({ data }: { data: Record<string, number> }) {
+  const { t } = useTranslation('dashboard');
   const total = Object.values(data).reduce((a, b) => a + b, 0);
-  if (total === 0) return <div className="text-xs text-muted-foreground">No tasks</div>;
+  if (total === 0) return <div className="text-xs text-muted-foreground">{t('empty.noTasks')}</div>;
 
   const statusColors: Record<string, string> = {
     completed: 'bg-emerald-500',
@@ -141,15 +143,16 @@ function StatusBar({ data }: { data: Record<string, number> }) {
 // ---------------------------------------------------------------------------
 
 function CostBreakdown({ costByModel }: { costByModel: Record<string, number> }) {
+  const { t } = useTranslation('dashboard');
   if (!costByModel || typeof costByModel !== 'object') {
-    return <div className="text-xs text-muted-foreground">No cost data</div>;
+    return <div className="text-xs text-muted-foreground">{t('empty.noCostData')}</div>;
   }
-  
+
   const entries = Object.entries(costByModel).sort(([, a], [, b]) => b - a);
   const total = entries.reduce((sum, [, v]) => sum + v, 0);
 
   if (entries.length === 0) {
-    return <div className="text-xs text-muted-foreground">No cost data</div>;
+    return <div className="text-xs text-muted-foreground">{t('empty.noCostData')}</div>;
   }
 
   return (
@@ -180,6 +183,7 @@ function CostBreakdown({ costByModel }: { costByModel: Record<string, number> })
 // ---------------------------------------------------------------------------
 
 export function DashboardMetrics({ projectId }: DashboardMetricsProps) {
+  const { t } = useTranslation('dashboard');
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -243,7 +247,7 @@ export function DashboardMetrics({ projectId }: DashboardMetricsProps) {
         <p className="text-sm">{error}</p>
         <Button variant="outline" size="sm" onClick={fetchSnapshot}>
           <RefreshCw className="h-3.5 w-3.5 mr-2" />
-          Retry
+          {t('common:buttons.retry')}
         </Button>
       </div>
     );
@@ -276,14 +280,14 @@ export function DashboardMetrics({ projectId }: DashboardMetricsProps) {
           <div className="flex items-center gap-3">
             <BarChart3 className="h-6 w-6 text-primary" />
             <div>
-              <h1 className="text-xl font-bold text-foreground">Dashboard</h1>
-              <p className="text-sm text-muted-foreground">Project metrics & KPIs</p>
+              <h1 className="text-xl font-bold text-foreground">{t('title')}</h1>
+              <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={fetchSnapshot}>
               <RefreshCw className="h-3.5 w-3.5 mr-2" />
-              Refresh
+              {t('common:buttons.refresh')}
             </Button>
             <Button variant="outline" size="sm" onClick={() => handleExport('json')}>
               <Download className="h-3.5 w-3.5 mr-2" />
@@ -299,30 +303,30 @@ export function DashboardMetrics({ projectId }: DashboardMetricsProps) {
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
-            title="Total Tasks"
+            title={t('kpi.totalTasks.title')}
             value={totalTasks}
-            subtitle={`${completedTasks} completed`}
+            subtitle={t('kpi.totalTasks.completed', { count: completedTasks })}
             icon={Target}
             color="primary"
           />
           <KpiCard
-            title="QA First-Pass Rate"
+            title={t('kpi.qaFirstPassRate.title')}
             value={`${snap.qa_first_pass_rate.toFixed(1)}%`}
-            subtitle={`Avg score: ${snap.qa_avg_score.toFixed(1)}`}
+            subtitle={t('kpi.qaFirstPassRate.avgScore', { score: snap.qa_avg_score.toFixed(1) })}
             icon={CheckCircle2}
             color="green"
           />
           <KpiCard
-            title="Total Tokens"
+            title={t('kpi.totalTokens.title')}
             value={snap.total_tokens.toLocaleString()}
-            subtitle={`$${snap.total_cost.toFixed(4)} total cost`}
+            subtitle={t('kpi.totalTokens.totalCost', { cost: snap.total_cost.toFixed(4) })}
             icon={Zap}
             color="amber"
           />
           <KpiCard
-            title="Auto Merges"
+            title={t('kpi.autoMerges.title')}
             value={`${mergeAutoRate}%`}
-            subtitle={`${snap.merge_auto_count} auto / ${snap.merge_manual_count} manual`}
+            subtitle={t('kpi.autoMerges.autoManual', { auto: snap.merge_auto_count, manual: snap.merge_manual_count })}
             icon={GitMerge}
             color="blue"
           />
@@ -332,16 +336,16 @@ export function DashboardMetrics({ projectId }: DashboardMetricsProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardContent className="p-5">
-              <h3 className="text-sm font-semibold text-foreground mb-4">Tasks by Status</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-4">{t('sections.tasksByStatus')}</h3>
               <StatusBar data={snap.tasks_by_status} />
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="p-5">
-              <h3 className="text-sm font-semibold text-foreground mb-4">Avg Completion Time by Complexity</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-4">{t('sections.avgCompletionTime')}</h3>
               {Object.keys(snap.avg_completion_by_complexity).length === 0 ? (
-                <div className="text-xs text-muted-foreground">No completion data yet</div>
+                <div className="text-xs text-muted-foreground">{t('empty.noCompletionData')}</div>
               ) : (
                 <div className="space-y-3">
                   {Object.entries(snap.avg_completion_by_complexity).map(([complexity, seconds]) => (
@@ -367,16 +371,16 @@ export function DashboardMetrics({ projectId }: DashboardMetricsProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardContent className="p-5">
-              <h3 className="text-sm font-semibold text-foreground mb-4">Cost by Model</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-4">{t('sections.costByModel')}</h3>
               <CostBreakdown costByModel={snap.cost_by_model} />
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="p-5">
-              <h3 className="text-sm font-semibold text-foreground mb-4">Tokens by Provider</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-4">{t('sections.tokensByProvider')}</h3>
               {Object.keys(snap.tokens_by_provider).length === 0 ? (
-                <div className="text-xs text-muted-foreground">No token data yet</div>
+                <div className="text-xs text-muted-foreground">{t('empty.noTokenData')}</div>
               ) : (
                 <div className="space-y-2">
                   {Object.entries(snap.tokens_by_provider)
@@ -396,7 +400,7 @@ export function DashboardMetrics({ projectId }: DashboardMetricsProps) {
         {/* Merge Resolution */}
         <Card>
           <CardContent className="p-5">
-            <h3 className="text-sm font-semibold text-foreground mb-4">Merge Resolution</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-4">{t('sections.mergeResolution')}</h3>
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
@@ -404,7 +408,7 @@ export function DashboardMetrics({ projectId }: DashboardMetricsProps) {
                 </div>
                 <div>
                   <p className="text-lg font-bold text-foreground">{snap.merge_auto_count}</p>
-                  <p className="text-xs text-muted-foreground">Automatic</p>
+                  <p className="text-xs text-muted-foreground">{t('merge.automatic')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -413,12 +417,12 @@ export function DashboardMetrics({ projectId }: DashboardMetricsProps) {
                 </div>
                 <div>
                   <p className="text-lg font-bold text-foreground">{snap.merge_manual_count}</p>
-                  <p className="text-xs text-muted-foreground">Manual</p>
+                  <p className="text-xs text-muted-foreground">{t('merge.manual')}</p>
                 </div>
               </div>
               {mergeTotal > 0 && (
                 <div className="ml-auto text-right">
-                  <p className="text-sm text-muted-foreground">Auto-resolution rate</p>
+                  <p className="text-sm text-muted-foreground">{t('merge.autoResolutionRate')}</p>
                   <p className="text-xl font-bold text-foreground">{mergeAutoRate}%</p>
                 </div>
               )}

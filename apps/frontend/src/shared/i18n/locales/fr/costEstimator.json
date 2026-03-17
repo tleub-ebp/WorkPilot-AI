@@ -1,0 +1,37 @@
+{
+  "title": "Estimateur de coûts",
+  "subtitle": "Coûts d'utilisation LLM, budgets et prévisions",
+  "retry": "Réessayer",
+  "kpi": {
+    "totalCost": {
+      "title": "Coût total",
+      "period": "Période de {{days}} jours"
+    },
+    "dailyAverage": {
+      "title": "Moyenne journalière"
+    },
+    "totalTokens": {
+      "title": "Total tokens",
+      "inOut": "Entrée : {{input}} / Sortie : {{output}}"
+    },
+    "providers": {
+      "title": "Fournisseurs",
+      "models": "{{count}} modèle",
+      "models_plural": "{{count}} modèles"
+    }
+  },
+  "budget": {
+    "title": "Budget mensuel",
+    "pctUsed": "{{pct}}% utilisé",
+    "spent": "{{amount}}$ dépensé",
+    "remaining": "{{amount}}$ restant",
+    "total": "{{amount}}$ total",
+    "forecast": "Prévision fin de mois :",
+    "overBudget": "Dépassement de budget"
+  },
+  "breakdown": {
+    "costByProvider": "Coût par fournisseur",
+    "costByModel": "Coût par modèle",
+    "noData": "Aucune donnée"
+  }
+}
