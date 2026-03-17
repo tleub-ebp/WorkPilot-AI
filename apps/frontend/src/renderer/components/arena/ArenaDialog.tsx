@@ -18,6 +18,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -180,31 +181,55 @@ function BattleTab() {
   // Cleanup listeners ref
   const cleanupRefs = useRef<Array<() => void>>([]);
 
+  // Fallback demo profiles used when the API is unavailable or returns no profiles
+  const DEMO_PROFILES = [
+    { id: 'claude-sonnet', name: 'Claude Sonnet 4.6', model: 'claude-sonnet-4-6' },
+    { id: 'claude-haiku', name: 'Claude Haiku 4.5', model: 'claude-haiku-4-5-20251001' },
+    { id: 'gpt-4.1', name: 'GPT-4.1', model: 'gpt-4.1' },
+    { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', model: 'gpt-4.1-mini' },
+  ];
+
   // Load profiles on mount
   useEffect(() => {
-    globalThis.electronAPI.arenaGetProfiles().then((res: { success: boolean; data?: unknown[]; error?: string }) => {
-      if (res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
-        setProfiles(res.data as Array<{ id: string; name: string; model: string }>);
-        setSelectedProfiles((res.data as Array<{ id: string }>).slice(0, 2).map((p) => p.id));
-      } else {
-        // Fallback demo profiles
-        setProfiles([
-          { id: 'claude-sonnet', name: 'Claude Sonnet', model: 'claude-sonnet-4-6' },
-          { id: 'claude-haiku', name: 'Claude Haiku', model: 'claude-haiku-4-5' },
-          { id: 'gpt-4o', name: 'GPT-4o', model: 'gpt-4o' },
-          { id: 'gpt-4o-mini', name: 'GPT-4o Mini', model: 'gpt-4o-mini' },
-        ]);
-        setSelectedProfiles(['claude-sonnet', 'claude-haiku']);
+    const loadProfiles = async () => {
+      try {
+        if (typeof globalThis.electronAPI?.arenaGetProfiles !== 'function') {
+          // Preload not yet reloaded — use demo profiles
+          setProfiles(DEMO_PROFILES);
+          setSelectedProfiles([DEMO_PROFILES[0].id, DEMO_PROFILES[1].id]);
+          return;
+        }
+        const res = await globalThis.electronAPI.arenaGetProfiles();
+        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+          setProfiles(res.data as Array<{ id: string; name: string; model: string }>);
+          setSelectedProfiles((res.data as Array<{ id: string }>).slice(0, 2).map((p) => p.id));
+        } else {
+          setProfiles(DEMO_PROFILES);
+          setSelectedProfiles([DEMO_PROFILES[0].id, DEMO_PROFILES[1].id]);
+        }
+      } catch {
+        setProfiles(DEMO_PROFILES);
+        setSelectedProfiles([DEMO_PROFILES[0].id, DEMO_PROFILES[1].id]);
       }
-    });
+    };
+    loadProfiles();
   }, []);
 
-  // Subscribe to battle events
+  // Subscribe to battle events (only when API is available)
   useEffect(() => {
-    const c1 = globalThis.electronAPI.onArenaBattleProgress(handleBattleProgress);
-    const c2 = globalThis.electronAPI.onArenaBattleResult(handleBattleResult);
-    const c3 = globalThis.electronAPI.onArenaBattleComplete(handleBattleComplete);
-    const c4 = globalThis.electronAPI.onArenaBattleError(({ error: err }: { battleId: string; error: string }) => setError(err));
+    const api = globalThis.electronAPI;
+    if (
+      typeof api?.onArenaBattleProgress !== 'function' ||
+      typeof api?.onArenaBattleResult !== 'function' ||
+      typeof api?.onArenaBattleComplete !== 'function' ||
+      typeof api?.onArenaBattleError !== 'function'
+    ) {
+      return;
+    }
+    const c1 = api.onArenaBattleProgress(handleBattleProgress);
+    const c2 = api.onArenaBattleResult(handleBattleResult);
+    const c3 = api.onArenaBattleComplete(handleBattleComplete);
+    const c4 = api.onArenaBattleError(({ error: err }: { battleId: string; error: string }) => setError(err));
 
     cleanupRefs.current = [c1, c2, c3, c4];
     return () => cleanupRefs.current.forEach((c) => c());
@@ -217,6 +242,10 @@ function BattleTab() {
     setError(null);
 
     try {
+      if (typeof globalThis.electronAPI?.arenaStartBattle !== 'function') {
+        setError('Arena API not available — please restart the application.');
+        return;
+      }
       const result = await globalThis.electronAPI.arenaStartBattle({
         taskType,
         prompt: prompt.trim(),
@@ -427,7 +456,9 @@ function HistoryTab() {
   const { battles, isLoadingHistory, loadHistory } = useArenaStore();
 
   const arenaClearHistoryFn = useCallback(async () => {
-    await globalThis.electronAPI.arenaClearHistory();
+    if (typeof globalThis.electronAPI?.arenaClearHistory === 'function') {
+      await globalThis.electronAPI.arenaClearHistory();
+    }
     loadHistory();
   }, [loadHistory]);
 
@@ -739,11 +770,11 @@ export function ArenaDialog() {
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
               <Swords className="h-5 w-5 text-primary" />
             </div>
-            <div>
-              <span>{t('title')}</span>
-              <p className="text-xs font-normal text-muted-foreground mt-0.5">{t('subtitle')}</p>
-            </div>
+            <span>{t('title')}</span>
           </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+            {t('subtitle')}
+          </DialogDescription>
         </DialogHeader>
 
         {/* Tab navigation */}
