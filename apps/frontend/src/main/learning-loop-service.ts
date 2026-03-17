@@ -51,15 +51,23 @@ export class LearningLoopService extends EventEmitter {
   private getAutoBuildSourcePath(): string | null {
     if (this.autoBuildSourcePath) return this.autoBuildSourcePath;
 
-    // Try common locations
+    const validatePath = (p: string): boolean =>
+      existsSync(path.join(p, 'runners', 'learning_loop_runner.py'));
+
+    // Try common locations (mirrors agent-process.ts resolution logic)
     const possiblePaths = [
-      path.join(app.getPath('userData'), '..', 'auto-claude'),
-      path.join(process.cwd(), 'apps', 'backend'),
+      // Packaged app: backend is in extraResources
+      ...(app.isPackaged ? [path.join(process.resourcesPath, 'backend')] : []),
+      // Dev mode: from dist/main -> ../../backend (apps/frontend/out/main -> apps/backend)
+      path.resolve(__dirname, '..', '..', '..', 'backend'),
+      // Alternative: from app root -> apps/backend
+      path.resolve(app.getAppPath(), '..', 'backend'),
+      // If running from repo root with apps structure
+      path.resolve(process.cwd(), 'apps', 'backend'),
     ];
 
     for (const p of possiblePaths) {
-      const runnerPath = path.join(p, 'runners', 'learning_loop_runner.py');
-      if (existsSync(runnerPath)) {
+      if (validatePath(p)) {
         this.autoBuildSourcePath = p;
         return p;
       }

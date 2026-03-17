@@ -24,11 +24,11 @@ import { Terminal, Globe, X, ExternalLink } from 'lucide-react';
 import { Github } from '@/lib/icons';
 
 interface CustomMcpDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  server: CustomMcpServer | null; // null = create new, non-null = edit
-  existingIds: string[]; // Existing server IDs for validation
-  onSave: (server: CustomMcpServer) => void;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly server: CustomMcpServer | null; // null = create new, non-null = edit
+  readonly existingIds: string[]; // Existing server IDs for validation
+  readonly onSave: (server: CustomMcpServer) => void;
 }
 
 export function CustomMcpDialog({
@@ -141,53 +141,64 @@ export function CustomMcpDialog({
 
   // Generate ID from name
   const generateId = (name: string): string => {
-    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return name.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-').replaceAll(/^-|-$/g, '');
   };
 
-  const handleSave = () => {
-    // Validate
+  // Validation functions
+  const validateForm = (): string | null => {
     if (!formData.name.trim()) {
-      setError(t('mcp.errorNameRequired'));
-      return;
+      return t('mcp.errorNameRequired');
     }
 
     const generatedId = isEditing ? formData.id : generateId(formData.name);
 
     // Check for duplicate ID (only when creating new)
     if (!isEditing && existingIds.includes(generatedId)) {
-      setError(t('mcp.errorIdExists'));
-      return;
+      return t('mcp.errorIdExists');
     }
 
     if (formData.type === 'command' && !formData.command?.trim()) {
-      setError(t('mcp.errorCommandRequired'));
-      return;
+      return t('mcp.errorCommandRequired');
     }
 
     if (formData.type === 'http' && !formData.url?.trim()) {
-      setError(t('mcp.errorUrlRequired'));
-      return;
+      return t('mcp.errorUrlRequired');
     }
 
-    // Build headers, merging bearer token if provided
+    return null;
+  };
+
+  // Header processing functions
+  const buildHeaders = (): Record<string, string> => {
+    if (formData.type !== 'http') {
+      return {};
+    }
+
     const finalHeaders: Record<string, string> = {};
-    if (formData.type === 'http') {
-      // Start with existing headers (excluding old Authorization if we have a new bearer token)
-      if (formData.headers) {
-        for (const [key, value] of Object.entries(formData.headers)) {
-          if (bearerToken && key.toLowerCase() === 'authorization') {
-            continue; // Skip old auth header if we have a new bearer token
-          }
-          finalHeaders[key] = value;
+    
+    // Copy existing headers (excluding old Authorization if we have a new bearer token)
+    if (formData.headers) {
+      for (const [key, value] of Object.entries(formData.headers)) {
+        if (bearerToken && key.toLowerCase() === 'authorization') {
+          continue; // Skip old auth header if we have a new bearer token
         }
-      }
-      // Add bearer token as Authorization header
-      if (bearerToken.trim()) {
-        finalHeaders['Authorization'] = `Bearer ${bearerToken.trim()}`;
+        finalHeaders[key] = value;
       }
     }
+    
+    // Add bearer token as Authorization header
+    if (bearerToken.trim()) {
+      finalHeaders['Authorization'] = `Bearer ${bearerToken.trim()}`;
+    }
 
-    const serverToSave: CustomMcpServer = {
+    return finalHeaders;
+  };
+
+  // Server object creation
+  const createServerToSave = (generatedId: string): CustomMcpServer => {
+    const headers = buildHeaders();
+    
+    return {
       id: generatedId,
       name: formData.name.trim(),
       type: formData.type,
@@ -199,9 +210,21 @@ export function CustomMcpDialog({
           }
         : {
             url: formData.url,
-            headers: Object.keys(finalHeaders).length > 0 ? finalHeaders : undefined,
+            headers: Object.keys(headers).length > 0 ? headers : undefined,
           }),
     };
+  };
+
+  const handleSave = () => {
+    // Validate form
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    const generatedId = isEditing ? formData.id : generateId(formData.name);
+    const serverToSave = createServerToSave(generatedId);
 
     onSave(serverToSave);
     onOpenChange(false);
@@ -367,7 +390,7 @@ export function CustomMcpDialog({
                       className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-1"
                       onClick={(e) => {
                         e.preventDefault();
-                        window.electronAPI?.openExternal(urlHint.link);
+                        globalThis.electronAPI?.openExternal(urlHint.link);
                       }}
                     >
                       {urlHint.linkText}
@@ -430,7 +453,7 @@ export function CustomMcpDialog({
                       </Button>
                     </div>
                     {/* Show non-Authorization headers */}
-                    {Object.entries(formData.headers || {}).filter(([key]) => key.toLowerCase() !== 'authorization').length > 0 && (
+                    {Object.entries(formData.headers || {}).some(([key]) => key.toLowerCase() !== 'authorization') && (
                       <div className="space-y-1 mt-2">
                         {Object.entries(formData.headers || {})
                           .filter(([key]) => key.toLowerCase() !== 'authorization')

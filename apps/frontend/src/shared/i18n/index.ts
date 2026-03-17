@@ -41,6 +41,7 @@ import enVisualProgramming from './locales/en/visualProgramming.json';
 import enMissionControl from './locales/en/missionControl.json';
 import enPixelOffice from './locales/en/pixelOffice.json';
 import enSelfHealing from './locales/en/selfHealing.json';
+import enSessionHistory from './locales/en/sessionHistory.json';
 import enWelcome from './locales/en/welcome.json';
 
 // Import French translation resources
@@ -83,6 +84,7 @@ import frTestGeneration from './locales/fr/testGeneration.json';
 import frVisualProgramming from './locales/fr/visualProgramming.json';
 import frPixelOffice from './locales/fr/pixelOffice.json';
 import frSelfHealing from './locales/fr/selfHealing.json';
+import frSessionHistory from './locales/fr/sessionHistory.json';
 import frWelcome from './locales/fr/welcome.json';
 
 export const defaultNS = 'common';
@@ -113,6 +115,7 @@ export const resources = {
     missionControl: enMissionControl,
     pixelOffice: enPixelOffice,
     selfHealing: enSelfHealing,
+    sessionHistory: enSessionHistory,
     naturalLanguageGit: enNaturalLanguageGit,
     navigation: enNavigation,
     onboarding: enOnboarding,
@@ -155,6 +158,7 @@ export const resources = {
     missionControl: frMissionControl,
     pixelOffice: frPixelOffice,
     selfHealing: frSelfHealing,
+    sessionHistory: frSessionHistory,
     naturalLanguageGit: frNaturalLanguageGit,
     navigation: frNavigation,
     onboarding: frOnboarding,
@@ -206,6 +210,7 @@ i18n
       'missionControl',
       'pixelOffice',
       'selfHealing',
+      'sessionHistory',
       'naturalLanguageGit',
       'navigation',
       'onboarding',
