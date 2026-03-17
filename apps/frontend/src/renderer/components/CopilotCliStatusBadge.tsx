@@ -146,50 +146,22 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
   // Helper function for delay
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-  // Update command for GitHub Copilot CLI
-  const COPILOT_UPDATE_COMMAND = `# Update GitHub Copilot CLI based on installation method
-  echo '${t("copilot:checkingInstallationMethod", "Checking installation method...")}'\nif command -v npm &> /dev/null && npm list -g @github/copilot &> /dev/null; then
-  echo '${t("copilot:updatingViaNpm", "Updating via npm...")}'\n  npm update -g @github/copilot\nelif command -v brew &> /dev/null && brew list copilot-cli &> /dev/null; then
-  echo '${t("copilot:updatingViaHomebrew", "Updating via Homebrew...")}'\n  brew upgrade copilot-cli\nelif command -v winget &> /dev/null; then
-  echo '${t("copilot:updatingViaWinget", "Updating via WinGet...")}'\n  winget upgrade GitHub.Copilot\nelse
-  echo '${t("copilot:installingViaScript", "Installing via script...")}'\n  curl -fsSL https://gh.io/copilot-install | bash\nfi\n`;
-
-  // Windows-specific update command for GitHub CLI (which includes Copilot)
-  const WINDOWS_UPDATE_COMMAND = `# Update GitHub CLI (includes Copilot CLI)
-  echo '${t("copilot:updatingGitHubCli", "Updating GitHub CLI...")}'\nif command -v winget &> /dev/null; then
-  echo '${t("copilot:updatingViaWinget", "Updating via WinGet...")}'\n  winget upgrade GitHub.Cli\nelif command -v choco &> /dev/null; then
-  echo '${t("copilot:updatingViaChocolatey", "Updating via Chocolatey...")}'\n  choco upgrade gh-cli\nelif command -v scoop &> /dev/null; then
-  echo '${t("copilot:updatingViaScoop", "Updating via Scoop...")}'\n  scoop update gh\nelse
-  echo '${t("copilot:manualDownloadRequired", "Manual download required. Please visit https://cli.github.com/")}'\nfi\n`;
-
-  // Helper function to send terminal commands with delays
-  const sendTerminalCommandsWithDelay = async (terminalId: string, commands: Array<{cmd: string; delay: number}>) => {
-    if (!globalThis.electronAPI?.sendTerminalInput) return;
-    
-    for (const {cmd, delay: ms} of commands) {
-      await delay(ms);
-      globalThis.electronAPI.sendTerminalInput(terminalId, cmd);
-    }
-  };
+  // Update command for GitHub Copilot CLI extension
+  const COPILOT_UPDATE_COMMAND = 'gh extension upgrade gh-copilot';
+  const COPILOT_INSTALL_COMMAND = 'gh extension install github/gh-copilot';
 
   // Helper function to execute terminal installation
   const executeTerminalInstallation = async (terminalId: string, isUpdate: boolean) => {
-    const commands = [
-      { cmd: "clear\n", delay: 0 },
-      { cmd: `echo '${t("copilot:updatingGitHubCopilotCli", "Updating GitHub Copilot CLI...")}'\n`, delay: 50 },
-      { cmd: isUpdate ? WINDOWS_UPDATE_COMMAND : COPILOT_UPDATE_COMMAND, delay: 50 }
-    ];
-    
-    await sendTerminalCommandsWithDelay(terminalId, commands);
+    // Send the command without \n so the user must press Enter to confirm
+    const command = isUpdate ? COPILOT_UPDATE_COMMAND : COPILOT_INSTALL_COMMAND;
+    await delay(200);
+    globalThis.electronAPI.sendTerminalInput(terminalId, command);
   };
 
   // Helper function to execute terminal auth
   const executeTerminalAuth = async (terminalId: string) => {
-    const commands = [
-      { cmd: "gh auth login\n", delay: 0 }
-    ];
-    
-    await sendTerminalCommandsWithDelay(terminalId, commands);
+    await delay(200);
+    globalThis.electronAPI.sendTerminalInput(terminalId, "gh auth login");
   };
 
   // Perform install/update
