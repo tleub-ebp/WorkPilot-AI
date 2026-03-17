@@ -6,8 +6,7 @@ import {
   Loader2, 
   Mic, 
   MicOff, 
-  RotateCcw, 
-  X, 
+  RotateCcw,
   Volume2,
   Clock,
   AlertCircle
@@ -47,7 +46,7 @@ import { useProjectStore } from '../../stores/project-store';
  */
 interface VoiceControlDialogProps {
   /** Called when a voice command is successfully processed */
-  onExecuteCommand?: (result: VoiceControlResult) => void;
+  readonly onExecuteCommand?: (result: VoiceControlResult) => void;
 }
 
 export function VoiceControlDialog({ onExecuteCommand }: VoiceControlDialogProps) {
@@ -213,7 +212,7 @@ export function VoiceControlDialog({ onExecuteCommand }: VoiceControlDialogProps
                     <Mic className="h-6 w-6" />
                   </Button>
                   {canRecord && (
-                    <div className="absolute -inset-2 rounded-full border-2 border-primary/20 animate-ping" />
+                    <div className="absolute -inset-2 rounded-full border-2 border-primary/20 animate-ping pointer-events-none" />
                   )}
                 </div>
                 <p className="text-center text-sm text-muted-foreground">
@@ -284,11 +283,9 @@ export function VoiceControlDialog({ onExecuteCommand }: VoiceControlDialogProps
         <DialogFooter className="gap-2 sm:gap-0">
           {/* Idle / Input state */}
           {phase === 'idle' && (
-            <>
-              <Button variant="outline" onClick={handleClose}>
-                {t('voiceControl:actions.close')}
-              </Button>
-            </>
+            <Button variant="outline" onClick={handleClose}>
+              {t('voiceControl:actions.close')}
+            </Button>
           )}
 
           {/* Recording / Processing state */}
@@ -340,10 +337,10 @@ function ResultView({
   onCopy,
   t,
 }: {
-  result: VoiceControlResult;
-  copied: boolean;
-  onCopy: (text: string) => void;
-  t: (key: string) => string;
+  readonly result: VoiceControlResult;
+  readonly copied: boolean;
+  readonly onCopy: (text: string) => void;
+  readonly t: (key: string) => string;
 }) {
   return (
     <div className="space-y-4">
