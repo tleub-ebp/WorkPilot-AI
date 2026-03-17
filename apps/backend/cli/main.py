@@ -15,6 +15,7 @@ from .batch_commands import (
     handle_batch_create_command,
     handle_batch_status_command,
 )
+from .self_healing_commands import handle_self_healing_command
 from .build_commands import handle_build_command
 from .cost_commands import (
     handle_cost_budget_command,
@@ -428,6 +429,17 @@ Environment Variables:
         help="Environment capture source (default: auto)",
     )
 
+    # Self-Healing Codebase + Incident Responder
+    healing_group = parser.add_argument_group("Self-Healing Codebase")
+    healing_group.add_argument(
+        "--self-heal",
+        type=str,
+        nargs="?",
+        const="dashboard",
+        metavar="MODE",
+        help="Self-healing mode: cicd, proactive, dashboard (default: dashboard)",
+    )
+
     return parser.parse_args()
 
 
@@ -586,6 +598,13 @@ def _run_cli() -> None:
 
     if args.env_validate:
         handle_env_validate_command(project_dir)
+        return
+
+    # Handle Self-Healing commands
+    if args.self_heal is not None:
+        handle_self_healing_command(
+            project_dir, mode=args.self_heal, verbose=args.verbose
+        )
         return
 
     # Require --spec if not listing

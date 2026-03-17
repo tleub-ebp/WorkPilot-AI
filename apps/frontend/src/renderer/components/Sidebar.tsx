@@ -49,6 +49,7 @@ import {
   Rocket,
   RotateCcw,
   Building2,
+  HeartPulse,
 } from 'lucide-react';
 
 // UI
@@ -144,7 +145,7 @@ import { DesignToCodeDialog } from './design-to-code/DesignToCodeDialog';
 // Types
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace' | 'design-to-code' | 'mission-control' | 'agent-replay' | 'pixel-office';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace' | 'design-to-code' | 'mission-control' | 'agent-replay' | 'pixel-office' | 'self-healing';
 
 interface SidebarProps {
   readonly onSettingsClick: () => void;
@@ -181,6 +182,7 @@ const navGroups: NavGroup[] = [
       { id: 'mission-control', labelKey: 'navigation:items.missionControl', icon: Rocket, shortcut: 'Q' },
       { id: 'pixel-office', labelKey: 'navigation:items.pixelOffice', icon: Building2, shortcut: 'P' },
       { id: 'agent-replay', labelKey: 'navigation:items.agentReplay', icon: RotateCcw, shortcut: 'R' },
+      { id: 'self-healing', labelKey: 'navigation:items.selfHealing', icon: HeartPulse, shortcut: 'H' },
     ],
     defaultExpanded: true
   },

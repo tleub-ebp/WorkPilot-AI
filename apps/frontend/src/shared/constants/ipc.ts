@@ -674,5 +674,27 @@ export const IPC_CHANNELS = {
   MULTI_REPO_COMPLETE: 'multiRepo:complete',
   MULTI_REPO_ERROR: 'multiRepo:error',
   MULTI_REPO_BREAKING_CHANGE: 'multiRepo:breakingChange',
-  MULTI_REPO_GRAPH: 'multiRepo:graph'
+  MULTI_REPO_GRAPH: 'multiRepo:graph',
+
+  // Self-Healing Codebase + Incident Responder
+  SELF_HEALING_GET_DASHBOARD: 'selfHealing:getDashboard',
+  SELF_HEALING_GET_INCIDENTS: 'selfHealing:getIncidents',
+  SELF_HEALING_GET_OPERATIONS: 'selfHealing:getOperations',
+  SELF_HEALING_GET_FRAGILITY: 'selfHealing:getFragility',
+  SELF_HEALING_CICD_ENABLE: 'selfHealing:cicd:enable',
+  SELF_HEALING_CICD_DISABLE: 'selfHealing:cicd:disable',
+  SELF_HEALING_CICD_CONFIG: 'selfHealing:cicd:config',
+  SELF_HEALING_PRODUCTION_CONNECT: 'selfHealing:production:connect',
+  SELF_HEALING_PRODUCTION_DISCONNECT: 'selfHealing:production:disconnect',
+  SELF_HEALING_PRODUCTION_CONFIG: 'selfHealing:production:config',
+  SELF_HEALING_PROACTIVE_SCAN: 'selfHealing:proactive:scan',
+  SELF_HEALING_PROACTIVE_CONFIG: 'selfHealing:proactive:config',
+  SELF_HEALING_TRIGGER_FIX: 'selfHealing:triggerFix',
+  SELF_HEALING_CANCEL_OPERATION: 'selfHealing:cancelOperation',
+  SELF_HEALING_DISMISS_INCIDENT: 'selfHealing:dismissIncident',
+  SELF_HEALING_RETRY_INCIDENT: 'selfHealing:retryIncident',
+  // Events (main -> renderer)
+  SELF_HEALING_INCIDENT_DETECTED: 'selfHealing:incidentDetected',
+  SELF_HEALING_OPERATION_PROGRESS: 'selfHealing:operationProgress',
+  SELF_HEALING_OPERATION_COMPLETE: 'selfHealing:operationComplete',
 } as const;
