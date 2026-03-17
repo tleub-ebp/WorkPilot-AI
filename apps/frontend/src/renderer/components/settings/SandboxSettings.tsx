@@ -60,26 +60,26 @@ export function SandboxSettings() {
   };
 
   const modes: { id: SandboxMode; label: string; desc: string }[] = [
-    { id: 'normal', label: 'Normal', desc: 'Whitelist + resource limits' },
-    { id: 'restricted', label: 'Restricted', desc: 'Strict whitelist, reduced limits' },
-    { id: 'dry_run', label: 'Dry-run', desc: 'Plan only, no file changes' },
-    { id: 'docker', label: 'Docker', desc: 'Full container isolation' },
+    { id: 'normal', label: t('sections.sandbox.defaultMode.normal.label'), desc: t('sections.sandbox.defaultMode.normal.description') },
+    { id: 'restricted', label: t('sections.sandbox.defaultMode.restricted.label'), desc: t('sections.sandbox.defaultMode.restricted.description') },
+    { id: 'dry_run', label: t('sections.sandbox.defaultMode.dryRun.label'), desc: t('sections.sandbox.defaultMode.dryRun.description') },
+    { id: 'docker', label: t('sections.sandbox.defaultMode.docker.label'), desc: t('sections.sandbox.defaultMode.docker.description') },
   ];
 
   return (
     <SettingsSection
-      title="Sandbox"
-      description="Configure agent execution isolation, file access whitelist, resource limits, and rollback behavior."
+      title={t('sections.sandbox.title')}
+      description={t('sections.sandbox.description')}
     >
       <div className="space-y-8">
         {/* Sandbox Mode */}
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <Shield className="h-4 w-4 text-primary" />
-            Default Sandbox Mode
+            {t('sections.sandbox.defaultMode.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            Choose the default isolation mode for agent execution.
+            {t('sections.sandbox.defaultMode.description')}
           </p>
           <div className="grid grid-cols-2 gap-3">
             {modes.map((m) => (
@@ -104,21 +104,21 @@ export function SandboxSettings() {
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <FolderOpen className="h-4 w-4 text-primary" />
-            File Access Whitelist
+            {t('sections.sandbox.fileAccess.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            Paths agents are allowed to access. Sensitive paths (.git/, .env, .ssh/) are always blocked.
+            {t('sections.sandbox.fileAccess.description')}
           </p>
           <div className="space-y-2">
             {allowedPaths.map((rule, i) => (
-              <div key={i} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm">
+              <div key={`${rule.path}-${rule.access}`} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm">
                 <FolderOpen className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <span className="flex-1 font-mono text-xs">{rule.path}</span>
                 <span className={cn(
                   'rounded-full px-2 py-0.5 text-[10px] font-medium',
                   rule.access === 'write' ? 'bg-amber-500/15 text-amber-600' : 'bg-blue-500/15 text-blue-600'
                 )}>
-                  {rule.access === 'write' ? 'Read/Write' : 'Read Only'}
+                  {rule.access === 'write' ? t('sections.sandbox.fileAccess.readWrite') : t('sections.sandbox.fileAccess.readOnly')}
                 </span>
                 <button onClick={() => handleRemovePath(i)} className="text-muted-foreground hover:text-destructive">
                   <Trash2 className="h-3.5 w-3.5" />
@@ -130,7 +130,7 @@ export function SandboxSettings() {
                 value={newPath}
                 onChange={(e) => setNewPath(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddPath()}
-                placeholder="e.g. lib/ or config/app.json"
+                placeholder={t('sections.sandbox.fileAccess.placeholder')}
                 className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary"
               />
               <select
@@ -138,8 +138,8 @@ export function SandboxSettings() {
                 onChange={(e) => setNewAccess(e.target.value as 'read' | 'write')}
                 className="rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none"
               >
-                <option value="read">Read</option>
-                <option value="write">Write</option>
+                <option value="read">{t('sections.sandbox.fileAccess.read')}</option>
+                <option value="write">{t('sections.sandbox.fileAccess.write')}</option>
               </select>
               <button
                 onClick={handleAddPath}
@@ -147,7 +147,7 @@ export function SandboxSettings() {
                 className="flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
               >
                 <Plus className="h-3.5 w-3.5" />
-                Add
+                {t('sections.sandbox.fileAccess.add')}
               </button>
             </div>
           </div>
@@ -157,18 +157,18 @@ export function SandboxSettings() {
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <Lock className="h-4 w-4 text-primary" />
-            Resource Limits
+            {t('sections.sandbox.resourceLimits.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            Maximum resources an agent can consume per execution.
+            {t('sections.sandbox.resourceLimits.description')}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { key: 'cpu_percent' as const, label: 'CPU (%)', min: 10, max: 100, step: 5 },
-              { key: 'memory_mb' as const, label: 'RAM (MB)', min: 256, max: 8192, step: 256 },
-              { key: 'execution_time_s' as const, label: 'Max Time (s)', min: 30, max: 3600, step: 30 },
-              { key: 'max_files_written' as const, label: 'Max Files', min: 1, max: 500, step: 10 },
-              { key: 'max_file_size_mb' as const, label: 'Max File Size (MB)', min: 1, max: 100, step: 1 },
+              { key: 'cpu_percent' as const, label: t('sections.sandbox.resourceLimits.cpu'), min: 10, max: 100, step: 5 },
+              { key: 'memory_mb' as const, label: t('sections.sandbox.resourceLimits.ram'), min: 256, max: 8192, step: 256 },
+              { key: 'execution_time_s' as const, label: t('sections.sandbox.resourceLimits.maxTime'), min: 30, max: 3600, step: 30 },
+              { key: 'max_files_written' as const, label: t('sections.sandbox.resourceLimits.maxFiles'), min: 1, max: 500, step: 10 },
+              { key: 'max_file_size_mb' as const, label: t('sections.sandbox.resourceLimits.maxFileSize'), min: 1, max: 100, step: 1 },
             ].map(({ key, label, min, max, step }) => (
               <div key={key} className="space-y-1">
                 <div className="flex items-center justify-between">
@@ -193,16 +193,16 @@ export function SandboxSettings() {
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <RotateCcw className="h-4 w-4 text-primary" />
-            Snapshots & Rollback
+            {t('sections.sandbox.snapshots.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            A file snapshot is automatically created before each agent execution. If the agent fails, files are restored automatically.
+            {t('sections.sandbox.snapshots.description')}
           </p>
           <div className="rounded-md border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
               <span>
-                Snapshots are created per-sandbox and stored in memory. Auto-rollback triggers when an agent execution fails or is terminated by the anomaly detector. Manual rollback is available in the task detail view.
+                {t('sections.sandbox.snapshots.warning')}
               </span>
             </div>
           </div>
@@ -212,10 +212,10 @@ export function SandboxSettings() {
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <Shield className="h-4 w-4 text-destructive" />
-            Blocked Commands (default)
+            {t('sections.sandbox.blockedCommands.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            These commands are always blocked inside the sandbox.
+            {t('sections.sandbox.blockedCommands.description')}
           </p>
           <div className="flex flex-wrap gap-1.5">
             {['rm -rf', 'sudo', 'curl', 'wget', 'ssh', 'scp', 'eval', 'exec', 'chmod 777', 'mkfs', 'dd', 'nc'].map((cmd) => (

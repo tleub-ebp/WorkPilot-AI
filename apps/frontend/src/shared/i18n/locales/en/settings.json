@@ -1,5 +1,9 @@
 {
   "title": "Settings",
+  "common": {
+    "enabled": "Enabled",
+    "disabled": "Disabled"
+  },
   "tabs": {
     "app": "App Settings",
     "project": "Project Settings"
@@ -180,11 +184,112 @@
     },
     "sandbox": {
       "title": "Sandbox",
-      "description": "Agent execution isolation & rollback"
+      "description": "Agent execution isolation & rollback",
+      "defaultMode": {
+        "title": "Default Sandbox Mode",
+        "description": "Choose the default isolation mode for agent execution.",
+        "normal": {
+          "label": "Normal",
+          "description": "Whitelist + resource limits"
+        },
+        "restricted": {
+          "label": "Restricted",
+          "description": "Strict whitelist, reduced limits"
+        },
+        "dryRun": {
+          "label": "Dry-run",
+          "description": "Plan only, no file changes"
+        },
+        "docker": {
+          "label": "Docker",
+          "description": "Full container isolation"
+        }
+      },
+      "fileAccess": {
+        "title": "File Access Whitelist",
+        "description": "Paths agents are allowed to access. Sensitive paths (.git/, .env, .ssh/) are always blocked.",
+        "placeholder": "e.g. lib/ or config/app.json",
+        "read": "Read",
+        "write": "Write",
+        "readWrite": "Read/Write",
+        "readOnly": "Read Only",
+        "add": "Add"
+      },
+      "resourceLimits": {
+        "title": "Resource Limits",
+        "description": "Maximum resources an agent can consume per execution.",
+        "cpu": "CPU (%)",
+        "ram": "RAM (MB)",
+        "maxTime": "Max Time (s)",
+        "maxFiles": "Max Files",
+        "maxFileSize": "Max File Size (MB)"
+      },
+      "snapshots": {
+        "title": "Snapshots & Rollback",
+        "description": "A file snapshot is automatically created before each agent execution. If the agent fails, files are restored automatically.",
+        "warning": "Snapshots are created per-sandbox and stored in memory. Auto-rollback triggers when an agent execution fails or is terminated by the anomaly detector. Manual rollback is available in the task detail view."
+      },
+      "blockedCommands": {
+        "title": "Blocked Commands (default)",
+        "description": "These commands are always blocked inside the sandbox."
+      }
     },
     "anomaly-detection": {
       "title": "Anomaly Detection",
-      "description": "Agent behavior monitoring & alerts"
+      "description": "Agent behavior monitoring & alerts",
+      "enable": {
+        "title": "Enable Anomaly Detection",
+        "description": "Monitor all agent sessions for suspicious behavior"
+      },
+      "trustScore": {
+        "title": "Trust Score Thresholds",
+        "description": "Each agent session starts at 100. Anomalies reduce the score. Actions trigger at these thresholds.",
+        "pauseThreshold": "Pause threshold",
+        "pauseDescription": "Agent is paused and a notification is sent",
+        "terminateThreshold": "Terminate threshold",
+        "terminateDescription": "Agent is terminated immediately"
+      },
+      "detectionLimits": {
+        "title": "Detection Limits",
+        "description": "Fine-tune when specific anomaly types trigger.",
+        "massDeletionCount": "Mass deletion count",
+        "massDeletionDesc": "File deletions before alert",
+        "maxRepetitiveErrors": "Max repetitive errors",
+        "maxRepetitiveDesc": "Errors before alert",
+        "rapidChangeWindow": "Rapid change window (s)",
+        "rapidChangeDesc": "Time window for rapid changes",
+        "tokenUsageMultiplier": "Token usage multiplier",
+        "tokenUsageDesc": "× baseline before alert"
+      },
+      "anomalyTypes": {
+        "title": "Anomaly Types",
+        "description": "10 anomaly types are monitored. Each reduces the trust score by a fixed amount.",
+        "anomaly": "Anomaly",
+        "severity": "Severity",
+        "scoreImpact": "Score Impact",
+        "types": {
+          "massFileDeletion": "Mass file deletion",
+          "sensitiveFileAccess": "Sensitive file access",
+          "dangerousCommand": "Dangerous command",
+          "unexpectedNetworkAccess": "Unexpected network access",
+          "pathTraversalAttempt": "Path traversal attempt",
+          "rapidFileChanges": "Rapid file changes",
+          "excessiveTokenUsage": "Excessive token usage",
+          "systemConfigModification": "System config modification",
+          "repetitiveErrors": "Repetitive errors",
+          "longRunningSession": "Long running session"
+        },
+        "severityLevels": {
+          "critical": "critical",
+          "high": "high",
+          "medium": "medium",
+          "low": "low"
+        }
+      },
+      "sensitivePaths": {
+        "title": "Sensitive Paths (always monitored)",
+        "description": "These paths are always monitored for suspicious activity."
+      }
     },
     "llm-router": {
       "title": "LLM Router",
@@ -549,18 +654,6 @@
       "integrationDescription": "Connect to Azure DevOps for work item management",
       "syncDescription": "Sync with Azure DevOps Backlog"
     },
-    "jira": {
-      "title": "Jira",
-      "description": "Jira integration"
-    },
-    "memory": {
-      "title": "Memory",
-      "description": "Graphiti memory backend"
-    },
-    "customized": "Customized",
-    "phaseConfigNote": "These settings will be used as defaults when creating new tasks with this profile. You can override them per-task in the task creation wizard.",
-    "profilesInfoProvider": "Configure the model used for each pipeline phase. Settings are saved per provider and will be restored when you switch back.",
-    "activeProvider": "Active provider: {{provider}}",
     "flagshipModel": "Flagship model: {{model}}",
     "tierFlagship": "Flagship",
     "supportsThinking": "Thinking",

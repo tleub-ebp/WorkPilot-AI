@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ShieldAlert, Activity, AlertTriangle, BarChart3, Settings2 } from 'lucide-react';
 import { SettingsSection } from './SettingsSection';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -21,6 +22,7 @@ interface AnomalyThresholds {
 // ---------------------------------------------------------------------------
 
 export function AnomalyDetectionSettings() {
+  const { t } = useTranslation('settings');
   const [enabled, setEnabled] = useState(true);
   const [thresholds, setThresholds] = useState<AnomalyThresholds>({
     trust_score_pause: 40,
@@ -36,16 +38,16 @@ export function AnomalyDetectionSettings() {
   };
 
   const anomalyTypes = [
-    { type: 'Mass file deletion', severity: 'critical', impact: -30 },
-    { type: 'Sensitive file access', severity: 'high', impact: -25 },
-    { type: 'Dangerous command', severity: 'high', impact: -25 },
-    { type: 'Unexpected network access', severity: 'high', impact: -20 },
-    { type: 'Path traversal attempt', severity: 'high', impact: -20 },
-    { type: 'Rapid file changes', severity: 'medium', impact: -15 },
-    { type: 'Excessive token usage', severity: 'medium', impact: -15 },
-    { type: 'System config modification', severity: 'medium', impact: -15 },
-    { type: 'Repetitive errors', severity: 'low', impact: -10 },
-    { type: 'Long running session', severity: 'low', impact: -5 },
+    { type: t('sections.anomaly-detection.anomalyTypes.types.massFileDeletion'), severity: 'critical', impact: -30 },
+    { type: t('sections.anomaly-detection.anomalyTypes.types.sensitiveFileAccess'), severity: 'high', impact: -25 },
+    { type: t('sections.anomaly-detection.anomalyTypes.types.dangerousCommand'), severity: 'high', impact: -25 },
+    { type: t('sections.anomaly-detection.anomalyTypes.types.unexpectedNetworkAccess'), severity: 'high', impact: -20 },
+    { type: t('sections.anomaly-detection.anomalyTypes.types.pathTraversalAttempt'), severity: 'high', impact: -20 },
+    { type: t('sections.anomaly-detection.anomalyTypes.types.rapidFileChanges'), severity: 'medium', impact: -15 },
+    { type: t('sections.anomaly-detection.anomalyTypes.types.excessiveTokenUsage'), severity: 'medium', impact: -15 },
+    { type: t('sections.anomaly-detection.anomalyTypes.types.systemConfigModification'), severity: 'medium', impact: -15 },
+    { type: t('sections.anomaly-detection.anomalyTypes.types.repetitiveErrors'), severity: 'low', impact: -10 },
+    { type: t('sections.anomaly-detection.anomalyTypes.types.longRunningSession'), severity: 'low', impact: -5 },
   ];
 
   const severityColor: Record<string, string> = {
@@ -55,10 +57,17 @@ export function AnomalyDetectionSettings() {
     low: 'bg-blue-500/15 text-blue-600',
   };
 
+  const severityTranslation: Record<string, string> = {
+    critical: t('sections.anomaly-detection.anomalyTypes.severityLevels.critical'),
+    high: t('sections.anomaly-detection.anomalyTypes.severityLevels.high'),
+    medium: t('sections.anomaly-detection.anomalyTypes.severityLevels.medium'),
+    low: t('sections.anomaly-detection.anomalyTypes.severityLevels.low'),
+  };
+
   return (
     <SettingsSection
-      title="Anomaly Detection"
-      description="Monitor agent behavior in real time. Automatically pause or terminate sessions when suspicious activity is detected."
+      title={t('sections.anomaly-detection.title')}
+      description={t('sections.anomaly-detection.description')}
     >
       <div className="space-y-8">
         {/* Enable toggle */}
@@ -66,8 +75,8 @@ export function AnomalyDetectionSettings() {
           <div className="flex items-center gap-3">
             <ShieldAlert className="h-5 w-5 text-primary" />
             <div>
-              <p className="text-sm font-medium">Enable Anomaly Detection</p>
-              <p className="text-xs text-muted-foreground">Monitor all agent sessions for suspicious behavior</p>
+              <p className="text-sm font-medium">{t('sections.anomaly-detection.enable.title')}</p>
+              <p className="text-xs text-muted-foreground">{t('sections.anomaly-detection.enable.description')}</p>
             </div>
           </div>
           <button
@@ -88,15 +97,15 @@ export function AnomalyDetectionSettings() {
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <Activity className="h-4 w-4 text-primary" />
-            Trust Score Thresholds
+            {t('sections.anomaly-detection.trustScore.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            Each agent session starts at 100. Anomalies reduce the score. Actions trigger at these thresholds.
+            {t('sections.anomaly-detection.trustScore.description')}
           </p>
           <div className="space-y-4">
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-muted-foreground">Pause threshold</label>
+                <label className="text-xs font-medium text-muted-foreground">{t('sections.anomaly-detection.trustScore.pauseThreshold')}</label>
                 <span className="text-xs font-mono tabular-nums text-amber-600">{thresholds.trust_score_pause}</span>
               </div>
               <input
@@ -105,11 +114,11 @@ export function AnomalyDetectionSettings() {
                 onChange={(e) => handleChange('trust_score_pause', Number(e.target.value))}
                 className="w-full accent-amber-500"
               />
-              <p className="text-[10px] text-muted-foreground">Agent is paused and a notification is sent</p>
+              <p className="text-[10px] text-muted-foreground">{t('sections.anomaly-detection.trustScore.pauseDescription')}</p>
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-muted-foreground">Terminate threshold</label>
+                <label className="text-xs font-medium text-muted-foreground">{t('sections.anomaly-detection.trustScore.terminateThreshold')}</label>
                 <span className="text-xs font-mono tabular-nums text-red-600">{thresholds.trust_score_terminate}</span>
               </div>
               <input
@@ -118,7 +127,7 @@ export function AnomalyDetectionSettings() {
                 onChange={(e) => handleChange('trust_score_terminate', Number(e.target.value))}
                 className="w-full accent-red-500"
               />
-              <p className="text-[10px] text-muted-foreground">Agent is terminated immediately</p>
+              <p className="text-[10px] text-muted-foreground">{t('sections.anomaly-detection.trustScore.terminateDescription')}</p>
             </div>
           </div>
         </div>
@@ -127,17 +136,17 @@ export function AnomalyDetectionSettings() {
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <Settings2 className="h-4 w-4 text-primary" />
-            Detection Limits
+            {t('sections.anomaly-detection.detectionLimits.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            Fine-tune when specific anomaly types trigger.
+            {t('sections.anomaly-detection.detectionLimits.description')}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { key: 'mass_deletion_count' as const, label: 'Mass deletion count', min: 1, max: 20, step: 1, desc: 'File deletions before alert' },
-              { key: 'max_error_count' as const, label: 'Max repetitive errors', min: 3, max: 30, step: 1, desc: 'Errors before alert' },
-              { key: 'rapid_change_window_s' as const, label: 'Rapid change window (s)', min: 5, max: 60, step: 5, desc: 'Time window for rapid changes' },
-              { key: 'excessive_token_multiplier' as const, label: 'Token usage multiplier', min: 2, max: 10, step: 1, desc: '× baseline before alert' },
+              { key: 'mass_deletion_count' as const, label: t('sections.anomaly-detection.detectionLimits.massDeletionCount'), min: 1, max: 20, step: 1, desc: t('sections.anomaly-detection.detectionLimits.massDeletionDesc') },
+              { key: 'max_error_count' as const, label: t('sections.anomaly-detection.detectionLimits.maxRepetitiveErrors'), min: 3, max: 30, step: 1, desc: t('sections.anomaly-detection.detectionLimits.maxRepetitiveDesc') },
+              { key: 'rapid_change_window_s' as const, label: t('sections.anomaly-detection.detectionLimits.rapidChangeWindow'), min: 5, max: 60, step: 5, desc: t('sections.anomaly-detection.detectionLimits.rapidChangeDesc') },
+              { key: 'excessive_token_multiplier' as const, label: t('sections.anomaly-detection.detectionLimits.tokenUsageMultiplier'), min: 2, max: 10, step: 1, desc: t('sections.anomaly-detection.detectionLimits.tokenUsageDesc') },
             ].map(({ key, label, min, max, step, desc }) => (
               <div key={key} className="space-y-1">
                 <div className="flex items-center justify-between">
@@ -160,18 +169,18 @@ export function AnomalyDetectionSettings() {
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-primary" />
-            Anomaly Types
+            {t('sections.anomaly-detection.anomalyTypes.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            10 anomaly types are monitored. Each reduces the trust score by a fixed amount.
+            {t('sections.anomaly-detection.anomalyTypes.description')}
           </p>
           <div className="rounded-md border border-border overflow-hidden">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Anomaly</th>
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Severity</th>
-                  <th className="text-right px-3 py-2 font-medium text-muted-foreground">Score Impact</th>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('sections.anomaly-detection.anomalyTypes.anomaly')}</th>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('sections.anomaly-detection.anomalyTypes.severity')}</th>
+                  <th className="text-right px-3 py-2 font-medium text-muted-foreground">{t('sections.anomaly-detection.anomalyTypes.scoreImpact')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -180,7 +189,7 @@ export function AnomalyDetectionSettings() {
                     <td className="px-3 py-1.5">{a.type}</td>
                     <td className="px-3 py-1.5">
                       <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-medium', severityColor[a.severity])}>
-                        {a.severity}
+                        {severityTranslation[a.severity]}
                       </span>
                     </td>
                     <td className="px-3 py-1.5 text-right font-mono text-destructive">{a.impact}</td>
@@ -195,7 +204,7 @@ export function AnomalyDetectionSettings() {
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-destructive" />
-            Sensitive Paths (always monitored)
+            {t('sections.anomaly-detection.sensitivePaths.title')}
           </h4>
           <div className="flex flex-wrap gap-1.5 mt-2">
             {['.env', '.git/', '.ssh/', '.aws/', 'credentials', 'id_rsa', '.npmrc', '.pypirc', 'secrets', '.gnupg/', 'authorized_keys', '.docker/config.json', 'shadow'].map((p) => (

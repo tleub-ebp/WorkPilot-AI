@@ -1,5 +1,9 @@
 {
   "title": "Paramètres",
+  "common": {
+    "enabled": "Activé",
+    "disabled": "Désactivé"
+  },
   "tabs": {
     "app": "Paramètres de l'application",
     "project": "Paramètres du projet"
@@ -144,7 +148,60 @@
     },
     "anomaly-detection": {
       "description": "Surveillance du comportement des agents et alertes",
-      "title": "Détection d'anomalies"
+      "title": "Détection d'anomalies",
+      "enable": {
+        "title": "Activer la détection d'anomalies",
+        "description": "Surveiller toutes les sessions d'agents pour un comportement suspect"
+      },
+      "trustScore": {
+        "title": "Seuils de score de confiance",
+        "description": "Chaque session d'agent commence à 100. Les anomalies réduisent le score. Les actions se déclenchent à ces seuils.",
+        "pauseThreshold": "Seuil de pause",
+        "pauseDescription": "L'agent est mis en pause et une notification est envoyée",
+        "terminateThreshold": "Seuil de terminaison",
+        "terminateDescription": "L'agent est terminé immédiatement"
+      },
+      "detectionLimits": {
+        "title": "Limites de détection",
+        "description": "Ajuster quand les types d'anomalies spécifiques se déclenchent.",
+        "massDeletionCount": "Nombre de suppressions massives",
+        "massDeletionDesc": "Suppressions de fichiers avant alerte",
+        "maxRepetitiveErrors": "Erreurs répétitives maximales",
+        "maxRepetitiveDesc": "Erreurs avant alerte",
+        "rapidChangeWindow": "Fenêtre de changement rapide (s)",
+        "rapidChangeDesc": "Fenêtre de temps pour les changements rapides",
+        "tokenUsageMultiplier": "Multiplicateur d'utilisation de tokens",
+        "tokenUsageDesc": "× baseline avant alerte"
+      },
+      "anomalyTypes": {
+        "title": "Types d'anomalies",
+        "description": "10 types d'anomalies sont surveillés. Chacun réduit le score de confiance d'un montant fixe.",
+        "anomaly": "Anomalie",
+        "severity": "Gravité",
+        "scoreImpact": "Impact sur le score",
+        "types": {
+          "massFileDeletion": "Suppression massive de fichiers",
+          "sensitiveFileAccess": "Accès aux fichiers sensibles",
+          "dangerousCommand": "Commande dangereuse",
+          "unexpectedNetworkAccess": "Accès réseau inattendu",
+          "pathTraversalAttempt": "Tentative de traversée de chemin",
+          "rapidFileChanges": "Changements de fichiers rapides",
+          "excessiveTokenUsage": "Utilisation excessive de tokens",
+          "systemConfigModification": "Modification de configuration système",
+          "repetitiveErrors": "Erreurs répétitives",
+          "longRunningSession": "Session longue"
+        },
+        "severityLevels": {
+          "critical": "critique",
+          "high": "élevée",
+          "medium": "moyenne",
+          "low": "faible"
+        }
+      },
+      "sensitivePaths": {
+        "title": "Chemins sensibles (toujours surveillés)",
+        "description": "Ces chemins sont toujours surveillés pour une activité suspecte."
+      }
     },
     "appearance": {
       "description": "Personnaliser l'apparence de WorkPilot AI",
@@ -180,7 +237,55 @@
     },
     "sandbox": {
       "description": "Isolation de l'exécution des agents et rollback",
-      "title": "Sandbox"
+      "title": "Bac à sable",
+      "defaultMode": {
+        "title": "Mode de bac à sable par défaut",
+        "description": "Choisissez le mode d'isolation par défaut pour l'exécution des agents.",
+        "normal": {
+          "label": "Normal",
+          "description": "Liste blanche + limites de ressources"
+        },
+        "restricted": {
+          "label": "Restreint",
+          "description": "Liste blanche stricte, limites réduites"
+        },
+        "dryRun": {
+          "label": "Simulation",
+          "description": "Planification uniquement, aucune modification de fichier"
+        },
+        "docker": {
+          "label": "Docker",
+          "description": "Isolation complète du conteneur"
+        }
+      },
+      "fileAccess": {
+        "title": "Liste blanche d'accès aux fichiers",
+        "description": "Chemins que les agents sont autorisés à accéder. Les chemins sensibles (.git/, .env, .ssh/) sont toujours bloqués.",
+        "placeholder": "ex: lib/ ou config/app.json",
+        "read": "Lecture",
+        "write": "Écriture",
+        "readWrite": "Lecture/Écriture",
+        "readOnly": "Lecture seule",
+        "add": "Ajouter"
+      },
+      "resourceLimits": {
+        "title": "Limites de ressources",
+        "description": "Ressources maximales qu'un agent peut consommer par exécution.",
+        "cpu": "CPU (%)",
+        "ram": "RAM (Mo)",
+        "maxTime": "Temps max (s)",
+        "maxFiles": "Fichiers max",
+        "maxFileSize": "Taille max fichier (Mo)"
+      },
+      "snapshots": {
+        "title": "Instantanés & Rollback",
+        "description": "Un instantané des fichiers est automatiquement créé avant chaque exécution d'agent. Si l'agent échoue, les fichiers sont restaurés automatiquement.",
+        "warning": "Les instantanés sont créés par bac à sable et stockés en mémoire. Le rollback automatique se déclenche lorsqu'une exécution d'agent échoue ou est terminée par le détecteur d'anomalies. Le rollback manuel est disponible dans la vue des détails de tâche."
+      },
+      "blockedCommands": {
+        "title": "Commandes bloquées (par défaut)",
+        "description": "Ces commandes sont toujours bloquées à l'intérieur du bac à sable."
+      }
     },
     "scheduler": {
       "description": "Planification de tâches de type cron et chaînes",
@@ -1268,7 +1373,23 @@
     },
     "memory": {
       "description": "Backend mémoire Graphiti",
-      "title": "Mémoire"
+      "title": "Mémoire",
+      "integrationTitle": "Paramètres de mémoire",
+      "integrationDescription": "Configurer le backend mémoire Graphiti pour le contexte inter-sessions",
+      "syncDescription": "Activer la mémoire persistante entre les sessions d'agents",
+      "enableMemory": "Activer la mémoire",
+      "enableMemoryDescription": "Mémoire persistante inter-sessions utilisant LadybugDB (base de données intégrée)",
+      "fileBasedMemoryDescription": "Utilisation de la mémoire basée sur fichiers. Les insights de session sont stockés localement dans des fichiers JSON. Activez la mémoire pour un contexte persistant inter-sessions avec recherche sémantique.",
+      "enableAgentMemoryAccess": "Activer l'accès mémoire agent",
+      "enableAgentMemoryAccessDescription": "Permettre aux agents de rechercher et d'ajouter au graphe de connaissances via MCP",
+      "graphitiMcpServerUrl": "URL du serveur MCP Graphiti",
+      "graphitiMcpServerUrlDescription": "URL du serveur MCP Graphiti pour l'accès mémoire des agents",
+      "embeddingProvider": "Fournisseur d'embeddings",
+      "embeddingProviderDescription": "Fournisseur pour la recherche sémantique (optionnel - la recherche par mots-clés fonctionne sans)",
+      "databaseName": "Nom de la base de données",
+      "databaseNameDescription": "Stocké dans ~/.auto-claude/memories/",
+      "databasePath": "Chemin de la base de données (Optionnel)",
+      "databasePathDescription": "Emplacement de stockage personnalisé. Par défaut : ~/.auto-claude/memories/"
     },
     "phaseConfigNote": "Ces paramètres seront utilisés par défaut lors de la création de nouvelles tâches avec ce profil. Vous pouvez les remplacer par tâche dans l'assistant de création de tâche.",
     "phaseConfigNoteProvider": "Ces paramètres de modèle s'appliquent au fournisseur {{provider}}. Ils sont enregistrés indépendamment et restaurés lorsque vous revenez à ce fournisseur.",
