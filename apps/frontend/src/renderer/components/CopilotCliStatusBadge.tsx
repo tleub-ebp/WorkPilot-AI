@@ -124,12 +124,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
           setStatus("not-found");
         } else if (result.data.isOutdated) {
           setStatus("outdated");
-          // Auto-show update dialog if not already shown
-          if (!updateDialogShown) {
-            setAutoUpdateDetected(true);
-            setShowInstallWarning(true);
-            setUpdateDialogShown(true);
-          }
+          // Don't auto-show update dialog - only show when user clicks Update button
         } else {
           setStatus("installed");
           // Reset update dialog state when version is current
@@ -188,16 +183,8 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
       checkVersion();
     }, CHECK_INTERVAL_MS);
 
-    // Additional interval for update checking when outdated
-    const updateInterval = setInterval(() => {
-      if (status === "outdated" && !updateDialogShown) {
-        checkVersion();
-      }
-    }, UPDATE_CHECK_INTERVAL_MS);
-
     return () => {
       clearInterval(interval);
-      clearInterval(updateInterval);
     };
   }, [checkVersion, checkAuth, status, updateDialogShown]);
 
@@ -381,6 +368,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
   // Handle install button click
   const handleInstall = () => {
     if (status === "outdated") {
+      setAutoUpdateDetected(true);
       setShowInstallWarning(true);
     } else {
       performInstall();
