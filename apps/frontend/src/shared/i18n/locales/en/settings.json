@@ -290,19 +290,19 @@
         "title": "Sensitive Paths (always monitored)",
         "description": "These paths are always monitored for suspicious activity."
       }
-    },
-    "llm-router": {
-      "title": "LLM Router",
-      "description": "Intelligent provider routing & A/B tests"
-    },
-    "scheduler": {
-      "title": "Scheduler",
-      "description": "Cron-like task scheduling & chains"
     }
   },
-  "apiProfiles": {
-    "title": "API Profiles",
-    "description": "Configure custom Anthropic-compatible API endpoints",
+  "tasks": {
+    "title": "Scheduled Tasks",
+    "description": "Recurring and one-off tasks managed by the scheduler.",
+    "addTask": "Add Task",
+    "table": {
+      "task": "Task",
+      "cron": "Cron",
+      "priority": "Priority",
+      "status": "Status",
+      "nextRun": "Next Run"
+    },
     "addButton": "Add Profile",
     "presets": {
       "anthropic": "Anthropic (Claude)",

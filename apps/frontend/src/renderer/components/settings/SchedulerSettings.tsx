@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { CalendarClock, Play, Pause, Link2, BarChart3, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { CalendarClock, Play, Link2, BarChart3, Plus } from 'lucide-react';
 import { SettingsSection } from './SettingsSection';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +29,7 @@ interface TaskChainEntry {
 // ---------------------------------------------------------------------------
 
 export function SchedulerSettings() {
+  const { t } = useTranslation('settings');
   const [checkInterval, setCheckInterval] = useState(30);
   const [autoStart, setAutoStart] = useState(true);
 
@@ -51,24 +53,24 @@ export function SchedulerSettings() {
 
   return (
     <SettingsSection
-      title="Scheduler"
-      description="Schedule recurring and one-off tasks with cron expressions, task chains, and priority queues."
+      title={t('sections.scheduler.title')}
+      description={t('sections.scheduler.description')}
     >
       <div className="space-y-8">
         {/* Global Settings */}
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <CalendarClock className="h-4 w-4 text-primary" />
-            Scheduler Settings
+            {t('sections.scheduler.settings.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            Global configuration for the background task scheduler.
+            {t('sections.scheduler.settings.description')}
           </p>
           <div className="space-y-4">
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <div>
-                <p className="text-sm font-medium">Auto-start scheduler</p>
-                <p className="text-xs text-muted-foreground">Start the scheduler daemon when the app launches</p>
+                <p className="text-sm font-medium">{t('sections.scheduler.settings.autoStart.label')}</p>
+                <p className="text-xs text-muted-foreground">{t('sections.scheduler.settings.autoStart.description')}</p>
               </div>
               <button
                 onClick={() => setAutoStart(!autoStart)}
@@ -85,7 +87,7 @@ export function SchedulerSettings() {
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-muted-foreground">Check interval (seconds)</label>
+                <label className="text-xs font-medium text-muted-foreground">{t('sections.scheduler.settings.checkInterval.label')}</label>
                 <span className="text-xs font-mono tabular-nums text-foreground">{checkInterval}s</span>
               </div>
               <input
@@ -94,7 +96,7 @@ export function SchedulerSettings() {
                 onChange={(e) => setCheckInterval(Number(e.target.value))}
                 className="w-full accent-primary"
               />
-              <p className="text-[10px] text-muted-foreground">How often the scheduler checks for due tasks</p>
+              <p className="text-[10px] text-muted-foreground">{t('sections.scheduler.settings.checkInterval.description')}</p>
             </div>
           </div>
         </div>
@@ -104,25 +106,25 @@ export function SchedulerSettings() {
           <div className="flex items-center justify-between mb-1">
             <h4 className="text-sm font-semibold flex items-center gap-2">
               <Play className="h-4 w-4 text-primary" />
-              Scheduled Tasks
+              {t('sections.scheduler.tasks.title')}
             </h4>
             <button className="flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground">
               <Plus className="h-3 w-3" />
-              Add Task
+              {t('sections.scheduler.tasks.addTask')}
             </button>
           </div>
           <p className="text-xs text-muted-foreground mb-3">
-            Recurring and one-off tasks managed by the scheduler.
+            {t('sections.scheduler.tasks.description')}
           </p>
           <div className="rounded-md border border-border overflow-hidden">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Task</th>
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Cron</th>
-                  <th className="text-center px-3 py-2 font-medium text-muted-foreground">Priority</th>
-                  <th className="text-center px-3 py-2 font-medium text-muted-foreground">Status</th>
-                  <th className="text-right px-3 py-2 font-medium text-muted-foreground">Next Run</th>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('sections.scheduler.tasks.table.task')}</th>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('sections.scheduler.tasks.table.cron')}</th>
+                  <th className="text-center px-3 py-2 font-medium text-muted-foreground">{t('sections.scheduler.tasks.table.priority')}</th>
+                  <th className="text-center px-3 py-2 font-medium text-muted-foreground">{t('sections.scheduler.tasks.table.status')}</th>
+                  <th className="text-right px-3 py-2 font-medium text-muted-foreground">{t('sections.scheduler.tasks.table.nextRun')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -148,38 +150,45 @@ export function SchedulerSettings() {
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <Link2 className="h-4 w-4 text-primary" />
-            Task Chains
+            {t('sections.scheduler.chains.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            Sequential task pipelines. When one task completes, the next starts automatically. Optionally stop on error.
+            {t('sections.scheduler.chains.description')}
           </p>
           <div className="space-y-3">
             {chains.map((chain) => (
               <div key={chain.name} className="rounded-md border border-border p-3">
                 <p className="text-xs font-semibold text-foreground mb-2">{chain.name}</p>
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  {chain.tasks.map((t, i) => (
-                    <span key={i} className="flex items-center gap-1.5">
-                      <span className={cn(
-                        'rounded px-2 py-0.5 text-[10px] font-mono',
-                        i < chain.currentStep
-                          ? 'bg-green-500/15 text-green-600 line-through'
-                          : i === chain.currentStep
-                            ? 'bg-primary/15 text-primary font-medium'
-                            : 'bg-accent text-muted-foreground'
-                      )}>
-                        {t}
+                  {chain.tasks.map((task, taskIndex) => {
+                    const isCompleted = taskIndex < chain.currentStep;
+                    const isCurrent = taskIndex === chain.currentStep;
+                    
+                    let taskStyleClass = 'rounded px-2 py-0.5 text-[10px] font-mono';
+                    if (isCompleted) {
+                      taskStyleClass += ' bg-green-500/15 text-green-600 line-through';
+                    } else if (isCurrent) {
+                      taskStyleClass += ' bg-primary/15 text-primary font-medium';
+                    } else {
+                      taskStyleClass += ' bg-accent text-muted-foreground';
+                    }
+                    
+                    return (
+                      <span key={task} className="flex items-center gap-1.5">
+                        <span className={cn(taskStyleClass)}>
+                          {task}
+                        </span>
+                        {taskIndex < chain.tasks.length - 1 && <span className="text-muted-foreground text-xs">→</span>}
                       </span>
-                      {i < chain.tasks.length - 1 && <span className="text-muted-foreground text-xs">→</span>}
-                    </span>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}
             {chains.length === 0 && (
               <div className="rounded-md border border-dashed border-border bg-muted/20 p-6 text-center">
                 <Link2 className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No task chains configured</p>
+                <p className="text-sm text-muted-foreground">{t('sections.scheduler.chains.noChains')}</p>
               </div>
             )}
           </div>
@@ -189,28 +198,28 @@ export function SchedulerSettings() {
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-primary" />
-            Cron Expression Reference
+            {t('sections.scheduler.cronReference.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            Standard 5-field POSIX cron syntax: minute hour day-of-month month day-of-week
+            {t('sections.scheduler.cronReference.description')}
           </p>
           <div className="rounded-md border border-border overflow-hidden">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Expression</th>
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Description</th>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('sections.scheduler.cronReference.table.expression')}</th>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('sections.scheduler.cronReference.table.description')}</th>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  { expr: '0 22 * * *', desc: 'Every day at 22:00' },
-                  { expr: '*/15 * * * *', desc: 'Every 15 minutes' },
-                  { expr: '0 3 * * 1', desc: 'Every Monday at 03:00' },
-                  { expr: '0 0 1 * *', desc: 'First day of each month at midnight' },
-                  { expr: '0 9-17 * * 1-5', desc: 'Every hour, Mon-Fri, 9 AM to 5 PM' },
-                ].map((row) => (
-                  <tr key={row.expr} className="border-b border-border last:border-0">
+                  { expr: '0 22 * * *', desc: t('sections.scheduler.cronReference.examples.daily') },
+                  { expr: '*/15 * * * *', desc: t('sections.scheduler.cronReference.examples.every15min') },
+                  { expr: '0 3 * * 1', desc: t('sections.scheduler.cronReference.examples.weekly') },
+                  { expr: '0 0 1 * *', desc: t('sections.scheduler.cronReference.examples.monthly') },
+                  { expr: '0 9-17 * * 1-5', desc: t('sections.scheduler.cronReference.examples.workHours') },
+                ].map((row, index) => (
+                  <tr key={`cron-${row.expr}`} className="border-b border-border last:border-0">
                     <td className="px-3 py-1.5 font-mono">{row.expr}</td>
                     <td className="px-3 py-1.5 text-muted-foreground">{row.desc}</td>
                   </tr>
