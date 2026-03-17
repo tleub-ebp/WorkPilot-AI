@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Coins,
   RefreshCw,
@@ -93,6 +94,7 @@ function CostKpiCard({
 // ---------------------------------------------------------------------------
 
 function BudgetBar({ budget }: { budget: BudgetInfo }) {
+  const { t } = useTranslation('costEstimator');
   const pct = Math.min(budget.utilization_pct, 100);
   const barColor =
     pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-500' : 'bg-emerald-500';
@@ -102,8 +104,8 @@ function BudgetBar({ budget }: { budget: BudgetInfo }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-foreground">Monthly Budget</span>
-        <span className={cn('text-sm font-bold', textColor)}>{pct.toFixed(0)}% used</span>
+        <span className="text-sm font-medium text-foreground">{t('budget.title')}</span>
+        <span className={cn('text-sm font-bold', textColor)}>{t('budget.pctUsed', { pct: pct.toFixed(0) })}</span>
       </div>
       <div className="h-3 w-full rounded-full bg-secondary overflow-hidden">
         <div
@@ -112,18 +114,18 @@ function BudgetBar({ budget }: { budget: BudgetInfo }) {
         />
       </div>
       <div className="flex justify-between text-xs text-muted-foreground">
-        <span>${budget.spent_this_month.toFixed(2)} spent</span>
-        <span>${budget.remaining.toFixed(2)} remaining</span>
-        <span>${budget.monthly_budget.toFixed(2)} total</span>
+        <span>{t('budget.spent', { amount: budget.spent_this_month.toFixed(2) })}</span>
+        <span>{t('budget.remaining', { amount: budget.remaining.toFixed(2) })}</span>
+        <span>{t('budget.total', { amount: budget.monthly_budget.toFixed(2) })}</span>
       </div>
       {budget.forecast_end_of_month > 0 && (
         <div className="flex items-center gap-2 text-xs">
           <TrendingUp className="h-3 w-3 text-muted-foreground" />
           <span className="text-muted-foreground">
-            End-of-month forecast: <span className="font-medium text-foreground">${budget.forecast_end_of_month.toFixed(2)}</span>
+            {t('budget.forecast')} <span className="font-medium text-foreground">${budget.forecast_end_of_month.toFixed(2)}</span>
           </span>
           {budget.forecast_end_of_month > budget.monthly_budget && (
-            <Badge variant="outline" className="text-[10px] text-red-500 border-red-500/20">Over budget</Badge>
+            <Badge variant="outline" className="text-[10px] text-red-500 border-red-500/20">{t('budget.overBudget')}</Badge>
           )}
         </div>
       )}
@@ -136,10 +138,11 @@ function BudgetBar({ budget }: { budget: BudgetInfo }) {
 // ---------------------------------------------------------------------------
 
 function ProviderBreakdown({ data }: { data: Record<string, number> }) {
+  const { t } = useTranslation('costEstimator');
   const entries = Object.entries(data).sort(([, a], [, b]) => b - a);
   const total = entries.reduce((sum, [, v]) => sum + v, 0);
 
-  if (entries.length === 0) return <div className="text-xs text-muted-foreground">No data</div>;
+  if (entries.length === 0) return <div className="text-xs text-muted-foreground">{t('breakdown.noData')}</div>;
 
   const colors = ['bg-primary', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500', 'bg-pink-500'];
 
@@ -171,6 +174,7 @@ function ProviderBreakdown({ data }: { data: Record<string, number> }) {
 // ---------------------------------------------------------------------------
 
 export function CostEstimator({ projectId }: CostEstimatorProps) {
+  const { t } = useTranslation('costEstimator');
   const [summary, setSummary] = useState<CostSummary | null>(null);
   const [budget, setBudget] = useState<BudgetInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -227,7 +231,7 @@ export function CostEstimator({ projectId }: CostEstimatorProps) {
         <p className="text-sm">{error}</p>
         <Button variant="outline" size="sm" onClick={fetchData}>
           <RefreshCw className="h-3.5 w-3.5 mr-2" />
-          Retry
+          {t('retry')}
         </Button>
       </div>
     );
@@ -241,13 +245,13 @@ export function CostEstimator({ projectId }: CostEstimatorProps) {
           <div className="flex items-center gap-3">
             <Coins className="h-6 w-6 text-primary" />
             <div>
-              <h1 className="text-xl font-bold text-foreground">Cost Estimator</h1>
-              <p className="text-sm text-muted-foreground">LLM usage costs, budgets, and forecasts</p>
+              <h1 className="text-xl font-bold text-foreground">{t('title')}</h1>
+              <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={fetchData}>
             <RefreshCw className="h-3.5 w-3.5 mr-2" />
-            Refresh
+            {t('common:buttons.refresh')}
           </Button>
         </div>
 
@@ -255,30 +259,30 @@ export function CostEstimator({ projectId }: CostEstimatorProps) {
         {summary && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <CostKpiCard
-              title="Total Cost"
+              title={t('kpi.totalCost.title')}
               value={`$${summary.total_cost.toFixed(4)}`}
-              subtitle={`${summary.period_days} day period`}
+              subtitle={t('kpi.totalCost.period', { days: summary.period_days })}
               icon={DollarSign}
               color="primary"
             />
             <CostKpiCard
-              title="Daily Average"
+              title={t('kpi.dailyAverage.title')}
               value={`$${summary.daily_avg.toFixed(4)}`}
               subtitle={summary.trend_pct >= 0 ? `↑ ${summary.trend_pct.toFixed(0)}%` : `↓ ${Math.abs(summary.trend_pct).toFixed(0)}%`}
               icon={summary.trend_pct >= 0 ? TrendingUp : TrendingDown}
               color={summary.trend_pct > 20 ? 'red' : summary.trend_pct > 0 ? 'amber' : 'green'}
             />
             <CostKpiCard
-              title="Total Tokens"
+              title={t('kpi.totalTokens.title')}
               value={summary.total_tokens.toLocaleString()}
-              subtitle={`In: ${summary.tokens_input.toLocaleString()} / Out: ${summary.tokens_output.toLocaleString()}`}
+              subtitle={t('kpi.totalTokens.inOut', { input: summary.tokens_input.toLocaleString(), output: summary.tokens_output.toLocaleString() })}
               icon={Zap}
               color="amber"
             />
             <CostKpiCard
-              title="Providers"
+              title={t('kpi.providers.title')}
               value={`${Object.keys(summary.cost_by_provider).length}`}
-              subtitle={`${Object.keys(summary.cost_by_model).length} models`}
+              subtitle={t('kpi.providers.models', { count: Object.keys(summary.cost_by_model).length })}
               icon={PieChart}
               color="green"
             />
@@ -309,13 +313,13 @@ export function CostEstimator({ projectId }: CostEstimatorProps) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardContent className="p-5">
-                <h3 className="text-sm font-semibold text-foreground mb-4">Cost by Provider</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-4">{t('breakdown.costByProvider')}</h3>
                 <ProviderBreakdown data={summary.cost_by_provider} />
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-5">
-                <h3 className="text-sm font-semibold text-foreground mb-4">Cost by Model</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-4">{t('breakdown.costByModel')}</h3>
                 <ProviderBreakdown data={summary.cost_by_model} />
               </CardContent>
             </Card>

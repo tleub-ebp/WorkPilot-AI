@@ -42,6 +42,10 @@ import enMissionControl from './locales/en/missionControl.json';
 import enPixelOffice from './locales/en/pixelOffice.json';
 import enSelfHealing from './locales/en/selfHealing.json';
 import enSessionHistory from './locales/en/sessionHistory.json';
+import enVoiceControl from './locales/en/voiceContol.json';
+import enIdeation from './locales/en/ideation.json';
+import enCostEstimator from './locales/en/costEstimator.json';
+import enDashboard from './locales/en/dashboard.json';
 import enWelcome from './locales/en/welcome.json';
 
 // Import French translation resources
@@ -85,6 +89,10 @@ import frVisualProgramming from './locales/fr/visualProgramming.json';
 import frPixelOffice from './locales/fr/pixelOffice.json';
 import frSelfHealing from './locales/fr/selfHealing.json';
 import frSessionHistory from './locales/fr/sessionHistory.json';
+import frVoiceControl from './locales/fr/voiceContol.json';
+import frIdeation from './locales/fr/ideation.json';
+import frCostEstimator from './locales/fr/costEstimator.json';
+import frDashboard from './locales/fr/dashboard.json';
 import frWelcome from './locales/fr/welcome.json';
 
 export const defaultNS = 'common';
@@ -116,6 +124,10 @@ export const resources = {
     pixelOffice: enPixelOffice,
     selfHealing: enSelfHealing,
     sessionHistory: enSessionHistory,
+    voiceControl: enVoiceControl,
+    ideation: enIdeation,
+    costEstimator: enCostEstimator,
+    dashboard: enDashboard,
     naturalLanguageGit: enNaturalLanguageGit,
     navigation: enNavigation,
     onboarding: enOnboarding,
@@ -159,6 +171,10 @@ export const resources = {
     pixelOffice: frPixelOffice,
     selfHealing: frSelfHealing,
     sessionHistory: frSessionHistory,
+    voiceControl: frVoiceControl,
+    ideation: frIdeation,
+    costEstimator: frCostEstimator,
+    dashboard: frDashboard,
     naturalLanguageGit: frNaturalLanguageGit,
     navigation: frNavigation,
     onboarding: frOnboarding,
@@ -211,6 +227,10 @@ i18n
       'pixelOffice',
       'selfHealing',
       'sessionHistory',
+      'voiceControl',
+      'ideation',
+      'costEstimator',
+      'dashboard',
       'naturalLanguageGit',
       'navigation',
       'onboarding',

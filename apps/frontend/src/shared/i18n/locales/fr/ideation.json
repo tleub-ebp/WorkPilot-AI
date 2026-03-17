@@ -1,0 +1,17 @@
+{
+  "emptyState": {
+    "title": "Aucune idée pour l'instant",
+    "description": "Générez des idées de fonctionnalités alimentées par l'IA basées sur le contexte de votre projet, les patterns existants et votre audience cible.",
+    "enabledTypes": "Types d'idéation activés",
+    "generateIdeas": "Générer des idées",
+    "tokenMissing": "Token Claude non configuré. Vous serez invité à le saisir lors de la génération."
+  },
+  "types": {
+    "code_improvements": "Améliorations du code",
+    "ui_ux_improvements": "Améliorations UI/UX",
+    "documentation_gaps": "Documentation",
+    "security_hardening": "Sécurité",
+    "performance_optimizations": "Performance",
+    "code_quality": "Qualité du code"
+  }
+}

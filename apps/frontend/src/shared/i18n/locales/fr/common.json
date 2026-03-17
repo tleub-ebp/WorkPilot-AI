@@ -864,6 +864,16 @@
       "welcomeHint": "Créez des serveurs MCP personnalisés visuellement. Définissez des outils, des paramètres et des actions HTTP sans écrire de code."
     }
   },
+  "terminalGrid": {
+    "history": "Historique",
+    "restoreSessions": "Restaurer les sessions depuis...",
+    "invokeClaudeAll": "Invoquer Claude (tout)",
+    "newTerminal": "Nouveau terminal",
+    "files": "Fichiers",
+    "agentTerminals": "Terminaux agents",
+    "emptyDescription": "Lancez plusieurs terminaux pour exécuter des agents Claude en parallèle. Utilisez Ctrl+T pour créer un nouveau terminal.",
+    "count": "{{count}} / 12 terminaux"
+  },
   "agnosticUsage": {
     "loadFailed": "Échec du chargement des données d'utilisation",
     "unsupportedAuthMethod": "Le fournisseur {{provider}} ne prend pas en charge l'authentification {{authMethod}}",
