@@ -32,8 +32,9 @@ import {
   SelectValue,
 } from "./ui/select";
 import { cn } from "@/lib/utils";
-import type { CopilotCliVersionInfo, CopilotInstallationInfo } from "@shared/types";
+import type { CopilotInstallationInfo } from "@shared/types";
 import { useProjectStore } from "@/stores/project-store";
+import { useCliStatus } from "@/contexts/CliStatusContext";
 
 interface CopilotCliStatusBadgeProps {
   readonly className?: string;
@@ -79,20 +80,19 @@ function CopilotIcon({ className }: CopilotIconProps) {
  */
 export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: CopilotCliStatusBadgeProps) {
   const { t } = useTranslation(["common", "navigation"]);
+  const { data, refreshCopilot } = useCliStatus();
+  const { copilot } = data;
+  
   const projects = useProjectStore((state) => state.projects);
   const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
   const currentProject = projects.find((p) => p.id === selectedProjectId);
   const projectPath = currentProject?.path || ".";
-  const [status, setStatus] = useState<StatusType>("loading");
-  const [versionInfo, setVersionInfo] = useState<CopilotCliVersionInfo | null>(null);
-  const [isInstalling, setIsInstalling] = useState(false);
-  const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  
   const [isOpen, setIsOpen] = useState(false);
   const [showInstallWarning, setShowInstallWarning] = useState(false);
   const [installError, setInstallError] = useState<string | null>(null);
-
-  // Auth state
-  const [authStatus, setAuthStatus] = useState<{ authenticated: boolean; username?: string } | null>(null);
+  const [isInstalling, setIsInstalling] = useState(false);
+  const [autoUpdateDetected, setAutoUpdateDetected] = useState(false);
 
   // CLI path selection state
   const [installations, setInstallations] = useState<CopilotInstallationInfo[]>([]);
@@ -100,59 +100,14 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
   const [installationsError, setInstallationsError] = useState<string | null>(null);
   const [selectedInstallation, setSelectedInstallation] = useState<string | null>(null);
   const [showPathChangeWarning, setShowPathChangeWarning] = useState(false);
-  const [autoUpdateDetected, setAutoUpdateDetected] = useState(false);
-  const [updateDialogShown, setUpdateDialogShown] = useState(false);
 
-  // Check Copilot CLI version
-  const checkVersion = useCallback(async () => {
-    try {
-      if (!globalThis.electronAPI?.checkCopilotCliVersion) {
-        setStatus("error");
-        return;
-      }
+  // Use data from context
+  const status = copilot.status;
+  const versionInfo = copilot.versionInfo;
+  const authStatus = copilot.authStatus;
+  const lastChecked = copilot.lastChecked;
 
-      const result = await globalThis.electronAPI.checkCopilotCliVersion();
-
-      if (result.success && result.data) {
-        setVersionInfo(result.data);
-        setLastChecked(new Date());
-
-        // Determine status based on gh availability and copilot extension
-        if (!result.data.ghVersion && !result.data.installed) {
-          setStatus("gh-missing");
-        } else if (!result.data.installed) {
-          setStatus("not-found");
-        } else if (result.data.isOutdated) {
-          setStatus("outdated");
-          // Don't auto-show update dialog - only show when user clicks Update button
-        } else {
-          setStatus("installed");
-          // Reset update dialog state when version is current
-          setUpdateDialogShown(false);
-        }
-      } else {
-        setStatus("error");
-      }
-    } catch (err) {
-      console.error("Failed to check Copilot CLI version:", err);
-      setStatus("error");
-    }
-  }, []);
-
-  // Check auth status
-  const checkAuth = useCallback(async () => {
-    try {
-      if (!globalThis.electronAPI?.checkCopilotAuth) return;
-      const result = await globalThis.electronAPI.checkCopilotAuth();
-      if (result.success && result.data) {
-        setAuthStatus(result.data);
-      }
-    } catch (err) {
-      console.error("Failed to check Copilot auth:", err);
-    }
-  }, []);
-
-  // Fetch CLI installations
+  // Fetch CLI installations when popover opens
   const fetchInstallations = useCallback(async () => {
     if (!globalThis.electronAPI?.getCopilotCliInstallations) return;
 
@@ -173,20 +128,6 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
       setIsLoadingInstallations(false);
     }
   }, []);
-
-  // Initial check and periodic re-check
-  useEffect(() => {
-    checkVersion();
-    checkAuth();
-
-    const interval = setInterval(() => {
-      checkVersion();
-    }, CHECK_INTERVAL_MS);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [checkVersion, checkAuth, status, updateDialogShown]);
 
   // Fetch installations when popover opens
   useEffect(() => {
@@ -290,7 +231,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
 
       // Don't call the external installCopilotCli - we're using the internal terminal
       await delay(VERSION_RECHECK_DELAY_MS);
-      checkVersion();
+      refreshCopilot();
     } catch (err) {
       console.error("Failed to install Copilot CLI:", err);
       setInstallError(err instanceof Error ? err.message : "Installation failed");
@@ -350,7 +291,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
 
       if (result.success) {
         setTimeout(() => {
-          checkVersion();
+          refreshCopilot();
           fetchInstallations();
         }, VERSION_RECHECK_DELAY_MS);
       } else {
@@ -609,8 +550,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
               size="sm"
               className="gap-1"
               onClick={() => {
-                checkVersion();
-                checkAuth();
+                refreshCopilot();
               }}
               disabled={status === "loading"}
             >

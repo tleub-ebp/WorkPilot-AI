@@ -32,12 +32,13 @@ import {
   SelectValue,
 } from "./ui/select";
 import { cn } from "@/lib/utils";
-import type { ClaudeCodeVersionInfo, ClaudeInstallationInfo } from "@shared/types";
+import type { ClaudeInstallationInfo } from "@shared/types";
 import { useProjectStore } from "@/stores/project-store";
+import { useCliStatus } from "@/contexts/CliStatusContext";
 
 interface ClaudeCodeStatusBadgeProps {
-  className?: string;
-  onNavigateToTerminals?: () => void; // Ajout de la prop pour la navigation
+  readonly className?: string;
+  readonly onNavigateToTerminals?: () => void; // Ajout de la prop pour la navigation
 }
 
 type StatusType = "loading" | "installed" | "outdated" | "not-found" | "error";
@@ -53,16 +54,18 @@ const VERSION_RECHECK_DELAY_MS = 5000;
  */
 export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: ClaudeCodeStatusBadgeProps) {
   const { t } = useTranslation(["common", "navigation"]);
+  const { data, refreshClaude } = useCliStatus();
+  const { claude } = data;
+  
   const projects = useProjectStore((state) => state.projects);
   const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
   const currentProject = projects.find((p) => p.id === selectedProjectId);
   const projectPath = currentProject?.path || ".";
-  const [status, setStatus] = useState<StatusType>("loading");
-  const [versionInfo, setVersionInfo] = useState<ClaudeCodeVersionInfo | null>(null);
-  const [isInstalling, setIsInstalling] = useState(false);
-  const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  
   const [isOpen, setIsOpen] = useState(false);
   const [showUpdateWarning, setShowUpdateWarning] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
+  const [installError, setInstallError] = useState<string | null>(null);
 
   // Version rollback state
   const [availableVersions, setAvailableVersions] = useState<string[]>([]);
@@ -70,7 +73,6 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
   const [versionsError, setVersionsError] = useState<string | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
   const [showRollbackWarning, setShowRollbackWarning] = useState(false);
-  const [installError, setInstallError] = useState<string | null>(null);
 
   // CLI path selection state
   const [installations, setInstallations] = useState<ClaudeInstallationInfo[]>([]);
@@ -79,39 +81,32 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
   const [selectedInstallation, setSelectedInstallation] = useState<string | null>(null);
   const [showPathChangeWarning, setShowPathChangeWarning] = useState(false);
 
+  // Use data from context
+  const status = claude.status;
+  const versionInfo = claude.versionInfo;
+  const lastChecked = claude.lastChecked;
+
   // Check Claude Code version
   const checkVersion = useCallback(async () => {
     try {
-      if (!window.electronAPI?.checkClaudeCodeVersion) {
-        setStatus("error");
+      if (!globalThis.electronAPI?.checkClaudeCodeVersion) {
         return;
       }
 
-      const result = await window.electronAPI.checkClaudeCodeVersion();
+      const result = await globalThis.electronAPI.checkClaudeCodeVersion();
 
       if (result.success && result.data) {
-        setVersionInfo(result.data);
-        setLastChecked(new Date());
-
-        if (!result.data.installed) {
-          setStatus("not-found");
-        } else if (result.data.isOutdated) {
-          setStatus("outdated");
-        } else {
-          setStatus("installed");
-        }
-      } else {
-        setStatus("error");
+        // Version checking is handled by the context
+        // No need to set local state since we use context data
       }
     } catch (err) {
       console.error("Failed to check Claude Code version:", err);
-      setStatus("error");
     }
   }, []);
 
   // Fetch available versions
   const fetchVersions = useCallback(async () => {
-    if (!window.electronAPI?.getClaudeCodeVersions) {
+    if (!globalThis.electronAPI?.getClaudeCodeVersions) {
       return;
     }
 
@@ -119,7 +114,7 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
     setVersionsError(null);
 
     try {
-      const result = await window.electronAPI.getClaudeCodeVersions();
+      const result = await globalThis.electronAPI.getClaudeCodeVersions();
       if (result.success && result.data) {
         setAvailableVersions(result.data.versions);
       } else {
@@ -135,7 +130,7 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
 
   // Fetch CLI installations
   const fetchInstallations = useCallback(async () => {
-    if (!window.electronAPI?.getClaudeCodeInstallations) {
+    if (!globalThis.electronAPI?.getClaudeCodeInstallations) {
       return;
     }
 
@@ -143,7 +138,7 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
     setInstallationsError(null);
 
     try {
-      const result = await window.electronAPI.getClaudeCodeInstallations();
+      const result = await globalThis.electronAPI.getClaudeCodeInstallations();
       if (result.success && result.data) {
         setInstallations(result.data.installations);
       } else {
@@ -189,16 +184,16 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
     setShowUpdateWarning(false);
     setInstallError(null);
     try {
-      if (!window.electronAPI?.installClaudeCode) {
+      if (!globalThis.electronAPI?.installClaudeCode) {
         setInstallError("Installation not available");
         setIsInstalling(false);
         return;
       }
 
       // Create a terminal in the app
-      if (window.electronAPI?.createTerminal) {
+      if (globalThis.electronAPI?.createTerminal) {
         const terminalId = `claude-code-update-${Date.now()}`;
-        const terminalResult = await window.electronAPI.createTerminal({
+        const terminalResult = await globalThis.electronAPI.createTerminal({
           id: terminalId,
           cwd: projectPath,
           cols: 80,
@@ -210,15 +205,15 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
           // Small delay to let terminal initialize
           setTimeout(() => {
             // Send commands immediately after terminal creation
-            if (window.electronAPI?.sendTerminalInput) {
+            if (globalThis.electronAPI?.sendTerminalInput) {
               // Send commands with small delays to ensure proper order
-              window.electronAPI.sendTerminalInput(terminalId, "clear\n");
+              globalThis.electronAPI.sendTerminalInput(terminalId, "clear\n");
               
               setTimeout(() => {
-                window.electronAPI.sendTerminalInput(terminalId, "echo 'Starting Claude Code installation...'\n");
+                globalThis.electronAPI.sendTerminalInput(terminalId, "echo 'Starting Claude Code installation...'\n");
                 
                 setTimeout(() => {
-                  window.electronAPI.sendTerminalInput(terminalId, "claude-code install\n");
+                  globalThis.electronAPI.sendTerminalInput(terminalId, "claude-code install\n");
                 }, 50);
               }, 50);
             }
@@ -236,7 +231,7 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
         }
       }
 
-      const result = await window.electronAPI.installClaudeCode();
+      const result = await globalThis.electronAPI.installClaudeCode();
 
       if (result.success) {
         // Re-check after a delay
@@ -263,15 +258,15 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
     setInstallError(null);
 
     try {
-      if (!window.electronAPI?.installClaudeCodeVersion) {
+      if (!globalThis.electronAPI?.installClaudeCodeVersion) {
         setInstallError("Version switching not available");
         return;
       }
 
       // Create a terminal in the app for version switch
-      if (window.electronAPI?.createTerminal) {
+      if (globalThis.electronAPI?.createTerminal) {
         const terminalId = `claude-code-switch-${Date.now()}`;
-        const terminalResult = await window.electronAPI.createTerminal({
+        const terminalResult = await globalThis.electronAPI.createTerminal({
           id: terminalId,
           cwd: projectPath,
           cols: 80,
@@ -283,15 +278,15 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
           // Small delay to let terminal initialize
           setTimeout(() => {
             // Send version switch commands immediately after terminal creation
-            if (window.electronAPI?.sendTerminalInput) {
+            if (globalThis.electronAPI?.sendTerminalInput) {
               // Send commands with small delays to ensure proper order
-              window.electronAPI.sendTerminalInput(terminalId, "clear\n");
+              globalThis.electronAPI.sendTerminalInput(terminalId, "clear\n");
               
               setTimeout(() => {
-                window.electronAPI.sendTerminalInput(terminalId, `echo 'Switching to Claude Code version ${selectedVersion}...'\n`);
+                globalThis.electronAPI.sendTerminalInput(terminalId, `echo 'Switching to Claude Code version ${selectedVersion}...'\n`);
                 
                 setTimeout(() => {
-                  window.electronAPI.sendTerminalInput(terminalId, `claude-code install --version ${selectedVersion}\n`);
+                  globalThis.electronAPI.sendTerminalInput(terminalId, `claude-code install --version ${selectedVersion}\n`);
                 }, 50);
               }, 50);
             }
@@ -309,7 +304,7 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
         }
       }
 
-      const result = await window.electronAPI.installClaudeCodeVersion(selectedVersion);
+      const result = await globalThis.electronAPI.installClaudeCodeVersion(selectedVersion);
 
       if (result.success) {
         // Re-check after a delay
@@ -337,12 +332,12 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
     setInstallError(null);
 
     try {
-      if (!window.electronAPI?.setClaudeCodeActivePath) {
+      if (!globalThis.electronAPI?.setClaudeCodeActivePath) {
         setInstallError("Path switching not available");
         return;
       }
 
-      const result = await window.electronAPI.setClaudeCodeActivePath(selectedInstallation);
+      const result = await globalThis.electronAPI.setClaudeCodeActivePath(selectedInstallation);
 
       if (result.success) {
         // Re-check version and refresh installations
@@ -446,6 +441,28 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
       case "error":
         return t("navigation:claudeCode.error", "Error checking Claude Code");
     }
+  };
+
+  // Get version select placeholder text
+  const getVersionSelectPlaceholder = () => {
+    if (isLoadingVersions) {
+      return t("navigation:claudeCode.loadingVersions", "Loading versions...");
+    }
+    if (versionsError) {
+      return t("navigation:claudeCode.failedToLoadVersions", "Failed to load versions");
+    }
+    return t("navigation:claudeCode.selectVersion", "Select version");
+  };
+
+  // Get installation select placeholder text
+  const getInstallationSelectPlaceholder = () => {
+    if (isLoadingInstallations) {
+      return t("navigation:claudeCode.loadingInstallations", "Loading installations...");
+    }
+    if (installationsError) {
+      return t("navigation:claudeCode.failedToLoadInstallations", "Failed to load installations");
+    }
+    return t("navigation:claudeCode.selectInstallation", "Select installation");
   };
 
   return (
@@ -605,13 +622,7 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
               >
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue
-                    placeholder={
-                      isLoadingVersions
-                        ? t("navigation:claudeCode.loadingVersions", "Loading versions...")
-                        : versionsError
-                          ? t("navigation:claudeCode.failedToLoadVersions", "Failed to load versions")
-                          : t("navigation:claudeCode.selectVersion", "Select version")
-                    }
+                    placeholder={getVersionSelectPlaceholder()}
                   />
                 </SelectTrigger>
                 <SelectContent>
@@ -651,13 +662,7 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
               >
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue
-                    placeholder={
-                      isLoadingInstallations
-                        ? t("navigation:claudeCode.loadingInstallations", "Loading installations...")
-                        : installationsError
-                          ? t("navigation:claudeCode.failedToLoadInstallations", "Failed to load installations")
-                          : t("navigation:claudeCode.selectInstallation", "Select installation")
-                    }
+                    placeholder={getInstallationSelectPlaceholder()}
                   />
                 </SelectTrigger>
                 <SelectContent>
@@ -691,7 +696,7 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
             size="sm"
             className="w-full text-xs text-muted-foreground gap-1"
             onClick={() =>
-              window.electronAPI?.openExternal?.(
+              globalThis.electronAPI?.openExternal?.(
                 "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md"
               )
             }
