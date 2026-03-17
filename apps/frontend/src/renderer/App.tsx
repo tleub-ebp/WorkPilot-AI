@@ -26,6 +26,7 @@ import {
   DialogTitle
 } from '@/components/ui';
 import { Toaster } from './components/ui/toaster';
+import { CliStatusProvider } from './contexts/CliStatusContext';
 import { Sidebar, type SidebarView } from '@/components';
 import { KanbanBoard, TaskCreationWizard } from '@/components';
 import { KanbanSkeleton } from '@/components/ui/KanbanSkeleton';
@@ -1000,7 +1001,7 @@ export function App() {
   return (
       <ProviderContextProvider>
         <ViewStateProvider>
-          <>
+          <CliStatusProvider>
             <TooltipProvider>
               <div className="flex h-screen bg-background">
                 {/* Sidebar */}
@@ -1279,7 +1280,6 @@ export function App() {
               />
 
               {/* AI Prompt Optimizer Dialog (Feature 9) */}
-              <PromptOptimizerDialog />
 
               {/* Voice Control Dialog (Feature 23) */}
               <VoiceControlDialog />
@@ -1287,50 +1287,50 @@ export function App() {
 
             {/* Onboarding wizard - shown only once at app start */}
             <OnboardingWizard
-                open={isOnboardingWizardOpen}
-                onOpenChange={setIsOnboardingWizardOpen}
-                onOpenTaskCreator={() => {
-                  setIsOnboardingWizardOpen(false);
-                  setIsNewTaskDialogOpen(true);
-                }}
-                onOpenSettings={() => {
-                  setIsOnboardingWizardOpen(false);
-                  setIsSettingsDialogOpen(true);
-                }}
+              open={isOnboardingWizardOpen}
+              onOpenChange={setIsOnboardingWizardOpen}
+              onOpenTaskCreator={() => {
+                setIsOnboardingWizardOpen(false);
+                setIsNewTaskDialogOpen(true);
+              }}
+              onOpenSettings={() => {
+                setIsOnboardingWizardOpen(false);
+                setIsSettingsDialogOpen(true);
+              }}
             />
 
             {/* Version warning modal - shown once for reauthentication notice */}
             <VersionWarningModal
-                isOpen={isVersionWarningModalOpen}
-                onClose={handleVersionWarningClose}
+              isOpen={isVersionWarningModalOpen}
+              onClose={handleVersionWarningClose}
             />
 
             {/* Modals spécifiques à GitHub et Azure DevOps */}
             {gitHubSetupProject && (
-                <GitHubSetupModal
-                    open={showGitHubSetup}
-                    onOpenChange={setShowGitHubSetup}
-                    onComplete={handleGitHubSetupComplete}
-                    onSkip={handleGitHubSetupSkip}
-                    project={gitHubSetupProject}
-                />
+              <GitHubSetupModal
+                open={showGitHubSetup}
+                onOpenChange={setShowGitHubSetup}
+                onComplete={handleGitHubSetupComplete}
+                onSkip={handleGitHubSetupSkip}
+                project={gitHubSetupProject}
+              />
             )}
 
             {/* Azure DevOps Setup Modal - configure Azure DevOps */}
             {azureDevOpsSetupProject && (
-                <AzureDevOpsSetupModal
-                    open={showAzureDevOpsSetup}
-                    onOpenChange={setShowAzureDevOpsSetup}
-                    onComplete={handleAzureDevOpsSetupComplete}
-                    onSkip={handleAzureDevOpsSetupSkip}
-                    project={azureDevOpsSetupProject}
-                />
+              <AzureDevOpsSetupModal
+                open={showAzureDevOpsSetup}
+                onOpenChange={setShowAzureDevOpsSetup}
+                onComplete={handleAzureDevOpsSetupComplete}
+                onSkip={handleAzureDevOpsSetupSkip}
+                project={azureDevOpsSetupProject}
+              />
             )}
 
             <AddProjectModal
-                open={showAddProjectModal}
-                onOpenChange={setShowAddProjectModal}
-                onProjectAdded={handleProjectAdded}
+              open={showAddProjectModal}
+              onOpenChange={setShowAddProjectModal}
+              onProjectAdded={handleProjectAdded}
             />
 
             {/* Remove Project Confirmation Dialog */}
@@ -1345,10 +1345,10 @@ export function App() {
                   </DialogDescription>
                 </DialogHeader>
                 {removeProjectError && (
-                    <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-                      <AlertCircle className="h-4 w-4 shrink-0" />
-                      <span>{removeProjectError}</span>
-                    </div>
+                  <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span>{removeProjectError}</span>
+                  </div>
                 )}
                 <DialogFooter>
                   <Button variant="outline" onClick={handleCancelRemoveProject}>
@@ -1360,8 +1360,8 @@ export function App() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-          </>
+          </CliStatusProvider>
         </ViewStateProvider>
       </ProviderContextProvider>
-  );
+    );
 }

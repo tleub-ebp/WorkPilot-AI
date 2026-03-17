@@ -58,6 +58,11 @@ import {
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from './ui';
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -313,6 +318,9 @@ export function Sidebar({
   const toggleSidebar = () => {
     saveSettings({ sidebarCollapsed: !isCollapsed });
   };
+
+  // State for CLI/Settings panel collapsible
+  const [isCliPanelExpanded, setIsCliPanelExpanded] = useState(true);
 
   // Subscribe to project-env-store for reactive GitHub/GitLab tab visibility
   const githubEnabled = useProjectEnvStore((state) => state.envConfig?.githubEnabled ?? false);
@@ -815,50 +823,77 @@ const toggleGroupExpansion = (groupId: string) => {
         {/* Update Banner - shows when app update is available */}
         <UpdateBanner />
 
-        {/* Bottom section with Settings, Help, and New Task */}
+        {/* Bottom section with CLI/Settings collapsible panel and New Task */}
         <div className={cn("space-y-3 transition-all duration-300", isCollapsed ? "p-2" : "p-4")}>
-          {/* CLI Tools — compact grouped badges */}
-          {!isCollapsed && (
-            <div className="space-y-0.5">
-              <ClaudeCodeStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />
-              <CopilotCliStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />
-              <CodexCliStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />
-            </div>
-          )}
+          {/* CLI/Settings Panel */}
+          <Collapsible open={isCliPanelExpanded} onOpenChange={setIsCliPanelExpanded}>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "w-full justify-start gap-2 text-xs font-medium",
+                  isCollapsed ? "h-8 w-8 p-0" : "h-8"
+                )}
+              >
+                <Wrench className="h-4 w-4" />
+                {!isCollapsed && (
+                  <>
+                    <span>Outils CLI & Paramètres</span>
+                    <ChevronRight 
+                      className={cn(
+                        "h-3 w-3 ml-auto transition-transform duration-200",
+                        isCliPanelExpanded && "rotate-90"
+                      )}
+                    />
+                  </>
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent className="space-y-3 mt-2">
+              {/* CLI Tools — compact grouped badges */}
+              <div className="space-y-0.5">
+                <ClaudeCodeStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />
+                <CopilotCliStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />
+                <CodexCliStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />
+              </div>
 
-          {/* Settings and Help row */}
-          <div className={cn(
-            "flex items-center",
-            isCollapsed ? "flex-col gap-1" : "gap-2"
-          )}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size={isCollapsed ? "icon" : "sm"}
-                  className={isCollapsed ? "" : "flex-1 justify-start gap-2"}
-                  onClick={onSettingsClick}
-                >
-                  <Settings className="h-4 w-4" />
-                  {!isCollapsed && t('actions.settings')}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side={isCollapsed ? "right" : "top"}>{t('tooltips.settings')}</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => globalThis.open('https://github.com/tleub-ebp/Auto-Claude_EBP/issues', '_blank')}
-                  aria-label={t('tooltips.help')}
-                >
-                  <HelpCircle className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side={isCollapsed ? "right" : "top"}>{t('tooltips.help')}</TooltipContent>
-            </Tooltip>
-          </div>
+              {/* Settings and Help row */}
+              <div className={cn(
+                "flex items-center",
+                isCollapsed ? "flex-col gap-1" : "gap-2"
+              )}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size={isCollapsed ? "icon" : "sm"}
+                      className={isCollapsed ? "" : "flex-1 justify-start gap-2"}
+                      onClick={onSettingsClick}
+                    >
+                      <Settings className="h-4 w-4" />
+                      {!isCollapsed && t('actions.settings')}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side={isCollapsed ? "right" : "top"}>{t('tooltips.settings')}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => globalThis.open('https://github.com/tleub-ebp/Auto-Claude_EBP/issues', '_blank')}
+                      aria-label={t('tooltips.help')}
+                    >
+                      <HelpCircle className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side={isCollapsed ? "right" : "top"}>{t('tooltips.help')}</TooltipContent>
+                </Tooltip>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* New Task button */}
           <Tooltip>

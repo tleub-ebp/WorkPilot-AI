@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Check,
@@ -12,6 +12,7 @@ import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useCliStatus } from "@/contexts/CliStatusContext";
 
 interface CodexCliStatusBadgeProps {
   readonly className?: string;
@@ -22,7 +23,7 @@ interface CodexIconProps {
   readonly className?: string;
 }
 
-type StatusType = "loading" | "authenticated" | "not-configured" | "error";
+type StatusType = "loading" | "installed" | "outdated" | "not-found" | "error";
 
 const CHECK_INTERVAL_MS = 60 * 1000; // Re-check every 60s
 
@@ -53,45 +54,27 @@ function CodexIcon({ className }: CodexIconProps) {
  */
 export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexCliStatusBadgeProps) {
   const { t } = useTranslation(["common", "navigation"]);
-  const [status, setStatus] = useState<StatusType>("loading");
-  const [profileName, setProfileName] = useState<string | null>(null);
+  const { data, refreshCodex } = useCliStatus();
+  const { codex } = data;
+  
   const [isOpen, setIsOpen] = useState(false);
-  const [lastChecked, setLastChecked] = useState<Date | null>(null);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      if (!globalThis.electronAPI?.checkOpenAICodexOAuth) {
-        setStatus("error");
-        return;
-      }
+  // Use data from context
+  const status = codex.status;
+  const versionInfo = codex.versionInfo;
+  const lastChecked = codex.lastChecked;
 
-      const result = await globalThis.electronAPI.checkOpenAICodexOAuth();
-
-      if (result?.isAuthenticated) {
-        setStatus("authenticated");
-        setProfileName(result.profileName || null);
-      } else {
-        setStatus("not-configured");
-        setProfileName(null);
-      }
-      setLastChecked(new Date());
-    } catch (err) {
-      console.error("Failed to check Codex CLI auth:", err);
-      setStatus("error");
-    }
-  }, []);
-
-  useEffect(() => {
-    checkAuth();
-    const interval = setInterval(checkAuth, CHECK_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [checkAuth]);
+  const handleRefresh = () => {
+    refreshCodex();
+  };
 
   const getStatusColor = () => {
     switch (status) {
-      case "authenticated":
+      case "installed":
         return "bg-green-500";
-      case "not-configured":
+      case "outdated":
+        return "bg-yellow-500";
+      case "not-found":
         return "bg-muted-foreground";
       case "error":
         return "bg-destructive";
@@ -102,14 +85,16 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
 
   const getStatusIcon = () => {
     switch (status) {
-      case "loading":
-        return <Loader2 className="h-3 w-3 animate-spin" />;
-      case "authenticated":
+      case "installed":
         return <Check className="h-3 w-3" />;
-      case "not-configured":
+      case "outdated":
+        return <AlertTriangle className="h-3 w-3" />;
+      case "not-found":
         return <X className="h-3 w-3" />;
       case "error":
         return <AlertTriangle className="h-3 w-3" />;
+      default:
+        return <Loader2 className="h-3 w-3 animate-spin" />;
     }
   };
 
@@ -117,12 +102,16 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
     switch (status) {
       case "loading":
         return "Vérification Codex CLI...";
-      case "authenticated":
-        return profileName ? `Codex CLI (${profileName})` : "Codex CLI connecté";
-      case "not-configured":
-        return "Codex CLI non configuré";
+      case "installed":
+        return versionInfo?.installed ? `Codex CLI (${versionInfo.installed})` : "Codex CLI installé";
+      case "outdated":
+        return `Codex CLI (${versionInfo?.installed}) - mise à jour disponible`;
+      case "not-found":
+        return "Codex CLI non trouvé";
       case "error":
         return "Erreur Codex CLI";
+      default:
+        return "Codex CLI";
     }
   };
 
@@ -136,7 +125,7 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
               size="sm"
               className={cn(
                 "w-full justify-start gap-2 text-xs",
-                status === "not-configured" || status === "error" ? "text-muted-foreground" : "",
+                status === "not-found" || status === "error" ? "text-muted-foreground" : "",
                 className
               )}
             >
@@ -150,7 +139,7 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
                 />
               </div>
               <span className="truncate">Codex</span>
-              {status === "not-configured" && (
+              {status === "not-found" && (
                 <span className="ml-auto text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
                   N/A
                 </span>
@@ -172,8 +161,8 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
               <h4 className="text-sm font-medium">OpenAI Codex CLI</h4>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 {getStatusIcon()}
-                {status === "authenticated" && "Connecté"}
-                {status === "not-configured" && "Non configuré"}
+                {status === "installed" && "Connecté"}
+                {status === "not-found" && "Non configuré"}
                 {status === "loading" && "Vérification..."}
                 {status === "error" && "Erreur"}
               </p>
@@ -181,11 +170,11 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
           </div>
 
           {/* Auth info */}
-          {status === "authenticated" && profileName && (
+          {status === "installed" && versionInfo?.installed && (
             <div className="text-xs space-y-1 p-2 bg-muted rounded-md">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Compte :</span>
-                <span className="font-medium truncate ml-2">{profileName}</span>
+                <span className="font-medium truncate ml-2">{versionInfo?.installed}</span>
               </div>
               {lastChecked && (
                 <div className="flex justify-between text-muted-foreground">
@@ -197,7 +186,7 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
           )}
 
           {/* Not configured notice */}
-          {status === "not-configured" && (
+          {status === "not-found" && (
             <div className="text-xs p-2 bg-muted/50 rounded-md text-muted-foreground">
               <p>Lancez <code className="font-mono bg-muted px-1 rounded">codex</code> dans un terminal pour vous authentifier via OAuth.</p>
               <p className="mt-1">Configurez dans Paramètres → OpenAI → OAuth / Codex.</p>
@@ -211,7 +200,7 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
               size="sm"
               className="flex-1 gap-1"
               onClick={() => {
-                checkAuth();
+                handleRefresh();
               }}
               disabled={status === "loading"}
             >
