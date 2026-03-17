@@ -617,13 +617,44 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
             description: authResult.error || t('accounts.toast.tryAgain'),
           });
         }
+      } else {
+        toast({
+          variant: 'destructive',
+          title: t('accounts.toast.addProfileFailed'),
+          description: result.error || t('accounts.toast.tryAgain'),
+        });
       }
-    } catch (_err) {
-      toast({
-        variant: 'destructive',
-        title: t('accounts.toast.addProfileFailed'),
-        description: t('accounts.toast.tryAgain'),
-      });
+    } catch (err) {
+      console.error('Failed to add Claude profile:', err);
+      
+      // Handle specific error types
+      if (err instanceof Error) {
+        if (err.message.includes('EACCES') || err.message.includes('permission')) {
+          toast({
+            variant: 'destructive',
+            title: t('accounts.toast.permissionDenied'),
+            description: t('accounts.toast.checkFilePermissions'),
+          });
+        } else if (err.message.includes('ENOENT') || err.message.includes('not found')) {
+          toast({
+            variant: 'destructive',
+            title: t('accounts.toast.pathNotFound'),
+            description: t('accounts.toast.checkPath'),
+          });
+        } else {
+          toast({
+            variant: 'destructive',
+            title: t('accounts.toast.addProfileFailed'),
+            description: err.message || t('accounts.toast.tryAgain'),
+          });
+        }
+      } else {
+        toast({
+          variant: 'destructive',
+          title: t('accounts.toast.addProfileFailed'),
+          description: t('accounts.toast.tryAgain'),
+        });
+      }
     } finally {
       setIsAddingProfile(false);
     }
