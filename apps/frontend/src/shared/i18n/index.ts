@@ -26,6 +26,7 @@ import enNavigation from './locales/en/navigation.json';
 import enOnboarding from './locales/en/onboarding.json';
 import enPromptOptimizer from './locales/en/promptOptimizer.json';
 import enProjectInitModal from './locales/en/projectInitModal.json';
+import enReplay from './locales/en/replay.json';
 import enRefactoring from './locales/en/refactoring.json';
 import enRoadmap from './locales/en/roadmap.json';
 import enSettings from './locales/en/settings.json';
@@ -37,6 +38,7 @@ import enTestGeneration from './locales/en/testGeneration.json';
 import enVisualProgramming from './locales/en/visualProgramming.json';
 import enMissionControl from './locales/en/missionControl.json';
 import enPixelOffice from './locales/en/pixelOffice.json';
+import enSelfHealing from './locales/en/selfHealing.json';
 import enWelcome from './locales/en/welcome.json';
 
 // Import French translation resources
@@ -65,6 +67,7 @@ import frNavigation from './locales/fr/navigation.json';
 import frOnboarding from './locales/fr/onboarding.json';
 import frPromptOptimizer from './locales/fr/promptOptimizer.json';
 import frProjectInitModal from './locales/fr/projectInitModal.json';
+import frReplay from './locales/fr/replay.json';
 import frRefactoring from './locales/fr/refactoring.json';
 import frRoadmap from './locales/fr/roadmap.json';
 import frSettings from './locales/fr/settings.json';
@@ -75,6 +78,7 @@ import frTerminal from './locales/fr/terminal.json';
 import frTestGeneration from './locales/fr/testGeneration.json';
 import frVisualProgramming from './locales/fr/visualProgramming.json';
 import frPixelOffice from './locales/fr/pixelOffice.json';
+import frSelfHealing from './locales/fr/selfHealing.json';
 import frWelcome from './locales/fr/welcome.json';
 
 export const defaultNS = 'common';
@@ -102,11 +106,13 @@ export const resources = {
     migrationWizard: enMigrationWizard,
     missionControl: enMissionControl,
     pixelOffice: enPixelOffice,
+    selfHealing: enSelfHealing,
     naturalLanguageGit: enNaturalLanguageGit,
     navigation: enNavigation,
     onboarding: enOnboarding,
     promptOptimizer: enPromptOptimizer,
     projectInitModal: enProjectInitModal,
+    replay: enReplay,
     refactoring: enRefactoring,
     roadmap: enRoadmap,
     settings: enSettings,
@@ -140,11 +146,13 @@ export const resources = {
     migrationWizard: frMigrationWizard,
     missionControl: frMissionControl,
     pixelOffice: frPixelOffice,
+    selfHealing: frSelfHealing,
     naturalLanguageGit: frNaturalLanguageGit,
     navigation: frNavigation,
     onboarding: frOnboarding,
     promptOptimizer: frPromptOptimizer,
     projectInitModal: frProjectInitModal,
+    replay: frReplay,
     refactoring: frRefactoring,
     roadmap: frRoadmap,
     settings: frSettings,
@@ -187,11 +195,13 @@ i18n
       'migrationWizard',
       'missionControl',
       'pixelOffice',
+      'selfHealing',
       'naturalLanguageGit',
       'navigation',
       'onboarding',
       'promptOptimizer',
       'projectInitModal',
+      'replay',
       'refactoring',
       'roadmap',
       'settings',

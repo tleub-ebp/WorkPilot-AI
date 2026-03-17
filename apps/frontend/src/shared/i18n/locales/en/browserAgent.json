@@ -1,0 +1,65 @@
+{
+  "title": "Browser Agent",
+  "subtitle": "Built-in Chromium browser for testing, scraping, and visual validation",
+  "tabs": {
+    "browser": "Browser",
+    "visualRegression": "Visual Regression",
+    "testRunner": "Test Runner"
+  },
+  "stats": {
+    "totalTests": "Total Tests",
+    "passRate": "Pass Rate",
+    "screenshots": "Screenshots",
+    "regressions": "Regressions"
+  },
+  "browser": {
+    "urlPlaceholder": "Enter URL to navigate...",
+    "navigate": "Go",
+    "captureScreenshot": "Capture",
+    "screenshotNamePlaceholder": "Screenshot name...",
+    "idle": "Browser is idle. Enter a URL and click Go to start.",
+    "launching": "Launching browser...",
+    "navigating": "Navigating...",
+    "ready": "Browser ready",
+    "refresh": "Refresh",
+    "openExternal": "Open in Browser",
+    "useEmulatorUrl": "Use Emulator URL",
+    "capturing": "Capturing screenshot..."
+  },
+  "regression": {
+    "setBaseline": "Set as Baseline",
+    "compare": "Compare",
+    "deleteBaseline": "Delete",
+    "match": "Match",
+    "diffPixels": "Diff Pixels",
+    "passed": "Passed",
+    "failed": "Failed",
+    "noBaselines": "No baselines yet. Capture a screenshot and set it as baseline.",
+    "threshold": "Threshold",
+    "comparing": "Comparing...",
+    "baselineSet": "Baseline set successfully",
+    "baselineDeleted": "Baseline deleted",
+    "baseline": "Baseline",
+    "current": "Current",
+    "diff": "Diff"
+  },
+  "tests": {
+    "runAll": "Run All Tests",
+    "running": "Running tests...",
+    "noResults": "No test results yet. Click Run All Tests to start.",
+    "passed": "Passed",
+    "failed": "Failed",
+    "skipped": "Skipped",
+    "error": "Error",
+    "duration": "Duration",
+    "errorDetails": "Error Details",
+    "summary": "{{passed}} passed, {{failed}} failed, {{skipped}} skipped"
+  },
+  "errors": {
+    "fetchFailed": "Failed to load browser agent data",
+    "screenshotFailed": "Screenshot capture failed",
+    "compareFailed": "Visual comparison failed",
+    "testsFailed": "Test execution failed",
+    "noProject": "Select a project to use the Browser Agent"
+  }
+}

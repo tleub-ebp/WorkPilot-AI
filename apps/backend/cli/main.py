@@ -15,6 +15,7 @@ from .batch_commands import (
     handle_batch_create_command,
     handle_batch_status_command,
 )
+from .browser_agent_commands import handle_browser_agent_command
 from .self_healing_commands import handle_self_healing_command
 from .build_commands import handle_build_command
 from .cost_commands import (
@@ -440,6 +441,27 @@ Environment Variables:
         help="Self-healing mode: cicd, proactive, dashboard (default: dashboard)",
     )
 
+    # Browser Agent
+    browser_group = parser.add_argument_group("Browser Agent")
+    browser_group.add_argument(
+        "--browser-agent",
+        type=str,
+        nargs="?",
+        const="dashboard",
+        metavar="MODE",
+        help="Browser agent mode: screenshot, compare, tests, dashboard (default: dashboard)",
+    )
+    browser_group.add_argument(
+        "--browser-url",
+        type=str,
+        help="URL to navigate/screenshot (for browser-agent screenshot/compare)",
+    )
+    browser_group.add_argument(
+        "--browser-name",
+        type=str,
+        help="Screenshot/baseline name (for browser-agent screenshot/compare)",
+    )
+
     return parser.parse_args()
 
 
@@ -604,6 +626,17 @@ def _run_cli() -> None:
     if args.self_heal is not None:
         handle_self_healing_command(
             project_dir, mode=args.self_heal, verbose=args.verbose
+        )
+        return
+
+    # Handle Browser Agent commands
+    if args.browser_agent is not None:
+        handle_browser_agent_command(
+            project_dir,
+            mode=args.browser_agent,
+            url=getattr(args, "browser_url", None),
+            name=getattr(args, "browser_name", None),
+            verbose=args.verbose,
         )
         return
 
