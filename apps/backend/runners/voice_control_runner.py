@@ -9,6 +9,7 @@ processing and AI-powered command interpretation.
 import argparse
 import asyncio
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -73,11 +74,11 @@ class VoiceControlProcessor:
                 return
 
             options = ClaudeAgentOptions(
-                model_id=self.model_id,
-                thinking_budget=self.thinking_budget,
+                model=self.model_id,
+                max_thinking_tokens=self.thinking_budget,
             )
             self.client = ClaudeSDKClient(options)
-            debug_success("Claude SDK client initialized")
+            debug_success("VoiceControl", "Claude SDK client initialized")
         except Exception as e:
             debug_error("VoiceControl", f"Failed to setup Claude client: {e}")
 
@@ -85,7 +86,7 @@ class VoiceControlProcessor:
         """Record audio and process voice command"""
         try:
             # Simulate audio recording with progress
-            debug("Starting voice recording...")
+            debug("VoiceControl", "Starting voice recording...")
             
             # Simulate recording duration and audio levels
             duration = 0.0
@@ -97,14 +98,14 @@ class VoiceControlProcessor:
                 print(f"__DURATION__:{duration}")
                 await asyncio.sleep(0.1)
             
-            debug("Recording completed, processing speech...")
+            debug("VoiceControl", "Recording completed, processing speech...")
             
             # Simulate speech-to-text processing
             transcript = await self.speech_to_text()
-            debug(f"Transcript: {transcript}")
+            debug("VoiceControl", f"Transcript: {transcript}")
             
             # Process command with AI
-            result = await self.process_command(transcript)
+            result = self.process_command(transcript)
             return result
             
         except Exception as e:
@@ -138,97 +139,151 @@ class VoiceControlProcessor:
         import random
         return random.choice(sample_commands)
 
-    async def process_command(self, transcript: str) -> Dict[str, Any]:
-        """Process voice command with AI"""
-        if not self.client:
-            debug_error("VoiceControl", "No client available for command processing")
-            return {
-                "transcript": transcript,
-                "command": transcript,
-                "action": "error",
-                "parameters": {},
-                "confidence": 0.0
-            }
+    def process_command(self, transcript: str) -> Dict[str, Any]:
+        """Process voice command using keyword matching"""
+        result = self._classify_command(transcript)
+        debug_success("VoiceControl", f"Command classified: {result['action']} -> {result['parameters']}")
+        return result
 
-        try:
-            # Build system prompt for command interpretation
-            system_prompt = self._build_system_prompt()
-            
-            # Build user prompt with transcript
-            user_prompt = f"""Interpret this voice command and extract the action and parameters:
+    def _classify_command(self, transcript: str) -> Dict[str, Any]:
+        """Classify voice command using keyword matching"""
+        text = transcript.lower()
+
+        # Destination keyword map
+        destinations = {
+            "kanban": ["kanban", "tableau", "tâche", "task board"],
+            "terminals": ["terminal", "console", "shell"],
+            "analytics": ["analytics", "statistique", "stat"],
+            "settings": ["setting", "paramètre", "configuration", "préférence", "preference"],
+            "insights": ["insight", "chat", "exploration"],
+            "roadmap": ["roadmap", "feuille de route", "planning"],
+            "context": ["context", "mémoire", "memory"],
+            "code-review": ["code review", "review", "relecture"],
+            "documentation": ["doc", "documentation"],
+            "dashboard": ["dashboard", "accueil", "home", "overview"],
+            "ideation": ["idéation", "ideation", "idée", "idea", "brainstorm"],
+            "changelog": ["changelog", "release", "notes de version"],
+            "cost-estimator": ["cost", "coût", "estimat", "billing", "facturation"],
+            "pair-programming": ["pair", "paire", "pair programming"],
+            "learning-loop": ["learning", "apprentissage"],
+            "self-healing": ["self.healing", "healing", "auto-répar"],
+            "mission-control": ["mission control", "mission"],
+        }
+
+        navigate_verbs = ["go", "open", "show", "navigate", "display", "switch", "va", "ouvre",
+                          "montre", "affiche", "navigue", "voir", "see"]
+
+        is_navigation = any(v in text for v in navigate_verbs)
+
+        for destination, keywords in destinations.items():
+            if any(kw in text for kw in keywords):
+                return {
+                    "transcript": transcript,
+                    "command": transcript,
+                    "action": "navigate",
+                    "parameters": {"destination": destination},
+                    "confidence": 0.9 if is_navigation else 0.75,
+                }
+
+        return {
+            "transcript": transcript,
+            "command": transcript,
+            "action": "unknown",
+            "parameters": {},
+            "confidence": 0.3,
+        }
+
+    def _create_error_result(self, transcript: str, message: str, error: str = None) -> Dict[str, Any]:
+        """Create standardized error result"""
+        debug_error("VoiceControl", message)
+        result = {
+            "transcript": transcript,
+            "command": transcript,
+            "action": "error",
+            "parameters": {},
+            "confidence": 0.0
+        }
+        if error:
+            result["error"] = error
+        return result
+
+    def _build_user_prompt(self, transcript: str) -> str:
+        """Build user prompt with transcript"""
+        return f"""Classify this voice command into a JSON object. Reply with ONLY the JSON, nothing else.
 
 Voice command: "{transcript}"
 
-Respond with a JSON object containing:
-- "command": The exact command text
-- "action": The main action (e.g., "navigate", "create", "show", "start")
-- "parameters": Object with relevant parameters
-- "confidence": Confidence score (0-1)
+Use action "navigate" for any command about going to, showing, or opening a view.
+Destinations: kanban, terminals, analytics, settings, insights, roadmap, context, code-review, documentation, dashboard, ideation, changelog, cost-estimator.
 
-Example response:
+Required JSON format:
 {{
-  "command": "Show me the kanban board",
+  "command": "{transcript}",
   "action": "navigate",
   "parameters": {{
-    "destination": "kanban"
+    "destination": "<matching destination>"
   }},
   "confidence": 0.95
 }}"""
 
-            debug("Processing command with AI...")
-            print("__TOOL_START__:{{\"tool\":\"claude_sdk\",\"action\":\"process_command\"}}")
-            
-            # Process with Claude SDK
-            response = await self.client.process_message_async(
-                system_prompt=system_prompt,
-                user_message=user_prompt
-            )
-            
-            print("__TOOL_END__:{{\"tool\":\"claude_sdk\"}}")
-            
-            # Parse the response
-            result = self._parse_ai_response(response.content, transcript)
-            debug_success(f"Command processed: {result['action']}")
-            
-            return result
-            
-        except Exception as e:
-            debug_error("VoiceControl", f"Error processing command: {e}")
-            return {
-                "transcript": transcript,
-                "command": transcript,
-                "action": "error",
-                "parameters": {},
-                "confidence": 0.0,
-                "error": str(e)
-            }
+    async def _process_with_ai(self, system_prompt: str, user_prompt: str) -> str:
+        """Process command with Claude SDK"""
+        debug("VoiceControl", "Processing command with AI...")
+        print("__TOOL_START__:{\"tool\":\"claude_sdk\",\"action\":\"process_command\"}")
+
+        # Create client and process
+        client = self._create_ai_client(system_prompt)
+        response_text = await self._get_ai_response(client, user_prompt)
+        
+        debug("VoiceControl", f"AI raw response: {response_text[:200]}")
+        print("__TOOL_END__:{\"tool\":\"claude_sdk\"}")
+        return response_text
+
+    def _create_ai_client(self, system_prompt: str) -> ClaudeSDKClient:
+        """Create and configure AI client for command classification (no thinking needed)"""
+        options = ClaudeAgentOptions(
+            model=self.model_id,
+            system_prompt=system_prompt,
+        )
+        return ClaudeSDKClient(options)
+
+    async def _get_ai_response(self, client: ClaudeSDKClient, user_prompt: str) -> str:
+        """Get response from AI client"""
+        response_text = ""
+        async with client:
+            await client.query(user_prompt)
+            async for msg in client.receive_response():
+                response_text += self._process_message(msg)
+        return response_text
+
+    def _process_message(self, msg) -> str:
+        """Process individual message from AI"""
+        msg_type = type(msg).__name__
+        
+        if msg_type == "AssistantMessage" and hasattr(msg, 'content'):
+            return self._process_assistant_message(msg)
+        elif msg_type == "ResultMessage" and hasattr(msg, 'result'):
+            return self._process_result_message(msg)
+        
+        return ""
+
+    def _process_assistant_message(self, msg) -> str:
+        """Process AssistantMessage content"""
+        text = ""
+        for block in msg.content:
+            if type(block).__name__ == "TextBlock" and hasattr(block, 'text'):
+                text += block.text
+        return text
+
+    def _process_result_message(self, msg) -> str:
+        """Process ResultMessage content"""
+        if isinstance(msg.result, str):
+            return msg.result
+        return ""
 
     def _build_system_prompt(self) -> str:
         """Build system prompt for command interpretation"""
-        base_prompt = """You are a voice command interpreter for WorkPilot AI, a development management tool.
-
-Your task is to interpret voice commands and extract structured information about the user's intent.
-
-Available actions:
-- "navigate": Navigate to a specific view/section
-- "create": Create something (task, project, etc.)
-- "show": Display information
-- "start": Initiate an action (build, process, etc.)
-- "open": Open a dialog or view
-- "help": Show help or information
-
-Common destinations:
-- "kanban": Kanban board view
-- "terminals": Terminal view
-- "analytics": Analytics dashboard
-- "settings": Settings dialog
-- "insights": Insights view
-- "roadmap": Roadmap view
-- "context": Project context
-- "code-review": Code review view
-- "documentation": Documentation view
-
-Always respond with valid JSON. If you cannot understand the command, set action to "unknown" and confidence low."""
+        base_prompt = "You are a voice command classifier for WorkPilot AI. Respond only with a JSON object, no explanation or markdown."
 
         if self.project_dir:
             base_prompt += f"\n\nCurrent project context: {self.project_dir}"
@@ -285,9 +340,9 @@ async def main():
     
     args = parser.parse_args()
     
-    # Validate authentication
-    token = ensure_claude_code_oauth_token()
-    if not token:
+    # Validate authentication (ensure_claude_code_oauth_token sets env as a side effect)
+    ensure_claude_code_oauth_token()
+    if not os.environ.get("CLAUDE_CODE_OAUTH_TOKEN") and not get_auth_token():
         debug_error("VoiceControl", "Authentication required. Please run: claude-code auth")
         sys.exit(1)
     
@@ -295,12 +350,12 @@ async def main():
     model_id = resolve_model_id(args.model)
     thinking_budget = get_thinking_budget(args.thinking_level)
     
-    debug_section("Voice Control")
-    debug(f"Model: {model_id}")
-    debug(f"Thinking budget: {thinking_budget}")
-    debug(f"Language: {args.language}")
+    debug_section("VoiceControl", "Voice Control")
+    debug("VoiceControl", f"Model: {model_id}")
+    debug("VoiceControl", f"Thinking budget: {thinking_budget}")
+    debug("VoiceControl", f"Language: {args.language}")
     if args.project_dir:
-        debug(f"Project: {args.project_dir}")
+        debug("VoiceControl", f"Project: {args.project_dir}")
     
     # Initialize processor
     processor = VoiceControlProcessor(
@@ -320,10 +375,10 @@ async def main():
             
             # Output structured result
             print(f"__VOICE_RESULT__:{json.dumps(result)}")
-            debug_success("Voice control completed")
+            debug_success("VoiceControl", "Voice control completed")
             
         except KeyboardInterrupt:
-            debug("Voice control interrupted")
+            debug("VoiceControl", "Voice control interrupted")
             sys.exit(0)
         except Exception as e:
             debug_error("VoiceControl", f"Voice control failed: {e}")

@@ -83,6 +83,14 @@ export function VoiceControlDialog({ onExecuteCommand }: VoiceControlDialogProps
     }
   }, [streamingOutput]);
 
+  // Auto-execute and close when result arrives with a known action
+  useEffect(() => {
+    if (phase === 'complete' && result && onExecuteCommand && result.action !== 'unknown' && result.action !== 'error') {
+      onExecuteCommand(result);
+      closeDialog();
+    }
+  }, [phase, result, onExecuteCommand, closeDialog]);
+
   const handleStartRecording = useCallback(() => {
     startRecording();
   }, []);

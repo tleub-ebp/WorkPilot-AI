@@ -26,26 +26,24 @@ import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '@/stores/settings-store';
 import { detectProvider, getProviderLabel, getProviderBadgeColor, type ApiProvider } from '@shared/utils/provider-detection';
 import { useProviderContext } from './ProviderContext';
+import { useClaudeProfileStore } from '@/stores/claude-profile-store';
 
 /**
- * Type-safe mapping from ApiProvider to translation keys
+ * Get subscription translation key based on subscription type
  */
-const PROVIDER_TRANSLATION_KEYS: Readonly<Partial<Record<ApiProvider, string>>> = {
-  anthropic: 'common:usage.providerAnthropic',
-  openai: 'common:usage.providerOpenAI',
-  ollama: 'common:usage.providerOllama',
-  ollama_local: 'common:usage.providerOllamaLocal',
-  copilot: 'common:usage.providerCopilot',
-  windsurf: 'common:usage.providerWindsurf',
-  google: 'common:usage.providerGoogle',
-  mistral: 'common:usage.providerMistral',
-  deepseek: 'common:usage.providerDeepSeek',
-  grok: 'common:usage.providerGrok',
-  meta: 'common:usage.providerMeta',
-  cursor: 'common:usage.providerCursor',
-  aws: 'common:usage.providerAWS',
-  unknown: 'common:usage.providerUnknown'
-} as const;
+function getSubscriptionTranslationKey(subscriptionType?: string): string {
+  if (!subscriptionType) return 'common:usage.claudeCodeSubscriptionUnknown';
+  
+  const normalizedType = subscriptionType.toLowerCase();
+  
+  if (normalizedType.includes('pro')) {
+    return 'common:usage.claudeCodeSubscriptionPro';
+  } else if (normalizedType.includes('max')) {
+    return 'common:usage.claudeCodeSubscriptionMax';
+  } else {
+    return 'common:usage.claudeCodeSubscriptionUnknown';
+  }
+}
 
 /**
  * OAuth fallback state when no API profile is active (e.g. Claude Code subscription)
@@ -74,6 +72,11 @@ export function AuthStatusIndicator() {
     usageInfo?: { usedMessages: number; totalMessages: number; usedFlowActions: number; totalFlowActions: number };
   } | null>(null);
   const [isLoadingWindsurfAccount, setIsLoadingWindsurfAccount] = useState(false);
+
+  // Get Claude subscription info from the profile store (populated from Keychain credentials)
+  const { profiles: claudeProfiles, activeProfileId: activeClaudeProfileId } = useClaudeProfileStore();
+  const activeClaudeProfile = claudeProfiles.find(p => p.id === activeClaudeProfileId);
+  const claudeSubscriptionType = activeClaudeProfile?.subscriptionType;
 
   // Subscribe to provider/profile change events
   useEffect(() => {
@@ -135,6 +138,7 @@ export function AuthStatusIndicator() {
       setIsLoadingWindsurfAccount(false);
     }
   }, [selectedProvider]);
+
 
   // Derive auth status purely from selectedProvider + profiles (no IPC calls)
   const authStatus = useMemo(() => {
@@ -423,7 +427,9 @@ export function AuthStatusIndicator() {
                     <Lock className="h-3 w-3" />
                     <span className="text-[10px]">{t('common:usage.subscription')}</span>
                   </div>
-                  <span className="font-medium text-[10px]">{t('common:usage.claudeCodeSubscription')}</span>
+                  <span className="font-medium text-[10px]">
+                    {t(getSubscriptionTranslationKey(claudeSubscriptionType))}
+                  </span>
                 </div>
               )}
 

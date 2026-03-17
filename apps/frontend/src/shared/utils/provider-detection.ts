@@ -107,8 +107,9 @@ export function detectProvider(baseUrl: string): ApiProvider {
 
     // No match found
     return 'unknown';
-  } catch (_error) {
-    // Invalid URL format
+  } catch (error) {
+    // Invalid URL format - log for debugging but return unknown
+    console.warn('Invalid URL format in provider detection:', error);
     return 'unknown';
   }
 }
