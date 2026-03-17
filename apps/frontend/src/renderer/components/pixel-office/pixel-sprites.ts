@@ -19,6 +19,8 @@ export const CHARACTER_PALETTES = [
 export const TILE_SIZE = 16;
 export const SPRITE_W = 16;
 export const SPRITE_H = 24;
+export const DESK_H = 14;   // Desk sprite height (compact, no tall legs)
+export const CHAIR_H = 6;   // Chair sprite height
 
 // ── Character sprite frames ──────────────────────────────────
 
@@ -124,40 +126,91 @@ export function getCharacterSprite(
   return canvas;
 }
 
-// ── Desk sprite ──────────────────────────────────────────────
+// ── Desk sprite (compact top-view, no tall legs) ─────────────
 
 export function getDeskSprite(): HTMLCanvasElement {
-  const key = 'desk';
+  const key = 'desk-v2';
   const cached = spriteCache.get(key);
   if (cached) return cached;
 
   const canvas = document.createElement('canvas');
   canvas.width = 32;
-  canvas.height = 24;
+  canvas.height = DESK_H; // 14px
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Could not get 2D context');
 
-  // Desk surface
-  ctx.fillStyle = '#8B6914';
-  ctx.fillRect(2, 4, 28, 3);
-  ctx.fillStyle = '#A07828';
-  ctx.fillRect(2, 2, 28, 2);
-
-  // Desk legs
+  // Table top surface (seen from slight angle)
+  ctx.fillStyle = '#C4922E'; // top highlight
+  ctx.fillRect(0, 0, 32, 1);
+  ctx.fillStyle = '#A07828'; // main surface
+  ctx.fillRect(0, 1, 32, 5);
+  // Front face of table (depth illusion)
+  ctx.fillStyle = '#7A5A10';
+  ctx.fillRect(0, 6, 32, 4);
+  // Bottom shadow
+  ctx.fillStyle = '#5A4208';
+  ctx.fillRect(0, 10, 32, 2);
+  // Short side supports (visible below table)
   ctx.fillStyle = '#6B5310';
-  ctx.fillRect(3, 7, 2, 16);
-  ctx.fillRect(27, 7, 2, 16);
+  ctx.fillRect(2, 10, 2, 4);
+  ctx.fillRect(28, 10, 2, 4);
 
-  // Monitor
-  ctx.fillStyle = '#2C2C3E';
-  ctx.fillRect(10, 0, 12, 2);
-  // Screen
-  ctx.fillStyle = '#1E90FF';
-  ctx.fillRect(11, 0, 10, 1);
+  // Monitor body
+  ctx.fillStyle = '#1E1E30';
+  ctx.fillRect(11, 0, 10, 5);
+  // Screen glow
+  ctx.fillStyle = '#1A5FD4';
+  ctx.fillRect(12, 0, 8, 4);
+  // Screen content lines
+  ctx.fillStyle = '#5DB8FF';
+  ctx.fillRect(13, 1, 5, 1);
+  ctx.fillStyle = '#4488CC';
+  ctx.fillRect(13, 3, 3, 1);
 
-  // Keyboard
+  // Keyboard on surface
+  ctx.fillStyle = '#484848';
+  ctx.fillRect(5, 2, 9, 2);
+  ctx.fillStyle = '#666';
+  for (let i = 0; i < 4; i++) {
+    ctx.fillRect(6 + i * 2, 2, 1, 1);
+  }
+
+  // Mouse
+  ctx.fillStyle = '#888';
+  ctx.fillRect(16, 2, 3, 2);
+  ctx.fillStyle = '#AAA';
+  ctx.fillRect(17, 2, 1, 1);
+
+  spriteCache.set(key, canvas);
+  return canvas;
+}
+
+// ── Chair sprite ──────────────────────────────────────────────
+
+export function getChairSprite(): HTMLCanvasElement {
+  const key = 'chair';
+  const cached = spriteCache.get(key);
+  if (cached) return cached;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 32;
+  canvas.height = CHAIR_H; // 6px
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Could not get 2D context');
+
+  // Chair seat
+  ctx.fillStyle = '#2A2A4E';
+  ctx.fillRect(7, 0, 18, 4);
+  // Seat highlight
+  ctx.fillStyle = '#3A3A6E';
+  ctx.fillRect(7, 0, 18, 1);
+  // Seat front edge
+  ctx.fillStyle = '#1A1A3A';
+  ctx.fillRect(7, 4, 18, 2);
+  // Chair legs (tiny)
   ctx.fillStyle = '#555';
-  ctx.fillRect(8, 3, 8, 1);
+  ctx.fillRect(8, 4, 2, 2);
+  ctx.fillRect(22, 4, 2, 2);
 
   spriteCache.set(key, canvas);
   return canvas;

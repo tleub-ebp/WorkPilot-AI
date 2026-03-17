@@ -1,9 +1,8 @@
 /**
  * Pixel Office — Main component wrapping the canvas + toolbar.
  *
- * Inspired by pixel-agents (https://github.com/pablodelucca/pixel-agents).
- * Each agent terminal becomes a pixel art character in an animated office.
- * Characters reflect real-time agent activity (typing, reading, waiting, idle).
+ * Each agent terminal AND active Kanban task appears as a pixel art character.
+ * Characters reflect real-time activity (typing, reading, waiting, idle).
  */
 
 import { useEffect, useCallback, useRef, useState } from 'react';
@@ -14,120 +13,199 @@ import {
   Users,
   Volume2,
   VolumeX,
-  Maximize2,
   Grid3X3,
+  LayoutDashboard,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
 import { useTerminalStore } from '../../stores/terminal-store';
+import { useTaskStore } from '../../stores/task-store';
 import { usePixelOfficeStore } from '../../stores/pixel-office-store';
 import { PixelOfficeCanvas } from './PixelOfficeCanvas';
-
-function getActivityColor(activity: string): string {
-  const colors: Record<string, string> = {
-    typing: '#4A90D9',
-    running: '#1ABC9C',
-    waiting: '#F39C12',
-    reading: '#27AE60',
-    exited: '#E74C3C',
-  };
-  return colors[activity] || '#6B7280';
-}
+import { AgentBubble, AddAgentButton } from './AgentBubble';
 
 interface PixelOfficeProps {
   readonly projectId: string;
+  readonly onNavigateToTerminals?: () => void;
+  readonly onNavigateToKanban?: () => void;
 }
 
-export function PixelOffice({ projectId }: PixelOfficeProps) {
+export function PixelOffice({ projectId, onNavigateToTerminals, onNavigateToKanban }: PixelOfficeProps) {
   useTranslation(['pixelOffice', 'common']);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
+  const [bubblePos, setBubblePos] = useState<{ x: number; y: number } | null>(null);
 
-  // Terminal store — source of truth for agents
-  const terminals = useTerminalStore((s) => s.terminals);
+  // ── Stores ──────────────────────────────────────────────────
+
+  const terminals      = useTerminalStore((s) => s.terminals);
   const setActiveTerminal = useTerminalStore((s) => s.setActiveTerminal);
+  const addTerminal    = useTerminalStore((s) => s.addTerminal);
+  const removeTerminal = useTerminalStore((s) => s.removeTerminal);
+  const canAddTerminal = useTerminalStore((s) => s.canAddTerminal);
 
-  // Pixel office store
-  const agents = usePixelOfficeStore((s) => s.agents);
+  const tasks     = useTaskStore((s) => s.tasks);
+  const selectTask = useTaskStore((s) => s.selectTask);
+
+  const agents          = usePixelOfficeStore((s) => s.agents);
   const selectedAgentId = usePixelOfficeStore((s) => s.selectedAgentId);
-  const settings = usePixelOfficeStore((s) => s.settings);
-  const syncFromTerminals = usePixelOfficeStore((s) => s.syncFromTerminals);
-  const selectAgent = usePixelOfficeStore((s) => s.selectAgent);
-  const updateSettings = usePixelOfficeStore((s) => s.updateSettings);
+  const settings        = usePixelOfficeStore((s) => s.settings);
+  const syncAll         = usePixelOfficeStore((s) => s.syncAll);
+  const selectAgent     = usePixelOfficeStore((s) => s.selectAgent);
+  const updateSettings  = usePixelOfficeStore((s) => s.updateSettings);
 
-  // Sync terminals → pixel agents
+  // ── Sync terminals + tasks → pixel agents ───────────────────
+
   useEffect(() => {
     const projectTerminals = terminals.filter(
       (t) => t.projectPath === projectId || !t.projectPath
     );
-    syncFromTerminals(projectTerminals);
-  }, [terminals, projectId, syncFromTerminals]);
+    const projectTasks = tasks.filter((t) => t.projectId === projectId);
+    syncAll(projectTerminals, projectTasks);
+  }, [terminals, tasks, projectId, syncAll]);
 
-  // Measure container
+  // ── Container resize ────────────────────────────────────────
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
-        setDimensions({ width: Math.floor(width), height: Math.floor(height) - 60 });
+        setDimensions({ width: Math.floor(width), height: Math.floor(height) - 52 });
       }
     });
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
-  // Handle agent click → select + switch terminal
+  // ── Bubble handlers ─────────────────────────────────────────
+
   const handleAgentClick = useCallback(
-    (agentId: string) => {
-      if (!agentId) {
-        selectAgent(null);
-        return;
-      }
+    (agentId: string, screenX: number, screenY: number) => {
+      if (!agentId) { selectAgent(null); setBubblePos(null); return; }
       selectAgent(agentId);
+      setBubblePos({ x: screenX, y: screenY });
     },
     [selectAgent]
   );
 
-  // Double-click to jump to terminal
+  const closeBubble = useCallback(() => {
+    selectAgent(null);
+    setBubblePos(null);
+  }, [selectAgent]);
+
+  // ── Terminal agent actions ───────────────────────────────────
+
   const handleGoToTerminal = useCallback(() => {
-    if (selectedAgentId) {
-      setActiveTerminal(selectedAgentId);
-    }
-  }, [selectedAgentId, setActiveTerminal]);
+    const agent = agents.find(a => a.id === selectedAgentId);
+    if (!agent || agent.type !== 'terminal') return;
+    setActiveTerminal(selectedAgentId!);
+    onNavigateToTerminals?.();
+    closeBubble();
+  }, [agents, selectedAgentId, setActiveTerminal, onNavigateToTerminals, closeBubble]);
 
-  const handleZoomIn = () => updateSettings({ zoom: Math.min(settings.zoom + 1, 6) });
+  const handleKill = useCallback(async () => {
+    if (!selectedAgentId) return;
+    closeBubble();
+    await globalThis.electronAPI.destroyTerminal(selectedAgentId);
+    removeTerminal(selectedAgentId);
+  }, [selectedAgentId, removeTerminal, closeBubble]);
+
+  const handleInterrupt = useCallback(() => {
+    if (!selectedAgentId) return;
+    globalThis.electronAPI.sendTerminalInput(selectedAgentId, '\x03');
+  }, [selectedAgentId]);
+
+  const handleResumeClaude = useCallback(() => {
+    if (!selectedAgentId) return;
+    globalThis.electronAPI.invokeClaudeInTerminal(selectedAgentId);
+  }, [selectedAgentId]);
+
+  const handleSendCommand = useCallback((cmd: string) => {
+    if (!selectedAgentId) return;
+    globalThis.electronAPI.sendTerminalInput(selectedAgentId, cmd + '\n');
+  }, [selectedAgentId]);
+
+  // ── Task agent actions ───────────────────────────────────────
+
+  const handleGoToTask = useCallback(() => {
+    const agent = agents.find(a => a.id === selectedAgentId);
+    if (!agent?.taskId) return;
+    selectTask(agent.taskId);
+    onNavigateToKanban?.();
+    closeBubble();
+  }, [agents, selectedAgentId, selectTask, onNavigateToKanban, closeBubble]);
+
+  const handleStopTask = useCallback(() => {
+    const agent = agents.find(a => a.id === selectedAgentId);
+    if (!agent?.taskId) return;
+    globalThis.electronAPI.stopTask(agent.taskId);
+    closeBubble();
+  }, [agents, selectedAgentId, closeBubble]);
+
+  // ── New terminal ─────────────────────────────────────────────
+
+  const handleAddAgent = useCallback(async () => {
+    const cwd = terminals.find((t) => t.projectPath === projectId)?.cwd;
+    const newTerminal = addTerminal(cwd, projectId);
+    if (!newTerminal) return;
+    await globalThis.electronAPI.createTerminal({
+      id: newTerminal.id,
+      cwd: newTerminal.cwd,
+      projectPath: projectId,
+    });
+  }, [terminals, projectId, addTerminal]);
+
+  // ── Zoom / grid / sound ──────────────────────────────────────
+
+  const handleZoomIn  = () => updateSettings({ zoom: Math.min(settings.zoom + 1, 6) });
   const handleZoomOut = () => updateSettings({ zoom: Math.max(settings.zoom - 1, 1) });
-  const toggleSound = () => updateSettings({ soundEnabled: !settings.soundEnabled });
-  const toggleGrid = () => updateSettings({ showGrid: !settings.showGrid });
+  const toggleSound   = () => updateSettings({ soundEnabled: !settings.soundEnabled });
+  const toggleGrid    = () => updateSettings({ showGrid: !settings.showGrid });
 
-  const selectedAgent = agents.find((a) => a.id === selectedAgentId);
-  const activeCount = agents.filter((a) => a.activity !== 'idle' && a.activity !== 'exited').length;
+  // ── Derived state ────────────────────────────────────────────
+
+  const selectedAgent   = agents.find(a => a.id === selectedAgentId);
+  const selectedTerminal = selectedAgent?.type === 'terminal'
+    ? terminals.find(t => t.id === selectedAgentId)
+    : undefined;
+
+  const terminalCount = agents.filter(a => a.type === 'terminal').length;
+  const taskCount     = agents.filter(a => a.type === 'task').length;
+  const activeCount   = agents.filter(a => a.activity !== 'idle' && a.activity !== 'exited').length;
 
   return (
     <div ref={containerRef} className="flex flex-col h-full overflow-hidden">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-background/80 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-bold tracking-tight" style={{ fontFamily: '"Courier New", monospace' }}>
-              🏢 Pixel Office
-            </span>
-            <Badge variant="secondary" className="font-mono text-xs">
-              <Users className="h-3 w-3 mr-1" />
-              {agents.length} {agents.length === 1 ? 'agent' : 'agents'}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-background/80 backdrop-blur-sm shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="text-base font-bold tracking-tight font-mono">🏢 Pixel Office</span>
+
+          {terminalCount > 0 && (
+            <Badge variant="secondary" className="font-mono text-xs gap-1">
+              <Users className="h-3 w-3" />
+              {terminalCount} terminal{terminalCount > 1 ? 'x' : ''}
             </Badge>
-            {activeCount > 0 && (
-              <Badge variant="default" className="font-mono text-xs bg-emerald-600">
-                {activeCount} active
-              </Badge>
-            )}
-          </div>
+          )}
+          {taskCount > 0 && (
+            <Badge variant="secondary" className="font-mono text-xs gap-1 border-orange-500/40 text-orange-400">
+              <LayoutDashboard className="h-3 w-3" />
+              {taskCount} tâche{taskCount > 1 ? 's' : ''}
+            </Badge>
+          )}
+          {activeCount > 0 && (
+            <Badge variant="default" className="font-mono text-xs bg-emerald-600">
+              {activeCount} actif{activeCount > 1 ? 's' : ''}
+            </Badge>
+          )}
         </div>
 
         <div className="flex items-center gap-1">
+          <AddAgentButton onClick={handleAddAgent} disabled={!canAddTerminal(projectId)} />
+          <div className="w-px h-5 bg-border mx-1" />
+
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomOut}>
@@ -164,11 +242,7 @@ export function PixelOffice({ projectId }: PixelOfficeProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleSound}>
-                {settings.soundEnabled ? (
-                  <Volume2 className="h-4 w-4" />
-                ) : (
-                  <VolumeX className="h-4 w-4" />
-                )}
+                {settings.soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
               </Button>
             </TooltipTrigger>
             <TooltipContent>Toggle Sound</TooltipContent>
@@ -181,56 +255,52 @@ export function PixelOffice({ projectId }: PixelOfficeProps) {
         {agents.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center gap-4 px-8">
             <div className="text-6xl">🏢</div>
-            <h2 className="text-xl font-bold text-white/80" style={{ fontFamily: '"Courier New", monospace' }}>
-              Your office is empty
-            </h2>
+            <h2 className="text-xl font-bold text-white/80 font-mono">Votre bureau est vide</h2>
             <p className="text-sm text-white/50 max-w-md">
-              Open agent terminals to see your AI workers appear at their desks.
-              Each terminal becomes a character with live activity tracking.
+              Démarrez une tâche dans le Kanban ou ouvrez des terminaux pour voir vos agents IA
+              apparaître à leurs bureaux avec un suivi d'activité en direct.
             </p>
+            <AddAgentButton onClick={handleAddAgent} disabled={!canAddTerminal(projectId)} />
           </div>
         ) : (
-          <PixelOfficeCanvas
-            width={dimensions.width}
-            height={dimensions.height}
-            onAgentClick={handleAgentClick}
-          />
+          <>
+            <PixelOfficeCanvas
+              width={dimensions.width}
+              height={dimensions.height}
+              onAgentClick={handleAgentClick}
+            />
+
+            {/* Backdrop */}
+            {selectedAgent && bubblePos && (
+              <button
+                type="button"
+                aria-label="Fermer la bulle"
+                className="absolute inset-0 cursor-default bg-transparent border-0 p-0"
+                style={{ zIndex: 40 }}
+                onClick={closeBubble}
+              />
+            )}
+
+            {/* Speech bubble overlay */}
+            {selectedAgent && bubblePos && (
+              <AgentBubble
+                agent={selectedAgent}
+                terminal={selectedTerminal}
+                anchorX={bubblePos.x}
+                anchorY={bubblePos.y}
+                onClose={closeBubble}
+                onGoToTerminal={handleGoToTerminal}
+                onGoToTask={handleGoToTask}
+                onKill={handleKill}
+                onInterrupt={handleInterrupt}
+                onResumeClaude={handleResumeClaude}
+                onSendCommand={handleSendCommand}
+                onStopTask={handleStopTask}
+              />
+            )}
+          </>
         )}
       </div>
-
-      {/* Agent detail panel (bottom strip) */}
-      {selectedAgent && (
-        <div className="border-t border-border bg-background/95 backdrop-blur-sm px-4 py-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: getActivityColor(selectedAgent.activity) }}
-                />
-                <span className="font-mono font-bold text-sm">{selectedAgent.name}</span>
-              </div>
-              <Badge variant="outline" className="font-mono text-xs capitalize">
-                {selectedAgent.activity}
-              </Badge>
-              {selectedAgent.isClaudeMode && (
-                <Badge variant="secondary" className="font-mono text-xs">
-                  Claude Mode
-                </Badge>
-              )}
-              {selectedAgent.taskName && (
-                <Badge variant="outline" className="font-mono text-xs">
-                  📋 {selectedAgent.taskName}
-                </Badge>
-              )}
-            </div>
-            <Button variant="outline" size="sm" onClick={handleGoToTerminal}>
-              <Maximize2 className="h-3.5 w-3.5 mr-1.5" />
-              Go to Terminal
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

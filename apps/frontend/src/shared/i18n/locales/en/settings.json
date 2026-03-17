@@ -303,6 +303,38 @@
       "status": "Status",
       "nextRun": "Next Run"
     },
+    "settings": {
+      "title": "Scheduler Settings",
+      "description": "Global configuration for the background task scheduler.",
+      "autoStart": {
+        "label": "Auto-start scheduler",
+        "description": "Start the scheduler daemon when the app launches"
+      },
+      "checkInterval": {
+        "label": "Check interval (seconds)",
+        "description": "How often the scheduler checks for due tasks"
+      }
+    },
+    "chains": {
+      "title": "Task Chains",
+      "description": "Sequential task pipelines. When one task completes, the next starts automatically. Optionally stop on error.",
+      "noChains": "No task chains configured"
+    },
+    "cronReference": {
+      "title": "Cron Expression Reference",
+      "description": "Standard 5-field POSIX cron syntax: minute hour day-of-month month day-of-week",
+      "table": {
+        "expression": "Expression",
+        "description": "Description"
+      },
+      "examples": {
+        "daily": "Every day at 22:00",
+        "every15min": "Every 15 minutes",
+        "weekly": "Every Monday at 03:00",
+        "monthly": "First day of each month at midnight",
+        "workHours": "Every hour, Mon-Fri, 9 AM to 5 PM"
+      }
+    },
     "addButton": "Add Profile",
     "presets": {
       "anthropic": "Anthropic (Claude)",
@@ -500,7 +532,16 @@
     "dark": "Dark",
     "system": "System",
     "colorTheme": "Color Theme",
-    "colorThemeDescription": "Choose your preferred color palette"
+    "colorThemeDescription": "Choose your preferred color palette",
+    "colorThemes": {
+      "default": "Oscura-inspired with pale yellow accent",
+      "dusk": "Warmer variant with slightly lighter dark mode",
+      "lime": "Fresh and energetic lime with purple accents",
+      "ocean": "Calm and professional blue tones",
+      "retro": "Warm and nostalgic amber atmospheres",
+      "neo": "Modern cyberpunk pink/magenta",
+      "forest": "Natural and earthy green tones"
+    }
   },
   "devtools": {
     "title": "Developer Tools",
@@ -1218,7 +1259,21 @@
     "title": "Agent Profile",
     "sectionDescription": "Configure agent behavior profile and thinking levels",
     "profilesInfo": "Configure the model used for each pipeline phase. Settings are saved per provider and will be restored when you switch back to this provider.",
+    "profilesInfoProvider": "Configure the models and thinking levels for each pipeline phase. These settings are specific to the {{provider}} provider and will be restored when you switch back.",
+    "customized": "Customized",
     "thinking": "Thinking",
+    "activeProvider": "Active provider: {{provider}}",
+    "flagshipModel": "Flagship model: {{model}}",
+    "model": "Model",
+    "selectModel": "Select a model",
+    "customModelPlaceholder": "Enter model name (e.g. llama3.3:latest)",
+    "thinkingLevel": "Thinking Level",
+    "tierFlagship": "Flagship",
+    "supportsThinking": "Thinking",
+    "phaseConfigNote": "These model settings apply to your Claude account. You can customize them per phase or reset to your profile defaults.",
+    "phaseConfigNoteProvider": "These model settings apply to the {{provider}} provider. They are saved independently and restored when you switch back to this provider.",
+    "resetToProfileDefaults": "Reset to {{profile}} defaults",
+    "resetToProviderDefaults": "Reset to provider defaults",
     "phaseConfiguration": "Phase Configuration",
     "phaseConfigurationDescription": "Configure models and thinking levels for each development pipeline phase",
     "phases": {
@@ -1233,6 +1288,10 @@
       "coding": {
         "label": "Coding",
         "description": "Actual code implementation"
+      },
+      "qa": {
+        "label": "QA Review",
+        "description": "Quality assurance and validation"
       }
     }
   },
@@ -1630,6 +1689,47 @@
   "extensionNotInstalled": "Extension not installed",
   "gitHubCliNotFoundShort": "GitHub CLI not found",
   "checking": "Checking...",
-  "error": "Error"
+  "error": "Error",
+  "llmRouter": {
+    "title": "LLM Router",
+    "description": "Configure intelligent provider routing with fallback chains, A/B testing, and strategy-based selection.",
+    "routingStrategy": {
+      "title": "Default Routing Strategy",
+      "description": "How the router selects a provider when multiple are available.",
+      "bestPerformance": "Best Performance",
+      "bestPerformanceDescription": "Prioritize quality score",
+      "cheapest": "Cheapest",
+      "cheapestDescription": "Minimize cost per task",
+      "lowestLatency": "Lowest Latency",
+      "lowestLatencyDescription": "Fastest response time",
+      "roundRobin": "Round Robin",
+      "roundRobinDescription": "Distribute evenly"
+    },
+    "registeredProviders": {
+      "title": "Registered Providers",
+      "description": "Providers available for routing. Configure accounts in Settings > Accounts.",
+      "table": {
+        "providerModel": "Provider / Model",
+        "capabilities": "Capabilities",
+        "priority": "Priority",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active",
+        "disabled": "Disabled",
+        "local": "local"
+      }
+    },
+    "fallbackChains": {
+      "title": "Fallback Chains",
+      "description": "If the primary provider is rate-limited or unavailable, the router automatically falls back to the next in the chain."
+    },
+    "abTesting": {
+      "title": "A/B Testing",
+      "description": "Compare two providers on the same task type. The router alternates between them and tracks quality, latency, and cost.",
+      "noActiveTests": "No active A/B tests",
+      "createTest": "Create a test from the Command Palette or from the task detail view."
+    }
+  }
 }
 }

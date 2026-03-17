@@ -300,6 +300,50 @@
       "title": "Mises à jour"
     }
   },
+  "tasks": {
+    "title": "Tâches Planifiées",
+    "description": "Tâches récurrentes et ponctuelles gérées par le planificateur.",
+    "addTask": "Ajouter une Tâche",
+    "table": {
+      "task": "Tâche",
+      "cron": "Cron",
+      "priority": "Priorité",
+      "status": "Statut",
+      "nextRun": "Prochaine Exécution"
+    },
+    "settings": {
+      "title": "Paramètres du Planificateur",
+      "description": "Configuration globale pour le planificateur de tâches en arrière-plan.",
+      "autoStart": {
+        "label": "Démarrage automatique du planificateur",
+        "description": "Démarrer le démon du planificateur au lancement de l'application"
+      },
+      "checkInterval": {
+        "label": "Intervalle de vérification (secondes)",
+        "description": "Fréquence à laquelle le planificateur vérifie les tâches à exécuter"
+      }
+    },
+    "chains": {
+      "title": "Chaînes de Tâches",
+      "description": "Pipelines de tâches séquentielles. Quand une tâche se termine, la suivante démarre automatiquement. Optionnellement s'arrêter en cas d'erreur.",
+      "noChains": "Aucune chaîne de tâches configurée"
+    },
+    "cronReference": {
+      "title": "Référence des Expressions Cron",
+      "description": "Syntaxe cron POSIX standard à 5 champs : minute heure jour-du-mois mois jour-de-la-semaine",
+      "table": {
+        "expression": "Expression",
+        "description": "Description"
+      },
+      "examples": {
+        "daily": "Tous les jours à 22:00",
+        "every15min": "Toutes les 15 minutes",
+        "weekly": "Tous les lundis à 03:00",
+        "monthly": "Premier jour de chaque mois à minuit",
+        "workHours": "Toutes les heures, lun-ven, 9h à 17h"
+      }
+    }
+  },
   "accounts": {
     "alerts": {
       "authPrepareFailed": "Échec de la préparation de l'authentification : {{error}}",
@@ -495,7 +539,21 @@
     "title": "Profil d'Agent",
     "sectionDescription": "Configurez le profil de comportement et les niveaux de réflexion de l'agent",
     "profilesInfo": "Configurez le modèle utilisé pour chaque phase du pipeline. Les paramètres sont sauvegardés par fournisseur et seront restaurés lorsque vous revenez à ce fournisseur.",
+    "profilesInfoProvider": "Configurez les modèles et niveaux de réflexion pour chaque phase du pipeline. Ces paramètres sont spécifiques au fournisseur {{provider}} et seront restaurés lorsque vous reviendrez à ce fournisseur.",
+    "customized": "Personnalisé",
     "thinking": "Réflexion",
+    "activeProvider": "Fournisseur actif : {{provider}}",
+    "flagshipModel": "Modèle phare : {{model}}",
+    "model": "Modèle",
+    "selectModel": "Sélectionner un modèle",
+    "customModelPlaceholder": "Entrez le nom du modèle (ex : llama3.3:latest)",
+    "thinkingLevel": "Niveau de Réflexion",
+    "tierFlagship": "Phare",
+    "supportsThinking": "Réflexion",
+    "phaseConfigNote": "Ces paramètres de modèle s'appliquent à votre compte Claude. Vous pouvez les personnaliser par phase ou réinitialiser aux valeurs par défaut du profil.",
+    "phaseConfigNoteProvider": "Ces paramètres de modèle s'appliquent au fournisseur {{provider}}. Ils sont sauvegardés indépendamment et restaurés lorsque vous revenez à ce fournisseur.",
+    "resetToProfileDefaults": "Réinitialiser aux valeurs par défaut de {{profile}}",
+    "resetToProviderDefaults": "Réinitialiser aux valeurs par défaut du fournisseur",
     "phaseConfiguration": "Configuration des Phases",
     "phaseConfigurationDescription": "Configurez les modèles et les niveaux de réflexion pour chaque phase du pipeline de développement",
     "phases": {
@@ -510,6 +568,10 @@
       "coding": {
         "label": "Codage",
         "description": "Implémentation réelle du code"
+      },
+      "qa": {
+        "label": "Revue QA",
+        "description": "Assurance qualité et validation"
       }
     }
   },
@@ -1611,7 +1673,16 @@
     "mode": "Mode",
     "modeDescription": "Choisir entre les thèmes clair et sombre",
     "system": "Système",
-    "title": "Apparence"
+    "title": "Apparence",
+    "colorThemes": {
+      "default": "Inspiré par Oscura avec accent jaune pâle",
+      "dusk": "Variante plus chaude avec mode sombre légèrement plus clair",
+      "lime": "Lime frais et énergique avec accents violets",
+      "ocean": "Tons bleus calmes et professionnels",
+      "retro": "Ambiances ambrées chaleureuses et nostalgiques",
+      "neo": "Rose/magenta cyberpunk moderne",
+      "forest": "Tons verts naturels et terreux"
+    }
   },
   "updates": {
     "appUpdateReady": "Mise à jour prête",
@@ -1691,5 +1762,46 @@
     "gitHubCliNotFoundShort": "GitHub CLI introuvable",
     "checking": "Vérification...",
     "error": "Erreur"
+  },
+  "llmRouter": {
+    "title": "Routeur LLM",
+    "description": "Configurez le routage intelligent des fournisseurs avec chaînes de secours, tests A/B et sélection basée sur la stratégie.",
+    "routingStrategy": {
+      "title": "Stratégie de Routage par Défaut",
+      "description": "Comment le routeur sélectionne un fournisseur lorsque plusieurs sont disponibles.",
+      "bestPerformance": "Meilleure Performance",
+      "bestPerformanceDescription": "Priorité au score de qualité",
+      "cheapest": "Le Moins Cher",
+      "cheapestDescription": "Minimiser le coût par tâche",
+      "lowestLatency": "Plus Faible Latence",
+      "lowestLatencyDescription": "Temps de réponse le plus rapide",
+      "roundRobin": "Round Robin",
+      "roundRobinDescription": "Distribution équitable"
+    },
+    "registeredProviders": {
+      "title": "Fournisseurs Enregistrés",
+      "description": "Fournisseurs disponibles pour le routage. Configurez les comptes dans Paramètres > Comptes.",
+      "table": {
+        "providerModel": "Fournisseur / Modèle",
+        "capabilities": "Capacités",
+        "priority": "Priorité",
+        "status": "Statut"
+      },
+      "status": {
+        "active": "Actif",
+        "disabled": "Désactivé",
+        "local": "local"
+      }
+    },
+    "fallbackChains": {
+      "title": "Chaînes de Secours",
+      "description": "Si le fournisseur principal est limité en débit ou indisponible, le routeur bascule automatiquement vers le suivant dans la chaîne."
+    },
+    "abTesting": {
+      "title": "Tests A/B",
+      "description": "Comparez deux fournisseurs sur le même type de tâche. Le routeur alterne entre eux et suit la qualité, la latence et le coût.",
+      "noActiveTests": "Aucun test A/B actif",
+      "createTest": "Créez un test depuis la Palette de Commandes ou depuis la vue de détail de la tâche."
+    }
   }
 }

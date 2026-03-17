@@ -129,7 +129,7 @@ export function ThemeSelector({ settings, onSettingsChange }: ThemeSelectorProps
                 {/* Theme info */}
                 <div className="space-y-1">
                   <p className="font-medium text-sm text-foreground">{theme.name}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{theme.description}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{t(`theme.colorThemes.${theme.id}`) || theme.description}</p>
                 </div>
               </button>
             );

@@ -1081,7 +1081,11 @@ export function App() {
                         <AgentReplayDashboard />
                     )}
                     {activeView === 'pixel-office' && (
-                        <PixelOffice projectId={selectedProject?.path || ''} />
+                        <PixelOffice
+                          projectId={selectedProject?.path || ''}
+                          onNavigateToTerminals={() => setActiveView('terminals')}
+                          onNavigateToKanban={() => setActiveView('kanban')}
+                        />
                     )}
                     {activeView === 'self-healing' && (activeProjectId || selectedProjectId) && (
                         <SelfHealingDashboard />

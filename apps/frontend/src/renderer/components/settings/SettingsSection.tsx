@@ -1,9 +1,9 @@
 import { Separator } from '../ui/separator';
 
 interface SettingsSectionProps {
-  title: string;
-  description: string;
-  children: React.ReactNode;
+  readonly title: string;
+  readonly description: string;
+  readonly children: React.ReactNode;
 }
 
 /**

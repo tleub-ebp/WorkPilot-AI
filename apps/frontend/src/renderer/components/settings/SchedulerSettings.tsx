@@ -53,24 +53,24 @@ export function SchedulerSettings() {
 
   return (
     <SettingsSection
-      title={t('sections.scheduler.title')}
-      description={t('sections.scheduler.description')}
+      title={t('tasks.title')}
+      description={t('tasks.description')}
     >
       <div className="space-y-8">
         {/* Global Settings */}
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <CalendarClock className="h-4 w-4 text-primary" />
-            {t('sections.scheduler.settings.title')}
+            {t('tasks.settings.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            {t('sections.scheduler.settings.description')}
+            {t('tasks.settings.description')}
           </p>
           <div className="space-y-4">
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <div>
-                <p className="text-sm font-medium">{t('sections.scheduler.settings.autoStart.label')}</p>
-                <p className="text-xs text-muted-foreground">{t('sections.scheduler.settings.autoStart.description')}</p>
+                <p className="text-sm font-medium">{t('tasks.settings.autoStart.label')}</p>
+                <p className="text-xs text-muted-foreground">{t('tasks.settings.autoStart.description')}</p>
               </div>
               <button
                 onClick={() => setAutoStart(!autoStart)}
@@ -87,7 +87,7 @@ export function SchedulerSettings() {
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-muted-foreground">{t('sections.scheduler.settings.checkInterval.label')}</label>
+                <label className="text-xs font-medium text-muted-foreground">{t('tasks.settings.checkInterval.label')}</label>
                 <span className="text-xs font-mono tabular-nums text-foreground">{checkInterval}s</span>
               </div>
               <input
@@ -96,7 +96,7 @@ export function SchedulerSettings() {
                 onChange={(e) => setCheckInterval(Number(e.target.value))}
                 className="w-full accent-primary"
               />
-              <p className="text-[10px] text-muted-foreground">{t('sections.scheduler.settings.checkInterval.description')}</p>
+              <p className="text-[10px] text-muted-foreground">{t('tasks.settings.checkInterval.description')}</p>
             </div>
           </div>
         </div>
@@ -106,25 +106,25 @@ export function SchedulerSettings() {
           <div className="flex items-center justify-between mb-1">
             <h4 className="text-sm font-semibold flex items-center gap-2">
               <Play className="h-4 w-4 text-primary" />
-              {t('sections.scheduler.tasks.title')}
+              {t('tasks.title')}
             </h4>
             <button className="flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground">
               <Plus className="h-3 w-3" />
-              {t('sections.scheduler.tasks.addTask')}
+              {t('tasks.addTask')}
             </button>
           </div>
           <p className="text-xs text-muted-foreground mb-3">
-            {t('sections.scheduler.tasks.description')}
+            {t('tasks.description')}
           </p>
           <div className="rounded-md border border-border overflow-hidden">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('sections.scheduler.tasks.table.task')}</th>
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('sections.scheduler.tasks.table.cron')}</th>
-                  <th className="text-center px-3 py-2 font-medium text-muted-foreground">{t('sections.scheduler.tasks.table.priority')}</th>
-                  <th className="text-center px-3 py-2 font-medium text-muted-foreground">{t('sections.scheduler.tasks.table.status')}</th>
-                  <th className="text-right px-3 py-2 font-medium text-muted-foreground">{t('sections.scheduler.tasks.table.nextRun')}</th>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('tasks.table.task')}</th>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('tasks.table.cron')}</th>
+                  <th className="text-center px-3 py-2 font-medium text-muted-foreground">{t('tasks.table.priority')}</th>
+                  <th className="text-center px-3 py-2 font-medium text-muted-foreground">{t('tasks.table.status')}</th>
+                  <th className="text-right px-3 py-2 font-medium text-muted-foreground">{t('tasks.table.nextRun')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -150,10 +150,10 @@ export function SchedulerSettings() {
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <Link2 className="h-4 w-4 text-primary" />
-            {t('sections.scheduler.chains.title')}
+            {t('tasks.chains.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            {t('sections.scheduler.chains.description')}
+            {t('tasks.chains.description')}
           </p>
           <div className="space-y-3">
             {chains.map((chain) => (
@@ -188,7 +188,7 @@ export function SchedulerSettings() {
             {chains.length === 0 && (
               <div className="rounded-md border border-dashed border-border bg-muted/20 p-6 text-center">
                 <Link2 className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">{t('sections.scheduler.chains.noChains')}</p>
+                <p className="text-sm text-muted-foreground">{t('tasks.chains.noChains')}</p>
               </div>
             )}
           </div>
@@ -198,26 +198,26 @@ export function SchedulerSettings() {
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-primary" />
-            {t('sections.scheduler.cronReference.title')}
+            {t('tasks.cronReference.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            {t('sections.scheduler.cronReference.description')}
+            {t('tasks.cronReference.description')}
           </p>
           <div className="rounded-md border border-border overflow-hidden">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('sections.scheduler.cronReference.table.expression')}</th>
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('sections.scheduler.cronReference.table.description')}</th>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('tasks.cronReference.table.expression')}</th>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('tasks.cronReference.table.description')}</th>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  { expr: '0 22 * * *', desc: t('sections.scheduler.cronReference.examples.daily') },
-                  { expr: '*/15 * * * *', desc: t('sections.scheduler.cronReference.examples.every15min') },
-                  { expr: '0 3 * * 1', desc: t('sections.scheduler.cronReference.examples.weekly') },
-                  { expr: '0 0 1 * *', desc: t('sections.scheduler.cronReference.examples.monthly') },
-                  { expr: '0 9-17 * * 1-5', desc: t('sections.scheduler.cronReference.examples.workHours') },
+                  { expr: '0 22 * * *', desc: t('tasks.cronReference.examples.daily') },
+                  { expr: '*/15 * * * *', desc: t('tasks.cronReference.examples.every15min') },
+                  { expr: '0 3 * * 1', desc: t('tasks.cronReference.examples.weekly') },
+                  { expr: '0 0 1 * *', desc: t('tasks.cronReference.examples.monthly') },
+                  { expr: '0 9-17 * * 1-5', desc: t('tasks.cronReference.examples.workHours') },
                 ].map((row, index) => (
                   <tr key={`cron-${row.expr}`} className="border-b border-border last:border-0">
                     <td className="px-3 py-1.5 font-mono">{row.expr}</td>

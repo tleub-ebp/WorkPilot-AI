@@ -6,16 +6,19 @@
  */
 
 import { useRef, useEffect, useCallback } from 'react';
-import { usePixelOfficeStore, type AgentActivity } from '../../stores/pixel-office-store';
+import { usePixelOfficeStore, type AgentActivity, type PixelAgent } from '../../stores/pixel-office-store';
 import {
   getCharacterSprite,
   getDeskSprite,
+  getChairSprite,
   getFloorTile,
   getWallTile,
   getActivityIcon,
   drawSpeechBubble,
   TILE_SIZE,
   SPRITE_H,
+  DESK_H,
+  CHAIR_H,
   type ActivityIcon,
 } from './pixel-sprites';
 
@@ -23,14 +26,62 @@ import {
 
 const OFFICE_COLS = 24;
 const OFFICE_ROWS = 16;
-const DESK_SPACING_X = 5;  // tiles between desk columns
-const DESK_SPACING_Y = 4;  // tiles between desk rows
-const DESK_START_X = 3;    // first desk column offset
-const DESK_START_Y = 3;    // first desk row offset
+const DESK_SPACING_X = 5;
+const DESK_SPACING_Y = 5;
+const DESK_START_X = 3;
+const DESK_START_Y = 2;
 const DESKS_PER_ROW = 4;
 const MAX_DESK_ROWS = 3;
 
-// ── Helpers ──────────────────────────────────────────────────
+const CHAR_OFFSET_Y = (DESK_H + CHAIR_H) / TILE_SIZE;
+
+// ── Activity config ───────────────────────────────────────────
+
+const ACTIVITY_COLORS: Record<string, string> = {
+  typing:  '#4A90D9',
+  running: '#1ABC9C',
+  waiting: '#F39C12',
+  reading: '#27AE60',
+  exited:  '#E74C3C',
+  idle:    '#6B7280',
+};
+
+interface AgentVisual {
+  color: string;
+  isActive: boolean;
+  isWaiting: boolean;
+  isIdle: boolean;
+  bounceY: number;
+}
+
+function getAgentVisual(activity: AgentActivity, frame: number, z: number): AgentVisual {
+  const color = ACTIVITY_COLORS[activity] ?? '#6B7280';
+  const isActive  = activity === 'typing' || activity === 'running' || activity === 'reading';
+  const isWaiting = activity === 'waiting';
+  const isIdle    = activity === 'idle'   || activity === 'exited';
+
+  let bounceY = 0;
+  if (activity === 'typing')       bounceY = Math.sin(frame * 0.35) * 1.2 * z;
+  else if (activity === 'running') bounceY = Math.abs(Math.sin(frame * 0.25)) * -1.5 * z;
+  else if (isWaiting)              bounceY = Math.sin(frame * 0.08) * 0.8 * z;
+
+  return { color, isActive, isWaiting, isIdle, bounceY };
+}
+
+function activityToDirection(activity: AgentActivity): 'down' | 'up' {
+  if (activity === 'typing' || activity === 'reading' || activity === 'running') return 'up';
+  return 'down';
+}
+
+function activityToIcon(activity: AgentActivity): ActivityIcon {
+  switch (activity) {
+    case 'typing':  return 'typing';
+    case 'reading': return 'reading';
+    case 'running': return 'running';
+    case 'waiting': return 'waiting';
+    default:        return 'idle';
+  }
+}
 
 function getDeskPosition(seatIndex: number): { x: number; y: number } {
   const col = seatIndex % DESKS_PER_ROW;
@@ -41,19 +92,163 @@ function getDeskPosition(seatIndex: number): { x: number; y: number } {
   };
 }
 
-function activityToDirection(activity: AgentActivity): 'down' | 'up' {
-  if (activity === 'typing' || activity === 'reading' || activity === 'running') return 'up';
-  return 'down';
+// ── Per-agent drawing helpers ─────────────────────────────────
+
+function drawActivityGlow(
+  ctx: CanvasRenderingContext2D,
+  cx: number, cy: number,
+  color: string, isWaiting: boolean,
+  z: number, frame: number
+) {
+  const pulse = isWaiting
+    ? 0.18 + Math.sin(frame * 0.07) * 0.1
+    : 0.22 + Math.sin(frame * 0.18) * 0.08;
+  ctx.save();
+  ctx.globalAlpha = pulse;
+  const grad = ctx.createRadialGradient(cx + 8 * z, cy + 20 * z, 0, cx + 8 * z, cy + 20 * z, 16 * z);
+  grad.addColorStop(0, color);
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.ellipse(cx + 8 * z, cy + 22 * z, 14 * z, 6 * z, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 }
 
-function activityToIcon(activity: AgentActivity): ActivityIcon {
-  switch (activity) {
-    case 'typing': return 'typing';
-    case 'reading': return 'reading';
-    case 'running': return 'running';
-    case 'waiting': return 'waiting';
-    default: return 'idle';
+function drawMonitorGlow(
+  ctx: CanvasRenderingContext2D,
+  dx: number, dy: number,
+  color: string, z: number, frame: number
+) {
+  ctx.save();
+  ctx.globalAlpha = 0.25 + Math.sin(frame * 0.22) * 0.12;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(dx + 10 * z, dy, 12 * z, 5 * z, 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawAgentLabel(
+  ctx: CanvasRenderingContext2D,
+  agent: PixelAgent, cx: number, cy: number,
+  color: string, isIdle: boolean, isSelected: boolean,
+  z: number
+) {
+  let labelColor: string;
+  if (isSelected) labelColor = '#FFD700';
+  else if (isIdle) labelColor = '#808080';
+  else             labelColor = color;
+
+  ctx.fillStyle = labelColor;
+  ctx.font = `bold ${Math.max(7, 8 * z)}px "Courier New", monospace`;
+  ctx.textAlign = 'center';
+  const displayName = agent.name.length > 12 ? `${agent.name.slice(0, 11)}…` : agent.name;
+  ctx.fillText(displayName, cx + 8 * z, cy + (SPRITE_H + 4) * z);
+  ctx.textAlign = 'start';
+}
+
+function drawAgent(
+  ctx: CanvasRenderingContext2D,
+  agent: PixelAgent,
+  dx: number, dy: number,
+  z: number,
+  selected: string | null,
+  animFrame: number,
+  frame: number
+) {
+  const visual = getAgentVisual(agent.activity, frame, z);
+  const { color, isActive, isWaiting, isIdle, bounceY } = visual;
+
+  const cx = dx + 8 * z;
+  const cy = dy + CHAR_OFFSET_Y * TILE_SIZE * z + bounceY;
+  const isSelected = agent.id === selected;
+
+  if (isIdle) ctx.globalAlpha = 0.55;
+
+  if (isActive || isWaiting) drawActivityGlow(ctx, cx, cy, color, isWaiting, z, frame);
+  if (isActive)              drawMonitorGlow(ctx, dx, dy, color, z, frame);
+
+  // Selection ring
+  if (isSelected) {
+    ctx.save();
+    ctx.globalAlpha = 1;
+    const sprite = getCharacterSprite(agent.characterIndex, activityToDirection(agent.activity), animFrame);
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 2]);
+    ctx.strokeRect(cx - 2 * z, cy - 2 * z, (sprite.width + 4) * z, (sprite.height + 4) * z);
+    ctx.setLineDash([]);
+    ctx.restore();
   }
+
+  // Character sprite
+  const sprite = getCharacterSprite(agent.characterIndex, activityToDirection(agent.activity), animFrame);
+  ctx.drawImage(sprite, cx, cy, sprite.width * z, sprite.height * z);
+  ctx.globalAlpha = 1;
+
+  // Claude mode orange aura
+  if (agent.isClaudeMode) {
+    ctx.save();
+    ctx.globalAlpha = 0.15 + Math.sin(frame * 0.1) * 0.1;
+    ctx.fillStyle = '#D97706';
+    ctx.beginPath();
+    ctx.arc(cx + 8 * z, cy + 12 * z, 14 * z, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Activity icon above head
+  if (!isIdle) {
+    const icon = getActivityIcon(activityToIcon(agent.activity), animFrame);
+    ctx.drawImage(icon, cx + 2 * z, cy - 14 * z, 12 * z, 12 * z);
+  }
+
+  drawAgentLabel(ctx, agent, cx, cy, color, isIdle, isSelected, z);
+
+  // Speech bubble
+  const bubbleText = agent.speechBubble ?? (isWaiting ? '💬 ...' : null);
+  if (bubbleText) drawSpeechBubble(ctx, cx + 8 * z, cy - 16 * z, bubbleText, z);
+}
+
+// ── Background drawing helpers ────────────────────────────────
+
+function drawFloor(ctx: CanvasRenderingContext2D, z: number) {
+  const tile = getFloorTile();
+  for (let row = 0; row < OFFICE_ROWS; row++) {
+    for (let col = 0; col < OFFICE_COLS; col++) {
+      ctx.drawImage(tile, col * TILE_SIZE * z, row * TILE_SIZE * z, TILE_SIZE * z, TILE_SIZE * z);
+    }
+  }
+}
+
+function drawWalls(ctx: CanvasRenderingContext2D, z: number) {
+  const tile = getWallTile();
+  for (let col = 0; col < OFFICE_COLS; col++) {
+    ctx.drawImage(tile, col * TILE_SIZE * z, 0, TILE_SIZE * z, TILE_SIZE * z);
+  }
+  for (let row = 0; row < OFFICE_ROWS; row++) {
+    ctx.drawImage(tile, 0, row * TILE_SIZE * z, TILE_SIZE * z, TILE_SIZE * z);
+  }
+}
+
+function drawDecorations(ctx: CanvasRenderingContext2D, z: number) {
+  // Water cooler
+  const wcX = (OFFICE_COLS - 3) * TILE_SIZE * z;
+  const wcY = (OFFICE_ROWS - 3) * TILE_SIZE * z;
+  ctx.fillStyle = '#4A90D9';
+  ctx.fillRect(wcX, wcY, 8 * z, 12 * z);
+  ctx.fillStyle = '#87CEEB';
+  ctx.fillRect(wcX + z, wcY + z, 6 * z, 4 * z);
+
+  // Plant
+  const plX = 2 * TILE_SIZE * z;
+  const plY = (OFFICE_ROWS - 2) * TILE_SIZE * z;
+  ctx.fillStyle = '#27AE60';
+  ctx.fillRect(plX + 2 * z, plY - 4 * z, 4 * z, 4 * z);
+  ctx.fillRect(plX + z, plY - 6 * z, 6 * z, 2 * z);
+  ctx.fillStyle = '#8B4513';
+  ctx.fillRect(plX + 2 * z, plY, 4 * z, 4 * z);
 }
 
 // ── Component ────────────────────────────────────────────────
@@ -61,28 +256,24 @@ function activityToIcon(activity: AgentActivity): ActivityIcon {
 interface PixelOfficeCanvasProps {
   readonly width: number;
   readonly height: number;
-  readonly onAgentClick?: (agentId: string) => void;
+  readonly onAgentClick?: (agentId: string, screenX: number, screenY: number) => void;
 }
 
 export function PixelOfficeCanvas({ width, height, onAgentClick }: PixelOfficeCanvasProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const frameRef = useRef(0);
+  const canvasRef   = useRef<HTMLCanvasElement>(null);
+  const frameRef    = useRef(0);
   const animFrameRef = useRef<number>(0);
   const lastTimeRef = useRef(0);
 
-  const agents = usePixelOfficeStore((s) => s.agents);
+  const agents          = usePixelOfficeStore((s) => s.agents);
   const selectedAgentId = usePixelOfficeStore((s) => s.selectedAgentId);
-  const zoom = usePixelOfficeStore((s) => s.settings.zoom);
+  const zoom            = usePixelOfficeStore((s) => s.settings.zoom);
 
-  // Keep agents in a ref for the render loop to avoid stale closures
-  const agentsRef = useRef(agents);
-  agentsRef.current = agents;
-  const selectedRef = useRef(selectedAgentId);
-  selectedRef.current = selectedAgentId;
-  const zoomRef = useRef(zoom);
-  zoomRef.current = zoom;
+  const agentsRef   = useRef(agents);   agentsRef.current   = agents;
+  const selectedRef = useRef(selectedAgentId); selectedRef.current = selectedAgentId;
+  const zoomRef     = useRef(zoom);     zoomRef.current     = zoom;
 
-  // ── Render function ──────────────────────────────────────
+  // ── Render loop ────────────────────────────────────────
 
   const render = useCallback((timestamp: number) => {
     const canvas = canvasRef.current;
@@ -90,209 +281,76 @@ export function PixelOfficeCanvas({ width, height, onAgentClick }: PixelOfficeCa
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Frame timing
     const delta = timestamp - lastTimeRef.current;
-    if (delta < 1000 / 30) {
-      // Cap at ~30fps for pixel art aesthetic
-      animFrameRef.current = requestAnimationFrame(render);
-      return;
-    }
+    if (delta < 1000 / 30) { animFrameRef.current = requestAnimationFrame(render); return; }
     lastTimeRef.current = timestamp;
     frameRef.current++;
 
-    const z = zoomRef.current;
-    const currentAgents = agentsRef.current;
+    const z        = zoomRef.current;
+    const agents   = agentsRef.current;
     const selected = selectedRef.current;
+    const frame    = frameRef.current;
 
-    // Clear
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Calculate viewport offset to center the office
     const officePixelW = OFFICE_COLS * TILE_SIZE * z;
     const officePixelH = OFFICE_ROWS * TILE_SIZE * z;
-    const offsetX = Math.max(0, (canvas.width - officePixelW) / 2);
+    const offsetX = Math.max(0, (canvas.width  - officePixelW) / 2);
     const offsetY = Math.max(0, (canvas.height - officePixelH) / 2);
 
     ctx.save();
     ctx.translate(offsetX, offsetY);
 
-    // ── Draw floor ───────────────────────────────────────
-    const floorTile = getFloorTile();
-    for (let row = 0; row < OFFICE_ROWS; row++) {
-      for (let col = 0; col < OFFICE_COLS; col++) {
-        ctx.drawImage(
-          floorTile,
-          col * TILE_SIZE * z,
-          row * TILE_SIZE * z,
-          TILE_SIZE * z,
-          TILE_SIZE * z
-        );
-      }
-    }
+    drawFloor(ctx, z);
+    drawWalls(ctx, z);
 
-    // ── Draw walls (top + left) ──────────────────────────
-    const wallTile = getWallTile();
-    for (let col = 0; col < OFFICE_COLS; col++) {
-      ctx.drawImage(wallTile, col * TILE_SIZE * z, 0, TILE_SIZE * z, TILE_SIZE * z);
-    }
-    for (let row = 0; row < OFFICE_ROWS; row++) {
-      ctx.drawImage(wallTile, 0, row * TILE_SIZE * z, TILE_SIZE * z, TILE_SIZE * z);
-    }
+    const deskSprite  = getDeskSprite();
+    const chairSprite = getChairSprite();
+    const totalSeats  = Math.max(agents.length, 4);
+    const animFrame   = Math.floor(frame / 15) % 2;
 
-    // ── Draw desks ───────────────────────────────────────
-    const deskSprite = getDeskSprite();
-    const totalSeats = Math.max(currentAgents.length, 4); // Always show at least 4 desks
     for (let i = 0; i < totalSeats; i++) {
       const pos = getDeskPosition(i);
-      const dx = pos.x * TILE_SIZE * z;
-      const dy = pos.y * TILE_SIZE * z;
-      ctx.drawImage(deskSprite, dx, dy, 32 * z, 24 * z);
+      const dx  = pos.x * TILE_SIZE * z;
+      const dy  = pos.y * TILE_SIZE * z;
 
-      // Empty desk label if no agent
-      const occupant = currentAgents.find(a => a.seatIndex === i);
+      ctx.drawImage(deskSprite,  dx, dy,              32 * z, DESK_H  * z);
+      ctx.drawImage(chairSprite, dx, dy + DESK_H * z, 32 * z, CHAIR_H * z);
+
+      const occupant = agents.find(a => a.seatIndex === i);
       if (!occupant) {
         ctx.fillStyle = 'rgba(255,255,255,0.15)';
-        ctx.font = `${Math.max(8, 9 * z)}px "Courier New", monospace`;
+        ctx.font = `${Math.max(7, 8 * z)}px "Courier New", monospace`;
         ctx.textAlign = 'center';
-        ctx.fillText('empty', dx + 16 * z, dy + 30 * z);
+        ctx.fillText('empty', dx + 16 * z, dy + (DESK_H + 14) * z);
         ctx.textAlign = 'start';
+        continue;
       }
+
+      drawAgent(ctx, occupant, dx, dy, z, selected, animFrame, frame);
     }
 
-    // ── Draw agents ──────────────────────────────────────
-    const animFrame = Math.floor(frameRef.current / 15) % 2; // Toggle every ~0.5s
-
-    for (const agent of currentAgents) {
-      const pos = getDeskPosition(agent.seatIndex);
-      // Character sits below desk
-      const cx = pos.x * TILE_SIZE * z + 8 * z;
-      const cy = (pos.y + 1.5) * TILE_SIZE * z;
-
-      const direction = activityToDirection(agent.activity);
-      const sprite = getCharacterSprite(agent.characterIndex, direction, animFrame);
-
-      // Selection highlight
-      if (agent.id === selected) {
-        ctx.strokeStyle = '#FFD700';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4, 2]);
-        ctx.strokeRect(
-          cx - 2 * z,
-          cy - 2 * z,
-          (sprite.width + 4) * z,
-          (sprite.height + 4) * z
-        );
-        ctx.setLineDash([]);
-      }
-
-      // Draw character sprite
-      ctx.drawImage(
-        sprite,
-        cx,
-        cy,
-        sprite.width * z,
-        sprite.height * z
-      );
-
-      // Activity icon above head
-      if (agent.activity !== 'idle' && agent.activity !== 'exited') {
-        const iconSprite = getActivityIcon(activityToIcon(agent.activity), animFrame);
-        ctx.drawImage(
-          iconSprite,
-          cx + 2 * z,
-          cy - 14 * z,
-          12 * z,
-          12 * z
-        );
-      }
-
-      // Claude mode glow
-      if (agent.isClaudeMode) {
-        ctx.save();
-        ctx.globalAlpha = 0.15 + Math.sin(frameRef.current * 0.1) * 0.1;
-        ctx.fillStyle = '#D97706';
-        ctx.beginPath();
-        ctx.arc(
-          cx + 8 * z,
-          cy + 12 * z,
-          14 * z,
-          0,
-          Math.PI * 2
-        );
-        ctx.fill();
-        ctx.restore();
-      }
-
-      // Name label
-      ctx.fillStyle = agent.id === selected ? '#FFD700' : '#E0E0E0';
-      ctx.font = `bold ${Math.max(8, 9 * z)}px "Courier New", monospace`;
-      ctx.textAlign = 'center';
-      const nameY = cy + (SPRITE_H + 4) * z;
-      const displayName = agent.name.length > 12
-        ? agent.name.slice(0, 11) + '…'
-        : agent.name;
-      ctx.fillText(displayName, cx + 8 * z, nameY);
-      ctx.textAlign = 'start';
-
-      // Speech bubble
-      if (agent.speechBubble) {
-        drawSpeechBubble(ctx, cx + 8 * z, cy - 16 * z, agent.speechBubble, z);
-      }
-
-      // "Waiting for input" bubble when agent is waiting
-      if (agent.activity === 'waiting' && !agent.speechBubble) {
-        drawSpeechBubble(ctx, cx + 8 * z, cy - 16 * z, '💬 Waiting...', z);
-      }
-    }
-
-    // ── Decorative elements ──────────────────────────────
-
-    // Water cooler area
-    ctx.fillStyle = '#4A90D9';
-    const wcX = (OFFICE_COLS - 3) * TILE_SIZE * z;
-    const wcY = (OFFICE_ROWS - 3) * TILE_SIZE * z;
-    ctx.fillRect(wcX, wcY, 8 * z, 12 * z);
-    ctx.fillStyle = '#87CEEB';
-    ctx.fillRect(wcX + 1 * z, wcY + 1 * z, 6 * z, 4 * z);
-
-    // Plant
-    ctx.fillStyle = '#27AE60';
-    const plX = 2 * TILE_SIZE * z;
-    const plY = (OFFICE_ROWS - 2) * TILE_SIZE * z;
-    ctx.fillRect(plX + 2 * z, plY - 4 * z, 4 * z, 4 * z);
-    ctx.fillRect(plX + 1 * z, plY - 6 * z, 6 * z, 2 * z);
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(plX + 2 * z, plY, 4 * z, 4 * z);
-
+    drawDecorations(ctx, z);
     ctx.restore();
 
     animFrameRef.current = requestAnimationFrame(render);
   }, []);
 
-  // ── Start/stop render loop ─────────────────────────────
-
   useEffect(() => {
     animFrameRef.current = requestAnimationFrame(render);
-    return () => {
-      cancelAnimationFrame(animFrameRef.current);
-    };
+    return () => { cancelAnimationFrame(animFrameRef.current); };
   }, [render]);
-
-  // ── Handle canvas resize ───────────────────────────────
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
+    canvas.width  = width  * dpr;
     canvas.height = height * dpr;
-    canvas.style.width = `${width}px`;
+    canvas.style.width  = `${width}px`;
     canvas.style.height = `${height}px`;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.scale(dpr, dpr);
-    }
+    canvas.getContext('2d')?.scale(dpr, dpr);
   }, [width, height]);
 
   // ── Click handling ─────────────────────────────────────
@@ -302,31 +360,25 @@ export function PixelOfficeCanvas({ width, height, onAgentClick }: PixelOfficeCa
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const z = zoomRef.current;
-    const officePixelW = OFFICE_COLS * TILE_SIZE * z;
-    const officePixelH = OFFICE_ROWS * TILE_SIZE * z;
-    const offsetX = Math.max(0, (rect.width - officePixelW) / 2);
-    const offsetY = Math.max(0, (rect.height - officePixelH) / 2);
+    const z    = zoomRef.current;
+    const offsetX = Math.max(0, (rect.width  - OFFICE_COLS * TILE_SIZE * z) / 2);
+    const offsetY = Math.max(0, (rect.height - OFFICE_ROWS * TILE_SIZE * z) / 2);
+    const clickX  = e.clientX - rect.left - offsetX;
+    const clickY  = e.clientY - rect.top  - offsetY;
 
-    const clickX = e.clientX - rect.left - offsetX;
-    const clickY = e.clientY - rect.top - offsetY;
-
-    // Check which agent was clicked
     for (const agent of agentsRef.current) {
-      const pos = getDeskPosition(agent.seatIndex);
-      const ax = pos.x * TILE_SIZE * z;
-      const ay = (pos.y + 1.5) * TILE_SIZE * z;
-      const aw = 16 * z;
-      const ah = SPRITE_H * z;
+      const pos  = getDeskPosition(agent.seatIndex);
+      const deskX = pos.x * TILE_SIZE * z;
+      const deskY = pos.y * TILE_SIZE * z;
+      const charY = deskY + CHAR_OFFSET_Y * TILE_SIZE * z;
+      const hitH  = (DESK_H + CHAIR_H) * z + SPRITE_H * z;
 
-      if (clickX >= ax && clickX <= ax + aw && clickY >= ay && clickY <= ay + ah) {
-        onAgentClick?.(agent.id);
+      if (clickX >= deskX && clickX <= deskX + 32 * z && clickY >= deskY && clickY <= deskY + hitH) {
+        onAgentClick?.(agent.id, e.clientX - rect.left, charY + offsetY);
         return;
       }
     }
-
-    // Clicked empty area — deselect
-    onAgentClick?.('');
+    onAgentClick?.('', 0, 0);
   }, [onAgentClick]);
 
   return (
@@ -334,11 +386,7 @@ export function PixelOfficeCanvas({ width, height, onAgentClick }: PixelOfficeCa
       ref={canvasRef}
       onClick={handleClick}
       className="cursor-pointer"
-      style={{
-        imageRendering: 'pixelated',
-        width: `${width}px`,
-        height: `${height}px`,
-      }}
+      style={{ imageRendering: 'pixelated', width: `${width}px`, height: `${height}px` }}
     />
   );
 }

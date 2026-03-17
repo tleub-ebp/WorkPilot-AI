@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Router, Zap, FlaskConical, ArrowDownUp, BarChart3 } from 'lucide-react';
 import { SettingsSection } from './SettingsSection';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,7 @@ interface FallbackChain {
 // ---------------------------------------------------------------------------
 
 export function LlmRouterSettings() {
+  const { t } = useTranslation('settings');
   const [strategy, setStrategy] = useState<RoutingStrategy>('best_performance');
 
   const [providers] = useState<ProviderEntry[]>([
@@ -50,26 +52,26 @@ export function LlmRouterSettings() {
   ]);
 
   const strategies: { id: RoutingStrategy; label: string; desc: string; icon: React.ReactNode }[] = [
-    { id: 'best_performance', label: 'Best Performance', desc: 'Prioritize quality score', icon: <Zap className="h-4 w-4" /> },
-    { id: 'cheapest', label: 'Cheapest', desc: 'Minimize cost per task', icon: <ArrowDownUp className="h-4 w-4" /> },
-    { id: 'lowest_latency', label: 'Lowest Latency', desc: 'Fastest response time', icon: <BarChart3 className="h-4 w-4" /> },
-    { id: 'round_robin', label: 'Round Robin', desc: 'Distribute evenly', icon: <Router className="h-4 w-4" /> },
+    { id: 'best_performance', label: t('llmRouter.routingStrategy.bestPerformance'), desc: t('llmRouter.routingStrategy.bestPerformanceDescription'), icon: <Zap className="h-4 w-4" /> },
+    { id: 'cheapest', label: t('llmRouter.routingStrategy.cheapest'), desc: t('llmRouter.routingStrategy.cheapestDescription'), icon: <ArrowDownUp className="h-4 w-4" /> },
+    { id: 'lowest_latency', label: t('llmRouter.routingStrategy.lowestLatency'), desc: t('llmRouter.routingStrategy.lowestLatencyDescription'), icon: <BarChart3 className="h-4 w-4" /> },
+    { id: 'round_robin', label: t('llmRouter.routingStrategy.roundRobin'), desc: t('llmRouter.routingStrategy.roundRobinDescription'), icon: <Router className="h-4 w-4" /> },
   ];
 
   return (
     <SettingsSection
-      title="LLM Router"
-      description="Configure intelligent provider routing with fallback chains, A/B testing, and strategy-based selection."
+      title={t('llmRouter.title')}
+      description={t('llmRouter.description')}
     >
       <div className="space-y-8">
         {/* Routing Strategy */}
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <Router className="h-4 w-4 text-primary" />
-            Default Routing Strategy
+            {t('llmRouter.routingStrategy.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            How the router selects a provider when multiple are available.
+            {t('llmRouter.routingStrategy.description')}
           </p>
           <div className="grid grid-cols-2 gap-3">
             {strategies.map((s) => (
@@ -97,19 +99,19 @@ export function LlmRouterSettings() {
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <Zap className="h-4 w-4 text-primary" />
-            Registered Providers
+            {t('llmRouter.registeredProviders.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            Providers available for routing. Configure accounts in Settings &gt; Accounts.
+            {t('llmRouter.registeredProviders.description')}
           </p>
           <div className="rounded-md border border-border overflow-hidden">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Provider / Model</th>
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Capabilities</th>
-                  <th className="text-center px-3 py-2 font-medium text-muted-foreground">Priority</th>
-                  <th className="text-center px-3 py-2 font-medium text-muted-foreground">Status</th>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('llmRouter.registeredProviders.table.providerModel')}</th>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('llmRouter.registeredProviders.table.capabilities')}</th>
+                  <th className="text-center px-3 py-2 font-medium text-muted-foreground">{t('llmRouter.registeredProviders.table.priority')}</th>
+                  <th className="text-center px-3 py-2 font-medium text-muted-foreground">{t('llmRouter.registeredProviders.table.status')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -120,7 +122,7 @@ export function LlmRouterSettings() {
                         <span className="font-medium">{p.provider}</span>
                         <span className="text-muted-foreground">/ {p.model}</span>
                         {p.isLocal && (
-                          <span className="rounded-full bg-green-500/15 text-green-600 px-1.5 py-0 text-[10px] font-medium">local</span>
+                          <span className="rounded-full bg-green-500/15 text-green-600 px-1.5 py-0 text-[10px] font-medium">{t('llmRouter.registeredProviders.status.local')}</span>
                         )}
                       </div>
                     </td>
@@ -137,7 +139,7 @@ export function LlmRouterSettings() {
                         'rounded-full px-2 py-0.5 text-[10px] font-medium',
                         p.enabled ? 'bg-green-500/15 text-green-600' : 'bg-muted text-muted-foreground'
                       )}>
-                        {p.enabled ? 'Active' : 'Disabled'}
+                        {p.enabled ? t('llmRouter.registeredProviders.status.active') : t('llmRouter.registeredProviders.status.disabled')}
                       </span>
                     </td>
                   </tr>
@@ -151,10 +153,10 @@ export function LlmRouterSettings() {
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <ArrowDownUp className="h-4 w-4 text-primary" />
-            Fallback Chains
+            {t('llmRouter.fallbackChains.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            If the primary provider is rate-limited or unavailable, the router automatically falls back to the next in the chain.
+            {t('llmRouter.fallbackChains.description')}
           </p>
           <div className="space-y-3">
             {fallbacks.map((fb) => (
@@ -177,16 +179,16 @@ export function LlmRouterSettings() {
         <div>
           <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <FlaskConical className="h-4 w-4 text-primary" />
-            A/B Testing
+            {t('llmRouter.abTesting.title')}
           </h4>
           <p className="text-xs text-muted-foreground mb-3">
-            Compare two providers on the same task type. The router alternates between them and tracks quality, latency, and cost.
+            {t('llmRouter.abTesting.description')}
           </p>
           <div className="rounded-md border border-dashed border-border bg-muted/20 p-6 text-center">
             <FlaskConical className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No active A/B tests</p>
+            <p className="text-sm text-muted-foreground">{t('llmRouter.abTesting.noActiveTests')}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Create a test from the Command Palette or from the task detail view.
+              {t('llmRouter.abTesting.createTest')}
             </p>
           </div>
         </div>
