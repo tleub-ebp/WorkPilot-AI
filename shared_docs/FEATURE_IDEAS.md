@@ -1275,11 +1275,7 @@ npm test -- --run src/renderer/stores/__tests__/mcp-marketplace-store.test.ts
 </details>
 
 <details>
-<summary>
-
-### 12. Cost Intelligence Engine ✅ Implémenté
-
-</summary>
+<summary>### 12. Cost Intelligence Engine ✅ Implémenté</summary>
 
 Routage intelligent entre modèles selon la complexité + tracking granulaire des coûts par agent/phase/spec.
 
