@@ -135,7 +135,7 @@ export function SchedulerSettings() {
                     <td className="px-3 py-2 text-center font-mono">{task.priority}</td>
                     <td className="px-3 py-2 text-center">
                       <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-medium', statusColor[task.status])}>
-                        {task.status}
+                        {t(`tasks.status.${task.status}`)}
                       </span>
                     </td>
                     <td className="px-3 py-2 text-right text-muted-foreground">{task.nextRun}</td>
