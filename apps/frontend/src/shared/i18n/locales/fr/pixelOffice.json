@@ -9,7 +9,8 @@
     "zoomIn": "Zoom avant",
     "zoomOut": "Zoom arrière",
     "toggleGrid": "Afficher/Masquer la grille",
-    "toggleSound": "Activer/Désactiver le son"
+    "toggleSound": "Activer/Désactiver le son",
+    "addAgent": "Nouveau terminal"
   },
   "agents": {
     "count_one": "{{count}} agent",
@@ -19,11 +20,21 @@
     "claudeMode": "Mode Claude"
   },
   "activity": {
-    "idle": "Inactif",
-    "typing": "Saisie",
-    "reading": "Lecture",
+    "idle": "Au repos",
+    "typing": "En train de coder",
+    "reading": "Analyse",
     "running": "Exécution",
     "waiting": "En attente",
     "exited": "Terminé"
+  },
+  "bubble": {
+    "taskLabel": "Tâche :",
+    "sendPlaceholderWaiting": "Réponds à l'agent…",
+    "sendPlaceholder": "Donne un ordre au terminal…",
+    "sendHint": "↵ Entrée pour envoyer · Le message sera tapé dans le terminal",
+    "viewTerminal": "Voir terminal",
+    "interrupt": "Interrompre",
+    "resumeClaude": "Reprendre Claude",
+    "close": "Fermer"
   }
 }

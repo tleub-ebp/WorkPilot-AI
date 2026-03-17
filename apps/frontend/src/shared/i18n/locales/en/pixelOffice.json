@@ -9,7 +9,8 @@
     "zoomIn": "Zoom In",
     "zoomOut": "Zoom Out",
     "toggleGrid": "Toggle Grid",
-    "toggleSound": "Toggle Sound"
+    "toggleSound": "Toggle Sound",
+    "addAgent": "New terminal"
   },
   "agents": {
     "count_one": "{{count}} agent",
@@ -20,10 +21,20 @@
   },
   "activity": {
     "idle": "Idle",
-    "typing": "Typing",
-    "reading": "Reading",
+    "typing": "Coding",
+    "reading": "Analysing",
     "running": "Running",
     "waiting": "Waiting",
-    "exited": "Exited"
+    "exited": "Closed"
+  },
+  "bubble": {
+    "taskLabel": "Task:",
+    "sendPlaceholderWaiting": "Reply to the agent…",
+    "sendPlaceholder": "Give an order to the terminal…",
+    "sendHint": "↵ Enter to send · The message will be typed in the terminal",
+    "viewTerminal": "View terminal",
+    "interrupt": "Interrupt",
+    "resumeClaude": "Resume Claude",
+    "close": "Close"
   }
 }
