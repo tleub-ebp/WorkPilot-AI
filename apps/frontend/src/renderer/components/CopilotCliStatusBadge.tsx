@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 import type { CopilotInstallationInfo } from "@shared/types";
 import { useProjectStore } from "@/stores/project-store";
 import { useCliStatus } from "@/contexts/CliStatusContext";
+import { useTerminalStore } from "@/stores/terminal-store";
 
 interface CopilotCliStatusBadgeProps {
   readonly className?: string;
@@ -87,6 +88,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
   const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
   const currentProject = projects.find((p) => p.id === selectedProjectId);
   const projectPath = currentProject?.path || ".";
+  const addExternalTerminal = useTerminalStore((state) => state.addExternalTerminal);
   
   const [isOpen, setIsOpen] = useState(false);
   const [showInstallWarning, setShowInstallWarning] = useState(false);
@@ -147,7 +149,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   // Update command for GitHub Copilot CLI extension
-  const COPILOT_UPDATE_COMMAND = 'gh extension upgrade gh-copilot';
+  const COPILOT_UPDATE_COMMAND = 'copilot update';
   const COPILOT_INSTALL_COMMAND = 'gh extension install github/gh-copilot';
 
   // Helper function to execute terminal installation
@@ -176,7 +178,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
         return;
       }
 
-      // Create a terminal in the app
+      // Create a terminal visible in the agent terminals view
       if (globalThis.electronAPI?.createTerminal) {
         const terminalId = `copilot-cli-install-${Date.now()}`;
         const terminalResult = await globalThis.electronAPI.createTerminal({
@@ -188,22 +190,18 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
         });
 
         if (terminalResult.success) {
-          await delay(100);
-          
-          const isUpdate = status === "outdated";
-          await executeTerminalInstallation(terminalId, isUpdate);
-          
-          await delay(200);
+          // Add to terminal store so it appears in the Terminaux agents view
+          addExternalTerminal(terminalId, "Copilot Update", projectPath, projectPath);
+
           setIsOpen(false);
           if (onNavigateToTerminals) {
             onNavigateToTerminals();
           }
+
+          const isUpdate = status === "outdated";
+          await executeTerminalInstallation(terminalId, isUpdate);
         }
       }
-
-      // Don't call the external installCopilotCli - we're using the internal terminal
-      await delay(VERSION_RECHECK_DELAY_MS);
-      refreshCopilot();
     } catch (err) {
       console.error("Failed to install Copilot CLI:", err);
       setInstallError(err instanceof Error ? err.message : "Installation failed");
@@ -215,8 +213,6 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
   // Start gh auth login
   const startAuth = async () => {
     try {
-      if (!globalThis.electronAPI?.startCopilotAuth) return;
-
       if (globalThis.electronAPI?.createTerminal) {
         const terminalId = `copilot-auth-${Date.now()}`;
         const terminalResult = await globalThis.electronAPI.createTerminal({
@@ -228,18 +224,16 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
         });
 
         if (terminalResult.success) {
-          await delay(100);
-          await executeTerminalAuth(terminalId);
-          
-          await delay(200);
+          addExternalTerminal(terminalId, "Copilot Auth", projectPath, projectPath);
+
           setIsOpen(false);
           if (onNavigateToTerminals) {
             onNavigateToTerminals();
           }
+
+          await executeTerminalAuth(terminalId);
         }
       }
-
-      await globalThis.electronAPI.startCopilotAuth();
     } catch (err) {
       console.error("Failed to start Copilot auth:", err);
     }

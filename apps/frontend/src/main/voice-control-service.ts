@@ -178,7 +178,7 @@ export class VoiceControlService extends EventEmitter {
         const { readFileSync } = require('node:fs');
         const settings: AppSettings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
         if (settings.globalClaudeOAuthToken) {
-          processEnv.CLAUDE_OAUTH_TOKEN = settings.globalClaudeOAuthToken;
+          processEnv.CLAUDE_CODE_OAUTH_TOKEN = settings.globalClaudeOAuthToken;
         }
         if (settings.globalAnthropicApiKey) {
           processEnv.ANTHROPIC_API_KEY = settings.globalAnthropicApiKey;
@@ -244,7 +244,7 @@ export class VoiceControlService extends EventEmitter {
       this.handleToolStart(line);
     } else if (line.startsWith('__TOOL_END__:')) {
       // Tool completed, continue
-    } else if (line.trim()) {
+    } else if (line.trim() && !line.startsWith('INFO:') && !line.startsWith('WARNING:') && !line.startsWith('DEBUG:')) {
       outputState.fullOutput += line + '\n';
       this.emit('stream-chunk', line + '\n');
     }

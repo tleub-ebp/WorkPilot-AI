@@ -463,6 +463,10 @@
     "allLoaded": "Tous les problèmes chargés"
   },
   "usage": {
+    "claudeCodeSubscription": "Claude Code",
+    "claudeCodeSubscriptionPro": "Claude Code Pro",
+    "claudeCodeSubscriptionMax": "Claude Code Max",
+    "claudeCodeSubscriptionUnknown": "Claude Code",
     "dataUnavailable": "Données d'utilisation indisponibles",
     "dataUnavailableDescription": "Le point de terminaison de surveillance d'utilisation pour ce fournisseur n'est pas disponible ou n'est pas pris en charge.",
     "dataUnavailableAnthropic": "Les données d'usage Anthropic ne sont pas disponibles. Vous pouvez vérifier votre consommation directement sur claude.ai/settings.",

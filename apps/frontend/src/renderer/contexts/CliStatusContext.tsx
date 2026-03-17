@@ -135,33 +135,22 @@ export function CliStatusProvider({ children }: { readonly children: ReactNode }
 
   const checkCodexVersion = useCallback(async () => {
     try {
-      if (!globalThis.electronAPI?.checkCodexCliVersion) return;
+      if (!globalThis.electronAPI?.checkOpenAICodexOAuth) return;
 
-      const result = await globalThis.electronAPI.checkCodexCliVersion();
-      
-      if (result.success && result.data) {
-        let status: CliStatusData['codex']['status'] = 'installed';
-        if (!result.data.installed) {
-          status = 'not-found';
-        } else if (result.data.isOutdated) {
-          status = 'outdated';
+      const result = await globalThis.electronAPI.checkOpenAICodexOAuth();
+
+      const status: CliStatusData['codex']['status'] = result.isAuthenticated ? 'installed' : 'not-found';
+      setData(prev => ({
+        ...prev,
+        codex: {
+          ...prev.codex,
+          status,
+          versionInfo: result.isAuthenticated
+            ? { installed: result.profileName ?? 'OpenAI Codex CLI' }
+            : null,
+          lastChecked: new Date(),
         }
-
-        setData(prev => ({
-          ...prev,
-          codex: {
-            ...prev.codex,
-            status,
-            versionInfo: result.data as CodexVersionInfo,
-            lastChecked: new Date(),
-          }
-        }));
-      } else {
-        setData(prev => ({
-          ...prev,
-          codex: { ...prev.codex, status: 'error' }
-        }));
-      }
+      }));
     } catch (err) {
       console.error("Failed to check Codex CLI version:", err);
       setData(prev => ({

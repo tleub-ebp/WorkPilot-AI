@@ -968,7 +968,11 @@ const toggleGroupExpansion = (groupId: string) => {
       <ConflictPredictorDialog />
       <DependencySentinelDialog />
       <NaturalLanguageGitDialog />
-      <VoiceControlDialog />
+      <VoiceControlDialog onExecuteCommand={(result) => {
+        if (result.action === 'navigate' && result.parameters?.destination) {
+          onViewChange?.(result.parameters.destination as SidebarView);
+        }
+      }} />
       <AppEmulatorDialog />
       <LearningLoopDialog />
       <DesignToCodeDialog />
