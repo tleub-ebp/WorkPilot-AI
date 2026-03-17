@@ -433,7 +433,7 @@ export function registerPluginMarketplaceHandlers(): void {
       const catalog = buildPluginCatalog();
       return { success: true, data: catalog };
     } catch (error) {
-      appLog('[Plugin Marketplace] Failed to get catalog', 'error');
+      appLog.error('[Plugin Marketplace] Failed to get catalog');
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   });
@@ -476,7 +476,7 @@ export function registerPluginMarketplaceHandlers(): void {
       installed.push(newInstall);
       writeInstalledPlugins(installed);
 
-      appLog(`[Plugin Marketplace] Installed plugin: ${plugin.name}`);
+      appLog.info(`[Plugin Marketplace] Installed plugin: ${plugin.name}`);
       return { success: true, data: newInstall };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : 'Installation failed' };
@@ -489,7 +489,7 @@ export function registerPluginMarketplaceHandlers(): void {
       const installed = readInstalledPlugins();
       const filtered = installed.filter(p => p.pluginId !== pluginId);
       writeInstalledPlugins(filtered);
-      appLog(`[Plugin Marketplace] Uninstalled plugin: ${pluginId}`);
+      appLog.info(`[Plugin Marketplace] Uninstalled plugin: ${pluginId}`);
       return { success: true };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : 'Uninstall failed' };

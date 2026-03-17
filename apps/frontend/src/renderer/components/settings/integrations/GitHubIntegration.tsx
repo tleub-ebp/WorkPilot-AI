@@ -229,9 +229,9 @@ export function GitHubIntegration({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
-          <Label className="font-normal text-foreground">Enable GitHub Issues</Label>
+          <Label className="font-normal text-foreground">{t('projectSections.github.enableGitHubIssues', { ns: 'settings' })}</Label>
           <p className="text-xs text-muted-foreground">
-            Sync issues from GitHub and create tasks automatically
+            {t('projectSections.github.syncIssuesFromGitHubAndCreateTasksAutomatically', { ns: 'settings' })}
           </p>
         </div>
         <Switch

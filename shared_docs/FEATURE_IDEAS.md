@@ -3512,6 +3512,7 @@ Le Voice Control supporte plusieurs langues :
 - **Précision** : > 90% de confiance sur commandes standards
 - **Adaptation** : Apprend des patterns de commandes utilisateur
 - **Cache** : Mémorisation des commandes fréquentes pour accélération
+</details>
 
 <details>
 <summary>### 40. AI Code Playground ✅ Implémenté</summary>
@@ -3688,6 +3689,7 @@ Le Code Playground supporte :
 - **Français** : Interface et messages en français
 - **Anglais** : Support natif complet
 - **Code** : Support universel des langages de programmation
+</details>
 
 ### 41. Cross-Language Translation
 
