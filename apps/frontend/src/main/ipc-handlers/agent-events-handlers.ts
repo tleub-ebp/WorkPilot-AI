@@ -264,7 +264,13 @@ export function registerAgenteventsHandlers(
 
   agentManager.on("task-event", (taskId: string, event, projectId?: string) => {
     console.debug(`[agent-events-handlers] Received task-event for ${taskId}:`, event.type, event);
-    
+
+    // Forward decision log entries directly to renderer without going through XState (Feature 30)
+    if (event.type === 'DECISION_LOG_ENTRY') {
+      safeSendToRenderer(getMainWindow, IPC_CHANNELS.AGENT_DECISION_LOG_ENTRY, taskId, event.entry, projectId);
+      return; // Skip XState processing — decision entries are not state transitions
+    }
+
     // Log detailed information for CODING_FAILED events
     if (event.type === 'CODING_FAILED') {
       logCodingFailedEvent(taskId, event, projectId);

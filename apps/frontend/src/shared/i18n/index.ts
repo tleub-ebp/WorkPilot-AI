@@ -4,6 +4,7 @@ import { initReactI18next } from 'react-i18next';
 // Import English translation resources
 import enAppEmulator from './locales/en/appEmulator.json';
 import enAnalytics from './locales/en/analytics.json';
+import enBrowserAgent from './locales/en/browserAgent.json';
 import enChangelog from './locales/en/changelog.json';
 import enCodePlayground from './locales/en/codePlayground.json';
 import enCodeReview from './locales/en/codeReview.json';
@@ -12,6 +13,7 @@ import enCommon from './locales/en/common.json';
 import enConflictPredictor from './locales/en/conflictPredictor.json';
 import enContext from './locales/en/context.json';
 import enContextAwareSnippets from './locales/en/contextAwareSnippets.json';
+import enDesignToCode from './locales/en/designToCode.json';
 import enDialogs from './locales/en/dialogs.json';
 import enDocumentation from './locales/en/documentation.json';
 import enErrors from './locales/en/errors.json';
@@ -44,6 +46,7 @@ import enWelcome from './locales/en/welcome.json';
 // Import French translation resources
 import frAppEmulator from './locales/fr/appEmulator.json';
 import frAnalytics from './locales/fr/analytics.json';
+import frBrowserAgent from './locales/fr/browserAgent.json';
 import frChangelog from './locales/fr/changelog.json';
 import frCodePlayground from './locales/fr/codePlayground.json';
 import frCodeReview from './locales/fr/codeReview.json';
@@ -52,6 +55,7 @@ import frCommon from './locales/fr/common.json';
 import frConflictPredictor from './locales/fr/conflictPredictor.json';
 import frContext from './locales/fr/context.json';
 import frContextAwareSnippets from './locales/fr/contextAwareSnippets.json';
+import frDesignToCode from './locales/fr/designToCode.json';
 import frDialogs from './locales/fr/dialogs.json';
 import frDocumentation from './locales/fr/documentation.json';
 import frErrors from './locales/fr/errors.json';
@@ -87,6 +91,7 @@ export const resources = {
   en: {
     appEmulator: enAppEmulator,
     analytics: enAnalytics,
+    browserAgent: enBrowserAgent,
     changelog: enChangelog,
     codePlayground: enCodePlayground,
     codeReview: enCodeReview,
@@ -95,6 +100,7 @@ export const resources = {
     conflictPredictor: enConflictPredictor,
     context: enContext,
     contextAwareSnippets: enContextAwareSnippets,
+    designToCode: enDesignToCode,
     dialogs: enDialogs,
     documentation: enDocumentation,
     errors: enErrors,
@@ -127,6 +133,7 @@ export const resources = {
   fr: {
     appEmulator: frAppEmulator,
     analytics: frAnalytics,
+    browserAgent: frBrowserAgent,
     changelog: frChangelog,
     codePlayground: frCodePlayground,
     codeReview: frCodeReview,
@@ -135,6 +142,7 @@ export const resources = {
     conflictPredictor: frConflictPredictor,
     context: frContext,
     contextAwareSnippets: frContextAwareSnippets,
+    designToCode: frDesignToCode,
     dialogs: frDialogs,
     documentation: frDocumentation,
     errors: frErrors,
@@ -176,6 +184,7 @@ i18n
     ns: [
       'appEmulator',
       'analytics',
+      'browserAgent',
       'changelog',
       'codePlayground',
       'codeReview',
@@ -184,6 +193,7 @@ i18n
       'conflictPredictor',
       'context',
       'contextAwareSnippets',
+      'designToCode',
       'dialogs',
       'documentation',
       'errors',
