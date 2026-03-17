@@ -112,14 +112,14 @@ export type SettingsTheme =
   | 'system';           // Système & Maintenance
 
 // Configuration des thèmes de paramètres avec leurs sections
-const SETTINGS_THEMES: Record<SettingsTheme, { 
+const createSettingsThemes = (t: any): Record<SettingsTheme, { 
   title: string; 
   icon: React.ElementType; 
   color: string;
   sections: Array<{ id: string; icon: React.ElementType; label: string; type: 'app' | 'project' }>;
   description: string;
   priority: number;
-}> = {
+}> => ({
   project: {
     title: 'Projet',
     icon: Settings2,
@@ -175,9 +175,9 @@ const SETTINGS_THEMES: Record<SettingsTheme, {
     icon: Shield,
     color: 'text-orange-600',
     sections: [
-      { id: 'sandbox', icon: Shield, label: 'Sandbox', type: 'app' },
-      { id: 'anomaly-detection', icon: ShieldAlert, label: 'Détection anomalies', type: 'app' },
-      { id: 'memory', icon: Database, label: 'Mémoire', type: 'project' }
+      { id: 'sandbox', icon: Shield, label: t('sections.sandbox.title'), type: 'app' },
+      { id: 'anomaly-detection', icon: ShieldAlert, label: t('sections.anomaly-detection.title'), type: 'app' },
+      { id: 'memory', icon: Database, label: t('projectSections.memory.title'), type: 'project' }
     ],
     description: 'Sécurité et performance du système',
     priority: 5
@@ -196,7 +196,7 @@ const SETTINGS_THEMES: Record<SettingsTheme, {
     description: 'Maintenance et système',
     priority: 6
   }
-};
+});
 
 /**
  * Main application settings dialog container
@@ -207,6 +207,9 @@ export function AppSettingsDialog(props: AppSettingsDialogProps) {
   const { t } = useTranslation('settings');
   const { settings, setSettings, isSaving, error, saveSettings, revertTheme, commitTheme } = useSettings();
   const [version, setVersion] = useState<string>('');
+
+  // Create dynamic settings themes with translations
+  const SETTINGS_THEMES = createSettingsThemes(t);
 
   // Project state (déclaré avant tout usage)
   const projects = useProjectStore((state) => state.projects);
