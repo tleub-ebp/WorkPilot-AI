@@ -32,3 +32,6 @@ class TaskContext:
     graph_hints: list[dict] = field(
         default_factory=list
     )  # Historical hints from Graphiti
+    dependency_hints: dict = field(
+        default_factory=dict
+    )  # Structural dependency analysis (Feature 28)
