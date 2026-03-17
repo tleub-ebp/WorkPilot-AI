@@ -52,7 +52,9 @@
     "pixelOffice": "Pixel Office",
     "agentReplay": "Agent Replay",
     "selfHealing": "Self-Healing",
-    "browserAgent": "Browser Agent"
+    "browserAgent": "Browser Agent",
+    "pairProgramming": "Pair Programming",
+    "pipelineGenerator": "Pipeline Generator"
   },
   "actions": {
     "settings": "Settings",

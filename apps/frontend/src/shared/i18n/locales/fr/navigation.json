@@ -52,7 +52,9 @@
     "pixelOffice": "Bureau Pixel",
     "agentReplay": "Agent de Replay",
     "selfHealing": "Auto-Guérison",
-    "browserAgent": "Agent Navigateur"
+    "browserAgent": "Agent Navigateur",
+    "pairProgramming": "Pair Programming IA",
+    "pipelineGenerator": "Générateur de Pipeline"
   },
   "actions": {
     "settings": "Paramètres",

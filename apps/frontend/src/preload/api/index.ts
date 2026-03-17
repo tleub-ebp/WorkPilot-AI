@@ -44,6 +44,10 @@ import type { DocumentationAgentAPI } from './modules/documentation-agent-api';
 import { createDocumentationAgentAPI } from './modules/documentation-agent-api';
 import type { DecisionLoggerAPI } from './modules/decision-logger-api';
 import { createDecisionLoggerAPI } from './modules/decision-logger-api';
+import type { PairProgrammingAPI } from './modules/pair-programming-api';
+import { createPairProgrammingAPI } from './modules/pair-programming-api';
+import type { PipelineGeneratorAPI } from './modules/pipeline-generator-api';
+import { createPipelineGeneratorAPI } from './modules/pipeline-generator-api';
 import { invokeIpc } from './modules/ipc-utils';
 import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
@@ -80,7 +84,9 @@ export interface ElectronAPI extends
   CodeMigrationAPI,
   PerformanceProfilerAPI,
   DocumentationAgentAPI,
-  DecisionLoggerAPI {
+  DecisionLoggerAPI,
+  PairProgrammingAPI,
+  PipelineGeneratorAPI {
   github: GitHubAPI;
   /** Queue routing API for rate limit recovery */
   queue: QueueAPI;
@@ -132,6 +138,8 @@ export const createElectronAPI = (): ElectronAPI => {
     ...createPerformanceProfilerAPI(),
     ...createDocumentationAgentAPI(),
     ...createDecisionLoggerAPI(),
+    ...createPairProgrammingAPI(),
+    ...createPipelineGeneratorAPI(),
     github: createGitHubAPI(),
     queue: createQueueAPI(),  // Queue routing for rate limit recovery
     quality: createQualityAPI(),  // Code quality analysis
@@ -207,3 +215,5 @@ export type { CodeMigrationAPI } from './modules/code-migration-api';
 export type { PerformanceProfilerAPI } from './modules/performance-profiler-api';
 export type { DocumentationAgentAPI } from './modules/documentation-agent-api';
 export type { DecisionLoggerAPI } from './modules/decision-logger-api';
+export { createPairProgrammingAPI } from './modules/pair-programming-api';
+export type { PairProgrammingAPI } from './modules/pair-programming-api';

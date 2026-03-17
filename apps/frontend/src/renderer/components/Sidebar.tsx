@@ -51,6 +51,7 @@ import {
   Building2,
   HeartPulse,
   Globe,
+  Users,
 } from 'lucide-react';
 
 // UI
@@ -147,7 +148,7 @@ import { DesignToCodeDialog } from './design-to-code/DesignToCodeDialog';
 // Types
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace' | 'design-to-code' | 'mission-control' | 'agent-replay' | 'pixel-office' | 'self-healing' | 'browser-agent';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace' | 'design-to-code' | 'mission-control' | 'agent-replay' | 'pixel-office' | 'self-healing' | 'browser-agent' | 'pair-programming' | 'pipeline-generator';
 
 interface SidebarProps {
   readonly onSettingsClick: () => void;
@@ -193,6 +194,7 @@ const navGroups: NavGroup[] = [
     labelKey: 'navigation:groups.development',
     icon: Code,
     items: [
+      { id: 'pair-programming', labelKey: 'navigation:items.pairProgramming', icon: Users, shortcut: 'U' },
       { id: 'code-review', labelKey: 'navigation:items.codeReview', icon: FileCode2, shortcut: 'V' },
       { id: 'refactoring', labelKey: 'navigation:items.refactoring', icon: Wand2, shortcut: 'F' },
       { id: 'documentation', labelKey: 'navigation:items.documentation', icon: BookOpenCheck, shortcut: 'O' },
@@ -217,6 +219,7 @@ const navGroups: NavGroup[] = [
       { id: 'learning-loop', labelKey: 'navigation:items.learningLoop', icon: Brain, shortcut: 'L' },
       { id: 'design-to-code', labelKey: 'navigation:items.designToCode', icon: ImageIcon, shortcut: 'Y' },
       { id: 'browser-agent', labelKey: 'navigation:items.browserAgent', icon: Globe, shortcut: 'B' },
+      { id: 'pipeline-generator', labelKey: 'navigation:items.pipelineGenerator', icon: Layers, shortcut: 'I' },
     ],
     defaultExpanded: false
   },

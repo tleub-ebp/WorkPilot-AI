@@ -60,6 +60,8 @@ const AgentReplayDashboard = lazy(() => import('./components/agent-replay').then
 const PixelOffice = lazy(() => import('./components/pixel-office').then(m => ({ default: m.PixelOffice })));
 const SelfHealingDashboard = lazy(() => import('./components/self-healing').then(m => ({ default: m.SelfHealingDashboard })));
 const BrowserAgentDashboard = lazy(() => import('./components/browser-agent').then(m => ({ default: m.BrowserAgentDashboard })));
+const PairProgramming = lazy(() => import('./components/PairProgramming').then(m => ({ default: m.PairProgramming })));
+const PipelineGeneratorView = lazy(() => import('./components/pipeline-generator/PipelineGenerator').then(m => ({ default: m.PipelineGenerator })));
 import { VersionWarningModal } from './components/VersionWarningModal';
 import { OnboardingWizard } from './components/onboarding';
 import { GitHubSetupModal } from './components/GitHubSetupModal';
@@ -1196,6 +1198,12 @@ export function App() {
                           )}
                           {activeView === 'session-history' && (activeProjectId || selectedProjectId) && (
                               <SessionHistory projectId={activeProjectId || selectedProjectId!} />
+                          )}
+                          {activeView === 'pair-programming' && (activeProjectId || selectedProjectId) && (
+                              <PairProgramming projectId={activeProjectId || selectedProjectId!} />
+                          )}
+                          {activeView === 'pipeline-generator' && (activeProjectId || selectedProjectId) && (
+                              <PipelineGeneratorView />
                           )}
                         </>
                     ) : (
