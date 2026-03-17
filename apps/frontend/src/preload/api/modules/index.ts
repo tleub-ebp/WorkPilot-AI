@@ -36,3 +36,4 @@ export * from './performance-profiler-api';
 export * from './documentation-agent-api';
 export * from './pipeline-generator-api';
 export * from './team-sync-api';
+export * from './arena-api';

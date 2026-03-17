@@ -1051,7 +1051,8 @@ npm test -- --run src/renderer/stores/__tests__/learning-loop-store.test.ts
 
 ## 🚀 Tier S — Game Changers (Avantage concurrentiel fort)
 
-### 9. Arena Mode — Comparaison A/B de Modèles à l'aveugle
+<details>
+<summary>### 9. Arena Mode — Comparaison A/B de Modèles à l'aveugle ✅ Implémenté</summary>
 
 **L'Arena Mode de Windsurf mais appliqué à tout le pipeline.** Comparer les modèles IA en aveugle sur des tâches réelles pour trouver le meilleur rapport qualité/prix.
 
@@ -1061,6 +1062,76 @@ npm test -- --run src/renderer/stores/__tests__/learning-loop-store.test.ts
 - **Exploite :** Provider abstraction, agent events, build analytics, Cost Intelligence
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Data-driven model selection. Plus de débat "Claude vs GPT". Les données parlent. Feature virale sur les réseaux sociaux (benchmarks réels).
+
+#### 🚀 Comment utiliser Arena Mode
+
+L'Arena Mode est maintenant intégré dans WorkPilot AI ! Comparez vos modèles IA en aveugle sur des tâches réelles et laissez les données guider vos choix.
+
+##### 🎯 Démarrage rapide
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"⚔️ Arena Mode"** dans le groupe "AI Tools"
+2. **Configurer le combat** :
+   - Choisissez le **type de tâche** (Coding, Code Review, Tests, Planning, Spec, Insights)
+   - Sélectionnez **2 à 4 modèles** à comparer
+   - Rédigez le **prompt** à envoyer à tous les modèles
+3. **Lancer** : Cliquez sur **"Start Battle"** — les modèles génèrent en parallèle
+4. **Voter** : Lisez les réponses anonymisées (Modèle A, B, C…) et **votez pour la meilleure**
+5. **Consulter** : Onglet **Analytics** pour voir les taux de victoire et coûts par modèle
+
+##### 🏗️ Architecture technique
+
+**Backend** (`apps/backend/runners/arena_runner.py`) :
+- `run_arena_battle()` — Orchestration async de tous les participants en parallèle
+- `compute_analytics()` — Calcul des win-rates, coûts et recommandations de routage
+- `record_vote()` — Persistance des votes dans `~/.auto-claude/arena/`
+- `get_analytics()` — Récupération des statistiques agrégées
+- Intégration avec `core.client` (Claude Agent SDK) via le système de profils
+- Mode fallback avec génération mock pour le développement/tests
+
+**Frontend** :
+- `apps/frontend/src/renderer/components/arena/ArenaDialog.tsx` — Interface principale avec 4 onglets
+- `apps/frontend/src/renderer/stores/arena-store.ts` — Zustand store avec streaming temps réel
+- `apps/frontend/src/main/ipc-handlers/arena-handlers.ts` — Handlers IPC avec persistance JSON
+- `apps/frontend/src/preload/api/modules/arena-api.ts` — Bridge preload/renderer
+- `apps/frontend/src/shared/types/arena.ts` — Types TypeScript complets
+
+**i18n** : `en/arena.json` + `fr/arena.json` — Traductions complètes EN/FR
+
+##### 🎨 Fonctionnalités clés
+
+- **Blind Comparison** : Les modèles sont anonymisés (Modèle A/B/C/D) jusqu'après le vote
+- **6 types de tâches** : Coding, Code Review, Tests, Planning, Spécification, Insights
+- **Streaming live** : Les résultats s'affichent en temps réel en parallèle pour chaque modèle
+- **Stats détaillées** : Tokens, coût USD, durée affichés par participant
+- **Historique complet** : Tous les combats persistés avec résultats déployables
+- **Analytics dashboard** :
+  - Classement des modèles par taux de victoire global
+  - Breakdown par type de tâche (coding, review, test…)
+  - Coût moyen par bataille
+  - Durée moyenne de réponse
+- **Auto-Routing intelligent** :
+  - Recommandations par type de tâche basées sur l'historique des votes
+  - Niveaux de confiance (Faible/Moyen/Élevé selon le nombre de données)
+  - Toggle pour activer/désactiver le routage automatique
+- **Persistence locale** : Données stockées dans `%APPDATA%/WorkPilot AI/arena-mode/`
+
+##### 📊 Comment lire les analytics
+
+| Métrique | Description |
+|----------|-------------|
+| Win Rate | % de combats remportés sur tous les duels |
+| W/Total | Victoires / Total de participations |
+| Avg Cost | Coût moyen en USD par bataille |
+| Confidence | Low (<5 duels) / Medium (5-9) / High (10+) |
+
+##### 💡 Conseils d'utilisation
+
+- **Au moins 5 combats** par type de tâche pour des recommandations fiables
+- Variez les prompts pour des benchmarks représentatifs de votre usage réel
+- Le coût affiché est une estimation basée sur les tokens générés
+- Les modèles identitaires ne sont révélés qu'après le vote pour éviter les biais
+
+</details>
 
 <details>
 <summary>### 10. AI Pair Programming Mode — Vrai travail parallèle coordonné ✅ Implémenté</summary>
