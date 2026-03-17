@@ -1,0 +1,85 @@
+{
+  "title": "Team Knowledge Sync",
+  "subtitle": "Share architectural decisions, patterns, and pitfalls with your entire team",
+  "status": {
+    "enabled": "Sync enabled",
+    "disabled": "Sync not configured",
+    "serverRunning": "HTTP server running on port {{port}}",
+    "serverStopped": "HTTP server stopped"
+  },
+  "config": {
+    "title": "Configuration",
+    "mode": "Sync mode",
+    "modeDirectory": "Shared folder (recommended)",
+    "modeHttp": "HTTP server",
+    "modeDirectoryHint": "Use a network drive, cloud-synced folder (OneDrive, Dropbox), or git-tracked path",
+    "modeHttpHint": "Start a local REST server; teammates connect to your machine over the network",
+    "syncPath": "Shared folder path",
+    "syncPathPlaceholder": "/mnt/shared/team-memory  or  //server/share/workpilot",
+    "serverUrl": "Remote server URL",
+    "serverUrlPlaceholder": "http://alice-pc:7749",
+    "serverHost": "Server bind address",
+    "serverPort": "Server port",
+    "teamId": "Team ID",
+    "teamIdPlaceholder": "my-team",
+    "memberId": "Your member name",
+    "memberIdPlaceholder": "alice (defaults to OS username)",
+    "autoSyncInterval": "Auto-sync interval (minutes, 0 = disabled)",
+    "autoPush": "Auto-push after each task completes",
+    "save": "Save configuration",
+    "saved": "Configuration saved"
+  },
+  "actions": {
+    "push": "Push my knowledge",
+    "pushShort": "Push",
+    "pull": "Pull team knowledge",
+    "pullShort": "Pull",
+    "startServer": "Start HTTP server",
+    "stopServer": "Stop server",
+    "refresh": "Refresh"
+  },
+  "stats": {
+    "localEpisodes": "Local episodes",
+    "importedEpisodes": "Imported episodes",
+    "peers": "Team members"
+  },
+  "peers": {
+    "title": "Team members",
+    "nopeers": "No teammate snapshots found yet. Ask your team to push their knowledge.",
+    "you": "(you)",
+    "episodes": "{{count}} episodes",
+    "lastExport": "Last export: {{date}}",
+    "neverExported": "Not yet exported",
+    "viewEpisodes": "View episodes"
+  },
+  "episodes": {
+    "title": "Episodes from {{member}}",
+    "empty": "No episodes imported from this member yet.",
+    "types": {
+      "session_insight": "Session insight",
+      "pattern": "Pattern",
+      "gotcha": "Gotcha",
+      "codebase_discovery": "Discovery",
+      "task_outcome": "Task outcome",
+      "qa_result": "QA result",
+      "historical_context": "Context"
+    }
+  },
+  "feedback": {
+    "pushSuccess": "Pushed {{count}} episodes to shared location",
+    "pushError": "Push failed: {{error}}",
+    "pullSuccess": "Imported {{count}} new episodes from {{peers}} peer(s)",
+    "pullNone": "No new episodes to import",
+    "pullError": "Pull failed: {{error}}",
+    "serverStarted": "Server started on port {{port}}",
+    "serverStopped": "Server stopped",
+    "serverError": "Failed to start server: {{error}}"
+  },
+  "help": {
+    "title": "How it works",
+    "step1": "Configure a shared folder path accessible to all team members",
+    "step2": "Click \"Push\" to export your local memory snapshot",
+    "step3": "Click \"Pull\" to import knowledge from teammates",
+    "step4": "New architectural decisions, patterns, and pitfalls are merged automatically"
+  }
+}
