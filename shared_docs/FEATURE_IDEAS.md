@@ -2721,11 +2721,7 @@ Memory System partagé entre tous les membres de l'équipe.
 - **Pourquoi c'est banger :** L'expérience collective capitalise automatiquement. Onboarding d'un nouveau dev en quelques minutes.
 
 <details>
-<summary>
-
-### 32. Environment Cloner ✅ Implémenté
-
-</summary>
+<summary>### 32. Environment Cloner ✅ Implémenté</summary>
 
 Reproduction d'environnements prod/staging en local pour debug.
 
@@ -2784,7 +2780,8 @@ Les fichiers sont créés dans `.auto-claude/environment/` :
 
 </details>
 
-### 33. Architecture Visualizer ✅ Implémenté
+<details>
+<summary>### 33. Architecture Visualizer ✅ Implémenté</summary>
 
 Génération automatique de diagrammes d'architecture depuis le code.
 
@@ -2801,11 +2798,14 @@ Génération automatique de diagrammes d'architecture depuis le code.
 - UI : `apps/frontend/src/renderer/components/architecture-visualizer/ArchitectureVisualizer.tsx`
 - Diagrammes Mermaid (module dependencies, component hierarchy, data flow, database schema) copiables vers mermaid.live
 
-### 34. Code Migration Agent ✅ Implémenté
+</details>
+
+<details>
+<summary>### 34. Code Migration Agent ✅ Implémenté</summary>
 
 Migration automatique entre frameworks, versions majeures ou langages.
 
-- **Principe :** "Migre ce projet de React Class Components vers des Hooks", "Upgrade de Python 3.9 à 3.12", "Convertis ce module JS en TypeScript". L'agent analyse le code, planifie la migration, exécute par batch, et valide avec QA.
+- **Principe :** "Migre ce projet de React Class Components vers des Hooks", "Upgrade de Python 3.9 à 3.13", "Convertis ce module JS en TypeScript". L'agent analyse le code, planifie la migration, exécute par batch, et valide avec QA.
 - **Exploite :** Agent coder, worktree isolation, QA pipeline, context system
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Les migrations sont le cauchemar de tout dev. L'automatiser est un selling point énorme.
@@ -2818,7 +2818,10 @@ Migration automatique entre frameworks, versions majeures ou langages.
 - UI : `apps/frontend/src/renderer/components/code-migration/CodeMigrationDashboard.tsx`
 - Mode Dry Run pour prévisualiser sans modifier les fichiers
 
-### 35. Performance Profiler Agent ✅ Implémenté
+</details>
+
+<details>
+<summary>### 35. Performance Profiler Agent ✅ Implémenté</summary>
 
 Agent qui profile le code, identifie les bottlenecks et propose des optimisations.
 
@@ -2836,7 +2839,10 @@ Agent qui profile le code, identifie les bottlenecks et propose des optimisation
 - Détection statique (nested loops, N+1, memory leaks, React issues) + benchmarks (vitest/jest/pytest)
 - Option auto-implement pour appliquer les fixes triviaux automatiquement
 
-### 36. Documentation Agent ✅ Implémenté
+</details>
+
+<details>
+<summary>### 36. Documentation Agent ✅ Implémenté</summary>
 
 Génération et maintenance automatique de la documentation technique.
 
@@ -2853,6 +2859,8 @@ Génération et maintenance automatique de la documentation technique.
 - UI : `apps/frontend/src/renderer/components/documentation-agent/DocumentationAgentDashboard.tsx`
 - Types supportés : README, API docs, contribution guide, docstrings/JSDoc, diagrammes de séquence Mermaid
 - Option insert-inline pour insérer les docstrings directement dans le code source
+
+</details>
 
 ### 37. Plugin Marketplace
 
