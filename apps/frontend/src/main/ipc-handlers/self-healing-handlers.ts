@@ -22,7 +22,7 @@ export function registerSelfHealingHandlers(
     try {
       const result = await runSelfHealingCommand(projectPath, ['dashboard', '--json']);
       return { success: true, data: JSON.parse(result) };
-    } catch (error) {
+    } catch (_error) {
       return { success: true, data: getEmptyDashboard() };
     }
   });
@@ -72,15 +72,15 @@ export function registerSelfHealingHandlers(
 
   // ── Production Mode ───────────────────────────────────────
 
-  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_PRODUCTION_CONNECT, async (_, projectPath: string, sourceConfig: Record<string, unknown>) => {
+  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_PRODUCTION_CONNECT, async (_, _projectPath: string, _sourceConfig: Record<string, unknown>) => {
     return { success: true };
   });
 
-  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_PRODUCTION_DISCONNECT, async (_, projectPath: string, source: string) => {
+  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_PRODUCTION_DISCONNECT, async (_, _projectPath: string, _source: string) => {
     return { success: true };
   });
 
-  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_PRODUCTION_CONFIG, async (_, projectPath: string, config: Record<string, unknown>) => {
+  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_PRODUCTION_CONFIG, async (_, _projectPath: string, _config: Record<string, unknown>) => {
     return { success: true };
   });
 
@@ -89,7 +89,7 @@ export function registerSelfHealingHandlers(
   ipcMain.handle(IPC_CHANNELS.SELF_HEALING_PROACTIVE_SCAN, async (_, projectPath: string) => {
     const mainWindow = getMainWindow();
     try {
-      const result = await runSelfHealingCommand(projectPath, ['proactive']);
+      await runSelfHealingCommand(projectPath, ['proactive']);
       if (mainWindow) {
         mainWindow.webContents.send(IPC_CHANNELS.SELF_HEALING_OPERATION_COMPLETE, {
           mode: 'proactive',
@@ -102,13 +102,13 @@ export function registerSelfHealingHandlers(
     }
   });
 
-  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_PROACTIVE_CONFIG, async (_, projectPath: string, config: Record<string, unknown>) => {
+  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_PROACTIVE_CONFIG, async (_, _projectPath: string, _config: Record<string, unknown>) => {
     return { success: true };
   });
 
   // ── Actions ───────────────────────────────────────────────
 
-  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_TRIGGER_FIX, async (_, projectPath: string, incidentId: string) => {
+  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_TRIGGER_FIX, async (_, _projectPath: string, incidentId: string) => {
     const mainWindow = getMainWindow();
     if (mainWindow) {
       mainWindow.webContents.send(IPC_CHANNELS.SELF_HEALING_OPERATION_PROGRESS, {
@@ -119,15 +119,15 @@ export function registerSelfHealingHandlers(
     return { success: true };
   });
 
-  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_CANCEL_OPERATION, async (_, projectPath: string, operationId: string) => {
+  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_CANCEL_OPERATION, async (_, _projectPath: string, _operationId: string) => {
     return { success: true };
   });
 
-  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_DISMISS_INCIDENT, async (_, projectPath: string, incidentId: string) => {
+  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_DISMISS_INCIDENT, async (_, _projectPath: string, _incidentId: string) => {
     return { success: true };
   });
 
-  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_RETRY_INCIDENT, async (_, projectPath: string, incidentId: string) => {
+  ipcMain.handle(IPC_CHANNELS.SELF_HEALING_RETRY_INCIDENT, async (_, _projectPath: string, _incidentId: string) => {
     return { success: true };
   });
 }
@@ -191,4 +191,5 @@ function runSelfHealingCommand(projectPath: string, args: string[]): Promise<str
     proc.on('error', (err: Error) => {
       reject(err);
     });
-  })
+  });
+}
