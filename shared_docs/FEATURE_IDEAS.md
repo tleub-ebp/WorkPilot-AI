@@ -2788,7 +2788,7 @@ Les fichiers sont créés dans `.auto-claude/environment/` :
 
 </details>
 
-### 33. Architecture Visualizer
+### 33. Architecture Visualizer ✅ Implémenté
 
 Génération automatique de diagrammes d'architecture depuis le code.
 
@@ -2797,7 +2797,15 @@ Génération automatique de diagrammes d'architecture depuis le code.
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La doc d'archi se génère et se maintient toute seule.
 
-### 34. Code Migration Agent
+**Implémentation :**
+- Backend : `apps/backend/architecture_visualizer/` (analyzer, diagram_generator, models) + `runners/architecture_visualizer_runner.py`
+- Frontend service : `apps/frontend/src/main/architecture-visualizer-service.ts`
+- IPC handlers : `apps/frontend/src/main/ipc-handlers/architecture-visualizer-handlers.ts`
+- Store : `apps/frontend/src/renderer/stores/architecture-visualizer-store.ts`
+- UI : `apps/frontend/src/renderer/components/architecture-visualizer/ArchitectureVisualizer.tsx`
+- Diagrammes Mermaid (module dependencies, component hierarchy, data flow, database schema) copiables vers mermaid.live
+
+### 34. Code Migration Agent ✅ Implémenté
 
 Migration automatique entre frameworks, versions majeures ou langages.
 
@@ -2806,7 +2814,15 @@ Migration automatique entre frameworks, versions majeures ou langages.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Les migrations sont le cauchemar de tout dev. L'automatiser est un selling point énorme.
 
-### 35. Performance Profiler Agent
+**Implémentation :**
+- Backend : Wraps `apps/backend/migration/orchestrator.py` (MigrationOrchestrator) via `runners/code_migration_runner.py`
+- Frontend service : `apps/frontend/src/main/code-migration-service.ts`
+- IPC handlers : `apps/frontend/src/main/ipc-handlers/code-migration-handlers.ts`
+- Store : `apps/frontend/src/renderer/stores/code-migration-store.ts`
+- UI : `apps/frontend/src/renderer/components/code-migration/CodeMigrationDashboard.tsx`
+- Mode Dry Run pour prévisualiser sans modifier les fichiers
+
+### 35. Performance Profiler Agent ✅ Implémenté
 
 Agent qui profile le code, identifie les bottlenecks et propose des optimisations.
 
@@ -2815,7 +2831,16 @@ Agent qui profile le code, identifie les bottlenecks et propose des optimisation
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** L'app s'optimise toute seule. Plus besoin d'experts perf.
 
-### 36. Documentation Agent
+**Implémentation :**
+- Backend : `apps/backend/performance/` (profiler, benchmark_runner, optimizer, models) + `runners/performance_profiler_runner.py`
+- Frontend service : `apps/frontend/src/main/performance-profiler-service.ts`
+- IPC handlers : `apps/frontend/src/main/ipc-handlers/performance-profiler-handlers.ts`
+- Store : `apps/frontend/src/renderer/stores/performance-profiler-store.ts`
+- UI : `apps/frontend/src/renderer/components/performance-profiler/PerformanceProfilerDashboard.tsx`
+- Détection statique (nested loops, N+1, memory leaks, React issues) + benchmarks (vitest/jest/pytest)
+- Option auto-implement pour appliquer les fixes triviaux automatiquement
+
+### 36. Documentation Agent ✅ Implémenté
 
 Génération et maintenance automatique de la documentation technique.
 
@@ -2823,6 +2848,15 @@ Génération et maintenance automatique de la documentation technique.
 - **Exploite :** Context system, project analysis, Memory (Graphiti)
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La doc n'est plus jamais outdated.
+
+**Implémentation :**
+- Backend : `apps/backend/documentation/` (doc_analyzer, doc_generator, doc_updater, models) + `runners/documentation_agent_runner.py`
+- Frontend service : `apps/frontend/src/main/documentation-agent-service.ts`
+- IPC handlers : `apps/frontend/src/main/ipc-handlers/documentation-agent-handlers.ts`
+- Store : `apps/frontend/src/renderer/stores/documentation-agent-store.ts`
+- UI : `apps/frontend/src/renderer/components/documentation-agent/DocumentationAgentDashboard.tsx`
+- Types supportés : README, API docs, contribution guide, docstrings/JSDoc, diagrammes de séquence Mermaid
+- Option insert-inline pour insérer les docstrings directement dans le code source
 
 ### 37. Plugin Marketplace
 
