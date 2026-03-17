@@ -21,10 +21,10 @@ interface AuthenticatedProvider {
 }
 
 interface GlobalAutoSwitchingProps {
-  settings: AppSettings;
-  onSettingsChange: (settings: AppSettings) => void;
-  isOpen: boolean;
-  useSheet?: boolean;
+  readonly settings: AppSettings;
+  readonly onSettingsChange: (settings: AppSettings) => void;
+  readonly isOpen: boolean;
+  readonly useSheet?: boolean;
 }
 
 export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useSheet = false }: GlobalAutoSwitchingProps) {
@@ -37,10 +37,13 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
   // Priority order state
   const [priorityOrder, setPriorityOrder] = useState<string[]>([]);
   const [isSavingPriority, setIsSavingPriority] = useState(false);
-  const [profileUsageData, setProfileUsageData] = useState<Map<string, any>>(new Map());
+  const [profileUsageData] = useState<Map<string, any>>(new Map());
 
   // Authenticated providers (Copilot, OpenAI, etc.)
   const [authenticatedProviders, setAuthenticatedProviders] = useState<AuthenticatedProvider[]>([]);
+  
+  // Unified accounts state
+  const [unifiedAccounts, setUnifiedAccounts] = useState<UnifiedAccount[]>([]);
   
   // Auto-switching state - initialize from settings
   const [autoSwitchEnabled, setAutoSwitchEnabled] = useState(settings.autoSwitchEnabled ?? false);
@@ -61,13 +64,13 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
 
       // Check Copilot via GitHub CLI
       try {
-        if (!window.electronAPI || !window.electronAPI.checkCopilotAuth) {
+        if (!globalThis.electronAPI?.checkCopilotAuth) {
           return;
         }
         
-        const copilotResult = await window.electronAPI.checkCopilotAuth();
+        const copilotResult = await globalThis.electronAPI.checkCopilotAuth();
         
-        if (copilotResult && copilotResult.success && copilotResult.data?.authenticated) {
+        if (copilotResult?.success && copilotResult.data?.authenticated) {
           const copilotProvider = {
             id: 'copilot', // Use same ID as CleanProviderSection
             name: 'copilot',
@@ -135,7 +138,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
   }, [settings.proactiveEnabled, settings.sessionThreshold, settings.rateLimitEnabled, settings.authFailureEnabled]);
 
   // Build unified accounts list
-  const buildUnifiedAccounts = (): UnifiedAccount[] => {
+  const buildUnifiedAccounts = async (): Promise<UnifiedAccount[]> => {
     const unifiedList: UnifiedAccount[] = [];
 
     // Track which providers are already represented to avoid duplicates
@@ -171,31 +174,24 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
       const usageData = profileUsageData.get(profile.id);
       unifiedList.push({
         id: `oauth-${profile.id}`,
-        name: 'anthropic',
+        name: profile.name,
         type: 'oauth',
-        displayName: getRegistryLabel('anthropic'),
-        identifier: profile.email || profile.name || t('accounts.priority.noEmail'),
+        displayName: profile.name,
+        identifier: profile.email || t('accounts.priority.noEmail'),
         isActive: profile.id === activeClaudeProfileId && !activeApiProfileId,
-        isNext: false,
+        isNext: false, // Will be computed by AccountPriorityList
         isAvailable: profile.isAuthenticated ?? false,
         hasUnlimitedUsage: false,
+        // Use real usage data from the usage monitor
         sessionPercent: usageData?.sessionPercent,
         weeklyPercent: usageData?.weeklyPercent,
-        isRateLimited: usageData?.isRateLimited,
-        rateLimitType: usageData?.rateLimitType,
-        isAuthenticated: profile.isAuthenticated,
-        needsReauthentication: usageData?.needsReauthentication,
       });
-      representedProviders.add('anthropic');
+      representedProviders.add(profile.name);
     });
     
-    // Loop 2: Add ALL API profiles (no priority order filter — show all configured profiles)
+    // Loop 2: Add API profiles (OpenAI, Google, etc.)
     apiProfiles.forEach((profile) => {
       const providerName = detectProviderFromProfile(profile);
-
-      // Skip Anthropic profiles since they are already covered by OAuth (Loop 1)
-      if (providerName === 'anthropic' && representedProviders.has('anthropic')) return;
-
       unifiedList.push({
         id: `api-${profile.id}`,
         name: providerName,
@@ -236,7 +232,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
 
     // Fallback: use getStaticProviders() to catch any configured providers not yet represented
     // This ensures profiles detected by URL/name matching appear even if Loops 2 & 3 missed them
-    const { providers: staticProviders, status: staticStatus } = getStaticProviders(apiProfiles);
+    const { providers: staticProviders, status: staticStatus } = await getStaticProviders(apiProfiles, settings);
     for (const sp of staticProviders) {
       if (representedProviders.has(sp.name)) continue;
       if (!staticStatus[sp.name]) continue; // Not configured/authenticated
@@ -253,18 +249,13 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
         hasUnlimitedUsage: sp.name !== 'copilot',
         sessionPercent: undefined,
         weeklyPercent: undefined,
-        isAuthenticated: true,
       });
       representedProviders.add(sp.name);
     }
 
-    // Filter out providers explicitly disabled by the user toggle
-    const disabledProviders: string[] = (settings as any).disabledAutoSwitchProviders || [];
-    const filteredList = disabledProviders.length > 0
-      ? unifiedList.filter(account => !disabledProviders.includes(account.id) && !disabledProviders.includes(account.name))
-      : unifiedList;
+    // Filter out unavailable providers
+    const filteredList = unifiedList.filter((account) => account.isAvailable);
 
-    // Sort by priority order if available, with improved matching by id or provider name
     if (priorityOrder.length > 0) {
       filteredList.sort((a, b) => {
         const findIndex = (account: UnifiedAccount): number => {
@@ -282,12 +273,20 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
     return filteredList;
   };
 
-  const unifiedAccounts = buildUnifiedAccounts();
+  // Load unified accounts when dependencies change
+  useEffect(() => {
+    const loadUnifiedAccounts = async () => {
+      const accounts = await buildUnifiedAccounts();
+      setUnifiedAccounts(accounts);
+    };
+    
+    loadUnifiedAccounts();
+  }, [claudeProfiles, apiProfiles, activeClaudeProfileId, activeApiProfileId, authenticatedProviders, priorityOrder, profileUsageData, settings]);
 
   // Load priority order from ClaudeProfileManager
   const loadPriorityOrder = async () => {
     try {
-      const result = await window.electronAPI.getAccountPriorityOrder();
+      const result = await globalThis.electronAPI.getAccountPriorityOrder();
       if (result.success && result.data) {
         setPriorityOrder(result.data);
       }
@@ -302,7 +301,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
     setIsSavingPriority(true);
     try {
       // Save to ClaudeProfileManager (single source of truth)
-      await window.electronAPI.setAccountPriorityOrder(newOrder);
+      await globalThis.electronAPI.setAccountPriorityOrder(newOrder);
     } catch (err) {
       console.warn('[GlobalAutoSwitching] Failed to save priority order:', err);
       toast({
@@ -352,6 +351,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
     } catch (error) {
       // Revert state if save failed
       setAutoSwitchEnabled(!enabled);
+      console.error('[GlobalAutoSwitching] Failed to toggle auto-switch:', error);
       toast({
         variant: 'destructive',
         title: t('settings:autoSwitching.toast.error'),
@@ -387,6 +387,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
       }
       
     } catch (error) {
+      console.error('[GlobalAutoSwitching] Failed to update settings:', error);
       toast({
         variant: 'destructive',
         title: t('settings:autoSwitching.toast.error'),
@@ -448,7 +449,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
                 max={99}
                 step={1}
                 value={sessionThreshold}
-                onChange={(e) => handleUpdateSetting({ sessionThreshold: parseInt(e.target.value, 10) })}
+                onChange={(e) => handleUpdateSetting({ sessionThreshold: Number.parseInt(e.target.value, 10) })}
                 disabled={isLoading}
                 className="flex-1"
               />

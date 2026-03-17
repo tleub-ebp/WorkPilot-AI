@@ -150,15 +150,28 @@ export function CleanProviderGrid({
 
   return (
     <div className={cn('space-y-6', className)}>
-      {/* Header avec actions */}
+      {/* Header avec titre/description/statistiques à gauche et boutons à droite */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">{t('providerGrid.title')}</h2>
-          <p className="text-sm text-muted-foreground">
-            {t('providerGrid.description')}
-          </p>
+        {/* Titre, description et statistiques à gauche */}
+        <div className="flex-1 sm:flex-none space-y-2">
+
+          {/* Statistiques */}
+          <div className="flex items-center gap-2 text-sm">
+            <div className="px-2 py-1 bg-primary/10 text-primary rounded">
+              {t('providerGrid.stats.total', { count: stats.total })}
+            </div>
+            <div className="px-2 py-1 bg-green-500/10 text-green-600 rounded">
+              {t('providerGrid.stats.configured', { count: stats.configured })}
+            </div>
+            {stats.errors > 0 && (
+              <div className="px-2 py-1 bg-red-500/10 text-red-600 rounded">
+                {t('providerGrid.stats.errors', { count: stats.errors })}
+              </div>
+            )}
+          </div>
         </div>
-        
+
+        {/* Boutons d'action à droite */}
         <div className="flex gap-2">
           {onRefreshProviders && (
             <Button
@@ -181,21 +194,6 @@ export function CleanProviderGrid({
             </Button>
           )}
         </div>
-      </div>
-
-      {/* Statistiques */}
-      <div className="flex items-center gap-4 text-sm">
-        <div className="px-2 py-1 bg-primary/10 text-primary rounded">
-          {t('providerGrid.stats.total', { count: stats.total })}
-        </div>
-        <div className="px-2 py-1 bg-green-500/10 text-green-600 rounded">
-          {t('providerGrid.stats.configured', { count: stats.configured })}
-        </div>
-        {stats.errors > 0 && (
-          <div className="px-2 py-1 bg-red-500/10 text-red-600 rounded">
-            {t('providerGrid.stats.errors', { count: stats.errors })}
-          </div>
-        )}
       </div>
 
       {/* Barre de recherche minimaliste */}

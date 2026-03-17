@@ -782,4 +782,17 @@ export const IPC_CHANNELS = {
   PAIR_PROGRAMMING_CONFLICT: 'pairProgramming:conflict',
   PAIR_PROGRAMMING_ERROR: 'pairProgramming:error',
   PAIR_PROGRAMMING_COMPLETE: 'pairProgramming:complete',
+
+  // Team Knowledge Sync (Feature 31) — Shared Graphiti memory across team members
+  TEAM_SYNC_GET_STATUS: 'teamSync:getStatus',
+  TEAM_SYNC_PUSH: 'teamSync:push',
+  TEAM_SYNC_PULL: 'teamSync:pull',
+  TEAM_SYNC_LIST_PEERS: 'teamSync:listPeers',
+  TEAM_SYNC_GET_PEER_EPISODES: 'teamSync:getPeerEpisodes',
+  TEAM_SYNC_CONFIGURE: 'teamSync:configure',
+  TEAM_SYNC_START_SERVER: 'teamSync:startServer',
+  TEAM_SYNC_STOP_SERVER: 'teamSync:stopServer',
+  // Team Sync events (main -> renderer)
+  TEAM_SYNC_SERVER_STATUS: 'teamSync:serverStatus',
+  TEAM_SYNC_SYNC_PROGRESS: 'teamSync:syncProgress',
 } as const;
