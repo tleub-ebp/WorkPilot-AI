@@ -7,7 +7,7 @@ import type { VoiceControlRequest } from '../voice-control-service';
  */
 export function registerVoiceControlHandlers(): void {
   // Start voice recording
-  ipcMain.handle('start-voice-recording', async (event, request?: VoiceControlRequest) => {
+  ipcMain.handle('voice-control:startRecording', async (event, request?: VoiceControlRequest) => {
     try {
       await voiceControlService.startRecording(request);
       return { success: true };
@@ -18,7 +18,7 @@ export function registerVoiceControlHandlers(): void {
   });
 
   // Stop voice recording
-  ipcMain.handle('stop-voice-recording', async () => {
+  ipcMain.handle('voice-control:stopRecording', async () => {
     try {
       voiceControlService.stopRecording();
       return { success: true };
@@ -29,7 +29,7 @@ export function registerVoiceControlHandlers(): void {
   });
 
   // Cancel voice control
-  ipcMain.handle('cancel-voice-control', async () => {
+  ipcMain.handle('voice-control:cancel', async () => {
     try {
       const cancelled = voiceControlService.cancel();
       return { success: true, cancelled };
@@ -40,7 +40,7 @@ export function registerVoiceControlHandlers(): void {
   });
 
   // Check if voice control is active
-  ipcMain.handle('is-voice-control-active', async () => {
+  ipcMain.handle('voice-control:isActive', async () => {
     try {
       const isActive = voiceControlService.isActive();
       return { success: true, isActive };
@@ -51,7 +51,7 @@ export function registerVoiceControlHandlers(): void {
   });
 
   // Configure voice control service
-  ipcMain.handle('configure-voice-control', async (event, config: { pythonPath?: string; autoBuildSourcePath?: string }) => {
+  ipcMain.handle('voice-control:configure', async (event, config: { pythonPath?: string; autoBuildSourcePath?: string }) => {
     try {
       voiceControlService.configure(config.pythonPath, config.autoBuildSourcePath);
       return { success: true };
@@ -71,7 +71,7 @@ export function setupVoiceControlEvents(): void {
     const windows = require('electron').BrowserWindow.getAllWindows();
     windows.forEach((window: any) => {
       if (!window.isDestroyed()) {
-        window.webContents.send('voice-control-status', status);
+        window.webContents.send('voice-control:status', status);
       }
     });
   });
@@ -81,7 +81,7 @@ export function setupVoiceControlEvents(): void {
     const windows = require('electron').BrowserWindow.getAllWindows();
     windows.forEach((window: any) => {
       if (!window.isDestroyed()) {
-        window.webContents.send('voice-control-stream-chunk', chunk);
+        window.webContents.send('voice-control:stream-chunk', chunk);
       }
     });
   });
@@ -91,7 +91,7 @@ export function setupVoiceControlEvents(): void {
     const windows = require('electron').BrowserWindow.getAllWindows();
     windows.forEach((window: any) => {
       if (!window.isDestroyed()) {
-        window.webContents.send('voice-control-error', error);
+        window.webContents.send('voice-control:error', error);
       }
     });
   });
@@ -101,7 +101,7 @@ export function setupVoiceControlEvents(): void {
     const windows = require('electron').BrowserWindow.getAllWindows();
     windows.forEach((window: any) => {
       if (!window.isDestroyed()) {
-        window.webContents.send('voice-control-complete', result);
+        window.webContents.send('voice-control:complete', result);
       }
     });
   });
@@ -111,7 +111,7 @@ export function setupVoiceControlEvents(): void {
     const windows = require('electron').BrowserWindow.getAllWindows();
     windows.forEach((window: any) => {
       if (!window.isDestroyed()) {
-        window.webContents.send('voice-control-audio-level', level);
+        window.webContents.send('voice-control:audio-level', level);
       }
     });
   });
@@ -121,7 +121,7 @@ export function setupVoiceControlEvents(): void {
     const windows = require('electron').BrowserWindow.getAllWindows();
     windows.forEach((window: any) => {
       if (!window.isDestroyed()) {
-        window.webContents.send('voice-control-duration', duration);
+        window.webContents.send('voice-control:duration', duration);
       }
     });
   });
