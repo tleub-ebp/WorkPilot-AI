@@ -80,6 +80,7 @@ export function ThemedProviderSection({
   // Vérifier si l'utilisateur est authentifié via OAuth (Claude Code CLI)
   // Check both settings AND CLI config files via IPC
   const [hasClaudeOAuth, setHasClaudeOAuth] = useState(Boolean(settings.globalClaudeOAuthToken));
+  const [hasOpenAICodexOAuth, setHasOpenAICodexOAuth] = useState(Boolean(settings.globalOpenAICodexOAuthToken));
 
   useEffect(() => {
     const checkOAuth = async () => {
@@ -100,8 +101,25 @@ export function ThemedProviderSection({
         // IPC not available
       }
     };
+    const checkOpenAIOAuth = async () => {
+      if (settings.globalOpenAICodexOAuthToken) {
+        setHasOpenAICodexOAuth(true);
+        return;
+      }
+      try {
+        if (globalThis.electronAPI?.checkOpenAICodexOAuth) {
+          const result = await globalThis.electronAPI.checkOpenAICodexOAuth();
+          if (result.isAuthenticated) {
+            setHasOpenAICodexOAuth(true);
+          }
+        }
+      } catch {
+        // IPC not available
+      }
+    };
     checkOAuth();
-  }, [settings.globalClaudeOAuthToken]);
+    checkOpenAIOAuth();
+  }, [settings.globalClaudeOAuthToken, settings.globalOpenAICodexOAuthToken]);
 
   // Charger les connecteurs
   useEffect(() => {
@@ -161,6 +179,10 @@ export function ThemedProviderSection({
     // Anthropic/Claude : vérifier d'abord l'auth OAuth via les profils Claude (CLI)
     // avant de regarder si une clé API existe
     if ((providerId === 'anthropic' || providerId === 'claude') && hasClaudeOAuth) {
+      return 'oauth';
+    }
+    // OpenAI : vérifier l'auth OAuth via Codex CLI
+    if (providerId === 'openai' && hasOpenAICodexOAuth) {
       return 'oauth';
     }
     // Copilot : utilise l'authentification via GitHub CLI

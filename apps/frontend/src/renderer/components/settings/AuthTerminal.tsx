@@ -167,22 +167,27 @@ export function AuthTerminal({
         xterm.writeln('\x1b[1;36m╚════════════════════════════════════════════════════════════╝\x1b[0m');
         xterm.writeln('');
 
-        // Pre-fill the terminal with 'claude /login' command
+        // Pre-fill the terminal with the appropriate command based on the terminal ID pattern
         // Wait a moment for the shell prompt to be ready, then send the command
         // (without carriage return so user must press Enter)
         // Guard: only send once per component lifecycle
         if (loginSentRef.current) {
-          debugLog('SKIPPED scheduling /login pre-fill (already sent)', { terminalId });
+          debugLog('SKIPPED scheduling command pre-fill (already sent)', { terminalId });
         } else {
-          debugLog('Scheduling /login pre-fill', { terminalId, delay: 500 });
+          debugLog('Scheduling command pre-fill', { terminalId, delay: 500 });
           loginTimeoutRef.current = setTimeout(() => {
             // Double-check guard in case of race conditions
             if (loginSentRef.current) {
-              debugLog('SKIPPED /login pre-fill (already sent)', { terminalId });
+              debugLog('SKIPPED command pre-fill (already sent)', { terminalId });
             } else {
               loginSentRef.current = true;
-              debugLog('Sending /login pre-fill NOW', { terminalId });
-              globalThis.electronAPI.sendTerminalInput(terminalId, 'claude /login');
+              debugLog('Sending command pre-fill NOW', { terminalId });
+              
+              // Check if this is an OpenAI Codex authentication terminal
+              const isCodexAuth = terminalId.startsWith('auth-codex-');
+              const command = isCodexAuth ? 'codex' : 'claude /login';
+              
+              globalThis.electronAPI.sendTerminalInput(terminalId, command);
             }
           }, 500);
         }

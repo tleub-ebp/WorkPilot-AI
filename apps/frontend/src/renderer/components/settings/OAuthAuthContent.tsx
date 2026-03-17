@@ -143,6 +143,23 @@ export function OAuthAuthContent({
     );
   }
 
+  // OpenAI Codex CLI OAuth
+  if (providerId === 'openai') {
+    return (
+      <div className="space-y-4">
+        <OpenAICodexAuthContent
+          authTerminal={authTerminal}
+          isAuthenticating={isAuthenticating}
+          onOAuthAuth={onOAuthAuth}
+          onAuthTerminalClose={onAuthTerminalClose}
+          onAuthTerminalSuccess={onAuthTerminalSuccess}
+          onAuthTerminalError={onAuthTerminalError}
+          t={t}
+        />
+      </div>
+    );
+  }
+
   // Anthropic/Claude OAuth
   return (
     <div className="space-y-4">
@@ -243,6 +260,67 @@ function WindsurfAuthContent({
       
       <div className="text-xs text-muted-foreground">
         <p>{t('sections.accounts.providerConfig.windsurfAuth.terminalInstructions')}</p>
+      </div>
+    </div>
+  );
+}
+
+function OpenAICodexAuthContent({
+  authTerminal,
+  isAuthenticating,
+  onOAuthAuth,
+  onAuthTerminalClose,
+  onAuthTerminalSuccess,
+  onAuthTerminalError,
+  t
+}: {
+  readonly authTerminal: AuthTerminalState | null;
+  readonly isAuthenticating: boolean;
+  readonly onOAuthAuth: () => void;
+  readonly onAuthTerminalClose: () => void;
+  readonly onAuthTerminalSuccess: (email?: string) => void;
+  readonly onAuthTerminalError: (error: string) => void;
+  readonly t: any;
+}) {
+  // Show auth terminal when active
+  if (authTerminal) {
+    return (
+      <div className="rounded-lg border border-primary/30 overflow-hidden" style={{ height: '320px' }}>
+        <AuthTerminal
+          terminalId={authTerminal.terminalId}
+          configDir={authTerminal.configDir}
+          profileName={authTerminal.profileName}
+          onClose={onAuthTerminalClose}
+          onAuthSuccess={onAuthTerminalSuccess}
+          onAuthError={onAuthTerminalError}
+        />
+      </div>
+    );
+  }
+
+  // Show default auth button
+  return (
+    <div className="space-y-4">
+      <Button
+        onClick={onOAuthAuth}
+        disabled={isAuthenticating}
+        className="w-full"
+      >
+        {isAuthenticating ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            {t('sections.accounts.providerConfig.openaiAuth.authenticating')}
+          </>
+        ) : (
+          <>
+            <LogIn className="w-4 h-4 mr-2" />
+            {t('sections.accounts.providerConfig.openaiAuth.connectWithCodex')}
+          </>
+        )}
+      </Button>
+      
+      <div className="text-xs text-muted-foreground">
+        <p>{t('sections.accounts.providerConfig.openaiAuth.terminalInstructions')}</p>
       </div>
     </div>
   );

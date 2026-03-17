@@ -311,6 +311,17 @@ export function CleanProviderSection({
         } catch {
           // IPC not available
         }
+        // Enrich settings with OpenAI Codex CLI OAuth status
+        try {
+          if (globalThis.electronAPI?.checkOpenAICodexOAuth) {
+            const oauthResult = await globalThis.electronAPI.checkOpenAICodexOAuth();
+            if (oauthResult.isAuthenticated) {
+              enrichedSettings.globalOpenAICodexOAuthToken = oauthResult.profileName || 'codex-authenticated';
+            }
+          }
+        } catch {
+          // IPC not available
+        }
         const result = await getStaticProviders(profiles, enrichedSettings);
         setStaticProviders(result.providers);
         setProviderStatus(result.status);

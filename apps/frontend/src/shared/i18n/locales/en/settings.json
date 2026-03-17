@@ -81,6 +81,12 @@
           "accountPlan": "Plan",
           "accountCredits": "Credits",
           "accountFlowActions": "Flow Actions"
+        },
+        "openaiAuth": {
+          "codexCliAuth": "Use Codex CLI OAuth authentication to easily connect with your OpenAI account.",
+          "authenticating": "Authenticating...",
+          "connectWithCodex": "Connect with Codex CLI",
+          "terminalInstructions": "This will open a terminal where you can run the `codex` command to authenticate via OAuth."
         }
       },
       "providerCard": {

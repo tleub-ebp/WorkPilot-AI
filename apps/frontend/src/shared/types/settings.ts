@@ -239,6 +239,7 @@ export interface AppSettings {
   notifications: NotificationSettings;
   // Global API keys (used as defaults for all projects)
   globalClaudeOAuthToken?: string;
+  globalOpenAICodexOAuthToken?: string;
   globalOpenAIApiKey?: string;
   globalAnthropicApiKey?: string;
   globalGoogleApiKey?: string;

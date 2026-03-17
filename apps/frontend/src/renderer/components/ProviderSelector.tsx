@@ -186,6 +186,17 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
         } catch {
           // IPC not available (e.g. in browser dev mode)
         }
+        // Enrich settings with OpenAI Codex CLI OAuth status
+        try {
+          if (globalThis.electronAPI?.checkOpenAICodexOAuth) {
+            const oauthResult = await globalThis.electronAPI.checkOpenAICodexOAuth();
+            if (oauthResult.isAuthenticated) {
+              enrichedSettings.globalOpenAICodexOAuthToken = oauthResult.profileName || 'codex-authenticated';
+            }
+          }
+        } catch {
+          // IPC not available
+        }
         const data = await getStaticProviders(profiles, enrichedSettings);
         setProvidersData(data);
       } catch (error) {

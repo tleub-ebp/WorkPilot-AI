@@ -383,6 +383,22 @@ export class CredentialManager extends EventEmitter {
         }
       }
 
+      // Cas spécial pour OpenAI — vérifie OAuth Codex CLI en plus de l'API key
+      if (provider === 'openai') {
+        const codexResult = await this.checkOpenAICodexOAuthStatus();
+        if (codexResult.isAuthenticated) {
+          return {
+            success: true,
+            message: 'OpenAI Codex CLI authentication active',
+            details: { 
+              method: 'OAuth (Codex CLI)',
+              profile: codexResult.profileName
+            }
+          };
+        }
+        // Fall through to standard API key check below
+      }
+
       // Cas spécial pour Windsurf — uses SSO token or service key stored in settings or detected locally
       if (provider === 'windsurf') {
         return await this.testWindsurfProvider();
@@ -855,6 +871,102 @@ export class CredentialManager extends EventEmitter {
    */
   public async checkClaudeOAuthStatusPublic(): Promise<{ isAuthenticated: boolean; profileName?: string }> {
     return this.checkClaudeOAuthStatus();
+  }
+
+  /**
+   * Check if OpenAI Codex CLI OAuth is configured.
+   * Checks multiple sources:
+   *   1. Codex CLI config files (~/.codex/ or ~/.config/codex/)
+   *   2. App's own profiles.json for OpenAI API profiles
+   *   3. Global settings for globalOpenAIApiKey
+   */
+  private async checkOpenAICodexOAuthStatus(): Promise<{ isAuthenticated: boolean; profileName?: string }> {
+    try {
+      const fs = require('node:fs').promises;
+      const path = require('node:path');
+      const os = require('node:os');
+
+      // Source 1: Check Codex CLI config files
+      const candidatePaths = [
+        // Windows: %APPDATA%\codex\auth.json
+        process.env.APPDATA ? path.join(process.env.APPDATA, 'codex', 'auth.json') : null,
+        // Unix/macOS: ~/.config/codex/auth.json
+        path.join(os.homedir(), '.config', 'codex', 'auth.json'),
+        // Also check ~/.codex/auth.json (alternative location)
+        path.join(os.homedir(), '.codex', 'auth.json'),
+        // OpenAI CLI config: ~/.openai/auth.json
+        process.env.APPDATA ? path.join(process.env.APPDATA, 'openai', 'auth.json') : null,
+        path.join(os.homedir(), '.config', 'openai', 'auth.json'),
+      ].filter(Boolean) as string[];
+
+      for (const configPath of candidatePaths) {
+        try {
+          const authData = await fs.readFile(configPath, 'utf-8');
+          const auth = JSON.parse(authData);
+
+          // Check for OAuth token or API key in Codex CLI config
+          if (auth.access_token || auth.token || auth.api_key) {
+            return {
+              isAuthenticated: true,
+              profileName: auth.email || auth.user || 'OpenAI Codex CLI'
+            };
+          }
+        } catch {
+          // This path doesn't exist, try next
+        }
+      }
+
+      // Source 2: Check app's own profiles.json for OpenAI API profile
+      try {
+        const profilesFile = await loadProfilesFile();
+        const openaiProfile = profilesFile.profiles.find(p => {
+          const detected = detectProvider(p.baseUrl);
+          return detected === 'openai';
+        });
+        if (openaiProfile?.apiKey && !openaiProfile.apiKey.includes('placeholder') && !openaiProfile.apiKey.startsWith('test-') && openaiProfile.apiKey.length >= 20) {
+          return {
+            isAuthenticated: true,
+            profileName: openaiProfile.name || 'OpenAI (API Key)'
+          };
+        }
+      } catch {
+        // profiles.json not available
+      }
+
+      // Source 3: Check global settings for globalOpenAIApiKey
+      try {
+        const settings = readSettingsFile();
+        const openaiKey = (settings as any)?.globalOpenAIApiKey as string | undefined;
+        if (openaiKey?.trim()) {
+          return {
+            isAuthenticated: true,
+            profileName: 'OpenAI (API Key)'
+          };
+        }
+        // Also check for Codex OAuth token in settings
+        const codexOAuthToken = (settings as any)?.globalOpenAICodexOAuthToken as string | undefined;
+        if (codexOAuthToken?.trim()) {
+          return {
+            isAuthenticated: true,
+            profileName: codexOAuthToken
+          };
+        }
+      } catch {
+        // settings not available
+      }
+
+      return { isAuthenticated: false };
+    } catch (error) {
+      console.warn('[CredentialManager] Failed to check OpenAI Codex OAuth status:', error);
+      return { isAuthenticated: false };
+    }
+  }
+
+  /**
+   * Public wrapper for checkOpenAICodexOAuthStatus — used by IPC handlers
+   */
+  public async checkOpenAICodexOAuthStatusPublic(): Promise<{ isAuthenticated: boolean; profileName?: string }> {
+    return this.checkOpenAICodexOAuthStatus();
   }
 
   /**
