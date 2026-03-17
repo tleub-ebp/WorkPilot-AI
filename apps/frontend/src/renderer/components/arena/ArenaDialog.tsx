@@ -81,15 +81,19 @@ function ParticipantCard({
   };
 
   return (
-    <div
+    <button
+      type="button"
       className={cn(
-        'flex flex-col rounded-xl border transition-all duration-300',
+        'flex flex-col rounded-xl border transition-all duration-300 text-left',
         isWinner && isRevealed
           ? 'border-yellow-500/60 bg-yellow-500/5 shadow-lg shadow-yellow-500/10'
           : 'border-border bg-card',
-        canVote && 'cursor-pointer hover:border-primary/50 hover:bg-accent/30'
+        canVote && 'cursor-pointer hover:border-primary/50 hover:bg-accent/30',
+        !canVote && 'cursor-default'
       )}
       onClick={() => canVote && onVote(participant.label)}
+      disabled={!canVote}
+      aria-label={`${t('battle.model')} ${participant.label}. ${isWinner && isRevealed ? t('battle.winner') : ''}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-border">
@@ -157,7 +161,7 @@ function ParticipantCard({
           </Button>
         </div>
       )}
-    </div>
+    </button>
   );
 }
 

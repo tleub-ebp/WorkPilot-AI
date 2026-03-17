@@ -130,85 +130,122 @@ def _save_votes(votes: list[dict]) -> None:
 TASK_TYPES: list[ArenaTaskType] = ["coding", "review", "test", "planning", "spec", "insights"]
 
 
-def compute_analytics(battles: list[dict], votes: list[dict]) -> dict:
-    """Build win-rate analytics from persisted battles and votes."""
-    model_map: dict[str, ArenaModelStats] = {}
+def _get_or_create_model_stats(model_map: dict[str, ArenaModelStats], participant: dict) -> ArenaModelStats:
+    """Get existing model stats or create new ones for a participant."""
+    pid = participant["profile_id"]
+    if pid not in model_map:
+        model_map[pid] = ArenaModelStats(
+            profile_id=pid,
+            model_name=participant.get("model_name", pid),
+            provider=participant.get("provider", "unknown"),
+        )
+    return model_map[pid]
 
-    for battle in battles:
-        if battle.get("status") != "completed" or not battle.get("winner_label"):
-            continue
-        for participant in battle.get("participants", []):
-            pid = participant["profile_id"]
-            if pid not in model_map:
-                model_map[pid] = ArenaModelStats(
-                    profile_id=pid,
-                    model_name=participant.get("model_name", pid),
-                    provider=participant.get("provider", "unknown"),
-                )
-            stats = model_map[pid]
-            is_winner = participant["label"] == battle["winner_label"]
-            stats.total += 1
-            if is_winner:
-                stats.wins += 1
-            else:
-                stats.losses += 1
 
-            cost = participant.get("cost_usd", 0.0)
-            dur = participant.get("duration_ms", 0)
-            stats.total_cost_usd += cost
-            stats.avg_duration_ms = (
-                (stats.avg_duration_ms * (stats.total - 1) + dur) / stats.total
-            )
+def _update_participant_stats(stats: ArenaModelStats, participant: dict, is_winner: bool) -> None:
+    """Update basic statistics for a participant."""
+    stats.total += 1
+    if is_winner:
+        stats.wins += 1
+    else:
+        stats.losses += 1
 
-            tt = battle.get("task_type", "coding")
-            if tt not in stats.by_task_type:
-                stats.by_task_type[tt] = {"wins": 0, "total": 0, "win_rate": 0.0, "avg_cost_usd": 0.0}
-            tt_data = stats.by_task_type[tt]
-            tt_data["total"] += 1
-            if is_winner:
-                tt_data["wins"] += 1
-            tt_data["win_rate"] = tt_data["wins"] / tt_data["total"]
-            tt_data["avg_cost_usd"] = (
-                tt_data["avg_cost_usd"] * (tt_data["total"] - 1) + cost
-            ) / tt_data["total"]
+    cost = participant.get("cost_usd", 0.0)
+    dur = participant.get("duration_ms", 0)
+    stats.total_cost_usd += cost
+    stats.avg_duration_ms = (
+        (stats.avg_duration_ms * (stats.total - 1) + dur) / stats.total
+    )
 
-    # Finalize
+
+def _update_task_type_stats(stats: ArenaModelStats, task_type: str, participant: dict, is_winner: bool) -> None:
+    """Update task type specific statistics."""
+    if task_type not in stats.by_task_type:
+        stats.by_task_type[task_type] = {"wins": 0, "total": 0, "win_rate": 0.0, "avg_cost_usd": 0.0}
+    
+    tt_data = stats.by_task_type[task_type]
+    tt_data["total"] += 1
+    if is_winner:
+        tt_data["wins"] += 1
+    
+    tt_data["win_rate"] = tt_data["wins"] / tt_data["total"]
+    cost = participant.get("cost_usd", 0.0)
+    tt_data["avg_cost_usd"] = (
+        tt_data["avg_cost_usd"] * (tt_data["total"] - 1) + cost
+    ) / tt_data["total"]
+
+
+def _finalize_model_stats(model_map: dict[str, ArenaModelStats]) -> None:
+    """Calculate final derived statistics for all models."""
     for stats in model_map.values():
         stats.win_rate = stats.wins / stats.total if stats.total > 0 else 0.0
         stats.avg_cost_per_battle = (
             stats.total_cost_usd / stats.total if stats.total > 0 else 0.0
         )
 
-    # Build auto-routing recommendations
+
+def _determine_confidence_level(sample_size: int) -> str:
+    """Determine confidence level based on sample size."""
+    if sample_size >= 10:
+        return "high"
+    elif sample_size >= 5:
+        return "medium"
+    else:
+        return "low"
+
+
+def _build_auto_routing_recommendations(model_map: dict[str, ArenaModelStats]) -> dict[str, dict]:
+    """Build auto-routing recommendations for each task type."""
     auto_routing: dict[str, dict] = {}
-    for tt in TASK_TYPES:
+    
+    for task_type in TASK_TYPES:
         best: Optional[ArenaModelStats] = None
         best_wins = 0
+        
         for stats in model_map.values():
-            tt_data = stats.by_task_type.get(tt)
+            tt_data = stats.by_task_type.get(task_type)
             if not tt_data or tt_data["total"] < 2:
                 continue
             if tt_data["wins"] > best_wins:
                 best_wins = tt_data["wins"]
                 best = stats
+        
         if best:
-            tt_data = best.by_task_type[tt]
-            n = tt_data["total"]
+            tt_data = best.by_task_type[task_type]
+            confidence = _determine_confidence_level(tt_data["total"])
             
-            # Determine confidence level based on sample size
-            if n >= 10:
-                confidence = "high"
-            elif n >= 5:
-                confidence = "medium"
-            else:
-                confidence = "low"
-            
-            auto_routing[tt] = {
+            auto_routing[task_type] = {
                 "profile_id": best.profile_id,
                 "model_name": best.model_name,
                 "win_rate": tt_data["win_rate"],
                 "confidence": confidence,
             }
+    
+    return auto_routing
+
+
+def compute_analytics(battles: list[dict], votes: list[dict]) -> dict:
+    """Build win-rate analytics from persisted battles and votes."""
+    model_map: dict[str, ArenaModelStats] = {}
+
+    # Process battles and collect statistics
+    for battle in battles:
+        if battle.get("status") != "completed" or not battle.get("winner_label"):
+            continue
+        
+        task_type = battle.get("task_type", "coding")
+        
+        for participant in battle.get("participants", []):
+            is_winner = participant["label"] == battle["winner_label"]
+            stats = _get_or_create_model_stats(model_map, participant)
+            _update_participant_stats(stats, participant, is_winner)
+            _update_task_type_stats(stats, task_type, participant, is_winner)
+
+    # Finalize statistics
+    _finalize_model_stats(model_map)
+    
+    # Build recommendations
+    auto_routing = _build_auto_routing_recommendations(model_map)
 
     return {
         "total_battles": len(battles),
