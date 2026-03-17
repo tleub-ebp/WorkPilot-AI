@@ -557,6 +557,11 @@ async def stream_chat(
                         if flags == 0x02:
                             error_msg = _check_connect_trailer(frame_payload)
                             if error_msg:
+                                # If Cascade session expired, reset panel so next call re-initializes
+                                if "failed_precondition" in error_msg.lower():
+                                    global _panel_initialized
+                                    _panel_initialized = False
+                                    logger.info("[WindsurfGRPC] Cascade session expired, panel reset for re-initialization")
                                 raise WindsurfError(
                                     f"Windsurf server error: {error_msg}",
                                     WindsurfErrorCode.STREAM_ERROR,
