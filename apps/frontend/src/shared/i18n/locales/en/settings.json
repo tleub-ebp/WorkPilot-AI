@@ -1121,6 +1121,28 @@
       "description": "AI-fills GitHub PR templates from code changes"
     }
   },
+  "agentProfile": {
+    "title": "Agent Profile",
+    "sectionDescription": "Configure agent behavior profile and thinking levels",
+    "profilesInfo": "Configure the model used for each pipeline phase. Settings are saved per provider and will be restored when you switch back to this provider.",
+    "thinking": "Thinking",
+    "phaseConfiguration": "Phase Configuration",
+    "phaseConfigurationDescription": "Configure models and thinking levels for each development pipeline phase",
+    "phases": {
+      "spec": {
+        "label": "Spec Creation",
+        "description": "Discovery, requirements, context gathering"
+      },
+      "planning": {
+        "label": "Planning",
+        "description": "Implementation planning and architecture"
+      },
+      "coding": {
+        "label": "Coding",
+        "description": "Actual code implementation"
+      }
+    }
+  },
   "azureDevOpsImport": {
     "title": "Import Azure DevOps Work Items",
     "description": "Select Azure DevOps work items to import into WorkPilot AI",
