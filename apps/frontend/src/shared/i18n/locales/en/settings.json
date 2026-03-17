@@ -320,6 +320,13 @@
       "description": "Sequential task pipelines. When one task completes, the next starts automatically. Optionally stop on error.",
       "noChains": "No task chains configured"
     },
+    "status": {
+      "pending": "pending",
+      "running": "running",
+      "paused": "paused",
+      "completed": "completed",
+      "failed": "failed"
+    },
     "cronReference": {
       "title": "Cron Expression Reference",
       "description": "Standard 5-field POSIX cron syntax: minute hour day-of-month month day-of-week",

@@ -328,6 +328,13 @@
       "description": "Pipelines de tâches séquentielles. Quand une tâche se termine, la suivante démarre automatiquement. Optionnellement s'arrêter en cas d'erreur.",
       "noChains": "Aucune chaîne de tâches configurée"
     },
+    "status": {
+      "pending": "en attente",
+      "running": "en cours",
+      "paused": "en pause",
+      "completed": "terminé",
+      "failed": "échoué"
+    },
     "cronReference": {
       "title": "Référence des Expressions Cron",
       "description": "Syntaxe cron POSIX standard à 5 champs : minute heure jour-du-mois mois jour-de-la-semaine",
