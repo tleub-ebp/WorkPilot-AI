@@ -105,6 +105,8 @@ export interface ElectronAPI extends
   detectWindsurfToken: () => Promise<{ success: boolean; apiKey?: string; userName?: string; planName?: string; usageInfo?: { usedMessages: number; totalMessages: number; usedFlowActions: number; totalFlowActions: number }; error?: string }>;
   /** Check Claude OAuth status from CLI config files on disk */
   checkClaudeOAuth: () => Promise<{ isAuthenticated: boolean; profileName?: string }>;
+  /** Check OpenAI Codex CLI OAuth status from config files on disk */
+  checkOpenAICodexOAuth: () => Promise<{ isAuthenticated: boolean; profileName?: string }>;
 }
 
 export const createElectronAPI = (): ElectronAPI => {
@@ -151,6 +153,7 @@ export const createElectronAPI = (): ElectronAPI => {
     testGitHubConnection: (config: { repo: string; token: string }) => invokeIpc<{ success: boolean; status?: number; error?: string }>('github:testConnection', config),
     detectWindsurfToken: () => invokeIpc<{ success: boolean; apiKey?: string; userName?: string; error?: string }>('credential:detectWindsurfToken'),
     checkClaudeOAuth: () => invokeIpc<{ isAuthenticated: boolean; profileName?: string }>('credential:checkClaudeOAuth'),
+    checkOpenAICodexOAuth: () => invokeIpc<{ isAuthenticated: boolean; profileName?: string }>('credential:checkOpenAICodexOAuth'),
   };
 };
 

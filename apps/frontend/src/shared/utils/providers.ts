@@ -104,7 +104,10 @@ export async function getStaticProviders(profiles: APIProfile[] = [], settings?:
       // For Anthropic, also check Claude OAuth token
       const hasOAuth = p.name === 'anthropic' && !!(settings?.globalClaudeOAuthToken && String(settings.globalClaudeOAuthToken).trim());
 
-      status[p.name] = hasProfile || hasGlobalKey || hasOAuth;
+      // For OpenAI, also check Codex CLI OAuth token
+      const hasCodexOAuth = p.name === 'openai' && !!(settings?.globalOpenAICodexOAuthToken && String(settings.globalOpenAICodexOAuthToken).trim());
+
+      status[p.name] = hasProfile || hasGlobalKey || hasOAuth || hasCodexOAuth;
     }
   }
 

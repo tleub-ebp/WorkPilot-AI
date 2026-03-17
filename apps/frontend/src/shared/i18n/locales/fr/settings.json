@@ -106,6 +106,12 @@
           "terminalInstructions": "Cela ouvrira un terminal où vous pourrez exécuter la commande `/login` pour vous authentifier.",
           "tokenDetected": "Clé API détectée",
           "tokenLoaded": "Le jeton SSO Windsurf a été automatiquement chargé depuis votre environnement IDE local."
+        },
+        "openaiAuth": {
+          "codexCliAuth": "Utilisez l'authentification OAuth via Codex CLI pour vous connecter facilement à votre compte OpenAI.",
+          "authenticating": "Authentification...",
+          "connectWithCodex": "Se connecter avec Codex CLI",
+          "terminalInstructions": "Cela ouvrira un terminal où vous pourrez exécuter la commande `codex` pour vous authentifier via OAuth."
         }
       },
       "providerToggle": {

@@ -216,7 +216,7 @@ function ModelInput({
       <Label htmlFor="model">Modèle par défaut</Label>
       <Input
         id="model"
-        placeholder="gpt-4, claude-3-sonnet, etc."
+        placeholder="gpt-5.3, claude-4.6-opus, etc."
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

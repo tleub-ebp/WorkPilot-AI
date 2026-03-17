@@ -229,6 +229,17 @@ class ProviderServiceClass {
     } catch {
       // IPC not available
     }
+    // Enrich settings with OpenAI Codex CLI OAuth status from config files (main process)
+    try {
+      if (settings && globalThis.electronAPI?.checkOpenAICodexOAuth) {
+        const oauthResult = await globalThis.electronAPI.checkOpenAICodexOAuth();
+        if (oauthResult.isAuthenticated) {
+          settings.globalOpenAICodexOAuthToken = oauthResult.profileName || 'codex-authenticated';
+        }
+      }
+    } catch {
+      // IPC not available
+    }
     return await getStaticProviders(profiles, settings);
   }
 

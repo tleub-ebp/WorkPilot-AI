@@ -73,7 +73,7 @@ class ProviderRegistry {
       description: 'GPT and o-series models via OpenAI API',
       category: 'openai',
       requiresApiKey: true,
-      requiresOAuth: false,
+      requiresOAuth: true,
       requiresCLI: false,
       models: PROVIDER_MODELS_MAP.openai || []
     });

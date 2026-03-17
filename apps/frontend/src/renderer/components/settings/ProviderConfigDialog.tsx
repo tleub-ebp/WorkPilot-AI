@@ -74,12 +74,13 @@ export function ProviderConfigDialog({
   } = useProviderAuth();
 
   const providerConfig = provider ? providerFields[provider.id] : null;
-  const supportsOAuth = ['anthropic', 'claude', 'windsurf'].includes(provider?.id || '');
+  const supportsOAuth = ['anthropic', 'claude', 'windsurf', 'openai'].includes(provider?.id || '');
   const supportsGitHubCopilot = provider?.id === 'copilot';
 
   const getDefaultActiveTab = (providerId: string, hasOAuthSupport: boolean): ActiveTab => {
     if (providerId === 'copilot') return 'github-copilot';
     if (providerId === 'windsurf') return 'api'; // Windsurf defaults to API key tab, SSO is secondary
+    if (providerId === 'openai') return 'api'; // OpenAI defaults to API key tab, Codex CLI is secondary
     if (hasOAuthSupport) return 'oauth';
     return 'api';
   };
@@ -142,6 +143,26 @@ export function ProviderConfigDialog({
       onOpenChange(false);
       return;
     }
+
+    // For OpenAI on OAuth tab: persist Codex CLI OAuth state instead of API keys
+    if (provider.id === 'openai' && activeTab === 'oauth') {
+      if (testResult?.success) {
+        newSettings.globalOpenAICodexOAuthToken = testResult.message || 'codex-authenticated';
+      } else if (!newSettings.globalOpenAICodexOAuthToken) {
+        try {
+          const result = await globalThis.electronAPI?.checkOpenAICodexOAuth?.();
+          if (result?.isAuthenticated) {
+            newSettings.globalOpenAICodexOAuthToken = result.profileName || 'codex-authenticated';
+          }
+        } catch {
+          // IPC not available
+        }
+      }
+      onSettingsChange(newSettings);
+      onProviderActivated?.(provider.id);
+      onOpenChange(false);
+      return;
+    }
     
     if (providerConfig.apiKey) {
       newSettings[providerConfig.apiKey] = formData.apiKey || '';
@@ -185,6 +206,25 @@ export function ProviderConfigDialog({
         return;
       }
 
+      // On OAuth tab for OpenAI: check Codex CLI OAuth status via IPC
+      if (activeTab === 'oauth' && provider.id === 'openai') {
+        const result = await globalThis.electronAPI?.checkOpenAICodexOAuth?.();
+        if (result?.isAuthenticated) {
+          setTestResult({ 
+            success: true, 
+            message: result.profileName 
+              ? `Authentification Codex CLI active (${result.profileName})` 
+              : 'Authentification Codex CLI active' 
+          });
+        } else {
+          setTestResult({ 
+            success: false, 
+            message: 'Aucune authentification Codex CLI détectée. Veuillez vous connecter d\'abord.' 
+          });
+        }
+        return;
+      }
+
       // Standard test via parent handler
       if (!onTest) return;
       await onTest(provider.id);
@@ -221,6 +261,11 @@ export function ProviderConfigDialog({
         newSettings.globalClaudeOAuthToken = '';
       }
 
+      // Also clear OAuth token for OpenAI Codex CLI
+      if (provider.id === 'openai') {
+        newSettings.globalOpenAICodexOAuthToken = '';
+      }
+
       onSettingsChange(newSettings);
       onOpenChange(false);
     }
@@ -255,7 +300,7 @@ export function ProviderConfigDialog({
             {supportsOAuth && (
               <TabsTrigger value="oauth" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
-                {provider?.id === 'windsurf' ? 'SSO' : 'OAuth'}
+                {provider?.id === 'windsurf' ? 'SSO' : provider?.id === 'openai' ? 'OAuth / Codex' : 'OAuth'}
               </TabsTrigger>
             )}
             {supportsGitHubCopilot && (
@@ -285,7 +330,9 @@ export function ProviderConfigDialog({
                 <p className="text-sm text-muted-foreground mb-4">
                   {provider?.id === 'windsurf' 
                     ? t('sections.accounts.providerConfig.windsurfAuth.description')
-                    : t('sections.accounts.providerConfig.windsurfAuth.claudeCodeAuth')
+                    : provider?.id === 'openai'
+                      ? t('sections.accounts.providerConfig.openaiAuth.codexCliAuth')
+                      : t('sections.accounts.providerConfig.windsurfAuth.claudeCodeAuth')
                   }
                 </p>
 

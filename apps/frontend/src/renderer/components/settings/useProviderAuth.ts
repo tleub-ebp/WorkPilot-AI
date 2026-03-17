@@ -59,6 +59,13 @@ export function useProviderAuth() {
     setAuthTerminal({ terminalId, configDir, profileName: providerName });
   }, []);
 
+  const handleOpenAICodexAuth = useCallback((providerId: string, providerName: string) => {
+    const terminalId = `auth-codex-${Date.now()}`;
+    const configDir = `codex-config-${providerId}`;
+    setAuthTerminal({ terminalId, configDir, profileName: providerName });
+    return { success: true };
+  }, []);
+
   const handleOAuthAuth = useCallback(async (providerId: string, providerName: string) => {
     setIsAuthenticating(true);
 
@@ -68,11 +75,14 @@ export function useProviderAuth() {
         setIsAuthenticating(false);
       }
       return result;
+    } else if (providerId === 'openai') {
+      const result = handleOpenAICodexAuth(providerId, providerName);
+      return result;
     } else {
       handleFallbackAuth(providerId, providerName);
       return { success: true };
     }
-  }, [handleClaudeAuth, handleFallbackAuth]);
+  }, [handleClaudeAuth, handleOpenAICodexAuth, handleFallbackAuth]);
 
   const handleAuthTerminalClose = useCallback(() => {
     setAuthTerminal(null);
@@ -86,6 +96,13 @@ export function useProviderAuth() {
     if (onSettingsChange && settings && providerId && (providerId === 'anthropic' || providerId === 'claude')) {
       const newSettings = { ...settings };
       newSettings.globalClaudeOAuthToken = email || 'oauth-authenticated';
+      onSettingsChange(newSettings);
+    }
+
+    // Persist Codex CLI OAuth state for OpenAI
+    if (onSettingsChange && settings && providerId === 'openai') {
+      const newSettings = { ...settings };
+      newSettings.globalOpenAICodexOAuthToken = email || 'codex-authenticated';
       onSettingsChange(newSettings);
     }
   }, []);

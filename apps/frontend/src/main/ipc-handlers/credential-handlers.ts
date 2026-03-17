@@ -5,9 +5,8 @@
  */
 
 import { ipcMain } from 'electron';
-import { credentialManager } from '../services/credential-manager';
 import type { CredentialConfig, UsageData } from '../services/credential-manager';
-import { detectWindsurfLocalToken, readWindsurfCachedPlanInfo } from '../services/credential-manager';
+import { credentialManager, detectWindsurfLocalToken, readWindsurfCachedPlanInfo } from '../services/credential-manager';
 
 /**
  * Enregistrer tous les handlers IPC pour les credentials
@@ -183,6 +182,14 @@ export function registerCredentialHandlers(): void {
    */
   ipcMain.handle('credential:checkClaudeOAuth', async (): Promise<{ isAuthenticated: boolean; profileName?: string }> => {
     return await credentialManager.checkClaudeOAuthStatusPublic();
+  });
+
+  /**
+   * Vérifier le statut OAuth OpenAI Codex CLI (vérifie les fichiers config CLI sur le disque)
+   * Retourne si l'utilisateur est authentifié via OpenAI Codex CLI
+   */
+  ipcMain.handle('credential:checkOpenAICodexOAuth', async (): Promise<{ isAuthenticated: boolean; profileName?: string }> => {
+    return await credentialManager.checkOpenAICodexOAuthStatusPublic();
   });
 
   console.log('[CredentialHandlers] IPC handlers registered');
