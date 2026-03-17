@@ -50,7 +50,8 @@
     "multiRepoOrchestration": "Multi-Repo",
     "missionControl": "Contrôle de Mission",
     "pixelOffice": "Pixel Office",
-    "agentReplay": "Replay Agent"
+    "agentReplay": "Replay Agent",
+    "selfHealing": "Self-Healing"
   },
   "actions": {
     "settings": "Paramètres",

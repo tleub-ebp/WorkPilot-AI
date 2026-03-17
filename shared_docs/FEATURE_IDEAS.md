@@ -139,11 +139,12 @@ Agent Replay est maintenant intégré dans WorkPilot AI ! Rejouez, débuguez et 
 
 </details>
 
-### 3. Self-Healing Codebase + Incident Responder (fusionné)
+<details>
+<summary>### 3. Self-Healing Codebase + Incident Responder (fusionné) ✅ Implémenté</summary>
 
 **Le repo se répare tout seul ET l'IA maintient la prod.** Système unifié de surveillance, détection et correction automatique.
 
-- **Principe :** 
+- **Principe :**
   - **Mode CI/CD** : Hook sur `git push` / CI. Quand les tests cassent, un agent analyse le diff, identifie la régression, génère un fix dans un worktree isolé, lance le QA, et ouvre une PR de correction — sans intervention humaine.
   - **Mode Production** : Connecté à Sentry, Datadog, CloudWatch, New Relic, PagerDuty via **MCP servers**. L'agent détecte les erreurs en temps réel, corrèle avec le code source, identifie la root cause, génère un fix avec tests de régression.
   - **Mode Proactif** : Analyse prédictive des zones fragiles du code (fonctions modifiées souvent, faible couverture de test, haute complexité cyclomatique) et génère des tests préventifs.
@@ -151,6 +152,111 @@ Agent Replay est maintenant intégré dans WorkPilot AI ! Rejouez, débuguez et 
 - **Exploite :** Agent coder, worktree isolation, QA pipeline, GitHub/GitLab integration, MCP protocol
 - **Effort :** Élevé
 - **Pourquoi c'est BANGER :** On passe de "l'IA écrit du code" à "l'IA maintient la prod". Changement de paradigme complet.
+
+#### 🩺 Comment utiliser le Self-Healing Codebase + Incident Responder
+
+Le Self-Healing Codebase est maintenant intégré dans WorkPilot AI ! Trois modes autonomes pour surveiller, détecter et corriger automatiquement les problèmes.
+
+##### 🚀 Accès au système
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"💓 Self-Healing"** dans le groupe "Core"
+2. **Dashboard** : Vue unifiée avec statistiques (incidents, taux de résolution, fix automatiques)
+3. **3 onglets** : CI/CD, Production, Proactif — chaque mode avec sa configuration et sa vue
+
+##### 🔄 Mode CI/CD
+
+Détection automatique des régressions de tests après un push.
+
+- **Activation** : Onglet CI/CD → Cocher "Enable CI/CD healing"
+- **Configuration** : Branches surveillées, auto-fix, auto-PR
+- **Flux** : Push → Tests cassent → Agent analyse le diff → Identifie la régression → Fix en worktree isolé → QA → PR automatique
+- **CLI** : `python runners/self_healing_runner.py cicd --commit abc123 --branch main`
+
+##### 🏭 Mode Production
+
+Connexion aux outils APM via MCP servers pour détecter les erreurs en temps réel.
+
+- **Sources supportées** : Sentry 🐛, Datadog 🐕, CloudWatch ☁️, New Relic 💎, PagerDuty 📟
+- **Configuration** : Onglet Production → Cliquer sur une source pour la connecter
+- **Flux** : Erreur détectée → Stack trace parsée → Corrélation avec le code → Root cause analysis → Fix + test de régression → PR [hotfix]
+- **CLI** : `python runners/self_healing_runner.py production --source sentry --error-type TypeError --error-message "..."  --stack-trace "..."`
+
+##### 🔮 Mode Proactif
+
+Analyse prédictive des zones fragiles du code.
+
+- **Métriques** : Complexité cyclomatique (AST), Git churn (commits/30j), Couverture de tests
+- **Score de risque** : `0.4 × complexité + 0.3 × churn + 0.3 × (100 - couverture)`
+- **Activation** : Onglet Proactif → Cliquer "Run Scan"
+- **Sortie** : Carte de fragilité avec barres de risque, tableau triable, tests préventifs suggérés
+- **CLI** : `python runners/self_healing_runner.py proactive --threshold 40 --top-n 10`
+
+##### 📊 Dashboard CLI
+
+```bash
+python runners/self_healing_runner.py dashboard
+```
+
+Affiche les statistiques, incidents récents et fichiers à risque.
+
+#### 🛠️ Architecture technique
+
+##### Backend (`apps/backend/self_healing/incident_responder/`)
+
+| Fichier | Rôle |
+|---------|------|
+| `models.py` | Modèles de données : Incident, HealingOperation, FragilityReport, enums |
+| `orchestrator.py` | `IncidentResponderOrchestrator` — coordonne les 3 modes, gère le cycle de vie |
+| `cicd_mode.py` | `CICDMode` — analyse diff, détection de tests, worktree, QA, PR |
+| `production_mode.py` | `ProductionMode` — connexion MCP, corrélation stack trace, root cause |
+| `proactive_mode.py` | `ProactiveMode` — scan de fragilité, génération de tests préventifs |
+| `mcp_connector.py` | `MCPConnector` — interface unifiée Sentry/Datadog/CloudWatch/NewRelic/PagerDuty |
+| `fragility_analyzer.py` | `FragilityAnalyzer` — complexité cyclomatique, git churn, couverture |
+
+##### Prompts d'agents (`apps/backend/prompts/`)
+
+| Prompt | Rôle |
+|--------|------|
+| `incident_cicd_analyzer.md` | Analyse de régression CI/CD, génération de fix minimal |
+| `incident_production_responder.md` | Root cause analysis, fix + test de régression |
+| `incident_proactive_analyzer.md` | Analyse de fragilité, tests préventifs edge cases |
+
+##### Frontend (`apps/frontend/src/renderer/components/self-healing/`)
+
+| Composant | Rôle |
+|-----------|------|
+| `SelfHealingDashboard.tsx` | Dashboard principal avec 3 onglets et stats |
+| `CICDTab.tsx` | Configuration CI/CD, liste d'incidents, opérations actives |
+| `ProductionTab.tsx` | Sources connectées, incidents en direct, root cause |
+| `ProactiveTab.tsx` | Config, carte de fragilité, tableau, tests suggérés |
+| `IncidentCard.tsx` | Carte d'incident réutilisable (sévérité, statut, fichiers) |
+| `HealingTimeline.tsx` | Timeline d'opération (détecté → analyse → fix → QA → PR) |
+| `FragilityChart.tsx` | Barres horizontales de scores de risque |
+
+##### State Management
+
+- **Store** : `apps/frontend/src/renderer/stores/self-healing-store.ts` (Zustand)
+- **Types** : `apps/frontend/src/shared/types/self-healing.ts`
+- **IPC** : 20+ channels dans `apps/frontend/src/shared/constants/ipc.ts`
+- **i18n** : `selfHealing.json` (EN + FR)
+
+#### 🔄 Intégration avec les systèmes existants
+
+- **Worktree isolation** : Utilise `core/worktree.py` (WorktreeManager) pour les fix isolés
+- **QA pipeline** : Réutilise `qa/reviewer.py` pour valider les corrections
+- **Recovery** : S'appuie sur `services/recovery.py` pour la gestion d'échecs
+- **Health checker** : Étend `self_healing/health_checker.py` pour l'analyse de fragilité
+- **Hooks system** : Déclenche des événements via `services/hooks/hook_service.py`
+
+#### 💡 Tips d'utilisation
+
+- Le Mode CI/CD fonctionne best avec un hook `post-push` ou une intégration CI webhook
+- Le Mode Production nécessite des serveurs MCP externes pour chaque source APM
+- Le Mode Proactif peut être exécuté en cron (`weekly`) pour un monitoring continu
+- Les incidents peuvent être corrigés manuellement (bouton "Fix") ou automatiquement
+- Les incidents non pertinents peuvent être dismissés sans correction
+
+</details>
 
 <details>
 <summary>### 4. Design-to-Code Pipeline — Screenshot/Figma → Code fonctionnel ✅ Implémenté</summary>
@@ -3173,13 +3279,13 @@ integrator = ContextCacheIntegrator(project_path, config)
 
 | Tier | # | Features | Impact | Statut |
 |------|---|----------|--------|--------|
-| **🔥 S+** | 7 | **🆕 Mission Control**, **🆕 Agent Replay & Debug**, **🆕 Self-Healing + Incident Responder**, **🆕 Design-to-Code Pipeline**, **🆕 Event-Driven Hooks**, **🆕 Multi-Repo Orchestration**, Agent Learning Loop ✅ | **BANGERS** — Différenciateurs uniques, aucun concurrent ne les a | 1/7 ✅ |
+| **🔥 S+** | 7 | **🆕 Mission Control**, **🆕 Agent Replay & Debug**, Self-Healing + Incident Responder ✅, **🆕 Design-to-Code Pipeline**, **🆕 Event-Driven Hooks**, **🆕 Multi-Repo Orchestration**, Agent Learning Loop ✅ | **BANGERS** — Différenciateurs uniques, aucun concurrent ne les a | 2/7 ✅ |
 | **🚀 S** | 4 | **🆕 Arena Mode**, **🆕 AI Pair Programming**, **🆕 MCP Marketplace**, **🆕 Cost Intelligence Engine** | Game changers — Avantage concurrentiel fort | 0/4 ✅ |
 | **💪 A** | 7 | Build Analytics ✅, Test Gen ✅, Dependency Sentinel ✅, Prompt Optimizer ✅, Conflict Predictor ✅, Code Review ✅, Architecture Enforcement ✅ | Strong impact — Features power users | **7/7 ✅** |
 | **🔧 B** | 13 | **🆕 Built-in Browser Agent**, **🆕 Steering Files**, Live Review, App Emulator ✅, Auto-Refactor ✅, Pipeline Gen, Smart Estimation ✅, NL Git ✅, Snippets ✅, Spec Templates, Dep Graph, QA Security, Agent Decision Logger | Solid value — Améliorations quotidiennes | 5/13 ✅ |
 | **💡 C** | 14 | Team Sync, Env Cloner, Arch Viz, Migration, Perf Profiler, Doc Agent, Plugin Marketplace, Voice ✅, Playground ✅, Cross-Lang, Spec Approval, Memory Lifecycle, CI/CD Triggers, Context Caching ✅ | Nice to have — Vision long terme | 3/14 ✅ |
 
-### 🏆 Score d'implémentation : 16/45 features (35%)
+### 🏆 Score d'implémentation : 17/45 features (37%)
 
 ### 🎯 Roadmap prioritaire recommandée
 
@@ -3195,7 +3301,7 @@ integrator = ContextCacheIntegrator(project_path, config)
 7. **Arena Mode** (S) — Feature virale, data-driven model selection
 
 **Phase 3 — Game Changers autonomes (4-8 mois)**
-8. **Self-Healing + Incident Responder** (S+) — Changement de paradigme
+8. ~~**Self-Healing + Incident Responder** (S+)~~ ✅ Implémenté
 9. **Design-to-Code Pipeline** (S+) — Killer demo pour agences/startups
 10. **AI Pair Programming** (S) — Vrai travail parallèle coordonné
 11. **Multi-Repo Orchestration** (S+) — Argument enterprise massif
@@ -3206,7 +3312,7 @@ integrator = ContextCacheIntegrator(project_path, config)
 |---------|-----------|--------|----------|-------------|-------------|------|-------|
 | Multi-agent orchestration | 🔜 Mission Control | ✅ 8 agents | ✅ Cascade panes | ❌ | ✅ Native | ❌ | ✅ Cloud |
 | Agent replay/debug | 🔜 Full replay | ❌ | ❌ | ❌ | 🟡 Artifacts | ❌ | ❌ |
-| Self-healing codebase | 🔜 3 modes | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Self-healing codebase | ✅ 3 modes | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Design-to-code | 🔜 Full pipeline | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 Figma |
 | Event-driven hooks | 🔜 Visual editor | ❌ | ❌ | ❌ | ❌ | ✅ Basique | ❌ |
 | Spec-driven dev | ✅ Native | ❌ | ❌ | ❌ | ❌ | ✅ Native | ❌ |

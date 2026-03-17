@@ -60,6 +60,15 @@ __all__ = [
     "AlertManager",
     "Alert",
     "AlertLevel",
+    # Incident Responder (Feature #3 S+)
+    "IncidentResponderOrchestrator",
 ]
 
-__version__ = "1.0.0"
+# Incident Responder - lazy import to avoid circular dependencies
+def __getattr__(name):
+    if name == "IncidentResponderOrchestrator":
+        from .incident_responder import IncidentResponderOrchestrator
+        return IncidentResponderOrchestrator
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+__version__ = "1.1.0"
