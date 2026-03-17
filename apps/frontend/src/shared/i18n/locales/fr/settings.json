@@ -916,7 +916,12 @@
       "tokenSaveFailed": "Échec de l'enregistrement du jeton",
       "tokenSaved": "Jeton enregistré",
       "tokenSavedDescription": "Votre jeton a été enregistré avec succès.",
-      "tryAgain": "Veuillez réessayer."
+      "tryAgain": "Veuillez réessayer.",
+      "permissionDenied": "Permission refusée",
+      "checkFilePermissions": "Veuillez vérifier vos permissions de fichier et réessayer.",
+      "pathNotFound": "Chemin introuvable",
+      "checkPath": "Veuillez vérifier que le chemin existe et réessayer.",
+      "authFailed": "Échec de l'authentification"
     },
     "tokenPlaceholder": "sk-ant-oat01-...",
     "weeklyThreshold": "Seuil d'utilisation hebdomadaire",

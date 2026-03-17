@@ -822,7 +822,12 @@
       "tokenSavedDescription": "Your token has been saved successfully.",
       "tokenSaveFailed": "Failed to Save Token",
       "settingsUpdateFailed": "Failed to Update Settings",
-      "tryAgain": "Please try again."
+      "tryAgain": "Please try again.",
+      "permissionDenied": "Permission Denied",
+      "checkFilePermissions": "Please check your file permissions and try again.",
+      "pathNotFound": "Path Not Found",
+      "checkPath": "Please check the path exists and try again.",
+      "authFailed": "Authentication Failed"
     },
     "alerts": {
       "profileCreatedAuthFailed": "Profile created but failed to prepare authentication: {{error}}",
