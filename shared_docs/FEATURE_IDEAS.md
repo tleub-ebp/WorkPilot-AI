@@ -2795,7 +2795,8 @@ Intégration de scans de sécurité SAST/DAST dans le pipeline QA pour chaque bu
 
 </details>
 
-### 30. Agent Decision Logger
+<details>
+<summary><strong>30. Agent Decision Logger</strong> — ✅ Implémenté</summary>
 
 Journal structuré léger des décisions de chaque agent — version simplifiée d'Agent Replay.
 
@@ -2803,6 +2804,48 @@ Journal structuré léger des décisions de chaque agent — version simplifiée
 - **Exploite :** Agent events, workflow logger, agent state
 - **Effort :** Faible
 - **Pourquoi c'est banger :** 80% de la valeur d'Agent Replay à 20% de l'effort. Transparence immédiate sur les décisions IA. Stepping stone vers le full replay.
+
+### Architecture
+
+**Backend — Logger & intégration agent :**
+
+- `apps/backend/agents/decision_logger.py` — `AgentDecisionLogger` avec 7 types d'entrées (`tool_call`, `file_read`, `file_write`, `reasoning`, `decision`, `phase_transition`, `error_recovery`). Persiste dans `decision_log.json` (cap 500 entrées), émet via `TaskEventEmitter` le channel `DECISION_LOG_ENTRY`.
+- `apps/backend/agents/session.py` — Intègre `AgentDecisionLogger` dans `run_agent_session()`, log automatique de chaque `ToolUseBlock`.
+
+**Frontend — IPC :**
+
+- `apps/frontend/src/shared/types/decision-logger.ts` — Types TypeScript `DecisionType`, `DecisionEntry`, `DecisionLog`.
+- `apps/frontend/src/main/ipc-handlers/decision-logger-handlers.ts` — Handlers `agentDecision:getLog` (lit `decision_log.json`) et `agentDecision:clearLog`.
+- `apps/frontend/src/main/ipc-handlers/agent-events-handlers.ts` — Bypass XState pour les events `DECISION_LOG_ENTRY`, forwarding direct vers le renderer via `agentDecision:entry`.
+- `apps/frontend/src/preload/api/modules/decision-logger-api.ts` — `DecisionLoggerAPI` avec `getDecisionLog`, `clearDecisionLog`, `onDecisionLogEntry`.
+
+**Frontend — UI :**
+
+- `apps/frontend/src/renderer/stores/decision-logger-store.ts` — Zustand store avec `entriesByTask`, merge historique/live, déduplication par `id+session_id`.
+- `apps/frontend/src/renderer/components/decision-logger/DecisionTimeline.tsx` — Timeline React avec icônes et couleurs par type, `FilterBar` à chips toggle, auto-scroll, chargement historique via `specDirPath`.
+
+### Utilisation
+
+```tsx
+// Dans un composant de tâche
+<DecisionTimeline
+  taskId={task.id}
+  specDirPath={task.specDirPath}
+  specId={task.specId}
+  maxHeightClass="max-h-[600px]"
+/>
+```
+
+```python
+# Dans un agent backend
+from agents.decision_logger import create_decision_logger
+
+logger = create_decision_logger(spec_dir, agent_type="coder")
+logger.log_tool_call("Read", {"file_path": "src/app.py"}, outcome="success")
+logger.log_decision("Use PostgreSQL", alternatives=["SQLite", "MySQL"], selected="PostgreSQL")
+```
+
+</details>
 
 ---
 

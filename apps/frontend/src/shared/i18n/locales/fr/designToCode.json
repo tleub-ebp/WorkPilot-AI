@@ -2,11 +2,11 @@
   "title": "Pipeline Design-to-Code",
   "description": "Uploadez un design et générez du code prêt pour la production en un clic.",
   "tabs": {
-    "upload": "Upload",
-    "spec": "Spec",
+    "upload": "Téléchargement",
+    "spec": "Spécification",
     "code": "Code",
     "tests": "Tests",
-    "tokens": "Tokens"
+    "tokens": "Jetons"
   },
   "phases": {
     "idle": "Prêt",

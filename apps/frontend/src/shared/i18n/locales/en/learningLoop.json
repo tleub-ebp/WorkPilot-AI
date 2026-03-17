@@ -30,7 +30,8 @@
     "reanalyze": "Re-analyze Builds",
     "enable": "Enable pattern",
     "disable": "Disable pattern",
-    "delete": "Delete pattern"
+    "delete": "Delete pattern",
+    "close": "Close"
   },
   "empty": {
     "title": "No patterns extracted yet",

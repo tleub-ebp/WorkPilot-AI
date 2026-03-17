@@ -66,6 +66,11 @@ export const IPC_CHANNELS = {
   TASK_LOGS_STREAM: 'task:logsStream',     // Event: streaming log chunk (main -> renderer)
   TASK_MERGE_PROGRESS: 'task:mergeProgress',  // Event: merge progress update (main -> renderer)
 
+  // Agent Decision Logger (Feature 30)
+  AGENT_DECISION_LOG_GET: 'agentDecision:getLog',       // Renderer → Main: load persisted log
+  AGENT_DECISION_LOG_CLEAR: 'agentDecision:clearLog',   // Renderer → Main: clear log file
+  AGENT_DECISION_LOG_ENTRY: 'agentDecision:entry',      // Main → Renderer: live entry stream
+
   // Terminal operations
   TERMINAL_CREATE: 'terminal:create',
   TERMINAL_DESTROY: 'terminal:destroy',

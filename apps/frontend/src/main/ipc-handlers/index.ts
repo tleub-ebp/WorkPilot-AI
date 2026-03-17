@@ -58,6 +58,7 @@ import { registerArchitectureVisualizerHandlers, setupArchitectureVisualizerEven
 import { registerCodeMigrationHandlers, setupCodeMigrationEventForwarding } from './code-migration-handlers';
 import { registerPerformanceProfilerHandlers, setupPerformanceProfilerEventForwarding } from './performance-profiler-handlers';
 import { registerDocumentationAgentHandlers, setupDocumentationAgentEventForwarding } from './documentation-agent-handlers';
+import { registerDecisionLoggerHandlers } from './decision-logger-handlers';
 
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from './project-handlers';
@@ -106,6 +107,7 @@ export { registerArchitectureVisualizerHandlers, setupArchitectureVisualizerEven
 export { registerCodeMigrationHandlers, setupCodeMigrationEventForwarding } from './code-migration-handlers';
 export { registerPerformanceProfilerHandlers, setupPerformanceProfilerEventForwarding } from './performance-profiler-handlers';
 export { registerDocumentationAgentHandlers, setupDocumentationAgentEventForwarding } from './documentation-agent-handlers';
+export { registerDecisionLoggerHandlers } from './decision-logger-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -265,6 +267,9 @@ export function setupIpcHandlers(
   // Documentation Agent handlers
   registerDocumentationAgentHandlers();
   setupDocumentationAgentEventForwarding(getMainWindow);
+
+  // Agent Decision Logger handlers (Feature 30)
+  registerDecisionLoggerHandlers();
 
   console.warn('[IPC] All handler modules registered successfully');
 }

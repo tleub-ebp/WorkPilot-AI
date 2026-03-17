@@ -42,6 +42,8 @@ import type { PerformanceProfilerAPI } from './modules/performance-profiler-api'
 import { createPerformanceProfilerAPI } from './modules/performance-profiler-api';
 import type { DocumentationAgentAPI } from './modules/documentation-agent-api';
 import { createDocumentationAgentAPI } from './modules/documentation-agent-api';
+import type { DecisionLoggerAPI } from './modules/decision-logger-api';
+import { createDecisionLoggerAPI } from './modules/decision-logger-api';
 import { invokeIpc } from './modules/ipc-utils';
 import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
@@ -77,7 +79,8 @@ export interface ElectronAPI extends
   ArchitectureVisualizerAPI,
   CodeMigrationAPI,
   PerformanceProfilerAPI,
-  DocumentationAgentAPI {
+  DocumentationAgentAPI,
+  DecisionLoggerAPI {
   github: GitHubAPI;
   /** Queue routing API for rate limit recovery */
   queue: QueueAPI;
@@ -128,6 +131,7 @@ export const createElectronAPI = (): ElectronAPI => {
     ...createCodeMigrationAPI(),
     ...createPerformanceProfilerAPI(),
     ...createDocumentationAgentAPI(),
+    ...createDecisionLoggerAPI(),
     github: createGitHubAPI(),
     queue: createQueueAPI(),  // Queue routing for rate limit recovery
     quality: createQualityAPI(),  // Code quality analysis
@@ -197,7 +201,9 @@ export { createArchitectureVisualizerAPI } from './modules/architecture-visualiz
 export { createCodeMigrationAPI } from './modules/code-migration-api';
 export { createPerformanceProfilerAPI } from './modules/performance-profiler-api';
 export { createDocumentationAgentAPI } from './modules/documentation-agent-api';
+export { createDecisionLoggerAPI } from './modules/decision-logger-api';
 export type { ArchitectureVisualizerAPI } from './modules/architecture-visualizer-api';
 export type { CodeMigrationAPI } from './modules/code-migration-api';
 export type { PerformanceProfilerAPI } from './modules/performance-profiler-api';
 export type { DocumentationAgentAPI } from './modules/documentation-agent-api';
+export type { DecisionLoggerAPI } from './modules/decision-logger-api';

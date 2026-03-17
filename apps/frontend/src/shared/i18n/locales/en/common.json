@@ -101,7 +101,8 @@
     "enable": "enable",
     "disable": "disable",
     "add": "Add",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "close": "Close"
   },
   "os": {
     "windows": "Windows",
