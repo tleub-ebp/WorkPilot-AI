@@ -531,7 +531,9 @@
         "selectedBranchHelp": "All new tasks will branch from {{branch}}"
       },
       "connectionString": "https://api.github.com/graphql",
-      "personalAccessToken": "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"
+      "personalAccessToken": "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN",
+      "enableGitHubIssues": "Enable GitHub Issues",
+      "syncIssuesFromGitHubAndCreateTasksAutomatically": "Sync issues from GitHub and create tasks automatically"
     },
     "gitlab": {
       "title": "GitLab",

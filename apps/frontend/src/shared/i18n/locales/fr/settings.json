@@ -386,6 +386,28 @@
       "label": "Remplisseur de template PR"
     }
   },
+  "agentProfile": {
+    "title": "Profil d'Agent",
+    "sectionDescription": "Configurez le profil de comportement et les niveaux de réflexion de l'agent",
+    "profilesInfo": "Configurez le modèle utilisé pour chaque phase du pipeline. Les paramètres sont sauvegardés par fournisseur et seront restaurés lorsque vous revenez à ce fournisseur.",
+    "thinking": "Réflexion",
+    "phaseConfiguration": "Configuration des Phases",
+    "phaseConfigurationDescription": "Configurez les modèles et les niveaux de réflexion pour chaque phase du pipeline de développement",
+    "phases": {
+      "spec": {
+        "label": "Création de Spécifications",
+        "description": "Découverte, exigences, collecte de contexte"
+      },
+      "planning": {
+        "label": "Planification",
+        "description": "Planification de l'implémentation et architecture"
+      },
+      "coding": {
+        "label": "Codage",
+        "description": "Implémentation réelle du code"
+      }
+    }
+  },
   "apiProfiles": {
     "actions": {
       "cancel": "Annuler",
@@ -931,7 +953,29 @@
     },
     "tokenPlaceholder": "sk-ant-oat01-...",
     "weeklyThreshold": "Seuil d'utilisation hebdomadaire",
-    "weeklyThresholdDescription": "Basculer lorsque l'utilisation hebdomadaire atteint ce niveau (recommandé : 99 %)"
+    "weeklyThresholdDescription": "Basculer lorsque l'utilisation hebdomadaire atteint ce niveau (recommandé : 99 %)",
+    "github": {
+      "defaultBranch": {
+        "label": "Branche par défaut",
+        "description": "Branche de base pour la création des arbres de travail des tâches",
+        "selectedBranchHelp": "Toutes les nouvelles tâches seront créées à partir de {{branch}}"
+      }
+    },
+    "linear": {
+      "enableLinearSync": "Activer la synchronisation Linear",
+      "enableLinearSyncDescription": "Créer et mettre à jour les tickets Linear automatiquement",
+      "apiKey": "Clé API",
+      "apiKeyDescription": "Obtenez votre clé API depuis",
+      "apiKeyLink": "Paramètres Linear",
+      "realtimeSync": "Synchronisation en temps réel",
+      "realtimeSyncDescription": "Importer automatiquement les nouvelles tâches créées dans Linear",
+      "teamId": "ID d'équipe (Optionnel)",
+      "teamIdDescription": "L'identifiant unique de votre équipe Linear",
+      "teamIdPlaceholder": "Détecté automatiquement",
+      "projectId": "ID de projet (Optionnel)",
+      "projectIdDescription": "L'identifiant unique du projet Linear à synchroniser",
+      "projectIdPlaceholder": "Créé automatiquement"
+    }
   },
   "jira": {
     "apiToken": "Jeton API",
@@ -1192,7 +1236,9 @@
       "issuesAvailable": "Problèmes disponibles",
       "issuesAvailableDescription": "Accédez aux problèmes GitHub depuis la barre latérale pour les consulter, investiguer et créer des tâches.",
       "autoSyncOnLoad": "Synchronisation automatique au chargement",
-      "autoSyncDescription": "Récupérer automatiquement les problèmes au chargement du projet"
+      "autoSyncDescription": "Récupérer automatiquement les problèmes au chargement du projet",
+      "enableGitHubIssues": "Activer les problèmes GitHub",
+      "syncIssuesFromGitHubAndCreateTasksAutomatically": "Synchroniser les problèmes depuis GitHub et créer des tâches automatiquement"
     },
     "gitlab": {
       "description": "Synchronisation des issues GitLab",

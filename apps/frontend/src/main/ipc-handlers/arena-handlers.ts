@@ -74,90 +74,139 @@ function writeVotes(votes: ArenaVote[]): void {
 
 // ─── Analytics Builder ────────────────────────────────────────────────────────
 
-function computeAnalytics(battles: ArenaBattle[], votes: ArenaVote[]): ArenaAnalytics {
+function initializeModelStats(participant: ArenaParticipant): ArenaModelStats {
+  return {
+    profileId: participant.profileId,
+    modelName: participant.modelName,
+    provider: participant.provider,
+    wins: 0,
+    losses: 0,
+    total: 0,
+    winRate: 0,
+    avgCostPerBattle: 0,
+    totalCostUsd: 0,
+    avgDurationMs: 0,
+    byTaskType: {},
+  };
+}
+
+function updateModelStats(
+  stats: ArenaModelStats,
+  participant: ArenaParticipant,
+  battle: ArenaBattle,
+  isWinner: boolean
+): void {
+  stats.total += 1;
+  if (isWinner) stats.wins += 1;
+  else stats.losses += 1;
+  stats.totalCostUsd += participant.costUsd;
+  stats.avgDurationMs =
+    (stats.avgDurationMs * (stats.total - 1) + participant.durationMs) / stats.total;
+}
+
+function updateTaskTypeStats(
+  stats: ArenaModelStats,
+  taskType: ArenaTaskType,
+  isWinner: boolean,
+  costUsd: number
+): void {
+  let ttStats = stats.byTaskType[taskType];
+  if (!ttStats) {
+    ttStats = { wins: 0, total: 0, winRate: 0, avgCostUsd: 0 };
+    stats.byTaskType[taskType] = ttStats;
+  }
+  ttStats.total += 1;
+  if (isWinner) ttStats.wins += 1;
+  ttStats.winRate = ttStats.wins / ttStats.total;
+  ttStats.avgCostUsd =
+    (ttStats.avgCostUsd * (ttStats.total - 1) + costUsd) / ttStats.total;
+}
+
+function buildModelStats(battles: ArenaBattle[]): Map<string, ArenaModelStats> {
   const modelMap = new Map<string, ArenaModelStats>();
 
-  // Build per-model stats from completed battles
   for (const battle of battles) {
     if (battle.status !== 'completed' || !battle.winnerLabel) continue;
 
-    for (const p of battle.participants) {
-      if (!modelMap.has(p.profileId)) {
-        modelMap.set(p.profileId, {
-          profileId: p.profileId,
-          modelName: p.modelName,
-          provider: p.provider,
-          wins: 0,
-          losses: 0,
-          total: 0,
-          winRate: 0,
-          avgCostPerBattle: 0,
-          totalCostUsd: 0,
-          avgDurationMs: 0,
-          byTaskType: {},
-        });
+    for (const participant of battle.participants) {
+      let stats = modelMap.get(participant.profileId);
+      
+      if (!stats) {
+        stats = initializeModelStats(participant);
+        modelMap.set(participant.profileId, stats);
       }
-
-      const stats = modelMap.get(p.profileId)!;
-      const isWinner = p.label === battle.winnerLabel;
-
-      stats.total += 1;
-      if (isWinner) stats.wins += 1;
-      else stats.losses += 1;
-      stats.totalCostUsd += p.costUsd;
-      stats.avgDurationMs =
-        (stats.avgDurationMs * (stats.total - 1) + p.durationMs) / stats.total;
-
-      // Per task-type breakdown
-      const tt = battle.taskType;
-      if (!stats.byTaskType[tt]) {
-        stats.byTaskType[tt] = { wins: 0, total: 0, winRate: 0, avgCostUsd: 0 };
-      }
-      const ttStats = stats.byTaskType[tt]!;
-      ttStats.total += 1;
-      if (isWinner) ttStats.wins += 1;
-      ttStats.winRate = ttStats.wins / ttStats.total;
-      ttStats.avgCostUsd =
-        (ttStats.avgCostUsd * (ttStats.total - 1) + p.costUsd) / ttStats.total;
+      
+      const isWinner = participant.label === battle.winnerLabel;
+      updateModelStats(stats, participant, battle, isWinner);
+      updateTaskTypeStats(stats, battle.taskType, isWinner, participant.costUsd);
     }
   }
 
-  // Finalize rates
+  return modelMap;
+}
+
+function finalizeStats(modelMap: Map<string, ArenaModelStats>): void {
   for (const stats of modelMap.values()) {
     stats.winRate = stats.total > 0 ? stats.wins / stats.total : 0;
     stats.avgCostPerBattle = stats.total > 0 ? stats.totalCostUsd / stats.total : 0;
   }
+}
 
-  // Build auto-routing recommendations
-  const taskTypes: ArenaTaskType[] = ['coding', 'review', 'test', 'planning', 'spec', 'insights'];
-  const autoRoutingRecommendations: ArenaAnalytics['autoRoutingRecommendations'] = {};
+function calculateConfidence(totalBattles: number): 'low' | 'medium' | 'high' {
+  if (totalBattles >= 10) return 'high';
+  if (totalBattles >= 5) return 'medium';
+  return 'low';
+}
 
-  for (const tt of taskTypes) {
-    let bestModel: ArenaModelStats | null = null;
-    let bestWins = 0;
+function findBestModelForTask(
+  modelMap: Map<string, ArenaModelStats>,
+  taskType: ArenaTaskType
+): [ArenaModelStats, NonNullable<ArenaModelStats['byTaskType'][ArenaTaskType]>] | null {
+  let bestCombo: [ArenaModelStats, NonNullable<ArenaModelStats['byTaskType'][ArenaTaskType]>] | null = null;
+  let bestWins = 0;
 
-    for (const stats of modelMap.values()) {
-      const ttStats = stats.byTaskType[tt];
-      if (!ttStats || ttStats.total < 2) continue;
-      if (ttStats.wins > bestWins) {
-        bestWins = ttStats.wins;
-        bestModel = stats;
-      }
+  for (const stats of modelMap.values()) {
+    const ttStats = stats.byTaskType[taskType];
+    if (!ttStats || ttStats.total < 2) continue;
+    
+    if (ttStats.wins > bestWins) {
+      bestWins = ttStats.wins;
+      bestCombo = [stats, ttStats];
     }
+  }
 
-    if (bestModel) {
-      const ttStats = bestModel.byTaskType[tt]!;
-      const confidence: 'low' | 'medium' | 'high' =
-        ttStats.total >= 10 ? 'high' : ttStats.total >= 5 ? 'medium' : 'low';
+  return bestCombo;
+}
 
-      autoRoutingRecommendations[tt] = {
-        profileId: bestModel.profileId,
-        modelName: bestModel.modelName,
+function buildAutoRoutingRecommendations(
+  modelMap: Map<string, ArenaModelStats>
+): ArenaAnalytics['autoRoutingRecommendations'] {
+  const taskTypes: ArenaTaskType[] = ['coding', 'review', 'test', 'planning', 'spec', 'insights'];
+  const recommendations: ArenaAnalytics['autoRoutingRecommendations'] = {};
+
+  for (const taskType of taskTypes) {
+    const bestCombo = findBestModelForTask(modelMap, taskType);
+    
+    if (bestCombo) {
+      const [stats, ttStats] = bestCombo;
+      const confidence = calculateConfidence(ttStats.total);
+
+      recommendations[taskType] = {
+        profileId: stats.profileId,
+        modelName: stats.modelName,
         winRate: ttStats.winRate,
         confidence,
       };
     }
   }
+
+  return recommendations;
+}
+
+function computeAnalytics(battles: ArenaBattle[], votes: ArenaVote[]): ArenaAnalytics {
+  const modelMap = buildModelStats(battles);
+  finalizeStats(modelMap);
+  const autoRoutingRecommendations = buildAutoRoutingRecommendations(modelMap);
 
   return {
     totalBattles: battles.length,
@@ -206,35 +255,24 @@ async function runBattle(
         costUsd: 0,
       });
 
-      // Build the system prompt based on task type
-      const systemPrompts: Record<ArenaTaskType, string> = {
-        coding: 'You are an expert software engineer. Provide clean, well-commented code with explanations.',
-        review: 'You are a senior code reviewer. Provide thorough, constructive feedback covering correctness, performance, security, and maintainability.',
-        test: 'You are a QA engineer. Write comprehensive test cases covering happy paths, edge cases, and error scenarios.',
-        planning: 'You are a technical architect. Provide detailed, actionable implementation plans with clear steps.',
-        spec: 'You are a product manager and architect. Write comprehensive technical specifications.',
-        insights: 'You are a codebase analyst. Provide deep insights about code structure, patterns, and improvements.',
-      };
-
       // Call the Anthropic API (or compatible endpoint) via the credential system
       // We use a simple fetch to the configured endpoint from the profile
-      const profileResult = await ipcMain.emit
-        ? await new Promise<{ success: boolean; data?: { baseUrl?: string; apiKey?: string; model?: string } }>((resolve) => {
-            // Use ipcMain to get profile credentials
-            const handler = ipcMain.listeners('profile:get')[0] as Function | undefined;
-            if (handler) {
-              const fakeEvent = { sender: win?.webContents };
-              const result = handler(fakeEvent, participant.profileId);
-              if (result && typeof result.then === 'function') {
-                result.then(resolve).catch(() => resolve({ success: false }));
-              } else {
-                resolve(result || { success: false });
-              }
-            } else {
-              resolve({ success: false });
-            }
-          })
-        : { success: false };
+      // Note: This is mock implementation - real API integration would use the profile credentials
+      await new Promise<{ success: boolean; data?: { baseUrl?: string; apiKey?: string; model?: string } }>((resolve) => {
+        // Use ipcMain to get profile credentials
+        const handler = ipcMain.listeners('profile:get')[0] as Function | undefined;
+        if (handler) {
+          const fakeEvent = { sender: win?.webContents };
+          const result = handler(fakeEvent, participant.profileId);
+          if (result && typeof result.then === 'function') {
+            result.then(resolve).catch(() => resolve({ success: false }));
+          } else {
+            resolve(result || { success: false });
+          }
+        } else {
+          resolve({ success: false });
+        }
+      });
 
       // Simulate streaming for demo (real implementation would use actual API)
       // This uses a mock generator until real profile API integration is wired
@@ -344,7 +382,7 @@ async function runBattle(
       return { label: participant.label, output: fullOutput, tokensUsed: tokenCount, costUsd: finalCost, durationMs };
     } catch (err) {
       const error = err instanceof Error ? err.message : 'Unknown error';
-      appLog(`[Arena] Participant ${participant.label} failed: ${error}`, 'error');
+      appLog.error(`[Arena] Participant ${participant.label} failed: ${error}`);
 
       safeSend('arena:battleResult', {
         battleId: battle.id,
@@ -388,7 +426,7 @@ async function runBattle(
   };
   writeBattles([completedBattle, ...battles.filter((b) => b.id !== battle.id)]);
 
-  appLog(`[Arena] Battle ${battle.id} completed with ${finalParticipants.length} participants`);
+  appLog.info(`[Arena] Battle ${battle.id} completed with ${finalParticipants.length} participants`);
 }
 
 // ─── Handler Registration ─────────────────────────────────────────────────────
@@ -429,11 +467,11 @@ export function registerArenaHandlers(
         revealed: false,
       };
 
-      appLog(`[Arena] Starting battle ${battleId} with ${participants.length} models`);
+      appLog.info(`[Arena] Starting battle ${battleId} with ${participants.length} models`);
 
       // Run in background — do not await here
       runBattle(battle, request, getMainWindow).catch((err) => {
-        appLog(`[Arena] Battle error: ${err}`, 'error');
+        appLog.error(`[Arena] Battle error: ${err}`);
         const win = getMainWindow();
         if (win && !win.isDestroyed()) {
           win.webContents.send('arena:battleError', {
@@ -445,7 +483,7 @@ export function registerArenaHandlers(
 
       return { success: true, data: battle };
     } catch (err) {
-      appLog(`[Arena] Failed to start battle: ${err}`, 'error');
+      appLog.error(`[Arena] Failed to start battle: ${err}`);
       return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
     }
   });
@@ -473,7 +511,7 @@ export function registerArenaHandlers(
       votes.unshift(vote);
       writeVotes(votes);
 
-      appLog(`[Arena] Vote recorded: battle=${vote.battleId}, winner=${vote.winnerLabel}`);
+      appLog.info(`[Arena] Vote recorded: battle=${vote.battleId}, winner=${vote.winnerLabel}`);
       return { success: true };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Failed to save vote' };
@@ -517,23 +555,21 @@ export function registerArenaHandlers(
   ipcMain.handle('arena:getProfiles', async () => {
     try {
       // Delegate to existing profile handler
-      return new Promise((resolve) => {
-        const handlers = ipcMain.listeners('profile:list') as Function[];
-        if (handlers.length > 0) {
-          const result = handlers[0]({} as Electron.IpcMainInvokeEvent);
-          if (result && typeof result.then === 'function') {
-            result.then(resolve).catch(() => resolve({ success: true, data: [] }));
-          } else {
-            resolve(result || { success: true, data: [] });
-          }
+      const handlers = ipcMain.listeners('profile:list') as Function[];
+      if (handlers.length > 0) {
+        const result = handlers[0]({} as Electron.IpcMainInvokeEvent);
+        if (result && typeof result.then === 'function') {
+          return await result.catch(() => ({ success: true, data: [] }));
         } else {
-          resolve({ success: true, data: [] });
+          return result || { success: true, data: [] };
         }
-      });
+      } else {
+        return { success: true, data: [] };
+      }
     } catch {
       return { success: true, data: [] };
     }
   });
 
-  appLog('[Arena] IPC handlers registered');
+  appLog.info('[Arena] IPC handlers registered');
 }

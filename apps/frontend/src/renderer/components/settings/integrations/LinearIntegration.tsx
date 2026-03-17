@@ -8,13 +8,13 @@ import { Separator } from '../../ui/separator';
 import type { ProjectEnvConfig, LinearSyncStatus } from '../../../../shared/types';
 
 interface LinearIntegrationProps {
-  envConfig: ProjectEnvConfig | null;
-  updateEnvConfig: (updates: Partial<ProjectEnvConfig>) => void;
-  showLinearKey: boolean;
-  setShowLinearKey: React.Dispatch<React.SetStateAction<boolean>>;
-  linearConnectionStatus: LinearSyncStatus | null;
-  isCheckingLinear: boolean;
-  onOpenLinearImport: () => void;
+  readonly envConfig: ProjectEnvConfig | null;
+  readonly updateEnvConfig: (updates: Partial<ProjectEnvConfig>) => void;
+  readonly showLinearKey: boolean;
+  readonly setShowLinearKey: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly linearConnectionStatus: LinearSyncStatus | null;
+  readonly isCheckingLinear: boolean;
+  readonly onOpenLinearImport: () => void;
 }
 
 /**
@@ -30,15 +30,17 @@ export function LinearIntegration({
   isCheckingLinear,
   onOpenLinearImport
 }: LinearIntegrationProps) {
+  const { t } = useTranslation('settings');
+
   if (!envConfig) return null;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
-          <Label className="font-normal text-foreground">Enable Linear Sync</Label>
+          <Label className="font-normal text-foreground">{t('integrations.linear.enableLinearSync')}</Label>
           <p className="text-xs text-muted-foreground">
-            Create and update Linear issues automatically
+            {t('integrations.linear.enableLinearSyncDescription')}
           </p>
         </div>
         <Switch
@@ -50,16 +52,16 @@ export function LinearIntegration({
       {envConfig.linearEnabled && (
         <>
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">API Key</Label>
+            <Label className="text-sm font-medium text-foreground">{t('integrations.linear.apiKey')}</Label>
             <p className="text-xs text-muted-foreground">
-              Get your API key from{' '}
+              {t('integrations.linear.apiKeyDescription')}{' '}
               <a
                 href="https://linear.app/settings/api"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-info hover:underline"
               >
-                Linear Settings
+                {t('integrations.linear.apiKeyLink')}
               </a>
             </p>
             <div className="relative">
@@ -115,22 +117,47 @@ export function LinearIntegration({
 }
 
 interface ConnectionStatusProps {
-  isChecking: boolean;
-  connectionStatus: LinearSyncStatus | null;
+  readonly isChecking: boolean;
+  readonly connectionStatus: LinearSyncStatus | null;
 }
 
 function ConnectionStatus({ isChecking, connectionStatus }: ConnectionStatusProps) {
   const { t } = useTranslation('settings');
+  
+  const getConnectionText = () => {
+    if (isChecking) {
+      return t('projectSections.linear.checking');
+    }
+    
+    if (connectionStatus?.connected) {
+      if (connectionStatus.teamName) {
+        return t('projectSections.linear.connectedTo', { team: connectionStatus.teamName });
+      }
+      return t('projectSections.linear.connected');
+    }
+    
+    return connectionStatus?.error || t('projectSections.linear.notConnected');
+  };
+  
+  const getStatusIcon = () => {
+    if (isChecking) {
+      return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+    }
+    
+    if (connectionStatus?.connected) {
+      return <CheckCircle2 className="h-4 w-4 text-success" />;
+    }
+    
+    return <AlertCircle className="h-4 w-4 text-warning" />;
+  };
+  
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-3">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-foreground">{t('projectSections.linear.connectionStatus')}</p>
           <p className="text-xs text-muted-foreground">
-            {isChecking ? t('projectSections.linear.checking') :
-              connectionStatus?.connected
-                ? (connectionStatus.teamName ? t('projectSections.linear.connectedTo', { team: connectionStatus.teamName }) : t('projectSections.linear.connected'))
-                : connectionStatus?.error || t('projectSections.linear.notConnected')}
+            {getConnectionText()}
           </p>
           {connectionStatus?.connected && connectionStatus.issueCount !== undefined && (
             <p className="text-xs text-muted-foreground mt-1">
@@ -138,20 +165,14 @@ function ConnectionStatus({ isChecking, connectionStatus }: ConnectionStatusProp
             </p>
           )}
         </div>
-        {isChecking ? (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        ) : connectionStatus?.connected ? (
-          <CheckCircle2 className="h-4 w-4 text-success" />
-        ) : (
-          <AlertCircle className="h-4 w-4 text-warning" />
-        )}
+        {getStatusIcon()}
       </div>
     </div>
   );
 }
 
 interface ImportTasksPromptProps {
-  onOpenLinearImport: () => void;
+  readonly onOpenLinearImport: () => void;
 }
 
 function ImportTasksPrompt({ onOpenLinearImport }: ImportTasksPromptProps) {
@@ -180,20 +201,22 @@ function ImportTasksPrompt({ onOpenLinearImport }: ImportTasksPromptProps) {
 }
 
 interface RealtimeSyncToggleProps {
-  enabled: boolean;
-  onToggle: (checked: boolean) => void;
+  readonly enabled: boolean;
+  readonly onToggle: (checked: boolean) => void;
 }
 
 function RealtimeSyncToggle({ enabled, onToggle }: RealtimeSyncToggleProps) {
+  const { t } = useTranslation('settings');
+  
   return (
     <div className="flex items-center justify-between">
       <div className="space-y-0.5">
         <div className="flex items-center gap-2">
           <Radio className="h-4 w-4 text-info" />
-          <Label className="font-normal text-foreground">Real-time Sync</Label>
+          <Label className="font-normal text-foreground">{t('integrations.linear.realtimeSync')}</Label>
         </div>
         <p className="text-xs text-muted-foreground pl-6">
-          Automatically import new tasks created in Linear
+          {t('integrations.linear.realtimeSyncDescription')}
         </p>
       </div>
       <Switch checked={enabled} onCheckedChange={onToggle} />
@@ -213,27 +236,29 @@ function RealtimeSyncWarning() {
 }
 
 interface TeamProjectIdsProps {
-  teamId: string;
-  projectId: string;
-  onTeamIdChange: (value: string) => void;
-  onProjectIdChange: (value: string) => void;
+  readonly teamId: string;
+  readonly projectId: string;
+  readonly onTeamIdChange: (value: string) => void;
+  readonly onProjectIdChange: (value: string) => void;
 }
 
 function TeamProjectIds({ teamId, projectId, onTeamIdChange, onProjectIdChange }: TeamProjectIdsProps) {
+  const { t } = useTranslation('settings');
+  
   return (
     <div className="grid grid-cols-2 gap-4">
       <div className="space-y-2">
-        <Label className="text-sm font-medium text-foreground">Team ID (Optional)</Label>
+        <Label className="text-sm font-medium text-foreground">{t('integrations.linear.teamId')}</Label>
         <Input
-          placeholder="Auto-detected"
+          placeholder={t('integrations.linear.teamIdPlaceholder')}
           value={teamId}
           onChange={(e) => onTeamIdChange(e.target.value)}
         />
       </div>
       <div className="space-y-2">
-        <Label className="text-sm font-medium text-foreground">Project ID (Optional)</Label>
+        <Label className="text-sm font-medium text-foreground">{t('integrations.linear.projectId')}</Label>
         <Input
-          placeholder="Auto-created"
+          placeholder={t('integrations.linear.projectIdPlaceholder')}
           value={projectId}
           onChange={(e) => onProjectIdChange(e.target.value)}
         />

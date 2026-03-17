@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Zap,
   Eye,
@@ -29,30 +30,30 @@ import {
 import type { ProjectEnvConfig, LinearSyncStatus, GitHubSyncStatus, Project, ProjectSettings as ProjectSettingsType } from '../../../shared/types';
 
 interface IntegrationSettingsProps {
-  envConfig: ProjectEnvConfig | null;
-  updateEnvConfig: (updates: Partial<ProjectEnvConfig>) => void;
+  readonly envConfig: ProjectEnvConfig | null;
+  readonly updateEnvConfig: (updates: Partial<ProjectEnvConfig>) => void;
 
   // Project settings for main branch
-  project: Project;
-  settings: ProjectSettingsType;
-  setSettings: React.Dispatch<React.SetStateAction<ProjectSettingsType>>;
+  readonly project: Project;
+  readonly settings: ProjectSettingsType;
+  readonly setSettings: React.Dispatch<React.SetStateAction<ProjectSettingsType>>;
 
   // Linear state
-  showLinearKey: boolean;
-  setShowLinearKey: React.Dispatch<React.SetStateAction<boolean>>;
-  linearConnectionStatus: LinearSyncStatus | null;
-  isCheckingLinear: boolean;
-  linearExpanded: boolean;
-  onLinearToggle: () => void;
-  onOpenLinearImport: () => void;
+  readonly showLinearKey: boolean;
+  readonly setShowLinearKey: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly linearConnectionStatus: LinearSyncStatus | null;
+  readonly isCheckingLinear: boolean;
+  readonly linearExpanded: boolean;
+  readonly onLinearToggle: () => void;
+  readonly onOpenLinearImport: () => void;
 
   // GitHub state
-  showGitHubToken: boolean;
-  setShowGitHubToken: React.Dispatch<React.SetStateAction<boolean>>;
-  gitHubConnectionStatus: GitHubSyncStatus | null;
-  isCheckingGitHub: boolean;
-  githubExpanded: boolean;
-  onGitHubToggle: () => void;
+  readonly showGitHubToken: boolean;
+  readonly setShowGitHubToken: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly gitHubConnectionStatus: GitHubSyncStatus | null;
+  readonly isCheckingGitHub: boolean;
+  readonly githubExpanded: boolean;
+  readonly onGitHubToggle: () => void;
 }
 
 export function IntegrationSettings({
@@ -75,6 +76,7 @@ export function IntegrationSettings({
   githubExpanded,
   onGitHubToggle
 }: IntegrationSettingsProps) {
+  const { t } = useTranslation();
   // Branch selection state
   const [branches, setBranches] = useState<string[]>([]);
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
@@ -100,14 +102,14 @@ export function IntegrationSettings({
   const loadBranches = useCallback(async () => {
     setIsLoadingBranches(true);
     try {
-      const result = await window.electronAPI.getGitBranches(project.path);
+      const result = await globalThis.electronAPI.getGitBranches(project.path);
       if (result.success && result.data) {
         setBranches(result.data);
         // Auto-detect main branch if not set and not already detected
         // Use mainBranchRef to avoid stale closure issues
         if (!mainBranchRef.current && !hasDetectedMainBranch.current) {
           hasDetectedMainBranch.current = true;
-          const detectResult = await window.electronAPI.detectMainBranch(project.path);
+          const detectResult = await globalThis.electronAPI.detectMainBranch(project.path);
           // Re-check mainBranchRef after await - user may have selected a branch during detection
           if (detectResult.success && detectResult.data !== null && detectResult.data !== undefined && !mainBranchRef.current) {
             const detectedBranch = detectResult.data;
@@ -220,10 +222,16 @@ export function IntegrationSettings({
                       <div>
                         <p className="text-sm font-medium text-foreground">Connection Status</p>
                         <p className="text-xs text-muted-foreground">
-                          {isCheckingLinear ? 'Checking...' :
-                            linearConnectionStatus?.connected
-                              ? `Connected${linearConnectionStatus.teamName ? ` to ${linearConnectionStatus.teamName}` : ''}`
-                              : linearConnectionStatus?.error || 'Not connected'}
+                          {(() => {
+                            if (isCheckingLinear) {
+                              return 'Checking...';
+                            }
+                            if (linearConnectionStatus?.connected) {
+                              const teamName = linearConnectionStatus.teamName ? ` to ${linearConnectionStatus.teamName}` : '';
+                              return `Connected${teamName}`;
+                            }
+                            return linearConnectionStatus?.error || 'Not connected';
+                          })()}
                         </p>
                         {linearConnectionStatus?.connected && linearConnectionStatus.issueCount !== undefined && (
                           <p className="text-xs text-muted-foreground mt-1">
@@ -231,13 +239,15 @@ export function IntegrationSettings({
                           </p>
                         )}
                       </div>
-                      {isCheckingLinear ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                      ) : linearConnectionStatus?.connected ? (
-                        <CheckCircle2 className="h-4 w-4 text-success" />
-                      ) : (
-                        <AlertCircle className="h-4 w-4 text-warning" />
-                      )}
+                      {(() => {
+                        if (isCheckingLinear) {
+                          return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+                        }
+                        if (linearConnectionStatus?.connected) {
+                          return <CheckCircle2 className="h-4 w-4 text-success" />;
+                        }
+                        return <AlertCircle className="h-4 w-4 text-warning" />;
+                      })()}
                     </div>
                   </div>
                 )}
@@ -348,9 +358,9 @@ export function IntegrationSettings({
           <div className="space-y-4 pl-6 pt-2">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="font-normal text-foreground">Enable GitHub Issues</Label>
+                <Label className="font-normal text-foreground">{t('projectSections.github.enableGitHubIssues', { ns: 'settings' })}</Label>
                 <p className="text-xs text-muted-foreground">
-                  Sync issues from GitHub and create tasks automatically
+                  {t('projectSections.github.syncIssuesFromGitHubAndCreateTasksAutomatically', { ns: 'settings' })}
                 </p>
               </div>
               <Switch
@@ -411,10 +421,15 @@ export function IntegrationSettings({
                       <div>
                         <p className="text-sm font-medium text-foreground">Connection Status</p>
                         <p className="text-xs text-muted-foreground">
-                          {isCheckingGitHub ? 'Checking...' :
-                            gitHubConnectionStatus?.connected
-                              ? `Connected to ${gitHubConnectionStatus.repoFullName}`
-                              : gitHubConnectionStatus?.error || 'Not connected'}
+                          {(() => {
+                            if (isCheckingGitHub) {
+                              return 'Checking...';
+                            }
+                            if (gitHubConnectionStatus?.connected) {
+                              return `Connected to ${gitHubConnectionStatus.repoFullName}`;
+                            }
+                            return gitHubConnectionStatus?.error || 'Not connected';
+                          })()}
                         </p>
                         {gitHubConnectionStatus?.connected && gitHubConnectionStatus.repoDescription && (
                           <p className="text-xs text-muted-foreground mt-1 italic">
@@ -422,13 +437,15 @@ export function IntegrationSettings({
                           </p>
                         )}
                       </div>
-                      {isCheckingGitHub ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                      ) : gitHubConnectionStatus?.connected ? (
-                        <CheckCircle2 className="h-4 w-4 text-success" />
-                      ) : (
-                        <AlertCircle className="h-4 w-4 text-warning" />
-                      )}
+                      {(() => {
+                        if (isCheckingGitHub) {
+                          return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+                        }
+                        if (gitHubConnectionStatus?.connected) {
+                          return <CheckCircle2 className="h-4 w-4 text-success" />;
+                        }
+                        return <AlertCircle className="h-4 w-4 text-warning" />;
+                      })()}
                     </div>
                   </div>
                 )}
