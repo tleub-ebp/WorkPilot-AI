@@ -171,6 +171,10 @@ export const useArenaStore = create<ArenaState & ArenaActions>((set, get) => ({
     if (!winner) return;
 
     try {
+      if (typeof globalThis.electronAPI?.arenaVote !== 'function') {
+        set({ error: 'Arena API not available — please restart the application.' });
+        return;
+      }
       const result = await globalThis.electronAPI.arenaVote({
         battleId,
         winnerLabel,
@@ -202,6 +206,9 @@ export const useArenaStore = create<ArenaState & ArenaActions>((set, get) => ({
   loadHistory: async () => {
     set({ isLoadingHistory: true, error: null });
     try {
+      if (typeof globalThis.electronAPI?.arenaGetBattles !== 'function') {
+        return;
+      }
       const result = await globalThis.electronAPI.arenaGetBattles();
       if (result.success && result.data) {
         set({ battles: result.data });
@@ -216,6 +223,9 @@ export const useArenaStore = create<ArenaState & ArenaActions>((set, get) => ({
   loadAnalytics: async () => {
     set({ isLoadingAnalytics: true });
     try {
+      if (typeof globalThis.electronAPI?.arenaGetAnalytics !== 'function') {
+        return;
+      }
       const result = await globalThis.electronAPI.arenaGetAnalytics();
       if (result.success && result.data) {
         set({ analytics: result.data });
