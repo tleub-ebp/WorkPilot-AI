@@ -147,3 +147,5 @@ export {
 
 // Re-export Image as ImageIcon for components that use this alias
 export { Image as ImageIcon } from 'lucide-react';
+// Re-export LucideGithub as Github for components that use this alias
+export { LucideGithub as Github } from 'lucide-react';

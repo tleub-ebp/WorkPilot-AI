@@ -469,10 +469,10 @@ export function Worktrees({ projectId }: WorktreesProps) {
         <div>
           <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <GitBranch className="h-6 w-6" />
-            Worktrees
+            {t('dialogs:worktrees.title')}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage isolated workspaces for your WorkPilot AI tasks
+            {t('dialogs:worktrees.description')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -539,7 +539,7 @@ export function Worktrees({ projectId }: WorktreesProps) {
           <div className="flex items-start gap-2">
             <AlertCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
             <div>
-              <p className="font-medium text-destructive">Error</p>
+              <p className="font-medium text-destructive">{t('common:status.error')}</p>
               <p className="text-muted-foreground mt-1 whitespace-pre-line">{error}</p>
             </div>
           </div>
@@ -559,10 +559,11 @@ export function Worktrees({ projectId }: WorktreesProps) {
           <div className="rounded-full bg-muted p-4 mb-4">
             <GitBranch className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-semibold text-foreground">No Worktrees</h3>
+          <h3 className="text-lg font-semibold text-foreground">{t('dialogs:worktrees.empty')}</h3>
           <p className="text-sm text-muted-foreground mt-2 max-w-md">
-            Worktrees are created automatically when WorkPilot AI builds features.
-            You can also create terminal worktrees from the Agent Terminals tab.
+            {t('dialogs:worktrees.emptyDescription')}
+            {' '}
+            {t('dialogs:worktrees.emptyDescriptionTerminal')}
           </p>
         </div>
       )}

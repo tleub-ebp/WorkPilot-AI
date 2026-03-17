@@ -1,0 +1,24 @@
+{
+  "title": "Session History",
+  "subtitle": "Track agent sessions, costs, and performance",
+  "refresh": "Refresh",
+  "noSessions": "No sessions found",
+  "stats": {
+    "total": "Total",
+    "completed": "Completed",
+    "failed": "Failed",
+    "tokens": "Tokens"
+  },
+  "filters": {
+    "all": "All",
+    "completed": "Completed",
+    "failed": "Failed",
+    "running": "Running"
+  },
+  "session": {
+    "session": "Session",
+    "ended": "Ended"
+  },
+  "phases": "Phases",
+  "error": "Error"
+}

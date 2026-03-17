@@ -108,6 +108,7 @@ import {
 } from '@/stores/dependency-sentinel-store';
 
 import { useNaturalLanguageGitStore } from '@/stores/natural-language-git-store';
+import { openVoiceControlDialog } from '@/stores/voice-control-store';
 
 import {
   openAppEmulatorDialog
@@ -299,8 +300,6 @@ export function Sidebar({
   const [showAzureDevOpsSetup, setShowAzureDevOpsSetup] = useState(false);
   const [azureDevOpsSetupProject, setAzureDevOpsSetupProject] = useState<Project | null>(null);
 
-  // AI Tools states - managed by individual stores
-  const [showVoiceControlDialog, setShowVoiceControlDialog] = useState(false);
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
 
@@ -563,7 +562,7 @@ export function Sidebar({
       return;
     }
     if (view === 'voice-control') {
-      setShowVoiceControlDialog(true);
+      openVoiceControlDialog();
       return;
     }
     if (view === 'app-emulator') {

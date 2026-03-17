@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Clock,
   RefreshCw,
@@ -47,14 +48,14 @@ interface SessionPhase {
 }
 
 interface SessionHistoryProps {
-  projectId: string;
+  readonly projectId: string;
 }
 
 // ---------------------------------------------------------------------------
 // Status icon
 // ---------------------------------------------------------------------------
 
-function StatusIcon({ status }: { status: string }) {
+function StatusIcon({ status }: { readonly status: string }) {
   switch (status.toLowerCase()) {
     case 'completed':
     case 'success':
@@ -102,7 +103,8 @@ function formatDateTime(iso: string): string {
 // Session card
 // ---------------------------------------------------------------------------
 
-function SessionCard({ session }: { session: SessionEntry }) {
+function SessionCard({ session }: { readonly session: SessionEntry }) {
+  const { t } = useTranslation('sessionHistory');
   const [expanded, setExpanded] = useState(false);
 
   const statusColor: Record<string, string> = {
@@ -171,15 +173,15 @@ function SessionCard({ session }: { session: SessionEntry }) {
         <div className="mt-3 pl-9 space-y-3">
           {session.error && (
             <div className="rounded-md bg-red-500/10 p-3 text-xs text-red-500">
-              <span className="font-medium">Error: </span>{session.error}
+              <span className="font-medium">{t('error')}: </span>{session.error}
             </div>
           )}
 
           {session.phases && session.phases.length > 0 && (
             <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Phases</p>
-              {session.phases.map((phase, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-xs">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('phases')}</p>
+              {session.phases.map((phase) => (
+                <div key={`${session.session_id}-${phase.name}`} className="flex items-center gap-2 text-xs">
                   <StatusIcon status={phase.status} />
                   <span className="text-foreground capitalize flex-1">{phase.name}</span>
                   {phase.duration_seconds !== undefined && (
@@ -194,8 +196,8 @@ function SessionCard({ session }: { session: SessionEntry }) {
           )}
 
           <div className="flex gap-4 text-xs text-muted-foreground">
-            <span>Session: <span className="font-mono text-foreground">{session.session_id}</span></span>
-            {session.ended_at && <span>Ended: {formatDateTime(session.ended_at)}</span>}
+            <span>{t('session.session')}: <span className="font-mono text-foreground">{session.session_id}</span></span>
+            {session.ended_at && <span>{t('session.ended')}: {formatDateTime(session.ended_at)}</span>}
           </div>
         </div>
       )}
@@ -208,6 +210,7 @@ function SessionCard({ session }: { session: SessionEntry }) {
 // ---------------------------------------------------------------------------
 
 export function SessionHistory({ projectId }: SessionHistoryProps) {
+  const { t } = useTranslation('sessionHistory');
   const [sessions, setSessions] = useState<SessionEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -270,13 +273,13 @@ export function SessionHistory({ projectId }: SessionHistoryProps) {
           <div className="flex items-center gap-3">
             <Clock className="h-6 w-6 text-primary" />
             <div>
-              <h1 className="text-xl font-bold text-foreground">Session History</h1>
-              <p className="text-sm text-muted-foreground">Track agent sessions, costs, and performance</p>
+              <h1 className="text-xl font-bold text-foreground">{t('title')}</h1>
+              <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={fetchSessions}>
             <RefreshCw className="h-3.5 w-3.5 mr-2" />
-            Refresh
+            {t('refresh')}
           </Button>
         </div>
 
@@ -285,42 +288,59 @@ export function SessionHistory({ projectId }: SessionHistoryProps) {
           <Card>
             <CardContent className="p-3 text-center">
               <p className="text-lg font-bold text-foreground">{stats.total}</p>
-              <p className="text-xs text-muted-foreground">Total</p>
+              <p className="text-xs text-muted-foreground">{t('stats.total')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-3 text-center">
               <p className="text-lg font-bold text-emerald-500">{stats.completed}</p>
-              <p className="text-xs text-muted-foreground">Completed</p>
+              <p className="text-xs text-muted-foreground">{t('stats.completed')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-3 text-center">
               <p className="text-lg font-bold text-red-500">{stats.failed}</p>
-              <p className="text-xs text-muted-foreground">Failed</p>
+              <p className="text-xs text-muted-foreground">{t('stats.failed')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-3 text-center">
               <p className="text-lg font-bold text-foreground">{stats.totalTokens.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Tokens</p>
+              <p className="text-xs text-muted-foreground">{t('stats.tokens')}</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Filter tabs */}
         <div className="flex gap-2">
-          {(['all', 'completed', 'failed', 'running'] as const).map((f) => (
-            <Button
-              key={f}
-              variant={filter === f ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFilter(f)}
-              className="capitalize"
-            >
-              {f} {f === 'all' ? `(${stats.total})` : f === 'completed' ? `(${stats.completed})` : f === 'failed' ? `(${stats.failed})` : `(${stats.running})`}
-            </Button>
-          ))}
+          {(['all', 'completed', 'failed', 'running'] as const).map((f) => {
+            const getFilterCount = () => {
+              switch (f) {
+                case 'all':
+                  return stats.total;
+                case 'completed':
+                  return stats.completed;
+                case 'failed':
+                  return stats.failed;
+                case 'running':
+                  return stats.running;
+                default:
+                  return 0;
+              }
+            };
+            
+            return (
+              <Button
+                key={f}
+                variant={filter === f ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilter(f)}
+                className="capitalize"
+              >
+                {t(`filters.${f}`)} ({getFilterCount()})
+              </Button>
+            );
+          })}
         </div>
 
         {/* Error */}
@@ -337,7 +357,7 @@ export function SessionHistory({ projectId }: SessionHistoryProps) {
         {filtered.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <Clock className="h-8 w-8 mx-auto mb-3 opacity-50" />
-            <p className="text-sm">No sessions found</p>
+            <p className="text-sm">{t('noSessions')}</p>
           </div>
         ) : (
           <div className="space-y-2">
