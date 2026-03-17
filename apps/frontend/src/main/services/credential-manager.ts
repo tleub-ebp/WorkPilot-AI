@@ -879,9 +879,11 @@ export class CredentialManager extends EventEmitter {
    *   1. Codex CLI config files (~/.codex/ or ~/.config/codex/)
    *   2. App's own profiles.json for OpenAI API profiles
    *   3. Global settings for globalOpenAIApiKey
+   *   4. Global settings for globalOpenAICodexOAuthToken (previously saved OAuth)
    */
   private async checkOpenAICodexOAuthStatus(): Promise<{ isAuthenticated: boolean; profileName?: string }> {
     try {
+      console.log('[CredentialManager] Checking OpenAI Codex OAuth status...');
       const fs = require('node:fs').promises;
       const path = require('node:path');
       const os = require('node:os');
@@ -897,64 +899,113 @@ export class CredentialManager extends EventEmitter {
         // OpenAI CLI config: ~/.openai/auth.json
         process.env.APPDATA ? path.join(process.env.APPDATA, 'openai', 'auth.json') : null,
         path.join(os.homedir(), '.config', 'openai', 'auth.json'),
+        path.join(os.homedir(), '.openai', 'auth.json'),
       ].filter(Boolean) as string[];
+
+      console.log('[CredentialManager] Checking Codex config paths:', candidatePaths);
 
       for (const configPath of candidatePaths) {
         try {
+          console.log(`[CredentialManager] Checking config path: ${configPath}`);
           const authData = await fs.readFile(configPath, 'utf-8');
           const auth = JSON.parse(authData);
 
-          // Check for OAuth token or API key in Codex CLI config
-          if (auth.access_token || auth.token || auth.api_key) {
+          // Codex CLI stores tokens in a nested `tokens` object:
+          //   { auth_mode, OPENAI_API_KEY, tokens: { id_token, access_token, refresh_token, account_id }, last_refresh }
+          const tokens = auth.tokens || {};
+          const hasAccessToken = !!(tokens.access_token || auth.access_token);
+          const hasRefreshToken = !!(tokens.refresh_token || auth.refresh_token);
+          const hasApiKey = !!(auth.OPENAI_API_KEY?.trim() || auth.api_key?.trim());
+          const hasAnyAuth = hasAccessToken || hasRefreshToken || hasApiKey;
+
+          console.log(`[CredentialManager] Found auth data at ${configPath}:`, {
+            authMode: auth.auth_mode,
+            hasAccessToken,
+            hasRefreshToken,
+            hasApiKey,
+            hasTokensObject: !!auth.tokens,
+          });
+
+          if (hasAnyAuth) {
+            // Try to extract email from id_token JWT payload
+            let profileName = auth.email || auth.user || 'OpenAI Codex CLI';
+            try {
+              const idToken = tokens.id_token || auth.id_token;
+              if (idToken) {
+                const parts = idToken.split('.');
+                if (parts.length >= 2) {
+                  // Base64url decode the payload
+                  let payload = parts[1].replaceAll('-', '+').replaceAll('_', '/');
+                  while (payload.length % 4) payload += '=';
+                  const decoded = Buffer.from(payload, 'base64').toString('utf-8');
+                  const claims = JSON.parse(decoded);
+                  if (claims.email) {
+                    profileName = claims.email;
+                  }
+                }
+              }
+            } catch {
+              // JWT decode failed, use fallback name
+            }
+
+            console.log(`[CredentialManager] Codex CLI authentication found: ${profileName}`);
             return {
               isAuthenticated: true,
-              profileName: auth.email || auth.user || 'OpenAI Codex CLI'
+              profileName
             };
           }
-        } catch {
+        } catch (error) {
+          console.log(`[CredentialManager] No auth data at ${configPath}:`, error instanceof Error ? error.message : 'Unknown error');
           // This path doesn't exist, try next
         }
       }
 
       // Source 2: Check app's own profiles.json for OpenAI API profile
       try {
+        console.log('[CredentialManager] Checking profiles.json for OpenAI API profile...');
         const profilesFile = await loadProfilesFile();
         const openaiProfile = profilesFile.profiles.find(p => {
           const detected = detectProvider(p.baseUrl);
           return detected === 'openai';
         });
         if (openaiProfile?.apiKey && !openaiProfile.apiKey.includes('placeholder') && !openaiProfile.apiKey.startsWith('test-') && openaiProfile.apiKey.length >= 20) {
+          console.log('[CredentialManager] OpenAI API profile found:', openaiProfile.name);
           return {
             isAuthenticated: true,
             profileName: openaiProfile.name || 'OpenAI (API Key)'
           };
         }
-      } catch {
-        // profiles.json not available
+      } catch (error) {
+        console.warn('[CredentialManager] Failed to check profiles.json:', error);
       }
 
       // Source 3: Check global settings for globalOpenAIApiKey
       try {
+        console.log('[CredentialManager] Checking global settings for OpenAI API key...');
         const settings = readSettingsFile();
         const openaiKey = (settings as any)?.globalOpenAIApiKey as string | undefined;
         if (openaiKey?.trim()) {
+          console.log('[CredentialManager] Global OpenAI API key found');
           return {
             isAuthenticated: true,
             profileName: 'OpenAI (API Key)'
           };
         }
-        // Also check for Codex OAuth token in settings
+        
+        // Source 4: Also check for Codex OAuth token in settings
         const codexOAuthToken = (settings as any)?.globalOpenAICodexOAuthToken as string | undefined;
         if (codexOAuthToken?.trim()) {
+          console.log('[CredentialManager] Saved Codex OAuth token found:', codexOAuthToken);
           return {
             isAuthenticated: true,
             profileName: codexOAuthToken
           };
         }
-      } catch {
-        // settings not available
+      } catch (error) {
+        console.warn('[CredentialManager] Failed to check settings:', error);
       }
 
+      console.log('[CredentialManager] No OpenAI Codex authentication found');
       return { isAuthenticated: false };
     } catch (error) {
       console.warn('[CredentialManager] Failed to check OpenAI Codex OAuth status:', error);

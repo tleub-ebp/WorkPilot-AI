@@ -9,8 +9,7 @@ import {
   DialogTitle,
 } from '../ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Key, Users, CheckCircle, AlertCircle } from 'lucide-react';
-import { LucideGithub } from '@/lib/icons';
+import { Key, Users, CheckCircle, AlertCircle, Github } from 'lucide-react';
 import { GitHubCopilotConfig } from './GitHubCopilotConfig';
 import { VisuallyHidden } from '../ui/visually-hidden';
 import { cn } from '@/lib/utils';
@@ -55,8 +54,9 @@ export function ProviderConfigDialog({
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [showApiKey, setShowApiKey] = useState(false);
+  const [isTestPending, setIsTestPending] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('api');
+  const [showApiKey, setShowApiKey] = useState(false);
   
   const {
     isAuthenticating,
@@ -73,9 +73,92 @@ export function ProviderConfigDialog({
     setWindsurfAccountInfo
   } = useProviderAuth();
 
+  // Auto-check Codex CLI authentication status when terminal is active
+  // Polls the actual ~/.codex/auth.json file via IPC instead of matching terminal output
+  useEffect(() => {
+    if (provider?.id === 'openai' && activeTab === 'oauth' && authTerminal?.terminalId?.startsWith('auth-codex-') && isAuthenticating) {
+      let checkCount = 0;
+      const maxChecks = 120; // Maximum 120 checks (2 minutes — user needs time to complete OAuth in browser)
+      
+      const checkInterval = setInterval(async () => {
+        checkCount++;
+        
+        // Only log every 10th attempt to reduce noise
+        if (checkCount % 10 === 1) {
+          console.log(`[ProviderConfigDialog] Checking Codex OAuth status (attempt ${checkCount}/${maxChecks})`);
+        }
+        
+        try {
+          const result = await globalThis.electronAPI?.checkOpenAICodexOAuth?.();
+          
+          if (result?.isAuthenticated) {
+            clearInterval(checkInterval);
+            console.log('[ProviderConfigDialog] Codex OAuth authentication detected:', result);
+            
+            const profileLabel = result.profileName || 'Codex CLI';
+            setTestResult({ 
+              success: true, 
+              message: `Authentification Codex CLI active (${profileLabel})` 
+            });
+            setIsTestPending(false);
+            
+            // Auto-save: persist the OAuth token to settings so provider shows as configured
+            const newSettings = { ...settings };
+            newSettings.globalOpenAICodexOAuthToken = profileLabel;
+            onSettingsChange(newSettings);
+            onProviderActivated?.(provider.id);
+            
+            // Close the terminal after a brief success display
+            setTimeout(() => {
+              handleAuthTerminalClose();
+            }, 1500);
+          } else if (checkCount >= maxChecks) {
+            clearInterval(checkInterval);
+            console.warn('[ProviderConfigDialog] Codex OAuth check timeout after maximum attempts');
+            setTestResult({ 
+              success: false, 
+              message: 'Authentification Codex CLI timeout. Veuillez réessayer.' 
+            });
+            setIsTestPending(false);
+            handleAuthTerminalClose();
+          }
+        } catch (error) {
+          console.error('[ProviderConfigDialog] Error checking Codex OAuth status:', error);
+          if (checkCount >= maxChecks) {
+            clearInterval(checkInterval);
+            setTestResult({ 
+              success: false, 
+              message: 'Erreur lors de la vérification de l\'authentification Codex CLI.' 
+            });
+            setIsTestPending(false);
+            handleAuthTerminalClose();
+          }
+        }
+      }, 1000); // Check every second
+
+      return () => clearInterval(checkInterval);
+    }
+  }, [provider?.id, activeTab, authTerminal?.terminalId, isAuthenticating, settings, onSettingsChange, onProviderActivated]);
+
   const providerConfig = provider ? providerFields[provider.id] : null;
   const supportsOAuth = ['anthropic', 'claude', 'windsurf', 'openai'].includes(provider?.id || '');
   const supportsGitHubCopilot = provider?.id === 'copilot';
+
+  const getOAuthTabLabel = (): string => {
+    if (provider?.id === 'windsurf') return 'SSO';
+    if (provider?.id === 'openai') return 'OAuth / Codex';
+    return 'OAuth';
+  };
+
+  const getOAuthDescription = (): string => {
+    if (provider?.id === 'windsurf') {
+      return t('sections.accounts.providerConfig.windsurfAuth.description');
+    }
+    if (provider?.id === 'openai') {
+      return t('sections.accounts.providerConfig.openaiAuth.codexCliAuth');
+    }
+    return t('sections.accounts.providerConfig.windsurfAuth.claudeCodeAuth');
+  };
 
   const getDefaultActiveTab = (providerId: string, hasOAuthSupport: boolean): ActiveTab => {
     if (providerId === 'copilot') return 'github-copilot';
@@ -208,18 +291,47 @@ export function ProviderConfigDialog({
 
       // On OAuth tab for OpenAI: check Codex CLI OAuth status via IPC
       if (activeTab === 'oauth' && provider.id === 'openai') {
-        const result = await globalThis.electronAPI?.checkOpenAICodexOAuth?.();
-        if (result?.isAuthenticated) {
-          setTestResult({ 
-            success: true, 
-            message: result.profileName 
-              ? `Authentification Codex CLI active (${result.profileName})` 
-              : 'Authentification Codex CLI active' 
-          });
-        } else {
+        try {
+          console.log('[ProviderConfigDialog] Checking Codex OAuth status...');
+          const result = await globalThis.electronAPI?.checkOpenAICodexOAuth?.();
+          console.log('[ProviderConfigDialog] Codex OAuth check result:', result);
+          
+          if (result?.isAuthenticated) {
+            setTestResult({ 
+              success: true, 
+              message: result.profileName 
+                ? `Authentification Codex CLI active (${result.profileName})` 
+                : 'Authentification Codex CLI active' 
+            });
+          } else {
+            // Check if there's an active Codex authentication terminal
+            const hasActiveCodexTerminal = authTerminal?.terminalId?.startsWith('auth-codex-');
+            const isAuthenticatingCodex = hasActiveCodexTerminal && isAuthenticating;
+            
+            console.log('[ProviderConfigDialog] Codex auth state:', { 
+              hasActiveCodexTerminal, 
+              isAuthenticatingCodex, 
+              terminalId: authTerminal?.terminalId 
+            });
+            
+            if (isAuthenticatingCodex) {
+              setTestResult({ 
+                success: false, 
+                message: 'Authentification Codex CLI en cours... Veuillez patienter.' 
+              });
+              setIsTestPending(true);
+            } else {
+              setTestResult({ 
+                success: false, 
+                message: 'Aucune authentification Codex CLI détectée. Veuillez vous connecter d\'abord.' 
+              });
+            }
+          }
+        } catch (error) {
+          console.error('[ProviderConfigDialog] Error checking Codex OAuth:', error);
           setTestResult({ 
             success: false, 
-            message: 'Aucune authentification Codex CLI détectée. Veuillez vous connecter d\'abord.' 
+            message: 'Erreur lors de la vérification de l\'authentification Codex CLI.' 
           });
         }
         return;
@@ -300,12 +412,12 @@ export function ProviderConfigDialog({
             {supportsOAuth && (
               <TabsTrigger value="oauth" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
-                {provider?.id === 'windsurf' ? 'SSO' : provider?.id === 'openai' ? 'OAuth / Codex' : 'OAuth'}
+                {getOAuthTabLabel()}
               </TabsTrigger>
             )}
             {supportsGitHubCopilot && (
               <TabsTrigger value="github-copilot" className="flex items-center gap-2">
-                <LucideGithub className="w-4 h-4" />
+                <Github className="w-4 h-4" />
                 OAuth GitHub Copilot
               </TabsTrigger>
             )}
@@ -328,12 +440,7 @@ export function ProviderConfigDialog({
             <div className="space-y-4">
               <div className="rounded-lg bg-muted/30 border border-border p-4">
                 <p className="text-sm text-muted-foreground mb-4">
-                  {provider?.id === 'windsurf' 
-                    ? t('sections.accounts.providerConfig.windsurfAuth.description')
-                    : provider?.id === 'openai'
-                      ? t('sections.accounts.providerConfig.openaiAuth.codexCliAuth')
-                      : t('sections.accounts.providerConfig.windsurfAuth.claudeCodeAuth')
-                  }
+                  {getOAuthDescription()}
                 </p>
 
                 <OAuthAuthContent

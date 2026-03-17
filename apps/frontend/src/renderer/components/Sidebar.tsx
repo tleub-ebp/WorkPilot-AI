@@ -131,6 +131,7 @@ import { GitHubSetupModal } from './GitHubSetupModal';
 import { RateLimitIndicator } from './RateLimitIndicator';
 import { ClaudeCodeStatusBadge } from './ClaudeCodeStatusBadge';
 import { CopilotCliStatusBadge } from './CopilotCliStatusBadge';
+import { CodexCliStatusBadge } from './CodexCliStatusBadge';
 import { UpdateBanner } from './UpdateBanner';
 
 import { TestGenerationDialog } from './test-generation/TestGenerationDialog';
@@ -816,11 +817,14 @@ const toggleGroupExpansion = (groupId: string) => {
 
         {/* Bottom section with Settings, Help, and New Task */}
         <div className={cn("space-y-3 transition-all duration-300", isCollapsed ? "p-2" : "p-4")}>
-          {/* Claude Code Status Badge (ProviderSelector déplacé dans le popover) */}
-          {!isCollapsed && <ClaudeCodeStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />}
-
-          {/* Copilot CLI Status Badge */}
-          {!isCollapsed && <CopilotCliStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />}
+          {/* CLI Tools — compact grouped badges */}
+          {!isCollapsed && (
+            <div className="space-y-0.5">
+              <ClaudeCodeStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />
+              <CopilotCliStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />
+              <CodexCliStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />
+            </div>
+          )}
 
           {/* Settings and Help row */}
           <div className={cn(
