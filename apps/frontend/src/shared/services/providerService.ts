@@ -191,12 +191,13 @@ class ProviderServiceClass {
       return { success: false, message: 'Provider not found' };
     }
 
-    if (!status[providerName]) {
+    // Ollama is always testable (local provider with a default URL)
+    if (!status[providerName] && providerName !== 'ollama') {
       return this.handleUnconfiguredProvider(providerName);
     }
 
     const { apiKey, baseUrl } = await this.getProviderConfig(providerName);
-    
+
     if (!apiKey && !baseUrl) {
       return { success: false, message: 'Missing API configuration' };
     }
@@ -266,13 +267,26 @@ class ProviderServiceClass {
    * Récupère la configuration API pour un provider
    */
   private async getProviderConfig(providerName: string): Promise<{ apiKey?: string; baseUrl?: string }> {
+    // Ollama uses settings (not profiles) with a default localhost URL
+    if (providerName === 'ollama') {
+      let settings: Record<string, any> = {};
+      try {
+        const { useSettingsStore } = await import('@/stores/settings-store');
+        settings = useSettingsStore.getState().settings as Record<string, any>;
+      } catch {
+        // Store not available in some contexts
+      }
+      const baseUrl = (settings?.globalOllamaApiUrl as string) || 'http://localhost:11434';
+      return { baseUrl };
+    }
+
     const profiles = this.getCurrentProfiles();
     const { detectProvider } = await import('@shared/utils/provider-detection');
-    
+
     console.log(`[ProviderService] Testing ${providerName}, available profiles:`, profiles.length);
-    
+
     const profile = this.findProviderProfile(profiles, providerName, detectProvider);
-    
+
     if (profile) {
       console.log(`[ProviderService] Found matching profile for ${providerName}:`, { name: profile.name, baseUrl: profile.baseUrl });
       return { apiKey: profile.apiKey, baseUrl: profile.baseUrl };

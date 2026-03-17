@@ -80,6 +80,11 @@ export async function getStaticProviders(profiles: APIProfile[] = [], settings?:
 
     if (p.name === 'copilot') {
       status[p.name] = true;
+    } else if (p.name === 'ollama') {
+      // Ollama is local with a default URL (localhost:11434) — always available
+      // Show as configured if a custom URL is explicitly set, but default to true
+      const hasGlobalUrl = !!(settings?.globalOllamaApiUrl && String(settings.globalOllamaApiUrl).trim());
+      status[p.name] = hasProfile || hasGlobalUrl || true;
     } else if (p.name === 'windsurf') {
       // Windsurf: check both API profiles and global settings key
       const hasGlobalKey = !!(settings?.globalWindsurfApiKey && String(settings.globalWindsurfApiKey).trim());
@@ -96,7 +101,7 @@ export async function getStaticProviders(profiles: APIProfile[] = [], settings?:
         'grok': 'globalGrokApiKey',
         'cursor': 'globalCursorApiKey',
         'aws': 'globalAwsAccessKey',
-        'ollama': 'globalOllamaUrl',
+        'ollama': 'globalOllamaApiUrl',
       };
       const globalSettingsKey = globalKeyMap[p.name];
       const hasGlobalKey = !!(globalSettingsKey && settings?.[globalSettingsKey] && String(settings[globalSettingsKey]).trim());
