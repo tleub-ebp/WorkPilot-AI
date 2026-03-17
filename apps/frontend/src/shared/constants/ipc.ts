@@ -697,4 +697,19 @@ export const IPC_CHANNELS = {
   SELF_HEALING_INCIDENT_DETECTED: 'selfHealing:incidentDetected',
   SELF_HEALING_OPERATION_PROGRESS: 'selfHealing:operationProgress',
   SELF_HEALING_OPERATION_COMPLETE: 'selfHealing:operationComplete',
+
+  // Browser Agent
+  BROWSER_AGENT_GET_DASHBOARD: 'browserAgent:getDashboard',
+  BROWSER_AGENT_NAVIGATE: 'browserAgent:navigate',
+  BROWSER_AGENT_CAPTURE_SCREENSHOT: 'browserAgent:captureScreenshot',
+  BROWSER_AGENT_GET_SCREENSHOT_IMAGE: 'browserAgent:getScreenshotImage',
+  BROWSER_AGENT_SET_BASELINE: 'browserAgent:setBaseline',
+  BROWSER_AGENT_LIST_BASELINES: 'browserAgent:listBaselines',
+  BROWSER_AGENT_COMPARE: 'browserAgent:compare',
+  BROWSER_AGENT_DELETE_BASELINE: 'browserAgent:deleteBaseline',
+  BROWSER_AGENT_RUN_TESTS: 'browserAgent:runTests',
+  // Browser Agent events (main -> renderer)
+  BROWSER_AGENT_PROGRESS: 'browserAgent:progress',
+  BROWSER_AGENT_TEST_COMPLETE: 'browserAgent:testComplete',
+  BROWSER_AGENT_SCREENSHOT_READY: 'browserAgent:screenshotReady',
 } as const;

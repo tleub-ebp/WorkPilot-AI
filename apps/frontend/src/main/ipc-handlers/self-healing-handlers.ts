@@ -6,7 +6,7 @@
  */
 
 import { ipcMain, type BrowserWindow } from 'electron';
-import { IPC_CHANNELS } from '@shared/constants/ipc';
+import { IPC_CHANNELS } from '../../shared/constants/ipc';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 

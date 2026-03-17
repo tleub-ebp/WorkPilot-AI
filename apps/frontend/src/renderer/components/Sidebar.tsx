@@ -50,6 +50,7 @@ import {
   RotateCcw,
   Building2,
   HeartPulse,
+  Globe,
 } from 'lucide-react';
 
 // UI
@@ -145,7 +146,7 @@ import { DesignToCodeDialog } from './design-to-code/DesignToCodeDialog';
 // Types
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace' | 'design-to-code' | 'mission-control' | 'agent-replay' | 'pixel-office' | 'self-healing';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace' | 'design-to-code' | 'mission-control' | 'agent-replay' | 'pixel-office' | 'self-healing' | 'browser-agent';
 
 interface SidebarProps {
   readonly onSettingsClick: () => void;
@@ -214,6 +215,7 @@ const navGroups: NavGroup[] = [
       { id: 'app-emulator', labelKey: 'navigation:items.appEmulator', icon: Monitor, shortcut: 'E' },
       { id: 'learning-loop', labelKey: 'navigation:items.learningLoop', icon: Brain, shortcut: 'L' },
       { id: 'design-to-code', labelKey: 'navigation:items.designToCode', icon: ImageIcon, shortcut: 'Y' },
+      { id: 'browser-agent', labelKey: 'navigation:items.browserAgent', icon: Globe, shortcut: 'B' },
     ],
     defaultExpanded: false
   },

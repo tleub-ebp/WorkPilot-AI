@@ -49,9 +49,10 @@
     "mcpMarketplace": "Marketplace MCP",
     "multiRepoOrchestration": "Multi-Repo",
     "missionControl": "Contrôle de Mission",
-    "pixelOffice": "Pixel Office",
-    "agentReplay": "Replay Agent",
-    "selfHealing": "Self-Healing"
+    "pixelOffice": "Bureau Pixel",
+    "agentReplay": "Agent de Replay",
+    "selfHealing": "Auto-Guérison",
+    "browserAgent": "Agent Navigateur"
   },
   "actions": {
     "settings": "Paramètres",

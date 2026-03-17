@@ -1074,7 +1074,7 @@ Mode collaboratif temps réel où l'IA code en parallèle du développeur sur le
 - **Pourquoi c'est banger :** Le vrai pair programming avec une IA. Pas du copilot inline, du vrai travail parallèle coordonné.
 
 <details>
-<summary>### 10. MCP Marketplace — L'écosystème d'intégrations universel ✅ Implémenté</summary>
+<summary>### 11. MCP Marketplace — L'écosystème d'intégrations universel ✅ Implémenté</summary>
 
 **Le "App Store" des intégrations MCP pour WorkPilot.** Connexion plug-and-play avec tous les outils de l'écosystème dev.
 
@@ -1340,7 +1340,7 @@ python run.py --cost-budget  # Voir le budget actuel
 ## 💪 Tier A — Strong Impact (Features attendues par les power users)
 
 <details>
-<summary>### 12. Build Analytics Dashboard ✅ Implémenté</summary>
+<summary>### 13. Build Analytics Dashboard ✅ Implémenté</summary>
 
 Métriques complètes sur les agents : taux de succès QA, coût tokens par phase, patterns d'échec, évolution dans le temps.
 
@@ -1434,7 +1434,7 @@ Les données sont stockées dans une base SQLite locale (`analytics.db`) et acce
 </details>
 
 <details>
-<summary>### 13. Test Generation Agent ✅ Implémenté</summary>
+<summary>### 14. Test Generation Agent ✅ Implémenté</summary>
 
 Agent IA spécialisé dans la génération automatique de tests et l'analyse de couverture de code.
 
@@ -1537,7 +1537,7 @@ npm test -- --run src/renderer/stores/__tests__/test-generation-store.test.ts
 </details>
 
 <details>
-<summary>### 14. Dependency Sentinel ✅ Implémenté</summary>
+<summary>### 15. Dependency Sentinel ✅ Implémenté</summary>
 
 Surveillance proactive 24/7 des dépendances : CVE, mises à jour breaking, licences incompatibles, avec PR automatique.
 
@@ -1549,7 +1549,7 @@ Surveillance proactive 24/7 des dépendances : CVE, mises à jour breaking, lice
 </details>
 
 <details>
-<summary>### 15. AI Prompt Optimizer ✅ Implémenté</summary>
+<summary>### 16. AI Prompt Optimizer ✅ Implémenté</summary>
 
 Amélioration automatique des prompts utilisateurs pour garantir les meilleurs résultats possibles des agents IA.
 
@@ -1645,7 +1645,7 @@ npm test -- --run src/renderer/stores/__tests__/prompt-optimizer-store.test.ts
 </details>
 
 <details>
-<summary>### 16. Conflict Predictor ✅ Implémenté</summary>
+<summary>### 17. Conflict Predictor ✅ Implémenté</summary>
 
 Détection proactive des conflits potentiels entre branches/worktrees actifs avant qu'ils ne surviennent.
 
@@ -1772,7 +1772,7 @@ Le Conflict Predictor utilise :
 </details>
 
 <details>
-<summary>### 17. AI Code Review Agent ✅ Implémenté</summary>
+<summary>### 18. AI Code Review Agent ✅ Implémenté</summary>
 
 Review de PR/MR intelligente avec contexte profond du codebase — comme un senior dev qui connaît tout le projet.
 
@@ -1931,7 +1931,7 @@ npm test -- --run src/renderer/stores/__tests__/code-review-store.test.ts
 </details>
 
 <details>
-<summary>### 18. Architecture Enforcement Agent ✅ Implémenté</summary>
+<summary>### 19. Architecture Enforcement Agent ✅ Implémenté</summary>
 
 Gardien automatique de l'architecture — détecte et bloque les violations architecturales avant qu'elles n'atteignent le codebase.
 
@@ -1946,7 +1946,8 @@ Gardien automatique de l'architecture — détecte et bloque les violations arch
 
 ## 🔧 Tier B — Solid Value (Améliorations significatives du quotidien)
 
-### 20. Built-in Browser Agent — Test visuel sans quitter WorkPilot
+<details>
+<summary>### 20. Built-in Browser Agent — Test visuel sans quitter WorkPilot ✅ Implémenté</summary>
 
 **L'arme secrète d'Antigravity, mais intégrée dans WorkPilot.** Un navigateur intégré que les agents peuvent utiliser pour tester, scraper et valider visuellement.
 
@@ -1957,12 +1958,94 @@ Gardien automatique de l'architecture — détecte et bloque les violations arch
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Différenciateur fort. Les bugs visuels sont détectés avant le merge. L'App Emulator existant est la fondation parfaite.
 
-- **Exploite :** Terminal system, context system, spec pipeline
-- **Effort :** Élevé
-- **Pourquoi c'est banger :** Shift-left ultime. Les problèmes sont détectés à l'écriture, pas à la review.
+#### 🌐 Comment utiliser le Browser Agent
+
+Le Browser Agent est maintenant intégré dans WorkPilot AI ! Naviguez, capturez, comparez et testez visuellement vos applications directement depuis l'interface.
+
+##### 🚀 Accès au Browser Agent
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"Browser Agent"** dans le groupe "AI Tools" (icône 🌐)
+2. **Dashboard** : Vue avec statistiques (tests, taux de succès, captures, régressions) et 3 onglets
+
+##### 🖥️ Onglet Browser
+
+Navigation et capture de screenshots :
+
+- **Barre d'URL** : Entrez l'URL de votre application (localhost, staging, etc.)
+- **Navigation** : Cliquez "Go" pour lancer le navigateur headless Chromium
+- **Capture** : Nommez votre screenshot et cliquez "Capture"
+- **Preview** : Visualisation du screenshot capturé directement dans l'interface
+- **Intégration App Emulator** : Si l'App Emulator est actif, l'URL est pré-remplie
+
+##### 🔍 Onglet Visual Regression
+
+Gestion des baselines et comparaison visuelle :
+
+- **Baselines** : Définissez un screenshot comme référence visuelle
+- **Comparaison** : Comparez le screenshot actuel vs la baseline avec diff pixel-par-pixel
+- **Seuil configurable** : Par défaut 95% de correspondance (ajustable)
+- **Diff overlay** : Les pixels différents sont surlignés en rouge
+- **Score** : Pourcentage de correspondance affiché (vert >95%, jaune >85%, rouge <85%)
+
+##### 🧪 Onglet Test Runner
+
+Exécution de tests E2E :
+
+- **Découverte** : Détecte automatiquement les tests Playwright et pytest dans le projet
+- **Exécution** : Lance tous les tests ou un sous-ensemble
+- **Résultats** : Statut par test (passed/failed/skipped) avec durée et détails d'erreur
+- **Résumé** : Barre de résumé avec compteurs passed/failed/skipped
+
+##### 📊 CLI
+
+```bash
+# Dashboard
+python run.py --browser-agent
+
+# Capture screenshot
+python run.py --browser-agent screenshot --browser-url http://localhost:3000 --browser-name homepage
+
+# Comparer avec la baseline
+python run.py --browser-agent compare --browser-name homepage
+
+# Lancer les tests E2E
+python run.py --browser-agent tests
+
+# Runner standalone
+python runners/browser_agent_runner.py --project /path screenshot --url http://localhost:3000 --name homepage
+python runners/browser_agent_runner.py --project /path compare --name homepage
+python runners/browser_agent_runner.py --project /path tests
+python runners/browser_agent_runner.py --project /path dashboard
+```
+
+##### 🏗️ Architecture technique
+
+**Backend** (`apps/backend/browser_agent/`) :
+- `browser_controller.py` — Wrapper Playwright async : navigation, screenshots, interactions, console errors
+- `visual_regression.py` — Moteur de comparaison pixel (Pillow) : baselines, diffs, seuils configurables
+- `test_executor.py` — Découverte et exécution de tests E2E (Playwright/pytest)
+- `models.py` — Modèles de données : ComparisonResult, BaselineInfo, TestRunResult, etc.
+
+**Runner** (`apps/backend/runners/browser_agent_runner.py`) — CLI avec sous-commandes : screenshot, compare, baseline, tests, dashboard
+
+**Frontend** (`apps/frontend/src/renderer/components/browser-agent/`) :
+- `BrowserAgentDashboard.tsx` — Dashboard principal avec header stats et 3 onglets
+- `BrowserTab.tsx` — Barre URL, navigation, capture de screenshots, preview
+- `VisualRegressionTab.tsx` — Gestion baselines, comparaison côte-à-côte, score de correspondance
+- `TestRunnerTab.tsx` — Exécution tests, liste résultats, détails d'erreurs
+
+**Store** (`browser-agent-store.ts`) — Zustand store avec état navigateur, screenshots, baselines, comparaisons, résultats de tests
+
+##### 📁 Stockage
+
+- Screenshots : `.auto-claude/browser-agent/screenshots/`
+- Baselines : `.auto-claude/browser-agent/baselines/`
+- Diff images : `.auto-claude/browser-agent/diffs/`
+
+</details>
 
 <details>
-<summary>### 23. App Emulator ✅ Implémenté</summary>
+<summary>### 21. App Emulator ✅ Implémenté</summary>
 
 Lancement et émulation de l'application directement depuis l'interface Kanban pour visualiser le rendu des tâches complétées.
 
@@ -2108,7 +2191,7 @@ Pour tester l'App Emulator :
 </details>
 
 <details>
-<summary>### 23. Auto-Refactor Agent ✅ Implémenté</summary>
+<summary>### 22. Auto-Refactor Agent ✅ Implémenté</summary>
 
 Détection continue de code smells, dette technique et patterns obsolètes avec refactoring autonome.
 
@@ -2284,7 +2367,7 @@ L'agent fournit des métriques détaillées :
 
 </details>
 
-### 25. Pipeline Generator
+### 23. Pipeline Generator
 
 Génération automatique de CI/CD complète adaptée au projet.
 - **Exploite :** Project analysis, context system
@@ -2292,7 +2375,7 @@ Génération automatique de CI/CD complète adaptée au projet.
 - **Pourquoi c'est banger :** Setup CI/CD en 30 secondes au lieu de 2 heures.
 
 <details>
-<summary>### 25. Smart Estimation ✅ Implémenté</summary>
+<summary>### 24. Smart Estimation ✅ Implémenté</summary>
 
 Scores de complexité basés sur l'historique réel des builds passés.
 
@@ -2431,7 +2514,7 @@ La Smart Estimation suit le flux suivant :
 </details>
 
 <details>
-<summary>### 26. Natural Language Git ✅ Implémenté</summary>
+<summary>### 25. Natural Language Git ✅ Implémenté</summary>
 
 Manipuler git en langage naturel directement depuis l'interface.
 
@@ -2450,7 +2533,7 @@ Manipuler git en langage naturel directement depuis l'interface.
 </details>
 
 <details>
-<summary>### 27. Context-Aware Snippets ✅ Implémenté</summary>
+<summary>### 26. Context-Aware Snippets ✅ Implémenté</summary>
 
 Snippets intelligents qui s'adaptent au style et aux conventions du projet.
 
@@ -2592,17 +2675,16 @@ npm test -- --run src/renderer/components/context-aware-snippets/__tests__/Conte
 
 </details>
 
-### 29. Spec Templates Library
+### 27. Spec Templates Library
 
 Templates de spec réutilisables par domaine pour accélérer la création de tâches récurrentes.
 
-### 30. Context-Aware Snippets 
 - **Principe :** Bibliothèque de templates de spec pour les patterns courants : CRUD API, authentification, dashboard, formulaire, migration DB, refactoring, intégration tierce. Chaque template pré-remplit les sections du spec (requirements, fichiers impactés, critères QA) et s'adapte au contexte du projet. Les utilisateurs peuvent créer et partager leurs propres templates.
 - **Exploite :** Spec pipeline, context system, project analysis
 - **Effort :** Faible
 - **Pourquoi c'est banger :** Quick win énorme. Les specs récurrentes passent de 5 minutes à 30 secondes. Réduit la friction d'adoption.
 
-### 31. Dependency Graph Intelligence
+### 28. Dependency Graph Intelligence
 
 Analyse des dépendances inter-fichiers et inter-modules pour un contexte agent drastiquement amélioré.
 
@@ -2611,7 +2693,7 @@ Analyse des dépendances inter-fichiers et inter-modules pour un contexte agent 
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Le contexte agent passe de "recherche par mots-clés" à "compréhension structurelle". Les agents produisent du code qui s'intègre mieux car ils voient les relations réelles.
 
-### 32. QA Security Scanner
+### 29. QA Security Scanner
 
 Intégration de scans de sécurité SAST/DAST dans le pipeline QA pour chaque build.
 
@@ -2620,7 +2702,7 @@ Intégration de scans de sécurité SAST/DAST dans le pipeline QA pour chaque bu
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La sécurité n'est plus une afterthought. Chaque build est scanné automatiquement. Argument imparable pour les clients enterprise.
 
-### 33. Agent Decision Logger
+### 30. Agent Decision Logger
 
 Journal structuré léger des décisions de chaque agent — version simplifiée d'Agent Replay.
 
@@ -2633,7 +2715,7 @@ Journal structuré léger des décisions de chaque agent — version simplifiée
 
 ## 💡 Tier C — Nice to Have (Vision long terme)
 
-### 34. Team Knowledge Sync
+### 31. Team Knowledge Sync
 
 Memory System partagé entre tous les membres de l'équipe.
 
@@ -2645,7 +2727,7 @@ Memory System partagé entre tous les membres de l'équipe.
 <details>
 <summary>
 
-### 35. Environment Cloner ✅ Implémenté
+### 32. Environment Cloner ✅ Implémenté
 
 </summary>
 
@@ -2706,7 +2788,7 @@ Les fichiers sont créés dans `.auto-claude/environment/` :
 
 </details>
 
-### 36. Architecture Visualizer
+### 33. Architecture Visualizer
 
 Génération automatique de diagrammes d'architecture depuis le code.
 
@@ -2715,7 +2797,7 @@ Génération automatique de diagrammes d'architecture depuis le code.
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La doc d'archi se génère et se maintient toute seule.
 
-### 37. Code Migration Agent
+### 34. Code Migration Agent
 
 Migration automatique entre frameworks, versions majeures ou langages.
 
@@ -2724,7 +2806,7 @@ Migration automatique entre frameworks, versions majeures ou langages.
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Les migrations sont le cauchemar de tout dev. L'automatiser est un selling point énorme.
 
-### 38. Performance Profiler Agent
+### 35. Performance Profiler Agent
 
 Agent qui profile le code, identifie les bottlenecks et propose des optimisations.
 
@@ -2733,7 +2815,7 @@ Agent qui profile le code, identifie les bottlenecks et propose des optimisation
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** L'app s'optimise toute seule. Plus besoin d'experts perf.
 
-### 39. Documentation Agent
+### 36. Documentation Agent
 
 Génération et maintenance automatique de la documentation technique.
 
@@ -2742,7 +2824,7 @@ Génération et maintenance automatique de la documentation technique.
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La doc n'est plus jamais outdated.
 
-### 40. Plugin Marketplace
+### 37. Plugin Marketplace
 
 Écosystème de plugins communautaires pour étendre WorkPilot.
 
@@ -2752,7 +2834,7 @@ Génération et maintenance automatique de la documentation technique.
 - **Pourquoi c'est banger :** Effet réseau. La communauté étend le produit. Verrouille les utilisateurs dans l'écosystème.
 
 <details>
-<summary>### 41. Voice Control ✅ Implémenté</summary>
+<summary>### 38. Voice Control ✅ Implémenté</summary>
 
 Contrôler WorkPilot à la voix : décrire des tâches, naviguer dans l'UI, commander des builds.
 
@@ -2908,7 +2990,7 @@ Le Voice Control supporte plusieurs langues :
 - **Cache** : Mémorisation des commandes fréquentes pour accélération
 
 <details>
-<summary>### 40. AI Code Playground ✅ Implémenté</summary>
+<summary>### 39. AI Code Playground ✅ Implémenté</summary>
 
 Sandbox interactive pour prototyper rapidement des idées avec l'IA avant de les intégrer au projet.
 
@@ -3083,7 +3165,7 @@ Le Code Playground supporte :
 - **Anglais** : Support natif complet
 - **Code** : Support universel des langages de programmation
 
-### 43. Cross-Language Translation
+### 40. Cross-Language Translation
 
 Traduire du code entre langages tout en préservant la logique et les patterns idiomatiques.
 
@@ -3092,7 +3174,7 @@ Traduire du code entre langages tout en préservant la logique et les patterns i
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Les migrations de stack deviennent triviales.
 
-### 44. Spec Approval Workflow
+### 41. Spec Approval Workflow
 
 Circuit de validation collaborative des specs avant implémentation — peer review pour les specs.
 
@@ -3101,7 +3183,7 @@ Circuit de validation collaborative des specs avant implémentation — peer rev
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Gouvernance légère mais efficace. Les specs critiques ne passent plus sans review humaine. Essential pour les équipes.
 
-### 45. Memory Lifecycle Manager
+### 42. Memory Lifecycle Manager
 
 Gestion intelligente du cycle de vie de la mémoire Graphiti — pruning automatique, politiques de rétention, contrôle de la fraîcheur.
 
@@ -3110,7 +3192,7 @@ Gestion intelligente du cycle de vie de la mémoire Graphiti — pruning automat
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Sans pruning, la mémoire devient bruitée et dégrade la qualité des agents. Un système de rétention intelligent garde la mémoire utile et pertinente.
 
-### 46. CI/CD Deployment Triggers
+### 43. CI/CD Deployment Triggers
 
 Déclenchement automatique de pipelines CI/CD après la création d'une PR par un agent.
 
@@ -3119,7 +3201,7 @@ Déclenchement automatique de pipelines CI/CD après la création d'une PR par u
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La boucle spec → code → test → deploy est complète. Du "j'ai une idée" à "c'est en preview" sans intervention.
 
-### 47. Intelligent Context Caching ✅
+### 44. Intelligent Context Caching ✅
 
 <details>
 <summary>

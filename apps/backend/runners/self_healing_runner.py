@@ -50,7 +50,7 @@ class SelfHealingRunner:
             passed, output, failing = await orchestrator.cicd.run_tests()
             if passed:
                 print("✅ All tests passing. No healing needed.")
-                return True
+                return True  # This is appropriate - no healing needed when tests pass
             test_output = output
             print(f"❌ {len(failing)} test(s) failing. Starting healing pipeline...")
 
@@ -67,7 +67,7 @@ class SelfHealingRunner:
                 print(f"   PR: {operation.incident.fix_pr_url}")
             return True
         else:
-            print(f"❌ Healing failed. Incident escalated for manual review.")
+            print("❌ Healing failed. Incident escalated for manual review.")
             return False
 
     async def run_production(
@@ -103,7 +103,7 @@ class SelfHealingRunner:
             print(f"✅ Incident resolved! Fix in branch: {operation.incident.fix_branch}")
             return True
         else:
-            print(f"❌ Incident requires manual review.")
+            print("❌ Incident requires manual review.")
             return False
 
     async def run_proactive(self, risk_threshold: float = 40.0, top_n: int = 10) -> bool:
@@ -135,12 +135,23 @@ class SelfHealingRunner:
         summary = orchestrator.proactive.get_summary()
         print(f"\n📈 Average risk score: {summary['avg_risk']}")
         print(f"   Maximum risk score: {summary['max_risk']}")
-        return True
 
-    async def run_dashboard(self) -> bool:
+        # Return False if high-risk files were found that need attention
+        max_risk = summary.get('max_risk', 0)
+        return max_risk <= risk_threshold
+
+    def run_dashboard(self, json_output: bool = False) -> bool:
         """Show self-healing dashboard data."""
         orchestrator = self._get_orchestrator()
         data = orchestrator.get_dashboard_data()
+
+        if json_output:
+            try:
+                print(json.dumps(data, indent=2))
+                return bool(data)  # Return based on data availability
+            except (TypeError, ValueError) as e:
+                print(f"Error serializing dashboard data: {e}")
+                return False
 
         stats = data["stats"]
         print("🩺 Self-Healing Dashboard")
@@ -169,7 +180,7 @@ class SelfHealingRunner:
             for report in fragility[:5]:
                 print(f"  ⚡ {report['file_path']} — risk {report['risk_score']}/100")
 
-        return True
+        return bool(data)  # Return False if no data available
 
 
 def main():
@@ -213,7 +224,8 @@ def main():
     proactive_parser.add_argument("--top-n", type=int, default=10, help="Show top N files")
 
     # Dashboard subcommand
-    subparsers.add_parser("dashboard", help="Show self-healing dashboard")
+    dashboard_parser = subparsers.add_parser("dashboard", help="Show self-healing dashboard")
+    dashboard_parser.add_argument("--json", action="store_true", help="Output dashboard data as JSON")
 
     args = parser.parse_args()
 
@@ -247,7 +259,7 @@ def main():
             top_n=args.top_n,
         ))
     elif args.command == "dashboard":
-        success = asyncio.run(runner.run_dashboard())
+        success = runner.run_dashboard(json_output=args.json)
     else:
         parser.print_help()
         return

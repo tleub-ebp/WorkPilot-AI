@@ -59,6 +59,7 @@ const MissionControlDashboard = lazy(() => import('./components/mission-control/
 const AgentReplayDashboard = lazy(() => import('./components/agent-replay').then(m => ({ default: m.AgentReplayDashboard })));
 const PixelOffice = lazy(() => import('./components/pixel-office').then(m => ({ default: m.PixelOffice })));
 const SelfHealingDashboard = lazy(() => import('./components/self-healing').then(m => ({ default: m.SelfHealingDashboard })));
+const BrowserAgentDashboard = lazy(() => import('./components/browser-agent').then(m => ({ default: m.BrowserAgentDashboard })));
 import { VersionWarningModal } from './components/VersionWarningModal';
 import { OnboardingWizard } from './components/onboarding';
 import { GitHubSetupModal } from './components/GitHubSetupModal';
@@ -1077,6 +1078,9 @@ export function App() {
                     )}
                     {activeView === 'self-healing' && (activeProjectId || selectedProjectId) && (
                         <SelfHealingDashboard />
+                    )}
+                    {activeView === 'browser-agent' && (activeProjectId || selectedProjectId) && (
+                        <BrowserAgentDashboard />
                     )}
                     {activeView === 'kanban' && !selectedProject && (
                               <>

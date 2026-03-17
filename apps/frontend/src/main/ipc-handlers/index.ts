@@ -53,6 +53,7 @@ import { registerLearningLoopHandlers } from './learning-loop-handlers';
 import { registerMcpMarketplaceHandlers } from './mcp-marketplace-handlers';
 import { registerMultiRepoHandlers } from './multi-repo-handlers';
 import { registerSelfHealingHandlers } from './self-healing-handlers';
+import { registerBrowserAgentHandlers } from './browser-agent-handlers';
 
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from './project-handlers';
@@ -96,6 +97,7 @@ export { registerLearningLoopHandlers } from './learning-loop-handlers';
 export { registerMcpMarketplaceHandlers } from './mcp-marketplace-handlers';
 export { registerMultiRepoHandlers } from './multi-repo-handlers';
 export { registerSelfHealingHandlers } from './self-healing-handlers';
+export { registerBrowserAgentHandlers } from './browser-agent-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -236,6 +238,9 @@ export function setupIpcHandlers(
 
   // Self-Healing Codebase + Incident Responder handlers
   registerSelfHealingHandlers(getMainWindow);
+
+  // Browser Agent handlers (built-in browser for testing and visual validation)
+  registerBrowserAgentHandlers(getMainWindow);
 
   console.warn('[IPC] All handler modules registered successfully');
 }

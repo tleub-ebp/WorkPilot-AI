@@ -51,7 +51,8 @@
     "missionControl": "Mission Control",
     "pixelOffice": "Pixel Office",
     "agentReplay": "Agent Replay",
-    "selfHealing": "Self-Healing"
+    "selfHealing": "Self-Healing",
+    "browserAgent": "Browser Agent"
   },
   "actions": {
     "settings": "Settings",
