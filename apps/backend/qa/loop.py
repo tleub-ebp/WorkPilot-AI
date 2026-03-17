@@ -30,6 +30,8 @@ from task_logger import (
     get_task_logger,
 )
 
+from security.qa_scanner import run_qa_security_scan
+
 from .criteria import (
     get_qa_iteration_count,
     get_qa_signoff_status,
@@ -205,6 +207,37 @@ async def run_qa_validation_loop(
             debug("qa_loop", "Removed processed QA_FIX_REQUEST.md")
         except OSError:
             pass  # Ignore if file removal fails
+
+    # ── Security Scan (Feature 29: QA Security Scanner) ──────────────────────
+    # Run before the QA review loop so findings are already in qa_report.md
+    # when the QA reviewer agent reads it.
+    print("\n🔐 Running security scan...")
+    try:
+        sec_passed, sec_section, sec_issues = await run_qa_security_scan(
+            project_dir, spec_dir
+        )
+        if not sec_passed:
+            critical_count = sum(1 for i in sec_issues if i.get("type") == "critical")
+            high_count = sum(1 for i in sec_issues if i.get("type") == "high")
+            debug_warning(
+                "qa_loop",
+                "Security scan found vulnerabilities",
+                critical=critical_count,
+                high=high_count,
+            )
+            print(
+                f"   ⚠️  Security issues found: {critical_count} critical, {high_count} high"
+            )
+            task_event_emitter.emit(
+                "SECURITY_SCAN_ISSUES",
+                {"critical": critical_count, "high": high_count, "issues": sec_issues[:10]},
+            )
+        else:
+            print("   ✅ Security scan passed — no critical/high issues")
+    except Exception as _sec_err:
+        debug_warning("qa_loop", f"Security scan skipped (non-blocking): {_sec_err}")
+        print(f"   ℹ️  Security scan skipped: {_sec_err}")
+    # ── End Security Scan ─────────────────────────────────────────────────────
 
     # Check for no-test projects
     if is_no_test_project(spec_dir, project_dir):

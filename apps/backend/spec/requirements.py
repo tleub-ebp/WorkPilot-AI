@@ -167,6 +167,54 @@ def create_requirements_from_task(task_description: str) -> dict:
     }
 
 
+def apply_template_to_requirements(
+    requirements: dict,
+    template_id: str,
+    project_dir: Path,
+    substitutions: Optional[dict] = None,
+) -> dict:
+    """
+    Apply a spec template to a requirements dict, enriching it with
+    pre-filled content, keywords, and QA criteria hints.
+
+    Args:
+        requirements: Existing requirements dict to enrich
+        template_id: ID of the template to apply (e.g. "crud-api")
+        project_dir: Project root (for loading custom templates)
+        substitutions: Optional {placeholder: value} replacements
+
+    Returns:
+        Enriched requirements dict (original is not mutated)
+    """
+    from spec.templates.library import TemplateLibrary
+
+    library = TemplateLibrary(project_dir)
+    patch = library.apply_template(template_id, substitutions)
+    if not patch:
+        return requirements
+
+    merged = dict(requirements)
+    # Only overwrite task_description if it's the default placeholder
+    if merged.get("task_description") in (None, "", "No task description provided"):
+        if "task_description" in patch:
+            merged["task_description"] = patch["task_description"]
+
+    # Merge non-overwriting fields
+    for key in ("workflow_type", "additional_context", "template_id",
+                "template_name", "template_keywords", "qa_criteria_hints"):
+        if key in patch and key not in merged:
+            merged[key] = patch[key]
+
+    # Merge services_involved (additive)
+    if "services_involved" in patch:
+        existing = merged.get("services_involved") or []
+        new_services = [s for s in patch["services_involved"] if s not in existing]
+        if new_services:
+            merged["services_involved"] = existing + new_services
+
+    return merged
+
+
 def save_requirements(spec_dir: Path, requirements: dict) -> Path:
     """Save requirements to file."""
     requirements_file = spec_dir / "requirements.json"

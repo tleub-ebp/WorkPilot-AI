@@ -11,6 +11,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from .categorizer import FileCategorizer
+from .dependency_graph import DependencyAnalyzer, DependencyGraphCache
 from .graphiti_integration import fetch_graph_hints, is_graphiti_enabled
 from .keyword_extractor import KeywordExtractor
 from .models import FileMatch, TaskContext
@@ -32,6 +33,7 @@ class ContextBuilder:
         self.keyword_extractor = KeywordExtractor()
         self.categorizer = FileCategorizer()
         self.pattern_discoverer = PatternDiscoverer(self.project_dir)
+        self._dep_cache = DependencyGraphCache(self.project_dir)
 
     def _load_project_index(self) -> dict:
         """Load project index from file or create new one (.auto-claude is the installed instance)."""
@@ -127,6 +129,11 @@ class ContextBuilder:
                 # Graphiti is optional - fail gracefully
                 graph_hints = []
 
+        # Enrich context with structural dependency graph (Feature 28)
+        dependency_hints = self._build_dependency_hints(
+            [f.path if isinstance(f, FileMatch) else f.get("path", "") for f in files_to_modify]
+        )
+
         return TaskContext(
             task_description=task,
             scoped_services=services,
@@ -139,6 +146,7 @@ class ContextBuilder:
             patterns_discovered=patterns,
             service_contexts=service_contexts,
             graph_hints=graph_hints,
+            dependency_hints=dependency_hints,
         )
 
     async def build_context_async(
@@ -208,6 +216,11 @@ class ContextBuilder:
         if include_graph_hints:
             graph_hints = await fetch_graph_hints(task, str(self.project_dir))
 
+        # Enrich context with structural dependency graph (Feature 28)
+        dependency_hints = self._build_dependency_hints(
+            [f.path if isinstance(f, FileMatch) else f.get("path", "") for f in files_to_modify]
+        )
+
         return TaskContext(
             task_description=task,
             scoped_services=services,
@@ -220,7 +233,51 @@ class ContextBuilder:
             patterns_discovered=patterns,
             service_contexts=service_contexts,
             graph_hints=graph_hints,
+            dependency_hints=dependency_hints,
         )
+
+    def _build_dependency_hints(self, file_paths: list[str]) -> dict:
+        """
+        Build structural dependency hints for the given files using the graph.
+
+        Returns a dict with:
+        - related_files: files structurally related to the target files
+        - circular_dependencies: any cycles involving target files
+        - high_coupling: coupling warnings for target files
+        """
+        try:
+            graph = self._dep_cache.get_or_build()
+            if not graph.nodes:
+                return {}
+            analyzer = DependencyAnalyzer(graph)
+            valid_paths = [p for p in file_paths if p and p in graph.nodes]
+            if not valid_paths:
+                return {}
+
+            related = analyzer.get_related_files(valid_paths, depth=2)
+
+            # Only report cycles that involve at least one of our target files
+            all_cycles = analyzer.detect_cycles()
+            relevant_cycles = [
+                c.cycle for c in all_cycles
+                if any(p in c.cycle for p in valid_paths)
+            ]
+
+            # Coupling warnings for target files
+            coupling = [
+                e for e in analyzer.detect_high_coupling()
+                if e["path"] in valid_paths
+            ]
+
+            return {
+                "related_files": related,
+                "circular_dependencies": relevant_cycles[:5],
+                "high_coupling_warnings": coupling,
+                "graph_nodes": graph.file_count,
+            }
+        except Exception:
+            # Dependency graph is best-effort — never block context building
+            return {}
 
     def _get_service_context(
         self,
