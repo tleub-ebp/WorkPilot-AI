@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Swords,
@@ -50,6 +50,26 @@ const LABEL_COLORS: Record<ArenaLabel, string> = {
   D: 'bg-orange-500/20 text-orange-400 border-orange-500/40',
 };
 
+const DEMO_PROFILES = [
+  { id: 'claude-sonnet', name: 'Claude Sonnet 4.6', model: 'claude-sonnet-4-6' },
+  { id: 'claude-haiku', name: 'Claude Haiku 4.5', model: 'claude-haiku-4-5-20251001' },
+  { id: 'gpt-4.1', name: 'GPT-4.1', model: 'gpt-4.1' },
+  { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', model: 'gpt-4.1-mini' },
+];
+
+const CONFIDENCE_COLOR: Record<string, string> = {
+  low: 'text-orange-400 bg-orange-500/10 border-orange-500/30',
+  medium: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30',
+  high: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
+};
+
+const ARENA_TABS = [
+  { id: 'battle' as ArenaTab, icon: Swords, labelKey: 'tabs.battle' },
+  { id: 'history' as ArenaTab, icon: History, labelKey: 'tabs.history' },
+  { id: 'analytics' as ArenaTab, icon: BarChart3, labelKey: 'tabs.analytics' },
+  { id: 'routing' as ArenaTab, icon: Route, labelKey: 'tabs.routing' },
+];
+
 // ─── Tab types ────────────────────────────────────────────────────────────────
 
 type ArenaTab = 'battle' | 'history' | 'analytics' | 'routing';
@@ -82,8 +102,9 @@ function ParticipantCard({
   };
 
   return (
-    <button
-      type="button"
+    <div
+      role={canVote ? 'button' : undefined}
+      tabIndex={canVote ? 0 : undefined}
       className={cn(
         'flex flex-col rounded-xl border transition-all duration-300 text-left',
         isWinner && isRevealed
@@ -93,8 +114,8 @@ function ParticipantCard({
         !canVote && 'cursor-default'
       )}
       onClick={() => canVote && onVote(participant.label)}
-      disabled={!canVote}
-      aria-label={`${t('battle.model')} ${participant.label}. ${isWinner && isRevealed ? t('battle.winner') : ''}`}
+      onKeyDown={(e) => canVote && (e.key === 'Enter' || e.key === ' ') && onVote(participant.label)}
+      aria-label={canVote ? `${t('battle.model')} ${participant.label}. ${isWinner && isRevealed ? t('battle.winner') : ''}` : undefined}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-border">
@@ -162,7 +183,7 @@ function ParticipantCard({
           </Button>
         </div>
       )}
-    </button>
+    </div>
   );
 }
 
@@ -177,17 +198,6 @@ function BattleTab() {
   const [prompt, setPrompt] = useState('');
   const [selectedProfiles, setSelectedProfiles] = useState<string[]>(['profile-1', 'profile-2']);
   const [profiles, setProfiles] = useState<Array<{ id: string; name: string; model: string }>>([]);
-
-  // Cleanup listeners ref
-  const cleanupRefs = useRef<Array<() => void>>([]);
-
-  // Fallback demo profiles used when the API is unavailable or returns no profiles
-  const DEMO_PROFILES = [
-    { id: 'claude-sonnet', name: 'Claude Sonnet 4.6', model: 'claude-sonnet-4-6' },
-    { id: 'claude-haiku', name: 'Claude Haiku 4.5', model: 'claude-haiku-4-5-20251001' },
-    { id: 'gpt-4.1', name: 'GPT-4.1', model: 'gpt-4.1' },
-    { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', model: 'gpt-4.1-mini' },
-  ];
 
   // Load profiles on mount
   useEffect(() => {
@@ -231,8 +241,7 @@ function BattleTab() {
     const c3 = api.onArenaBattleComplete(handleBattleComplete);
     const c4 = api.onArenaBattleError(({ error: err }: { battleId: string; error: string }) => setError(err));
 
-    cleanupRefs.current = [c1, c2, c3, c4];
-    return () => cleanupRefs.current.forEach((c) => c());
+    return () => [c1, c2, c3, c4].forEach((c) => c());
   }, [handleBattleProgress, handleBattleResult, handleBattleComplete, setError]);
 
   const handleStartBattle = useCallback(async () => {
@@ -288,6 +297,7 @@ function BattleTab() {
             <div className="flex flex-wrap gap-2">
               {TASK_TYPES.map((tt) => (
                 <button
+                  type="button"
                   key={tt.value}
                   onClick={() => setTaskType(tt.value)}
                   className={cn(
@@ -523,7 +533,7 @@ function BattleHistoryRow({ battle }: { readonly battle: ArenaBattle }) {
       >
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-base">{TASK_TYPES.find((tt) => tt.value === battle.taskType)?.icon}</span>
-          <span className="text-sm truncate">{battle.prompt.slice(0, 60)}…</span>
+          <span className="text-sm truncate">{battle.prompt.length > 60 ? `${battle.prompt.slice(0, 60)}…` : battle.prompt}</span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {battle.status === 'completed' && winner && (
@@ -671,12 +681,6 @@ function RoutingTab() {
   const recommendations = analytics?.autoRoutingRecommendations ?? {};
   const hasRecommendations = Object.keys(recommendations).length > 0;
 
-  const confidenceColor = {
-    low: 'text-orange-400 bg-orange-500/10 border-orange-500/30',
-    medium: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30',
-    high: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
-  };
-
   return (
     <div className="flex flex-col gap-4">
       {/* Toggle */}
@@ -722,7 +726,7 @@ function RoutingTab() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium">{rec.modelName}</span>
-                  <Badge variant="outline" className={cn('text-xs', confidenceColor[rec.confidence])}>
+                  <Badge variant="outline" className={cn('text-xs', CONFIDENCE_COLOR[rec.confidence])}>
                     {(rec.winRate * 100).toFixed(0)}% · {t(`routing.confidence.${rec.confidence}`)}
                   </Badge>
                 </div>
@@ -755,12 +759,6 @@ export function ArenaDialog() {
   const { isOpen, closeDialog } = useArenaStore();
   const [activeTab, setActiveTab] = useState<ArenaTab>('battle');
 
-  const tabs: { id: ArenaTab; icon: React.ElementType; labelKey: string }[] = [
-    { id: 'battle', icon: Swords, labelKey: 'tabs.battle' },
-    { id: 'history', icon: History, labelKey: 'tabs.history' },
-    { id: 'analytics', icon: BarChart3, labelKey: 'tabs.analytics' },
-    { id: 'routing', icon: Route, labelKey: 'tabs.routing' },
-  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeDialog()}>
@@ -779,7 +777,7 @@ export function ArenaDialog() {
 
         {/* Tab navigation */}
         <div className="flex gap-1 px-5 pt-4 border-b border-border pb-0 shrink-0">
-          {tabs.map(({ id, icon: Icon, labelKey }) => (
+          {ARENA_TABS.map(({ id, icon: Icon, labelKey }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
