@@ -144,8 +144,11 @@ export class CredentialManager extends EventEmitter {
           isActive: true,
           lastValidated: Date.now()
         };
-      } else if (windsurfKey) {
-        // No selectedProvider saved, but globalWindsurfApiKey exists — user configured Windsurf
+      } else if (windsurfKey && !savedProvider) {
+        // No provider explicitly saved AND globalWindsurfApiKey exists — user configured Windsurf.
+        // IMPORTANT: only auto-restore windsurf when savedProvider is null/undefined (first run).
+        // If savedProvider is 'claude'/'anthropic' the user explicitly chose Claude Code, so we
+        // must NOT override with windsurf even though the key exists in settings.
         console.log('[CredentialManager] Restoring windsurf provider from globalWindsurfApiKey');
         this.activeCredential = {
           provider: 'windsurf',
@@ -1339,7 +1342,13 @@ export class CredentialManager extends EventEmitter {
       try {
         const settings = readSettingsFile();
         const windsurfKey = settings?.globalWindsurfApiKey as string | undefined;
-        if (windsurfKey?.trim()) {
+        const explicitProvider = settings?.selectedProvider as string | undefined;
+        // Do NOT inject windsurf if the user explicitly chose Claude Code or Anthropic.
+        // The globalWindsurfApiKey may exist from a previous configuration but should
+        // not override the user's current provider choice.
+        const userChoseClaudeExplicitly =
+          explicitProvider === 'claude' || explicitProvider === 'anthropic';
+        if (windsurfKey?.trim() && !userChoseClaudeExplicitly) {
           env.SELECTED_LLM_PROVIDER = 'windsurf';
           env.WINDSURF_API_KEY = windsurfKey.trim();
           return Object.fromEntries(

@@ -64,6 +64,10 @@ import { registerPipelineGeneratorHandlers, setupPipelineGeneratorEventForwardin
 import { registerTeamSyncHandlers } from './team-sync-handlers';
 import { registerPluginMarketplaceHandlers } from './plugin-marketplace-handlers';
 import { registerArenaHandlers } from './arena-handlers';
+import { registerMemoryLifecycleHandlers, setupMemoryLifecycleEventForwarding } from './memory-lifecycle-handlers';
+import { registerCICDTriggersHandlers, setupCICDTriggersEventForwarding } from './cicd-triggers-handlers';
+import { registerCrossLanguageTranslationHandlers } from './cross-language-translation-handlers';
+import { registerSpecApprovalHandlers } from './spec-approval-handlers';
 
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from './project-handlers';
@@ -118,6 +122,10 @@ export { registerPipelineGeneratorHandlers, setupPipelineGeneratorEventForwardin
 export { registerTeamSyncHandlers } from './team-sync-handlers';
 export { registerPluginMarketplaceHandlers } from './plugin-marketplace-handlers';
 export { registerArenaHandlers } from './arena-handlers';
+export { registerMemoryLifecycleHandlers, setupMemoryLifecycleEventForwarding } from './memory-lifecycle-handlers';
+export { registerCICDTriggersHandlers, setupCICDTriggersEventForwarding } from './cicd-triggers-handlers';
+export { registerCrossLanguageTranslationHandlers } from './cross-language-translation-handlers';
+export { registerSpecApprovalHandlers } from './spec-approval-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -297,6 +305,20 @@ export function setupIpcHandlers(
 
   // Arena Mode handlers (Feature 9) — Blind A/B model comparison
   registerArenaHandlers(getMainWindow);
+
+  // Memory Lifecycle Manager handlers (Feature 43)
+  registerMemoryLifecycleHandlers();
+  setupMemoryLifecycleEventForwarding(getMainWindow);
+
+  // CI/CD Deployment Triggers handlers (Feature 44)
+  registerCICDTriggersHandlers();
+  setupCICDTriggersEventForwarding(getMainWindow);
+
+  // Cross-Language Translation Agent handlers (Feature 41)
+  registerCrossLanguageTranslationHandlers();
+
+  // Spec Approval Workflow handlers (Feature 42)
+  registerSpecApprovalHandlers();
 
   console.warn('[IPC] All handler modules registered successfully');
 }

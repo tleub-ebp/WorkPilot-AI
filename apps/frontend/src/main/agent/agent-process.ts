@@ -651,7 +651,14 @@ export class AgentProcessManager {
     // (SSO token from state.vscdb or API key) and doesn't need Claude OAuth tokens.
     // Use getEnvironmentVariables() as the source of truth since it handles all
     // fallback paths (activeCredential, globalWindsurfApiKey in settings, etc.)
-    const providerCheck = credentialManager.getEnvironmentVariables();
+    const providerCheckRaw = credentialManager.getEnvironmentVariables();
+    // If Claude Code OAuth is active (agentConfigDir set) and windsurf is being injected
+    // only via the globalWindsurfApiKey fallback (no explicit windsurf activeCredential),
+    // treat it as a Claude provider so OAuth token refresh still happens.
+    const isWindsurfViaFallback =
+      providerCheckRaw.SELECTED_LLM_PROVIDER === 'windsurf' &&
+      credentialManager.getActiveCredential()?.provider !== 'windsurf';
+    const providerCheck = isWindsurfViaFallback ? {} : providerCheckRaw;
     const selectedLlmProvider = providerCheck.SELECTED_LLM_PROVIDER?.toLowerCase();
     const isNonClaudeProvider = selectedLlmProvider &&
       !['anthropic', 'claude'].includes(selectedLlmProvider);
@@ -735,8 +742,8 @@ export class AgentProcessManager {
     const oauthModeClearVars = getOAuthModeClearVars(apiProfileEnv);
 
     // Get provider-specific env vars (WINDSURF_API_KEY, SELECTED_LLM_PROVIDER, etc.)
-    // These must be injected regardless of OAuth mode since they are independent credentials
-    const providerSpecificEnv = credentialManager.getEnvironmentVariables();
+    // Skip windsurf fallback env when Claude Code OAuth is active without an explicit windsurf credential.
+    const providerSpecificEnv = isWindsurfViaFallback ? {} : providerCheckRaw;
 
     // Parse Python commandto handle space-separated commands like "py -3"
     const [pythonCommand, pythonBaseArgs] = parsePythonCommand(this.getPythonPath());

@@ -1810,5 +1810,86 @@
       "noActiveTests": "Aucun test A/B actif",
       "createTest": "Créez un test depuis la Palette de Commandes ou depuis la vue de détail de la tâche."
     }
+  },
+  "memoryLifecycle": {
+    "title": "Gestionnaire du Cycle de Vie Mémoire",
+    "description": "Gérer la mémoire Graphiti — élagage, politiques de rétention, contrôle de fraîcheur",
+    "status": "Statut",
+    "episodeCount": "Épisodes stockés",
+    "diskUsage": "Espace disque utilisé",
+    "retentionDays": "Rétention (jours)",
+    "maxEpisodes": "Épisodes maximum",
+    "pruneStrategy": "Stratégie d'élagage",
+    "autoPrune": "Élagage automatique",
+    "runPrune": "Lancer l'élagage",
+    "export": "Exporter les mémoires",
+    "pruneStrategies": {
+      "lru": "LRU (moins récemment utilisé)",
+      "oldest": "Plus anciens en premier",
+      "duplicates": "Doublons uniquement"
+    }
+  },
+  "cicdTriggers": {
+    "title": "Déclencheurs CI/CD",
+    "description": "Déclencher automatiquement des pipelines de déploiement après la création d'une PR par l'agent",
+    "provider": "Fournisseur",
+    "enabled": "Déclenchement automatique activé",
+    "triggerOnPr": "Déclencher à la création de PR",
+    "triggerOnMerge": "Déclencher à la fusion",
+    "recentRuns": "Exécutions récentes",
+    "triggerNow": "Déclencher maintenant",
+    "noRuns": "Aucune exécution de pipeline pour l'instant",
+    "providers": {
+      "github": "GitHub Actions",
+      "gitlab": "GitLab CI",
+      "azure": "Azure DevOps",
+      "jenkins": "Jenkins"
+    },
+    "runStatus": {
+      "pending": "En attente",
+      "triggered": "Déclenché",
+      "running": "En cours",
+      "success": "Succès",
+      "failed": "Échec"
+    }
+  },
+  "crossLangTranslation": {
+    "title": "Traduction Cross-Langage",
+    "description": "Traduction de code assistée par IA entre langages de programmation",
+    "sourceLang": "Langage source",
+    "targetLang": "Langage cible",
+    "inputCode": "Code source",
+    "outputCode": "Code traduit",
+    "translate": "Traduire",
+    "cancel": "Annuler",
+    "history": "Historique de traductions",
+    "clearHistory": "Effacer l'historique",
+    "preserveComments": "Conserver les commentaires",
+    "generateTests": "Générer des tests",
+    "noHistory": "Aucune traduction pour l'instant",
+    "status": {
+      "pending": "En attente",
+      "complete": "Terminé",
+      "failed": "Échec"
+    }
+  },
+  "specApproval": {
+    "title": "Workflow d'Approbation de Spec",
+    "description": "Réviser et approuver les spécifications générées par l'IA avant exécution",
+    "pendingSpecs": "En attente d'approbation",
+    "history": "Historique d'approbation",
+    "approve": "Approuver",
+    "reject": "Rejeter",
+    "requestChanges": "Demander des modifications",
+    "amendments": "Amendements (facultatif)",
+    "feedback": "Retour",
+    "noPending": "Aucune spec en attente d'approbation",
+    "specContent": "Contenu de la spec",
+    "status": {
+      "pending": "En attente",
+      "approved": "Approuvée",
+      "rejected": "Rejetée",
+      "changes_requested": "Modifications demandées"
+    }
   }
 }

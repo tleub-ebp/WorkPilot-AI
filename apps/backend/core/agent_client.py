@@ -661,8 +661,8 @@ class WindsurfAgentClient(AgentClient):
         "claude-opus-4": "claude-4-opus",
         "claude-sonnet-4.5": "claude-4.5-sonnet",
         "claude-opus-4.5": "claude-4.5-opus",
-        "claude-sonnet-4.5": "claude-4.6-sonnet",
-        "claude-opus-4.5": "claude-4.6-opus",
+        "claude-sonnet-4.6": "claude-4.6-sonnet",
+        "claude-opus-4.6": "claude-4.6-opus",
     }
 
     def __init__(
@@ -898,6 +898,7 @@ class WindsurfAgentClient(AgentClient):
         messages.append({"role": "user", "content": prompt})
 
         last_error: Exception | None = None
+        text_parts: list[str] = []
         for attempt in range(2):
             if attempt > 0:
                 # Refresh credentials to get a fresh CSRF token and re-init panel
@@ -909,7 +910,7 @@ class WindsurfAgentClient(AgentClient):
                     logger.error(f"[WindsurfAgent] Credential refresh failed: {refresh_err}")
                     break
 
-            text_parts: list[str] = []
+            text_parts = []
             try:
                 async for chunk in stream_chat(
                     credentials=self._credentials,
@@ -920,16 +921,34 @@ class WindsurfAgentClient(AgentClient):
                 ):
                     text_parts.append(chunk)
                 last_error = None
-                break  # success
             except Exception as e:
                 last_error = e
                 err_str = str(e).lower()
                 if attempt == 0 and ("failed_precondition" in err_str or "cascade session" in err_str):
-                    logger.warning(f"[WindsurfAgent] Cascade session error, will retry with fresh credentials: {e}")
+                    logger.warning(f"[WindsurfAgent] Cascade session error (exception), retrying: {e}")
                     _grpc_mod._panel_initialized = False
                     continue
                 logger.error(f"[WindsurfAgent] gRPC streaming error: {e}")
                 break
+
+            # Windsurf sometimes streams the error as text (HTTP 200) with no real content.
+            # Detect this: if the full response is only the error message, retry.
+            full_text = "".join(text_parts)
+            if (
+                "failed_precondition" in full_text.lower()
+                and "cascade session" in full_text.lower()
+                and attempt == 0
+            ):
+                logger.warning("[WindsurfAgent] Cascade session error in response text, retrying with fresh credentials")
+                _grpc_mod._panel_initialized = False
+                try:
+                    self._credentials = discover_credentials()
+                except Exception as refresh_err:
+                    logger.error(f"[WindsurfAgent] Credential refresh failed: {refresh_err}")
+                    break
+                continue
+
+            break  # success or non-retryable error
 
         if last_error is not None:
             return AgentMessage(

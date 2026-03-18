@@ -10,7 +10,8 @@ export type PixelAgentType = 'terminal' | 'task';
 export interface PixelAgent {
   id: string;                  // Terminal ID or Task ID
   type: PixelAgentType;        // Source of this agent
-  name: string;                // Display name
+  name: string;                // Short display name (canvas label, ≤16 chars)
+  fullName: string;            // Full untruncated name (used in bubble header)
   characterIndex: number;      // Which character sprite to use (0-5)
   activity: AgentActivity;     // Current visual activity
   seatIndex: number;           // Which desk the agent sits at
@@ -107,11 +108,13 @@ export const usePixelOfficeStore = create<PixelOfficeState>((set, get) => ({
     // ── Terminal agents ───────────────────────────────
     for (const terminal of terminals.filter(t => t.status !== 'exited')) {
       const existing = existingMap.get(terminal.id);
+      const shortTitle = terminal.title.length > 40 ? `${terminal.title.slice(0, 39)}…` : terminal.title;
       if (existing) {
         newAgents.push({
           ...existing,
           type: 'terminal',
-          name: terminal.title,
+          name: shortTitle,
+          fullName: terminal.title,
           activity: mapTerminalToActivity(terminal),
           isClaudeMode: terminal.isClaudeMode,
           seatIndex: existing.seatIndex,
@@ -120,7 +123,8 @@ export const usePixelOfficeStore = create<PixelOfficeState>((set, get) => ({
         newAgents.push({
           id: terminal.id,
           type: 'terminal',
-          name: terminal.title,
+          name: shortTitle,
+          fullName: terminal.title,
           characterIndex: nextIdx++ % 6,
           activity: mapTerminalToActivity(terminal),
           seatIndex: seatIndex,
@@ -139,13 +143,14 @@ export const usePixelOfficeStore = create<PixelOfficeState>((set, get) => ({
       const agentId = `task:${task.id}`;
       const existing = existingMap.get(agentId);
       const activity = mapTaskToActivity(task);
-      const shortTitle = task.title.length > 20 ? `${task.title.slice(0, 19)}…` : task.title;
+      const shortTitle = task.title.length > 40 ? `${task.title.slice(0, 39)}…` : task.title;
 
       if (existing) {
         newAgents.push({
           ...existing,
           type: 'task',
           name: shortTitle,
+          fullName: task.title,
           activity,
           phase: task.executionProgress?.phase,
           progress: task.executionProgress?.overallProgress,
@@ -158,6 +163,7 @@ export const usePixelOfficeStore = create<PixelOfficeState>((set, get) => ({
           id: agentId,
           type: 'task',
           name: shortTitle,
+          fullName: task.title,
           characterIndex: nextIdx++ % 6,
           activity,
           seatIndex: seatIndex,
