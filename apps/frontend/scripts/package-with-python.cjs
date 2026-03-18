@@ -5,10 +5,10 @@
  *
  * Usage: node scripts/package-with-python.cjs [--mac|--win|--linux] [--x64|--arm64|--universal]
  */
-const { spawnSync } = require('child_process');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+const { spawnSync } = require('node:child_process');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 
 const { isWindows, getCurrentPlatform, toNodePlatform } = require('../src/shared/platform.cjs');
 const { downloadPython } = require('./download-python.cjs');
@@ -140,12 +140,12 @@ function buildEnv(frontendDir) {
 
   const env = { ...process.env, PATH: pathValue };
 
-  // Strip npm workspace environment variables to prevent electron-builder v26 from
-  // entering workspace detection mode. In workspace mode, electron-builder v26 has a
-  // bug where it stats workspace package directories (e.g. apps/frontend) as files
-  // instead of reading their package.json, crashing with "not a file".
+  // Strip all npm_* environment variables to prevent electron-builder v26 from
+  // detecting npm workspace mode via process environment (npm_execpath, npm_config_user_agent, etc.).
+  // In workspace mode, electron-builder v26 has a bug where it stats workspace package
+  // directories (e.g. apps/frontend) as files instead of package.json, crashing with "not a file".
   for (const key of Object.keys(env)) {
-    if (key.startsWith('npm_config_workspace')) {
+    if (key.startsWith('npm_')) {
       delete env[key];
     }
   }
