@@ -139,9 +139,11 @@
     "husky": "^9.1.7",
     "jsdom": "^27.3.0",
     "lint-staged": "^16.2.7",
+    "node-pty": "^1.1.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
+    "unzipper": "^0.10.14",
     "vite": "^7.2.7",
     "vitest": "^4.0.16"
   },
@@ -172,6 +174,7 @@
     ],
     "asarUnpack": [
       "out/main/node_modules/@lydell/node-pty-*/**",
+      "out/main/node_modules/node-pty/**",
       "out/main/node_modules/better-sqlite3/**"
     ],
     "extraResources": [
