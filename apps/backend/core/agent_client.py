@@ -885,7 +885,9 @@ class WindsurfAgentClient(AgentClient):
 
     async def _grpc_response(self, prompt: str) -> AgentMessage:
         """Send prompt via gRPC to local Windsurf language server (no tools)."""
+        from integrations.windsurf_proxy import grpc_client as _grpc_mod
         from integrations.windsurf_proxy.grpc_client import stream_chat
+        from integrations.windsurf_proxy.auth import discover_credentials
         from integrations.windsurf_proxy.models import resolve_model
 
         model_enum, model_name = resolve_model(self.model)
@@ -895,24 +897,47 @@ class WindsurfAgentClient(AgentClient):
             messages.append({"role": "system", "content": self.system_prompt})
         messages.append({"role": "user", "content": prompt})
 
-        text_parts: list[str] = []
-        try:
-            async for chunk in stream_chat(
-                credentials=self._credentials,
-                messages=messages,
-                model_enum=model_enum,
-                model_name=model_name,
-                system_prompt=self.system_prompt,
-            ):
-                text_parts.append(chunk)
-        except Exception as e:
-            logger.error(f"[WindsurfAgent] gRPC streaming error: {e}")
+        last_error: Exception | None = None
+        for attempt in range(2):
+            if attempt > 0:
+                # Refresh credentials to get a fresh CSRF token and re-init panel
+                logger.warning("[WindsurfAgent] Refreshing credentials before retry (attempt 2)")
+                _grpc_mod._panel_initialized = False
+                try:
+                    self._credentials = discover_credentials()
+                except Exception as refresh_err:
+                    logger.error(f"[WindsurfAgent] Credential refresh failed: {refresh_err}")
+                    break
+
+            text_parts: list[str] = []
+            try:
+                async for chunk in stream_chat(
+                    credentials=self._credentials,
+                    messages=messages,
+                    model_enum=model_enum,
+                    model_name=model_name,
+                    system_prompt=self.system_prompt,
+                ):
+                    text_parts.append(chunk)
+                last_error = None
+                break  # success
+            except Exception as e:
+                last_error = e
+                err_str = str(e).lower()
+                if attempt == 0 and ("failed_precondition" in err_str or "cascade session" in err_str):
+                    logger.warning(f"[WindsurfAgent] Cascade session error, will retry with fresh credentials: {e}")
+                    _grpc_mod._panel_initialized = False
+                    continue
+                logger.error(f"[WindsurfAgent] gRPC streaming error: {e}")
+                break
+
+        if last_error is not None:
             return AgentMessage(
                 role=MessageRole.SYSTEM,
                 content=[
                     ContentBlock(
                         type=ContentBlockType.TEXT,
-                        text=f"Windsurf gRPC error: {e}",
+                        text=f"Windsurf gRPC error: {last_error}",
                     )
                 ],
             )
@@ -1039,7 +1064,9 @@ class WindsurfAgentClient(AgentClient):
         """
         import json as _json
 
+        from integrations.windsurf_proxy import grpc_client as _grpc_mod
         from integrations.windsurf_proxy.grpc_client import stream_chat
+        from integrations.windsurf_proxy.auth import discover_credentials
         from integrations.windsurf_proxy.models import resolve_model
 
         model_enum, model_name = resolve_model(self.model)
@@ -1071,25 +1098,48 @@ class WindsurfAgentClient(AgentClient):
                 f"sending {len(messages)} messages..."
             )
 
-            # Send to Windsurf via gRPC
+            # Send to Windsurf via gRPC — retry once with fresh credentials on Cascade session errors
             text_parts: list[str] = []
-            try:
-                async for chunk in stream_chat(
-                    credentials=self._credentials,
-                    messages=messages,
-                    model_enum=model_enum,
-                    model_name=model_name,
-                    system_prompt=full_system_prompt,
-                ):
-                    text_parts.append(chunk)
-            except Exception as e:
-                logger.error(f"[WindsurfAgent] gRPC streaming error (turn {turn + 1}): {e}")
+            turn_error: Exception | None = None
+            for attempt in range(2):
+                if attempt > 0:
+                    logger.warning("[WindsurfAgent] Refreshing credentials before retry")
+                    _grpc_mod._panel_initialized = False
+                    try:
+                        self._credentials = discover_credentials()
+                    except Exception as refresh_err:
+                        logger.error(f"[WindsurfAgent] Credential refresh failed: {refresh_err}")
+                        break
+
+                text_parts = []
+                try:
+                    async for chunk in stream_chat(
+                        credentials=self._credentials,
+                        messages=messages,
+                        model_enum=model_enum,
+                        model_name=model_name,
+                        system_prompt=full_system_prompt,
+                    ):
+                        text_parts.append(chunk)
+                    turn_error = None
+                    break  # success
+                except Exception as e:
+                    turn_error = e
+                    err_str = str(e).lower()
+                    if attempt == 0 and ("failed_precondition" in err_str or "cascade session" in err_str):
+                        logger.warning(f"[WindsurfAgent] Cascade session error on turn {turn + 1}, retrying: {e}")
+                        _grpc_mod._panel_initialized = False
+                        continue
+                    logger.error(f"[WindsurfAgent] gRPC streaming error (turn {turn + 1}): {e}")
+                    break
+
+            if turn_error is not None:
                 yield AgentMessage(
                     role=MessageRole.SYSTEM,
                     content=[
                         ContentBlock(
                             type=ContentBlockType.TEXT,
-                            text=f"Windsurf gRPC error: {e}",
+                            text=f"Windsurf gRPC error: {turn_error}",
                         )
                     ],
                 )

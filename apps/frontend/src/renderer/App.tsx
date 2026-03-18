@@ -1082,7 +1082,8 @@ export function App() {
                     )}
                     {activeView === 'pixel-office' && (
                         <PixelOffice
-                          projectId={selectedProject?.path || ''}
+                          projectPath={selectedProject?.path || ''}
+                          projectId={selectedProject?.id || ''}
                           onNavigateToTerminals={() => setActiveView('terminals')}
                           onNavigateToKanban={() => setActiveView('kanban')}
                         />
