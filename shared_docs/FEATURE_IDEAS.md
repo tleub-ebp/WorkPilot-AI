@@ -2,9 +2,9 @@
 
 > Idées de fonctionnalités pour WorkPilot AI. Triées par impact — les plus **bangers** en premier.
 >
-> 📊 **Analyse concurrentielle Mars 2026** : Cursor (IDE premium, 8 agents parallèles), Windsurf (best value, Arena Mode), Claude Code (meilleur cerveau, 1M contexte), Codex (cloud agents parallèles), Antigravity (multi-agent orchestration, built-in browser), Kiro (spec-driven, hooks event-driven), Devin (full autonome), Zencoder (spec-driven enterprise).
+> 📊 **Analyse concurrentielle Mars 2026** : Cursor (IDE premium, 8 agents parallèles), Windsurf (best value, Arena Mode chat), Claude Code (meilleur cerveau, 1M contexte, hooks event-driven), Codex (cloud agents parallèles), Antigravity (multi-agent orchestration, built-in browser), Kiro (spec-driven, hooks event-driven), Devin (full autonome, $500/mois), Zencoder (spec-driven enterprise).
 >
-> 🎯 **Stratégie WorkPilot** : Aller là où personne ne va encore — l'orchestration complète du cycle de vie logiciel avec transparence totale, de l'idée au monitoring en production. Pas juste un IDE avec IA, mais **un OS pour le développement logiciel autonome**.
+> 🎯 **Stratégie WorkPilot** : Là où les concurrents offrent un ou deux axes de différenciation, WorkPilot couvre **l'intégralité du cycle de vie logiciel** avec transparence totale — de l'idée au déploiement en production. **45/45 features implémentées** — 14 features totalement uniques sur le marché. Pas juste un IDE avec IA, mais **un OS pour le développement logiciel autonome**.
 
 ---
 
@@ -3691,7 +3691,8 @@ Le Code Playground supporte :
 - **Code** : Support universel des langages de programmation
 </details>
 
-### 41. Cross-Language Translation
+<details>
+<summary>### 41. Cross-Language Translation ✅ Implémenté</summary>
 
 Traduire du code entre langages tout en préservant la logique et les patterns idiomatiques.
 
@@ -3700,7 +3701,43 @@ Traduire du code entre langages tout en préservant la logique et les patterns i
 - **Effort :** Élevé
 - **Pourquoi c'est banger :** Les migrations de stack deviennent triviales.
 
-### 42. Spec Approval Workflow
+#### 🔄 Comment utiliser Cross-Language Translation
+
+##### 🚀 Accès
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"🔄 Cross-Language Translation"** dans le groupe "AI Tools"
+2. **Sélectionner** : Choisissez le fichier source, le langage source et le langage cible
+3. **Lancer** : Cliquez sur **"Translate"** — l'IA traduit en préservant la logique et les idiomes
+
+##### 🌐 Langages supportés
+
+Python, Go, TypeScript, JavaScript, Rust, Java, C#, Ruby, Swift, Kotlin
+
+##### 🏗️ Architecture technique
+
+**Backend** (`apps/backend/runners/cross_language_translation_runner.py`) :
+- `CrossLanguageTranslator` — Agent Claude qui analyse la logique, traduit en idiomes cibles, génère les tests équivalents
+- Args : `--source-file`, `--source-lang`, `--target-lang`, `--preserve-tests`, `--project-dir`, `--model`, `--thinking-level`
+- Output JSON : `{ translated_code, test_code, notes, idioms_applied[] }`
+
+**Frontend** :
+- `apps/frontend/src/main/cross-language-translation-service.ts` — Service principal (spawn runner, events)
+- `apps/frontend/src/main/ipc-handlers/cross-language-translation-handlers.ts` — IPC handlers
+- `apps/frontend/src/renderer/stores/cross-language-translation-store.ts` — Zustand store
+- `apps/frontend/src/renderer/components/cross-language-translation/CrossLanguageTranslationDashboard.tsx` — UI
+
+##### 🎨 Fonctionnalités clés
+
+- **10 langages** : Python, Go, TypeScript, JavaScript, Rust, Java, C#, Ruby, Swift, Kotlin
+- **Préservation des tests** : Option pour générer les tests équivalents dans le langage cible
+- **Idiomes respectés** : L'IA applique les conventions du langage cible (pas de traduction littérale)
+- **Streaming live** : Progression en temps réel pendant la traduction
+- **Notes de traduction** : Explication des choix idiomatiques effectués
+
+</details>
+
+<details>
+<summary>### 42. Spec Approval Workflow ✅ Implémenté</summary>
 
 Circuit de validation collaborative des specs avant implémentation — peer review pour les specs.
 
@@ -3709,7 +3746,41 @@ Circuit de validation collaborative des specs avant implémentation — peer rev
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Gouvernance légère mais efficace. Les specs critiques ne passent plus sans review humaine. Essential pour les équipes.
 
-### 43. Memory Lifecycle Manager
+#### ✅ Comment utiliser Spec Approval Workflow
+
+##### 🚀 Accès
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"✅ Spec Approval"** dans le groupe "Planning"
+2. **Soumettre** : Sélectionnez un spec et le niveau d'approbation requis (Tech Lead, PM, Stakeholder, Any)
+3. **Reviewer** : Les reviewers reçoivent une notification in-app, peuvent commenter et approuver/rejeter
+
+##### 📋 Niveaux d'approbation
+
+- **Tech Lead** : Validation architecturale et technique
+- **PM** : Validation produit et priorités
+- **Stakeholder** : Validation métier
+- **Any** : Premier reviewer disponible
+
+##### 🏗️ Architecture technique
+
+**Frontend** (frontend-only, persistance locale) :
+- `apps/frontend/src/main/ipc-handlers/spec-approval-handlers.ts` — IPC handlers (submit, approve, reject, addComment, getApprovals)
+- `apps/frontend/src/renderer/stores/spec-approval-store.ts` — Zustand store avec types `SpecApproval`, `ApprovalComment`
+- `apps/frontend/src/renderer/components/spec-approval/SpecApprovalDashboard.tsx` — Dashboard avec liste, statuts, commentaires
+- Persistance : `userData/spec-approvals/*.json`
+
+##### 🎨 Fonctionnalités clés
+
+- **Statuts visuels** : Pending (jaune), Approved (vert), Rejected (rouge), Draft (gris)
+- **Thread de commentaires** : Commentaires inline avec résolution
+- **Historique des approbations** : Date, reviewer, décision pour chaque spec
+- **Rejet motivé** : Commentaire obligatoire pour un rejet
+- **Multi-projet** : Approvals filtrés par projet actif
+
+</details>
+
+<details>
+<summary>### 43. Memory Lifecycle Manager ✅ Implémenté</summary>
 
 Gestion intelligente du cycle de vie de la mémoire Graphiti — pruning automatique, politiques de rétention, contrôle de la fraîcheur.
 
@@ -3718,7 +3789,47 @@ Gestion intelligente du cycle de vie de la mémoire Graphiti — pruning automat
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** Sans pruning, la mémoire devient bruitée et dégrade la qualité des agents. Un système de rétention intelligent garde la mémoire utile et pertinente.
 
-### 44. CI/CD Deployment Triggers
+#### 🧹 Comment utiliser Memory Lifecycle Manager
+
+##### 🚀 Accès
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"🧹 Memory Lifecycle"** dans le groupe "Memory"
+2. **Scanner** : Lancez un scan pour voir les entrées obsolètes et redondantes
+3. **Pruner** : Configurez les seuils (âge max, score de pertinence min) et lancez le pruning
+
+##### 📊 Actions disponibles
+
+| Action | Description |
+|--------|-------------|
+| **Scan** | Analyse la mémoire : entrées totales, obsolètes, redondantes, taille |
+| **Prune** | Supprime les entrées sous le seuil de pertinence ou trop anciennes |
+| **Stats** | Santé de la mémoire : good / degraded / critical |
+| **Export** | Exporte la mémoire en JSON pour migration |
+
+##### 🏗️ Architecture technique
+
+**Backend** (`apps/backend/runners/memory_lifecycle_runner.py`) :
+- `MemoryLifecycleManager` — Actions : scan, prune, export, stats
+- Args : `--action`, `--max-age-days` (défaut 90), `--min-relevance` (0.0-1.0, défaut 0.3), `--dry-run`
+- Output JSON avec stats détaillées et liste des entrées à pruner
+
+**Frontend** :
+- `apps/frontend/src/main/memory-lifecycle-service.ts` — Service principal
+- `apps/frontend/src/main/ipc-handlers/memory-lifecycle-handlers.ts` — IPC handlers
+- `apps/frontend/src/renderer/stores/memory-lifecycle-store.ts` — Zustand store
+- `apps/frontend/src/renderer/components/memory-lifecycle/MemoryLifecycleDashboard.tsx` — UI avec 4 onglets
+
+##### 🎨 Fonctionnalités clés
+
+- **Indicateur de santé** : good (vert) / degraded (jaune) / critical (rouge)
+- **Mode Dry Run** : Prévisualiser les suppressions sans modifier la mémoire
+- **Score de pertinence** : Basé sur la fréquence d'accès et l'âge
+- **Export portable** : JSON pour migration entre projets
+
+</details>
+
+<details>
+<summary>### 44. CI/CD Deployment Triggers ✅ Implémenté</summary>
 
 Déclenchement automatique de pipelines CI/CD après la création d'une PR par un agent.
 
@@ -3726,6 +3837,44 @@ Déclenchement automatique de pipelines CI/CD après la création d'une PR par u
 - **Exploite :** GitHub/GitLab integration, agent events, terminal system
 - **Effort :** Moyen
 - **Pourquoi c'est banger :** La boucle spec → code → test → deploy est complète. Du "j'ai une idée" à "c'est en preview" sans intervention.
+
+#### 🚀 Comment utiliser CI/CD Deployment Triggers
+
+##### 🚀 Accès
+
+1. **Navigation** : Dans la barre latérale, cliquez sur **"🚀 CI/CD Triggers"** dans le groupe "Integration & Git"
+2. **Configurer** : Sélectionnez le provider (GitHub Actions, GitLab CI, Vercel, Netlify)
+3. **Déclencher** : Entrez le repo et le numéro de PR, puis cliquez **"Trigger Pipeline"**
+
+##### 🔗 Providers supportés
+
+- **GitHub Actions** : Déclenche un workflow via `workflow_dispatch`
+- **GitLab CI** : Déclenche un pipeline via l'API GitLab
+- **Vercel** : Preview deployment automatique
+- **Netlify** : Deploy preview automatique
+
+##### 🏗️ Architecture technique
+
+**Backend** (`apps/backend/runners/cicd_triggers_runner.py`) :
+- `CICDTriggersRunner` — Actions : trigger, check-status, list
+- Args : `--action`, `--provider`, `--repo`, `--pr-number`, `--run-id`, `--pipeline-type`
+- Output JSON : `{ run_id, pipeline_url, preview_url, estimated_duration_minutes }`
+
+**Frontend** :
+- `apps/frontend/src/main/cicd-triggers-service.ts` — Service principal
+- `apps/frontend/src/main/ipc-handlers/cicd-triggers-handlers.ts` — IPC handlers
+- `apps/frontend/src/renderer/stores/cicd-triggers-store.ts` — Zustand store avec historique
+- `apps/frontend/src/renderer/components/cicd-triggers/CICDTriggersDashboard.tsx` — UI
+
+##### 🎨 Fonctionnalités clés
+
+- **4 providers** : GitHub Actions, GitLab CI, Vercel, Netlify
+- **3 types de pipeline** : Preview deployment, Staging, Smoke tests
+- **URLs cliquables** : Pipeline URL et Preview URL directement dans l'UI
+- **Historique** : Liste des déclenchements passés avec statut
+- **Polling de statut** : Suivi automatique de la progression du pipeline
+
+</details>
 
 ### 45. Intelligent Context Caching ✅
 
@@ -3887,50 +4036,58 @@ integrator = ContextCacheIntegrator(project_path, config)
 
 | Tier | # | Features | Impact | Statut |
 |------|---|----------|--------|--------|
-| **🔥 S+** | 7 | **🆕 Mission Control**, **🆕 Agent Replay & Debug**, Self-Healing + Incident Responder ✅, **🆕 Design-to-Code Pipeline**, **🆕 Event-Driven Hooks**, **🆕 Multi-Repo Orchestration**, Agent Learning Loop ✅ | **BANGERS** — Différenciateurs uniques, aucun concurrent ne les a | 2/7 ✅ |
-| **🚀 S** | 4 | **🆕 Arena Mode**, **🆕 AI Pair Programming**, **🆕 MCP Marketplace**, **🆕 Cost Intelligence Engine** | Game changers — Avantage concurrentiel fort | 0/4 ✅ |
+| **🔥 S+** | 8 | Mission Control ✅, Agent Replay & Debug ✅, Self-Healing + Incident Responder ✅, Design-to-Code Pipeline ✅, Event-Driven Hooks ✅, Multi-Repo Orchestration ✅, Pixel Office ✅, Agent Learning Loop ✅ | **BANGERS** — Différenciateurs uniques, aucun concurrent ne les a | **8/8 ✅** |
+| **🚀 S** | 4 | Arena Mode ✅, AI Pair Programming ✅, MCP Marketplace ✅, Cost Intelligence Engine ✅ | Game changers — Avantage concurrentiel fort | **4/4 ✅** |
 | **💪 A** | 7 | Build Analytics ✅, Test Gen ✅, Dependency Sentinel ✅, Prompt Optimizer ✅, Conflict Predictor ✅, Code Review ✅, Architecture Enforcement ✅ | Strong impact — Features power users | **7/7 ✅** |
-| **🔧 B** | 13 | **🆕 Built-in Browser Agent**, **🆕 Steering Files**, Live Review, App Emulator ✅, Auto-Refactor ✅, Pipeline Gen, Smart Estimation ✅, NL Git ✅, Snippets ✅, Spec Templates, Dep Graph, QA Security, Agent Decision Logger | Solid value — Améliorations quotidiennes | 5/13 ✅ |
-| **💡 C** | 14 | Team Sync, Env Cloner, Arch Viz, Migration, Perf Profiler, Doc Agent, Plugin Marketplace ✅, Voice ✅, Playground ✅, Cross-Lang, Spec Approval, Memory Lifecycle, CI/CD Triggers, Context Caching ✅ | Nice to have — Vision long terme | 4/14 ✅ |
+| **🔧 B** | 11 | Built-in Browser Agent ✅, App Emulator ✅, Auto-Refactor ✅, Pipeline Gen ✅, Smart Estimation ✅, NL Git ✅, Snippets ✅, Spec Templates ✅, Dep Graph ✅, QA Security ✅, Agent Decision Logger ✅ | Solid value — Améliorations quotidiennes | **11/11 ✅** |
+| **💡 C** | 15 | Team Sync ✅, Env Cloner ✅, Arch Viz ✅, Migration ✅, Perf Profiler ✅, Doc Agent ✅, Plugin Marketplace ✅, Ollama ✅, Voice ✅, Playground ✅, Cross-Lang ✅, Spec Approval ✅, Memory Lifecycle ✅, CI/CD Triggers ✅, Context Caching ✅ | Nice to have — Vision long terme | **15/15 ✅** |
 
-### 🏆 Score d'implémentation : 18/45 features (40%)
+### 🏆 Score d'implémentation : 45/45 features (100%) 🎉
 
-### 🎯 Roadmap prioritaire recommandée
+### 🎯 Prochaines étapes — Au-delà des 45
 
-**Phase 1 — Quick Wins à fort impact (1-2 mois)**
-1. **Event-Driven Hooks System** (S+) — Effort moyen, effet "wow" immédiat, Kiro a prouvé le concept
-2. **Steering Files** (B) — Effort faible, résout le pain point #1 des devs IA
-3. **Cost Intelligence Engine** (S) — Effort moyen, ROI immédiat et mesurable
+Toutes les 45 features de la roadmap initiale sont implémentées. Les prochains axes de développement :
 
-**Phase 2 — Différenciateurs clés (2-4 mois)**
-4. **Mission Control** (S+) — Le killer feature visuel, démontrable en 30s
-5. **Agent Replay & Debug** (S+) — Transparence totale = confiance enterprise
-6. **MCP Marketplace** (S) — Effet réseau, 97M+ SDK downloads, standard universel
-7. **Arena Mode** (S) — Feature virale, data-driven model selection
+**Axe 1 — Intégration & Qualité**
+- Connecter les features entre elles (ex: CI/CD Triggers déclenché auto après chaque PR agent)
+- Tests end-to-end cross-features
+- Performance et polish UX sur les features Tier B/C
 
-**Phase 3 — Game Changers autonomes (4-8 mois)**
-8. ~~**Self-Healing + Incident Responder** (S+)~~ ✅ Implémenté
-9. **Design-to-Code Pipeline** (S+) — Killer demo pour agences/startups
-10. **AI Pair Programming** (S) — Vrai travail parallèle coordonné
-11. **Multi-Repo Orchestration** (S+) — Argument enterprise massif
+**Axe 2 — Nouvelles plateformes & providers**
+- Azure DevOps CI/CD dans CI/CD Triggers
+- Intégration GitHub Copilot dans Arena Mode
+- Support Zencoder/Codex dans Multi-Repo
 
-### 📈 Analyse concurrentielle — Positionnement WorkPilot vs Marché
+**Axe 3 — Enterprise**
+- SSO / permissions RBAC pour Spec Approval Workflow
+- Audit trail des actions agents
+- Compliance reporting automatique
 
-| Feature | WorkPilot | Cursor | Windsurf | Claude Code | Antigravity | Kiro | Codex |
-|---------|-----------|--------|----------|-------------|-------------|------|-------|
-| Multi-agent orchestration | 🔜 Mission Control | ✅ 8 agents | ✅ Cascade panes | ❌ | ✅ Native | ❌ | ✅ Cloud |
-| Agent replay/debug | 🔜 Full replay | ❌ | ❌ | ❌ | 🟡 Artifacts | ❌ | ❌ |
-| Self-healing codebase | ✅ 3 modes | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Design-to-code | 🔜 Full pipeline | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 Figma |
-| Event-driven hooks | 🔜 Visual editor | ❌ | ❌ | ❌ | ❌ | ✅ Basique | ❌ |
-| Spec-driven dev | ✅ Native | ❌ | ❌ | ❌ | ❌ | ✅ Native | ❌ |
-| Arena mode | 🔜 Full pipeline | ❌ | ✅ Chat only | ❌ | ❌ | ❌ | ❌ |
-| Built-in browser | 🔜 + visual regression | ❌ | ✅ Live preview | ❌ | ✅ Native | ❌ | ❌ |
-| MCP support | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
-| Cost intelligence | 🔜 Auto-routing | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Learning loop | ✅ Unique | ❌ | 🟡 Memories | ❌ | ❌ | ❌ | ❌ |
-| Multi-repo | 🔜 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+### 📈 Analyse concurrentielle — Positionnement WorkPilot vs Marché (Mars 2026)
 
-> **Légende :** ✅ Disponible | 🔜 Planifié WorkPilot | 🟡 Partiel | ❌ Non disponible
+> **Concurrents analysés :** Cursor (IDE premium, 8 agents parallèles), Windsurf (best value, Arena Mode chat), Claude Code (meilleur cerveau, 1M contexte), Codex (cloud agents parallèles), Antigravity (multi-agent, built-in browser), Kiro (spec-driven, hooks event-driven), Devin (full autonome, $500/mois), Zencoder (spec-driven enterprise).
+
+| Feature | WorkPilot | Cursor | Windsurf | Claude Code | Antigravity | Kiro | Codex | Devin |
+|---------|-----------|--------|----------|-------------|-------------|------|-------|-------|
+| Multi-agent orchestration | ✅ Mission Control | ✅ 8 agents | ✅ Cascade panes | ❌ | ✅ Native | ❌ | ✅ Cloud | ✅ |
+| Agent replay/debug | ✅ Full replay | ❌ | ❌ | ❌ | 🟡 Artifacts | ❌ | ❌ | ❌ |
+| Self-healing codebase | ✅ 3 modes | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 |
+| Design-to-code | ✅ Full pipeline | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 Figma | ❌ |
+| Event-driven hooks | ✅ Visual editor | ❌ | ❌ | ✅ Claude hooks | ❌ | ✅ Basique | ❌ | ❌ |
+| Spec-driven dev | ✅ Native | ❌ | ❌ | ❌ | ❌ | ✅ Native | ❌ | ❌ |
+| Arena mode (A/B models) | ✅ Full pipeline | ❌ | ✅ Chat only | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Built-in browser | ✅ + visual regression | ❌ | ✅ Live preview | ❌ | ✅ Native | ❌ | ❌ | 🟡 |
+| MCP support | ✅ + Marketplace | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
+| Cost intelligence | ✅ Auto-routing | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Learning loop | ✅ Unique | ❌ | 🟡 Memories | ❌ | ❌ | ❌ | ❌ | 🟡 |
+| Multi-repo orchestration | ✅ Full | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 |
+| Memory lifecycle mgmt | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| CI/CD auto-triggers | ✅ 4 providers | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ✅ |
+| Spec approval workflow | ✅ | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ |
+| Cross-lang translation | ✅ 10 langages | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 |
+| Local LLM (Ollama) | ✅ Natif | ✅ Via hack | ✅ Via hack | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Pixel Office visualization | ✅ Unique | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+> **Légende :** ✅ Disponible | 🟡 Partiel | ❌ Non disponible
 >
-> **Avantage WorkPilot** : 8 features uniques planifiées que PERSONNE n'a sur le marché (Agent Replay, Self-Healing, Design-to-Code full pipeline, Visual event hooks editor, Arena Mode full pipeline, Cost auto-routing, Multi-repo orchestration, Learning Loop). C'est la stratégie de différenciation.
+> **Score unique WorkPilot** : **14 features que PERSONNE d'autre n'a** — Agent Replay full, Self-Healing 3 modes, Design-to-Code full pipeline, Arena Mode full pipeline, Cost auto-routing, Learning Loop, Memory Lifecycle, Cross-Language Translation 10 langages, Spec Approval, Pixel Office, MCP Marketplace builder, Multi-Repo full, Environment Cloner, Team Knowledge Sync. C'est la stratégie de différenciation radicale : **WorkPilot = OS complet pour le développement logiciel autonome**.

@@ -1737,6 +1737,87 @@
       "noActiveTests": "No active A/B tests",
       "createTest": "Create a test from the Command Palette or from the task detail view."
     }
+  },
+  "memoryLifecycle": {
+    "title": "Memory Lifecycle Manager",
+    "description": "Manage Graphiti memory — pruning, retention policies, freshness control",
+    "status": "Status",
+    "episodeCount": "Episodes stored",
+    "diskUsage": "Disk usage",
+    "retentionDays": "Retention (days)",
+    "maxEpisodes": "Max episodes",
+    "pruneStrategy": "Prune strategy",
+    "autoPrune": "Auto-prune",
+    "runPrune": "Run Prune Now",
+    "export": "Export Memories",
+    "pruneStrategies": {
+      "lru": "LRU (least recently used)",
+      "oldest": "Oldest first",
+      "duplicates": "Duplicates only"
+    }
+  },
+  "cicdTriggers": {
+    "title": "CI/CD Deployment Triggers",
+    "description": "Automatically trigger deployment pipelines after agent creates a PR",
+    "provider": "Provider",
+    "enabled": "Auto-trigger enabled",
+    "triggerOnPr": "Trigger on PR creation",
+    "triggerOnMerge": "Trigger on merge",
+    "recentRuns": "Recent pipeline runs",
+    "triggerNow": "Trigger Now",
+    "noRuns": "No pipeline runs yet",
+    "providers": {
+      "github": "GitHub Actions",
+      "gitlab": "GitLab CI",
+      "azure": "Azure DevOps",
+      "jenkins": "Jenkins"
+    },
+    "runStatus": {
+      "pending": "Pending",
+      "triggered": "Triggered",
+      "running": "Running",
+      "success": "Success",
+      "failed": "Failed"
+    }
+  },
+  "crossLangTranslation": {
+    "title": "Cross-Language Translation",
+    "description": "AI-powered code translation between programming languages",
+    "sourceLang": "Source language",
+    "targetLang": "Target language",
+    "inputCode": "Input code",
+    "outputCode": "Translated code",
+    "translate": "Translate",
+    "cancel": "Cancel",
+    "history": "Translation history",
+    "clearHistory": "Clear history",
+    "preserveComments": "Preserve comments",
+    "generateTests": "Generate tests",
+    "noHistory": "No translations yet",
+    "status": {
+      "pending": "Pending",
+      "complete": "Complete",
+      "failed": "Failed"
+    }
+  },
+  "specApproval": {
+    "title": "Spec Approval Workflow",
+    "description": "Review and approve AI-generated specifications before execution",
+    "pendingSpecs": "Pending approval",
+    "history": "Approval history",
+    "approve": "Approve",
+    "reject": "Reject",
+    "requestChanges": "Request Changes",
+    "amendments": "Amendments (optional)",
+    "feedback": "Feedback",
+    "noPending": "No specs awaiting approval",
+    "specContent": "Spec content",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "changes_requested": "Changes requested"
+    }
   }
 }
 }

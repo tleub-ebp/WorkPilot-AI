@@ -129,34 +129,66 @@ function drawMonitorGlow(
   ctx.restore();
 }
 
-function drawAgentLabel(
-  ctx: CanvasRenderingContext2D,
-  agent: PixelAgent, cx: number, cy: number,
-  color: string, isIdle: boolean, isSelected: boolean,
-  z: number
-) {
+interface LabelOpts {
+  ctx: CanvasRenderingContext2D;
+  agent: PixelAgent; cx: number; cy: number;
+  color: string; isIdle: boolean; isSelected: boolean; z: number;
+}
+
+/** Wrap text by measuring real pixel widths with ctx.measureText. */
+function measureWrap(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let current = '';
+
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (ctx.measureText(candidate).width <= maxW) {
+      current = candidate;
+    } else {
+      if (current) lines.push(current);
+      // If a single word is wider than maxW, hard-truncate it
+      current = ctx.measureText(word).width <= maxW ? word : word.slice(0, Math.max(3, Math.floor(word.length * maxW / ctx.measureText(word).width)));
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+function drawAgentLabel({ ctx, agent, cx, cy, color, isIdle, isSelected, z }: LabelOpts) {
   let labelColor: string;
   if (isSelected) labelColor = '#FFD700';
   else if (isIdle) labelColor = '#808080';
   else             labelColor = color;
 
-  ctx.fillStyle = labelColor;
-  ctx.font = `bold ${Math.max(7, 8 * z)}px "Courier New", monospace`;
-  ctx.textAlign = 'center';
-  const displayName = agent.name.length > 12 ? `${agent.name.slice(0, 11)}…` : agent.name;
-  ctx.fillText(displayName, cx + 8 * z, cy + (SPRITE_H + 4) * z);
+  const name     = agent.fullName; // full untruncated name
+  const fontSize = Math.max(4, 6 * z);
+  ctx.fillStyle  = labelColor;
+  ctx.font       = `bold ${fontSize}px Arial, sans-serif`;
+  ctx.textAlign  = 'center';
+
+  const cx8   = cx + 8 * z;
+  const lineY = cy + (SPRITE_H + 4) * z;
+  const lineH = fontSize + 2;
+  const maxW  = 36 * z; // slightly wider than desk (32px) for readability
+
+  const lines = measureWrap(ctx, name, maxW).slice(0, 3);
+  for (let i = 0; i < lines.length; i++) {
+    ctx.fillText(lines[i], cx8, lineY + i * lineH);
+  }
+
   ctx.textAlign = 'start';
 }
 
-function drawAgent(
-  ctx: CanvasRenderingContext2D,
-  agent: PixelAgent,
-  dx: number, dy: number,
-  z: number,
-  selected: string | null,
-  animFrame: number,
-  frame: number
-) {
+interface DrawAgentOpts {
+  ctx: CanvasRenderingContext2D;
+  agent: PixelAgent;
+  dx: number; dy: number; z: number;
+  selected: string | null;
+  animFrame: number; frame: number;
+}
+
+function drawAgent({ ctx, agent, dx, dy, z, selected, animFrame, frame }: DrawAgentOpts) {
   const visual = getAgentVisual(agent.activity, frame, z);
   const { color, isActive, isWaiting, isIdle, bounceY } = visual;
 
@@ -204,7 +236,7 @@ function drawAgent(
     ctx.drawImage(icon, cx + 2 * z, cy - 14 * z, 12 * z, 12 * z);
   }
 
-  drawAgentLabel(ctx, agent, cx, cy, color, isIdle, isSelected, z);
+  drawAgentLabel({ ctx, agent, cx, cy, color, isIdle, isSelected, z });
 
   // Speech bubble
   const bubbleText = agent.speechBubble ?? (isWaiting ? '💬 ...' : null);
@@ -328,7 +360,7 @@ export function PixelOfficeCanvas({ width, height, onAgentClick }: PixelOfficeCa
         continue;
       }
 
-      drawAgent(ctx, occupant, dx, dy, z, selected, animFrame, frame);
+      drawAgent({ ctx, agent: occupant, dx, dy, z, selected, animFrame, frame });
     }
 
     drawDecorations(ctx, z);
