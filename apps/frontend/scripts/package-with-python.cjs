@@ -140,15 +140,14 @@ function buildEnv(frontendDir) {
 
   const env = { ...process.env, PATH: pathValue };
 
-  // Strip npm_* and INIT_CWD environment variables to prevent electron-builder v26 from
-  // detecting npm workspace mode via process environment.
-  // npm sets npm_* vars and INIT_CWD pointing to the repo root. electron-builder uses these
-  // to traverse up and find the root package.json which has "workspaces". It then tries to stat
-  // workspace directory paths (e.g. apps/frontend) as files, crashing with "not a file".
-  // Without these vars, electron-builder falls back to process.cwd() (apps/frontend) which has no workspaces.
-  for (const key of Object.keys(env)) {
-    if (key.startsWith('npm_') || key === 'INIT_CWD') {
-      delete env[key];
+  // When a code-signing secret (CSC_LINK, WIN_CSC_LINK) is not configured in CI, GitHub Actions
+  // evaluates the secret expression to an empty string and sets the env var to "".
+  // electron-builder then calls path.resolve(cwd, "") which resolves to the project directory
+  // (apps/frontend), and then fails with "<projectDir> not a file" when trying to import it
+  // as a certificate. Removing empty signing vars lets electron-builder skip code signing gracefully.
+  for (const signingVar of ['CSC_LINK', 'WIN_CSC_LINK']) {
+    if (signingVar in env && !env[signingVar].trim()) {
+      delete env[signingVar];
     }
   }
 
