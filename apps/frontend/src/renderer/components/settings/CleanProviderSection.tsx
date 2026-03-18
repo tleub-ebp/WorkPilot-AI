@@ -190,9 +190,19 @@ export function CleanProviderSection({
     } catch (err) {
       console.warn('[CleanProviderSection] Failed to load profile usage data:', err);
     }
-    // Trigger a fresh poll AFTER the initial (potentially stale) data is set.
-    // onUsageUpdated will then overwrite the active profile with the real current value.
-    globalThis.electronAPI?.requestUsageUpdate?.();
+    // Trigger a fresh REAL API fetch AFTER the initial (potentially stale) data is set.
+    // Passing 'anthropic' forces getUsageForProvider() which makes a real OAuth API call,
+    // unlike requestUsageUpdate() with no args which only returns the cached currentUsage.
+    // The result is emitted as usage-updated → handleUsageUpdated overwrites stale data.
+    try {
+      const freshResult = await globalThis.electronAPI?.requestUsageUpdate?.('anthropic');
+      const freshSnapshot = freshResult?.data ?? null;
+      if (freshResult?.success && freshSnapshot) {
+        handleUsageUpdated(freshSnapshot);
+      }
+    } catch (err) {
+      console.warn('[CleanProviderSection] Failed to fetch fresh usage:', err);
+    }
   };
 
   // Load usage data from CredentialManager (Windsurf, etc.)

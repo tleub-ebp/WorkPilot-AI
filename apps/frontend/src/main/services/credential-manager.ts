@@ -1312,6 +1312,32 @@ export class CredentialManager extends EventEmitter {
   getEnvironmentVariables(): Record<string, string> {
     const env: Record<string, string> = {};
 
+    // Priority check: if the user explicitly selected a non-Claude provider in settings,
+    // always inject SELECTED_LLM_PROVIDER — even when a Claude API profile is active in
+    // profiles.json. Without this, loadProfiles() sets activeCredential to the Claude
+    // profile (type: 'api_key') and returns early, so the Copilot/Windsurf selection in
+    // settings.json is never reflected in the subprocess environment.
+    try {
+      const settings = readSettingsFile();
+      const selectedProvider = (settings?.selectedProvider as string | undefined)?.toLowerCase();
+      const nonClaudeProviders = ['copilot', 'openai', 'google', 'ollama', 'meta', 'mistral', 'deepseek', 'grok', 'aws', 'custom'];
+      if (selectedProvider && nonClaudeProviders.includes(selectedProvider)) {
+        // The active credential from profiles.json may be a Claude profile —
+        // still force SELECTED_LLM_PROVIDER so the backend routes to the right client.
+        env.SELECTED_LLM_PROVIDER = selectedProvider;
+        console.log(`[CredentialManager] getEnvironmentVariables: injecting SELECTED_LLM_PROVIDER=${selectedProvider} from settings.json (overrides active Claude profile)`);
+        // For Copilot: auth is via `gh auth token` CLI — no extra env vars needed.
+        // For other providers: fall through to provider-specific handling below.
+        if (selectedProvider === 'copilot') {
+          return Object.fromEntries(
+            Object.entries(env).filter(([_, value]) => value.trim() !== '')
+          );
+        }
+      }
+    } catch {
+      // settings file not available
+    }
+
     // For Windsurf SSO enterprise users: even without an api_key credential,
     // we must inject SELECTED_LLM_PROVIDER so the backend uses WindsurfAgentClient
     // instead of silently falling back to Claude SDK.

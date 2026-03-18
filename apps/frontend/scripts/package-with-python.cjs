@@ -137,7 +137,20 @@ function buildEnv(frontendDir) {
   const pathValue = process.env.PATH
     ? `${pathParts.join(path.delimiter)}${path.delimiter}${process.env.PATH}`
     : pathParts.join(path.delimiter);
-  return { ...process.env, PATH: pathValue };
+
+  const env = { ...process.env, PATH: pathValue };
+
+  // Strip npm workspace environment variables to prevent electron-builder v26 from
+  // entering workspace detection mode. In workspace mode, electron-builder v26 has a
+  // bug where it stats workspace package directories (e.g. apps/frontend) as files
+  // instead of reading their package.json, crashing with "not a file".
+  for (const key of Object.keys(env)) {
+    if (key.startsWith('npm_config_workspace')) {
+      delete env[key];
+    }
+  }
+
+  return env;
 }
 
 function runCommand(command, commandArgs, cwd, env) {
