@@ -82,6 +82,9 @@ jobs:
       - name: Setup Node.js and install dependencies
         uses: ./.github/actions/setup-node-frontend
 
+      - name: Install node-pty in frontend
+        run: cd apps/frontend && npm install node-pty@1.1.0-beta42 --no-save
+
       - name: Install Rust toolchain (for building native Python packages)
         uses: dtolnay/rust-toolchain@stable
 
@@ -161,6 +164,9 @@ jobs:
       - name: Setup Node.js and install dependencies
         uses: ./.github/actions/setup-node-frontend
 
+      - name: Install node-pty in frontend
+        run: cd apps/frontend && npm install node-pty@1.1.0-beta42 --no-save
+
       - name: Cache pip wheel cache
         uses: actions/cache@v5
         with:
@@ -238,6 +244,9 @@ jobs:
 
       - name: Setup Node.js and install dependencies
         uses: ./.github/actions/setup-node-frontend
+
+      - name: Install node-pty in frontend
+        run: cd apps/frontend && npm install node-pty@1.1.0-beta42 --no-save
 
       - name: Cache pip wheel cache
         uses: actions/cache@v5
@@ -413,6 +422,9 @@ jobs:
 
       - name: Setup Node.js and install dependencies
         uses: ./.github/actions/setup-node-frontend
+
+      - name: Install node-pty in frontend
+        run: cd apps/frontend && npm install node-pty@1.1.0-beta42 --no-save
 
       - name: Setup Flatpak and verification tools
         run: |
