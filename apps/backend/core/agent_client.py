@@ -1200,8 +1200,12 @@ class WindsurfAgentClient(AgentClient):
             turn_error: Exception | None = None
             for attempt in range(2):
                 if attempt > 0:
+                    # Invalidate process cache so discover_credentials() fetches a
+                    # fresh CSRF token instead of returning the cached stale one.
                     logger.warning("[WindsurfAgent] Refreshing credentials before retry")
                     _grpc_mod._panel_initialized = False
+                    invalidate_process_cache()
+                    await _asyncio.sleep(1.5)
                     try:
                         self._credentials = discover_credentials()
                     except Exception as refresh_err:
