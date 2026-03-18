@@ -645,7 +645,7 @@ jobs:
             3. Enable "Beta Updates" toggle
 
             ### Reporting Issues
-            Please report any issues at https://github.com/tleub-ebp/Auto-Claude_EBP/issues
+            Please report any issues at https://github.com/${{ github.repository }}/issues
 
             ---
 
@@ -655,6 +655,41 @@ jobs:
           prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Update README with new beta version after successful release
+  update-readme:
+    needs: [create-release]
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.dry_run != 'true' }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Update README.md
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          python3 scripts/update-readme.py "$VERSION" --prerelease
+
+          echo "--- Verifying update ---"
+          grep -E "(beta-)[0-9]" README.md | head -5
+
+      - name: Commit and push README update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet README.md; then
+            echo "No changes to README.md, skipping commit"
+            exit 0
+          fi
+
+          git add README.md
+          git commit -m "docs: update README to v${{ github.event.inputs.version }} [skip ci]"
+          git push origin develop
 
   dry-run-summary:
     needs: [create-tag, finalize-notarization, build-windows, build-linux]

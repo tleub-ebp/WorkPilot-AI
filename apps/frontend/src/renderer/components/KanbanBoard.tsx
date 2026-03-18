@@ -19,7 +19,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
-import { Plus, Inbox, Loader2, Eye, CheckCircle2, Archive, RefreshCw, GitPullRequest, X, Settings, ListPlus, ChevronLeft, ChevronRight, ChevronsRight, Lock, Unlock, Trash2, Settings2, Download } from 'lucide-react';
+import { Plus, Inbox, Loader2, Eye, CheckCircle2, Archive, RefreshCw, GitPullRequest, X, Settings, ListPlus, ChevronLeft, ChevronRight, ChevronsRight, Lock, Unlock, Trash2, Settings2, Download, Ban } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
@@ -68,6 +68,9 @@ function isValidDropColumn(id: string): id is typeof TASK_STATUS_COLUMNS[number]
   return VALID_DROP_COLUMNS.has(id);
 }
 
+// Columns where external work items (Azure DevOps / Jira) can be dropped
+const IMPORT_ALLOWED_COLUMNS = new Set<string>(['backlog', 'queue', 'in_progress']);
+
 /**
  * Get the visual column for a task status.
  * pr_created tasks are displayed in the 'done' column, so we map them accordingly.
@@ -97,6 +100,7 @@ interface DroppableColumnProps {
   onTaskClick: (task: Task) => void;
   onStatusChange: (taskId: string, newStatus: TaskStatus) => unknown;
   isOver: boolean;
+  isImportForbidden?: boolean;
   onAddClick?: () => void;
   onArchiveAll?: () => void;
   onQueueSettings?: () => void;
@@ -160,6 +164,7 @@ function droppableColumnPropsAreEqual(
   // Quick checks first
   if (prevProps.status !== nextProps.status) return false;
   if (prevProps.isOver !== nextProps.isOver) return false;
+  if (prevProps.isImportForbidden !== nextProps.isImportForbidden) return false;
   if (prevProps.onTaskClick !== nextProps.onTaskClick) return false;
   if (prevProps.onStatusChange !== nextProps.onStatusChange) return false;
   if (prevProps.onAddClick !== nextProps.onAddClick) return false;
@@ -252,7 +257,7 @@ const getEmptyStateContent = (status: TaskStatus, t: (key: string) => string): {
   }
 };
 
-const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskClick, onStatusChange, isOver, onAddClick, onArchiveAll, onQueueSettings, onQueueAll, maxParallelTasks, archivedCount, showArchived, onToggleArchived, selectedTaskIds, onSelectAll, onDeselectAll, onToggleSelect, onDeleteTask, onViewPRFiles, onPreviewApp, isCollapsed, onToggleCollapsed, columnWidth, isResizing, onResizeStart, onResizeEnd, isLocked, onToggleLocked }: DroppableColumnProps) {
+const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskClick, onStatusChange, isOver, isImportForbidden, onAddClick, onArchiveAll, onQueueSettings, onQueueAll, maxParallelTasks, archivedCount, showArchived, onToggleArchived, selectedTaskIds, onSelectAll, onDeselectAll, onToggleSelect, onDeleteTask, onViewPRFiles, onPreviewApp, isCollapsed, onToggleCollapsed, columnWidth, isResizing, onResizeStart, onResizeEnd, isLocked, onToggleLocked }: DroppableColumnProps) {
   const { t } = useTranslation(['tasks', 'common']);
   const { setNodeRef } = useDroppable({
     id: status
@@ -391,14 +396,20 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
       <div
         ref={setNodeRef}
         className={cn(
-          'flex flex-col rounded-xl border border-white/5 bg-linear-to-b from-secondary/30 to-transparent backdrop-blur-sm transition-all duration-200',
+          'relative flex flex-col rounded-xl border border-white/5 bg-linear-to-b from-secondary/30 to-transparent backdrop-blur-sm transition-all duration-200',
           getColumnBorderColor(),
           'border-t-2',
-          isOver && 'drop-zone-highlight'
+          isOver && 'drop-zone-highlight',
+          isImportForbidden && 'border-destructive/60'
         )}
         style={{ width: COLLAPSED_COLUMN_WIDTH, minWidth: COLLAPSED_COLUMN_WIDTH, maxWidth: COLLAPSED_COLUMN_WIDTH }}
         data-column-status={status}
       >
+        {isImportForbidden && (
+          <div className="absolute inset-0 rounded-xl bg-destructive/15 flex items-center justify-center z-10 pointer-events-none">
+            <Ban className="h-6 w-6 text-destructive/70" />
+          </div>
+        )}
         {/* Expand button at top */}
         <div className="flex justify-center p-2 border-b border-white/5">
           <Tooltip delayDuration={200}>
@@ -493,13 +504,19 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
       <div
         ref={setNodeRef}
         className={cn(
-          'flex flex-1 flex-col rounded-xl border border-white/5 bg-linear-to-b from-secondary/30 to-transparent backdrop-blur-sm transition-all duration-200',
+          'relative flex flex-1 flex-col rounded-xl border border-white/5 bg-linear-to-b from-secondary/30 to-transparent backdrop-blur-sm transition-all duration-200',
           getColumnBorderColor(),
           'border-t-2',
-          isOver && 'drop-zone-highlight'
+          isOver && 'drop-zone-highlight',
+          isImportForbidden && 'border-destructive/60'
         )}
         data-column-status={status}
       >
+        {isImportForbidden && (
+          <div className="absolute inset-0 rounded-xl bg-destructive/15 flex items-center justify-center z-10 pointer-events-none">
+            <Ban className="h-10 w-10 text-destructive/70" />
+          </div>
+        )}
         {/* Column header - enhanced styling */}
         <div className="flex items-center justify-between p-4 border-b border-white/5">
           <div className="flex items-center gap-2.5">
@@ -1232,6 +1249,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
 
     let successCount = 0;
     let errorCount = 0;
+    let firstImportedTitle = '';
 
     for (const workItem of workItems) {
       try {
@@ -1281,6 +1299,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         );
 
         if (result) {
+          if (successCount === 0) firstImportedTitle = workItem.title;
           successCount++;
           console.log('[Import] Created task from work item:', result.id);
 
@@ -1317,7 +1336,9 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     // Show toast
     if (successCount > 0) {
       toast({
-        title: t('settings:azureDevOpsImport.importSuccess', { count: successCount }),
+        title: successCount === 1
+          ? t('settings:azureDevOpsImport.importSuccessSingle', { title: firstImportedTitle })
+          : t('settings:azureDevOpsImport.importSuccess', { count: successCount }),
         variant: 'default'
       });
     } else {
@@ -1589,11 +1610,16 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
             // Find the column we're over
             const target = event.target as HTMLElement;
             const columnElement = target.closest('[data-column-status]');
-            
+
             if (columnElement) {
               const columnStatus = columnElement.getAttribute('data-column-status');
               if (columnStatus && isValidDropColumn(columnStatus)) {
                 setOverColumnId(columnStatus);
+                if (event.dataTransfer) {
+                  event.dataTransfer.dropEffect = IMPORT_ALLOWED_COLUMNS.has(columnStatus) ? 'copy' : 'none';
+                }
+              } else {
+                setOverColumnId(null);
               }
             }
           }
@@ -1658,7 +1684,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           if (columnElement) {
             const columnStatus = columnElement.getAttribute('data-column-status');
             
-            if (columnStatus && isValidDropColumn(columnStatus)) {
+            if (columnStatus && isValidDropColumn(columnStatus) && IMPORT_ALLOWED_COLUMNS.has(columnStatus)) {
               // Show the import confirmation dialog
               setImportConfirmDialog({
                 open: true,
@@ -1749,17 +1775,20 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       for (const column of allColumns) {
         const rect = column.getBoundingClientRect();
         const buffer = 20;
-        if (mouseX >= rect.left - buffer && mouseX <= rect.right + buffer && 
+        if (mouseX >= rect.left - buffer && mouseX <= rect.right + buffer &&
             mouseY >= rect.top - buffer && mouseY <= rect.bottom + buffer) {
           const columnStatus = column.getAttribute('data-column-status');
           if (columnStatus && isValidDropColumn(columnStatus)) {
             setOverColumnId(columnStatus);
+            if (event.dataTransfer) {
+              event.dataTransfer.dropEffect = IMPORT_ALLOWED_COLUMNS.has(columnStatus) ? 'copy' : 'none';
+            }
             foundColumn = true;
           }
           break;
         }
       }
-      
+
       if (!foundColumn) {
         setOverColumnId(null);
       }
@@ -2225,7 +2254,8 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
               tasks={tasksByStatus[status]}
               onTaskClick={onTaskClick}
               onStatusChange={handleStatusChange}
-              isOver={overColumnId === status}
+              isOver={overColumnId === status && (!isDraggingAzureDevOps || IMPORT_ALLOWED_COLUMNS.has(status))}
+              isImportForbidden={isDraggingAzureDevOps && overColumnId === status && !IMPORT_ALLOWED_COLUMNS.has(status)}
               onAddClick={status === 'backlog' ? onNewTaskClick : undefined}
               onQueueAll={status === 'backlog' ? handleQueueAll : undefined}
               onQueueSettings={status === 'queue' ? () => {
