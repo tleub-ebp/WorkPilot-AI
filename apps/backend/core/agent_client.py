@@ -955,7 +955,7 @@ class WindsurfAgentClient(AgentClient):
         """Send prompt via gRPC to local Windsurf language server (no tools)."""
         from integrations.windsurf_proxy import grpc_client as _grpc_mod
         from integrations.windsurf_proxy.grpc_client import stream_chat
-        from integrations.windsurf_proxy.auth import discover_credentials
+        from integrations.windsurf_proxy.auth import discover_credentials, invalidate_process_cache
         from integrations.windsurf_proxy.models import resolve_model
 
         model_enum, model_name = resolve_model(self.model)
@@ -969,9 +969,15 @@ class WindsurfAgentClient(AgentClient):
         text_parts: list[str] = []
         for attempt in range(2):
             if attempt > 0:
-                # Refresh credentials to get a fresh CSRF token and re-init panel
+                # Refresh credentials to get a fresh CSRF token and re-init panel.
+                # IMPORTANT: invalidate the process-info cache first — without this,
+                # discover_credentials() returns the same stale CSRF token (10s TTL).
                 logger.warning("[WindsurfAgent] Refreshing credentials before retry (attempt 2)")
                 _grpc_mod._panel_initialized = False
+                invalidate_process_cache()
+                # Brief pause: lets Windsurf's internal session recover before we re-init.
+                import asyncio as _asyncio
+                await _asyncio.sleep(1.5)
                 try:
                     self._credentials = discover_credentials()
                 except Exception as refresh_err:
@@ -1009,6 +1015,9 @@ class WindsurfAgentClient(AgentClient):
             ):
                 logger.warning("[WindsurfAgent] Cascade session error in response text, retrying with fresh credentials")
                 _grpc_mod._panel_initialized = False
+                invalidate_process_cache()
+                import asyncio as _asyncio
+                await _asyncio.sleep(1.5)
                 try:
                     self._credentials = discover_credentials()
                 except Exception as refresh_err:
@@ -1153,8 +1162,9 @@ class WindsurfAgentClient(AgentClient):
 
         from integrations.windsurf_proxy import grpc_client as _grpc_mod
         from integrations.windsurf_proxy.grpc_client import stream_chat
-        from integrations.windsurf_proxy.auth import discover_credentials
+        from integrations.windsurf_proxy.auth import discover_credentials, invalidate_process_cache
         from integrations.windsurf_proxy.models import resolve_model
+        import asyncio as _asyncio
 
         model_enum, model_name = resolve_model(self.model)
 

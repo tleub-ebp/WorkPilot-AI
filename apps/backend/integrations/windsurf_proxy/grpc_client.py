@@ -47,6 +47,7 @@ Message format:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import struct
@@ -81,6 +82,18 @@ CHAT_TIMEOUT = 120.0
 
 # Whether the cascade panel has been initialized for this session
 _panel_initialized = False
+
+# Lock preventing concurrent panel re-initializations when multiple agents
+# run in parallel and all detect a Cascade session expiry simultaneously.
+_panel_init_lock: asyncio.Lock | None = None
+
+
+def _get_panel_init_lock() -> asyncio.Lock:
+    """Lazy-init the panel init lock (must run inside an event loop)."""
+    global _panel_init_lock
+    if _panel_init_lock is None:
+        _panel_init_lock = asyncio.Lock()
+    return _panel_init_lock
 
 
 # =============================================================================
@@ -427,50 +440,59 @@ async def _ensure_panel_initialized(credentials: WindsurfCredentials) -> None:
     This must be called before RawGetChatMessage to set up the server-side
     Cascade panel state.  Without it, RawGetChatMessage returns
     "failed_precondition: There was an error with your Cascade session".
+
+    A module-level asyncio Lock prevents multiple concurrent agents from
+    racing to re-initialize the panel simultaneously after a session expiry.
     """
     global _panel_initialized
     if _panel_initialized:
         return
 
-    try:
-        import httpx
-    except ImportError:
-        raise ImportError("httpx is required for Windsurf gRPC client. Install with: pip install httpx[http2]")
+    async with _get_panel_init_lock():
+        # Double-checked locking: another agent may have completed init
+        # while we were waiting for the lock.
+        if _panel_initialized:
+            return
 
-    metadata = _build_metadata(credentials)
-    init_req = bytearray()
-    init_req.extend(_encode_bytes_field(1, metadata))  # metadata
-    init_req.extend(_encode_varint_field(3, 1))         # workspace_trusted = true
+        try:
+            import httpx
+        except ImportError:
+            raise ImportError("httpx is required for Windsurf gRPC client. Install with: pip install httpx[http2]")
 
-    url = f"http://localhost:{credentials.port}{INIT_PANEL_PATH}"
-    headers = {
-        "content-type": "application/proto",
-        "x-codeium-csrf-token": credentials.csrf_token,
-        "connect-protocol-version": "1",
-    }
+        metadata = _build_metadata(credentials)
+        init_req = bytearray()
+        init_req.extend(_encode_bytes_field(1, metadata))  # metadata
+        init_req.extend(_encode_varint_field(3, 1))         # workspace_trusted = true
 
-    logger.debug(f"[WindsurfGRPC] InitializeCascadePanelState: POST {url}")
+        url = f"http://localhost:{credentials.port}{INIT_PANEL_PATH}"
+        headers = {
+            "content-type": "application/proto",
+            "x-codeium-csrf-token": credentials.csrf_token,
+            "connect-protocol-version": "1",
+        }
 
-    try:
-        async with httpx.AsyncClient(http2=True, timeout=15.0) as client:
-            resp = await client.post(url, content=bytes(init_req), headers=headers)
-            if resp.status_code == 200:
-                _panel_initialized = True
-                logger.debug("[WindsurfGRPC] Panel initialized successfully")
-            else:
-                body = resp.content[:300].decode("utf-8", errors="replace")
-                raise WindsurfError(
-                    f"InitializeCascadePanelState failed (status={resp.status_code}): {body}",
-                    WindsurfErrorCode.STREAM_ERROR,
-                )
-    except WindsurfError:
-        raise
-    except Exception as e:
-        raise WindsurfError(
-            f"InitializeCascadePanelState error: {e}",
-            WindsurfErrorCode.CONNECTION_FAILED,
-            details=e,
-        )
+        logger.debug(f"[WindsurfGRPC] InitializeCascadePanelState: POST {url}")
+
+        try:
+            async with httpx.AsyncClient(http2=True, timeout=15.0) as client:
+                resp = await client.post(url, content=bytes(init_req), headers=headers)
+                if resp.status_code == 200:
+                    _panel_initialized = True
+                    logger.debug("[WindsurfGRPC] Panel initialized successfully")
+                else:
+                    body = resp.content[:300].decode("utf-8", errors="replace")
+                    raise WindsurfError(
+                        f"InitializeCascadePanelState failed (status={resp.status_code}): {body}",
+                        WindsurfErrorCode.STREAM_ERROR,
+                    )
+        except WindsurfError:
+            raise
+        except Exception as e:
+            raise WindsurfError(
+                f"InitializeCascadePanelState error: {e}",
+                WindsurfErrorCode.CONNECTION_FAILED,
+                details=e,
+            )
 
 
 # =============================================================================
