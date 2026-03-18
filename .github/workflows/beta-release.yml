@@ -108,6 +108,9 @@ jobs:
           SENTRY_TRACES_SAMPLE_RATE: ${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}
           SENTRY_PROFILES_SAMPLE_RATE: ${{ secrets.SENTRY_PROFILES_SAMPLE_RATE }}
 
+      - name: Fix Electron and rebuild native modules
+        run: cd apps/frontend && node ../../scripts/fix-electron.js && npx @electron/rebuild -m . -w better-sqlite3
+
       - name: Package macOS (Intel)
         run: |
           VERSION="${{ needs.create-tag.outputs.version }}"
@@ -180,6 +183,9 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_TRACES_SAMPLE_RATE: ${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}
           SENTRY_PROFILES_SAMPLE_RATE: ${{ secrets.SENTRY_PROFILES_SAMPLE_RATE }}
+
+      - name: Fix Electron and rebuild native modules
+        run: cd apps/frontend && node ../../scripts/fix-electron.js && npx @electron/rebuild -m . -w better-sqlite3
 
       - name: Package macOS (Apple Silicon)
         run: |
@@ -255,6 +261,9 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_TRACES_SAMPLE_RATE: ${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}
           SENTRY_PROFILES_SAMPLE_RATE: ${{ secrets.SENTRY_PROFILES_SAMPLE_RATE }}
+
+      - name: Fix Electron and rebuild native modules
+        run: cd apps/frontend && node ../../scripts/fix-electron.js && npx @electron/rebuild -m . -w better-sqlite3
 
       - name: Package Windows
         shell: bash
@@ -436,6 +445,9 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_TRACES_SAMPLE_RATE: ${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}
           SENTRY_PROFILES_SAMPLE_RATE: ${{ secrets.SENTRY_PROFILES_SAMPLE_RATE }}
+
+      - name: Fix Electron and rebuild native modules
+        run: cd apps/frontend && node ../../scripts/fix-electron.js && npx @electron/rebuild -m . -w better-sqlite3
 
       - name: Package Linux
         run: |
