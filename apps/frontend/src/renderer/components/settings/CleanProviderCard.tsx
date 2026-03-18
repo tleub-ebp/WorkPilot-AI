@@ -306,7 +306,7 @@ export function CleanProviderCard({
     // Default case: API key with show/hide functionality
     return (
       <>
-        <code className="px-2 py-1 bg-gray-50 rounded text-xs font-mono text-gray-600 truncate min-w-0 flex-1">
+        <code className="px-2 py-1 bg-gray-50 rounded text-xs font-mono text-gray-600 break-all min-w-0 flex-1 select-all cursor-text">
           {showApiKey && provider.realApiKeyInfo.keyPreview
             ? provider.realApiKeyInfo.keyPreview
             : provider.realApiKeyInfo.keyPreview

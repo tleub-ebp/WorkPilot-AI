@@ -117,39 +117,49 @@ export function CleanProviderSection({
     // onUsageUpdated fires after each poll with the freshest snapshot for the active profile.
     // We use it as the primary source because it reflects currentUsage directly, avoiding
     // the stale-cache issue where getAllProfilesUsage returns 0% when cache pre-dates the poll.
-    const unsubscribeUsage = globalThis.electronAPI?.onUsageUpdated?.((snapshot: UsageSnapshot) => {
-      if (!snapshot?.profileId) return;
-      const summary: ProfileUsageSummary = {
-        profileId: snapshot.profileId,
-        profileName: snapshot.profileName,
-        profileEmail: snapshot.profileEmail,
-        sessionPercent: snapshot.sessionPercent,
-        weeklyPercent: snapshot.weeklyPercent,
-        sessionResetTimestamp: snapshot.sessionResetTimestamp,
-        weeklyResetTimestamp: snapshot.weeklyResetTimestamp,
-        isAuthenticated: true,
-        // If a fresh snapshot came back with real usage data, the user is not blocked
-        isRateLimited: false,
-        availabilityScore: 100 - Math.max(snapshot.sessionPercent, snapshot.weeklyPercent),
-        isActive: true,
-        needsReauthentication: snapshot.needsReauthentication,
-      };
-      setProfileUsageData(prev => new Map(prev).set(snapshot.profileId, summary));
-    });
+    const unsubscribeUsage = globalThis.electronAPI?.onUsageUpdated?.(handleUsageUpdated);
 
-    const unsubscribeAllProfiles = globalThis.electronAPI?.onAllProfilesUsageUpdated?.((allProfilesUsage) => {
-      const usageMap = new Map<string, ProfileUsageSummary>();
-      allProfilesUsage.allProfiles.forEach((profile: ProfileUsageSummary) => {
-        usageMap.set(profile.profileId, profile);
-      });
-      setProfileUsageData(usageMap);
-    });
+    const unsubscribeAllProfiles = globalThis.electronAPI?.onAllProfilesUsageUpdated?.(handleAllProfilesUsageUpdated);
 
     return () => {
       unsubscribeUsage?.();
       unsubscribeAllProfiles?.();
     };
   }, [isOpen]);
+
+  // Extracted callback handlers to reduce nesting
+  const handleUsageUpdated = (snapshot: UsageSnapshot) => {
+    if (!snapshot?.profileId) return;
+    const summary: ProfileUsageSummary = {
+      profileId: snapshot.profileId,
+      profileName: snapshot.profileName,
+      profileEmail: snapshot.profileEmail,
+      sessionPercent: snapshot.sessionPercent,
+      weeklyPercent: snapshot.weeklyPercent,
+      sessionResetTimestamp: snapshot.sessionResetTimestamp,
+      weeklyResetTimestamp: snapshot.weeklyResetTimestamp,
+      isAuthenticated: true,
+      // If a fresh snapshot came back with real usage data, the user is not blocked
+      isRateLimited: false,
+      availabilityScore: 100 - Math.max(snapshot.sessionPercent, snapshot.weeklyPercent),
+      isActive: true,
+      needsReauthentication: snapshot.needsReauthentication,
+    };
+    setProfileUsageData(prev => new Map(prev).set(snapshot.profileId, summary));
+  };
+
+  const handleAllProfilesUsageUpdated = (allProfilesUsage: any) => {
+    setProfileUsageData(prev => {
+      const next = new Map(prev);
+      allProfilesUsage.allProfiles.forEach((profile: ProfileUsageSummary) => {
+        const existing = next.get(profile.profileId);
+        // Don't overwrite a fresh onUsageUpdated entry with stale getAllProfilesUsage data (0%)
+        if (existing && existing.sessionPercent > 0 && profile.sessionPercent === 0) return;
+        next.set(profile.profileId, profile);
+      });
+      return next;
+    });
+  };
 
   // Load connectors
   const loadConnectors = async () => {
@@ -395,41 +405,50 @@ export function CleanProviderSection({
 
   // Charger les providers de manière asynchrone
   useEffect(() => {
-    const loadProviders = async () => {
-      try {
-        // Enrich settings with Claude OAuth status from CLI config files (main process)
-        const enrichedSettings = { ...settings };
-        try {
-          if (globalThis.electronAPI?.checkClaudeOAuth) {
-            const oauthResult = await globalThis.electronAPI.checkClaudeOAuth();
-            if (oauthResult.isAuthenticated) {
-              enrichedSettings.globalClaudeOAuthToken = oauthResult.profileName || 'oauth-authenticated';
-            }
-          }
-        } catch {
-          // IPC not available
-        }
-        // Enrich settings with OpenAI Codex CLI OAuth status
-        try {
-          if (globalThis.electronAPI?.checkOpenAICodexOAuth) {
-            const oauthResult = await globalThis.electronAPI.checkOpenAICodexOAuth();
-            if (oauthResult.isAuthenticated) {
-              enrichedSettings.globalOpenAICodexOAuthToken = oauthResult.profileName || 'codex-authenticated';
-            }
-          }
-        } catch {
-          // IPC not available
-        }
-        const result = await getStaticProviders(profiles, enrichedSettings);
-        setStaticProviders(result.providers);
-        setProviderStatus(result.status);
-      } catch (error) {
-        console.error('Failed to load providers:', error);
-      }
-    };
-    
     loadProviders();
   }, [profiles, settings]);
+
+  // Extracted functions to reduce nesting
+  const enrichSettingsWithOAuth = async (baseSettings: any) => {
+    const enrichedSettings = { ...baseSettings };
+    
+    // Enrich with Claude OAuth status
+    try {
+      if (globalThis.electronAPI?.checkClaudeOAuth) {
+        const oauthResult = await globalThis.electronAPI.checkClaudeOAuth();
+        if (oauthResult.isAuthenticated) {
+          enrichedSettings.globalClaudeOAuthToken = oauthResult.profileName || 'oauth-authenticated';
+        }
+      }
+    } catch {
+      // IPC not available
+    }
+    
+    // Enrich with OpenAI Codex CLI OAuth status
+    try {
+      if (globalThis.electronAPI?.checkOpenAICodexOAuth) {
+        const oauthResult = await globalThis.electronAPI.checkOpenAICodexOAuth();
+        if (oauthResult.isAuthenticated) {
+          enrichedSettings.globalOpenAICodexOAuthToken = oauthResult.profileName || 'codex-authenticated';
+        }
+      }
+    } catch {
+      // IPC not available
+    }
+    
+    return enrichedSettings;
+  };
+
+  const loadProviders = async () => {
+    try {
+      const enrichedSettings = await enrichSettingsWithOAuth(settings);
+      const result = await getStaticProviders(profiles, enrichedSettings);
+      setStaticProviders(result.providers);
+      setProviderStatus(result.status);
+    } catch (error) {
+      console.error('Failed to load providers:', error);
+    }
+  };
 
   // Transformer les providers statiques en providers pour la grille avec mémorisation
   const providers = useMemo(() => {
@@ -530,80 +549,10 @@ export function CleanProviderSection({
     setTestingProviders(prev => new Set(prev).add(providerId));
     
     try {
-      // Passer les profiles actuels au ProviderService
-      const currentProfiles = getCurrentProfiles();
-      ProviderService.setProfiles(currentProfiles);
-
-      // Utiliser le vrai service de test du provider
-      const result = await ProviderService.testProvider(providerId);
-
-      // Save test result
-      const testResult = {
-        date: new Date().toISOString(),
-        success: result.success
-      };
-
-      // Update provider test results
-      setProviderTestResults(prev => new Map(prev).set(providerId, testResult));
-
-      // Save to settings for persistence
-      onSettingsChange({
-        ...settings,
-        [`testResult_${providerId}`]: testResult
-      });
-
-      if (result.success) {
-        // Mettre à jour le statut du provider pour indiquer qu'il fonctionne
-        setProviderStatus(prev => ({
-          ...prev,
-          [providerId]: true
-        }));
-        
-        // Afficher un toast de succès avec détails
-        let description = t('sections.accounts.providerCard.testSuccessDescription', { 
-          providerName: providerId 
-        });
-        
-        if (result.details) {
-          if (result.details.modelCount) {
-            description += ` (${t('sections.accounts.providerCard.testDetails.modelsAvailable', { count: result.details.modelCount })})`;
-          } else if (result.details.model) {
-            description += ` (${t('sections.accounts.providerCard.testDetails.modelUsed', { model: result.details.model })})`;
-          }
-        }
-        
-        toast({
-          title: t('sections.accounts.providerCard.testSuccess'),
-          description,
-        });
-        
-        // Test provider success
-      } else {
-        // Afficher un toast d'erreur avec le message réel de l'API
-        toast({
-          variant: 'destructive',
-          title: t('sections.accounts.providerCard.testError'),
-          description: t('sections.accounts.providerCard.testErrorDescription', { 
-            providerName: providerId,
-            error: result.message
-          }),
-        });
-        
-        console.error('Test failed:', providerId, result.message);
-      }
-      
+      const result = await testProvider(providerId);
+      await processTestResult(providerId, result);
     } catch (err) {
-      console.error('Test error:', err);
-      
-      // Afficher un toast d'erreur générique
-      toast({
-        variant: 'destructive',
-        title: t('sections.accounts.providerCard.testError'),
-        description: t('sections.accounts.providerCard.testErrorDescription', { 
-          providerName: providerId,
-          error: t('sections.accounts.providerCard.errors.unknownError')
-        }),
-      });
+      handleTestError(providerId, err);
     } finally {
       setTestingProviders(prev => {
         const newSet = new Set(prev);
@@ -611,6 +560,85 @@ export function CleanProviderSection({
         return newSet;
       });
     }
+  };
+
+  // Extracted helper functions to reduce nesting
+  const testProvider = async (providerId: string) => {
+    const currentProfiles = getCurrentProfiles();
+    ProviderService.setProfiles(currentProfiles);
+    return await ProviderService.testProvider(providerId);
+  };
+
+  const processTestResult = async (providerId: string, result: any) => {
+    const testResult = {
+      date: new Date().toISOString(),
+      success: result.success
+    };
+
+    // Update provider test results
+    setProviderTestResults(prev => new Map(prev).set(providerId, testResult));
+
+    // Save to settings for persistence
+    onSettingsChange({
+      ...settings,
+      [`testResult_${providerId}`]: testResult
+    });
+
+    if (result.success) {
+      await handleTestSuccess(providerId, result);
+    } else {
+      handleTestFailure(providerId, result);
+    }
+  };
+
+  const handleTestSuccess = async (providerId: string, result: any) => {
+    setProviderStatus(prev => ({
+      ...prev,
+      [providerId]: true
+    }));
+    
+    let description = t('sections.accounts.providerCard.testSuccessDescription', { 
+      providerName: providerId 
+    });
+    
+    if (result.details) {
+      if (result.details.modelCount) {
+        description += ` (${t('sections.accounts.providerCard.testDetails.modelsAvailable', { count: result.details.modelCount })})`;
+      } else if (result.details.model) {
+        description += ` (${t('sections.accounts.providerCard.testDetails.modelUsed', { model: result.details.model })})`;
+      }
+    }
+    
+    toast({
+      title: t('sections.accounts.providerCard.testSuccess'),
+      description,
+    });
+  };
+
+  const handleTestFailure = (providerId: string, result: any) => {
+    toast({
+      variant: 'destructive',
+      title: t('sections.accounts.providerCard.testError'),
+      description: t('sections.accounts.providerCard.testErrorDescription', { 
+        providerName: providerId,
+        error: result.message
+      }),
+    });
+    
+    console.error('Test failed:', providerId, result.message);
+  };
+
+  const handleTestError = (providerId: string, err: any) => {
+    console.error('Test error:', err);
+    
+    toast({
+      variant: 'destructive',
+      title: t('sections.accounts.providerCard.testError'),
+      description: t('sections.accounts.providerCard.testErrorDescription', { 
+        providerName: providerId,
+        error: t('sections.accounts.providerCard.errors.unknownError')
+      }),
+    });
   };
 
   // Récupérer les profiles actuels pour le test

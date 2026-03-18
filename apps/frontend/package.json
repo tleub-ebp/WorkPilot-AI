@@ -19,7 +19,7 @@
     "pnpm": ">=8.0.0"
   },
   "scripts": {
-    "postinstall": "echo 'Skipping postinstall in CI - will run after build'",
+    "postinstall": "node -e \"if (!process.env.CI) { var r = require('child_process').spawnSync('electron-rebuild', [], {stdio:'inherit', shell:true}); process.exit(r.status || 0) }\"",
     "dev": "npm run sync-backend-port && electron-vite dev",
     "dev:debug": "cross-env DEBUG=true electron-vite dev",
     "dev:mcp": "electron-vite dev -- --remote-debugging-port=9222",
