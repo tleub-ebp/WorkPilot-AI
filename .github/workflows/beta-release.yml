@@ -40,7 +40,7 @@ jobs:
           echo "Valid version: $VERSION"
 
   create-tag:
-    name: Create beta tag
+    name: Create tag (check if it doesn't already exist)
     needs: validate-version
     runs-on: ubuntu-latest
     permissions:
@@ -58,9 +58,15 @@ jobs:
           VERSION="${{ github.event.inputs.version }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "v$VERSION" -m "Beta release v$VERSION"
-          git push origin "v$VERSION"
-          echo "Created tag v$VERSION"
+          
+          # Check if tag already exists
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION already exists, using existing tag"
+          else
+            git tag -a "v$VERSION" -m "Release v$VERSION"
+            git push origin "v$VERSION"
+            echo "Created tag v$VERSION"
+          fi
 
       - name: Create tag only (dry run)
         if: ${{ github.event.inputs.dry_run == 'true' }}
@@ -85,6 +91,9 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install python-dotenv
 
       - name: Setup Node.js and install dependencies
         uses: ./.github/actions/setup-node-frontend
@@ -168,6 +177,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install Python dependencies
+        run: pip install python-dotenv
+
       - name: Setup Node.js and install dependencies
         uses: ./.github/actions/setup-node-frontend
 
@@ -248,6 +260,9 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install python-dotenv
 
       - name: Setup Node.js and install dependencies
         uses: ./.github/actions/setup-node-frontend
@@ -426,6 +441,9 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install python-dotenv
 
       - name: Setup Node.js and install dependencies
         uses: ./.github/actions/setup-node-frontend
