@@ -110,6 +110,23 @@ export function CleanProviderSection({
     }
   }, [isOpen]);
 
+  // Subscribe to live usage updates so the card refreshes without reopening settings
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const unsubscribe = globalThis.electronAPI?.onAllProfilesUsageUpdated?.((allProfilesUsage) => {
+      const usageMap = new Map<string, ProfileUsageSummary>();
+      allProfilesUsage.allProfiles.forEach((profile: ProfileUsageSummary) => {
+        usageMap.set(profile.profileId, profile);
+      });
+      setProfileUsageData(usageMap);
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, [isOpen]);
+
   // Load connectors
   const loadConnectors = async () => {
     setIsLoading(true);

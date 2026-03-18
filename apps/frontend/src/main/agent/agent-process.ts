@@ -799,6 +799,10 @@ export class AgentProcessManager {
     let stdoutBuffer = '';
     let stderrBuffer = '';
     let sequenceNumber = 0;
+    // Suppress repetitive "Error in hook callback hook_0: Stream closed" noise.
+    // These come from Claude Code CLI's internal skill-improvement hook firing on an
+    // already-closed IPC stream. They are harmless but pollute agent logs every ~5s.
+    let hookErrorSuppressionLines = 0;
     // FIX (ACS-203): Track completed phases to prevent phase overlaps
     // When a phase completes, it's added to this array before transitioning to the next phase
     const completedPhases: CompletablePhase[] = [];
@@ -910,6 +914,16 @@ export class AgentProcessManager {
 
       for (const line of lines) {
         if (line.trim()) {
+          // Detect the start of a hook_0 Stream-closed error block and suppress it.
+          // Pattern: "Error in hook callback hook_0:" kicks off a multi-line Bun
+          // error dump (source snippet + "error: Stream closed" + stack frames).
+          if (line.includes('Error in hook callback hook_0:')) {
+            hookErrorSuppressionLines = 8; // suppress this line + up to 7 follow-up Bun error lines
+          }
+          if (hookErrorSuppressionLines > 0) {
+            hookErrorSuppressionLines--;
+            continue;
+          }
           this.emitter.emit('log', taskId, line + '\n', projectId);
           processLog(line);
           if (isDebug) {

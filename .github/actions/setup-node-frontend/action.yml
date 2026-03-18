@@ -124,3 +124,9 @@ runs:
         fi
         count=$(ls apps/frontend/node_modules 2>/dev/null | wc -l)
         echo "Verified: apps/frontend/node_modules resolves correctly ($count entries)"
+
+    - name: Install electron-vite build tool
+      shell: bash
+      # electron-vite bin link is not reliably created by npm ci for workspace devDependencies.
+      # Install it explicitly at root so node_modules/.bin/electron-vite is always present.
+      run: npm install electron-vite@5.0.0 --no-save --ignore-scripts
