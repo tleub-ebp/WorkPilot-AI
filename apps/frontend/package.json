@@ -19,11 +19,11 @@
     "pnpm": ">=8.0.0"
   },
   "scripts": {
-    "postinstall": "node ../../scripts/fix-electron.js && npx @electron/rebuild -m . -w better-sqlite3",
+    "postinstall": "echo 'Skipping postinstall in CI - will run after build'",
     "dev": "npm run sync-backend-port && electron-vite dev",
     "dev:debug": "cross-env DEBUG=true electron-vite dev",
     "dev:mcp": "electron-vite dev -- --remote-debugging-port=9222",
-    "build": "electron-vite build",
+    "build": "npm run sync-backend-port && electron-vite build",
     "start": "electron .",
     "start:mcp": "electron . --remote-debugging-port=9222",
     "preview": "electron-vite preview",
