@@ -128,7 +128,7 @@ jobs:
           SENTRY_PROFILES_SAMPLE_RATE: ${{ secrets.SENTRY_PROFILES_SAMPLE_RATE }}
 
       - name: Fix Electron and rebuild native modules
-        run: cd apps/frontend && node ../../scripts/fix-electron.js && npx @electron/rebuild -m . -w better-sqlite3
+        run: cd apps/frontend && node ../../scripts/fix-electron.js && npx @electron/rebuild -m ../.. -w better-sqlite3
 
       - name: Package macOS (Intel)
         run: |
@@ -210,7 +210,7 @@ jobs:
           SENTRY_PROFILES_SAMPLE_RATE: ${{ secrets.SENTRY_PROFILES_SAMPLE_RATE }}
 
       - name: Fix Electron and rebuild native modules
-        run: cd apps/frontend && node ../../scripts/fix-electron.js && npx @electron/rebuild -m . -w better-sqlite3
+        run: cd apps/frontend && node ../../scripts/fix-electron.js && npx @electron/rebuild -m ../.. -w better-sqlite3
 
       - name: Package macOS (Apple Silicon)
         run: |
@@ -294,7 +294,7 @@ jobs:
           SENTRY_PROFILES_SAMPLE_RATE: ${{ secrets.SENTRY_PROFILES_SAMPLE_RATE }}
 
       - name: Fix Electron and rebuild native modules
-        run: cd apps/frontend && node ../../scripts/fix-electron.js && npx @electron/rebuild -m . -w better-sqlite3
+        run: cd apps/frontend && node ../../scripts/fix-electron.js && npx @electron/rebuild -m ../.. -w better-sqlite3
 
       - name: Package Windows
         shell: bash
@@ -484,7 +484,7 @@ jobs:
           SENTRY_PROFILES_SAMPLE_RATE: ${{ secrets.SENTRY_PROFILES_SAMPLE_RATE }}
 
       - name: Fix Electron and rebuild native modules
-        run: cd apps/frontend && node ../../scripts/fix-electron.js && npx @electron/rebuild -m . -w better-sqlite3
+        run: cd apps/frontend && node ../../scripts/fix-electron.js && npx @electron/rebuild -m ../.. -w better-sqlite3
 
       - name: Package Linux
         run: |
