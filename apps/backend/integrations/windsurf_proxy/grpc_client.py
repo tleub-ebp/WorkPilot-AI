@@ -458,12 +458,19 @@ async def _ensure_panel_initialized(credentials: WindsurfCredentials) -> None:
                 _panel_initialized = True
                 logger.debug("[WindsurfGRPC] Panel initialized successfully")
             else:
-                logger.warning(
-                    f"[WindsurfGRPC] InitializeCascadePanelState failed: "
-                    f"status={resp.status_code}, body={resp.content[:200]}"
+                body = resp.content[:300].decode("utf-8", errors="replace")
+                raise WindsurfError(
+                    f"InitializeCascadePanelState failed (status={resp.status_code}): {body}",
+                    WindsurfErrorCode.STREAM_ERROR,
                 )
+    except WindsurfError:
+        raise
     except Exception as e:
-        logger.warning(f"[WindsurfGRPC] InitializeCascadePanelState error: {e}")
+        raise WindsurfError(
+            f"InitializeCascadePanelState error: {e}",
+            WindsurfErrorCode.CONNECTION_FAILED,
+            details=e,
+        )
 
 
 # =============================================================================

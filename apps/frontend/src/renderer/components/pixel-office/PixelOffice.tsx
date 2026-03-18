@@ -26,12 +26,15 @@ import { PixelOfficeCanvas } from './PixelOfficeCanvas';
 import { AgentBubble, AddAgentButton } from './AgentBubble';
 
 interface PixelOfficeProps {
+  /** File-system path of the project — used to match terminal sessions */
+  readonly projectPath: string;
+  /** Project ID (UUID) — used to match Kanban tasks */
   readonly projectId: string;
   readonly onNavigateToTerminals?: () => void;
   readonly onNavigateToKanban?: () => void;
 }
 
-export function PixelOffice({ projectId, onNavigateToTerminals, onNavigateToKanban }: PixelOfficeProps) {
+export function PixelOffice({ projectPath, projectId, onNavigateToTerminals, onNavigateToKanban }: PixelOfficeProps) {
   useTranslation(['pixelOffice', 'common']);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
@@ -59,11 +62,11 @@ export function PixelOffice({ projectId, onNavigateToTerminals, onNavigateToKanb
 
   useEffect(() => {
     const projectTerminals = terminals.filter(
-      (t) => t.projectPath === projectId || !t.projectPath
+      (t) => t.projectPath === projectPath || !t.projectPath
     );
     const projectTasks = tasks.filter((t) => t.projectId === projectId);
     syncAll(projectTerminals, projectTasks);
-  }, [terminals, tasks, projectId, syncAll]);
+  }, [terminals, tasks, projectPath, projectId, syncAll]);
 
   // ── Container resize ────────────────────────────────────────
 
@@ -100,8 +103,8 @@ export function PixelOffice({ projectId, onNavigateToTerminals, onNavigateToKanb
 
   const handleGoToTerminal = useCallback(() => {
     const agent = agents.find(a => a.id === selectedAgentId);
-    if (!agent || agent.type !== 'terminal') return;
-    setActiveTerminal(selectedAgentId!);
+    if (agent?.type !== 'terminal') return;
+    setActiveTerminal(selectedAgentId);
     onNavigateToTerminals?.();
     closeBubble();
   }, [agents, selectedAgentId, setActiveTerminal, onNavigateToTerminals, closeBubble]);
@@ -148,15 +151,15 @@ export function PixelOffice({ projectId, onNavigateToTerminals, onNavigateToKanb
   // ── New terminal ─────────────────────────────────────────────
 
   const handleAddAgent = useCallback(async () => {
-    const cwd = terminals.find((t) => t.projectPath === projectId)?.cwd;
-    const newTerminal = addTerminal(cwd, projectId);
+    const cwd = terminals.find((t) => t.projectPath === projectPath)?.cwd;
+    const newTerminal = addTerminal(cwd, projectPath);
     if (!newTerminal) return;
     await globalThis.electronAPI.createTerminal({
       id: newTerminal.id,
       cwd: newTerminal.cwd,
-      projectPath: projectId,
+      projectPath: projectPath,
     });
-  }, [terminals, projectId, addTerminal]);
+  }, [terminals, projectPath, addTerminal]);
 
   // ── Zoom / grid / sound ──────────────────────────────────────
 
@@ -203,7 +206,7 @@ export function PixelOffice({ projectId, onNavigateToTerminals, onNavigateToKanb
         </div>
 
         <div className="flex items-center gap-1">
-          <AddAgentButton onClick={handleAddAgent} disabled={!canAddTerminal(projectId)} />
+          <AddAgentButton onClick={handleAddAgent} disabled={!canAddTerminal(projectPath)} />
           <div className="w-px h-5 bg-border mx-1" />
 
           <Tooltip>
@@ -260,7 +263,7 @@ export function PixelOffice({ projectId, onNavigateToTerminals, onNavigateToKanb
               Démarrez une tâche dans le Kanban ou ouvrez des terminaux pour voir vos agents IA
               apparaître à leurs bureaux avec un suivi d'activité en direct.
             </p>
-            <AddAgentButton onClick={handleAddAgent} disabled={!canAddTerminal(projectId)} />
+            <AddAgentButton onClick={handleAddAgent} disabled={!canAddTerminal(projectPath)} />
           </div>
         ) : (
           <>
