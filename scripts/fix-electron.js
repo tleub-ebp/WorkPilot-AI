@@ -5,7 +5,7 @@ import { get } from 'node:https';
 import { fileURLToPath } from 'node:url';
 import pkg from 'unzipper';
 
-const { extract } = pkg;
+const { Extract: extract } = pkg;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // This script only applies to Windows — skip on other platforms
