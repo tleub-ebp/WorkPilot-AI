@@ -7,6 +7,13 @@ import pkg from 'unzipper';
 
 const { extract } = pkg;
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// This script only applies to Windows — skip on other platforms
+if (process.platform !== 'win32') {
+  console.log('✔ Not Windows, skipping Electron binary repair.');
+  process.exit(0);
+}
+
 const distDir = join(__dirname, '../apps/frontend/node_modules/electron/dist');
 const exePath = join(distDir, 'electron.exe');
 const pathTxt = join(__dirname, '../apps/frontend/node_modules/electron/path.txt');
@@ -14,6 +21,11 @@ const zipUrl = 'https://github.com/electron/electron/releases/download/v40.0.0/e
 
 function downloadAndExtract(url, destDir, cb) {
   get(url, (res) => {
+    // Follow redirects (GitHub release downloads return 302)
+    if (res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 307 || res.statusCode === 308) {
+      downloadAndExtract(res.headers.location, destDir, cb);
+      return;
+    }
     if (res.statusCode !== 200) {
       cb(new Error('Failed to download Electron zip: ' + res.statusCode));
       return;
