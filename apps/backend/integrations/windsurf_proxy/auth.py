@@ -95,6 +95,17 @@ _PROCESS_CACHE: tuple[str | None, float] | None = None
 _PROCESS_CACHE_TTL = 10.0  # seconds
 
 
+def invalidate_process_cache() -> None:
+    """Force the next call to _get_language_server_process() to do a fresh discovery.
+
+    Must be called before discover_credentials() when retrying after a Cascade
+    session error — otherwise the 10-second TTL cache returns the same (potentially
+    stale) CSRF token that triggered the failure in the first place.
+    """
+    global _PROCESS_CACHE
+    _PROCESS_CACHE = None
+
+
 def _get_language_server_process() -> str | None:
     """Get the language server process listing.
 
