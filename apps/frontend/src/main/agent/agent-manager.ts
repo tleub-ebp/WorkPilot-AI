@@ -7,6 +7,7 @@ import { AgentProcessManager } from './agent-process';
 import { AgentQueueManager } from './agent-queue';
 import { getClaudeProfileManager, initializeClaudeProfileManager } from '../claude-profile-manager';
 import type { ClaudeProfileManager } from '../claude-profile-manager';
+import { readSettingsFile } from '../settings-utils';
 import { getOperationRegistry } from '../claude-profile/operation-registry';
 import {
   SpecCreationMetadata,
@@ -38,6 +39,16 @@ export class AgentManager extends EventEmitter {
     /** Generation counter to prevent stale cleanup after restart */
     generation: number;
   }> = new Map();
+
+  /**
+   * Returns true if Claude OAuth auth is required for the current active provider.
+   * Non-Claude providers (Windsurf, OpenAI, Copilot, etc.) manage their own auth.
+   */
+  private requiresClaudeAuth(): boolean {
+    const settings = readSettingsFile();
+    const provider = (settings?.selectedProvider as string | undefined)?.toLowerCase();
+    return !provider || provider === 'claude' || provider === 'anthropic';
+  }
 
   constructor() {
     super();
@@ -165,7 +176,7 @@ export class AgentManager extends EventEmitter {
       this.emit('error', taskId, 'Failed to initialize profile manager. Please check file permissions and disk space.');
       return;
     }
-    if (!profileManager.hasValidAuth()) {
+    if (this.requiresClaudeAuth() && !profileManager.hasValidAuth()) {
       this.emit('error', taskId, 'Claude authentication required. Please authenticate in Settings > Claude Profiles before starting tasks.');
       return;
     }
@@ -267,7 +278,7 @@ export class AgentManager extends EventEmitter {
       this.emit('error', taskId, 'Failed to initialize profile manager. Please check file permissions and disk space.');
       return;
     }
-    if (!profileManager.hasValidAuth()) {
+    if (this.requiresClaudeAuth() && !profileManager.hasValidAuth()) {
       this.emit('error', taskId, 'Claude authentication required. Please authenticate in Settings > Claude Profiles before starting tasks.');
       return;
     }

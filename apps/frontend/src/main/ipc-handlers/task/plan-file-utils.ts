@@ -17,8 +17,8 @@
  * 2. The calling context truly cannot use async/await (e.g., synchronous event handlers)
  */
 
-import path from 'path';
-import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import path from 'node:path';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { AUTO_BUILD_PATHS, getSpecsDir } from '../../../shared/constants';
 import type { TaskStatus, Project, Task } from '../../../shared/types';
 import { projectStore } from '../../project-store';

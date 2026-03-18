@@ -34,13 +34,13 @@ export function SchedulerSettings() {
   const [autoStart, setAutoStart] = useState(true);
 
   const [scheduledTasks] = useState<ScheduledTaskEntry[]>([
-    { id: 'sched-1', name: 'Daily security scan', cron: '0 22 * * *', action: 'security_scan', priority: 2, status: 'pending', nextRun: 'Tonight 22:00' },
-    { id: 'sched-2', name: 'Weekly dependency update', cron: '0 3 * * 1', action: 'update_deps', priority: 5, status: 'pending', nextRun: 'Monday 03:00' },
-    { id: 'sched-3', name: 'Hourly log check', cron: '0 * * * *', action: 'check_logs', priority: 8, status: 'paused', nextRun: '—' },
+    { id: 'sched-1', name: t('tasks.sampleTasks.dailyScan.name'), cron: '0 22 * * *', action: 'security_scan', priority: 2, status: 'pending', nextRun: t('tasks.sampleTasks.dailyScan.nextRun') },
+    { id: 'sched-2', name: t('tasks.sampleTasks.weeklyUpdate.name'), cron: '0 3 * * 1', action: 'update_deps', priority: 5, status: 'pending', nextRun: t('tasks.sampleTasks.weeklyUpdate.nextRun') },
+    { id: 'sched-3', name: t('tasks.sampleTasks.hourlyLog.name'), cron: '0 * * * *', action: 'check_logs', priority: 8, status: 'paused', nextRun: '—' },
   ]);
 
   const [chains] = useState<TaskChainEntry[]>([
-    { name: 'CI Pipeline', tasks: ['Lint', 'Test', 'Build', 'Deploy'], currentStep: 0 },
+    { name: t('tasks.sampleTasks.ciPipeline'), tasks: ['Lint', 'Test', 'Build', 'Deploy'], currentStep: 0 },
   ]);
 
   const statusColor: Record<string, string> = {
@@ -218,7 +218,7 @@ export function SchedulerSettings() {
                   { expr: '0 3 * * 1', desc: t('tasks.cronReference.examples.weekly') },
                   { expr: '0 0 1 * *', desc: t('tasks.cronReference.examples.monthly') },
                   { expr: '0 9-17 * * 1-5', desc: t('tasks.cronReference.examples.workHours') },
-                ].map((row, index) => (
+                ].map((row) => (
                   <tr key={`cron-${row.expr}`} className="border-b border-border last:border-0">
                     <td className="px-3 py-1.5 font-mono">{row.expr}</td>
                     <td className="px-3 py-1.5 text-muted-foreground">{row.desc}</td>

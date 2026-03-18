@@ -490,14 +490,14 @@ export function CleanProviderCard({
           {/* Statut du provider */}
           {provider.realUsageData?.isRateLimited && (
             <div className="flex items-center justify-between text-xs text-orange-600">
-              <span>{t('sections.accounts.providerCard.status')}</span>
+              <span>{t('sections.accounts.providerCard.statusLabel')}</span>
               <span className="font-medium">{t('sections.accounts.providerCard.rateLimited')}</span>
             </div>
           )}
 
           {provider.realUsageData?.needsReauthentication && (
             <div className="flex items-center justify-between text-xs text-red-600">
-              <span>{t('sections.accounts.providerCard.status')}</span>
+              <span>{t('sections.accounts.providerCard.statusLabel')}</span>
               <span className="font-medium">{t('sections.accounts.providerCard.needsReauth')}</span>
             </div>
           )}

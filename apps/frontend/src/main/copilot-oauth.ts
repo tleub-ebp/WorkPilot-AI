@@ -149,20 +149,20 @@ async function getGitHubUserProfile(accessToken: string): Promise<{
 }
 
 /**
- * Check Copilot access with GitHub token
+ * Check Copilot access by exchanging the GitHub token for a Copilot session token.
+ * The token-exchange endpoint returns 200 only when the account has an active Copilot subscription.
  */
 async function checkCopilotAccess(accessToken: string): Promise<boolean> {
   try {
-    // Try to access Copilot API endpoint
-    const response = await fetch('https://api.github.com/copilot', {
+    const response = await fetch('https://api.github.com/copilot_internal/v2/token', {
       headers: {
         'Authorization': `token ${accessToken}`,
-        'User-Agent': 'WorkPilot-AI',
+        'editor-version': 'vscode/1.95.3',
+        'editor-plugin-version': 'copilot-chat/0.22.4',
+        'user-agent': 'GitHubCopilotChat/0.22.4',
       },
     });
-
-    // If we get any response (even error), Copilot access is available
-    return true;
+    return response.ok;
   } catch (error) {
     console.warn('[Copilot OAuth] Copilot access check failed:', error);
     return false;

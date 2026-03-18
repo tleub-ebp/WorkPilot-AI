@@ -65,7 +65,7 @@ const providerCategories: Record<string, string> = {
 };
 
 export function CleanProviderSection({ 
-  settings: propsSettings, 
+  settings: _propsSettings,
   onSettingsChange: propsOnSettingsChange, 
   isOpen 
 }: Readonly<CleanProviderSectionProps>) {
@@ -83,6 +83,7 @@ export function CleanProviderSection({
   // Real data states
   const [profileUsageData, setProfileUsageData] = useState<Map<string, ProfileUsageSummary>>(new Map());
   const [providerTestResults, setProviderTestResults] = useState<Map<string, { date: string; success: boolean }>>(new Map());
+  const [credentialUsageData, setCredentialUsageData] = useState<Map<string, { usage: { sessionPercent?: number; weeklyPercent?: number; needsReauthentication?: boolean }; profileId?: string; profileName?: string }>>(new Map());
 
   // Use store directly for real-time updates (like ProviderSelector)
   const { profiles, settings: storeSettings, updateSettings } = useSettingsStore();
@@ -105,6 +106,7 @@ export function CleanProviderSection({
       loadConnectors();
       loadProfileUsageData();
       loadProviderTestResults();
+      loadCredentialManagerUsageData();
     }
   }, [isOpen]);
 
@@ -122,7 +124,7 @@ export function CleanProviderSection({
     }
   };
 
-  // Load profile usage data
+  // Load profile usage data (Claude OAuth profiles)
   const loadProfileUsageData = async () => {
     try {
       const result = await globalThis.electronAPI.requestAllProfilesUsage?.(true);
@@ -135,6 +137,47 @@ export function CleanProviderSection({
       }
     } catch (err) {
       console.warn('[CleanProviderSection] Failed to load profile usage data:', err);
+    }
+  };
+
+  // Load usage data from CredentialManager (Windsurf, etc.)
+  const loadCredentialManagerUsageData = async () => {
+    try {
+      if (!globalThis.electronAPI?.invoke) return;
+      // Trigger on-demand fetch for windsurf
+      globalThis.electronAPI.invoke('usage:getData', 'windsurf').catch(() => {});
+      // Get all cached usage data
+      const allUsage = await globalThis.electronAPI.invoke('usage:getAllData') as Record<string, { provider: string; profileId?: string; profileName?: string; usage: { sessionPercent?: number; weeklyPercent?: number; needsReauthentication?: boolean }; timestamp: number }>;
+      if (allUsage) {
+        const usageMap = new Map<string, { usage: { sessionPercent?: number; weeklyPercent?: number; needsReauthentication?: boolean }; profileId?: string; profileName?: string }>();
+        Object.entries(allUsage).forEach(([provider, data]) => {
+          usageMap.set(provider, { usage: data.usage, profileId: data.profileId, profileName: data.profileName });
+        });
+        setCredentialUsageData(usageMap);
+      }
+    } catch (err) {
+      console.warn('[CleanProviderSection] Failed to load credential usage data:', err);
+    }
+  };
+
+  // Silently test all configured providers that have never been tested
+  const autoTestConfiguredProviders = async (providerList: { id: string; isConfigured: boolean }[]) => {
+    const untested = providerList.filter(p => p.isConfigured && !providerTestResults.has(p.id));
+    for (const provider of untested) {
+      try {
+        const currentProfiles = useSettingsStore.getState().profiles;
+        ProviderService.setProfiles(currentProfiles);
+        const result = await ProviderService.testProvider(provider.id);
+        const testResult = { date: new Date().toISOString(), success: result.success };
+        setProviderTestResults(prev => new Map(prev).set(provider.id, testResult));
+        const currentSettings = useSettingsStore.getState().settings;
+        onSettingsChange({ ...currentSettings, [`testResult_${provider.id}`]: testResult });
+        if (result.success) {
+          setProviderStatus(prev => ({ ...prev, [provider.id]: true }));
+        }
+      } catch {
+        // Silent failure — don't block loading
+      }
     }
   };
 
@@ -249,6 +292,24 @@ export function CleanProviderSection({
       };
     }
 
+    // Fallback: if the provider is active but no API key was found,
+    // detect the real auth method from the registry and provider status.
+    if (providerStatus[providerId]) {
+      // CLI providers (e.g. Copilot via gh CLI) are configured without a key/profile
+      const registryProvider = getRegistryProvider(providerId);
+      if (registryProvider?.requiresCLI) {
+        return { hasKey: true, isOAuth: false, authMethod: 'cli' };
+      }
+      // Anthropic/OpenAI: active without an API key → user is authenticated via OAuth
+      if (registryProvider?.requiresOAuth) {
+        return {
+          hasKey: true,
+          isOAuth: true,
+          authMethod: 'oauth'
+        };
+      }
+    }
+
     return { hasKey: false, authMethod };
   };
 
@@ -336,11 +397,32 @@ export function CleanProviderSection({
   // Transformer les providers statiques en providers pour la grille avec mémorisation
   const providers = useMemo(() => {
     return staticProviders.map(provider => {
-      // Get real usage data for this provider
-      const usageData = Array.from(profileUsageData.values()).find(profile => 
-        profile.profileName?.toLowerCase().includes(provider.name.toLowerCase()) ||
-        profile.profileId.includes(provider.name)
-      );
+      // Get real usage data from Claude OAuth profiles
+      let profileUsage: ProfileUsageSummary | undefined;
+      if (provider.name === 'anthropic' || provider.name === 'claude') {
+        // requestAllProfilesUsage only returns Claude/Anthropic profiles — use the active one
+        profileUsage = Array.from(profileUsageData.values()).find(p => p.isActive)
+          ?? Array.from(profileUsageData.values())[0];
+      } else {
+        profileUsage = Array.from(profileUsageData.values()).find(profile =>
+          profile.profileName?.toLowerCase().includes(provider.name.toLowerCase()) ||
+          profile.profileId.includes(provider.name)
+        );
+      }
+
+      // Get usage data from CredentialManager (Windsurf, etc.) as fallback
+      const credUsage = credentialUsageData.get(provider.name);
+      const usageData: ProfileUsageSummary | undefined = profileUsage ?? (credUsage ? {
+        profileId: credUsage.profileId || provider.name,
+        profileName: credUsage.profileName || provider.label,
+        sessionPercent: credUsage.usage.sessionPercent ?? 0,
+        weeklyPercent: credUsage.usage.weeklyPercent ?? 0,
+        isAuthenticated: true,
+        isRateLimited: false,
+        availabilityScore: 100,
+        isActive: true,
+        needsReauthentication: credUsage.usage.needsReauthentication,
+      } : undefined);
 
       // Get test result for this provider
       const testResult = providerTestResults.get(provider.name);
@@ -363,15 +445,22 @@ export function CleanProviderSection({
         realUsageData: usageData,
         realApiKeyInfo: apiKeyInfo,
       };
-      
+
       return mappedProvider;
     });
-  }, [staticProviders, providerStatus, profileUsageData, providerTestResults, profiles, t]);
+  }, [staticProviders, providerStatus, profileUsageData, credentialUsageData, providerTestResults, profiles, t]);
 
   // Synchronize providersState with providers (avoid infinite loop)
   useEffect(() => {
     setProvidersState(providers);
   }, [providers.length, providers.map(p => `${p.id}-${p.isConfigured}-${p.lastTested}`).join(',')]);
+
+  // Auto-test configured providers that have never been tested (runs after providers load)
+  useEffect(() => {
+    if (isOpen && providers.length > 0) {
+      autoTestConfiguredProviders(providers);
+    }
+  }, [isOpen, providers.length]);
 
   const handleProviderActivated = async (providerId: string) => {
     // 1. Update ProviderContext so UI components (UsageIndicator, etc.) reflect the new provider

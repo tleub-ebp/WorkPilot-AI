@@ -1335,10 +1335,25 @@ export class CredentialManager extends EventEmitter {
       );
     }
 
-    // Fallback: if activeCredential is not set but Windsurf is configured in settings.json
-    // (e.g., SSO token saved via ProviderConfigDialog "Save and Connect" button),
-    // inject SELECTED_LLM_PROVIDER=windsurf so the backend picks up the right provider.
+    // OAuth providers (Copilot, Windsurf SSO without key, custom OAuth, etc.)
+    // When the active credential is OAuth type with an explicit non-Claude provider,
+    // signal the provider to the backend via SELECTED_LLM_PROVIDER.
+    // This ensures providers like Copilot (which use external CLI auth like `gh`)
+    // are correctly routed instead of silently falling back to Claude.
     if (this.activeCredential?.type !== 'api_key') {
+      const oauthProvider = this.activeCredential?.provider;
+      if (oauthProvider && oauthProvider !== 'claude' && oauthProvider !== 'anthropic') {
+        // Non-Claude OAuth provider: signal provider name so backend routes correctly.
+        // Auth is handled externally (e.g., `gh auth` for Copilot, SSO for Windsurf).
+        env.SELECTED_LLM_PROVIDER = oauthProvider;
+        return Object.fromEntries(
+          Object.entries(env).filter(([_, value]) => value.trim() !== '')
+        );
+      }
+
+      // No explicit non-Claude provider — check for globalWindsurfApiKey fallback.
+      // This handles SSO/enterprise Windsurf users who configured a key in settings
+      // but have no explicit activeCredential (e.g., legacy configuration).
       try {
         const settings = readSettingsFile();
         const windsurfKey = settings?.globalWindsurfApiKey as string | undefined;

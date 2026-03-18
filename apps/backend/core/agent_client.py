@@ -371,19 +371,21 @@ class ClaudeAgentClient(AgentClient):
 
 
 class CopilotAgentClient(AgentClient):
-    """Agent client backed by GitHub Copilot Models API.
+    """Agent client backed by GitHub Copilot API.
 
-    Uses the OpenAI-compatible endpoint at:
-        https://api.github.com/copilot/chat/completions
+    Authentication flow (two-step):
+    1. Exchange a GitHub OAuth token (ghu_... / ghp_...) for a short-lived
+       Copilot session token via:
+           GET https://api.github.com/copilot_internal/v2/token
+    2. Use that session token as Bearer auth against:
+           POST https://api.githubcopilot.com/chat/completions
 
-    This enables:
-    - Tool-use loops (function calling)
-    - Parallel sub-agent simulation via concurrent API sessions
-    - Streaming responses
+    The session token expires roughly every 30 minutes and is refreshed
+    automatically before each request.
 
-    Authentication:
-    - Uses GITHUB_TOKEN environment variable
-    - Token must have Copilot access scope
+    Required IDE headers (enforced by GitHub, missing → 400/421):
+        editor-version, editor-plugin-version, Copilot-Integration-Id,
+        openai-intent, user-agent, x-github-api-version
 
     Sub-agent Strategy:
     When sub-agents are defined, CopilotAgentClient spawns parallel
@@ -391,6 +393,14 @@ class CopilotAgentClient(AgentClient):
     the sub-agent's specialized system prompt. Results are collected
     and injected back into the orchestrator's context as tool results.
     """
+
+    # IDE impersonation headers — required by the Copilot API gateway.
+    # Omitting any of these causes 400 / 421 errors on Copilot Enterprise.
+    _IDE_HEADERS = {
+        "editor-version": "vscode/1.95.3",
+        "editor-plugin-version": "copilot-chat/0.22.4",
+        "user-agent": "GitHubCopilotChat/0.22.4",
+    }
 
     def __init__(
         self,
@@ -411,22 +421,32 @@ class CopilotAgentClient(AgentClient):
         self.cwd = cwd
         self.max_turns = max_turns
         self.github_token = github_token or os.environ.get("GITHUB_TOKEN", "")
-        self._api_base = "https://api.github.com/copilot/chat/completions"
+
+        # Real Copilot chat endpoint (not api.github.com)
+        self._api_base = "https://api.githubcopilot.com/chat/completions"
+        # Token-exchange endpoint: GitHub token → short-lived Copilot session token
+        self._token_exchange_url = "https://api.github.com/copilot_internal/v2/token"
+
         self._messages: list[dict[str, Any]] = []
         self._pending_query: str | None = None
         self._http_client: Any = None
 
+        # Copilot session token cache (expires ~30 min)
+        self._copilot_token: str = ""
+        self._copilot_token_expires_at: float = 0.0
+
     def _get_http_client(self):
-        """Lazy-init an aiohttp ClientSession."""
+        """Lazy-init an aiohttp ClientSession with shared IDE headers."""
         if self._http_client is None:
             try:
                 import aiohttp
 
+                # Authorization is injected per-request (token refreshes)
                 self._http_client = aiohttp.ClientSession(
                     headers={
-                        "Authorization": f"Bearer {self.github_token}",
                         "Content-Type": CONTENT_TYPE_JSON,
                         "Accept": CONTENT_TYPE_JSON,
+                        **self._IDE_HEADERS,
                     }
                 )
             except ImportError:
@@ -435,6 +455,40 @@ class CopilotAgentClient(AgentClient):
                     "Install it with: pip install aiohttp"
                 )
         return self._http_client
+
+    async def _get_copilot_token(self) -> str:
+        """Return a valid Copilot session token, refreshing if needed.
+
+        GitHub's Copilot API does not accept raw GitHub PATs directly.
+        The raw token must first be exchanged at copilot_internal/v2/token
+        for a short-lived session token (~30 min TTL).
+        """
+        import time
+        import aiohttp
+
+        # Return cached token if still valid (60-second safety buffer)
+        if self._copilot_token and time.time() < self._copilot_token_expires_at - 60:
+            return self._copilot_token
+
+        exchange_headers = {
+            "Authorization": f"token {self.github_token}",
+            **self._IDE_HEADERS,
+        }
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self._token_exchange_url, headers=exchange_headers) as resp:
+                if resp.status != 200:
+                    error_text = await resp.text()
+                    raise ValueError(
+                        f"Copilot token exchange failed ({resp.status}): {error_text}"
+                    )
+                data = await resp.json()
+
+        self._copilot_token = data["token"]
+        # expires_at is a Unix timestamp; default to 30 min if absent
+        self._copilot_token_expires_at = data.get("expires_at", time.time() + 1800)
+        logger.info("[CopilotAgentClient] Session token refreshed")
+        return self._copilot_token
 
     async def query(self, prompt: str) -> None:
         """Queue a prompt for the next receive_response() call."""
@@ -464,14 +518,21 @@ class CopilotAgentClient(AgentClient):
         self._pending_query = None
 
         try:
+            copilot_token = await self._get_copilot_token()
             session = self._get_http_client()
             payload = {
                 "model": self.model,
                 "messages": messages,
                 "stream": False,
             }
+            request_headers = {
+                "Authorization": f"Bearer {copilot_token}",
+                "Copilot-Integration-Id": "vscode-chat",
+                "openai-intent": "conversation-panel",
+                "x-github-api-version": "2023-07-07",
+            }
 
-            async with session.post(self._api_base, json=payload) as resp:
+            async with session.post(self._api_base, json=payload, headers=request_headers) as resp:
                 if resp.status != 200:
                     error_text = await resp.text()
                     yield AgentMessage(
@@ -567,15 +628,22 @@ class CopilotAgentClient(AgentClient):
                 {"role": "user", "content": context_prompt},
             ]
 
+            copilot_token = await self._get_copilot_token()
             session = self._get_http_client()
             payload = {
                 "model": defn.model if defn.model != "inherit" else self.model,
                 "messages": messages,
                 "stream": False,
             }
+            request_headers = {
+                "Authorization": f"Bearer {copilot_token}",
+                "Copilot-Integration-Id": "vscode-chat",
+                "openai-intent": "conversation-panel",
+                "x-github-api-version": "2023-07-07",
+            }
 
             try:
-                async with session.post(self._api_base, json=payload) as resp:
+                async with session.post(self._api_base, json=payload, headers=request_headers) as resp:
                     if resp.status != 200:
                         error_text = await resp.text()
                         return (name, f"Error ({resp.status}): {error_text}")
