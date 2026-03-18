@@ -25,6 +25,17 @@ import { appLog } from '../../app-logger';
 import { readSettingsFile } from '../../settings-utils';
 
 /**
+ * Returns true if the currently active provider requires Claude OAuth authentication.
+ * Non-Claude providers (Windsurf, OpenAI, Google, etc.) handle their own auth
+ * and should not be blocked by the Claude profile auth check.
+ */
+function requiresClaudeAuth(): boolean {
+  const settings = readSettingsFile();
+  const selectedProvider = (settings?.selectedProvider as string | undefined)?.toLowerCase();
+  return !selectedProvider || selectedProvider === 'claude' || selectedProvider === 'anthropic';
+}
+
+/**
  * Convert TaskMetadata to SpecCreationMetadata for spec creation
  * This handles the type incompatibility between the two metadata types
  */
@@ -288,8 +299,10 @@ export function registerTaskExecutionHandlers(
         return;
       }
 
-      // Check authentication - Claude requires valid auth to run tasks
-      if (!profileManager.hasValidAuth()) {
+      // Check authentication - Claude requires valid auth to run tasks.
+      // Skip this check for non-Claude providers (Windsurf, OpenAI, Google, etc.)
+      // which handle their own authentication independently.
+      if (requiresClaudeAuth() && !profileManager.hasValidAuth()) {
         console.warn('[TASK_START] No valid authentication for active profile');
         mainWindow.webContents.send(
           IPC_CHANNELS.TASK_ERROR,
@@ -903,7 +916,7 @@ print(json.dumps(result))
             return { success: false, error: initResult.error };
           }
           const profileManager = initResult.profileManager;
-          if (!profileManager.hasValidAuth()) {
+          if (requiresClaudeAuth() && !profileManager.hasValidAuth()) {
             console.warn('[TASK_UPDATE_STATUS] No valid authentication for active profile');
             if (mainWindow) {
               mainWindow.webContents.send(
@@ -1335,7 +1348,7 @@ print(json.dumps(result))
             };
           }
           const profileManager = initResult.profileManager;
-          if (!profileManager.hasValidAuth()) {
+          if (requiresClaudeAuth() && !profileManager.hasValidAuth()) {
             console.warn('[Recovery] Auth check failed, cannot auto-restart task');
             // Recovery succeeded but we can't restart without auth
             return {

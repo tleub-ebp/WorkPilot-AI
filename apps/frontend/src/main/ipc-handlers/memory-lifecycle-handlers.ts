@@ -28,8 +28,9 @@ async function runRunner(
   projectDir: string,
   args: string[],
 ): Promise<{ success: boolean; data?: unknown; error?: string }> {
-  const pythonPath = await getConfiguredPythonPath(projectDir);
-  const { cmd, cmdArgs } = parsePythonCommand(pythonPath, [getRunnerPath(), ...args]);
+  const pythonPath = getConfiguredPythonPath();
+  const [cmd, pythonBaseArgs] = parsePythonCommand(pythonPath);
+  const cmdArgs = [...pythonBaseArgs, getRunnerPath(), ...args];
 
   return new Promise((resolve) => {
     const env = { ...process.env } as Record<string, string>;
