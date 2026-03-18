@@ -411,6 +411,7 @@ class CopilotAgentClient(AgentClient):
         cwd: str | None = None,
         max_turns: int = 50,
         github_token: str | None = None,
+        agent_type: str = "coder",
     ):
         import os
 
@@ -420,6 +421,7 @@ class CopilotAgentClient(AgentClient):
         self.agents = agents or {}
         self.cwd = cwd
         self.max_turns = max_turns
+        self._agent_type = agent_type
         self.github_token = github_token or os.environ.get("GITHUB_TOKEN", "") or self._get_github_token_from_cli()
 
         # Real Copilot chat endpoint (not api.github.com)
@@ -430,6 +432,8 @@ class CopilotAgentClient(AgentClient):
         self._messages: list[dict[str, Any]] = []
         self._pending_query: str | None = None
         self._http_client: Any = None
+        self._tool_executor: Any = None
+        self._tool_definitions: list[dict[str, Any]] = []
 
         # Copilot session token cache (expires ~30 min)
         self._copilot_token: str = ""
@@ -542,109 +546,222 @@ class CopilotAgentClient(AgentClient):
     async def receive_response(self) -> AsyncIterator[AgentMessage]:
         """Execute the queued prompt against the Copilot Models API.
 
-        Implements a tool-use loop similar to LiteLLMRuntime:
-        1. Send messages to API
-        2. If response contains tool_calls, yield tool-use blocks
-        3. Wait for tool results (not handled here — caller must inject)
-        4. Repeat until no more tool calls or max_turns reached
-
-        For the initial implementation, this performs a single API call
-        and yields the response. Tool-use loops will be implemented
-        in Step 13.
+        Implements a full multi-turn tool-use loop:
+        1. Send messages + tool definitions to API
+        2. If response contains tool_calls → execute each tool locally, add results, continue
+        3. If no tool_calls → yield final text response and stop
+        4. Repeat up to max_turns
         """
+        import json as _json
+
         if not self._pending_query:
             return
 
-        # Build messages
-        messages = []
-        if self.system_prompt:
-            messages.append({"role": "system", "content": self.system_prompt})
-        messages.append({"role": "user", "content": self._pending_query})
+        prompt = self._pending_query
         self._pending_query = None
 
-        try:
-            copilot_token = await self._get_copilot_token()
-            session = self._get_http_client()
-            payload = {
+        messages: list[dict[str, Any]] = []
+        if self.system_prompt:
+            messages.append({"role": "system", "content": self.system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        # Build OpenAI-format tool definitions
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": td["name"],
+                    "description": td.get("description", ""),
+                    "parameters": td.get("parameters", {"type": "object", "properties": {}}),
+                },
+            }
+            for td in self._tool_definitions
+        ]
+
+        request_headers = {
+            "Authorization": "",  # set per-call after token refresh
+            "Copilot-Integration-Id": "vscode-chat",
+            "openai-intent": "conversation-panel",
+            "x-github-api-version": "2023-07-07",
+        }
+
+        logger.info(
+            f"[CopilotAgentClient] Starting session (model={self.model}, "
+            f"tools={len(tools)}, prompt_len={len(prompt)})"
+        )
+        print(
+            f"[CopilotAgentClient] 🤖 Starting Copilot session "
+            f"(model={self.model}, {len(tools)} tools)",
+            flush=True,
+        )
+
+        session = self._get_http_client()
+
+        for turn in range(self.max_turns):
+            try:
+                copilot_token = await self._get_copilot_token()
+            except Exception as e:
+                logger.error(f"[CopilotAgentClient] Token refresh failed: {e}")
+                yield AgentMessage(
+                    role=MessageRole.SYSTEM,
+                    content=[ContentBlock(type=ContentBlockType.TEXT, text=f"Copilot auth error: {e}")],
+                )
+                return
+
+            request_headers["Authorization"] = f"Bearer {copilot_token}"
+
+            payload: dict[str, Any] = {
                 "model": self.model,
                 "messages": messages,
                 "stream": False,
             }
-            request_headers = {
-                "Authorization": f"Bearer {copilot_token}",
-                "Copilot-Integration-Id": "vscode-chat",
-                "openai-intent": "conversation-panel",
-                "x-github-api-version": "2023-07-07",
-            }
+            if tools:
+                payload["tools"] = tools
+                payload["tool_choice"] = "auto"
 
-            async with session.post(self._api_base, json=payload, headers=request_headers) as resp:
-                if resp.status != 200:
-                    error_text = await resp.text()
-                    yield AgentMessage(
-                        role=MessageRole.SYSTEM,
-                        content=[
-                            ContentBlock(
-                                type=ContentBlockType.TEXT,
-                                text=f"Copilot API error ({resp.status}): {error_text}",
-                            )
-                        ],
-                    )
-                    return
+            logger.info(
+                f"[CopilotAgentClient] Turn {turn + 1}/{self.max_turns}: "
+                f"sending {len(messages)} messages..."
+            )
 
-                data = await resp.json()
-
-            # Parse response
-            choices = data.get("choices", [])
-            if not choices:
+            try:
+                async with session.post(self._api_base, json=payload, headers=request_headers) as resp:
+                    if resp.status != 200:
+                        error_text = await resp.text()
+                        logger.error(f"[CopilotAgentClient] API error ({resp.status}): {error_text[:500]}")
+                        yield AgentMessage(
+                            role=MessageRole.SYSTEM,
+                            content=[
+                                ContentBlock(
+                                    type=ContentBlockType.TEXT,
+                                    text=f"Copilot API error ({resp.status}): {error_text}",
+                                )
+                            ],
+                        )
+                        return
+                    data = await resp.json()
+            except Exception as e:
+                logger.error(f"[CopilotAgentClient] Request failed: {e}")
+                yield AgentMessage(
+                    role=MessageRole.SYSTEM,
+                    content=[ContentBlock(type=ContentBlockType.TEXT, text=f"Copilot API error: {e}")],
+                )
                 return
 
-            choice = choices[0]
-            message = choice.get("message", {})
-            content = message.get("content", "")
+            choices = data.get("choices", [])
+            if not choices:
+                logger.warning(f"[CopilotAgentClient] Empty choices in response")
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[ContentBlock(type=ContentBlockType.TEXT, text="(Empty response from Copilot)")],
+                )
+                return
 
-            # Check for tool calls
+            message = choices[0].get("message", {})
+            content = message.get("content") or ""
             tool_calls = message.get("tool_calls", [])
+            finish_reason = choices[0].get("finish_reason", "")
 
-            blocks: list[ContentBlock] = []
+            logger.info(
+                f"[CopilotAgentClient] Turn {turn + 1}: "
+                f"content_len={len(content)}, tool_calls={len(tool_calls)}, "
+                f"finish_reason={finish_reason}"
+            )
 
+            # Yield text content if present
             if content:
-                blocks.append(ContentBlock(type=ContentBlockType.TEXT, text=content))
-
-            for tc in tool_calls:
-                import json
-
-                func = tc.get("function", {})
-                try:
-                    args = json.loads(func.get("arguments", "{}"))
-                except (json.JSONDecodeError, TypeError):
-                    args = {}
-
-                blocks.append(
-                    ContentBlock(
-                        type=ContentBlockType.TOOL_USE,
-                        tool_name=func.get("name", ""),
-                        tool_id=tc.get("id", "unknown"),
-                        tool_input=args,
-                    )
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[ContentBlock(type=ContentBlockType.TEXT, text=content)],
                 )
 
-            yield AgentMessage(role=MessageRole.ASSISTANT, content=blocks)
-
-            # If there were tool calls, the caller is expected to handle
-            # tool execution and feed results back. For sub-agents,
-            # see run_subagents().
-
-        except Exception as e:
-            logger.error(f"[CopilotAgentClient] API error: {e}")
-            yield AgentMessage(
-                role=MessageRole.SYSTEM,
-                content=[
-                    ContentBlock(
-                        type=ContentBlockType.TEXT,
-                        text=f"Copilot API error: {e}",
+            # No tool calls → session complete
+            if not tool_calls:
+                if not content:
+                    yield AgentMessage(
+                        role=MessageRole.ASSISTANT,
+                        content=[ContentBlock(type=ContentBlockType.TEXT, text="(No response from Copilot)")],
                     )
-                ],
-            )
+                logger.info(f"[CopilotAgentClient] Session complete after {turn + 1} turn(s)")
+                return
+
+            # Add assistant message (with tool_calls) to conversation history
+            assistant_msg: dict[str, Any] = {"role": "assistant"}
+            if content:
+                assistant_msg["content"] = content
+            assistant_msg["tool_calls"] = tool_calls
+            messages.append(assistant_msg)
+
+            # Execute each tool call
+            for tc in tool_calls:
+                func = tc.get("function", {})
+                tool_name = func.get("name", "")
+                tool_id = tc.get("id", f"call_{turn}_{tool_name}")
+
+                try:
+                    args = _json.loads(func.get("arguments", "{}"))
+                except (_json.JSONDecodeError, TypeError):
+                    args = {}
+
+                logger.info(
+                    f"[CopilotAgentClient] Turn {turn + 1}: tool_call {tool_name}({list(args.keys())})"
+                )
+                print(f"[CopilotAgentClient] 🔧 Tool: {tool_name}", flush=True)
+
+                # Yield TOOL_USE block so session handler can log it
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TOOL_USE,
+                            tool_name=tool_name,
+                            tool_id=tool_id,
+                            tool_input=args,
+                        )
+                    ],
+                )
+
+                # Execute tool locally
+                result_text = ""
+                is_error = False
+                if self._tool_executor:
+                    try:
+                        result = await self._tool_executor.execute(tool_name, args)
+                        result_text = str(result) if result is not None else ""
+                    except Exception as e:
+                        result_text = f"Tool error: {e}"
+                        is_error = True
+                        logger.warning(f"[CopilotAgentClient] Tool {tool_name} failed: {e}")
+                else:
+                    result_text = "Tool executor not available"
+                    is_error = True
+
+                # Yield TOOL_RESULT block so session handler can log it
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TOOL_RESULT,
+                            tool_use_id=tool_id,
+                            is_error=is_error,
+                            result_content=result_text,
+                        )
+                    ],
+                )
+
+                # Add tool result for next API call
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_id,
+                    "content": result_text[:10000],  # Truncate large results
+                })
+
+            # Continue loop — next turn sends updated messages with tool results
+
+        logger.warning(
+            f"[CopilotAgentClient] Reached max_turns ({self.max_turns}) — stopping tool loop"
+        )
+        print(f"[CopilotAgentClient] ⚠️ Reached max turns ({self.max_turns})", flush=True)
 
     async def run_subagents(
         self,
@@ -723,6 +840,18 @@ class CopilotAgentClient(AgentClient):
         return "copilot"
 
     async def __aenter__(self):
+        if self.cwd:
+            try:
+                from core.runtimes.tool_executor import ToolExecutor, get_tool_definitions
+
+                self._tool_executor = ToolExecutor(self.cwd)
+                self._tool_definitions = get_tool_definitions(self._agent_type)
+                logger.info(
+                    f"[CopilotAgentClient] Tool execution enabled: "
+                    f"{len(self._tool_definitions)} tools for agent_type={self._agent_type}"
+                )
+            except Exception as e:
+                logger.warning(f"[CopilotAgentClient] Tool executor init failed (text-only mode): {e}")
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):

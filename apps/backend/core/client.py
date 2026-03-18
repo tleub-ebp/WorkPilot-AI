@@ -1073,6 +1073,7 @@ def create_agent_client(
             allowed_tools=allowed_tools_list,
             agents=copilot_agents,
             cwd=str(project_dir.resolve()),
+            agent_type=agent_type,
         )
 
     elif provider == "claude":
