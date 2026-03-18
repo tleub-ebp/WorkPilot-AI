@@ -523,7 +523,7 @@ export function CleanProviderSection({
   // Synchronize providersState with providers (avoid infinite loop)
   useEffect(() => {
     setProvidersState(providers);
-  }, [providers.length, providers.map(p => `${p.id}-${p.isConfigured}-${p.lastTested}`).join(',')]);
+  }, [providers.length, providers.map(p => `${p.id}-${p.isConfigured}-${p.lastTested}-${p.realUsageData?.isRateLimited}-${p.realUsageData?.sessionPercent}-${p.realUsageData?.weeklyPercent}`).join(',')]);
 
   // Auto-test configured providers that have never been tested (runs after providers load)
   useEffect(() => {

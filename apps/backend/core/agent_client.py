@@ -454,17 +454,19 @@ class CopilotAgentClient(AgentClient):
         import subprocess
         import shutil
 
-        gh_exe = shutil.which("gh")
+        # Prefer GITHUB_CLI_PATH set by the Electron frontend (handles Windows where
+        # the subprocess PATH may not include the user's `gh` installation).
+        gh_exe = os.environ.get("GITHUB_CLI_PATH") or shutil.which("gh")
         if not gh_exe:
             logger.warning(
-                "[CopilotAgentClient] `gh` CLI not found on PATH. "
+                "[CopilotAgentClient] `gh` CLI not found on PATH or GITHUB_CLI_PATH. "
                 "Install GitHub CLI and run `gh auth login` to enable Copilot."
             )
             return ""
 
         try:
             result = subprocess.run(
-                [gh_exe, "auth", "token"],
+                [gh_exe, "auth", "token", "--hostname", "github.com"],
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -474,10 +476,12 @@ class CopilotAgentClient(AgentClient):
                 logger.info("[CopilotAgentClient] Retrieved GitHub token via `gh auth token`")
                 return token
             else:
+                stderr = result.stderr.strip()
                 logger.warning(
                     "[CopilotAgentClient] `gh auth token` returned no token "
-                    "(exit %d). Run `gh auth login` first.",
+                    "(exit %d, stderr: %s). Run `gh auth login` first.",
                     result.returncode,
+                    stderr or "(none)",
                 )
                 return ""
         except Exception as exc:
@@ -519,6 +523,12 @@ class CopilotAgentClient(AgentClient):
         if self._copilot_token and time.time() < self._copilot_token_expires_at - 60:
             return self._copilot_token
 
+        if not self.github_token:
+            raise ValueError(
+                "Copilot auth error: No GitHub token available. "
+                "Run `gh auth login` and ensure GitHub CLI is installed."
+            )
+
         exchange_headers = {
             "Authorization": f"token {self.github_token}",
             **self._IDE_HEADERS,
@@ -528,8 +538,14 @@ class CopilotAgentClient(AgentClient):
             async with session.get(self._token_exchange_url, headers=exchange_headers) as resp:
                 if resp.status != 200:
                     error_text = await resp.text()
+                    hint = (
+                        " (Hint: 404 usually means the GitHub account does not have an active "
+                        "Copilot subscription, or the token lacks Copilot scopes — run "
+                        "`gh auth refresh -s copilot` to add them.)"
+                        if resp.status == 404 else ""
+                    )
                     raise ValueError(
-                        f"Copilot token exchange failed ({resp.status}): {error_text}"
+                        f"Copilot token exchange failed ({resp.status}): {error_text}{hint}"
                     )
                 data = await resp.json()
 
