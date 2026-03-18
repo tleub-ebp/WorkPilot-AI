@@ -16,21 +16,28 @@ on:
 
 jobs:
   validate-version:
-    name: Validate beta version format
+    name: Validate version format
     runs-on: ubuntu-latest
     steps:
       - name: Validate version format
         run: |
           VERSION="${{ github.event.inputs.version }}"
 
-          # Check if version matches beta semver pattern
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-(beta|alpha|rc)\.[0-9]+$ ]]; then
-            echo "::error::Invalid version format: $VERSION"
-            echo "Version must match pattern: X.Y.Z-beta.N (e.g., 2.8.0-beta.1)"
+          # Accept any version format (including semver, beta, alpha, rc, or custom)
+          # Just check that it's not empty and doesn't contain invalid characters
+          if [[ -z "$VERSION" ]]; then
+            echo "::error::Version cannot be empty"
             exit 1
           fi
 
-          echo "Valid beta version: $VERSION"
+          # Basic validation: no spaces, no special characters except . - _
+          if [[ "$VERSION" =~ [^a-zA-Z0-9._-] ]]; then
+            echo "::error::Invalid version format: $VERSION"
+            echo "Version can only contain letters, numbers, dots, hyphens, and underscores"
+            exit 1
+          fi
+
+          echo "Valid version: $VERSION"
 
   create-tag:
     name: Create beta tag
