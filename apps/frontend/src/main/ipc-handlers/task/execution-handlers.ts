@@ -97,7 +97,12 @@ function syncTaskProvider(
 ): string | null {
   if (!task.metadata) return null;
 
-  const projectProvider = project.settings?.provider;
+  // Use project-level provider if set, otherwise fall back to the global
+  // selectedProvider from settings.json (set by the UI provider selector).
+  // Without this fallback, selecting a provider globally in the UI has no effect
+  // on task execution — the task silently falls back to Anthropic.
+  const projectProvider = project.settings?.provider
+    ?? (readSettingsFile()?.selectedProvider as string | undefined);
   const taskProvider = task.metadata.provider;
 
   // No change needed

@@ -1326,13 +1326,84 @@ export class CredentialManager extends EventEmitter {
         // still force SELECTED_LLM_PROVIDER so the backend routes to the right client.
         env.SELECTED_LLM_PROVIDER = selectedProvider;
         console.log(`[CredentialManager] getEnvironmentVariables: injecting SELECTED_LLM_PROVIDER=${selectedProvider} from settings.json (overrides active Claude profile)`);
+
         // For Copilot: auth is via `gh auth token` CLI — no extra env vars needed.
-        // For other providers: fall through to provider-specific handling below.
         if (selectedProvider === 'copilot') {
           return Object.fromEntries(
             Object.entries(env).filter(([_, value]) => value.trim() !== '')
           );
         }
+
+        // For other API-key providers: inject the global API key from settings.json.
+        // The activeCredential may be type:'oauth' (set by PROVIDER_SELECT handler)
+        // which bypasses the switch statement below — so we must inject the key here.
+        // Source priority: profiles.json → globalXxxApiKey in settings.json
+        const globalKeyMap: Record<string, string[]> = {
+          'openai':   ['globalOpenAIApiKey'],
+          'google':   ['globalGoogleDeepMindApiKey', 'globalGoogleApiKey'],
+          'gemini':   ['globalGoogleApiKey', 'globalGoogleDeepMindApiKey'],
+          'mistral':  ['globalMistralApiKey'],
+          'deepseek': ['globalDeepSeekApiKey'],
+          'grok':     ['globalGrokApiKey'],
+          'meta':     ['globalMetaApiKey'],
+          'aws':      ['globalAWSApiKey'],
+        };
+        const envVarMap: Record<string, string> = {
+          'openai':   'OPENAI_API_KEY',
+          'google':   'GOOGLE_API_KEY',
+          'gemini':   'GOOGLE_API_KEY',
+          'mistral':  'MISTRAL_API_KEY',
+          'deepseek': 'DEEPSEEK_API_KEY',
+          'grok':     'GROK_API_KEY',
+          'meta':     'META_API_KEY',
+          'aws':      'AWS_ACCESS_KEY_ID',
+        };
+        const baseUrlMap: Record<string, string> = {
+          'openai':   'OPENAI_BASE_URL',
+          'mistral':  'MISTRAL_BASE_URL',
+          'deepseek': 'DEEPSEEK_BASE_URL',
+          'meta':     'META_BASE_URL',
+          'aws':      'AWS_BEDROCK_ENDPOINT',
+        };
+
+        // Check profiles.json first (most specific), then global settings
+        let apiKey = '';
+        let baseUrl = '';
+        try {
+          const profiles = this.profiles;
+          const profile = profiles?.profiles.find(p => {
+            try {
+              return (p as any).provider === selectedProvider
+                || (p.baseUrl && p.baseUrl.toLowerCase().includes(selectedProvider));
+            } catch { return false; }
+          });
+          if ((profile as any)?.apiKey) {
+            apiKey = (profile as any).apiKey;
+            baseUrl = profile?.baseUrl ?? '';
+          }
+        } catch { /* profiles.json not available */ }
+
+        if (!apiKey) {
+          for (const key of (globalKeyMap[selectedProvider] ?? [])) {
+            const val = (settings as any)?.[key] as string | undefined;
+            if (val?.trim()) { apiKey = val.trim(); break; }
+          }
+        }
+
+        const envVar = envVarMap[selectedProvider];
+        if (envVar && apiKey) env[envVar] = apiKey;
+        const baseUrlVar = baseUrlMap[selectedProvider];
+        if (baseUrlVar && baseUrl) env[baseUrlVar] = baseUrl;
+
+        // Ollama: just inject base URL if configured
+        if (selectedProvider === 'ollama') {
+          const ollamaUrl = (settings as any)?.globalOllamaBaseUrl as string | undefined;
+          if (ollamaUrl?.trim()) env.OLLAMA_BASE_URL = ollamaUrl.trim();
+        }
+
+        return Object.fromEntries(
+          Object.entries(env).filter(([_, value]) => value.trim() !== '')
+        );
       }
     } catch {
       // settings file not available

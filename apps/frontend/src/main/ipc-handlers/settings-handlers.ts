@@ -396,43 +396,47 @@ export function registerSettingsHandlers(
     IPC_CHANNELS.PROVIDER_SELECT,
     async (_, provider: string): Promise<IPCResult<string>> => {
       try {
-        console.log(`[IPC:PROVIDER_SELECT] Attempting to select provider: ${provider}`);
-        
-        const result = await makeBackendRequest<{ selected: string }>(
-          `http://127.0.0.1:9000/providers/select?provider=${encodeURIComponent(provider)}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-        
-        if (result.success && result.data) {
-          console.log(`[IPC:PROVIDER_SELECT] Successfully selected provider: ${provider}`);
-          // Notify UsageMonitor to clear stale caches and fetch fresh usage data
-          try {
-            getUsageMonitor().onProviderSwitch(provider);
-          } catch (e) {
-            console.warn('[IPC:PROVIDER_SELECT] Failed to notify UsageMonitor:', e);
-          }
-          // Update CredentialManager so getEnvironmentVariables() injects the
-          // correct SELECTED_LLM_PROVIDER and provider-specific env vars
-          try {
-            await credentialManager.setActiveProvider(provider, 'oauth');
-          } catch (e) {
-            console.warn('[IPC:PROVIDER_SELECT] Failed to update CredentialManager:', e);
-          }
-          return { success: true, data: result.data.selected };
-        } else {
-          console.error(`[IPC:PROVIDER_SELECT] Failed to select provider ${provider}:`, result.error);
-          return { success: false, error: result.error };
+        console.log(`[IPC:PROVIDER_SELECT] Selecting provider: ${provider}`);
+
+        // CRITICAL: Update CredentialManager and persist to settings.json FIRST,
+        // regardless of whether the optional FastAPI backend is running.
+        // This ensures SELECTED_LLM_PROVIDER is correctly injected into every
+        // agent subprocess so the Python backend routes to the right LLM client.
+        // Without this, a task would silently fall back to Anthropic whenever
+        // the FastAPI server is down.
+        try {
+          await credentialManager.setActiveProvider(provider, 'oauth');
+          console.log(`[IPC:PROVIDER_SELECT] CredentialManager updated: selectedProvider=${provider}`);
+        } catch (e) {
+          console.warn('[IPC:PROVIDER_SELECT] Failed to update CredentialManager:', e);
         }
+
+        // Notify UsageMonitor to clear stale caches for the new provider
+        try {
+          getUsageMonitor().onProviderSwitch(provider);
+        } catch (e) {
+          console.warn('[IPC:PROVIDER_SELECT] Failed to notify UsageMonitor:', e);
+        }
+
+        // Optionally notify the FastAPI backend (for LLM router feature).
+        // This is best-effort — the backend may not be running for non-router users.
+        makeBackendRequest<{ selected: string }>(
+          `http://127.0.0.1:9000/providers/select?provider=${encodeURIComponent(provider)}`,
+          { method: 'POST', headers: { 'Content-Type': 'application/json' } }
+        ).then(result => {
+          if (result.success) {
+            console.log(`[IPC:PROVIDER_SELECT] FastAPI backend notified: ${provider}`);
+          }
+        }).catch(() => {
+          // Backend not running — not an error, provider is already persisted above
+        });
+
+        return { success: true, data: provider };
       } catch (error) {
         console.error(`[IPC:PROVIDER_SELECT] Unexpected error for provider ${provider}:`, error);
-        return { 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Unexpected error' 
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unexpected error'
         };
       }
     }
