@@ -30,8 +30,9 @@ async function runRunner(
   projectDir: string,
   args: string[],
 ): Promise<{ success: boolean; data?: unknown; error?: string }> {
-  const pythonPath = await getConfiguredPythonPath(projectDir);
-  const { cmd, cmdArgs } = parsePythonCommand(pythonPath, [getRunnerPath(), ...args]);
+  const pythonPath = getConfiguredPythonPath();
+  const [cmd, pythonBaseArgs] = parsePythonCommand(pythonPath);
+  const cmdArgs = [...pythonBaseArgs, getRunnerPath(), ...args];
 
   return new Promise((resolve) => {
     const env = { ...process.env } as Record<string, string>;
@@ -43,7 +44,7 @@ async function runRunner(
           if (!trimmed || trimmed.startsWith('#')) continue;
           const eqIdx = trimmed.indexOf('=');
           if (eqIdx < 0) continue;
-          env[trimmed.slice(0, eqIdx).trim()] = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+          env[trimmed.slice(0, eqIdx).trim()] = trimmed.slice(eqIdx + 1).trim().replaceAll(/^["']|["']$/g, '');
         }
       } catch { /* ignore */ }
     }
@@ -77,7 +78,7 @@ function readCicdConfig(projectDir: string): Record<string, string> {
       if (!trimmed.startsWith('CICD_')) continue;
       const eqIdx = trimmed.indexOf('=');
       if (eqIdx < 0) continue;
-      result[trimmed.slice(0, eqIdx).trim()] = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+      result[trimmed.slice(0, eqIdx).trim()] = trimmed.slice(eqIdx + 1).trim().replaceAll(/^["']|["']$/g, '');
     }
   } catch { /* ignore */ }
   return result;

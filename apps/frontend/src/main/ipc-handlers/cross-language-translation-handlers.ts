@@ -37,8 +37,9 @@ async function runRunner(
     _currentProcess = null;
   }
 
-  const pythonPath = await getConfiguredPythonPath(projectDir);
-  const { cmd, cmdArgs } = parsePythonCommand(pythonPath, [getRunnerPath(), ...args]);
+  const pythonPath = getConfiguredPythonPath();
+  const [cmd, pythonBaseArgs] = parsePythonCommand(pythonPath);
+  const cmdArgs = [...pythonBaseArgs, getRunnerPath(), ...args];
 
   return new Promise((resolve) => {
     const env = { ...process.env } as Record<string, string>;
@@ -50,7 +51,7 @@ async function runRunner(
           if (!trimmed || trimmed.startsWith('#')) continue;
           const eqIdx = trimmed.indexOf('=');
           if (eqIdx < 0) continue;
-          env[trimmed.slice(0, eqIdx).trim()] = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+          env[trimmed.slice(0, eqIdx).trim()] = trimmed.slice(eqIdx + 1).trim().replaceAll(/^["']|["']$/g, '');
         }
       } catch { /* ignore */ }
     }
@@ -161,7 +162,7 @@ export function registerCrossLanguageTranslationHandlers(): void {
       fs.mkdirSync(path.dirname(tempFile), { recursive: true });
       fs.writeFileSync(tempFile, params.code, 'utf-8');
       args.splice(args.indexOf('--file') + 1, 1, tempFile);
-      if (args.indexOf('--file') < 0) args.push('--file', tempFile);
+      if (!args.includes('--file')) args.push('--file', tempFile);
     }
 
     const result = await runRunner(params.projectDir, args, (chunk) => {
