@@ -473,6 +473,30 @@ class CopilotAgentClient(AgentClient):
             )
             token = result.stdout.strip()
             if result.returncode == 0 and token:
+                # Check that the token has the 'copilot' scope.
+                # gh auth status shows scopes like: Token scopes: 'gist', 'repo', 'copilot'
+                # Without the copilot scope the token exchange endpoint returns 404.
+                try:
+                    status_result = subprocess.run(
+                        [gh_exe, "auth", "status", "--hostname", "github.com"],
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                    )
+                    status_output = (status_result.stdout + status_result.stderr).lower()
+                    if "token scopes" in status_output and "'copilot'" not in status_output:
+                        logger.warning(
+                            "[CopilotAgentClient] GitHub token is missing the 'copilot' scope. "
+                            "Run: gh auth refresh -s copilot --hostname github.com"
+                        )
+                        print(
+                            "[CopilotAgentClient] ⚠️  GitHub token missing 'copilot' scope. "
+                            "Fix: gh auth refresh -s copilot --hostname github.com",
+                            flush=True,
+                        )
+                except Exception:
+                    pass  # scope check is best-effort; proceed anyway
+
                 logger.info("[CopilotAgentClient] Retrieved GitHub token via `gh auth token`")
                 return token
             else:
