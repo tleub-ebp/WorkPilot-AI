@@ -225,7 +225,7 @@ export function CleanProviderCard({
           <span>{t('sections.accounts.providerCard.usage')}</span>
           <div className="text-right">
             <div className="font-medium text-gray-700">
-              {provider.realUsageData.sessionPercent ? `${Math.round(provider.realUsageData.sessionPercent)}%` : 'N/A'}
+              {provider.realUsageData.sessionPercent !== null ? `${Math.round(provider.realUsageData.sessionPercent)}%` : 'N/A'}
             </div>
             {Boolean(provider.realUsageData.weeklyPercent) && (
               <div className="text-gray-400 text-[10px]">
