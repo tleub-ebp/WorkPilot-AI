@@ -107,6 +107,16 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
           return;
         }
       }
+      // Notify the user if the provider will change when restarting
+      const projectProvider = activeProject?.settings?.provider;
+      const taskProvider = (task.metadata as any)?.provider;
+      if (projectProvider && taskProvider && projectProvider !== taskProvider) {
+        toast({
+          title: t('tasks:providerSwitch.title'),
+          description: t('tasks:providerSwitch.description', { from: taskProvider, to: projectProvider }),
+          duration: 4000,
+        });
+      }
       startTask(task.id);
     }
   };
