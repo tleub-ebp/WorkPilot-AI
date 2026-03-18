@@ -1,9 +1,12 @@
 // Automates Electron binary repair for Windows users
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { get } from 'node:https';
-import { extract } from 'unzipper';
+import { fileURLToPath } from 'node:url';
+import pkg from 'unzipper';
 
+const { extract } = pkg;
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const distDir = join(__dirname, '../apps/frontend/node_modules/electron/dist');
 const exePath = join(distDir, 'electron.exe');
 const pathTxt = join(__dirname, '../apps/frontend/node_modules/electron/path.txt');
