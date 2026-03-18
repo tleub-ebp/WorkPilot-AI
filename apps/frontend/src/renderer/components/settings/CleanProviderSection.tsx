@@ -14,7 +14,7 @@ import { getProvider as getRegistryProvider } from '@shared/services/providerReg
 import { useSettingsStore, saveSettings as saveSettingsToDisk } from '@/stores/settings-store';
 import { useToast } from '@/hooks/use-toast';
 import { ProviderService } from '@shared/services/providerService';
-import type { ProfileUsageSummary, AuthMethod } from '@shared/types/agent';
+import type { ProfileUsageSummary, UsageSnapshot, AuthMethod } from '@shared/types/agent';
 import { useProviderContext } from '../ProviderContext';
 
 interface Provider {
@@ -114,7 +114,30 @@ export function CleanProviderSection({
   useEffect(() => {
     if (!isOpen) return;
 
-    const unsubscribe = globalThis.electronAPI?.onAllProfilesUsageUpdated?.((allProfilesUsage) => {
+    // onUsageUpdated fires after each poll with the freshest snapshot for the active profile.
+    // We use it as the primary source because it reflects currentUsage directly, avoiding
+    // the stale-cache issue where getAllProfilesUsage returns 0% when cache pre-dates the poll.
+    const unsubscribeUsage = globalThis.electronAPI?.onUsageUpdated?.((snapshot: UsageSnapshot) => {
+      if (!snapshot?.profileId) return;
+      const summary: ProfileUsageSummary = {
+        profileId: snapshot.profileId,
+        profileName: snapshot.profileName,
+        profileEmail: snapshot.profileEmail,
+        sessionPercent: snapshot.sessionPercent,
+        weeklyPercent: snapshot.weeklyPercent,
+        sessionResetTimestamp: snapshot.sessionResetTimestamp,
+        weeklyResetTimestamp: snapshot.weeklyResetTimestamp,
+        isAuthenticated: true,
+        // If a fresh snapshot came back with real usage data, the user is not blocked
+        isRateLimited: false,
+        availabilityScore: 100 - Math.max(snapshot.sessionPercent, snapshot.weeklyPercent),
+        isActive: true,
+        needsReauthentication: snapshot.needsReauthentication,
+      };
+      setProfileUsageData(prev => new Map(prev).set(snapshot.profileId, summary));
+    });
+
+    const unsubscribeAllProfiles = globalThis.electronAPI?.onAllProfilesUsageUpdated?.((allProfilesUsage) => {
       const usageMap = new Map<string, ProfileUsageSummary>();
       allProfilesUsage.allProfiles.forEach((profile: ProfileUsageSummary) => {
         usageMap.set(profile.profileId, profile);
@@ -123,7 +146,8 @@ export function CleanProviderSection({
     });
 
     return () => {
-      unsubscribe?.();
+      unsubscribeUsage?.();
+      unsubscribeAllProfiles?.();
     };
   }, [isOpen]);
 
@@ -270,7 +294,7 @@ export function CleanProviderSection({
     if (profile?.apiKey) {
       return {
         hasKey: true,
-        keyPreview: maskApiKey(profile.apiKey),
+        keyPreview: profile.apiKey,
         provider: profile.name,
         isOAuth: false,
         authMethod: 'api-key'
@@ -282,7 +306,7 @@ export function CleanProviderSection({
     if (apiKeyField && (settings as any)[apiKeyField]) {
       return {
         hasKey: true,
-        keyPreview: maskApiKey((settings as any)[apiKeyField]),
+        keyPreview: (settings as any)[apiKeyField],
         isOAuth: false,
         authMethod: 'api-key'
       };
@@ -364,10 +388,6 @@ export function CleanProviderSection({
   };
 
   // Helper function to mask API key
-  const maskApiKey = (apiKey: string): string => {
-    if (!apiKey || apiKey.length < 10) return 'sk-...';
-    return `sk-${apiKey.substring(3, 7)}...••••••••••••••••••••••••••••`;
-  };
 
   // Utiliser la même logique que ProviderSelector pour déterminer le statut
   const [staticProviders, setStaticProviders] = useState<CanonicalProvider[]>([]);

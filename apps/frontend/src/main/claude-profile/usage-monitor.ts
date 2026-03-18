@@ -1099,6 +1099,12 @@ export class UsageMonitor extends EventEmitter {
       const profileManager = getClaudeProfileManager();
       profileManager.updateProfileUsageFromAPI(profileId, usage.sessionPercent, usage.weeklyPercent);
 
+      // Step 2.6: Clear stale rate limit events when usage is well below the threshold.
+      // A successful API fetch with low usage means the window has reset and the user is no longer blocked.
+      if (usage.sessionPercent < 90 && usage.weeklyPercent < 90) {
+        profileManager.clearRateLimitEvents(profileId);
+      }
+
       // Step 3: Emit usage update for UI (always emit, regardless of proactive swap settings)
       this.emit('usage-updated', usage);
 

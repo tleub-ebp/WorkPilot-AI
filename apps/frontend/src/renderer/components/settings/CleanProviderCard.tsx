@@ -307,9 +307,11 @@ export function CleanProviderCard({
     return (
       <>
         <code className="px-2 py-1 bg-gray-50 rounded text-xs font-mono text-gray-600 truncate min-w-0 flex-1">
-          {showApiKey && provider.realApiKeyInfo.keyPreview ?
-            provider.realApiKeyInfo.keyPreview :
-            'sk-...••••••••••••••••••••••••••••••••'
+          {showApiKey && provider.realApiKeyInfo.keyPreview
+            ? provider.realApiKeyInfo.keyPreview
+            : provider.realApiKeyInfo.keyPreview
+              ? `${provider.realApiKeyInfo.keyPreview.substring(0, 8)} ${'•'.repeat(Math.min(provider.realApiKeyInfo.keyPreview.length - 8, 24))}`
+              : '••••••••••••••••••••••••••••••••'
           }
         </code>
         <Button
