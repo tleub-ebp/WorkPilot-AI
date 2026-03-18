@@ -140,12 +140,14 @@ function buildEnv(frontendDir) {
 
   const env = { ...process.env, PATH: pathValue };
 
-  // Strip all npm_* environment variables to prevent electron-builder v26 from
-  // detecting npm workspace mode via process environment (npm_execpath, npm_config_user_agent, etc.).
-  // In workspace mode, electron-builder v26 has a bug where it stats workspace package
-  // directories (e.g. apps/frontend) as files instead of package.json, crashing with "not a file".
+  // Strip npm_* and INIT_CWD environment variables to prevent electron-builder v26 from
+  // detecting npm workspace mode via process environment.
+  // npm sets npm_* vars and INIT_CWD pointing to the repo root. electron-builder uses these
+  // to traverse up and find the root package.json which has "workspaces". It then tries to stat
+  // workspace directory paths (e.g. apps/frontend) as files, crashing with "not a file".
+  // Without these vars, electron-builder falls back to process.cwd() (apps/frontend) which has no workspaces.
   for (const key of Object.keys(env)) {
-    if (key.startsWith('npm_')) {
+    if (key.startsWith('npm_') || key === 'INIT_CWD') {
       delete env[key];
     }
   }
