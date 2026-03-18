@@ -10,6 +10,10 @@
     "complete": "Terminé",
     "archived": "Archivé"
   },
+  "providerSwitch": {
+    "title": "Provider mis à jour",
+    "description": "La tâche va maintenant s'exécuter avec {{to}} au lieu de {{from}}"
+  },
   "actions": {
     "start": "Démarrer",
     "stop": "Arrêter",

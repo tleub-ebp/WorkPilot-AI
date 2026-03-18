@@ -22,6 +22,7 @@ import { getAppLanguage } from '../../app-language';
 import { getIsolatedGitEnv } from '../../utils/git-isolation';
 import { pythonEnvManager } from '../../python-env-manager';
 import { appLog } from '../../app-logger';
+import { readSettingsFile } from '../../settings-utils';
 
 /**
  * Convert TaskMetadata to SpecCreationMetadata for spec creation
@@ -69,6 +70,75 @@ function convertPhaseThinkingConfig(phaseThinking?: any): any {
     coding: phaseThinking.coding || 'medium',
     qa: phaseThinking.qa || 'medium',
   };
+}
+
+/**
+ * Synchronise le provider de la tâche avec le provider actuel du projet.
+ * Appelé à chaque démarrage/redémarrage pour permettre le changement de provider à la volée.
+ *
+ * @returns L'ancien provider si un changement a eu lieu, null sinon.
+ */
+function syncTaskProvider(
+  task: any,
+  project: any,
+  specDir: string
+): string | null {
+  if (!task.metadata) return null;
+
+  const projectProvider = project.settings?.provider;
+  const taskProvider = task.metadata.provider;
+
+  if (!projectProvider || projectProvider === taskProvider) {
+    // Pas de changement, mais injection initiale si manquante
+    if (!taskProvider && projectProvider) {
+      task.metadata.provider = projectProvider;
+      try {
+        const metadataPath = path.join(specDir, 'task_metadata.json');
+        if (existsSync(metadataPath)) {
+          const content = safeReadFileSync(metadataPath);
+          if (content) {
+            const meta = JSON.parse(content);
+            meta.provider = projectProvider;
+            atomicWriteFileSync(metadataPath, JSON.stringify(meta, null, 2));
+          }
+        }
+      } catch (err) {
+        console.warn('[Provider Sync] Failed to persist initial provider:', err);
+      }
+    }
+    return null;
+  }
+
+  // Le provider du projet a changé — on met à jour la tâche
+  const previousProvider = taskProvider;
+  const globalSettings = readSettingsFile() ?? {};
+  const providerPhaseModels = (globalSettings.providerPhaseModels as Record<string, any> | undefined)?.[projectProvider];
+  const providerPhaseThinking = (globalSettings.providerPhaseThinking as Record<string, any> | undefined)?.[projectProvider];
+
+  task.metadata.provider = projectProvider;
+  if (providerPhaseModels) task.metadata.phaseModels = providerPhaseModels;
+  if (providerPhaseThinking) task.metadata.phaseThinking = providerPhaseThinking;
+
+  console.warn(`[Provider Switch] ${previousProvider} -> ${projectProvider} for task ${task.id}`);
+
+  try {
+    const metadataPath = path.join(specDir, 'task_metadata.json');
+    if (existsSync(metadataPath)) {
+      const content = safeReadFileSync(metadataPath);
+      if (content) {
+        const meta = JSON.parse(content);
+        meta.provider = projectProvider;
+        if (providerPhaseModels) meta.phaseModels = providerPhaseModels;
+        if (providerPhaseThinking) meta.phaseThinking = providerPhaseThinking;
+        atomicWriteFileSync(metadataPath, JSON.stringify(meta, null, 2));
+        console.warn('[Provider Switch] Persisted new provider/phaseModels to task_metadata.json');
+      }
+    }
+  } catch (err) {
+    console.warn('[Provider Switch] Failed to persist provider update:', err);
+  }
+
+  return previousProvider;
 }
 
 /**
@@ -304,31 +374,15 @@ export function registerTaskExecutionHandlers(
 
       console.warn('[TASK_START] hasSpec:', hasSpec, 'needsSpecCreation:', needsSpecCreation, 'needsImplementation:', needsImplementation);
 
-      // Inject provider defaults for imported tasks that lack model/provider configuration.
-      // This ensures tasks from Azure DevOps, JIRA, GitHub, etc. use the correct provider
-      // and model based on the project's current settings, rather than always defaulting
-      // to Claude Sonnet. The provider is also persisted to task_metadata.json so that
-      // later phases (planning, coding, QA) in run.py/phase_config.py use the right models.
-      if (task.metadata && !task.metadata.provider) {
-        const projectProvider = project.settings?.provider;
-        if (projectProvider) {
-          task.metadata.provider = projectProvider;
-          console.warn('[TASK_START] Injected provider from project settings:', projectProvider);
-          // Persist provider to task_metadata.json so backend phases use correct models
-          try {
-            const metadataPath = path.join(specDir, 'task_metadata.json');
-            if (existsSync(metadataPath)) {
-              const existingContent = safeReadFileSync(metadataPath);
-              if (existingContent) {
-                const existingMetadata = JSON.parse(existingContent);
-                existingMetadata.provider = projectProvider;
-                atomicWriteFileSync(metadataPath, JSON.stringify(existingMetadata, null, 2));
-              }
-            }
-          } catch (err) {
-            console.warn('[TASK_START] Failed to persist provider to task_metadata.json:', err);
-          }
-        }
+      // Synchronise le provider de la tâche avec le provider actuel du projet.
+      // Cela permet de changer de provider (Anthropic, OpenAI, Windsurf…) entre deux runs
+      // sans avoir à recréer la tâche. La mise à jour est persistée dans task_metadata.json
+      // pour que toutes les phases backend (planning, coding, QA) utilisent le bon provider.
+      const previousProvider = syncTaskProvider(task, project, specDir);
+      if (previousProvider) {
+        console.warn(`[TASK_START] Provider switched: ${previousProvider} -> ${task.metadata.provider}`);
+      } else {
+        console.warn('[TASK_START] Provider:', task.metadata?.provider ?? 'none');
       }
 
       // Get base branch: task-level override takes precedence over project settings
@@ -874,6 +928,12 @@ print(json.dumps(result))
 
           console.warn('[TASK_UPDATE_STATUS] hasSpec:', hasSpec, 'needsSpecCreation:', needsSpecCreation, 'needsImplementation:', needsImplementation);
 
+          // Synchronise le provider avec le projet (permet le switch de provider entre deux runs)
+          const prevProviderForUpdate = syncTaskProvider(task, project, specDir);
+          if (prevProviderForUpdate) {
+            console.warn(`[TASK_UPDATE_STATUS] Provider switched: ${prevProviderForUpdate} -> ${task.metadata?.provider}`);
+          }
+
           // Get base branch: task-level override takes precedence over project settings
           const baseBranchForUpdate = task.metadata?.baseBranch || project.settings?.mainBranch;
 
@@ -1325,6 +1385,12 @@ print(json.dumps(result))
             const specFilePath = path.join(specDirForWatcher, AUTO_BUILD_PATHS.SPEC_FILE);
             const hasSpec = existsSync(specFilePath);
             const needsSpecCreation = !hasSpec;
+
+            // Synchronise le provider avec le projet (permet le switch de provider entre deux runs)
+            const prevProviderForRecovery = syncTaskProvider(task, project, specDirForWatcher);
+            if (prevProviderForRecovery) {
+              console.warn(`[Recovery] Provider switched: ${prevProviderForRecovery} -> ${task.metadata?.provider}`);
+            }
 
             // Get base branch: task-level override takes precedence over project settings
             const baseBranchForRecovery = task.metadata?.baseBranch || project.settings?.mainBranch;

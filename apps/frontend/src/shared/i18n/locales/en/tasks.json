@@ -10,6 +10,10 @@
     "complete": "Complete",
     "archived": "Archived"
   },
+  "providerSwitch": {
+    "title": "Provider updated",
+    "description": "Task will now run with {{to}} instead of {{from}}"
+  },
   "actions": {
     "start": "Start",
     "stop": "Stop",
