@@ -547,16 +547,8 @@ export class UsageMonitor extends EventEmitter {
       const profile = settings.profiles[i];
       const cached = this.allProfilesUsageCache.get(profile.id);
 
-      // Use cached data if fresh (within TTL) and not force refreshing
-      if (!forceRefresh && cached && (now - cached.fetchedAt) < UsageMonitor.PROFILE_USAGE_CACHE_TTL_MS) {
-        profileResults[i] = {
-          ...cached.usage,
-          isActive: profile.id === activeProfileId
-        };
-        continue;
-      }
-
-      // For active profile, use the current detailed usage (always fresh from the last poll)
+      // For active profile, always prefer this.currentUsage (most up-to-date data from last poll)
+      // This must run BEFORE the cache check so a stale cache entry cannot shadow fresh polling data
       if (profile.id === activeProfileId && this.currentUsage) {
         const summary = this.buildProfileUsageSummary({
           id: profile.id,
@@ -566,6 +558,15 @@ export class UsageMonitor extends EventEmitter {
         }, this.currentUsage);
         profileResults[i] = summary;
         this.allProfilesUsageCache.set(profile.id, {usage: summary, fetchedAt: now});
+        continue;
+      }
+
+      // Use cached data if fresh (within TTL) and not force refreshing
+      if (!forceRefresh && cached && (now - cached.fetchedAt) < UsageMonitor.PROFILE_USAGE_CACHE_TTL_MS) {
+        profileResults[i] = {
+          ...cached.usage,
+          isActive: profile.id === activeProfileId
+        };
         continue;
       }
 

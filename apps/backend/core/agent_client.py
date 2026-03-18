@@ -420,7 +420,7 @@ class CopilotAgentClient(AgentClient):
         self.agents = agents or {}
         self.cwd = cwd
         self.max_turns = max_turns
-        self.github_token = github_token or os.environ.get("GITHUB_TOKEN", "")
+        self.github_token = github_token or os.environ.get("GITHUB_TOKEN", "") or self._get_github_token_from_cli()
 
         # Real Copilot chat endpoint (not api.github.com)
         self._api_base = "https://api.githubcopilot.com/chat/completions"
@@ -434,6 +434,51 @@ class CopilotAgentClient(AgentClient):
         # Copilot session token cache (expires ~30 min)
         self._copilot_token: str = ""
         self._copilot_token_expires_at: float = 0.0
+
+    @staticmethod
+    def _get_github_token_from_cli() -> str:
+        """Attempt to retrieve a GitHub token via `gh auth token` (GitHub CLI).
+
+        The frontend passes SELECTED_LLM_PROVIDER=copilot but does not inject
+        GITHUB_TOKEN into the subprocess environment because Copilot auth is
+        managed by the GitHub CLI (`gh`). This fallback calls `gh auth token`
+        to obtain the current OAuth token so the Copilot session-token exchange
+        can proceed without any manual token configuration.
+
+        Returns an empty string if `gh` is unavailable or not authenticated.
+        """
+        import subprocess
+        import shutil
+
+        gh_exe = shutil.which("gh")
+        if not gh_exe:
+            logger.warning(
+                "[CopilotAgentClient] `gh` CLI not found on PATH. "
+                "Install GitHub CLI and run `gh auth login` to enable Copilot."
+            )
+            return ""
+
+        try:
+            result = subprocess.run(
+                [gh_exe, "auth", "token"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            token = result.stdout.strip()
+            if result.returncode == 0 and token:
+                logger.info("[CopilotAgentClient] Retrieved GitHub token via `gh auth token`")
+                return token
+            else:
+                logger.warning(
+                    "[CopilotAgentClient] `gh auth token` returned no token "
+                    "(exit %d). Run `gh auth login` first.",
+                    result.returncode,
+                )
+                return ""
+        except Exception as exc:
+            logger.warning("[CopilotAgentClient] Failed to call `gh auth token`: %s", exc)
+            return ""
 
     def _get_http_client(self):
         """Lazy-init an aiohttp ClientSession with shared IDE headers."""
