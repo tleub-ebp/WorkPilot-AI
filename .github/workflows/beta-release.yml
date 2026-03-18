@@ -1,6 +1,6 @@
-name: Beta Release
+name: Alpha/Beta Release
 
-# Manual trigger for beta releases from develop branch
+# Manual trigger for alpha/beta releases from develop branch
 on:
   workflow_dispatch:
     inputs:
