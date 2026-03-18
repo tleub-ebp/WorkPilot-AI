@@ -152,9 +152,10 @@ export function CleanProviderSection({
     setProfileUsageData(prev => {
       const next = new Map(prev);
       allProfilesUsage.allProfiles.forEach((profile: ProfileUsageSummary) => {
-        const existing = next.get(profile.profileId);
-        // Don't overwrite a fresh onUsageUpdated entry with stale getAllProfilesUsage data (0%)
-        if (existing && existing.sessionPercent > 0 && profile.sessionPercent === 0) return;
+        // The active profile is always handled by onUsageUpdated which has fresher data.
+        // getAllProfilesUsage uses a TTL cache that can lag behind the live poll by 1+ minute,
+        // so we must not let it overwrite the real-time data we already have.
+        if (profile.isActive) return;
         next.set(profile.profileId, profile);
       });
       return next;
@@ -189,6 +190,9 @@ export function CleanProviderSection({
     } catch (err) {
       console.warn('[CleanProviderSection] Failed to load profile usage data:', err);
     }
+    // Trigger a fresh poll AFTER the initial (potentially stale) data is set.
+    // onUsageUpdated will then overwrite the active profile with the real current value.
+    globalThis.electronAPI?.requestUsageUpdate?.();
   };
 
   // Load usage data from CredentialManager (Windsurf, etc.)
