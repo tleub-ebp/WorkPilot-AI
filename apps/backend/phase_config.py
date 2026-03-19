@@ -8,6 +8,7 @@ Reads configuration from task_metadata.json and provides resolved model IDs.
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Literal, TypedDict
 
@@ -60,6 +61,22 @@ DEFAULT_PHASE_MODELS: dict[str, str] = {
 # Keys must match provider names from provider_api.py / ProviderContext.
 # Values are the "standard" tier model for each provider — a sensible default
 # that balances quality and cost across all phases.
+
+# Google Gemini default model
+GOOGLE_GEMINI_MODEL = "gemini-2.5-pro"
+
+# Meta LLaMA default model
+META_LLAMA_MODEL = "meta-llama/llama-4-scout"
+
+# AWS Bedrock default model
+AWS_BEDROCK_MODEL = "anthropic.claude-sonnet-4-5-v1"
+
+# Ollama default model
+OLLAMA_MODEL = "llama3.3"
+
+# Windsurf default model
+WINDSURF_MODEL = "swe-1.5"
+
 PROVIDER_DEFAULT_MODELS: dict[str, dict[str, str]] = {
     # Anthropic / Claude — use Claude shorthands (resolved by resolve_model_id)
     "anthropic": {"spec": "sonnet", "planning": "sonnet", "coding": "sonnet", "qa": "sonnet"},
@@ -69,7 +86,7 @@ PROVIDER_DEFAULT_MODELS: dict[str, dict[str, str]] = {
     # GitHub Copilot
     "copilot":   {"spec": "claude-sonnet-4-5", "planning": "claude-sonnet-4-5", "coding": "claude-sonnet-4-5", "qa": "claude-sonnet-4-5"},
     # Google Gemini
-    "google":    {"spec": "gemini-2.5-pro", "planning": "gemini-2.5-pro", "coding": "gemini-2.5-pro", "qa": "gemini-2.5-pro"},
+    "google":    {"spec": GOOGLE_GEMINI_MODEL, "planning": GOOGLE_GEMINI_MODEL, "coding": GOOGLE_GEMINI_MODEL, "qa": GOOGLE_GEMINI_MODEL},
     # Mistral AI
     "mistral":   {"spec": "mistral-large-2", "planning": "mistral-large-2", "coding": "mistral-large-2", "qa": "mistral-large-2"},
     # DeepSeek
@@ -77,13 +94,13 @@ PROVIDER_DEFAULT_MODELS: dict[str, dict[str, str]] = {
     # Grok (xAI)
     "grok":      {"spec": "grok-2", "planning": "grok-2", "coding": "grok-2", "qa": "grok-2"},
     # Meta (LLaMA)
-    "meta":      {"spec": "meta-llama/llama-4-scout", "planning": "meta-llama/llama-4-scout", "coding": "meta-llama/llama-4-scout", "qa": "meta-llama/llama-4-scout"},
+    "meta":      {"spec": META_LLAMA_MODEL, "planning": META_LLAMA_MODEL, "coding": META_LLAMA_MODEL, "qa": META_LLAMA_MODEL},
     # AWS Bedrock
-    "aws":       {"spec": "anthropic.claude-sonnet-4-5-v1", "planning": "anthropic.claude-sonnet-4-5-v1", "coding": "anthropic.claude-sonnet-4-5-v1", "qa": "anthropic.claude-sonnet-4-5-v1"},
+    "aws":       {"spec": AWS_BEDROCK_MODEL, "planning": AWS_BEDROCK_MODEL, "coding": AWS_BEDROCK_MODEL, "qa": AWS_BEDROCK_MODEL},
     # Ollama (local)
-    "ollama":    {"spec": "llama3.3", "planning": "llama3.3", "coding": "llama3.3", "qa": "llama3.3"},
+    "ollama":    {"spec": OLLAMA_MODEL, "planning": OLLAMA_MODEL, "coding": OLLAMA_MODEL, "qa": OLLAMA_MODEL},
     # Windsurf (Codeium) — SWE-1.5 is the flagship proprietary model
-    "windsurf":  {"spec": "swe-1.5", "planning": "swe-1.5", "coding": "swe-1.5", "qa": "swe-1.5"},
+    "windsurf":  {"spec": WINDSURF_MODEL, "planning": WINDSURF_MODEL, "coding": WINDSURF_MODEL, "qa": WINDSURF_MODEL},
 }
 
 DEFAULT_PHASE_THINKING: dict[str, str] = {
@@ -267,8 +284,97 @@ def _resolve_provider_model(model: str, provider: str | None) -> str:
         # Caller should handle this; just pass through resolve_model_id as fallback
         return resolve_model_id(model)
 
+    # Detect Anthropic versioned model IDs (e.g. "claude-sonnet-4-5-20250929",
+    # "claude-opus-4-6") that are NOT valid for non-Anthropic providers.
+    # This happens when a task was started with Anthropic and its task_metadata.json
+    # still contains the old versioned model after the provider was switched.
+    # Fall back to the provider's default model instead of sending an invalid ID.
+    if re.match(r"^claude-(opus|sonnet|haiku)-\d", model):
+        provider_defaults = PROVIDER_DEFAULT_MODELS.get(provider, {})
+        fallback = provider_defaults.get("spec") or provider_defaults.get("coding")
+        if fallback:
+            return fallback
+
     # Already a full model ID for non-Anthropic provider
     return model
+
+
+def _resolve_cli_model(cli_model: str | None) -> str | None:
+    """Resolve CLI model argument if provided."""
+    if cli_model:
+        return resolve_model_id(cli_model)
+    return None
+
+
+def _resolve_auto_profile_model(
+    metadata: TaskMetadataConfig, 
+    phase: Phase, 
+    cli_provider: str | None
+) -> str | None:
+    """Resolve model from auto profile configuration."""
+    if not metadata.get("isAutoProfile") or not metadata.get("phaseModels"):
+        return None
+    
+    phase_models = metadata["phaseModels"]
+    provider = cli_provider or metadata.get("provider")
+    model = phase_models.get(phase, DEFAULT_PHASE_MODELS[phase])
+    return _resolve_provider_model(model, provider)
+
+
+def _resolve_single_model(
+    metadata: TaskMetadataConfig, 
+    cli_provider: str | None
+) -> str | None:
+    """Resolve model from single model configuration."""
+    if not metadata.get("model"):
+        return None
+    
+    provider = cli_provider or metadata.get("provider")
+    return _resolve_provider_model(metadata["model"], provider)
+
+
+def _resolve_complexity_routing(
+    spec_dir: Path, 
+    phase: Phase, 
+    cli_provider: str | None, 
+    metadata: TaskMetadataConfig | None
+) -> str | None:
+    """Resolve model using complexity-based routing."""
+    if metadata and not metadata.get("isAutoProfile"):
+        return None
+    
+    try:
+        from scheduling.complexity_router import get_complexity_routing
+        routing = get_complexity_routing(spec_dir)
+        if routing.source == "default":
+            return None
+        
+        model = routing.phase_models.get(phase, DEFAULT_PHASE_MODELS[phase])
+        provider = cli_provider or (metadata.get("provider") if metadata else None)
+        return _resolve_provider_model(model, provider)
+    except ImportError:
+        return None
+
+
+def _resolve_provider_default(
+    spec_dir: Path, 
+    phase: Phase, 
+    cli_provider: str | None, 
+    metadata: TaskMetadataConfig | None
+) -> str | None:
+    """Resolve model from provider-specific defaults."""
+    provider = cli_provider
+    if not provider and metadata:
+        provider = metadata.get("provider")
+    if not provider:
+        provider = get_phase_provider(spec_dir)
+    
+    if provider and provider in PROVIDER_DEFAULT_MODELS:
+        provider_models = PROVIDER_DEFAULT_MODELS[provider]
+        model = provider_models.get(phase, DEFAULT_PHASE_MODELS[phase])
+        return _resolve_provider_model(model, provider)
+    
+    return None
 
 
 def get_phase_model(
@@ -296,53 +402,36 @@ def get_phase_model(
     Returns:
         Resolved full model ID
     """
-    # CLI argument takes precedence
-    if cli_model:
-        return resolve_model_id(cli_model)
+    # 1. CLI argument takes precedence
+    cli_result = _resolve_cli_model(cli_model)
+    if cli_result:
+        return cli_result
 
-    # Load task metadata
+    # 2. Load task metadata
     metadata = load_task_metadata(spec_dir)
 
+    # 3. Auto profile with phase-specific config
     if metadata:
-        # Check for auto profile with phase-specific config
-        if metadata.get("isAutoProfile") and metadata.get("phaseModels"):
-            phase_models = metadata["phaseModels"]
-            provider = cli_provider or metadata.get("provider")
-            model = phase_models.get(phase, DEFAULT_PHASE_MODELS[phase])
-            return _resolve_provider_model(model, provider)
+        auto_profile_result = _resolve_auto_profile_model(metadata, phase, cli_provider)
+        if auto_profile_result:
+            return auto_profile_result
+        
+        # 4. Non-auto profile: use single model
+        single_model_result = _resolve_single_model(metadata, cli_provider)
+        if single_model_result:
+            return single_model_result
 
-        # Non-auto profile: use single model
-        if metadata.get("model"):
-            provider = cli_provider or metadata.get("provider")
-            return _resolve_provider_model(metadata["model"], provider)
+    # 5. Complexity-based routing
+    complexity_result = _resolve_complexity_routing(spec_dir, phase, cli_provider, metadata)
+    if complexity_result:
+        return complexity_result
 
-    # Complexity-based routing (Cost Intelligence Engine):
-    # When auto-profile is active but no explicit phaseModels were set,
-    # route to the cheapest adequate model based on task complexity.
-    if not metadata or metadata.get("isAutoProfile"):
-        try:
-            from scheduling.complexity_router import get_complexity_routing
-            routing = get_complexity_routing(spec_dir)
-            if routing.source != "default":
-                model = routing.phase_models.get(phase, DEFAULT_PHASE_MODELS[phase])
-                provider = cli_provider or (metadata.get("provider") if metadata else None)
-                return _resolve_provider_model(model, provider)
-        except ImportError:
-            pass
+    # 6. Provider-specific defaults
+    provider_result = _resolve_provider_default(spec_dir, phase, cli_provider, metadata)
+    if provider_result:
+        return provider_result
 
-    # Fall back to provider-specific defaults if provider is known
-    provider = cli_provider
-    if not provider and metadata:
-        provider = metadata.get("provider")
-    if not provider:
-        provider = get_phase_provider(spec_dir)
-
-    if provider and provider in PROVIDER_DEFAULT_MODELS:
-        provider_models = PROVIDER_DEFAULT_MODELS[provider]
-        model = provider_models.get(phase, DEFAULT_PHASE_MODELS[phase])
-        return _resolve_provider_model(model, provider)
-
-    # Ultimate fallback: Anthropic/Claude default
+    # 7. Ultimate fallback: Anthropic/Claude default
     return resolve_model_id(DEFAULT_PHASE_MODELS[phase])
 
 

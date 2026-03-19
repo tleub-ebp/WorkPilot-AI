@@ -16,7 +16,7 @@ import { TooltipProvider } from '../ui/tooltip';
 import i18n from '../../../shared/i18n';
 
 // Wrapper for components that need TooltipProvider
-function TestWrapper({ children }: { children: React.ReactNode }) {
+function TestWrapper({ children }: { readonly children: React.ReactNode }) {
   return <TooltipProvider>{children}</TooltipProvider>;
 }
 

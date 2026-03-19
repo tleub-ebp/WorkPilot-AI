@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe, Key, RefreshCw, Plus, Trash2 } from 'lucide-react';
+import { Globe, RefreshCw, Plus, Trash2 } from 'lucide-react';
 import { useSettingsStore, saveSettings } from '../../stores/settings-store';
 import { useProviderContext } from '../ProviderContext';
 import { SettingsSection } from './SettingsSection';
@@ -294,7 +294,15 @@ export function CustomProviderConfig() {
                 {t('customProvider.availableModels')} ({customModels.length})
               </h4>
               <div className="space-y-1">
-                {customModels.map((model) => (
+                {customModels.map((model) => {
+                  const tierClasses = 
+                    model.tier === 'flagship' 
+                      ? 'bg-primary/10 text-primary'
+                      : model.tier === 'standard'
+                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                      : 'bg-green-500/10 text-green-600 dark:text-green-400';
+
+                  return (
                   <div
                     key={model.value}
                     className="flex items-center justify-between p-2 border border-border rounded bg-card"
@@ -302,13 +310,7 @@ export function CustomProviderConfig() {
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{model.label}</span>
                       <span className="text-xs text-muted-foreground">({model.value})</span>
-                      <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-medium ${
-                        model.tier === 'flagship' 
-                          ? 'bg-primary/10 text-primary'
-                          : model.tier === 'standard'
-                          ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                          : 'bg-green-500/10 text-green-600 dark:text-green-400'
-                      }`}>
+                      <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-medium ${tierClasses}`}>
                         {t(`customProvider.tier${model.tier.charAt(0).toUpperCase() + model.tier.slice(1)}`)}
                       </span>
                       {model.supportsThinking && (
@@ -326,7 +328,8 @@ export function CustomProviderConfig() {
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

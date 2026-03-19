@@ -826,7 +826,7 @@ export function CleanProviderSection({
           </div>
 
           {/* Auto-switching settings - tiroir compact */}
-          <div className={`${autoSwitchingOpen ? "flex-1" : "w-auto"} transition-all duration-300`}>
+          <div className={`${autoSwitchingOpen ? "flex-1" : "w-auto"} transition-all duration-300 sticky top-0 self-start`}>
             {autoSwitchingOpen ? (
               /* Contenu de l'auto-switching dans un tiroir */
               <div className="border rounded-lg p-4 space-y-4">
@@ -846,11 +846,11 @@ export function CleanProviderSection({
                 </div>
                 
                 <div className="space-y-4">
-                  <GlobalAutoSwitching 
-                    settings={settings} 
+                  <GlobalAutoSwitching
+                    settings={settings}
                     onSettingsChange={onSettingsChange}
                     isOpen={true}
-                    useSheet={true}
+                    providerStatus={providerStatus}
                   />
                 </div>
               </div>
