@@ -77,6 +77,9 @@ OLLAMA_MODEL = "llama3.3"
 # Windsurf default model
 WINDSURF_MODEL = "swe-1.5"
 
+# GitHub Copilot default model (must be accepted by api.githubcopilot.com for this account)
+COPILOT_MODEL = "claude-sonnet-4.6"
+
 PROVIDER_DEFAULT_MODELS: dict[str, dict[str, str]] = {
     # Anthropic / Claude — use Claude shorthands (resolved by resolve_model_id)
     "anthropic": {"spec": "sonnet", "planning": "sonnet", "coding": "sonnet", "qa": "sonnet"},
@@ -84,7 +87,7 @@ PROVIDER_DEFAULT_MODELS: dict[str, dict[str, str]] = {
     # OpenAI
     "openai":    {"spec": "gpt-4o", "planning": "gpt-4o", "coding": "gpt-4o", "qa": "gpt-4o"},
     # GitHub Copilot
-    "copilot":   {"spec": "claude-sonnet-4-5", "planning": "claude-sonnet-4-5", "coding": "claude-sonnet-4-5", "qa": "claude-sonnet-4-5"},
+    "copilot":   {"spec": COPILOT_MODEL, "planning": COPILOT_MODEL, "coding": COPILOT_MODEL, "qa": COPILOT_MODEL},
     # Google Gemini
     "google":    {"spec": GOOGLE_GEMINI_MODEL, "planning": GOOGLE_GEMINI_MODEL, "coding": GOOGLE_GEMINI_MODEL, "qa": GOOGLE_GEMINI_MODEL},
     # Mistral AI
