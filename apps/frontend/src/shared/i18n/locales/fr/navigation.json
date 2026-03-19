@@ -56,7 +56,8 @@
     "pairProgramming": "Pair Programming IA",
     "pipelineGenerator": "Générateur de Pipeline",
     "pluginMarketplace": "Marketplace de Plugins",
-    "arenaMode": "Mode Arena"
+    "arenaMode": "Mode Arena",
+    "apiExplorer": "Explorateur API"
   },
   "actions": {
     "settings": "Paramètres",

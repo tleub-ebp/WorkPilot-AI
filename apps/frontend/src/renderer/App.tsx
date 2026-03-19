@@ -64,6 +64,7 @@ const BrowserAgentDashboard = lazy(() => import('./components/browser-agent').th
 const PairProgramming = lazy(() => import('./components/PairProgramming').then(m => ({ default: m.PairProgramming })));
 const PipelineGeneratorView = lazy(() => import('./components/pipeline-generator/PipelineGenerator').then(m => ({ default: m.PipelineGenerator })));
 const PluginMarketplace = lazy(() => import('./components/plugin-marketplace/PluginMarketplace').then(m => ({ default: m.PluginMarketplace })));
+const ApiExplorer = lazy(() => import('./components/api-explorer').then(m => ({ default: m.ApiExplorer })));
 import { VersionWarningModal } from './components/VersionWarningModal';
 import { OnboardingWizard } from './components/onboarding';
 import { GitHubSetupModal } from './components/GitHubSetupModal';
@@ -1073,6 +1074,9 @@ export function App() {
                     )}
                     {activeView === 'plugin-marketplace' && (
                         <PluginMarketplace />
+                    )}
+                    {activeView === 'api-explorer' && (
+                        <ApiExplorer />
                     )}
                     {activeView === 'mission-control' && (
                         <MissionControlDashboard />

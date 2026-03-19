@@ -1,0 +1,63 @@
+{
+  "sidebar": {
+    "search": "Rechercher des endpoints...",
+    "loading": "Chargement du spec...",
+    "loadError": "Échec du chargement du spec",
+    "noResults": "Aucun endpoint ne correspond à votre recherche",
+    "endpoints": "endpoints"
+  },
+  "environments": {
+    "title": "Environnements",
+    "manage": "Gérer les environnements",
+    "addNew": "Ajouter un environnement",
+    "namePlaceholder": "Nom de l'environnement"
+  },
+  "actions": {
+    "export": "Exporter",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "add": "Ajouter"
+  },
+  "export": {
+    "title": "Exporter le contrat API",
+    "openapiDesc": "Spécification OpenAPI 3.x brute",
+    "postmanDesc": "Importable directement dans Postman",
+    "markdownDesc": "Documentation API lisible par l'humain",
+    "copySpec": "Copier le spec dans le presse-papiers",
+    "copied": "Copié !"
+  },
+  "detail": {
+    "overview": "Vue d'ensemble",
+    "schema": "Schéma",
+    "test": "Tester",
+    "description": "Description",
+    "parameters": "Paramètres",
+    "responses": "Réponses",
+    "requestBody": "Corps de la requête",
+    "responseSchema": "Schéma de réponse",
+    "noSchema": "Aucun schéma défini pour cet endpoint"
+  },
+  "request": {
+    "send": "Envoyer",
+    "sending": "Envoi en cours...",
+    "params": "Paramètres",
+    "headers": "En-têtes",
+    "body": "Corps",
+    "pathParams": "Paramètres de chemin",
+    "queryParams": "Paramètres de requête",
+    "noParams": "Aucun paramètre pour cet endpoint",
+    "noHeaders": "Aucun en-tête défini",
+    "fillExample": "Remplir avec l'exemple",
+    "networkError": "Erreur réseau"
+  },
+  "response": {
+    "body": "Corps",
+    "headers": "En-têtes"
+  },
+  "empty": {
+    "selectEndpoint": "Sélectionner un endpoint",
+    "selectEndpointHint": "Choisissez un endpoint dans la liste pour voir ses détails et le tester",
+    "noSpec": "Aucun spec chargé",
+    "noSpecHint": "Entrez une URL de spec OpenAPI valide ci-dessus"
+  }
+}

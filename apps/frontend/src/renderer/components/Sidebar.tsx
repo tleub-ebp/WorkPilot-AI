@@ -159,7 +159,7 @@ import { ArenaDialog } from './arena/ArenaDialog';
 // Types
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace' | 'design-to-code' | 'mission-control' | 'agent-replay' | 'pixel-office' | 'self-healing' | 'browser-agent' | 'pair-programming' | 'pipeline-generator' | 'plugin-marketplace' | 'arena-mode';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace' | 'design-to-code' | 'mission-control' | 'agent-replay' | 'pixel-office' | 'self-healing' | 'browser-agent' | 'pair-programming' | 'pipeline-generator' | 'plugin-marketplace' | 'arena-mode' | 'api-explorer';
 
 interface SidebarProps {
   readonly onSettingsClick: () => void;
@@ -209,6 +209,7 @@ const navGroups: NavGroup[] = [
       { id: 'code-review', labelKey: 'navigation:items.codeReview', icon: FileCode2, shortcut: 'V' },
       { id: 'refactoring', labelKey: 'navigation:items.refactoring', icon: Wand2, shortcut: 'F' },
       { id: 'documentation', labelKey: 'navigation:items.documentation', icon: BookOpenCheck, shortcut: 'O' },
+      { id: 'api-explorer', labelKey: 'navigation:items.apiExplorer', icon: Globe, shortcut: 'X' },
       { id: 'agent-tools', labelKey: 'navigation:items.agentTools', icon: Wrench, shortcut: 'M' },
       { id: 'visual-programming', labelKey: 'navigation:items.visualProgramming', icon: Brain, shortcut: 'V' },
     ],

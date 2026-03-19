@@ -1,0 +1,63 @@
+{
+  "sidebar": {
+    "search": "Search endpoints...",
+    "loading": "Loading spec...",
+    "loadError": "Failed to load spec",
+    "noResults": "No endpoints match your search",
+    "endpoints": "endpoints"
+  },
+  "environments": {
+    "title": "Environments",
+    "manage": "Manage environments",
+    "addNew": "Add environment",
+    "namePlaceholder": "Environment name"
+  },
+  "actions": {
+    "export": "Export",
+    "cancel": "Cancel",
+    "save": "Save",
+    "add": "Add"
+  },
+  "export": {
+    "title": "Export API Contract",
+    "openapiDesc": "Raw OpenAPI 3.x specification",
+    "postmanDesc": "Import directly into Postman",
+    "markdownDesc": "Human-readable API documentation",
+    "copySpec": "Copy spec to clipboard",
+    "copied": "Copied!"
+  },
+  "detail": {
+    "overview": "Overview",
+    "schema": "Schema",
+    "test": "Test",
+    "description": "Description",
+    "parameters": "Parameters",
+    "responses": "Responses",
+    "requestBody": "Request Body",
+    "responseSchema": "Response Schema",
+    "noSchema": "No schema defined for this endpoint"
+  },
+  "request": {
+    "send": "Send",
+    "sending": "Sending...",
+    "params": "Params",
+    "headers": "Headers",
+    "body": "Body",
+    "pathParams": "Path Parameters",
+    "queryParams": "Query Parameters",
+    "noParams": "No parameters for this endpoint",
+    "noHeaders": "No header parameters defined",
+    "fillExample": "Fill with example",
+    "networkError": "Network Error"
+  },
+  "response": {
+    "body": "Body",
+    "headers": "Headers"
+  },
+  "empty": {
+    "selectEndpoint": "Select an endpoint",
+    "selectEndpointHint": "Choose an endpoint from the list to view details and test it",
+    "noSpec": "No spec loaded",
+    "noSpecHint": "Enter a valid OpenAPI spec URL above"
+  }
+}

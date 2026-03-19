@@ -49,6 +49,7 @@ import enDashboard from './locales/en/dashboard.json';
 import enWelcome from './locales/en/welcome.json';
 import enPairProgramming from './locales/en/pairProgramming.json';
 import enArena from './locales/en/arena.json';
+import enApiExplorer from './locales/en/apiExplorer.json';
 
 // Import French translation resources
 import frAppEmulator from './locales/fr/appEmulator.json';
@@ -98,6 +99,7 @@ import frDashboard from './locales/fr/dashboard.json';
 import frWelcome from './locales/fr/welcome.json';
 import frPairProgramming from './locales/fr/pairProgramming.json';
 import frArena from './locales/fr/arena.json';
+import frApiExplorer from './locales/fr/apiExplorer.json';
 
 export const defaultNS = 'common';
 
@@ -149,7 +151,8 @@ export const resources = {
     visualProgramming: enVisualProgramming,
     welcome: enWelcome,
     pairProgramming: enPairProgramming,
-    arena: enArena
+    arena: enArena,
+    apiExplorer: enApiExplorer
   },
   fr: {
     appEmulator: frAppEmulator,
@@ -198,7 +201,8 @@ export const resources = {
     visualProgramming: frVisualProgramming,
     welcome: frWelcome,
     pairProgramming: frPairProgramming,
-    arena: frArena
+    arena: frArena,
+    apiExplorer: frApiExplorer
   }
 } as const;
 
@@ -256,7 +260,8 @@ i18n
       'visualProgramming',
       'welcome',
       'pairProgramming',
-      'arena'
+      'arena',
+      'apiExplorer'
     ],
     interpolation: {
       escapeValue: false 

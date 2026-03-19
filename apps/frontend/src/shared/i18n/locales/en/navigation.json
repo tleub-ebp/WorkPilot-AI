@@ -56,7 +56,8 @@
     "pairProgramming": "Pair Programming",
     "pipelineGenerator": "Pipeline Generator",
     "pluginMarketplace": "Plugin Marketplace",
-    "arenaMode": "Arena Mode"
+    "arenaMode": "Arena Mode",
+    "apiExplorer": "API Explorer"
   },
   "actions": {
     "settings": "Settings",
