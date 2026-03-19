@@ -1377,13 +1377,18 @@
     "activeProvider": "Fournisseur actif : {{provider}}",
     "agentConfiguration": {
       "title": "Configuration de l'agent",
-      "description": "Configurer le modèle et les paramètres de l'agent"
+      "description": "Configurer le modèle et les paramètres de l'agent",
+      "model": "Modèle"
     },
     "autoBuild": {
       "title": "Intégration Auto-Build",
       "description": "Configurer l'intégration de build automatique",
       "initialized": "Initialisé",
-      "notInitialized": "Non initialisé"
+      "notInitialized": "Non initialisé",
+      "notInitializedDescription": "Initialisez Auto-Build pour activer la création de tâches et les workflows d'agents.",
+      "initializing": "Initialisation en cours...",
+      "initializeButton": "Initialiser Auto-Build",
+      "checkingStatus": "Vérification du statut..."
     },
     "azure-devops": {
       "description": "Éléments de travail Azure DevOps",
