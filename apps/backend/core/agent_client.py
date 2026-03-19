@@ -756,8 +756,23 @@ class CopilotAgentClient(AgentClient):
                     content=[ContentBlock(type=ContentBlockType.TEXT, text=content)],
                 )
 
-            # No tool calls → session complete
+            # No tool calls returned
             if not tool_calls:
+                if finish_reason == "tool_calls":
+                    # Copilot API returned finish_reason=tool_calls but no actual tool_calls —
+                    # this can occur with Claude models via the OpenAI-compatible Copilot API.
+                    # Add the partial assistant message and prompt the model to proceed with tools.
+                    logger.warning(
+                        f"[CopilotAgentClient] Turn {turn + 1}: finish_reason=tool_calls "
+                        "but no tool_calls in response — retrying with nudge"
+                    )
+                    if content:
+                        messages.append({"role": "assistant", "content": content})
+                    messages.append({
+                        "role": "user",
+                        "content": "Please proceed by calling the appropriate tools to complete your task.",
+                    })
+                    continue  # retry — don't return early
                 if not content:
                     yield AgentMessage(
                         role=MessageRole.ASSISTANT,

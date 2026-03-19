@@ -1,7 +1,7 @@
-import path from 'path';
-import { existsSync, readFileSync, } from 'fs';
-import { EventEmitter } from 'events';
-import type { TaskLogs, TaskLogPhase, TaskLogStreamChunk, TaskPhaseLog } from '../shared/types';
+import path from 'node:path';
+import { existsSync, readFileSync, } from 'node:fs';
+import { EventEmitter } from 'node:events';
+import type { TaskLogs, TaskLogPhase, TaskLogStreamChunk, TaskPhaseLog, TaskLogEntry } from '../shared/types';
 import { findTaskWorktree } from './worktree-paths';
 import { debugLog, debugWarn, debugError } from '../shared/utils/debug-logger';
 
@@ -27,10 +27,13 @@ function findWorktreeSpecDir(projectPath: string, specId: string, specsRelPath: 
  * watches both locations and merges logs from both sources.
  */
 export class TaskLogService extends EventEmitter {
-  private logCache: Map<string, TaskLogs> = new Map();
-  private pollIntervals: Map<string, NodeJS.Timeout> = new Map();
+  private readonly logCache: Map<string, TaskLogs> = new Map();
+  private readonly pollIntervals: Map<string, NodeJS.Timeout> = new Map();
   // Store paths being watched for each specId (main + worktree)
-  private watchedPaths: Map<string, { mainSpecDir: string; worktreeSpecDir: string | null; specsRelPath: string }> = new Map();
+  private readonly watchedPaths: Map<string, { mainSpecDir: string; worktreeSpecDir: string | null; specsRelPath: string }> = new Map();
+  // Store last known file contents for change detection
+  private readonly lastMainContents: Map<string, string> = new Map();
+  private readonly lastWorktreeContents: Map<string, string> = new Map();
 
   // Poll interval for watching log changes (more reliable than fs.watch on some systems)
   private readonly POLL_INTERVAL_MS = 1000;
@@ -90,6 +93,94 @@ export class TaskLogService extends EventEmitter {
   }
 
   /**
+   * Select planning phase source based on entry count
+   */
+  private selectPlanningPhaseSource(
+    worktreePhase: TaskPhaseLog | undefined,
+    mainPhase: TaskPhaseLog | undefined,
+    worktreeCount: number,
+    mainCount: number
+  ): TaskPhaseLog | undefined {
+    // Prefer the source with more entries
+    return worktreeCount > mainCount ? worktreePhase : (mainPhase || worktreePhase);
+  }
+
+  /**
+   * Select coding/validation phase source based on activity
+   */
+  private selectActivePhaseSource(
+    worktreePhase: TaskPhaseLog | undefined,
+    mainPhase: TaskPhaseLog | undefined,
+    worktreeCount: number
+  ): TaskPhaseLog | undefined {
+    // Prefer worktree if it has entries or is active
+    return (worktreeCount > 0 || worktreePhase?.status !== 'pending') ? worktreePhase : mainPhase;
+  }
+
+  /**
+   * Get entry count for a phase
+   */
+  private getPhaseEntryCount(phase: TaskPhaseLog | undefined): number {
+    return phase?.entries?.length || 0;
+  }
+
+  /**
+   * Create merged logs object
+   */
+  private createMergedLogs(
+    mainLogs: TaskLogs,
+    worktreeLogs: TaskLogs,
+    worktreePlanningCount: number,
+    mainPlanningCount: number
+  ): TaskLogs {
+    const worktreeCodingCount = this.getPhaseEntryCount(worktreeLogs.phases.coding);
+    const worktreeValidationCount = this.getPhaseEntryCount(worktreeLogs.phases.validation);
+
+    return {
+      spec_id: mainLogs.spec_id,
+      created_at: mainLogs.created_at,
+      updated_at: new Date(Math.max(new Date(worktreeLogs.updated_at).getTime(), new Date(mainLogs.updated_at).getTime())).toISOString(),
+      phases: {
+        planning: this.selectPlanningPhaseSource(
+          worktreeLogs.phases.planning,
+          mainLogs.phases.planning,
+          worktreePlanningCount,
+          mainPlanningCount
+        ) || mainLogs.phases.planning,
+        coding: this.selectActivePhaseSource(
+          worktreeLogs.phases.coding,
+          mainLogs.phases.coding,
+          worktreeCodingCount
+        ) || mainLogs.phases.coding,
+        validation: this.selectActivePhaseSource(
+          worktreeLogs.phases.validation,
+          mainLogs.phases.validation,
+          worktreeValidationCount
+        ) || mainLogs.phases.validation
+      }
+    };
+  }
+
+  /**
+   * Determine log source for debugging
+   */
+  private determineLogSource(
+    worktreeLogs: TaskLogs,
+    mainLogs: TaskLogs,
+    worktreePlanningCount: number,
+    mainPlanningCount: number
+  ): { planning: string; coding: string; validation: string } {
+    const worktreeCodingCount = this.getPhaseEntryCount(worktreeLogs.phases.coding);
+    const worktreeValidationCount = this.getPhaseEntryCount(worktreeLogs.phases.validation);
+
+    return {
+      planning: worktreePlanningCount > mainPlanningCount ? 'worktree' : 'main',
+      coding: (worktreeCodingCount > 0 || worktreeLogs.phases.coding?.status !== 'pending') ? 'worktree' : 'main',
+      validation: (worktreeValidationCount > 0 || worktreeLogs.phases.validation?.status !== 'pending') ? 'worktree' : 'main'
+    };
+  }
+
+  /**
    * Merge logs from main and worktree spec directories
    */
   private mergeLogs(mainLogs: TaskLogs | null, worktreeLogs: TaskLogs | null, specDir: string): TaskLogs | null {
@@ -123,22 +214,11 @@ export class TaskLogService extends EventEmitter {
       return worktreeLogs;
     }
 
-    // Merge logs: planning from main, coding/validation from worktree (if available)
-    const mergedLogs: TaskLogs = {
-      spec_id: mainLogs.spec_id,
-      created_at: mainLogs.created_at,
-      updated_at: worktreeLogs.updated_at > mainLogs.updated_at ? worktreeLogs.updated_at : mainLogs.updated_at,
-      phases: {
-        planning: mainLogs.phases.planning || worktreeLogs.phases.planning,
-        // Use worktree logs for coding/validation if they have entries, otherwise fall back to main
-        coding: (worktreeLogs.phases.coding?.entries?.length > 0 || worktreeLogs.phases.coding?.status !== 'pending')
-          ? worktreeLogs.phases.coding
-          : mainLogs.phases.coding,
-        validation: (worktreeLogs.phases.validation?.entries?.length > 0 || worktreeLogs.phases.validation?.status !== 'pending')
-          ? worktreeLogs.phases.validation
-          : mainLogs.phases.validation
-      }
-    };
+    // Merge logs using helper methods
+    const worktreePlanningCount = this.getPhaseEntryCount(worktreeLogs.phases.planning);
+    const mainPlanningCount = this.getPhaseEntryCount(mainLogs.phases.planning);
+    const mergedLogs = this.createMergedLogs(mainLogs, worktreeLogs, worktreePlanningCount, mainPlanningCount);
+    const logSource = this.determineLogSource(worktreeLogs, mainLogs, worktreePlanningCount, mainPlanningCount);
 
     debugLog('[TaskLogService.mergeLogs] Merged logs created:', {
       specDir,
@@ -147,11 +227,7 @@ export class TaskLogService extends EventEmitter {
         coding: mergedLogs.phases.coding?.entries?.length || 0,
         validation: mergedLogs.phases.validation?.entries?.length || 0
       },
-      source: {
-        planning: mainLogs.phases.planning ? 'main' : 'worktree',
-        coding: (worktreeLogs.phases.coding?.entries?.length > 0 || worktreeLogs.phases.coding?.status !== 'pending') ? 'worktree' : 'main',
-        validation: (worktreeLogs.phases.validation?.entries?.length > 0 || worktreeLogs.phases.validation?.status !== 'pending') ? 'worktree' : 'main'
-      }
+      source: logSource
     });
 
     this.logCache.set(specDir, mergedLogs);
@@ -241,6 +317,157 @@ export class TaskLogService extends EventEmitter {
   }
 
   /**
+   * Load initial log file contents
+   */
+  private loadInitialFileContents(mainLogFile: string, worktreeSpecDir: string | null): { mainContent: string; worktreeContent: string } {
+    let mainContent = '';
+    let worktreeContent = '';
+
+    // Load main log file
+    if (existsSync(mainLogFile)) {
+      try {
+        mainContent = readFileSync(mainLogFile, 'utf-8');
+      } catch (error) {
+        debugWarn('[TaskLogService.startWatching] Failed to read main log file:', mainLogFile, error);
+      }
+    }
+
+    // Load worktree log file
+    if (worktreeSpecDir) {
+      const worktreeLogFile = path.join(worktreeSpecDir, 'task_logs.json');
+      if (existsSync(worktreeLogFile)) {
+        try {
+          worktreeContent = readFileSync(worktreeLogFile, 'utf-8');
+        } catch (error) {
+          debugWarn('[TaskLogService.startWatching] Failed to read worktree log file:', worktreeLogFile, error);
+        }
+      }
+    }
+
+    return { mainContent, worktreeContent };
+  }
+
+  /**
+   * Check if a log file has changed and return new content
+   */
+  private checkFileChanged(logFile: string, lastContent: string): { changed: boolean; newContent: string } {
+    if (!existsSync(logFile)) {
+      return { changed: false, newContent: lastContent };
+    }
+
+    try {
+      const currentContent = readFileSync(logFile, 'utf-8');
+      if (currentContent !== lastContent) {
+        return { changed: true, newContent: currentContent };
+      }
+    } catch (error) {
+      debugWarn('[TaskLogService.checkFileChanged] Failed to read log file:', logFile, error);
+    }
+
+    return { changed: false, newContent: lastContent };
+  }
+
+  /**
+   * Discover worktree if not already found
+   */
+  private discoverWorktree(specId: string, projectPath?: string, specsRelPath?: string): string | null {
+    if (!projectPath || !specsRelPath) {
+      return null;
+    }
+    return findWorktreeSpecDir(projectPath, specId, specsRelPath);
+  }
+
+  /**
+   * Handle file changes and emit events
+   */
+  private handleFileChanges(specId: string, mainChanged: boolean, worktreeChanged: boolean): void {
+    if (!mainChanged && !worktreeChanged) {
+      return;
+    }
+
+    debugLog('[TaskLogService] Log file changed:', {
+      specId,
+      mainChanged,
+      worktreeChanged
+    });
+
+    const previousLogs = this.logCache.get(specId);
+    const logs = this.loadLogs(specId);
+
+    if (logs) {
+      debugLog('[TaskLogService] Emitting logs-changed event:', {
+        specId,
+        entryCounts: {
+          planning: logs.phases.planning?.entries?.length || 0,
+          coding: logs.phases.coding?.entries?.length || 0,
+          validation: logs.phases.validation?.entries?.length || 0
+        }
+      });
+
+      this.emit('logs-changed', specId, logs);
+      this.emitNewEntries(specId, previousLogs, logs);
+    } else {
+      debugWarn('[TaskLogService] No logs loaded after file change:', specId);
+    }
+  }
+
+  /**
+   * Create polling function for file changes
+   */
+  private createPollingFunction(
+    specId: string, 
+    mainLogFile: string, 
+    projectPath?: string, 
+    specsRelPath?: string
+  ): () => void {
+    return () => {
+      let mainChanged = false;
+      let worktreeChanged = false;
+
+      // Get current worktree info
+      const watchedInfo = this.watchedPaths.get(specId);
+      let currentWorktreeSpecDir = watchedInfo?.worktreeSpecDir || null;
+
+      // Discover worktree if not found yet
+      if (!currentWorktreeSpecDir && projectPath && specsRelPath) {
+        const discoveredWorktree = this.discoverWorktree(specId, projectPath, specsRelPath);
+        if (discoveredWorktree) {
+          currentWorktreeSpecDir = discoveredWorktree;
+          this.watchedPaths.set(specId, {
+            mainSpecDir: watchedInfo?.mainSpecDir || '',
+            worktreeSpecDir: discoveredWorktree,
+            specsRelPath: specsRelPath
+          });
+          debugLog('[TaskLogService] Discovered worktree for spec:', {
+            specId,
+            worktreeSpecDir: discoveredWorktree
+          });
+        }
+      }
+
+      // Check main file changes
+      const mainResult = this.checkFileChanged(mainLogFile, this.lastMainContents.get(specId) || '');
+      if (mainResult.changed) {
+        this.lastMainContents.set(specId, mainResult.newContent);
+        mainChanged = true;
+      }
+
+      // Check worktree file changes
+      if (currentWorktreeSpecDir) {
+        const worktreeLogFile = path.join(currentWorktreeSpecDir, 'task_logs.json');
+        const worktreeResult = this.checkFileChanged(worktreeLogFile, this.lastWorktreeContents.get(specId) || '');
+        if (worktreeResult.changed) {
+          this.lastWorktreeContents.set(specId, worktreeResult.newContent);
+          worktreeChanged = true;
+        }
+      }
+
+      // Handle changes
+      this.handleFileChanges(specId, mainChanged, worktreeChanged);
+    };
+  }
+
+  /**
    * Start watching a spec directory for log changes
    * Also watches the worktree spec directory if it exists (for coding/validation phases)
    *
@@ -258,8 +485,7 @@ export class TaskLogService extends EventEmitter {
     });
 
     // Check if already watching with the same parameters (prevents rapid watch/unwatch cycles)
-    const existingWatch = this.watchedPaths.get(specId);
-    if (existingWatch && existingWatch.mainSpecDir === specDir) {
+    if (this.isAlreadyWatching(specId, specDir)) {
       debugLog('[TaskLogService.startWatching] Already watching this spec, skipping');
       return;
     }
@@ -268,20 +494,54 @@ export class TaskLogService extends EventEmitter {
     this.stopWatching(specId);
 
     const mainLogFile = path.join(specDir, 'task_logs.json');
-
-    // Calculate worktree spec directory path if we have project info
-    let worktreeSpecDir: string | null = null;
-    if (projectPath && specsRelPath) {
-      worktreeSpecDir = findWorktreeSpecDir(projectPath, specId, specsRelPath);
-    }
-
+    const worktreeSpecDir = this.findWorktreeSpecDir(projectPath, specId, specsRelPath);
+    
     // Store watched paths for this specId
+    this.storeWatchedPaths(specId, specDir, worktreeSpecDir, specsRelPath);
+
+    // Load initial content
+    const { lastMainContent, lastWorktreeContent } = this.loadInitialContent(mainLogFile, worktreeSpecDir);
+
+    // Load and cache initial logs
+    this.loadAndCacheInitialLogs(specDir, specId);
+
+    // Start polling for changes
+    this.startPolling(specId, specDir, mainLogFile, projectPath, specsRelPath, lastMainContent, lastWorktreeContent);
+  }
+
+  /**
+   * Check if already watching a spec with the same directory
+   */
+  private isAlreadyWatching(specId: string, specDir: string): boolean {
+    const existingWatch = this.watchedPaths.get(specId);
+    return existingWatch?.mainSpecDir === specDir;
+  }
+
+  /**
+   * Find worktree spec directory
+   */
+  private findWorktreeSpecDir(projectPath?: string, specId?: string, specsRelPath?: string): string | null {
+    if (!projectPath || !specsRelPath || !specId) {
+      return null;
+    }
+    return findWorktreeSpecDir(projectPath, specId, specsRelPath);
+  }
+
+  /**
+   * Store watched paths for a spec
+   */
+  private storeWatchedPaths(specId: string, specDir: string, worktreeSpecDir: string | null, specsRelPath?: string): void {
     this.watchedPaths.set(specId, {
       mainSpecDir: specDir,
       worktreeSpecDir,
       specsRelPath: specsRelPath || ''
     });
+  }
 
+  /**
+   * Load initial content from log files
+   */
+  private loadInitialContent(mainLogFile: string, worktreeSpecDir: string | null): { lastMainContent: string; lastWorktreeContent: string } {
     let lastMainContent = '';
     let lastWorktreeContent = '';
 
@@ -289,8 +549,8 @@ export class TaskLogService extends EventEmitter {
     if (existsSync(mainLogFile)) {
       try {
         lastMainContent = readFileSync(mainLogFile, 'utf-8');
-      } catch (_e) {
-        // Ignore parse errors on initial load
+      } catch (error) {
+        debugWarn('[TaskLogService.startWatching] Failed to read main log file:', mainLogFile, error);
       }
     }
 
@@ -300,13 +560,19 @@ export class TaskLogService extends EventEmitter {
       if (existsSync(worktreeLogFile)) {
         try {
           lastWorktreeContent = readFileSync(worktreeLogFile, 'utf-8');
-        } catch (_e) {
-          // Ignore parse errors on initial load
+        } catch (error) {
+          debugWarn('[TaskLogService.startWatching] Failed to read worktree log file:', worktreeLogFile, error);
         }
       }
     }
 
-    // Do initial merged load
+    return { lastMainContent, lastWorktreeContent };
+  }
+
+  /**
+   * Load and cache initial logs
+   */
+  private loadAndCacheInitialLogs(specDir: string, specId: string): void {
     debugLog('[TaskLogService.startWatching] Loading initial logs');
     const initialLogs = this.loadLogs(specDir);
     if (initialLogs) {
@@ -322,94 +588,35 @@ export class TaskLogService extends EventEmitter {
     } else {
       debugLog('[TaskLogService.startWatching] No initial logs found');
     }
+  }
 
+  /**
+   * Start polling for log changes
+   */
+  private startPolling(
+    specId: string,
+    specDir: string,
+    mainLogFile: string,
+    projectPath?: string,
+    specsRelPath?: string,
+    lastMainContent?: string,
+    lastWorktreeContent?: string
+  ): void {
     // Poll for changes in both locations
     // Note: worktreeSpecDir may be null initially if worktree doesn't exist yet.
     // We need to dynamically re-discover it during polling.
     const pollInterval = setInterval(() => {
-      let mainChanged = false;
-      let worktreeChanged = false;
-
-      // Dynamically re-discover worktree if not found yet
-      // This handles the case where user opens logs before worktree is created
-      const watchedInfo = this.watchedPaths.get(specId);
-      let currentWorktreeSpecDir = watchedInfo?.worktreeSpecDir || null;
-
-      if (!currentWorktreeSpecDir && projectPath && specsRelPath) {
-        const discoveredWorktree = findWorktreeSpecDir(projectPath, specId, specsRelPath);
-        if (discoveredWorktree) {
-          currentWorktreeSpecDir = discoveredWorktree;
-          // Update stored paths so future iterations don't need to re-discover
-          this.watchedPaths.set(specId, {
-            mainSpecDir: specDir,
-            worktreeSpecDir: discoveredWorktree,
-            specsRelPath: specsRelPath
-          });
-          debugLog('[TaskLogService] Discovered worktree for spec:', {
-            specId,
-            worktreeSpecDir: discoveredWorktree
-          });
-        }
-      }
-
-      // Check main spec dir
-      if (existsSync(mainLogFile)) {
-        try {
-          const currentContent = readFileSync(mainLogFile, 'utf-8');
-          if (currentContent !== lastMainContent) {
-            lastMainContent = currentContent;
-            mainChanged = true;
-          }
-        } catch (_error) {
-          // Ignore read/parse errors
-        }
-      }
-
-      // Check worktree spec dir
-      if (currentWorktreeSpecDir) {
-        const worktreeLogFile = path.join(currentWorktreeSpecDir, 'task_logs.json');
-        if (existsSync(worktreeLogFile)) {
-          try {
-            const currentContent = readFileSync(worktreeLogFile, 'utf-8');
-            if (currentContent !== lastWorktreeContent) {
-              lastWorktreeContent = currentContent;
-              worktreeChanged = true;
-            }
-          } catch (_error) {
-            // Ignore read/parse errors
-          }
-        }
-      }
-
+      const { mainChanged, worktreeChanged, newMainContent, newWorktreeContent } = this.checkForChanges(
+        specId, mainLogFile, projectPath, specsRelPath, specDir, lastMainContent, lastWorktreeContent
+      );
+      
+      // Update content references
+      if (newMainContent !== undefined) lastMainContent = newMainContent;
+      if (newWorktreeContent !== undefined) lastWorktreeContent = newWorktreeContent;
+      
       // If either file changed, reload and emit
       if (mainChanged || worktreeChanged) {
-        debugLog('[TaskLogService] Log file changed:', {
-          specId,
-          mainChanged,
-          worktreeChanged
-        });
-
-        const previousLogs = this.logCache.get(specDir);
-        const logs = this.loadLogs(specDir);
-
-        if (logs) {
-          debugLog('[TaskLogService] Emitting logs-changed event:', {
-            specId,
-            entryCounts: {
-              planning: logs.phases.planning?.entries?.length || 0,
-              coding: logs.phases.coding?.entries?.length || 0,
-              validation: logs.phases.validation?.entries?.length || 0
-            }
-          });
-
-          // Emit change event with the merged logs
-          this.emit('logs-changed', specId, logs);
-
-          // Calculate and emit streaming updates for new entries
-          this.emitNewEntries(specId, previousLogs, logs);
-        } else {
-          debugWarn('[TaskLogService] No logs loaded after file change:', specId);
-        }
+        this.handleFileChanges(specId, mainChanged, worktreeChanged);
       }
     }, this.POLL_INTERVAL_MS);
 
@@ -417,9 +624,101 @@ export class TaskLogService extends EventEmitter {
     debugLog('[TaskLogService] Started watching spec:', {
       specId,
       mainSpecDir: specDir,
-      worktreeSpecDir: worktreeSpecDir || 'none',
+      worktreeSpecDir: this.watchedPaths.get(specId)?.worktreeSpecDir || 'none',
       pollIntervalMs: this.POLL_INTERVAL_MS
     });
+  }
+
+  /**
+   * Check for file changes in both main and worktree directories
+   */
+  private checkForChanges(
+    specId: string,
+    mainLogFile: string,
+    projectPath?: string,
+    specsRelPath?: string,
+    specDir?: string,
+    lastMainContent?: string,
+    lastWorktreeContent?: string
+  ): { mainChanged: boolean; worktreeChanged: boolean; newMainContent?: string; newWorktreeContent?: string } {
+    let mainChanged = false;
+    let worktreeChanged = false;
+    let newMainContent: string | undefined;
+    let newWorktreeContent: string | undefined;
+
+    // Get current worktree info and discover if needed
+    const currentWorktreeSpecDir = this.getCurrentWorktreeSpecDir(specId, projectPath, specsRelPath, specDir);
+
+    // Check main spec dir
+    const mainResult = this.checkFileChange(mainLogFile, lastMainContent || '');
+    if (mainResult.changed) {
+      newMainContent = mainResult.newContent;
+      mainChanged = true;
+    }
+
+    // Check worktree spec dir
+    if (currentWorktreeSpecDir) {
+      const worktreeLogFile = path.join(currentWorktreeSpecDir, 'task_logs.json');
+      const worktreeResult = this.checkFileChange(worktreeLogFile, lastWorktreeContent || '');
+      if (worktreeResult.changed) {
+        newWorktreeContent = worktreeResult.newContent;
+        worktreeChanged = true;
+      }
+    }
+
+    return { mainChanged, worktreeChanged, newMainContent, newWorktreeContent };
+  }
+
+  /**
+   * Get current worktree spec directory, discovering if needed
+   */
+  private getCurrentWorktreeSpecDir(
+    specId: string,
+    projectPath?: string,
+    specsRelPath?: string,
+    specDir?: string
+  ): string | null {
+    // Dynamically re-discover worktree if not found yet
+    // This handles the case where user opens logs before worktree is created
+    const watchedInfo = this.watchedPaths.get(specId);
+    let currentWorktreeSpecDir = watchedInfo?.worktreeSpecDir || null;
+
+    if (!currentWorktreeSpecDir && projectPath && specsRelPath && specDir) {
+      const discoveredWorktree = findWorktreeSpecDir(projectPath, specId, specsRelPath);
+      if (discoveredWorktree) {
+        currentWorktreeSpecDir = discoveredWorktree;
+        // Update stored paths so future iterations don't need to re-discover
+        this.watchedPaths.set(specId, {
+          mainSpecDir: specDir,
+          worktreeSpecDir: discoveredWorktree,
+          specsRelPath: specsRelPath
+        });
+        debugLog('[TaskLogService] Discovered worktree for spec:', {
+          specId,
+          worktreeSpecDir: discoveredWorktree
+        });
+      }
+    }
+
+    return currentWorktreeSpecDir;
+  }
+
+  /**
+   * Check if a file has changed
+   */
+  private checkFileChange(logFile: string, lastContent: string): { changed: boolean; newContent: string } {
+    if (!existsSync(logFile)) {
+      return { changed: false, newContent: lastContent };
+    }
+
+    try {
+      const currentContent = readFileSync(logFile, 'utf-8');
+      const changed = currentContent !== lastContent;
+      return { changed, newContent: currentContent };
+    } catch (error) {
+      debugWarn('[TaskLogService] Failed to read log file during polling:', logFile, error);
+      return { changed: false, newContent: lastContent };
+    }
   }
 
   /**
@@ -432,6 +731,8 @@ export class TaskLogService extends EventEmitter {
       clearInterval(interval);
       this.pollIntervals.delete(specId);
       this.watchedPaths.delete(specId);
+      this.lastMainContents.delete(specId);
+      this.lastWorktreeContents.delete(specId);
     }
   }
 
@@ -456,51 +757,77 @@ export class TaskLogService extends EventEmitter {
 
       if (!currPhase) continue;
 
-      // Check for phase status changes
-      if (prevPhase?.status !== currPhase.status) {
-        if (currPhase.status === 'active') {
-          this.emit('stream-chunk', specId, {
-            type: 'phase_start',
-            phase,
-            timestamp: currPhase.started_at || new Date().toISOString()
-          } as TaskLogStreamChunk);
-        } else if (currPhase.status === 'completed' || currPhase.status === 'failed') {
-          this.emit('stream-chunk', specId, {
-            type: 'phase_end',
-            phase,
-            timestamp: currPhase.completed_at || new Date().toISOString()
-          } as TaskLogStreamChunk);
-        }
-      }
-
-      // Check for new entries
-      const prevEntryCount = prevPhase?.entries.length || 0;
-      const currEntryCount = currPhase.entries.length;
-
-      if (currEntryCount > prevEntryCount) {
-        // Emit new entries
-        for (let i = prevEntryCount; i < currEntryCount; i++) {
-          const entry = currPhase.entries[i];
-
-          const streamUpdate: TaskLogStreamChunk = {
-            type: entry.type as TaskLogStreamChunk['type'],
-            content: entry.content,
-            phase: entry.phase,
-            timestamp: entry.timestamp,
-            subtask_id: entry.subtask_id
-          };
-
-          if (entry.tool_name) {
-            streamUpdate.tool = {
-              name: entry.tool_name,
-              input: entry.tool_input
-            };
-          }
-
-          this.emit('stream-chunk', specId, streamUpdate);
-        }
-      }
+      this.emitPhaseStatusChanges(specId, phase, prevPhase, currPhase);
+      this.emitNewPhaseEntries(specId, prevPhase, currPhase);
     }
+  }
+
+  /**
+   * Emit phase status change events
+   */
+  private emitPhaseStatusChanges(
+    specId: string, 
+    phase: TaskLogPhase, 
+    prevPhase: TaskPhaseLog | undefined, 
+    currPhase: TaskPhaseLog
+  ): void {
+    if (prevPhase?.status === currPhase.status) return;
+
+    if (currPhase.status === 'active') {
+      this.emit('stream-chunk', specId, {
+        type: 'phase_start',
+        phase,
+        timestamp: currPhase.started_at || new Date().toISOString()
+      } as TaskLogStreamChunk);
+    } else if (currPhase.status === 'completed' || currPhase.status === 'failed') {
+      this.emit('stream-chunk', specId, {
+        type: 'phase_end',
+        phase,
+        timestamp: currPhase.completed_at || new Date().toISOString()
+      } as TaskLogStreamChunk);
+    }
+  }
+
+  /**
+   * Emit new entries for a phase
+   */
+  private emitNewPhaseEntries(
+    specId: string, 
+    prevPhase: TaskPhaseLog | undefined, 
+    currPhase: TaskPhaseLog
+  ): void {
+    const prevEntryCount = prevPhase?.entries.length || 0;
+    const currEntryCount = currPhase.entries.length;
+
+    if (currEntryCount <= prevEntryCount) return;
+
+    for (let i = prevEntryCount; i < currEntryCount; i++) {
+      const entry = currPhase.entries[i];
+      const streamUpdate = this.createStreamUpdate(entry);
+      this.emit('stream-chunk', specId, streamUpdate);
+    }
+  }
+
+  /**
+   * Create a stream update from a log entry
+   */
+  private createStreamUpdate(entry: TaskLogEntry): TaskLogStreamChunk {
+    const streamUpdate: TaskLogStreamChunk = {
+      type: entry.type as TaskLogStreamChunk['type'],
+      content: entry.content,
+      phase: entry.phase,
+      timestamp: entry.timestamp,
+      subtask_id: entry.subtask_id
+    };
+
+    if (entry.tool_name) {
+      streamUpdate.tool = {
+        name: entry.tool_name,
+        input: entry.tool_input
+      };
+    }
+
+    return streamUpdate;
   }
 
   /**
