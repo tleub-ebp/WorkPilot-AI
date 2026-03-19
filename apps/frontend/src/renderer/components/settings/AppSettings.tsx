@@ -22,7 +22,6 @@ import {
   Cloud,
   Shield,
   ShieldAlert,
-  Router,
   CalendarClock,
   Sparkles,
   ChevronRight
@@ -54,7 +53,6 @@ import type { UseProjectSettingsReturn } from '@/components/project-settings';
 import { CleanProviderSection } from './CleanProviderSection';
 import { SandboxSettings } from './SandboxSettings';
 import { AnomalyDetectionSettings } from './AnomalyDetectionSettings';
-import { LlmRouterSettings } from './LlmRouterSettings';
 import { SchedulerSettings } from './SchedulerSettings';
 
 // GitLab icon component (lucide-react doesn't have one)
@@ -99,7 +97,7 @@ export type AppSection =
   // Sécurité & Performance
   | 'sandbox' | 'anomaly-detection' | 'memory'
   // Système & Maintenance
-  | 'updates' | 'notifications' | 'debug' | 'scheduler' | 'llm-router';
+  | 'updates' | 'notifications' | 'debug' | 'scheduler';
 
 export type ProjectSettingsSection = 'general' | 'azure-devops' | 'jira' | 'github' | 'gitlab' | 'linear' | 'memory';
 
@@ -190,8 +188,7 @@ const createSettingsThemes = (t: any): Record<SettingsTheme, {
       { id: 'updates', icon: Package, label: 'Mises à jour', type: 'app' },
       { id: 'notifications', icon: Bell, label: 'Notifications', type: 'app' },
       { id: 'debug', icon: Bug, label: 'Debug', type: 'app' },
-      { id: 'scheduler', icon: CalendarClock, label: 'Planification', type: 'app' },
-      { id: 'llm-router', icon: Router, label: 'Routage LLM', type: 'app' }
+      { id: 'scheduler', icon: CalendarClock, label: 'Planification', type: 'app' }
     ],
     description: 'Maintenance et système',
     priority: 6
@@ -344,8 +341,6 @@ export function AppSettingsDialog(props: AppSettingsDialogProps) {
         return <SandboxSettings />;
       case 'anomaly-detection':
         return <AnomalyDetectionSettings />;
-      case 'llm-router':
-        return <LlmRouterSettings />;
       case 'scheduler':
         return <SchedulerSettings />;
       default:
