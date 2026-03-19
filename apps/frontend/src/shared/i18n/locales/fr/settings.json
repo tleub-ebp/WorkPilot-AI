@@ -113,10 +113,14 @@
           "tokenLoaded": "Le jeton SSO Windsurf a été automatiquement chargé depuis votre environnement IDE local."
         },
         "openaiAuth": {
-          "codexCliAuth": "Utilisez l'authentification OAuth via Codex CLI pour vous connecter facilement à votre compte OpenAI.",
-          "authenticating": "Authentification...",
-          "connectWithCodex": "Se connecter avec Codex CLI",
-          "terminalInstructions": "Cela ouvrira un terminal où vous pourrez exécuter la commande `codex` pour vous authentifier via OAuth."
+          "codexCliAuth": "Utilisez une clé API OpenAI depuis platform.openai.com pour vous connecter.",
+          "oauthNotSupported": "Le token OAuth Codex CLI ne peut pas être utilisé pour les appels API",
+          "oauthExplanation": "OpenAI n'autorise pas les tokens OAuth ChatGPT/Codex CLI pour appeler directement l'API. Une clé API payante (sk-...) avec facturation est requise.",
+          "useApiKeyInstead": "Pour utiliser le provider OpenAI, obtenez une clé API sur platform.openai.com :",
+          "step1": "Aller sur platform.openai.com/api-keys",
+          "step2": "Créer une nouvelle clé API (commence par sk-...)",
+          "step3": "La saisir dans l'onglet \"Clé API\"",
+          "openPlatform": "Ouvrir platform.openai.com"
         }
       },
       "providerToggle": {

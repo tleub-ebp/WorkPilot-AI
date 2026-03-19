@@ -221,6 +221,19 @@ export class AgentProcessManager {
       keys: Object.keys(providerEnv),
     });
 
+    // When using a non-Claude provider (e.g., OpenAI, Mistral), clear Claude/Anthropic
+    // auth env vars so Claude Code CLI doesn't authenticate to Anthropic and then reject
+    // provider-specific model names (e.g., gpt-4o is unknown to Anthropic).
+    const nonClaudeProvider = providerEnv.SELECTED_LLM_PROVIDER
+      && !['claude', 'anthropic'].includes(providerEnv.SELECTED_LLM_PROVIDER)
+      && providerEnv.SELECTED_LLM_PROVIDER !== 'copilot'; // copilot uses its own gh CLI auth
+    const claudeAuthClearVars: Record<string, undefined> = nonClaudeProvider ? {
+      CLAUDE_CODE_OAUTH_TOKEN: undefined,
+      CLAUDE_CONFIG_DIR: undefined,
+      ANTHROPIC_API_KEY: undefined,
+      ANTHROPIC_AUTH_TOKEN: undefined,
+    } : {};
+
     return {
       ...augmentedEnv,
       ...gitBashEnv,
@@ -229,6 +242,7 @@ export class AgentProcessManager {
       ...glabCliEnv,
       ...extraEnv,
       ...profileEnv,
+      ...claudeAuthClearVars,
       ...providerEnv,
       PYTHONUNBUFFERED: '1',
       PYTHONIOENCODING: 'utf-8',

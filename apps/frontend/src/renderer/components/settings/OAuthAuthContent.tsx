@@ -143,19 +143,11 @@ export function OAuthAuthContent({
     );
   }
 
-  // OpenAI Codex CLI OAuth
+  // OpenAI: OAuth/Codex CLI tokens cannot be used for API calls — show guidance instead
   if (providerId === 'openai') {
     return (
       <div className="space-y-4">
-        <OpenAICodexAuthContent
-          authTerminal={authTerminal}
-          isAuthenticating={isAuthenticating}
-          onOAuthAuth={onOAuthAuth}
-          onAuthTerminalClose={onAuthTerminalClose}
-          onAuthTerminalSuccess={onAuthTerminalSuccess}
-          onAuthTerminalError={onAuthTerminalError}
-          t={t}
-        />
+        <OpenAICodexAuthContent t={t} />
       </div>
     );
   }
@@ -266,62 +258,39 @@ function WindsurfAuthContent({
 }
 
 function OpenAICodexAuthContent({
-  authTerminal,
-  isAuthenticating,
-  onOAuthAuth,
-  onAuthTerminalClose,
-  onAuthTerminalSuccess,
-  onAuthTerminalError,
   t
 }: {
-  readonly authTerminal: AuthTerminalState | null;
-  readonly isAuthenticating: boolean;
-  readonly onOAuthAuth: () => void;
-  readonly onAuthTerminalClose: () => void;
-  readonly onAuthTerminalSuccess: (email?: string) => void;
-  readonly onAuthTerminalError: (error: string) => void;
   readonly t: any;
 }) {
-  // Show auth terminal when active
-  if (authTerminal) {
-    return (
-      <div className="rounded-lg border border-primary/30 overflow-hidden" style={{ height: '320px' }}>
-        <AuthTerminal
-          terminalId={authTerminal.terminalId}
-          configDir={authTerminal.configDir}
-          profileName={authTerminal.profileName}
-          onClose={onAuthTerminalClose}
-          onAuthSuccess={onAuthTerminalSuccess}
-          onAuthError={onAuthTerminalError}
-        />
-      </div>
-    );
-  }
-
-  // Show default auth button
   return (
     <div className="space-y-4">
-      <Button
-        onClick={onOAuthAuth}
-        disabled={isAuthenticating}
-        className="w-full"
-      >
-        {isAuthenticating ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            {t('sections.accounts.providerConfig.openaiAuth.authenticating')}
-          </>
-        ) : (
-          <>
-            <LogIn className="w-4 h-4 mr-2" />
-            {t('sections.accounts.providerConfig.openaiAuth.connectWithCodex')}
-          </>
-        )}
-      </Button>
-      
-      <div className="text-xs text-muted-foreground">
-        <p>{t('sections.accounts.providerConfig.openaiAuth.terminalInstructions')}</p>
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 space-y-2">
+        <div className="flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+          <div className="text-sm text-amber-700 dark:text-amber-400 space-y-1">
+            <p className="font-medium">{t('sections.accounts.providerConfig.openaiAuth.oauthNotSupported')}</p>
+            <p className="text-xs text-muted-foreground">{t('sections.accounts.providerConfig.openaiAuth.oauthExplanation')}</p>
+          </div>
+        </div>
       </div>
+
+      <div className="text-sm text-muted-foreground space-y-2">
+        <p>{t('sections.accounts.providerConfig.openaiAuth.useApiKeyInstead')}</p>
+        <ol className="list-decimal list-inside space-y-1 text-xs">
+          <li>{t('sections.accounts.providerConfig.openaiAuth.step1')}</li>
+          <li>{t('sections.accounts.providerConfig.openaiAuth.step2')}</li>
+          <li>{t('sections.accounts.providerConfig.openaiAuth.step3')}</li>
+        </ol>
+      </div>
+
+      <Button
+        variant="outline"
+        className="w-full"
+        onClick={() => window.open('https://platform.openai.com/api-keys', '_blank')}
+      >
+        <LogIn className="w-4 h-4 mr-2" />
+        {t('sections.accounts.providerConfig.openaiAuth.openPlatform')}
+      </Button>
     </div>
   );
 }
