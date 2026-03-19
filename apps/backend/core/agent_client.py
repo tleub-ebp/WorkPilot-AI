@@ -1370,6 +1370,23 @@ class WindsurfAgentClient(AgentClient):
             except Exception as e:
                 logger.debug(f"[WindsurfAgent] state.vscdb key lookup failed: {e}")
 
+        # 1c. For sk-ws-* keys from env var, check if state.vscdb has a fresher key.
+        # After a Windsurf re-login, state.vscdb is updated with the new key but the
+        # env var still carries the stale key injected from saved frontend settings.
+        # state.vscdb always reflects the current login session, so prefer it.
+        if self._api_key and self._api_key.startswith("sk-ws-"):
+            try:
+                from integrations.windsurf_proxy.auth import _get_api_key_from_state_db
+                db_key = _get_api_key_from_state_db()
+                if db_key and db_key != self._api_key:
+                    logger.info(
+                        "[WindsurfAgent] state.vscdb has a different key than env var "
+                        "(user likely re-logged into Windsurf) — preferring state.vscdb key"
+                    )
+                    self._api_key = db_key
+            except Exception as e:
+                logger.debug(f"[WindsurfAgent] state.vscdb freshness check failed: {e}")
+
         # 1c. If Windsurf IDE is running, extract API key from its credentials
         if not self._api_key and is_windsurf_running():
             try:
@@ -1817,7 +1834,6 @@ class WindsurfAgentClient(AgentClient):
                     ):
                         text_parts.append(chunk)
                     turn_error = None
-                    break  # success
                 except Exception as e:
                     turn_error = e
                     err_str = str(e).lower()
@@ -1827,6 +1843,27 @@ class WindsurfAgentClient(AgentClient):
                         continue
                     logger.error(f"[WindsurfAgent] gRPC streaming error (turn {turn + 1}): {e}")
                     break
+
+                # Windsurf sometimes returns the Cascade session error as HTTP 200 text.
+                # Detect this and retry with fresh credentials (same as _grpc_response).
+                if turn_error is None and attempt == 0:
+                    partial_text = "".join(text_parts).lower()
+                    if "failed_precondition" in partial_text and "cascade session" in partial_text:
+                        logger.warning(
+                            f"[WindsurfAgent] Cascade session error in response text on turn {turn + 1}, "
+                            "retrying with fresh credentials"
+                        )
+                        _grpc_mod._panel_initialized = False
+                        invalidate_process_cache()
+                        await _asyncio.sleep(1.5)
+                        try:
+                            self._credentials = discover_credentials()
+                        except Exception as refresh_err:
+                            logger.error(f"[WindsurfAgent] Credential refresh failed: {refresh_err}")
+                            break
+                        continue  # retry with fresh credentials
+
+                break  # success or non-retryable error
 
             if turn_error is not None:
                 yield AgentMessage(
