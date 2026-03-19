@@ -185,7 +185,7 @@ export function GeneralSettings({
                 />
               </div>
               <div className="flex items-center justify-between">
-                <Label className="font-normal text-foreground">On Review Needed</Label>
+                <Label className="font-normal text-foreground">{t('notifications.onReviewNeeded')}</Label>
                 <Switch
                   checked={settings.notifications.onReviewNeeded}
                   onCheckedChange={(checked) =>
@@ -200,7 +200,7 @@ export function GeneralSettings({
                 />
               </div>
               <div className="flex items-center justify-between">
-                <Label className="font-normal text-foreground">Sound</Label>
+                <Label className="font-normal text-foreground">{t('notifications.sound')}</Label>
                 <Switch
                   checked={settings.notifications.sound}
                   onCheckedChange={(checked) =>

@@ -1378,7 +1378,7 @@
     "agentConfiguration": {
       "title": "Configuration de l'agent",
       "description": "Configurer le modèle et les paramètres de l'agent",
-      "model": "Modèle"
+      "model": "Modèle Claude"
     },
     "autoBuild": {
       "title": "Intégration Auto-Build",
@@ -1405,8 +1405,9 @@
     "customized": "Personnalisé",
     "flagshipModel": "Modèle flagship : {{model}}",
     "general": {
-      "description": "Auto-Build et config agent",
       "title": "Général",
+      "description": "Configuration Auto-Build et agent",
+      "configureFor": "Configurer Auto-Build, modèle d'agent et notifications pour {{projectName}}",
       "useClaudeMd": "Utiliser CLAUDE.md",
       "useClaudeMdDescription": "Inclure les instructions CLAUDE.md dans le contexte de l'agent"
     },
