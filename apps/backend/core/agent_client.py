@@ -396,10 +396,12 @@ class CopilotAgentClient(AgentClient):
 
     # IDE impersonation headers — required by the Copilot API gateway.
     # Omitting any of these causes 400 / 421 errors on Copilot Enterprise.
+    # Versions verified against working open-source implementations (2025).
     _IDE_HEADERS = {
-        "editor-version": "vscode/1.95.3",
-        "editor-plugin-version": "copilot-chat/0.22.4",
-        "user-agent": "GitHubCopilotChat/0.22.4",
+        "editor-version": "vscode/1.104.3",
+        "editor-plugin-version": "copilot-chat/0.26.7",
+        "user-agent": "GitHubCopilotChat/0.26.7",
+        "x-vscode-user-agent-library-version": "electron-fetch",
     }
 
     def __init__(
@@ -554,8 +556,24 @@ class CopilotAgentClient(AgentClient):
                 "Run `gh auth login` and ensure GitHub CLI is installed."
             )
 
+        # Warn if token looks like a classic PAT (ghp_) — these do NOT work with
+        # the Copilot internal API. Only OAuth tokens (gho_) are accepted.
+        if self.github_token.startswith("ghp_"):
+            logger.warning(
+                "[CopilotAgentClient] Token appears to be a classic PAT (ghp_). "
+                "The Copilot API requires an OAuth token (gho_). "
+                "Re-authenticate with: gh auth login --web"
+            )
+            print(
+                "[CopilotAgentClient] ⚠️  Classic PAT detected (ghp_). "
+                "Copilot requires OAuth token (gho_). Fix: gh auth login --web",
+                flush=True,
+            )
+
         exchange_headers = {
             "Authorization": f"token {self.github_token}",
+            "Accept": "application/json",
+            "x-github-api-version": "2025-04-01",
             **self._IDE_HEADERS,
         }
 
@@ -563,14 +581,19 @@ class CopilotAgentClient(AgentClient):
             async with session.get(self._token_exchange_url, headers=exchange_headers) as resp:
                 if resp.status != 200:
                     error_text = await resp.text()
-                    hint = (
-                        " (Hint: 404 usually means the GitHub account does not have an active "
-                        "Copilot subscription, or the token lacks Copilot scopes — run "
-                        "`gh auth refresh -s copilot` to add them.)"
-                        if resp.status == 404 else ""
-                    )
+                    token_hint = ""
+                    if self.github_token.startswith("ghp_"):
+                        token_hint = (
+                            " (Your token is a classic PAT (ghp_) — Copilot requires an OAuth "
+                            "token (gho_). Fix: run `gh auth login --web` to re-authenticate.)"
+                        )
+                    elif resp.status == 404:
+                        token_hint = (
+                            " (404 usually means: no active Copilot subscription, or token is "
+                            "not an OAuth token (gho_). Fix: `gh auth login --web`)"
+                        )
                     raise ValueError(
-                        f"Copilot token exchange failed ({resp.status}): {error_text}{hint}"
+                        f"Copilot token exchange failed ({resp.status}): {error_text}{token_hint}"
                     )
                 data = await resp.json()
 
@@ -623,7 +646,7 @@ class CopilotAgentClient(AgentClient):
             "Authorization": "",  # set per-call after token refresh
             "Copilot-Integration-Id": "vscode-chat",
             "openai-intent": "conversation-panel",
-            "x-github-api-version": "2023-07-07",
+            "x-github-api-version": "2025-04-01",
         }
 
         logger.info(
@@ -842,7 +865,7 @@ class CopilotAgentClient(AgentClient):
                 "Authorization": f"Bearer {copilot_token}",
                 "Copilot-Integration-Id": "vscode-chat",
                 "openai-intent": "conversation-panel",
-                "x-github-api-version": "2023-07-07",
+                "x-github-api-version": "2025-04-01",
             }
 
             try:
