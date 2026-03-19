@@ -391,8 +391,14 @@ export class TaskLogService extends EventEmitter {
       worktreeChanged
     });
 
-    const previousLogs = this.logCache.get(specId);
-    const logs = this.loadLogs(specId);
+    const watchedInfo = this.watchedPaths.get(specId);
+    if (!watchedInfo) {
+      debugWarn('[TaskLogService] No watched paths found for specId, cannot reload logs:', specId);
+      return;
+    }
+    const mainSpecDir = watchedInfo.mainSpecDir;
+    const previousLogs = this.logCache.get(mainSpecDir);
+    const logs = this.loadLogs(mainSpecDir);
 
     if (logs) {
       debugLog('[TaskLogService] Emitting logs-changed event:', {
