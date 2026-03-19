@@ -658,6 +658,19 @@
       "useClaudeMd": "Use CLAUDE.md",
       "useClaudeMdDescription": "Include CLAUDE.md instructions in agent context"
     },
+    "autoBuild": {
+      "title": "Auto-Build Integration",
+      "initialized": "Initialized",
+      "notInitialized": "Not Initialized",
+      "notInitializedDescription": "Initialize Auto-Build to enable task creation and agent workflows.",
+      "initializing": "Initializing...",
+      "initializeButton": "Initialize Auto-Build",
+      "checkingStatus": "Checking status..."
+    },
+    "agentConfiguration": {
+      "title": "Agent Configuration",
+      "model": "Model"
+    },
     "claude": {
       "title": "Claude Auth",
       "description": "Claude authentication"

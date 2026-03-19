@@ -25,13 +25,13 @@ import type {
 } from '../../../shared/types';
 
 interface GeneralSettingsProps {
-  project: Project;
-  settings: ProjectSettingsType;
-  setSettings: React.Dispatch<React.SetStateAction<ProjectSettingsType>>;
-  versionInfo: AutoBuildVersionInfo | null;
-  isCheckingVersion: boolean;
-  isUpdating: boolean;
-  handleInitialize: () => Promise<void>;
+  readonly project: Project;
+  readonly settings: ProjectSettingsType;
+  readonly setSettings: React.Dispatch<React.SetStateAction<ProjectSettingsType>>;
+  readonly versionInfo: AutoBuildVersionInfo | null;
+  readonly isCheckingVersion: boolean;
+  readonly isUpdating: boolean;
+  readonly handleInitialize: () => Promise<void>;
 }
 
 export function GeneralSettings({
@@ -49,15 +49,37 @@ export function GeneralSettings({
     <>
       {/* Auto-Build Integration */}
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground">Auto-Build Integration</h3>
-        {!project.autoBuildPath ? (
+        <h3 className="text-sm font-semibold text-foreground">{t('projectSections.autoBuild.title')}</h3>
+        {project.autoBuildPath ? (
+          <div className="rounded-lg border border-border bg-muted/50 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-success" />
+                <span className="text-sm font-medium text-foreground">{t('projectSections.autoBuild.initialized')}</span>
+              </div>
+              <code className="text-xs bg-background px-2 py-1 rounded">
+                {project.autoBuildPath}
+              </code>
+            </div>
+            {isCheckingVersion ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                {t('projectSections.autoBuild.checkingStatus')}
+              </div>
+            ) : versionInfo && (
+              <div className="text-xs text-muted-foreground">
+                {versionInfo.isInitialized ? t('projectSections.autoBuild.initialized') : t('projectSections.autoBuild.notInitialized')}
+              </div>
+            )}
+          </div>
+        ) : (
           <div className="rounded-lg border border-border bg-muted/50 p-4">
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-warning mt-0.5 shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Not Initialized</p>
+                <p className="text-sm font-medium text-foreground">{t('projectSections.autoBuild.notInitialized')}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Initialize Auto-Build to enable task creation and agent workflows.
+                  {t('projectSections.autoBuild.notInitializedDescription')}
                 </p>
                 <Button
                   size="sm"
@@ -68,39 +90,17 @@ export function GeneralSettings({
                   {isUpdating ? (
                     <>
                       <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                      Initializing...
+                      {t('projectSections.autoBuild.initializing')}
                     </>
                   ) : (
                     <>
                       <Download className="mr-2 h-4 w-4" />
-                      Initialize Auto-Build
+                      {t('projectSections.autoBuild.initializeButton')}
                     </>
                   )}
                 </Button>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="rounded-lg border border-border bg-muted/50 p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                <span className="text-sm font-medium text-foreground">Initialized</span>
-              </div>
-              <code className="text-xs bg-background px-2 py-1 rounded">
-                {project.autoBuildPath}
-              </code>
-            </div>
-            {isCheckingVersion ? (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Checking status...
-              </div>
-            ) : versionInfo && (
-              <div className="text-xs text-muted-foreground">
-                {versionInfo.isInitialized ? 'Initialized' : 'Not initialized'}
-              </div>
-            )}
           </div>
         )}
       </section>
@@ -111,9 +111,9 @@ export function GeneralSettings({
 
           {/* Agent Settings */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">Agent Configuration</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t('projectSections.agentConfiguration.title')}</h3>
             <div className="space-y-2">
-              <Label htmlFor="model" className="text-sm font-medium text-foreground">Model</Label>
+              <Label htmlFor="model" className="text-sm font-medium text-foreground">{t('projectSections.agentConfiguration.model')}</Label>
               <Select
                 value={settings.model}
                 onValueChange={(value) => setSettings({ ...settings, model: value })}
@@ -152,10 +152,10 @@ export function GeneralSettings({
 
           {/* Notifications */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t('notifications.title')}</h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="font-normal text-foreground">On Task Complete</Label>
+                <Label className="font-normal text-foreground">{t('notifications.onTaskComplete')}</Label>
                 <Switch
                   checked={settings.notifications.onTaskComplete}
                   onCheckedChange={(checked) =>
@@ -170,7 +170,7 @@ export function GeneralSettings({
                 />
               </div>
               <div className="flex items-center justify-between">
-                <Label className="font-normal text-foreground">On Task Failed</Label>
+                <Label className="font-normal text-foreground">{t('notifications.onTaskFailed')}</Label>
                 <Switch
                   checked={settings.notifications.onTaskFailed}
                   onCheckedChange={(checked) =>
