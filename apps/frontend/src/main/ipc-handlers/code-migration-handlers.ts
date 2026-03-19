@@ -33,35 +33,35 @@ export function registerCodeMigrationHandlers(): void {
 
 export function setupCodeMigrationEventForwarding(): void {
   codeMigrationService.on('status', (status: string) => {
-    const mainWindow = global.mainWindow;
+    const mainWindow = globalThis.mainWindow;
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('codeMigration:status', status);
     }
   });
 
   codeMigrationService.on('stream-chunk', (chunk: string) => {
-    const mainWindow = global.mainWindow;
+    const mainWindow = globalThis.mainWindow;
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('codeMigration:stream-chunk', chunk);
     }
   });
 
   codeMigrationService.on('error', (error: string) => {
-    const mainWindow = global.mainWindow;
+    const mainWindow = globalThis.mainWindow;
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('codeMigration:error', error);
     }
   });
 
   codeMigrationService.on('complete', (result) => {
-    const mainWindow = global.mainWindow;
+    const mainWindow = globalThis.mainWindow;
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('codeMigration:complete', result);
     }
   });
 
   codeMigrationService.on('task-progress', (progress) => {
-    const mainWindow = global.mainWindow;
+    const mainWindow = globalThis.mainWindow;
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('codeMigration:task-progress', progress);
     }

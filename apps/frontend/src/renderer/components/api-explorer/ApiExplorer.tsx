@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Search,
@@ -17,8 +18,11 @@ import {
   AlertCircle,
   Loader2,
   ExternalLink,
+  ScanSearch,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { useProjectStore } from '../../stores/project-store';
+import { useProjectRouteScan } from '../../hooks/useProjectRouteScan';
 import {
   useApiExplorerStore,
   makeEndpointKey,
@@ -27,6 +31,115 @@ import {
   type OpenApiOperation,
   type OpenApiParameter,
 } from '../../stores/api-explorer-store';
+
+// ── Environment Auto-Detection ───────────────────────────────────────────────
+
+interface DetectedEnvironment {
+  name: string;
+  baseUrl: string;
+  headers: Record<string, string>;
+  source: string; // file origin
+}
+
+/** Parse a .env file content into key=value pairs */
+function parseEnvFile(content: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx < 1) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    let val = trimmed.slice(eqIdx + 1).trim();
+    // Strip surrounding quotes
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1);
+    }
+    result[key] = val;
+  }
+  return result;
+}
+
+/** Return true if value looks like an HTTP(S) URL */
+function isUrl(val: string): boolean {
+  return /^https?:\/\/[^\s]+/.test(val);
+}
+
+/** Pick the most relevant URL from a parsed env object */
+function pickBestUrl(vars: Record<string, string>): string | null {
+  // Priority: known keys first
+  const priority = [
+    'VITE_BACKEND_URL',
+    'BACKEND_URL',
+    'API_URL',
+    'API_BASE_URL',
+    'REACT_APP_API_URL',
+    'NEXT_PUBLIC_API_URL',
+    'APP_URL',
+    'BASE_URL',
+  ];
+  for (const key of priority) {
+    if (vars[key] && isUrl(vars[key])) return vars[key];
+  }
+  // Fallback: any key ending in _URL, _BASE_URL, _API_URL, _ENDPOINT that looks like URL
+  const urlPatterns = [/_URL$/, /_BASE_URL$/, /_API_URL$/, /_ENDPOINT$/, /_HOST$/];
+  for (const [key, val] of Object.entries(vars)) {
+    if (urlPatterns.some((p) => p.test(key)) && isUrl(val)) return val;
+  }
+  return null;
+}
+
+/** Derive a human-readable env name from a filename */
+function envNameFromFile(filename: string): string {
+  const base = filename.replace(/^\.env\.?/, '').replace(/^\./, '');
+  if (!base) return 'Default';
+  return base.charAt(0).toUpperCase() + base.slice(1);
+}
+
+async function detectEnvironmentsFromProject(projectPath: string): Promise<DetectedEnvironment[]> {
+  const filesToScan = [
+    '.env',
+    '.env.local',
+    '.env.development',
+    '.env.staging',
+    '.env.stage',
+    '.env.production',
+    '.env.prod',
+    '.env.test',
+    'apps/frontend/.env',
+    'apps/frontend/.env.local',
+    'apps/frontend/.env.staging',
+    'apps/frontend/.env.production',
+  ];
+
+  const detected: DetectedEnvironment[] = [];
+  const seenUrls = new Set<string>();
+
+  for (const relPath of filesToScan) {
+    const fullPath = `${projectPath}/${relPath}`.replace(/\\/g, '/');
+    try {
+      const result = await window.electronAPI.readFile(fullPath);
+      if (!result.success || !result.data) continue;
+
+      const vars = parseEnvFile(result.data);
+      const url = pickBestUrl(vars);
+      if (!url || seenUrls.has(url)) continue;
+
+      seenUrls.add(url);
+      const filename = relPath.split('/').pop() ?? relPath;
+      detected.push({
+        name: envNameFromFile(filename),
+        baseUrl: url,
+        headers: {},
+        source: relPath,
+      });
+    } catch {
+      // File doesn't exist — skip silently
+    }
+  }
+
+  return detected;
+}
 
 // ── Utilities ────────────────────────────────────────────────────────────────
 
@@ -99,6 +212,14 @@ function EnvironmentManager({ onClose }: EnvironmentManagerProps) {
   const updateEnvironment = useApiExplorerStore((s) => s.updateEnvironment);
   const removeEnvironment = useApiExplorerStore((s) => s.removeEnvironment);
 
+  // Project path for auto-detection
+  const projects = useProjectStore((s) => s.projects);
+  const activeProjectId = useProjectStore((s) => s.activeProjectId);
+  const selectedProjectId = useProjectStore((s) => s.selectedProjectId);
+  const activeProject = projects.find(
+    (p) => p.id === (activeProjectId ?? selectedProjectId)
+  );
+
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editUrl, setEditUrl] = useState('');
@@ -107,6 +228,44 @@ function EnvironmentManager({ onClose }: EnvironmentManagerProps) {
   const [newName, setNewName] = useState('');
   const [newUrl, setNewUrl] = useState('');
   const [newHeaders, setNewHeaders] = useState('');
+
+  // Auto-detection state
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [detectedEnvs, setDetectedEnvs] = useState<DetectedEnvironment[]>([]);
+  const [selectedDetected, setSelectedDetected] = useState<Set<number>>(new Set());
+
+  async function runDetection() {
+    if (!activeProject?.path) return;
+    setIsDetecting(true);
+    setDetectedEnvs([]);
+    try {
+      const results = await detectEnvironmentsFromProject(activeProject.path);
+      // Filter out URLs already in the list
+      const existingUrls = new Set(environments.map((e) => e.baseUrl));
+      const fresh = results.filter((r) => !existingUrls.has(r.baseUrl));
+      setDetectedEnvs(fresh);
+      setSelectedDetected(new Set(fresh.map((_, i) => i)));
+    } finally {
+      setIsDetecting(false);
+    }
+  }
+
+  function importDetected() {
+    for (const idx of selectedDetected) {
+      const env = detectedEnvs[idx];
+      if (env) addEnvironment({ name: env.name, baseUrl: env.baseUrl, headers: env.headers });
+    }
+    setDetectedEnvs([]);
+    setSelectedDetected(new Set());
+  }
+
+  function toggleDetected(idx: number) {
+    setSelectedDetected((prev) => {
+      const next = new Set(prev);
+      next.has(idx) ? next.delete(idx) : next.add(idx);
+      return next;
+    });
+  }
 
   function startEdit(env: ApiEnvironment) {
     setEditId(env.id);
@@ -147,9 +306,9 @@ function EnvironmentManager({ onClose }: EnvironmentManagerProps) {
     setNewHeaders('');
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-2xl w-full max-w-xl p-6">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-2xl w-full max-w-xl p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t('apiExplorer:environments.title')}
@@ -216,6 +375,42 @@ function EnvironmentManager({ onClose }: EnvironmentManagerProps) {
           ))}
         </div>
 
+        {/* Auto-detected environments */}
+        {detectedEnvs.length > 0 && (
+          <div className="mt-3 border border-emerald-400/20 bg-emerald-400/5 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-xs font-semibold text-emerald-400">{t('apiExplorer:environments.detected')} ({detectedEnvs.length})</span>
+              <div className="flex gap-1.5">
+                <button onClick={() => setDetectedEnvs([])} className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">
+                  {t('apiExplorer:actions.cancel')}
+                </button>
+                <Button size="sm" onClick={importDetected} disabled={selectedDetected.size === 0}>
+                  {t('apiExplorer:environments.importSelected')} ({selectedDetected.size})
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              {detectedEnvs.map((env, idx) => (
+                <label key={idx} className="flex items-center gap-2.5 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={selectedDetected.has(idx)}
+                    onChange={() => toggleDetected(idx)}
+                    className="accent-emerald-400 shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-[var(--color-text-primary)]">{env.name}</span>
+                      <span className="text-[9px] font-mono text-[var(--color-text-muted)] border border-[var(--color-border)] rounded px-1">{env.source}</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-emerald-400/80 truncate block">{env.baseUrl}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
         {isAdding ? (
           <div className="mt-3 border border-[var(--color-border)] rounded-lg p-3 space-y-2">
             <input
@@ -244,16 +439,29 @@ function EnvironmentManager({ onClose }: EnvironmentManagerProps) {
             </div>
           </div>
         ) : (
-          <button
-            onClick={() => setIsAdding(true)}
-            className="mt-3 w-full border border-dashed border-[var(--color-border)] rounded-lg py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-hover)] transition-colors flex items-center justify-center gap-2"
-          >
-            <Plus size={14} />
-            {t('apiExplorer:environments.addNew')}
-          </button>
+          <div className="mt-3 flex gap-2">
+            {activeProject && (
+              <button
+                onClick={runDetection}
+                disabled={isDetecting}
+                className="flex-1 border border-dashed border-emerald-400/30 rounded-lg py-2 text-sm text-emerald-400/70 hover:text-emerald-400 hover:border-emerald-400/50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isDetecting ? <Loader2 size={13} className="animate-spin" /> : <ScanSearch size={13} />}
+                {isDetecting ? t('apiExplorer:environments.detecting') : t('apiExplorer:environments.detect')}
+              </button>
+            )}
+            <button
+              onClick={() => setIsAdding(true)}
+              className="flex-1 border border-dashed border-[var(--color-border)] rounded-lg py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-hover)] transition-colors flex items-center justify-center gap-2"
+            >
+              <Plus size={14} />
+              {t('apiExplorer:environments.addNew')}
+            </button>
+          </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.getElementById('root') ?? document.body
   );
 }
 
@@ -430,9 +638,9 @@ function ExportDialog({ spec, onClose }: ExportDialogProps) {
     },
   ];
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-2xl w-full max-w-md p-6">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-2xl w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t('apiExplorer:export.title')}
@@ -471,7 +679,8 @@ function ExportDialog({ spec, onClose }: ExportDialogProps) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.getElementById('root') ?? document.body
   );
 }
 
@@ -1131,6 +1340,10 @@ export function ApiExplorer() {
   const specUrl = useApiExplorerStore((s) => s.specUrl);
   const isLoadingSpec = useApiExplorerStore((s) => s.isLoadingSpec);
   const specError = useApiExplorerStore((s) => s.specError);
+  const specSource = useApiExplorerStore((s) => s.specSource);
+  const isProjectScanning = useApiExplorerStore((s) => s.isProjectScanning);
+  const projectScanError = useApiExplorerStore((s) => s.projectScanError);
+  const lastProjectScanAt = useApiExplorerStore((s) => s.lastProjectScanAt);
   const environments = useApiExplorerStore((s) => s.environments);
   const activeEnvironmentId = useApiExplorerStore((s) => s.activeEnvironmentId);
   const selectedEndpointKey = useApiExplorerStore((s) => s.selectedEndpointKey);
@@ -1139,6 +1352,7 @@ export function ApiExplorer() {
 
   const setSpec = useApiExplorerStore((s) => s.setSpec);
   const setSpecUrl = useApiExplorerStore((s) => s.setSpecUrl);
+  const setSpecSource = useApiExplorerStore((s) => s.setSpecSource);
   const setIsLoadingSpec = useApiExplorerStore((s) => s.setIsLoadingSpec);
   const setSpecError = useApiExplorerStore((s) => s.setSpecError);
   const setActiveEnvironment = useApiExplorerStore((s) => s.setActiveEnvironment);
@@ -1151,9 +1365,12 @@ export function ApiExplorer() {
   const [showExport, setShowExport] = useState(false);
   const [urlInput, setUrlInput] = useState(specUrl);
 
+  // Background scan hook — rescan() forces a new scan of the active project
+  const { rescan } = useProjectRouteScan();
+
   const activeEnv = environments.find((e) => e.id === activeEnvironmentId) ?? environments[0];
 
-  // Load spec on mount and when specUrl changes
+  // Load spec from a remote OpenAPI URL (manual action only — no auto-load on mount)
   const loadSpec = useCallback(async (url: string) => {
     setIsLoadingSpec(true);
     setSpecError(null);
@@ -1162,24 +1379,20 @@ export function ApiExplorer() {
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       const data: OpenApiSpec = await res.json();
       setSpec(data);
+      setSpecSource('url');
     } catch (err) {
       setSpecError(String(err));
       setSpec(null);
     } finally {
       setIsLoadingSpec(false);
     }
-  }, [setIsLoadingSpec, setSpecError, setSpec]);
-
-  useEffect(() => {
-    void loadSpec(specUrl);
-  }, [specUrl, loadSpec]);
+  }, [setIsLoadingSpec, setSpecError, setSpec, setSpecSource]);
 
   function applySpecUrl() {
     if (urlInput !== specUrl) {
       setSpecUrl(urlInput);
-    } else {
-      void loadSpec(urlInput);
     }
+    void loadSpec(urlInput);
   }
 
   const groups = useMemo(
@@ -1229,6 +1442,22 @@ export function ApiExplorer() {
           >
             {isLoadingSpec ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
           </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={rescan}
+            disabled={isProjectScanning}
+            className="shrink-0 gap-1.5"
+            title={t('apiExplorer:scan.tooltip')}
+          >
+            {isProjectScanning
+              ? <Loader2 size={13} className="animate-spin" />
+              : <ScanSearch size={13} />}
+            <span className="text-[11px]">
+              {isProjectScanning ? t('apiExplorer:scan.scanning') : t('apiExplorer:scan.resync')}
+            </span>
+          </Button>
         </div>
 
         {/* Environment selector */}
@@ -1267,12 +1496,48 @@ export function ApiExplorer() {
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
         <div className="w-64 shrink-0 flex flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-primary)]">
-          {/* Spec info + search */}
+          {/* Spec info + scan status + search */}
           <div className="p-3 border-b border-[var(--color-border)]">
+            {/* Scan status banner */}
+            {isProjectScanning && (
+              <div className="flex items-center gap-1.5 mb-2 text-[10px] text-[var(--color-text-muted)]">
+                <Loader2 size={10} className="animate-spin shrink-0" />
+                <span>{t('apiExplorer:scan.scanning')}</span>
+              </div>
+            )}
+
+            {/* Project scan error */}
+            {projectScanError && !isProjectScanning && (
+              <div className="flex items-start gap-1.5 mb-2 p-2 bg-amber-400/10 border border-amber-400/20 rounded-md">
+                <AlertCircle size={11} className="text-amber-400 shrink-0 mt-0.5" />
+                <span className="text-[10px] text-amber-400/80 break-all">{projectScanError}</span>
+              </div>
+            )}
+
             {spec && (
               <div className="mb-2.5">
-                <div className="text-sm font-semibold text-[var(--color-text-primary)] truncate">{spec.info.title}</div>
-                <div className="text-[10px] text-[var(--color-text-muted)] font-mono">v{spec.info.version} · {totalEndpoints} {t('apiExplorer:sidebar.endpoints')}</div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <div className="text-sm font-semibold text-[var(--color-text-primary)] truncate flex-1">{spec.info.title}</div>
+                  {/* Source badge */}
+                  {specSource === 'scan' && (
+                    <span className="shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">
+                      {t('apiExplorer:scan.sourceBadge')}
+                    </span>
+                  )}
+                  {specSource === 'url' && (
+                    <span className="shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded bg-blue-400/10 text-blue-400 border border-blue-400/20">
+                      URL
+                    </span>
+                  )}
+                </div>
+                <div className="text-[10px] text-[var(--color-text-muted)] font-mono">
+                  v{spec.info.version} · {totalEndpoints} {t('apiExplorer:sidebar.endpoints')}
+                  {specSource === 'scan' && lastProjectScanAt && (
+                    <span className="ml-1 opacity-60">
+                      · {t('apiExplorer:scan.scannedAt', { time: new Date(lastProjectScanAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
             <div className="relative">

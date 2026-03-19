@@ -4,8 +4,8 @@ import { AVAILABLE_MODELS } from '../../../shared/constants';
 import type { ProjectSettings } from '../../../shared/types';
 
 interface AgentConfigSectionProps {
-  settings: ProjectSettings;
-  onUpdateSettings: (updates: Partial<ProjectSettings>) => void;
+  readonly settings: ProjectSettings;
+  readonly onUpdateSettings: (updates: Partial<ProjectSettings>) => void;
 }
 
 export function AgentConfigSection({ settings, onUpdateSettings }: AgentConfigSectionProps) {

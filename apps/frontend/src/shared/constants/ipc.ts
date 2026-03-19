@@ -531,6 +531,9 @@ export const IPC_CHANNELS = {
   FILE_EXPLORER_READ: 'fileExplorer:read',
   FILE_EXPLORER_SAVE: 'fileExplorer:save',  // Save JSON files
 
+  // API Explorer — project route scanning
+  API_EXPLORER_SCAN_ROUTES: 'apiExplorer:scanRoutes',
+
   // Git operations
   GIT_GET_BRANCHES: 'git:getBranches',
   GIT_GET_BRANCHES_WITH_INFO: 'git:getBranchesWithInfo',
