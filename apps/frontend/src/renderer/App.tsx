@@ -77,7 +77,7 @@ import { useTerminalStore, restoreTerminalSessions } from './stores/terminal-sto
 import { initializeGitHubListeners } from './stores/github';
 import { initDownloadProgressListener } from './stores/download-store';
 import { GlobalDownloadIndicator } from './components/GlobalDownloadIndicator';
-import { useIpcListeners, useTerminalProfileChange } from '@/hooks';
+import { useIpcListeners, useTerminalProfileChange, useProjectRouteScan } from '@/hooks';
 import { useGlobalTerminalListeners } from './hooks/useGlobalTerminalListeners';
 import { COLOR_THEMES, UI_SCALE_MIN, UI_SCALE_MAX, UI_SCALE_DEFAULT } from '@shared/constants';
 import type { Task, Project, ColorTheme } from '@shared/types';
@@ -137,6 +137,9 @@ export function App() {
 
   // Handle terminal profile change events (recreate terminals on profile switch)
   useTerminalProfileChange();
+
+  // Background scan of active project's API routes (for API Explorer)
+  useProjectRouteScan();
 
   // Stores
   const projects = useProjectStore((state) => state.projects);

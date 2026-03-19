@@ -82,12 +82,24 @@ export function makeEndpointKey(method: string, path: string): string {
 
 // ── Store ────────────────────────────────────────────────────────────────────
 
+export type SpecSource = 'url' | 'scan' | null;
+
 interface ApiExplorerState {
   // Spec
   spec: OpenApiSpec | null;
   specUrl: string;
   isLoadingSpec: boolean;
   specError: string | null;
+  /** Where the current spec came from: 'url' = loaded via URL, 'scan' = scanned from source code */
+  specSource: SpecSource;
+
+  // Background project scan state (not persisted)
+  isProjectScanning: boolean;
+  projectScanError: string | null;
+  /** ID of the project that was last scanned */
+  scannedProjectId: string | null;
+  /** Timestamp of last successful scan */
+  lastProjectScanAt: number | null;
 
   // Environments (persisted)
   environments: ApiEnvironment[];
@@ -117,6 +129,11 @@ interface ApiExplorerState {
   setSpecUrl: (url: string) => void;
   setIsLoadingSpec: (loading: boolean) => void;
   setSpecError: (error: string | null) => void;
+  setSpecSource: (source: SpecSource) => void;
+  setIsProjectScanning: (scanning: boolean) => void;
+  setProjectScanError: (error: string | null) => void;
+  setScannedProjectId: (projectId: string | null) => void;
+  setLastProjectScanAt: (ts: number | null) => void;
 
   addEnvironment: (env: Omit<ApiEnvironment, 'id'>) => void;
   updateEnvironment: (id: string, updates: Partial<Omit<ApiEnvironment, 'id'>>) => void;
@@ -148,7 +165,7 @@ const DEFAULT_ENVIRONMENTS: ApiEnvironment[] = [
   {
     id: 'local',
     name: 'Local',
-    baseUrl: 'http://127.0.0.1:9000',
+    baseUrl: 'http://localhost:9000',
     headers: {},
     isDefault: true,
   },
@@ -159,9 +176,16 @@ export const useApiExplorerStore = create<ApiExplorerState>()(
     (set) => ({
       // Spec
       spec: null,
-      specUrl: 'http://127.0.0.1:9000/openapi.json',
+      specUrl: 'http://localhost:9000/openapi.json',
       isLoadingSpec: false,
       specError: null,
+      specSource: null,
+
+      // Project scan
+      isProjectScanning: false,
+      projectScanError: null,
+      scannedProjectId: null,
+      lastProjectScanAt: null,
 
       // Environments
       environments: DEFAULT_ENVIRONMENTS,
@@ -191,6 +215,11 @@ export const useApiExplorerStore = create<ApiExplorerState>()(
       setSpecUrl: (specUrl) => set({ specUrl }),
       setIsLoadingSpec: (isLoadingSpec) => set({ isLoadingSpec }),
       setSpecError: (specError) => set({ specError }),
+      setSpecSource: (specSource) => set({ specSource }),
+      setIsProjectScanning: (isProjectScanning) => set({ isProjectScanning }),
+      setProjectScanError: (projectScanError) => set({ projectScanError }),
+      setScannedProjectId: (scannedProjectId) => set({ scannedProjectId }),
+      setLastProjectScanAt: (lastProjectScanAt) => set({ lastProjectScanAt }),
 
       // Environment actions
       addEnvironment: (env) =>

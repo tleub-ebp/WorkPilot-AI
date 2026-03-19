@@ -9,3 +9,4 @@ export {
 export { useVirtualizedTree } from './useVirtualizedTree';
 export { useTerminalProfileChange } from './useTerminalProfileChange';
 export { useToast } from './use-toast';
+export { useProjectRouteScan } from './useProjectRouteScan';

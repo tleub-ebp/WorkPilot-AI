@@ -53,10 +53,12 @@ import { createTeamSyncAPI } from './modules/team-sync-api';
 import type { ArenaAPI } from './modules/arena-api';
 import { createArenaAPI } from './modules/arena-api';
 import { invokeIpc } from './modules/ipc-utils';
+import { type ApiExplorerAPI, createApiExplorerAPI } from './modules/api-explorer-api';
 import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
 export interface ElectronAPI extends
   ProjectAPI,
+  ApiExplorerAPI,
   TerminalAPI,
   TaskAPI,
   SettingsAPI,
@@ -118,6 +120,7 @@ export interface ElectronAPI extends
 export const createElectronAPI = (): ElectronAPI => {
   return {
     ...createProjectAPI(),
+    ...createApiExplorerAPI(),
     ...createTerminalAPI(),
     ...createTaskAPI(),
     ...createSettingsAPI(),
@@ -230,3 +233,5 @@ export { createPairProgrammingAPI } from './modules/pair-programming-api';
 export type { PairProgrammingAPI } from './modules/pair-programming-api';
 export { createArenaAPI } from './modules/arena-api';
 export type { ArenaAPI } from './modules/arena-api';
+export { createApiExplorerAPI } from './modules/api-explorer-api';
+export type { ApiExplorerAPI } from './modules/api-explorer-api';

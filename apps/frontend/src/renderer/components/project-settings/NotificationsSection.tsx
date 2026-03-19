@@ -3,8 +3,8 @@ import { Switch } from '../ui/switch';
 import type { ProjectSettings } from '../../../shared/types';
 
 interface NotificationsSectionProps {
-  settings: ProjectSettings;
-  onUpdateSettings: (updates: Partial<ProjectSettings>) => void;
+  readonly settings: ProjectSettings;
+  readonly onUpdateSettings: (updates: Partial<ProjectSettings>) => void;
 }
 
 export function NotificationsSection({ settings, onUpdateSettings }: NotificationsSectionProps) {

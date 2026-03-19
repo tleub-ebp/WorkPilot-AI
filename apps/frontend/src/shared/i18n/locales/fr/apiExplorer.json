@@ -9,8 +9,12 @@
   "environments": {
     "title": "Environnements",
     "manage": "Gérer les environnements",
-    "addNew": "Ajouter un environnement",
-    "namePlaceholder": "Nom de l'environnement"
+    "addNew": "Ajouter manuellement",
+    "namePlaceholder": "Nom de l'environnement",
+    "detect": "Détecter depuis le projet",
+    "detecting": "Scan des fichiers .env...",
+    "detected": "Environnements détectés",
+    "importSelected": "Importer"
   },
   "actions": {
     "export": "Exporter",
@@ -59,5 +63,14 @@
     "selectEndpointHint": "Choisissez un endpoint dans la liste pour voir ses détails et le tester",
     "noSpec": "Aucun spec chargé",
     "noSpecHint": "Entrez une URL de spec OpenAPI valide ci-dessus"
+  },
+  "scan": {
+    "button": "Scanner le projet",
+    "scanning": "Scan en cours...",
+    "tooltip": "Scanner le code source pour détecter les endpoints API (C#, Python, Node.js, Java, Go, Rust, Ruby)",
+    "error": "Impossible de scanner les routes du projet",
+    "resync": "Resynchroniser",
+    "sourceBadge": "Source",
+    "scannedAt": "scanné à {{time}}"
   }
 }

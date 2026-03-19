@@ -3,26 +3,20 @@ import { Button } from '../ui/button';
 import type { AutoBuildVersionInfo } from '../../../shared/types';
 
 interface AutoBuildIntegrationProps {
-  autoBuildPath: string | null;
-  versionInfo: AutoBuildVersionInfo | null;
-  isCheckingVersion: boolean;
-  isUpdating: boolean;
-  onInitialize: () => void;
-  onUpdate: () => void;
+  readonly autoBuildPath: string | null;
+  readonly versionInfo: AutoBuildVersionInfo | null;
+  readonly isCheckingVersion: boolean;
+  readonly isUpdating: boolean;
+  readonly onInitialize: () => void;
+  readonly onUpdate: () => void;
 }
 
-export function AutoBuildIntegration({
-  autoBuildPath,
-  versionInfo,
-  isCheckingVersion,
-  isUpdating,
-  onInitialize,
-  onUpdate: _onUpdate,
-}: AutoBuildIntegrationProps) {
+export function AutoBuildIntegration(props: AutoBuildIntegrationProps) {
+  const { autoBuildPath, versionInfo, isCheckingVersion, isUpdating, onInitialize, onUpdate: _onUpdate } = props;
   return (
     <section className="space-y-4">
       <h3 className="text-sm font-semibold text-foreground">Auto-Build Integration</h3>
-      {!autoBuildPath ? (
+      {autoBuildPath == null ? (
         <div className="rounded-lg border border-border bg-muted/50 p-4">
           <div className="flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-warning mt-0.5 shrink-0" />

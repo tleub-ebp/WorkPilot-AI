@@ -68,6 +68,7 @@ import { registerMemoryLifecycleHandlers, setupMemoryLifecycleEventForwarding } 
 import { registerCICDTriggersHandlers, setupCICDTriggersEventForwarding } from './cicd-triggers-handlers';
 import { registerCrossLanguageTranslationHandlers } from './cross-language-translation-handlers';
 import { registerSpecApprovalHandlers } from './spec-approval-handlers';
+import { registerApiExplorerHandlers } from './api-explorer-handlers';
 
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from './project-handlers';
@@ -126,6 +127,7 @@ export { registerMemoryLifecycleHandlers, setupMemoryLifecycleEventForwarding } 
 export { registerCICDTriggersHandlers, setupCICDTriggersEventForwarding } from './cicd-triggers-handlers';
 export { registerCrossLanguageTranslationHandlers } from './cross-language-translation-handlers';
 export { registerSpecApprovalHandlers } from './spec-approval-handlers';
+export { registerApiExplorerHandlers } from './api-explorer-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -273,19 +275,19 @@ export function setupIpcHandlers(
 
   // Architecture Visualizer handlers
   registerArchitectureVisualizerHandlers();
-  setupArchitectureVisualizerEventForwarding(getMainWindow);
+  setupArchitectureVisualizerEventForwarding();
 
   // Code Migration Agent handlers
   registerCodeMigrationHandlers();
-  setupCodeMigrationEventForwarding(getMainWindow);
+  setupCodeMigrationEventForwarding();
 
   // Performance Profiler Agent handlers
   registerPerformanceProfilerHandlers();
-  setupPerformanceProfilerEventForwarding(getMainWindow);
+  setupPerformanceProfilerEventForwarding();
 
   // Documentation Agent handlers
   registerDocumentationAgentHandlers();
-  setupDocumentationAgentEventForwarding(getMainWindow);
+  setupDocumentationAgentEventForwarding();
 
   // Agent Decision Logger handlers (Feature 30)
   registerDecisionLoggerHandlers();
@@ -319,6 +321,9 @@ export function setupIpcHandlers(
 
   // Spec Approval Workflow handlers (Feature 42)
   registerSpecApprovalHandlers();
+
+  // API Explorer — project route scanning
+  registerApiExplorerHandlers();
 
   console.warn('[IPC] All handler modules registered successfully');
 }

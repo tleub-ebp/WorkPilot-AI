@@ -2,12 +2,12 @@ import { ReactNode, useId } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface CollapsibleSectionProps {
-  title: string;
-  icon: ReactNode;
-  isExpanded: boolean;
-  onToggle: () => void;
-  badge?: ReactNode;
-  children: ReactNode;
+  readonly title: string;
+  readonly icon: ReactNode;
+  readonly isExpanded: boolean;
+  readonly onToggle: () => void;
+  readonly badge?: ReactNode;
+  readonly children: ReactNode;
 }
 
 export function CollapsibleSection({

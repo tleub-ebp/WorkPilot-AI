@@ -22,8 +22,8 @@ const __dirname = dirname(__filename);
 // In development: __dirname is out/main (compiled), so go up 2 levels
 // In production: app resources directory
 const possibleEnvPaths = [
-  resolve(__dirname, '../../.env'),           // Development: out/main -> apps/frontend/.env
-  resolve(__dirname, '../../../.env'),        // Alternative: might be in different location
+  resolve(__dirname, '../../.env'),             // Development: out/main -> apps/frontend/.env
+  resolve(__dirname, '../../../.env'),          // Alternative: might be in different location
   resolve(process.cwd(), 'apps/frontend/.env'), // Fallback: from workspace root
 ];
 
@@ -343,6 +343,7 @@ function createWindow(): void {
   // Clean up on close
   mainWindow.on('closed', () => {
     mainWindow = null;
+    globalThis.mainWindow = null;
   });
 }
 
@@ -503,22 +504,27 @@ async function ensureStreamingServerLaunched() {
 
 // Initialisation explicite du PythonEnvManager avec le chemin du backend (corrigé)
 const backendSourcePath = resolve(__dirname, '../../../backend');
-pythonEnvManager.initialize(backendSourcePath).then((status) => {
+try {
+  const status = await pythonEnvManager.initialize(backendSourcePath);
   console.warn('[main] PythonEnvManager status:', status);
-}).catch((err) => {
+} catch (err) {
   console.error('[main] Erreur lors de l\'initialisation du PythonEnvManager:', err);
-});
+}
 
 // Initialize the application
-app.whenReady().then(async () => {
+async function main() {
+  await app.whenReady();
   // Set app user model id for Windows
   electronApp.setAppUserModelId('com.workpilotai.app');
 
   // Clear cache on Windows to prevent permission errors from stale cache
   if (isWindows()) {
-    session.defaultSession.clearCache()
-      .then(() => console.log('[main] Cleared cache on startup'))
-      .catch((err) => console.warn('[main] Failed to clear cache:', err));
+    try {
+      await session.defaultSession.clearCache();
+      console.log('[main] Cleared cache on startup');
+    } catch (err) {
+      console.warn('[main] Failed to clear cache:', err);
+    }
   }
 
   // Initialize app language from OS locale for main process i18n (context menus)
@@ -776,7 +782,7 @@ app.whenReady().then(async () => {
   ensureStreamingServerLaunched().catch((err) => {
     console.warn('[main] Streaming server launch failed (non-critical):', err);
   });
-});
+}
 
 // Arrêt propre du backend et du streaming server à la fermeture de l'app
 app.on('will-quit', () => {
@@ -846,6 +852,18 @@ app.on('before-quit', (event) => {
     }
   })();
 });
+
+// Launch the application.
+// Wrapped in a regular function (not top-level await) so that the app.on() event
+// handlers above are already registered before main() starts. Using top-level await
+// would block handler registration until main() resolves, causing Electron to quit
+// if the window closes during startup (before-quit / window-all-closed not yet active).
+function startApp(): void {
+  main().catch((err) => {
+    console.error('[main] Fatal error during app initialization:', err);
+  });
+}
+startApp();
 
 // Note: Uncaught exceptions and unhandled rejections are now
 // logged by setupErrorLogging() in app-logger.ts
