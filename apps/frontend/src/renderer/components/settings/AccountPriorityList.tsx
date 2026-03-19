@@ -107,8 +107,8 @@ export interface UnifiedAccount {
 }
 
 interface SortableAccountItemProps {
-  account: UnifiedAccount;
-  index: number;
+  readonly account: UnifiedAccount;
+  readonly index: number;
 }
 
 function SortableAccountItem({ account, index }: SortableAccountItemProps) {
@@ -130,6 +130,16 @@ function SortableAccountItem({ account, index }: SortableAccountItemProps) {
 
   const statusKey = getStatusKey(account.sessionPercent, account.weeklyPercent, account.isRateLimited);
 
+  // Determine account status styling
+  let accountStatusClasses: string;
+  if (account.isActive) {
+    accountStatusClasses = 'border-primary bg-primary/5';
+  } else if (account.isAvailable) {
+    accountStatusClasses = 'border-border bg-background hover:bg-muted/50';
+  } else {
+    accountStatusClasses = 'border-border/50 bg-muted/20 opacity-60';
+  }
+
   return (
     <div
       ref={setNodeRef}
@@ -137,11 +147,7 @@ function SortableAccountItem({ account, index }: SortableAccountItemProps) {
       className={cn(
         'flex items-center gap-3 p-3 rounded-lg border transition-all',
         isDragging && 'opacity-60 shadow-lg scale-[1.02]',
-        account.isActive
-          ? 'border-primary bg-primary/5'
-          : account.isAvailable
-            ? 'border-border bg-background hover:bg-muted/50'
-            : 'border-border/50 bg-muted/20 opacity-60'
+        accountStatusClasses
       )}
     >
       {/* Drag handle */}
@@ -174,19 +180,7 @@ function SortableAccountItem({ account, index }: SortableAccountItemProps) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium text-foreground truncate">
-            {account.name === 'copilot' ? 'Copilot' :
-             account.name === 'google' ? 'Google' :
-             account.name === 'mistral' ? 'Mistral' :
-             account.name === 'grok' ? 'Grok' :
-             account.name === 'aws' ? 'AWS' :
-             account.name === 'meta-llama' ? 'Meta Llama' :
-             account.name === 'meta' ? 'Meta' :
-             account.name === 'openai' ? 'OpenAI' :
-             account.name === 'deepseek' ? 'DeepSeek' :
-             account.name === 'gemini' ? 'Gemini' :
-             account.name === 'windsurf' ? 'Windsurf' :
-             account.name === 'cursor' ? 'Cursor' :
-             account.displayName}
+            {account.displayName}
           </span>
           {/* Account type indicator */}
           <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 bg-muted rounded">
@@ -328,9 +322,9 @@ function SortableAccountItem({ account, index }: SortableAccountItemProps) {
 }
 
 interface AccountPriorityListProps {
-  accounts: UnifiedAccount[];
-  onReorder: (newOrder: string[]) => void;
-  isLoading?: boolean;
+  readonly accounts: UnifiedAccount[];
+  readonly onReorder: (newOrder: string[]) => void;
+  readonly isLoading?: boolean;
 }
 
 export function AccountPriorityList({ accounts, onReorder, isLoading }: AccountPriorityListProps) {
@@ -365,11 +359,10 @@ export function AccountPriorityList({ accounts, onReorder, isLoading }: AccountP
 
   // Detect duplicate usage - OAuth accounts with identical non-zero usage may be the same underlying account
   const duplicateUsageIds = useMemo(() => {
-    const duplicates = new Set<string>();
     const oauthAccounts = items.filter(a => a.type === 'oauth' && a.isAvailable);
 
     // Only check if we have 2+ OAuth accounts with usage data
-    if (oauthAccounts.length < 2) return duplicates;
+    if (oauthAccounts.length < 2) return new Set<string>();
 
     // Build usage signature map
     const usageSignatures = new Map<string, string[]>();
@@ -387,7 +380,8 @@ export function AccountPriorityList({ accounts, onReorder, isLoading }: AccountP
       }
     }
 
-    // Mark accounts with duplicate signatures
+    // Find and return accounts with duplicate signatures
+    const duplicates = new Set<string>();
     for (const [, ids] of usageSignatures) {
       if (ids.length > 1) {
         ids.forEach(id => duplicates.add(id));
@@ -412,18 +406,14 @@ export function AccountPriorityList({ accounts, onReorder, isLoading }: AccountP
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setItems((currentItems) => {
-        const oldIndex = currentItems.findIndex((item) => item.id === active.id);
-        const newIndex = currentItems.findIndex((item) => item.id === over.id);
-        const newItems = arrayMove(currentItems, oldIndex, newIndex);
-
-        // Notify parent of new order
-        onReorder(newItems.map(item => item.id));
-
-        return newItems;
-      });
+      const oldIndex = items.findIndex((item) => item.id === active.id);
+      const newIndex = items.findIndex((item) => item.id === over.id);
+      const newItems = arrayMove(items, oldIndex, newIndex);
+      setItems(newItems);
+      // Call onReorder outside the setState updater to avoid updating parent during render
+      onReorder(newItems.map(item => item.id));
     }
-  }, [onReorder]);
+  }, [items, onReorder]);
 
   if (items.length === 0) {
     return (
