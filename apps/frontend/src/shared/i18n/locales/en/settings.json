@@ -655,6 +655,7 @@
     "general": {
       "title": "General",
       "description": "Auto-Build and agent config",
+      "configureFor": "Configure Auto-Build, agent model, and notifications for {{projectName}}",
       "useClaudeMd": "Use CLAUDE.md",
       "useClaudeMdDescription": "Include CLAUDE.md instructions in agent context"
     },
@@ -669,7 +670,7 @@
     },
     "agentConfiguration": {
       "title": "Agent Configuration",
-      "model": "Model"
+      "model": "Claude Model"
     },
     "claude": {
       "title": "Claude Auth",
