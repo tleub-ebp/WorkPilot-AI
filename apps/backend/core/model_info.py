@@ -122,7 +122,7 @@ def _get_model_info_for_provider(provider: str) -> Dict[str, str]:
         except ImportError:
             pass
         
-        model = os.getenv("OPENAI_MODEL", "gpt-5.2")
+        model = os.getenv("OPENAI_MODEL", "gpt-4o")
         return {
             "model": model,
             "model_label": _format_openai_model_label(model)
@@ -228,12 +228,22 @@ def _format_anthropic_model_label(model: str) -> str:
 def _format_openai_model_label(model: str) -> str:
     """Format OpenAI model label for display."""
     model_labels = {
-        "gpt-5.2": "ChatGPT 5.2",
-        "gpt-4o": "ChatGPT 4o",
-        "gpt-4": "ChatGPT 4",
-        "gpt-3.5-turbo": "ChatGPT 3.5 Turbo",
+        "gpt-4o": "GPT-4o",
+        "gpt-4.1": "GPT-4.1",
+        "gpt-4.1-mini": "GPT-4.1 mini",
+        "gpt-4.1-nano": "GPT-4.1 nano",
+        "gpt-4o-mini": "GPT-4o mini",
+        "gpt-4-turbo": "GPT-4 Turbo",
+        "gpt-4": "GPT-4",
+        "gpt-3.5-turbo": "GPT-3.5 Turbo",
+        "o1": "o1",
+        "o1-mini": "o1-mini",
+        "o1-pro": "o1 Pro",
+        "o3": "o3",
+        "o3-mini": "o3-mini",
+        "o4-mini": "o4-mini",
     }
-    return model_labels.get(model, f"ChatGPT: {model}")
+    return model_labels.get(model, f"OpenAI: {model}")
 
 
 def _format_google_model_label(model: str) -> str:
@@ -259,49 +269,37 @@ def _format_grok_model_label(model: str) -> str:
 def _format_windsurf_model_label(model: str) -> str:
     """Format Windsurf model label for display."""
     model_labels = {
-        # SWE models
+        # SWE models (Windsurf proprietary)
         "swe-1.5": "SWE-1.5",
         "swe-1.5-thinking": "SWE-1.5 Thinking",
         "swe-1.5-slow": "SWE-1.5 Slow",
         "swe-1.5-fast": "SWE-1.5 Fast",
-        # Claude models
-        "claude-4-sonnet": "Claude 4 Sonnet (Windsurf)",
-        "claude-4-sonnet-thinking": "Claude 4 Sonnet Thinking (Windsurf)",
-        "claude-4-opus": "Claude 4 Opus (Windsurf)",
-        "claude-4-opus-thinking": "Claude 4 Opus Thinking (Windsurf)",
-        "claude-4.1-opus": "Claude 4.1 Opus (Windsurf)",
-        "claude-4.5-sonnet": "Claude 4.5 Sonnet (Windsurf)",
-        "claude-4.5-sonnet-thinking": "Claude 4.5 Sonnet Thinking (Windsurf)",
-        "claude-4.5-opus": "Claude 4.5 Opus (Windsurf)",
-        "claude-4.5-opus-thinking": "Claude 4.5 Opus Thinking (Windsurf)",
+        # Claude models (canonical aliases used by WorkPilot)
+        "claude-sonnet-4": "Claude Sonnet 4 (Windsurf)",
+        "claude-opus-4": "Claude Opus 4 (Windsurf)",
         "claude-3.7-sonnet": "Claude 3.7 Sonnet (Windsurf)",
+        "claude-3.7-sonnet-thinking": "Claude 3.7 Sonnet Thinking (Windsurf)",
         "claude-3.5-sonnet": "Claude 3.5 Sonnet (Windsurf)",
+        # Internal aliases kept for compatibility
+        "claude-4-sonnet": "Claude Sonnet 4 (Windsurf)",
+        "claude-4-opus": "Claude Opus 4 (Windsurf)",
+        "claude-4.5-sonnet": "Claude 4.5 Sonnet (Windsurf)",
+        "claude-4.5-opus": "Claude 4.5 Opus (Windsurf)",
         "claude-code": "Claude Code (Windsurf)",
         # GPT models
         "gpt-4o": "GPT-4o (Windsurf)",
         "gpt-4.1": "GPT-4.1 (Windsurf)",
-        "gpt-5": "GPT-5 (Windsurf)",
-        "gpt-5.2-low": "GPT-5.2 Low (Windsurf)",
-        "gpt-5-codex": "GPT-5 Codex (Windsurf)",
+        "gpt-4.1-mini": "GPT-4.1 mini (Windsurf)",
         # Reasoning
-        "o3": "O3 (Windsurf)",
-        "o3-mini": "O3 Mini (Windsurf)",
-        "o4-mini": "O4 Mini (Windsurf)",
+        "o3": "o3 (Windsurf)",
+        "o3-mini": "o3-mini (Windsurf)",
+        "o4-mini": "o4-mini (Windsurf)",
         # Other
         "gemini-2.5-pro": "Gemini 2.5 Pro (Windsurf)",
-        "gemini-3-flash": "Gemini 3.0 Flash (Windsurf)",
+        "gemini-2.0-flash": "Gemini 2.0 Flash (Windsurf)",
         "deepseek-r1": "DeepSeek R1 (Windsurf)",
+        "deepseek-v3": "DeepSeek V3 (Windsurf)",
         "grok-3": "Grok 3 (Windsurf)",
-        # Legacy
-        "claude-opus-4.6": "Claude Opus 4.6 (Windsurf)",
-        "claude-sonnet-4.6": "Claude Sonnet 4.6 (Windsurf)",
-        "claude-sonnet-4.5": "Claude Sonnet 4.5 (Windsurf)",
-        "gpt-5.4-low-thinking": "GPT-5.4 (Windsurf)",
-        "gpt-5.3-low-thinking": "GPT-5.3 (Windsurf)",
-        "windsurf-codestral": "Windsurf Codestral",
-        "windsurf-sonnet": "Windsurf Sonnet",
-        "windsurf-haiku": "Windsurf Haiku",
-        "windsurf-custom": "Windsurf Custom",
     }
     return model_labels.get(model, f"Windsurf: {model}")
 

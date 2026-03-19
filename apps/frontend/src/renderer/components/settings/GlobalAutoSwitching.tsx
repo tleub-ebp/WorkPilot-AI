@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
-import { RefreshCw, Activity, AlertCircle } from 'lucide-react';
+import { RefreshCw, Activity, AlertCircle, Zap, ArrowDownUp, BarChart3, Router } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { AccountPriorityList, type UnifiedAccount } from './AccountPriorityList';
 import { useSettingsStore, saveSettings } from '../../stores/settings-store';
@@ -51,6 +52,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
   const [sessionThreshold, setSessionThreshold] = useState(settings.sessionThreshold ?? 95);
   const [rateLimitEnabled, setRateLimitEnabled] = useState(settings.rateLimitEnabled ?? false);
   const [authFailureEnabled, setAuthFailureEnabled] = useState(settings.authFailureEnabled ?? false);
+  const [routingStrategy, setRoutingStrategy] = useState(settings.routingStrategy ?? 'best_performance');
 
   // Load Claude profiles on mount
   useEffect(() => {
@@ -135,7 +137,8 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
     setSessionThreshold(settings.sessionThreshold ?? 95);
     setRateLimitEnabled(settings.rateLimitEnabled ?? false);
     setAuthFailureEnabled(settings.authFailureEnabled ?? false);
-  }, [settings.proactiveEnabled, settings.sessionThreshold, settings.rateLimitEnabled, settings.authFailureEnabled]);
+    setRoutingStrategy(settings.routingStrategy ?? 'best_performance');
+  }, [settings.proactiveEnabled, settings.sessionThreshold, settings.rateLimitEnabled, settings.authFailureEnabled, settings.routingStrategy]);
 
   // Build unified accounts list
   const buildUnifiedAccounts = async (): Promise<UnifiedAccount[]> => {
@@ -362,6 +365,11 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
     }
   };
 
+  const handleStrategyChange = async (strategy: typeof routingStrategy) => {
+    setRoutingStrategy(strategy);
+    await handleUpdateSetting({ routingStrategy: strategy });
+  };
+
   const handleUpdateSetting = async (updates: any) => {
     setIsLoading(true);
     try {
@@ -417,6 +425,46 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
 
       {autoSwitchEnabled && (
         <>
+          {/* Routing Strategy */}
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Router className="h-3.5 w-3.5" />
+                {t('llmRouter.routingStrategy.title')}
+              </Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('llmRouter.routingStrategy.description')}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { id: 'best_performance', label: t('llmRouter.routingStrategy.bestPerformance'), desc: t('llmRouter.routingStrategy.bestPerformanceDescription'), icon: <Zap className="h-3.5 w-3.5" /> },
+                { id: 'cheapest', label: t('llmRouter.routingStrategy.cheapest'), desc: t('llmRouter.routingStrategy.cheapestDescription'), icon: <ArrowDownUp className="h-3.5 w-3.5" /> },
+                { id: 'lowest_latency', label: t('llmRouter.routingStrategy.lowestLatency'), desc: t('llmRouter.routingStrategy.lowestLatencyDescription'), icon: <BarChart3 className="h-3.5 w-3.5" /> },
+                { id: 'round_robin', label: t('llmRouter.routingStrategy.roundRobin'), desc: t('llmRouter.routingStrategy.roundRobinDescription'), icon: <Router className="h-3.5 w-3.5" /> },
+              ] as const).map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => handleStrategyChange(s.id)}
+                  disabled={isLoading}
+                  className={cn(
+                    'flex items-start gap-2 rounded-lg border p-2.5 text-left transition-colors',
+                    routingStrategy === s.id
+                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                      : 'border-border hover:bg-accent/50'
+                  )}
+                >
+                  <span className={cn('mt-0.5 shrink-0', routingStrategy === s.id ? 'text-primary' : 'text-muted-foreground')}>{s.icon}</span>
+                  <div className="min-w-0">
+                    <span className="text-xs font-medium block">{s.label}</span>
+                    <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{s.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Proactive Monitoring */}
           <div className="pl-6 space-y-4 pt-2 border-l-2 border-primary/20">
             <div className="flex items-center justify-between">

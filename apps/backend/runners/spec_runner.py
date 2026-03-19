@@ -279,6 +279,18 @@ Examples:
                 project_dir = parent
                 break
 
+    # Propagate --provider to SELECTED_LLM_PROVIDER environment variable so that
+    # _get_active_provider() picks it up throughout the entire spec creation pipeline
+    # (AgentRunner, SpecOrchestrator, etc.) even when the frontend credential manager
+    # did not inject it (e.g. settings.json.selectedProvider is null).
+    if args.provider and args.provider not in ("anthropic", "claude"):
+        import os as _os
+        _os.environ["SELECTED_LLM_PROVIDER"] = args.provider
+        debug(
+            "spec_runner",
+            f"Injected SELECTED_LLM_PROVIDER={args.provider} into environment from --provider arg",
+        )
+
     # Resolve model: if provider is non-Anthropic and model is the default "sonnet",
     # use the provider-specific default model instead of the Claude shorthand.
     from phase_config import PROVIDER_DEFAULT_MODELS

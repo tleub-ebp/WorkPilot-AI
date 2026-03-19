@@ -948,6 +948,36 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
         logger.info(f"[_get_active_provider] Resolved provider from SELECTED_LLM_PROVIDER env var: '{selected_env}' -> '{resolved}'")
         return resolved
 
+    # 1.7. Check task_metadata.json for provider.
+    # This handles the case where the frontend has a non-Claude provider stored in the
+    # task's metadata (e.g. "copilot") but has not set SELECTED_LLM_PROVIDER in the
+    # subprocess environment (because settings.json.selectedProvider is null — i.e. the
+    # user never explicitly clicked "select" in the provider UI after authenticating).
+    if spec_dir:
+        try:
+            import json as _json
+            metadata_path = Path(spec_dir) / "task_metadata.json"
+            if not metadata_path.exists():
+                # spec_dir may be e.g. .auto-claude/specs/001-name — try parent dirs
+                for parent in Path(spec_dir).parents:
+                    candidate = parent / "task_metadata.json"
+                    if candidate.exists():
+                        metadata_path = candidate
+                        break
+            if metadata_path.exists():
+                with open(metadata_path, encoding="utf-8") as _f:
+                    _meta = _json.load(_f)
+                _meta_provider = _meta.get("provider", "").lower().strip()
+                if _meta_provider and _meta_provider in provider_mapping:
+                    _mapped = provider_mapping[_meta_provider]
+                    logger.info(
+                        f"[_get_active_provider] Resolved from task_metadata.json: "
+                        f"'{_meta_provider}' -> '{_mapped}'"
+                    )
+                    return _mapped
+        except Exception:
+            pass  # best-effort; fall through to env var and project checks
+
     # 2. Environment variable override
     env_provider = os.environ.get("AUTO_CLAUDE_PROVIDER", "").lower().strip()
     if env_provider in ("claude", "copilot", "openai", "google", "ollama", "meta", "mistral", "deepseek", "grok", "aws", "windsurf", "custom"):

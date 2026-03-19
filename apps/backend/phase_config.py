@@ -82,6 +82,8 @@ PROVIDER_DEFAULT_MODELS: dict[str, dict[str, str]] = {
     "aws":       {"spec": "anthropic.claude-sonnet-4-5-v1", "planning": "anthropic.claude-sonnet-4-5-v1", "coding": "anthropic.claude-sonnet-4-5-v1", "qa": "anthropic.claude-sonnet-4-5-v1"},
     # Ollama (local)
     "ollama":    {"spec": "llama3.3", "planning": "llama3.3", "coding": "llama3.3", "qa": "llama3.3"},
+    # Windsurf (Codeium) — SWE-1.5 is the flagship proprietary model
+    "windsurf":  {"spec": "swe-1.5", "planning": "swe-1.5", "coding": "swe-1.5", "qa": "swe-1.5"},
 }
 
 DEFAULT_PHASE_THINKING: dict[str, str] = {

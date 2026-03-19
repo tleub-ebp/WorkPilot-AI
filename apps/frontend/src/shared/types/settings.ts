@@ -327,6 +327,7 @@ export interface AppSettings {
   sessionThreshold?: number;
   rateLimitEnabled?: boolean;
   authFailureEnabled?: boolean;
+  routingStrategy?: 'best_performance' | 'cheapest' | 'lowest_latency' | 'round_robin';
   // Active view persistence (restore last view on app reload)
   activeView?: import('../../renderer/components/Sidebar').SidebarView;
   // Provider grid UI preferences
