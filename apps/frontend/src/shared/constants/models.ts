@@ -29,34 +29,37 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
   ],
 
   // ---- GitHub Copilot ----
+  // Source: docs.github.com/en/copilot/reference/ai-models/supported-models
   copilot: [
-    { value: 'gpt-5.4',              label: 'GPT-5.4 (Copilot)',            tier: 'flagship' },
-    { value: 'gpt-5.3',              label: 'GPT-5.3 (Copilot)',            tier: 'flagship' },
-    { value: 'o4',                   label: 'o4 (Copilot)',                 tier: 'flagship', supportsThinking: true },
-    { value: 'gpt-5.2',              label: 'GPT-5.2 (Copilot)',            tier: 'flagship' },
-    { value: 'gpt-5',                label: 'GPT-5 (Copilot)',              tier: 'flagship' },
-    { value: 'o3',                   label: 'o3 (Copilot)',                 tier: 'flagship', supportsThinking: true },
-    { value: 'claude-opus-4-6',      label: 'Claude Opus 4.6 (Copilot)',    tier: 'flagship', supportsThinking: true },
-    { value: 'claude-sonnet-4-6',    label: 'Claude Sonnet 4.6 (Copilot)',  tier: 'standard', supportsThinking: true },
-    { value: 'gpt-4o',               label: 'GPT-4o (Copilot)',             tier: 'standard' },
-    { value: 'o4-mini',              label: 'o4-mini (Copilot)',            tier: 'standard', supportsThinking: true },
-    { value: 'o3-mini',              label: 'o3-mini (Copilot)',            tier: 'standard', supportsThinking: true },
-    { value: 'claude-sonnet-4-5',    label: 'Claude Sonnet 4.5 (Copilot)',  tier: 'standard', supportsThinking: true },
-    { value: 'gpt-4o-mini',          label: 'GPT-4o mini (Copilot)',        tier: 'fast' },
+    { value: 'gpt-4o',              label: 'GPT-4o (Copilot)',               tier: 'flagship' },
+    { value: 'gpt-4.1',             label: 'GPT-4.1 (Copilot)',              tier: 'flagship' },
+    { value: 'claude-sonnet-4-5',   label: 'Claude Sonnet 4.5 (Copilot)',    tier: 'flagship', supportsThinking: true },
+    { value: 'claude-opus-4-5',     label: 'Claude Opus 4.5 (Copilot)',      tier: 'flagship', supportsThinking: true },
+    { value: 'o3-mini',             label: 'o3-mini (Copilot)',              tier: 'standard', supportsThinking: true },
+    { value: 'o1',                  label: 'o1 (Copilot)',                   tier: 'standard', supportsThinking: true },
+    { value: 'o1-mini',             label: 'o1-mini (Copilot)',              tier: 'standard', supportsThinking: true },
+    { value: 'gpt-4.1-mini',        label: 'GPT-4.1 mini (Copilot)',         tier: 'standard' },
+    { value: 'claude-3.7-sonnet',   label: 'Claude 3.7 Sonnet (Copilot)',    tier: 'standard', supportsThinking: true },
+    { value: 'gemini-2.5-pro',      label: 'Gemini 2.5 Pro (Copilot)',       tier: 'standard', supportsThinking: true },
+    { value: 'claude-haiku-4-5',    label: 'Claude Haiku 4.5 (Copilot)',     tier: 'fast' },
+    { value: 'gemini-2.0-flash',    label: 'Gemini 2.0 Flash (Copilot)',     tier: 'fast' },
+    { value: 'gpt-4o-mini',         label: 'GPT-4o mini (Copilot)',          tier: 'fast' },
   ],
 
   // ---- OpenAI ----
+  // Source: platform.openai.com/docs/models
   openai: [
-    { value: 'gpt-5.4',       label: 'GPT-5.4',           tier: 'flagship' },
-    { value: 'gpt-5.3',       label: 'GPT-5.3',           tier: 'flagship' },
-    { value: 'gpt-5.2',       label: 'GPT-5.2',           tier: 'flagship' },
-    { value: 'gpt-5',         label: 'GPT-5',              tier: 'flagship' },
-    { value: 'o4',            label: 'o4',                  tier: 'flagship', supportsThinking: true },
-    { value: 'o4-mini',       label: 'o4-mini',            tier: 'standard', supportsThinking: true },
+    { value: 'gpt-4o',        label: 'GPT-4o',             tier: 'flagship' },
+    { value: 'gpt-4.1',       label: 'GPT-4.1',            tier: 'flagship' },
     { value: 'o3',            label: 'o3',                  tier: 'flagship', supportsThinking: true },
+    { value: 'o1-pro',        label: 'o1 Pro',              tier: 'flagship', supportsThinking: true },
+    { value: 'o4-mini',       label: 'o4-mini',            tier: 'standard', supportsThinking: true },
+    { value: 'gpt-4.1-mini',  label: 'GPT-4.1 mini',       tier: 'standard' },
+    { value: 'o1',            label: 'o1',                  tier: 'standard', supportsThinking: true },
     { value: 'o3-mini',       label: 'o3-mini',            tier: 'standard', supportsThinking: true },
-    { value: 'gpt-4o',        label: 'GPT-4o',             tier: 'standard' },
     { value: 'gpt-4o-mini',   label: 'GPT-4o mini',        tier: 'fast' },
+    { value: 'gpt-4.1-nano',  label: 'GPT-4.1 nano',       tier: 'fast' },
+    { value: 'o1-mini',       label: 'o1-mini',            tier: 'fast',     supportsThinking: true },
     { value: 'gpt-4-turbo',   label: 'GPT-4 Turbo',        tier: 'standard' },
   ],
 
@@ -152,11 +155,20 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
   ],
 
   // ---- Windsurf (Codeium) ----
+  // Source: docs.windsurf.com/windsurf/models
   windsurf: [
-    { value: 'windsurf-codestral', label: 'Windsurf Codestral', tier: 'flagship' },
-    { value: 'windsurf-sonnet', label: 'Windsurf Sonnet', tier: 'standard' },
-    { value: 'windsurf-haiku', label: 'Windsurf Haiku', tier: 'fast' },
-    { value: 'windsurf-custom', label: 'Windsurf Custom', tier: 'standard' },
+    { value: 'swe-1.5',          label: 'SWE-1.5',                      tier: 'flagship' },
+    { value: 'swe-1.5-thinking', label: 'SWE-1.5 Thinking',             tier: 'flagship', supportsThinking: true },
+    { value: 'claude-sonnet-4',  label: 'Claude Sonnet 4 (Windsurf)',    tier: 'flagship', supportsThinking: true },
+    { value: 'claude-opus-4',    label: 'Claude Opus 4 (Windsurf)',      tier: 'flagship', supportsThinking: true },
+    { value: 'claude-3.7-sonnet',label: 'Claude 3.7 Sonnet (Windsurf)', tier: 'standard', supportsThinking: true },
+    { value: 'gpt-4.1',          label: 'GPT-4.1 (Windsurf)',           tier: 'standard' },
+    { value: 'gpt-4o',           label: 'GPT-4o (Windsurf)',            tier: 'standard' },
+    { value: 'gemini-2.5-pro',   label: 'Gemini 2.5 Pro (Windsurf)',    tier: 'standard', supportsThinking: true },
+    { value: 'deepseek-r1',      label: 'DeepSeek R1 (Windsurf)',       tier: 'standard', supportsThinking: true },
+    { value: 'deepseek-v3',      label: 'DeepSeek V3 (Windsurf)',       tier: 'standard' },
+    { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash (Windsurf)',  tier: 'fast' },
+    { value: 'swe-1.5-fast',     label: 'SWE-1.5 Fast',                 tier: 'fast' },
   ],
 };
 

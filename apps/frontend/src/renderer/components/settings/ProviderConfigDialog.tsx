@@ -246,7 +246,18 @@ export function ProviderConfigDialog({
       onOpenChange(false);
       return;
     }
-    
+
+    // For GitHub Copilot on github-copilot tab: auth is managed by GitHubCopilotConfig
+    // but we must still notify the backend so SELECTED_LLM_PROVIDER is injected for
+    // agent subprocesses. Without this, settings.json.selectedProvider stays null and
+    // the provider silently falls back to Claude.
+    if (provider.id === 'copilot' && activeTab === 'github-copilot') {
+      onSettingsChange(newSettings);
+      onProviderActivated?.(provider.id);
+      onOpenChange(false);
+      return;
+    }
+
     if (providerConfig.apiKey) {
       newSettings[providerConfig.apiKey] = formData.apiKey || '';
       newSettings[`${providerConfig.apiKey}Enabled`] = !!formData.apiKey;

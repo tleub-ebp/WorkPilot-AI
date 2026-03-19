@@ -9,6 +9,10 @@ import json
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 
+# Constants for commonly used model names to avoid duplication
+GPT_4_1 = 'gpt-4.1'
+GEMINI_2_5_PRO = 'gemini-2.5-pro'
+
 class Provider:
     def __init__(
         self,
@@ -82,6 +86,7 @@ class ProviderRegistry:
         )
         
         # --- OpenAI ---
+        # Source: platform.openai.com/docs/models
         self._providers['openai'] = Provider(
             name='openai',
             label='OpenAI (ChatGPT)',
@@ -91,16 +96,17 @@ class ProviderRegistry:
             requires_oauth=False,
             requires_cli=False,
             models=[
-                {'value': 'gpt-5.4', 'label': 'GPT-5.4', 'tier': 'flagship'},
-                {'value': 'gpt-5.3', 'label': 'GPT-5.3', 'tier': 'flagship'},
-                {'value': 'gpt-5.2', 'label': 'GPT-5.2', 'tier': 'flagship'},
-                {'value': 'gpt-5', 'label': 'GPT-5', 'tier': 'flagship'},
-                {'value': 'o4', 'label': 'o4', 'tier': 'flagship', 'supportsThinking': True},
-                {'value': 'o4-mini', 'label': 'o4-mini', 'tier': 'standard', 'supportsThinking': True},
+                {'value': 'gpt-4o', 'label': 'GPT-4o', 'tier': 'flagship'},
+                {'value': GPT_4_1, 'label': 'GPT-4.1', 'tier': 'flagship'},
                 {'value': 'o3', 'label': 'o3', 'tier': 'flagship', 'supportsThinking': True},
+                {'value': 'o1-pro', 'label': 'o1 Pro', 'tier': 'flagship', 'supportsThinking': True},
+                {'value': 'o4-mini', 'label': 'o4-mini', 'tier': 'standard', 'supportsThinking': True},
+                {'value': 'gpt-4.1-mini', 'label': 'GPT-4.1 mini', 'tier': 'standard'},
+                {'value': 'o1', 'label': 'o1', 'tier': 'standard', 'supportsThinking': True},
                 {'value': 'o3-mini', 'label': 'o3-mini', 'tier': 'standard', 'supportsThinking': True},
-                {'value': 'gpt-4o', 'label': 'GPT-4o', 'tier': 'standard'},
                 {'value': 'gpt-4o-mini', 'label': 'GPT-4o mini', 'tier': 'fast'},
+                {'value': 'gpt-4.1-nano', 'label': 'GPT-4.1 nano', 'tier': 'fast'},
+                {'value': 'o1-mini', 'label': 'o1-mini', 'tier': 'fast', 'supportsThinking': True},
                 {'value': 'gpt-4-turbo', 'label': 'GPT-4 Turbo', 'tier': 'standard'},
             ]
         )
@@ -118,7 +124,7 @@ class ProviderRegistry:
                 {'value': 'gemini-3.1-pro', 'label': 'Gemini 3.1 Pro', 'tier': 'flagship', 'supportsThinking': True},
                 {'value': 'gemini-3-flash', 'label': 'Gemini 3 Flash', 'tier': 'flagship'},
                 {'value': 'gemini-3.1-flash-lite', 'label': 'Gemini 3.1 Flash-Lite', 'tier': 'standard'},
-                {'value': 'gemini-2.5-pro', 'label': 'Gemini 2.5 Pro', 'tier': 'flagship', 'supportsThinking': True},
+                {'value': GEMINI_2_5_PRO, 'label': 'Gemini 2.5 Pro', 'tier': 'flagship', 'supportsThinking': True},
                 {'value': 'gemini-2.5-flash', 'label': 'Gemini 2.5 Flash', 'tier': 'fast'},
                 {'value': 'gemini-2.0-flash-thinking', 'label': 'Gemini 2.0 Flash Thinking', 'tier': 'standard', 'supportsThinking': True},
                 {'value': 'gemini-1.5-pro', 'label': 'Gemini 1.5 Pro', 'tier': 'standard'},
@@ -236,6 +242,7 @@ class ProviderRegistry:
         )
         
         # --- GitHub Copilot ---
+        # Source: docs.github.com/en/copilot/reference/ai-models/supported-models
         self._providers['copilot'] = Provider(
             name='copilot',
             label='GitHub Copilot',
@@ -245,13 +252,18 @@ class ProviderRegistry:
             requires_oauth=False,
             requires_cli=True,  # Requiert gh CLI
             models=[
-                {'value': 'gpt-5.4', 'label': 'GPT-5.4 (Copilot)', 'tier': 'flagship'},
-                {'value': 'gpt-5.3', 'label': 'GPT-5.3 (Copilot)', 'tier': 'flagship'},
-                {'value': 'o4', 'label': 'o4 (Copilot)', 'tier': 'flagship', 'supportsThinking': True},
-                {'value': 'gpt-4o', 'label': 'GPT-4o (Copilot)', 'tier': 'standard'},
-                {'value': 'o4-mini', 'label': 'o4-mini (Copilot)', 'tier': 'standard', 'supportsThinking': True},
+                {'value': 'gpt-4o', 'label': 'GPT-4o (Copilot)', 'tier': 'flagship'},
+                {'value': GPT_4_1, 'label': 'GPT-4.1 (Copilot)', 'tier': 'flagship'},
+                {'value': 'claude-sonnet-4-5', 'label': 'Claude Sonnet 4.5 (Copilot)', 'tier': 'flagship', 'supportsThinking': True},
+                {'value': 'claude-opus-4-5', 'label': 'Claude Opus 4.5 (Copilot)', 'tier': 'flagship', 'supportsThinking': True},
                 {'value': 'o3-mini', 'label': 'o3-mini (Copilot)', 'tier': 'standard', 'supportsThinking': True},
-                {'value': 'claude-sonnet-4.6', 'label': 'Claude Sonnet 4.6 (Copilot)', 'tier': 'standard', 'supportsThinking': True},
+                {'value': 'o1', 'label': 'o1 (Copilot)', 'tier': 'standard', 'supportsThinking': True},
+                {'value': 'o1-mini', 'label': 'o1-mini (Copilot)', 'tier': 'standard', 'supportsThinking': True},
+                {'value': 'gpt-4.1-mini', 'label': 'GPT-4.1 mini (Copilot)', 'tier': 'standard'},
+                {'value': 'claude-3.7-sonnet', 'label': 'Claude 3.7 Sonnet (Copilot)', 'tier': 'standard', 'supportsThinking': True},
+                {'value': GEMINI_2_5_PRO, 'label': 'Gemini 2.5 Pro (Copilot)', 'tier': 'standard', 'supportsThinking': True},
+                {'value': 'claude-haiku-4-5', 'label': 'Claude Haiku 4.5 (Copilot)', 'tier': 'fast'},
+                {'value': 'gemini-2.0-flash', 'label': 'Gemini 2.0 Flash (Copilot)', 'tier': 'fast'},
                 {'value': 'gpt-4o-mini', 'label': 'GPT-4o mini (Copilot)', 'tier': 'fast'},
             ]
         )
@@ -273,6 +285,7 @@ class ProviderRegistry:
         )
         
         # --- Windsurf AI (Codeium) ---
+        # Source: docs.windsurf.com/windsurf/models
         self._providers['windsurf'] = Provider(
             name='windsurf',
             label='Windsurf (Codeium)',
@@ -282,18 +295,18 @@ class ProviderRegistry:
             requires_oauth=True,     # Also supports SSO/OAuth authentication
             requires_cli=False,
             models=[
-                {'value': 'swe-1.5', 'label': 'SWE-1.5', 'tier': 'flagship', 'supportsThinking': True},
-                {'value': 'claude-opus-4.6', 'label': 'Claude Opus 4.6', 'tier': 'flagship', 'supportsThinking': True},
-                {'value': 'claude-sonnet-4.6', 'label': 'Claude Sonnet 4.6', 'tier': 'standard', 'supportsThinking': True},
-                {'value': 'gpt-5.4-low-thinking', 'label': 'GPT-5.4 Low Thinking', 'tier': 'standard'},
+                {'value': 'swe-1.5', 'label': 'SWE-1.5', 'tier': 'flagship'},
+                {'value': 'swe-1.5-thinking', 'label': 'SWE-1.5 Thinking', 'tier': 'flagship', 'supportsThinking': True},
+                {'value': 'claude-sonnet-4', 'label': 'Claude Sonnet 4 (Windsurf)', 'tier': 'flagship', 'supportsThinking': True},
+                {'value': 'claude-opus-4', 'label': 'Claude Opus 4 (Windsurf)', 'tier': 'flagship', 'supportsThinking': True},
+                {'value': 'claude-3.7-sonnet', 'label': 'Claude 3.7 Sonnet (Windsurf)', 'tier': 'standard', 'supportsThinking': True},
+                {'value': GPT_4_1, 'label': 'GPT-4.1 (Windsurf)', 'tier': 'standard'},
+                {'value': 'gpt-4o', 'label': 'GPT-4o (Windsurf)', 'tier': 'standard'},
+                {'value': GEMINI_2_5_PRO, 'label': 'Gemini 2.5 Pro (Windsurf)', 'tier': 'standard', 'supportsThinking': True},
+                {'value': 'deepseek-r1', 'label': 'DeepSeek R1 (Windsurf)', 'tier': 'standard', 'supportsThinking': True},
+                {'value': 'deepseek-v3', 'label': 'DeepSeek V3 (Windsurf)', 'tier': 'standard'},
+                {'value': 'gemini-2.0-flash', 'label': 'Gemini 2.0 Flash (Windsurf)', 'tier': 'fast'},
                 {'value': 'swe-1.5-fast', 'label': 'SWE-1.5 Fast', 'tier': 'fast'},
-                {'value': 'claude-sonnet-4.5', 'label': 'Claude Sonnet 4.5', 'tier': 'standard', 'supportsThinking': True},
-                {'value': 'gpt-5.3-low-thinking', 'label': 'GPT-5.3 Low Thinking', 'tier': 'standard'},
-                # Garder les modèles originaux pour compatibilité
-                {'value': 'windsurf-codestral', 'label': 'Windsurf Codestral', 'tier': 'flagship'},
-                {'value': 'windsurf-sonnet', 'label': 'Windsurf Sonnet', 'tier': 'standard'},
-                {'value': 'windsurf-haiku', 'label': 'Windsurf Haiku', 'tier': 'fast'},
-                {'value': 'windsurf-custom', 'label': 'Windsurf Custom', 'tier': 'standard'},
             ]
         )
         
