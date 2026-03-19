@@ -29,7 +29,7 @@ import {
 
 interface ProfileListProps {
   /** Optional callback when a profile is saved */
-  onProfileSaved?: () => void;
+  readonly onProfileSaved?: () => void;
 }
 
 export function ProfileList({ onProfileSaved }: ProfileListProps) {

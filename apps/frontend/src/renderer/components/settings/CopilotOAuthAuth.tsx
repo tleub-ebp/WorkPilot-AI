@@ -50,14 +50,14 @@ export const CopilotOAuthAuth: React.FC<CopilotOAuthAuthProps> = ({
       setIsCheckingStatus(true);
 
       // 1. Check OAuth token files via IPC
-      const statusResponse = await window.electronAPI.copilotOAuthStatus();
+      const statusResponse = await globalThis.electronAPI.copilotOAuthStatus();
       if (statusResponse.success && statusResponse.data?.authenticated) {
         setAuthStatus(statusResponse.data);
         return;
       }
 
       // 2. Fallback: check GitHub CLI auth (gh auth status)
-      const cliAuthResponse = await window.electronAPI.checkCopilotAuth();
+      const cliAuthResponse = await globalThis.electronAPI.checkCopilotAuth();
       if (cliAuthResponse.success && cliAuthResponse.data?.authenticated) {
         setAuthStatus({
           authenticated: true,
@@ -92,7 +92,7 @@ export const CopilotOAuthAuth: React.FC<CopilotOAuthAuthProps> = ({
       }
 
       // Start OAuth flow
-      const response = await window.electronAPI.copilotOAuthStart(profileName);
+      const response = await globalThis.electronAPI.copilotOAuthStart(profileName);
       
       if (response.success) {
         toast({
@@ -103,7 +103,7 @@ export const CopilotOAuthAuth: React.FC<CopilotOAuthAuthProps> = ({
         // Poll for authentication completion
         const pollInterval = setInterval(async () => {
           try {
-            const statusResponse = await window.electronAPI.copilotOAuthStatus();
+            const statusResponse = await globalThis.electronAPI.copilotOAuthStatus();
             if (statusResponse.success && statusResponse.data.authenticated) {
               clearInterval(pollInterval);
               setIsLoading(false);
@@ -160,7 +160,7 @@ export const CopilotOAuthAuth: React.FC<CopilotOAuthAuthProps> = ({
     try {
       setIsLoading(true);
       
-      const response = await window.electronAPI.copilotOAuthRevoke(username);
+      const response = await globalThis.electronAPI.copilotOAuthRevoke(username);
       
       if (response.success) {
         toast({
@@ -252,8 +252,8 @@ export const CopilotOAuthAuth: React.FC<CopilotOAuthAuthProps> = ({
           <>
             <div className="space-y-3">
               <h4 className="text-sm font-medium">{t('settings:copilotOAuth.authenticatedProfiles')}</h4>
-              {authStatus.profiles.map((profile, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+              {authStatus.profiles.map((profile) => (
+                <div key={`${profile.username}-${profile.profileName}`} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center gap-3">
                     <User className="w-4 h-4 text-muted-foreground" />
                     <div>

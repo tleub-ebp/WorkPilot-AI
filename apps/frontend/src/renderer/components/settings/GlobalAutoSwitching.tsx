@@ -25,10 +25,13 @@ interface GlobalAutoSwitchingProps {
   readonly settings: AppSettings;
   readonly onSettingsChange: (settings: AppSettings) => void;
   readonly isOpen: boolean;
-  readonly useSheet?: boolean;
+  /** Pre-computed provider status from the parent grid (includes OAuth enrichment).
+   *  When provided, used as the source of truth to filter providers — guarantees
+   *  the priority list is ISO with what the grid shows. */
+  readonly providerStatus?: Record<string, boolean>;
 }
 
-export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useSheet = false }: GlobalAutoSwitchingProps) {
+export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, providerStatus }: GlobalAutoSwitchingProps) {
   const { t } = useTranslation('settings');
   const { toast } = useToast();
   const { profiles: apiProfiles, activeProfileId: activeApiProfileId } = useSettingsStore();
@@ -140,113 +143,77 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
     setRoutingStrategy(settings.routingStrategy ?? 'best_performance');
   }, [settings.proactiveEnabled, settings.sessionThreshold, settings.rateLimitEnabled, settings.authFailureEnabled, settings.routingStrategy]);
 
-  // Build unified accounts list
+  // Build unified accounts list — getStaticProviders is the single source of truth,
+  // same as the provider grid, to guarantee ISO between the two views.
   const buildUnifiedAccounts = async (): Promise<UnifiedAccount[]> => {
     const unifiedList: UnifiedAccount[] = [];
-
-    // Track which providers are already represented to avoid duplicates
     const representedProviders = new Set<string>();
 
-    // Helper: get display label from providerRegistry for consistent naming with left grid
     const getRegistryLabel = (providerName: string): string => {
       const regProvider = getRegistryProvider(providerName);
       return regProvider?.label || providerName;
     };
 
-    // Helper: detect provider name from an API profile (URL + name based)
-    const detectProviderFromProfile = (profile: { baseUrl?: string; name?: string }): string => {
-      const url = profile.baseUrl?.toLowerCase() || '';
-      const name = profile.name?.toLowerCase() || '';
-
-      if (url.includes('anthropic.com') || name.includes('claude') || name.includes('anthropic')) return 'anthropic';
-      if (url.includes('openai.com') || name.includes('openai') || name.includes('chatgpt')) return 'openai';
-      if (url.includes('google.com') || name.includes('gemini') || name.includes('google')) return 'google';
-      if (url.includes('mistral.ai') || name.includes('mistral')) return 'mistral';
-      if (url.includes('deepseek.com') || name.includes('deepseek')) return 'deepseek';
-      if (url.includes('meta.com') || name.includes('llama') || name.includes('meta')) return 'meta';
-      if (url.includes('x.ai') || name.includes('grok')) return 'grok';
-      if (url.includes('aws.amazon.com') || name.includes('bedrock') || name.includes('aws')) return 'aws';
-      if (url.includes('ollama') || name.includes('ollama') || url.includes('localhost') || url.includes('127.0.0.1')) return 'ollama';
-      if (url.includes('github.com') || name.includes('copilot')) return 'copilot';
-
-      return 'custom';
-    };
-
-    // Loop 1: Add OAuth profiles (Claude accounts) with usage data
+    // Step 1: OAuth Claude profiles → always displayed as "Anthropic (Claude)"
     claudeProfiles.forEach((profile) => {
       const usageData = profileUsageData.get(profile.id);
       unifiedList.push({
         id: `oauth-${profile.id}`,
         name: profile.name,
         type: 'oauth',
-        displayName: profile.name,
+        displayName: getRegistryLabel('anthropic'), // "Anthropic (Claude)" — not the account nickname
         identifier: profile.email || t('accounts.priority.noEmail'),
         isActive: profile.id === activeClaudeProfileId && !activeApiProfileId,
-        isNext: false, // Will be computed by AccountPriorityList
+        isNext: false,
         isAvailable: profile.isAuthenticated ?? false,
         hasUnlimitedUsage: false,
-        // Use real usage data from the usage monitor
         sessionPercent: usageData?.sessionPercent,
         weeklyPercent: usageData?.weeklyPercent,
       });
       representedProviders.add(profile.name);
+      representedProviders.add('anthropic'); // block duplicate API Anthropic entry
     });
-    
-    // Loop 2: Add API profiles (OpenAI, Google, etc.)
-    apiProfiles.forEach((profile) => {
-      const providerName = detectProviderFromProfile(profile);
-      unifiedList.push({
-        id: `api-${profile.id}`,
-        name: providerName,
-        type: 'api',
-        displayName: getRegistryLabel(providerName),
-        identifier: profile.baseUrl || profile.name,
-        isActive: profile.id === activeApiProfileId,
-        isNext: false,
-        isAvailable: true,
-        hasUnlimitedUsage: true,
-        sessionPercent: undefined,
-        weeklyPercent: undefined,
+
+    // Step 2: All other providers via getStaticProviders — same source as the provider grid
+    // Use parent's providerStatus when available (already OAuth-enriched, matches the grid exactly).
+    // Fall back to getStaticProviders for standalone usage (e.g. outside CleanProviderSection).
+    const { providers: staticProviders, status: fallbackStatus } = await getStaticProviders(apiProfiles, settings);
+    const effectiveStatus = providerStatus ?? fallbackStatus;
+
+    // Copilot username (from async auth check) for a nicer identifier
+    const copilotProvider = authenticatedProviders.find((p) => p.name === 'copilot');
+    // Matching API profile for URL-based identifier
+    const findApiProfile = (providerName: string) =>
+      apiProfiles.find((p) => {
+        const url = p.baseUrl?.toLowerCase() || '';
+        const n = p.name?.toLowerCase() || '';
+        if (providerName === 'openai') return url.includes('openai.com') || n.includes('openai');
+        if (providerName === 'google') return url.includes('google.com') || n.includes('gemini');
+        if (providerName === 'mistral') return url.includes('mistral.ai') || n.includes('mistral');
+        if (providerName === 'deepseek') return url.includes('deepseek.com') || n.includes('deepseek');
+        if (providerName === 'grok') return url.includes('x.ai') || n.includes('grok');
+        if (providerName === 'windsurf') return url.includes('windsurf') || n.includes('windsurf');
+        if (providerName === 'ollama') return url.includes('ollama') || url.includes('localhost');
+        return false;
       });
-      representedProviders.add(providerName);
-    });
 
-    // Loop 3: Add authenticated providers (Copilot, settings-based API keys)
-    // Only if not already represented by OAuth or API profiles
-    authenticatedProviders.forEach((prov) => {
-      if (representedProviders.has(prov.name)) return;
-
-      unifiedList.push({
-        id: prov.id,
-        name: prov.name,
-        type: 'api' as const,
-        displayName: getRegistryLabel(prov.name),
-        identifier: prov.username ? `@${prov.username}` : t('accounts.priority.providerAuth'),
-        isActive: false,
-        isNext: false,
-        isAvailable: true,
-        hasUnlimitedUsage: prov.name !== 'copilot',
-        sessionPercent: undefined,
-        weeklyPercent: undefined,
-        isAuthenticated: true,
-      });
-      representedProviders.add(prov.name);
-    });
-
-    // Fallback: use getStaticProviders() to catch any configured providers not yet represented
-    // This ensures profiles detected by URL/name matching appear even if Loops 2 & 3 missed them
-    const { providers: staticProviders, status: staticStatus } = await getStaticProviders(apiProfiles, settings);
     for (const sp of staticProviders) {
       if (representedProviders.has(sp.name)) continue;
-      if (!staticStatus[sp.name]) continue; // Not configured/authenticated
+      if (!effectiveStatus[sp.name]) continue; // not configured/authenticated — skip (same filter as grid)
+
+      const matchingProfile = findApiProfile(sp.name);
+      const identifier =
+        sp.name === 'copilot' && copilotProvider?.username
+          ? `@${copilotProvider.username}`
+          : matchingProfile?.baseUrl || matchingProfile?.name || t('accounts.priority.providerAuth');
 
       unifiedList.push({
-        id: sp.name,
+        id: matchingProfile ? `api-${matchingProfile.id}` : sp.name,
         name: sp.name,
-        type: 'api' as const,
+        type: 'api',
         displayName: getRegistryLabel(sp.name),
-        identifier: t('accounts.priority.providerAuth'),
-        isActive: false,
+        identifier,
+        isActive: matchingProfile ? matchingProfile.id === activeApiProfileId : false,
         isNext: false,
         isAvailable: true,
         hasUnlimitedUsage: sp.name !== 'copilot',
@@ -256,7 +223,6 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, useShe
       representedProviders.add(sp.name);
     }
 
-    // Filter out unavailable providers
     const filteredList = unifiedList.filter((account) => account.isAvailable);
 
     if (priorityOrder.length > 0) {

@@ -203,7 +203,20 @@ function persistProviderToMetadata(
     meta.provider = projectProvider;
     if (providerPhaseModels) meta.phaseModels = providerPhaseModels;
     if (providerPhaseThinking) meta.phaseThinking = providerPhaseThinking;
-    
+
+    // When switching to a non-Anthropic provider, clear any Anthropic-specific
+    // versioned model ID (e.g. "claude-sonnet-4-5-20250929") from the single
+    // model field so the backend falls back to PROVIDER_DEFAULT_MODELS for the
+    // new provider instead of sending an invalid model ID to the API.
+    const isNonAnthropicProvider =
+      projectProvider && projectProvider !== 'anthropic' && projectProvider !== 'claude';
+    const hasAnthropicVersionedModel =
+      typeof meta.model === 'string' &&
+      /^claude-(opus|sonnet|haiku)-\d/.test(meta.model);
+    if (isNonAnthropicProvider && hasAnthropicVersionedModel) {
+      delete meta.model;
+    }
+
     atomicWriteFileSync(metadataPath, JSON.stringify(meta, null, 2));
     console.warn(`[Provider Sync] Persisted ${context} to task_metadata.json`);
   } catch (err) {
