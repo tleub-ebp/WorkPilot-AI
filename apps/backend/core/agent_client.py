@@ -539,9 +539,14 @@ class CopilotAgentClient(AgentClient):
     async def _get_copilot_token(self) -> str:
         """Return a valid Copilot session token, refreshing if needed.
 
-        GitHub's Copilot API does not accept raw GitHub PATs directly.
-        The raw token must first be exchanged at copilot_internal/v2/token
-        for a short-lived session token (~30 min TTL).
+        Two-path authentication:
+        1. (Preferred) Exchange a GitHub OAuth token at copilot_internal/v2/token
+           for a short-lived session token (~30 min TTL).
+        2. (Fallback) Some Copilot Business/Enterprise accounts managed by an
+           organisation have the token-exchange endpoint restricted (returns 404).
+           In that case the raw GitHub OAuth token (gho_…) is accepted directly
+           as a Bearer token by api.githubcopilot.com.  We cache this as the
+           "session token" with a 30-minute TTL to match normal behaviour.
         """
         import time
         import aiohttp
@@ -573,13 +578,37 @@ class CopilotAgentClient(AgentClient):
         exchange_headers = {
             "Authorization": f"token {self.github_token}",
             "Accept": "application/json",
-            "x-github-api-version": "2025-04-01",
+            "x-github-api-version": "2022-11-28",
             **self._IDE_HEADERS,
         }
 
         async with aiohttp.ClientSession() as session:
             async with session.get(self._token_exchange_url, headers=exchange_headers) as resp:
-                if resp.status != 200:
+                if resp.status == 200:
+                    data = await resp.json()
+                    self._copilot_token = data["token"]
+                    # expires_at is a Unix timestamp; default to 30 min if absent
+                    self._copilot_token_expires_at = data.get("expires_at", time.time() + 1800)
+                    logger.info("[CopilotAgentClient] Session token refreshed via exchange")
+                    return self._copilot_token
+                elif resp.status == 404:
+                    # Copilot Business/Enterprise accounts managed by an organisation
+                    # often restrict the internal token-exchange endpoint.  Fall back
+                    # to using the raw GitHub OAuth token directly as Bearer auth —
+                    # api.githubcopilot.com accepts it for these account types.
+                    logger.info(
+                        "[CopilotAgentClient] Token exchange endpoint returned 404 "
+                        "(organisation-managed Copilot). Using GitHub token directly as Bearer."
+                    )
+                    print(
+                        "[CopilotAgentClient] [INFO] Token exchange not available "
+                        "(Copilot Business/Enterprise). Using GitHub token directly.",
+                        flush=True,
+                    )
+                    self._copilot_token = self.github_token
+                    self._copilot_token_expires_at = time.time() + 1800
+                    return self._copilot_token
+                else:
                     error_text = await resp.text()
                     token_hint = ""
                     if self.github_token.startswith("ghp_"):
@@ -587,21 +616,9 @@ class CopilotAgentClient(AgentClient):
                             " (Your token is a classic PAT (ghp_) — Copilot requires an OAuth "
                             "token (gho_). Fix: run `gh auth login --web` to re-authenticate.)"
                         )
-                    elif resp.status == 404:
-                        token_hint = (
-                            " (404 usually means: no active Copilot subscription, or token is "
-                            "not an OAuth token (gho_). Fix: `gh auth login --web`)"
-                        )
                     raise ValueError(
                         f"Copilot token exchange failed ({resp.status}): {error_text}{token_hint}"
                     )
-                data = await resp.json()
-
-        self._copilot_token = data["token"]
-        # expires_at is a Unix timestamp; default to 30 min if absent
-        self._copilot_token_expires_at = data.get("expires_at", time.time() + 1800)
-        logger.info("[CopilotAgentClient] Session token refreshed")
-        return self._copilot_token
 
     async def query(self, prompt: str) -> None:
         """Queue a prompt for the next receive_response() call."""
