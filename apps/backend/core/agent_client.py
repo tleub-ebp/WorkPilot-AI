@@ -451,6 +451,7 @@ class CopilotAgentClient(AgentClient):
 
         Returns an empty string if `gh` is unavailable or not authenticated.
         """
+        import os
         import subprocess
         import shutil
 
