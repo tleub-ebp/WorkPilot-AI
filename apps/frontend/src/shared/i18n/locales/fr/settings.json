@@ -487,6 +487,7 @@
         "addProvider": "Ajouter un fournisseur",
         "refresh": "Actualiser"
       },
+      "loadingProviders": "Chargement des fournisseurs...",
       "stats": {
         "configured": "{{count}} configuré(s)",
         "errors": "{{count}} erreur(s)",
