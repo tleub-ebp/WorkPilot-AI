@@ -87,10 +87,14 @@
           "accountFlowActions": "Flow Actions"
         },
         "openaiAuth": {
-          "codexCliAuth": "Use Codex CLI OAuth authentication to easily connect with your OpenAI account.",
-          "authenticating": "Authenticating...",
-          "connectWithCodex": "Connect with Codex CLI",
-          "terminalInstructions": "This will open a terminal where you can run the `codex` command to authenticate via OAuth."
+          "codexCliAuth": "Use an OpenAI API key from platform.openai.com to connect.",
+          "oauthNotSupported": "Codex CLI OAuth cannot be used for API calls",
+          "oauthExplanation": "OpenAI does not allow ChatGPT/Codex CLI OAuth tokens to call the API directly. A paid API key (sk-...) with billing is required.",
+          "useApiKeyInstead": "To use the OpenAI provider, get an API key from platform.openai.com:",
+          "step1": "Go to platform.openai.com/api-keys",
+          "step2": "Create a new API key (starts with sk-...)",
+          "step3": "Enter it in the \"API Key\" tab",
+          "openPlatform": "Open platform.openai.com"
         }
       },
       "providerCard": {

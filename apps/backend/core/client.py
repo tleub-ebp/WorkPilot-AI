@@ -1160,9 +1160,38 @@ def create_agent_client(
             agent_type=agent_type,
         )
 
+    elif provider == "openai":
+        from core.agent_client import OpenAIAgentClient
+
+        openai_system_prompt = (
+            f"You are an expert full-stack developer building production-quality software. "
+            f"Your working directory is: {project_dir.resolve()}\n"
+            f"Your filesystem access is RESTRICTED to this directory only. "
+            f"Use relative paths (starting with ./) for all file operations. "
+            f"Never use absolute paths or try to access files outside your working directory.\n\n"
+            f"You follow existing code patterns, write clean maintainable code, and verify "
+            f"your work through thorough testing. You communicate progress through Git commits "
+            f"and build-progress.txt updates.\n\n"
+            f"You MUST use the provided tools (read_file, write_file, list_files, run_command) "
+            f"to interact with the filesystem and execute commands. Do not just describe what to do — "
+            f"actually do it by calling the tools."
+        )
+
+        logger.info(
+            "[create_agent_client] Using OpenAIAgentClient (model=%s, agent_type=%s)",
+            model,
+            agent_type,
+        )
+        return OpenAIAgentClient(
+            model=model or "gpt-4o",
+            system_prompt=openai_system_prompt,
+            max_turns=50,
+            project_dir=str(project_dir),
+            agent_type=agent_type,
+        )
+
     else:
-        # For other providers (openai, google, ollama, etc.), fall back to Claude SDK
-        # These providers are handled at the LLM client level via the provider selection
+        # For other providers (google, ollama, etc.), fall back to Claude SDK
         logger.warning(f"Provider '{provider}' not directly supported, falling back to Claude SDK with provider selection")
         sdk_client = create_client(
             project_dir=project_dir,

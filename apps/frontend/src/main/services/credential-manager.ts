@@ -884,6 +884,38 @@ export class CredentialManager extends EventEmitter {
    *   3. Global settings for globalOpenAIApiKey
    *   4. Global settings for globalOpenAICodexOAuthToken (previously saved OAuth)
    */
+  private readCodexCliApiKey(): string {
+    try {
+      const path = require('node:path') as typeof import('node:path');
+      const os = require('node:os') as typeof import('node:os');
+      const { readFileSync, existsSync } = require('node:fs') as typeof import('node:fs');
+
+      const candidatePaths = [
+        process.env.APPDATA ? path.join(process.env.APPDATA, 'codex', 'auth.json') : null,
+        path.join(os.homedir(), '.config', 'codex', 'auth.json'),
+        path.join(os.homedir(), '.codex', 'auth.json'),
+        process.env.APPDATA ? path.join(process.env.APPDATA, 'openai', 'auth.json') : null,
+        path.join(os.homedir(), '.config', 'openai', 'auth.json'),
+        path.join(os.homedir(), '.openai', 'auth.json'),
+      ].filter(Boolean) as string[];
+
+      for (const configPath of candidatePaths) {
+        if (existsSync(configPath)) {
+          const auth = JSON.parse(readFileSync(configPath, 'utf-8'));
+          const apiKey = (auth.OPENAI_API_KEY as string | undefined)?.trim()
+            || (auth.api_key as string | undefined)?.trim()
+            || (auth.tokens?.access_token as string | undefined)?.trim()
+            || (auth.access_token as string | undefined)?.trim();
+          if (apiKey) {
+            console.log(`[CredentialManager] readCodexCliApiKey: found credentials at ${configPath}`);
+            return apiKey;
+          }
+        }
+      }
+    } catch { /* ignore */ }
+    return '';
+  }
+
   private async checkOpenAICodexOAuthStatus(): Promise<{ isAuthenticated: boolean; profileName?: string }> {
     try {
       console.log('[CredentialManager] Checking OpenAI Codex OAuth status...');
@@ -1389,6 +1421,10 @@ export class CredentialManager extends EventEmitter {
             if (val?.trim()) { apiKey = val.trim(); break; }
           }
         }
+
+        // Note: Codex CLI OAuth tokens are NOT used as fallback — they require
+        // specific OpenAI scopes that the ChatGPT OAuth flow does not grant.
+        // Users must provide a real API key (sk-...) from platform.openai.com.
 
         const envVar = envVarMap[selectedProvider];
         if (envVar && apiKey) env[envVar] = apiKey;

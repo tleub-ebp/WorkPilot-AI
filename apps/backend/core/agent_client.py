@@ -957,6 +957,295 @@ class CopilotAgentClient(AgentClient):
 
 
 # =============================================================================
+# OpenAI Agent Client — direct REST calls to OpenAI API
+# =============================================================================
+
+
+class OpenAIAgentClient(AgentClient):
+    """Agent client backed by OpenAI API (direct REST calls).
+
+    Requires a valid OpenAI API key (sk-...) from https://platform.openai.com/api-keys.
+    Uses /v1/chat/completions with full tool-use loop.
+    """
+
+    def __init__(
+        self,
+        model: str = "gpt-4o",
+        system_prompt: str | None = None,
+        max_turns: int = 50,
+        project_dir: str | None = None,
+        agent_type: str = "coder",
+    ):
+        import os as _os
+
+        self.model = model
+        self.system_prompt = system_prompt
+        self.max_turns = max_turns
+        self._project_dir = project_dir
+        self._agent_type = agent_type
+        self._api_key: str = _os.environ.get("OPENAI_API_KEY", "")
+        self._api_base = "https://api.openai.com/v1/chat/completions"
+        self._pending_query: str | None = None
+        self._http_client: Any = None
+        self._tool_executor: Any = None
+        self._tool_definitions: list[dict[str, Any]] = []
+
+    def _get_http_client(self):
+        """Lazy-init an aiohttp ClientSession."""
+        if self._http_client is None:
+            try:
+                import aiohttp
+
+                self._http_client = aiohttp.ClientSession(
+                    headers={
+                        "Content-Type": CONTENT_TYPE_JSON,
+                        "Accept": CONTENT_TYPE_JSON,
+                    }
+                )
+            except ImportError:
+                raise ImportError(
+                    "aiohttp is required for OpenAIAgentClient. "
+                    "Install it with: pip install aiohttp"
+                )
+        return self._http_client
+
+    async def __aenter__(self):
+        if self._project_dir:
+            try:
+                from core.runtimes.tool_executor import ToolExecutor, get_tool_definitions
+
+                self._tool_executor = ToolExecutor(self._project_dir)
+                self._tool_definitions = get_tool_definitions(self._agent_type)
+                logger.info(
+                    f"[OpenAIAgentClient] Tool execution enabled: "
+                    f"{len(self._tool_definitions)} tools for agent_type={self._agent_type}"
+                )
+            except Exception as e:
+                logger.warning(f"[OpenAIAgentClient] Tool executor init failed (text-only mode): {e}")
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self._http_client is not None:
+            await self._http_client.close()
+            self._http_client = None
+
+    async def query(self, prompt: str) -> None:
+        """Queue a prompt for the next receive_response() call."""
+        self._pending_query = prompt
+
+    async def receive_response(self) -> AsyncIterator[AgentMessage]:
+        """Execute the queued prompt against the OpenAI API (/v1/chat/completions).
+
+        Requires a valid OpenAI API key (sk-...) from https://platform.openai.com/api-keys.
+        Implements a full multi-turn tool-use loop.
+        """
+        import json as _json
+
+        if not self._pending_query:
+            return
+
+        if not self._api_key:
+            yield AgentMessage(
+                role=MessageRole.SYSTEM,
+                content=[ContentBlock(type=ContentBlockType.TEXT, text="OpenAI auth error: OPENAI_API_KEY not set.")],
+            )
+            return
+
+        prompt = self._pending_query
+        self._pending_query = None
+
+        messages: list[dict[str, Any]] = []
+        if self.system_prompt:
+            messages.append({"role": "system", "content": self.system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": td["name"],
+                    "description": td.get("description", ""),
+                    "parameters": td.get("parameters", {"type": "object", "properties": {}}),
+                },
+            }
+            for td in self._tool_definitions
+        ]
+
+        request_headers = {
+            "Authorization": f"Bearer {self._api_key}",
+        }
+
+        logger.info(
+            f"[OpenAIAgentClient] Starting session (model={self.model}, "
+            f"tools={len(tools)}, prompt_len={len(prompt)})"
+        )
+        print(
+            f"[OpenAIAgentClient] 🤖 Starting OpenAI session "
+            f"(model={self.model}, {len(tools)} tools)",
+            flush=True,
+        )
+
+        session = self._get_http_client()
+
+        for turn in range(self.max_turns):
+            payload: dict[str, Any] = {
+                "model": self.model,
+                "messages": messages,
+                "stream": False,
+            }
+            if tools:
+                payload["tools"] = tools
+                payload["tool_choice"] = "auto"
+
+            logger.info(
+                f"[OpenAIAgentClient] Turn {turn + 1}/{self.max_turns}: "
+                f"sending {len(messages)} messages..."
+            )
+
+            try:
+                async with session.post(self._api_base, json=payload, headers=request_headers) as resp:
+                    if resp.status != 200:
+                        error_text = await resp.text()
+                        logger.error(f"[OpenAIAgentClient] API error ({resp.status}): {error_text[:500]}")
+                        yield AgentMessage(
+                            role=MessageRole.SYSTEM,
+                            content=[
+                                ContentBlock(
+                                    type=ContentBlockType.TEXT,
+                                    text=f"OpenAI API error ({resp.status}): {error_text}",
+                                )
+                            ],
+                        )
+                        return
+                    data = await resp.json()
+            except Exception as e:
+                logger.error(f"[OpenAIAgentClient] Request failed: {e}")
+                yield AgentMessage(
+                    role=MessageRole.SYSTEM,
+                    content=[ContentBlock(type=ContentBlockType.TEXT, text=f"OpenAI API error: {e}")],
+                )
+                return
+
+            choices = data.get("choices", [])
+            if not choices:
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[ContentBlock(type=ContentBlockType.TEXT, text="(Empty response from OpenAI)")],
+                )
+                return
+
+            message = choices[0].get("message", {})
+            content = message.get("content") or ""
+            tool_calls = message.get("tool_calls", [])
+            finish_reason = choices[0].get("finish_reason", "")
+
+            logger.info(
+                f"[OpenAIAgentClient] Turn {turn + 1}: "
+                f"content_len={len(content)}, tool_calls={len(tool_calls)}, "
+                f"finish_reason={finish_reason}"
+            )
+
+            if content:
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[ContentBlock(type=ContentBlockType.TEXT, text=content)],
+                )
+
+            if not tool_calls:
+                if not content:
+                    yield AgentMessage(
+                        role=MessageRole.ASSISTANT,
+                        content=[ContentBlock(type=ContentBlockType.TEXT, text="(No response from OpenAI)")],
+                    )
+                logger.info(f"[OpenAIAgentClient] Session complete after {turn + 1} turn(s)")
+                return
+
+            assistant_msg: dict[str, Any] = {"role": "assistant"}
+            if content:
+                assistant_msg["content"] = content
+            assistant_msg["tool_calls"] = tool_calls
+            messages.append(assistant_msg)
+
+            for tc in tool_calls:
+                func = tc.get("function", {})
+                tool_name = func.get("name", "")
+                tool_id = tc.get("id", f"call_{turn}_{tool_name}")
+
+                try:
+                    args = _json.loads(func.get("arguments", "{}"))
+                except (_json.JSONDecodeError, TypeError):
+                    args = {}
+
+                logger.info(
+                    f"[OpenAIAgentClient] Turn {turn + 1}: tool_call {tool_name}({list(args.keys())})"
+                )
+                print(f"[OpenAIAgentClient] 🔧 Tool: {tool_name}", flush=True)
+
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TOOL_USE,
+                            tool_name=tool_name,
+                            tool_id=tool_id,
+                            tool_input=args,
+                        )
+                    ],
+                )
+
+                result_text = ""
+                is_error = False
+                if self._tool_executor:
+                    try:
+                        result = await self._tool_executor.execute(tool_name, args)
+                        result_text = str(result) if result is not None else ""
+                    except Exception as e:
+                        result_text = f"Tool error: {e}"
+                        is_error = True
+                        logger.warning(f"[OpenAIAgentClient] Tool {tool_name} failed: {e}")
+                else:
+                    result_text = "Tool executor not available"
+                    is_error = True
+
+                yield AgentMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TOOL_RESULT,
+                            tool_use_id=tool_id,
+                            is_error=is_error,
+                            result_content=result_text,
+                        )
+                    ],
+                )
+
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_id,
+                    "content": result_text[:10000],
+                })
+
+        logger.warning(
+            f"[OpenAIAgentClient] Reached max_turns ({self.max_turns}) — stopping tool loop"
+        )
+        print(f"[OpenAIAgentClient] ⚠️ Reached max turns ({self.max_turns})", flush=True)
+
+    def provider_name(self) -> str:
+        return "openai"
+
+    def supports_subagents(self) -> bool:
+        return False
+
+    async def run_subagents(
+        self,
+        agents: dict[str, SubagentDefinition],
+        context_prompt: str,
+    ) -> dict[str, str]:
+        """Not implemented for OpenAI client; returns empty dict."""
+        return {}
+
+
+# =============================================================================
 # Windsurf Agent Client — dual-mode (gRPC proxy + REST fallback)
 # =============================================================================
 
