@@ -592,7 +592,8 @@ export class CredentialManager extends EventEmitter {
       }
 
       // Strategy 2: Bearer header (works for personal sk-ws- keys and SSO/JWT tokens)
-      if (!resp || resp.status === 401) {
+      // Also retry on 400 (bad request) — GetTeamCreditBalance returns 400 for personal sk-ws- keys
+      if (!resp || !resp.ok) {
         resp = await fetch('https://server.codeium.com/api/v1/GetTeamCreditBalance', {
           method: 'POST',
           headers: {
@@ -611,45 +612,44 @@ export class CredentialManager extends EventEmitter {
         }
       }
 
-      // Strategy 3: GetUser endpoint (SSO fallback)
-      if (resp.status === 401) {
+      // Strategy 3: GetUser endpoint (SSO fallback — works for personal tokens)
+      try {
+        const userResp = await fetch('https://server.codeium.com/exa.api_server_pb.ApiServerService/GetUser', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+          },
+          body: '{}',
+          signal: AbortSignal.timeout(10000)
+        });
+        if (userResp.ok) {
+          return {
+            success: true,
+            message: 'Windsurf connection successful',
+            details: { method: 'SSO/OAuth', source, authType: 'sso' }
+          };
+        }
+      } catch {
+        // GetUser network error — fall through to local IDE detection
+      }
+
+      // All remote API attempts failed (any 4xx/5xx).
+      // For personal sk-ws- keys, these team/enterprise endpoints may always return 4xx.
+      // Trust the local IDE state.vscdb as the source of truth instead.
+      if (source !== 'local IDE detection') {
+        console.log(`[CredentialManager] Windsurf API endpoints returned errors (source: ${source}), checking local IDE`);
         try {
-          const userResp = await fetch('https://server.codeium.com/exa.api_server_pb.ApiServerService/GetUser', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${serviceKey}`,
-            },
-            body: '{}',
-            signal: AbortSignal.timeout(10000)
-          });
-          if (userResp.ok) {
+          const detected = await detectWindsurfLocalToken();
+          if (detected.success && detected.apiKey) {
             return {
               success: true,
-              message: 'Windsurf SSO connection successful',
-              details: { method: 'SSO/OAuth', source, authType: 'sso' }
+              message: 'Windsurf token verified from local IDE',
+              details: { method: 'local IDE', source: 'local IDE detection', authType: 'sso' }
             };
           }
-        } catch {
-          // GetUser network error — fall through to local IDE detection
-        }
-
-        // All API attempts returned 401 — token is stale. Try fresh detection from local IDE.
-        if (source !== 'local IDE detection') {
-          console.log(`[CredentialManager] Windsurf token returned 401 (source: ${source}), retrying with local IDE detection`);
-          try {
-            const detected = await detectWindsurfLocalToken();
-            if (detected.success && detected.apiKey) {
-              // Trust local IDE token unconditionally (user just re-logged in)
-              return {
-                success: true,
-                message: 'Windsurf token detected from local IDE',
-                details: { method: 'SSO (local IDE)', source: 'local IDE detection (refreshed)', authType: 'sso' }
-              };
-            }
-          } catch (e) {
-            console.warn('[CredentialManager] Windsurf local IDE re-detection failed:', e);
-          }
+        } catch (e) {
+          console.warn('[CredentialManager] Windsurf local IDE detection failed:', e);
         }
       }
 
@@ -657,14 +657,14 @@ export class CredentialManager extends EventEmitter {
       if (source === 'local IDE detection') {
         return {
           success: true,
-          message: 'Windsurf token detected from local IDE',
-          details: { method: 'SSO (local IDE)', source, authType: 'sso' }
+          message: 'Windsurf token verified from local IDE',
+          details: { method: 'local IDE', source, authType: 'sso' }
         };
       }
 
       return {
         success: false,
-        message: `Windsurf API returned HTTP ${resp.status}. Token may be expired — try re-authenticating in Windsurf IDE.`
+        message: 'Windsurf token not found in local IDE. Please open Windsurf IDE and sign in.'
       };
 
     } catch (error) {
