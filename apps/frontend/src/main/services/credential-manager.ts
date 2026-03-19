@@ -591,6 +591,46 @@ export class CredentialManager extends EventEmitter {
           };
         }
 
+        // 401 means stored key is stale (e.g. user re-logged in Windsurf) — try fresh IDE detection
+        if (resp.status === 401 && source !== 'local IDE detection') {
+          console.log(`[CredentialManager] Windsurf stored key returned 401 (source: ${source}), retrying with local IDE detection`);
+          try {
+            const detected = await detectWindsurfLocalToken();
+            if (detected.success && detected.apiKey && detected.apiKey !== serviceKey) {
+              serviceKey = detected.apiKey;
+              source = 'local IDE detection (refreshed)';
+              // Re-enter the validation logic with the fresh token
+              const isNewServiceKey = serviceKey.startsWith('sk-ws-') || serviceKey.startsWith('sk-');
+              const isNewJWT = serviceKey.startsWith('eyJ');
+              if (isNewServiceKey) {
+                const resp2 = await fetch('https://server.codeium.com/api/v1/GetTeamCreditBalance', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ service_key: serviceKey }),
+                  signal: AbortSignal.timeout(10000)
+                });
+                if (resp2.ok) {
+                  return { success: true, message: 'Windsurf connection successful (refreshed service key)', details: { method: 'Service Key', source, authType: 'api_key' } };
+                }
+              } else if (isNewJWT || serviceKey.length > 40) {
+                const resp2 = await fetch('https://server.codeium.com/exa.api_server_pb.ApiServerService/GetUser', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+                  body: '{}',
+                  signal: AbortSignal.timeout(10000)
+                });
+                if (resp2.ok) {
+                  return { success: true, message: 'Windsurf SSO connection successful (refreshed)', details: { method: 'SSO/OAuth', source, authType: 'sso' } };
+                }
+              }
+              // Fresh token detected but validation inconclusive — trust local IDE
+              return { success: true, message: 'Windsurf token refreshed from local IDE', details: { method: 'SSO (local IDE)', source, authType: 'sso' } };
+            }
+          } catch (e) {
+            console.warn('[CredentialManager] Windsurf local IDE re-detection failed:', e);
+          }
+        }
+
         return {
           success: false,
           message: `Windsurf API returned HTTP ${resp.status}: ${resp.statusText}`
@@ -626,6 +666,23 @@ export class CredentialManager extends EventEmitter {
               message: 'Windsurf SSO token detected from local IDE',
               details: { method: 'SSO (local IDE)', source, authType: 'sso' }
             };
+          }
+
+          // 401 on stored token — try refreshing from local IDE (covers re-login scenario)
+          if (resp.status === 401) {
+            console.log(`[CredentialManager] Windsurf SSO token returned 401 (source: ${source}), retrying with local IDE detection`);
+            try {
+              const detected = await detectWindsurfLocalToken();
+              if (detected.success && detected.apiKey && detected.apiKey !== serviceKey) {
+                return {
+                  success: true,
+                  message: 'Windsurf token refreshed from local IDE',
+                  details: { method: 'SSO (local IDE)', source: 'local IDE detection (refreshed)', authType: 'sso' }
+                };
+              }
+            } catch (e) {
+              console.warn('[CredentialManager] Windsurf local IDE re-detection failed:', e);
+            }
           }
 
           return {

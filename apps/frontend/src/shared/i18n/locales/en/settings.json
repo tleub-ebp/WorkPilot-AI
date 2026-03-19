@@ -846,7 +846,8 @@
       "buttons": {
         "refresh": "Refresh",
         "addProvider": "Add Provider"
-      }
+      },
+      "loadingProviders": "Loading providers..."
     },
     "tabs": {
       "aiProvider": "AI Authentication",

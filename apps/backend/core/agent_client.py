@@ -1422,13 +1422,48 @@ class WindsurfAgentClient(AgentClient):
                     "Please start Windsurf IDE to use your Windsurf credits."
                 )
         elif self._api_key:
-            # Non-IDE key (SSO/enterprise/API token): use REST mode
-            self._use_local_grpc = False
-            logger.info(
-                f"[WindsurfAgent] Mode 2 (REST): API to {self._rest_base_url} "
-                f"(model={self.model}, "
-                f"key_prefix={self._api_key[:8]}...)"
-            )
+            # Non-IDE key (SSO/enterprise/OAuth token).
+            # Windsurf has no public REST chat completions endpoint — all known
+            # remote URLs (windsurf.com/api/v1, api.codeium.com/v1,
+            # server.codeium.com/api/v1) return 404 for /chat/completions.
+            # If the local Windsurf IDE is running, prefer gRPC (Connect protocol)
+            # through the local language server, which works with any credential type.
+            if is_windsurf_running():
+                try:
+                    self._credentials = discover_credentials()
+                    self._use_local_grpc = True
+                    logger.info(
+                        f"[WindsurfAgent] Mode 1 (gRPC): SSO/OAuth token + IDE running → "
+                        f"routing through local language server at localhost:{self._credentials.port} "
+                        f"(model={self.model})"
+                    )
+                    print(
+                        f"[WindsurfAgent] Using Windsurf IDE gRPC (SSO token, IDE running)",
+                        flush=True,
+                    )
+                except Exception as e:
+                    # gRPC discovery failed — fall back to REST with a warning
+                    logger.warning(
+                        f"[WindsurfAgent] gRPC discovery failed ({e}), falling back to REST"
+                    )
+                    self._use_local_grpc = False
+                    logger.info(
+                        f"[WindsurfAgent] Mode 2 (REST): {self._rest_base_url} "
+                        f"(model={self.model}, key_prefix={self._api_key[:8]}...)"
+                    )
+            else:
+                # No IDE running — try REST (may not work if no enterprise endpoint configured)
+                self._use_local_grpc = False
+                logger.warning(
+                    "[WindsurfAgent] Mode 2 (REST): Windsurf IDE not running. "
+                    "REST chat endpoints may return 404. "
+                    "Start Windsurf IDE or set WINDSURF_BASE_URL to a valid enterprise endpoint."
+                )
+                print(
+                    "[WindsurfAgent] ⚠️ Windsurf IDE not running — REST mode may fail. "
+                    "Start Windsurf IDE for reliable operation.",
+                    flush=True,
+                )
         elif is_windsurf_running():
             # No key in env but IDE running: gRPC mode
             try:

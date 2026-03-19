@@ -740,7 +740,7 @@ export function CleanProviderSection({
       >
         <div className="flex flex-col items-center justify-center py-16 space-y-4">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-          <span className="text-sm text-gray-600">AAChargement des providers...</span>
+          <span className="text-sm text-gray-600">{t('accounts.multiConnector.loadingProviders')}</span>
         </div>
       </SettingsSection>
     );
