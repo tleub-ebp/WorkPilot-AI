@@ -163,7 +163,8 @@ export function setupAppEmulatorListeners(): () => void {
     });
     const unsubStopped = (globalThis as any).electronAPI.onAppEmulatorStopped(() => {
       const currentPhase = store().phase;
-      if (currentPhase !== 'error') {
+      // Ignore stale stop events from the previous run during a retry (detecting/starting)
+      if (currentPhase !== 'error' && currentPhase !== 'detecting' && currentPhase !== 'starting') {
         store().setPhase('stopped');
         store().setStatus('Server stopped');
       }

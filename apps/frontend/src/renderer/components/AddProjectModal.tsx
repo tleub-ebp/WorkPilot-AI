@@ -17,7 +17,7 @@ import { AzureDevOpsRemoteConfigModal } from './AzureDevOpsRemoteConfigModal';
 import { GitHubRemoteConfigModal } from './GitHubRemoteConfigModal';
 import { GitSetupModal } from './GitSetupModal';
 import { Radio } from 'lucide-react';
-import { GithubIcon } from '@/lib/icons';
+import { Github } from '@/lib/icons';
 
 // Types explicites pour les props et états
 interface AddProjectModalProps {

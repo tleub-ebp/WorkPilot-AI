@@ -20,7 +20,6 @@ import {
   ExternalLink,
   ScanSearch,
   Play,
-  Square,
   Shield,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
@@ -38,8 +37,6 @@ import {
 } from '../../stores/api-explorer-store';
 import {
   useAppEmulatorStore,
-  stopAppEmulator,
-  startAppEmulator,
   setupAppEmulatorListeners,
   openAppEmulatorDialog,
 } from '../../stores/app-emulator-store';
@@ -204,9 +201,9 @@ function prettifyXml(value: string): string {
 function escapeHtml(s: string): string {
   return s
     .replaceAll('&', '&amp;')
-    .replaceAll('&', '&lt;')
-    .replaceAll('&', '&gt;')
-    .replaceAll('&', '&quot;');
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
 }
 
 // Returns an HTML string with syntax-highlighted JSON
@@ -1913,10 +1910,18 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                               : 'text';
 
                       if (effectiveLang === 'xml' || effectiveLang === 'html') {
+                        const isXmlLike = responseBody.trimStart().startsWith('<');
                         return (
-                          <pre className="text-xs font-mono text-[var(--color-text-primary)] whitespace-pre-wrap break-all">
-                            {prettifyXml(responseBody)}
-                          </pre>
+                          <>
+                            {!isXmlLike && responseLanguage !== 'auto' && (
+                              <p className="mb-2 text-[11px] text-amber-400">
+                                {t('apiExplorer:response.format.mismatch', { format: effectiveLang.toUpperCase() })}
+                              </p>
+                            )}
+                            <pre className="text-xs font-mono text-[var(--color-text-primary)] whitespace-pre-wrap break-all">
+                              {isXmlLike ? prettifyXml(responseBody) : responseBody}
+                            </pre>
+                          </>
                         );
                       }
                       if (effectiveLang === 'text') {
@@ -1926,12 +1931,22 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                           </pre>
                         );
                       }
+                      // JSON
+                      let isValidJson = true;
+                      try { JSON.parse(responseBody); } catch { isValidJson = false; }
                       return (
-                        <pre
-                          className="text-xs font-mono whitespace-pre-wrap break-all"
-                          // biome-ignore lint/security/noDangerouslySetInnerHtml: content is HTML-escaped before highlighting
-                          dangerouslySetInnerHTML={{ __html: syntaxHighlightJson(responseBody) }}
-                        />
+                        <>
+                          {!isValidJson && responseLanguage !== 'auto' && (
+                            <p className="mb-2 text-[11px] text-amber-400">
+                              {t('apiExplorer:response.format.mismatch', { format: 'JSON' })}
+                            </p>
+                          )}
+                          <pre
+                            className="text-xs font-mono whitespace-pre-wrap break-all"
+                            // biome-ignore lint/security/noDangerouslySetInnerHtml: content is HTML-escaped before highlighting
+                            dangerouslySetInnerHTML={{ __html: isValidJson ? syntaxHighlightJson(responseBody) : escapeHtml(responseBody) }}
+                          />
+                        </>
                       );
                     })()
                   )}
@@ -1970,13 +1985,15 @@ function LangDropdown({ value, onChange, t, active = true, onActivate }: LangDro
   const [open, setOpen] = useState(false);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     function handler(e: MouseEvent) {
-      if (btnRef.current && !btnRef.current.closest('[data-lang-dropdown]')?.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const target = e.target as Node;
+      if (btnRef.current?.closest('[data-lang-dropdown]')?.contains(target)) return;
+      if (portalRef.current?.contains(target)) return;
+      setOpen(false);
     }
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -2008,6 +2025,7 @@ function LangDropdown({ value, onChange, t, active = true, onActivate }: LangDro
       </button>
       {open && createPortal(
         <div
+          ref={portalRef}
           data-lang-dropdown=""
           className="fixed min-w-[80px] border border-[var(--color-border)] rounded-md shadow-2xl overflow-hidden"
           style={{ top: dropdownPos.top, left: dropdownPos.left, zIndex: 2147483647, backgroundColor: 'var(--card, var(--color-bg-secondary))', isolation: 'isolate' }}
@@ -2347,24 +2365,9 @@ export function ApiExplorer() {
   const emulatorStatus = useAppEmulatorStore((s) => s.status);
   const updateEnvironment = useApiExplorerStore((s) => s.updateEnvironment);
 
-  // Project path for auto-launch
-  const projects = useProjectStore((s) => s.projects);
-  const activeProjectId = useProjectStore((s) => s.activeProjectId);
-  const selectedProjectId = useProjectStore((s) => s.selectedProjectId);
-  const activeProject = projects.find((p) => p.id === (activeProjectId ?? selectedProjectId));
-
   // Set up IPC listeners for emulator events
   useEffect(() => {
     return setupAppEmulatorListeners();
-  }, []);
-
-  // Auto-launch the project server when the API Studio page opens
-  useEffect(() => {
-    if (activeProject?.path && (emulatorPhase === 'idle' || emulatorPhase === 'stopped')) {
-      startAppEmulator(activeProject.path);
-    }
-    // Only on mount — we intentionally ignore emulatorPhase/activeProject changes here
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // When emulator becomes running, auto-sync active environment base URL
@@ -2379,12 +2382,8 @@ export function ApiExplorer() {
   }, [emulatorPhase, emulatorUrl, activeEnv, updateEnvironment]);
 
   function handleEmulatorToggle() {
-    if (emulatorPhase === 'running') {
-      void stopAppEmulator();
-    } else {
-      // Open the AppEmulatorDialog — it handles detection, start, terminal output, iframe
-      openAppEmulatorDialog();
-    }
+    // Always open the dialog — stop is handled inside the dialog
+    openAppEmulatorDialog();
   }
 
   // Load spec from a remote OpenAPI URL (via main process proxy to bypass CSP)
@@ -2502,8 +2501,7 @@ export function ApiExplorer() {
             title={emulatorBtnTitle}
           >
             {isEmulatorBusy && <Loader2 size={13} className="animate-spin" />}
-            {!isEmulatorBusy && isEmulatorRunning && <Square size={13} className="fill-current" />}
-            {!isEmulatorBusy && !isEmulatorRunning && <Play size={13} />}
+            {!isEmulatorBusy && <Play size={13} />}
             <span className="text-[11px]">{emulatorBtnLabel}</span>
             {isEmulatorRunning && (
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
@@ -2516,7 +2514,10 @@ export function ApiExplorer() {
           <CustomSelect
             value={activeEnvironmentId}
             onChange={setActiveEnvironment}
-            options={environments.map((env) => ({ value: env.id, label: env.name }))}
+            options={[
+              { value: '', label: t('apiExplorer:environments.placeholder') },
+              ...environments.map((env) => ({ value: env.id, label: env.name })),
+            ]}
             className="max-w-36 text-xs"
           />
           <button

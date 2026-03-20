@@ -33,6 +33,14 @@
     "command": "Commande",
     "url": "URL"
   },
+  "tabs": {
+    "preview": "Aperçu"
+  },
+  "steps": {
+    "detect": "Détection",
+    "start": "Démarrage",
+    "waitingOutput": "En attente de la sortie du serveur..."
+  },
   "output": {
     "title": "Sortie du serveur",
     "noOutput": "Aucune sortie pour le moment"
