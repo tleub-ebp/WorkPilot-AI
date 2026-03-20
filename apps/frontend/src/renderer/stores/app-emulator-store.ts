@@ -40,15 +40,21 @@ export const useAppEmulatorStore = create<AppEmulatorState>((set) => ({
   ...initialState,
 
   openDialog: (taskId?: string) =>
-    set({
-      isOpen: true,
-      phase: 'idle',
-      config: null,
-      url: null,
-      output: '',
-      error: null,
-      status: '',
-      taskId: taskId ?? null,
+    set((state) => {
+      // If already in progress or running, just show the dialog without resetting state
+      if (state.phase === 'detecting' || state.phase === 'starting' || state.phase === 'running') {
+        return { isOpen: true };
+      }
+      return {
+        isOpen: true,
+        phase: 'idle',
+        config: null,
+        url: null,
+        output: '',
+        error: null,
+        status: '',
+        taskId: taskId ?? null,
+      };
     }),
 
   closeDialog: () => {
@@ -78,6 +84,13 @@ export const useAppEmulatorStore = create<AppEmulatorState>((set) => ({
  */
 export async function startAppEmulator(projectDir: string): Promise<void> {
   const store = useAppEmulatorStore.getState();
+
+  // Guard against concurrent starts — only one detection/start at a time
+  const currentPhase = store.phase;
+  if (currentPhase === 'detecting' || currentPhase === 'starting' || currentPhase === 'running') {
+    return;
+  }
+
   store.setPhase('detecting');
   store.setStatus('Detecting project type...');
 
@@ -96,7 +109,11 @@ export async function startAppEmulator(projectDir: string): Promise<void> {
 
     const startResult = await (globalThis as any).electronAPI.startAppEmulator(config);
     if (!startResult.success) {
-      store.setError(startResult.error || 'Failed to start server');
+      // "Already starting" means a concurrent call is in progress — silently ignore,
+      // the real start will emit events (onReady / onError / onStopped) directly.
+      if (startResult.error !== 'Already starting — ignoring duplicate request') {
+        store.setError(startResult.error || 'Failed to start server');
+      }
     }
   } catch (err: any) {
     store.setError(err.message || 'An unexpected error occurred');

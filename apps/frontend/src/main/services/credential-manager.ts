@@ -933,7 +933,7 @@ export class CredentialManager extends EventEmitter {
 
   private async checkOpenAICodexOAuthStatus(): Promise<{ isAuthenticated: boolean; profileName?: string }> {
     try {
-      console.log('[CredentialManager] Checking OpenAI Codex OAuth status...');
+      console.debug('[CredentialManager] Checking OpenAI Codex OAuth status...');
       const fs = require('node:fs').promises;
       const path = require('node:path');
       const os = require('node:os');
@@ -952,11 +952,11 @@ export class CredentialManager extends EventEmitter {
         path.join(os.homedir(), '.openai', 'auth.json'),
       ].filter(Boolean) as string[];
 
-      console.log('[CredentialManager] Checking Codex config paths:', candidatePaths);
+      console.debug('[CredentialManager] Checking Codex config paths:', candidatePaths);
 
       for (const configPath of candidatePaths) {
         try {
-          console.log(`[CredentialManager] Checking config path: ${configPath}`);
+          console.debug(`[CredentialManager] Checking config path: ${configPath}`);
           const authData = await fs.readFile(configPath, 'utf-8');
           const auth = JSON.parse(authData);
 
@@ -968,7 +968,7 @@ export class CredentialManager extends EventEmitter {
           const hasApiKey = !!(auth.OPENAI_API_KEY?.trim() || auth.api_key?.trim());
           const hasAnyAuth = hasAccessToken || hasRefreshToken || hasApiKey;
 
-          console.log(`[CredentialManager] Found auth data at ${configPath}:`, {
+          console.debug(`[CredentialManager] Found auth data at ${configPath}:`, {
             authMode: auth.auth_mode,
             hasAccessToken,
             hasRefreshToken,
@@ -998,14 +998,14 @@ export class CredentialManager extends EventEmitter {
               // JWT decode failed, use fallback name
             }
 
-            console.log(`[CredentialManager] Codex CLI authentication found: ${profileName}`);
+            console.debug(`[CredentialManager] Codex CLI authentication found: ${profileName}`);
             return {
               isAuthenticated: true,
               profileName
             };
           }
         } catch (error) {
-          console.log(`[CredentialManager] No auth data at ${configPath}:`, error instanceof Error ? error.message : 'Unknown error');
+          console.debug(`[CredentialManager] No auth data at ${configPath}:`, error instanceof Error ? error.message : 'Unknown error');
           // This path doesn't exist, try next
         }
       }

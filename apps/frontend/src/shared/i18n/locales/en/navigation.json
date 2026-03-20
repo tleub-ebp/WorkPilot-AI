@@ -57,7 +57,7 @@
     "pipelineGenerator": "Pipeline Generator",
     "pluginMarketplace": "Plugin Marketplace",
     "arenaMode": "Arena Mode",
-    "apiExplorer": "API Explorer"
+    "apiExplorer": "API Studio"
   },
   "actions": {
     "settings": "Settings",

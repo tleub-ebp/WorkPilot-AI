@@ -546,6 +546,43 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
 
     return {"success": False, "error": f"Provider '{provider}' non supporté pour le test"}
 
+@app.get("/providers/models/{provider}")
+def get_provider_models(provider: str):
+    """Returns a list of known models for the given provider."""
+    PROVIDER_MODELS: dict[str, list[str]] = {
+        "anthropic": [
+            "claude-opus-4-5", "claude-sonnet-4-5", "claude-haiku-4-5",
+            "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229",
+        ],
+        "claude": [
+            "claude-opus-4-5", "claude-sonnet-4-5", "claude-haiku-4-5",
+            "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022",
+        ],
+        "openai": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"],
+        "google": ["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"],
+        "mistral": ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest", "open-mistral-7b"],
+        "meta": ["llama-3.3-70b-instruct", "llama-3.1-8b-instruct"],
+        "deepseek": ["deepseek-chat", "deepseek-reasoner"],
+        "aws": ["anthropic.claude-3-5-sonnet-20241022-v2:0", "amazon.titan-text-premier-v1:0"],
+        "ollama": [],
+    }
+
+    models = PROVIDER_MODELS.get(provider, [])
+
+    # For Ollama, try to fetch available models from local instance
+    if provider == "ollama":
+        try:
+            import httpx
+            resp = httpx.get("http://localhost:11434/api/tags", timeout=3)
+            if resp.status_code == 200:
+                data = resp.json()
+                models = [m["name"] for m in data.get("models", [])]
+        except Exception:
+            models = []
+
+    return {"models": models, "provider": provider}
+
+
 @app.get("/providers/capabilities/{provider}")
 def get_provider_capabilities(provider: str):
     provider_cls = get_provider_by_name(provider)

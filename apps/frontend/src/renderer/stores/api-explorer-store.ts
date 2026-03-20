@@ -71,6 +71,8 @@ export interface ApiEnvironment {
   name: string;
   baseUrl: string;
   headers: Record<string, string>;
+  /** Bearer token — auto-injected as Authorization: Bearer <token> if set */
+  token?: string;
   isDefault?: boolean;
 }
 
@@ -79,6 +81,48 @@ export interface ApiEnvironment {
 export function makeEndpointKey(method: string, path: string): string {
   return `${method.toUpperCase()}:${path}`;
 }
+
+// ── Request Auth ─────────────────────────────────────────────────────────────
+
+export type AuthType = 'inherited' | 'none' | 'bearer' | 'basic' | 'apikey' | 'oauth2';
+export type OAuth2GrantType = 'client_credentials' | 'authorization_code' | 'password';
+
+export interface RequestAuth {
+  type: AuthType;
+  bearer: string;
+  username: string;
+  password: string;
+  keyName: string;
+  keyValue: string;
+  keyLocation: 'header' | 'query';
+  // OAuth 2.0
+  oauth2GrantType: OAuth2GrantType;
+  oauth2TokenUrl: string;
+  oauth2AuthUrl: string;
+  oauth2ClientId: string;
+  oauth2ClientSecret: string;
+  oauth2Scope: string;
+  oauth2AccessToken: string;
+  oauth2HeaderPrefix: string;
+}
+
+export const DEFAULT_REQUEST_AUTH: RequestAuth = {
+  type: 'inherited',
+  bearer: '',
+  username: '',
+  password: '',
+  keyName: 'X-API-Key',
+  keyValue: '',
+  keyLocation: 'header',
+  oauth2GrantType: 'client_credentials',
+  oauth2TokenUrl: '',
+  oauth2AuthUrl: '',
+  oauth2ClientId: '',
+  oauth2ClientSecret: '',
+  oauth2Scope: '',
+  oauth2AccessToken: '',
+  oauth2HeaderPrefix: 'Bearer',
+};
 
 // ── Store ────────────────────────────────────────────────────────────────────
 
@@ -115,6 +159,7 @@ interface ApiExplorerState {
   requestQueryParams: Record<string, string>;
   requestHeaders: Record<string, string>;
   requestBody: string;
+  requestAuth: RequestAuth;
 
   // Response state
   responseStatus: number | null;
@@ -148,6 +193,7 @@ interface ApiExplorerState {
   setRequestQueryParams: (params: Record<string, string>) => void;
   setRequestHeaders: (headers: Record<string, string>) => void;
   setRequestBody: (body: string) => void;
+  setRequestAuth: (auth: Partial<RequestAuth>) => void;
   clearRequestState: () => void;
 
   setResponse: (payload: {
@@ -201,6 +247,7 @@ export const useApiExplorerStore = create<ApiExplorerState>()(
       requestQueryParams: {},
       requestHeaders: {},
       requestBody: '',
+      requestAuth: { ...DEFAULT_REQUEST_AUTH },
 
       // Response
       responseStatus: null,
@@ -261,12 +308,15 @@ export const useApiExplorerStore = create<ApiExplorerState>()(
       setRequestQueryParams: (requestQueryParams) => set({ requestQueryParams }),
       setRequestHeaders: (requestHeaders) => set({ requestHeaders }),
       setRequestBody: (requestBody) => set({ requestBody }),
+      setRequestAuth: (auth) =>
+        set((state) => ({ requestAuth: { ...state.requestAuth, ...auth } })),
       clearRequestState: () =>
         set({
           requestPathParams: {},
           requestQueryParams: {},
           requestHeaders: {},
           requestBody: '',
+          requestAuth: { ...DEFAULT_REQUEST_AUTH },
         }),
 
       // Response actions

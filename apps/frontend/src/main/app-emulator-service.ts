@@ -2,6 +2,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import net from 'node:net';
+import http from 'node:http';
 import { EventEmitter } from 'node:events';
 import { app } from 'electron';
 
@@ -35,6 +36,8 @@ export class AppEmulatorService extends EventEmitter {
   private serverUrl: string | null = null;
   private pythonPath = 'python';
   private autoBuildSourcePath: string | null = null;
+  /** Synchronous guard — prevents concurrent startServer calls (race condition on port check) */
+  private startingInProgress = false;
 
   /**
    * Configure paths for Python and auto-claude source.
@@ -125,15 +128,15 @@ export class AppEmulatorService extends EventEmitter {
       try {
         const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
         const scripts = pkg.scripts ?? {};
-        const deps = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
+        const deps = { ...(pkg.dependencies), ...(pkg.devDependencies ?? {}) };
 
         let framework = 'node';
         let type = 'web';
         let port = 3000;
 
-        if ('next' in deps) { framework = 'next'; port = 3000; }
-        else if ('nuxt' in deps || 'nuxt3' in deps) { framework = 'nuxt'; port = 3000; }
-        else if ('react-scripts' in deps) { framework = 'create-react-app'; port = 3000; }
+        if ('next' in deps) { framework = 'next'; }
+        else if ('nuxt' in deps || 'nuxt3' in deps) { framework = 'nuxt'; }
+        else if ('react-scripts' in deps) { framework = 'create-react-app'; }
         else if ('vite' in deps) { framework = 'vite'; port = 5173; }
         else if ('@angular/core' in deps) { framework = 'angular'; port = 4200; }
         else if ('vue' in deps && !('vite' in deps)) { framework = 'vue-cli'; port = 8080; }
@@ -152,6 +155,16 @@ export class AppEmulatorService extends EventEmitter {
         if (!startCommand && Object.keys(scripts).length > 0) {
           const first = Object.keys(scripts)[0];
           startCommand = `${pm} run ${first}`;
+        }
+
+        // If the resolved start command uses SSL (common in ASP.NET Core + Angular templates),
+        // fall back to a plain ng serve to avoid missing certificate errors
+        if (framework === 'angular' && startCommand) {
+          const resolvedScript = scripts['start'] ?? scripts['dev'] ?? '';
+          if (typeof resolvedScript === 'string' && resolvedScript.includes('--ssl')) {
+            console.log('[AppEmulator] Angular start script uses --ssl, falling back to plain ng serve');
+            startCommand = `npx ng serve --port ${port}`;
+          }
         }
 
         return { type, framework, startCommand, port, isWeb: type === 'web' };
@@ -189,7 +202,14 @@ export class AppEmulatorService extends EventEmitter {
         const entry = hasAppPy ? 'app.py' : 'main.py';
         return { type: 'web', framework: 'streamlit', startCommand: `streamlit run ${entry}`, port: 8501, isWeb: true };
       }
-      const entry = hasMainPy ? 'main.py' : (hasAppPy ? 'app.py' : '');
+      let entry: string;
+      if (hasMainPy) {
+        entry = 'main.py';
+      } else if (hasAppPy) {
+        entry = 'app.py';
+      } else {
+        entry = '';
+      }
       if (entry) {
         return { type: 'cli', framework: 'python', startCommand: `python ${entry}`, port: 0, isWeb: false };
       }
@@ -258,20 +278,28 @@ export class AppEmulatorService extends EventEmitter {
             const scripts = pkg.scripts ?? {};
             // Only consider it if it has dev/start scripts (not just a lockfile)
             if (Object.keys(scripts).length > 0) {
-              const deps = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
-
+              // Only create deps object if there are actual dependencies
+              const hasDeps = (pkg.dependencies && Object.keys(pkg.dependencies).length > 0) || 
+                           (pkg.devDependencies && Object.keys(pkg.devDependencies).length > 0);
+              
+              // Declare variables outside the conditional
               let framework = 'node';
               let type = 'web';
               let port = 3000;
 
-              if ('@angular/core' in deps) { framework = 'angular'; port = 4200; }
-              else if ('next' in deps) { framework = 'next'; port = 3000; }
-              else if ('nuxt' in deps || 'nuxt3' in deps) { framework = 'nuxt'; port = 3000; }
-              else if ('react-scripts' in deps) { framework = 'create-react-app'; port = 3000; }
-              else if ('vite' in deps) { framework = 'vite'; port = 5173; }
-              else if ('vue' in deps && !('vite' in deps)) { framework = 'vue-cli'; port = 8080; }
-              else if ('svelte' in deps || '@sveltejs/kit' in deps) { framework = 'svelte'; port = 5173; }
-              else if ('electron' in deps) { framework = 'electron'; type = 'desktop'; port = 0; }
+              // Only proceed with framework detection if there are dependencies
+              if (hasDeps) {
+                const deps = { ...(pkg.dependencies), ...(pkg.devDependencies ?? {}) };
+                if ('@angular/core' in deps) { framework = 'angular'; port = 4200; }
+                else if ('next' in deps) { framework = 'next'; }
+                else if ('nuxt' in deps || 'nuxt3' in deps) { framework = 'nuxt'; }
+                else if ('react-scripts' in deps) { framework = 'create-react-app'; }
+                else if ('vite' in deps) { framework = 'vite'; port = 5173; }
+                else if ('vue' in deps && !('vite' in deps)) { framework = 'vue-cli'; port = 8080; }
+                else if ('svelte' in deps || '@sveltejs/kit' in deps) { framework = 'svelte'; port = 5173; }
+                else if ('electron' in deps) { framework = 'electron'; type = 'desktop'; port = 0; }
+              }
+              // If no dependencies, defaults (node, web, 3000) are already set
 
               const pm = this.detectPackageManager(fullPath);
               let startCommand = '';
@@ -284,6 +312,15 @@ export class AppEmulatorService extends EventEmitter {
               if (!startCommand) {
                 const first = Object.keys(scripts)[0];
                 startCommand = `${pm} run ${first}`;
+              }
+
+              // If the start script uses --ssl (ASP.NET Core + Angular templates), fall back to plain ng serve
+              if (framework === 'angular' && startCommand) {
+                const resolvedScript = scripts['start'] ?? scripts['dev'] ?? '';
+                if (typeof resolvedScript === 'string' && resolvedScript.includes('--ssl')) {
+                  console.log('[AppEmulator] Angular start script uses --ssl, falling back to plain ng serve');
+                  startCommand = `npx ng serve --port ${port}`;
+                }
               }
 
               console.log('[AppEmulator] Found frontend project in subdirectory:', fullPath, 'framework:', framework);
@@ -390,6 +427,14 @@ export class AppEmulatorService extends EventEmitter {
    * Start the dev server with the given config.
    */
   async startServer(config: AppEmulatorConfig): Promise<void> {
+    // Synchronous guard — prevents race condition when two calls arrive before either awaits
+    if (this.startingInProgress) {
+      console.log('[AppEmulator] startServer called while already starting — ignoring');
+      return;
+    }
+    this.startingInProgress = true;
+
+    try {
     // Stop any existing server
     this.stopServer();
 
@@ -399,6 +444,31 @@ export class AppEmulatorService extends EventEmitter {
     if (!config.startCommand) {
       this.emit('error', 'No start command configured');
       return;
+    }
+
+    // Check if something is already running on the configured port
+    if (config.isWeb && config.port > 0) {
+      const portFree = await this.isPortAvailable(config.port);
+      if (!portFree) {
+        // Port is occupied — check if there's a working HTTP server we can reuse
+        const alreadyServing = await this.isHttpReachable(config.port);
+        if (alreadyServing) {
+          console.log(`[AppEmulator] Port ${config.port} already has a running server — reusing it`);
+          this.serverUrl = `http://localhost:${config.port}`;
+          this.emit('status', `Running at ${this.serverUrl}`);
+          this.emit('ready', this.serverUrl);
+          return;
+        }
+
+        // Port occupied but no usable HTTP server — find the next available port directly.
+        // Avoid killing the occupying process (unreliable on Windows with node process trees).
+        const availablePort = await this.findAvailablePort(config.port + 1);
+        this.emit('status', `Port ${config.port} in use — using port ${availablePort} instead`);
+        config.startCommand = this.replacePortInCommand(config.startCommand, config.port, availablePort);
+        config.port = availablePort;
+        this.currentConfig = config;
+        this.emit('config', config);
+      }
     }
 
     this.emit('status', `Starting: ${config.startCommand}`);
@@ -438,6 +508,8 @@ export class AppEmulatorService extends EventEmitter {
     proc.on('close', (code) => {
       this.activeServerProcess = null;
       this.serverUrl = null;
+      // Release startingInProgress so a retry can start immediately
+      this.startingInProgress = false;
       if (code !== null && code !== 0) {
         this.emit('error', `Server exited with code ${code}`);
       }
@@ -447,23 +519,90 @@ export class AppEmulatorService extends EventEmitter {
     proc.on('error', (err) => {
       this.activeServerProcess = null;
       this.serverUrl = null;
+      this.startingInProgress = false;
       this.emit('error', `Failed to start server: ${err.message}`);
     });
 
     // Wait for the port to become available (for web apps)
     if (config.isWeb && config.port > 0) {
       try {
-        await this.waitForPort(config.port, 30000);
+        await this.waitForPort(config.port, 60000);
+      } catch {
+        // Port didn't open in time; bail if the process died
+        if (!this.activeServerProcess || this.activeServerProcess.killed) return;
+      }
+
+      // After TCP is up, wait for the server to actually serve HTTP (e.g. Angular
+      // dev-server binds the port immediately but compiles for 30-60 s before
+      // responding with 2xx).  We poll for up to 90 s; if still not 2xx we emit
+      // 'ready' anyway so the user at least sees the terminal output.
+      await this.waitForHttpSuccess(config.port, 90000);
+
+      if (this.activeServerProcess && !this.activeServerProcess.killed) {
         this.serverUrl = `http://localhost:${config.port}`;
         this.emit('ready', this.serverUrl);
-      } catch {
-        // Server might still be starting, emit what we have
-        if (this.activeServerProcess && !this.activeServerProcess.killed) {
-          this.serverUrl = `http://localhost:${config.port}`;
-          this.emit('ready', this.serverUrl);
-        }
       }
     }
+    } finally {
+      this.startingInProgress = false;
+    }
+  }
+
+  /**
+   * Replace every occurrence of `oldPort` in a start command with `newPort`.
+   * Handles both `--port N` and `PORT=N` forms.
+   */
+  private replacePortInCommand(cmd: string, oldPort: number, newPort: number): string {
+    return cmd.replaceAll(
+      new RegExp(String.raw`(--port\s+)${oldPort}|(\bPORT=)${oldPort}`, 'g'),
+      (_m: string, p1: string, p2: string) => p1 ? `${p1}${newPort}` : `${p2}${newPort}`,
+    );
+  }
+
+  /**
+   * Quick check: is there an HTTP server responding on this port?
+   * Returns true if we get any HTTP response within 1.5 s.
+   */
+  private isHttpReachable(port: number): Promise<boolean> {
+    return new Promise((resolve) => {
+      const req = http.get(
+        { hostname: '127.0.0.1', port, path: '/', timeout: 1500 },
+        (res) => {
+          res.resume();
+          resolve(true);
+        },
+      );
+      req.on('error', () => resolve(false));
+      req.on('timeout', () => { req.destroy(); resolve(false); });
+    });
+  }
+
+  /**
+   * Check if a port is available (not in use).
+   * Uses `createServer().listen()` — more reliable than connect() because it
+   * actually tries to bind the port rather than just probing it.
+   */
+  private isPortAvailable(port: number): Promise<boolean> {
+    return new Promise((resolve) => {
+      const server = net.createServer();
+      server.unref(); // don't keep the event loop alive
+      server.once('error', () => resolve(false)); // EADDRINUSE → in use
+      server.listen(port, '127.0.0.1', () => {
+        server.close(() => resolve(true)); // successfully bound → free
+      });
+    });
+  }
+
+  /**
+   * Find an available port starting from startPort.
+   */
+  private async findAvailablePort(startPort: number): Promise<number> {
+    let port = startPort;
+    while (port < startPort + 20) {
+      if (await this.isPortAvailable(port)) return port;
+      port++;
+    }
+    return startPort; // fallback
   }
 
   /**
@@ -476,6 +615,12 @@ export class AppEmulatorService extends EventEmitter {
       const tryConnect = () => {
         if (Date.now() - startTime > timeout) {
           reject(new Error(`Timeout waiting for port ${port}`));
+          return;
+        }
+
+        // Bail out immediately if the process died
+        if (!this.activeServerProcess || this.activeServerProcess.killed) {
+          resolve();
           return;
         }
 
@@ -505,19 +650,66 @@ export class AppEmulatorService extends EventEmitter {
   }
 
   /**
+   * Poll the server with an HTTP GET until it responds with a 2xx status code
+   * (meaning the app is compiled and actually serving content), or until
+   * `timeout` ms elapses, whichever comes first.
+   */
+  private waitForHttpSuccess(port: number, timeout: number): Promise<void> {
+    return new Promise((resolve) => {
+      const startTime = Date.now();
+
+      const tryGet = () => {
+        // Stop polling if the process died
+        if (!this.activeServerProcess || this.activeServerProcess.killed) {
+          resolve();
+          return;
+        }
+
+        if (Date.now() - startTime > timeout) {
+          // Timed out — emit ready anyway so the user can see what's happening
+          resolve();
+          return;
+        }
+
+        const req = http.get(
+          { hostname: '127.0.0.1', port, path: '/', timeout: 3000 },
+          (res) => {
+            res.resume(); // drain the response body
+            if (res.statusCode !== undefined && res.statusCode < 400) {
+              resolve();
+            } else {
+              // Non-2xx (e.g. still compiling) — retry
+              setTimeout(tryGet, 2000);
+            }
+          },
+        );
+
+        req.on('error', () => setTimeout(tryGet, 1000));
+        req.on('timeout', () => {
+          req.destroy();
+          setTimeout(tryGet, 1000);
+        });
+      };
+
+      tryGet();
+    });
+  }
+
+  /**
    * Stop the dev server.
    */
   stopServer(): void {
     if (!this.activeServerProcess) return;
 
+    const pid = this.activeServerProcess.pid;
     try {
-      // On Windows, use taskkill to kill the entire process tree
-      if (process.platform === 'win32' && this.activeServerProcess.pid) {
-        spawn('taskkill', ['/pid', String(this.activeServerProcess.pid), '/f', '/t'], {
-          stdio: 'ignore',
-        });
+      // On Windows, use taskkill to kill the entire process tree (including node child procs)
+      if (process.platform === 'win32' && pid) {
+        // Kill synchronously via taskkill; fire-and-forget is sufficient since we also
+        // call killPortProcess before the next start to handle any lingering processes.
+        spawn('taskkill', ['/pid', String(pid), '/f', '/t'], { stdio: 'ignore' });
       } else {
-        this.activeServerProcess.kill('SIGTERM');
+        this.activeServerProcess.kill('SIGKILL');
       }
     } catch {
       // Process might already be dead

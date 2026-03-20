@@ -15,18 +15,26 @@ export function registerAppEmulatorHandlers(getMainWindow: () => BrowserWindow |
     }
   });
 
-  // Start dev server
+  // Start dev server — mutex prevents concurrent starts if renderer sends multiple requests
+  let startLock = false;
   ipcMain.handle('app-emulator:start', async (_event, { config }: { config: AppEmulatorConfig }) => {
+    if (startLock) {
+      return { success: false, error: 'Already starting — ignoring duplicate request' };
+    }
+    startLock = true;
     try {
       await appEmulatorService.startServer(config);
       return { success: true };
     } catch (error: unknown) {
       return { success: false, error: error instanceof Error ? error.message : String(error) };
+    } finally {
+      startLock = false;
     }
   });
 
-  // Stop dev server
+  // Stop dev server — also releases startLock so server can be restarted immediately
   ipcMain.handle('app-emulator:stop', async () => {
+    startLock = false;
     appEmulatorService.stopServer();
     return { success: true };
   });
