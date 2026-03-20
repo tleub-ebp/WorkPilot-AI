@@ -8,6 +8,7 @@
   },
   "environments": {
     "title": "Environments",
+    "placeholder": "Environment",
     "manage": "Manage environments",
     "addNew": "Add manually",
     "namePlaceholder": "Environment name",
@@ -129,7 +130,8 @@
         "xml": "XML",
         "html": "HTML",
         "text": "Text"
-      }
+      },
+      "mismatch": "Content cannot be parsed as {{format}}, showing as plain text."
     }
   },
   "empty": {

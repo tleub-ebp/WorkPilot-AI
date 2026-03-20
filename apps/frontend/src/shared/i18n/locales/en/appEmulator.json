@@ -33,6 +33,14 @@
     "command": "Command",
     "url": "URL"
   },
+  "tabs": {
+    "preview": "Preview"
+  },
+  "steps": {
+    "detect": "Detection",
+    "start": "Starting",
+    "waitingOutput": "Waiting for server output..."
+  },
   "output": {
     "title": "Server Output",
     "noOutput": "No output yet"

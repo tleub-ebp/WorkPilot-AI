@@ -1,8 +1,9 @@
 import { spawn, type ChildProcess } from 'node:child_process';
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, readdirSync, statSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import net from 'node:net';
 import http from 'node:http';
+import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import { app } from 'electron';
 
@@ -57,6 +58,10 @@ export class AppEmulatorService extends EventEmitter {
   private startingInProgress = false;
   /** Tracks all service processes for multi-service (fullstack) mode */
   private readonly activeServiceProcesses = new Map<string, ChildProcess>();
+  /** Maps original paths with spaces → junction paths without spaces (Windows only) */
+  private readonly junctionMap = new Map<string, string>();
+  /** Maps @ngtools/webpack index.js path → original file content (for patch rollback) */
+  private readonly angularWebpackPatches = new Map<string, string>();
 
   /**
    * Configure paths for Python and auto-claude source.
@@ -791,7 +796,14 @@ export class AppEmulatorService extends EventEmitter {
       return;
     }
 
-    const projectDir = config.projectDir || process.cwd();
+    const rawDir = config.projectDir || process.cwd();
+    const projectDir = rawDir; // No junction — Angular runs from the real path
+
+    // Patch @ngtools/webpack to fix the %20 encoding bug for paths with spaces.
+    // Must run from real path (not junction) so TypeScript & webpack use the same paths.
+    if (config.framework === 'angular') {
+      await this.patchAngularWebpack(rawDir);
+    }
 
     if (!config.startCommand) {
       this.emit('error', 'No start command configured');
@@ -844,7 +856,11 @@ export class AppEmulatorService extends EventEmitter {
 
     const proc = spawn(cmd, args, {
       cwd: projectDir,
-      env: { ...process.env, BROWSER: 'none', PORT: String(config.port) } as Record<string, string>,
+      env: {
+        ...process.env,
+        BROWSER: 'none',
+        PORT: String(config.port),
+      } as Record<string, string>,
       shell,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -966,9 +982,18 @@ export class AppEmulatorService extends EventEmitter {
       if (skipSpawn.has(svc.label)) continue;
       this.emit('output', `[${svc.label}] Starting: ${svc.startCommand}`);
       const [cmd, ...args] = svc.startCommand.split(' ');
+      // Patch @ngtools/webpack to fix the %20 encoding bug (paths with spaces).
+      // Angular must run from the real path so TypeScript & webpack use the same paths.
+      if (svc.framework === 'angular') {
+        await this.patchAngularWebpack(svc.projectDir);
+      }
       const proc = spawn(cmd, args, {
         cwd: svc.projectDir,
-        env: { ...process.env, BROWSER: 'none', PORT: String(svc.port) } as Record<string, string>,
+        env: {
+          ...process.env,
+          BROWSER: 'none',
+          PORT: String(svc.port),
+        } as Record<string, string>,
         shell,
         stdio: ['ignore', 'pipe', 'pipe'],
       });
@@ -998,9 +1023,17 @@ export class AppEmulatorService extends EventEmitter {
     // Spawn primary service — drives 'ready' and waitForPort checks
     this.emit('status', `Starting: ${primary.startCommand}`);
     const [primaryCmd, ...primaryArgs] = primary.startCommand.split(' ');
+    // Patch @ngtools/webpack for the %20 bug if primary is Angular.
+    if (primary.framework === 'angular') {
+      await this.patchAngularWebpack(primary.projectDir);
+    }
     const primaryProc = spawn(primaryCmd, primaryArgs, {
       cwd: primary.projectDir,
-      env: { ...process.env, BROWSER: 'none', PORT: String(primary.port) } as Record<string, string>,
+      env: {
+        ...process.env,
+        BROWSER: 'none',
+        PORT: String(primary.port),
+      } as Record<string, string>,
       shell,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -1041,10 +1074,21 @@ export class AppEmulatorService extends EventEmitter {
     } catch {
       if (!this.activeServerProcess || this.activeServerProcess.killed) return;
     }
-    await this.waitForHttpSuccess(primary.port, 120000);
+    // For fullstack projects, poll the frontend HTTP (no auth required) rather than
+    // the backend API which may return 401 and pollute the backend logs.
+    const frontendSvc = secondaries.find(s =>
+      ['angular', 'vite', 'next', 'nuxt', 'create-react-app', 'vue-cli', 'svelte'].includes(s.framework)
+    );
+    if (frontendSvc) {
+      await this.waitForHttpSuccess(frontendSvc.port, 120000);
+    } else {
+      await this.waitForHttpSuccess(primary.port, 120000);
+    }
 
     if (this.activeServerProcess && !this.activeServerProcess.killed) {
-      this.serverUrl = `http://localhost:${primary.port}`;
+      this.serverUrl = frontendSvc
+        ? `http://localhost:${frontendSvc.port}`
+        : `http://localhost:${primary.port}`;
       this.emit('ready', this.serverUrl);
     }
   }
@@ -1183,10 +1227,11 @@ export class AppEmulatorService extends EventEmitter {
           { hostname: '127.0.0.1', port, path: '/', timeout: 3000 },
           (res) => {
             res.resume(); // drain the response body
-            if (res.statusCode !== undefined && res.statusCode < 400) {
+            if (res.statusCode !== undefined && res.statusCode < 500) {
+              // Any non-5xx response (including 401/403) means the server is up and reachable
               resolve();
             } else {
-              // Non-2xx (e.g. still compiling) — retry
+              // 5xx or no status — server not ready yet (e.g. still compiling)
               setTimeout(tryGet, 2000);
             }
           },
@@ -1208,6 +1253,40 @@ export class AppEmulatorService extends EventEmitter {
    * Used to release ports held by orphaned processes from previous emulator sessions
    * that were never properly stopped (e.g. after navigating away without closing).
    */
+  /**
+   * On Windows, if `dir` contains spaces, create a persistent junction under
+   * C:\wpemu\<hash> so that tools like Angular CLI (which URL-encodes paths
+   * internally and then fails to resolve them) work correctly.
+   * Returns the junction path on success, or the original path as fallback.
+   */
+  private async ensureNoSpacesPath(dir: string): Promise<string> {
+    if (process.platform !== 'win32' || !dir.includes(' ')) return dir;
+    if (this.junctionMap.has(dir)) return this.junctionMap.get(dir)!;
+
+    const hash = crypto.createHash('md5').update(dir).digest('hex').slice(0, 8);
+    const junctionRoot = 'C:\\wpemu';
+    const junctionPath = path.join(junctionRoot, hash);
+
+    try {
+      mkdirSync(junctionRoot, { recursive: true });
+      await new Promise<void>((resolve) => {
+        const ps = spawn('powershell', [
+          '-NoProfile', '-NonInteractive', '-Command',
+          `if (-not (Test-Path '${junctionPath}')) { New-Item -ItemType Junction -Path '${junctionPath}' -Target '${dir}' | Out-Null }`,
+        ], { stdio: 'ignore' });
+        ps.on('close', () => resolve());
+        ps.on('error', () => resolve());
+        setTimeout(() => resolve(), 5000);
+      });
+
+      this.junctionMap.set(dir, junctionPath);
+      console.log(`[AppEmulator] Junction created: ${junctionPath} → ${dir}`);
+      return junctionPath;
+    } catch {
+      return dir;
+    }
+  }
+
   private killProcessOnPort(port: number): Promise<void> {
     if (process.platform !== 'win32') return Promise.resolve();
     return new Promise<void>((resolve) => {
@@ -1228,30 +1307,6 @@ export class AppEmulatorService extends EventEmitter {
   }
 
   /**
-   * Kill a .NET compiled executable by name (Windows only).
-   * Finds the .csproj in projectDir to derive the exe name, then calls taskkill.
-   * Used to release file locks on the compiled binary before `dotnet run` rebuilds.
-   */
-  private killDotnetExe(projectDir: string): Promise<void> {
-    if (process.platform !== 'win32') return Promise.resolve();
-    let exeName: string | null = null;
-    try {
-      const entries = readdirSync(projectDir);
-      const csproj = entries.find(f => f.endsWith('.csproj'));
-      if (csproj) exeName = csproj.replace(/\.csproj$/i, '.exe');
-    } catch { /* ignore */ }
-    if (!exeName) return Promise.resolve();
-
-    console.log(`[AppEmulator] killDotnetExe: taskkill /f /im ${exeName}`);
-    return new Promise<void>((resolve) => {
-      const proc = spawn('taskkill', ['/f', '/im', exeName!], { stdio: 'ignore' });
-      proc.on('close', () => setTimeout(resolve, 600));
-      proc.on('error', () => resolve());
-      setTimeout(() => { try { proc.kill(); } catch { /* ignore */ } resolve(); }, 3000);
-    });
-  }
-
-  /**
    * Stop the dev server (single-service) or all services (multi-service).
    */
   stopServer(): void {
@@ -1265,6 +1320,18 @@ export class AppEmulatorService extends EventEmitter {
         }
       } catch { /* already dead */ }
     };
+
+    // Capture ports before clearing config — used for fallback port-based kill below
+    const portsToKill: number[] = [];
+    if (this.currentConfig) {
+      if (this.currentConfig.services) {
+        for (const svc of this.currentConfig.services) {
+          if (svc.port > 0) portsToKill.push(svc.port);
+        }
+      } else if (this.currentConfig.port > 0) {
+        portsToKill.push(this.currentConfig.port);
+      }
+    }
 
     // Kill all tracked secondary service processes
     for (const proc of this.activeServiceProcesses.values()) {
@@ -1280,7 +1347,113 @@ export class AppEmulatorService extends EventEmitter {
 
     this.serverUrl = null;
     this.currentConfig = null;
+
+    // Fallback port-based kill: on Windows, dotnet run spawns the actual web server
+    // as a grandchild process that taskkill /t sometimes misses. Kill by port to be sure.
+    for (const port of portsToKill) {
+      this.killProcessOnPort(port).catch(() => {});
+    }
+
+    // Remove any junctions created to work around spaces-in-path issues
+    this.cleanupJunctions();
+    // Restore any @ngtools/webpack patches applied for the spaces-in-path bug
+    this.restoreAngularWebpackPatches();
+
     this.emit('stopped');
+  }
+
+  /**
+   * Remove all junctions created by ensureNoSpacesPath and clear the map.
+   */
+  private cleanupJunctions(): void {
+    for (const junctionPath of this.junctionMap.values()) {
+      spawn('powershell', [
+        '-NoProfile', '-NonInteractive', '-Command',
+        `Remove-Item -Path '${junctionPath}' -Force -ErrorAction SilentlyContinue`,
+      ], { stdio: 'ignore' });
+    }
+    this.junctionMap.clear();
+  }
+
+  /**
+   * Patch @ngtools/webpack/src/ivy/plugin.js to add decodeURIComponent() around
+   * resource paths before they are looked up in the TypeScript compilation.
+   *
+   * Root cause: webpack URL-encodes paths containing spaces, producing module IDs
+   * like "MeCa%20Web/...". The TypeScript compilation registers source files with
+   * the real decoded path ("MeCa Web/..."). On incremental rebuilds the lookup in
+   * `createFileEmitter` calls `normalizePath(file)` where `file` still has `%20`,
+   * so `program.getSourceFile()` returns undefined → "missing from TypeScript
+   * compilation" error.
+   *
+   * Fix: wrap `file` and `resource` in `decodeURIComponent()` before passing to
+   * `normalizePath()`, matching the same fix shipped in Angular CLI 15.1
+   * (angular-cli#24798).
+   *
+   * IMPORTANT: Angular must run from the real project path (no junction symlink),
+   * otherwise TypeScript compiles with junction paths and the lookup still fails.
+   *
+   * No-op if:
+   *  - projectDir has no spaces
+   *  - plugin.js does not exist (Angular CLI not installed)
+   *  - the fix is already present (Angular CLI 15.1+)
+   *  - the expected pattern is not found in this compiled version
+   */
+  private async patchAngularWebpack(projectDir: string): Promise<void> {
+    if (!projectDir.includes(' ')) return;
+
+    const pluginPath = path.join(
+      projectDir, 'node_modules', '@ngtools', 'webpack', 'src', 'ivy', 'plugin.js',
+    );
+    if (!existsSync(pluginPath)) return;
+    if (this.angularWebpackPatches.has(pluginPath)) return; // already patched this session
+
+    try {
+      const original = readFileSync(pluginPath, 'utf-8');
+
+      // Guard: patch already present (Angular CLI 15.1+)
+      if (original.includes('decodeURIComponent(file)') || original.includes('decodeURIComponent(resource)')) return;
+
+      let patched = original;
+
+      // Fix 1: createFileEmitter — decode the resource path before TypeScript program lookup.
+      // normalizePath)(file) → normalizePath)(decodeURIComponent(file))
+      patched = patched.replace(
+        /normalizePath\)\(file\)/g,
+        'normalizePath)(decodeURIComponent(file))',
+      );
+
+      // Fix 2: unused-file detection and rebuild-file detection.
+      // normalizePath)(resource) → normalizePath)(decodeURIComponent(resource))
+      patched = patched.replace(
+        /normalizePath\)\(resource\)/g,
+        'normalizePath)(decodeURIComponent(resource))',
+      );
+
+      if (patched === original) {
+        console.log('[AppEmulator] patchAngularWebpack: pattern not found in plugin.js, skipping');
+        return;
+      }
+
+      writeFileSync(pluginPath, patched, 'utf-8');
+      this.angularWebpackPatches.set(pluginPath, original);
+      console.log(`[AppEmulator] Patched @ngtools/webpack/plugin.js for spaces-in-path fix`);
+    } catch (err) {
+      console.warn('[AppEmulator] Could not patch @ngtools/webpack:', err);
+    }
+  }
+
+  /**
+   * Restore all @ngtools/webpack files that were patched by patchAngularWebpack.
+   */
+  private restoreAngularWebpackPatches(): void {
+    for (const [indexPath, original] of this.angularWebpackPatches) {
+      try {
+        writeFileSync(indexPath, original, 'utf-8');
+        console.log(`[AppEmulator] Restored @ngtools/webpack: ${indexPath}`);
+      } catch { /* ignore — file may have been deleted */ }
+    }
+    this.angularWebpackPatches.clear();
   }
 
   /**
