@@ -13,7 +13,8 @@
     "openInBrowser": "Ouvrir dans le navigateur",
     "retry": "Réessayer",
     "close": "Fermer",
-    "restart": "Redémarrer"
+    "restart": "Redémarrer",
+    "copyLogs": "Copier les logs"
   },
   "status": {
     "detecting": "Analyse de la configuration du projet...",

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Loader2,
@@ -9,6 +9,8 @@ import {
   RotateCcw,
   Server,
   Terminal as TerminalIcon,
+  Copy,
+  Check,
 } from 'lucide-react';
 import {
   Dialog,
@@ -20,7 +22,6 @@ import {
 } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import {
   useAppEmulatorStore,
@@ -40,6 +41,7 @@ export function AppEmulatorDialog() {
   const { t } = useTranslation(['appEmulator', 'common']);
   const outputRef = useRef<HTMLPreElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [copied, setCopied] = useState(false);
 
   const {
     isOpen,
@@ -113,6 +115,15 @@ export function AppEmulatorDialog() {
     closeDialog();
   }, [closeDialog]);
 
+  const handleCopyLogs = useCallback(() => {
+    if (output) {
+      navigator.clipboard.writeText(output).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }, [output]);
+
   if (!isOpen) return null;
 
   const isLoading = phase === 'detecting' || phase === 'starting';
@@ -131,13 +142,30 @@ export function AppEmulatorDialog() {
 
         {/* Project Info Bar */}
         {config && (
-          <div className="flex items-center gap-3 text-sm">
-            <Badge variant="outline" className="gap-1">
-              <Server className="h-3 w-3" />
-              {config.framework}
-            </Badge>
-            {config.port > 0 && (
-              <Badge variant="secondary">{t('appEmulator:projectInfo.port')}: {config.port}</Badge>
+          <div className="flex items-center gap-3 text-sm flex-wrap">
+            {config.services && config.services.length > 1 ? (
+              config.services.map((svc) => (
+                <Badge
+                  key={svc.label}
+                  variant={svc.isPrimary ? 'default' : 'outline'}
+                  className="gap-1"
+                >
+                  <Server className="h-3 w-3" />
+                  {svc.label}
+                  {svc.port > 0 && <span className="opacity-70">:{svc.port}</span>}
+                  {svc.isPrimary && <span className="text-xs opacity-70 ml-0.5">API</span>}
+                </Badge>
+              ))
+            ) : (
+              <>
+                <Badge variant="outline" className="gap-1">
+                  <Server className="h-3 w-3" />
+                  {config.framework}
+                </Badge>
+                {config.port > 0 && (
+                  <Badge variant="secondary">{t('appEmulator:projectInfo.port')}: {config.port}</Badge>
+                )}
+              </>
             )}
             {url && (
               <Badge variant="secondary" className="gap-1">
@@ -152,26 +180,25 @@ export function AppEmulatorDialog() {
         <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-border">
           {/* Loading State */}
           {isLoading && (
-            <div className="flex flex-col items-center justify-center h-full gap-4">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <div className="text-center">
-                <p className="text-sm font-medium">
-                  {phase === 'detecting' ? t('appEmulator:detecting') : t('appEmulator:starting')}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">{status}</p>
+            <div className="flex flex-col h-full">
+              <div className="flex flex-col items-center gap-4 py-6 px-4 shrink-0">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div className="text-center">
+                  <p className="text-sm font-medium">
+                    {phase === 'detecting' ? t('appEmulator:detecting') : t('appEmulator:starting')}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">{status}</p>
+                </div>
               </div>
-              {/* Show output during startup */}
               {output && (
-                <Card className="w-full max-w-2xl max-h-40">
-                  <CardContent className="p-2">
-                    <pre
-                      ref={outputRef}
-                      className="text-xs font-mono text-muted-foreground overflow-auto max-h-32 whitespace-pre-wrap"
-                    >
-                      {output}
-                    </pre>
-                  </CardContent>
-                </Card>
+                <div className="flex-1 min-h-0 mx-4 mb-4 overflow-hidden rounded-lg bg-muted/50">
+                  <pre
+                    ref={outputRef}
+                    className="text-xs font-mono text-muted-foreground overflow-auto h-full p-3 whitespace-pre-wrap"
+                  >
+                    {output}
+                  </pre>
+                </div>
               )}
             </div>
           )}
@@ -207,30 +234,30 @@ export function AppEmulatorDialog() {
 
           {/* Error State */}
           {phase === 'error' && (
-            <div className="flex flex-col items-center justify-center h-full gap-4">
-              <div className="text-center max-w-md">
-                <p className="text-sm font-medium text-destructive">{error}</p>
+            <div className="flex flex-col h-full">
+              <div className="flex flex-col items-center gap-2 py-6 px-4 shrink-0">
+                <p className="text-sm font-medium text-destructive text-center max-w-md">{error}</p>
                 {selectedProject?.path && (
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-xs text-muted-foreground text-center">
                     {t('appEmulator:errors.scannedPath')}: {selectedProject.path}
                   </p>
                 )}
               </div>
               {output && (
-                <Card className="w-full max-w-2xl max-h-48">
-                  <CardHeader className="py-2 px-3">
-                    <CardTitle className="text-xs">{t('appEmulator:output.title')}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-2 pt-0">
-                    <pre
-                      ref={outputRef}
-                      className="text-xs font-mono text-muted-foreground overflow-auto max-h-32 whitespace-pre-wrap"
-                    >
-                      {output}
-                    </pre>
-                  </CardContent>
-                </Card>
+                <div className="flex-1 min-h-0 mx-4 mb-4 overflow-hidden rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-2 px-3 py-2 border-b border-border shrink-0">
+                    <TerminalIcon className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-xs font-medium">{t('appEmulator:output.title')}</span>
+                  </div>
+                  <pre
+                    ref={outputRef}
+                    className="text-xs font-mono text-muted-foreground overflow-auto h-[calc(100%-2rem)] p-3 whitespace-pre-wrap"
+                  >
+                    {output}
+                  </pre>
+                </div>
               )}
+              {!output && <div className="flex-1" />}
             </div>
           )}
 
@@ -263,6 +290,16 @@ export function AppEmulatorDialog() {
                   {t('appEmulator:actions.openInBrowser')}
                 </Button>
               </>
+            )}
+            {output && (
+              <Button variant="outline" size="sm" onClick={handleCopyLogs}>
+                {copied ? (
+                  <Check className="h-4 w-4 mr-1.5 text-green-500" />
+                ) : (
+                  <Copy className="h-4 w-4 mr-1.5" />
+                )}
+                {t('appEmulator:actions.copyLogs')}
+              </Button>
             )}
           </div>
           <div className="flex gap-2">
