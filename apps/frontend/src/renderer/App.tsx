@@ -920,12 +920,16 @@ export function App() {
           return res.json();
         })
         .then((data) => {
-          setProviders(data.providers || []);
+          // data.providers is an array of objects {name, label, description}
+          const providerNames: string[] = (data.providers || []).map((p: unknown) =>
+            typeof p === 'object' && p !== null && 'name' in p ? (p as { name: string }).name : String(p)
+          );
+          setProviders(providerNames);
           // Sélectionne automatiquement 'claude' si présent
-          if (!selectedProvider && data.providers?.includes('claude')) {
+          if (!selectedProvider && providerNames.includes('claude')) {
             setSelectedProvider('claude');
-          } else if (!selectedProvider && data.providers?.length > 0) {
-            setSelectedProvider(data.providers[0]);
+          } else if (!selectedProvider && providerNames.length > 0) {
+            setSelectedProvider(providerNames[0]);
           }
         })
         .catch((err) => {

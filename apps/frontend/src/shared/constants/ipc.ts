@@ -533,6 +533,8 @@ export const IPC_CHANNELS = {
 
   // API Explorer — project route scanning
   API_EXPLORER_SCAN_ROUTES: 'apiExplorer:scanRoutes',
+  // API Explorer — HTTP proxy (bypasses renderer CSP)
+  API_EXPLORER_PROXY_REQUEST: 'apiExplorer:proxyRequest',
 
   // Git operations
   GIT_GET_BRANCHES: 'git:getBranches',

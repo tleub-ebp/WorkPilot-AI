@@ -88,8 +88,9 @@ export function AppEmulatorDialog() {
     stopAppEmulator();
   }, []);
 
-  const handleRetry = useCallback(() => {
+  const handleRetry = useCallback(async () => {
     if (selectedProject?.path) {
+      await stopAppEmulator();
       useAppEmulatorStore.getState().reset();
       useAppEmulatorStore.getState().openDialog();
       startAppEmulator(selectedProject.path);

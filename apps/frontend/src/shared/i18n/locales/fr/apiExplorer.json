@@ -14,7 +14,10 @@
     "detect": "Détecter depuis le projet",
     "detecting": "Scan des fichiers .env...",
     "detected": "Environnements détectés",
-    "importSelected": "Importer"
+    "importSelected": "Importer",
+    "token": "Bearer Token",
+    "tokenPlaceholder": "Collez votre JWT ou token API",
+    "headers": "En-têtes personnalisés"
   },
   "actions": {
     "export": "Exporter",
@@ -31,9 +34,7 @@
     "copied": "Copié !"
   },
   "detail": {
-    "overview": "Vue d'ensemble",
-    "schema": "Schéma",
-    "test": "Tester",
+    "docs": "Docs",
     "description": "Description",
     "parameters": "Paramètres",
     "responses": "Réponses",
@@ -47,16 +48,89 @@
     "params": "Paramètres",
     "headers": "En-têtes",
     "body": "Corps",
+    "auth": "Auth",
     "pathParams": "Paramètres de chemin",
     "queryParams": "Paramètres de requête",
     "noParams": "Aucun paramètre pour cet endpoint",
     "noHeaders": "Aucun en-tête défini",
     "fillExample": "Remplir avec l'exemple",
-    "networkError": "Erreur réseau"
+    "networkError": "Erreur réseau",
+    "addParam": "Ajouter un paramètre",
+    "addHeader": "Ajouter un en-tête",
+    "paramKey": "Paramètre",
+    "paramValue": "Valeur",
+    "headerKey": "En-tête",
+    "headerValue": "Valeur",
+    "specHeaders": "En-têtes du spec"
+  },
+  "auth": {
+    "type": "Type d'authentification",
+    "types": {
+      "inherited": "Hérité de l'env.",
+      "none": "Sans auth",
+      "bearer": "Bearer Token",
+      "basic": "Basic Auth",
+      "apikey": "Clé API",
+      "oauth2": "OAuth 2.0"
+    },
+    "inheritedFrom": "Bearer Token de \"{{env}}\" utilisé",
+    "noEnvToken": "Aucun token configuré sur \"{{env}}\".",
+    "configureEnv": "Configurer l'environnement →",
+    "noAuthDesc": "Aucune autorisation ne sera envoyée avec cette requête.",
+    "token": "Token",
+    "tokenPlaceholder": "Collez votre JWT ou token d'accès",
+    "bearerHint": "Envoyé sous : Authorization: Bearer <token>",
+    "username": "Nom d'utilisateur",
+    "usernamePlaceholder": "utilisateur",
+    "password": "Mot de passe",
+    "basicHint": "Identifiants encodés en Base64 dans le header Authorization.",
+    "keyName": "Nom de la clé",
+    "keyValue": "Valeur de la clé",
+    "keyValuePlaceholder": "votre-clé-api",
+    "addTo": "Ajouter dans",
+    "locationHeader": "Header",
+    "locationQuery": "Query Params",
+    "oauth2": {
+      "grantType": "Type de flux",
+      "grants": {
+        "client_credentials": "Client Credentials",
+        "authorization_code": "Authorization Code (With PKCE)",
+        "password": "Password"
+      },
+      "configureToken": "Configurer un nouveau token",
+      "authUrl": "URL d'autorisation",
+      "tokenUrl": "URL du token d'accès",
+      "clientId": "Client ID",
+      "clientSecret": "Client Secret",
+      "scope": "Scope",
+      "getToken": "Obtenir un nouveau token d'accès",
+      "openBrowser": "Ouvrir le navigateur pour s'authentifier",
+      "currentToken": "Token actuel",
+      "tokenPlaceholder": "Collez ou auto-remplissez le token d'accès",
+      "headerPrefix": "Préfixe du header",
+      "missingTokenUrl": "L'URL du token d'accès est requise.",
+      "tokenError": "Impossible de récupérer le token d'accès."
+    }
   },
   "response": {
     "body": "Corps",
-    "headers": "En-têtes"
+    "headers": "En-têtes",
+    "saveToken": "Sauvegarder comme Bearer Token",
+    "saveTokenTitle": "Sauvegarde le token de cette réponse dans l'environnement actif",
+    "tokenSaved": "Token sauvegardé !",
+    "format": {
+      "pretty": "Formaté",
+      "raw": "Brut",
+      "preview": "Aperçu",
+      "languageTitle": "Sélectionner le langage de rendu",
+      "lang": {
+        "auto": "Auto",
+        "json": "JSON",
+        "xml": "XML",
+        "html": "HTML",
+        "text": "Texte"
+      }
+    }
   },
   "empty": {
     "selectEndpoint": "Sélectionner un endpoint",
@@ -72,5 +146,13 @@
     "resync": "Resynchroniser",
     "sourceBadge": "Source",
     "scannedAt": "scanné à {{time}}"
+  },
+  "emulator": {
+    "run": "Lancer le projet",
+    "stop": "Arrêter le serveur",
+    "detecting": "Détection...",
+    "starting": "Démarrage...",
+    "running": "En cours",
+    "noProject": "Aucun projet actif sélectionné"
   }
 }

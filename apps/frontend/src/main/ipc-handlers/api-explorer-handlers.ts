@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron';
+import { ipcMain, net } from 'electron';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { IPC_CHANNELS } from '../../shared/constants';
@@ -328,6 +328,23 @@ function buildOpenApiSpec(routes: DetectedRoute[], projectName: string): Record<
 
 // ── IPC handler registration ──────────────────────────────────────────────────
 
+interface ProxyRequestPayload {
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body?: string;
+}
+
+interface ProxyResponse {
+  success: boolean;
+  status?: number;
+  statusText?: string;
+  headers?: Record<string, string>;
+  body?: string;
+  time?: number;
+  error?: string;
+}
+
 export function registerApiExplorerHandlers(): void {
   ipcMain.handle(
     IPC_CHANNELS.API_EXPLORER_SCAN_ROUTES,
@@ -347,6 +364,51 @@ export function registerApiExplorerHandlers(): void {
         return { success: true, data: spec, routeCount: routes.length };
       } catch (err) {
         return { success: false, error: String(err) };
+      }
+    }
+  );
+
+  // HTTP proxy — makes requests from main process to bypass renderer CSP
+  ipcMain.handle(
+    IPC_CHANNELS.API_EXPLORER_PROXY_REQUEST,
+    async (_event, payload: ProxyRequestPayload): Promise<ProxyResponse> => {
+      const start = Date.now();
+      try {
+        const res = await net.fetch(payload.url, {
+          method: payload.method,
+          headers: payload.headers,
+          body: payload.body ?? undefined,
+        });
+
+        const resHeaders: Record<string, string> = {};
+        res.headers.forEach((val: string, key: string) => { resHeaders[key] = val; });
+
+        const contentType = res.headers.get('content-type') ?? '';
+        let body: string;
+        if (contentType.includes('application/json') || contentType.includes('text/')) {
+          body = await res.text();
+        } else {
+          body = `[Binary content: ${contentType}]`;
+        }
+
+        return {
+          success: true,
+          status: res.status,
+          statusText: res.statusText,
+          headers: resHeaders,
+          body,
+          time: Date.now() - start,
+        };
+      } catch (err) {
+        return {
+          success: false,
+          status: 0,
+          statusText: 'Network Error',
+          headers: {},
+          body: String(err),
+          time: Date.now() - start,
+          error: String(err),
+        };
       }
     }
   );
