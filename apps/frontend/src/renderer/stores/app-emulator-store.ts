@@ -135,47 +135,61 @@ export async function stopAppEmulator(): Promise<void> {
 /**
  * Setup IPC listeners. Returns cleanup function.
  */
+// Ref-counted singleton: multiple components (ApiExplorer, AppEmulatorDialog) can call
+// setupAppEmulatorListeners() safely — IPC listeners are registered only once.
+let _listenerRefCount = 0;
+let _listenerCleanup: (() => void) | null = null;
+
 export function setupAppEmulatorListeners(): () => void {
-  const store = () => useAppEmulatorStore.getState();
+  _listenerRefCount++;
 
-  const unsubStatus = (globalThis as any).electronAPI.onAppEmulatorStatus((status: string) => {
-    store().setStatus(status);
-  });
+  if (_listenerRefCount === 1) {
+    // First caller — register the actual IPC listeners
+    const store = () => useAppEmulatorStore.getState();
 
-  const unsubReady = (globalThis as any).electronAPI.onAppEmulatorReady((url: string) => {
-    store().setUrl(url);
-    store().setPhase('running');
-    store().setStatus(`Running at ${url}`);
-  });
+    const unsubStatus = (globalThis as any).electronAPI.onAppEmulatorStatus((status: string) => {
+      store().setStatus(status);
+    });
+    const unsubReady = (globalThis as any).electronAPI.onAppEmulatorReady((url: string) => {
+      store().setUrl(url);
+      store().setPhase('running');
+      store().setStatus(`Running at ${url}`);
+    });
+    const unsubOutput = (globalThis as any).electronAPI.onAppEmulatorOutput((line: string) => {
+      store().appendOutput(line);
+    });
+    const unsubError = (globalThis as any).electronAPI.onAppEmulatorError((error: string) => {
+      store().setError(error);
+    });
+    const unsubStopped = (globalThis as any).electronAPI.onAppEmulatorStopped(() => {
+      const currentPhase = store().phase;
+      if (currentPhase !== 'error') {
+        store().setPhase('stopped');
+        store().setStatus('Server stopped');
+      }
+    });
+    const unsubConfig = (globalThis as any).electronAPI.onAppEmulatorConfig((config: AppEmulatorConfig) => {
+      store().setConfig(config);
+    });
 
-  const unsubOutput = (globalThis as any).electronAPI.onAppEmulatorOutput((line: string) => {
-    store().appendOutput(line);
-  });
+    _listenerCleanup = () => {
+      unsubStatus();
+      unsubReady();
+      unsubOutput();
+      unsubError();
+      unsubStopped();
+      unsubConfig();
+    };
+  }
 
-  const unsubError = (globalThis as any).electronAPI.onAppEmulatorError((error: string) => {
-    store().setError(error);
-  });
-
-  const unsubStopped = (globalThis as any).electronAPI.onAppEmulatorStopped(() => {
-    const currentPhase = store().phase;
-    // Only update if not already in error state
-    if (currentPhase !== 'error') {
-      store().setPhase('stopped');
-      store().setStatus('Server stopped');
-    }
-  });
-
-  const unsubConfig = (globalThis as any).electronAPI.onAppEmulatorConfig((config: AppEmulatorConfig) => {
-    store().setConfig(config);
-  });
-
+  // Each caller gets a cleanup that decrements the ref-count and only truly
+  // unregisters when the last subscriber unmounts.
   return () => {
-    unsubStatus();
-    unsubReady();
-    unsubOutput();
-    unsubError();
-    unsubStopped();
-    unsubConfig();
+    _listenerRefCount--;
+    if (_listenerRefCount === 0 && _listenerCleanup) {
+      _listenerCleanup();
+      _listenerCleanup = null;
+    }
   };
 }
 
