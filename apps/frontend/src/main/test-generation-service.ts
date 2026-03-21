@@ -2,6 +2,7 @@ import { spawn, ChildProcess } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { EventEmitter } from 'node:events';
+import { app } from 'electron';
 import { getRunnerEnv } from './ipc-handlers/github/utils/runner-env';
 
 /**
@@ -219,9 +220,12 @@ export class TestGenerationService extends EventEmitter {
 
       if (generationResult !== null) {
         this.emit(successEvent, generationResult);
-      } else if (code !== 0) {
+      } else if (code === 0) {
+        // Process exited cleanly (code 0) but produced no result — report it so the UI doesn't hang
+        this.emit('error', 'Test generation completed without output. Check that the source file is readable and Claude is authenticated.');
+      } else {
         // Strip ANSI escape codes so the error message is readable
-        const clean = stderrOutput.replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').replace(/[\u2500-\u257F]/g, '').trim();
+        const clean = stderrOutput.replaceAll(/\x1b\[[0-9;]*[A-Za-z]/g, '').replaceAll(/[\u2500-\u257F]/g, '').trim();
         if (clean.includes('rate_limit') || clean.includes('Rate limit')) {
           this.emit('error', 'Rate limit reached. Please try again in a few moments.');
         } else if (clean.includes('authentication') || clean.includes('CLAUDE_OAUTH_TOKEN')) {
@@ -229,9 +233,6 @@ export class TestGenerationService extends EventEmitter {
         } else {
           this.emit('error', `Test generation failed (exit code ${code}). ${clean.slice(-500)}`);
         }
-      } else {
-        // Process exited cleanly (code 0) but produced no result — report it so the UI doesn't hang
-        this.emit('error', 'Test generation completed without output. Check that the source file is readable and Claude is authenticated.');
       }
     });
 

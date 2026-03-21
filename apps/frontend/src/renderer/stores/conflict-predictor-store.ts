@@ -188,7 +188,7 @@ const handleConflictPredictionEvent = (data: any) => {
       break;
 
     case 'progress':
-      useConflictPredictorStore.setState({ status: eventData });
+      useConflictPredictorStore.setState({ status: eventData.status || '' });
       break;
     case 'output':
       useConflictPredictorStore.setState((state) => ({
