@@ -97,5 +97,8 @@
   "loadErrorTitle": "Load error",
   "loadErrorDesc": "The file is invalid or corrupted.",
   "cancel": "Cancel",
-  "chooseFileName": "Export file name"
+  "chooseFileName": "Export file name",
+  "chooseFileNameDesc": "You can modify the file name before saving.",
+  "selectedFolder": "Selected folder",
+  "noFolder": "None"
 }

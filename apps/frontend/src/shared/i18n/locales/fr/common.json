@@ -566,7 +566,20 @@
     "costByModelLabel": "Coût par modèle :",
     "embeddingsLabel": "Intégrations (tokens) :",
     "moderationsLabel": "Modérations (tokens) :",
-    "noData": "Aucune donnée"
+    "noData": "Aucune donnée",
+    "copilotInsuffPermissions": "Permissions insuffisantes",
+    "copilotInsuffPermissionsDesc": "Permissions insuffisantes pour accéder aux métriques Copilot.",
+    "copilotSuggestionsLabel": "Suggestions",
+    "copilotRunCmd": "Exécutez :",
+    "copilotMustBeAdmin": "Assurez-vous d'être administrateur de l'organisation Copilot",
+    "copilotContactAdmin": "Contactez votre administrateur GitHub pour obtenir les permissions nécessaires",
+    "copilotBackendUnavailable": "Backend non disponible",
+    "copilotBackendUnavailableDesc": "Le backend FastAPI n'est pas démarré. Veuillez démarrer le backend pour voir les métriques Copilot.",
+    "copilotMetricsTitle": "Métriques GitHub Copilot",
+    "copilotMetricsDesc": "Données d'utilisation GitHub Copilot pour les 28 derniers jours.",
+    "copilotAcceptancesLabel": "Acceptations",
+    "copilotAcceptanceRateLabel": "Taux d'acceptation",
+    "copilotTokensUsedLabel": "Tokens utilisés"
   },
   "oauth": {
     "enterCode": "Saisie de code manuelle (Fallback)",

@@ -97,5 +97,8 @@
   "loadErrorTitle": "Erreur de chargement",
   "loadErrorDesc": "Le fichier est invalide ou corrompu.",
   "cancel": "Annuler",
-  "chooseFileName": "Nom du fichier d'export"
+  "chooseFileName": "Nom du fichier d'export",
+  "chooseFileNameDesc": "Vous pouvez modifier le nom du fichier avant l'enregistrement.",
+  "selectedFolder": "Dossier sélectionné",
+  "noFolder": "Aucun"
 }

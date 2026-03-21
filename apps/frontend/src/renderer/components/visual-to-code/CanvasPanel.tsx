@@ -76,45 +76,58 @@ export const CanvasPanel: React.FC = () => {
   const [selectedCodeFile, setSelectedCodeFile] = useState(0);
   const codeToVisualInputRef = useRef<HTMLInputElement>(null);
 
+  // Extracted event handlers to reduce nesting
+  const handleVisualProgrammingStatus = (msg: string) => {
+    setAiStatus(msg);
+  };
+
+  const handleVisualProgrammingError = (err: string) => {
+    setIsAiRunning(false);
+    setAiStatus('');
+    toast({ title: t('aiError', 'Erreur IA'), description: err, variant: 'destructive' });
+  };
+
+  const handleVisualProgrammingComplete = (payload: { action: string; data: GenerateCodeResult | CodeToVisualResult }) => {
+    setIsAiRunning(false);
+    setAiStatus('');
+    if (payload.action === 'generate-code') {
+      handleGenerateCodeComplete(payload.data as GenerateCodeResult);
+    } else if (payload.action === 'code-to-visual') {
+      handleCodeToVisualComplete(payload.data as CodeToVisualResult);
+    }
+  };
+
+  const handleGenerateCodeComplete = (result: GenerateCodeResult) => {
+    setCodeResult(result);
+    setSelectedCodeFile(0);
+    setShowCodeResult(true);
+    toast({ title: t('codeGenerated', 'Code généré !'), description: result.summary });
+  };
+
+  const handleCodeToVisualComplete = (result: CodeToVisualResult) => {
+    const newNodes = result.nodes.map((n, i) => ({
+      id: n.id || `imported-${i}`,
+      position: { x: 120 + (i % 4) * 220, y: 80 + Math.floor(i / 4) * 120 },
+      data: { label: n.label, type: n.type, framework: n.framework, onRename: handleRenameNode },
+      type: 'editable' as const,
+    }));
+    const newEdges = result.edges.map((e, i) => ({
+      id: `imported-edge-${i}`,
+      source: e.source,
+      target: e.target,
+      data: { label: e.label || '' },
+    }));
+    setNodes(newNodes);
+    setEdges(newEdges);
+    setIsJsonSaved(false);
+    toast({ title: t('codeToVisualDone', 'Diagramme généré !'), description: result.summary });
+  };
+
   // Subscribe to backend events once on mount
   useEffect(() => {
-    const offStatus = window.electronAPI?.onVisualProgrammingStatus?.((msg: string) => {
-      setAiStatus(msg);
-    });
-    const offError = window.electronAPI?.onVisualProgrammingError?.((err: string) => {
-      setIsAiRunning(false);
-      setAiStatus('');
-      toast({ title: t('aiError', 'Erreur IA'), description: err, variant: 'destructive' });
-    });
-    const offComplete = window.electronAPI?.onVisualProgrammingComplete?.((payload: { action: string; data: GenerateCodeResult | CodeToVisualResult }) => {
-      setIsAiRunning(false);
-      setAiStatus('');
-      if (payload.action === 'generate-code') {
-        const result = payload.data as GenerateCodeResult;
-        setCodeResult(result);
-        setSelectedCodeFile(0);
-        setShowCodeResult(true);
-        toast({ title: t('codeGenerated', 'Code généré !'), description: result.summary });
-      } else if (payload.action === 'code-to-visual') {
-        const result = payload.data as CodeToVisualResult;
-        const newNodes = result.nodes.map((n, i) => ({
-          id: n.id || `imported-${i}`,
-          position: { x: 120 + (i % 4) * 220, y: 80 + Math.floor(i / 4) * 120 },
-          data: { label: n.label, type: n.type, framework: n.framework, onRename: handleRenameNode },
-          type: 'editable' as const,
-        }));
-        const newEdges = result.edges.map((e, i) => ({
-          id: `imported-edge-${i}`,
-          source: e.source,
-          target: e.target,
-          data: { label: e.label || '' },
-        }));
-        setNodes(newNodes);
-        setEdges(newEdges);
-        setIsJsonSaved(false);
-        toast({ title: t('codeToVisualDone', 'Diagramme généré !'), description: result.summary });
-      }
-    });
+    const offStatus = globalThis.electronAPI?.onVisualProgrammingStatus?.(handleVisualProgrammingStatus);
+    const offError = globalThis.electronAPI?.onVisualProgrammingError?.(handleVisualProgrammingError);
+    const offComplete = globalThis.electronAPI?.onVisualProgrammingComplete?.(handleVisualProgrammingComplete);
     return () => {
       offStatus?.();
       offError?.();
@@ -124,7 +137,7 @@ export const CanvasPanel: React.FC = () => {
   }, []);
 
   const handleGenerateCode = async () => {
-    if (!window.electronAPI?.runVisualProgramming) {
+    if (!globalThis.electronAPI?.runVisualProgramming) {
       toast({ title: t('aiNotAvailable', 'IA non disponible'), description: 'Electron API manquante', variant: 'destructive' });
       return;
     }
@@ -135,7 +148,7 @@ export const CanvasPanel: React.FC = () => {
     setIsAiRunning(true);
     setAiStatus(t('starting', 'Démarrage…'));
     const diagramJson = JSON.stringify({ nodes, edges, diagramType });
-    await window.electronAPI.runVisualProgramming({
+    await globalThis.electronAPI.runVisualProgramming({
       action: 'generate-code',
       diagramJson,
       framework: '',
@@ -146,13 +159,13 @@ export const CanvasPanel: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
     event.target.value = '';
-    if (!window.electronAPI?.runVisualProgramming) {
+    if (!globalThis.electronAPI?.runVisualProgramming) {
       toast({ title: t('aiNotAvailable', 'IA non disponible'), description: 'Electron API manquante', variant: 'destructive' });
       return;
     }
     setIsAiRunning(true);
     setAiStatus(t('starting', 'Démarrage…'));
-    await window.electronAPI.runVisualProgramming({
+    await globalThis.electronAPI.runVisualProgramming({
       action: 'code-to-visual',
       filePath: (file as any).path || file.name,
     });
@@ -202,8 +215,8 @@ export const CanvasPanel: React.FC = () => {
     const fileName = saveAsFileName;
     const folderPath = selectedFolder;
     try {
-      if (window.electronAPI?.saveJsonFile) {
-        const result = await window.electronAPI.saveJsonFile(folderPath, fileName, exportData);
+      if (globalThis.electronAPI?.saveJsonFile) {
+        const result = await globalThis.electronAPI.saveJsonFile(folderPath, fileName, exportData);
         if (result?.success) {
           setIsJsonSaved(true);
           setShowSaveAsDialog(false);
@@ -263,7 +276,11 @@ export const CanvasPanel: React.FC = () => {
     if (reactFlowInstance?.project) {
       position = reactFlowInstance.project({ x: mouseX, y: mouseY });
     }
-    if (!FRAMEWORKS[type]) {
+    if (FRAMEWORKS[type]) {
+      const newId = (nodes.length + 1).toString();
+      setPendingNode({ id: newId, type, position });
+      setShowFrameworkModal(true);
+    } else {
       const newId = (nodes.length + 1).toString();
       setNodes((nds) => [
         ...nds,
@@ -274,10 +291,6 @@ export const CanvasPanel: React.FC = () => {
           type: 'editable',
         },
       ]);
-    } else {
-      const newId = (nodes.length + 1).toString();
-      setPendingNode({ id: newId, type, position });
-      setShowFrameworkModal(true);
     }
   };
 
@@ -291,7 +304,7 @@ export const CanvasPanel: React.FC = () => {
     const pascalType = pendingNode.type.charAt(0).toUpperCase() + pendingNode.type.slice(1);
     let label = `${framework} (${pascalType})`;
     if (pendingNode.type === 'custom') {
-      const customName = window.prompt(t('customBlockPrompt', 'Nom du bloc personnalisé?'));
+      const customName = globalThis.prompt(t('customBlockPrompt', 'Nom du bloc personnalisé?'));
       if (customName) label = customName;
     }
     setNodes((nds) => [
@@ -365,15 +378,21 @@ export const CanvasPanel: React.FC = () => {
     multiSelectionKeyCode: ['Shift', 'Meta', 'Control'],
   };
 
+  // Extracted keyboard handler to reduce nesting
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      deleteSelectedElements();
+    }
+  };
+
+  const deleteSelectedElements = () => {
+    setNodes((nds) => nds.filter((n) => !n.selected));
+    setEdges((eds) => eds.filter((e) => !e.selected));
+  };
+
   React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        setNodes((nds) => nds.filter((n) => !n.selected));
-        setEdges((eds) => eds.filter((e) => !e.selected));
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    globalThis.addEventListener('keydown', handleKeyDown);
+    return () => globalThis.removeEventListener('keydown', handleKeyDown);
   }, [setNodes, setEdges]);
 
   React.useEffect(() => {
@@ -398,11 +417,11 @@ export const CanvasPanel: React.FC = () => {
   };
 
   const getDefaultExplorerRoot = () => {
-    if (window.electronAPI?.getUserHome) {
-      const home = window.electronAPI.getUserHome();
+    if (globalThis.electronAPI?.getUserHome) {
+      const home = globalThis.electronAPI.getUserHome();
       if (home && home.length > 0) return home;
     }
-    if (window.process?.platform === 'win32') return 'C:\\';
+    if ((globalThis as any).platform?.isWindows) return 'C:\\';
     return '/';
   };
   const [explorerRoot, setExplorerRoot] = useState(getDefaultExplorerRoot());
@@ -525,7 +544,7 @@ export const CanvasPanel: React.FC = () => {
           <div className="mt-4" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
             <FileTree rootPath={explorerRoot} onSelectFolder={setSelectedFolder} selectedFolder={selectedFolder} />
             <div className="mt-2 text-sm font-bold text-primary">
-              Dossier sélectionné : {selectedFolder || 'Aucun'}
+              {t('selectedFolder', 'Selected folder')}: {selectedFolder || t('noFolder', 'None')}
             </div>
           </div>
           <div className="mt-4">

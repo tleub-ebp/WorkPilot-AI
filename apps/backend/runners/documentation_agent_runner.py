@@ -23,18 +23,28 @@ from typing import Dict, List, Optional
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
-from documentation import DocumentationAnalyzer, DocumentationGenerator, DocumentationUpdater
-from documentation.models import DocType
+try:
+    from documentation import DocumentationAnalyzer, DocumentationGenerator, DocumentationUpdater
+    from documentation.models import DocType
+    _DOCUMENTATION_AVAILABLE = True
+except ImportError:
+    _DOCUMENTATION_AVAILABLE = False
 
 
-DOC_TYPE_MAP = {
-    "api": DocType.API_DOCS,
-    "readme": DocType.README,
-    "contribution": DocType.CONTRIBUTION_GUIDE,
-    "docstrings": DocType.INLINE_DOCSTRINGS,
-    "diagrams": DocType.SEQUENCE_DIAGRAMS,
-    "changelog": DocType.CHANGELOG,
-}
+if _DOCUMENTATION_AVAILABLE:
+    DOC_TYPE_MAP = {
+        "api": DocType.API_DOCS,
+        "readme": DocType.README,
+        "contribution": DocType.CONTRIBUTION_GUIDE,
+        "docstrings": DocType.INLINE_DOCSTRINGS,
+        "diagrams": DocType.SEQUENCE_DIAGRAMS,
+        "changelog": DocType.CHANGELOG,
+    }
+else:
+    DOC_TYPE_MAP = {
+        "api": "api", "readme": "readme", "contribution": "contribution",
+        "docstrings": "docstrings", "diagrams": "diagrams", "changelog": "changelog",
+    }
 
 ALL_DOC_TYPES = list(DOC_TYPE_MAP.keys())
 
@@ -238,6 +248,15 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if not _DOCUMENTATION_AVAILABLE:
+        error_result = {
+            "status": "error",
+            "error": "Documentation module not yet available. This feature is under development.",
+            "files_generated": [],
+        }
+        print("__DOC_RESULT__:" + json.dumps(error_result))
+        sys.exit(0)
 
     if not os.path.exists(args.project_dir):
         print(f"❌ Project directory not found: {args.project_dir}")

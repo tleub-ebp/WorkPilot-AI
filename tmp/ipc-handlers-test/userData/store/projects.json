@@ -1,0 +1,27 @@
+{
+  "projects": [
+    {
+      "id": "3ec876e3-406b-4c6f-85a5-04b41714377b",
+      "name": "path",
+      "path": "/nonexistent/path",
+      "autoBuildPath": "",
+      "settings": {
+        "model": "opus",
+        "memoryBackend": "file",
+        "linearSync": false,
+        "notifications": {
+          "onTaskComplete": true,
+          "onTaskFailed": true,
+          "onReviewNeeded": true,
+          "sound": false
+        },
+        "graphitiMcpEnabled": true,
+        "graphitiMcpUrl": "http://localhost:9000/mcp/",
+        "useClaudeMd": true
+      },
+      "createdAt": "2026-03-21T15:20:21.340Z",
+      "updatedAt": "2026-03-21T15:20:21.340Z"
+    }
+  ],
+  "settings": {}
+}

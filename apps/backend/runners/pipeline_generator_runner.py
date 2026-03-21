@@ -244,26 +244,14 @@ async def generate_pipelines(
     try:
         prompt = build_generation_prompt(project_dir, stack, platforms_to_generate)
 
-        # Use create_client if available, otherwise fall back to direct SDK
-        try:
-            client = create_client(
-                project_dir=project_dir,
-                model=model,
-                agent_type="coder",
-            )
-            async with client:
-                from core.session import run_agent_session
-                _, response_text = await run_agent_session(client, prompt, None)
-        except Exception:
-            # Fallback: use anthropic directly if SDK client fails
-            import anthropic
-            anthropic_client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
-            message = anthropic_client.messages.create(
-                model="claude-sonnet-4-6",
-                max_tokens=8192,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            response_text = message.content[0].text if message.content else ""
+        client = create_client(
+            project_dir=project_dir,
+            model=model,
+            agent_type="coder",
+        )
+        async with client:
+            from core.session import run_agent_session
+            _, response_text = await run_agent_session(client, prompt, None)
 
         # Parse the response to extract each platform's pipeline
         for platform in platforms_to_generate:

@@ -39,21 +39,28 @@ class NaturalLanguageGitRunner:
         """Main execution method."""
         try:
             self._log_status("Analyzing natural language command...")
-            
+
             # Generate Git command using AI
             git_command = self._generate_git_command()
             if not git_command:
                 self._log_error("Failed to generate Git command")
+                error_result = {
+                    'generatedCommand': '',
+                    'explanation': 'Could not generate a Git command. Please check your Claude configuration.',
+                    'executionOutput': '',
+                    'success': False,
+                }
+                print(f"__GIT_RESULT__:{json.dumps(error_result)}")
                 return
 
             self._log_status(f"Generated command: {git_command}")
-            
+
             # Execute the Git command
             result = self._execute_git_command(git_command)
-            
+
             # Output the result
             self._output_result(git_command, result)
-            
+
         except Exception as e:
             self._log_error(f"Unexpected error: {str(e)}")
             sys.exit(1)
@@ -61,41 +68,38 @@ class NaturalLanguageGitRunner:
     def _generate_git_command(self) -> Optional[str]:
         """Generate Git command from natural language using AI."""
         try:
+            import asyncio
+            from core.client import create_client
+            from core.session import run_agent_session
+
             self._log_status("Understanding command intent...")
-            
-            # Get current Git status for context
+
             git_status = self._get_git_status()
             current_branch = self._get_current_branch()
-            
-            # Build the system prompt
             system_prompt = self._build_system_prompt(git_status, current_branch)
-            
-            # Get user prompt
             user_prompt = f"Convert this natural language command to a Git command: '{self.command}'"
-            
-            # Use Claude to generate the command
-            from agents.claude_agent_sdk import ClaudeAgentSDK
-            
-            agent = ClaudeAgentSDK(
-                model=self.model,
-                thinking_level=self.thinking_level or "medium"
-            )
-            
-            response = agent.chat([
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ])
-            
-            # Extract the command from the response
+            full_prompt = f"{system_prompt}\n\n{user_prompt}"
+
+            async def _run_async() -> str:
+                client = create_client(
+                    project_dir=str(self.project_path),
+                    model=self.model,
+                    agent_type="coder",
+                )
+                async with client:
+                    _, response = await run_agent_session(client, full_prompt, None)
+                return response or ""
+
+            response = asyncio.run(_run_async())
             command = self._extract_command_from_response(response)
-            
+
             if command:
                 self._log_status(f"Generated Git command: {command}")
                 return command
-            else:
-                self._log_error("Could not extract Git command from AI response")
-                return None
-                
+
+            self._log_error("Could not extract Git command from AI response")
+            return None
+
         except Exception as e:
             self._log_error(f"Failed to generate Git command: {str(e)}")
             return None
@@ -190,13 +194,11 @@ Respond with ONLY the Git command, nothing else."""
         """Execute the Git command and return results."""
         try:
             self._log_status(f"Executing: {command}")
-            
-            # Parse the command
+
             parts = command.split()
             if not parts or parts[0] != 'git':
                 raise ValueError("Invalid Git command")
-            
-            # Execute with timeout
+
             result = subprocess.run(
                 parts,
                 capture_output=True,
@@ -204,55 +206,14 @@ Respond with ONLY the Git command, nothing else."""
                 timeout=30,
                 cwd=self.project_path
             )
-            
+
             return {
                 'success': result.returncode == 0,
                 'stdout': result.stdout,
                 'stderr': result.stderr,
                 'returncode': result.returncode
-            }
-            
-        except subprocess.TimeoutExpired:
-            return {
-                'success': False,
-                'stdout': '',
-                'stderr': 'Command timed out after 30 seconds',
-                'returncode': -1
-            }
-        except Exception as e:
-            return {
-                'success': False,
-                'stdout': '',
-                'stderr': str(e),
-                'returncode': -1
             }
 
-    def _execute_git_command(self, command: str) -> Dict[str, Any]:
-        """Execute the Git command and return results."""
-        try:
-            self._log_status(f"Executing: {command}")
-            
-            # Parse the command
-            parts = command.split()
-            if not parts or parts[0] != 'git':
-                raise ValueError("Invalid Git command")
-            
-            # Execute with timeout
-            result = subprocess.run(
-                parts,
-                capture_output=True,
-                text=True,
-                timeout=30,
-                cwd=self.project_path
-            )
-            
-            return {
-                'success': result.returncode == 0,
-                'stdout': result.stdout,
-                'stderr': result.stderr,
-                'returncode': result.returncode
-            }
-            
         except subprocess.TimeoutExpired:
             return {
                 'success': False,
