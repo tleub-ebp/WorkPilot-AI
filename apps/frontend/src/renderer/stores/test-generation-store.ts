@@ -95,6 +95,8 @@ interface TestGenerationState {
   setTddSnippetType: (snippetType: string) => void;
   setSelectedFile: (filePath: string) => void;
   reset: () => void;
+  createErrorHandler: (cleanup: () => void, reject: (reason?: any) => void) => (error: string) => void;
+  createCleanupHandler: (listeners: Array<() => void>) => () => void;
 
   // API Actions
   analyzeCoverage: (filePath: string, existingTestPath?: string) => Promise<CoverageGap[]>;
@@ -120,6 +122,24 @@ const initialState = {
 
 export const useTestGenerationStore = create<TestGenerationState>((set, get) => ({
   ...initialState,
+
+  // Common error handler for test generation
+  createErrorHandler: (cleanup: () => void, reject: (reason?: any) => void) => {
+    const { setPhase, setError } = get();
+    return (error: string) => {
+      cleanup();
+      setPhase('error');
+      setError(error);
+      reject(new Error(error));
+    };
+  },
+
+  // Common cleanup handler for removing listeners
+  createCleanupHandler: (listeners: Array<() => void>) => {
+    return () => {
+      listeners.forEach(listener => listener());
+    };
+  },
 
   openDialog: (filePath: string, existingTestPath?: string) => {
     set({
@@ -156,42 +176,46 @@ export const useTestGenerationStore = create<TestGenerationState>((set, get) => 
   reset: () => set(initialState),
 
   analyzeCoverage: async (filePath: string, existingTestPath?: string) => {
-    const { setPhase, setStatus, setError } = get();
+    const { setPhase, setStatus } = get();
     setPhase('analyzing');
     setStatus('Analyzing test coverage...');
 
     return new Promise<CoverageGap[]>((resolve, reject) => {
+      const onStatus = (status: string) => setStatus(status);
+      const cleanup = get().createCleanupHandler([
+        () => globalThis.electronAPI.removeTestGenerationStatusListener(onStatus),
+        () => globalThis.electronAPI.removeTestGenerationResultListener(onResult),
+        () => globalThis.electronAPI.removeTestGenerationErrorListener(onError),
+      ]);
       const onResult = (data: any) => {
-        window.electronAPI.removeTestGenerationResultListener(onResult);
-        window.electronAPI.removeTestGenerationErrorListener(onError);
+        cleanup();
         setPhase('complete');
         setStatus('Coverage analysis complete');
         resolve((data as { gaps?: CoverageGap[] }).gaps || []);
       };
-      const onError = (error: string) => {
-        window.electronAPI.removeTestGenerationResultListener(onResult);
-        window.electronAPI.removeTestGenerationErrorListener(onError);
-        setPhase('error');
-        setError(error);
-        reject(new Error(error));
-      };
+      const onError = get().createErrorHandler(cleanup, reject);
       const projectPath = useProjectStore.getState().getActiveProject()?.path;
-      window.electronAPI.onTestGenerationStatus((status: string) => setStatus(status));
-      window.electronAPI.onTestGenerationResult(onResult);
-      window.electronAPI.onTestGenerationError(onError);
-      window.electronAPI.analyzeTestCoverage(filePath, existingTestPath, projectPath);
+      globalThis.electronAPI.onTestGenerationStatus(onStatus);
+      globalThis.electronAPI.onTestGenerationResult(onResult);
+      globalThis.electronAPI.onTestGenerationError(onError);
+      globalThis.electronAPI.analyzeTestCoverage(filePath, existingTestPath, projectPath);
     });
   },
 
   generateUnitTests: async (filePath: string, existingTestPath?: string, coverageTarget?: number) => {
-    const { setPhase, setStatus, setError, setResult } = get();
+    const { setPhase, setStatus, setResult } = get();
     setPhase('generating');
     setStatus('Generating unit tests...');
 
     return new Promise<TestGenerationResult>((resolve, reject) => {
+      const onStatus = (status: string) => setStatus(status);
+      const cleanup = get().createCleanupHandler([
+        () => globalThis.electronAPI.removeTestGenerationStatusListener(onStatus),
+        () => globalThis.electronAPI.removeTestGenerationCompleteListener(onComplete),
+        () => globalThis.electronAPI.removeTestGenerationErrorListener(onError),
+      ]);
       const onComplete = (data: any) => {
-        window.electronAPI.removeTestGenerationCompleteListener(onComplete);
-        window.electronAPI.removeTestGenerationErrorListener(onError);
+        cleanup();
         const parsed = data as { result?: TestGenerationResult };
         const result = parsed.result as TestGenerationResult;
         setPhase('complete');
@@ -199,30 +223,29 @@ export const useTestGenerationStore = create<TestGenerationState>((set, get) => 
         setResult(result);
         resolve(result);
       };
-      const onError = (error: string) => {
-        window.electronAPI.removeTestGenerationCompleteListener(onComplete);
-        window.electronAPI.removeTestGenerationErrorListener(onError);
-        setPhase('error');
-        setError(error);
-        reject(new Error(error));
-      };
+      const onError = get().createErrorHandler(cleanup, reject);
       const projectPath = useProjectStore.getState().getActiveProject()?.path;
-      window.electronAPI.onTestGenerationStatus((status: string) => setStatus(status));
-      window.electronAPI.onTestGenerationComplete(onComplete);
-      window.electronAPI.onTestGenerationError(onError);
-      window.electronAPI.generateUnitTests(filePath, existingTestPath, coverageTarget, projectPath);
+      globalThis.electronAPI.onTestGenerationStatus(onStatus);
+      globalThis.electronAPI.onTestGenerationComplete(onComplete);
+      globalThis.electronAPI.onTestGenerationError(onError);
+      globalThis.electronAPI.generateUnitTests(filePath, existingTestPath, coverageTarget, projectPath);
     });
   },
 
   generateE2ETests: async (userStory: string, targetModule: string) => {
-    const { setPhase, setStatus, setError, setResult } = get();
+    const { setPhase, setStatus, setResult } = get();
     setPhase('generating');
     setStatus('Generating E2E tests...');
 
     return new Promise<TestGenerationResult>((resolve, reject) => {
+      const onStatus = (status: string) => setStatus(status);
+      const cleanup = get().createCleanupHandler([
+        () => globalThis.electronAPI.removeTestGenerationStatusListener(onStatus),
+        () => globalThis.electronAPI.removeTestGenerationCompleteListener(onComplete),
+        () => globalThis.electronAPI.removeTestGenerationErrorListener(onError),
+      ]);
       const onComplete = (data: any) => {
-        window.electronAPI.removeTestGenerationCompleteListener(onComplete);
-        window.electronAPI.removeTestGenerationErrorListener(onError);
+        cleanup();
         const parsed = data as { result?: TestGenerationResult };
         const result = parsed.result as TestGenerationResult;
         setPhase('complete');
@@ -230,30 +253,29 @@ export const useTestGenerationStore = create<TestGenerationState>((set, get) => 
         setResult(result);
         resolve(result);
       };
-      const onError = (error: string) => {
-        window.electronAPI.removeTestGenerationCompleteListener(onComplete);
-        window.electronAPI.removeTestGenerationErrorListener(onError);
-        setPhase('error');
-        setError(error);
-        reject(new Error(error));
-      };
+      const onError = get().createErrorHandler(cleanup, reject);
       const projectPath = useProjectStore.getState().getActiveProject()?.path;
-      window.electronAPI.onTestGenerationStatus((status: string) => setStatus(status));
-      window.electronAPI.onTestGenerationComplete(onComplete);
-      window.electronAPI.onTestGenerationError(onError);
-      window.electronAPI.generateE2ETests(userStory, targetModule, projectPath);
+      globalThis.electronAPI.onTestGenerationStatus(onStatus);
+      globalThis.electronAPI.onTestGenerationComplete(onComplete);
+      globalThis.electronAPI.onTestGenerationError(onError);
+      globalThis.electronAPI.generateE2ETests(userStory, targetModule, projectPath);
     });
   },
 
   generateTDDTests: async (spec: { description: string; language: string; snippet_type: string }) => {
-    const { setPhase, setStatus, setError, setResult } = get();
+    const { setPhase, setStatus, setResult } = get();
     setPhase('generating');
     setStatus('Generating TDD tests...');
 
     return new Promise<TestGenerationResult>((resolve, reject) => {
+      const onStatus = (status: string) => setStatus(status);
+      const cleanup = get().createCleanupHandler([
+        () => globalThis.electronAPI.removeTestGenerationStatusListener(onStatus),
+        () => globalThis.electronAPI.removeTestGenerationCompleteListener(onComplete),
+        () => globalThis.electronAPI.removeTestGenerationErrorListener(onError),
+      ]);
       const onComplete = (data: any) => {
-        window.electronAPI.removeTestGenerationCompleteListener(onComplete);
-        window.electronAPI.removeTestGenerationErrorListener(onError);
+        cleanup();
         const parsed = data as { result?: TestGenerationResult };
         const result = parsed.result as TestGenerationResult;
         setPhase('complete');
@@ -261,23 +283,17 @@ export const useTestGenerationStore = create<TestGenerationState>((set, get) => 
         setResult(result);
         resolve(result);
       };
-      const onError = (error: string) => {
-        window.electronAPI.removeTestGenerationCompleteListener(onComplete);
-        window.electronAPI.removeTestGenerationErrorListener(onError);
-        setPhase('error');
-        setError(error);
-        reject(new Error(error));
-      };
+      const onError = get().createErrorHandler(cleanup, reject);
       const projectPath = useProjectStore.getState().getActiveProject()?.path;
-      window.electronAPI.onTestGenerationStatus((status: string) => setStatus(status));
-      window.electronAPI.onTestGenerationComplete(onComplete);
-      window.electronAPI.onTestGenerationError(onError);
-      window.electronAPI.generateTDDTests(spec.description, spec.language, spec.snippet_type, projectPath);
+      globalThis.electronAPI.onTestGenerationStatus(onStatus);
+      globalThis.electronAPI.onTestGenerationComplete(onComplete);
+      globalThis.electronAPI.onTestGenerationError(onError);
+      globalThis.electronAPI.generateTDDTests(spec.description, spec.language, spec.snippet_type, projectPath);
     });
   },
 
   runPostBuildGeneration: async (projectPath: string, modifiedFiles: string[]) => {
-    const { setPhase, setStatus, setError, setPostBuildResults } = get();
+    const { setPhase, setStatus, setError } = get();
 
     try {
       setPhase('generating');

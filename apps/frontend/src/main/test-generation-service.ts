@@ -217,7 +217,9 @@ export class TestGenerationService extends EventEmitter {
       // code === null means killed by signal (e.g. cancel() was called) — ignore silently
       if (code === null) return;
 
-      if (code !== 0 && generationResult === null) {
+      if (generationResult !== null) {
+        this.emit(successEvent, generationResult);
+      } else if (code !== 0) {
         // Strip ANSI escape codes so the error message is readable
         const clean = stderrOutput.replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').replace(/[\u2500-\u257F]/g, '').trim();
         if (clean.includes('rate_limit') || clean.includes('Rate limit')) {
@@ -227,8 +229,9 @@ export class TestGenerationService extends EventEmitter {
         } else {
           this.emit('error', `Test generation failed (exit code ${code}). ${clean.slice(-500)}`);
         }
-      } else if (generationResult !== null) {
-        this.emit(successEvent, generationResult);
+      } else {
+        // Process exited cleanly (code 0) but produced no result — report it so the UI doesn't hang
+        this.emit('error', 'Test generation completed without output. Check that the source file is readable and Claude is authenticated.');
       }
     });
 

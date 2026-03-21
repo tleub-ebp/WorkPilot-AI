@@ -22,6 +22,12 @@ export interface TestGenerationAPI {
   removeTestGenerationCompleteListener: (callback: (result: any) => void) => void;
 }
 
+// Maps to store callback → actual IPC listener so removeListener can find the exact reference
+const statusListeners = new Map<Function, (event: IpcRendererEvent, status: string) => void>();
+const errorListeners = new Map<Function, (event: IpcRendererEvent, error: string) => void>();
+const resultListeners = new Map<Function, (event: IpcRendererEvent, result: any) => void>();
+const completeListeners = new Map<Function, (event: IpcRendererEvent, result: any) => void>();
+
 export const createTestGenerationAPI = (): TestGenerationAPI => ({
   analyzeTestCoverage: async (
     filePath: string,
@@ -80,34 +86,75 @@ export const createTestGenerationAPI = (): TestGenerationAPI => ({
   },
 
   onTestGenerationStatus: (callback: (status: string) => void) => {
-    ipcRenderer.on('test-generation:status', (_event: IpcRendererEvent, status: string) => callback(status));
+    // Remove any existing listener for this callback before adding a new one
+    const existing = statusListeners.get(callback);
+    if (existing) {
+      ipcRenderer.removeListener('test-generation:status', existing);
+    }
+    const listener = (_event: IpcRendererEvent, status: string) => callback(status);
+    statusListeners.set(callback, listener);
+    ipcRenderer.on('test-generation:status', listener);
   },
 
   onTestGenerationError: (callback: (error: string) => void) => {
-    ipcRenderer.on('test-generation:error', (_event: IpcRendererEvent, error: string) => callback(error));
+    const existing = errorListeners.get(callback);
+    if (existing) {
+      ipcRenderer.removeListener('test-generation:error', existing);
+    }
+    const listener = (_event: IpcRendererEvent, error: string) => callback(error);
+    errorListeners.set(callback, listener);
+    ipcRenderer.on('test-generation:error', listener);
   },
 
   onTestGenerationResult: (callback: (result: any) => void) => {
-    ipcRenderer.on('test-generation:result', (_event: IpcRendererEvent, result: any) => callback(result));
+    const existing = resultListeners.get(callback);
+    if (existing) {
+      ipcRenderer.removeListener('test-generation:result', existing);
+    }
+    const listener = (_event: IpcRendererEvent, result: any) => callback(result);
+    resultListeners.set(callback, listener);
+    ipcRenderer.on('test-generation:result', listener);
   },
 
   onTestGenerationComplete: (callback: (result: any) => void) => {
-    ipcRenderer.on('test-generation:complete', (_event: IpcRendererEvent, result: any) => callback(result));
+    const existing = completeListeners.get(callback);
+    if (existing) {
+      ipcRenderer.removeListener('test-generation:complete', existing);
+    }
+    const listener = (_event: IpcRendererEvent, result: any) => callback(result);
+    completeListeners.set(callback, listener);
+    ipcRenderer.on('test-generation:complete', listener);
   },
 
   removeTestGenerationStatusListener: (callback: (status: string) => void) => {
-    ipcRenderer.removeListener('test-generation:status', (_event: IpcRendererEvent, status: string) => callback(status));
+    const listener = statusListeners.get(callback);
+    if (listener) {
+      ipcRenderer.removeListener('test-generation:status', listener);
+      statusListeners.delete(callback);
+    }
   },
 
   removeTestGenerationErrorListener: (callback: (error: string) => void) => {
-    ipcRenderer.removeListener('test-generation:error', (_event: IpcRendererEvent, error: string) => callback(error));
+    const listener = errorListeners.get(callback);
+    if (listener) {
+      ipcRenderer.removeListener('test-generation:error', listener);
+      errorListeners.delete(callback);
+    }
   },
 
   removeTestGenerationResultListener: (callback: (result: any) => void) => {
-    ipcRenderer.removeListener('test-generation:result', (_event: IpcRendererEvent, result: any) => callback(result));
+    const listener = resultListeners.get(callback);
+    if (listener) {
+      ipcRenderer.removeListener('test-generation:result', listener);
+      resultListeners.delete(callback);
+    }
   },
 
   removeTestGenerationCompleteListener: (callback: (result: any) => void) => {
-    ipcRenderer.removeListener('test-generation:complete', (_event: IpcRendererEvent, result: any) => callback(result));
+    const listener = completeListeners.get(callback);
+    if (listener) {
+      ipcRenderer.removeListener('test-generation:complete', listener);
+      completeListeners.delete(callback);
+    }
   },
 });
