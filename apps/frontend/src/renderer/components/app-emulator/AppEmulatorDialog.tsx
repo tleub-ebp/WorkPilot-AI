@@ -12,6 +12,8 @@ import {
   Copy,
   Check,
   Globe,
+  Search,
+  X,
 } from 'lucide-react';
 import {
   Dialog,
@@ -50,6 +52,66 @@ function execCommandCopy(text: string, onSuccess: () => void) {
   }
 }
 
+/** Maps a matched level keyword to its Tailwind color class. */
+function classifyLogLevel(keyword: string): string {
+  const k = keyword.toLowerCase();
+  if (/^(error|err|fatal|critical|crit|panic|exception|severe|fail(ed)?)$/.test(k)) return 'text-red-400';
+  if (/^(warn|warning|wrn)$/.test(k)) return 'text-amber-400';
+  if (/^(info|information|inf|notice)$/.test(k)) return 'text-sky-400';
+  if (/^(debug|dbg|dbug|trace|trce|trc|verbose|verb|vrb)$/.test(k)) return 'text-slate-400';
+  return '';
+}
+
+/**
+ * Classify a log line and return its Tailwind color class.
+ * Generic — works across any language, framework, or log format.
+ *
+ * Priority order:
+ *  1. Bracket notation  — [ERROR], (WARN), {INFO}
+ *  2. Keyword prefix    — "ERROR:", "warn |", "fail -" at line start
+ *  3. Uppercase keyword — standalone ERROR/WARN/INFO/DEBUG anywhere in line
+ *  4. Success symbols   — ✓, ✔, ✅ or common "ready" phrases
+ */
+function classifyLogLine(line: string): string {
+  // 1. Bracket notation: [LEVEL], (LEVEL), {LEVEL}
+  const bracketMatch = line.match(/[\[({]([a-z]+)[\])}]/i);
+  if (bracketMatch) {
+    const cls = classifyLogLevel(bracketMatch[1]);
+    if (cls) return cls;
+  }
+
+  // 2. Keyword prefix at start of line, optionally after a timestamp in brackets.
+  //    Covers: "ERROR:", "warn:", "fail:", "DEBUG |", "TRACE -"
+  const prefixMatch = line.match(/^\s*(?:\[[^\]]*\]\s*)?([a-z]+)\s*[:|]/i);
+  if (prefixMatch) {
+    const cls = classifyLogLevel(prefixMatch[1]);
+    if (cls) return cls;
+  }
+
+  // 3. Uppercase standalone keyword anywhere in the line.
+  //    Uppercase-only avoids false positives on ordinary words ("error" in a sentence).
+  const upperMatch = line.match(/\b(ERROR|FATAL|CRITICAL|EXCEPTION|PANIC|FAILED|WARNING|WARN|INFO|INFORMATION|DEBUG|TRACE|VERBOSE)\b/);
+  if (upperMatch) {
+    return classifyLogLevel(upperMatch[1]);
+  }
+
+  // 4. Success / ready indicators (symbols or common phrases)
+  if (/[✓✔✅]/.test(line) || /\b(compiled successfully|ready in|ready on|application started|now listening|server (started|running))\b/i.test(line)) {
+    return 'text-green-400';
+  }
+
+  return '';
+}
+
+/** Render log text with per-line color highlighting based on log level. */
+function renderColorizedContent(text: string) {
+  return text.split('\n').map((line, i) => (
+    <span key={i} className={`block ${classifyLogLine(line)}`}>
+      {line}
+    </span>
+  ));
+}
+
 /**
  * AppEmulatorDialog — Preview the application directly from WorkPilot.
  *
@@ -63,6 +125,8 @@ export function AppEmulatorDialog() {
   const [copied, setCopied] = useState(false);
   /** Active tab: PREVIEW_TAB | service label | null (no explicit selection yet) */
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  /** Per-tab log search query */
+  const [searchQuery, setSearchQuery] = useState('');
 
   const {
     isOpen,
@@ -86,6 +150,7 @@ export function AppEmulatorDialog() {
   // Reset tab when config changes (new project / retry)
   useEffect(() => {
     setActiveTab(null);
+    setSearchQuery('');
   }, [config]);
 
   // Auto-switch to Preview tab when the server becomes ready (web apps)
@@ -107,6 +172,11 @@ export function AppEmulatorDialog() {
     return null;
   }, [activeTab, phase, isWeb, isMultiService, services]);
 
+  // Reset search when active tab changes
+  useEffect(() => {
+    setSearchQuery('');
+  }, [resolvedTab]);
+
   const showPreview = resolvedTab === PREVIEW_TAB && phase === 'running' && isWeb && !!url;
 
   // Filter output lines to the active service tab (no filtering for PREVIEW_TAB or null)
@@ -120,18 +190,28 @@ export function AppEmulatorDialog() {
       .join('\n');
   }, [output, resolvedTab, isMultiService]);
 
+  // Apply search filter on top of the tab-filtered output
+  const searchFilteredOutput = useMemo(() => {
+    if (!searchQuery.trim()) return filteredOutput;
+    const q = searchQuery.toLowerCase();
+    return filteredOutput
+      .split('\n')
+      .filter((line) => line.toLowerCase().includes(q))
+      .join('\n');
+  }, [filteredOutput, searchQuery]);
+
   // Setup IPC listeners
   useEffect(() => {
     const cleanup = setupAppEmulatorListeners();
     return cleanup;
   }, []);
 
-  // Auto-scroll output (only when the log panel is visible)
+  // Auto-scroll output (only when the log panel is visible and not actively searching)
   useEffect(() => {
-    if (!showPreview && outputRef.current) {
+    if (!showPreview && !searchQuery && outputRef.current) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
-  }, [filteredOutput, showPreview]);
+  }, [searchFilteredOutput, showPreview, searchQuery]);
 
   // Auto-detect and start when dialog opens
   useEffect(() => {
@@ -179,7 +259,7 @@ export function AppEmulatorDialog() {
   }, [closeDialog]);
 
   const handleCopyLogs = useCallback(() => {
-    if (!filteredOutput) return;
+    if (!searchFilteredOutput) return;
 
     const markCopied = () => {
       setCopied(true);
@@ -187,13 +267,13 @@ export function AppEmulatorDialog() {
     };
 
     if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(filteredOutput).then(markCopied).catch(() => {
-        execCommandCopy(filteredOutput, markCopied);
+      navigator.clipboard.writeText(searchFilteredOutput).then(markCopied).catch(() => {
+        execCommandCopy(searchFilteredOutput, markCopied);
       });
     } else {
-      execCommandCopy(filteredOutput, markCopied);
+      execCommandCopy(searchFilteredOutput, markCopied);
     }
-  }, [filteredOutput]);
+  }, [searchFilteredOutput]);
 
   if (!isOpen) return null;
 
@@ -307,14 +387,43 @@ export function AppEmulatorDialog() {
                 )}
               </div>
 
+              {/* Search bar */}
+              <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border shrink-0">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t('appEmulator:output.searchPlaceholder')}
+                    className="w-full h-7 pl-7 pr-7 text-xs rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                {searchQuery && (
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {searchFilteredOutput ? searchFilteredOutput.split('\n').filter(Boolean).length : 0}{' '}
+                    {t('appEmulator:output.searchResults')}
+                  </span>
+                )}
+              </div>
+
               {/* Live terminal output */}
               <pre
                 ref={outputRef}
                 className="flex-1 min-h-0 m-3 overflow-y-auto text-xs font-mono text-muted-foreground p-3 whitespace-pre-wrap bg-muted/50 rounded-lg"
               >
-                {filteredOutput || (
-                  <span className="italic opacity-50">{t('appEmulator:steps.waitingOutput')}</span>
-                )}
+                {searchFilteredOutput
+                  ? renderColorizedContent(searchFilteredOutput)
+                  : <span className="italic opacity-50">{t('appEmulator:steps.waitingOutput')}</span>}
               </pre>
             </div>
           )}
@@ -332,24 +441,57 @@ export function AppEmulatorDialog() {
 
           {/* Running State — log tabs (service tabs or non-web terminal) */}
           {phase === 'running' && !showPreview && (
-            <ScrollArea className="flex-1 min-h-0">
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <TerminalIcon className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">
-                    {isMultiService && resolvedTab !== PREVIEW_TAB
-                      ? resolvedTab
-                      : t('appEmulator:output.title')}
-                  </span>
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-2 border-b border-border shrink-0">
+                <TerminalIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="text-sm font-medium shrink-0">
+                  {isMultiService && resolvedTab !== PREVIEW_TAB
+                    ? resolvedTab
+                    : t('appEmulator:output.title')}
+                </span>
+                <div className="flex-1 relative">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t('appEmulator:output.searchPlaceholder')}
+                    className="w-full h-7 pl-7 pr-7 text-xs rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
-                <pre
-                  ref={outputRef}
-                  className="text-xs font-mono text-foreground whitespace-pre-wrap bg-muted/50 rounded-lg p-3"
-                >
-                  {filteredOutput || t('appEmulator:output.noOutput')}
-                </pre>
+                {searchQuery && (
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {searchFilteredOutput
+                      ? searchFilteredOutput.split('\n').filter(Boolean).length
+                      : 0}{' '}
+                    {t('appEmulator:output.searchResults')}
+                  </span>
+                )}
               </div>
-            </ScrollArea>
+              <ScrollArea className="flex-1 min-h-0">
+                <div className="p-4">
+                  <pre
+                    ref={outputRef}
+                    className="text-xs font-mono text-foreground whitespace-pre-wrap bg-muted/50 rounded-lg p-3"
+                  >
+                    {searchFilteredOutput
+                      ? renderColorizedContent(searchFilteredOutput)
+                      : (searchQuery
+                          ? t('appEmulator:output.noResults', { query: searchQuery })
+                          : t('appEmulator:output.noOutput'))}
+                  </pre>
+                </div>
+              </ScrollArea>
+            </div>
           )}
 
           {/* Error State */}
@@ -363,12 +505,12 @@ export function AppEmulatorDialog() {
                   </p>
                 )}
               </div>
-              {filteredOutput && (
+              {searchFilteredOutput && (
                 <pre
                   ref={outputRef}
                   className="flex-1 min-h-0 mx-4 mb-4 overflow-y-auto text-xs font-mono text-muted-foreground p-3 whitespace-pre-wrap bg-muted/50 rounded-lg"
                 >
-                  {filteredOutput}
+                  {renderColorizedContent(searchFilteredOutput)}
                 </pre>
               )}
             </div>
@@ -404,7 +546,7 @@ export function AppEmulatorDialog() {
                 </Button>
               </>
             )}
-            {!showPreview && filteredOutput && (
+            {!showPreview && searchFilteredOutput && (
               <Button variant="outline" size="sm" onClick={handleCopyLogs}>
                 {copied ? (
                   <Check className="h-4 w-4 mr-1.5 text-green-500" />

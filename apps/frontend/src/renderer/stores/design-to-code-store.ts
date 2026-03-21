@@ -81,9 +81,6 @@ export type FrameworkType = 'react' | 'vue' | 'angular' | 'svelte' | 'nextjs' | 
 export type DesignSourceType = 'screenshot' | 'figma' | 'wireframe' | 'whiteboard' | 'photo';
 
 interface DesignToCodeState {
-  // Dialog state
-  isOpen: boolean;
-
   // Pipeline state
   phase: PipelinePhase;
   status: string;
@@ -109,10 +106,6 @@ interface DesignToCodeState {
 }
 
 interface DesignToCodeActions {
-  // Dialog
-  openDialog: () => void;
-  closeDialog: () => void;
-
   // Configuration
   setFramework: (framework: FrameworkType) => void;
   setSourceType: (sourceType: DesignSourceType) => void;
@@ -138,7 +131,6 @@ interface DesignToCodeActions {
 }
 
 const initialState: DesignToCodeState = {
-  isOpen: false,
   phase: 'idle',
   status: '',
   result: null,
@@ -158,10 +150,6 @@ const initialState: DesignToCodeState = {
 
 export const useDesignToCodeStore = create<DesignToCodeState & DesignToCodeActions>((set) => ({
   ...initialState,
-
-  // Dialog
-  openDialog: () => set({ isOpen: true }),
-  closeDialog: () => set({ isOpen: false }),
 
   // Configuration
   setFramework: (framework) => set({ framework }),
@@ -214,20 +202,6 @@ export const useDesignToCodeStore = create<DesignToCodeState & DesignToCodeActio
   setSelectedFileIndex: (index) => set({ selectedFileIndex: index }),
   setActiveTab: (tab) => set({ activeTab: tab }),
 }));
-
-/**
- * Open the Design-to-Code dialog
- */
-export function openDesignToCodeDialog() {
-  useDesignToCodeStore.getState().openDialog();
-}
-
-/**
- * Close the Design-to-Code dialog
- */
-export function closeDesignToCodeDialog() {
-  useDesignToCodeStore.getState().closeDialog();
-}
 
 /**
  * Run the design-to-code pipeline via IPC
