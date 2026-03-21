@@ -17,7 +17,6 @@ backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
 from services.conflict_predictor_service import get_conflict_predictor_service
-from core.context_manager import get_project_context
 
 
 class ConflictPredictorRunner:
@@ -28,28 +27,23 @@ class ConflictPredictorRunner:
     def __init__(self):
         self.conflict_service = get_conflict_predictor_service()
     
-    def run_conflict_analysis(self, project_id: str) -> Dict[str, Any]:
+    def run_conflict_analysis(self, project_path: str) -> Dict[str, Any]:
         """
         Run conflict prediction analysis for a given project.
-        
+
         Args:
-            project_id: ID of the project
-            
+            project_path: Path to the project directory
+
         Returns:
             Dictionary containing the conflict analysis result
         """
         try:
             # Emit start event
             self._emit_event('start', {'status': 'Analyzing project for potential conflicts...'})
-            
-            # Get project context
-            self._emit_event('progress', {'status': 'Loading project context...'})
-            project_context = get_project_context(project_id)
-            project_path = project_context.get('project_path', '')
-            
-            if not project_path:
-                raise ValueError(f"Project context not found for project ID: {project_id}")
-            
+
+            if not project_path or not os.path.exists(project_path):
+                raise ValueError(f"Project path not found: {project_path}")
+
             # Run the conflict analysis
             self._emit_event('progress', {'status': 'Scanning worktrees and branches...'})
             result = self.conflict_service.analyze_project_conflicts(project_path)
@@ -252,13 +246,13 @@ class ConflictPredictorRunner:
 def main():
     """Main entry point for the conflict predictor runner"""
     parser = argparse.ArgumentParser(description='Conflict Predictor Runner')
-    parser.add_argument('--project-id', required=True, help='Project ID')
-    
+    parser.add_argument('--project-path', required=True, help='Path to the project directory')
+
     args = parser.parse_args()
-    
+
     try:
         runner = ConflictPredictorRunner()
-        result = runner.run_conflict_analysis(args.project_id)
+        result = runner.run_conflict_analysis(args.project_path)
         # Result is already emitted via events, but we also return it for completeness
         print(f"CONFLICT_PREDICTOR_RESULT:{json.dumps(result)}", flush=True)
         

@@ -9,8 +9,7 @@ import {
   Loader2, 
   RefreshCw, 
   Shield, 
-  TriangleAlert, 
-  X, 
+  TriangleAlert,
   FileText,
   Users,
   Target,
@@ -187,10 +186,10 @@ export function ConflictPredictorDialog() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <GitBranch className="h-5 w-5" />
-            Conflict Predictor
+            {t('conflictPredictor:title')}
           </DialogTitle>
           <DialogDescription>
-            Proactive conflict detection between worktrees and branches
+            {t('conflictPredictor:description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -202,12 +201,16 @@ export function ConflictPredictorDialog() {
                 {phase === 'analyzing' && <Loader2 className="h-4 w-4 animate-spin" />}
                 {phase === 'complete' && <Check className="h-4 w-4 text-green-600" />}
                 {phase === 'error' && <AlertTriangle className="h-4 w-4 text-red-600" />}
-                <span className="text-sm font-medium">{status}</span>
+                <span className="text-sm font-medium">
+                  {phase === 'error'
+                    ? t('conflictPredictor:status.analysisFailed')
+                    : status}
+                </span>
               </div>
               
               {phase === 'analyzing' && (
                 <div className="text-xs text-muted-foreground">
-                  Analyzing worktrees...
+                  {t('conflictPredictor:status.analyzing')}
                 </div>
               )}
             </div>
@@ -219,10 +222,10 @@ export function ConflictPredictorDialog() {
           {result && (
             <Tabs defaultValue="overview" className="flex-1">
               <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="conflicts">Conflicts</TabsTrigger>
-                <TabsTrigger value="files">Files</TabsTrigger>
-                <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
+                <TabsTrigger value="overview">{t('conflictPredictor:tabs.overview')}</TabsTrigger>
+                <TabsTrigger value="conflicts">{t('conflictPredictor:tabs.conflicts')}</TabsTrigger>
+                <TabsTrigger value="files">{t('conflictPredictor:tabs.files')}</TabsTrigger>
+                <TabsTrigger value="recommendations">{t('conflictPredictor:tabs.recommendations')}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="mt-4">
@@ -232,7 +235,7 @@ export function ConflictPredictorDialog() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Target className="h-5 w-5" />
-                        Risk Assessment
+                        {t('conflictPredictor:result.riskLevel')}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -247,25 +250,25 @@ export function ConflictPredictorDialog() {
                     <Card>
                       <CardContent className="pt-6">
                         <div className="text-2xl font-bold">{result.total_worktrees}</div>
-                        <p className="text-xs text-muted-foreground">Active Worktrees</p>
+                        <p className="text-xs text-muted-foreground">{t('conflictPredictor:result.worktrees')}</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="pt-6">
                         <div className="text-2xl font-bold text-red-600">{result.summary.total_conflicts}</div>
-                        <p className="text-xs text-muted-foreground">Total Conflicts</p>
+                        <p className="text-xs text-muted-foreground">{t('conflictPredictor:result.conflicts')}</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="pt-6">
                         <div className="text-2xl font-bold text-orange-600">{result.summary.critical_conflicts + result.summary.high_conflicts}</div>
-                        <p className="text-xs text-muted-foreground">High Risk</p>
+                        <p className="text-xs text-muted-foreground">{t('conflictPredictor:stats.highRisk')}</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="pt-6">
                         <div className="text-2xl font-bold text-green-600">{result.modified_files.length}</div>
-                        <p className="text-xs text-muted-foreground">Files Modified</p>
+                        <p className="text-xs text-muted-foreground">{t('conflictPredictor:stats.filesModified')}</p>
                       </CardContent>
                     </Card>
                   </div>
@@ -275,7 +278,7 @@ export function ConflictPredictorDialog() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Users className="h-5 w-5" />
-                        Active Worktrees & Branches
+                        {t('conflictPredictor:result.worktreesAndBranches')}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -296,10 +299,10 @@ export function ConflictPredictorDialog() {
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <GitMerge className="h-5 w-5" />
-                          Safe Merge Order
+                          {t('conflictPredictor:result.safeMergeOrder')}
                         </CardTitle>
                         <CardDescription>
-                          Suggested order to minimize conflicts
+                          {t('conflictPredictor:result.safeMergeOrderDesc')}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -325,11 +328,11 @@ export function ConflictPredictorDialog() {
                     {result.conflicts_detected.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
                         <Check className="h-12 w-12 mx-auto mb-4 text-green-600" />
-                        <p>No conflicts detected - safe for parallel development!</p>
+                        <p>{t('conflictPredictor:result.noConflicts')}</p>
                       </div>
                     ) : (
-                      result.conflicts_detected.map((conflict, index) => (
-                        <Card key={index}>
+                      result.conflicts_detected.map((conflict) => (
+                        <Card key={`${conflict.worktree1}-${conflict.worktree2}-${conflict.file_path}`}>
                           <CardHeader>
                             <div className="flex items-center justify-between">
                               <CardTitle className="text-base">{conflict.file_path}</CardTitle>
@@ -347,7 +350,7 @@ export function ConflictPredictorDialog() {
                               </div>
                               <p className="text-sm text-muted-foreground">{conflict.description}</p>
                               <div className="mt-2 p-2 bg-muted rounded text-sm">
-                                <strong>Resolution:</strong> {conflict.resolution_strategy}
+                                <strong>{t('conflictPredictor:result.resolution')}:</strong> {conflict.resolution_strategy}
                               </div>
                             </div>
                           </CardContent>
@@ -361,8 +364,8 @@ export function ConflictPredictorDialog() {
               <TabsContent value="files" className="mt-4">
                 <ScrollArea className="h-[400px]">
                   <div className="space-y-2">
-                    {result.modified_files.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded">
+                    {result.modified_files.map((file) => (
+                      <div key={`${file.worktree_name}-${file.file_path}`} className="flex items-center justify-between p-3 border rounded">
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4" />
                           <span className="text-sm font-mono">{file.file_path}</span>
@@ -387,13 +390,13 @@ export function ConflictPredictorDialog() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Zap className="h-5 w-5" />
-                        Recommendations
+                        {t('conflictPredictor:result.recommendations')}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
                         {result.recommendations.map((rec, index) => (
-                          <div key={index} className="flex gap-3">
+                          <div key={rec.substring(0, 20).replaceAll(/\s+/g, '-')} className="flex gap-3">
                             <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center shrink-0">
                               {index + 1}
                             </div>
@@ -409,13 +412,13 @@ export function ConflictPredictorDialog() {
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <AlertTriangle className="h-5 w-5" />
-                          High Risk Areas
+                          {t('conflictPredictor:result.highRiskAreas')}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-2">
                           {result.high_risk_areas.map((area, index) => (
-                            <div key={index} className="flex items-center gap-2 text-sm">
+                            <div key={area.substring(0, 20).replaceAll(/\s+/g, '-')} className="flex items-center gap-2 text-sm">
                               <div className="w-2 h-2 rounded-full bg-red-500"></div>
                               <span>{area}</span>
                             </div>
@@ -445,7 +448,7 @@ export function ConflictPredictorDialog() {
           {process.env.NODE_ENV === 'development' && streamingOutput && (
             <Card className="mt-4">
               <CardHeader>
-                <CardTitle className="text-sm">Debug Output</CardTitle>
+                <CardTitle className="text-sm">{t('conflictPredictor:result.streamingOutput')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <pre ref={streamOutputRef} className="text-xs bg-muted p-2 rounded overflow-auto max-h-32">
@@ -460,17 +463,17 @@ export function ConflictPredictorDialog() {
           {phase === 'idle' && (
             <>
               <Button variant="outline" onClick={handleClose}>
-                Cancel
+                {t('conflictPredictor:actions.cancel')}
               </Button>
               <Button onClick={handleAnalyze} disabled={!selectedProjectId}>
-                Analyze Conflicts
+                {t('conflictPredictor:actions.analyzeConflicts')}
               </Button>
             </>
           )}
 
           {phase === 'analyzing' && (
             <Button variant="outline" onClick={handleClose}>
-              Cancel
+              {t('conflictPredictor:actions.cancel')}
             </Button>
           )}
 
@@ -478,14 +481,14 @@ export function ConflictPredictorDialog() {
             <>
               <Button variant="outline" onClick={handleCopyResults}>
                 <Copy className="h-4 w-4 mr-2" />
-                {copied ? 'Copied!' : 'Copy Report'}
+                {copied ? t('conflictPredictor:actions.copied') : t('conflictPredictor:actions.copy')}
               </Button>
               <Button onClick={handleAnalyze}>
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Re-analyze
+                {t('conflictPredictor:actions.reanalyze')}
               </Button>
               <Button onClick={handleClose}>
-                Close
+                {t('conflictPredictor:actions.close')}
               </Button>
             </>
           )}
@@ -493,11 +496,11 @@ export function ConflictPredictorDialog() {
           {phase === 'error' && (
             <>
               <Button variant="outline" onClick={handleClose}>
-                Close
+                {t('conflictPredictor:actions.close')}
               </Button>
               <Button onClick={handleRetry}>
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Retry
+                {t('conflictPredictor:actions.retry')}
               </Button>
             </>
           )}

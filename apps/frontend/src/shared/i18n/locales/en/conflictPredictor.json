@@ -5,24 +5,40 @@
     "analyzeConflicts": "Analyze Conflicts",
     "cancel": "Cancel",
     "close": "Close",
-    "copy": "Copy",
-    "copied": "Copied",
-    "retry": "Retry"
+    "copy": "Copy Report",
+    "copied": "Copied!",
+    "retry": "Retry",
+    "reanalyze": "Re-analyze"
   },
   "status": {
-    "analyzing": "Analyzing conflicts...",
+    "analyzing": "Analyzing worktrees...",
+    "analysisFailed": "Analysis failed",
     "error": "Error",
     "ready": "Ready"
   },
+  "tabs": {
+    "overview": "Overview",
+    "conflicts": "Conflicts",
+    "files": "Files",
+    "recommendations": "Recommendations"
+  },
   "result": {
-    "conflicts": "Detected Conflicts",
-    "riskLevel": "Risk Level",
+    "conflicts": "Total Conflicts",
+    "riskLevel": "Risk Assessment",
     "worktrees": "Active Worktrees",
+    "worktreesAndBranches": "Active Worktrees & Branches",
     "recommendations": "Recommendations",
     "safeMergeOrder": "Safe Merge Order",
+    "safeMergeOrderDesc": "Suggested order to minimize conflicts",
     "highRiskAreas": "High Risk Areas",
     "summary": "Summary",
-    "streamingOutput": "Live Output"
+    "streamingOutput": "Debug Output",
+    "noConflicts": "No conflicts detected - safe for parallel development!",
+    "resolution": "Resolution"
+  },
+  "stats": {
+    "highRisk": "High Risk",
+    "filesModified": "Files Modified"
   },
   "riskLevels": {
     "low": "Low",

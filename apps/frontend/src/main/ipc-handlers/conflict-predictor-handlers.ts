@@ -8,6 +8,9 @@ import { ipcMain } from 'electron';
 import { spawn, ChildProcess } from 'child_process';
 import { resolve } from 'path';
 import { app } from 'electron';
+import { projectStore } from '../project-store';
+import { getConfiguredPythonPath } from '../python-env-manager';
+import { parsePythonCommand } from '../python-detector';
 
 interface ConflictPredictorRequest {
   projectId: string;
@@ -29,12 +32,22 @@ export function setupConflictPredictorHandlers() {
     return new Promise((resolve, reject) => {
       killExistingProcess();
 
+      const project = projectStore.getProject(projectId);
+      if (!project) {
+        const errorMessage = `Project not found: ${projectId}`;
+        event.sender.send('conflict-predictor-error', errorMessage);
+        reject(new Error(errorMessage));
+        return;
+      }
+
       const backendPath = resolve(app.getAppPath(), 'apps', 'backend');
       const runnerPath = resolve(backendPath, 'runners', 'conflict_predictor_runner.py');
 
-      const spawnedProcess = spawn('python', [
+      const [pythonCommand, pythonBaseArgs] = parsePythonCommand(getConfiguredPythonPath());
+      const spawnedProcess = spawn(pythonCommand, [
+        ...pythonBaseArgs,
         runnerPath,
-        '--project-id', projectId
+        '--project-path', project.path
       ], {
         cwd: backendPath,
         env: {

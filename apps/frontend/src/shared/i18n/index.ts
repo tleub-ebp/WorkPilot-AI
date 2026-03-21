@@ -50,6 +50,7 @@ import enWelcome from './locales/en/welcome.json';
 import enPairProgramming from './locales/en/pairProgramming.json';
 import enArena from './locales/en/arena.json';
 import enApiExplorer from './locales/en/apiExplorer.json';
+import enPipelineGenerator from './locales/en/pipelineGenerator.json';
 
 // Import French translation resources
 import frAppEmulator from './locales/fr/appEmulator.json';
@@ -100,6 +101,7 @@ import frWelcome from './locales/fr/welcome.json';
 import frPairProgramming from './locales/fr/pairProgramming.json';
 import frArena from './locales/fr/arena.json';
 import frApiExplorer from './locales/fr/apiExplorer.json';
+import frPipelineGenerator from './locales/fr/pipelineGenerator.json';
 
 export const defaultNS = 'common';
 
@@ -152,7 +154,8 @@ export const resources = {
     welcome: enWelcome,
     pairProgramming: enPairProgramming,
     arena: enArena,
-    apiExplorer: enApiExplorer
+    apiExplorer: enApiExplorer,
+    pipelineGenerator: enPipelineGenerator
   },
   fr: {
     appEmulator: frAppEmulator,
@@ -202,7 +205,8 @@ export const resources = {
     welcome: frWelcome,
     pairProgramming: frPairProgramming,
     arena: frArena,
-    apiExplorer: frApiExplorer
+    apiExplorer: frApiExplorer,
+    pipelineGenerator: frPipelineGenerator
   }
 } as const;
 
@@ -261,7 +265,8 @@ i18n
       'welcome',
       'pairProgramming',
       'arena',
-      'apiExplorer'
+      'apiExplorer',
+      'pipelineGenerator'
     ],
     interpolation: {
       escapeValue: false 

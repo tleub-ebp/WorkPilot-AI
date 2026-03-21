@@ -1,6 +1,7 @@
 {
   "title": "Pipeline Generator",
   "description": "Auto-generate complete CI/CD pipelines adapted to your project in seconds.",
+  "project": "Project",
   "platforms": "CI/CD Platforms",
   "viewPipeline": "View Pipeline",
   "detectedStack": "Detected Stack",

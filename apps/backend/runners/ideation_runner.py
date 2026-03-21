@@ -23,8 +23,16 @@ import asyncio
 import sys
 from pathlib import Path
 
-# Add auto-claude to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add both the backend dir and project root to sys.path.
+# Project root MUST come first so that `src/connectors/llm_config.py` (in the
+# real project root src/) takes precedence over apps/backend/src/__init__.py.
+# If apps/backend is inserted first, Python caches sys.modules['src'] pointing
+# to apps/backend/src/ (which lacks llm_config.py) and all later `from src.*`
+# imports fail even after the project root is added to sys.path.
+_backend_dir = Path(__file__).parent.parent
+_project_root = _backend_dir.parent.parent
+sys.path.insert(0, str(_backend_dir))
+sys.path.insert(0, str(_project_root))
 
 # Validate platform-specific dependencies BEFORE any imports that might
 # trigger graphiti_core -> real_ladybug -> pywintypes import chain (ACS-253)
