@@ -43,7 +43,10 @@
   },
   "output": {
     "title": "Sortie du serveur",
-    "noOutput": "Aucune sortie pour le moment"
+    "noOutput": "Aucune sortie pour le moment",
+    "searchPlaceholder": "Filtrer les logs...",
+    "searchResults": "lignes",
+    "noResults": "Aucune ligne correspondant à \"{{query}}\""
   },
   "errors": {
     "noProject": "Veuillez sélectionner un projet pour utiliser l'émulateur d'application",

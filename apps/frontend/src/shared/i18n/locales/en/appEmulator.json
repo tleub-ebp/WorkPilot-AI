@@ -43,7 +43,10 @@
   },
   "output": {
     "title": "Server Output",
-    "noOutput": "No output yet"
+    "noOutput": "No output yet",
+    "searchPlaceholder": "Filter logs...",
+    "searchResults": "lines",
+    "noResults": "No lines matching \"{{query}}\""
   },
   "errors": {
     "noProject": "Please select a project to use the App Emulator",
