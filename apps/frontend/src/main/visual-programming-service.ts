@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { app } from 'electron';
+import { getEffectiveSourcePath } from './updater/path-resolver';
 
 export interface GeneratedFile {
   filename: string;
@@ -65,15 +66,10 @@ export class VisualProgrammingService extends EventEmitter {
 
   private getSourcePath(): string | null {
     if (this.sourcePath) return this.sourcePath;
-    const candidates = [
-      path.join(app.getPath('userData'), '..', 'auto-claude'),
-      path.join(process.cwd(), 'apps', 'backend'),
-    ];
-    for (const p of candidates) {
-      if (existsSync(path.join(p, 'runners', 'visual_programming_runner.py'))) {
-        this.sourcePath = p;
-        return p;
-      }
+    const resolved = getEffectiveSourcePath();
+    if (existsSync(path.join(resolved, 'runners', 'visual_programming_runner.py'))) {
+      this.sourcePath = resolved;
+      return resolved;
     }
     return null;
   }

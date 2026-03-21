@@ -1199,8 +1199,8 @@ export function App() {
                           {activeView === 'visual-to-code' && (
                               <VisualToCodeHub />
                           )}
-                          {activeView === 'dashboard' && (activeProjectId || selectedProjectId) && (
-                              <DashboardMetrics projectId={activeProjectId || selectedProjectId!} />
+                          {activeView === 'dashboard' && selectedProject?.path && (
+                              <DashboardMetrics projectPath={selectedProject.path} />
                           )}
                           {activeView === 'analytics' && (
                               <AnalyticsDashboard />
@@ -1214,8 +1214,8 @@ export function App() {
                           {activeView === 'documentation' && (activeProjectId || selectedProjectId) && (
                               <DocumentationView projectId={activeProjectId || selectedProjectId!} />
                           )}
-                          {activeView === 'cost-estimator' && (activeProjectId || selectedProjectId) && (
-                              <CostEstimator projectId={activeProjectId || selectedProjectId!} />
+                          {activeView === 'cost-estimator' && selectedProject?.path && (
+                              <CostEstimator projectPath={selectedProject.path} />
                           )}
                           {activeView === 'session-history' && (activeProjectId || selectedProjectId) && (
                               <SessionHistory projectId={activeProjectId || selectedProjectId!} />

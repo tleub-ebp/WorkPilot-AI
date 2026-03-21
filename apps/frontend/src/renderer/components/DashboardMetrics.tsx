@@ -38,7 +38,7 @@ interface DashboardSnapshot {
 }
 
 interface DashboardMetricsProps {
-  projectId: string;
+  projectPath: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -182,7 +182,7 @@ function CostBreakdown({ costByModel }: { costByModel: Record<string, number> })
 // Main component
 // ---------------------------------------------------------------------------
 
-export function DashboardMetrics({ projectId }: DashboardMetricsProps) {
+export function DashboardMetrics({ projectPath }: DashboardMetricsProps) {
   const { t } = useTranslation('dashboard');
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -192,20 +192,18 @@ export function DashboardMetrics({ projectId }: DashboardMetricsProps) {
     setLoading(true);
     setError(null);
     try {
-      const backendUrl = import.meta.env?.VITE_BACKEND_URL || '';
-      const res = await fetch(`${backendUrl}/api/dashboard/snapshot/${projectId}`);
-      const data = await res.json();
-      if (data.success) {
-        setSnapshot(data.snapshot);
+      const result = await window.electronAPI.getDashboardSnapshot(projectPath);
+      if (result.success) {
+        setSnapshot(result.snapshot!);
       } else {
-        setError(data.error || 'Failed to load dashboard');
+        setError(result.error || 'Failed to load dashboard');
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Network error');
     } finally {
       setLoading(false);
     }
-  }, [projectId]);
+  }, [projectPath]);
 
   useEffect(() => {
     fetchSnapshot();
@@ -213,20 +211,34 @@ export function DashboardMetrics({ projectId }: DashboardMetricsProps) {
 
   const handleExport = async (fmt: 'json' | 'csv') => {
     try {
-      const backendUrl = import.meta.env?.VITE_BACKEND_URL || '';
-      const res = await fetch(`${backendUrl}/api/dashboard/export/${projectId}?fmt=${fmt}`);
-      const data = await res.json();
-      if (data.success) {
-        const blob = new Blob([typeof data.report === 'string' ? data.report : JSON.stringify(data.report, null, 2)], {
-          type: fmt === 'csv' ? 'text/csv' : 'application/json',
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `dashboard-${projectId}.${fmt}`;
-        a.click();
-        URL.revokeObjectURL(url);
+      const result = await window.electronAPI.getDashboardSnapshot(projectPath);
+      if (!result.success || !result.snapshot) return;
+      const snap = result.snapshot;
+      let content: string;
+      if (fmt === 'csv') {
+        const rows = [
+          ['metric', 'value'],
+          ['total_tokens', String(snap.total_tokens)],
+          ['total_cost', String(snap.total_cost)],
+          ['qa_first_pass_rate', String(snap.qa_first_pass_rate)],
+          ['qa_avg_score', String(snap.qa_avg_score)],
+          ['merge_auto_count', String(snap.merge_auto_count)],
+          ['merge_manual_count', String(snap.merge_manual_count)],
+          ...Object.entries(snap.tasks_by_status).map(([k, v]) => [`tasks_${k}`, String(v)]),
+          ...Object.entries(snap.tokens_by_provider).map(([k, v]) => [`tokens_${k}`, String(v)]),
+          ...Object.entries(snap.cost_by_model).map(([k, v]) => [`cost_${k}`, String(v)]),
+        ];
+        content = rows.map(r => r.join(',')).join('\n');
+      } else {
+        content = JSON.stringify(snap, null, 2);
       }
+      const blob = new Blob([content], { type: fmt === 'csv' ? 'text/csv' : 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dashboard-export.${fmt}`;
+      a.click();
+      URL.revokeObjectURL(url);
     } catch {
       // silently fail export
     }

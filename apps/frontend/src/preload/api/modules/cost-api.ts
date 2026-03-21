@@ -26,10 +26,24 @@ export interface BudgetInfo {
   forecast_end_of_month: number;
 }
 
+export interface DashboardSnapshot {
+  tasks_by_status: Record<string, number>;
+  avg_completion_by_complexity: Record<string, number>;
+  qa_first_pass_rate: number;
+  qa_avg_score: number;
+  total_tokens: number;
+  tokens_by_provider: Record<string, number>;
+  total_cost: number;
+  cost_by_model: Record<string, number>;
+  merge_auto_count: number;
+  merge_manual_count: number;
+}
+
 export interface CostAPI {
   getCostSummary(projectPath: string): Promise<{ success: boolean; summary?: CostSummary; error?: string }>;
   getCostBudget(projectPath: string): Promise<{ success: boolean; budget?: BudgetInfo; error?: string }>;
   setCostBudget(projectPath: string, limit: number, period?: string): Promise<{ success: boolean; error?: string }>;
+  getDashboardSnapshot(projectPath: string): Promise<{ success: boolean; snapshot?: DashboardSnapshot; error?: string }>;
 }
 
 export const createCostAPI = (): CostAPI => ({
@@ -41,4 +55,7 @@ export const createCostAPI = (): CostAPI => ({
 
   setCostBudget: (projectPath: string, limit: number, period = 'monthly') =>
     ipcRenderer.invoke('costs:setBudget', projectPath, limit, period),
+
+  getDashboardSnapshot: (projectPath: string) =>
+    ipcRenderer.invoke('dashboard:getSnapshot', projectPath),
 });

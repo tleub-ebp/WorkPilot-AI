@@ -44,7 +44,7 @@ interface BudgetInfo {
 }
 
 interface CostEstimatorProps {
-  projectId: string;
+  readonly projectPath: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -58,11 +58,11 @@ function CostKpiCard({
   icon: Icon,
   color = 'primary',
 }: {
-  title: string;
-  value: string;
-  subtitle?: string;
-  icon: React.ElementType;
-  color?: 'primary' | 'green' | 'amber' | 'red';
+  readonly title: string;
+  readonly value: string;
+  readonly subtitle?: string;
+  readonly icon: React.ElementType;
+  readonly color?: 'primary' | 'green' | 'amber' | 'red';
 }) {
   const colorClasses = {
     primary: 'text-primary bg-primary/10',
@@ -93,13 +93,29 @@ function CostKpiCard({
 // Budget progress bar
 // ---------------------------------------------------------------------------
 
-function BudgetBar({ budget }: { budget: BudgetInfo }) {
+function BudgetBar({ budget }: { readonly budget: BudgetInfo }) {
   const { t } = useTranslation('costEstimator');
   const pct = Math.min(budget.utilization_pct, 100);
-  const barColor =
-    pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-500' : 'bg-emerald-500';
-  const textColor =
-    pct >= 90 ? 'text-red-500' : pct >= 70 ? 'text-amber-500' : 'text-emerald-500';
+
+  // Determine bar color based on utilization percentage
+  let barColor: string;
+  if (pct >= 90) {
+    barColor = 'bg-red-500';
+  } else if (pct >= 70) {
+    barColor = 'bg-amber-500';
+  } else {
+    barColor = 'bg-emerald-500';
+  }
+
+  // Determine text color based on utilization percentage
+  let textColor: string;
+  if (pct >= 90) {
+    textColor = 'text-red-500';
+  } else if (pct >= 70) {
+    textColor = 'text-amber-500';
+  } else {
+    textColor = 'text-emerald-500';
+  }
 
   return (
     <div className="space-y-3">
@@ -137,7 +153,7 @@ function BudgetBar({ budget }: { budget: BudgetInfo }) {
 // Provider breakdown
 // ---------------------------------------------------------------------------
 
-function ProviderBreakdown({ data }: { data: Record<string, number> }) {
+function ProviderBreakdown({ data }: { readonly data: Record<string, number> }) {
   const { t } = useTranslation('costEstimator');
   const entries = Object.entries(data).sort(([, a], [, b]) => b - a);
   const total = entries.reduce((sum, [, v]) => sum + v, 0);
@@ -170,10 +186,24 @@ function ProviderBreakdown({ data }: { data: Record<string, number> }) {
 }
 
 // ---------------------------------------------------------------------------
+// Helper functions
+// ---------------------------------------------------------------------------
+
+function getTrendColor(trendPct: number): 'primary' | 'green' | 'amber' | 'red' {
+  if (trendPct > 20) {
+    return 'red';
+  } else if (trendPct > 0) {
+    return 'amber';
+  } else {
+    return 'green';
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
-export function CostEstimator({ projectId }: CostEstimatorProps) {
+export function CostEstimator({ projectPath }: CostEstimatorProps) {
   const { t } = useTranslation('costEstimator');
   const [summary, setSummary] = useState<CostSummary | null>(null);
   const [budget, setBudget] = useState<BudgetInfo | null>(null);
@@ -185,15 +215,15 @@ export function CostEstimator({ projectId }: CostEstimatorProps) {
     setError(null);
     try {
       const [summaryRes, budgetRes] = await Promise.allSettled([
-        window.electronAPI.getCostSummary(projectId),
-        window.electronAPI.getCostBudget(projectId),
+        globalThis.electronAPI.getCostSummary(projectPath),
+        globalThis.electronAPI.getCostBudget(projectPath),
       ]);
 
       if (summaryRes.status === 'fulfilled' && summaryRes.value.success) {
-        setSummary(summaryRes.value.summary!);
+        setSummary(summaryRes.value.summary);
       }
       if (budgetRes.status === 'fulfilled' && budgetRes.value.success) {
-        setBudget(budgetRes.value.budget!);
+        setBudget(budgetRes.value.budget);
       }
 
       // Only show error if summary failed (budget missing is acceptable)
@@ -206,7 +236,7 @@ export function CostEstimator({ projectId }: CostEstimatorProps) {
     } finally {
       setLoading(false);
     }
-  }, [projectId, t]);
+  }, [projectPath, t]);
 
   useEffect(() => {
     fetchData();
@@ -266,7 +296,7 @@ export function CostEstimator({ projectId }: CostEstimatorProps) {
               value={`$${summary.daily_avg.toFixed(4)}`}
               subtitle={summary.trend_pct >= 0 ? `↑ ${summary.trend_pct.toFixed(0)}%` : `↓ ${Math.abs(summary.trend_pct).toFixed(0)}%`}
               icon={summary.trend_pct >= 0 ? TrendingUp : TrendingDown}
-              color={summary.trend_pct > 20 ? 'red' : summary.trend_pct > 0 ? 'amber' : 'green'}
+              color={getTrendColor(summary.trend_pct)}
             />
             <CostKpiCard
               title={t('kpi.totalTokens.title')}
@@ -292,8 +322,8 @@ export function CostEstimator({ projectId }: CostEstimatorProps) {
               <BudgetBar budget={budget} />
               {budget.alerts.length > 0 && (
                 <div className="mt-4 space-y-2">
-                  {budget.alerts.map((alert, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-amber-500">
+                  {budget.alerts.map((alert) => (
+                    <div key={alert} className="flex items-center gap-2 text-xs text-amber-500">
                       <Bell className="h-3.5 w-3.5 shrink-0" />
                       <span>{alert}</span>
                     </div>

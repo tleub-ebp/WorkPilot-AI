@@ -6,14 +6,12 @@ interface ProfileRendererProps {
   readonly account: ClaudeProfile;
   readonly isActive: boolean;
   readonly onClick: (e: React.MouseEvent) => void;
-  readonly onSetActive: (e: React.MouseEvent) => void;
 }
 
 export function ProfileRenderer({
   account,
   isActive,
   onClick,
-  onSetActive
 }: ProfileRendererProps) {
   const { t } = useTranslation(['common']);
 
@@ -44,13 +42,9 @@ export function ProfileRenderer({
         </div>
       </div>
       {!isActive && (
-        <button
-          type="button"
-          onClick={onSetActive}
-          className="text-xs px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-        >
+        <span className="text-xs px-2 py-1 rounded-md bg-primary/10 text-primary pointer-events-none">
           {t('common:usage.setActive')}
-        </button>
+        </span>
       )}
     </button>
   );
