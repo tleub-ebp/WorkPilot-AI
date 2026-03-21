@@ -711,6 +711,60 @@ function ExportDialog({ spec, onClose }: ExportDialogProps) {
   const activeEnv = environments.find((e) => e.id === activeEnvironmentId) ?? environments[0];
   const [copied, setCopied] = useState(false);
 
+  const httpMethods = ['get', 'post', 'put', 'delete', 'patch', 'head', 'options'];
+
+  const allEndpoints = useMemo(() => {
+    const endpoints: Array<{ key: string; method: string; path: string }> = [];
+    for (const [path, methods] of Object.entries(spec.paths ?? {})) {
+      for (const method of Object.keys(methods)) {
+        if (httpMethods.includes(method)) {
+          endpoints.push({ key: `${method}::${path}`, method, path });
+        }
+      }
+    }
+    return endpoints;
+  }, [spec]);
+
+  const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(
+    () => new Set(allEndpoints.map((e) => e.key))
+  );
+
+  const allSelected = selectedEndpoints.size === allEndpoints.length;
+
+  function toggleEndpoint(key: string) {
+    setSelectedEndpoints((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    if (allSelected) {
+      setSelectedEndpoints(new Set());
+    } else {
+      setSelectedEndpoints(new Set(allEndpoints.map((e) => e.key)));
+    }
+  }
+
+  function getFilteredSpec(): OpenApiSpec {
+    if (selectedEndpoints.size === allEndpoints.length) return spec;
+    const filteredPaths: Record<string, Record<string, OpenApiOperation>> = {};
+    for (const [path, methods] of Object.entries(spec.paths ?? {})) {
+      const filteredMethods: Record<string, OpenApiOperation> = {};
+      for (const [method, op] of Object.entries(methods)) {
+        if (selectedEndpoints.has(`${method}::${path}`)) {
+          filteredMethods[method] = op;
+        }
+      }
+      if (Object.keys(filteredMethods).length > 0) {
+        filteredPaths[path] = filteredMethods;
+      }
+    }
+    return { ...spec, paths: filteredPaths };
+  }
+
   function download(content: string, filename: string, mime: string) {
     const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
@@ -722,20 +776,21 @@ function ExportDialog({ spec, onClose }: ExportDialogProps) {
   }
 
   function exportOpenApi() {
-    download(JSON.stringify(spec, null, 2), 'openapi.json', 'application/json');
+    download(JSON.stringify(getFilteredSpec(), null, 2), 'openapi.json', 'application/json');
   }
 
   function exportPostman() {
-    const collection = buildPostmanCollection(spec, activeEnv?.baseUrl ?? '');
+    const collection = buildPostmanCollection(getFilteredSpec(), activeEnv?.baseUrl ?? '');
     download(JSON.stringify(collection, null, 2), 'collection.postman_collection.json', 'application/json');
   }
 
   function exportMarkdown() {
-    download(buildMarkdownDocs(spec), `${spec.info.title.toLowerCase().replaceAll(/\s+/g, '-')}-api.md`, 'text/markdown');
+    const filtered = getFilteredSpec();
+    download(buildMarkdownDocs(filtered), `${filtered.info.title.toLowerCase().replaceAll(/\s+/g, '-')}-api.md`, 'text/markdown');
   }
 
   function copyOpenApi() {
-    navigator.clipboard.writeText(JSON.stringify(spec, null, 2));
+    navigator.clipboard.writeText(JSON.stringify(getFilteredSpec(), null, 2));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -773,12 +828,46 @@ function ExportDialog({ spec, onClose }: ExportDialogProps) {
           </button>
         </div>
 
+        {allEndpoints.length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-[var(--color-text-secondary)]">
+                {t('apiExplorer:export.endpoints', { selected: selectedEndpoints.size, total: allEndpoints.length })}
+              </span>
+              <button
+                onClick={toggleAll}
+                className="text-xs text-[var(--color-primary)] hover:underline"
+              >
+                {allSelected ? t('apiExplorer:export.deselectAll') : t('apiExplorer:export.selectAll')}
+              </button>
+            </div>
+            <div className="max-h-40 overflow-y-auto rounded-lg border border-[var(--color-border)] divide-y divide-[var(--color-border)]">
+              {allEndpoints.map((ep) => (
+                <label
+                  key={ep.key}
+                  className="flex items-center gap-2.5 px-3 py-1.5 cursor-pointer hover:bg-[var(--color-bg-secondary)] select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedEndpoints.has(ep.key)}
+                    onChange={() => toggleEndpoint(ep.key)}
+                    className="shrink-0 accent-[var(--color-primary)]"
+                  />
+                  <MethodBadge method={ep.method} />
+                  <span className="text-xs text-[var(--color-text-secondary)] truncate font-mono">{ep.path}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="space-y-2.5">
           {formats.map((fmt) => (
             <button
               key={fmt.label}
               onClick={fmt.action}
-              className="w-full text-left flex items-center gap-3 p-3 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border-hover)] hover:bg-[var(--color-bg-secondary)] transition-all group"
+              disabled={selectedEndpoints.size === 0}
+              className="w-full text-left flex items-center gap-3 p-3 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border-hover)] hover:bg-[var(--color-bg-secondary)] transition-all group disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <div className="w-10 h-10 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center text-xs font-bold font-mono text-[var(--color-text-secondary)] shrink-0">
                 {fmt.icon}
@@ -795,7 +884,8 @@ function ExportDialog({ spec, onClose }: ExportDialogProps) {
         <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
           <button
             onClick={copyOpenApi}
-            className="w-full flex items-center justify-center gap-2 py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+            disabled={selectedEndpoints.size === 0}
+            className="w-full flex items-center justify-center gap-2 py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
             {copied ? t('apiExplorer:export.copied') : t('apiExplorer:export.copySpec')}

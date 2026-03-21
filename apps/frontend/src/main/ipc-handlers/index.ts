@@ -69,6 +69,9 @@ import { registerCICDTriggersHandlers, setupCICDTriggersEventForwarding } from '
 import { registerCrossLanguageTranslationHandlers } from './cross-language-translation-handlers';
 import { registerSpecApprovalHandlers } from './spec-approval-handlers';
 import { registerApiExplorerHandlers } from './api-explorer-handlers';
+import { setupTestGenerationHandlers } from './test-generation-handlers';
+import { registerCostHandlers } from './cost-handlers';
+import { registerVisualProgrammingHandlers, setupVisualProgrammingEventForwarding } from './visual-programming-handlers';
 
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from './project-handlers';
@@ -128,6 +131,9 @@ export { registerCICDTriggersHandlers, setupCICDTriggersEventForwarding } from '
 export { registerCrossLanguageTranslationHandlers } from './cross-language-translation-handlers';
 export { registerSpecApprovalHandlers } from './spec-approval-handlers';
 export { registerApiExplorerHandlers } from './api-explorer-handlers';
+export { setupTestGenerationHandlers } from './test-generation-handlers';
+export { registerCostHandlers } from './cost-handlers';
+export { registerVisualProgrammingHandlers, setupVisualProgrammingEventForwarding } from './visual-programming-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -324,6 +330,16 @@ export function setupIpcHandlers(
 
   // API Explorer — project route scanning
   registerApiExplorerHandlers();
+
+  // Test Generation handlers
+  setupTestGenerationHandlers(getMainWindow);
+
+  // Cost Estimator handlers
+  registerCostHandlers();
+
+  // Visual Programming handlers (diagram → code, code → diagram)
+  registerVisualProgrammingHandlers(getMainWindow);
+  setupVisualProgrammingEventForwarding(getMainWindow);
 
   console.warn('[IPC] All handler modules registered successfully');
 }

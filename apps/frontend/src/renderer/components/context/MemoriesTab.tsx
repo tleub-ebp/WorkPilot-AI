@@ -185,7 +185,7 @@ export function MemoriesTab({
               </>
             ) : (
               <div className="text-sm text-muted-foreground">
-                <p>{memoryStatus?.reason || t('context:memories.notConfigured')}</p>
+                <p>{memoryStatus?.reason ? t(`context:memories.${memoryStatus.reason}`, { defaultValue: memoryStatus.reason }) : t('context:memories.notConfigured')}</p>
                 <p className="mt-2 text-xs">
                   {t('context:memories.enableInstructions')} <code className="bg-muted px-1 py-0.5 rounded">GRAPHITI_ENABLED=true</code> {t('context:memories.inProjectSettings')}.
                 </p>

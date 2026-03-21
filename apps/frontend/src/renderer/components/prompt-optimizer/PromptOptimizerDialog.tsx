@@ -182,7 +182,7 @@ export function PromptOptimizerDialog({ onUsePrompt }: PromptOptimizerDialogProp
               <SelectTrigger id="agent-type-select">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-200">
                 {AGENT_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
                     <div className="flex flex-col">

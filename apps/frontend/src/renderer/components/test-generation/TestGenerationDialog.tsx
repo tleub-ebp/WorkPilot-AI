@@ -15,6 +15,13 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Badge } from '../ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import {
@@ -22,6 +29,7 @@ import {
   type CoverageGap,
   type GeneratedTest,
 } from '../../stores/test-generation-store';
+import { SmartFilePicker } from './SmartFilePicker';
 
 const PRIORITY_COLORS = {
   high: 'bg-red-100 text-red-800',
@@ -50,7 +58,7 @@ export function TestGenerationDialog({ onApplyTests }: TestGenerationDialogProps
   const [activeTab, setActiveTab] = useState('analyze');
   const [userStory, setUserStory] = useState('');
   const [targetModule, setTargetModule] = useState('');
-  const [tddSpec, setTddSpec] = useState('');
+  const [tddDescription, setTddDescription] = useState('');
 
   const {
     isOpen,
@@ -61,9 +69,14 @@ export function TestGenerationDialog({ onApplyTests }: TestGenerationDialogProps
     error,
     selectedFile,
     existingTestPath,
-    maxTestsPerFunction,
-    setMaxTestsPerFunction,
+    coverageTarget,
+    setCoverageTarget,
+    tddLanguage,
+    setTddLanguage,
+    tddSnippetType,
+    setTddSnippetType,
     reset,
+    setSelectedFile,
     analyzeCoverage,
     generateUnitTests,
     generateE2ETests,
@@ -77,7 +90,7 @@ export function TestGenerationDialog({ onApplyTests }: TestGenerationDialogProps
       setActiveTab('analyze');
       setUserStory('');
       setTargetModule('');
-      setTddSpec('');
+      setTddDescription('');
       setCopied(false);
     }
   }, [isOpen, reset]);
@@ -89,8 +102,8 @@ export function TestGenerationDialog({ onApplyTests }: TestGenerationDialogProps
 
   const handleGenerateUnitTests = useCallback(async () => {
     if (!selectedFile) return;
-    await generateUnitTests(selectedFile, existingTestPath || undefined, maxTestsPerFunction);
-  }, [selectedFile, existingTestPath, maxTestsPerFunction, generateUnitTests]);
+    await generateUnitTests(selectedFile, existingTestPath || undefined, coverageTarget);
+  }, [selectedFile, existingTestPath, coverageTarget, generateUnitTests]);
 
   const handleGenerateE2ETests = useCallback(async () => {
     if (!userStory.trim() || !targetModule.trim()) return;
@@ -98,14 +111,9 @@ export function TestGenerationDialog({ onApplyTests }: TestGenerationDialogProps
   }, [userStory, targetModule, generateE2ETests]);
 
   const handleGenerateTDDTests = useCallback(async () => {
-    if (!tddSpec.trim()) return;
-    try {
-      const spec = JSON.parse(tddSpec);
-      await generateTDDTests(spec);
-    } catch (e) {
-      console.error('Invalid TDD spec JSON:', e);
-    }
-  }, [tddSpec, generateTDDTests]);
+    if (!tddDescription.trim()) return;
+    await generateTDDTests({ description: tddDescription, language: tddLanguage, snippet_type: tddSnippetType });
+  }, [tddDescription, tddLanguage, tddSnippetType, generateTDDTests]);
 
   const handleCopyToClipboard = useCallback((content: string) => {
     navigator.clipboard.writeText(content);
@@ -187,12 +195,12 @@ export function TestGenerationDialog({ onApplyTests }: TestGenerationDialogProps
           <TabsContent value="analyze" className="space-y-4">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="file-path">{t('testGeneration:sourceFile.label', { defaultValue: 'Source File' })}</Label>
-                <Input
-                  id="file-path"
+                <Label>{t('testGeneration:sourceFile.label', { defaultValue: 'Source File' })}</Label>
+                <SmartFilePicker
                   value={selectedFile}
-                  readOnly
-                  placeholder={t('testGeneration:sourceFile.placeholder', { defaultValue: 'Select a file to analyze' })}
+                  onChange={setSelectedFile}
+                  tabType="analyze"
+                  placeholder={t('testGeneration:filePicker.selectFile')}
                 />
               </div>
 
@@ -266,24 +274,29 @@ export function TestGenerationDialog({ onApplyTests }: TestGenerationDialogProps
           <TabsContent value="unit" className="space-y-4">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="unit-file">{t('testGeneration:sourceFile.label', { defaultValue: 'Source File' })}</Label>
-                <Input
-                  id="unit-file"
+                <Label>{t('testGeneration:sourceFile.label', { defaultValue: 'Source File' })}</Label>
+                <SmartFilePicker
                   value={selectedFile}
-                  readOnly
-                  placeholder={t('testGeneration:unit.placeholder', { defaultValue: 'Select a file for unit test generation' })}
+                  onChange={setSelectedFile}
+                  tabType="unit"
+                  placeholder={t('testGeneration:filePicker.selectFile')}
                 />
               </div>
 
               <div>
-                <Label htmlFor="max-tests">{t('testGeneration:maxTests.label', { defaultValue: 'Max Tests per Function' })}</Label>
+                <Label htmlFor="coverage-target">
+                  {t('testGeneration:coverageTarget.label', { defaultValue: 'Coverage Target (%)' })}
+                  <span className="ml-2 font-semibold">{coverageTarget}%</span>
+                </Label>
                 <Input
-                  id="max-tests"
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={maxTestsPerFunction}
-                  onChange={(e) => setMaxTestsPerFunction(Number.parseInt(e.target.value) || 3)}
+                  id="coverage-target"
+                  type="range"
+                  min="10"
+                  max="100"
+                  step="5"
+                  value={coverageTarget}
+                  onChange={(e) => setCoverageTarget(Number.parseInt(e.target.value))}
+                  className="mt-1"
                 />
               </div>
 
@@ -397,53 +410,51 @@ export function TestGenerationDialog({ onApplyTests }: TestGenerationDialogProps
           <TabsContent value="tdd" className="space-y-4">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="snippet-type">{t('testGeneration:snippetType.label', { defaultValue: 'Snippet Type' })}</Label>
-                <select
-                  id="snippet-type"
-                  className="w-full p-2 rounded-md border-2 border-yellow-400 focus:border-yellow-500 focus-visible:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
-                  style={{
-                    borderRadius: '0.5rem',
-                    outline: 'none'
-                  }}
-                >
-                  <option value="component">{t('testGeneration:snippetType.options.component', { defaultValue: 'Component' })}</option>
-                </select>
+                <Label>{t('testGeneration:snippetType.label', { defaultValue: 'Snippet Type' })}</Label>
+                <Select value={tddSnippetType} onValueChange={setTddSnippetType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-200">
+                    <SelectItem value="function">{t('testGeneration:snippetType.options.function', { defaultValue: 'Function' })}</SelectItem>
+                    <SelectItem value="class">{t('testGeneration:snippetType.options.class', { defaultValue: 'Class' })}</SelectItem>
+                    <SelectItem value="component">{t('testGeneration:snippetType.options.component', { defaultValue: 'Component' })}</SelectItem>
+                    <SelectItem value="api">{t('testGeneration:snippetType.options.api', { defaultValue: 'API Endpoint' })}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
-                <Label htmlFor="language-select">{t('testGeneration:language.label', { defaultValue: 'Language' })}</Label>
-                <select
-                  id="language-select"
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="javascript">JavaScript</option>
-                  <option value="typescript">TypeScript</option>
-                  <option value="python">Python</option>
-                  <option value="java">Java</option>
-                </select>
+                <Label>{t('testGeneration:language.label', { defaultValue: 'Language' })}</Label>
+                <Select value={tddLanguage} onValueChange={setTddLanguage}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-200">
+                    <SelectItem value="typescript">TypeScript</SelectItem>
+                    <SelectItem value="javascript">JavaScript</SelectItem>
+                    <SelectItem value="python">Python</SelectItem>
+                    <SelectItem value="java">Java</SelectItem>
+                    <SelectItem value="csharp">C#</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
-                <Label htmlFor="tdd-spec">{t('testGeneration:tdd.spec.label', { defaultValue: 'Function Specification (JSON)' })}</Label>
+                <Label htmlFor="tdd-description">{t('testGeneration:tdd.description.label', { defaultValue: 'What should this code do?' })}</Label>
                 <Textarea
-                  id="tdd-spec"
-                  value={tddSpec}
-                  onChange={(e) => setTddSpec(e.target.value)}
-                  placeholder={t('testGeneration:tdd.spec.placeholder', { defaultValue: '{\n  "name": "calculate_total",\n  "args": ["items", "tax_rate"],\n  "returns": "float",\n  "description": "Calculate total with tax",\n  "edge_cases": ["empty_items", "invalid_tax_rate"]\n}' })}
-                  rows={8}
-                  className="border-2 border-yellow-400 focus:border-yellow-500 focus-visible:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
-                  style={{
-                    border: '2px solid rgb(250, 204, 21)',
-                    borderRadius: '0.5rem',
-                    outline: 'none'
-                  }}
+                  id="tdd-description"
+                  value={tddDescription}
+                  onChange={(e) => setTddDescription(e.target.value)}
+                  placeholder={t('testGeneration:tdd.description.placeholder', { defaultValue: 'Describe the behaviour to implement. Example: a function that calculates the total price of a cart including taxes and discounts, handling empty carts and negative quantities.' })}
+                  rows={5}
                 />
               </div>
 
               <div className="flex gap-2">
                 <Button
                   onClick={handleGenerateTDDTests}
-                  disabled={phase === 'generating' || !tddSpec.trim()}
+                  disabled={phase === 'generating' || !tddDescription.trim()}
                   className="flex-1"
                 >
                   {phase === 'generating' ? (

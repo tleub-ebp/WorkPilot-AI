@@ -184,33 +184,29 @@ export function CostEstimator({ projectId }: CostEstimatorProps) {
     setLoading(true);
     setError(null);
     try {
-      const backendUrl = import.meta.env?.VITE_BACKEND_URL || '';
       const [summaryRes, budgetRes] = await Promise.allSettled([
-        fetch(`${backendUrl}/api/costs/summary/${projectId}`).then(r => r.json()),
-        fetch(`${backendUrl}/api/costs/budget/${projectId}`).then(r => r.json()),
+        window.electronAPI.getCostSummary(projectId),
+        window.electronAPI.getCostBudget(projectId),
       ]);
 
       if (summaryRes.status === 'fulfilled' && summaryRes.value.success) {
-        setSummary(summaryRes.value.summary);
+        setSummary(summaryRes.value.summary!);
       }
       if (budgetRes.status === 'fulfilled' && budgetRes.value.success) {
-        setBudget(budgetRes.value.budget);
+        setBudget(budgetRes.value.budget!);
       }
 
-      // If both failed, show error
-      if (
-        (summaryRes.status === 'rejected' || !summaryRes.value?.success) &&
-        (budgetRes.status === 'rejected' || !budgetRes.value?.success)
-      ) {
-        const msg = summaryRes.status === 'fulfilled' ? summaryRes.value.error : 'Failed to load';
-        setError(msg || 'Failed to load cost data');
+      // Only show error if summary failed (budget missing is acceptable)
+      if (summaryRes.status === 'rejected' || !summaryRes.value?.success) {
+        const msg = summaryRes.status === 'fulfilled' ? summaryRes.value.error : undefined;
+        setError(msg || t('error'));
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Network error');
+      setError(e instanceof Error ? e.message : t('error'));
     } finally {
       setLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, t]);
 
   useEffect(() => {
     fetchData();

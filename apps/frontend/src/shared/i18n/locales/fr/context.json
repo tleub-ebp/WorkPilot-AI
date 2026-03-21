@@ -92,7 +92,12 @@
     "noMatchingMemories": "Aucune mémoire ne correspond au filtre sélectionné.",
     "showAll": "Afficher toutes les mémoires",
     "enableInstructions": "Pour activer la mémoire graphique, définissez",
-    "inProjectSettings": "dans les paramètres du projet"
+    "inProjectSettings": "dans les paramètres du projet",
+    "reasons.notConfigured": "Graphiti non configuré",
+    "reasons.openaiKeyNotSet": "OPENAI_API_KEY non défini (requis pour les embeddings OpenAI)",
+    "reasons.googleKeyNotSet": "GOOGLE_API_KEY non défini (requis pour les embeddings Google AI)",
+    "reasons.voyageKeyNotSet": "VOYAGE_API_KEY non défini (requis pour les embeddings Voyage AI)",
+    "reasons.azureKeyNotSet": "AZURE_OPENAI_API_KEY non défini (requis pour les embeddings Azure OpenAI)"
   }
 }
 

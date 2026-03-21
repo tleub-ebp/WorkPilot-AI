@@ -222,31 +222,31 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
       setError(null);
 
       // Fetch dashboard overview
-      const overviewResponse = await fetch(`http://localhost:9000/analytics/overview?days=${selectedDays}`);
+      const overviewResponse = await fetch(`/analytics/overview?days=${selectedDays}`);
       if (!overviewResponse.ok) throw new Error('Failed to fetch overview');
       const overviewData = await overviewResponse.json();
       setOverview(overviewData);
 
       // Fetch builds
-      const buildsResponse = await fetch(`http://localhost:9000/analytics/builds?limit=20`);
+      const buildsResponse = await fetch(`/analytics/builds?limit=20`);
       if (!buildsResponse.ok) throw new Error('Failed to fetch builds');
       const buildsData = await buildsResponse.json();
       setBuilds(buildsData);
 
       // Fetch token metrics
-      const tokenResponse = await fetch(`http://localhost:9000/analytics/metrics/tokens?days=${selectedDays}`);
+      const tokenResponse = await fetch(`/analytics/metrics/tokens?days=${selectedDays}`);
       if (!tokenResponse.ok) throw new Error('Failed to fetch token metrics');
       const tokenData = await tokenResponse.json();
       setTokenMetrics(tokenData);
 
       // Fetch QA metrics
-      const qaResponse = await fetch(`http://localhost:9000/analytics/metrics/qa?days=${selectedDays}`);
+      const qaResponse = await fetch(`/analytics/metrics/qa?days=${selectedDays}`);
       if (!qaResponse.ok) throw new Error('Failed to fetch QA metrics');
       const qaData = await qaResponse.json();
       setQaMetrics(qaData);
 
       // Fetch agent performance
-      const agentResponse = await fetch(`http://localhost:9000/analytics/metrics/agent-performance?days=${selectedDays}`);
+      const agentResponse = await fetch(`/analytics/metrics/agent-performance?days=${selectedDays}`);
       if (!agentResponse.ok) throw new Error('Failed to fetch agent performance');
       const agentData = await agentResponse.json();
       setAgentPerformance(agentData);

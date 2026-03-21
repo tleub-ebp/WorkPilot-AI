@@ -102,7 +102,7 @@ export function buildMemoryStatus(
     return {
       enabled: false,
       available: false,
-      reason: 'Graphiti not configured'
+      reason: 'reasons.notConfigured'
     };
   }
 

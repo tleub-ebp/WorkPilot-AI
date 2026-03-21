@@ -13,8 +13,8 @@
   "unit": {
     "placeholder": "Select a file for unit test generation"
   },
-  "maxTests": {
-    "label": "Max Tests per Function"
+  "coverageTarget": {
+    "label": "Coverage Target"
   },
   "userStory": {
     "label": "User Story",
@@ -78,20 +78,28 @@
     "streamingOutput": "Live Output"
   },
   "tdd": {
-    "spec": {
-      "label": "Function Specification (JSON)",
-      "placeholder": "{\n  \"name\": \"calculate_total\",\n  \"args\": [\"items\", \"tax_rate\"],\n  \"returns\": \"float\",\n  \"description\": \"Calculate total with tax\",\n  \"edge_cases\": [\"empty_items\", \"invalid_tax_rate\"]\n}"
+    "description": {
+      "label": "What should this code do?",
+      "placeholder": "Describe the behaviour to implement. Example: a function that calculates the total price of a cart including taxes and discounts, handling empty carts and negative quantities."
     },
-    "generate": "Generate from spec"
+    "generate": "Generate failing tests"
   },
   "snippetType": {
     "label": "Snippet Type",
     "options": {
-      "component": "Component"
+      "function": "Function",
+      "class": "Class",
+      "component": "Component",
+      "api": "API Endpoint"
     }
   },
   "language": {
     "label": "Language"
+  },
+  "filePicker": {
+    "selectFile": "Browse and select a source file...",
+    "filter": "Filter files...",
+    "empty": "No files found"
   },
   "errors": {
     "noFile": "Please select a file to analyze",

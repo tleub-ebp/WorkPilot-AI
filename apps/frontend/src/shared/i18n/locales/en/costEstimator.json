@@ -2,6 +2,7 @@
   "title": "Cost Estimator",
   "subtitle": "LLM usage costs, budgets, and forecasts",
   "retry": "Retry",
+  "error": "Failed to load cost data",
   "kpi": {
     "totalCost": {
       "title": "Total Cost",

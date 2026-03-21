@@ -153,7 +153,7 @@ export function validateEmbeddingConfiguration(
       return {
         valid: false,
         provider: 'openai',
-        reason: 'OPENAI_API_KEY not set (required for OpenAI embeddings)'
+        reason: 'reasons.openaiKeyNotSet'
       };
     }
 
@@ -170,7 +170,7 @@ export function validateEmbeddingConfiguration(
       return {
         valid: false,
         provider: 'google',
-        reason: 'GOOGLE_API_KEY not set (required for Google AI embeddings)'
+        reason: 'reasons.googleKeyNotSet'
       };
     }
 
@@ -182,7 +182,7 @@ export function validateEmbeddingConfiguration(
       return {
         valid: false,
         provider: 'voyage',
-        reason: 'VOYAGE_API_KEY not set (required for Voyage AI embeddings)'
+        reason: 'reasons.voyageKeyNotSet'
       };
     }
 
@@ -194,7 +194,7 @@ export function validateEmbeddingConfiguration(
       return {
         valid: false,
         provider: 'azure_openai',
-        reason: 'AZURE_OPENAI_API_KEY not set (required for Azure OpenAI embeddings)'
+        reason: 'reasons.azureKeyNotSet'
       };
     }
 

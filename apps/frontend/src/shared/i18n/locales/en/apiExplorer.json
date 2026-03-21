@@ -32,7 +32,10 @@
     "postmanDesc": "Import directly into Postman",
     "markdownDesc": "Human-readable API documentation",
     "copySpec": "Copy spec to clipboard",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "endpoints": "{{selected}}/{{total}} endpoints selected",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all"
   },
   "detail": {
     "docs": "Docs",

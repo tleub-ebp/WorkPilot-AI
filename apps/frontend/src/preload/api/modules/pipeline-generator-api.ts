@@ -3,6 +3,7 @@
  */
 
 import type { CiPlatform, PipelineGeneratorRequest, PipelineGeneratorResult } from '../../../main/pipeline-generator-service';
+import { invokeIpc, createIpcListener, type IpcListenerCleanup } from './ipc-utils';
 
 export type { CiPlatform, PipelineGeneratorRequest, PipelineGeneratorResult };
 
@@ -10,27 +11,27 @@ export interface PipelineGeneratorAPI {
   generatePipelines: (request: PipelineGeneratorRequest) => Promise<{ success: boolean; error?: string }>;
   cancelPipelineGeneration: () => Promise<{ success: boolean; cancelled: boolean; error?: string }>;
   configurePipelineGenerator: (config: { pythonPath?: string; autoBuildSourcePath?: string }) => Promise<{ success: boolean; error?: string }>;
-  onPipelineGeneratorStatus: (callback: (status: string) => void) => () => void;
-  onPipelineGeneratorStreamChunk: (callback: (chunk: string) => void) => () => void;
-  onPipelineGeneratorError: (callback: (error: string) => void) => () => void;
-  onPipelineGeneratorComplete: (callback: (result: PipelineGeneratorResult) => void) => () => void;
+  onPipelineGeneratorStatus: (callback: (status: string) => void) => IpcListenerCleanup;
+  onPipelineGeneratorStreamChunk: (callback: (chunk: string) => void) => IpcListenerCleanup;
+  onPipelineGeneratorError: (callback: (error: string) => void) => IpcListenerCleanup;
+  onPipelineGeneratorComplete: (callback: (result: PipelineGeneratorResult) => void) => IpcListenerCleanup;
 }
 
 export function createPipelineGeneratorAPI(): PipelineGeneratorAPI {
   return {
     generatePipelines: (request) =>
-      globalThis.electronAPI.invoke('pipelineGenerator:generate', request),
+      invokeIpc<{ success: boolean; error?: string }>('pipelineGenerator:generate', request),
     cancelPipelineGeneration: () =>
-      globalThis.electronAPI.invoke('pipelineGenerator:cancel'),
+      invokeIpc<{ success: boolean; cancelled: boolean; error?: string }>('pipelineGenerator:cancel'),
     configurePipelineGenerator: (config) =>
-      globalThis.electronAPI.invoke('pipelineGenerator:configure', config),
+      invokeIpc<{ success: boolean; error?: string }>('pipelineGenerator:configure', config),
     onPipelineGeneratorStatus: (callback) =>
-      globalThis.electronAPI.on('pipelineGenerator:status', callback),
+      createIpcListener<[string]>('pipelineGenerator:status', callback),
     onPipelineGeneratorStreamChunk: (callback) =>
-      globalThis.electronAPI.on('pipelineGenerator:streamChunk', callback),
+      createIpcListener<[string]>('pipelineGenerator:streamChunk', callback),
     onPipelineGeneratorError: (callback) =>
-      globalThis.electronAPI.on('pipelineGenerator:error', callback),
+      createIpcListener<[string]>('pipelineGenerator:error', callback),
     onPipelineGeneratorComplete: (callback) =>
-      globalThis.electronAPI.on('pipelineGenerator:complete', callback),
+      createIpcListener<[PipelineGeneratorResult]>('pipelineGenerator:complete', callback),
   };
 }

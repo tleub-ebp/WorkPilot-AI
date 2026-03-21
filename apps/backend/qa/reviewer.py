@@ -26,6 +26,11 @@ from task_logger import (
 
 from .criteria import get_qa_signoff_status, load_implementation_plan, save_implementation_plan
 
+try:
+    from core.usage_tracker import record_qa_result as _ut_record_qa
+except ImportError:
+    _ut_record_qa = None  # type: ignore[assignment]
+
 import re
 from datetime import datetime, timezone
 
@@ -425,6 +430,11 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
 
         if status and status.get("status") == "approved":
             debug_success("qa_reviewer", "QA APPROVED")
+            if _ut_record_qa is not None:
+                try:
+                    _ut_record_qa(project_dir, spec_dir.name, passed=True, score=100.0)
+                except Exception:
+                    pass
             qa_discoveries["patterns_found"].append(
                 f"QA session {qa_session}: All acceptance criteria validated successfully"
             )
@@ -441,6 +451,11 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
             return "approved", response_text
         elif status and status.get("status") == "rejected":
             debug_error("qa_reviewer", "QA REJECTED")
+            if _ut_record_qa is not None:
+                try:
+                    _ut_record_qa(project_dir, spec_dir.name, passed=False, score=0.0)
+                except Exception:
+                    pass
             # Extract issues found for memory
             issues = status.get("issues_found", [])
             for issue in issues:
