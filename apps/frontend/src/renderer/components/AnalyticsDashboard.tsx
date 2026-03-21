@@ -205,6 +205,19 @@ function KpiCard({ title, value, subtitle, icon, trend, className }: KpiCardProp
 // Main Analytics Dashboard Component
 // ---------------------------------------------------------------------------
 
+async function fetchJSON<T>(url: string): Promise<T> {
+  const response = await fetch(url);
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(`Le serveur backend est inaccessible (${response.status})`);
+  }
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.detail ?? `HTTP ${response.status}`);
+  }
+  return response.json() as Promise<T>;
+}
+
 export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
   const { t } = useTranslation('analytics');
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
@@ -221,34 +234,17 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
       setLoading(true);
       setError(null);
 
-      // Fetch dashboard overview
-      const overviewResponse = await fetch(`/analytics/overview?days=${selectedDays}`);
-      if (!overviewResponse.ok) throw new Error('Failed to fetch overview');
-      const overviewData = await overviewResponse.json();
+      const [overviewData, buildsData, tokenData, qaData, agentData] = await Promise.all([
+        fetchJSON<DashboardOverview>(`/analytics/overview?days=${selectedDays}`),
+        fetchJSON<BuildSummary[]>(`/analytics/builds?limit=20`),
+        fetchJSON<TokenMetrics[]>(`/analytics/metrics/tokens?days=${selectedDays}`),
+        fetchJSON<QAMetrics[]>(`/analytics/metrics/qa?days=${selectedDays}`),
+        fetchJSON<AgentPerformanceMetrics[]>(`/analytics/metrics/agent-performance?days=${selectedDays}`),
+      ]);
       setOverview(overviewData);
-
-      // Fetch builds
-      const buildsResponse = await fetch(`/analytics/builds?limit=20`);
-      if (!buildsResponse.ok) throw new Error('Failed to fetch builds');
-      const buildsData = await buildsResponse.json();
       setBuilds(buildsData);
-
-      // Fetch token metrics
-      const tokenResponse = await fetch(`/analytics/metrics/tokens?days=${selectedDays}`);
-      if (!tokenResponse.ok) throw new Error('Failed to fetch token metrics');
-      const tokenData = await tokenResponse.json();
       setTokenMetrics(tokenData);
-
-      // Fetch QA metrics
-      const qaResponse = await fetch(`/analytics/metrics/qa?days=${selectedDays}`);
-      if (!qaResponse.ok) throw new Error('Failed to fetch QA metrics');
-      const qaData = await qaResponse.json();
       setQaMetrics(qaData);
-
-      // Fetch agent performance
-      const agentResponse = await fetch(`/analytics/metrics/agent-performance?days=${selectedDays}`);
-      if (!agentResponse.ok) throw new Error('Failed to fetch agent performance');
-      const agentData = await agentResponse.json();
       setAgentPerformance(agentData);
 
     } catch (err) {

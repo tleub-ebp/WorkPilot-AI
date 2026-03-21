@@ -2,20 +2,28 @@
 LiteLLMRuntime: AgentRuntime for provider-agnostic LLMs via LiteLLM
 Implements agent loop with tool execution for OpenAI-compatible LLMs
 """
+from __future__ import annotations
+
 import sys
-from pathlib import Path
-
-# Ajouter le répertoire racine du projet au chemin pour pouvoir importer src
-project_root = Path(__file__).parent.parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
-
 import asyncio
-from typing import Any, Dict, Optional, List
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict, Optional, List
 from core.runtime import AgentRuntime, SessionResult, StreamEvent, SessionStatus, ErrorType
 from core.llm_client import LLMClient, LLMResponse, LLMToolResponse, ToolCall, ConcreteLLMClient
-from src.connectors.llm_config import ProviderConfig
 from core.runtimes.tool_executor import ToolExecutor, get_tool_definitions
 import progress
+
+if TYPE_CHECKING:
+    from src.connectors.llm_config import ProviderConfig
+
+
+def _get_provider_config():
+    """Lazy import to avoid sys.path shadowing by apps/backend/src/__init__.py."""
+    project_root = Path(__file__).parent.parent.parent.parent.parent
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+    from src.connectors.llm_config import ProviderConfig  # noqa: PLC0415
+    return ProviderConfig
 
 class LiteLLMRuntime(AgentRuntime):
     def __init__(self, spec_dir: str, phase: str, project_dir: str, agent_type: str, config: ProviderConfig, cli_thinking: Optional[int] = None):

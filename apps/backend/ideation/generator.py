@@ -109,8 +109,8 @@ class IdeationGenerator:
         # Utilisation : await runtime.run_session(prompt)
 
         try:
-            await runtime.run_session(prompt)
-
+            result = await runtime.run_session(prompt)
+            return True, str(result) if result else ""
         except Exception as e:
             return False, str(e)
 

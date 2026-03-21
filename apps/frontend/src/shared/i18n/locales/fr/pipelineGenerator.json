@@ -1,6 +1,7 @@
 {
   "title": "Générateur de Pipeline",
   "description": "Générez automatiquement des pipelines CI/CD complets adaptés à votre projet en quelques secondes.",
+  "project": "Projet",
   "platforms": "Plateformes CI/CD",
   "viewPipeline": "Voir le Pipeline",
   "detectedStack": "Stack Détecté",

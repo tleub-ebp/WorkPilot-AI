@@ -5,24 +5,40 @@
     "analyzeConflicts": "Analyser les conflits",
     "cancel": "Annuler",
     "close": "Fermer",
-    "copy": "Copier",
-    "copied": "Copié",
-    "retry": "Réessayer"
+    "copy": "Copier le rapport",
+    "copied": "Copié !",
+    "retry": "Réessayer",
+    "reanalyze": "Ré-analyser"
   },
   "status": {
-    "analyzing": "Analyse des conflits...",
+    "analyzing": "Analyse des worktrees...",
+    "analysisFailed": "Analyse échouée",
     "error": "Erreur",
     "ready": "Prêt"
   },
+  "tabs": {
+    "overview": "Aperçu",
+    "conflicts": "Conflits",
+    "files": "Fichiers",
+    "recommendations": "Recommandations"
+  },
   "result": {
-    "conflicts": "Conflits détectés",
-    "riskLevel": "Niveau de risque",
+    "conflicts": "Total des conflits",
+    "riskLevel": "Évaluation des risques",
     "worktrees": "Worktrees actifs",
+    "worktreesAndBranches": "Worktrees et branches actifs",
     "recommendations": "Recommandations",
     "safeMergeOrder": "Ordre de fusion sûr",
+    "safeMergeOrderDesc": "Ordre suggéré pour minimiser les conflits",
     "highRiskAreas": "Zones à haut risque",
     "summary": "Résumé",
-    "streamingOutput": "Sortie en direct"
+    "streamingOutput": "Sortie de débogage",
+    "noConflicts": "Aucun conflit détecté - développement parallèle sûr !",
+    "resolution": "Résolution"
+  },
+  "stats": {
+    "highRisk": "Haut risque",
+    "filesModified": "Fichiers modifiés"
   },
   "riskLevels": {
     "low": "Faible",

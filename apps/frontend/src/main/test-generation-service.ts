@@ -2,8 +2,7 @@ import { spawn, ChildProcess } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { EventEmitter } from 'node:events';
-import { app } from 'electron';
-import type { AppSettings } from '../shared/types';
+import { getRunnerEnv } from './ipc-handlers/github/utils/runner-env';
 
 /**
  * Service for test generation
@@ -89,7 +88,7 @@ export class TestGenerationService extends EventEmitter {
     if (projectPath) {
       args.push('--project-path', projectPath);
     }
-    this.spawnRunner(args, 'result');
+    await this.spawnRunner(args, 'result');
   }
 
   /**
@@ -107,7 +106,7 @@ export class TestGenerationService extends EventEmitter {
     if (projectPath) {
       args.push('--project-path', projectPath);
     }
-    this.spawnRunner(args, 'complete');
+    await this.spawnRunner(args, 'complete');
   }
 
   /**
@@ -122,7 +121,7 @@ export class TestGenerationService extends EventEmitter {
     if (projectPath) {
       args.push('--project-path', projectPath);
     }
-    this.spawnRunner(args, 'complete');
+    await this.spawnRunner(args, 'complete');
   }
 
   /**
@@ -138,7 +137,7 @@ export class TestGenerationService extends EventEmitter {
     if (projectPath) {
       args.push('--project-path', projectPath);
     }
-    this.spawnRunner(args, 'complete');
+    await this.spawnRunner(args, 'complete');
   }
 
   /**
@@ -146,7 +145,7 @@ export class TestGenerationService extends EventEmitter {
    * @param args - Arguments to pass to the runner (after the script path)
    * @param successEvent - Event to emit when the result is received ('result' or 'complete')
    */
-  private spawnRunner(args: string[], successEvent: 'result' | 'complete'): void {
+  private async spawnRunner(args: string[], successEvent: 'result' | 'complete'): Promise<void> {
     // Cancel any existing process
     this.cancel();
 
@@ -162,28 +161,11 @@ export class TestGenerationService extends EventEmitter {
       return;
     }
 
-    // Build process environment
-    const processEnv: Record<string, string> = {
-      ...(process.env as Record<string, string>),
-      PYTHONPATH: backendSource,
-    };
-
-    // Read OAuth token from settings if available
-    try {
-      const settingsPath = path.join(app.getPath('userData'), 'settings.json');
-      if (existsSync(settingsPath)) {
-        const { readFileSync } = require('node:fs');
-        const settings: AppSettings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
-        if (settings.globalClaudeOAuthToken) {
-          processEnv.CLAUDE_OAUTH_TOKEN = settings.globalClaudeOAuthToken;
-        }
-        if (settings.globalAnthropicApiKey) {
-          processEnv.ANTHROPIC_API_KEY = settings.globalAnthropicApiKey;
-        }
-      }
-    } catch {
-      // Ignore settings read errors
-    }
+    // Build clean environment using the same pattern as other runners.
+    // This ensures the correct Claude profile (CLAUDE_CONFIG_DIR, CLAUDE_CODE_OAUTH_TOKEN)
+    // is used and prevents host IDE env vars (e.g. Windsurf) from redirecting the SDK
+    // to the wrong API provider.
+    const processEnv = await getRunnerEnv({ PYTHONPATH: backendSource });
 
     const fullArgs = [runnerPath, ...args];
 

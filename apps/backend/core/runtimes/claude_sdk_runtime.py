@@ -4,15 +4,20 @@ ClaudeSDKRuntime: AgentRuntime for Claude Agent SDK
 Uses the Claude Agent SDK for direct integration with Claude models.
 Provides tool execution through MCP servers and streaming capabilities.
 """
+from __future__ import annotations
 
 import asyncio
 import json
 import logging
-from typing import Any, Dict, Optional, List, AsyncGenerator
+import sys
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict, Optional, List, AsyncGenerator
+
+if TYPE_CHECKING:
+    from src.connectors.llm_config import ProviderConfig
 
 from core.runtime import AgentRuntime, SessionResult, SessionStatus, StreamEvent
 from core.simple_client import create_simple_client
-from src.connectors.llm_config import ProviderConfig
 
 logger = logging.getLogger(__name__)
 

@@ -11,10 +11,13 @@ import {
   type CiPlatform,
 } from '../../stores/pipeline-generator-store';
 import { useProjectStore } from '../../stores/project-store';
+import { ProjectSelector } from '../settings/ProjectSelector';
 
 export function PipelineGenerator(): React.ReactElement {
   const { t } = useTranslation(['pipelineGenerator', 'common']);
-  const { activeProject } = useProjectStore();
+  const activeProject = useProjectStore((s) => s.getActiveProject());
+  const activeProjectId = useProjectStore((s) => s.activeProjectId);
+  const setActiveProject = useProjectStore((s) => s.setActiveProject);
   const {
     phase,
     status,
@@ -86,6 +89,19 @@ export function PipelineGenerator(): React.ReactElement {
       <div className="flex flex-1 overflow-hidden">
         {/* Left sidebar */}
         <div className="w-56 border-r border-[var(--border-color)] p-4 flex flex-col gap-4">
+          {/* Project selection */}
+          <div>
+            <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
+              {t('pipelineGenerator:project')}
+            </h3>
+            <ProjectSelector
+              selectedProjectId={activeProjectId}
+              onProjectChange={(id) => {
+                if (id) setActiveProject(id);
+              }}
+            />
+          </div>
+
           {/* Platform selection */}
           <div>
             <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
