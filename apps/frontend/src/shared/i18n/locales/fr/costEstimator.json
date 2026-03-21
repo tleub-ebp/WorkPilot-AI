@@ -2,6 +2,7 @@
   "title": "Estimateur de coûts",
   "subtitle": "Coûts d'utilisation LLM, budgets et prévisions",
   "retry": "Réessayer",
+  "error": "Impossible de charger les données de coûts",
   "kpi": {
     "totalCost": {
       "title": "Coût total",

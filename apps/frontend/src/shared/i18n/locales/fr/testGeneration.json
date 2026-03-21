@@ -13,8 +13,8 @@
   "unit": {
     "placeholder": "Sélectionnez un fichier pour la génération de tests unitaires"
   },
-  "maxTests": {
-    "label": "Max de tests par fonction"
+  "coverageTarget": {
+    "label": "Couverture cible"
   },
   "userStory": {
     "label": "User Story",
@@ -78,20 +78,28 @@
     "streamingOutput": "Sortie en direct"
   },
   "tdd": {
-    "spec": {
-      "label": "Spécification de fonction (JSON)",
-      "placeholder": "{\n  \"name\": \"calculate_total\",\n  \"args\": [\"items\", \"tax_rate\"],\n  \"returns\": \"float\",\n  \"description\": \"Calculer le total avec taxe\",\n  \"edge_cases\": [\"empty_items\", \"invalid_tax_rate\"]\n}"
+    "description": {
+      "label": "Que doit faire ce code ?",
+      "placeholder": "Décrivez le comportement à implémenter. Exemple : une fonction qui calcule le prix total d'un panier avec taxes et remises, en gérant les paniers vides et les quantités négatives."
     },
-    "generate": "Générer depuis la spec"
+    "generate": "Générer les tests (failing)"
   },
   "snippetType": {
     "label": "Type de snippet",
     "options": {
-      "component": "Composant"
+      "function": "Fonction",
+      "class": "Classe",
+      "component": "Composant",
+      "api": "Endpoint API"
     }
   },
   "language": {
     "label": "Langue"
+  },
+  "filePicker": {
+    "selectFile": "Parcourir et sélectionner un fichier source...",
+    "filter": "Filtrer les fichiers...",
+    "empty": "Aucun fichier trouvé"
   },
   "errors": {
     "noFile": "Veuillez sélectionner un fichier à analyser",

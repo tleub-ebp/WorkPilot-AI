@@ -36,6 +36,10 @@ export default defineConfig({
       '/projects/': backendUrl,
       '/tasks': backendUrl,
       '/tasks/': backendUrl,
+      '/analytics': {
+        target: backendUrl,
+        changeOrigin: true,
+      },
       // Ajoutez ici d'autres routes API nécessaires
     },
   },

@@ -54,6 +54,11 @@ import type { ArenaAPI } from './modules/arena-api';
 import { createArenaAPI } from './modules/arena-api';
 import { invokeIpc } from './modules/ipc-utils';
 import { type ApiExplorerAPI, createApiExplorerAPI } from './modules/api-explorer-api';
+import type { TestGenerationAPI } from './modules/test-generation-api';
+import { createTestGenerationAPI } from './modules/test-generation-api';
+import { type CostAPI, createCostAPI } from './modules/cost-api';
+import type { VisualProgrammingAPI } from './modules/visual-programming-api';
+import { createVisualProgrammingAPI } from './modules/visual-programming-api';
 import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
 export interface ElectronAPI extends
@@ -94,7 +99,10 @@ export interface ElectronAPI extends
   PairProgrammingAPI,
   PipelineGeneratorAPI,
   TeamSyncAPI,
-  ArenaAPI {
+  ArenaAPI,
+  TestGenerationAPI,
+  CostAPI,
+  VisualProgrammingAPI {
   github: GitHubAPI;
   /** Queue routing API for rate limit recovery */
   queue: QueueAPI;
@@ -153,6 +161,9 @@ export const createElectronAPI = (): ElectronAPI => {
     ...createPipelineGeneratorAPI(),
     ...createTeamSyncAPI(),
     ...createArenaAPI(),
+    ...createTestGenerationAPI(),
+    ...createCostAPI(),
+    ...createVisualProgrammingAPI(),
     github: createGitHubAPI(),
     queue: createQueueAPI(),  // Queue routing for rate limit recovery
     quality: createQualityAPI(),  // Code quality analysis
@@ -235,3 +246,7 @@ export { createArenaAPI } from './modules/arena-api';
 export type { ArenaAPI } from './modules/arena-api';
 export { createApiExplorerAPI } from './modules/api-explorer-api';
 export type { ApiExplorerAPI } from './modules/api-explorer-api';
+export { createTestGenerationAPI } from './modules/test-generation-api';
+export type { TestGenerationAPI } from './modules/test-generation-api';
+export { createVisualProgrammingAPI } from './modules/visual-programming-api';
+export type { VisualProgrammingAPI } from './modules/visual-programming-api';

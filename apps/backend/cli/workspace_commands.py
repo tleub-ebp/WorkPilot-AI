@@ -41,6 +41,11 @@ from workspace import (
 
 from .utils import print_banner
 
+try:
+    from core.usage_tracker import record_merge as _ut_record_merge
+except ImportError:
+    _ut_record_merge = None  # type: ignore[assignment]
+
 
 def _detect_default_branch(project_dir: Path) -> str:
     """
@@ -387,6 +392,12 @@ def handle_merge_command(
     success = merge_existing_build(
         project_dir, spec_name, no_commit=no_commit, base_branch=base_branch
     )
+
+    if success and _ut_record_merge is not None:
+        try:
+            _ut_record_merge(project_dir, automatic=False)
+        except Exception:
+            pass
 
     # Generate commit message suggestion if staging succeeded (no_commit mode)
     if success and no_commit:

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useProjectStore } from './project-store';
 
 /**
  * Function information from coverage analysis
@@ -77,7 +78,9 @@ interface TestGenerationState {
   isOpen: boolean;
   selectedFile: string;
   existingTestPath: string | null;
-  maxTestsPerFunction: number;
+  coverageTarget: number;
+  tddLanguage: string;
+  tddSnippetType: string;
 
   // Actions
   openDialog: (filePath: string, existingTestPath?: string) => void;
@@ -87,14 +90,17 @@ interface TestGenerationState {
   setResult: (result: TestGenerationResult) => void;
   setPostBuildResults: (postBuildResults: PostBuildResult[]) => void;
   setError: (error: string) => void;
-  setMaxTestsPerFunction: (max: number) => void;
+  setCoverageTarget: (target: number) => void;
+  setTddLanguage: (language: string) => void;
+  setTddSnippetType: (snippetType: string) => void;
+  setSelectedFile: (filePath: string) => void;
   reset: () => void;
 
   // API Actions
   analyzeCoverage: (filePath: string, existingTestPath?: string) => Promise<CoverageGap[]>;
-  generateUnitTests: (filePath: string, existingTestPath?: string, maxTestsPerFunction?: number) => Promise<TestGenerationResult>;
+  generateUnitTests: (filePath: string, existingTestPath?: string, coverageTarget?: number) => Promise<TestGenerationResult>;
   generateE2ETests: (userStory: string, targetModule: string) => Promise<TestGenerationResult>;
-  generateTDDTests: (spec: any) => Promise<TestGenerationResult>;
+  generateTDDTests: (spec: { description: string; language: string; snippet_type: string }) => Promise<TestGenerationResult>;
   runPostBuildGeneration: (projectPath: string, modifiedFiles: string[]) => Promise<PostBuildResult[]>;
 }
 
@@ -107,7 +113,9 @@ const initialState = {
   isOpen: false,
   selectedFile: '',
   existingTestPath: null,
-  maxTestsPerFunction: 3,
+  coverageTarget: 80,
+  tddLanguage: 'typescript',
+  tddSnippetType: 'function',
 };
 
 export const useTestGenerationStore = create<TestGenerationState>((set, get) => ({
@@ -140,195 +148,143 @@ export const useTestGenerationStore = create<TestGenerationState>((set, get) => 
   setResult: (result: TestGenerationResult) => set({ result }),
   setPostBuildResults: (postBuildResults: PostBuildResult[]) => set({ postBuildResults }),
   setError: (error: string) => set({ error }),
-  setMaxTestsPerFunction: (maxTestsPerFunction: number) => set({ maxTestsPerFunction }),
+  setCoverageTarget: (coverageTarget: number) => set({ coverageTarget }),
+  setTddLanguage: (tddLanguage: string) => set({ tddLanguage }),
+  setTddSnippetType: (tddSnippetType: string) => set({ tddSnippetType }),
+  setSelectedFile: (filePath: string) => set({ selectedFile: filePath }),
 
   reset: () => set(initialState),
 
   analyzeCoverage: async (filePath: string, existingTestPath?: string) => {
     const { setPhase, setStatus, setError } = get();
-    
-    try {
-      setPhase('analyzing');
-      setStatus('Analyzing test coverage...');
+    setPhase('analyzing');
+    setStatus('Analyzing test coverage...');
 
-      const response = await fetch('http://localhost:9000/api/test-generation/analyze-coverage', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          file_path: filePath,
-          existing_test_path: existingTestPath,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to analyze coverage');
-      }
-
-      setPhase('complete');
-      setStatus('Coverage analysis complete');
-      return data.gaps;
-    } catch (error) {
-      setPhase('error');
-      setError(error instanceof Error ? error.message : 'Unknown error');
-      throw error;
-    }
+    return new Promise<CoverageGap[]>((resolve, reject) => {
+      const onResult = (data: any) => {
+        window.electronAPI.removeTestGenerationResultListener(onResult);
+        window.electronAPI.removeTestGenerationErrorListener(onError);
+        setPhase('complete');
+        setStatus('Coverage analysis complete');
+        resolve((data as { gaps?: CoverageGap[] }).gaps || []);
+      };
+      const onError = (error: string) => {
+        window.electronAPI.removeTestGenerationResultListener(onResult);
+        window.electronAPI.removeTestGenerationErrorListener(onError);
+        setPhase('error');
+        setError(error);
+        reject(new Error(error));
+      };
+      const projectPath = useProjectStore.getState().getActiveProject()?.path;
+      window.electronAPI.onTestGenerationStatus((status: string) => setStatus(status));
+      window.electronAPI.onTestGenerationResult(onResult);
+      window.electronAPI.onTestGenerationError(onError);
+      window.electronAPI.analyzeTestCoverage(filePath, existingTestPath, projectPath);
+    });
   },
 
-  generateUnitTests: async (filePath: string, existingTestPath?: string, maxTestsPerFunction?: number) => {
+  generateUnitTests: async (filePath: string, existingTestPath?: string, coverageTarget?: number) => {
     const { setPhase, setStatus, setError, setResult } = get();
-    
-    try {
-      setPhase('generating');
-      setStatus('Generating unit tests...');
+    setPhase('generating');
+    setStatus('Generating unit tests...');
 
-      const response = await fetch('http://localhost:9000/api/test-generation/generate-unit-tests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          file_path: filePath,
-          existing_test_path: existingTestPath,
-          max_tests_per_function: maxTestsPerFunction || 3,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to generate tests');
-      }
-
-      setPhase('complete');
-      setStatus('Unit tests generated successfully');
-      setResult(data.result);
-      return data.result;
-    } catch (error) {
-      setPhase('error');
-      setError(error instanceof Error ? error.message : 'Unknown error');
-      throw error;
-    }
+    return new Promise<TestGenerationResult>((resolve, reject) => {
+      const onComplete = (data: any) => {
+        window.electronAPI.removeTestGenerationCompleteListener(onComplete);
+        window.electronAPI.removeTestGenerationErrorListener(onError);
+        const parsed = data as { result?: TestGenerationResult };
+        const result = parsed.result as TestGenerationResult;
+        setPhase('complete');
+        setStatus('Unit tests generated successfully');
+        setResult(result);
+        resolve(result);
+      };
+      const onError = (error: string) => {
+        window.electronAPI.removeTestGenerationCompleteListener(onComplete);
+        window.electronAPI.removeTestGenerationErrorListener(onError);
+        setPhase('error');
+        setError(error);
+        reject(new Error(error));
+      };
+      const projectPath = useProjectStore.getState().getActiveProject()?.path;
+      window.electronAPI.onTestGenerationStatus((status: string) => setStatus(status));
+      window.electronAPI.onTestGenerationComplete(onComplete);
+      window.electronAPI.onTestGenerationError(onError);
+      window.electronAPI.generateUnitTests(filePath, existingTestPath, coverageTarget, projectPath);
+    });
   },
 
   generateE2ETests: async (userStory: string, targetModule: string) => {
     const { setPhase, setStatus, setError, setResult } = get();
-    
-    try {
-      setPhase('generating');
-      setStatus('Generating E2E tests...');
+    setPhase('generating');
+    setStatus('Generating E2E tests...');
 
-      const response = await fetch('http://localhost:9000/api/test-generation/generate-e2e-tests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_story: userStory,
-          target_module: targetModule,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to generate E2E tests');
-      }
-
-      setPhase('complete');
-      setStatus('E2E tests generated successfully');
-      setResult(data.result);
-      return data.result;
-    } catch (error) {
-      setPhase('error');
-      setError(error instanceof Error ? error.message : 'Unknown error');
-      throw error;
-    }
+    return new Promise<TestGenerationResult>((resolve, reject) => {
+      const onComplete = (data: any) => {
+        window.electronAPI.removeTestGenerationCompleteListener(onComplete);
+        window.electronAPI.removeTestGenerationErrorListener(onError);
+        const parsed = data as { result?: TestGenerationResult };
+        const result = parsed.result as TestGenerationResult;
+        setPhase('complete');
+        setStatus('E2E tests generated successfully');
+        setResult(result);
+        resolve(result);
+      };
+      const onError = (error: string) => {
+        window.electronAPI.removeTestGenerationCompleteListener(onComplete);
+        window.electronAPI.removeTestGenerationErrorListener(onError);
+        setPhase('error');
+        setError(error);
+        reject(new Error(error));
+      };
+      const projectPath = useProjectStore.getState().getActiveProject()?.path;
+      window.electronAPI.onTestGenerationStatus((status: string) => setStatus(status));
+      window.electronAPI.onTestGenerationComplete(onComplete);
+      window.electronAPI.onTestGenerationError(onError);
+      window.electronAPI.generateE2ETests(userStory, targetModule, projectPath);
+    });
   },
 
-  generateTDDTests: async (spec: any) => {
+  generateTDDTests: async (spec: { description: string; language: string; snippet_type: string }) => {
     const { setPhase, setStatus, setError, setResult } = get();
-    
-    try {
-      setPhase('generating');
-      setStatus('Generating TDD tests...');
+    setPhase('generating');
+    setStatus('Generating TDD tests...');
 
-      const response = await fetch('http://localhost:9000/api/test-generation/generate-tdd-tests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(spec),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to generate TDD tests');
-      }
-
-      setPhase('complete');
-      setStatus('TDD tests generated successfully');
-      setResult(data.result);
-      return data.result;
-    } catch (error) {
-      setPhase('error');
-      setError(error instanceof Error ? error.message : 'Unknown error');
-      throw error;
-    }
+    return new Promise<TestGenerationResult>((resolve, reject) => {
+      const onComplete = (data: any) => {
+        window.electronAPI.removeTestGenerationCompleteListener(onComplete);
+        window.electronAPI.removeTestGenerationErrorListener(onError);
+        const parsed = data as { result?: TestGenerationResult };
+        const result = parsed.result as TestGenerationResult;
+        setPhase('complete');
+        setStatus('TDD tests generated successfully');
+        setResult(result);
+        resolve(result);
+      };
+      const onError = (error: string) => {
+        window.electronAPI.removeTestGenerationCompleteListener(onComplete);
+        window.electronAPI.removeTestGenerationErrorListener(onError);
+        setPhase('error');
+        setError(error);
+        reject(new Error(error));
+      };
+      const projectPath = useProjectStore.getState().getActiveProject()?.path;
+      window.electronAPI.onTestGenerationStatus((status: string) => setStatus(status));
+      window.electronAPI.onTestGenerationComplete(onComplete);
+      window.electronAPI.onTestGenerationError(onError);
+      window.electronAPI.generateTDDTests(spec.description, spec.language, spec.snippet_type, projectPath);
+    });
   },
 
   runPostBuildGeneration: async (projectPath: string, modifiedFiles: string[]) => {
     const { setPhase, setStatus, setError, setPostBuildResults } = get();
-    
+
     try {
       setPhase('generating');
       setStatus('Running post-build test generation...');
 
-      const response = await fetch('http://localhost:9000/api/test-generation/run-post-build', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          project_path: projectPath,
-          modified_files: modifiedFiles,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to run post-build generation');
-      }
-
-      setPhase('complete');
-      setStatus('Post-build test generation complete');
-      setPostBuildResults(data.results);
-      return data.results;
+      // Post-build generation is not yet wired via IPC — placeholder for future implementation
+      throw new Error(`Post-build generation for ${projectPath} with ${modifiedFiles.length} file(s) is not yet implemented via IPC`);
     } catch (error) {
       setPhase('error');
       setError(error instanceof Error ? error.message : 'Unknown error');

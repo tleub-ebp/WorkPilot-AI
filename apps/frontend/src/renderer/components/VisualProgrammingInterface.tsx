@@ -7,7 +7,7 @@
  * - Reverse: Code → Visual representation
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
@@ -19,6 +19,7 @@ import { nodeTypes, edgeTypes } from './reactflowTypes';
 import { toast } from "@/hooks/use-toast";
 import { FileTree } from './FileTree';
 import {saveAs} from "file-saver";
+import type { GenerateCodeResult, CodeToVisualResult } from '@preload/api/modules/visual-programming-api';
 
 export const VisualProgrammingInterface: React.FC = () => {
   const { t } = useTranslation('visualProgramming');
@@ -27,7 +28,6 @@ export const VisualProgrammingInterface: React.FC = () => {
   ]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [diagramType, setDiagramType] = useState<DiagramType>('flowchart');
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const loadInputRef = useRef<HTMLInputElement>(null);
   const [showFrameworkModal, setShowFrameworkModal] = useState(false);
   const [pendingNode, setPendingNode] = useState<{ id: string; type: string; position: { x: number; y: number } } | null>(null);
@@ -67,6 +67,97 @@ export const VisualProgrammingInterface: React.FC = () => {
     ],
   };
 
+  // ── AI generation state ─────────────────────────────────────────────
+  const [isAiRunning, setIsAiRunning] = useState(false);
+  const [aiStatus, setAiStatus] = useState('');
+  const [showCodeResult, setShowCodeResult] = useState(false);
+  const [codeResult, setCodeResult] = useState<GenerateCodeResult | null>(null);
+  const [selectedCodeFile, setSelectedCodeFile] = useState(0);
+  const codeToVisualInputRef = useRef<HTMLInputElement>(null);
+
+  // Subscribe to backend events once on mount
+  useEffect(() => {
+    const offStatus = window.electronAPI?.onVisualProgrammingStatus?.((msg: string) => {
+      setAiStatus(msg);
+    });
+    const offError = window.electronAPI?.onVisualProgrammingError?.((err: string) => {
+      setIsAiRunning(false);
+      setAiStatus('');
+      toast({ title: t('aiError', 'Erreur IA'), description: err, variant: 'destructive' });
+    });
+    const offComplete = window.electronAPI?.onVisualProgrammingComplete?.((payload: { action: string; data: GenerateCodeResult | CodeToVisualResult }) => {
+      setIsAiRunning(false);
+      setAiStatus('');
+      if (payload.action === 'generate-code') {
+        const result = payload.data as GenerateCodeResult;
+        setCodeResult(result);
+        setSelectedCodeFile(0);
+        setShowCodeResult(true);
+        toast({ title: t('codeGenerated', 'Code généré !'), description: result.summary });
+      } else if (payload.action === 'code-to-visual') {
+        const result = payload.data as CodeToVisualResult;
+        const newNodes = result.nodes.map((n, i) => ({
+          id: n.id || `imported-${i}`,
+          position: { x: 120 + (i % 4) * 220, y: 80 + Math.floor(i / 4) * 120 },
+          data: { label: n.label, type: n.type, framework: n.framework, onRename: handleRenameNode },
+          type: 'editable' as const,
+        }));
+        const newEdges = result.edges.map((e, i) => ({
+          id: `imported-edge-${i}`,
+          source: e.source,
+          target: e.target,
+          data: { label: e.label || '' },
+        }));
+        setNodes(newNodes);
+        setEdges(newEdges);
+        setIsJsonSaved(false);
+        toast({ title: t('codeToVisualDone', 'Diagramme généré !'), description: result.summary });
+      }
+    });
+    return () => {
+      offStatus?.();
+      offError?.();
+      offComplete?.();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleGenerateCode = async () => {
+    if (!window.electronAPI?.runVisualProgramming) {
+      toast({ title: t('aiNotAvailable', 'IA non disponible'), description: 'Electron API manquante', variant: 'destructive' });
+      return;
+    }
+    if (nodes.length === 0) {
+      toast({ title: t('emptyDiagram', 'Diagramme vide'), description: t('addBlocksFirst', 'Ajoutez des blocs avant de générer du code.'), variant: 'destructive' });
+      return;
+    }
+    setIsAiRunning(true);
+    setAiStatus(t('starting', 'Démarrage…'));
+    const diagramJson = JSON.stringify({ nodes, edges, diagramType });
+    await window.electronAPI.runVisualProgramming({
+      action: 'generate-code',
+      diagramJson,
+      framework: '',
+    });
+  };
+
+  const handleCodeToVisual = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    // Reset input so same file can be picked again
+    event.target.value = '';
+    if (!window.electronAPI?.runVisualProgramming) {
+      toast({ title: t('aiNotAvailable', 'IA non disponible'), description: 'Electron API manquante', variant: 'destructive' });
+      return;
+    }
+    setIsAiRunning(true);
+    setAiStatus(t('starting', 'Démarrage…'));
+    await window.electronAPI.runVisualProgramming({
+      action: 'code-to-visual',
+      filePath: (file as any).path || file.name,
+    });
+  };
+
   const onConnect = (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds));
 
   // Ajout d'un nouveau bloc/module
@@ -96,29 +187,6 @@ export const VisualProgrammingInterface: React.FC = () => {
     const pad = (n: number, l: number = 2) => n.toString().padStart(l, '0');
     const fileName = `${diagramType}-export-${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}-${pad(now.getMilliseconds(),3)}.json`;
     saveAs(new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' }), fileName);
-  };
-
-  const handleImportCode = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    // Utilise Blob#text() pour lire le contenu
-    const content = await file.text();
-    // Simple heuristique : chaque ligne devient un node, liens entre nodes
-    const lines = content.split('\n').filter(l => l.trim());
-    const importedNodes = lines.map((line, idx) => ({
-      id: `imported-${idx+1}`,
-      position: { x: 100 + idx*60, y: 100 + idx*40 },
-      data: { label: line },
-      type: 'default'
-    }));
-    const importedEdges = lines.length > 1 ? lines.slice(1).map((_, idx) => ({
-      id: `imported-edge-${idx+1}`,
-      source: `imported-${idx+1}`,
-      target: `imported-${idx+2}`,
-      data: { label: '' }
-    })) : [];
-    setNodes(importedNodes);
-    setEdges(importedEdges);
   };
 
   // Génère le nom par défaut avec timestamp
@@ -397,10 +465,27 @@ export const VisualProgrammingInterface: React.FC = () => {
             );
           })}
           <Button variant="outline" onClick={handleAddNode}>{t('addBlock', 'Ajouter un bloc')}</Button>
-          <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".js,.ts,.txt" onChange={handleImportCode} />
-          <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>{t('reverse')}</Button>
-          <Button variant="outline" onClick={handleExportCode}>{t('save', 'Enregistrer')}</Button>
-          <Button variant="outline" onClick={handleSaveAs}>{t('save', 'Enregistrer')}</Button>
+          {/* Code → Visual: pick a source file and let Claude extract structure */}
+          <input type="file" ref={codeToVisualInputRef} style={{ display: 'none' }} accept=".js,.ts,.tsx,.jsx,.py,.cs,.java,.go,.rb,.vue,.svelte" onChange={handleCodeToVisual} />
+          <Button
+            variant="secondary"
+            onClick={() => codeToVisualInputRef.current?.click()}
+            disabled={isAiRunning}
+            title={t('reverseTooltip', 'Analyser un fichier source et générer le diagramme correspondant')}
+          >
+            {t('reverse')}
+          </Button>
+          {/* Diagram → Code: call Claude to generate code from current diagram */}
+          <Button
+            variant="default"
+            onClick={handleGenerateCode}
+            disabled={isAiRunning || nodes.length === 0}
+            title={t('generateCodeTooltip', 'Générer du code à partir du diagramme courant')}
+          >
+            {isAiRunning ? `⏳ ${aiStatus || t('generating', 'Génération…')}` : t('generateCode', 'Générer le code')}
+          </Button>
+          <Button variant="outline" onClick={handleExportCode}>{t('export', 'Exporter JSON')}</Button>
+          <Button variant="outline" onClick={handleSaveAs}>{t('saveAs', 'Enregistrer sous…')}</Button>
           <input type="file" ref={loadInputRef} style={{ display: 'none' }} accept=".json" onChange={handleLoad} />
           <Button variant="outline" onClick={() => loadInputRef.current?.click()}>{t('load')}</Button>
         </div>
@@ -490,6 +575,78 @@ export const VisualProgrammingInterface: React.FC = () => {
             </Button>
             <Button variant="ghost" onClick={cancelSaveAs}>{t('cancel', 'Annuler')}</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Generated Code Dialog */}
+      <Dialog open={showCodeResult} onOpenChange={setShowCodeResult}>
+        <DialogContent style={{ maxWidth: '80vw', maxHeight: '90vh', overflowY: 'auto' }}>
+          <DialogTitle>{t('generatedCodeTitle', 'Code généré par IA')}</DialogTitle>
+          {codeResult && (
+            <>
+              <DialogDescription>{codeResult.summary}</DialogDescription>
+              {codeResult.files.length > 1 && (
+                <div className="flex gap-1 flex-wrap mt-2">
+                  {codeResult.files.map((f, i) => (
+                    <Button
+                      key={f.filename}
+                      variant={i === selectedCodeFile ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedCodeFile(i)}
+                    >
+                      {f.filename}
+                    </Button>
+                  ))}
+                </div>
+              )}
+              {codeResult.files[selectedCodeFile] && (
+                <div className="mt-3">
+                  <p className="text-xs font-mono text-muted-foreground mb-1">
+                    {codeResult.files[selectedCodeFile].filename}
+                  </p>
+                  <pre
+                    className="text-xs bg-muted rounded p-3 overflow-auto"
+                    style={{ maxHeight: '50vh', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}
+                  >
+                    {codeResult.files[selectedCodeFile].content}
+                  </pre>
+                </div>
+              )}
+              {codeResult.instructions && (
+                <p className="mt-2 text-sm text-muted-foreground">{codeResult.instructions}</p>
+              )}
+              <DialogFooter className="mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const file = codeResult.files[selectedCodeFile];
+                    if (!file) return;
+                    saveAs(
+                      new Blob([file.content], { type: 'text/plain' }),
+                      file.filename.split('/').pop() || 'generated.txt'
+                    );
+                  }}
+                >
+                  {t('downloadFile', 'Télécharger ce fichier')}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    codeResult.files.forEach((f) => {
+                      saveAs(
+                        new Blob([f.content], { type: 'text/plain' }),
+                        f.filename.split('/').pop() || 'generated.txt'
+                      );
+                    });
+                  }}
+                >
+                  {t('downloadAll', 'Tout télécharger')}
+                </Button>
+                <Button variant="ghost" onClick={() => setShowCodeResult(false)}>
+                  {t('close', 'Fermer')}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </Card>

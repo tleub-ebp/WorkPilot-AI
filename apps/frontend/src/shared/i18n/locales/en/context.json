@@ -92,7 +92,12 @@
     "noMatchingMemories": "No memories match the selected filter.",
     "showAll": "Show all memories",
     "enableInstructions": "To enable graph memory, set",
-    "inProjectSettings": "in project settings"
+    "inProjectSettings": "in project settings",
+    "reasons.notConfigured": "Graphiti not configured",
+    "reasons.openaiKeyNotSet": "OPENAI_API_KEY not set (required for OpenAI embeddings)",
+    "reasons.googleKeyNotSet": "GOOGLE_API_KEY not set (required for Google AI embeddings)",
+    "reasons.voyageKeyNotSet": "VOYAGE_API_KEY not set (required for Voyage AI embeddings)",
+    "reasons.azureKeyNotSet": "AZURE_OPENAI_API_KEY not set (required for Azure OpenAI embeddings)"
   }
 }
 

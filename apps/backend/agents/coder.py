@@ -16,6 +16,14 @@ from pathlib import Path
 from core.client import create_agent_client
 from core.task_event import TaskEventEmitter
 from core.workflow_logger import workflow_logger
+try:
+    from core.usage_tracker import (
+        start_build as _ut_start_build,
+        finish_build as _ut_finish_build,
+        record_task_status as _ut_record_task,
+    )
+except ImportError:
+    _ut_start_build = _ut_finish_build = _ut_record_task = None  # type: ignore[assignment]
 from linear_updater import (
     LinearTaskState,
     is_linear_enabled,
@@ -437,6 +445,20 @@ async def run_autonomous_agent(
             "streaming_session_id": streaming_session_id
         }
     )
+
+    # Start build tracking (best-effort)
+    if _ut_start_build is not None:
+        try:
+            _ut_start_build(
+                spec_dir=spec_dir,
+                project_dir=project_dir,
+                spec_id=spec_dir.name,
+                spec_name=spec_dir.name,
+                model=model,
+                provider="anthropic",
+            )
+        except Exception:
+            pass
     
     # Set environment variable for security hooks to find the correct project directory
     # This is needed because os.getcwd() may return the wrong directory in worktree mode
@@ -1317,10 +1339,20 @@ async def run_autonomous_agent(
     # Set final status
     if completed == total:
         status_manager.update(state=BuildState.COMPLETE)
+        if _ut_finish_build is not None:
+            try:
+                _ut_finish_build(spec_dir, status="complete")
+            except Exception:
+                pass
+        if _ut_record_task is not None:
+            try:
+                _ut_record_task(project_dir, spec_dir.name, "completed")
+            except Exception:
+                pass
         # Log agent completion
         workflow_logger.log_agent_end(
-            AGENT_NAME, 
-            "autonomous_agent_loop", 
+            AGENT_NAME,
+            "autonomous_agent_loop",
             "success",
             {
                 "total_sessions": iteration,
@@ -1333,10 +1365,20 @@ async def run_autonomous_agent(
         )
     else:
         status_manager.update(state=BuildState.PAUSED)
+        if _ut_finish_build is not None:
+            try:
+                _ut_finish_build(spec_dir, status="paused")
+            except Exception:
+                pass
+        if _ut_record_task is not None:
+            try:
+                _ut_record_task(project_dir, spec_dir.name, "in_progress")
+            except Exception:
+                pass
         # Log agent pause
         workflow_logger.log_agent_end(
-            AGENT_NAME, 
-            "autonomous_agent_loop", 
+            AGENT_NAME,
+            "autonomous_agent_loop",
             "paused",
             {
                 "total_sessions": iteration,

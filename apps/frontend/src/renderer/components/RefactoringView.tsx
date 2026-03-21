@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Wand2,
@@ -19,6 +19,7 @@ import { Badge } from './ui/badge';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '../lib/utils';
+import { useContextStore } from '../stores/context-store';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -78,6 +79,17 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
   const [error, setError] = useState<string | null>(null);
   const [expandedSmells, setExpandedSmells] = useState<Set<number>>(new Set());
 
+  const projectIndex = useContextStore((s) => s.projectIndex);
+  const detectedLanguages = useMemo(() => {
+    if (!projectIndex?.services) return [];
+    return [...new Set(
+      Object.values(projectIndex.services)
+        .map((s) => s.language)
+        .filter((l): l is string => Boolean(l))
+    )];
+  }, [projectIndex]);
+  const primaryLanguage = detectedLanguages[0] ?? null;
+
   const toggleSmell = (idx: number) => {
     setExpandedSmells((prev) => {
       const next = new Set(prev);
@@ -98,7 +110,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
       const res = await fetch(`${backendUrl}/api/refactoring/detect-smells`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source }),
+        body: JSON.stringify({ source, language: primaryLanguage }),
       });
       const data = await res.json();
       if (data.success) {
@@ -122,7 +134,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
       const res = await fetch(`${backendUrl}/api/refactoring/propose`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source }),
+        body: JSON.stringify({ source, language: primaryLanguage }),
       });
       const data = await res.json();
       if (data.success) {
@@ -171,7 +183,16 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
         <Card>
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground">{t('refactoring:input.label')}</label>
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-foreground">
+                  {primaryLanguage
+                    ? t('refactoring:input.labelWithLanguage', { language: primaryLanguage })
+                    : t('refactoring:input.label')}
+                </label>
+                {detectedLanguages.length > 1 && detectedLanguages.slice(1).map((lang) => (
+                  <Badge key={lang} variant="outline" className="text-xs text-muted-foreground">{lang}</Badge>
+                ))}
+              </div>
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={handlePaste}>
                   <ClipboardPaste className="h-3.5 w-3.5 mr-1.5" />
@@ -188,7 +209,9 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
             <Textarea
               value={source}
               onChange={(e) => setSource(e.target.value)}
-              placeholder={t('refactoring:input.placeholder')}
+              placeholder={primaryLanguage
+                ? t('refactoring:input.placeholderWithLanguage', { language: primaryLanguage })
+                : t('refactoring:input.placeholder')}
               className="min-h-[200px] font-mono text-xs"
               spellCheck={false}
             />

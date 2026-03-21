@@ -27,6 +27,31 @@ from pathlib import Path
 
 from agents.tools_pkg import get_agent_config, get_default_thinking_level
 from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
+
+# BUG FIX: Monkey-patch SDK message parser to handle unknown message types
+# (e.g. "rate_limit_event") gracefully. Mirrors the same patch in core/client.py
+# so that simple_client users are also protected.
+try:
+    import claude_agent_sdk._internal.message_parser as _sdk_msg_parser
+    from claude_agent_sdk.types import SystemMessage as _SDKSystemMessage
+
+    _original_parse_message = _sdk_msg_parser.parse_message
+
+    def _patched_parse_message(data):
+        try:
+            return _original_parse_message(data)
+        except Exception as exc:
+            if "Unknown message type" in str(exc):
+                msg_type = data.get("type", "unknown") if isinstance(data, dict) else "unknown"
+                logging.getLogger(__name__).warning(
+                    "SDK received unknown message type '%s' — skipping gracefully", msg_type
+                )
+                return _SDKSystemMessage(subtype=msg_type, data=data)
+            raise
+
+    _sdk_msg_parser.parse_message = _patched_parse_message
+except Exception:
+    pass
 from core.auth import (
     configure_sdk_authentication,
     get_sdk_env_vars,

@@ -53,6 +53,11 @@ from .utils import (
     sync_spec_to_source,
 )
 
+try:
+    from core.usage_tracker import record_session_usage as _record_usage
+except ImportError:
+    _record_usage = None  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 
 
@@ -509,6 +514,7 @@ async def run_agent_session(
 
         # Collect response text and show tool use
         response_text = ""
+        _sdk_result_msg = None  # Captures ResultMessage (cost/usage) when emitted
         debug("session", "Starting to receive response stream...")
         async for msg in client.receive_response():
             msg_type = type(msg).__name__
@@ -518,6 +524,11 @@ async def run_agent_session(
                 f"Received message #{message_count}",
                 msg_type=msg_type,
             )
+
+            # Capture ResultMessage (cost/usage info from the SDK)
+            if msg_type == "ResultMessage":
+                _sdk_result_msg = msg
+                continue
 
             # Handle AssistantMessage (text and tool use)
             if msg_type == "AssistantMessage" and hasattr(msg, "content"):
@@ -708,6 +719,30 @@ async def run_agent_session(
 
         print("\n" + "-" * 70 + "\n")
 
+        # Record token usage from the SDK ResultMessage (best-effort)
+        if _sdk_result_msg is not None and _record_usage is not None:
+            try:
+                usage = getattr(_sdk_result_msg, "usage", None) or {}
+                input_tokens = usage.get("input_tokens", 0) if isinstance(usage, dict) else 0
+                output_tokens = usage.get("output_tokens", 0) if isinstance(usage, dict) else 0
+                cost_usd = getattr(_sdk_result_msg, "total_cost_usd", None) or 0.0
+                # Derive project_dir from spec_dir (spec_dir = project/.auto-claude/specs/XXX)
+                _project_dir = spec_dir.parent.parent.parent
+                _model = getattr(getattr(client, "options", None), "model", "unknown")
+                _record_usage(
+                    spec_dir=spec_dir,
+                    project_dir=_project_dir,
+                    phase=phase.value,
+                    agent_type=phase.value,
+                    model=_model,
+                    provider="anthropic",
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                    cost_usd=cost_usd,
+                )
+            except Exception as _ute:
+                logger.debug("[usage_tracker] SDK usage recording failed: %s", _ute)
+
         # Check if build is complete
         if is_build_complete(spec_dir):
             debug_success(
@@ -838,7 +873,7 @@ async def _run_agent_client_session(
         response_text = ""
         debug("session", "Starting to receive response stream...")
 
-        async for agent_msg in client.receive_response():
+        async for agent_msg in client.receive_response():  # noqa: SIM113 — result msg needs post-loop handling
             message_count += 1
             debug_detailed(
                 "session",
@@ -997,6 +1032,26 @@ async def _run_agent_client_session(
                     current_tool = None
 
         print("\n" + "-" * 70 + "\n")
+
+        # Record token usage from AgentClient (best-effort via duck typing)
+        if _record_usage is not None:
+            try:
+                _usage = getattr(client, "last_usage", None)
+                if _usage is not None:
+                    _project_dir = spec_dir.parent.parent.parent
+                    _record_usage(
+                        spec_dir=spec_dir,
+                        project_dir=_project_dir,
+                        phase=phase.value,
+                        agent_type=phase.value,
+                        model=getattr(client, "model", "unknown"),
+                        provider=client.provider_name(),
+                        input_tokens=_usage.get("input_tokens", 0),
+                        output_tokens=_usage.get("output_tokens", 0),
+                        cost_usd=_usage.get("cost_usd", 0.0),
+                    )
+            except Exception as _ute:
+                logger.debug("[usage_tracker] AgentClient usage recording failed: %s", _ute)
 
         if is_build_complete(spec_dir):
             debug_success(

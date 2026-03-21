@@ -1,27 +1,24 @@
-"""Test Generator Agent — Automatic test generation for existing code.
+"""Test Generator Agent — LLM-powered test generation for any language.
 
-Specialized agent that analyzes source code and generates comprehensive
-test suites including unit tests, integration tests, and E2E tests.
+Uses Claude to analyse source files and generate comprehensive test suites,
+detecting the project's language and test framework automatically from
+package.json, pyproject.toml, .csproj, pom.xml, etc.
 
-Capabilities:
-- Analyze code coverage gaps and generate tests for uncovered functions
-- Generate unit tests with mocks, fixtures, and edge cases
-- Generate integration tests based on detected workflows
-- Generate E2E tests from user stories
-- TDD mode: generate tests before implementation
+Supported languages: Python, TypeScript, JavaScript, C#, Java, Go, Ruby, etc.
 
 Example:
-    >>> from apps.backend.agents.test_generator import TestGeneratorAgent
-    >>> agent = TestGeneratorAgent(llm_provider=provider)
-    >>> result = agent.analyze_coverage("src/connectors/jira/connector.py")
-    >>> tests = agent.generate_unit_tests("src/connectors/jira/connector.py")
+    >>> agent = TestGeneratorAgent()
+    >>> gaps = agent.analyze_coverage("src/utils/calculator.ts", project_path="/my/project")
+    >>> result = agent.generate_unit_tests("src/utils/calculator.ts", project_path="/my/project")
 """
 
-import ast
+import asyncio
+import json
 import logging
 import os
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -32,20 +29,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class FunctionInfo:
-    """Information about a function extracted from source code.
-
-    Attributes:
-        name: The function name.
-        module: The module path.
-        class_name: The parent class name, or None if top-level.
-        args: List of argument names (excluding self/cls).
-        return_type: The return type annotation, or None.
-        docstring: The function docstring, or empty string.
-        line_number: The line number where the function starts.
-        is_async: Whether the function is async.
-        decorators: List of decorator names.
-        complexity: Estimated cyclomatic complexity.
-    """
+    """Information about a function/method extracted from source code."""
 
     name: str
     module: str
@@ -60,32 +44,22 @@ class FunctionInfo:
 
     @property
     def full_name(self) -> str:
-        """Get the fully qualified function name."""
         if self.class_name:
             return f"{self.class_name}.{self.name}"
         return self.name
 
     @property
     def is_private(self) -> bool:
-        """Check if the function is private (starts with _)."""
         return self.name.startswith("_") and not self.name.startswith("__")
 
     @property
     def is_dunder(self) -> bool:
-        """Check if the function is a dunder method."""
         return self.name.startswith("__") and self.name.endswith("__")
 
 
 @dataclass
 class CoverageGap:
-    """Represents a gap in test coverage.
-
-    Attributes:
-        function: The uncovered function.
-        priority: Priority for test generation (``'high'``, ``'medium'``, ``'low'``).
-        reason: Why this function needs tests.
-        suggested_test_count: Estimated number of tests needed.
-    """
+    """Represents a gap in test coverage."""
 
     function: FunctionInfo
     priority: str = "medium"
@@ -95,17 +69,7 @@ class CoverageGap:
 
 @dataclass
 class GeneratedTest:
-    """A generated test case.
-
-    Attributes:
-        test_name: The test function name.
-        test_code: The generated test code.
-        target_function: The function being tested.
-        test_type: Type of test (``'unit'``, ``'integration'``, ``'e2e'``).
-        description: What the test verifies.
-        imports: Required import statements.
-        fixtures: Required pytest fixtures.
-    """
+    """A generated test case."""
 
     test_name: str
     test_code: str
@@ -118,17 +82,7 @@ class GeneratedTest:
 
 @dataclass
 class TestGenerationResult:
-    """Result of a test generation run.
-
-    Attributes:
-        source_file: The source file that was analyzed.
-        functions_analyzed: Number of functions analyzed.
-        tests_generated: Number of tests generated.
-        coverage_gaps: Identified coverage gaps.
-        generated_tests: The generated test cases.
-        test_file_content: The complete test file content.
-        test_file_path: Suggested path for the test file.
-    """
+    """Result of a test generation run."""
 
     source_file: str
     functions_analyzed: int = 0
@@ -139,809 +93,791 @@ class TestGenerationResult:
     test_file_path: str = ""
 
 
-# ── Code analyzer ───────────────────────────────────────────────────
+# ── Project analyser ────────────────────────────────────────────────
 
 
-class CodeAnalyzer:
-    """Analyzes Python source code to extract function signatures and metadata.
+class ProjectAnalyzer:
+    """Detects project language and test framework from config files."""
 
-    Uses the ``ast`` module to parse Python files and extract
-    function definitions, class structures, and complexity estimates.
-    """
+    EXTENSION_TO_LANGUAGE: dict[str, str] = {
+        ".py": "python",
+        ".ts": "typescript",
+        ".tsx": "typescript",
+        ".js": "javascript",
+        ".jsx": "javascript",
+        ".mjs": "javascript",
+        ".cjs": "javascript",
+        ".cs": "csharp",
+        ".java": "java",
+        ".rb": "ruby",
+        ".go": "go",
+        ".rs": "rust",
+        ".kt": "kotlin",
+        ".kts": "kotlin",
+        ".swift": "swift",
+        ".php": "php",
+        ".vue": "javascript",
+        ".svelte": "javascript",
+    }
 
-    def analyze_file(self, file_path: str) -> list[FunctionInfo]:
-        """Analyze a Python file and extract function information.
-
-        Args:
-            file_path: Path to the Python source file.
-
-        Returns:
-            A list of FunctionInfo objects for all functions in the file.
-
-        Raises:
-            FileNotFoundError: If the file does not exist.
-            SyntaxError: If the file contains invalid Python.
-        """
-        logger.info("Analyzing file: %s", file_path)
-
-        with open(file_path, "r", encoding="utf-8") as f:
-            source = f.read()
-
-        return self.analyze_source(source, module=file_path)
-
-    def analyze_source(
+    def detect(
         self,
-        source: str,
-        module: str = "<unknown>",
-    ) -> list[FunctionInfo]:
-        """Analyze Python source code and extract function information.
+        file_path: str,
+        project_path: str | None = None,
+    ) -> dict[str, str]:
+        """Detect language and test framework for a source file.
 
         Args:
-            source: The Python source code string.
-            module: The module name/path for context.
+            file_path: Path to the source file.
+            project_path: Optional explicit project root. When None, walks up
+                the directory tree looking for config file markers.
 
         Returns:
-            A list of FunctionInfo objects.
+            Dict with keys ``language``, ``test_framework``, ``project_root``,
+            ``details``.
         """
+        ext = Path(file_path).suffix.lower()
+        language = self.EXTENSION_TO_LANGUAGE.get(ext, "unknown")
+
+        root = project_path or self._find_project_root(file_path)
+
+        if root:
+            framework, details = self._scan_framework(root, language)
+        else:
+            framework = self._default_framework(language)
+            details = ""
+
+        return {
+            "language": language,
+            "test_framework": framework,
+            "project_root": root or str(Path(file_path).parent),
+            "details": details,
+        }
+
+    def _find_project_root(self, file_path: str) -> str | None:
+        """Walk up from the file to find the project root."""
+        markers = [
+            "package.json",
+            "pyproject.toml",
+            "requirements.txt",
+            "pom.xml",
+            "build.gradle",
+            "build.gradle.kts",
+            "Cargo.toml",
+            "go.mod",
+            ".git",
+        ]
+        current = Path(file_path).resolve().parent
+        for _ in range(7):
+            for marker in markers:
+                if (current / marker).exists():
+                    return str(current)
+            parent = current.parent
+            if parent == current:
+                break
+            current = parent
+        return None
+
+    def _scan_framework(
+        self, project_root: str, language: str
+    ) -> tuple[str, str]:
+        """Scan config files to detect the test framework in use."""
+        root = Path(project_root)
+        for detector in (
+            self._detect_js_framework,
+            self._detect_python_framework,
+            self._detect_java_framework,
+            self._detect_csharp_framework,
+            self._detect_ruby_framework,
+        ):
+            result = detector(root, language)
+            if result:
+                return result
+        return self._default_framework(language), ""
+
+    def _detect_js_framework(
+        self, root: Path, language: str
+    ) -> tuple[str, str] | None:
+        pkg_json = root / "package.json"
+        if not pkg_json.exists():
+            return None
         try:
-            tree = ast.parse(source)
-        except SyntaxError:
-            logger.error("Failed to parse source from %s.", module)
-            return []
+            pkg = json.loads(pkg_json.read_text(encoding="utf-8"))
+            deps: dict[str, str] = {
+                **pkg.get("dependencies", {}),
+                **pkg.get("devDependencies", {}),
+            }
+            for fw, dep in [
+                ("vitest", "vitest"),
+                ("jest", "jest"),
+                ("mocha", "mocha"),
+                ("jasmine", "jasmine"),
+                ("playwright", "@playwright/test"),
+                ("cypress", "cypress"),
+            ]:
+                if dep in deps:
+                    return fw, f"{dep} {deps[dep]}"
+            if language in ("typescript", "javascript"):
+                return "jest", "(no test framework detected in package.json)"
+        except Exception:
+            pass
+        return None
 
-        functions: list[FunctionInfo] = []
-        self._visit_node(tree, functions, module, class_name=None)
-        return functions
-
-    def _visit_node(
-        self,
-        node: ast.AST,
-        functions: list[FunctionInfo],
-        module: str,
-        class_name: str | None,
-    ) -> None:
-        """Recursively visit AST nodes to extract functions.
-
-        Args:
-            node: The current AST node.
-            functions: Accumulator list.
-            module: The module path.
-            class_name: Current class name if inside a class.
-        """
-        for child in ast.iter_child_nodes(node):
-            if isinstance(child, ast.ClassDef):
-                # Visit class methods
-                self._visit_node(child, functions, module, class_name=child.name)
-            elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                func_info = self._extract_function_info(
-                    child, module, class_name
-                )
-                functions.append(func_info)
-
-    def _extract_function_info(
-        self,
-        node: ast.FunctionDef | ast.AsyncFunctionDef,
-        module: str,
-        class_name: str | None,
-    ) -> FunctionInfo:
-        """Extract FunctionInfo from an AST function node.
-
-        Args:
-            node: The AST function definition node.
-            module: The module path.
-            class_name: Parent class name, or None.
-
-        Returns:
-            A FunctionInfo instance.
-        """
-        # Extract arguments (skip self/cls)
-        args = []
-        for arg in node.args.args:
-            name = arg.arg
-            if name not in ("self", "cls"):
-                args.append(name)
-
-        # Extract return type annotation
-        return_type = None
-        if node.returns:
+    def _detect_python_framework(
+        self, root: Path, language: str  # noqa: ARG002
+    ) -> tuple[str, str] | None:
+        for fname in ("requirements.txt", "requirements-dev.txt", "requirements-test.txt"):
+            req_path = root / fname
+            if req_path.exists():
+                try:
+                    content = req_path.read_text(encoding="utf-8").lower()
+                    if "pytest" in content:
+                        return "pytest", f"pytest ({fname})"
+                    if "nose2" in content:
+                        return "nose2", f"nose2 ({fname})"
+                except Exception:
+                    pass
+        pyproject = root / "pyproject.toml"
+        if pyproject.exists():
             try:
-                return_type = ast.unparse(node.returns)
-            except Exception:
-                return_type = None
-
-        # Extract docstring
-        docstring = ast.get_docstring(node) or ""
-
-        # Extract decorators
-        decorators = []
-        for dec in node.decorator_list:
-            try:
-                decorators.append(ast.unparse(dec))
+                content = pyproject.read_text(encoding="utf-8").lower()
+                if "pytest" in content:
+                    return "pytest", "pytest (pyproject.toml)"
+                if "unittest" in content:
+                    return "unittest", "unittest (pyproject.toml)"
             except Exception:
                 pass
+        return None
 
-        # Estimate complexity
-        complexity = self._estimate_complexity(node)
+    def _detect_java_framework(
+        self, root: Path, language: str  # noqa: ARG002
+    ) -> tuple[str, str] | None:
+        pom = root / "pom.xml"
+        if pom.exists():
+            try:
+                content = pom.read_text(encoding="utf-8")
+                lower = content.lower()
+                if "junit" in lower:
+                    if "junit-jupiter" in content or "org.junit.jupiter" in content:
+                        return "junit5", "JUnit 5 (pom.xml)"
+                    return "junit4", "JUnit 4 (pom.xml)"
+                if "testng" in lower:
+                    return "testng", "TestNG (pom.xml)"
+            except Exception:
+                pass
+        for gradle_file in ("build.gradle", "build.gradle.kts"):
+            gradle = root / gradle_file
+            if gradle.exists():
+                try:
+                    if "junit" in gradle.read_text(encoding="utf-8").lower():
+                        return "junit5", f"JUnit ({gradle_file})"
+                except Exception:
+                    pass
+        return None
 
-        return FunctionInfo(
-            name=node.name,
-            module=module,
-            class_name=class_name,
-            args=args,
-            return_type=return_type,
-            docstring=docstring,
-            line_number=node.lineno,
-            is_async=isinstance(node, ast.AsyncFunctionDef),
-            decorators=decorators,
-            complexity=complexity,
-        )
+    def _detect_csharp_framework(
+        self, root: Path, language: str  # noqa: ARG002
+    ) -> tuple[str, str] | None:
+        try:
+            for entry in root.iterdir():
+                if entry.is_file() and entry.suffix == ".csproj":
+                    try:
+                        content = entry.read_text(encoding="utf-8")
+                        if "NUnit" in content:
+                            return "nunit", f"NUnit ({entry.name})"
+                        if "xunit" in content.lower():
+                            return "xunit", f"xUnit ({entry.name})"
+                        if "MSTest" in content:
+                            return "mstest", f"MSTest ({entry.name})"
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        return None
 
-    def _estimate_complexity(self, node: ast.AST) -> int:
-        """Estimate cyclomatic complexity of a function.
+    def _detect_ruby_framework(
+        self, root: Path, language: str  # noqa: ARG002
+    ) -> tuple[str, str] | None:
+        gemfile = root / "Gemfile"
+        if not gemfile.exists():
+            return None
+        try:
+            content = gemfile.read_text(encoding="utf-8").lower()
+            if "rspec" in content:
+                return "rspec", "RSpec (Gemfile)"
+            if "minitest" in content:
+                return "minitest", "Minitest (Gemfile)"
+        except Exception:
+            pass
+        return None
 
-        Counts branches (if, elif, for, while, except, and, or)
-        to estimate complexity.
+    def default_framework(self, language: str) -> str:
+        """Return the conventional default test framework for a language."""
+        return self._default_framework(language)
 
-        Args:
-            node: The AST node to analyze.
-
-        Returns:
-            The estimated complexity score.
-        """
-        complexity = 1
-        for child in ast.walk(node):
-            if isinstance(child, (ast.If, ast.IfExp)):
-                complexity += 1
-            elif isinstance(child, (ast.For, ast.AsyncFor)):
-                complexity += 1
-            elif isinstance(child, (ast.While,)):
-                complexity += 1
-            elif isinstance(child, ast.ExceptHandler):
-                complexity += 1
-            elif isinstance(child, ast.BoolOp):
-                complexity += len(child.values) - 1
-        return complexity
+    def _default_framework(self, language: str) -> str:
+        defaults: dict[str, str] = {
+            "python": "pytest",
+            "typescript": "jest",
+            "javascript": "jest",
+            "csharp": "xunit",
+            "java": "junit5",
+            "go": "testing",
+            "rust": "built-in",
+            "ruby": "rspec",
+            "kotlin": "junit5",
+            "swift": "xctest",
+            "php": "phpunit",
+        }
+        return defaults.get(language, "unknown")
 
 
 # ── Test generator agent ────────────────────────────────────────────
 
 
 class TestGeneratorAgent:
-    """Agent specialized in automatic test generation.
+    """LLM-powered agent that generates tests for any programming language.
 
-    Analyzes source code, identifies coverage gaps, and generates
-    comprehensive test suites using templates and LLM assistance.
-
-    Attributes:
-        _analyzer: The code analyzer instance.
-        _llm_provider: Optional LLM provider for AI-assisted generation.
+    Detects the project's language and test framework automatically, then
+    uses Claude to generate real, production-quality test code — not stubs.
 
     Example:
         >>> agent = TestGeneratorAgent()
-        >>> result = agent.generate_unit_tests("src/connectors/jira/connector.py")
+        >>> result = agent.generate_unit_tests(
+        ...     "src/utils/calculator.ts",
+        ...     project_path="/path/to/project",
+        ... )
         >>> print(result.test_file_content)
     """
 
     def __init__(self, llm_provider: Any = None) -> None:
-        """Initialize the test generator agent.
+        self._project_analyzer = ProjectAnalyzer()
+        # llm_provider kept for backward compatibility but not used
 
-        Args:
-            llm_provider: Optional LLM provider for AI-assisted test
-                generation. If None, uses template-based generation.
-        """
-        self._analyzer = CodeAnalyzer()
-        self._llm_provider = llm_provider
+    # ── Public API ───────────────────────────────────────────────────
 
     def analyze_coverage(
         self,
         file_path: str,
         existing_test_path: str | None = None,
+        project_path: str | None = None,
     ) -> list[CoverageGap]:
-        """Analyze coverage gaps for a source file.
-
-        Identifies functions that lack corresponding test coverage
-        by comparing source functions against existing test files.
-
-        Args:
-            file_path: Path to the source file to analyze.
-            existing_test_path: Optional path to existing test file.
-
-        Returns:
-            A list of CoverageGap objects sorted by priority.
-        """
-        logger.info("Analyzing coverage for: %s", file_path)
-
-        functions = self._analyzer.analyze_file(file_path)
-
-        # Find existing tested functions
-        tested_functions: set[str] = set()
-        if existing_test_path and os.path.exists(existing_test_path):
-            tested_functions = self._find_tested_functions(existing_test_path)
-
-        gaps: list[CoverageGap] = []
-        for func in functions:
-            if func.is_dunder and func.name not in ("__init__",):
-                continue
-
-            if func.full_name in tested_functions or func.name in tested_functions:
-                continue
-
-            priority = self._assess_priority(func)
-            test_count = max(1, func.complexity)
-
-            reason = self._generate_gap_reason(func, tested_functions)
-
-            gaps.append(CoverageGap(
-                function=func,
-                priority=priority,
-                reason=reason,
-                suggested_test_count=test_count,
-            ))
-
-        # Sort by priority
-        priority_order = {"high": 0, "medium": 1, "low": 2}
-        gaps.sort(key=lambda g: priority_order.get(g.priority, 1))
-
-        logger.info(
-            "Found %d coverage gaps (%d functions analyzed).",
-            len(gaps),
-            len(functions),
+        """Identify functions/methods in *file_path* that lack test coverage."""
+        return asyncio.run(
+            self._analyze_coverage_async(file_path, existing_test_path, project_path)
         )
-        return gaps
-
-    def _find_tested_functions(self, test_file_path: str) -> set[str]:
-        """Extract function names that are tested in a test file.
-
-        Parses test function names to infer which source functions
-        they cover (e.g., ``test_connect`` → ``connect``).
-
-        Args:
-            test_file_path: Path to the test file.
-
-        Returns:
-            A set of function names that appear to be tested.
-        """
-        try:
-            with open(test_file_path, "r", encoding="utf-8") as f:
-                source = f.read()
-        except (FileNotFoundError, OSError):
-            return set()
-
-        tested = set()
-        # Pattern: test_<function_name> or test_<function_name>_<variant>
-        for match in re.finditer(r"def\s+test_(\w+)", source):
-            name = match.group(1)
-            # Add the full name
-            tested.add(name)
-            # Also add all possible underscore-split prefixes so that
-            # e.g. "get_user_returns_expected" matches function "get_user"
-            parts = name.split("_")
-            for i in range(1, len(parts)):
-                prefix = "_".join(parts[:i])
-                tested.add(prefix)
-
-        return tested
-
-    def _assess_priority(self, func: FunctionInfo) -> str:
-        """Assess test generation priority for a function.
-
-        Args:
-            func: The function to assess.
-
-        Returns:
-            Priority string: ``'high'``, ``'medium'``, or ``'low'``.
-        """
-        if func.is_private:
-            return "low"
-        if func.complexity >= 5:
-            return "high"
-        if "property" in func.decorators:
-            return "low"
-        if any(d in func.decorators for d in ("abstractmethod", "staticmethod")):
-            return "medium"
-        if func.class_name and not func.is_private:
-            return "high"
-        return "medium"
-
-    def _generate_gap_reason(
-        self,
-        func: FunctionInfo,
-        tested: set[str],
-    ) -> str:
-        """Generate a human-readable reason for a coverage gap.
-
-        Args:
-            func: The uncovered function.
-            tested: Set of already-tested function names.
-
-        Returns:
-            A reason string.
-        """
-        if func.complexity >= 5:
-            return f"High complexity ({func.complexity}) — needs thorough testing"
-        if func.class_name and not func.is_private:
-            return f"Public method on {func.class_name} — part of public API"
-        if not func.is_private:
-            return "Public function without test coverage"
-        return "Private function — low priority but may need edge case tests"
 
     def generate_unit_tests(
         self,
         file_path: str,
         existing_test_path: str | None = None,
         max_tests_per_function: int = 3,
+        project_path: str | None = None,
     ) -> TestGenerationResult:
-        """Generate unit tests for a source file.
-
-        Analyzes the file, identifies coverage gaps, and generates
-        test cases for uncovered functions.
-
-        Args:
-            file_path: Path to the source file.
-            existing_test_path: Optional path to existing test file.
-            max_tests_per_function: Maximum tests per function.
-
-        Returns:
-            A TestGenerationResult with generated tests.
-        """
-        logger.info("Generating unit tests for: %s", file_path)
-
-        functions = self._analyzer.analyze_file(file_path)
-        gaps = self.analyze_coverage(file_path, existing_test_path)
-
-        generated_tests: list[GeneratedTest] = []
-        for gap in gaps:
-            tests = self._generate_tests_for_function(
-                gap.function,
-                max_tests=max_tests_per_function,
+        """Generate a complete unit test file for *file_path*."""
+        return asyncio.run(
+            self._generate_unit_async(
+                file_path, existing_test_path, max_tests_per_function, project_path
             )
-            generated_tests.extend(tests)
-
-        # Build complete test file
-        test_file_path = self._compute_test_file_path(file_path)
-        test_file_content = self._build_test_file(
-            file_path, functions, generated_tests
         )
-
-        result = TestGenerationResult(
-            source_file=file_path,
-            functions_analyzed=len(functions),
-            tests_generated=len(generated_tests),
-            coverage_gaps=gaps,
-            generated_tests=generated_tests,
-            test_file_content=test_file_content,
-            test_file_path=test_file_path,
-        )
-
-        logger.info(
-            "Generated %d tests for %d functions in '%s'.",
-            result.tests_generated,
-            result.functions_analyzed,
-            file_path,
-        )
-        return result
 
     def generate_tests_from_user_story(
         self,
         user_story: str,
         target_module: str,
+        project_path: str | None = None,
     ) -> TestGenerationResult:
-        """Generate E2E tests from a user story description.
-
-        Args:
-            user_story: The user story text.
-            target_module: The module/file to test.
-
-        Returns:
-            A TestGenerationResult with E2E test cases.
-        """
-        logger.info("Generating E2E tests from user story for: %s", target_module)
-
-        # Parse user story into test scenarios
-        scenarios = self._parse_user_story(user_story)
-
-        generated_tests: list[GeneratedTest] = []
-        for i, scenario in enumerate(scenarios):
-            test = GeneratedTest(
-                test_name=f"test_e2e_{self._slugify(scenario['title'])}",
-                test_code=self._generate_e2e_test_code(scenario),
-                target_function=target_module,
-                test_type="e2e",
-                description=scenario.get("description", ""),
-                imports=["import pytest"],
-            )
-            generated_tests.append(test)
-
-        test_file_content = self._build_e2e_test_file(
-            target_module, generated_tests
-        )
-
-        return TestGenerationResult(
-            source_file=target_module,
-            functions_analyzed=0,
-            tests_generated=len(generated_tests),
-            generated_tests=generated_tests,
-            test_file_content=test_file_content,
-            test_file_path=f"tests/e2e/test_{self._slugify(target_module)}.py",
+        """Generate E2E tests from a user story."""
+        return asyncio.run(
+            self._generate_e2e_async(user_story, target_module, project_path)
         )
 
     def generate_tdd_tests(
         self,
         spec: dict[str, Any],
+        project_path: str | None = None,
     ) -> TestGenerationResult:
-        """Generate tests before implementation (TDD mode).
+        """Generate failing tests (TDD red phase) based on a spec."""
+        return asyncio.run(self._generate_tdd_async(spec, project_path))
 
-        Creates test stubs based on a function specification that
-        define the expected behavior before the code is written.
+    # ── Async implementations ────────────────────────────────────────
 
-        Args:
-            spec: Function specification with keys:
-                ``'name'``, ``'args'``, ``'returns'``, ``'description'``,
-                ``'module'``, ``'edge_cases'``.
+    async def _analyze_coverage_async(
+        self, file_path: str, existing_test_path: str | None, project_path: str | None
+    ) -> list[CoverageGap]:
+        framework_info = self._project_analyzer.detect(file_path, project_path)
+        source = self._read_file(file_path)
+        if not source:
+            raise FileNotFoundError(f"Cannot read source file: {file_path}")
 
-        Returns:
-            A TestGenerationResult with TDD test stubs.
-        """
-        func_name = spec.get("name", "unknown")
-        module = spec.get("module", "")
+        existing = (
+            self._read_file(existing_test_path)
+            if existing_test_path and os.path.exists(existing_test_path)
+            else ""
+        )
+
+        print(
+            f"Detected {framework_info['language']} project with {framework_info['test_framework']}",
+            flush=True,
+        )
+        print("Asking Claude to analyse coverage gaps...", flush=True)
+
+        prompt = self._analyze_coverage_prompt(source, file_path, framework_info, existing)
+        response = await self._call_claude(prompt)
+        return self._parse_gaps(response, file_path)
+
+    async def _generate_unit_async(
+        self,
+        file_path: str,
+        existing_test_path: str | None,
+        max_tests_per_function: int,
+        project_path: str | None,
+    ) -> TestGenerationResult:
+        framework_info = self._project_analyzer.detect(file_path, project_path)
+        source = self._read_file(file_path)
+        if not source:
+            raise FileNotFoundError(f"Cannot read source file: {file_path}")
+
+        existing = (
+            self._read_file(existing_test_path)
+            if existing_test_path and os.path.exists(existing_test_path)
+            else ""
+        )
+
+        print(
+            f"Detected {framework_info['language']} + {framework_info['test_framework']}",
+            flush=True,
+        )
+        print("Asking Claude to generate unit tests...", flush=True)
+
+        prompt = self._generate_unit_prompt(
+            source, file_path, framework_info, existing, max_tests_per_function
+        )
+        response = await self._call_claude(prompt)
+        return self._parse_generation_result(response, file_path, "unit", framework_info)
+
+    async def _generate_e2e_async(
+        self, user_story: str, target_module: str, project_path: str | None
+    ) -> TestGenerationResult:
+        # Try to detect framework from target module; fall back to project_path
+        if os.path.exists(target_module):
+            framework_info = self._project_analyzer.detect(target_module, project_path)
+        elif project_path:
+            framework_info = self._project_analyzer.detect(
+                os.path.join(project_path, "dummy.ts"), project_path
+            )
+        else:
+            framework_info = {
+                "language": "unknown",
+                "test_framework": "jest",
+                "project_root": "",
+                "details": "",
+            }
+
+        print(
+            f"Detected {framework_info['language']} + {framework_info['test_framework']}",
+            flush=True,
+        )
+        print("Asking Claude to generate E2E tests...", flush=True)
+
+        prompt = self._generate_e2e_prompt(user_story, target_module, framework_info)
+        response = await self._call_claude(prompt)
+        return self._parse_generation_result(response, target_module, "e2e", framework_info)
+
+    async def _generate_tdd_async(
+        self, spec: dict[str, Any], project_path: str | None
+    ) -> TestGenerationResult:
+        language = spec.get("language", "python")
+
+        # Detect framework from project if possible
+        framework = self._project_analyzer.default_framework(language)
+        if project_path:
+            # Build a dummy file path with the right extension to trigger detection
+            ext_map = {
+                "typescript": ".ts",
+                "javascript": ".js",
+                "python": ".py",
+                "csharp": ".cs",
+                "java": ".java",
+                "ruby": ".rb",
+                "go": ".go",
+                "kotlin": ".kt",
+                "rust": ".rs",
+            }
+            ext = ext_map.get(language, f".{language[:2]}")
+            dummy_path = os.path.join(project_path, f"dummy{ext}")
+            detected = self._project_analyzer.detect(dummy_path, project_path)
+            framework = detected.get("test_framework", framework)
+
+        framework_info = {
+            "language": language,
+            "test_framework": framework,
+            "project_root": project_path or "",
+            "details": "",
+        }
+
+        print(
+            f"Generating TDD tests for {language} ({framework})",
+            flush=True,
+        )
+        print("Asking Claude to generate failing tests (TDD red phase)...", flush=True)
+
+        prompt = self._generate_tdd_prompt(spec, framework_info)
+        response = await self._call_claude(prompt)
+        slug = re.sub(r"[^a-z0-9_]", "_", spec.get("snippet_type", "feature").lower())
+        return self._parse_generation_result(response, f"tdd_{slug}", "unit", framework_info)
+
+    # ── Claude call ──────────────────────────────────────────────────
+
+    async def _call_claude(self, prompt: str) -> str:
+        """Call Claude via the Agent SDK and return the text response."""
+        from core.auth import ensure_claude_code_oauth_token
+        from core.model_config import get_utility_model_config
+        from core.simple_client import create_simple_client
+
+        ensure_claude_code_oauth_token()
+        model, thinking_budget = get_utility_model_config(
+            default_model="claude-sonnet-4-6"
+        )
+
+        client = create_simple_client(
+            agent_type="batch_analysis",
+            model=model,
+            max_thinking_tokens=thinking_budget,
+        )
+
+        response_text = ""
+        try:
+            async with client:
+                await client.query(prompt)
+                async for msg in client.receive_response():
+                    if (
+                        type(msg).__name__ == "AssistantMessage"
+                        and hasattr(msg, "content")
+                    ):
+                        for block in msg.content:
+                            if hasattr(block, "text"):
+                                response_text += block.text
+        except Exception as exc:
+            logger.error("Claude call failed: %s", exc)
+            raise
+
+        return response_text
+
+    # ── Prompts ──────────────────────────────────────────────────────
+
+    def _analyze_coverage_prompt(
+        self,
+        source: str,
+        file_path: str,
+        framework_info: dict[str, str],
+        existing: str,
+    ) -> str:
+        language = framework_info["language"]
+        framework = framework_info["test_framework"]
+        existing_section = (
+            f"\n\nExisting test file (exclude already-tested functions from gaps):\n```\n{existing}\n```"
+            if existing
+            else ""
+        )
+        return f"""Analyse this {language} source file and identify which functions / methods / components lack test coverage.
+
+Source file: {file_path}
+Test framework used in this project: {framework}
+
+Source code:
+```{language}
+{source}
+```{existing_section}
+
+Return ONLY a raw JSON object (no markdown, no explanation) matching this schema:
+{{
+  "functions_analyzed": <integer>,
+  "gaps": [
+    {{
+      "name": "<function or method name>",
+      "full_name": "<ClassName.method or bare function name>",
+      "class_name": "<class name or null>",
+      "line_number": <integer>,
+      "priority": "<high | medium | low>",
+      "reason": "<one sentence explaining why it needs tests>",
+      "suggested_test_count": <integer>
+    }}
+  ]
+}}
+
+Priority rules:
+- high  → public API / business logic / multiple branches / external I/O
+- medium → helper functions, utility methods
+- low   → trivial getters / setters, private helpers
+
+Skip dunder / magic methods except __init__ when it has non-trivial logic.
+Only include items NOT already covered by the existing test file."""
+
+    def _generate_unit_prompt(
+        self,
+        source: str,
+        file_path: str,
+        framework_info: dict[str, str],
+        existing: str,
+        max_tests_per_function: int,
+    ) -> str:
+        language = framework_info["language"]
+        framework = framework_info["test_framework"]
+        existing_section = (
+            f"\n\nExisting tests (extend, avoid duplicates):\n```\n{existing}\n```"
+            if existing
+            else ""
+        )
+        stem = Path(file_path).stem
+        # Convention hints per language
+        path_convention = {
+            "python": f"tests/test_{stem}.py",
+            "typescript": f"src/__tests__/{stem}.test.ts",
+            "javascript": f"src/__tests__/{stem}.test.js",
+            "csharp": f"{stem}Tests.cs",
+            "java": f"{stem}Test.java",
+            "go": f"{stem}_test.go",
+            "ruby": f"spec/{stem}_spec.rb",
+            "kotlin": f"{stem}Test.kt",
+        }.get(language, f"tests/{stem}_test")
+
+        return f"""Generate a complete, production-quality test file for this {language} source file.
+
+Source file: {file_path}
+Test framework: {framework}
+Max tests per function: {max_tests_per_function}
+
+Source code:
+```{language}
+{source}
+```{existing_section}
+
+Requirements:
+1. Use {framework} syntax, imports, and conventions exactly as they appear in real projects.
+2. Write REAL, MEANINGFUL tests — no stubs, no TODOs, no "pass".
+3. Cover: happy path, edge cases, error handling, boundary values.
+4. Mock / stub external dependencies (I/O, network, database) appropriately.
+5. Generate up to {max_tests_per_function} tests per function.
+6. Include all necessary imports at the top of the file.
+
+Return ONLY a raw JSON object (no markdown, no explanation) matching this schema:
+{{
+  "test_file_content": "<complete test file as a single escaped string>",
+  "test_file_path": "{path_convention}",
+  "tests_generated": <integer>,
+  "functions_analyzed": <integer>,
+  "generated_tests": [
+    {{
+      "test_name": "<test name>",
+      "description": "<one sentence: what this test verifies>"
+    }}
+  ]
+}}"""
+
+    def _generate_e2e_prompt(
+        self,
+        user_story: str,
+        target_module: str,
+        framework_info: dict[str, str],
+    ) -> str:
+        language = framework_info["language"]
+        framework = framework_info["test_framework"]
+        stem = re.sub(r"[^a-z0-9_]", "_", Path(target_module).stem.lower())
+
+        return f"""Generate E2E / acceptance tests that verify the following user story end-to-end.
+
+User story:
+{user_story}
+
+Target module/file: {target_module}
+Test framework: {framework}
+Language: {language}
+
+Requirements:
+1. Map each acceptance criterion to one or more test scenarios.
+2. Use Given / When / Then structure in test descriptions.
+3. Use {framework} syntax and imports.
+4. Write realistic assertions, not just "expect(true).toBe(true)".
+
+Return ONLY a raw JSON object (no markdown) matching this schema:
+{{
+  "test_file_content": "<complete test file as a single escaped string>",
+  "test_file_path": "e2e/test_{stem}.{language == 'typescript' and 'ts' or language == 'python' and 'py' or 'js'}",
+  "tests_generated": <integer>,
+  "functions_analyzed": 0,
+  "generated_tests": [
+    {{
+      "test_name": "<scenario name>",
+      "description": "<user story acceptance criterion covered>"
+    }}
+  ]
+}}"""
+
+    def _generate_tdd_prompt(
+        self,
+        spec: dict[str, Any],
+        framework_info: dict[str, str],
+    ) -> str:
+        language = framework_info["language"]
+        framework = framework_info["test_framework"]
         description = spec.get("description", "")
-        args = spec.get("args", [])
-        returns = spec.get("returns", "Any")
-        edge_cases = spec.get("edge_cases", [])
+        snippet_type = spec.get("snippet_type", "function")
+        slug = re.sub(r"[^a-z0-9_]", "_", description[:40].lower().strip())
 
-        logger.info("Generating TDD tests for: %s.%s", module, func_name)
+        return f"""Generate failing tests for not-yet-implemented {language} code (TDD red phase).
 
-        generated_tests: list[GeneratedTest] = []
+What needs to be implemented:
+{description}
 
-        # Happy path test
-        generated_tests.append(GeneratedTest(
-            test_name=f"test_{func_name}_happy_path",
-            test_code=self._generate_tdd_happy_path(spec),
-            target_function=func_name,
-            test_type="unit",
-            description=f"Verify {func_name} works with valid inputs",
-            imports=["import pytest"],
-        ))
+Snippet type: {snippet_type}
+Language: {language}
+Test framework: {framework}
 
-        # Edge case tests
-        for i, case in enumerate(edge_cases):
-            generated_tests.append(GeneratedTest(
-                test_name=f"test_{func_name}_{self._slugify(case)}",
-                test_code=self._generate_tdd_edge_case(spec, case),
-                target_function=func_name,
-                test_type="unit",
-                description=f"Edge case: {case}",
-                imports=["import pytest"],
-            ))
+Requirements:
+1. Tests MUST FAIL until the implementation exists — this is the TDD red phase.
+2. DO NOT implement the function/class — only write tests.
+3. Each test precisely documents one expected behaviour.
+4. Cover: normal inputs, boundary values, invalid inputs / error conditions.
+5. Use descriptive test names that serve as a living specification.
+6. Import the function/class from a logical module path even though it doesn't exist yet.
 
-        # Error handling test
-        generated_tests.append(GeneratedTest(
-            test_name=f"test_{func_name}_error_handling",
-            test_code=self._generate_tdd_error_test(spec),
-            target_function=func_name,
-            test_type="unit",
-            description=f"Verify {func_name} handles errors correctly",
-            imports=["import pytest"],
-        ))
+Return ONLY a raw JSON object (no markdown) matching this schema:
+{{
+  "test_file_content": "<complete test file as a single escaped string>",
+  "test_file_path": "tests/test_{slug}.{language == 'python' and 'py' or language in ('typescript',) and 'ts' or 'js'}",
+  "tests_generated": <integer>,
+  "functions_analyzed": 0,
+  "generated_tests": [
+    {{
+      "test_name": "<test name>",
+      "description": "<behaviour specified by this test>"
+    }}
+  ]
+}}"""
 
-        test_content = self._build_tdd_test_file(module, func_name, generated_tests)
+    # ── Response parsing ─────────────────────────────────────────────
+
+    def _parse_gaps(self, response: str, file_path: str) -> list[CoverageGap]:
+        data = self._extract_json(response)
+        gaps: list[CoverageGap] = []
+        for g in data.get("gaps", []):
+            func = FunctionInfo(
+                name=g.get("name", "unknown"),
+                module=file_path,
+                class_name=g.get("class_name"),
+                line_number=g.get("line_number", 0),
+            )
+            gaps.append(
+                CoverageGap(
+                    function=func,
+                    priority=g.get("priority", "medium"),
+                    reason=g.get("reason", ""),
+                    suggested_test_count=g.get("suggested_test_count", 1),
+                )
+            )
+        return gaps
+
+    def _parse_generation_result(
+        self,
+        response: str,
+        file_path: str,
+        test_type: str,
+        framework_info: dict[str, str],
+    ) -> TestGenerationResult:
+        data = self._extract_json(response)
+
+        test_file_content = data.get("test_file_content", "")
+        if not test_file_content:
+            # Last resort: the whole response might be the test file
+            test_file_content = response
+
+        test_file_path = data.get(
+            "test_file_path",
+            self._compute_test_file_path(file_path, framework_info),
+        )
+        tests_generated = data.get("tests_generated", 0)
+        functions_analyzed = data.get("functions_analyzed", 0)
+
+        generated_tests = [
+            GeneratedTest(
+                test_name=t.get("test_name", ""),
+                test_code="",
+                target_function=file_path,
+                test_type=test_type,
+                description=t.get("description", ""),
+            )
+            for t in data.get("generated_tests", [])
+        ]
 
         return TestGenerationResult(
-            source_file=module,
-            functions_analyzed=0,
-            tests_generated=len(generated_tests),
+            source_file=file_path,
+            functions_analyzed=functions_analyzed,
+            tests_generated=tests_generated,
             generated_tests=generated_tests,
-            test_file_content=test_content,
-            test_file_path=f"tests/test_{func_name}.py",
+            test_file_content=test_file_content,
+            test_file_path=test_file_path,
         )
 
-    # ── Internal generation methods ──────────────────────────────────
+    def _extract_json(self, text: str) -> dict[str, Any]:
+        """Extract JSON from a Claude response, handling markdown fences."""
+        # Strip markdown code fences
+        if "```json" in text:
+            start = text.find("```json") + 7
+            end = text.find("```", start)
+            if end > start:
+                text = text[start:end].strip()
+        elif "```" in text:
+            start = text.find("```") + 3
+            end = text.find("```", start)
+            if end > start:
+                text = text[start:end].strip()
 
-    def _generate_tests_for_function(
-        self,
-        func: FunctionInfo,
-        max_tests: int = 3,
-    ) -> list[GeneratedTest]:
-        """Generate test cases for a single function.
+        # Direct parse
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass
 
-        Args:
-            func: The function to generate tests for.
-            max_tests: Maximum number of tests to generate.
+        # Find first { ... last }
+        start = text.find("{")
+        end = text.rfind("}") + 1
+        if start >= 0 and end > start:
+            try:
+                return json.loads(text[start:end])
+            except json.JSONDecodeError:
+                pass
 
-        Returns:
-            A list of GeneratedTest objects.
-        """
-        tests: list[GeneratedTest] = []
+        logger.error("Failed to parse JSON from response: %.200s", text)
+        return {}
 
-        # Happy path test
-        tests.append(GeneratedTest(
-            test_name=f"test_{func.name}_returns_expected",
-            test_code=self._generate_happy_path_test(func),
-            target_function=func.full_name,
-            test_type="unit",
-            description=f"Verify {func.full_name} returns expected result",
-        ))
-
-        # Edge case: empty/None inputs
-        if func.args and len(tests) < max_tests:
-            tests.append(GeneratedTest(
-                test_name=f"test_{func.name}_with_empty_input",
-                test_code=self._generate_edge_case_test(func),
-                target_function=func.full_name,
-                test_type="unit",
-                description=f"Verify {func.full_name} handles empty/None inputs",
-            ))
-
-        # Error handling test
-        if func.complexity >= 3 and len(tests) < max_tests:
-            tests.append(GeneratedTest(
-                test_name=f"test_{func.name}_error_handling",
-                test_code=self._generate_error_test(func),
-                target_function=func.full_name,
-                test_type="unit",
-                description=f"Verify {func.full_name} handles errors correctly",
-            ))
-
-        return tests
-
-    def _generate_happy_path_test(self, func: FunctionInfo) -> str:
-        """Generate a happy path test for a function."""
-        args_str = ", ".join(f"{a}=mock_{a}" for a in func.args)
-        if func.class_name:
-            setup = f"    instance = {func.class_name}(mock_dependency)\n"
-            call = f"    result = instance.{func.name}({args_str})"
-        else:
-            call = f"    result = {func.name}({args_str})"
-            setup = ""
-
-        return (
-            f"def test_{func.name}_returns_expected({', '.join(func.args) if func.args else ''}):\n"
-            f'    """{func.full_name} returns expected result with valid inputs."""\n'
-            f"    # Arrange\n"
-            f"{setup}"
-            f"    # Act\n"
-            f"{call}\n"
-            f"    # Assert\n"
-            f"    assert result is not None\n"
-        )
-
-    def _generate_edge_case_test(self, func: FunctionInfo) -> str:
-        """Generate an edge case test for a function."""
-        if func.class_name:
-            call_prefix = f"instance.{func.name}"
-        else:
-            call_prefix = func.name
-
-        return (
-            f"def test_{func.name}_with_empty_input():\n"
-            f'    """{func.full_name} handles empty/None inputs gracefully."""\n'
-            f"    # Test with empty/default parameters\n"
-            f"    # TODO: Customize arguments for specific edge case\n"
-            f"    pass\n"
-        )
-
-    def _generate_error_test(self, func: FunctionInfo) -> str:
-        """Generate an error handling test for a function."""
-        return (
-            f"def test_{func.name}_error_handling():\n"
-            f'    """{func.full_name} raises appropriate errors."""\n'
-            f"    # Test error conditions\n"
-            f"    with pytest.raises(Exception):\n"
-            f"        # TODO: Call with invalid inputs\n"
-            f"        pass\n"
-        )
-
-    def _generate_tdd_happy_path(self, spec: dict[str, Any]) -> str:
-        """Generate a TDD happy path test."""
-        name = spec.get("name", "func")
-        args = spec.get("args", [])
-        returns = spec.get("returns", "Any")
-        args_str = ", ".join(f"{a}=valid_{a}" for a in args)
-
-        return (
-            f"def test_{name}_happy_path():\n"
-            f'    """Verify {name} works with valid inputs."""\n'
-            f"    # TODO: Define valid input values\n"
-            f"    result = {name}({args_str})\n"
-            f"    assert result is not None\n"
-            f"    # TODO: Assert specific return value / type\n"
-        )
-
-    def _generate_tdd_edge_case(self, spec: dict[str, Any], case: str) -> str:
-        """Generate a TDD edge case test."""
-        name = spec.get("name", "func")
-        slug = self._slugify(case)
-
-        return (
-            f"def test_{name}_{slug}():\n"
-            f'    """Edge case: {case}."""\n'
-            f"    # TODO: Implement edge case test\n"
-            f"    pass\n"
-        )
-
-    def _generate_tdd_error_test(self, spec: dict[str, Any]) -> str:
-        """Generate a TDD error handling test."""
-        name = spec.get("name", "func")
-
-        return (
-            f"def test_{name}_error_handling():\n"
-            f'    """Verify {name} handles errors correctly."""\n'
-            f"    with pytest.raises(Exception):\n"
-            f"        # TODO: Call with invalid inputs\n"
-            f"        {name}()\n"
-        )
-
-    def _generate_e2e_test_code(self, scenario: dict[str, Any]) -> str:
-        """Generate E2E test code from a scenario."""
-        title = scenario.get("title", "scenario")
-        steps = scenario.get("steps", [])
-
-        steps_code = "\n".join(
-            f"    # Step: {step}" for step in steps
-        )
-
-        return (
-            f"def test_e2e_{self._slugify(title)}():\n"
-            f'    """E2E: {title}."""\n'
-            f"{steps_code}\n"
-            f"    # TODO: Implement E2E steps\n"
-            f"    pass\n"
-        )
-
-    # ── File building ────────────────────────────────────────────────
-
-    def _build_test_file(
-        self,
-        source_file: str,
-        functions: list[FunctionInfo],
-        tests: list[GeneratedTest],
+    def _compute_test_file_path(
+        self, source_path: str, framework_info: dict[str, str]
     ) -> str:
-        """Build a complete test file from generated tests.
-
-        Args:
-            source_file: The source file path.
-            functions: All analyzed functions.
-            tests: The generated tests.
-
-        Returns:
-            The complete test file content as a string.
-        """
-        module_name = self._path_to_module(source_file)
-
-        # Collect unique imports
-        all_imports = {"from unittest.mock import MagicMock, patch", "import pytest"}
-        for t in tests:
-            all_imports.update(t.imports)
-
-        imports_str = "\n".join(sorted(all_imports))
-
-        # Group tests by target function
-        header = (
-            f'"""Auto-generated unit tests for {source_file}.\n'
-            f'\n'
-            f'Generated by TestGeneratorAgent (Feature 8.3).\n'
-            f'"""\n'
-        )
-
-        test_code = "\n\n".join(t.test_code for t in tests)
-
-        return f"{header}\n{imports_str}\n\n\n{test_code}\n"
-
-    def _build_e2e_test_file(
-        self,
-        target_module: str,
-        tests: list[GeneratedTest],
-    ) -> str:
-        """Build a complete E2E test file."""
-        header = (
-            f'"""Auto-generated E2E tests for {target_module}.\n'
-            f'\n'
-            f'Generated by TestGeneratorAgent (Feature 8.3).\n'
-            f'"""\n'
-        )
-
-        test_code = "\n\n".join(t.test_code for t in tests)
-
-        return f"{header}\nimport pytest\n\n\n{test_code}\n"
-
-    def _build_tdd_test_file(
-        self,
-        module: str,
-        func_name: str,
-        tests: list[GeneratedTest],
-    ) -> str:
-        """Build a TDD test file."""
-        header = (
-            f'"""TDD tests for {module}.{func_name}.\n'
-            f'\n'
-            f'Tests written BEFORE implementation (TDD mode).\n'
-            f'Generated by TestGeneratorAgent (Feature 8.3).\n'
-            f'"""\n'
-        )
-
-        test_code = "\n\n".join(t.test_code for t in tests)
-
-        return f"{header}\nimport pytest\n\n\n{test_code}\n"
+        language = framework_info.get("language", "python")
+        stem = Path(source_path).stem
+        if language == "python":
+            return f"tests/test_{stem}.py"
+        if language in ("typescript",):
+            return f"src/__tests__/{stem}.test.ts"
+        if language in ("javascript",):
+            return f"src/__tests__/{stem}.test.js"
+        if language == "csharp":
+            return f"{stem}Tests.cs"
+        if language == "java":
+            return f"{stem}Test.java"
+        if language == "go":
+            return f"{stem}_test.go"
+        if language == "ruby":
+            return f"spec/{stem}_spec.rb"
+        return f"tests/test_{stem}"
 
     # ── Utilities ────────────────────────────────────────────────────
 
-    def _compute_test_file_path(self, source_path: str) -> str:
-        """Compute the test file path for a source file.
-
-        Args:
-            source_path: The source file path.
-
-        Returns:
-            The corresponding test file path.
-        """
-        # Convert source path to test path
-        # e.g., src/connectors/jira/connector.py -> tests/connectors/jira/test_connector.py
-        parts = source_path.replace("\\", "/").split("/")
-        filename = parts[-1]
-        test_filename = f"test_{filename}"
-
-        if "src/" in source_path:
-            rel = source_path.split("src/", 1)[1]
-            return f"tests/{os.path.dirname(rel)}/{test_filename}".replace("\\", "/")
-
-        return f"tests/{test_filename}"
-
-    def _path_to_module(self, file_path: str) -> str:
-        """Convert a file path to a Python module path.
-
-        Args:
-            file_path: The file path (e.g., ``'src/connectors/jira/connector.py'``).
-
-        Returns:
-            The module path (e.g., ``'src.connectors.jira.connector'``).
-        """
-        module = file_path.replace("\\", "/").replace("/", ".")
-        if module.endswith(".py"):
-            module = module[:-3]
-        return module
-
-    def _slugify(self, text: str) -> str:
-        """Convert text to a valid Python identifier slug.
-
-        Args:
-            text: The text to slugify.
-
-        Returns:
-            A valid Python identifier string.
-        """
-        slug = re.sub(r"[^a-zA-Z0-9]+", "_", text.lower())
-        slug = slug.strip("_")
-        return slug or "unnamed"
-
-    def _parse_user_story(self, user_story: str) -> list[dict[str, Any]]:
-        """Parse a user story into test scenarios.
-
-        Args:
-            user_story: The user story text.
-
-        Returns:
-            A list of scenario dictionaries with ``'title'``,
-            ``'description'``, and ``'steps'`` keys.
-        """
-        scenarios: list[dict[str, Any]] = []
-
-        # Simple parsing: split on "Given/When/Then" or numbered steps
-        lines = user_story.strip().split("\n")
-        current_scenario: dict[str, Any] = {
-            "title": lines[0] if lines else "Default scenario",
-            "description": user_story,
-            "steps": [],
-        }
-
-        for line in lines[1:]:
-            stripped = line.strip()
-            if stripped.lower().startswith(("given ", "when ", "then ", "and ")):
-                current_scenario["steps"].append(stripped)
-            elif stripped.startswith(("- ", "* ", "1.", "2.", "3.")):
-                current_scenario["steps"].append(stripped.lstrip("-* 0123456789."))
-
-        if not current_scenario["steps"]:
-            current_scenario["steps"] = [user_story]
-
-        scenarios.append(current_scenario)
-        return scenarios
+    def _read_file(self, path: str) -> str:
+        try:
+            with open(path, encoding="utf-8") as f:
+                return f.read()
+        except Exception as exc:
+            logger.warning("Could not read %s: %s", path, exc)
+            return ""

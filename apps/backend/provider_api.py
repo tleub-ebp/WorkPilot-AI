@@ -987,32 +987,71 @@ async def get_provider_usage(provider: str):
 # ---------------------------------------------------------------------------
 
 # --- 1.1 Dashboard Metrics ---
-@app.get("/api/dashboard/snapshot/{project_id}")
+def _load_dashboard_snapshot(project_id: str) -> dict:
+    """Load dashboard_snapshot.json written by core.usage_tracker.
+    project_id is the project path (URL-decoded by FastAPI)."""
+    import json as _json
+    from pathlib import Path as _Path
+    snap_path = _Path(project_id) / ".auto-claude" / "dashboard_snapshot.json"
+    if snap_path.exists():
+        try:
+            return _json.loads(snap_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {
+        "tasks_by_status": {},
+        "avg_completion_by_complexity": {},
+        "qa_first_pass_rate": 0.0,
+        "qa_avg_score": 0.0,
+        "total_tokens": 0,
+        "tokens_by_provider": {},
+        "total_cost": 0.0,
+        "cost_by_model": {},
+        "merge_auto_count": 0,
+        "merge_manual_count": 0,
+    }
+
+@app.get("/api/dashboard/snapshot/{project_id:path}")
 def get_dashboard_snapshot(project_id: str):
     try:
-        from scheduling.dashboard_metrics import DashboardMetrics
-        dm = DashboardMetrics()
-        snapshot = dm.get_snapshot(project_id)
-        return {"success": True, "snapshot": snapshot.to_dict() if hasattr(snapshot, 'to_dict') else snapshot.__dict__}
+        snap = _load_dashboard_snapshot(project_id)
+        # Compute merge rate
+        auto = snap.get("merge_auto_count", 0)
+        manual = snap.get("merge_manual_count", 0)
+        total_merges = auto + manual
+        merge_rate = (auto / total_merges * 100) if total_merges > 0 else 0.0
+        snap["merge_auto_rate"] = merge_rate
+        # Flatten avg_completion (list → mean)
+        avg_compl = {}
+        for k, v in snap.get("avg_completion_by_complexity", {}).items():
+            if isinstance(v, list) and v:
+                avg_compl[k] = sum(v) / len(v)
+            else:
+                avg_compl[k] = v or 0.0
+        snap["avg_completion_by_complexity"] = avg_compl
+        return {"success": True, "snapshot": snap}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 @app.get("/api/dashboard/stats")
 def get_dashboard_stats():
-    try:
-        from scheduling.dashboard_metrics import DashboardMetrics
-        dm = DashboardMetrics()
-        return {"success": True, "stats": dm.get_stats()}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
+    return {"success": True, "stats": {}}
 
-@app.get("/api/dashboard/export/{project_id}")
+@app.get("/api/dashboard/export/{project_id:path}")
 def export_dashboard(project_id: str, fmt: str = "json"):
     try:
-        from scheduling.dashboard_metrics import DashboardMetrics
-        dm = DashboardMetrics()
-        report = dm.export_report(project_id, fmt=fmt)
-        return {"success": True, "report": report, "format": fmt}
+        import csv as _csv
+        import io as _io
+        snap = _load_dashboard_snapshot(project_id)
+        if fmt == "csv":
+            buf = _io.StringIO()
+            writer = _csv.writer(buf)
+            writer.writerow(["metric", "value"])
+            for k, v in snap.items():
+                if not k.startswith("_"):
+                    writer.writerow([k, v])
+            return {"success": True, "report": buf.getvalue(), "format": "csv"}
+        return {"success": True, "report": snap, "format": "json"}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -1623,13 +1662,19 @@ def get_hook_executions(hook_id: Annotated[Optional[str], Query()] = None, limit
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-# --- Analytics API ---
+# --- Analytics API (prefer real DB implementation, fall back to minimal stub) ---
 try:
-    from analytics.api_minimal import router as analytics_router
+    from analytics.database import init_database as _init_analytics_db
+    _init_analytics_db()
+    from analytics.api_simple import router as analytics_router
     app.include_router(analytics_router)
-except ImportError as e:
-    print(f"Warning: Could not import analytics router: {e}")
-    # Continue without analytics if module is not available
+except Exception as e:
+    print(f"Warning: Could not load real analytics router ({e}), falling back to minimal stub")
+    try:
+        from analytics.api_minimal import router as analytics_router
+        app.include_router(analytics_router)
+    except ImportError as e2:
+        print(f"Warning: Could not import analytics router: {e2}")
 
 # --- Mission Control API ---
 try:
