@@ -656,13 +656,19 @@ export function UsageIndicator() {
   const isOpenAI = usage.providerName === 'openai';
   const isCopilot = usage.providerName === 'copilot';
 
-  const Icon = (
+  const hasErrorCondition = 
     usage.needsReauthentication ||
     (isCopilot && (usage as any).error && (usage as any).error !== 'NONE') ||
-    maxUsage >= THRESHOLD_WARNING
-  ) ? AlertCircle
-    : maxUsage >= THRESHOLD_ELEVATED ? TrendingUp
-    : Activity;
+    maxUsage >= THRESHOLD_WARNING;
+
+  let Icon;
+  if (hasErrorCondition) {
+    Icon = AlertCircle;
+  } else if (maxUsage >= THRESHOLD_ELEVATED) {
+    Icon = TrendingUp;
+  } else {
+    Icon = Activity;
+  }
 
   // Define renderUsageContent function after all variables are calculated
   const renderUsageContent = () => {
@@ -678,7 +684,62 @@ export function UsageIndicator() {
       return <CopilotUsageContent usage={usage} />;
     }
     
-    return <DefaultUsageContent usage={usage} sessionLabel={sessionLabel} weeklyLabel={weeklyLabel} />;
+    return <DefaultUsageContent usage={usage} sessionResetTime={sessionResetTime} weeklyResetTime={weeklyResetTime} sessionLabel={sessionLabel} weeklyLabel={weeklyLabel} />;
+  };
+
+  const renderRealTimeIndicator = () => {
+    if (isRefreshing) {
+      return (
+        <>
+          <Activity className="h-2.5 w-2.5 motion-safe:animate-spin" />
+          <span>{t('common:usage.updating')}</span>
+        </>
+      );
+    }
+
+    if (lastRefreshTime) {
+      const minutesSinceUpdate = Math.floor((Date.now() - lastRefreshTime.getTime()) / 60000);
+      return (
+        <>
+          <Clock className="h-2.5 w-2.5" />
+          <span>{t('common:usage.lastUpdate', { minutes: minutesSinceUpdate })}</span>
+        </>
+      );
+    }
+
+    return <span>{t('common:usage.realTime')}</span>;
+  };
+
+  const renderUsageIndicatorContent = () => {
+    if (usage.needsReauthentication) {
+      return (
+        <span className="text-xs font-semibold text-red-500" title="Needs re-authentication">!</span>
+      );
+    }
+
+    if (isOpenAI) {
+      return (
+        <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
+          <span className="text-green-500" title="OpenAI Cost">${formatUsageValue(usage.weeklyUsageValue, i18n.language)}</span>
+        </div>
+      );
+    }
+
+    if (isCopilot) {
+      return (
+        <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
+          <span className="text-blue-500" title="Copilot Cost">{formatUsageValue(usage.copilotUsageDetails?.totalTokens, i18n.language)}T</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
+        <span className={sessionColorClass} title="Session usage">{Math.round(sessionPercent)}</span>
+        <span className="text-muted-foreground/50">│</span>
+        <span className={weeklyColorClass} title="Weekly usage">{Math.round(weeklyPercent)}</span>
+      </div>
+    );
   };
 
   return (
@@ -692,23 +753,7 @@ export function UsageIndicator() {
               onClick={handleTriggerClick}
           >
             <Icon className={`h-3.5 w-3.5 shrink-0 ${isRefreshing ? 'motion-safe:animate-spin' : ''}`} />
-            {usage.needsReauthentication ? (
-              <span className="text-xs font-semibold text-red-500" title="Needs re-authentication">!</span>
-            ) : isOpenAI ? (
-              <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
-                <span className="text-green-500" title="OpenAI Cost">${formatUsageValue(usage.weeklyUsageValue, i18n.language)}</span>
-              </div>
-            ) : isCopilot ? (
-              <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
-                <span className="text-blue-500" title="Copilot Cost">{formatUsageValue(usage.copilotUsageDetails?.totalTokens, i18n.language)}T</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-0.5 text-xs font-semibold font-mono">
-                <span className={sessionColorClass} title="Session usage">{Math.round(sessionPercent)}</span>
-                <span className="text-muted-foreground/50">│</span>
-                <span className={weeklyColorClass} title="Weekly usage">{Math.round(weeklyPercent)}</span>
-              </div>
-            )}
+            {renderUsageIndicatorContent()}
           </button>
         </PopoverTrigger>
         <PopoverContent
@@ -727,19 +772,7 @@ export function UsageIndicator() {
               </div>
               {/* Real-time indicator */}
               <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                {isRefreshing ? (
-                  <>
-                    <Activity className="h-2.5 w-2.5 motion-safe:animate-spin" />
-                    <span>{t('common:usage.updating')}</span>
-                  </>
-                ) : lastRefreshTime ? (
-                  <>
-                    <Clock className="h-2.5 w-2.5" />
-                    <span>{t('common:usage.lastUpdate', { minutes: Math.floor((Date.now() - lastRefreshTime.getTime()) / 60000) })}</span>
-                  </>
-                ) : (
-                  <span>{t('common:usage.realTime')}</span>
-                )}
+                {renderRealTimeIndicator()}
               </div>
             </div>
 
@@ -826,7 +859,6 @@ export function UsageIndicator() {
                         }}
                         isActive={false}
                         onClick={(e) => handleSwapProfile(e, profile.profileId)}
-                        onSetActive={() => {}}
                       />
                     );
                   })}

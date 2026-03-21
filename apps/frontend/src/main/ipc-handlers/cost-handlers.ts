@@ -199,6 +199,64 @@ export function registerCostHandlers(): void {
   });
 
   /**
+   * dashboard:getSnapshot — reads {projectPath}/.auto-claude/dashboard_snapshot.json
+   */
+  ipcMain.handle('dashboard:getSnapshot', async (_, projectPath: string) => {
+    try {
+      const snapPath = path.join(projectPath, '.auto-claude', 'dashboard_snapshot.json');
+      if (!fs.existsSync(snapPath)) {
+        return {
+          success: true,
+          snapshot: {
+            tasks_by_status: {},
+            avg_completion_by_complexity: {},
+            qa_first_pass_rate: 0,
+            qa_avg_score: 0,
+            total_tokens: 0,
+            tokens_by_provider: {},
+            total_cost: 0,
+            cost_by_model: {},
+            merge_auto_count: 0,
+            merge_manual_count: 0,
+          },
+        };
+      }
+      const raw = fs.readFileSync(snapPath, 'utf-8');
+      const snap = JSON.parse(raw);
+
+      // avg_completion_by_complexity may store arrays (list of durations) — convert to means
+      const avgCompletion: Record<string, number> = {};
+      for (const [complexity, val] of Object.entries(snap.avg_completion_by_complexity || {})) {
+        if (Array.isArray(val)) {
+          const arr = val as number[];
+          avgCompletion[complexity] = arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+        } else {
+          avgCompletion[complexity] = val as number;
+        }
+      }
+
+      return {
+        success: true,
+        snapshot: {
+          tasks_by_status: snap.tasks_by_status || {},
+          avg_completion_by_complexity: avgCompletion,
+          qa_first_pass_rate: snap.qa_first_pass_rate || 0,
+          qa_avg_score: snap.qa_avg_score || 0,
+          total_tokens: snap.total_tokens || 0,
+          tokens_by_provider: snap.tokens_by_provider || {},
+          total_cost: snap.total_cost || 0,
+          cost_by_model: snap.cost_by_model || {},
+          merge_auto_count: snap.merge_auto_count || 0,
+          merge_manual_count: snap.merge_manual_count || 0,
+        },
+      };
+    } catch (err) {
+      logger.error('[dashboard] getSnapshot failed', err);
+      return { success: false, error: String(err) };
+    }
+  });
+
+  /**
    * costs:setBudget — create/update budget for a project
    */
   ipcMain.handle(

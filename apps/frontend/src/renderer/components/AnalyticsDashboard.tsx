@@ -25,6 +25,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Progress } from './ui/progress';
 import { cn } from '../lib/utils';
 
+const BACKEND_URL = (import.meta.env?.VITE_BACKEND_URL as string) || 'http://localhost:9000';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -235,11 +237,11 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
       setError(null);
 
       const [overviewData, buildsData, tokenData, qaData, agentData] = await Promise.all([
-        fetchJSON<DashboardOverview>(`/analytics/overview?days=${selectedDays}`),
-        fetchJSON<BuildSummary[]>(`/analytics/builds?limit=20`),
-        fetchJSON<TokenMetrics[]>(`/analytics/metrics/tokens?days=${selectedDays}`),
-        fetchJSON<QAMetrics[]>(`/analytics/metrics/qa?days=${selectedDays}`),
-        fetchJSON<AgentPerformanceMetrics[]>(`/analytics/metrics/agent-performance?days=${selectedDays}`),
+        fetchJSON<DashboardOverview>(`${BACKEND_URL}/analytics/overview?days=${selectedDays}`),
+        fetchJSON<BuildSummary[]>(`${BACKEND_URL}/analytics/builds?limit=20`),
+        fetchJSON<TokenMetrics[]>(`${BACKEND_URL}/analytics/metrics/tokens?days=${selectedDays}`),
+        fetchJSON<QAMetrics[]>(`${BACKEND_URL}/analytics/metrics/qa?days=${selectedDays}`),
+        fetchJSON<AgentPerformanceMetrics[]>(`${BACKEND_URL}/analytics/metrics/agent-performance?days=${selectedDays}`),
       ]);
       setOverview(overviewData);
       setBuilds(buildsData);

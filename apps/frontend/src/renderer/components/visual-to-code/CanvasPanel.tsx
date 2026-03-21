@@ -10,6 +10,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
+import {
+  Plus, ArrowLeftRight, Sparkles, Loader2,
+  FileJson, Save, FolderOpen, GitBranch, Layers, LayoutTemplate,
+} from 'lucide-react';
 import ReactFlow, { MiniMap, Controls, Background, addEdge, useNodesState, useEdgesState, Connection, Edge } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
@@ -19,16 +23,29 @@ import { toast } from '@/hooks/use-toast';
 import { FileTree } from '../FileTree';
 import { saveAs } from 'file-saver';
 import type { GenerateCodeResult, CodeToVisualResult } from '@preload/api/modules/visual-programming-api';
+import { useVisualToCodeStore } from '../../stores/visual-to-code-store';
+import type { DiagramType } from '../../stores/visual-to-code-store';
 
-export type DiagramType = 'flowchart' | 'architecture' | 'mockup';
+export type { DiagramType };
 
 export const CanvasPanel: React.FC = () => {
   const { t } = useTranslation('visualProgramming');
-  const [nodes, setNodes, onNodesChange] = useNodesState([
-    { id: '1', position: { x: 250, y: 5 }, data: { label: t('newFlowchart') }, type: 'editable' }
-  ]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [diagramType, setDiagramType] = useState<DiagramType>('flowchart');
+  const {
+    canvasNodes: storedNodes,
+    canvasEdges: storedEdges,
+    canvasDiagramType: storedDiagramType,
+    setCanvasNodes,
+    setCanvasEdges,
+    setCanvasDiagramType,
+  } = useVisualToCodeStore();
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(
+    storedNodes.length > 0
+      ? storedNodes
+      : [{ id: '1', position: { x: 250, y: 5 }, data: { label: t('newFlowchart') }, type: 'editable' }]
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState(storedEdges);
+  const [diagramType, setDiagramType] = useState<DiagramType>(storedDiagramType);
   const loadInputRef = useRef<HTMLInputElement>(null);
   const [showFrameworkModal, setShowFrameworkModal] = useState(false);
   const [pendingNode, setPendingNode] = useState<{ id: string; type: string; position: { x: number; y: number } } | null>(null);
@@ -407,6 +424,35 @@ export const CanvasPanel: React.FC = () => {
     setShowSaveAsDialog(true);
   };
 
+  // Sync canvas state to store so it survives page/tab navigation
+  React.useEffect(() => {
+    const serializableNodes = nodes.map((n) => {
+      const { onRename: _, ...data } = n.data as Record<string, unknown>;
+      return { ...n, data };
+    });
+    setCanvasNodes(serializableNodes);
+  }, [nodes, setCanvasNodes]);
+
+  React.useEffect(() => {
+    setCanvasEdges(edges);
+  }, [edges, setCanvasEdges]);
+
+  React.useEffect(() => {
+    setCanvasDiagramType(diagramType);
+  }, [diagramType, setCanvasDiagramType]);
+
+  // Re-inject onRename into restored nodes (functions are not serializable)
+  const renameInjectedRef = useRef(false);
+  React.useEffect(() => {
+    if (!renameInjectedRef.current && storedNodes.length > 0) {
+      renameInjectedRef.current = true;
+      setNodes((nds) =>
+        nds.map((n) => ({ ...n, data: { ...n.data, onRename: handleRenameNode } }))
+      );
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleNodesChange = (changes: any) => {
     setIsJsonSaved(false);
     onNodesChange(changes);
@@ -433,51 +479,115 @@ export const CanvasPanel: React.FC = () => {
     }
   }, [showSaveAsDialog]);
 
+  const DIAGRAM_OPTIONS: { type: DiagramType; icon: React.ReactNode; label: string }[] = [
+    { type: 'flowchart', icon: <GitBranch className="h-3.5 w-3.5" />, label: t('newFlowchart') },
+    { type: 'architecture', icon: <Layers className="h-3.5 w-3.5" />, label: t('newArchitectureDiagram') },
+    { type: 'mockup', icon: <LayoutTemplate className="h-3.5 w-3.5" />, label: t('newMockup') },
+  ];
+
   return (
-    <div className="p-6 flex flex-col gap-4 h-full flex-1 relative">
-      <div className="flex flex-col h-full">
-        <div className="flex gap-2 mb-2 flex-wrap">
-          {(['flowchart', 'architecture', 'mockup'] as const).map((type) => {
-            let buttonLabel = '';
-            if (type === 'flowchart') buttonLabel = t('newFlowchart');
-            else if (type === 'architecture') buttonLabel = t('newArchitectureDiagram');
-            else buttonLabel = t('newMockup');
-            return (
-              <Button
-                key={type}
-                variant="outline"
-                onClick={() => requestDiagramChange(type)}
-                className={diagramType === type ? 'bg-primary/80 text-primary-foreground hover:bg-primary/90' : ''}
-                style={diagramType === type ? { boxShadow: '0 2px 8px 0 rgba(80,80,255,0.10)' } : {}}
-              >
-                {buttonLabel}
-              </Button>
-            );
-          })}
-          <Button variant="outline" onClick={handleAddNode}>{t('addBlock', 'Ajouter un bloc')}</Button>
-          <input type="file" ref={codeToVisualInputRef} style={{ display: 'none' }} accept=".js,.ts,.tsx,.jsx,.py,.cs,.java,.go,.rb,.vue,.svelte" onChange={handleCodeToVisual} />
-          <Button
-            variant="secondary"
-            onClick={() => codeToVisualInputRef.current?.click()}
-            disabled={isAiRunning}
-            title={t('reverseTooltip', 'Analyser un fichier source et générer le diagramme correspondant')}
-          >
-            {t('reverse')}
-          </Button>
-          <Button
-            variant="default"
-            onClick={handleGenerateCode}
-            disabled={isAiRunning || nodes.length === 0}
-            title={t('generateCodeTooltip', 'Générer du code à partir du diagramme courant')}
-          >
-            {isAiRunning ? `⏳ ${aiStatus || t('generating', 'Génération…')}` : t('generateCode', 'Générer le code')}
-          </Button>
-          <Button variant="outline" onClick={handleExportCode}>{t('export', 'Exporter JSON')}</Button>
-          <Button variant="outline" onClick={handleSaveAs}>{t('saveAs', 'Enregistrer sous…')}</Button>
-          <input type="file" ref={loadInputRef} style={{ display: 'none' }} accept=".json" onChange={handleLoad} />
-          <Button variant="outline" onClick={() => loadInputRef.current?.click()}>{t('load')}</Button>
+    <div className="flex flex-col h-full flex-1 relative">
+      {/* Toolbar */}
+      <div className="flex items-center gap-1 px-2 py-1.5 border-b bg-background shrink-0">
+        {/* Group 1 — Diagram type selector */}
+        <div className="flex items-center gap-0.5 p-0.5 bg-muted rounded-md">
+          {DIAGRAM_OPTIONS.map(({ type, icon, label }) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => requestDiagramChange(type)}
+              title={label}
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded transition-all ${
+                diagramType === type
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {icon}
+              <span className="hidden lg:inline">{label}</span>
+            </button>
+          ))}
         </div>
-        <div className="flex-1 min-h-0 border rounded bg-muted/30 text-muted-foreground overflow-hidden relative">
+
+        <div className="h-5 w-px bg-border mx-0.5" />
+
+        {/* Group 2 — Canvas editing */}
+        <Button
+          size="sm" variant="ghost"
+          onClick={handleAddNode}
+          className="gap-1.5 h-7 px-2 text-xs"
+          title={t('addBlock', 'Ajouter un bloc')}
+        >
+          <Plus className="h-3.5 w-3.5" />
+          <span className="hidden md:inline">{t('addBlock', 'Bloc')}</span>
+        </Button>
+        <input type="file" ref={codeToVisualInputRef} style={{ display: 'none' }} accept=".js,.ts,.tsx,.jsx,.py,.cs,.java,.go,.rb,.vue,.svelte" onChange={handleCodeToVisual} />
+        <Button
+          size="sm" variant="ghost"
+          onClick={() => codeToVisualInputRef.current?.click()}
+          disabled={isAiRunning}
+          className="gap-1.5 h-7 px-2 text-xs"
+          title={t('reverseTooltip', 'Analyser un fichier source et générer le diagramme correspondant')}
+        >
+          <ArrowLeftRight className="h-3.5 w-3.5" />
+          <span className="hidden md:inline">{t('reverse', 'Code → Visuel')}</span>
+        </Button>
+
+        <div className="h-5 w-px bg-border mx-0.5" />
+
+        {/* Group 3 — AI: primary action */}
+        <Button
+          size="sm"
+          onClick={handleGenerateCode}
+          disabled={isAiRunning || nodes.length === 0}
+          title={t('generateCodeTooltip', 'Générer du code à partir du diagramme courant')}
+          className="gap-1.5 h-7 px-3 text-xs bg-violet-600 hover:bg-violet-700 text-white"
+        >
+          {isAiRunning
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            : <Sparkles className="h-3.5 w-3.5" />}
+          {isAiRunning ? (aiStatus || t('generating', 'Génération…')) : t('generateCode', 'Générer le code')}
+        </Button>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Group 4 — File operations */}
+        <Button
+          size="sm" variant="ghost"
+          onClick={handleExportCode}
+          className="gap-1.5 h-7 px-2 text-xs"
+          title={t('export', 'Exporter JSON')}
+        >
+          <FileJson className="h-3.5 w-3.5" />
+          <span className="hidden lg:inline">{t('export', 'Exporter')}</span>
+        </Button>
+        <Button
+          size="sm" variant="ghost"
+          onClick={handleSaveAs}
+          className="gap-1.5 h-7 px-2 text-xs relative"
+          title={t('saveAs', 'Enregistrer sous…')}
+        >
+          <Save className="h-3.5 w-3.5" />
+          <span className="hidden lg:inline">{t('saveAs', 'Enregistrer')}</span>
+          {!isJsonSaved && (
+            <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-amber-400" />
+          )}
+        </Button>
+        <input type="file" ref={loadInputRef} style={{ display: 'none' }} accept=".json" onChange={handleLoad} />
+        <Button
+          size="sm" variant="ghost"
+          onClick={() => loadInputRef.current?.click()}
+          className="gap-1.5 h-7 px-2 text-xs"
+          title={t('load', 'Charger')}
+        >
+          <FolderOpen className="h-3.5 w-3.5" />
+          <span className="hidden lg:inline">{t('load', 'Charger')}</span>
+        </Button>
+      </div>
+
+      <div className="flex flex-col flex-1 min-h-0">
+        <div className="flex-1 min-h-0 bg-muted/30 text-muted-foreground overflow-hidden relative">
           <ReactFlow
             ref={reactFlowRef}
             key={diagramType}
