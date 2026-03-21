@@ -1,13 +1,13 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { existsSync, readFileSync } from 'fs';
-import { spawn } from 'child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { existsSync, readFileSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 import { app } from 'electron';
 
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { detectRateLimit, createSDKRateLimitInfo, getBestAvailableProfileEnv } from './rate-limit-detector';
 import { parsePythonCommand, getValidatedPythonPath } from './python-detector';
 import { getConfiguredPythonPath } from './python-env-manager';
@@ -331,7 +331,7 @@ asyncio.run(generate_title())
    */
   private cleanTitle(title: string): string {
     // Remove quotes if present
-    let cleaned = title.replace(/^["']|["']$/g, '');
+    let cleaned = title.replaceAll(/^["']|["']$/g, '');
 
     // Remove any "Title:" or similar prefixes
     cleaned = cleaned.replace(/^(title|task|feature)[:\s]*/i, '');
