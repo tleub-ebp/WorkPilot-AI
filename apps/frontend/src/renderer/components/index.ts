@@ -14,7 +14,7 @@ export * from './EnvConfigModal';
 export * from './AddProjectModal';
 export * from './streaming';
 export * from './MigrationWizard';
-export * from './VisualProgrammingInterface';
+export * from './visual-to-code/VisualToCodeHub';
 export { ProviderManager } from "./ProviderManager";
 export { ProviderSelector } from "./ProviderSelector";
 export * from './test-generation';

@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, fireEvent, screen, waitFor } from '@testing-library/react';
-import { VisualProgrammingInterface } from './VisualProgrammingInterface';
+import { CanvasPanel } from './visual-to-code/CanvasPanel';
 
 describe('VisualProgrammingInterface', () => {
   it('renders the main title and buttons', () => {
-    render(<VisualProgrammingInterface />);
+    render(<CanvasPanel />);
     expect(screen.getByText('🎨 Visual Programming Interface')).toBeInTheDocument();
     expect(screen.getByText('New Flowchart')).toBeInTheDocument();
     expect(screen.getByText('New Architecture Diagram')).toBeInTheDocument();
@@ -18,7 +18,7 @@ describe('VisualProgrammingInterface', () => {
   });
 
   it('permet d’ajouter un bloc template avec framework via drag & drop', async () => {
-    render(<VisualProgrammingInterface />);
+    render(<CanvasPanel />);
     // Simule le drag & drop d’un bloc FrontEnd
     const frontendBlock = screen.getByText(/FrontEnd/i);
     const canvas = screen.getByRole('region'); // ou autre sélecteur du canvas
