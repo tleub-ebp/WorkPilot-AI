@@ -47,7 +47,7 @@ const Changelog = lazy(() => import('./components/Changelog').then(m => ({ defau
 const AgentTools = lazy(() => import('./components/AgentTools').then(m => ({ default: m.AgentTools })));
 const Worktrees = lazy(() => import('./components/Worktrees').then(m => ({ default: m.Worktrees })));
 const MigrationWizard = lazy(() => import('./components/MigrationWizard').then(m => ({ default: m.MigrationWizard })));
-const VisualProgrammingInterface = lazy(() => import('./components/VisualProgrammingInterface').then(m => ({ default: m.VisualProgrammingInterface })));
+const VisualToCodeHub = lazy(() => import('./components/visual-to-code/VisualToCodeHub').then(m => ({ default: m.VisualToCodeHub })));
 const DashboardMetrics = lazy(() => import('./components/DashboardMetrics').then(m => ({ default: m.DashboardMetrics })));
 const AnalyticsDashboard = lazy(() => import('./components/AnalyticsDashboard').then(m => ({ default: m.AnalyticsDashboard })));
 const CodeReview = lazy(() => import('./components/CodeReview').then(m => ({ default: m.CodeReview })));
@@ -1196,8 +1196,8 @@ export function App() {
                           {activeView === 'migration' && (
                               <MigrationWizard />
                           )}
-                          {activeView === 'visual-programming' && (
-                              <VisualProgrammingInterface />
+                          {activeView === 'visual-to-code' && (
+                              <VisualToCodeHub />
                           )}
                           {activeView === 'dashboard' && (activeProjectId || selectedProjectId) && (
                               <DashboardMetrics projectId={activeProjectId || selectedProjectId!} />

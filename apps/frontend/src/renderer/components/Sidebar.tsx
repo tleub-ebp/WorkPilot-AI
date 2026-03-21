@@ -126,9 +126,6 @@ import {
   openLearningLoopDialog
 } from '@/stores/learning-loop-store';
 
-import {
-  openDesignToCodeDialog
-} from '@/stores/design-to-code-store';
 
 import { openArenaDialog } from '@/stores/arena-store';
 
@@ -153,13 +150,12 @@ import { DependencySentinelDialog } from './dependency-sentinel/DependencySentin
 import { VoiceControlDialog } from './voice-control/VoiceControlDialog';
 import { AppEmulatorDialog } from './app-emulator/AppEmulatorDialog';
 import { LearningLoopDialog } from './learning-loop/LearningLoopDialog';
-import { DesignToCodeDialog } from './design-to-code/DesignToCodeDialog';
 import { ArenaDialog } from './arena/ArenaDialog';
 
 // Types
 import type { Project, GitStatus } from '@shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-programming' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace' | 'design-to-code' | 'mission-control' | 'agent-replay' | 'pixel-office' | 'self-healing' | 'browser-agent' | 'pair-programming' | 'pipeline-generator' | 'plugin-marketplace' | 'arena-mode' | 'api-explorer';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'gitlab-issues' | 'github-prs' | 'gitlab-merge-requests' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'migration' | 'visual-to-code' | 'dashboard' | 'analytics' | 'code-review' | 'refactoring' | 'documentation' | 'cost-estimator' | 'session-history' | 'voice-control' | 'test-generation' | 'prompt-optimizer' | 'code-playground' | 'dependency-sentinel' | 'natural-language-git' | 'conflict-predictor' | 'context-aware-snippets' | 'app-emulator' | 'learning-loop' | 'mcp-marketplace' | 'mission-control' | 'agent-replay' | 'pixel-office' | 'self-healing' | 'browser-agent' | 'pair-programming' | 'pipeline-generator' | 'plugin-marketplace' | 'arena-mode' | 'api-explorer';
 
 interface SidebarProps {
   readonly onSettingsClick: () => void;
@@ -211,7 +207,7 @@ const navGroups: NavGroup[] = [
       { id: 'documentation', labelKey: 'navigation:items.documentation', icon: BookOpenCheck, shortcut: 'O' },
       { id: 'api-explorer', labelKey: 'navigation:items.apiExplorer', icon: Globe, shortcut: 'X' },
       { id: 'agent-tools', labelKey: 'navigation:items.agentTools', icon: Wrench, shortcut: 'M' },
-      { id: 'visual-programming', labelKey: 'navigation:items.visualProgramming', icon: Brain, shortcut: 'V' },
+      { id: 'visual-to-code', labelKey: 'navigation:items.visualToCode', icon: WandSparkles, shortcut: 'Y' },
     ],
     defaultExpanded: false
   },
@@ -229,7 +225,6 @@ const navGroups: NavGroup[] = [
       { id: 'natural-language-git', labelKey: 'navigation:items.naturalLanguageGit', icon: GitBranch, shortcut: 'G' },
       { id: 'app-emulator', labelKey: 'navigation:items.appEmulator', icon: Monitor, shortcut: 'E' },
       { id: 'learning-loop', labelKey: 'navigation:items.learningLoop', icon: Brain, shortcut: 'L' },
-      { id: 'design-to-code', labelKey: 'navigation:items.designToCode', icon: ImageIcon, shortcut: 'Y' },
       { id: 'browser-agent', labelKey: 'navigation:items.browserAgent', icon: Globe, shortcut: 'B' },
       { id: 'pipeline-generator', labelKey: 'navigation:items.pipelineGenerator', icon: Layers, shortcut: 'I' },
       { id: 'arena-mode', labelKey: 'navigation:items.arenaMode', icon: Swords, shortcut: 'W' },
@@ -591,10 +586,6 @@ export function Sidebar({
     }
     if (view === 'learning-loop') {
       openLearningLoopDialog();
-      return;
-    }
-    if (view === 'design-to-code') {
-      openDesignToCodeDialog();
       return;
     }
     if (view === 'arena-mode') {
@@ -985,7 +976,7 @@ const toggleGroupExpansion = (groupId: string) => {
       }} />
       <AppEmulatorDialog />
       <LearningLoopDialog />
-      <DesignToCodeDialog />
+
       <ArenaDialog />
     </TooltipProvider>
   );
