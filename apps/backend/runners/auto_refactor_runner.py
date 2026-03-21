@@ -17,10 +17,14 @@ from typing import List, Dict, Any, Optional
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
-from agents.coder_agent import CoderAgent
-from core.model_info import get_model_info_for_logs
-from core.context import ProjectContext
-from memory.bmad_memory import BMadMemory
+try:
+    from agents.coder_agent import CoderAgent
+    from core.model_info import get_model_info_for_logs
+    from core.context import ProjectContext
+    from memory.bmad_memory import BMadMemory
+    _AVAILABLE = True
+except ImportError:
+    _AVAILABLE = False
 
 
 class AutoRefactorRunner:
@@ -274,9 +278,24 @@ def main():
     parser.add_argument("--model", help="AI model to use")
     parser.add_argument("--thinking-level", default="medium", help="Thinking level for the agent")
     parser.add_argument("--auto-execute", action="store_true", help="Automatically execute refactoring (use with caution)")
-    
+
     args = parser.parse_args()
-    
+
+    if not _AVAILABLE:
+        error_result = {
+            "status": "error",
+            "error": "Auto-refactor agent dependencies not yet available. This feature is under development.",
+            "analysis": {"status": "error", "analysis": None, "files_analyzed": 0},
+            "plan": {"status": "error", "plan": None},
+            "execution": {"status": "error", "execution": None, "auto_executed": False},
+            "summary": {
+                "issues_found": 0, "files_analyzed": 0, "refactoring_items": 0,
+                "quick_wins": 0, "estimated_effort": "N/A", "risk_level": "N/A",
+            },
+        }
+        print("__AUTO_REFACTOR_RESULT__:" + json.dumps(error_result))
+        sys.exit(0)
+
     # Validate project directory
     if not os.path.exists(args.project_dir):
         print(f"❌ Error: Project directory '{args.project_dir}' does not exist")

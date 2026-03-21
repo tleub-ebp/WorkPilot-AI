@@ -18,10 +18,14 @@ from typing import Any, Dict, List, Optional
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
-from core.context_manager import ContextManager
-from core.model_info import get_model_info_for_logs
-from memory.bmad_memory import BMadMemory
-from services.project_analyzer import ProjectAnalyzer
+try:
+    from core.context_manager import ContextManager
+    from core.model_info import get_model_info_for_logs
+    from memory.bmad_memory import BMadMemory
+    from services.project_analyzer import ProjectAnalyzer
+    _AVAILABLE = True
+except ImportError:
+    _AVAILABLE = False
 
 
 class ContextAwareSnippetResult:
@@ -386,6 +390,11 @@ def main():
     
     args = parser.parse_args()
     
+    if not _AVAILABLE:
+        error_result = {"status": "error", "error": "Context-aware snippets dependencies not yet available. This feature is under development.", "snippet": "", "language": "", "description": args.description, "context_used": [], "adaptations": [], "reasoning": ""}
+        print(f"__CONTEXT_AWARE_SNIPPET__:{json.dumps(error_result)}")
+        sys.exit(0)
+
     try:
         # Validate project directory
         project_path = Path(args.project_dir)

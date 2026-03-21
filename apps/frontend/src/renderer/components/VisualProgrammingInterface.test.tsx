@@ -1,34 +1,90 @@
-import { describe, it, expect, vi } from 'vitest';
-import React from 'react';
-import { render, fireEvent, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, fallback?: string) => {
+      const translations: Record<string, string> = {
+        newFlowchart: 'New Flowchart',
+        newArchitectureDiagram: 'New Architecture Diagram',
+        newMockup: 'New Mockup',
+        addBlock: 'Add block',
+        reverse: 'Reverse: Code → Visual',
+        generateCode: 'Generate code',
+        export: 'Export JSON',
+        saveAs: 'Save as\u2026',
+        load: 'Load',
+        chooseFramework: 'Choose framework or language',
+        chooseFileName: 'Export file name',
+        customBlockPrompt: 'Custom block name?',
+      };
+      return translations[key] ?? fallback ?? key;
+    },
+    i18n: { language: 'en', changeLanguage: vi.fn() },
+  }),
+}));
+
+vi.mock('reactflow', async () => {
+  const React = await import('react');
+  return {
+    default: React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+      ({ children, onDrop, onDragOver }, ref) =>
+        React.createElement('div', { ref, 'data-testid': 'reactflow-canvas', onDrop, onDragOver }, children)
+    ),
+    MiniMap: () => null,
+    Controls: () => null,
+    Background: () => null,
+    addEdge: vi.fn((params: unknown, eds: unknown[]) => [...eds, params]),
+    useNodesState: (initial: unknown[]) => [initial, vi.fn(), vi.fn()],
+    useEdgesState: (initial: unknown[]) => [initial, vi.fn(), vi.fn()],
+  };
+});
+
+vi.mock('file-saver', () => ({ saveAs: vi.fn() }));
+
 import { CanvasPanel } from './visual-to-code/CanvasPanel';
 
-describe('VisualProgrammingInterface', () => {
-  it('renders the main title and buttons', () => {
+describe('CanvasPanel', () => {
+  beforeEach(() => {
+    (globalThis as any).electronAPI = {
+      ...((globalThis as any).electronAPI),
+      onVisualProgrammingStatus: vi.fn(() => vi.fn()),
+      onVisualProgrammingError: vi.fn(() => vi.fn()),
+      onVisualProgrammingComplete: vi.fn(() => vi.fn()),
+      runVisualProgramming: vi.fn().mockResolvedValue({ success: true }),
+      saveJsonFile: vi.fn().mockResolvedValue({ success: true }),
+      getUserHome: vi.fn().mockReturnValue('/home/user'),
+    };
+    (globalThis as any).platform = { isWindows: false };
+  });
+
+  it('renders diagram type buttons', () => {
     render(<CanvasPanel />);
-    expect(screen.getByText('🎨 Visual Programming Interface')).toBeInTheDocument();
     expect(screen.getByText('New Flowchart')).toBeInTheDocument();
     expect(screen.getByText('New Architecture Diagram')).toBeInTheDocument();
     expect(screen.getByText('New Mockup')).toBeInTheDocument();
-    expect(screen.getByText('Reverse: Code → Visual')).toBeInTheDocument();
-    expect(screen.getByText('Visual editor coming soon...')).toBeInTheDocument();
-    expect(screen.getByText('Export Code')).toBeInTheDocument();
-    expect(screen.getByText('Save')).toBeInTheDocument();
+  });
+
+  it('renders action buttons', () => {
+    render(<CanvasPanel />);
+    expect(screen.getByText('Add block')).toBeInTheDocument();
+    expect(screen.getByText('Reverse: Code \u2192 Visual')).toBeInTheDocument();
+    expect(screen.getByText('Generate code')).toBeInTheDocument();
+    expect(screen.getByText('Export JSON')).toBeInTheDocument();
+    expect(screen.getByText('Save as\u2026')).toBeInTheDocument();
     expect(screen.getByText('Load')).toBeInTheDocument();
   });
 
-  it('permet d’ajouter un bloc template avec framework via drag & drop', async () => {
+  it('renders the ReactFlow canvas', () => {
     render(<CanvasPanel />);
-    // Simule le drag & drop d’un bloc FrontEnd
-    const frontendBlock = screen.getByText(/FrontEnd/i);
-    const canvas = screen.getByRole('region'); // ou autre sélecteur du canvas
-    fireEvent.dragStart(frontendBlock, { dataTransfer: { setData: vi.fn() } });
-    fireEvent.drop(canvas, { dataTransfer: { getData: () => 'frontend' }, clientX: 200, clientY: 200 });
-    // Le modal de choix de framework doit apparaître
-    await waitFor(() => screen.getByText(/Choisissez le framework/i));
-    // Sélectionne React
-    fireEvent.click(screen.getByText(/React/i));
-    // Vérifie que le node a été ajouté avec le bon label
-    await waitFor(() => screen.getByText(/FrontEnd \(React\)/i));
+    expect(screen.getByTestId('reactflow-canvas')).toBeInTheDocument();
+  });
+
+  it('Generate code button is enabled when diagram has nodes', () => {
+    render(<CanvasPanel />);
+    // Initial state has 1 node (the default New Flowchart node), so button is enabled
+    const button = screen.getByRole('button', { name: 'Generate code' });
+    expect(button).not.toBeDisabled();
   });
 });

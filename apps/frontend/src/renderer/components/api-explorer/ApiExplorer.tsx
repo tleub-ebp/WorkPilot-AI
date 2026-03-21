@@ -2175,19 +2175,19 @@ function CustomSelect({ value, onChange, options, className }: CustomSelectProps
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center justify-between w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md px-3 py-2 text-sm text-[var(--color-text-primary)] hover:border-[var(--color-border-hover)] focus:outline-none focus:border-[var(--color-accent)] cursor-pointer transition-colors"
+        className="flex items-center justify-between w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[length:inherit] text-[var(--color-text-primary)] hover:border-[var(--color-border-hover)] focus:outline-none focus:border-[var(--color-accent)] cursor-pointer transition-colors"
       >
         <span>{selected?.label ?? value}</span>
         <ChevronDown size={14} className={`text-[var(--color-text-muted)] shrink-0 ml-2 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[var(--card)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden" style={{ backdropFilter: 'none' }}>
+        <div className="absolute z-50 top-full left-0 min-w-full w-max mt-1 bg-[var(--card)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden" style={{ backdropFilter: 'none' }}>
           {options.map((opt) => (
             <button
               key={opt.value}
               type="button"
               onClick={() => { onChange(opt.value); setOpen(false); }}
-              className={`flex items-center gap-2 w-full px-3 py-2 text-sm text-left transition-colors hover:bg-[var(--color-bg-secondary)] ${
+              className={`flex items-center gap-2 w-full px-3 py-2 text-[length:inherit] text-left transition-colors hover:bg-[var(--color-bg-secondary)] ${
                 opt.value === value
                   ? 'text-[var(--color-text-primary)] bg-[var(--color-bg-secondary)]'
                   : 'text-[var(--color-text-secondary)]'

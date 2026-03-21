@@ -17,7 +17,13 @@ from typing import Dict, Optional
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
-from performance import PerformanceProfiler, BenchmarkRunner, PerformanceOptimizer, PerformanceReport
+try:
+    from performance import PerformanceProfiler, BenchmarkRunner, PerformanceOptimizer, PerformanceReport
+    _PERFORMANCE_AVAILABLE = True
+except ImportError:
+    _PERFORMANCE_AVAILABLE = False
+
+PERF_RESULT_MARKER = "__PERF_RESULT__:"
 
 
 class PerformanceProfilerRunner:
@@ -127,6 +133,16 @@ def main():
 
     args = parser.parse_args()
 
+    if not _PERFORMANCE_AVAILABLE:
+        error_result = {
+            "status": "error",
+            "error": "Performance profiler module not yet available. This feature is under development.",
+            "report": None,
+            "summary": {},
+        }
+        print(PERF_RESULT_MARKER + json.dumps(error_result))
+        sys.exit(0)
+
     if not os.path.exists(args.project_dir):
         print(f"❌ Project directory not found: {args.project_dir}")
         sys.exit(1)
@@ -141,13 +157,14 @@ def main():
         runner.setup()
         result = runner.run_profiling()
 
-        print("__PERF_RESULT__:" + json.dumps(result))
-        print(f"\n✅ Performance profiling complete!")
+        print(PERF_RESULT_MARKER + json.dumps(result))
+        print("\n✅ Performance profiling complete!")
     except KeyboardInterrupt:
         print("\n⚠️ Profiling interrupted.")
         sys.exit(1)
     except Exception as e:
-        print(f"❌ Fatal error: {e}")
+        error_result = {"status": "error", "error": str(e), "report": None, "summary": {}}
+        print(PERF_RESULT_MARKER + json.dumps(error_result))
         sys.exit(1)
 
 

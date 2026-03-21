@@ -16,9 +16,12 @@ import argparse
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
-from services.smart_estimation_service import get_smart_estimation_service
-from core.context_manager import get_project_context
-from agents.claude_agent_sdk import ClaudeAgentSDK
+try:
+    from services.smart_estimation_service import get_smart_estimation_service
+    from core.context_manager import get_project_context
+    _AVAILABLE = True
+except ImportError:
+    _AVAILABLE = False
 
 
 class SmartEstimationRunner:
@@ -28,7 +31,6 @@ class SmartEstimationRunner:
     
     def __init__(self):
         self.estimation_service = get_smart_estimation_service()
-        self.agent_sdk = ClaudeAgentSDK()
     
     def run_estimation(self, project_id: str, task_description: str) -> Dict[str, Any]:
         """
@@ -95,14 +97,24 @@ class SmartEstimationRunner:
         return datetime.utcnow().isoformat()
 
 
+def _emit_error(message: str) -> None:
+    """Emit a structured error event and exit."""
+    event = {'type': 'error', 'data': {'error': message}}
+    print(f"SMART_ESTIMATION_EVENT:{json.dumps(event)}", flush=True)
+
+
 def main():
     """Main entry point for the smart estimation runner"""
     parser = argparse.ArgumentParser(description='Smart Estimation Runner')
     parser.add_argument('--project-id', required=True, help='Project ID')
     parser.add_argument('--task-description', required=True, help='Task description to analyze')
-    
+
     args = parser.parse_args()
-    
+
+    if not _AVAILABLE:
+        _emit_error("Smart estimation service not yet available. This feature is under development.")
+        sys.exit(0)
+
     try:
         runner = SmartEstimationRunner()
         result = runner.run_estimation(args.project_id, args.task_description)
