@@ -41,9 +41,9 @@ import { TERMINAL_DOM_UPDATE_DELAY_MS, PANEL_CLEANUP_GRACE_PERIOD_MS } from '../
 import type { SessionDateInfo } from '../../shared/types';
 
 interface TerminalGridProps {
-  projectPath?: string;
-  onNewTaskClick?: () => void;
-  isActive?: boolean;
+  readonly projectPath?: string;
+  readonly onNewTaskClick?: () => void;
+  readonly isActive?: boolean;
 }
 
 export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: TerminalGridProps) {
@@ -146,6 +146,22 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
 
   // Expanded terminal state - when set, this terminal takes up the full grid space
   const [expandedTerminalId, setExpandedTerminalId] = useState<string | null>(null);
+  // Spotlight state (jump-to from Pixel Office)
+  const [spotlitTerminalId, setSpotlitTerminalId] = useState<string | null>(null);
+  const jumpToTerminalId = useTerminalStore((state) => state.jumpToTerminalId);
+  const clearTerminalJump = useTerminalStore((state) => state.clearTerminalJump);
+
+  // Auto-expand + spotlight when jumping from Pixel Office
+  useEffect(() => {
+    if (!jumpToTerminalId) return;
+    const timer = setTimeout(() => {
+      setExpandedTerminalId(jumpToTerminalId);
+      setSpotlitTerminalId(jumpToTerminalId);
+      clearTerminalJump();
+    }, 120);
+    const clearTimer = setTimeout(() => setSpotlitTerminalId(null), 120 + 2200);
+    return () => { clearTimeout(timer); clearTimeout(clearTimer); };
+  }, [jumpToTerminalId, clearTerminalJump]);
 
   // Reset expanded terminal and clear pending cleanup when project changes
   useEffect(() => {
@@ -164,7 +180,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
     const fetchSessionDates = async () => {
       setIsLoadingDates(true);
       try {
-        const result = await window.electronAPI.getTerminalSessionDates(projectPath);
+        const result = await globalThis.electronAPI.getTerminalSessionDates(projectPath);
         if (result.success && result.data) {
           setSessionDates(result.data);
         }
@@ -188,7 +204,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
     setIsRestoring(true);
     try {
       // First get the session data for this date (we need it after restore)
-      const sessionsResult = await window.electronAPI.getTerminalSessionsForDate(date, projectPath);
+      const sessionsResult = await globalThis.electronAPI.getTerminalSessionsForDate(date, projectPath);
       const sessionsToRestore = sessionsResult.success ? sessionsResult.data || [] : [];
 
       console.warn(`[TerminalGrid] Found ${sessionsToRestore.length} sessions to restore from ${date}`);
@@ -201,7 +217,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
 
       // Close all existing terminals
       for (const terminal of terminals) {
-        await window.electronAPI.destroyTerminal(terminal.id);
+        await globalThis.electronAPI.destroyTerminal(terminal.id);
         removeTerminal(terminal.id);
       }
 
@@ -209,7 +225,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // Restore sessions from the selected date (creates PTYs in main process)
-      const result = await window.electronAPI.restoreTerminalSessionsFromDate(
+      const result = await globalThis.electronAPI.restoreTerminalSessionsFromDate(
         date,
         projectPath,
         80,
@@ -245,11 +261,11 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
 
         // Trigger terminal refit after grid layout stabilizes to ensure correct dimensions
         setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('terminal-refit-all'));
+          globalThis.dispatchEvent(new CustomEvent('terminal-refit-all'));
         }, TERMINAL_DOM_UPDATE_DELAY_MS);
 
         // Refresh session dates to update counts
-        const datesResult = await window.electronAPI.getTerminalSessionDates(projectPath);
+        const datesResult = await globalThis.electronAPI.getTerminalSessionDates(projectPath);
         if (datesResult.success && datesResult.data) {
           setSessionDates(datesResult.data);
         }
@@ -285,7 +301,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
   const draggingTerminal = terminals.find(t => t.id === draggingTerminalId);
 
   const handleCloseTerminal = useCallback((id: string) => {
-    window.electronAPI.destroyTerminal(id);
+    globalThis.electronAPI.destroyTerminal(id);
     removeTerminal(id);
     // Clear expanded state if the closed terminal was expanded
     if (expandedTerminalId === id) {
@@ -312,8 +328,8 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    globalThis.addEventListener('keydown', handleKeyDown);
+    return () => globalThis.removeEventListener('keydown', handleKeyDown);
   }, [isActive, addTerminal, canAddTerminal, projectPath, activeTerminalId, handleCloseTerminal]);
 
   const handleAddTerminal = useCallback(() => {
@@ -331,7 +347,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
     terminals.forEach((terminal) => {
       if (terminal.status === 'running' && !terminal.isClaudeMode) {
         setClaudeMode(terminal.id, true);
-        window.electronAPI.invokeClaudeInTerminal(terminal.id, terminal.cwd || projectPath);
+        globalThis.electronAPI.invokeClaudeInTerminal(terminal.id, terminal.cwd || projectPath);
       }
     });
   }, [terminals, setClaudeMode, projectPath]);
@@ -390,7 +406,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
               .filter(t => t.projectPath === projectPath || !t.projectPath)
               .map(t => ({ terminalId: t.id, displayOrder: t.displayOrder ?? 0 }));
             try {
-              const result = await window.electronAPI.updateTerminalDisplayOrders(projectPath, orders);
+              const result = await globalThis.electronAPI.updateTerminalDisplayOrders(projectPath, orders);
               if (!result.success) {
                 console.warn('[TerminalGrid] Failed to persist terminal order:', result.error);
               }
@@ -401,7 +417,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
         }
 
         setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('terminal-refit-all'));
+          globalThis.dispatchEvent(new CustomEvent('terminal-refit-all'));
         }, TERMINAL_DOM_UPDATE_DELAY_MS);
       }
       return;
@@ -422,7 +438,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
       // Quote the path if it contains spaces
       const quotedPath = activeData.path.includes(' ') ? `"${activeData.path}"` : activeData.path;
       // Insert the file path into the terminal with a trailing space
-      window.electronAPI.sendTerminalInput(terminalId, quotedPath + ' ');
+      globalThis.electronAPI.sendTerminalInput(terminalId, quotedPath + ' ');;
     }
   }, [reorderTerminals, terminals, projectPath]);
 
@@ -529,7 +545,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
                     >
                       <span>{dateInfo.label}</span>
                       <span className="text-xs text-muted-foreground">
-                        {dateInfo.sessionCount} session{dateInfo.sessionCount !== 1 ? 's' : ''}
+                        {dateInfo.sessionCount} session{dateInfo.sessionCount === 1 ? '' : 's'}
                       </span>
                     </DropdownMenuItem>
                   ))}
@@ -541,7 +557,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
               size="sm"
               className="h-7 text-xs gap-1.5"
               onClick={() => {
-                window.dispatchEvent(new CustomEvent('open-app-settings', { detail: 'terminal-fonts' }));
+                globalThis.dispatchEvent(new CustomEvent('open-app-settings', { detail: 'terminal-fonts' }));
               }}
             >
               <Settings className="h-3 w-3" />
@@ -599,7 +615,10 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
                 const expandedTerminal = terminals.find(t => t.id === expandedTerminalId);
                 if (!expandedTerminal) return null;
                 return (
-                  <div className="h-full p-1">
+                  <div className={cn(
+                    "h-full p-1 rounded-lg",
+                    spotlitTerminalId === expandedTerminal.id && "terminal-spotlight"
+                  )}>
                     <SortableTerminalWrapper
                       id={expandedTerminal.id}
                       cwd={expandedTerminal.cwd || projectPath}
@@ -621,7 +640,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
               <SortableContext items={terminalIds} strategy={rectSortingStrategy}>
                 <Group orientation="vertical" className="h-full">
                   {terminalRows.map((row, rowIndex) => (
-                    <React.Fragment key={rowIndex}>
+                    <React.Fragment key={row.map(t => t.id).join('-')}>
                       <Panel id={`row-${rowIndex}`} defaultSize={100 / terminalRows.length} minSize={15}>
                         <Group orientation="horizontal" className="h-full">
                           {row.map((terminal, colIndex) => (

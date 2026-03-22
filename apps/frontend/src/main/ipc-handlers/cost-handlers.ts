@@ -93,6 +93,47 @@ function watchCostData(projectPath: string): void {
 }
 
 // ---------------------------------------------------------------------------
+// File watchers — push DASHBOARD_SNAPSHOT_UPDATED when dashboard_snapshot.json changes
+// ---------------------------------------------------------------------------
+
+const _snapshotWatchers = new Map<string, fs.FSWatcher>();
+const _snapshotDebounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+function watchDashboardSnapshot(projectPath: string): void {
+  if (_snapshotWatchers.has(projectPath)) return;
+
+  const filePath = path.join(projectPath, '.auto-claude', 'dashboard_snapshot.json');
+  if (!fs.existsSync(filePath)) return;
+
+  try {
+    const watcher = fs.watch(filePath, { persistent: false }, () => {
+      const existing = _snapshotDebounceTimers.get(projectPath);
+      if (existing) clearTimeout(existing);
+      _snapshotDebounceTimers.set(
+        projectPath,
+        setTimeout(() => {
+          _snapshotDebounceTimers.delete(projectPath);
+          for (const win of BrowserWindow.getAllWindows()) {
+            if (!win.isDestroyed()) {
+              win.webContents.send(IPC_CHANNELS.DASHBOARD_SNAPSHOT_UPDATED, projectPath);
+            }
+          }
+        }, 400),
+      );
+    });
+
+    watcher.on('error', () => {
+      watcher.close();
+      _snapshotWatchers.delete(projectPath);
+    });
+
+    _snapshotWatchers.set(projectPath, watcher);
+  } catch {
+    // Silently ignore — watcher is best-effort
+  }
+}
+
+// ---------------------------------------------------------------------------
 // JSON file shape (mirrors Python CostEstimator.save_to_file)
 // ---------------------------------------------------------------------------
 
@@ -299,6 +340,7 @@ export function registerCostHandlers(): void {
    */
   ipcMain.handle('dashboard:getSnapshot', async (_, projectPath: string) => {
     try {
+      watchDashboardSnapshot(projectPath); // Start watching on first access
       const snapPath = path.join(projectPath, '.auto-claude', 'dashboard_snapshot.json');
       if (!fs.existsSync(snapPath)) {
         return {

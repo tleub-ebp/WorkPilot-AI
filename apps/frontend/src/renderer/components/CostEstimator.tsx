@@ -12,6 +12,7 @@ import {
   PieChart,
   Bell
 } from 'lucide-react';
+import { getEurRate, formatCurrency } from '../lib/currency';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
@@ -196,39 +197,7 @@ function ProviderBreakdown({ data, formatAmount }: { readonly data: Record<strin
   );
 }
 
-// ---------------------------------------------------------------------------
-// Currency formatting
-// ---------------------------------------------------------------------------
-
-// Module-level EUR rate cache (shared across component mounts)
-let _eurRate = 0.92;
-let _eurRateFetchedAt = 0;
-
-async function getEurRate(): Promise<number> {
-  const STALE_MS = 24 * 60 * 60 * 1000; // 24 h
-  if (Date.now() - _eurRateFetchedAt < STALE_MS) return _eurRate;
-  try {
-    const res = await fetch('https://open.er-api.com/v6/latest/USD');
-    if (res.ok) {
-      const data = await res.json() as { rates?: Record<string, number> };
-      const rate = data.rates?.EUR;
-      if (typeof rate === 'number' && rate > 0) {
-        _eurRate = rate;
-        _eurRateFetchedAt = Date.now();
-      }
-    }
-  } catch {
-    // Keep existing cached rate on network error
-  }
-  return _eurRate;
-}
-
-function formatCurrency(usd: number, language: string, eurRate: number, decimals = 4): string {
-  if (language.startsWith('fr')) {
-    return `${(usd * eurRate).toFixed(decimals)} €`;
-  }
-  return `$${usd.toFixed(decimals)}`;
-}
+// Currency formatting — imported from ../lib/currency
 
 // ---------------------------------------------------------------------------
 // Helper functions
@@ -250,7 +219,7 @@ function getTrendColor(trendPct: number): 'primary' | 'green' | 'amber' | 'red' 
 
 export function CostEstimator({ projectPath }: CostEstimatorProps) {
   const { t, i18n } = useTranslation('costEstimator');
-  const [eurRate, setEurRate] = useState(_eurRate);
+  const [eurRate, setEurRate] = useState(0.92);
   const [summary, setSummary] = useState<CostSummary | null>(null);
   const [budget, setBudget] = useState<BudgetInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -265,32 +234,56 @@ export function CostEstimator({ projectPath }: CostEstimatorProps) {
     }
   }, [i18n.language]);
 
-  const fetchData = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    if (!silent) setError(null);
+  // Helper function to handle API response
+  const handleApiResponse = useCallback((result: PromiseSettledResult<any>, setter: (value: any) => void, silent: boolean, errorKey: string) => {
+    if (result.status === 'fulfilled' && result.value?.success) {
+      setter(result.value.success ? result.value.summary || result.value.budget : null);
+      return true;
+    }
+    
+    if (!silent && (result.status === 'rejected' || !result.value?.success)) {
+      const msg = result.status === 'fulfilled' ? result.value?.error : undefined;
+      setError(msg || t(errorKey));
+    }
+    
+    return false;
+  }, [t]);
+
+  // Helper function to fetch data from APIs
+  const fetchFromAPIs = useCallback(async (silent: boolean) => {
     try {
       const [summaryRes, budgetRes] = await Promise.allSettled([
         globalThis.electronAPI.getCostSummary(projectPath),
         globalThis.electronAPI.getCostBudget(projectPath),
       ]);
 
-      if (summaryRes.status === 'fulfilled' && summaryRes.value.success) {
-        setSummary(summaryRes.value.summary);
-      }
-      if (budgetRes.status === 'fulfilled' && budgetRes.value.success) {
-        setBudget(budgetRes.value.budget);
-      }
-
-      if (!silent && (summaryRes.status === 'rejected' || !summaryRes.value?.success)) {
-        const msg = summaryRes.status === 'fulfilled' ? summaryRes.value.error : undefined;
-        setError(msg || t('error'));
-      }
+      const summarySuccess = handleApiResponse(summaryRes, setSummary, silent, 'error');
+      const budgetSuccess = handleApiResponse(budgetRes, setBudget, silent, 'error');
+      
+      return summarySuccess || budgetSuccess;
     } catch (e) {
-      if (!silent) setError(e instanceof Error ? e.message : t('error'));
-    } finally {
-      if (!silent) setLoading(false);
+      if (!silent) {
+        setError(e instanceof Error ? e.message : t('error'));
+      }
+      return false;
     }
-  }, [projectPath, t]);
+  }, [projectPath, handleApiResponse, t]);
+
+  // Main fetchData function
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
+    
+    try {
+      await fetchFromAPIs(silent);
+    } finally {
+      if (!silent) {
+        setLoading(false);
+      }
+    }
+  }, [fetchFromAPIs]);
 
   // Initial load
   useEffect(() => {

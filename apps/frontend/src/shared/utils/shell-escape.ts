@@ -112,8 +112,15 @@ export function escapeShellArgWindows(arg: string): string {
  * Inside double quotes in cmd.exe, the escaping rules are different:
  * - Caret (^) is a LITERAL character, not an escape character
  * - Only double quotes need escaping, done by doubling them ("")
- * - Percent signs (%) must be escaped as %% to prevent variable expansion
  * - Newlines/carriage returns still need removal (command terminators)
+ *
+ * NOTE: Percent signs (%) are NOT escaped here. The %% escape only works in
+ * batch files (.bat/.cmd). In interactive cmd.exe (PTY terminals), %% is
+ * interpreted as an empty variable reference and both % signs are consumed,
+ * mangling paths that contain literal % (e.g., URL-encoded names like
+ * "MeCa%20Web" would become "MeCa20Web"). Since all values passed through
+ * this function come from already-expanded sources (process.env, OS APIs),
+ * lone % characters in paths are literal and should not be escaped.
  *
  * Use this for values in set commands like: set "VAR=value"
  *
@@ -122,19 +129,20 @@ export function escapeShellArgWindows(arg: string): string {
  * - "it's" → "it's"
  * - 'path with "quotes"' → 'path with ""quotes""'
  * - "C:\Company & Co" → "C:\Company & Co" (ampersand protected by quotes)
- * - "%PATH%" → "%%PATH%%" (percent escaped)
+ * - "MeCa%20Web" → "MeCa%20Web" (percent preserved for interactive cmd.exe)
  *
  * @param arg - The argument to escape
  * @returns The escaped argument (caller should wrap in double quotes)
  */
 export function escapeForWindowsDoubleQuote(arg: string): string {
-  // Inside double quotes, only escape embedded double quotes by doubling them.
-  // Also escape percent signs to prevent variable expansion.
-  // Also remove newlines/carriage returns as they terminate commands.
+  // Inside double quotes in interactive cmd.exe:
+  // - Only escape embedded double quotes by doubling them
+  // - Do NOT escape % → %% (that's batch-file syntax; in interactive cmd.exe
+  //   %% is consumed as an empty variable reference, breaking paths with literal %)
+  // - Remove newlines/carriage returns as they terminate commands
   const escaped = arg
     .replace(/\r/g, '')        // Remove carriage returns (command terminators)
     .replace(/\n/g, '')        // Remove newlines (command terminators)
-    .replace(/%/g, '%%')       // Escape percent (variable expansion in cmd.exe)
     .replace(/"/g, '""');      // Escape double quotes by doubling
 
   return escaped;

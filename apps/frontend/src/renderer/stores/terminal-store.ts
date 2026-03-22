@@ -109,6 +109,7 @@ interface TerminalState {
   terminals: Terminal[];
   layouts: TerminalLayout[];
   activeTerminalId: string | null;
+  jumpToTerminalId: string | null;  // Triggers expand + spotlight animation (from Pixel Office)
   maxTerminals: number;
   hasRestoredSessions: boolean;  // Track if we've restored sessions for this project
 
@@ -132,6 +133,8 @@ interface TerminalState {
   setHasRestoredSessions: (value: boolean) => void;
   reorderTerminals: (activeId: string, overId: string) => void;
   resumeAllPendingClaude: () => Promise<void>;
+  jumpToTerminal: (id: string) => void;
+  clearTerminalJump: () => void;
 
   // Selectors
   getTerminal: (id: string) => Terminal | undefined;
@@ -157,6 +160,7 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
   terminals: [],
   layouts: [],
   activeTerminalId: null,
+  jumpToTerminalId: null,
   // Maximum terminals per project - limited to 12 to prevent excessive memory usage
   // from terminal buffers (~1MB each) and PTY process resource exhaustion.
   // Each terminal maintains a scrollback buffer and associated xterm.js state.
@@ -332,6 +336,14 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
 
   setActiveTerminal: (id: string | null) => {
     set({ activeTerminalId: id });
+  },
+
+  jumpToTerminal: (id: string) => {
+    set({ jumpToTerminalId: id, activeTerminalId: id });
+  },
+
+  clearTerminalJump: () => {
+    set({ jumpToTerminalId: null });
   },
 
   setTerminalStatus: (id: string, status: TerminalStatus) => {

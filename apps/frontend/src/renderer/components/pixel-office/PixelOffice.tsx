@@ -198,7 +198,7 @@ export function PixelOffice({ projectPath, projectId, onNavigateToTerminals, onN
   // ── Stores ──────────────────────────────────────────────────
 
   const terminals      = useTerminalStore((s) => s.terminals);
-  const setActiveTerminal = useTerminalStore((s) => s.setActiveTerminal);
+  const jumpToTerminal = useTerminalStore((s) => s.jumpToTerminal);
   const addTerminal    = useTerminalStore((s) => s.addTerminal);
   const removeTerminal = useTerminalStore((s) => s.removeTerminal);
   const canAddTerminal = useTerminalStore((s) => s.canAddTerminal);
@@ -259,11 +259,11 @@ export function PixelOffice({ projectPath, projectId, onNavigateToTerminals, onN
 
   const handleGoToTerminal = useCallback(() => {
     const agent = agents.find(a => a.id === selectedAgentId);
-    if (agent?.type !== 'terminal') return;
-    setActiveTerminal(selectedAgentId);
+    if (agent?.type !== 'terminal' || !selectedAgentId) return;
+    jumpToTerminal(selectedAgentId);
     onNavigateToTerminals?.();
     closeBubble();
-  }, [agents, selectedAgentId, setActiveTerminal, onNavigateToTerminals, closeBubble]);
+  }, [agents, selectedAgentId, jumpToTerminal, onNavigateToTerminals, closeBubble]);
 
   const handleKill = useCallback(async () => {
     if (!selectedAgentId) return;
