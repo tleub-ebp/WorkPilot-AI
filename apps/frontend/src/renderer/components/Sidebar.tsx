@@ -1,5 +1,5 @@
 // React
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 
 // i18n
 import { useTranslation } from 'react-i18next';
@@ -322,6 +322,53 @@ export function Sidebar({
 
   // Sidebar collapsed state from settings
   const isCollapsed = settings.sidebarCollapsed ?? false;
+
+  // Sidebar resizable width
+  const SIDEBAR_MIN_WIDTH = 200;
+  const SIDEBAR_MAX_WIDTH = 480;
+  const SIDEBAR_DEFAULT_WIDTH = 256;
+  const SIDEBAR_COLLAPSED_WIDTH = 64;
+
+  const sidebarWidth = settings.sidebarWidth ?? SIDEBAR_DEFAULT_WIDTH;
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeWidth, setResizeWidth] = useState(sidebarWidth);
+  const resizingRef = useRef(false);
+
+  // Sync resizeWidth when settings change externally
+  useEffect(() => {
+    if (!resizingRef.current) {
+      setResizeWidth(settings.sidebarWidth ?? SIDEBAR_DEFAULT_WIDTH);
+    }
+  }, [settings.sidebarWidth]);
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    resizingRef.current = true;
+    setIsResizing(true);
+    const startX = e.clientX;
+    const startWidth = resizeWidth;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const newWidth = Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, startWidth + (moveEvent.clientX - startX)));
+      setResizeWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      resizingRef.current = false;
+      setIsResizing(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      // Persist final width
+      const finalWidth = Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, startWidth + (0)));
+      setResizeWidth(prev => {
+        saveSettings({ sidebarWidth: prev });
+        return prev;
+      });
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [resizeWidth]);
 
   const toggleSidebar = () => {
     saveSettings({ sidebarCollapsed: !isCollapsed });
@@ -797,15 +844,19 @@ const toggleGroupExpansion = (groupId: string) => {
               // Group items by subGroup for visual sectioning
               const hasSubGroups = group.items.some(item => item.subGroup);
               if (!hasSubGroups) {
-                return group.items.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="animate-in slide-in-from-left-2 duration-200 ease-out"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    {renderNavItem(item, true)}
+                return (
+                  <div className="rounded-lg bg-white/4 border border-white/8 px-1.5 py-1.5 space-y-0.5">
+                    {group.items.map((item, index) => (
+                      <div
+                        key={item.id}
+                        className="animate-in slide-in-from-left-2 duration-200 ease-out"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                      >
+                        {renderNavItem(item, true)}
+                      </div>
+                    ))}
                   </div>
-                ));
+                );
               }
 
               // Render with sub-group sections
@@ -860,10 +911,13 @@ const toggleGroupExpansion = (groupId: string) => {
 
   return (
     <TooltipProvider>
-      <div className={cn(
-        "flex h-full flex-col bg-sidebar border-r border-border transition-all duration-300",
-        isCollapsed ? "w-16" : "w-64"
-      )}>
+      <div
+        className={cn(
+          "relative flex h-full flex-col bg-sidebar border-r border-border",
+          !isResizing && "transition-all duration-300"
+        )}
+        style={{ width: isCollapsed ? SIDEBAR_COLLAPSED_WIDTH : resizeWidth }}
+      >
         {/* Header with drag area - extra top padding for macOS traffic lights */}
         <div className={cn(
           "electron-drag flex h-14 items-center pt-6 transition-all duration-300",
@@ -1020,6 +1074,18 @@ const toggleGroupExpansion = (groupId: string) => {
             </p>
           )}
         </div>
+
+        {/* Resize handle */}
+        {!isCollapsed && (
+          <div
+            onMouseDown={handleResizeStart}
+            className={cn(
+              "absolute top-0 right-0 w-1 h-full cursor-col-resize z-50 transition-colors",
+              "hover:bg-primary/40",
+              isResizing && "bg-primary/60"
+            )}
+          />
+        )}
       </div>
 
       {/* Add Project Modal */}
