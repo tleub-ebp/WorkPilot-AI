@@ -66,6 +66,11 @@
     "arenaMode": "Mode Arena",
     "apiExplorer": "API Studio"
   },
+  "search": {
+    "placeholder": "Rechercher...",
+    "clear": "Effacer la recherche",
+    "noResults": "Aucun résultat trouvé"
+  },
   "actions": {
     "settings": "Paramètres",
     "help": "Aide & Feedback",

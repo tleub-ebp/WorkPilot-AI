@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Code, ExternalLink, BookOpen, Package, Puzzle, Terminal } from 'lucide-react';
+import { Code, BookOpen, Package, Puzzle, Terminal, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PluginCreatorWizard } from './PluginCreatorWizard';
 
 const SDK_SECTIONS = [
   {
@@ -66,6 +68,11 @@ const PLUGIN_TYPES = [
 
 export function PluginSDKView() {
   const { t } = useTranslation(['common']);
+  const [showCreator, setShowCreator] = useState(false);
+
+  if (showCreator) {
+    return <PluginCreatorWizard onClose={() => setShowCreator(false)} />;
+  }
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
@@ -82,22 +89,14 @@ export function PluginSDKView() {
             {t('common:pluginMarketplace.sdk.description')}
           </p>
           <div className="flex gap-3 mt-4">
-            <a
-              href="#"
+            <button
+              type="button"
+              onClick={() => setShowCreator(true)}
               className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
-              <BookOpen className="h-3.5 w-3.5" />
-              {t('common:pluginMarketplace.sdk.readDocs')}
-              <ExternalLink className="h-3 w-3" />
-            </a>
-            <a
-              href="#"
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-xs font-medium hover:bg-accent transition-colors"
-            >
-              <Code className="h-3.5 w-3.5" />
-              {t('common:pluginMarketplace.sdk.viewExamples')}
-              <ExternalLink className="h-3 w-3" />
-            </a>
+              <Sparkles className="h-3.5 w-3.5" />
+              {t('common:pluginMarketplace.creator.createPlugin')}
+            </button>
           </div>
         </div>
       </div>

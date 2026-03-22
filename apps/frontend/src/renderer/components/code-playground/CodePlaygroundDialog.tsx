@@ -166,12 +166,7 @@ export function CodePlaygroundDialog({ onIntegrate }: CodePlaygroundDialogProps)
               value={editableIdea}
               onChange={(e) => setEditableIdea(e.target.value)}
               placeholder={t('codePlayground:idea.placeholder')}
-              className="min-h-[100px] border-2 border-yellow-400 focus:border-yellow-500 focus-visible:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
-              style={{
-                border: '2px solid rgb(250, 204, 21)',
-                borderRadius: '0.5rem',
-                outline: 'none'
-              }}
+              className="min-h-[100px] rounded-lg border-2 border-yellow-400 focus:border-yellow-500 focus-visible:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
               disabled={isGenerating}
             />
           </div>
@@ -189,7 +184,7 @@ export function CodePlaygroundDialog({ onIntegrate }: CodePlaygroundDialogProps)
                 }
                 disabled={isGenerating}
               >
-                <SelectTrigger id="playground-type-select">
+                <SelectTrigger id="playground-type-select" className="border-2 border-yellow-400 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-400/30">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -216,7 +211,7 @@ export function CodePlaygroundDialog({ onIntegrate }: CodePlaygroundDialogProps)
                 }
                 disabled={isGenerating}
               >
-                <SelectTrigger id="sandbox-type-select">
+                <SelectTrigger id="sandbox-type-select" className="border-2 border-yellow-400 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-400/30">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

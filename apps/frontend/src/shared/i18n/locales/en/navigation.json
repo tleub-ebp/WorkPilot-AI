@@ -66,6 +66,11 @@
     "arenaMode": "Arena Mode",
     "apiExplorer": "API Studio"
   },
+  "search": {
+    "placeholder": "Search...",
+    "clear": "Clear search",
+    "noResults": "No results found"
+  },
   "actions": {
     "settings": "Settings",
     "help": "Help & Feedback",
