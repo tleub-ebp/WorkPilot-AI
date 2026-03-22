@@ -13,5 +13,59 @@
     "security_hardening": "Sécurité",
     "performance_optimizations": "Performance",
     "code_quality": "Qualité du code"
-  }
+  },
+  "header": {
+    "title": "Idéation",
+    "subtitle": "Idées de fonctionnalités générées par l'IA pour votre projet",
+    "ideasCount": "{{count}} idées",
+    "selectedCount": "{{count}} sélectionnées",
+    "addMore": "Ajouter",
+    "delete": "Supprimer",
+    "convertSelected": "Ajouter au Kanban",
+    "convertedSuccess": "{{count}} idée(s) ajoutée(s) au Kanban"
+  },
+  "filters": {
+    "all": "Tout",
+    "code": "Code",
+    "uiux": "UI/UX",
+    "docs": "Docs",
+    "security": "Sécurité",
+    "performance": "Performance"
+  },
+  "config": {
+    "title": "Configuration de l'idéation",
+    "description": "Configurez les types d'idées à générer",
+    "typesLabel": "Types d'idéation",
+    "contextSources": "Sources de contexte",
+    "includeRoadmap": "Inclure le contexte Roadmap",
+    "includeKanban": "Inclure le contexte Kanban",
+    "close": "Fermer"
+  },
+  "addMore": {
+    "title": "Ajouter des idées",
+    "description": "Sélectionnez des types d'idéation supplémentaires. Vos idées existantes seront conservées.",
+    "allGenerated": "Vous avez déjà généré tous les types d'idéation !",
+    "useRegenerate": "Utilisez \"Régénérer\" pour actualiser les idées existantes.",
+    "cancel": "Annuler",
+    "generate": "Générer",
+    "generateTypes": "Générer {{count}} types"
+  },
+  "generation": {
+    "title": "Génération des idées",
+    "complete": "{{completed}}/{{total}} terminés",
+    "hideLogs": "Masquer les logs",
+    "showLogs": "Afficher les logs",
+    "stopping": "Arrêt en cours...",
+    "stop": "Arrêter",
+    "stopTooltip": "Arrêter la génération",
+    "waitingToStart": "En attente...",
+    "failedCategory": "Échec de génération pour cette catégorie",
+    "noIdeasCategory": "Aucune idée générée pour cette catégorie",
+    "ideasCount": "{{count}} idées"
+  },
+  "auth": {
+    "title": "Authentification Claude requise",
+    "description": "Un token OAuth Claude Code est requis pour générer des idées de fonctionnalités."
+  },
+  "noIdeas": "Aucune idée à afficher"
 }

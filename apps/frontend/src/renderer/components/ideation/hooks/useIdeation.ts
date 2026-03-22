@@ -29,7 +29,7 @@ interface UseIdeationOptions {
 
 export function useIdeation(projectId: string, options: UseIdeationOptions = {}) {
   const { onGoToTask, showArchived: externalShowArchived } = options;
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(['common', 'ideation']);
   const session = useIdeationStore((state) => state.session);
   const generationStatus = useIdeationStore((state) => state.generationStatus);
   const isGenerating = useIdeationStore((state) => state.isGenerating);
@@ -209,6 +209,42 @@ export function useIdeation(projectId: string, options: UseIdeationOptions = {})
     await deleteMultipleIdeasForProject(projectId, Array.from(currentSelectedIds));
   }, [projectId]);
 
+  const handleConvertSelectedToTasks = useCallback(async () => {
+    const currentSession = useIdeationStore.getState().session;
+    const currentSelectedIds = useIdeationStore.getState().selectedIds;
+    if (currentSelectedIds.size === 0 || !currentSession) return;
+
+    const ideasToConvert = currentSession.ideas.filter(
+      (idea) =>
+        currentSelectedIds.has(idea.id) &&
+        idea.status !== 'converted' &&
+        idea.status !== 'dismissed' &&
+        idea.status !== 'archived'
+    );
+    if (ideasToConvert.length === 0) return;
+
+    let successCount = 0;
+    for (const idea of ideasToConvert) {
+      try {
+        const result = await window.electronAPI.convertIdeaToTask(projectId, idea.id);
+        if (result.success && result.data) {
+          useIdeationStore.getState().setIdeaTaskId(idea.id, result.data.id);
+          successCount++;
+        }
+      } catch (error) {
+        console.error('Failed to convert idea to task:', error);
+      }
+    }
+
+    if (successCount > 0) {
+      loadTasks(projectId);
+      useIdeationStore.getState().clearSelection();
+      toast({
+        title: t('ideation:header.convertedSuccess', { count: successCount })
+      });
+    }
+  }, [projectId, t]);
+
   const handleSelectAll = useCallback((ideas: Idea[]) => {
     selectAllIdeas(ideas.map(idea => idea.id));
   }, [selectAllIdeas]);
@@ -282,6 +318,7 @@ export function useIdeation(projectId: string, options: UseIdeationOptions = {})
     handleStop,
     handleDismissAll,
     handleDeleteSelected,
+    handleConvertSelectedToTasks,
     handleSelectAll,
     handleEnvConfigured,
     getAvailableTypesToAdd,

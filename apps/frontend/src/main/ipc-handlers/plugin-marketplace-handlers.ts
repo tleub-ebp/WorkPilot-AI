@@ -511,4 +511,81 @@ export function registerPluginMarketplaceHandlers(): void {
       return { success: false, error: error instanceof Error ? error.message : 'Toggle failed' };
     }
   });
+
+  // Scaffold a new plugin on disk
+  ipcMain.handle('pluginMarketplace:create', async (_event, data: {
+    type: string;
+    id: string;
+    name: string;
+    description: string;
+    version: string;
+    systemPrompt?: string;
+    triggerKeywords?: string;
+    authType?: string;
+    apiEndpoint?: string;
+    primaryColor?: string;
+    backgroundColor?: string;
+    templateContent?: string;
+  }) => {
+    try {
+      const pluginsDir = path.join(getPluginDataDir(), 'local', data.id);
+      if (fs.existsSync(pluginsDir)) {
+        return { success: false, error: `A plugin with ID "${data.id}" already exists` };
+      }
+      fs.mkdirSync(pluginsDir, { recursive: true });
+
+      // Build config object
+      const config: Record<string, unknown> = {
+        id: data.id,
+        name: data.name,
+        type: data.type,
+        version: data.version,
+        description: data.description,
+      };
+
+      if (data.type === 'agent') {
+        config.systemPrompt = data.systemPrompt || '';
+        if (data.triggerKeywords?.trim()) {
+          config.triggers = data.triggerKeywords.split(',').map(k => k.trim()).filter(Boolean);
+        }
+      } else if (data.type === 'integration') {
+        config.authType = data.authType || 'none';
+        if (data.apiEndpoint) config.apiEndpoint = data.apiEndpoint;
+      } else if (data.type === 'theme') {
+        config.themeData = {
+          '--color-primary': data.primaryColor || '#8b5cf6',
+          '--color-background': data.backgroundColor || '#0a0a1a',
+        };
+      } else if (data.type === 'spec-template' || data.type === 'custom-prompt') {
+        config.content = data.templateContent || '';
+      }
+
+      // Write plugin.config.json
+      const configPath = path.join(pluginsDir, 'plugin.config.json');
+      fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+      // Write a README
+      const readme = `# ${data.name}\n\n${data.description}\n\n## Type\n\n\`${data.type}\`\n\n## Version\n\n\`${data.version}\`\n`;
+      fs.writeFileSync(path.join(pluginsDir, 'README.md'), readme);
+
+      // Register in local.json for auto-loading
+      const localJsonPath = path.join(getPluginDataDir(), 'local.json');
+      let localConfig: { localPlugins: Array<{ path: string; enabled: boolean }> } = { localPlugins: [] };
+      if (fs.existsSync(localJsonPath)) {
+        try {
+          localConfig = JSON.parse(fs.readFileSync(localJsonPath, 'utf-8'));
+        } catch { /* use default */ }
+      }
+      if (!localConfig.localPlugins.some(p => p.path === pluginsDir)) {
+        localConfig.localPlugins.push({ path: pluginsDir, enabled: true });
+      }
+      fs.writeFileSync(localJsonPath, JSON.stringify(localConfig, null, 2));
+
+      appLog.info(`[Plugin Marketplace] Created plugin: ${data.name} at ${pluginsDir}`);
+      return { success: true, data: { path: pluginsDir } };
+    } catch (error) {
+      appLog.error(`[Plugin Marketplace] Failed to create plugin: ${error}`);
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to create plugin' };
+    }
+  });
 }

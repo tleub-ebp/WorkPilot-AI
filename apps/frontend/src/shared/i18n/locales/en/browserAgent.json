@@ -18,13 +18,16 @@
     "captureScreenshot": "Capture",
     "screenshotNamePlaceholder": "Screenshot name...",
     "idle": "Browser is idle. Enter a URL and click Go to start.",
+    "idleTitle": "No page loaded",
+    "idleDescription": "Enter a URL in the address bar above and click Go to capture a screenshot of the page.",
     "launching": "Launching browser...",
     "navigating": "Navigating...",
     "ready": "Browser ready",
     "refresh": "Refresh",
     "openExternal": "Open in Browser",
     "useEmulatorUrl": "Use Emulator URL",
-    "capturing": "Capturing screenshot..."
+    "capturing": "Capturing...",
+    "errorHint": "Check that the URL is reachable and try again."
   },
   "regression": {
     "setBaseline": "Set as Baseline",
@@ -34,7 +37,9 @@
     "diffPixels": "Diff Pixels",
     "passed": "Passed",
     "failed": "Failed",
-    "noBaselines": "No baselines yet. Capture a screenshot and set it as baseline.",
+    "noBaselines": "Capture a screenshot in the Browser tab, then come back here to set it as a baseline for visual regression testing.",
+    "noBaselinesTitle": "No baselines yet",
+    "resultsTitle": "Comparison Results",
     "threshold": "Threshold",
     "comparing": "Comparing...",
     "baselineSet": "Baseline set successfully",
@@ -46,7 +51,8 @@
   "tests": {
     "runAll": "Run All Tests",
     "running": "Running tests...",
-    "noResults": "No test results yet. Click Run All Tests to start.",
+    "noResults": "Click Run All Tests to execute E2E tests and see the results here.",
+    "noResultsTitle": "No test results yet",
     "passed": "Passed",
     "failed": "Failed",
     "skipped": "Skipped",

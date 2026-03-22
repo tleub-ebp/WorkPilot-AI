@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { TabsContent } from '../ui/tabs';
 import { EnvConfigModal } from '../EnvConfigModal';
 import { IDEATION_TYPE_DESCRIPTIONS } from '../../../shared/constants';
@@ -13,11 +14,12 @@ import { useViewState } from '../../contexts/ViewStateContext';
 import { ALL_IDEATION_TYPES } from './constants';
 
 interface IdeationProps {
-  projectId: string;
-  onGoToTask?: (taskId: string) => void;
+  readonly projectId: string;
+  readonly onGoToTask?: (taskId: string) => void;
 }
 
 export function Ideation({ projectId, onGoToTask }: IdeationProps) {
+  const { t } = useTranslation('ideation');
   // Get showArchived from shared context for cross-page sync
   const { showArchived } = useViewState();
 
@@ -55,6 +57,7 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
     handleStop,
     handleDismissAll,
     handleDeleteSelected,
+    handleConvertSelectedToTasks,
     handleSelectAll,
     handleEnvConfigured,
     getAvailableTypesToAdd,
@@ -119,8 +122,8 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
           open={showEnvConfigModal}
           onOpenChange={setShowEnvConfigModal}
           onConfigured={handleEnvConfigured}
-          title="Claude Authentication Required"
-          description="A Claude Code OAuth token is required to generate AI-powered feature ideas."
+          title={t('auth.title')}
+          description={t('auth.description')}
           projectId={projectId}
         />
       </>
@@ -143,6 +146,7 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
         }}
         onDismissAll={handleDismissAll}
         onDeleteSelected={handleDeleteSelected}
+        onConvertSelected={handleConvertSelectedToTasks}
         onSelectAll={() => handleSelectAll(activeIdeas)}
         onClearSelection={clearSelection}
         onRefresh={handleRefresh}
@@ -170,7 +174,7 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
               ))}
               {activeIdeas.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
-                  No ideas to display
+                  {t('noIdeas')}
                 </div>
               )}
             </div>
@@ -242,8 +246,8 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
         open={showEnvConfigModal}
         onOpenChange={setShowEnvConfigModal}
         onConfigured={handleEnvConfigured}
-        title="Claude Authentication Required"
-        description="A Claude Code OAuth token is required to generate AI-powered feature ideas."
+        title={t('auth.title')}
+        description={t('auth.description')}
         projectId={projectId}
       />
     </div>

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { ElectronAPI } from '@shared/types/ipc';
+import { useProjectStore } from './project-store';
 
 // Extend globalThis to include electronAPI
 declare global {
@@ -188,8 +189,10 @@ export async function executeGitCommand(projectId: string) {
   useNaturalLanguageGitStore.setState({ streamingOutput: '', error: null, result: null });
 
   try {
-    // Get project path
-    const projectPath = await globalThis.electronAPI?.getProjectPath(projectId);
+    // Get project path from project store
+    const projects = useProjectStore.getState().projects;
+    const project = projects.find((p) => p.id === projectId);
+    const projectPath = project?.path;
     if (!projectPath) {
       throw new Error('Project path not found');
     }

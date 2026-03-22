@@ -54,6 +54,8 @@ import {
   Globe,
   Users,
   Swords,
+  Search,
+  X,
 } from 'lucide-react';
 
 // UI
@@ -311,6 +313,8 @@ export function Sidebar({
   const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
   const [pendingProject, setPendingProject] = useState<Project | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['workspace'])); // Workspace group expanded by default
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [showGitHubSetup, setShowGitHubSetup] = useState(false);
   const [gitHubSetupProject, setGitHubSetupProject] = useState<Project | null>(null);
@@ -410,6 +414,20 @@ export function Sidebar({
     return visibleNavGroups.flatMap(group => group.items);
   }, [visibleNavGroups]);
 
+  // Filter nav groups based on search query
+  const filteredNavGroups = useMemo(() => {
+    if (!searchQuery.trim()) return visibleNavGroups;
+    const query = searchQuery.toLowerCase().trim();
+    return visibleNavGroups
+      .map(group => ({
+        ...group,
+        items: group.items.filter(item =>
+          t(item.labelKey).toLowerCase().includes(query)
+        )
+      }))
+      .filter(group => group.items.length > 0);
+  }, [visibleNavGroups, searchQuery, t]);
+
   // Load envConfig when project changes to ensure store is populated
   useEffect(() => {
     // Track whether this effect is still current (for race condition handling)
@@ -456,6 +474,13 @@ export function Sidebar({
 
       // Check for modifier keys - we want plain key presses only
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      // "/" focuses the search input when sidebar is expanded
+      if (e.key === '/' && !isCollapsed) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
 
       const key = e.key.toUpperCase();
 
@@ -600,6 +625,9 @@ export function Sidebar({
   };
 
   const handleNavClick = (view: SidebarView) => {
+    // Clear search when navigating
+    setSearchQuery('');
+
     // Handle AI Tools that open dialogs instead of changing view
     if (view === 'test-generation') {
       openTestGenerationDialog();
@@ -726,7 +754,7 @@ const toggleGroupExpansion = (groupId: string) => {
   };
 
   const renderNavGroup = (group: NavGroup) => {
-    const isExpanded = expandedGroups.has(group.id);
+    const isExpanded = searchQuery.trim() ? true : expandedGroups.has(group.id);
     const GroupIcon = group.icon;
     const hasActiveItem = group.items.some(item => activeView === item.id);
 
@@ -961,12 +989,49 @@ const toggleGroupExpansion = (groupId: string) => {
 
         <Separator />
 
+        {/* Search input - only visible when expanded */}
+        {!isCollapsed && (
+          <div className="px-3 py-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setSearchQuery('');
+                    searchInputRef.current?.blur();
+                  }
+                }}
+                placeholder={t('search.placeholder')}
+                className="w-full pl-8 pr-7 py-1.5 text-sm rounded-md bg-muted/50 border border-border placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => { setSearchQuery(''); searchInputRef.current?.focus(); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={t('search.clear')}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Navigation */}
         <ScrollArea className="flex-1">
           <div className={cn("py-4 transition-all duration-300", isCollapsed ? "px-2" : "px-3")}>
             {/* Navigation Groups */}
             <div className="space-y-2">
-              {visibleNavGroups.map(renderNavGroup)}
+              {filteredNavGroups.map(renderNavGroup)}
+              {!isCollapsed && searchQuery.trim() && filteredNavGroups.length === 0 && (
+                <p className="px-3 py-4 text-sm text-center text-muted-foreground">
+                  {t('search.noResults')}
+                </p>
+              )}
             </div>
           </div>
         </ScrollArea>
