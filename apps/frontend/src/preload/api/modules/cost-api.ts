@@ -4,6 +4,7 @@
  */
 
 import { ipcRenderer } from 'electron';
+import { IPC_CHANNELS } from '../../../shared/constants/ipc';
 
 export interface CostSummary {
   total_cost: number;
@@ -44,6 +45,7 @@ export interface CostAPI {
   getCostBudget(projectPath: string): Promise<{ success: boolean; budget?: BudgetInfo; error?: string }>;
   setCostBudget(projectPath: string, limit: number, period?: string): Promise<{ success: boolean; error?: string }>;
   getDashboardSnapshot(projectPath: string): Promise<{ success: boolean; snapshot?: DashboardSnapshot; error?: string }>;
+  onCostsUpdated(callback: (projectPath: string) => void): () => void;
 }
 
 export const createCostAPI = (): CostAPI => ({
@@ -58,4 +60,10 @@ export const createCostAPI = (): CostAPI => ({
 
   getDashboardSnapshot: (projectPath: string) =>
     ipcRenderer.invoke('dashboard:getSnapshot', projectPath),
+
+  onCostsUpdated: (callback: (projectPath: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, projectPath: string) => callback(projectPath);
+    ipcRenderer.on(IPC_CHANNELS.COSTS_DATA_UPDATED, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.COSTS_DATA_UPDATED, handler);
+  },
 });

@@ -6,10 +6,91 @@
  * Python HTTP server.
  */
 
-import { ipcMain } from 'electron';
+import { BrowserWindow, app, ipcMain } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { logger } from '../app-logger';
+import { IPC_CHANNELS } from '../../shared/constants/ipc';
+
+// ---------------------------------------------------------------------------
+// Load all configured provider IDs from configured_providers.json
+// so we can show $0 entries for providers with no usage.
+// ---------------------------------------------------------------------------
+
+function loadConfiguredProviderIds(): string[] {
+  // configured_providers.json is at the repo root.
+  // app.getAppPath() can point to different directories depending on dev vs packaged mode,
+  // so we try multiple candidates including process.cwd() for dev mode.
+  const appPath = app.getAppPath();
+  const cwd = process.cwd();
+  const candidates = [
+    // Dev mode: process.cwd() is typically apps/frontend
+    path.join(cwd, '..', '..', 'configured_providers.json'),
+    path.join(cwd, '..', 'configured_providers.json'),
+    path.join(cwd, 'configured_providers.json'),
+    // app.getAppPath()-based (works in various electron-vite configurations)
+    path.join(appPath, '..', '..', '..', 'configured_providers.json'),
+    path.join(appPath, '..', '..', 'configured_providers.json'),
+    path.join(appPath, '..', 'configured_providers.json'),
+    path.join(appPath, 'configured_providers.json'),
+    // Fallback: src dir
+    path.join(appPath, 'src', 'configured_providers.json'),
+  ];
+  for (const p of candidates) {
+    try {
+      if (!fs.existsSync(p)) continue;
+      const raw = fs.readFileSync(p, 'utf-8');
+      const parsed = JSON.parse(raw) as { providers?: { id?: string; name?: string }[] };
+      const ids = (parsed.providers ?? []).map(pv => pv.id ?? pv.name ?? '').filter(Boolean);
+      if (ids.length > 0) return ids;
+    } catch {
+      // try next
+    }
+  }
+  return [];
+}
+
+// ---------------------------------------------------------------------------
+// File watchers — push COSTS_DATA_UPDATED when cost_data.json changes
+// ---------------------------------------------------------------------------
+
+const _watchers = new Map<string, fs.FSWatcher>();
+const _debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+function watchCostData(projectPath: string): void {
+  if (_watchers.has(projectPath)) return;
+
+  const filePath = getCostDataPath(projectPath);
+  if (!fs.existsSync(filePath)) return;
+
+  try {
+    const watcher = fs.watch(filePath, { persistent: false }, () => {
+      // Debounce: coalesce rapid events (e.g. atomic rename fires twice on Windows)
+      const existing = _debounceTimers.get(projectPath);
+      if (existing) clearTimeout(existing);
+      _debounceTimers.set(
+        projectPath,
+        setTimeout(() => {
+          _debounceTimers.delete(projectPath);
+          for (const win of BrowserWindow.getAllWindows()) {
+            if (!win.isDestroyed()) {
+              win.webContents.send(IPC_CHANNELS.COSTS_DATA_UPDATED, projectPath);
+            }
+          }
+        }, 400),
+      );
+    });
+
+    watcher.on('error', () => {
+      watcher.close();
+      _watchers.delete(projectPath);
+    });
+
+    _watchers.set(projectPath, watcher);
+  } catch {
+    // Silently ignore — watcher is best-effort
+  }
+}
 
 // ---------------------------------------------------------------------------
 // JSON file shape (mirrors Python CostEstimator.save_to_file)
@@ -95,6 +176,7 @@ export function registerCostHandlers(): void {
    */
   ipcMain.handle('costs:getSummary', async (_, projectPath: string) => {
     try {
+      watchCostData(projectPath); // Start watching on first access
       const data = loadCostData(projectPath);
       const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const since60 = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
@@ -117,7 +199,21 @@ export function registerCostHandlers(): void {
         byModel[modelKey] = (byModel[modelKey] ?? 0) + u.cost;
       }
 
-      const dailyAvg = totalCost / 30;
+      // Add all configured providers with $0 if they have no usage yet
+      for (const pid of loadConfiguredProviderIds()) {
+        if (!(pid in byProvider)) byProvider[pid] = 0;
+      }
+
+      // Compute actual span of data in the window (more accurate than a hardcoded 30)
+      let periodDays = 30;
+      if (recent.length > 0) {
+        const timestamps = recent.map(u => new Date(u.timestamp).getTime());
+        const oldest = Math.min(...timestamps);
+        const newest = Math.max(...timestamps);
+        const spanDays = Math.ceil((newest - oldest) / (24 * 60 * 60 * 1000)) + 1;
+        periodDays = Math.max(1, Math.min(30, spanDays));
+      }
+      const dailyAvg = totalCost / periodDays;
       const trendPct = prevCost > 0 ? ((totalCost - prevCost) / prevCost) * 100 : 0;
 
       return {
@@ -129,7 +225,7 @@ export function registerCostHandlers(): void {
           total_tokens: tokensInput + tokensOutput,
           tokens_input: tokensInput,
           tokens_output: tokensOutput,
-          period_days: 30,
+          period_days: periodDays,
           daily_avg: dailyAvg,
           trend_pct: trendPct,
         },

@@ -59,7 +59,7 @@ def _get_cached_project_data(
         Tuple of (project_index, project_capabilities)
     """
 
-    key = str(project_dir.resolve())
+    key = str(Path(project_dir).resolve())
     now = time.time()
     debug = os.environ.get("DEBUG", "").lower() in ("true", "1")
 
@@ -126,7 +126,7 @@ def invalidate_project_cache(project_dir: Path | None = None) -> None:
             _PROJECT_INDEX_CACHE.clear()
             logger.debug("Cleared all project index cache entries")
         else:
-            key = str(project_dir.resolve())
+            key = str(Path(project_dir).resolve())
             if key in _PROJECT_INDEX_CACHE:
                 del _PROJECT_INDEX_CACHE[key]
                 logger.debug(f"Invalidated project index cache for {project_dir}")
@@ -511,6 +511,8 @@ def create_client(
     Only starts MCP servers that the agent actually needs, reducing context
     window bloat and startup latency.
 
+    project_dir and spec_dir are normalized to Path objects if passed as strings.
+
     Args:
         project_dir: Root directory for the project (working directory)
         spec_dir: Directory containing the spec (for settings file)
@@ -543,6 +545,12 @@ def create_client(
        (see security.py for ALLOWED_COMMANDS)
     4. Tool filtering - Each agent type only sees relevant tools (prevents misuse)
     """
+    # Normalize to Path objects in case strings are passed
+    if isinstance(project_dir, str):
+        project_dir = Path(project_dir)
+    if isinstance(spec_dir, str):
+        spec_dir = Path(spec_dir)
+
     # Collect env vars to pass to SDK (ANTHROPIC_BASE_URL, CLAUDE_CONFIG_DIR, etc.)
     sdk_env = get_sdk_env_vars()
 
@@ -611,7 +619,7 @@ def create_client(
     # Note: Using both relative paths ("./**") and absolute paths to handle
     # cases where Claude uses absolute paths for file operations
     project_path_str = str(project_dir.resolve())
-    spec_path_str = str(spec_dir.resolve())
+    spec_path_str = str(spec_dir.resolve()) if spec_dir else project_path_str
 
     # Detect if we're running in a worktree and get the original project directory
     # Worktrees are located in either:
@@ -1052,6 +1060,12 @@ def create_agent_client(
         CopilotAgentClient,
         SubagentDefinition,
     )
+
+    # Normalize to Path objects in case strings are passed
+    if isinstance(project_dir, str):
+        project_dir = Path(project_dir)
+    if isinstance(spec_dir, str):
+        spec_dir = Path(spec_dir)
 
     # Resolve provider
     if provider is None:

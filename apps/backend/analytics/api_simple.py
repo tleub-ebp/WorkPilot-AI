@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc, asc, and_, or_
+from sqlalchemy import func, desc, asc, and_, or_, cast, Integer, case
 
 from .database import get_db
 from .database_schema import (
@@ -134,7 +134,7 @@ async def get_dashboard_overview(
         BuildError.error_type,
         BuildError.error_category,
         func.count(BuildError.id).label('count'),
-        func.sum(func.cast(BuildError.resolved, int)).label('resolved_count')
+        func.sum(cast(BuildError.resolved, Integer)).label('resolved_count')
     ).join(Build).filter(
         Build.started_at >= cutoff_date
     ).group_by(
@@ -154,7 +154,7 @@ async def get_dashboard_overview(
         func.avg(BuildPhase.duration_seconds).label('avg_duration'),
         func.sum(BuildPhase.tokens_used).label('total_tokens'),
         func.sum(BuildPhase.cost_usd).label('total_cost'),
-        func.sum(func.cast(BuildPhase.success, int)).label('success_count'),
+        func.sum(cast(BuildPhase.success, Integer)).label('success_count'),
         func.count(BuildPhase.id).label('total_count')
     ).join(Build).filter(
         Build.started_at >= cutoff_date
@@ -346,7 +346,7 @@ async def get_agent_performance(
         Build.llm_provider,
         Build.llm_model,
         func.count(BuildPhase.build_id).label('total_builds'),
-        func.sum(func.cast(BuildPhase.success, int)).label('successful_builds'),
+        func.sum(cast(BuildPhase.success, Integer)).label('successful_builds'),
         func.avg(BuildPhase.duration_seconds).label('avg_duration'),
         func.avg(BuildPhase.tokens_used).label('avg_tokens'),
         func.avg(BuildPhase.cost_usd).label('avg_cost')
@@ -361,7 +361,7 @@ async def get_agent_performance(
     return [
         serialize_agent_performance(
             data.agent_type, data.llm_provider, data.llm_model,
-            data.total_builds, (data.successful_builds / data.total_builds * 100) if data.total_builds > 0 else 0,
+            data.total_builds, ((data.successful_builds or 0) / data.total_builds * 100) if data.total_builds > 0 else 0,
             data.avg_duration, data.avg_tokens, data.avg_cost
         ) for data in performance_data
     ]
@@ -379,7 +379,7 @@ async def get_error_metrics(
         BuildError.error_type,
         BuildError.error_category,
         func.count(BuildError.id).label('count'),
-        func.sum(func.cast(BuildError.resolved, int)).label('resolved_count')
+        func.sum(cast(BuildError.resolved, Integer)).label('resolved_count')
     ).join(Build).filter(
         Build.started_at >= cutoff_date
     ).group_by(
@@ -400,7 +400,7 @@ async def get_specs_summary(db: Session = Depends(get_db)):
         Build.spec_id,
         Build.spec_name,
         func.count(Build.build_id).label('total_builds'),
-        func.sum(func.cast(Build.status == BuildStatus.COMPLETE, int)).label('successful_builds'),
+        func.sum(case((Build.status == BuildStatus.COMPLETE, 1), else_=0)).label('successful_builds'),
         func.avg(Build.total_duration_seconds).label('avg_duration'),
         func.avg(Build.total_cost_usd).label('avg_cost'),
         func.avg(Build.qa_iterations).label('avg_qa_iterations')

@@ -144,6 +144,7 @@ export const IPC_CHANNELS = {
   CLAUDE_RETRY_WITH_PROFILE: 'claude:retryWithProfile',
 
   // Usage monitoring (proactive account switching)
+  COSTS_DATA_UPDATED: 'costs:dataUpdated',  // Event: cost_data.json changed (main -> renderer)
   USAGE_UPDATED: 'claude:usageUpdated',  // Event: usage data updated (main -> renderer)
   USAGE_REQUEST: 'claude:usageRequest',  // Request current usage snapshot
   ALL_PROFILES_USAGE_REQUEST: 'claude:allProfilesUsageRequest',  // Request all profiles usage immediately

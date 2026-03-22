@@ -729,13 +729,24 @@ async def run_agent_session(
                 # Derive project_dir from spec_dir (spec_dir = project/.auto-claude/specs/XXX)
                 _project_dir = spec_dir.parent.parent.parent
                 _model = getattr(getattr(client, "options", None), "model", "unknown")
+                # Resolve provider via the same multi-strategy logic used by create_agent_client
+                # (env vars, task_metadata.json, .auto-claude/.env) — get_selected_provider()
+                # always returns None in subprocess context so it's useless here.
+                _provider = "anthropic"
+                try:
+                    from core.client import _get_active_provider
+                    _active = _get_active_provider(spec_dir)
+                    # _get_active_provider returns "claude" for Anthropic; normalise to "anthropic"
+                    _provider = "anthropic" if _active in ("claude", "anthropic") else _active
+                except Exception:
+                    pass
                 _record_usage(
                     spec_dir=spec_dir,
                     project_dir=_project_dir,
                     phase=phase.value,
                     agent_type=phase.value,
                     model=_model,
-                    provider="anthropic",
+                    provider=_provider,
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
                     cost_usd=cost_usd,

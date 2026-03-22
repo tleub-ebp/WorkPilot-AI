@@ -16,17 +16,19 @@
       "inOut": "In: {{input}} / Out: {{output}}"
     },
     "providers": {
-      "title": "Providers",
-      "models": "{{count}} model",
-      "models_plural": "{{count}} models"
+      "title": "Provider(s)",
+      "models_one": "{{count}} model",
+      "models_other": "{{count}} models",
+      "models_plural": "{{count}} models",
+      "models": "{{count}} model"
     }
   },
   "budget": {
     "title": "Monthly Budget",
     "pctUsed": "{{pct}}% used",
-    "spent": "${{amount}} spent",
-    "remaining": "${{amount}} remaining",
-    "total": "${{amount}} total",
+    "spent": "{{amount}} spent",
+    "remaining": "{{amount}} remaining",
+    "total": "{{amount}} total",
     "forecast": "End-of-month forecast:",
     "overBudget": "Over budget"
   },

@@ -440,6 +440,8 @@ class CopilotAgentClient(AgentClient):
         # Copilot session token cache (expires ~30 min)
         self._copilot_token: str = ""
         self._copilot_token_expires_at: float = 0.0
+        # Usage tracking (Copilot API doesn't expose token counts — subscription-based)
+        self.last_usage: dict | None = None
 
     @staticmethod
     def _get_github_token_from_cli() -> str:
@@ -637,6 +639,10 @@ class CopilotAgentClient(AgentClient):
 
         if not self._pending_query:
             return
+
+        # Copilot is subscription-based — no token counts in API response.
+        # Mark as "recorded" immediately so session.py always logs a Copilot entry.
+        self.last_usage = {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
 
         prompt = self._pending_query
         self._pending_query = None
@@ -961,6 +967,40 @@ class CopilotAgentClient(AgentClient):
 # =============================================================================
 
 
+# OpenAI pricing ($/M tokens, input/output) — update as rates change
+_OPENAI_PRICING: dict[str, tuple[float, float]] = {
+    "gpt-4o":           (2.50,  10.00),
+    "gpt-4o-mini":      (0.15,   0.60),
+    "gpt-4.1":          (2.00,   8.00),
+    "gpt-4.1-mini":     (0.40,   1.60),
+    "gpt-4.1-nano":     (0.10,   0.40),
+    "gpt-4-turbo":     (10.00,  30.00),
+    "gpt-4":           (30.00,  60.00),
+    "gpt-3.5-turbo":    (0.50,   1.50),
+    "o1":              (15.00,  60.00),
+    "o1-mini":          (3.00,  12.00),
+    "o1-pro":         (150.00, 600.00),
+    "o3":              (10.00,  40.00),
+    "o3-mini":          (1.10,   4.40),
+    "o4-mini":          (1.10,   4.40),
+}
+
+
+def _openai_cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
+    """Estimate cost in USD for an OpenAI API call."""
+    # Try exact match, then prefix match (e.g. "gpt-4o-2024-11-20" → "gpt-4o")
+    rates = _OPENAI_PRICING.get(model)
+    if rates is None:
+        for key, r in _OPENAI_PRICING.items():
+            if model.startswith(key):
+                rates = r
+                break
+    if rates is None:
+        return 0.0
+    in_rate, out_rate = rates
+    return (input_tokens * in_rate + output_tokens * out_rate) / 1_000_000
+
+
 class OpenAIAgentClient(AgentClient):
     """Agent client backed by OpenAI API (direct REST calls).
 
@@ -989,6 +1029,8 @@ class OpenAIAgentClient(AgentClient):
         self._http_client: Any = None
         self._tool_executor: Any = None
         self._tool_definitions: list[dict[str, Any]] = []
+        # Usage accumulated across the session's turns
+        self.last_usage: dict | None = None
 
     def _get_http_client(self):
         """Lazy-init an aiohttp ClientSession."""
@@ -1087,6 +1129,9 @@ class OpenAIAgentClient(AgentClient):
 
         session = self._get_http_client()
 
+        _total_in = 0
+        _total_out = 0
+
         for turn in range(self.max_turns):
             payload: dict[str, Any] = {
                 "model": self.model,
@@ -1126,6 +1171,11 @@ class OpenAIAgentClient(AgentClient):
                 )
                 return
 
+            # Accumulate token usage from each turn
+            _u = data.get("usage", {})
+            _total_in += _u.get("prompt_tokens", 0)
+            _total_out += _u.get("completion_tokens", 0)
+
             choices = data.get("choices", [])
             if not choices:
                 yield AgentMessage(
@@ -1158,6 +1208,11 @@ class OpenAIAgentClient(AgentClient):
                         content=[ContentBlock(type=ContentBlockType.TEXT, text="(No response from OpenAI)")],
                     )
                 logger.info(f"[OpenAIAgentClient] Session complete after {turn + 1} turn(s)")
+                self.last_usage = {
+                    "input_tokens": _total_in,
+                    "output_tokens": _total_out,
+                    "cost_usd": _openai_cost_usd(self.model, _total_in, _total_out),
+                }
                 return
 
             assistant_msg: dict[str, Any] = {"role": "assistant"}
@@ -1229,6 +1284,11 @@ class OpenAIAgentClient(AgentClient):
             f"[OpenAIAgentClient] Reached max_turns ({self.max_turns}) — stopping tool loop"
         )
         print(f"[OpenAIAgentClient] ⚠️ Reached max turns ({self.max_turns})", flush=True)
+        self.last_usage = {
+            "input_tokens": _total_in,
+            "output_tokens": _total_out,
+            "cost_usd": _openai_cost_usd(self.model, _total_in, _total_out),
+        }
 
     def provider_name(self) -> str:
         return "openai"
@@ -1321,6 +1381,8 @@ class WindsurfAgentClient(AgentClient):
         self._http_client: Any = None
         self._tool_executor: Any = None  # ToolExecutor instance
         self._tool_definitions: list[dict[str, Any]] = []
+        # Usage accumulated across REST turns (gRPC mode: credits only, no token count)
+        self.last_usage: dict | None = None
         # Ordered list of base URLs to try.  `server.codeium.com` is the
         # documented base for analytics/billing, but chat completions may live
         # elsewhere — or may not be exposed at all for sk-ws-* keys.
@@ -2075,6 +2137,9 @@ class WindsurfAgentClient(AgentClient):
             flush=True,
         )
 
+        _ws_total_in = 0
+        _ws_total_out = 0
+
         for turn in range(self.max_turns):
             payload: dict[str, Any] = {
                 "model": self.model,
@@ -2161,7 +2226,7 @@ class WindsurfAgentClient(AgentClient):
                 f"(keys={list(data.keys())})"
             )
 
-            # Parse usage from response (for logging)
+            # Parse usage from response (for logging and cost tracking)
             usage = data.get("usage", {})
             if usage:
                 logger.info(
@@ -2170,6 +2235,8 @@ class WindsurfAgentClient(AgentClient):
                     f"completion={usage.get('completion_tokens', '?')}, "
                     f"total={usage.get('total_tokens', '?')}"
                 )
+                _ws_total_in += usage.get("prompt_tokens", 0)
+                _ws_total_out += usage.get("completion_tokens", 0)
 
             choices = data.get("choices", [])
             if not choices:
@@ -2220,6 +2287,12 @@ class WindsurfAgentClient(AgentClient):
                     f"[WindsurfAgent] Session complete after {turn + 1} turn(s) "
                     f"(finish_reason={finish_reason})"
                 )
+                # Windsurf uses credits (not per-token billing) — store tokens, cost=0
+                self.last_usage = {
+                    "input_tokens": _ws_total_in,
+                    "output_tokens": _ws_total_out,
+                    "cost_usd": 0.0,
+                }
                 return
 
             # Add assistant message (with tool_calls) to conversation history
@@ -2304,6 +2377,11 @@ class WindsurfAgentClient(AgentClient):
             f"[WindsurfAgent] ⚠️ Reached max turns ({self.max_turns})",
             flush=True,
         )
+        self.last_usage = {
+            "input_tokens": _ws_total_in,
+            "output_tokens": _ws_total_out,
+            "cost_usd": 0.0,
+        }
 
     def supports_subagents(self) -> bool:
         return False

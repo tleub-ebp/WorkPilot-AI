@@ -14,12 +14,36 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Per-file locks — serialise concurrent read-modify-write on JSON snapshots
+# within the same process (covers parallel subagents / async tasks).
+# ---------------------------------------------------------------------------
+
+_file_locks: dict[str, threading.Lock] = {}
+_file_locks_mutex = threading.Lock()
+
+
+def _get_file_lock(path: Path) -> threading.Lock:
+    key = str(path.resolve())
+    with _file_locks_mutex:
+        if key not in _file_locks:
+            _file_locks[key] = threading.Lock()
+        return _file_locks[key]
+
+
+def _atomic_write(path: Path, content: str) -> None:
+    """Write *content* to *path* atomically via a sibling .tmp file + rename."""
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(content, encoding="utf-8")
+    tmp.replace(path)
 
 # ---------------------------------------------------------------------------
 # In-process build registry  (one entry per active spec_dir)
@@ -154,30 +178,31 @@ def _append_cost_data(
     data_path = project_dir / ".auto-claude" / "cost_data.json"
     data_path.parent.mkdir(parents=True, exist_ok=True)
 
-    if data_path.exists():
-        try:
-            data: dict = json.loads(data_path.read_text(encoding="utf-8"))
-        except Exception:
+    with _get_file_lock(data_path):
+        if data_path.exists():
+            try:
+                data = json.loads(data_path.read_text(encoding="utf-8"))
+            except Exception:
+                data = {"usages": [], "budgets": {}}
+        else:
             data = {"usages": [], "budgets": {}}
-    else:
-        data = {"usages": [], "budgets": {}}
 
-    data.setdefault("usages", [])
-    data["usages"].append({
-        "project_id": str(project_dir),
-        "provider": provider,
-        "model": model,
-        "input_tokens": input_tokens,
-        "output_tokens": output_tokens,
-        "cost": cost_usd,
-        "task_id": spec_id,
-        "agent_type": agent_type,
-        "phase": phase,
-        "spec_id": spec_id,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    })
+        data.setdefault("usages", [])
+        data["usages"].append({
+            "project_id": str(project_dir),
+            "provider": provider,
+            "model": model,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "cost": cost_usd,
+            "task_id": spec_id,
+            "agent_type": agent_type,
+            "phase": phase,
+            "spec_id": spec_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        })
 
-    data_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        _atomic_write(data_path, json.dumps(data, indent=2))
 
 
 # ---------------------------------------------------------------------------
@@ -301,35 +326,32 @@ def _update_dashboard_snapshot(
     snap_path = project_dir / ".auto-claude" / "dashboard_snapshot.json"
     snap_path.parent.mkdir(parents=True, exist_ok=True)
 
-    if snap_path.exists():
+    with _get_file_lock(snap_path):
         try:
-            snap: dict = json.loads(snap_path.read_text(encoding="utf-8"))
+            snap: dict = json.loads(snap_path.read_text(encoding="utf-8")) if snap_path.exists() else {}
         except Exception:
             snap = {}
-    else:
-        snap = {}
 
-    # Defaults
-    snap.setdefault("total_tokens", 0)
-    snap.setdefault("total_cost", 0.0)
-    snap.setdefault("tokens_by_provider", {})
-    snap.setdefault("cost_by_model", {})
-    snap.setdefault("tasks_by_status", {})
-    snap.setdefault("qa_first_pass_rate", 0.0)
-    snap.setdefault("qa_avg_score", 0.0)
-    snap.setdefault("merge_auto_count", 0)
-    snap.setdefault("merge_manual_count", 0)
-    snap.setdefault("avg_completion_by_complexity", {})
+        snap.setdefault("total_tokens", 0)
+        snap.setdefault("total_cost", 0.0)
+        snap.setdefault("tokens_by_provider", {})
+        snap.setdefault("cost_by_model", {})
+        snap.setdefault("tasks_by_status", {})
+        snap.setdefault("qa_first_pass_rate", 0.0)
+        snap.setdefault("qa_avg_score", 0.0)
+        snap.setdefault("merge_auto_count", 0)
+        snap.setdefault("merge_manual_count", 0)
+        snap.setdefault("avg_completion_by_complexity", {})
 
-    total = input_tokens + output_tokens
-    snap["total_tokens"] += total
-    snap["total_cost"] = (snap["total_cost"] or 0.0) + cost_usd
-    snap["tokens_by_provider"][provider] = snap["tokens_by_provider"].get(provider, 0) + total
-    model_key = f"{provider}/{model}"
-    snap["cost_by_model"][model_key] = (snap["cost_by_model"].get(model_key) or 0.0) + cost_usd
-    snap["last_updated"] = datetime.now(timezone.utc).isoformat()
+        total = input_tokens + output_tokens
+        snap["total_tokens"] += total
+        snap["total_cost"] = (snap["total_cost"] or 0.0) + cost_usd
+        snap["tokens_by_provider"][provider] = snap["tokens_by_provider"].get(provider, 0) + total
+        model_key = f"{provider}/{model}"
+        snap["cost_by_model"][model_key] = (snap["cost_by_model"].get(model_key) or 0.0) + cost_usd
+        snap["last_updated"] = datetime.now(timezone.utc).isoformat()
 
-    snap_path.write_text(json.dumps(snap, indent=2), encoding="utf-8")
+        _atomic_write(snap_path, json.dumps(snap, indent=2))
 
 
 # ---------------------------------------------------------------------------
@@ -347,27 +369,27 @@ def record_task_status(
     try:
         snap_path = project_dir / ".auto-claude" / "dashboard_snapshot.json"
         snap_path.parent.mkdir(parents=True, exist_ok=True)
-        snap: dict = {}
-        if snap_path.exists():
+
+        with _get_file_lock(snap_path):
             try:
-                snap = json.loads(snap_path.read_text(encoding="utf-8"))
+                snap: dict = json.loads(snap_path.read_text(encoding="utf-8")) if snap_path.exists() else {}
             except Exception:
                 snap = {}
 
-        snap.setdefault("tasks_by_status", {})
-        snap["tasks_by_status"][status] = snap["tasks_by_status"].get(status, 0) + 1
+            snap.setdefault("tasks_by_status", {})
+            snap["tasks_by_status"][status] = snap["tasks_by_status"].get(status, 0) + 1
 
-        if status == "completed" and completion_seconds > 0:
-            snap.setdefault("avg_completion_by_complexity", {})
-            existing = snap["avg_completion_by_complexity"].get(complexity, [])
-            if isinstance(existing, list):
-                existing.append(completion_seconds)
-            else:
-                existing = [completion_seconds]
-            snap["avg_completion_by_complexity"][complexity] = existing
+            if status == "completed" and completion_seconds > 0:
+                snap.setdefault("avg_completion_by_complexity", {})
+                existing = snap["avg_completion_by_complexity"].get(complexity, [])
+                if isinstance(existing, list):
+                    existing.append(completion_seconds)
+                else:
+                    existing = [completion_seconds]
+                snap["avg_completion_by_complexity"][complexity] = existing
 
-        snap["last_updated"] = datetime.now(timezone.utc).isoformat()
-        snap_path.write_text(json.dumps(snap, indent=2), encoding="utf-8")
+            snap["last_updated"] = datetime.now(timezone.utc).isoformat()
+            _atomic_write(snap_path, json.dumps(snap, indent=2))
     except Exception as exc:
         logger.warning("[usage_tracker] record_task_status failed: %s", exc)
 
@@ -382,25 +404,25 @@ def record_qa_result(
     try:
         snap_path = project_dir / ".auto-claude" / "dashboard_snapshot.json"
         snap_path.parent.mkdir(parents=True, exist_ok=True)
-        snap: dict = {}
-        if snap_path.exists():
+
+        with _get_file_lock(snap_path):
             try:
-                snap = json.loads(snap_path.read_text(encoding="utf-8"))
+                snap: dict = json.loads(snap_path.read_text(encoding="utf-8")) if snap_path.exists() else {}
             except Exception:
                 snap = {}
 
-        snap.setdefault("_qa_total", 0)
-        snap.setdefault("_qa_passed", 0)
-        snap.setdefault("_qa_score_sum", 0.0)
-        snap["_qa_total"] += 1
-        if passed:
-            snap["_qa_passed"] += 1
-        snap["_qa_score_sum"] += score
+            snap.setdefault("_qa_total", 0)
+            snap.setdefault("_qa_passed", 0)
+            snap.setdefault("_qa_score_sum", 0.0)
+            snap["_qa_total"] += 1
+            if passed:
+                snap["_qa_passed"] += 1
+            snap["_qa_score_sum"] += score
 
-        snap["qa_first_pass_rate"] = snap["_qa_passed"] / snap["_qa_total"] * 100
-        snap["qa_avg_score"] = snap["_qa_score_sum"] / snap["_qa_total"]
-        snap["last_updated"] = datetime.now(timezone.utc).isoformat()
-        snap_path.write_text(json.dumps(snap, indent=2), encoding="utf-8")
+            snap["qa_first_pass_rate"] = snap["_qa_passed"] / snap["_qa_total"] * 100
+            snap["qa_avg_score"] = snap["_qa_score_sum"] / snap["_qa_total"]
+            snap["last_updated"] = datetime.now(timezone.utc).isoformat()
+            _atomic_write(snap_path, json.dumps(snap, indent=2))
     except Exception as exc:
         logger.warning("[usage_tracker] record_qa_result failed: %s", exc)
 
@@ -410,20 +432,20 @@ def record_merge(project_dir: Path, automatic: bool) -> None:
     try:
         snap_path = project_dir / ".auto-claude" / "dashboard_snapshot.json"
         snap_path.parent.mkdir(parents=True, exist_ok=True)
-        snap: dict = {}
-        if snap_path.exists():
+
+        with _get_file_lock(snap_path):
             try:
-                snap = json.loads(snap_path.read_text(encoding="utf-8"))
+                snap: dict = json.loads(snap_path.read_text(encoding="utf-8")) if snap_path.exists() else {}
             except Exception:
                 snap = {}
 
-        snap.setdefault("merge_auto_count", 0)
-        snap.setdefault("merge_manual_count", 0)
-        if automatic:
-            snap["merge_auto_count"] += 1
-        else:
-            snap["merge_manual_count"] += 1
-        snap["last_updated"] = datetime.now(timezone.utc).isoformat()
-        snap_path.write_text(json.dumps(snap, indent=2), encoding="utf-8")
+            snap.setdefault("merge_auto_count", 0)
+            snap.setdefault("merge_manual_count", 0)
+            if automatic:
+                snap["merge_auto_count"] += 1
+            else:
+                snap["merge_manual_count"] += 1
+            snap["last_updated"] = datetime.now(timezone.utc).isoformat()
+            _atomic_write(snap_path, json.dumps(snap, indent=2))
     except Exception as exc:
         logger.warning("[usage_tracker] record_merge failed: %s", exc)

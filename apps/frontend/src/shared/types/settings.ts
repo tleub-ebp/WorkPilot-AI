@@ -314,6 +314,8 @@ export interface AppSettings {
   seenVersionWarnings?: string[];
   // Sidebar collapsed state (icons only when true)
   sidebarCollapsed?: boolean;
+  // CLI panel expanded state in sidebar
+  cliPanelExpanded?: boolean;
   providerPriorityOrder?: import('../../renderer/components/settings/multiconnector/types').LLMProvider[];
   // Providers explicitly disabled from auto-switching by user toggle
   disabledAutoSwitchProviders?: string[];

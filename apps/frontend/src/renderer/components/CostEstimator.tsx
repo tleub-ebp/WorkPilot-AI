@@ -93,7 +93,7 @@ function CostKpiCard({
 // Budget progress bar
 // ---------------------------------------------------------------------------
 
-function BudgetBar({ budget }: { readonly budget: BudgetInfo }) {
+function BudgetBar({ budget, formatAmount }: { readonly budget: BudgetInfo; readonly formatAmount: (usd: number, decimals?: number) => string }) {
   const { t } = useTranslation('costEstimator');
   const pct = Math.min(budget.utilization_pct, 100);
 
@@ -130,15 +130,15 @@ function BudgetBar({ budget }: { readonly budget: BudgetInfo }) {
         />
       </div>
       <div className="flex justify-between text-xs text-muted-foreground">
-        <span>{t('budget.spent', { amount: budget.spent_this_month.toFixed(2) })}</span>
-        <span>{t('budget.remaining', { amount: budget.remaining.toFixed(2) })}</span>
-        <span>{t('budget.total', { amount: budget.monthly_budget.toFixed(2) })}</span>
+        <span>{t('budget.spent', { amount: formatAmount(budget.spent_this_month, 2) })}</span>
+        <span>{t('budget.remaining', { amount: formatAmount(budget.remaining, 2) })}</span>
+        <span>{t('budget.total', { amount: formatAmount(budget.monthly_budget, 2) })}</span>
       </div>
       {budget.forecast_end_of_month > 0 && (
         <div className="flex items-center gap-2 text-xs">
           <TrendingUp className="h-3 w-3 text-muted-foreground" />
           <span className="text-muted-foreground">
-            {t('budget.forecast')} <span className="font-medium text-foreground">${budget.forecast_end_of_month.toFixed(2)}</span>
+            {t('budget.forecast')} <span className="font-medium text-foreground">{formatAmount(budget.forecast_end_of_month, 2)}</span>
           </span>
           {budget.forecast_end_of_month > budget.monthly_budget && (
             <Badge variant="outline" className="text-[10px] text-red-500 border-red-500/20">{t('budget.overBudget')}</Badge>
@@ -153,24 +153,26 @@ function BudgetBar({ budget }: { readonly budget: BudgetInfo }) {
 // Provider breakdown
 // ---------------------------------------------------------------------------
 
-function ProviderBreakdown({ data }: { readonly data: Record<string, number> }) {
+function ProviderBreakdown({ data, formatAmount }: { readonly data: Record<string, number>; readonly formatAmount: (usd: number, decimals?: number) => string }) {
   const { t } = useTranslation('costEstimator');
-  const entries = Object.entries(data).sort(([, a], [, b]) => b - a);
-  const total = entries.reduce((sum, [, v]) => sum + v, 0);
+  const allEntries = Object.entries(data).sort(([, a], [, b]) => b - a);
+  const used = allEntries.filter(([, v]) => v > 0);
+  const unused = allEntries.filter(([, v]) => v === 0);
+  const total = used.reduce((sum, [, v]) => sum + v, 0);
 
-  if (entries.length === 0) return <div className="text-xs text-muted-foreground">{t('breakdown.noData')}</div>;
+  if (allEntries.length === 0) return <div className="text-xs text-muted-foreground">{t('breakdown.noData')}</div>;
 
   const colors = ['bg-primary', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500', 'bg-pink-500'];
 
   return (
     <div className="space-y-3">
-      {entries.map(([name, cost], idx) => {
+      {used.map(([name, cost], idx) => {
         const pct = total > 0 ? (cost / total) * 100 : 0;
         return (
           <div key={name} className="space-y-1">
             <div className="flex items-center justify-between text-xs">
               <span className="text-foreground font-medium capitalize">{name}</span>
-              <span className="text-muted-foreground">${cost.toFixed(4)} ({pct.toFixed(0)}%)</span>
+              <span className="text-muted-foreground">{formatAmount(cost)} ({pct.toFixed(0)}%)</span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
               <div
@@ -181,8 +183,51 @@ function ProviderBreakdown({ data }: { readonly data: Record<string, number> }) 
           </div>
         );
       })}
+      {unused.length > 0 && (
+        <div className="pt-1 border-t border-border/40">
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {unused.map(([name]) => (
+              <span key={name} className="text-[10px] text-muted-foreground/60 capitalize">{name} — {formatAmount(0, 2)}</span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Currency formatting
+// ---------------------------------------------------------------------------
+
+// Module-level EUR rate cache (shared across component mounts)
+let _eurRate = 0.92;
+let _eurRateFetchedAt = 0;
+
+async function getEurRate(): Promise<number> {
+  const STALE_MS = 24 * 60 * 60 * 1000; // 24 h
+  if (Date.now() - _eurRateFetchedAt < STALE_MS) return _eurRate;
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/USD');
+    if (res.ok) {
+      const data = await res.json() as { rates?: Record<string, number> };
+      const rate = data.rates?.EUR;
+      if (typeof rate === 'number' && rate > 0) {
+        _eurRate = rate;
+        _eurRateFetchedAt = Date.now();
+      }
+    }
+  } catch {
+    // Keep existing cached rate on network error
+  }
+  return _eurRate;
+}
+
+function formatCurrency(usd: number, language: string, eurRate: number, decimals = 4): string {
+  if (language.startsWith('fr')) {
+    return `${(usd * eurRate).toFixed(decimals)} €`;
+  }
+  return `$${usd.toFixed(decimals)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -204,15 +249,25 @@ function getTrendColor(trendPct: number): 'primary' | 'green' | 'amber' | 'red' 
 // ---------------------------------------------------------------------------
 
 export function CostEstimator({ projectPath }: CostEstimatorProps) {
-  const { t } = useTranslation('costEstimator');
+  const { t, i18n } = useTranslation('costEstimator');
+  const [eurRate, setEurRate] = useState(_eurRate);
   const [summary, setSummary] = useState<CostSummary | null>(null);
   const [budget, setBudget] = useState<BudgetInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const fmtCurrency = (usd: number, decimals = 4) => formatCurrency(usd, i18n.language, eurRate, decimals);
+
+  // Fetch live EUR rate when in FR mode
+  useEffect(() => {
+    if (i18n.language.startsWith('fr')) {
+      getEurRate().then(setEurRate);
+    }
+  }, [i18n.language]);
+
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    if (!silent) setError(null);
     try {
       const [summaryRes, budgetRes] = await Promise.allSettled([
         globalThis.electronAPI.getCostSummary(projectPath),
@@ -226,21 +281,30 @@ export function CostEstimator({ projectPath }: CostEstimatorProps) {
         setBudget(budgetRes.value.budget);
       }
 
-      // Only show error if summary failed (budget missing is acceptable)
-      if (summaryRes.status === 'rejected' || !summaryRes.value?.success) {
+      if (!silent && (summaryRes.status === 'rejected' || !summaryRes.value?.success)) {
         const msg = summaryRes.status === 'fulfilled' ? summaryRes.value.error : undefined;
         setError(msg || t('error'));
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('error'));
+      if (!silent) setError(e instanceof Error ? e.message : t('error'));
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [projectPath, t]);
 
+  // Initial load
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Auto-refresh when cost_data.json changes (pushed by main process)
+  useEffect(() => {
+    if (typeof globalThis.electronAPI?.onCostsUpdated !== 'function') return;
+    const unsubscribe = globalThis.electronAPI.onCostsUpdated((updatedPath: string) => {
+      if (updatedPath === projectPath) fetchData(true);
+    });
+    return unsubscribe;
+  }, [projectPath, fetchData]);
 
   if (loading) {
     return (
@@ -255,7 +319,7 @@ export function CostEstimator({ projectPath }: CostEstimatorProps) {
       <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
         <AlertTriangle className="h-8 w-8" />
         <p className="text-sm">{error}</p>
-        <Button variant="outline" size="sm" onClick={fetchData}>
+        <Button variant="outline" size="sm" onClick={() => fetchData()}>
           <RefreshCw className="h-3.5 w-3.5 mr-2" />
           {t('retry')}
         </Button>
@@ -275,7 +339,7 @@ export function CostEstimator({ projectPath }: CostEstimatorProps) {
               <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchData}>
+          <Button variant="outline" size="sm" onClick={() => fetchData()}>
             <RefreshCw className="h-3.5 w-3.5 mr-2" />
             {t('common:buttons.refresh')}
           </Button>
@@ -286,14 +350,14 @@ export function CostEstimator({ projectPath }: CostEstimatorProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <CostKpiCard
               title={t('kpi.totalCost.title')}
-              value={`$${summary.total_cost.toFixed(4)}`}
+              value={fmtCurrency(summary.total_cost)}
               subtitle={t('kpi.totalCost.period', { days: summary.period_days })}
               icon={DollarSign}
               color="primary"
             />
             <CostKpiCard
               title={t('kpi.dailyAverage.title')}
-              value={`$${summary.daily_avg.toFixed(4)}`}
+              value={fmtCurrency(summary.daily_avg)}
               subtitle={summary.trend_pct >= 0 ? `↑ ${summary.trend_pct.toFixed(0)}%` : `↓ ${Math.abs(summary.trend_pct).toFixed(0)}%`}
               icon={summary.trend_pct >= 0 ? TrendingUp : TrendingDown}
               color={getTrendColor(summary.trend_pct)}
@@ -307,7 +371,7 @@ export function CostEstimator({ projectPath }: CostEstimatorProps) {
             />
             <CostKpiCard
               title={t('kpi.providers.title')}
-              value={`${Object.keys(summary.cost_by_provider).length}`}
+              value={`${Object.values(summary.cost_by_provider).filter(v => v > 0).length}`}
               subtitle={t('kpi.providers.models', { count: Object.keys(summary.cost_by_model).length })}
               icon={PieChart}
               color="green"
@@ -319,7 +383,7 @@ export function CostEstimator({ projectPath }: CostEstimatorProps) {
         {budget && (
           <Card>
             <CardContent className="p-5">
-              <BudgetBar budget={budget} />
+              <BudgetBar budget={budget} formatAmount={fmtCurrency} />
               {budget.alerts.length > 0 && (
                 <div className="mt-4 space-y-2">
                   {budget.alerts.map((alert) => (
@@ -340,13 +404,13 @@ export function CostEstimator({ projectPath }: CostEstimatorProps) {
             <Card>
               <CardContent className="p-5">
                 <h3 className="text-sm font-semibold text-foreground mb-4">{t('breakdown.costByProvider')}</h3>
-                <ProviderBreakdown data={summary.cost_by_provider} />
+                <ProviderBreakdown data={summary.cost_by_provider} formatAmount={fmtCurrency} />
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-5">
                 <h3 className="text-sm font-semibold text-foreground mb-4">{t('breakdown.costByModel')}</h3>
-                <ProviderBreakdown data={summary.cost_by_model} />
+                <ProviderBreakdown data={summary.cost_by_model} formatAmount={fmtCurrency} />
               </CardContent>
             </Card>
           </div>
