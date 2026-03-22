@@ -145,6 +145,7 @@ export const IPC_CHANNELS = {
 
   // Usage monitoring (proactive account switching)
   COSTS_DATA_UPDATED: 'costs:dataUpdated',  // Event: cost_data.json changed (main -> renderer)
+  DASHBOARD_SNAPSHOT_UPDATED: 'dashboard:snapshotUpdated',  // Event: dashboard_snapshot.json changed (main -> renderer)
   USAGE_UPDATED: 'claude:usageUpdated',  // Event: usage data updated (main -> renderer)
   USAGE_REQUEST: 'claude:usageRequest',  // Request current usage snapshot
   ALL_PROFILES_USAGE_REQUEST: 'claude:allProfilesUsageRequest',  // Request all profiles usage immediately

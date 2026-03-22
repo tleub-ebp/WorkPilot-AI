@@ -62,8 +62,9 @@ export class ProjectStore {
         data.projects = data.projects.map((p: Project) => ({
           ...p,
           // Ensure project.path is always absolute (critical for dev mode path resolution)
-          // Also URL-decode paths that were stored with encoded characters (e.g. %20 for spaces)
-          path: ensureAbsolutePath(decodeURIComponent(p.path)),
+          // Do NOT use decodeURIComponent: filesystem paths may contain literal %20
+          // (e.g., directory named "MeCa%20Web") which is a valid filename, not URL encoding
+          path: ensureAbsolutePath(p.path),
           createdAt: new Date(p.createdAt),
           updatedAt: new Date(p.updatedAt)
         }));
@@ -88,8 +89,8 @@ export class ProjectStore {
   addProject(projectPath: string, name?: string): Project {
     // CRITICAL: Normalize to absolute path for dev mode compatibility
     // This prevents path resolution issues after app restart
-    // Also URL-decode paths that may have been passed with encoded characters (e.g. %20 for spaces)
-    const absolutePath = ensureAbsolutePath(decodeURIComponent(projectPath));
+    // Do NOT use decodeURIComponent: filesystem paths may contain literal %20
+    const absolutePath = ensureAbsolutePath(projectPath);
 
     // Check if project already exists (using absolute path for comparison)
     const existing = this.data.projects.find((p) => p.path === absolutePath);

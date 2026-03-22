@@ -3,7 +3,7 @@ import { EditableNode } from './EditableNode';
 import { NodeProps } from 'reactflow';
 
 export const EditableNodeWrapper: React.FC<NodeProps> = (props) => {
-  const { id, data, ...rest } = props;
+  const { data } = props;
   const [label, setLabel] = useState(data.label || '');
 
   useEffect(() => {

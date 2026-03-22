@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 
 // Utilise les couleurs du thème utilisateur via CSS vars (définies dans globals.css)

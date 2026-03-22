@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
-  Coins,
   GitMerge,
   Download,
   RefreshCw,
@@ -19,6 +18,7 @@ import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '../lib/utils';
+import { getEurRate, formatCurrency } from '../lib/currency';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -142,7 +142,7 @@ function StatusBar({ data }: { data: Record<string, number> }) {
 // Cost breakdown
 // ---------------------------------------------------------------------------
 
-function CostBreakdown({ costByModel }: { costByModel: Record<string, number> }) {
+function CostBreakdown({ costByModel, fmtCost }: { costByModel: Record<string, number>; fmtCost: (usd: number, decimals?: number) => string }) {
   const { t } = useTranslation('dashboard');
   if (!costByModel || typeof costByModel !== 'object') {
     return <div className="text-xs text-muted-foreground">{t('empty.noCostData')}</div>;
@@ -163,7 +163,7 @@ function CostBreakdown({ costByModel }: { costByModel: Record<string, number> })
           <div key={model} className="space-y-1">
             <div className="flex items-center justify-between text-xs">
               <span className="text-foreground font-medium truncate">{model}</span>
-              <span className="text-muted-foreground">${cost.toFixed(4)} ({pct.toFixed(0)}%)</span>
+              <span className="text-muted-foreground">{fmtCost(cost)} ({pct.toFixed(0)}%)</span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
               <div
@@ -183,10 +183,17 @@ function CostBreakdown({ costByModel }: { costByModel: Record<string, number> })
 // ---------------------------------------------------------------------------
 
 export function DashboardMetrics({ projectPath }: DashboardMetricsProps) {
-  const { t } = useTranslation('dashboard');
+  const { t, i18n } = useTranslation('dashboard');
+  const lang = i18n.language;
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [eurRate, setEurRate] = useState(0.92);
+
+  const fmtCost = useCallback(
+    (usd: number, decimals = 4) => formatCurrency(usd, lang, eurRate, decimals),
+    [lang, eurRate],
+  );
 
   const fetchSnapshot = useCallback(async () => {
     setLoading(true);
@@ -207,7 +214,18 @@ export function DashboardMetrics({ projectPath }: DashboardMetricsProps) {
 
   useEffect(() => {
     fetchSnapshot();
+    getEurRate().then(setEurRate);
   }, [fetchSnapshot]);
+
+  // Subscribe to real-time updates when dashboard_snapshot.json changes
+  useEffect(() => {
+    const unsubscribe = window.electronAPI.onDashboardSnapshotUpdated((updatedPath: string) => {
+      if (updatedPath === projectPath) {
+        fetchSnapshot();
+      }
+    });
+    return () => unsubscribe();
+  }, [projectPath, fetchSnapshot]);
 
   const handleExport = async (fmt: 'json' | 'csv') => {
     try {
@@ -331,7 +349,7 @@ export function DashboardMetrics({ projectPath }: DashboardMetricsProps) {
           <KpiCard
             title={t('kpi.totalTokens.title')}
             value={snap.total_tokens.toLocaleString()}
-            subtitle={t('kpi.totalTokens.totalCost', { cost: snap.total_cost.toFixed(4) })}
+            subtitle={t('kpi.totalTokens.totalCost', { cost: fmtCost(snap.total_cost) })}
             icon={Zap}
             color="amber"
           />
@@ -384,7 +402,7 @@ export function DashboardMetrics({ projectPath }: DashboardMetricsProps) {
           <Card>
             <CardContent className="p-5">
               <h3 className="text-sm font-semibold text-foreground mb-4">{t('sections.costByModel')}</h3>
-              <CostBreakdown costByModel={snap.cost_by_model} />
+              <CostBreakdown costByModel={snap.cost_by_model} fmtCost={fmtCost} />
             </CardContent>
           </Card>
 

@@ -12,7 +12,7 @@
     },
     "totalTokens": {
       "title": "Total Tokens",
-      "totalCost": "${{cost}} total cost"
+      "totalCost": "{{cost}} total cost"
     },
     "autoMerges": {
       "title": "Auto Merges",

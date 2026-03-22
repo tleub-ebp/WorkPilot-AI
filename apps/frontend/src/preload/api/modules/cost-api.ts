@@ -46,6 +46,7 @@ export interface CostAPI {
   setCostBudget(projectPath: string, limit: number, period?: string): Promise<{ success: boolean; error?: string }>;
   getDashboardSnapshot(projectPath: string): Promise<{ success: boolean; snapshot?: DashboardSnapshot; error?: string }>;
   onCostsUpdated(callback: (projectPath: string) => void): () => void;
+  onDashboardSnapshotUpdated(callback: (projectPath: string) => void): () => void;
 }
 
 export const createCostAPI = (): CostAPI => ({
@@ -65,5 +66,11 @@ export const createCostAPI = (): CostAPI => ({
     const handler = (_event: Electron.IpcRendererEvent, projectPath: string) => callback(projectPath);
     ipcRenderer.on(IPC_CHANNELS.COSTS_DATA_UPDATED, handler);
     return () => ipcRenderer.removeListener(IPC_CHANNELS.COSTS_DATA_UPDATED, handler);
+  },
+
+  onDashboardSnapshotUpdated: (callback: (projectPath: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, projectPath: string) => callback(projectPath);
+    ipcRenderer.on(IPC_CHANNELS.DASHBOARD_SNAPSHOT_UPDATED, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.DASHBOARD_SNAPSHOT_UPDATED, handler);
   },
 });

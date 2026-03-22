@@ -12,12 +12,12 @@ export const DefaultEdge: React.FC<EdgeProps> = (props) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setLabel(e.target.value);
   const handleBlur = () => {
     setEditing(false);
-    if (props.onEdgeLabelChange) props.onEdgeLabelChange(id, label);
+    if (data?.onEdgeLabelChange) data.onEdgeLabelChange(id, label);
   };
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       setEditing(false);
-      if (props.onEdgeLabelChange) props.onEdgeLabelChange(id, label);
+      if (data?.onEdgeLabelChange) data.onEdgeLabelChange(id, label);
     }
   };
 
@@ -36,8 +36,15 @@ export const DefaultEdge: React.FC<EdgeProps> = (props) => {
             alignItems: 'center',
           }}
         >
-          <div
+          <button
+            type="button"
             onDoubleClick={handleDoubleClick}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleDoubleClick();
+              }
+            }}
             style={{
               background: selected ? '#e0e7ff' : '#fff',
               borderRadius: 4,
@@ -61,7 +68,7 @@ export const DefaultEdge: React.FC<EdgeProps> = (props) => {
             ) : (
               <span>{label || '→'}</span>
             )}
-          </div>
+          </button>
         </div>
       </EdgeLabelRenderer>
     </>
