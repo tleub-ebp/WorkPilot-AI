@@ -314,6 +314,8 @@ export interface AppSettings {
   seenVersionWarnings?: string[];
   // Sidebar collapsed state (icons only when true)
   sidebarCollapsed?: boolean;
+  // Sidebar width in pixels when expanded (default 256)
+  sidebarWidth?: number;
   // CLI panel expanded state in sidebar
   cliPanelExpanded?: boolean;
   providerPriorityOrder?: import('../../renderer/components/settings/multiconnector/types').LLMProvider[];
