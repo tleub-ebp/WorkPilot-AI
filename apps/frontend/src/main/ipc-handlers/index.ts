@@ -72,6 +72,7 @@ import { registerApiExplorerHandlers } from './api-explorer-handlers';
 import { setupTestGenerationHandlers } from './test-generation-handlers';
 import { registerCostHandlers } from './cost-handlers';
 import { registerVisualProgrammingHandlers, setupVisualProgrammingEventForwarding } from './visual-programming-handlers';
+import { registerCodePlaygroundHandlers, setupCodePlaygroundEventForwarding } from './code-playground-handlers';
 
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from './project-handlers';
@@ -134,6 +135,7 @@ export { registerApiExplorerHandlers } from './api-explorer-handlers';
 export { setupTestGenerationHandlers } from './test-generation-handlers';
 export { registerCostHandlers } from './cost-handlers';
 export { registerVisualProgrammingHandlers, setupVisualProgrammingEventForwarding } from './visual-programming-handlers';
+export { registerCodePlaygroundHandlers, setupCodePlaygroundEventForwarding } from './code-playground-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -340,6 +342,10 @@ export function setupIpcHandlers(
   // Visual Programming handlers (diagram → code, code → diagram)
   registerVisualProgrammingHandlers(getMainWindow);
   setupVisualProgrammingEventForwarding(getMainWindow);
+
+  // Code Playground handlers (AI sandbox code generation)
+  registerCodePlaygroundHandlers();
+  setupCodePlaygroundEventForwarding();
 
   console.warn('[IPC] All handler modules registered successfully');
 }
