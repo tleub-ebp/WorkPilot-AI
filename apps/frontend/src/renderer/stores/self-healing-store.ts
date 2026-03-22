@@ -5,6 +5,7 @@
  */
 
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type {
   CICDConfig,
   FragilityReport,
@@ -92,7 +93,9 @@ const defaultProactiveConfig: ProactiveConfig = {
 
 // ── Store ───────────────────────────────────────────────────
 
-export const useSelfHealingStore = create<SelfHealingState>((set, get) => ({
+export const useSelfHealingStore = create<SelfHealingState>()(
+  persist(
+  (set, get) => ({
   // Initial state
   incidents: [],
   activeOperations: [],
@@ -210,4 +213,13 @@ export const useSelfHealingStore = create<SelfHealingState>((set, get) => ({
       set({ error: String(error) });
     }
   },
-}));
+  }),
+  {
+    name: 'self-healing-config',
+    partialize: (state) => ({
+      cicdConfig: state.cicdConfig,
+      productionConfig: state.productionConfig,
+      proactiveConfig: state.proactiveConfig,
+    }),
+  }
+));
