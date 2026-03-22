@@ -3,11 +3,11 @@
  * Manages Claude-specific operations including profile switching, rate limiting, and OAuth token detection
  */
 
-import * as os from 'os';
-import * as fs from 'fs';
-import { promises as fsPromises } from 'fs';
-import * as path from 'path';
-import * as crypto from 'crypto';
+import * as os from 'node:os';
+import * as fs from 'node:fs';
+import { promises as fsPromises } from 'node:fs';
+import * as path from 'node:path';
+import * as crypto from 'node:crypto';
 import { IPC_CHANNELS } from '../../shared/constants';
 import { getClaudeProfileManager, initializeClaudeProfileManager } from '../claude-profile-manager';
 import { getFullCredentialsFromKeychain, clearKeychainCache, updateProfileSubscriptionMetadata } from '../claude-profile/credential-utils';
@@ -65,7 +65,7 @@ const AUTH_TERMINAL_ID_PATTERN = /^claude-login-([a-z0-9-]+)-(\d{13,})$/;
  * extractProfileIdFromAuthTerminalId('regular-terminal-1') // null
  */
 function extractProfileIdFromAuthTerminalId(terminalId: string): string | null {
-  const match = terminalId.match(AUTH_TERMINAL_ID_PATTERN);
+  const match = AUTH_TERMINAL_ID_PATTERN.exec(terminalId);
   return match ? match[1] : null;
 }
 
@@ -113,7 +113,7 @@ function maskEmail(email: string | null | undefined): string {
 }
 
 function normalizePathForBash(envPath: string): string {
-  return isWindows() ? envPath.replace(/;/g, ':') : envPath;
+  return isWindows() ? envPath.replaceAll(/;/g, ':') : envPath;
 }
 
 /**
@@ -162,12 +162,33 @@ function buildPathPrefix(pathEnv: string): string {
   }
 
   if (isWindows()) {
-    // Windows: Use semicolon-separated PATH with double-quote escaping
-    // Format: set "PATH=value" where value uses semicolons
-    // For values inside double quotes, use escapeForWindowsDoubleQuote() because
-    // caret is literal inside double quotes in cmd.exe (only " needs escaping).
-    const escapedPath = escapeForWindowsDoubleQuote(pathEnv);
-    return `set "PATH=${escapedPath}" && `;
+    // Windows: Only prepend NEW paths (not already in the system PATH) and
+    // preserve the terminal's existing PATH via %PATH%.
+    //
+    // We must NOT replace the entire PATH because:
+    // 1. The terminal's cmd.exe needs system paths (C:\Windows\system32, etc.)
+    //    for claude.exe to find its DLLs (STATUS_DLL_NOT_FOUND / 0xC0000135)
+    // 2. Sending the full augmented PATH (~4000+ chars) makes the command too long
+    //
+    // Instead, compute the delta (paths added by getAugmentedEnv) and prepend
+    // only those to the terminal's existing %PATH%.
+    const pathSeparator = ';';
+    const originalPath = process.env.PATH || '';
+    const originalPaths = new Set(
+      originalPath.split(pathSeparator)
+        .filter(Boolean)
+        .map(p => p.toLowerCase().replace(/[\\/]+$/, ''))
+    );
+    const newPaths = pathEnv.split(pathSeparator)
+      .filter(p => p && !originalPaths.has(p.toLowerCase().replace(/[\\/]+$/, '')));
+
+    if (newPaths.length === 0) {
+      return '';
+    }
+
+    const escapedNewPaths = escapeForWindowsDoubleQuote(newPaths.join(pathSeparator));
+    // %PATH% is expanded by interactive cmd.exe to the terminal's current PATH
+    return `set "PATH=${escapedNewPaths};%PATH%" && `;
   }
 
   // Unix/macOS: Use colon-separated PATH with bash escaping
@@ -1604,7 +1625,7 @@ export async function switchClaudeProfile(
     debugLog('[ClaudeIntegration:switchClaudeProfile] Terminal is in Claude mode, sending exit commands');
 
     // Send Ctrl+C to interrupt any ongoing operation
-    debugLog('[ClaudeIntegration:switchClaudeProfile] Sending Ctrl+C (\\x03)');
+    debugLog(String.raw`[ClaudeIntegration:switchClaudeProfile] Sending Ctrl+C (\x03)`);
     // Use PtyManager.writeToPty for safer write with error handling
     PtyManager.writeToPty(terminal, '\x03');
 
@@ -1626,7 +1647,7 @@ export async function switchClaudeProfile(
       // Even on timeout, we'll try to proceed but log the warning
       // The alternative would be to abort, but that could leave users stuck
       // If this becomes a problem, we could add retry logic or abort option
-    } else if (!exitResult.success) {
+    } else if (exitResult.success === false) {
       console.error('[ClaudeIntegration:switchClaudeProfile] Failed to exit Claude:', exitResult.error);
       debugError('[ClaudeIntegration:switchClaudeProfile] Exit failed:', exitResult.error);
       // Continue anyway - the /exit command was sent
