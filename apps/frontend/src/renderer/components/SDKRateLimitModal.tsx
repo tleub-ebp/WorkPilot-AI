@@ -109,7 +109,7 @@ export function SDKRateLimitModal() {
 
   const loadAutoSwitchSettings = async () => {
     try {
-      const result = await window.electronAPI.getAutoSwitchSettings();
+      const result = await globalThis.electronAPI.getAutoSwitchSettings();
       if (result.success && result.data) {
         setAutoSwitchEnabled(result.data.autoSwitchOnRateLimit);
       }
@@ -121,7 +121,7 @@ export function SDKRateLimitModal() {
   const handleAutoSwitchToggle = async (enabled: boolean) => {
     setIsLoadingSettings(true);
     try {
-      await window.electronAPI.updateAutoSwitchSettings({
+      await globalThis.electronAPI.updateAutoSwitchSettings({
         enabled: enabled,
         autoSwitchOnRateLimit: enabled
       });
@@ -144,9 +144,9 @@ export function SDKRateLimitModal() {
     try {
       // Create a new profile - the backend will set the proper configDir
       const profileName = newProfileName.trim();
-      const profileSlug = profileName.toLowerCase().replace(/\s+/g, '-');
+      const profileSlug = profileName.toLowerCase().replaceAll(/\s+/g, '-');
 
-      const result = await window.electronAPI.saveClaudeProfile({
+      const result = await globalThis.electronAPI.saveClaudeProfile({
         id: `profile-${Date.now()}`,
         name: profileName,
         // Use a placeholder - the backend will resolve the actual path
@@ -192,10 +192,10 @@ export function SDKRateLimitModal() {
 
     try {
       // First, set the active profile
-      await window.electronAPI.setActiveClaudeProfile(selectedProfileId);
+      await globalThis.electronAPI.setActiveClaudeProfile(selectedProfileId);
 
       // Then retry the operation
-      const result = await window.electronAPI.retryWithProfile({
+      const result = await globalThis.electronAPI.retryWithProfile({
         source: sdkRateLimitInfo.source,
         projectId: sdkRateLimitInfo.projectId,
         taskId: sdkRateLimitInfo.taskId,
