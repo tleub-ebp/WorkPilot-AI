@@ -8,22 +8,22 @@
 
 import { ipcMain } from 'electron';
 import type { BrowserWindow } from 'electron';
-import { spawn } from 'child_process';
-import type { ChildProcess } from 'child_process';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { ChildProcess, spawn } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   existsSync,
   writeFileSync,
   readFileSync,
   mkdirSync,
-} from 'fs';
-import os from 'os';
+} from 'node:fs';
+import os from 'node:os';
 import { IPC_CHANNELS } from '../../shared/constants';
 import type { IPCResult } from '../../shared/types';
 import { projectStore } from '../project-store';
 import { safeSendToRenderer } from './utils';
 import { getConfiguredPythonPath } from '../python-env-manager';
+import { credentialManager } from '../services/credential-manager';
 
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -171,6 +171,20 @@ export function registerPairProgrammingHandlers(
       }
 
       const backendDir = getBackendDir();
+
+      // Get provider credentials (SELECTED_LLM_PROVIDER, API keys, etc.)
+      // so the Python runner uses the user-selected provider instead of defaulting to Claude
+      const providerEnv = credentialManager.getEnvironmentVariables();
+      const nonClaudeProvider = providerEnv.SELECTED_LLM_PROVIDER
+        && !['claude', 'anthropic'].includes(providerEnv.SELECTED_LLM_PROVIDER)
+        && providerEnv.SELECTED_LLM_PROVIDER !== 'copilot';
+      const claudeAuthClearVars: Record<string, string | undefined> = nonClaudeProvider ? {
+        CLAUDE_CODE_OAUTH_TOKEN: undefined,
+        CLAUDE_CONFIG_DIR: undefined,
+        ANTHROPIC_API_KEY: undefined,
+        ANTHROPIC_AUTH_TOKEN: undefined,
+      } : {};
+
       const proc = spawn(pythonPath, [
         runnerPath,
         '--project-dir', project.path,
@@ -182,7 +196,15 @@ export function registerPairProgrammingHandlers(
         '--messages-file', messagesFile,
       ], {
         cwd: backendDir,
-        env: { ...process.env, PYTHONPATH: backendDir, PYTHONUNBUFFERED: '1' },
+        env: {
+          ...process.env,
+          ...claudeAuthClearVars,
+          ...providerEnv,
+          PYTHONPATH: backendDir,
+          PYTHONUNBUFFERED: '1',
+          PYTHONIOENCODING: 'utf-8',
+          PYTHONUTF8: '1',
+        } as NodeJS.ProcessEnv,
       });
 
       const activeSession: ActiveSession = {
@@ -318,8 +340,9 @@ function handleRunnerEvent(
     case 'status': {
       const status = event.status as string;
       const message = event.message as string;
-      activeSession.session.status =
-        status === 'planning' ? 'planning' : status === 'active' ? 'active' : activeSession.session.status;
+      if (status === 'planning' || status === 'active') {
+        activeSession.session.status = status;
+      }
       activeSession.session.updatedAt = new Date().toISOString();
       safeSendToRenderer(getMainWindow, IPC_CHANNELS.PAIR_PROGRAMMING_STATUS, projectId, status, message);
       break;
@@ -328,7 +351,7 @@ function handleRunnerEvent(
     case 'stream': {
       const content = event.content as string;
       // Add AI message to session
-      const lastMsg = activeSession.session.messages[activeSession.session.messages.length - 1];
+      const lastMsg = activeSession.session.messages.at(-1);
       if (lastMsg?.role === 'ai') {
         lastMsg.content += content;
       } else {

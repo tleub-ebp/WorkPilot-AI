@@ -521,6 +521,7 @@
     "windowCredits": "Credits used",
     "windowBillingCycle": "Billing cycle",
     "otherAccounts": "Other Accounts",
+    "setActive": "Set as active",
     "next": "Next",
     "weeklyLimitReached": "Weekly limit reached",
     "sessionLimitReached": "Session limit reached",

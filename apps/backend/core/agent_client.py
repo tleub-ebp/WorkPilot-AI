@@ -417,7 +417,7 @@ class CopilotAgentClient(AgentClient):
     ):
         import os
 
-        self.model = model
+        self.model = model or "gpt-4o"
         self.system_prompt = system_prompt
         self.allowed_tools = allowed_tools or []
         self.agents = agents or {}
@@ -428,8 +428,12 @@ class CopilotAgentClient(AgentClient):
 
         # Real Copilot chat endpoint (not api.github.com)
         self._api_base = "https://api.githubcopilot.com/chat/completions"
+        # Fallback: GitHub Models API (works when org blocks api.githubcopilot.com)
+        self._github_models_api_base = "https://models.inference.ai.azure.com/chat/completions"
         # Token-exchange endpoint: GitHub token → short-lived Copilot session token
         self._token_exchange_url = "https://api.github.com/copilot_internal/v2/token"
+        # Whether we've fallen back to GitHub Models API
+        self._using_github_models = False
 
         self._messages: list[dict[str, Any]] = []
         self._pending_query: str | None = None
@@ -711,9 +715,46 @@ class CopilotAgentClient(AgentClient):
                 f"sending {len(messages)} messages..."
             )
 
+            # Determine which endpoint to use
+            api_url = self._github_models_api_base if self._using_github_models else self._api_base
+
+            # For GitHub Models API, use the raw GitHub token directly (not the Copilot session token)
+            if self._using_github_models:
+                request_headers["Authorization"] = f"Bearer {self.github_token}"
+
             try:
-                async with session.post(self._api_base, json=payload, headers=request_headers) as resp:
-                    if resp.status != 200:
+                async with session.post(api_url, json=payload, headers=request_headers) as resp:
+                    if resp.status == 403 and not self._using_github_models:
+                        # Copilot API blocked (org restriction) — fallback to GitHub Models API
+                        error_text = await resp.text()
+                        logger.warning(
+                            f"[CopilotAgentClient] Copilot API returned 403 — "
+                            f"falling back to GitHub Models API at {self._github_models_api_base}"
+                        )
+                        print(
+                            "[CopilotAgentClient] [INFO] Copilot API blocked by org. "
+                            "Falling back to GitHub Models API.",
+                            flush=True,
+                        )
+                        self._using_github_models = True
+                        request_headers["Authorization"] = f"Bearer {self.github_token}"
+                        # Retry this turn with the GitHub Models API
+                        async with session.post(self._github_models_api_base, json=payload, headers=request_headers) as retry_resp:
+                            if retry_resp.status != 200:
+                                retry_error = await retry_resp.text()
+                                logger.error(f"[CopilotAgentClient] GitHub Models API error ({retry_resp.status}): {retry_error[:500]}")
+                                yield AgentMessage(
+                                    role=MessageRole.SYSTEM,
+                                    content=[
+                                        ContentBlock(
+                                            type=ContentBlockType.TEXT,
+                                            text=f"GitHub Models API error ({retry_resp.status}): {retry_error}",
+                                        )
+                                    ],
+                                )
+                                return
+                            data = await retry_resp.json()
+                    elif resp.status != 200:
                         error_text = await resp.text()
                         logger.error(f"[CopilotAgentClient] API error ({resp.status}): {error_text[:500]}")
                         yield AgentMessage(
@@ -726,7 +767,8 @@ class CopilotAgentClient(AgentClient):
                             ],
                         )
                         return
-                    data = await resp.json()
+                    else:
+                        data = await resp.json()
             except Exception as e:
                 logger.error(f"[CopilotAgentClient] Request failed: {e}")
                 yield AgentMessage(

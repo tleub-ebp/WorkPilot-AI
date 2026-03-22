@@ -39,3 +39,4 @@ export * from './team-sync-api';
 export * from './arena-api';
 export * from './test-generation-api';
 export * from './cost-api';
+export * from './self-healing-api';
