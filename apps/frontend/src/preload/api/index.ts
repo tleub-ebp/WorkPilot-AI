@@ -23,8 +23,6 @@ import { createCodePlaygroundAPI } from './modules/code-playground-api';
 import type { ConflictPredictorAPI } from './modules/conflict-predictor-api';
 import { createConflictPredictorAPI } from './modules/conflict-predictor-api';
 import { type VoiceControlAPI, createVoiceControlAPI } from './modules/voice-control-api';
-import type { AutoRefactorAPI } from './modules/auto-refactor-api';
-import { createAutoRefactorAPI } from './modules/auto-refactor-api';
 import { type SmartEstimationAPI, createSmartEstimationAPI } from './modules/smart-estimation-api';
 import type { ContextAwareSnippetsAPI } from './modules/context-aware-snippets-api';
 import { createContextAwareSnippetsAPI } from './modules/context-aware-snippets-api';
@@ -59,6 +57,8 @@ import { createTestGenerationAPI } from './modules/test-generation-api';
 import { type CostAPI, createCostAPI } from './modules/cost-api';
 import type { VisualProgrammingAPI } from './modules/visual-programming-api';
 import { createVisualProgrammingAPI } from './modules/visual-programming-api';
+import type { SelfHealingAPIObject } from './modules/self-healing-api';
+import { createSelfHealingAPI } from './modules/self-healing-api';
 import type { IPCResult, UsageSnapshot } from '../../shared/types';
 
 export interface ElectronAPI extends
@@ -108,6 +108,8 @@ export interface ElectronAPI extends
   queue: QueueAPI;
   /** Code quality analysis API */
   quality: QualityAPI;
+  /** Self-Healing Codebase + Incident Responder API */
+  selfHealing: SelfHealingAPIObject;
   createClaudeProfileDirectory: (profileName: string) => Promise<{ success: boolean; data?: string; error?: string }>;
   requestUsageUpdate: (providerName?: string) => Promise<IPCResult<UsageSnapshot | null>>;
   /** Get GitHub CLI status for Copilot authentication */
@@ -167,6 +169,7 @@ export const createElectronAPI = (): ElectronAPI => {
     github: createGitHubAPI(),
     queue: createQueueAPI(),  // Queue routing for rate limit recovery
     quality: createQualityAPI(),  // Code quality analysis
+    selfHealing: createSelfHealingAPI(),
     createClaudeProfileDirectory: (profileName: string) => invokeIpc<{ success: boolean; data?: string; error?: string }>('claude:profileCreateDir', profileName),
     requestUsageUpdate: (providerName?: string) => invokeIpc<IPCResult<UsageSnapshot | null>>('claude:usageRequest', providerName),
     getGithubCliStatus: () => invokeIpc<IPCResult<{ available: boolean; isAuth?: boolean; username?: string }>>('copilotCli:getStatus'),

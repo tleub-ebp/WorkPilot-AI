@@ -42,7 +42,7 @@ async function runRunner(
           if (!trimmed || trimmed.startsWith('#')) continue;
           const eqIdx = trimmed.indexOf('=');
           if (eqIdx < 0) continue;
-          env[trimmed.slice(0, eqIdx).trim()] = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+          env[trimmed.slice(0, eqIdx).trim()] = trimmed.slice(eqIdx + 1).trim().replaceAll(/^["']|["']$/g, '');
         }
       } catch { /* ignore */ }
     }
@@ -77,7 +77,7 @@ function readPolicy(projectDir: string): Record<string, string> {
       if (!trimmed.startsWith('MEMORY_')) continue;
       const eqIdx = trimmed.indexOf('=');
       if (eqIdx < 0) continue;
-      result[trimmed.slice(0, eqIdx).trim()] = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+      result[trimmed.slice(0, eqIdx).trim()] = trimmed.slice(eqIdx + 1).trim().replaceAll(/^["']|["']$/g, '');
     }
   } catch { /* ignore */ }
   return result;
@@ -162,8 +162,8 @@ export function registerMemoryLifecycleHandlers(): void {
       '--action', 'prune',
       '--project', projectDir,
       ...(options.strategy ? ['--strategy', options.strategy] : []),
-      ...(options.max_age_days != null ? ['--max-age-days', String(options.max_age_days)] : []),
-      ...(options.max_count != null ? ['--max-count', String(options.max_count)] : []),
+      ...(options.max_age_days === undefined ? [] : ['--max-age-days', String(options.max_age_days)]),
+      ...(options.max_count === undefined ? [] : ['--max-count', String(options.max_count)]),
       ...(options.dry_run ? ['--dry-run'] : []),
       '--output-json',
     ]);
@@ -177,10 +177,10 @@ export function registerMemoryLifecycleHandlers(): void {
   }) => {
     try {
       const envConfig: Record<string, string> = {};
-      if (policy.retention_days != null) envConfig['MEMORY_RETENTION_DAYS'] = String(policy.retention_days);
-      if (policy.max_episodes != null) envConfig['MEMORY_MAX_EPISODES'] = String(policy.max_episodes);
-      if (policy.prune_strategy != null) envConfig['MEMORY_PRUNE_STRATEGY'] = policy.prune_strategy;
-      if (policy.auto_prune != null) envConfig['MEMORY_AUTO_PRUNE'] = policy.auto_prune ? 'true' : 'false';
+      if (policy.retention_days !== undefined) envConfig['MEMORY_RETENTION_DAYS'] = String(policy.retention_days);
+      if (policy.max_episodes !== undefined) envConfig['MEMORY_MAX_EPISODES'] = String(policy.max_episodes);
+      if (policy.prune_strategy !== undefined) envConfig['MEMORY_PRUNE_STRATEGY'] = policy.prune_strategy;
+      if (policy.auto_prune !== undefined) envConfig['MEMORY_AUTO_PRUNE'] = policy.auto_prune ? 'true' : 'false';
       writePolicy(projectDir, envConfig);
       return { success: true };
     } catch (err) {

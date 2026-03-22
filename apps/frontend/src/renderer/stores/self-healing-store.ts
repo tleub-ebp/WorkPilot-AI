@@ -45,9 +45,9 @@ interface SelfHealingState {
   setIncidents: (incidents: Incident[]) => void;
   setFragilityReports: (reports: FragilityReport[]) => void;
   setActiveOperations: (operations: HealingOperation[]) => void;
-  setCICDConfig: (config: Partial<CICDConfig>) => void;
-  setProductionConfig: (config: Partial<ProductionConfig>) => void;
-  setProactiveConfig: (config: Partial<ProactiveConfig>) => void;
+  setCICDConfig: (projectPath: string, config: Partial<CICDConfig>) => void;
+  setProductionConfig: (projectPath: string, config: Partial<ProductionConfig>) => void;
+  setProactiveConfig: (projectPath: string, config: Partial<ProactiveConfig>) => void;
   setScanning: (scanning: boolean) => void;
 
   // Async actions
@@ -124,28 +124,41 @@ export const useSelfHealingStore = create<SelfHealingState>((set, get) => ({
   setFragilityReports: (reports) => set({ fragilityReports: reports }),
   setActiveOperations: (operations) => set({ activeOperations: operations }),
 
-  setCICDConfig: (config) =>
-    set((state) => ({
-      cicdConfig: { ...state.cicdConfig, ...config },
-    })),
+  setCICDConfig: (projectPath, config) => {
+    const merged = { ...get().cicdConfig, ...config };
+    set({ cicdConfig: merged });
+    // Persist to backend
+    globalThis.electronAPI.selfHealing.cicdConfig(projectPath, merged).catch(() => {});
+  },
 
-  setProductionConfig: (config) =>
-    set((state) => ({
-      productionConfig: { ...state.productionConfig, ...config },
-    })),
+  setProductionConfig: (projectPath, config) => {
+    const merged = { ...get().productionConfig, ...config };
+    set({ productionConfig: merged });
+    globalThis.electronAPI.selfHealing.productionConfig(projectPath, merged).catch(() => {});
+  },
 
-  setProactiveConfig: (config) =>
-    set((state) => ({
-      proactiveConfig: { ...state.proactiveConfig, ...config },
-    })),
+  setProactiveConfig: (projectPath, config) => {
+    const merged = { ...get().proactiveConfig, ...config };
+    set({ proactiveConfig: merged });
+    globalThis.electronAPI.selfHealing.proactiveConfig(projectPath, merged).catch(() => {});
+  },
 
   // Async actions
   fetchDashboard: async (projectPath: string) => {
     set({ isLoading: true, error: null });
     try {
-      const result = await window.electronAPI.invoke('selfHealing:getDashboard', projectPath);
+      const result = await globalThis.electronAPI.selfHealing.getDashboard(projectPath);
       if (result?.success && result.data) {
-        get().setDashboardData(result.data);
+        const data = result.data as SelfHealingDashboardData & {
+          cicdConfig?: CICDConfig;
+          productionConfig?: ProductionConfig;
+          proactiveConfig?: ProactiveConfig;
+        };
+        get().setDashboardData(data);
+        // Restore persisted configs if present
+        if (data.cicdConfig) set({ cicdConfig: { ...defaultCICDConfig, ...data.cicdConfig } });
+        if (data.productionConfig) set({ productionConfig: { ...defaultProductionConfig, ...data.productionConfig } });
+        if (data.proactiveConfig) set({ proactiveConfig: { ...defaultProactiveConfig, ...data.proactiveConfig } });
       }
     } catch (error) {
       set({ error: String(error) });
@@ -157,7 +170,7 @@ export const useSelfHealingStore = create<SelfHealingState>((set, get) => ({
   triggerProactiveScan: async (projectPath: string) => {
     set({ isScanning: true, error: null });
     try {
-      await window.electronAPI.invoke('selfHealing:proactive:scan', projectPath);
+      await globalThis.electronAPI.selfHealing.proactiveScan(projectPath);
       // Refresh dashboard after scan
       await get().fetchDashboard(projectPath);
     } catch (error) {
@@ -169,7 +182,7 @@ export const useSelfHealingStore = create<SelfHealingState>((set, get) => ({
 
   triggerFix: async (projectPath: string, incidentId: string) => {
     try {
-      await window.electronAPI.invoke('selfHealing:triggerFix', projectPath, incidentId);
+      await globalThis.electronAPI.selfHealing.triggerFix(projectPath, incidentId);
       await get().fetchDashboard(projectPath);
     } catch (error) {
       set({ error: String(error) });
@@ -178,7 +191,7 @@ export const useSelfHealingStore = create<SelfHealingState>((set, get) => ({
 
   dismissIncident: async (projectPath: string, incidentId: string) => {
     try {
-      await window.electronAPI.invoke('selfHealing:dismissIncident', projectPath, incidentId);
+      await globalThis.electronAPI.selfHealing.dismissIncident(projectPath, incidentId);
       set((state) => ({
         incidents: state.incidents.map((i) =>
           i.id === incidentId ? { ...i, status: 'resolved' as const } : i
@@ -191,7 +204,7 @@ export const useSelfHealingStore = create<SelfHealingState>((set, get) => ({
 
   retryIncident: async (projectPath: string, incidentId: string) => {
     try {
-      await window.electronAPI.invoke('selfHealing:retryIncident', projectPath, incidentId);
+      await globalThis.electronAPI.selfHealing.retryIncident(projectPath, incidentId);
       await get().fetchDashboard(projectPath);
     } catch (error) {
       set({ error: String(error) });

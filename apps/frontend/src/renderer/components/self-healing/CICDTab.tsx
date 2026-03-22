@@ -36,7 +36,7 @@ export function CICDTab({ projectPath }: CICDTabProps) {
             <input
               type="checkbox"
               checked={cicdConfig.enabled}
-              onChange={(e) => setCICDConfig({ enabled: e.target.checked })}
+              onChange={(e) => setCICDConfig(projectPath, { enabled: e.target.checked })}
               className="rounded"
             />
             {t('selfHealing:cicdEnabled')}
@@ -45,7 +45,7 @@ export function CICDTab({ projectPath }: CICDTabProps) {
             <input
               type="checkbox"
               checked={cicdConfig.autoFixEnabled}
-              onChange={(e) => setCICDConfig({ autoFixEnabled: e.target.checked })}
+              onChange={(e) => setCICDConfig(projectPath, { autoFixEnabled: e.target.checked })}
               className="rounded"
             />
             {t('selfHealing:autoFix')}
@@ -54,7 +54,7 @@ export function CICDTab({ projectPath }: CICDTabProps) {
             <input
               type="checkbox"
               checked={cicdConfig.autoCreatePR}
-              onChange={(e) => setCICDConfig({ autoCreatePR: e.target.checked })}
+              onChange={(e) => setCICDConfig(projectPath, { autoCreatePR: e.target.checked })}
               className="rounded"
             />
             {t('selfHealing:autoCreatePR')}

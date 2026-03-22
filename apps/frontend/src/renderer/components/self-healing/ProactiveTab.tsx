@@ -44,7 +44,7 @@ export function ProactiveTab({ projectPath }: ProactiveTabProps) {
             <input
               type="checkbox"
               checked={proactiveConfig.enabled}
-              onChange={(e) => setProactiveConfig({ enabled: e.target.checked })}
+              onChange={(e) => setProactiveConfig(projectPath, { enabled: e.target.checked })}
               className="rounded"
             />
             {t('selfHealing:proactiveEnabled')}
@@ -53,7 +53,7 @@ export function ProactiveTab({ projectPath }: ProactiveTabProps) {
             <input
               type="checkbox"
               checked={proactiveConfig.autoGenerateTests}
-              onChange={(e) => setProactiveConfig({ autoGenerateTests: e.target.checked })}
+              onChange={(e) => setProactiveConfig(projectPath, { autoGenerateTests: e.target.checked })}
               className="rounded"
             />
             {t('selfHealing:autoGenerateTests')}
@@ -65,7 +65,7 @@ export function ProactiveTab({ projectPath }: ProactiveTabProps) {
               min={0}
               max={100}
               value={proactiveConfig.riskThreshold}
-              onChange={(e) => setProactiveConfig({ riskThreshold: Number(e.target.value) })}
+              onChange={(e) => setProactiveConfig(projectPath, { riskThreshold: Number(e.target.value) })}
               className="w-16 px-2 py-0.5 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)] text-[var(--text-primary)] text-sm"
             />
           </div>
@@ -74,7 +74,7 @@ export function ProactiveTab({ projectPath }: ProactiveTabProps) {
             <select
               value={proactiveConfig.scanFrequency}
               onChange={(e) =>
-                setProactiveConfig({
+                setProactiveConfig(projectPath, {
                   scanFrequency: e.target.value as 'daily' | 'weekly' | 'on_push',
                 })
               }

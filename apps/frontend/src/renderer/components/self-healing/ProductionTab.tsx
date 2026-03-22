@@ -20,6 +20,7 @@ export function ProductionTab({ projectPath }: ProductionTabProps) {
   const {
     incidents,
     productionConfig,
+    setProductionConfig,
     triggerFix,
     dismissIncident,
     retryIncident,
@@ -29,6 +30,42 @@ export function ProductionTab({ projectPath }: ProductionTabProps) {
 
   return (
     <div className="space-y-4">
+      {/* Config panel */}
+      <div className="rounded-lg border border-[var(--border-primary)] bg-[var(--bg-secondary)] p-4">
+        <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3">
+          {t('selfHealing:productionConfig')}
+        </h3>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+            <input
+              type="checkbox"
+              checked={productionConfig.enabled}
+              onChange={(e) => setProductionConfig(projectPath, { enabled: e.target.checked })}
+              className="rounded"
+            />
+            {t('selfHealing:productionEnabled')}
+          </label>
+          <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+            <input
+              type="checkbox"
+              checked={productionConfig.autoAnalyze}
+              onChange={(e) => setProductionConfig(projectPath, { autoAnalyze: e.target.checked })}
+              className="rounded"
+            />
+            {t('selfHealing:autoAnalyze')}
+          </label>
+          <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+            <input
+              type="checkbox"
+              checked={productionConfig.autoFix}
+              onChange={(e) => setProductionConfig(projectPath, { autoFix: e.target.checked })}
+              className="rounded"
+            />
+            {t('selfHealing:autoFixProduction')}
+          </label>
+        </div>
+      </div>
+
       {/* Connected sources panel */}
       <div className="rounded-lg border border-[var(--border-primary)] bg-[var(--bg-secondary)] p-4">
         <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3">
