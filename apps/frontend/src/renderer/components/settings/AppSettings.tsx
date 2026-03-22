@@ -24,7 +24,8 @@ import {
   ShieldAlert,
   CalendarClock,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  MessageSquare
 } from 'lucide-react';
 import {
   FullScreenDialog,
@@ -99,7 +100,7 @@ export type AppSection =
   // Système & Maintenance
   | 'updates' | 'notifications' | 'debug' | 'scheduler';
 
-export type ProjectSettingsSection = 'general' | 'azure-devops' | 'jira' | 'github' | 'gitlab' | 'linear' | 'memory';
+export type ProjectSettingsSection = 'general' | 'azure-devops' | 'jira' | 'github' | 'gitlab' | 'linear' | 'teams' | 'memory';
 
 export type SettingsTheme = 
   | 'project'           // Projet
@@ -138,7 +139,8 @@ const createSettingsThemes = (t: any): Record<SettingsTheme, {
       { id: 'jira', icon: JiraIcon, label: 'Jira', type: 'project' },
       { id: 'github', icon: Github, label: 'GitHub', type: 'project' },
       { id: 'gitlab', icon: GitLabIcon, label: 'GitLab', type: 'project' },
-      { id: 'linear', icon: Zap, label: 'Linear', type: 'project' }
+      { id: 'linear', icon: Zap, label: 'Linear', type: 'project' },
+      { id: 'teams', icon: MessageSquare, label: 'Microsoft Teams', type: 'project' }
     ],
     description: 'Comptes IA et intégrations externes',
     priority: 2

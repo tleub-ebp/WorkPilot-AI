@@ -368,7 +368,13 @@ export interface ProjectEnvConfig {
     electronEnabled?: boolean;
     /** Puppeteer browser automation (QA only) - default: false */
     puppeteerEnabled?: boolean;
+    /** Chrome DevTools MCP for browser automation (coder + QA) - default: false */
+    chromeDevtoolsEnabled?: boolean;
   };
+
+  // Microsoft Teams Notifications
+  teamsNotificationsEnabled?: boolean;
+  teamsWebhookUrl?: string; // Incoming Webhook URL from Teams channel connector
 
   // Per-agent MCP overrides (add/remove MCPs from specific agents)
   agentMcpOverrides?: AgentMcpOverrides;

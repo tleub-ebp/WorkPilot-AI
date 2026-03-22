@@ -8,6 +8,7 @@ import { GitHubIntegration } from '../integrations/GitHubIntegration';
 import { GitLabIntegration } from '../integrations/GitLabIntegration';
 import { AzureDevOpsIntegration } from '../integrations/AzureDevOpsIntegration';
 import { JiraIntegration } from '../integrations/JiraIntegration';
+import { TeamsIntegration } from '../integrations/TeamsIntegration';
 import { InitializationGuard } from '../common/InitializationGuard';
 import type { ProjectSettingsSection } from '../ProjectSettingsContent';
 
@@ -222,6 +223,25 @@ export function SectionRouter({
               updateEnvConfig={updateEnvConfig}
               showJiraToken={showAzureDevOpsToken}
               setShowJiraToken={setShowAzureDevOpsToken}
+            />
+          </InitializationGuard>
+        </SettingsSection>
+      );
+
+    case 'teams':
+      return (
+        <SettingsSection
+          title={t('settings:teams.title')}
+          description={t('settings:teams.description')}
+        >
+          <InitializationGuard
+            initialized={!!project.autoBuildPath}
+            title={t('settings:teams.title')}
+            description={t('settings:teams.initGuardDescription')}
+          >
+            <TeamsIntegration
+              envConfig={envConfig}
+              updateEnvConfig={updateEnvConfig}
             />
           </InitializationGuard>
         </SettingsSection>

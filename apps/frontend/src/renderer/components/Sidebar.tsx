@@ -169,6 +169,7 @@ interface NavItem {
   labelKey: string;
   icon: React.ElementType;
   shortcut?: string;
+  subGroup?: string; // i18n key for visual sub-group header within a group
 }
 
 interface NavGroup {
@@ -179,22 +180,32 @@ interface NavGroup {
   defaultExpanded?: boolean;
 }
 
-// Navigation groups with thematic organization
+// Navigation groups organized by user intent
 const navGroups: NavGroup[] = [
   {
-    id: 'core',
-    labelKey: 'navigation:groups.core',
+    id: 'workspace',
+    labelKey: 'navigation:groups.workspace',
     icon: Target,
     items: [
       { id: 'kanban', labelKey: 'navigation:items.kanban', icon: LayoutGrid, shortcut: 'K' },
-      { id: 'terminals', labelKey: 'navigation:items.terminals', icon: Terminal, shortcut: 'A' },
-      { id: 'insights', labelKey: 'navigation:items.insights', icon: Sparkles, shortcut: 'N' },
       { id: 'mission-control', labelKey: 'navigation:items.missionControl', icon: Rocket, shortcut: 'Q' },
+      { id: 'dashboard', labelKey: 'navigation:items.dashboard', icon: BarChart3, shortcut: 'H' },
+      { id: 'session-history', labelKey: 'navigation:items.sessionHistory', icon: History, shortcut: 'S' },
+    ],
+    defaultExpanded: true
+  },
+  {
+    id: 'agents',
+    labelKey: 'navigation:groups.agents',
+    icon: Rocket,
+    items: [
+      { id: 'terminals', labelKey: 'navigation:items.terminals', icon: Terminal, shortcut: 'A' },
       { id: 'pixel-office', labelKey: 'navigation:items.pixelOffice', icon: Building2, shortcut: 'P' },
       { id: 'agent-replay', labelKey: 'navigation:items.agentReplay', icon: RotateCcw, shortcut: 'R' },
       { id: 'self-healing', labelKey: 'navigation:items.selfHealing', icon: HeartPulse, shortcut: 'H' },
+      { id: 'arena-mode', labelKey: 'navigation:items.arenaMode', icon: Swords, shortcut: 'W' },
     ],
-    defaultExpanded: true
+    defaultExpanded: false
   },
   {
     id: 'development',
@@ -204,41 +215,33 @@ const navGroups: NavGroup[] = [
       { id: 'pair-programming', labelKey: 'navigation:items.pairProgramming', icon: Users, shortcut: 'U' },
       { id: 'code-review', labelKey: 'navigation:items.codeReview', icon: FileCode2, shortcut: 'V' },
       { id: 'refactoring', labelKey: 'navigation:items.refactoring', icon: Wand2, shortcut: 'F' },
-      { id: 'documentation', labelKey: 'navigation:items.documentation', icon: BookOpenCheck, shortcut: 'O' },
-      { id: 'api-explorer', labelKey: 'navigation:items.apiExplorer', icon: Globe, shortcut: 'X' },
-      { id: 'agent-tools', labelKey: 'navigation:items.agentTools', icon: Wrench, shortcut: 'M' },
+      { id: 'test-generation', labelKey: 'navigation:items.testGeneration', icon: TestTube, shortcut: 'T' },
+      { id: 'code-playground', labelKey: 'navigation:items.codePlayground', icon: Zap, shortcut: 'G' },
       { id: 'visual-to-code', labelKey: 'navigation:items.visualToCode', icon: WandSparkles, shortcut: 'Y' },
+      { id: 'documentation', labelKey: 'navigation:items.documentation', icon: BookOpenCheck, shortcut: 'O' },
     ],
     defaultExpanded: false
   },
   {
-    id: 'ai-tools',
-    labelKey: 'navigation:groups.aiTools',
+    id: 'explore',
+    labelKey: 'navigation:groups.explore',
     icon: Sparkles,
     items: [
-      { id: 'test-generation', labelKey: 'navigation:items.testGeneration', icon: TestTube, shortcut: 'T' },
-      { id: 'prompt-optimizer', labelKey: 'navigation:items.promptOptimizer', icon: WandSparkles, shortcut: 'P' },
-      { id: 'context-aware-snippets', labelKey: 'navigation:items.contextAwareSnippets', icon: Code, shortcut: 'S' },
-      { id: 'code-playground', labelKey: 'navigation:items.codePlayground', icon: Zap, shortcut: 'G' },
-      { id: 'dependency-sentinel', labelKey: 'navigation:items.dependencySentinel', icon: Shield, shortcut: 'D' },
-      { id: 'conflict-predictor', labelKey: 'navigation:items.conflictPredictor', icon: GitMerge, shortcut: 'C' },
-      { id: 'natural-language-git', labelKey: 'navigation:items.naturalLanguageGit', icon: GitBranch, shortcut: 'G' },
-      { id: 'app-emulator', labelKey: 'navigation:items.appEmulator', icon: Monitor, shortcut: 'E' },
+      { id: 'insights', labelKey: 'navigation:items.insights', icon: Sparkles, shortcut: 'N' },
+      { id: 'context', labelKey: 'navigation:items.context', icon: BookOpen, shortcut: 'C' },
+      { id: 'ideation', labelKey: 'navigation:items.ideation', icon: Lightbulb, shortcut: 'I' },
       { id: 'learning-loop', labelKey: 'navigation:items.learningLoop', icon: Brain, shortcut: 'L' },
-      { id: 'browser-agent', labelKey: 'navigation:items.browserAgent', icon: Globe, shortcut: 'B' },
-      { id: 'pipeline-generator', labelKey: 'navigation:items.pipelineGenerator', icon: Layers, shortcut: 'I' },
-      { id: 'arena-mode', labelKey: 'navigation:items.arenaMode', icon: Swords, shortcut: 'W' },
     ],
     defaultExpanded: false
   },
   {
-    id: 'integration',
-    labelKey: 'navigation:groups.integration',
+    id: 'git-integrations',
+    labelKey: 'navigation:groups.gitIntegrations',
     icon: GitFork,
     items: [
       { id: 'worktrees', labelKey: 'navigation:items.worktrees', icon: GitBranch, shortcut: 'W' },
-      { id: 'mcp-marketplace', labelKey: 'navigation:items.mcpMarketplace', icon: Store, shortcut: 'X' },
-      { id: 'plugin-marketplace', labelKey: 'navigation:items.pluginMarketplace', icon: Puzzle, shortcut: 'J' },
+      { id: 'natural-language-git', labelKey: 'navigation:items.naturalLanguageGit', icon: GitBranch, shortcut: 'G' },
+      { id: 'conflict-predictor', labelKey: 'navigation:items.conflictPredictor', icon: GitMerge, shortcut: 'C' },
     ],
     defaultExpanded: false
   },
@@ -248,29 +251,27 @@ const navGroups: NavGroup[] = [
     icon: BarChart3,
     items: [
       { id: 'roadmap', labelKey: 'navigation:items.roadmap', icon: Map, shortcut: 'D' },
-      { id: 'dashboard', labelKey: 'navigation:items.dashboard', icon: BarChart3, shortcut: 'H' },
       { id: 'analytics', labelKey: 'navigation:items.analytics', icon: Database, shortcut: 'A' },
       { id: 'cost-estimator', labelKey: 'navigation:items.costEstimator', icon: Coins, shortcut: 'E' },
-      { id: 'session-history', labelKey: 'navigation:items.sessionHistory', icon: History, shortcut: 'S' },
-    ],
-    defaultExpanded: false
-  },
-  {
-    id: 'knowledge',
-    labelKey: 'navigation:groups.knowledge',
-    icon: BookOpen,
-    items: [
-      { id: 'context', labelKey: 'navigation:items.context', icon: BookOpen, shortcut: 'C' },
-      { id: 'ideation', labelKey: 'navigation:items.ideation', icon: Lightbulb, shortcut: 'I' },
       { id: 'changelog', labelKey: 'navigation:items.changelog', icon: FileText, shortcut: 'L' },
     ],
     defaultExpanded: false
   },
   {
-    id: 'utilities',
-    labelKey: 'navigation:groups.utilities',
-    icon: Layers,
+    id: 'toolbox',
+    labelKey: 'navigation:groups.toolbox',
+    icon: Wrench,
     items: [
+      { id: 'api-explorer', labelKey: 'navigation:items.apiExplorer', icon: Globe, shortcut: 'X' },
+      { id: 'agent-tools', labelKey: 'navigation:items.agentTools', icon: Wrench, shortcut: 'M' },
+      { id: 'mcp-marketplace', labelKey: 'navigation:items.mcpMarketplace', icon: Store, shortcut: 'X' },
+      { id: 'plugin-marketplace', labelKey: 'navigation:items.pluginMarketplace', icon: Puzzle, shortcut: 'J' },
+      { id: 'app-emulator', labelKey: 'navigation:items.appEmulator', icon: Monitor, shortcut: 'E' },
+      { id: 'browser-agent', labelKey: 'navigation:items.browserAgent', icon: Globe, shortcut: 'B' },
+      { id: 'pipeline-generator', labelKey: 'navigation:items.pipelineGenerator', icon: Layers, shortcut: 'I' },
+      { id: 'dependency-sentinel', labelKey: 'navigation:items.dependencySentinel', icon: Shield, shortcut: 'D' },
+      { id: 'prompt-optimizer', labelKey: 'navigation:items.promptOptimizer', icon: WandSparkles, shortcut: 'P' },
+      { id: 'context-aware-snippets', labelKey: 'navigation:items.contextAwareSnippets', icon: Code, shortcut: 'S' },
       { id: 'voice-control', labelKey: 'navigation:items.voiceControl', icon: Mic, shortcut: 'V' },
       { id: 'migration', labelKey: 'navigation:items.migration', icon: Download, shortcut: 'Z' },
     ],
@@ -305,7 +306,7 @@ export function Sidebar({
   const [showGitSetupModal, setShowGitSetupModal] = useState(false);
   const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
   const [pendingProject, setPendingProject] = useState<Project | null>(null);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['core'])); // Core group expanded by default
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['workspace'])); // Workspace group expanded by default
 
   const [showGitHubSetup, setShowGitHubSetup] = useState(false);
   const [gitHubSetupProject, setGitHubSetupProject] = useState<Project | null>(null);
@@ -338,7 +339,7 @@ export function Sidebar({
     const groups = [...navGroups];
     
     // Add GitHub/GitLab items to integration group if enabled
-    const integrationGroup = groups.find(g => g.id === 'integration');
+    const integrationGroup = groups.find(g => g.id === 'git-integrations');
     if (integrationGroup) {
       const integrationItems = [...integrationGroup.items];
       if (githubEnabled) {

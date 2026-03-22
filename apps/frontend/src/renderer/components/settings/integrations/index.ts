@@ -6,3 +6,4 @@
 export { LinearIntegration } from './LinearIntegration';
 export { GitHubIntegration } from './GitHubIntegration';
 export { AzureDevOpsIntegration } from './AzureDevOpsIntegration';
+export { TeamsIntegration } from './TeamsIntegration';

@@ -4,13 +4,13 @@
     "tools": "Tools"
   },
   "groups": {
-    "core": " Core Workflow",
-    "development": " Development Tools",
-    "integration": " Integration & Git",
-    "planning": " Planning & Analysis",
-    "knowledge": " Knowledge & Content",
-    "utilities": " Utilities",
-    "aiTools": " AI Tools"
+    "workspace": " Workspace",
+    "agents": " Agents",
+    "development": " Development",
+    "explore": " Explore",
+    "gitIntegrations": " Git & Integrations",
+    "planning": " Planning",
+    "toolbox": " Toolbox"
   },
   "items": {
     "kanban": "Kanban Board",

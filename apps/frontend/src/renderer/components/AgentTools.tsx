@@ -32,7 +32,8 @@ import {
   Terminal,
   Loader2,
   RefreshCw,
-  Lock
+  Lock,
+  Chrome
 } from 'lucide-react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { ScrollArea } from './ui/scroll-area';
@@ -336,7 +337,108 @@ const MCP_SERVERS: Record<string, { name: string; description: string; icon: Rea
       'mcp__puppeteer__puppeteer_evaluate',
     ],
   },
+  github: {
+    name: 'GitHub',
+    description: 'GitHub API operations (repos, issues, PRs, commits). Requires GITHUB_PERSONAL_ACCESS_TOKEN env var.',
+    icon: Code,
+    tools: [
+      'mcp__github__get_file_contents',
+      'mcp__github__search_repositories',
+      'mcp__github__create_issue',
+      'mcp__github__create_pull_request',
+      'mcp__github__list_commits',
+      'mcp__github__search_code',
+    ],
+  },
+  'brave-search': {
+    name: 'Brave Search',
+    description: 'Privacy-focused web search as an alternative to WebSearch. Requires BRAVE_API_KEY env var.',
+    icon: Search,
+    tools: [
+      'mcp__brave-search__brave_web_search',
+      'mcp__brave-search__brave_local_search',
+    ],
+  },
+  jira: {
+    name: 'Jira',
+    description: 'Jira & Confluence issue tracking. Requires JIRA_URL, JIRA_USERNAME and JIRA_API_TOKEN env vars.',
+    icon: ClipboardList,
+    tools: [
+      'mcp__jira__get_issue',
+      'mcp__jira__search_issues',
+      'mcp__jira__create_issue',
+      'mcp__jira__update_issue',
+      'mcp__jira__list_projects',
+    ],
+  },
+  'azure-devops': {
+    name: 'Azure DevOps',
+    description: 'Azure Boards, Repos, Pipelines and work items. Requires AZURE_DEVOPS_TOKEN and AZURE_DEVOPS_ORG env vars.',
+    icon: ClipboardList,
+    tools: [
+      'mcp__azure-devops__list_work_items',
+      'mcp__azure-devops__get_work_item',
+      'mcp__azure-devops__create_work_item',
+      'mcp__azure-devops__list_repositories',
+      'mcp__azure-devops__get_pipeline',
+    ],
+  },
+  sentry: {
+    name: 'Sentry',
+    description: 'Error monitoring and performance tracking. Requires SENTRY_AUTH_TOKEN env var.',
+    icon: AlertCircle,
+    tools: [
+      'mcp__sentry__get_issues',
+      'mcp__sentry__get_issue',
+      'mcp__sentry__get_event',
+      'mcp__sentry__list_projects',
+    ],
+  },
+  slack: {
+    name: 'Slack',
+    description: 'Send messages and read channels. Requires SLACK_BOT_TOKEN env var.',
+    icon: Globe,
+    tools: [
+      'mcp__slack__list_channels',
+      'mcp__slack__post_message',
+      'mcp__slack__reply_to_thread',
+      'mcp__slack__get_channel_history',
+    ],
+  },
+  postman: {
+    name: 'Postman',
+    description: 'Run and manage API collections, environments and tests. Requires POSTMAN_API_KEY env var.',
+    icon: Globe,
+    tools: [
+      'mcp__postman__list_collections',
+      'mcp__postman__get_collection',
+      'mcp__postman__run_collection',
+      'mcp__postman__list_environments',
+      'mcp__postman__get_environment',
+    ],
+  },
+  teams: {
+    name: 'Microsoft Teams',
+    description: 'Send messages to Teams channels. Requires TEAMS_WEBHOOK_URL env var (Incoming Webhook).',
+    icon: Globe,
+    tools: [
+      'mcp__teams__send_message',
+      'mcp__teams__list_channels',
+      'mcp__teams__send_adaptive_card',
+    ],
+  },
 };
+
+// MCP servers grouped by category for the add dialog
+const MCP_CATEGORY_GROUPS: Array<{ labelKey: string; fallback: string; ids: string[] }> = [
+  { labelKey: 'mcp.categories.core',           fallback: 'Core',               ids: ['context7', 'graphiti-memory'] },
+  { labelKey: 'mcp.categories.projectMgmt',    fallback: 'Project Management', ids: ['linear', 'jira', 'azure-devops'] },
+  { labelKey: 'mcp.categories.devTools',       fallback: 'Dev Tools',          ids: ['github'] },
+  { labelKey: 'mcp.categories.search',         fallback: 'Search',             ids: ['brave-search'] },
+  { labelKey: 'mcp.categories.testingQA',      fallback: 'Testing & QA',       ids: ['electron', 'puppeteer', 'postman'] },
+  { labelKey: 'mcp.categories.monitoring',     fallback: 'Monitoring',         ids: ['sentry'] },
+  { labelKey: 'mcp.categories.communication',  fallback: 'Communication',      ids: ['slack', 'teams'] },
+];
 
 // All available MCP servers that can be added to agents
 const ALL_MCP_SERVERS = [
@@ -345,7 +447,15 @@ const ALL_MCP_SERVERS = [
   'linear',
   'electron',
   'puppeteer',
-  'auto-claude'
+  'auto-claude',
+  'github',
+  'brave-search',
+  'jira',
+  'azure-devops',
+  'sentry',
+  'slack',
+  'postman',
+  'teams',
 ] as const;
 
 // Category metadata - neutral styling per design.json
@@ -372,6 +482,7 @@ interface AgentCardProps {
 function AgentCard({ id, config, modelLabel, thinkingLabel, overrides, mcpServerStates, customServers, onAddMcp, onRemoveMcp }: AgentCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [mcpSearch, setMcpSearch] = useState('');
   const { t } = useTranslation(['settings']);
   const category = CATEGORIES[config.category as keyof typeof CATEGORIES];
   const CategoryIcon = category.icon;
@@ -407,6 +518,7 @@ function AgentCard({ id, config, modelLabel, thinkingLabel, overrides, mcpServer
         case 'linear': return mcpServerStates.linearMcpEnabled !== false;
         case 'electron': return mcpServerStates.electronEnabled !== false;
         case 'puppeteer': return mcpServerStates.puppeteerEnabled !== false;
+        case 'chrome-devtools': return mcpServerStates.chromeDevtoolsEnabled === true;
         default: return true;
       }
     });
@@ -431,6 +543,39 @@ function AgentCard({ id, config, modelLabel, thinkingLabel, overrides, mcpServer
     mcp => !effectiveMcps.includes(mcp) && !removedMcps.includes(mcp) && mcp !== 'auto-claude'
   );
 
+  // Group available MCPs by category, filtered by search query
+  const groupedAvailableMcps = useMemo(() => {
+    const searchLower = mcpSearch.toLowerCase().trim();
+    const knownIds = MCP_CATEGORY_GROUPS.flatMap(g => g.ids);
+    const result: Array<{ labelKey: string; fallback: string; items: string[] }> = [];
+
+    for (const group of MCP_CATEGORY_GROUPS) {
+      const items = group.ids.filter(id =>
+        availableMcps.includes(id) &&
+        (!searchLower ||
+          id.toLowerCase().includes(searchLower) ||
+          allMcpServers[id]?.name.toLowerCase().includes(searchLower) ||
+          allMcpServers[id]?.description?.toLowerCase().includes(searchLower)
+        )
+      );
+      if (items.length > 0) result.push({ ...group, items });
+    }
+
+    // Custom servers not in any known category
+    const customItems = availableMcps.filter(id =>
+      !knownIds.includes(id) &&
+      (!searchLower ||
+        id.toLowerCase().includes(searchLower) ||
+        allMcpServers[id]?.name.toLowerCase().includes(searchLower)
+      )
+    );
+    if (customItems.length > 0) {
+      result.push({ labelKey: 'mcp.categories.custom', fallback: 'Custom', items: customItems });
+    }
+
+    return result;
+  }, [availableMcps, allMcpServers, mcpSearch]);
+
   return (
     <div className="border border-border rounded-lg bg-card overflow-hidden">
       {/* Header - clickable to expand */}
@@ -444,7 +589,7 @@ function AgentCard({ id, config, modelLabel, thinkingLabel, overrides, mcpServer
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-medium text-sm text-foreground">{config.label}</h3>
+            <h3 className="font-medium text-sm text-foreground">{t(`agents.${id}.label`, { defaultValue: config.label })}</h3>
             <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-secondary text-secondary-foreground">
               {modelLabel}
             </span>
@@ -452,7 +597,7 @@ function AgentCard({ id, config, modelLabel, thinkingLabel, overrides, mcpServer
               {thinkingLabel}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground truncate">{config.description}</p>
+          <p className="text-xs text-muted-foreground truncate">{t(`agents.${id}.description`, { defaultValue: config.description })}</p>
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
           <span className="text-xs">
@@ -556,7 +701,7 @@ function AgentCard({ id, config, modelLabel, thinkingLabel, overrides, mcpServer
           {/* Tools */}
           <div>
             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-              Available Tools
+              {t('agents.availableTools')}
             </h4>
             {config.tools.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
@@ -570,69 +715,108 @@ function AgentCard({ id, config, modelLabel, thinkingLabel, overrides, mcpServer
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Text-only (no tools)</p>
+              <p className="text-sm text-muted-foreground">{t('agents.textOnly')}</p>
             )}
           </div>
         </div>
       )}
 
       {/* Add MCP Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={showAddDialog} onOpenChange={(open) => { setShowAddDialog(open); if (!open) setMcpSearch(''); }}>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t('mcp.addMcpTo', { agent: config.label })}</DialogTitle>
+            <DialogTitle>{t('mcp.addMcpTo', { agent: t(`agents.${id}.label`, { defaultValue: config.label }) })}</DialogTitle>
             <DialogDescription>{t('mcp.addMcpDescription')}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 py-4">
-            {availableMcps.length > 0 ? (
-              availableMcps.map((mcpId) => {
-                const server = allMcpServers[mcpId];
-                const ServerIcon = server?.icon || Server;
-                return (
-                  <button
-                    type="button"
-                    key={mcpId}
-                    onClick={() => { onAddMcp(id, mcpId); setShowAddDialog(false); }}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
-                  >
-                    <ServerIcon className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <div className="font-medium text-sm">{server?.name || mcpId}</div>
-                      <div className="text-xs text-muted-foreground">{server?.description}</div>
-                    </div>
-                  </button>
-                );
-              })
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              value={mcpSearch}
+              onChange={(e) => setMcpSearch(e.target.value)}
+              placeholder={t('mcp.searchPlaceholder', { defaultValue: 'Search MCP servers…' })}
+              className="w-full pl-9 pr-3 py-2 text-sm bg-muted/50 border border-border rounded-md outline-none focus:ring-1 focus:ring-primary/50"
+            />
+          </div>
+
+          <div className="overflow-y-auto max-h-[400px] space-y-4 pr-1 pt-1">
+            {groupedAvailableMcps.length > 0 ? (
+              groupedAvailableMcps.map((group, groupIdx) => (
+                <div key={group.labelKey} className={groupIdx > 0 ? 'pt-2' : ''}>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 px-1">
+                    {t(group.labelKey, { defaultValue: group.fallback })}
+                  </p>
+                  <div className="space-y-1">
+                    {group.items.map((mcpId) => {
+                      const server = allMcpServers[mcpId];
+                      const ServerIcon = server?.icon || Server;
+                      const needsSetup = server?.description?.toLowerCase().includes('requires');
+                      return (
+                        <button
+                          type="button"
+                          key={mcpId}
+                          onClick={() => { onAddMcp(id, mcpId); setShowAddDialog(false); setMcpSearch(''); }}
+                          className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted transition-colors text-left group"
+                        >
+                          <div className="flex-shrink-0 w-8 h-8 rounded-md bg-muted flex items-center justify-center group-hover:bg-background transition-colors">
+                            <ServerIcon className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm">{server?.name || mcpId}</span>
+                              {needsSetup && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium flex-shrink-0">
+                                  {t('mcp.setupRequired', { defaultValue: 'Setup required' })}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate">{server?.description}</p>
+                          </div>
+                          <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 flex-shrink-0 transition-opacity" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                {t('mcp.allMcpsAdded')}
+              <p className="text-sm text-muted-foreground text-center py-6">
+                {mcpSearch ? t('mcp.noSearchResults', { defaultValue: 'No servers match your search.' }) : t('mcp.allMcpsAdded')}
               </p>
             )}
-            {/* Also show removed MCPs that can be restored */}
-            {removedMcps.length > 0 && (
-              <>
-                <div className="border-t border-border my-2 pt-2">
-                  <p className="text-xs text-muted-foreground mb-2">{t('mcp.restore')}:</p>
+
+            {/* Restore removed MCPs */}
+            {removedMcps.length > 0 && !mcpSearch && (
+              <div className="border-t border-border pt-3">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 px-1">
+                  {t('mcp.restore')}
+                </p>
+                <div className="space-y-1">
+                  {removedMcps.map((mcpId) => {
+                    const server = allMcpServers[mcpId];
+                    const ServerIcon = server?.icon || Server;
+                    return (
+                      <button
+                        type="button"
+                        key={mcpId}
+                        onClick={() => { onAddMcp(id, mcpId); setShowAddDialog(false); }}
+                        className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted transition-colors text-left group opacity-60 hover:opacity-100"
+                      >
+                        <div className="flex-shrink-0 w-8 h-8 rounded-md bg-muted flex items-center justify-center">
+                          <ServerIcon className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm">{server?.name || mcpId}</div>
+                          <p className="text-xs text-muted-foreground truncate">{server?.description}</p>
+                        </div>
+                        <RotateCcw className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 flex-shrink-0 transition-opacity" />
+                      </button>
+                    );
+                  })}
                 </div>
-                {removedMcps.map((mcpId) => {
-                  const server = allMcpServers[mcpId];
-                  const ServerIcon = server?.icon || Server;
-                  return (
-                    <button
-                      type="button"
-                      key={mcpId}
-                      onClick={() => { onAddMcp(id, mcpId); setShowAddDialog(false); }}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left opacity-60"
-                    >
-                      <ServerIcon className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium text-sm">{server?.name || mcpId}</div>
-                        <div className="text-xs text-muted-foreground">{server?.description}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </>
+              </div>
             )}
           </div>
         </DialogContent>
@@ -983,6 +1167,7 @@ export function AgentTools() {
     mcpServers.linearMcpEnabled !== false && envConfig?.linearEnabled,
     mcpServers.electronEnabled,
     mcpServers.puppeteerEnabled,
+    mcpServers.chromeDevtoolsEnabled,
     true, // auto-claude always enabled
   ].filter(Boolean).length;
 
@@ -1031,7 +1216,7 @@ export function AgentTools() {
               <h1 className="text-xl font-semibold text-foreground">{t('settings:mcp.title')}</h1>
               {selectedProject && (
                 <span className="text-sm text-muted-foreground">
-                  for {selectedProject.name}
+                  {t('agents.forProject', { name: selectedProject.name })}
                 </span>
               )}
             </div>
@@ -1176,6 +1361,21 @@ export function AgentTools() {
                     <Switch
                       checked={mcpServers.puppeteerEnabled === true}
                       onCheckedChange={(checked) => updateMcpServer('puppeteerEnabled', checked)}
+                    />
+                  </div>
+
+                  {/* Chrome DevTools */}
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-3">
+                      <Chrome className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <span className="text-sm font-medium">{t('settings:mcp.servers.chromeDevtools.name')}</span>
+                        <p className="text-xs text-muted-foreground">{t('settings:mcp.servers.chromeDevtools.description')}</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={mcpServers.chromeDevtoolsEnabled === true}
+                      onCheckedChange={(checked) => updateMcpServer('chromeDevtoolsEnabled', checked)}
                     />
                   </div>
                 </div>
@@ -1338,10 +1538,10 @@ export function AgentTools() {
                   )}
                   <CategoryIcon className="h-4 w-4 text-muted-foreground" />
                   <h2 className="text-sm font-semibold text-foreground">
-                    {category.label}
+                    {t(`agents.categories.${categoryId}`, { defaultValue: category.label })}
                   </h2>
                   <span className="text-xs text-muted-foreground">
-                    ({agents.length} agents)
+                    {t('agents.agentsCount', { count: agents.length })}
                   </span>
                 </button>
 

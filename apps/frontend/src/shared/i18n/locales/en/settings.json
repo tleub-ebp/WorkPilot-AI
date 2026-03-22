@@ -1079,6 +1079,19 @@
     "remove": "Remove",
     "restore": "Restore",
     "noMcpServers": "No MCP servers",
+    "searchPlaceholder": "Search MCP servers…",
+    "setupRequired": "Setup required",
+    "noSearchResults": "No servers match your search.",
+    "categories": {
+      "core": "Core",
+      "projectMgmt": "Project Management",
+      "devTools": "Dev Tools",
+      "search": "Search",
+      "testingQA": "Testing & QA",
+      "monitoring": "Monitoring",
+      "communication": "Communication",
+      "custom": "Custom"
+    },
     "cannotRemove": "Cannot remove (required)",
     "servers": {
       "context7": {
@@ -1103,9 +1116,45 @@
         "name": "Puppeteer",
         "description": "Web browser automation for testing"
       },
+      "chromeDevtools": {
+        "name": "Chrome DevTools",
+        "description": "Browser automation via Chrome DevTools Protocol (coder + QA agents)"
+      },
       "autoClaude": {
         "name": "WorkPilot AI Tools",
         "description": "Build progress tracking"
+      },
+      "github": {
+        "name": "GitHub",
+        "description": "GitHub API operations. Requires GITHUB_PERSONAL_ACCESS_TOKEN env var."
+      },
+      "braveSearch": {
+        "name": "Brave Search",
+        "description": "Privacy-focused web search. Requires BRAVE_API_KEY env var."
+      },
+      "jira": {
+        "name": "Jira",
+        "description": "Jira & Confluence issue tracking. Requires JIRA_URL, JIRA_USERNAME and JIRA_API_TOKEN env vars."
+      },
+      "azureDevops": {
+        "name": "Azure DevOps",
+        "description": "Azure Boards, Repos and Pipelines. Requires AZURE_DEVOPS_TOKEN and AZURE_DEVOPS_ORG env vars."
+      },
+      "sentry": {
+        "name": "Sentry",
+        "description": "Error monitoring and performance tracking. Requires SENTRY_AUTH_TOKEN env var."
+      },
+      "slack": {
+        "name": "Slack",
+        "description": "Send messages and read channels. Requires SLACK_BOT_TOKEN env var."
+      },
+      "postman": {
+        "name": "Postman",
+        "description": "Run and manage API collections and tests. Requires POSTMAN_API_KEY env var."
+      },
+      "teams": {
+        "name": "Microsoft Teams",
+        "description": "Send messages to Teams channels. Requires TEAMS_WEBHOOK_URL env var."
       }
     },
     "customServers": "Custom Servers",
@@ -1291,6 +1340,93 @@
     }
   },
   "agents": {
+    "categories": {
+      "spec": "Spec Creation",
+      "build": "Build",
+      "qa": "QA",
+      "utility": "Utility",
+      "ideation": "Ideation"
+    },
+    "agentsCount": "({{count}} agents)",
+    "forProject": "for {{name}}",
+    "availableTools": "Available Tools",
+    "textOnly": "Text-only (no tools)",
+    "spec_gatherer": {
+      "label": "Spec Gatherer",
+      "description": "Collects initial requirements from user"
+    },
+    "spec_researcher": {
+      "label": "Spec Researcher",
+      "description": "Validates external integrations and APIs"
+    },
+    "spec_writer": {
+      "label": "Spec Writer",
+      "description": "Creates the spec.md document"
+    },
+    "spec_critic": {
+      "label": "Spec Critic",
+      "description": "Self-critique using deep analysis"
+    },
+    "spec_discovery": {
+      "label": "Spec Discovery",
+      "description": "Initial project discovery and analysis"
+    },
+    "spec_context": {
+      "label": "Spec Context",
+      "description": "Builds context from existing codebase"
+    },
+    "spec_validation": {
+      "label": "Spec Validation",
+      "description": "Validates spec completeness and quality"
+    },
+    "planner": {
+      "label": "Planner",
+      "description": "Creates implementation plan with subtasks"
+    },
+    "coder": {
+      "label": "Coder",
+      "description": "Implements individual subtasks"
+    },
+    "qa_reviewer": {
+      "label": "QA Reviewer",
+      "description": "Validates acceptance criteria. Uses Electron or Puppeteer based on project type."
+    },
+    "qa_fixer": {
+      "label": "QA Fixer",
+      "description": "Fixes QA-reported issues. Uses Electron or Puppeteer based on project type."
+    },
+    "pr_reviewer": {
+      "label": "PR Reviewer",
+      "description": "Reviews GitHub pull requests"
+    },
+    "commit_message": {
+      "label": "Commit Message",
+      "description": "Generates commit messages"
+    },
+    "merge_resolver": {
+      "label": "Merge Resolver",
+      "description": "Resolves merge conflicts"
+    },
+    "insights": {
+      "label": "Insights",
+      "description": "Extracts code insights"
+    },
+    "analysis": {
+      "label": "Analysis",
+      "description": "Codebase analysis with context lookup"
+    },
+    "batch_analysis": {
+      "label": "Batch Analysis",
+      "description": "Batch processing of issues or items"
+    },
+    "ideation": {
+      "label": "Ideation",
+      "description": "Generates feature ideas"
+    },
+    "roadmap_discovery": {
+      "label": "Roadmap Discovery",
+      "description": "Discovers roadmap items"
+    },
     "pr_template_filler": {
       "label": "PR Template Filler",
       "description": "AI-fills GitHub PR templates from code changes"
@@ -1537,6 +1673,24 @@
     "instance": "Instance",
     "required": "*",
     "fillAllFields": "Please fill in all required fields (Instance URL, Email, API Token)"
+  },
+  "teams": {
+    "title": "Microsoft Teams",
+    "description": "Receive notifications in Teams when tasks are done and PRs are created",
+    "initGuardDescription": "Initialize WorkPilot AI for this project to configure Teams notifications",
+    "enableNotifications": "Enable Teams notifications",
+    "enableNotificationsHint": "Send a message to your Teams channel when a task completes and a PR is created",
+    "webhookUrl": "Incoming Webhook URL",
+    "webhookUrlHint": "Paste the Incoming Webhook URL from your Teams channel connector",
+    "testWebhook": "Send test message",
+    "testSuccess": "Message sent!",
+    "testError": "Failed to reach webhook",
+    "testMessage": "WorkPilot AI — Test notification",
+    "testMessageBody": "This is a test message from WorkPilot AI. Your Teams notifications are configured correctly.",
+    "howToCreate": "How to create a webhook",
+    "triggers": "Notification triggers",
+    "triggerTaskDone": "When a Kanban task reaches 'Done' and a PR is created",
+    "triggerPrCreated": "When a PR is automatically created for human review"
   },
   "jiraImport": {
     "title": "Import Jira Issues",

@@ -68,7 +68,7 @@ interface TaskCardProps {
   onDelete?: () => void;
   // Optional PR files viewer handler
   onViewPRFiles?: (prUrl: string, taskId: string) => void;
-  // Optional app preview handler for done tasks
+  // Optional app preview handler for done, human_review, and ai_review tasks
   onPreviewApp?: () => void;
 }
 
@@ -396,6 +396,44 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           <Archive className="mr-1.5 h-3 w-3" />
           {t('actions.archive')}
         </Button>
+      </div>
+    );
+  }
+
+  // Preview button for human_review tasks (validate rendering before PR approval)
+  if (task.status === 'human_review') {
+    return (
+      <div className="flex gap-1">
+        {onPreviewApp && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); onPreviewApp(); }}
+            title={t('tooltips.previewApp')}
+          >
+            <Monitor className="h-3 w-3" />
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  // Preview button for ai_review tasks (inspect rendering during AI validation)
+  if (task.status === 'ai_review') {
+    return (
+      <div className="flex gap-1">
+        {onPreviewApp && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); onPreviewApp(); }}
+            title={t('tooltips.previewApp')}
+          >
+            <Monitor className="h-3 w-3" />
+          </Button>
+        )}
       </div>
     );
   }
