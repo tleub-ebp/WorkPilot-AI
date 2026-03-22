@@ -262,18 +262,22 @@ const navGroups: NavGroup[] = [
     labelKey: 'navigation:groups.toolbox',
     icon: Wrench,
     items: [
-      { id: 'api-explorer', labelKey: 'navigation:items.apiExplorer', icon: Globe, shortcut: 'X' },
-      { id: 'agent-tools', labelKey: 'navigation:items.agentTools', icon: Wrench, shortcut: 'M' },
-      { id: 'mcp-marketplace', labelKey: 'navigation:items.mcpMarketplace', icon: Store, shortcut: 'X' },
-      { id: 'plugin-marketplace', labelKey: 'navigation:items.pluginMarketplace', icon: Puzzle, shortcut: 'J' },
-      { id: 'app-emulator', labelKey: 'navigation:items.appEmulator', icon: Monitor, shortcut: 'E' },
-      { id: 'browser-agent', labelKey: 'navigation:items.browserAgent', icon: Globe, shortcut: 'B' },
-      { id: 'pipeline-generator', labelKey: 'navigation:items.pipelineGenerator', icon: Layers, shortcut: 'I' },
-      { id: 'dependency-sentinel', labelKey: 'navigation:items.dependencySentinel', icon: Shield, shortcut: 'D' },
-      { id: 'prompt-optimizer', labelKey: 'navigation:items.promptOptimizer', icon: WandSparkles, shortcut: 'P' },
-      { id: 'context-aware-snippets', labelKey: 'navigation:items.contextAwareSnippets', icon: Code, shortcut: 'S' },
-      { id: 'voice-control', labelKey: 'navigation:items.voiceControl', icon: Mic, shortcut: 'V' },
-      { id: 'migration', labelKey: 'navigation:items.migration', icon: Download, shortcut: 'Z' },
+      // Extensions
+      { id: 'agent-tools', labelKey: 'navigation:items.agentTools', icon: Wrench, shortcut: 'M', subGroup: 'navigation:subGroups.extensions' },
+      { id: 'mcp-marketplace', labelKey: 'navigation:items.mcpMarketplace', icon: Store, shortcut: 'X', subGroup: 'navigation:subGroups.extensions' },
+      { id: 'plugin-marketplace', labelKey: 'navigation:items.pluginMarketplace', icon: Puzzle, shortcut: 'J', subGroup: 'navigation:subGroups.extensions' },
+      // Assistants
+      { id: 'api-explorer', labelKey: 'navigation:items.apiExplorer', icon: Globe, shortcut: 'X', subGroup: 'navigation:subGroups.assistants' },
+      { id: 'prompt-optimizer', labelKey: 'navigation:items.promptOptimizer', icon: WandSparkles, shortcut: 'P', subGroup: 'navigation:subGroups.assistants' },
+      { id: 'context-aware-snippets', labelKey: 'navigation:items.contextAwareSnippets', icon: Code, shortcut: 'S', subGroup: 'navigation:subGroups.assistants' },
+      { id: 'dependency-sentinel', labelKey: 'navigation:items.dependencySentinel', icon: Shield, shortcut: 'D', subGroup: 'navigation:subGroups.assistants' },
+      // Automation
+      { id: 'app-emulator', labelKey: 'navigation:items.appEmulator', icon: Monitor, shortcut: 'E', subGroup: 'navigation:subGroups.automation' },
+      { id: 'browser-agent', labelKey: 'navigation:items.browserAgent', icon: Globe, shortcut: 'B', subGroup: 'navigation:subGroups.automation' },
+      { id: 'pipeline-generator', labelKey: 'navigation:items.pipelineGenerator', icon: Layers, shortcut: 'I', subGroup: 'navigation:subGroups.automation' },
+      // Utilities
+      { id: 'voice-control', labelKey: 'navigation:items.voiceControl', icon: Mic, shortcut: 'V', subGroup: 'navigation:subGroups.utilities' },
+      { id: 'migration', labelKey: 'navigation:items.migration', icon: Download, shortcut: 'Z', subGroup: 'navigation:subGroups.utilities' },
     ],
     defaultExpanded: false
   }
@@ -697,17 +701,60 @@ const toggleGroupExpansion = (groupId: string) => {
             <div className="space-y-2">
               <p className="font-medium text-sm">{t(group.labelKey)}</p>
               <div className="space-y-1">
-                {group.items.map(item => (
-                  <div key={item.id} className="flex items-center gap-2 text-xs p-1 rounded hover:bg-accent/50">
-                    <item.icon className="h-3 w-3 shrink-0" />
-                    <span className="truncate">{t(item.labelKey)}</span>
-                    {item.shortcut && (
-                      <kbd className="rounded border border-border bg-secondary px-1 font-mono text-[9px] ml-auto">
-                        {item.shortcut}
-                      </kbd>
-                    )}
-                  </div>
-                ))}
+                {(() => {
+                  const hasSubGroups = group.items.some(item => item.subGroup);
+                  if (!hasSubGroups) {
+                    return group.items.map(item => (
+                      <div key={item.id} className="flex items-center gap-2 text-xs p-1 rounded hover:bg-accent/50">
+                        <item.icon className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{t(item.labelKey)}</span>
+                        {item.shortcut && (
+                          <kbd className="rounded border border-border bg-secondary px-1 font-mono text-[9px] ml-auto">
+                            {item.shortcut}
+                          </kbd>
+                        )}
+                      </div>
+                    ));
+                  }
+
+                  const subGroups: { key: string; items: NavItem[] }[] = [];
+                  for (const item of group.items) {
+                    const key = item.subGroup ?? '';
+                    const last = subGroups[subGroups.length - 1];
+                    if (last && last.key === key) {
+                      last.items.push(item);
+                    } else {
+                      subGroups.push({ key, items: [item] });
+                    }
+                  }
+
+                  return subGroups.map((sg, sgIndex) => (
+                    <div
+                      key={sg.key}
+                      className={cn(
+                        "rounded bg-muted/30 px-1 py-1",
+                        sgIndex > 0 && "mt-1"
+                      )}
+                    >
+                      {sg.key && (
+                        <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-1 pb-0.5">
+                          {t(sg.key)}
+                        </div>
+                      )}
+                      {sg.items.map(item => (
+                        <div key={item.id} className="flex items-center gap-2 text-xs p-1 rounded hover:bg-accent/50">
+                          <item.icon className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{t(item.labelKey)}</span>
+                          {item.shortcut && (
+                            <kbd className="rounded border border-border bg-secondary px-1 font-mono text-[9px] ml-auto">
+                              {item.shortcut}
+                            </kbd>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ));
+                })()}
               </div>
             </div>
           </TooltipContent>
@@ -746,15 +793,65 @@ const toggleGroupExpansion = (groupId: string) => {
         
         {isExpanded && (
           <div className="space-y-1 animate-in slide-in-from-top-2 duration-300 ease-out">
-            {group.items.map((item, index) => (
-              <div 
-                key={item.id} 
-                className="animate-in slide-in-from-left-2 duration-200 ease-out"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                {renderNavItem(item, true)}
-              </div>
-            ))}
+            {(() => {
+              // Group items by subGroup for visual sectioning
+              const hasSubGroups = group.items.some(item => item.subGroup);
+              if (!hasSubGroups) {
+                return group.items.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="animate-in slide-in-from-left-2 duration-200 ease-out"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    {renderNavItem(item, true)}
+                  </div>
+                ));
+              }
+
+              // Render with sub-group sections
+              const subGroups: { key: string; items: NavItem[] }[] = [];
+              for (const item of group.items) {
+                const key = item.subGroup ?? '';
+                const last = subGroups[subGroups.length - 1];
+                if (last && last.key === key) {
+                  last.items.push(item);
+                } else {
+                  subGroups.push({ key, items: [item] });
+                }
+              }
+
+              let itemIndex = 0;
+              return subGroups.map((sg, sgIndex) => (
+                <div
+                  key={sg.key}
+                  className={cn(
+                    "rounded-lg bg-muted/50 border border-border/40 px-1.5 py-1.5",
+                    sgIndex > 0 && "mt-2"
+                  )}
+                >
+                  {sg.key && (
+                    <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                      {t(sg.key)}
+                    </div>
+                  )}
+                  <div className="space-y-0.5">
+                    {sg.items.map(item => {
+                      const delay = itemIndex * 50;
+                      itemIndex++;
+                      return (
+                        <div
+                          key={item.id}
+                          className="animate-in slide-in-from-left-2 duration-200 ease-out"
+                          style={{ animationDelay: `${delay}ms` }}
+                        >
+                          {renderNavItem(item, true)}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ));
+            })()}
           </div>
         )}
       </div>

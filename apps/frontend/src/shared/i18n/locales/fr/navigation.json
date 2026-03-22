@@ -12,6 +12,12 @@
     "planning": "📊 Planification",
     "toolbox": "🧰 Boîte à outils"
   },
+  "subGroups": {
+    "extensions": "Extensions",
+    "assistants": "Assistants",
+    "automation": "Automatisation",
+    "utilities": "Utilitaires"
+  },
   "items": {
     "kanban": "Tableau Kanban",
     "terminals": "Terminaux Agent",

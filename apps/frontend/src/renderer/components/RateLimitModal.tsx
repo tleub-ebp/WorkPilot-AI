@@ -63,7 +63,7 @@ export function RateLimitModal() {
 
   const loadAutoSwitchSettings = async () => {
     try {
-      const result = await window.electronAPI.getAutoSwitchSettings();
+      const result = await globalThis.electronAPI.getAutoSwitchSettings();
       if (result.success && result.data) {
         setAutoSwitchEnabled(result.data.autoSwitchOnRateLimit);
       }
@@ -75,7 +75,7 @@ export function RateLimitModal() {
   const handleAutoSwitchToggle = async (enabled: boolean) => {
     setIsLoadingSettings(true);
     try {
-      await window.electronAPI.updateAutoSwitchSettings({
+      await globalThis.electronAPI.updateAutoSwitchSettings({
         enabled: enabled,
         autoSwitchOnRateLimit: enabled
       });
@@ -88,7 +88,7 @@ export function RateLimitModal() {
   };
 
   const handleUpgrade = () => {
-    window.open(CLAUDE_UPGRADE_URL, '_blank');
+    globalThis.open(CLAUDE_UPGRADE_URL, '_blank');
   };
 
   const handleAddProfile = async () => {
@@ -98,9 +98,9 @@ export function RateLimitModal() {
     try {
       // Create a new profile - the backend will set the proper configDir
       const profileName = newProfileName.trim();
-      const profileSlug = profileName.toLowerCase().replace(/\s+/g, '-');
+      const profileSlug = profileName.toLowerCase().replaceAll(/\s+/g, '-');
 
-      const result = await window.electronAPI.saveClaudeProfile({
+      const result = await globalThis.electronAPI.saveClaudeProfile({
         id: `profile-${Date.now()}`,
         name: profileName,
         // Use a placeholder - the backend will resolve the actual path
@@ -164,6 +164,17 @@ export function RateLimitModal() {
 
   // Check if auto-switch already happened
   const autoSwitchHappened = rateLimitInfo?.autoSwitchEnabled && suggestedProfile;
+
+  // Determine the appropriate button text based on the current state
+  const getButtonText = () => {
+    if (autoSwitchHappened) {
+      return t('buttons.continue');
+    }
+    if (hasMultipleProfiles) {
+      return t('buttons.close');
+    }
+    return t('buttons.gotIt');
+  };
 
   return (
     <Dialog open={isModalOpen} onOpenChange={(open) => !open && hideRateLimitModal()}>
@@ -387,7 +398,7 @@ export function RateLimitModal() {
 
         <DialogFooter>
           <Button variant="outline" onClick={hideRateLimitModal}>
-            {autoSwitchHappened ? t('buttons.continue') : hasMultipleProfiles ? t('buttons.close') : t('buttons.gotIt')}
+            {getButtonText()}
           </Button>
         </DialogFooter>
       </DialogContent>
