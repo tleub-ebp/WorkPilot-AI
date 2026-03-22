@@ -314,6 +314,7 @@ export function Sidebar({
   const [pendingProject, setPendingProject] = useState<Project | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['workspace'])); // Workspace group expanded by default
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [showGitHubSetup, setShowGitHubSetup] = useState(false);
@@ -475,10 +476,11 @@ export function Sidebar({
       // Check for modifier keys - we want plain key presses only
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
-      // "/" focuses the search input when sidebar is expanded
+      // "/" opens and focuses the search input when sidebar is expanded
       if (e.key === '/' && !isCollapsed) {
         e.preventDefault();
-        searchInputRef.current?.focus();
+        setIsSearchOpen(true);
+        requestAnimationFrame(() => searchInputRef.current?.focus());
         return;
       }
 
@@ -627,6 +629,7 @@ export function Sidebar({
   const handleNavClick = (view: SidebarView) => {
     // Clear search when navigating
     setSearchQuery('');
+    setIsSearchOpen(false);
 
     // Handle AI Tools that open dialogs instead of changing view
     if (view === 'test-generation') {
@@ -960,17 +963,81 @@ const toggleGroupExpansion = (groupId: string) => {
           )}
         </div>
 
-        {/* Toggle button */}
+        {/* Toggle + Search row */}
         <div className={cn(
-          "flex py-2 transition-all duration-300",
-          isCollapsed ? "justify-center px-2" : "justify-end px-3"
+          "flex items-center py-2 transition-all duration-300",
+          isCollapsed ? "justify-center px-2" : "justify-end gap-1 px-3"
         )}>
+          {/* Search button / inline input — only when expanded */}
+          {!isCollapsed && (
+            <div className={cn(
+              "flex items-center overflow-hidden rounded-md transition-all duration-300 ease-in-out",
+              isSearchOpen ? "flex-1 bg-muted/50 border border-border" : "flex-none"
+            )}>
+              {isSearchOpen ? (
+                <div className="relative flex items-center w-full">
+                  <Search className="absolute left-2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setSearchQuery('');
+                        setIsSearchOpen(false);
+                      }
+                    }}
+                    onBlur={() => {
+                      if (!searchQuery.trim()) {
+                        setIsSearchOpen(false);
+                      }
+                    }}
+                    placeholder={t('search.placeholder')}
+                    className="w-full bg-transparent pl-7 pr-7 py-1 text-sm placeholder:text-muted-foreground/60 focus:outline-none"
+                  />
+                  {searchQuery && (
+                    <button
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => { setSearchQuery(''); searchInputRef.current?.focus(); }}
+                      className="absolute right-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={t('search.clear')}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0"
+                      onClick={() => {
+                        setIsSearchOpen(true);
+                        requestAnimationFrame(() => searchInputRef.current?.focus());
+                      }}
+                      aria-label={t('search.placeholder')}
+                    >
+                      <Search className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {t('search.placeholder')}
+                    <kbd className="ml-2 rounded border border-border bg-secondary px-1 font-mono text-[10px]">/</kbd>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )}
+
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-7 w-7 shrink-0"
                 onClick={toggleSidebar}
                 aria-label={isCollapsed ? t('actions.expandSidebar') : t('actions.collapseSidebar')}
               >
@@ -988,38 +1055,6 @@ const toggleGroupExpansion = (groupId: string) => {
         </div>
 
         <Separator />
-
-        {/* Search input - only visible when expanded */}
-        {!isCollapsed && (
-          <div className="px-3 py-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
-                    setSearchQuery('');
-                    searchInputRef.current?.blur();
-                  }
-                }}
-                placeholder={t('search.placeholder')}
-                className="w-full pl-8 pr-7 py-1.5 text-sm rounded-md bg-muted/50 border border-border placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => { setSearchQuery(''); searchInputRef.current?.focus(); }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  aria-label={t('search.clear')}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Navigation */}
         <ScrollArea className="flex-1">
