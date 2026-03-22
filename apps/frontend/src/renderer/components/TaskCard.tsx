@@ -32,7 +32,7 @@ import {
   JSON_ERROR_PREFIX,
   JSON_ERROR_TITLE_SUFFIX
 } from '../../shared/constants';
-import { startTask, stopTask, checkTaskRunning, recoverStuckTask, isIncompleteHumanReview, archiveTasks, hasRecentActivity } from '../stores/task-store';
+import { useTaskStore, startTask, stopTask, checkTaskRunning, recoverStuckTask, isIncompleteHumanReview, archiveTasks, hasRecentActivity } from '../stores/task-store';
 import { useProjectStore } from '../stores/project-store';
 import type { Task, TaskCategory, ReviewReason, TaskStatus } from '../../shared/types';
 import {useFormatRelativeTime} from "@/hooks/useFormatRelativeTime";
@@ -582,6 +582,23 @@ export const TaskCard = memo(function TaskCard({
   const deleteButtonRef = useRef<HTMLButtonElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
 
+  // ── Spotlight (jump-to from Pixel Office) ─────────────────
+  const [isSpotlit, setIsSpotlit] = useState(false);
+  const jumpToTaskId = useTaskStore((s) => s.jumpToTaskId);
+  const clearJump    = useTaskStore((s) => s.clearJump);
+
+  useEffect(() => {
+    if (jumpToTaskId !== task.id) return;
+    // Small delay so the Kanban view has time to mount before scrolling
+    const scrollTimer = setTimeout(() => {
+      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      setIsSpotlit(true);
+      clearJump();
+    }, 120);
+    const clearTimer = setTimeout(() => setIsSpotlit(false), 120 + 2200); // 3 × 0.7s animation
+    return () => { clearTimeout(scrollTimer); clearTimeout(clearTimer); };
+  }, [jumpToTaskId, task.id, clearJump]);
+
   // Get project details from store to access projectPath
   const projects = useProjectStore((state) => state.projects);
   const currentProject = projects.find((p) => p.id === task.projectId);
@@ -759,8 +776,8 @@ export const TaskCard = memo(function TaskCard({
         isStuck && 'ring-2 ring-warning border-warning task-stuck-pulse',
         isArchived && 'opacity-60 hover:opacity-80',
         isSelectable && isSelected && 'ring-2 ring-ring border-ring bg-accent/10',
-        // Azure DevOps imported tasks - custom CSS class for negative styling
-        isFromAzureDevOps && 'azure-devops-task'
+        isFromAzureDevOps && 'azure-devops-task',
+        isSpotlit && 'ring-2 task-spotlight' // violet spotlight on jump-to
       )}
       onClick={handleCardClick}
       onMouseDown={(e) => {

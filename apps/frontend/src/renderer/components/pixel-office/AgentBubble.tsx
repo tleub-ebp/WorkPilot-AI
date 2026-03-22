@@ -93,6 +93,11 @@ const ACTIVITY_INFO: Record<string, ActivityInfo> = {
     description: () => "Ce terminal a été fermé.",
     color: '#E74C3C', bgColor: 'rgba(231,76,60,0.12)',
   },
+  pending: {
+    emoji: '⏳', label: 'File d\'attente',
+    description: () => "Cette tâche attend son lancement. Démarre-la depuis le Kanban.",
+    color: '#8B5CF6', bgColor: 'rgba(139,92,246,0.12)',
+  },
 };
 
 const PHASE_COLOR: Record<string, string> = {
@@ -102,6 +107,7 @@ const PHASE_COLOR: Record<string, string> = {
 };
 
 function getAgentColor(agent: PixelAgent): string {
+  if (agent.activity === 'pending') return '#8B5CF6';
   if (agent.type === 'task') return PHASE_COLOR[agent.phase ?? 'idle'] ?? '#6B7280';
   return ACTIVITY_INFO[agent.activity]?.color ?? '#6B7280';
 }
@@ -252,8 +258,7 @@ function LogStream({ taskId }: { readonly taskId: string }) {
             <div className="p-3 space-y-1">
               {visibleLines.map((line, i) => (
                 <p
-                  // biome-ignore lint/suspicious/noArrayIndexKey: log lines have no stable id
-                  key={i}
+                  key={`${line}-${i}`}
                   className="text-[11px] font-mono leading-relaxed break-all"
                   style={{ color: logLineColor(line) }}
                 >
@@ -264,6 +269,55 @@ function LogStream({ taskId }: { readonly taskId: string }) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Pending task panel (planning/queued) ──────────────────────
+
+function PendingTaskPanel({
+  onGoToTask,
+  onClose,
+}: {
+  readonly onGoToTask: () => void;
+  readonly onClose: () => void;
+}) {
+  return (
+    <div className="flex flex-col flex-1 min-h-0">
+      <div className="px-4 py-4 flex-1">
+        <p className="text-xs text-white/75 leading-relaxed">
+          Cette tâche est en file d&apos;attente et n&apos;a pas encore démarré. Rends-toi dans le
+          Kanban pour la lancer, la prioriser ou modifier sa spécification.
+        </p>
+        <div
+          className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] font-mono"
+          style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', color: 'rgba(196,181,253,0.8)' }}
+        >
+          <span>📋</span>
+          <span>En attente d&apos;un agent disponible</span>
+        </div>
+      </div>
+      <div
+        className="flex gap-1.5 px-4 pb-4 shrink-0"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px', marginTop: '2px' }}
+      >
+        <Button
+          size="sm" variant="ghost"
+          className="h-7 px-2.5 text-[11px] text-white/60 hover:text-white hover:bg-white/10"
+          onClick={onGoToTask}
+        >
+          <LayoutDashboard className="h-3 w-3 mr-1" />
+          Voir dans Kanban
+        </Button>
+        <Button
+          size="sm" variant="ghost"
+          className="h-7 px-2.5 text-[11px] text-white/40 hover:text-white/60 ml-auto"
+          onClick={onClose}
+        >
+          <X className="h-3 w-3 mr-1" />
+          Fermer
+        </Button>
+      </div>
     </div>
   );
 }
@@ -539,11 +593,57 @@ export function AgentBubble({
   // Arrow points up to the agent: clamp so it stays within the bubble bounds
   const arrowLeft = Math.max(20, Math.min(anchorX - 16, (globalThis.innerWidth ?? 1200) - 32 - 20));
 
-  const isTaskAgent = agent.type === 'task';
-  const phaseInfo   = PHASE_INFO[agent.phase ?? 'idle'] ?? PHASE_INFO.idle;
-  const actInfo     = ACTIVITY_INFO[agent.activity] ?? ACTIVITY_INFO.idle;
-  const headerEmoji = isTaskAgent ? phaseInfo.emoji : actInfo.emoji;
-  const headerLabel = isTaskAgent ? phaseInfo.label : actInfo.label;
+  const isTaskAgent  = agent.type === 'task';
+  const isPending    = agent.activity === 'pending';
+  const phaseInfo    = PHASE_INFO[agent.phase ?? 'idle'] ?? PHASE_INFO.idle;
+  const actInfo      = ACTIVITY_INFO[agent.activity] ?? ACTIVITY_INFO.idle;
+  const pendingInfo  = ACTIVITY_INFO.pending;
+
+  // Extract header information based on agent state
+  let headerEmoji: string;
+  let headerLabel: string;
+  
+  if (isPending) {
+    headerEmoji = pendingInfo.emoji;
+    headerLabel = pendingInfo.label;
+  } else if (isTaskAgent) {
+    headerEmoji = phaseInfo.emoji;
+    headerLabel = phaseInfo.label;
+  } else {
+    headerEmoji = actInfo.emoji;
+    headerLabel = actInfo.label;
+  }
+
+  // Determine which panel to render based on agent state
+  const bodyPanel = (() => {
+    if (isPending) {
+      return <PendingTaskPanel onGoToTask={onGoToTask} onClose={onClose} />;
+    }
+    
+    if (isTaskAgent) {
+      return (
+        <TaskPanel
+          agent={agent}
+          color={color}
+          onGoToTask={onGoToTask}
+          onStopTask={onStopTask}
+          onClose={onClose}
+        />
+      );
+    }
+    
+    return (
+      <TerminalPanel
+        agent={agent}
+        terminal={terminal}
+        onGoToTerminal={onGoToTerminal}
+        onKill={onKill}
+        onInterrupt={onInterrupt}
+        onResumeClaude={onResumeClaude}
+        onSendCommand={onSendCommand}
+      />
+    );
+  })();
 
   return (
     // biome-ignore lint/a11y/noNoninteractiveElementInteractions: bubble captures clicks to prevent backdrop close
@@ -617,25 +717,7 @@ export function AgentBubble({
 
         {/* Body — split by agent type */}
         <div className="flex flex-col flex-1 min-h-0">
-          {isTaskAgent ? (
-            <TaskPanel
-              agent={agent}
-              color={color}
-              onGoToTask={onGoToTask}
-              onStopTask={onStopTask}
-              onClose={onClose}
-            />
-          ) : (
-            <TerminalPanel
-              agent={agent}
-              terminal={terminal}
-              onGoToTerminal={onGoToTerminal}
-              onKill={onKill}
-              onInterrupt={onInterrupt}
-              onResumeClaude={onResumeClaude}
-              onSendCommand={onSendCommand}
-            />
-          )}
+          {bodyPanel}
         </div>
       </div>
     </div>

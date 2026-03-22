@@ -339,7 +339,8 @@ export function PixelOfficeCanvas({ width, height, onAgentClick }: PixelOfficeCa
 
     const deskSprite  = getDeskSprite();
     const chairSprite = getChairSprite();
-    const totalSeats  = Math.max(agents.length, 4);
+    const deskAgents  = agents.filter(a => a.seatIndex >= 0);
+    const totalSeats  = Math.max(deskAgents.length, 4);
     const animFrame   = Math.floor(frame / 15) % 2;
 
     for (let i = 0; i < totalSeats; i++) {

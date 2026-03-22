@@ -9,7 +9,9 @@ import { ipcMain, type BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '../../shared/constants/ipc';
 import path from 'node:path';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { spawn, type ChildProcess } from 'node:child_process';
+import { getConfiguredPythonPath } from '../python-env-manager';
 
 /** Tracks running fix/retry processes by incident ID so they can be cancelled. */
 const activeFixProcesses = new Map<string, ChildProcess>();
@@ -474,16 +476,32 @@ async function getEmptyDashboardWithPersistedData(projectPath: string) {
   };
 }
 
+function getBackendDir(): string {
+  // In packaged app: resources/backend | In dev: apps/backend
+  const devPath = path.resolve(__dirname, '..', '..', '..', '..', 'apps', 'backend');
+  const resourcesPath = path.resolve(process.resourcesPath || '', 'backend');
+  return existsSync(resourcesPath) ? resourcesPath : devPath;
+}
+
 function getRunnerPath(): string {
-  return path.join(__dirname, '..', '..', '..', '..', 'backend', 'runners', 'self_healing_runner.py');
+  return path.join(getBackendDir(), 'runners', 'self_healing_runner.py');
 }
 
 function runSelfHealingCommand(projectPath: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    const proc = spawn('python', [getRunnerPath(), '--project', projectPath, ...args], {
-      cwd: projectPath,
+    const backendDir = getBackendDir();
+    const pythonPath = getConfiguredPythonPath() || 'python3';
+    const proc = spawn(pythonPath, [getRunnerPath(), '--project', projectPath, ...args], {
+      cwd: backendDir,
       stdio: ['ignore', 'pipe', 'pipe'],
       timeout: 120000,
+      env: {
+        ...process.env,
+        PYTHONPATH: backendDir,
+        PYTHONUNBUFFERED: '1',
+        PYTHONIOENCODING: 'utf-8',
+        PYTHONUTF8: '1',
+      },
     });
 
     let stdout = '';
@@ -516,10 +534,19 @@ function runSelfHealingCommandStreaming(
   trackKey: string,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    const proc = spawn('python', [getRunnerPath(), '--project', projectPath, ...args], {
-      cwd: projectPath,
+    const backendDir = getBackendDir();
+    const pythonPath = getConfiguredPythonPath() || 'python3';
+    const proc = spawn(pythonPath, [getRunnerPath(), '--project', projectPath, ...args], {
+      cwd: backendDir,
       stdio: ['ignore', 'pipe', 'pipe'],
       timeout: 300000,
+      env: {
+        ...process.env,
+        PYTHONPATH: backendDir,
+        PYTHONUNBUFFERED: '1',
+        PYTHONIOENCODING: 'utf-8',
+        PYTHONUTF8: '1',
+      },
     });
 
     activeFixProcesses.set(trackKey, proc);
