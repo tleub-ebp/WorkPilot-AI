@@ -107,30 +107,30 @@ class WorkflowLogger:
     
     def _format_log_message(self, event: WorkflowEvent) -> str:
         """Format workflow event for readable logging."""
-        # Create visual indicators
+        # Create visual indicators (ASCII-safe for Windows cp1252 consoles)
         type_icons = {
-            WorkflowType.AGENT: "🤖",
-            WorkflowType.SKILL: "⚡", 
-            WorkflowType.HOOK: "🪝",
-            WorkflowType.ORCHESTRATOR: "🎼",
-            WorkflowType.STREAMING: "📡",
-            WorkflowType.PHASE: "🔄",
-            WorkflowType.TASK: "📋"
+            WorkflowType.AGENT: "[AGENT]",
+            WorkflowType.SKILL: "[SKILL]",
+            WorkflowType.HOOK: "[HOOK]",
+            WorkflowType.ORCHESTRATOR: "[ORCH]",
+            WorkflowType.STREAMING: "[STREAM]",
+            WorkflowType.PHASE: "[PHASE]",
+            WorkflowType.TASK: "[TASK]",
         }
-        
+
         status_icons = {
-            WorkflowStatus.START: "▶️",
-            WorkflowStatus.END: "✅",
-            WorkflowStatus.ERROR: "❌",
-            WorkflowStatus.TIMEOUT: "⏰",
-            WorkflowStatus.CANCELLED: "🛑"
+            WorkflowStatus.START: ">>",
+            WorkflowStatus.END: "OK",
+            WorkflowStatus.ERROR: "ERR",
+            WorkflowStatus.TIMEOUT: "TIMEOUT",
+            WorkflowStatus.CANCELLED: "CANCEL",
         }
-        
-        icon = type_icons.get(event.workflow_type, "📝")
-        status_icon = status_icons.get(event.status, "❓")
+
+        icon = type_icons.get(event.workflow_type, "[LOG]")
+        status_icon = status_icons.get(event.status, "?")
         
         # Build base message
-        msg = f"{icon} [{event.workflow_type.value.upper()}] {status_icon} {event.component_name}"
+        msg = f"{icon} {status_icon} {event.component_name}"
         
         # Add action
         if event.action:

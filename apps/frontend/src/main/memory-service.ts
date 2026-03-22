@@ -7,10 +7,10 @@
  * LadybugDB stores data in Kuzu format at ~/.auto-claude/memories/<database>/
  */
 
-import { spawn } from 'child_process';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-import * as fs from 'fs';
+import { spawn } from 'node:child_process';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import * as fs from 'node:fs';
 import { app } from 'electron';
 
 // ESM-compatible __dirname
@@ -434,10 +434,17 @@ async function executeSemanticQuery(
  * Memory Service for querying graph memories from LadybugDB
  */
 export class MemoryService {
-  private config: MemoryServiceConfig;
+  private readonly config: MemoryServiceConfig;
 
   constructor(config: MemoryServiceConfig) {
     this.config = config;
+  }
+
+  /**
+   * Get the service configuration
+   */
+  getConfig(): MemoryServiceConfig {
+    return this.config;
   }
 
   /**
@@ -739,8 +746,8 @@ let serviceInstance: MemoryService | null = null;
 export function getMemoryService(config: MemoryServiceConfig): MemoryService {
   if (
     !serviceInstance ||
-    serviceInstance['config'].dbPath !== config.dbPath ||
-    serviceInstance['config'].database !== config.database
+    serviceInstance.getConfig()?.dbPath !== config.dbPath ||
+    serviceInstance.getConfig()?.database !== config.database
   ) {
     serviceInstance = new MemoryService(config);
   }

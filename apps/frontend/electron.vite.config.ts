@@ -96,6 +96,12 @@ export default defineConfig({
       }
     },
     server: {
+      proxy: {
+        '/analytics': {
+          target: 'http://localhost:9000',
+          changeOrigin: true,
+        },
+      },
       watch: {
         // Ignore directories to prevent HMR conflicts during merge operations
         // Using absolute paths and broader patterns

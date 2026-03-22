@@ -130,7 +130,8 @@ async def run_pair_programming_session(
         sys.path.insert(0, str(backend_dir))
 
     try:
-        from core.client import create_client
+        from core.client import create_agent_client
+        from core.agent_client import ContentBlockType
         from core.workflow_logger import workflow_logger
     except ImportError as e:
         emit_error(f"Failed to import backend modules: {e}")
@@ -157,7 +158,9 @@ Start by analyzing the existing codebase structure relevant to your scope, then 
 Be concrete and actually write/modify files. Show your work step by step.
 """
 
-    prompt = f"""Please implement the following as part of our pair programming session:
+    prompt = f"""{system_context}
+
+Please implement the following as part of our pair programming session:
 
 GOAL: {goal}
 YOUR SCOPE: {ai_scope}
@@ -179,7 +182,7 @@ Begin now. Be systematic and thorough."""
     emit_status("active", f"Starting AI implementation: {ai_scope}")
 
     try:
-        client = create_client(
+        client = create_agent_client(
             project_dir=project_dir,
             spec_dir=None,
             model=None,
@@ -190,51 +193,41 @@ Begin now. Be systematic and thorough."""
         last_message_check = time.time()
 
         async with client:
-            async for event in client.stream(
-                prompt=prompt,
-                system=system_context,
-            ):
-                event_type = event.get("type", "")
+            await client.query(prompt)
 
-                # Check for user messages every 5 seconds
+            async for msg in client.receive_response():
+                # Check for user messages periodically
                 if time.time() - last_message_check > 5:
                     last_message_check = time.time()
                     pending = read_pending_messages(messages_file)
-                    for msg in pending:
-                        emit_stream(f"\n\n[Developer says: {msg.get('content', '')}]\n\n")
+                    for pending_msg in pending:
+                        emit_stream(f"\n\n[Developer says: {pending_msg.get('content', '')}]\n\n")
 
-                if event_type == "text":
-                    content = event.get("content", "")
-                    if content:
-                        accumulated_response.append(content)
-                        emit_stream(content)
+                for block in msg.content:
+                    if block.type == ContentBlockType.TEXT and block.text:
+                        accumulated_response.append(block.text)
+                        emit_stream(block.text)
 
                         # Detect file operations in the stream
-                        lower = content.lower()
+                        lower = block.text.lower()
                         if "creating file" in lower or "writing file" in lower or "create file" in lower:
-                            # Try to extract file path from context
-                            emit_action("file_created", content[:120].strip())
+                            emit_action("file_created", block.text[:120].strip())
                         elif "modifying" in lower or "updating" in lower or "editing" in lower:
-                            emit_action("file_modified", content[:120].strip())
+                            emit_action("file_modified", block.text[:120].strip())
 
-                elif event_type == "tool_use":
-                    tool_name = event.get("name", "")
-                    tool_input = event.get("input", {})
+                    elif block.type == ContentBlockType.TOOL_USE:
+                        tool_name = block.tool_name or ""
+                        inp = block.tool_input or {}
 
-                    if tool_name in ("create_file", "write_file"):
-                        file_path = tool_input.get("path", tool_input.get("file_path", ""))
-                        emit_action("file_created", f"Created {file_path}", file_path)
-                    elif tool_name in ("edit_file", "str_replace_editor"):
-                        file_path = tool_input.get("path", tool_input.get("file_path", ""))
-                        emit_action("file_modified", f"Modified {file_path}", file_path)
-                    elif tool_name == "bash":
-                        cmd = str(tool_input.get("command", ""))[:80]
-                        emit_action("command_run", f"Running: {cmd}")
-
-                elif event_type == "error":
-                    error_msg = event.get("message", "Unknown error")
-                    emit_error(error_msg)
-                    return
+                        if tool_name in ("create_file", "write_file"):
+                            file_path = inp.get("path", inp.get("file_path", ""))
+                            emit_action("file_created", f"Created {file_path}", file_path)
+                        elif tool_name in ("edit_file", "str_replace_editor"):
+                            file_path = inp.get("path", inp.get("file_path", ""))
+                            emit_action("file_modified", f"Modified {file_path}", file_path)
+                        elif tool_name == "bash":
+                            cmd = str(inp.get("command", ""))[:80]
+                            emit_action("command_run", f"Running: {cmd}")
 
         # Check for any dev scope conflicts (simple heuristic)
         full_response = "".join(accumulated_response)
@@ -248,7 +241,7 @@ Begin now. Be systematic and thorough."""
                 break
 
         summary = f"Completed AI scope: {ai_scope}. See chat for implementation details."
-        workflow_logger.log_agent_end("PairProgrammingAgent", "success", trace_id=trace_id)
+        workflow_logger.log_agent_end("PairProgrammingAgent", "pair_programming", "success", trace_id=trace_id)
         emit_done(summary)
 
     except ImportError:
@@ -257,7 +250,9 @@ Begin now. Be systematic and thorough."""
         _run_demo_session(goal, dev_scope, ai_scope, messages_file)
 
     except Exception as e:
-        workflow_logger.log_agent_end("PairProgrammingAgent", "error", trace_id=trace_id)
+        import traceback
+        traceback.print_exc()
+        workflow_logger.log_agent_end("PairProgrammingAgent", "pair_programming", "error", trace_id=trace_id)
         emit_error(f"Session failed: {e}")
 
 

@@ -16,17 +16,19 @@
       "inOut": "Entrée : {{input}} / Sortie : {{output}}"
     },
     "providers": {
-      "title": "Fournisseurs",
-      "models": "{{count}} modèle",
-      "models_plural": "{{count}} modèles"
+      "title": "Fournisseur(s)",
+      "models_one": "{{count}} modèle",
+      "models_other": "{{count}} modèles",
+      "models_plural": "{{count}} modèles",
+      "models": "{{count}} modèle"
     }
   },
   "budget": {
     "title": "Budget mensuel",
     "pctUsed": "{{pct}}% utilisé",
-    "spent": "{{amount}}$ dépensé",
-    "remaining": "{{amount}}$ restant",
-    "total": "{{amount}}$ total",
+    "spent": "{{amount}} dépensé",
+    "remaining": "{{amount}} restant",
+    "total": "{{amount}} total",
     "forecast": "Prévision fin de mois :",
     "overBudget": "Dépassement de budget"
   },

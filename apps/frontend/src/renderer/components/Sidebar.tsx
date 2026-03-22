@@ -322,8 +322,9 @@ export function Sidebar({
     saveSettings({ sidebarCollapsed: !isCollapsed });
   };
 
-  // State for CLI/Settings panel collapsible
-  const [isCliPanelExpanded, setIsCliPanelExpanded] = useState(true);
+  // CLI panel expanded state persisted in settings (default: true)
+  const isCliPanelExpanded = settings.cliPanelExpanded ?? true;
+  const setIsCliPanelExpanded = (value: boolean) => saveSettings({ cliPanelExpanded: value });
 
   // Subscribe to project-env-store for reactive GitHub/GitLab tab visibility
   const githubEnabled = useProjectEnvStore((state) => state.envConfig?.githubEnabled ?? false);

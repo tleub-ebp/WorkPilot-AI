@@ -1203,7 +1203,7 @@ export function App() {
                               <DashboardMetrics projectPath={selectedProject.path} />
                           )}
                           {activeView === 'analytics' && (
-                              <AnalyticsDashboard />
+                              <AnalyticsDashboard projectPath={selectedProject?.path} />
                           )}
                           {activeView === 'code-review' && (activeProjectId || selectedProjectId) && (
                               <CodeReview projectId={activeProjectId || selectedProjectId!} />

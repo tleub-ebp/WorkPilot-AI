@@ -31,9 +31,9 @@ interface TasksCacheEntry {
  * Persistent storage for projects and settings
  */
 export class ProjectStore {
-  private storePath: string;
-  private data: StoreData;
-  private tasksCache: Map<string, TasksCacheEntry> = new Map();
+  private readonly storePath: string;
+  private readonly data: StoreData;
+  private readonly tasksCache: Map<string, TasksCacheEntry> = new Map();
   private readonly CACHE_TTL_MS = 3000; // 3 seconds TTL for task cache
 
   constructor() {
@@ -62,7 +62,8 @@ export class ProjectStore {
         data.projects = data.projects.map((p: Project) => ({
           ...p,
           // Ensure project.path is always absolute (critical for dev mode path resolution)
-          path: ensureAbsolutePath(p.path),
+          // Also URL-decode paths that were stored with encoded characters (e.g. %20 for spaces)
+          path: ensureAbsolutePath(decodeURIComponent(p.path)),
           createdAt: new Date(p.createdAt),
           updatedAt: new Date(p.updatedAt)
         }));
@@ -87,7 +88,8 @@ export class ProjectStore {
   addProject(projectPath: string, name?: string): Project {
     // CRITICAL: Normalize to absolute path for dev mode compatibility
     // This prevents path resolution issues after app restart
-    const absolutePath = ensureAbsolutePath(projectPath);
+    // Also URL-decode paths that may have been passed with encoded characters (e.g. %20 for spaces)
+    const absolutePath = ensureAbsolutePath(decodeURIComponent(projectPath));
 
     // Check if project already exists (using absolute path for comparison)
     const existing = this.data.projects.find((p) => p.path === absolutePath);
@@ -178,13 +180,13 @@ export class ProjectStore {
    */
   saveTabState(tabState: TabState): void {
     // Filter out any project IDs that no longer exist
-    const validProjectIds = this.data.projects.map(p => p.id);
+    const validProjectIds = new Set(this.data.projects.map(p => p.id));
     this.data.tabState = {
-      openProjectIds: tabState.openProjectIds.filter(id => validProjectIds.includes(id)),
-      activeProjectId: tabState.activeProjectId && validProjectIds.includes(tabState.activeProjectId)
+      openProjectIds: tabState.openProjectIds.filter(id => validProjectIds.has(id)),
+      activeProjectId: tabState.activeProjectId && validProjectIds.has(tabState.activeProjectId)
         ? tabState.activeProjectId
         : null,
-      tabOrder: tabState.tabOrder.filter(id => validProjectIds.includes(id))
+      tabOrder: tabState.tabOrder.filter(id => validProjectIds.has(id))
     };
     this.save();
   }
@@ -200,9 +202,7 @@ export class ProjectStore {
    * Save kanban column preferences for a specific project
    */
   saveKanbanPreferences(projectId: string, preferences: KanbanPreferences): void {
-    if (!this.data.kanbanPreferences) {
-      this.data.kanbanPreferences = {};
-    }
+    this.data.kanbanPreferences ??= {};
     this.data.kanbanPreferences[projectId] = preferences;
     this.save();
   }
@@ -338,20 +338,16 @@ export class ProjectStore {
     const taskMap = new Map<string, Task>();
     for (const task of allTasks) {
       const existing = taskMap.get(task.id);
-      if (!existing) {
-        // First occurrence wins
-        taskMap.set(task.id, task);
-      } else {
+      if (existing) {
         // PREFER MAIN PROJECT over worktree - main has current user changes
         // Only use status priority when both are from same location
         const existingIsMain = existing.location === 'main';
         const newIsMain = task.location === 'main';
 
-        if (existingIsMain && !newIsMain) {
-        } else if (!existingIsMain && newIsMain) {
+        if (!existingIsMain && newIsMain) {
           // New is main, replace existing worktree
           taskMap.set(task.id, task);
-        } else {
+        } else if (existingIsMain === newIsMain) {
           // Same location - use status priority to determine which is more complete
           const existingPriority = TASK_STATUS_PRIORITY[existing.status] || 0;
           const newPriority = TASK_STATUS_PRIORITY[task.status] || 0;
@@ -362,6 +358,10 @@ export class ProjectStore {
           }
           // Otherwise keep existing version
         }
+        // If existing is main and new is worktree, keep existing (do nothing)
+      } else {
+        // First occurrence wins
+        taskMap.set(task.id, task);
       }
     }
 
@@ -464,8 +464,9 @@ export class ProjectStore {
             // Extract full Overview section until next heading or end of file
             // Use \n#{1,6}\s to match valid markdown headings (# to ######) with required space
             // This avoids truncating at # in code blocks (e.g., Python comments)
-            const overviewMatch = content.match(/## Overview\s*\n+([\s\S]*?)(?=\n#{1,6}\s|$)/);
-            if (overviewMatch) {
+            const overviewRegex = /## Overview\s*\n+([\s\S]*?)(?=\n#{1,6}\s|$)/;
+            const overviewMatch = overviewRegex.exec(content);
+            if (overviewMatch?.[1]) {
               description = overviewMatch[1].trim();
             }
           } catch {
@@ -530,8 +531,9 @@ export class ProjectStore {
             // "# Quick Spec: Title" -> "Title"
             // "# Specification: Title" -> "Title"
             // "# Title" -> "Title"
-            const titleMatch = specContent.match(/^#\s+(?:Quick Spec:|Specification:)?\s*(.+)$/m);
-            if (titleMatch?.[1]) {
+            const titleRegex = /^#\s+(?:Quick Spec:|Specification:)?\s*(.+)$/m;
+            const titleMatch = titleRegex.exec(specContent);
+            if (titleMatch && titleMatch[1]) {
               title = titleMatch[1].trim();
             }
           } catch {
@@ -543,11 +545,15 @@ export class ProjectStore {
         // Priority: executionPhase > xstateState > inferred from status
         const persistedPhase = (plan as { executionPhase?: string } | null)?.executionPhase as ExecutionPhase | undefined;
         const xstateState = (plan as { xstateState?: string } | null)?.xstateState;
-        const executionProgress = persistedPhase
-          ? { phase: persistedPhase, phaseProgress: 50, overallProgress: 50 }
-          : xstateState
-            ? this.inferExecutionProgressFromXState(xstateState)
-            : this.inferExecutionProgress(plan?.status);
+        
+        let executionProgress: { phase: ExecutionPhase; phaseProgress: number; overallProgress: number } | undefined;
+        if (persistedPhase) {
+          executionProgress = { phase: persistedPhase, phaseProgress: 50, overallProgress: 50 };
+        } else if (xstateState) {
+          executionProgress = this.inferExecutionProgressFromXState(xstateState);
+        } else {
+          executionProgress = this.inferExecutionProgress(plan?.status);
+        }
 
         tasks.push({
           id: dir.name, // Use spec directory name as ID

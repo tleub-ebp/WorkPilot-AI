@@ -3,200 +3,96 @@ import { useTranslation } from 'react-i18next';
 import {
   BarChart3,
   CheckCircle2,
-  Clock,
   AlertTriangle,
   Coins,
   TrendingUp,
-  Zap,
-  Target,
+  TrendingDown,
   RefreshCw,
   Loader2,
-  Activity,
   DollarSign,
-  Bug,
-  Code,
-  TestTube
+  GitMerge,
+  Activity,
+  FolderOpen,
+  Zap,
+  Target
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Progress } from './ui/progress';
 import { cn } from '../lib/utils';
-
-const BACKEND_URL = (import.meta.env?.VITE_BACKEND_URL as string) || 'http://localhost:9000';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-interface BuildSummary {
-  build_id: string;
-  spec_id: string;
-  spec_name?: string;
-  started_at: string;
-  completed_at?: string;
-  status: string;
-  total_duration_seconds?: number;
-  total_tokens_used: number;
-  total_cost_usd: number;
-  qa_iterations: number;
-  qa_success_rate: number;
-  llm_provider?: string;
-  llm_model?: string;
-}
-
-interface PhaseMetrics {
-  phase_name: string;
-  phase_type: string;
-  duration_seconds?: number;
-  tokens_used: number;
-  cost_usd: number;
-  success: boolean;
-  builds_count: number;
-}
-
-interface TokenMetrics {
-  date: string;
+interface CostSummaryData {
+  total_cost: number;
+  cost_by_provider: Record<string, number>;
+  cost_by_model: Record<string, number>;
   total_tokens: number;
-  total_cost_usd: number;
-  builds_count: number;
-  avg_tokens_per_build: number;
+  tokens_input: number;
+  tokens_output: number;
+  period_days: number;
+  daily_avg: number;
+  trend_pct: number;
 }
 
-interface QAMetrics {
-  date: string;
-  avg_success_rate: number;
-  total_iterations: number;
-  builds_tested: number;
-  avg_coverage: number;
-}
-
-interface ErrorMetrics {
-  error_type: string;
-  error_category: string;
-  count: number;
-  resolved_count: number;
-  resolution_rate: number;
-}
-
-interface AgentPerformanceMetrics {
-  agent_type: string;
-  llm_provider?: string;
-  llm_model?: string;
-  total_builds: number;
-  success_rate: number;
-  avg_duration_seconds: number;
-  avg_tokens_per_build: number;
-  avg_cost_per_build: number;
-}
-
-interface DashboardOverview {
-  total_builds: number;
-  successful_builds: number;
-  success_rate: number;
-  total_tokens_used: number;
-  total_cost_usd: number;
-  avg_build_duration: number;
-  recent_builds: BuildSummary[];
-  top_error_types: ErrorMetrics[];
-  phase_performance: PhaseMetrics[];
+interface SnapshotData {
+  tasks_by_status: Record<string, number>;
+  avg_completion_by_complexity: Record<string, number>;
+  qa_first_pass_rate: number;
+  qa_avg_score: number;
+  total_tokens: number;
+  tokens_by_provider: Record<string, number>;
+  total_cost: number;
+  cost_by_model: Record<string, number>;
+  merge_auto_count: number;
+  merge_manual_count: number;
 }
 
 interface AnalyticsDashboardProps {
   readonly className?: string;
+  readonly projectPath?: string;
 }
 
 // ---------------------------------------------------------------------------
-// Helper Functions
+// Helpers
 // ---------------------------------------------------------------------------
 
-const formatDuration = (seconds?: number): string => {
-  if (!seconds) return 'N/A';
-  if (seconds < 60) return `${seconds.toFixed(1)}s`;
-  if (seconds < 3600) return `${(seconds / 60).toFixed(1)}m`;
-  return `${(seconds / 3600).toFixed(1)}h`;
-};
-
-const formatTokens = (tokens: number): string => {
-  if (tokens < 1000) return tokens.toString();
-  if (tokens < 1000000) return `${(tokens / 1000).toFixed(1)}K`;
-  return `${(tokens / 1000000).toFixed(1)}M`;
-};
-
-const formatCost = (cost: number): string => {
-  return `$${cost.toFixed(4)}`;
-};
-
-const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString();
-};
-
-const getStatusColor = (status: string): string => {
-  switch (status) {
-    case 'complete': return 'text-green-600';
-    case 'failed': return 'text-red-600';
-    case 'coding': return 'text-blue-600';
-    case 'qa_review': return 'text-purple-600';
-    case 'planning': return 'text-orange-600';
-    default: return 'text-gray-600';
-  }
-};
-
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case 'complete': return <CheckCircle2 className="h-4 w-4" />;
-    case 'failed': return <AlertTriangle className="h-4 w-4" />;
-    case 'coding': return <Code className="h-4 w-4" />;
-    case 'qa_review': return <TestTube className="h-4 w-4" />;
-    case 'planning': return <Target className="h-4 w-4" />;
-    default: return <Clock className="h-4 w-4" />;
-  }
-};
+function formatTokens(n: number): string {
+  if (n < 1000) return n.toString();
+  if (n < 1_000_000) return `${(n / 1000).toFixed(1)}K`;
+  return `${(n / 1_000_000).toFixed(2)}M`;
+}
 
 // ---------------------------------------------------------------------------
-// KPI Card Component
+// KPI Card
 // ---------------------------------------------------------------------------
 
-interface KpiCardProps {
+function KpiCard({
+  title,
+  value,
+  subtitle,
+  icon,
+  className,
+}: {
   readonly title: string;
-  readonly value: string | number;
+  readonly value: string;
   readonly subtitle?: string;
   readonly icon: React.ReactNode;
-  readonly trend?: {
-    readonly value: number;
-    readonly isPositive: boolean;
-  };
   readonly className?: string;
-}
-
-function KpiCard({ title, value, subtitle, icon, trend, className }: KpiCardProps) {
+}) {
   return (
     <Card className={cn('relative overflow-hidden', className)}>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
-            {subtitle && (
-              <p className="text-xs text-muted-foreground">{subtitle}</p>
-            )}
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0 space-y-1">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
+            <p className="text-2xl font-bold text-foreground">{value}</p>
+            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="p-2 bg-muted rounded-lg">
-              {icon}
-            </div>
-            {trend && (
-              <div className={cn(
-                'flex items-center text-xs',
-                trend.isPositive ? 'text-green-600' : 'text-red-600'
-              )}>
-                <TrendingUp className="h-3 w-3 mr-1" />
-                {trend.value}%
-              </div>
-            )}
-          </div>
+          <div className="p-2.5 bg-muted rounded-lg">{icon}</div>
         </div>
       </CardContent>
     </Card>
@@ -204,389 +100,463 @@ function KpiCard({ title, value, subtitle, icon, trend, className }: KpiCardProp
 }
 
 // ---------------------------------------------------------------------------
-// Main Analytics Dashboard Component
+// Breakdown bar list (provider / model)
 // ---------------------------------------------------------------------------
 
-async function fetchJSON<T>(url: string): Promise<T> {
-  const response = await fetch(url);
-  const contentType = response.headers.get('content-type') ?? '';
-  if (!contentType.includes('application/json')) {
-    throw new Error(`Le serveur backend est inaccessible (${response.status})`);
+function BreakdownList({
+  data,
+  formatValue,
+}: {
+  readonly data: Record<string, number>;
+  readonly formatValue: (v: number) => string;
+}) {
+  const entries = Object.entries(data).sort(([, a], [, b]) => b - a).filter(([, v]) => v > 0);
+  const total = entries.reduce((s, [, v]) => s + v, 0);
+
+  if (entries.length === 0) {
+    return <p className="text-xs text-muted-foreground">—</p>;
   }
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.detail ?? `HTTP ${response.status}`);
-  }
-  return response.json() as Promise<T>;
+
+  const colors = ['bg-primary', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500', 'bg-pink-500'];
+
+  return (
+    <div className="space-y-2.5">
+      {entries.map(([name, value], idx) => {
+        const pct = total > 0 ? (value / total) * 100 : 0;
+        return (
+          <div key={name} className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-foreground font-medium capitalize truncate">{name}</span>
+              <span className="text-muted-foreground shrink-0 ml-2">{formatValue(value)} ({pct.toFixed(0)}%)</span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
+              <div
+                className={cn('h-full rounded-full transition-all', colors[idx % colors.length])}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
-export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
+// ---------------------------------------------------------------------------
+// Status bar (task statuses)
+// ---------------------------------------------------------------------------
+
+function StatusBar({ data }: { readonly data: Record<string, number> }) {
   const { t } = useTranslation('analytics');
-  const [overview, setOverview] = useState<DashboardOverview | null>(null);
-  const [builds, setBuilds] = useState<BuildSummary[]>([]);
-  const [tokenMetrics, setTokenMetrics] = useState<TokenMetrics[]>([]);
-  const [qaMetrics, setQaMetrics] = useState<QAMetrics[]>([]);
-  const [agentPerformance, setAgentPerformance] = useState<AgentPerformanceMetrics[]>([]);
+  const total = Object.values(data).reduce((a, b) => a + b, 0);
+
+  if (total === 0) {
+    return <p className="text-xs text-muted-foreground">{t('status.noData')}</p>;
+  }
+
+  const statusColors: Record<string, string> = {
+    completed: 'bg-emerald-500',
+    complete: 'bg-emerald-500',
+    in_progress: 'bg-blue-500',
+    pending: 'bg-amber-500',
+    failed: 'bg-red-500',
+    cancelled: 'bg-gray-400',
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex h-3 w-full overflow-hidden rounded-full bg-secondary">
+        {Object.entries(data).map(([status, count]) => {
+          const pct = (count / total) * 100;
+          if (pct === 0) return null;
+          return (
+            <div
+              key={status}
+              className={cn('h-full transition-all', statusColors[status] ?? 'bg-gray-300')}
+              style={{ width: `${pct}%` }}
+              title={`${status}: ${count}`}
+            />
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-3">
+        {Object.entries(data).map(([status, count]) => (
+          <div key={status} className="flex items-center gap-1.5 text-xs">
+            <div className={cn('h-2 w-2 rounded-full', statusColors[status] ?? 'bg-gray-300')} />
+            <span className="text-muted-foreground capitalize">{status.replace('_', ' ')}</span>
+            <span className="font-semibold text-foreground">{count}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
+
+export function AnalyticsDashboard({ className, projectPath }: AnalyticsDashboardProps) {
+  const { t } = useTranslation('analytics');
+  const [costSummary, setCostSummary] = useState<CostSummaryData | null>(null);
+  const [snapshot, setSnapshot] = useState<SnapshotData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDays, setSelectedDays] = useState(30);
 
   const fetchAnalytics = useCallback(async () => {
+    if (!projectPath) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-
-      const [overviewData, buildsData, tokenData, qaData, agentData] = await Promise.all([
-        fetchJSON<DashboardOverview>(`${BACKEND_URL}/analytics/overview?days=${selectedDays}`),
-        fetchJSON<BuildSummary[]>(`${BACKEND_URL}/analytics/builds?limit=20`),
-        fetchJSON<TokenMetrics[]>(`${BACKEND_URL}/analytics/metrics/tokens?days=${selectedDays}`),
-        fetchJSON<QAMetrics[]>(`${BACKEND_URL}/analytics/metrics/qa?days=${selectedDays}`),
-        fetchJSON<AgentPerformanceMetrics[]>(`${BACKEND_URL}/analytics/metrics/agent-performance?days=${selectedDays}`),
+      const [costRes, snapRes] = await Promise.allSettled([
+        globalThis.electronAPI.getCostSummary(projectPath),
+        globalThis.electronAPI.getDashboardSnapshot(projectPath),
       ]);
-      setOverview(overviewData);
-      setBuilds(buildsData);
-      setTokenMetrics(tokenData);
-      setQaMetrics(qaData);
-      setAgentPerformance(agentData);
 
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      if (costRes.status === 'fulfilled' && costRes.value.success) {
+        setCostSummary(costRes.value.summary ?? null);
+      }
+      if (snapRes.status === 'fulfilled' && snapRes.value.success) {
+        setSnapshot(snapRes.value.snapshot ?? null);
+      }
+
+      const bothFailed =
+        (costRes.status === 'rejected' || !costRes.value?.success) &&
+        (snapRes.status === 'rejected' || !snapRes.value?.success);
+      if (bothFailed) setError(t('status.error'));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('status.error'));
     } finally {
       setLoading(false);
     }
-  }, [selectedDays]);
+  }, [projectPath, t]);
 
   useEffect(() => {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
+  // ── No project selected ────────────────────────────────────────────────
+  if (!projectPath) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <FolderOpen className="h-10 w-10" />
+          <p className="text-sm">{t('empty.noProject')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Loading ────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="flex items-center space-x-2">
           <Loader2 className="h-6 w-6 animate-spin" />
-          <span>{t('status.loading')}</span>
+          <span className="text-sm text-muted-foreground">{t('status.loading')}</span>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  // ── Error ──────────────────────────────────────────────────────────────
+  if (error && !costSummary && !snapshot) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Card className="max-w-md">
-          <CardContent className="p-6 text-center">
-            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">{t('status.error')}</h3>
-            <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={fetchAnalytics}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              {t('status.retry')}
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col items-center justify-center h-96 gap-4 text-muted-foreground">
+        <AlertTriangle className="h-8 w-8" />
+        <p className="text-sm">{error}</p>
+        <Button variant="outline" size="sm" onClick={fetchAnalytics}>
+          <RefreshCw className="h-3.5 w-3.5 mr-2" />
+          {t('status.retry')}
+        </Button>
       </div>
     );
   }
 
-  if (!overview) {
-    return null;
-  }
+  // ── Derived values ─────────────────────────────────────────────────────
+  const cs = costSummary;
+  const sn = snapshot;
+
+  const totalTasks = sn ? Object.values(sn.tasks_by_status).reduce((a, b) => a + b, 0) : 0;
+  const completedTasks = sn ? (sn.tasks_by_status['completed'] ?? sn.tasks_by_status['complete'] ?? 0) : 0;
+  const successRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+  const totalCost = cs?.total_cost ?? sn?.total_cost ?? 0;
+  const totalTokens = cs?.total_tokens ?? sn?.total_tokens ?? 0;
+  const qaPassRate = sn?.qa_first_pass_rate ?? 0;
+
+  const trendPct = cs?.trend_pct ?? 0;
+  const TrendIcon = trendPct >= 0 ? TrendingUp : TrendingDown;
+  const trendColor = trendPct > 20 ? 'text-red-500' : trendPct > 0 ? 'text-amber-500' : 'text-emerald-500';
 
   return (
-    <div className={cn('space-y-6', className)}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">{t('title')}</h2>
-          <p className="text-muted-foreground">
-            {t('subtitle')}
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <select
-            value={selectedDays}
-            onChange={(e) => setSelectedDays(Number(e.target.value))}
-            className="px-3 py-2 border rounded-md"
-          >
-            <option value={7}>{t('periodSelector.last7Days')}</option>
-            <option value={30}>{t('periodSelector.last30Days')}</option>
-            <option value={90}>{t('periodSelector.last90Days')}</option>
-          </select>
+    <ScrollArea className={cn('h-full', className)}>
+      <div className="p-6 space-y-6 max-w-5xl mx-auto">
+
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">{t('title')}</h2>
+            <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
+          </div>
           <Button onClick={fetchAnalytics} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="h-3.5 w-3.5 mr-2" />
             {t('actions.refresh')}
           </Button>
         </div>
-      </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KpiCard
-          title={t('kpis.totalBuilds.title')}
-          value={overview.total_builds}
-          subtitle={`${overview.successful_builds} ${t('kpis.successfulBuilds.title').toLowerCase()}`}
-          icon={<BarChart3 className="h-5 w-5 text-blue-500" />}
-          trend={{
-            value: 12,
-            isPositive: true
-          }}
-        />
-        <KpiCard
-          title={t('kpis.successRate.title')}
-          value={`${overview.success_rate.toFixed(1)}%`}
-          subtitle={t('kpis.successRate.description')}
-          icon={<CheckCircle2 className="h-5 w-5 text-green-500" />}
-        />
-        <KpiCard
-          title={t('kpis.totalTokens.title')}
-          value={formatTokens(overview.total_tokens_used)}
-          subtitle={t('kpis.totalTokens.description')}
-          icon={<Coins className="h-5 w-5 text-orange-500" />}
-        />
-        <KpiCard
-          title={t('kpis.totalCost.title')}
-          value={`$${overview.total_cost_usd.toFixed(4)}`}
-          subtitle={t('kpis.totalCost.description')}
-          icon={<DollarSign className="h-5 w-5 text-purple-500" />}
-        />
-      </div>
+        {/* KPI cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard
+            title={t('kpis.totalBuilds.title')}
+            value={String(totalTasks)}
+            subtitle={`${completedTasks} ${t('kpis.successfulBuilds.title').toLowerCase()}`}
+            icon={<BarChart3 className="h-5 w-5 text-blue-500" />}
+          />
+          <KpiCard
+            title={t('kpis.successRate.title')}
+            value={`${successRate.toFixed(1)}%`}
+            subtitle={t('kpis.successRate.description')}
+            icon={<CheckCircle2 className="h-5 w-5 text-green-500" />}
+          />
+          <KpiCard
+            title={t('kpis.totalTokens.title')}
+            value={formatTokens(totalTokens)}
+            subtitle={t('kpis.totalTokens.description')}
+            icon={<Coins className="h-5 w-5 text-orange-500" />}
+          />
+          <KpiCard
+            title={t('kpis.totalCost.title')}
+            value={`$${totalCost.toFixed(4)}`}
+            subtitle={cs ? `${t('fields.dailyAvg')}: $${cs.daily_avg.toFixed(4)}` : t('kpis.totalCost.description')}
+            icon={<DollarSign className="h-5 w-5 text-purple-500" />}
+          />
+        </div>
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
-          <TabsTrigger value="builds">{t('tabs.builds')}</TabsTrigger>
-          <TabsTrigger value="performance">{t('tabs.performance')}</TabsTrigger>
-          <TabsTrigger value="errors">{t('tabs.errors')}</TabsTrigger>
-        </TabsList>
+        {/* Tabs */}
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
+            <TabsTrigger value="costs">{t('tabs.costs')}</TabsTrigger>
+            <TabsTrigger value="performance">{t('tabs.performance')}</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Recent Builds */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Clock className="h-5 w-5 mr-2" />
-                  {t('sections.recentBuilds')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-64">
-                  <div className="space-y-3">
-                    {overview.recent_builds.map((build) => (
-                      <div key={build.build_id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2">
-                            {getStatusIcon(build.status)}
-                            <span className="font-medium">{build.spec_name || build.spec_id}</span>
-                            <Badge variant="outline" className={getStatusColor(build.status)}>
-                              {build.status}
-                            </Badge>
-                          </div>
-                          <div className="text-sm text-muted-foreground mt-1">
-                            {formatDate(build.started_at)} • {formatDuration(build.total_duration_seconds)}
-                          </div>
+          {/* ── Overview tab ──────────────────────────────────────────── */}
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Task status */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                    <Target className="h-4 w-4" />
+                    {t('sections.tasksByStatus')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {sn ? (
+                    <StatusBar data={sn.tasks_by_status} />
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{t('status.noData')}</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* QA + Merge stats */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                    <Activity className="h-4 w-4" />
+                    {t('sections.qaMetrics')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {sn ? (
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">{t('fields.qaPassRate')}</span>
+                          <span className="font-semibold text-foreground">{sn.qa_first_pass_rate.toFixed(1)}%</span>
                         </div>
-                        <div className="text-right text-sm">
-                          <div>{formatTokens(build.total_tokens_used)} tokens</div>
-                          <div>{formatCost(build.total_cost_usd)}</div>
+                        <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-emerald-500 transition-all"
+                            style={{ width: `${Math.min(sn.qa_first_pass_rate, 100)}%` }}
+                          />
                         </div>
                       </div>
-                    ))}
+                      <div className="grid grid-cols-2 gap-3 pt-1">
+                        <div className="text-xs">
+                          <p className="text-muted-foreground">{t('fields.mergeAuto')}</p>
+                          <p className="font-semibold text-foreground text-base">{sn.merge_auto_count}</p>
+                        </div>
+                        <div className="text-xs">
+                          <p className="text-muted-foreground">{t('fields.mergeManual')}</p>
+                          <p className="font-semibold text-foreground text-base">{sn.merge_manual_count}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{t('status.noData')}</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* ── Costs tab ─────────────────────────────────────────────── */}
+          <TabsContent value="costs" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Cost by provider */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold">{t('sections.costByProvider')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {cs ? (
+                    <BreakdownList
+                      data={cs.cost_by_provider}
+                      formatValue={(v) => `$${v.toFixed(4)}`}
+                    />
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{t('status.noData')}</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Cost by model */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold">{t('sections.costByModel')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {cs ? (
+                    <BreakdownList
+                      data={cs.cost_by_model}
+                      formatValue={(v) => `$${v.toFixed(4)}`}
+                    />
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{t('status.noData')}</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Daily avg + trend card */}
+            {cs && (
+              <Card>
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        {t('fields.dailyAvg')}
+                      </p>
+                      <p className="mt-1 text-xl font-bold text-foreground">${cs.daily_avg.toFixed(4)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t('fields.overDays', { days: cs.period_days })}
+                      </p>
+                    </div>
+                    <div className={cn('flex items-center gap-1 text-sm font-medium', trendColor)}>
+                      <TrendIcon className="h-4 w-4" />
+                      <span>
+                        {trendPct >= 0 ? '+' : ''}{trendPct.toFixed(0)}% {t('fields.trend')}
+                      </span>
+                    </div>
                   </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-            {/* Phase Performance */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Activity className="h-5 w-5 mr-2" />
-                  {t('sections.phasePerformance')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {overview.phase_performance.map((phase) => (
-                    <div key={phase.phase_name} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{phase.phase_name}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {phase.builds_count} builds
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-4 text-sm">
-                        <span>{formatDuration(phase.duration_seconds)}</span>
-                        <span>{formatTokens(phase.tokens_used)} tokens</span>
-                        <span>{formatCost(phase.cost_usd)}</span>
-                        <Badge variant={phase.success ? 'default' : 'destructive'}>
-                          {phase.success ? 'Success' : 'Failed'}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+          {/* ── Performance tab ────────────────────────────────────────── */}
+          <TabsContent value="performance" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Tokens by provider */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                    <Zap className="h-4 w-4" />
+                    {t('sections.tokensByProvider')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {sn && Object.keys(sn.tokens_by_provider).length > 0 ? (
+                    <BreakdownList
+                      data={sn.tokens_by_provider}
+                      formatValue={(v) => formatTokens(v)}
+                    />
+                  ) : cs ? (
+                    <BreakdownList
+                      data={cs.cost_by_provider}
+                      formatValue={(_v) => formatTokens(cs.total_tokens)}
+                    />
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{t('status.noData')}</p>
+                  )}
+                </CardContent>
+              </Card>
 
-        <TabsContent value="builds" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Builds</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-96">
-                <div className="space-y-3">
-                  {builds.map((build) => (
-                    <div key={build.build_id} className="p-4 border rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          {getStatusIcon(build.status)}
-                          <span className="font-medium">{build.spec_name || build.spec_id}</span>
-                          <Badge variant="outline" className={getStatusColor(build.status)}>
-                            {build.status}
-                          </Badge>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatDate(build.started_at)}
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Duration:</span>
-                          <div>{formatDuration(build.total_duration_seconds)}</div>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Tokens:</span>
-                          <div>{formatTokens(build.total_tokens_used)}</div>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Cost:</span>
-                          <div>{formatCost(build.total_cost_usd)}</div>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">QA Iterations:</span>
-                          <div>{build.qa_iterations}</div>
-                        </div>
-                      </div>
+              {/* Completion by complexity */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                    <GitMerge className="h-4 w-4" />
+                    {t('sections.completionByComplexity')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {sn && Object.keys(sn.avg_completion_by_complexity).length > 0 ? (
+                    <div className="space-y-2">
+                      {Object.entries(sn.avg_completion_by_complexity)
+                        .sort(([, a], [, b]) => a - b)
+                        .map(([complexity, avgSecs]) => (
+                          <div key={complexity} className="flex items-center justify-between text-xs">
+                            <span className="text-foreground capitalize font-medium">{complexity}</span>
+                            <span className="text-muted-foreground">
+                              {avgSecs < 60
+                                ? `${avgSecs.toFixed(0)}s`
+                                : avgSecs < 3600
+                                  ? `${(avgSecs / 60).toFixed(1)}m`
+                                  : `${(avgSecs / 3600).toFixed(1)}h`}
+                            </span>
+                          </div>
+                        ))}
                     </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{t('status.noData')}</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
-        <TabsContent value="performance" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Agent Performance */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Zap className="h-5 w-5 mr-2" />
-                  Agent Performance
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {agentPerformance.map((agent) => (
-                    <div key={`${agent.agent_type}-${agent.llm_provider}`} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{agent.agent_type}</span>
-                        <Badge variant="outline">
-                          {agent.llm_provider} • {agent.llm_model}
-                        </Badge>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Success Rate:</span>
-                          <div>{agent.success_rate.toFixed(1)}%</div>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Avg Duration:</span>
-                          <div>{formatDuration(agent.avg_duration_seconds)}</div>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Avg Tokens:</span>
-                          <div>{formatTokens(agent.avg_tokens_per_build)}</div>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Avg Cost:</span>
-                          <div>{formatCost(agent.avg_cost_per_build)}</div>
-                        </div>
-                      </div>
-                      <Progress value={agent.success_rate} className="h-2" />
+            {/* Input / Output tokens split */}
+            {cs && (
+              <Card>
+                <CardContent className="p-5">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                    {t('sections.tokenSplit')}
+                  </p>
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground text-xs">{t('fields.totalTokens')}</p>
+                      <p className="font-bold text-foreground">{formatTokens(cs.total_tokens)}</p>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Token Usage Trend */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Coins className="h-5 w-5 mr-2" />
-                  Token Usage Trend
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {tokenMetrics.slice(-7).map((metric) => (
-                    <div key={metric.date} className="flex items-center justify-between">
-                      <span className="text-sm">{formatDate(metric.date)}</span>
-                      <div className="flex items-center space-x-4 text-sm">
-                        <span>{formatTokens(metric.total_tokens)}</span>
-                        <span>{formatCost(metric.total_cost_usd)}</span>
-                        <span>{metric.builds_count} builds</span>
-                      </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">{t('fields.inputTokens')}</p>
+                      <p className="font-bold text-foreground">{formatTokens(cs.tokens_input)}</p>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="errors" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Bug className="h-5 w-5 mr-2" />
-                Top Error Types
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {overview.top_error_types.map((error) => (
-                  <div key={error.error_type} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium">{error.error_type}</span>
-                        <Badge variant="outline">{error.error_category}</Badge>
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        {error.count} occurrences
-                      </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">{t('fields.outputTokens')}</p>
+                      <p className="font-bold text-foreground">{formatTokens(cs.tokens_output)}</p>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium">{error.resolution_rate.toFixed(1)}% resolved</div>
-                      <div className="text-xs text-muted-foreground">
-                        {error.resolved_count}/{error.count}
-                      </div>
-                    </div>
-                    <Progress value={error.resolution_rate} className="w-20 h-2 ml-4" />
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </ScrollArea>
   );
 }
