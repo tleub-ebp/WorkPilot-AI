@@ -732,7 +732,7 @@ const toggleGroupExpansion = (groupId: string) => {
                     <div
                       key={sg.key}
                       className={cn(
-                        "rounded bg-muted/30 px-1 py-1",
+                        "rounded bg-white/4 border border-white/8 px-1 py-1",
                         sgIndex > 0 && "mt-1"
                       )}
                     >
@@ -825,7 +825,7 @@ const toggleGroupExpansion = (groupId: string) => {
                 <div
                   key={sg.key}
                   className={cn(
-                    "rounded-lg bg-muted/50 border border-border/40 px-1.5 py-1.5",
+                    "rounded-lg bg-white/4 border border-white/8 px-1.5 py-1.5",
                     sgIndex > 0 && "mt-2"
                   )}
                 >
@@ -953,9 +953,9 @@ const toggleGroupExpansion = (groupId: string) => {
               </Button>
             </CollapsibleTrigger>
             
-            <CollapsibleContent className="space-y-3 mt-2">
+            <CollapsibleContent className="mt-2 space-y-2">
               {/* CLI Tools — compact grouped badges */}
-              <div className="space-y-0.5">
+              <div className="rounded-lg bg-white/4 border border-white/8 p-2 space-y-0.5">
                 <ClaudeCodeStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />
                 <CopilotCliStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />
                 <CodexCliStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />
@@ -963,7 +963,7 @@ const toggleGroupExpansion = (groupId: string) => {
 
               {/* Settings and Help row */}
               <div className={cn(
-                "flex items-center",
+                "flex items-center rounded-lg bg-white/4 border border-white/8 p-1.5",
                 isCollapsed ? "flex-col gap-1" : "gap-2"
               )}>
                 <Tooltip>
