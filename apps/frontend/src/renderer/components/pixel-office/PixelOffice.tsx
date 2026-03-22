@@ -21,9 +21,164 @@ import { Badge } from '../ui/badge';
 import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
 import { useTerminalStore } from '../../stores/terminal-store';
 import { useTaskStore } from '../../stores/task-store';
-import { usePixelOfficeStore } from '../../stores/pixel-office-store';
+import { usePixelOfficeStore, type PixelAgent } from '../../stores/pixel-office-store';
 import { PixelOfficeCanvas } from './PixelOfficeCanvas';
 import { AgentBubble, AddAgentButton } from './AgentBubble';
+import { getCharacterSprite } from './pixel-sprites';
+
+// ── Mini pixel character (for the waiting queue) ─────────────
+
+function MiniPixelChar({ characterIndex }: { readonly characterIndex: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const frameRef  = useRef(0);
+
+  useEffect(() => {
+    let animId = 0;
+    let lastTime = 0;
+
+    const render = (time: number) => {
+      if (time - lastTime > 700) {
+        frameRef.current = (frameRef.current + 1) % 2;
+        lastTime = time;
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.imageSmoothingEnabled = false;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const sprite = getCharacterSprite(characterIndex, 'down', frameRef.current);
+            ctx.drawImage(sprite, 0, 0, canvas.width, canvas.height);
+          }
+        }
+      }
+      animId = requestAnimationFrame(render);
+    };
+
+    // Initial draw
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.imageSmoothingEnabled = false;
+        const sprite = getCharacterSprite(characterIndex, 'down', 0);
+        ctx.drawImage(sprite, 0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    animId = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(animId);
+  }, [characterIndex]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={16}
+      height={24}
+      style={{ imageRendering: 'pixelated', width: 32, height: 48 }}
+    />
+  );
+}
+
+// ── Waiting queue strip ───────────────────────────────────────
+
+interface WaitingQueueProps {
+  readonly agents: PixelAgent[];
+  readonly onAgentClick: (agentId: string, x: number, y: number) => void;
+}
+
+function WaitingQueue({ agents, onAgentClick }: WaitingQueueProps) {
+  if (agents.length === 0) return null;
+
+  return (
+    <div
+      className="absolute bottom-0 left-0 right-0 pointer-events-none"
+      style={{ zIndex: 20 }}
+    >
+      <div
+        className="mx-4 mb-3 rounded-2xl pointer-events-auto overflow-hidden"
+        style={{
+          background: 'linear-gradient(to top, rgba(10,8,30,0.97) 0%, rgba(20,14,50,0.92) 100%)',
+          border: '1px solid rgba(139,92,246,0.35)',
+          boxShadow: '0 -4px 24px rgba(139,92,246,0.12)',
+        }}
+      >
+        {/* Sign / header */}
+        <div className="flex items-center gap-2.5 px-4 pt-3 pb-2">
+          <div
+            className="w-2 h-2 rounded-full shrink-0"
+            style={{ background: '#8B5CF6', boxShadow: '0 0 6px #8B5CF6', animation: 'pulse 2s ease-in-out infinite' }}
+          />
+          <span className="text-xs font-mono font-bold" style={{ color: '#C4B5FD' }}>
+            ⏳ En attente de lancement
+          </span>
+          <span className="text-[10px] font-mono ml-auto" style={{ color: 'rgba(167,139,250,0.5)' }}>
+            {agents.length} tâche{agents.length > 1 ? 's' : ''} en file
+          </span>
+        </div>
+
+        {/* Bench line */}
+        <div className="mx-4 mb-2 h-px" style={{ background: 'rgba(139,92,246,0.2)' }} />
+
+        {/* Agents queue */}
+        <div className="flex gap-3 px-4 pb-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          {agents.map((agent) => (
+            <button
+              key={agent.id}
+              type="button"
+              className="flex flex-col items-center gap-1 group transition-opacity hover:opacity-100"
+              style={{ opacity: 0.75, minWidth: 48 }}
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const parentRect = e.currentTarget.closest('.relative')?.getBoundingClientRect();
+                if (!parentRect) return;
+                onAgentClick(
+                  agent.id,
+                  rect.left - parentRect.left + rect.width / 2,
+                  0, // bubble from top
+                );
+              }}
+              title={agent.fullName}
+            >
+              {/* Slow-bob wrapper */}
+              <div style={{ animation: 'waitBob 2.5s ease-in-out infinite', animationDelay: `${(agent.waitingIndex ?? 0) * 0.4}s` }}>
+                <MiniPixelChar characterIndex={agent.characterIndex} />
+              </div>
+              {/* Violet glow dot */}
+              <div
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ background: '#8B5CF6', opacity: 0.7 }}
+              />
+              {/* Name */}
+              <span
+                className="text-[9px] font-mono text-center leading-tight max-w-[52px] truncate"
+                style={{ color: 'rgba(196,181,253,0.65)' }}
+                title={agent.fullName}
+              >
+                {agent.name}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Bench plank at the bottom */}
+        <div
+          className="mx-4 mb-3 rounded-lg h-2"
+          style={{ background: 'linear-gradient(to bottom, #3D2A6E, #2A1A50)', border: '1px solid rgba(139,92,246,0.3)' }}
+        />
+      </div>
+
+      {/* Keyframe for bob animation injected once */}
+      <style>{`
+        @keyframes waitBob {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 
 interface PixelOfficeProps {
   /** File-system path of the project — used to match terminal sessions */
@@ -48,8 +203,9 @@ export function PixelOffice({ projectPath, projectId, onNavigateToTerminals, onN
   const removeTerminal = useTerminalStore((s) => s.removeTerminal);
   const canAddTerminal = useTerminalStore((s) => s.canAddTerminal);
 
-  const tasks     = useTaskStore((s) => s.tasks);
+  const tasks      = useTaskStore((s) => s.tasks);
   const selectTask = useTaskStore((s) => s.selectTask);
+  const jumpToTask = useTaskStore((s) => s.jumpToTask);
 
   const agents          = usePixelOfficeStore((s) => s.agents);
   const selectedAgentId = usePixelOfficeStore((s) => s.selectedAgentId);
@@ -137,9 +293,10 @@ export function PixelOffice({ projectPath, projectId, onNavigateToTerminals, onN
     const agent = agents.find(a => a.id === selectedAgentId);
     if (!agent?.taskId) return;
     selectTask(agent.taskId);
+    jumpToTask(agent.taskId);   // triggers scroll + spotlight in TaskCard
     onNavigateToKanban?.();
     closeBubble();
-  }, [agents, selectedAgentId, selectTask, onNavigateToKanban, closeBubble]);
+  }, [agents, selectedAgentId, selectTask, jumpToTask, onNavigateToKanban, closeBubble]);
 
   const handleStopTask = useCallback(() => {
     const agent = agents.find(a => a.id === selectedAgentId);
@@ -147,6 +304,13 @@ export function PixelOffice({ projectPath, projectId, onNavigateToTerminals, onN
     globalThis.electronAPI.stopTask(agent.taskId);
     closeBubble();
   }, [agents, selectedAgentId, closeBubble]);
+
+  // ── Pending agent click (from WaitingQueue strip) ────────────
+
+  const handlePendingAgentClick = useCallback((agentId: string, x: number, _y: number) => {
+    selectAgent(agentId);
+    setBubblePos({ x, y: 0 }); // bubble fills from top so it appears above the queue
+  }, [selectAgent]);
 
   // ── New terminal ─────────────────────────────────────────────
 
@@ -175,9 +339,12 @@ export function PixelOffice({ projectPath, projectId, onNavigateToTerminals, onN
     ? terminals.find(t => t.id === selectedAgentId)
     : undefined;
 
-  const terminalCount = agents.filter(a => a.type === 'terminal').length;
-  const taskCount     = agents.filter(a => a.type === 'task').length;
-  const activeCount   = agents.filter(a => a.activity !== 'idle' && a.activity !== 'exited').length;
+  const pendingAgents = agents.filter(a => a.activity === 'pending');
+  const activeAgents  = agents.filter(a => a.activity !== 'pending');
+
+  const terminalCount = activeAgents.filter(a => a.type === 'terminal').length;
+  const taskCount     = activeAgents.filter(a => a.type === 'task').length;
+  const activeCount   = activeAgents.filter(a => a.activity !== 'idle' && a.activity !== 'exited').length;
 
   return (
     <div ref={containerRef} className="flex flex-col h-full overflow-hidden">
@@ -201,6 +368,11 @@ export function PixelOffice({ projectPath, projectId, onNavigateToTerminals, onN
           {activeCount > 0 && (
             <Badge variant="default" className="font-mono text-xs bg-emerald-600">
               {activeCount} actif{activeCount > 1 ? 's' : ''}
+            </Badge>
+          )}
+          {pendingAgents.length > 0 && (
+            <Badge variant="secondary" className="font-mono text-xs gap-1" style={{ borderColor: 'rgba(139,92,246,0.4)', color: '#A78BFA' }}>
+              ⏳ {pendingAgents.length} en attente
             </Badge>
           )}
         </div>
@@ -267,11 +439,26 @@ export function PixelOffice({ projectPath, projectId, onNavigateToTerminals, onN
           </div>
         ) : (
           <>
-            <PixelOfficeCanvas
-              width={dimensions.width}
-              height={dimensions.height}
-              onAgentClick={handleAgentClick}
-            />
+            {activeAgents.length > 0 && (
+              <PixelOfficeCanvas
+                width={dimensions.width}
+                height={dimensions.height}
+                onAgentClick={handleAgentClick}
+              />
+            )}
+
+            {/* Pending-only placeholder when no desk agents yet */}
+            {activeAgents.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full pb-40 gap-3 text-center px-8">
+                <div className="text-5xl">🏢</div>
+                <p className="text-sm text-white/40 font-mono">
+                  Les agents démarreront dès le lancement des tâches
+                </p>
+              </div>
+            )}
+
+            {/* Waiting queue strip — always visible when pending agents exist */}
+            <WaitingQueue agents={pendingAgents} onAgentClick={handlePendingAgentClick} />
 
             {/* Backdrop */}
             {selectedAgent && bubblePos && (

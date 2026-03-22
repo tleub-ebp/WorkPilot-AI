@@ -111,7 +111,7 @@ export async function loadLearningPatterns(projectDir: string): Promise<void> {
   const store = useLearningLoopStore.getState();
   store.setIsLoading(true);
   try {
-    const result = await window.electronAPI.getLearningPatterns(projectDir);
+    const result = await globalThis.electronAPI.getLearningPatterns(projectDir);
     if (result.success && result.data) {
       store.setPatterns(result.data);
     } else if (result.error) {
@@ -129,7 +129,7 @@ export async function loadLearningPatterns(projectDir: string): Promise<void> {
  */
 export async function loadLearningSummary(projectDir: string): Promise<void> {
   try {
-    const result = await window.electronAPI.getLearningSummary(projectDir);
+    const result = await globalThis.electronAPI.getLearningSummary(projectDir);
     if (result.success && result.data) {
       useLearningLoopStore.getState().setSummary(result.data);
     }
@@ -147,14 +147,14 @@ export function startLearningAnalysis(projectDir: string, specId?: string): void
   store.setStatus('');
   useLearningLoopStore.setState({ streamingOutput: '', error: null });
 
-  window.electronAPI.runLearningAnalysis(projectDir, specId);
+  globalThis.electronAPI.runLearningAnalysis(projectDir, specId);
 }
 
 /**
  * Cancel learning loop analysis via IPC
  */
 export async function cancelLearningAnalysis(): Promise<void> {
-  await window.electronAPI.stopLearningAnalysis();
+  await globalThis.electronAPI.stopLearningAnalysis();
   useLearningLoopStore.getState().setPhase('idle');
 }
 
@@ -163,7 +163,7 @@ export async function cancelLearningAnalysis(): Promise<void> {
  */
 export async function deleteLearningPattern(projectDir: string, patternId: string): Promise<boolean> {
   try {
-    const result = await window.electronAPI.deleteLearningPattern(projectDir, patternId);
+    const result = await globalThis.electronAPI.deleteLearningPattern(projectDir, patternId);
     if (result.success) {
       useLearningLoopStore.getState().removePatternFromList(patternId);
       return true;
@@ -179,7 +179,7 @@ export async function deleteLearningPattern(projectDir: string, patternId: strin
  */
 export async function toggleLearningPattern(projectDir: string, patternId: string): Promise<boolean> {
   try {
-    const result = await window.electronAPI.toggleLearningPattern(projectDir, patternId);
+    const result = await globalThis.electronAPI.toggleLearningPattern(projectDir, patternId);
     if (result.success && result.data !== undefined) {
       useLearningLoopStore.getState().updatePatternInList(patternId, { enabled: result.data });
       return true;
@@ -200,7 +200,7 @@ export function setupLearningLoopListeners(): () => void {
   const noop = () => {};
 
   // Guard: API methods may not exist in browser-mock / dev mode
-  const api = window.electronAPI;
+  const api = globalThis.electronAPI;
   if (!api?.onLearningLoopStreamChunk) {
     return noop;
   }

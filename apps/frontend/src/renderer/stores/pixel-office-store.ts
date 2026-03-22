@@ -4,7 +4,7 @@ import type { Task, ExecutionPhase } from '../../shared/types/task';
 
 // ── Types ────────────────────────────────────────────────────
 
-export type AgentActivity = 'idle' | 'typing' | 'reading' | 'running' | 'waiting' | 'exited';
+export type AgentActivity = 'idle' | 'typing' | 'reading' | 'running' | 'waiting' | 'pending' | 'exited';
 export type PixelAgentType = 'terminal' | 'task';
 
 export interface PixelAgent {
@@ -25,6 +25,8 @@ export interface PixelAgent {
   taskName?: string;           // Associated task name (for speech bubble)
   speechBubble?: string;       // Text to show in canvas speech bubble
   speechBubbleTimer?: number;  // Auto-dismiss timer
+  // Waiting queue fields
+  waitingIndex?: number;       // Position in the waiting queue (pending/planning tasks only)
 }
 
 export interface PixelOfficeSettings {
@@ -62,6 +64,7 @@ function mapTerminalToActivity(terminal: Terminal): AgentActivity {
 }
 
 function mapTaskToActivity(task: Task): AgentActivity {
+  if (task.status === 'backlog') return 'pending';
   if (task.status === 'error') return 'exited';
   if (task.status === 'human_review') return 'waiting';
   const phase = task.executionProgress?.phase;
@@ -81,8 +84,60 @@ function mapTaskToActivity(task: Task): AgentActivity {
 
 /** Task statuses that should appear in Pixel Office */
 const ACTIVE_TASK_STATUSES = new Set<Task['status']>([
-  'in_progress', 'ai_review', 'human_review', 'error',
+  'in_progress', 'ai_review', 'human_review', 'error', 'backlog',
 ]);
+
+// ── Agent builder helpers ─────────────────────────────────────
+
+function shortTitle(title: string): string {
+  return title.length > 40 ? `${title.slice(0, 39)}…` : title;
+}
+
+function buildTerminalAgent(
+  terminal: Terminal,
+  existing: PixelAgent | undefined,
+  nextIdx: number,
+  seatIndex: number,
+): PixelAgent {
+  const name = shortTitle(terminal.title);
+  const activity = mapTerminalToActivity(terminal);
+  if (existing) {
+    return { ...existing, type: 'terminal', name, fullName: terminal.title, activity, isClaudeMode: terminal.isClaudeMode, seatIndex: existing.seatIndex };
+  }
+  return { id: terminal.id, type: 'terminal', name, fullName: terminal.title, characterIndex: nextIdx % 6, activity, seatIndex, isClaudeMode: terminal.isClaudeMode };
+}
+
+function buildTaskAgent(
+  task: Task,
+  existing: PixelAgent | undefined,
+  nextIdx: number,
+  seatIndex: number,
+  waitingIdx: number,
+): PixelAgent {
+  const agentId = `task:${task.id}`;
+  const name = shortTitle(task.title);
+  const activity = mapTaskToActivity(task);
+  const isPending = activity === 'pending';
+  const progress = { phase: task.executionProgress?.phase, progress: task.executionProgress?.overallProgress, currentSubtask: task.executionProgress?.currentSubtask };
+
+  if (existing) {
+    return {
+      ...existing,
+      type: 'task', name, fullName: task.title,
+      activity, ...progress,
+      isClaudeMode: !isPending, taskId: task.id,
+      ...(isPending ? { seatIndex: -1, waitingIndex: waitingIdx } : {}),
+    };
+  }
+  return {
+    id: agentId, type: 'task', name, fullName: task.title,
+    characterIndex: nextIdx % 6, activity,
+    seatIndex: isPending ? -1 : seatIndex,
+    waitingIndex: isPending ? waitingIdx : undefined,
+    isClaudeMode: !isPending, taskId: task.id, taskName: task.title,
+    ...progress,
+  };
+}
 
 // ── Store ─────────────────────────────────────────────────────
 
@@ -101,81 +156,28 @@ export const usePixelOfficeStore = create<PixelOfficeState>((set, get) => ({
     const state = get();
     const existingMap = new Map(state.agents.map(a => [a.id, a]));
     let nextIdx = state.nextCharacterIndex;
-
     const newAgents: PixelAgent[] = [];
     let seatIndex = 0;
 
     // ── Terminal agents ───────────────────────────────
     for (const terminal of terminals.filter(t => t.status !== 'exited')) {
-      const existing = existingMap.get(terminal.id);
-      const shortTitle = terminal.title.length > 40 ? `${terminal.title.slice(0, 39)}…` : terminal.title;
-      if (existing) {
-        newAgents.push({
-          ...existing,
-          type: 'terminal',
-          name: shortTitle,
-          fullName: terminal.title,
-          activity: mapTerminalToActivity(terminal),
-          isClaudeMode: terminal.isClaudeMode,
-          seatIndex: existing.seatIndex,
-        });
-      } else {
-        newAgents.push({
-          id: terminal.id,
-          type: 'terminal',
-          name: shortTitle,
-          fullName: terminal.title,
-          characterIndex: nextIdx++ % 6,
-          activity: mapTerminalToActivity(terminal),
-          seatIndex: seatIndex,
-          isClaudeMode: terminal.isClaudeMode,
-        });
-        seatIndex++;
-      }
+      const agent = buildTerminalAgent(terminal, existingMap.get(terminal.id), nextIdx, seatIndex);
+      newAgents.push(agent);
+      if (!existingMap.has(terminal.id)) { nextIdx++; seatIndex++; }
     }
 
-    // Update seatIndex counter past terminal agents
+    // Advance seatIndex past all terminal seats
     const usedSeats = new Set(newAgents.map(a => a.seatIndex));
     seatIndex = Math.max(newAgents.length, ...Array.from(usedSeats)) + 1;
 
     // ── Task agents ───────────────────────────────────
+    let waitingIdx = 0;
     for (const task of tasks.filter(t => ACTIVE_TASK_STATUSES.has(t.status))) {
       const agentId = `task:${task.id}`;
-      const existing = existingMap.get(agentId);
-      const activity = mapTaskToActivity(task);
-      const shortTitle = task.title.length > 40 ? `${task.title.slice(0, 39)}…` : task.title;
-
-      if (existing) {
-        newAgents.push({
-          ...existing,
-          type: 'task',
-          name: shortTitle,
-          fullName: task.title,
-          activity,
-          phase: task.executionProgress?.phase,
-          progress: task.executionProgress?.overallProgress,
-          currentSubtask: task.executionProgress?.currentSubtask,
-          isClaudeMode: true,
-          taskId: task.id,
-        });
-      } else {
-        newAgents.push({
-          id: agentId,
-          type: 'task',
-          name: shortTitle,
-          fullName: task.title,
-          characterIndex: nextIdx++ % 6,
-          activity,
-          seatIndex: seatIndex,
-          isClaudeMode: true,
-          taskId: task.id,
-          taskName: task.title,
-          phase: task.executionProgress?.phase,
-          progress: task.executionProgress?.overallProgress,
-          currentSubtask: task.executionProgress?.currentSubtask,
-        });
-        seatIndex++;
-      }
+      const agent = buildTaskAgent(task, existingMap.get(agentId), nextIdx, seatIndex, waitingIdx);
+      newAgents.push(agent);
+      if (!existingMap.has(agentId)) nextIdx++;
+      if (agent.activity === 'pending') { waitingIdx++; } else if (!existingMap.has(agentId)) { seatIndex++; }
     }
 
     set({ agents: newAgents, nextCharacterIndex: nextIdx });

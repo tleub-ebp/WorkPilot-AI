@@ -6,6 +6,7 @@ import { debugLog, debugWarn } from '../../shared/utils/debug-logger';
 interface TaskState {
   tasks: Task[];
   selectedTaskId: string | null;
+  jumpToTaskId: string | null;   // Triggers scroll + spotlight animation in TaskCard
   isLoading: boolean;
   error: string | null;
   taskOrder: TaskOrderState | null;  // Per-column task ordering for kanban board
@@ -20,6 +21,8 @@ interface TaskState {
   appendLog: (taskId: string, log: string) => void;
   batchAppendLogs: (taskId: string, logs: string[]) => void;
   selectTask: (taskId: string | null) => void;
+  jumpToTask: (taskId: string) => void;   // Navigate + spotlight a task card
+  clearJump: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearTasks: () => void;
@@ -187,6 +190,7 @@ function createEmptyTaskOrder(): TaskOrderState {
 export const useTaskStore = create<TaskState>((set, get) => ({
   tasks: [],
   selectedTaskId: null,
+  jumpToTaskId: null,
   isLoading: false,
   error: null,
   taskOrder: null,
@@ -559,6 +563,9 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   selectTask: (taskId) => set({ selectedTaskId: taskId }),
+
+  jumpToTask: (taskId) => set({ jumpToTaskId: taskId }),
+  clearJump: () => set({ jumpToTaskId: null }),
 
   setLoading: (isLoading) => set({ isLoading }),
 
