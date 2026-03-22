@@ -4,13 +4,13 @@
     "tools": "Outils"
   },
   "groups": {
-    "core": "🎯 Workflow Essentiel",
-    "development": "📁 Outils de Développement",
-    "integration": "🌐 Intégrations & Git",
-    "planning": "📊 Planification & Analyse",
-    "knowledge": "💡 Connaissances & Contenu",
-    "utilities": "⚙️ Utilitaires",
-    "aiTools": "🤖 Outils IA"
+    "workspace": "🎯 Espace de travail",
+    "agents": "🤖 Agents",
+    "development": "📁 Développement",
+    "explore": "✨ Explorer",
+    "gitIntegrations": "🌐 Git & Intégrations",
+    "planning": "📊 Planification",
+    "toolbox": "🧰 Boîte à outils"
   },
   "items": {
     "kanban": "Tableau Kanban",

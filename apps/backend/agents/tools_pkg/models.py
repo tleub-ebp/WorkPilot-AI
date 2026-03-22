@@ -110,6 +110,42 @@ ELECTRON_TOOLS = [
     "mcp__electron__read_electron_logs",  # Read console logs from Electron app
 ]
 
+# Chrome DevTools MCP tools for browser automation via Chrome DevTools Protocol
+# Uses chrome-devtools-mcp (https://github.com/ChromeDevTools/chrome-devtools-mcp)
+# Available to coding agents and QA agents for visual validation of web frontends.
+# Provides comprehensive browser control: navigation, interaction, screenshots, debugging.
+CHROME_DEVTOOLS_TOOLS = [
+    # Navigation
+    "mcp__chrome-devtools__navigate_page",  # Go to URL, back, forward, reload
+    "mcp__chrome-devtools__new_page",  # Open new tab
+    "mcp__chrome-devtools__close_page",  # Close a tab
+    "mcp__chrome-devtools__list_pages",  # List open tabs
+    "mcp__chrome-devtools__select_page",  # Select active tab
+    "mcp__chrome-devtools__wait_for",  # Wait for text to appear
+    # Input
+    "mcp__chrome-devtools__click",  # Click element by uid
+    "mcp__chrome-devtools__fill",  # Fill input/textarea
+    "mcp__chrome-devtools__fill_form",  # Fill multiple form fields
+    "mcp__chrome-devtools__hover",  # Hover over element
+    "mcp__chrome-devtools__press_key",  # Press key combo
+    "mcp__chrome-devtools__type_text",  # Type text into focused input
+    "mcp__chrome-devtools__drag",  # Drag element onto another
+    "mcp__chrome-devtools__upload_file",  # Upload file
+    "mcp__chrome-devtools__handle_dialog",  # Handle alert/confirm/prompt
+    # Debugging & Inspection
+    "mcp__chrome-devtools__take_screenshot",  # Capture page screenshot
+    "mcp__chrome-devtools__take_snapshot",  # DOM/accessibility snapshot
+    "mcp__chrome-devtools__evaluate_script",  # Execute JS in page context
+    "mcp__chrome-devtools__list_console_messages",  # List console messages
+    "mcp__chrome-devtools__get_console_message",  # Get specific console message
+    # Emulation
+    "mcp__chrome-devtools__emulate",  # Emulate device features
+    "mcp__chrome-devtools__resize_page",  # Resize browser window
+    # Network
+    "mcp__chrome-devtools__list_network_requests",  # List network requests
+    "mcp__chrome-devtools__get_network_request",  # Get specific network request
+]
+
 # =============================================================================
 # Configuration
 # =============================================================================
@@ -201,7 +237,7 @@ AGENT_CONFIGS = {
     },
     "coder": {
         "tools": BASE_READ_TOOLS + BASE_WRITE_TOOLS + WEB_TOOLS,
-        "mcp_servers": ["context7", "graphiti", "auto-claude"],
+        "mcp_servers": ["context7", "graphiti", "auto-claude", "chrome-devtools"],
         "mcp_servers_optional": ["linear"],
         "auto_claude_tools": [
             TOOL_UPDATE_SUBTASK_STATUS,
@@ -219,7 +255,7 @@ AGENT_CONFIGS = {
         # Read + Write/Edit (for QA reports and plan updates) + Bash (for tests)
         # Note: Reviewer writes to spec directory only (qa_report.md, implementation_plan.json)
         "tools": BASE_READ_TOOLS + BASE_WRITE_TOOLS + WEB_TOOLS,
-        "mcp_servers": ["context7", "graphiti", "auto-claude", "browser"],
+        "mcp_servers": ["context7", "graphiti", "auto-claude", "browser", "chrome-devtools"],
         "mcp_servers_optional": ["linear"],  # For updating issue status
         "auto_claude_tools": [
             TOOL_GET_BUILD_PROGRESS,
@@ -230,7 +266,7 @@ AGENT_CONFIGS = {
     },
     "qa_fixer": {
         "tools": BASE_READ_TOOLS + BASE_WRITE_TOOLS + WEB_TOOLS,
-        "mcp_servers": ["context7", "graphiti", "auto-claude", "browser"],
+        "mcp_servers": ["context7", "graphiti", "auto-claude", "browser", "chrome-devtools"],
         "mcp_servers_optional": ["linear"],
         "auto_claude_tools": [
             TOOL_UPDATE_SUBTASK_STATUS,
@@ -394,7 +430,16 @@ def _map_mcp_server_name(
         "linear": "linear",
         "electron": "electron",
         "puppeteer": "puppeteer",
+        "chrome-devtools": "chrome-devtools",
         "auto-claude": "auto-claude",
+        "github": "github",
+        "brave-search": "brave-search",
+        "jira": "jira",
+        "azure-devops": "azure-devops",
+        "sentry": "sentry",
+        "slack": "slack",
+        "postman": "postman",
+        "teams": "teams",
     }
     # Check if it's a known mapping
     mapped = mappings.get(name.lower().strip())
@@ -428,7 +473,8 @@ def get_required_mcp_servers(
         linear_enabled: Whether Linear integration is enabled for this project
         mcp_config: Per-project MCP server toggles from .auto-claude/.env
                    Keys: CONTEXT7_ENABLED, LINEAR_MCP_ENABLED, ELECTRON_MCP_ENABLED,
-                         PUPPETEER_MCP_ENABLED, AGENT_MCP_<agent>_ADD/REMOVE
+                         PUPPETEER_MCP_ENABLED, CHROME_DEVTOOLS_MCP_ENABLED,
+                         AGENT_MCP_<agent>_ADD/REMOVE
 
     Returns:
         List of MCP server names to start
@@ -476,9 +522,14 @@ def get_required_mcp_servers(
                     servers.append("puppeteer")
 
     # Filter graphiti if not enabled
-    if "graphiti" in servers:
-        if not os.environ.get("GRAPHITI_MCP_URL"):
-            servers = [s for s in servers if s != "graphiti"]
+    if "graphiti" in servers and not os.environ.get("GRAPHITI_MCP_URL"):
+        servers = [s for s in servers if s != "graphiti"]
+
+    # Filter chrome-devtools if not enabled (default: disabled)
+    if "chrome-devtools" in servers:
+        chrome_devtools_enabled = mcp_config.get("CHROME_DEVTOOLS_MCP_ENABLED", "false")
+        if str(chrome_devtools_enabled).lower() != "true":
+            servers = [s for s in servers if s != "chrome-devtools"]
 
     # ========== Apply per-agent MCP overrides ==========
     # Format: AGENT_MCP_<agent_type>_ADD=server1,server2

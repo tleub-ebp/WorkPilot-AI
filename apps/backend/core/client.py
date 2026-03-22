@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 _PROJECT_INDEX_CACHE: dict[str, tuple[dict[str, Any], dict[str, bool], float]] = {}
 _CACHE_TTL_SECONDS = 300  # 5 minute TTL
 _CACHE_LOCK = threading.Lock()  # Protects _PROJECT_INDEX_CACHE access
+_AUTO_CLAUDE_DIR = ".auto-claude"  # Auto-Claude configuration directory
 
 
 def _get_cached_project_data(
@@ -192,9 +193,14 @@ try:
         get_sdk_env_vars,
     )
 except ImportError:
+    # Fallback implementations for testing environments where core.auth module is not available
+    # These functions are intentionally empty to prevent crashes during testing/development
     def configure_sdk_authentication(*args, **kwargs):
+        """No-op fallback - authentication not available in test environment"""
         pass
+    
     def get_sdk_env_vars(*args, **kwargs):
+        """No-op fallback - returns empty dict when auth module unavailable"""
         return {}
 from linear_updater import is_linear_enabled
 from prompts_pkg.project_context import detect_project_capabilities, load_project_index
@@ -364,7 +370,7 @@ def _validate_custom_mcp_server(server: dict) -> bool:
 
 def load_project_mcp_config(project_dir: Path) -> dict:
     """
-    Load MCP configuration from project's .auto-claude/.env file.
+    Load MCP configuration from project's _AUTO_CLAUDE_DIR/.env file.
 
     Returns a dict of MCP-related env vars:
     - CONTEXT7_ENABLED (default: true)
@@ -381,7 +387,7 @@ def load_project_mcp_config(project_dir: Path) -> dict:
     Returns:
         Dict of MCP configuration values (string values, except CUSTOM_MCP_SERVERS which is parsed JSON)
     """
-    env_path = project_dir / ".auto-claude" / ".env"
+    env_path = project_dir / _AUTO_CLAUDE_DIR / ".env"
     if not env_path.exists():
         return {}
 
@@ -580,9 +586,9 @@ def create_client(
     # Load project capabilities for dynamic MCP tool selection
     # This enables context-aware tool injection based on project type
     # Uses caching to avoid reloading on every create_client() call
-    project_index, project_capabilities = _get_cached_project_data(project_dir)
+    _, project_capabilities = _get_cached_project_data(project_dir)
 
-    # Load per-project MCP configuration from .auto-claude/.env
+    # Load per-project MCP configuration from _AUTO_CLAUDE_DIR/.env
     mcp_config = load_project_mcp_config(project_dir)
 
     # Get allowed tools using phase-aware configuration
@@ -623,10 +629,10 @@ def create_client(
 
     # Detect if we're running in a worktree and get the original project directory
     # Worktrees are located in either:
-    # - .auto-claude/worktrees/tasks/{spec-name}/ (new location)
+    # - _AUTO_CLAUDE_DIR/worktrees/tasks/{spec-name}/ (new location)
     # - .worktrees/{spec-name}/ (legacy location)
     # When running in a worktree, we need to allow access to both the worktree
-    # and the original project's .auto-claude/ directory for spec files
+    # and the original project's _AUTO_CLAUDE_DIR/ directory for spec files
     original_project_permissions = []
     resolved_project_path = project_dir.resolve()
 
@@ -634,8 +640,8 @@ def create_client(
     # This handles spec worktrees, PR review worktrees, and legacy worktrees
     # Note: Windows paths are normalized to forward slashes before comparison
     worktree_markers = [
-        "/.auto-claude/worktrees/tasks/",  # Spec/task worktrees
-        "/.auto-claude/github/pr/worktrees/",  # PR review worktrees
+        f"/{_AUTO_CLAUDE_DIR}/worktrees/tasks/",  # Spec/task worktrees
+        f"/{_AUTO_CLAUDE_DIR}/github/pr/worktrees/",  # PR review worktrees
         "/.worktrees/",  # Legacy worktree location
     ]
     project_path_posix = str(resolved_project_path).replace("\\", "/")
@@ -650,7 +656,7 @@ def create_client(
             # Grant permissions for relevant directories in the original project
             permission_ops = ["Read", "Write", "Edit", "Glob", "Grep"]
             dirs_to_permit = [
-                original_project_dir / ".auto-claude",
+                original_project_dir / _AUTO_CLAUDE_DIR,
                 original_project_dir / ".worktrees",  # Legacy support
             ]
 
@@ -684,7 +690,7 @@ def create_client(
                 f"Read({spec_path_str}/**)",
                 f"Write({spec_path_str}/**)",
                 f"Edit({spec_path_str}/**)",
-                # Allow original project's .auto-claude/ and .worktrees/ directories
+                # Allow original project's _AUTO_CLAUDE_DIR/ and .worktrees/ directories
                 # when running in a worktree (fixes issue #385 - permission errors)
                 *original_project_permissions,
                 # Bash permission granted here, but actual commands are validated
@@ -787,6 +793,27 @@ def create_client(
             "args": ["puppeteer-mcp-server"],
         }
 
+    if "chrome-devtools" in required_servers:
+        # Chrome DevTools MCP for browser automation via Chrome DevTools Protocol
+        # Connects to a running Chrome instance or launches a new one
+        chrome_devtools_args = ["-y", "chrome-devtools-mcp@latest"]
+        # Check if we should connect to an existing browser (e.g., app emulator)
+        chrome_devtools_port = mcp_config.get(
+            "CHROME_DEVTOOLS_PORT",
+            os.environ.get("CHROME_DEVTOOLS_PORT", ""),
+        )
+        if chrome_devtools_port:
+            chrome_devtools_args.append(
+                f"--browser-url=http://127.0.0.1:{chrome_devtools_port}"
+            )
+        else:
+            # Headless mode when no existing browser to connect to
+            chrome_devtools_args.append("--headless")
+        mcp_servers["chrome-devtools"] = {
+            "command": "npx",
+            "args": chrome_devtools_args,
+        }
+
     if "linear" in required_servers:
         mcp_servers["linear"] = {
             "type": "http",
@@ -800,6 +827,88 @@ def create_client(
             "type": "http",
             "url": get_graphiti_mcp_url(),
         }
+
+    if "github" in required_servers:
+        github_pat = os.environ.get("GITHUB_PERSONAL_ACCESS_TOKEN", "")
+        if github_pat:
+            mcp_servers["github"] = {
+                "command": "npx",
+                "args": ["-y", "@modelcontextprotocol/server-github"],
+                "env": {"GITHUB_PERSONAL_ACCESS_TOKEN": github_pat},
+            }
+
+    if "brave-search" in required_servers:
+        brave_api_key = os.environ.get("BRAVE_API_KEY", "")
+        if brave_api_key:
+            mcp_servers["brave-search"] = {
+                "command": "npx",
+                "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+                "env": {"BRAVE_API_KEY": brave_api_key},
+            }
+
+    if "jira" in required_servers:
+        jira_url = os.environ.get("JIRA_URL", "")
+        jira_username = os.environ.get("JIRA_USERNAME", "")
+        jira_api_token = os.environ.get("JIRA_API_TOKEN", "")
+        if jira_url and jira_username and jira_api_token:
+            mcp_servers["jira"] = {
+                "command": "npx",
+                "args": ["-y", "mcp-atlassian"],
+                "env": {
+                    "JIRA_URL": jira_url,
+                    "JIRA_USERNAME": jira_username,
+                    "JIRA_API_TOKEN": jira_api_token,
+                },
+            }
+
+    if "azure-devops" in required_servers:
+        ado_token = os.environ.get("AZURE_DEVOPS_TOKEN", "")
+        ado_org = os.environ.get("AZURE_DEVOPS_ORG", "")
+        if ado_token and ado_org:
+            mcp_servers["azure-devops"] = {
+                "command": "npx",
+                "args": ["-y", "azure-devops-mcp"],
+                "env": {
+                    "AZURE_DEVOPS_TOKEN": ado_token,
+                    "AZURE_DEVOPS_ORG": ado_org,
+                },
+            }
+
+    if "sentry" in required_servers:
+        sentry_token = os.environ.get("SENTRY_AUTH_TOKEN", "")
+        if sentry_token:
+            mcp_servers["sentry"] = {
+                "command": "npx",
+                "args": ["-y", "@sentry/mcp-server"],
+                "env": {"SENTRY_AUTH_TOKEN": sentry_token},
+            }
+
+    if "slack" in required_servers:
+        slack_token = os.environ.get("SLACK_BOT_TOKEN", "")
+        if slack_token:
+            mcp_servers["slack"] = {
+                "command": "npx",
+                "args": ["-y", "@modelcontextprotocol/server-slack"],
+                "env": {"SLACK_BOT_TOKEN": slack_token},
+            }
+
+    if "postman" in required_servers:
+        postman_api_key = os.environ.get("POSTMAN_API_KEY", "")
+        if postman_api_key:
+            mcp_servers["postman"] = {
+                "command": "npx",
+                "args": ["-y", "@postman/mcp-postman"],
+                "env": {"POSTMAN_API_KEY": postman_api_key},
+            }
+
+    if "teams" in required_servers:
+        teams_webhook_url = os.environ.get("TEAMS_WEBHOOK_URL", "")
+        if teams_webhook_url:
+            mcp_servers["teams"] = {
+                "command": "npx",
+                "args": ["-y", "teams-mcp-server"],
+                "env": {"TEAMS_WEBHOOK_URL": teams_webhook_url},
+            }
 
     # Add custom auto-claude MCP server if required and available
     if "auto-claude" in required_servers and auto_claude_tools_enabled:
@@ -911,7 +1020,7 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
     Resolution order:
     1. Provider selected via IPC (from frontend UI selection)
     2. AUTO_CLAUDE_PROVIDER environment variable
-    3. Project-level .auto-claude/.env → AI_PROVIDER key
+    3. Project-level _AUTO_CLAUDE_DIR/.env → AI_PROVIDER key
     4. Default: "claude"
 
     Args:
@@ -966,7 +1075,7 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
             import json as _json
             metadata_path = Path(spec_dir) / "task_metadata.json"
             if not metadata_path.exists():
-                # spec_dir may be e.g. .auto-claude/specs/001-name — try parent dirs
+                # spec_dir may be e.g. _AUTO_CLAUDE_DIR/specs/001-name — try parent dirs
                 for parent in Path(spec_dir).parents:
                     candidate = parent / "task_metadata.json"
                     if candidate.exists():
@@ -993,11 +1102,11 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
 
     # 3. Project-level setting from spec's parent project
     if spec_dir:
-        env_path = spec_dir / ".auto-claude" / ".env"
+        env_path = spec_dir / _AUTO_CLAUDE_DIR / ".env"
         if not env_path.exists():
-            # Try parent directories (spec_dir might be inside .auto-claude/)
+            # Try parent directories (spec_dir might be inside _AUTO_CLAUDE_DIR/)
             for parent in spec_dir.parents:
-                candidate = parent / ".auto-claude" / ".env"
+                candidate = parent / _AUTO_CLAUDE_DIR / ".env"
                 if candidate.exists():
                     env_path = candidate
                     break
@@ -1103,7 +1212,7 @@ def create_agent_client(
                     copilot_agents[name] = SubagentDefinition(**defn)
 
         # Get allowed tools for the agent type
-        project_index, project_capabilities = _get_cached_project_data(project_dir)
+        _, project_capabilities = _get_cached_project_data(project_dir)
         from linear_updater import is_linear_enabled as _is_linear_enabled
 
         mcp_config = load_project_mcp_config(project_dir)

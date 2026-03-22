@@ -78,6 +78,7 @@ export function AzureDevOpsSidePanel({
   const [error, setError] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<AzureDevOpsSyncStatus | null>(null);
   const [draggedIds, setDraggedIds] = useState<Set<number>>(new Set());
+  const dragImageRef = useRef<HTMLDivElement | null>(null);
   const [panelWidth, setPanelWidth] = useState(384); // w-96 = 384px
   const [isResizing, setIsResizing] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -397,7 +398,24 @@ export function AzureDevOpsSidePanel({
     e.dataTransfer.setData('application/json', JSON.stringify(dragData));
     e.dataTransfer.effectAllowed = 'copy';
     setDraggedIds(new Set(workItemIds));
-    
+
+    // Créer un ghost avec liseré pour le drag image
+    const sourceEl = e.currentTarget as HTMLElement;
+    const clone = sourceEl.cloneNode(true) as HTMLDivElement;
+    clone.style.position = 'absolute';
+    clone.style.top = '-1000px';
+    clone.style.left = '-1000px';
+    clone.style.width = `${sourceEl.offsetWidth}px`;
+    clone.style.outline = '2px solid var(--primary)';
+    clone.style.outlineOffset = '2px';
+    clone.style.borderRadius = '8px';
+    clone.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+    clone.style.opacity = '0.95';
+    clone.style.backgroundColor = 'var(--card)';
+    document.body.appendChild(clone);
+    e.dataTransfer.setDragImage(clone, clone.offsetWidth / 2, 20);
+    dragImageRef.current = clone;
+
     // Marquer le panel comme étant en cours de drag
     const panelElement = panelRef.current;
     if (panelElement) {
@@ -415,7 +433,13 @@ export function AzureDevOpsSidePanel({
 
   const handleDragEnd = useCallback(() => {
     setDraggedIds(new Set());
-    
+
+    // Nettoyer le ghost du drag image
+    if (dragImageRef.current?.parentNode) {
+      dragImageRef.current.parentNode.removeChild(dragImageRef.current);
+      dragImageRef.current = null;
+    }
+
     // Nettoyer l'attribut data-dragging
     const panelElement = panelRef.current;
     if (panelElement) {
@@ -699,7 +723,7 @@ export function AzureDevOpsSidePanel({
                     "hover:bg-muted/50",
                     "select-none",
                     selectedIds.has(item.id) && "bg-primary/10 border-primary/30 cursor-grab",
-                    draggedIds.has(item.id) && "cursor-grabbing opacity-50",
+                    draggedIds.has(item.id) && "cursor-grabbing opacity-70 ring-2 ring-primary ring-offset-1 ring-offset-background rounded-md shadow-md",
                     "bg-transparent border-none"
                   )}
                   draggable={true}

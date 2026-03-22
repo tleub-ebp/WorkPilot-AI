@@ -557,9 +557,96 @@
     "save": "Enregistrer les paramètres"
   },
   "agents": {
+    "categories": {
+      "spec": "Création de spec",
+      "build": "Construction",
+      "qa": "QA",
+      "utility": "Utilitaires",
+      "ideation": "Idéation"
+    },
+    "agentsCount": "({{count}} agents)",
+    "forProject": "pour {{name}}",
+    "availableTools": "Outils disponibles",
+    "textOnly": "Texte uniquement (sans outils)",
+    "spec_gatherer": {
+      "label": "Collecteur de spec",
+      "description": "Collecte les exigences initiales de l'utilisateur"
+    },
+    "spec_researcher": {
+      "label": "Chercheur de spec",
+      "description": "Valide les intégrations externes et les APIs"
+    },
+    "spec_writer": {
+      "label": "Rédacteur de spec",
+      "description": "Crée le document spec.md"
+    },
+    "spec_critic": {
+      "label": "Critique de spec",
+      "description": "Auto-critique par analyse approfondie"
+    },
+    "spec_discovery": {
+      "label": "Découverte de spec",
+      "description": "Découverte et analyse initiale du projet"
+    },
+    "spec_context": {
+      "label": "Contexte de spec",
+      "description": "Construit le contexte à partir du code existant"
+    },
+    "spec_validation": {
+      "label": "Validation de spec",
+      "description": "Valide la complétude et la qualité de la spec"
+    },
+    "planner": {
+      "label": "Planificateur",
+      "description": "Crée le plan d'implémentation avec les sous-tâches"
+    },
+    "coder": {
+      "label": "Codeur",
+      "description": "Implémente les sous-tâches individuelles"
+    },
+    "qa_reviewer": {
+      "label": "Réviseur QA",
+      "description": "Valide les critères d'acceptation. Utilise Electron ou Puppeteer selon le type de projet."
+    },
+    "qa_fixer": {
+      "label": "Correcteur QA",
+      "description": "Corrige les problèmes signalés par le QA. Utilise Electron ou Puppeteer selon le type de projet."
+    },
+    "pr_reviewer": {
+      "label": "Réviseur de PR",
+      "description": "Révise les pull requests GitHub"
+    },
+    "commit_message": {
+      "label": "Message de commit",
+      "description": "Génère les messages de commit"
+    },
+    "merge_resolver": {
+      "label": "Résolveur de conflits",
+      "description": "Résout les conflits de fusion"
+    },
+    "insights": {
+      "label": "Insights",
+      "description": "Extrait des informations du code"
+    },
+    "analysis": {
+      "label": "Analyse",
+      "description": "Analyse du code avec recherche contextuelle"
+    },
+    "batch_analysis": {
+      "label": "Analyse en lot",
+      "description": "Traitement en lot des issues ou éléments"
+    },
+    "ideation": {
+      "label": "Idéation",
+      "description": "Génère des idées de fonctionnalités"
+    },
+    "roadmap_discovery": {
+      "label": "Découverte de roadmap",
+      "description": "Découvre les éléments de la roadmap"
+    },
     "pr_template_filler": {
-      "description": "Remplit automatiquement les templates de PR GitHub à partir des changements de code",
-      "label": "Remplisseur de template PR"
+      "label": "Remplisseur de template PR",
+      "description": "Remplit automatiquement les templates de PR GitHub à partir des changements de code"
     }
   },
   "agentProfile": {
@@ -1208,6 +1295,24 @@
     "testConnection": "Tester la connexion",
     "title": "Intégration Jira"
   },
+  "teams": {
+    "title": "Microsoft Teams",
+    "description": "Recevez des notifications dans Teams quand les tâches sont terminées et les PRs créées",
+    "initGuardDescription": "Initialisez WorkPilot AI pour ce projet afin de configurer les notifications Teams",
+    "enableNotifications": "Activer les notifications Teams",
+    "enableNotificationsHint": "Envoyer un message dans votre canal Teams quand une tâche est terminée et une PR créée",
+    "webhookUrl": "URL du Webhook entrant",
+    "webhookUrlHint": "Collez l'URL du Webhook entrant depuis le connecteur de votre canal Teams",
+    "testWebhook": "Envoyer un message de test",
+    "testSuccess": "Message envoyé !",
+    "testError": "Impossible d'atteindre le webhook",
+    "testMessage": "WorkPilot AI — Notification de test",
+    "testMessageBody": "Ceci est un message de test de WorkPilot AI. Vos notifications Teams sont correctement configurées.",
+    "howToCreate": "Comment créer un webhook",
+    "triggers": "Déclencheurs de notification",
+    "triggerTaskDone": "Quand une tâche Kanban passe en 'Terminé' et qu'une PR est créée",
+    "triggerPrCreated": "Quand une PR est automatiquement créée pour validation humaine"
+  },
   "jiraImport": {
     "cancel": "Annuler",
     "configureButton": "Configurer Jira",
@@ -1306,6 +1411,19 @@
     },
     "noCustomServers": "Aucun serveur personnalisé configuré. Ajoutez-en un pour l'utiliser avec vos agents.",
     "noMcpServers": "Aucun serveur MCP",
+    "searchPlaceholder": "Rechercher des serveurs MCP…",
+    "setupRequired": "Configuration requise",
+    "noSearchResults": "Aucun serveur ne correspond à votre recherche.",
+    "categories": {
+      "core": "Essentiel",
+      "projectMgmt": "Gestion de projet",
+      "devTools": "Outils de dev",
+      "search": "Recherche",
+      "testingQA": "Tests & QA",
+      "monitoring": "Monitoring",
+      "communication": "Communication",
+      "custom": "Personnalisé"
+    },
     "noProjectSelected": "Aucun projet sélectionné",
     "noProjectSelectedDescription": "Sélectionnez un projet dans le menu déroulant pour voir et configurer les serveurs MCP.",
     "projectNotInitialized": "Projet non initialisé",
@@ -1344,6 +1462,42 @@
       "puppeteer": {
         "description": "Automatisation de navigateur web pour les tests",
         "name": "Puppeteer"
+      },
+      "chromeDevtools": {
+        "name": "Chrome DevTools",
+        "description": "Automatisation navigateur via Chrome DevTools Protocol (agents coder + QA)"
+      },
+      "github": {
+        "name": "GitHub",
+        "description": "Opérations GitHub via l'API. Nécessite la variable d'env GITHUB_PERSONAL_ACCESS_TOKEN."
+      },
+      "braveSearch": {
+        "name": "Brave Search",
+        "description": "Recherche web respectueuse de la vie privée. Nécessite la variable d'env BRAVE_API_KEY."
+      },
+      "jira": {
+        "name": "Jira",
+        "description": "Suivi des issues Jira & Confluence. Nécessite les variables d'env JIRA_URL, JIRA_USERNAME et JIRA_API_TOKEN."
+      },
+      "azureDevops": {
+        "name": "Azure DevOps",
+        "description": "Azure Boards, Repos et Pipelines. Nécessite les variables d'env AZURE_DEVOPS_TOKEN et AZURE_DEVOPS_ORG."
+      },
+      "sentry": {
+        "name": "Sentry",
+        "description": "Monitoring d'erreurs et de performance. Nécessite la variable d'env SENTRY_AUTH_TOKEN."
+      },
+      "slack": {
+        "name": "Slack",
+        "description": "Envoi de messages et lecture de canaux. Nécessite la variable d'env SLACK_BOT_TOKEN."
+      },
+      "postman": {
+        "name": "Postman",
+        "description": "Exécuter et gérer les collections et tests API. Nécessite la variable d'env POSTMAN_API_KEY."
+      },
+      "teams": {
+        "name": "Microsoft Teams",
+        "description": "Envoyer des messages aux canaux Teams. Nécessite la variable d'env TEAMS_WEBHOOK_URL."
       }
     },
     "serversEnabled": "{{count}} serveurs activés",

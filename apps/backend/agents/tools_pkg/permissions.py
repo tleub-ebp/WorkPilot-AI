@@ -16,6 +16,7 @@ for backwards compatibility.
 
 from .models import (
     AGENT_CONFIGS,
+    CHROME_DEVTOOLS_TOOLS,
     CONTEXT7_TOOLS,
     ELECTRON_TOOLS,
     GRAPHITI_MCP_TOOLS,
@@ -105,6 +106,8 @@ def _get_mcp_tools_for_servers(servers: list[str]) -> list[str]:
             tools.extend(ELECTRON_TOOLS)
         elif server == "puppeteer":
             tools.extend(PUPPETEER_TOOLS)
+        elif server == "chrome-devtools":
+            tools.extend(CHROME_DEVTOOLS_TOOLS)
         # auto-claude tools are already added via config["auto_claude_tools"]
 
     return tools

@@ -40,6 +40,12 @@ const JIRA_ENV_KEYS = {
   AUTO_SYNC: 'JIRA_AUTO_SYNC'
 } as const;
 
+// Microsoft Teams environment variable keys
+const TEAMS_ENV_KEYS = {
+  ENABLED: 'TEAMS_NOTIFICATIONS_ENABLED',
+  WEBHOOK_URL: 'TEAMS_WEBHOOK_URL',
+} as const;
+
 /**
  * Helper to generate .env line (DRY)
  * Uses explicit undefined/null check instead of truthiness to avoid
@@ -205,6 +211,13 @@ export function registerEnvHandlers(
     if (config.jiraAutoSync !== undefined) {
       existingVars[JIRA_ENV_KEYS.AUTO_SYNC] = config.jiraAutoSync ? 'true' : 'false';
     }
+    // Microsoft Teams Notifications
+    if (config.teamsNotificationsEnabled !== undefined) {
+      existingVars[TEAMS_ENV_KEYS.ENABLED] = config.teamsNotificationsEnabled ? 'true' : 'false';
+    }
+    if (config.teamsWebhookUrl !== undefined && (config.teamsWebhookUrl || !existingVars[TEAMS_ENV_KEYS.WEBHOOK_URL])) {
+      existingVars[TEAMS_ENV_KEYS.WEBHOOK_URL] = config.teamsWebhookUrl;
+    }
     // Git/Worktree Settings
     if (config.defaultBranch !== undefined) {
       existingVars['DEFAULT_BRANCH'] = config.defaultBranch;
@@ -265,6 +278,9 @@ export function registerEnvHandlers(
       }
       if (config.mcpServers.puppeteerEnabled !== undefined) {
         existingVars['PUPPETEER_MCP_ENABLED'] = config.mcpServers.puppeteerEnabled ? 'true' : 'false';
+      }
+      if (config.mcpServers.chromeDevtoolsEnabled !== undefined) {
+        existingVars['CHROME_DEVTOOLS_MCP_ENABLED'] = config.mcpServers.chromeDevtoolsEnabled ? 'true' : 'false';
       }
       // Note: graphitiEnabled is already handled via GRAPHITI_ENABLED above
     }
@@ -352,6 +368,14 @@ ${envLine(existingVars, JIRA_ENV_KEYS.EMAIL)}
 ${envLine(existingVars, JIRA_ENV_KEYS.API_TOKEN)}
 ${envLine(existingVars, JIRA_ENV_KEYS.PROJECT_KEY, 'PROJ')}
 ${existingVars[JIRA_ENV_KEYS.AUTO_SYNC] ? `${JIRA_ENV_KEYS.AUTO_SYNC}=${existingVars[JIRA_ENV_KEYS.AUTO_SYNC]}` : `# ${JIRA_ENV_KEYS.AUTO_SYNC}=false`}
+
+# =============================================================================
+# MICROSOFT TEAMS NOTIFICATIONS (OPTIONAL)
+# Sends a message to a Teams channel when a task is done and a PR is created.
+# Create an Incoming Webhook in your Teams channel to get the URL.
+# =============================================================================
+${existingVars[TEAMS_ENV_KEYS.ENABLED] ? `${TEAMS_ENV_KEYS.ENABLED}=${existingVars[TEAMS_ENV_KEYS.ENABLED]}` : `# ${TEAMS_ENV_KEYS.ENABLED}=false`}
+${envLine(existingVars, TEAMS_ENV_KEYS.WEBHOOK_URL, 'https://xxx.webhook.office.com/webhookb2/...')}
 
 # =============================================================================
 # GIT/WORKTREE SETTINGS (OPTIONAL)
@@ -467,6 +491,7 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
         gitlabEnabled: false,
         azureDevOpsEnabled: false,
         jiraEnabled: false,
+        teamsNotificationsEnabled: false,
         graphitiEnabled: false,
         enableFancyUi: true,
         claudeTokenIsGlobal: false,
@@ -591,6 +616,14 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
         config.jiraAutoSync = true;
       }
 
+      // Microsoft Teams Notifications
+      if (vars[TEAMS_ENV_KEYS.ENABLED]?.toLowerCase() === 'true') {
+        config.teamsNotificationsEnabled = true;
+      }
+      if (vars[TEAMS_ENV_KEYS.WEBHOOK_URL]) {
+        config.teamsWebhookUrl = vars[TEAMS_ENV_KEYS.WEBHOOK_URL];
+      }
+
       // Git/Worktree config
       if (vars['DEFAULT_BRANCH']) {
         config.defaultBranch = vars['DEFAULT_BRANCH'];
@@ -657,6 +690,7 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
         linearMcpEnabled: vars['LINEAR_MCP_ENABLED']?.toLowerCase() !== 'false', // default true
         electronEnabled: vars['ELECTRON_MCP_ENABLED']?.toLowerCase() === 'true', // default false
         puppeteerEnabled: vars['PUPPETEER_MCP_ENABLED']?.toLowerCase() === 'true', // default false
+        chromeDevtoolsEnabled: vars['CHROME_DEVTOOLS_MCP_ENABLED']?.toLowerCase() === 'true', // default false
       };
 
       // Parse per-agent MCP overrides (AGENT_MCP_<agent>_ADD/REMOVE)
