@@ -6,19 +6,18 @@ import { ProfileEditDialog } from '../settings/ProfileEditDialog';
 import { useSettingsStore } from '../../stores/settings-store';
 
 interface AuthChoiceStepProps {
-  onNext: () => void;
-  onBack: () => void;
-  onSkip: () => void;
-  onAPIKeyPathComplete?: () => void; // Called when profile is created (skips oauth)
+  readonly onNext: () => void;
+  readonly onSkip: () => void;
+  readonly onAPIKeyPathComplete?: () => void; // Called when profile is created (skips oauth)
 }
 
 interface AuthOptionCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  onClick: () => void;
-  variant?: 'default' | 'oauth';
-  'data-testid'?: string;
+  readonly icon: React.ReactNode;
+  readonly title: string;
+  readonly description: string;
+  readonly onClick: () => void;
+  readonly variant?: 'default' | 'oauth';
+  readonly 'data-testid'?: string;
 }
 
 function AuthOptionCard({ icon, title, description, onClick, variant = 'default', 'data-testid': dataTestId }: AuthOptionCardProps) {
@@ -61,7 +60,7 @@ function AuthOptionCard({ icon, title, description, onClick, variant = 'default'
  * AC Coverage:
  * - AC1: Displays first-run screen with two clear options
  */
-export function AuthChoiceStep({ onNext, onBack, onSkip, onAPIKeyPathComplete }: AuthChoiceStepProps) {
+export function AuthChoiceStep({ onNext, onSkip, onAPIKeyPathComplete }: AuthChoiceStepProps) {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const profiles = useSettingsStore((state) => state.profiles);
 
