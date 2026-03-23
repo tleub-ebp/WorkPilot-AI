@@ -46,7 +46,6 @@ import {
   Monitor,
   Store,
   Puzzle,
-  Image as ImageIcon,
   Rocket,
   RotateCcw,
   Building2,
@@ -702,9 +701,9 @@ const toggleGroupExpansion = (groupId: string) => {
         return 'justify-center px-2 py-2';
       }
       if (isSubItem) {
-        return 'gap-3 px-3 py-1.5 ml-6';
+        return 'gap-3 px-3 py-1.5 ml-6 pr-0';
       }
-      return 'gap-3 px-3 py-2';
+      return 'gap-3 px-3 py-2 pr-0';
     };
 
     const button = (
@@ -714,7 +713,7 @@ const toggleGroupExpansion = (groupId: string) => {
         disabled={!selectedProjectId}
         aria-keyshortcuts={item.shortcut}
         className={cn(
-          'flex w-full items-center rounded-lg text-sm transition-all duration-200',
+          'flex w-[calc(100%-(--spacing(5)))] items-center rounded-lg text-sm transition-all duration-200',
           'hover:bg-accent hover:text-accent-foreground',
           'disabled:pointer-events-none disabled:opacity-50',
           isActive && 'bg-accent text-accent-foreground',
