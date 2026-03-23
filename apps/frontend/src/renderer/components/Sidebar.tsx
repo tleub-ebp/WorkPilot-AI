@@ -364,7 +364,6 @@ export function Sidebar({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       // Persist final width
-      const finalWidth = Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, startWidth + (0)));
       setResizeWidth(prev => {
         saveSettings({ sidebarWidth: prev });
         return prev;
@@ -727,7 +726,7 @@ const toggleGroupExpansion = (groupId: string) => {
           <>
             <span className="flex-1 text-left">{t(item.labelKey)}</span>
             {item.shortcut && (
-              <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded-md border border-border bg-secondary px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:flex mr-1">
+              <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded-md border border-border bg-secondary px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:flex mr-3">
                 {item.shortcut}
               </kbd>
             )}
@@ -756,6 +755,105 @@ const toggleGroupExpansion = (groupId: string) => {
     return button;
   };
 
+  const groupItemsBySubGroup = (items: NavItem[]) => {
+    const subGroups: { key: string; items: NavItem[] }[] = [];
+    for (const item of items) {
+      const key = item.subGroup ?? '';
+      const last = subGroups.at(-1);
+      if (last?.key === key) {
+        last.items.push(item);
+      } else {
+        subGroups.push({ key, items: [item] });
+      }
+    }
+    return subGroups;
+  };
+
+  const renderTooltipSubGroupItem = (item: NavItem) => (
+    <div key={item.id} className="flex items-center gap-2 text-xs p-1 rounded hover:bg-accent/50">
+      <item.icon className="h-3 w-3 shrink-0" />
+      <span className="truncate">{t(item.labelKey)}</span>
+      {item.shortcut && (
+        <kbd className="rounded border border-border bg-secondary px-1 font-mono text-[9px] ml-auto">
+          {item.shortcut}
+        </kbd>
+      )}
+    </div>
+  );
+
+  const renderTooltipItems = (items: NavItem[]) => {
+    const hasSubGroups = items.some(item => item.subGroup);
+    
+    if (!hasSubGroups) {
+      return items.map(renderTooltipSubGroupItem);
+    }
+
+    const subGroups = groupItemsBySubGroup(items);
+    return subGroups.map((sg, sgIndex) => (
+      <div
+        key={sg.key}
+        className={cn(
+          "rounded bg-white/4 border border-white/8 px-1 py-1",
+          sgIndex > 0 && "mt-1"
+        )}
+      >
+        {sg.key && (
+          <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-1 pb-0.5">
+            {t(sg.key)}
+          </div>
+        )}
+        {sg.items.map(renderTooltipSubGroupItem)}
+      </div>
+    ));
+  };
+
+  const renderExpandedSubGroupItem = (item: NavItem, delay: number) => (
+    <div
+      key={item.id}
+      className="animate-in slide-in-from-left-2 duration-200 ease-out"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      {renderNavItem(item, true)}
+    </div>
+  );
+
+  const renderExpandedItems = (items: NavItem[]) => {
+    const hasSubGroups = items.some(item => item.subGroup);
+    
+    if (!hasSubGroups) {
+      return (
+        <div className="rounded-lg bg-white/4 border border-white/8 px-1.5 py-1.5 space-y-0.5">
+          {items.map((item, index) => renderExpandedSubGroupItem(item, index * 50))}
+        </div>
+      );
+    }
+
+    const subGroups = groupItemsBySubGroup(items);
+    let itemIndex = 0;
+    return subGroups.map((sg, sgIndex) => (
+      <div
+        key={sg.key}
+        className={cn(
+          "rounded-lg bg-white/4 border border-white/8 px-1.5 py-1.5",
+          sgIndex > 0 && "mt-2"
+        )}
+      >
+        {sg.key && (
+          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+            {t(sg.key)}
+          </div>
+        )}
+        <div className="space-y-0.5">
+          {sg.items.map(item => {
+            const delay = itemIndex * 50;
+            itemIndex++;
+            return renderExpandedSubGroupItem(item, delay);
+          })}
+        </div>
+      </div>
+    ));
+  };
+
   const renderNavGroup = (group: NavGroup) => {
     const isExpanded = searchQuery.trim() ? true : expandedGroups.has(group.id);
     const GroupIcon = group.icon;
@@ -779,60 +877,7 @@ const toggleGroupExpansion = (groupId: string) => {
             <div className="space-y-2">
               <p className="font-medium text-sm">{t(group.labelKey)}</p>
               <div className="space-y-1">
-                {(() => {
-                  const hasSubGroups = group.items.some(item => item.subGroup);
-                  if (!hasSubGroups) {
-                    return group.items.map(item => (
-                      <div key={item.id} className="flex items-center gap-2 text-xs p-1 rounded hover:bg-accent/50">
-                        <item.icon className="h-3 w-3 shrink-0" />
-                        <span className="truncate">{t(item.labelKey)}</span>
-                        {item.shortcut && (
-                          <kbd className="rounded border border-border bg-secondary px-1 font-mono text-[9px] ml-auto">
-                            {item.shortcut}
-                          </kbd>
-                        )}
-                      </div>
-                    ));
-                  }
-
-                  const subGroups: { key: string; items: NavItem[] }[] = [];
-                  for (const item of group.items) {
-                    const key = item.subGroup ?? '';
-                    const last = subGroups[subGroups.length - 1];
-                    if (last && last.key === key) {
-                      last.items.push(item);
-                    } else {
-                      subGroups.push({ key, items: [item] });
-                    }
-                  }
-
-                  return subGroups.map((sg, sgIndex) => (
-                    <div
-                      key={sg.key}
-                      className={cn(
-                        "rounded bg-white/4 border border-white/8 px-1 py-1",
-                        sgIndex > 0 && "mt-1"
-                      )}
-                    >
-                      {sg.key && (
-                        <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-1 pb-0.5">
-                          {t(sg.key)}
-                        </div>
-                      )}
-                      {sg.items.map(item => (
-                        <div key={item.id} className="flex items-center gap-2 text-xs p-1 rounded hover:bg-accent/50">
-                          <item.icon className="h-3 w-3 shrink-0" />
-                          <span className="truncate">{t(item.labelKey)}</span>
-                          {item.shortcut && (
-                            <kbd className="rounded border border-border bg-secondary px-1 font-mono text-[9px] ml-auto">
-                              {item.shortcut}
-                            </kbd>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ));
-                })()}
+                {renderTooltipItems(group.items)}
               </div>
             </div>
           </TooltipContent>
@@ -871,69 +916,7 @@ const toggleGroupExpansion = (groupId: string) => {
         
         {isExpanded && (
           <div className="space-y-1 animate-in slide-in-from-top-2 duration-300 ease-out">
-            {(() => {
-              // Group items by subGroup for visual sectioning
-              const hasSubGroups = group.items.some(item => item.subGroup);
-              if (!hasSubGroups) {
-                return (
-                  <div className="rounded-lg bg-white/4 border border-white/8 px-1.5 py-1.5 space-y-0.5">
-                    {group.items.map((item, index) => (
-                      <div
-                        key={item.id}
-                        className="animate-in slide-in-from-left-2 duration-200 ease-out"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        {renderNavItem(item, true)}
-                      </div>
-                    ))}
-                  </div>
-                );
-              }
-
-              // Render with sub-group sections
-              const subGroups: { key: string; items: NavItem[] }[] = [];
-              for (const item of group.items) {
-                const key = item.subGroup ?? '';
-                const last = subGroups[subGroups.length - 1];
-                if (last && last.key === key) {
-                  last.items.push(item);
-                } else {
-                  subGroups.push({ key, items: [item] });
-                }
-              }
-
-              let itemIndex = 0;
-              return subGroups.map((sg, sgIndex) => (
-                <div
-                  key={sg.key}
-                  className={cn(
-                    "rounded-lg bg-white/4 border border-white/8 px-1.5 py-1.5",
-                    sgIndex > 0 && "mt-2"
-                  )}
-                >
-                  {sg.key && (
-                    <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                      {t(sg.key)}
-                    </div>
-                  )}
-                  <div className="space-y-0.5">
-                    {sg.items.map(item => {
-                      const delay = itemIndex * 50;
-                      itemIndex++;
-                      return (
-                        <div
-                          key={item.id}
-                          className="animate-in slide-in-from-left-2 duration-200 ease-out"
-                          style={{ animationDelay: `${delay}ms` }}
-                        >
-                          {renderNavItem(item, true)}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ));
-            })()}
+            {renderExpandedItems(group.items)}
           </div>
         )}
       </div>
