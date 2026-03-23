@@ -19,6 +19,8 @@
     "subtitle": "Idées de fonctionnalités générées par l'IA pour votre projet",
     "ideasCount": "{{count}} idées",
     "selectedCount": "{{count}} sélectionnées",
+    "selectAll": "Tout sélectionner",
+    "importAll": "Importer tout",
     "addMore": "Ajouter",
     "delete": "Supprimer",
     "convertSelected": "Ajouter au Kanban",

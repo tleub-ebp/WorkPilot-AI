@@ -701,9 +701,9 @@ const toggleGroupExpansion = (groupId: string) => {
         return 'justify-center px-2 py-2';
       }
       if (isSubItem) {
-        return 'gap-3 px-3 py-1.5 ml-6 pr-0';
+        return 'gap-3 px-3 py-1.5 ml-6';
       }
-      return 'gap-3 px-3 py-2 pr-0';
+      return 'gap-3 px-3 py-2';
     };
 
     const button = (
@@ -725,7 +725,7 @@ const toggleGroupExpansion = (groupId: string) => {
           <>
             <span className="flex-1 text-left">{t(item.labelKey)}</span>
             {item.shortcut && (
-              <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded-md border border-border bg-secondary px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:flex mr-3">
+              <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded-md border border-border bg-secondary px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:flex">
                 {item.shortcut}
               </kbd>
             )}
@@ -821,7 +821,7 @@ const toggleGroupExpansion = (groupId: string) => {
     
     if (!hasSubGroups) {
       return (
-        <div className="rounded-lg bg-white/4 border border-white/8 px-1.5 py-1.5 space-y-0.5">
+        <div className="rounded-lg overflow-hidden bg-white/4 border border-white/8 px-1.5 py-1.5 space-y-0.5">
           {items.map((item, index) => renderExpandedSubGroupItem(item, index * 50))}
         </div>
       );
@@ -833,7 +833,7 @@ const toggleGroupExpansion = (groupId: string) => {
       <div
         key={sg.key}
         className={cn(
-          "rounded-lg bg-white/4 border border-white/8 px-1.5 py-1.5",
+          "rounded-lg overflow-hidden bg-white/4 border border-white/8 px-1.5 py-1.5",
           sgIndex > 0 && "mt-2"
         )}
       >

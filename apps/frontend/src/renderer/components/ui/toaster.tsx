@@ -15,13 +15,16 @@ import {
 import { useToast } from '../../hooks/use-toast';
 
 export function Toaster() {
-  const { toasts } = useToast();
+  const { toasts, dismiss } = useToast();
 
   return (
     <ToastProvider>
-      {toasts.map(({ id, title, description, action, ...props }) => (
+      {toasts.map(({ id, title, description, action, onClick, ...props }) => (
           <Toast key={id} {...props}>
-            <div className="grid gap-1">
+            <div
+              className={onClick ? 'grid gap-1 cursor-pointer' : 'grid gap-1'}
+              onClick={onClick ? () => { onClick(); dismiss(id); } : undefined}
+            >
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
                 <ToastDescription>{description}</ToastDescription>

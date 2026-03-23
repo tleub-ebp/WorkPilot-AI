@@ -19,6 +19,8 @@
     "subtitle": "AI-generated feature ideas for your project",
     "ideasCount": "{{count}} ideas",
     "selectedCount": "{{count}} selected",
+    "selectAll": "Select all",
+    "importAll": "Import all",
     "addMore": "Add More",
     "delete": "Delete",
     "convertSelected": "Add to Kanban",
