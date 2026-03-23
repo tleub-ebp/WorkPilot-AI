@@ -78,6 +78,7 @@ import { initializeGitHubListeners } from './stores/github';
 import { initDownloadProgressListener } from './stores/download-store';
 import { GlobalDownloadIndicator } from './components/GlobalDownloadIndicator';
 import { useIpcListeners, useTerminalProfileChange, useProjectRouteScan } from '@/hooks';
+import { useTaskNotifications } from './hooks/useTaskNotifications';
 import { useGlobalTerminalListeners } from './hooks/useGlobalTerminalListeners';
 import { COLOR_THEMES, UI_SCALE_MIN, UI_SCALE_MAX, UI_SCALE_DEFAULT } from '@shared/constants';
 import type { Task, Project, ColorTheme } from '@shared/types';
@@ -193,6 +194,9 @@ export function App() {
   const [isOnboardingWizardOpen, setIsOnboardingWizardOpen] = useState(false);
   const [isVersionWarningModalOpen, setIsVersionWarningModalOpen] = useState(false);
   const [isRefreshingTasks, setIsRefreshingTasks] = useState(false);
+
+  // Task completion toast notifications (human_review, done, pr_created, error)
+  useTaskNotifications({ onNavigate: (view) => setActiveView(view as SidebarView) });
 
   // Command Palette & Keyboard Shortcuts state (Features 9.4 & 9.5)
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);

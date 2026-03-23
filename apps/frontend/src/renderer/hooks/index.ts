@@ -1,5 +1,6 @@
 // Export all custom hooks
 export { useIpcListeners } from './useIpc';
+export { useTaskNotifications } from './useTaskNotifications';
 export {
   useResolvedAgentSettings,
   resolveAgentSettings,

@@ -213,7 +213,7 @@ async def run_qa_validation_loop(
     # when the QA reviewer agent reads it.
     print("\n🔐 Running security scan...")
     try:
-        sec_passed, sec_section, sec_issues = await run_qa_security_scan(
+        sec_passed, _, sec_issues = await run_qa_security_scan(
             project_dir, spec_dir
         )
         if not sec_passed:
@@ -488,6 +488,50 @@ async def run_qa_validation_loop(
                     print("\nLinear: Task marked as QA approved, awaiting human review")
 
                 return True
+
+        elif status == "human_escalation":
+            # QA agent could not auto-verify (e.g. sandbox/no CLI) — escalate to human review
+            debug(
+                "qa_loop",
+                "QA requires human verification",
+                iteration=qa_iteration,
+                duration=f"{iteration_duration:.1f}s",
+            )
+            qa_status = get_qa_signoff_status(spec_dir) or {}
+            notes = qa_status.get("next_steps", [])
+
+            emit_phase(ExecutionPhase.COMPLETE, "QA requires manual verification")
+            task_event_emitter.emit(
+                "QA_PASSED",
+                {
+                    "iteration": qa_iteration,
+                    "testsRun": qa_status.get("tests_passed", {}),
+                    "manualVerificationRequired": True,
+                },
+            )
+
+            print("\n" + "=" * 70)
+            print("  ⚠️  QA REQUIRES MANUAL VERIFICATION")
+            print("=" * 70)
+            print("\nCode quality passed automated review.")
+            print("Manual verification required (e.g. run tests outside sandbox).")
+            if notes:
+                print("\nNext steps:")
+                for step in notes[:5]:
+                    print(f"  - {step}")
+
+            if task_logger:
+                task_logger.end_phase(
+                    LogPhase.VALIDATION,
+                    success=True,
+                    message="QA validation passed — manual verification required",
+                )
+
+            if linear_task and linear_task.task_id:
+                await linear_qa_approved(spec_dir)
+                print("\nLinear: Task marked as QA approved, awaiting human review")
+
+            return True
 
         elif status == "rejected":
             # Reset error tracking on valid response (rejected is a valid response)

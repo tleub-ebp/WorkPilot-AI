@@ -34,13 +34,13 @@ import { cn } from '../lib/utils';
 import type { InsightsSessionSummary } from '../../shared/types';
 
 interface ChatHistorySidebarProps {
-  sessions: InsightsSessionSummary[];
-  currentSessionId: string | null;
-  isLoading: boolean;
-  onNewSession: () => void;
-  onSelectSession: (sessionId: string) => void;
-  onDeleteSession: (sessionId: string) => Promise<boolean>;
-  onRenameSession: (sessionId: string, newTitle: string) => Promise<boolean>;
+  readonly sessions: InsightsSessionSummary[];
+  readonly currentSessionId: string | null;
+  readonly isLoading: boolean;
+  readonly onNewSession: () => void;
+  readonly onSelectSession: (sessionId: string) => void;
+  readonly onDeleteSession: (sessionId: string) => Promise<boolean>;
+  readonly onRenameSession: (sessionId: string, newTitle: string) => Promise<boolean>;
 }
 
 export function ChatHistorySidebar({
@@ -89,11 +89,11 @@ export function ChatHistorySidebar({
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
-      return 'Today';
+      return t('chatHistory.today');
     } else if (diffDays === 1) {
-      return 'Yesterday';
+      return t('chatHistory.yesterday');
     } else if (diffDays < 7) {
-      return `${diffDays} days ago`;
+      return t('chatHistory.daysAgo', { count: diffDays });
     } else {
       return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     }
@@ -109,11 +109,68 @@ export function ChatHistorySidebar({
     return groups;
   }, {} as Record<string, InsightsSessionSummary[]>);
 
+  const handleSelectSession = (sessionId: string) => {
+    onSelectSession(sessionId);
+  };
+
+  const handleStartEditSession = (session: InsightsSessionSummary) => {
+    handleStartEdit(session);
+  };
+
+  const handleDeleteSession = (sessionId: string) => {
+    setDeleteSessionId(sessionId);
+  };
+
+  const renderSessionList = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      );
+    }
+
+    if (sessions.length === 0) {
+      return (
+        <div className="px-3 py-8 text-center text-sm text-muted-foreground">
+          {t('chatHistory.noConversations')}
+        </div>
+      );
+    }
+
+    return (
+      <div className="py-2">
+        {Object.entries(groupedSessions).map(([dateLabel, dateSessions]) => (
+          <div key={dateLabel} className="mb-2">
+            <div className="px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              {dateLabel}
+            </div>
+            {dateSessions.map((session) => (
+              <SessionItem
+                key={session.id}
+                session={session}
+                isActive={session.id === currentSessionId}
+                isEditing={editingId === session.id}
+                editTitle={editTitle}
+                onSelect={() => handleSelectSession(session.id)}
+                onStartEdit={() => handleStartEditSession(session)}
+                onSaveEdit={handleSaveEdit}
+                onCancelEdit={handleCancelEdit}
+                onEditTitleChange={setEditTitle}
+                onDelete={() => handleDeleteSession(session.id)}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-full w-64 flex-col border-r border-border bg-muted/30">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-3 py-3">
-        <h3 className="text-sm font-medium text-foreground">Chat History</h3>
+        <h3 className="text-sm font-medium text-foreground">{t('chatHistory.title')}</h3>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -132,55 +189,21 @@ export function ChatHistorySidebar({
 
       {/* Session list */}
       <ScrollArea className="flex-1">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : sessions.length === 0 ? (
-          <div className="px-3 py-8 text-center text-sm text-muted-foreground">
-            No conversations yet
-          </div>
-        ) : (
-          <div className="py-2">
-            {Object.entries(groupedSessions).map(([dateLabel, dateSessions]) => (
-              <div key={dateLabel} className="mb-2">
-                <div className="px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                  {dateLabel}
-                </div>
-                {dateSessions.map((session) => (
-                  <SessionItem
-                    key={session.id}
-                    session={session}
-                    isActive={session.id === currentSessionId}
-                    isEditing={editingId === session.id}
-                    editTitle={editTitle}
-                    onSelect={() => onSelectSession(session.id)}
-                    onStartEdit={() => handleStartEdit(session)}
-                    onSaveEdit={handleSaveEdit}
-                    onCancelEdit={handleCancelEdit}
-                    onEditTitleChange={setEditTitle}
-                    onDelete={() => setDeleteSessionId(session.id)}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
+        {renderSessionList()}
       </ScrollArea>
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={!!deleteSessionId} onOpenChange={() => setDeleteSessionId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
+            <AlertDialogTitle>{t('chatHistory.deleteDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this conversation and all its messages.
-              This action cannot be undone.
+              {t('chatHistory.deleteDialog.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t('chatHistory.deleteDialog.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>{t('chatHistory.deleteDialog.confirm')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -189,16 +212,16 @@ export function ChatHistorySidebar({
 }
 
 interface SessionItemProps {
-  session: InsightsSessionSummary;
-  isActive: boolean;
-  isEditing: boolean;
-  editTitle: string;
-  onSelect: () => void;
-  onStartEdit: () => void;
-  onSaveEdit: () => void;
-  onCancelEdit: () => void;
-  onEditTitleChange: (title: string) => void;
-  onDelete: () => void;
+  readonly session: InsightsSessionSummary;
+  readonly isActive: boolean;
+  readonly isEditing: boolean;
+  readonly editTitle: string;
+  readonly onSelect: () => void;
+  readonly onStartEdit: () => void;
+  readonly onSaveEdit: () => void;
+  readonly onCancelEdit: () => void;
+  readonly onEditTitleChange: (title: string) => void;
+  readonly onDelete: () => void;
 }
 
 function SessionItem({
@@ -274,14 +297,14 @@ function SessionItem({
         <div className="min-w-0 flex-1">
           <p
             className={cn(
-              'line-clamp-2 text-sm leading-tight break-words',
+              'line-clamp-2 text-sm leading-tight wrap-break-word',
               isActive ? 'font-medium text-foreground' : 'text-foreground/80'
             )}
           >
             {session.title}
           </p>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            {session.messageCount} message{session.messageCount !== 1 ? 's' : ''}
+            {t('chatHistory.messageCount', { count: session.messageCount })}
           </p>
         </div>
       </div>
@@ -298,17 +321,17 @@ function SessionItem({
             <MoreVertical className="h-3.5 w-3.5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" sideOffset={5} className="w-36 z-[100]">
+        <DropdownMenuContent align="end" sideOffset={5} className="w-36 z-100">
           <DropdownMenuItem onSelect={onStartEdit}>
             <Pencil className="mr-2 h-3.5 w-3.5" />
-            Rename
+            {t('chatHistory.rename')}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={onDelete}
             className="text-destructive focus:text-destructive"
           >
             <Trash2 className="mr-2 h-3.5 w-3.5" />
-            Delete
+            {t('chatHistory.delete')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -440,6 +440,46 @@ EOF
 # Only commit actual code changes to the project
 ```
 
+### If CANNOT VERIFY (sandbox/environment limitation):
+
+> **Use this ONLY when** tests literally cannot run (no CLI, no runtime, sandbox restriction) **and** code review shows the implementation is correct. Do NOT use this to avoid writing tests.
+
+Update `{{SPEC_DIR}}/implementation_plan.json`:
+
+```json
+{
+  "qa_signoff": {
+    "status": "awaiting_manual_verification",
+    "conditional_approval": true,
+    "sandbox_limitation": true,
+    "timestamp": "[ISO timestamp]",
+    "qa_session": [session-number],
+    "code_quality_rating": "excellent",
+    "tests_passed": {
+      "code_review": "PASS",
+      "unit": "CANNOT_VERIFY (reason)",
+      "integration": "CANNOT_VERIFY (reason)"
+    },
+    "issues_found": [
+      {
+        "type": "blocking",
+        "category": "sandbox_limitation",
+        "title": "Cannot run automated tests",
+        "description": "[Exact reason]",
+        "fix_required": "Manual verification: [exact commands to run]",
+        "is_code_quality_issue": false
+      }
+    ],
+    "next_steps": [
+      "HUMAN ACTION REQUIRED: [exact commands to verify]"
+    ],
+    "verified_by": "qa_agent"
+  }
+}
+```
+
+The framework will mark the build as **passed with conditions** and surface it for human review.
+
 ### If REJECTED:
 
 Create a fix request file:

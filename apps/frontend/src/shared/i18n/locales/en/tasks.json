@@ -74,6 +74,21 @@
     "title": "No tasks yet",
     "description": "Create your first task to get started"
   },
+  "statusNotifications": {
+    "view": "View",
+    "human_review": {
+      "title": "Ready for Review"
+    },
+    "done": {
+      "title": "Task Completed"
+    },
+    "pr_created": {
+      "title": "PR Created"
+    },
+    "error": {
+      "title": "Task Failed"
+    }
+  },
   "columns": {
     "backlog": "Planning",
     "queue": "Queue",

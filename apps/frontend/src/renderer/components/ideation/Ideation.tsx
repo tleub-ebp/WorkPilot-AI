@@ -28,6 +28,7 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
     session,
     generationStatus,
     isGenerating,
+    isLoadingSession,
     config,
     logs,
     typeStates,
@@ -71,6 +72,17 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
     clearSelection,
     getIdeasByType
   } = useIdeation(projectId, { onGoToTask, showArchived });
+
+  // Show loading skeleton while session is being fetched (prevents empty state flash)
+  if (isLoadingSession && !isGenerating) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center text-muted-foreground">
+          <div className="h-8 w-8 mx-auto mb-3 animate-spin rounded-full border-2 border-border border-t-primary" />
+        </div>
+      </div>
+    );
+  }
 
   // Show generation progress with streaming ideas (use isGenerating flag for reliable state)
   if (isGenerating) {

@@ -63,17 +63,28 @@ export class NaturalLanguageGitService extends EventEmitter {
    * Get the auto-build source path, resolving from settings if needed
    */
   private getAutoBuildSourcePath(): string | null {
-    if (this.autoBuildSourcePath) return this.autoBuildSourcePath;
+    if (this.autoBuildSourcePath && existsSync(this.autoBuildSourcePath)) {
+      return this.autoBuildSourcePath;
+    }
 
-    // Try common locations
+    const validatePath = (p: string): boolean => {
+      return existsSync(p) && existsSync(path.join(p, 'runners', 'natural_language_git_runner.py'));
+    };
+
+    // Auto-detect from app location (same strategy as agent-process.ts)
     const possiblePaths = [
-      path.join(app.getPath('userData'), '..', 'auto-claude'),
-      path.join(process.cwd(), 'apps', 'backend'),
+      // Packaged app: backend is in extraResources
+      ...(app.isPackaged ? [path.join(process.resourcesPath, 'backend')] : []),
+      // Dev mode: from dist/main -> ../../backend (apps/frontend/out/main -> apps/backend)
+      path.resolve(__dirname, '..', '..', '..', 'backend'),
+      // Alternative: from app root -> apps/backend
+      path.resolve(app.getAppPath(), '..', 'backend'),
+      // If running from repo root with apps structure
+      path.resolve(process.cwd(), 'apps', 'backend'),
     ];
 
     for (const p of possiblePaths) {
-      const runnerPath = path.join(p, 'runners', 'natural_language_git_runner.py');
-      if (existsSync(runnerPath)) {
+      if (validatePath(p)) {
         this.autoBuildSourcePath = p;
         return p;
       }

@@ -74,6 +74,21 @@
     "title": "Aucune tâche",
     "description": "Créez votre première tâche pour commencer"
   },
+  "statusNotifications": {
+    "view": "Voir",
+    "human_review": {
+      "title": "Prête pour révision"
+    },
+    "done": {
+      "title": "Tâche terminée"
+    },
+    "pr_created": {
+      "title": "PR créée"
+    },
+    "error": {
+      "title": "Tâche échouée"
+    }
+  },
   "columns": {
     "backlog": "Planification",
     "queue": "File d'attente",
