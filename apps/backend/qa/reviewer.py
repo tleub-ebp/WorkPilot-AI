@@ -16,7 +16,7 @@ from pathlib import Path
 from agents.memory_manager import get_graphiti_context, save_session_memory
 from claude_agent_sdk import ClaudeSDKClient
 from claude_agent_sdk.types import ResultMessage
-from debug import debug, debug_detailed, debug_error, debug_section, debug_success
+from debug import debug, debug_detailed, debug_error, debug_section, debug_success, debug_warning
 from prompts_pkg import get_qa_reviewer_prompt
 from security.tool_input_validator import get_safe_tool_input
 from task_logger import (

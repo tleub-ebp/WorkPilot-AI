@@ -7,6 +7,7 @@ Uses AI to understand the user's intent and generate appropriate Git commands.
 """
 
 import argparse
+import asyncio
 import json
 import os
 import subprocess
@@ -18,8 +19,27 @@ from typing import Dict, Any, Optional
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
-from task_logger.logger import TaskLogger
-from core.model_info import get_current_model_info
+from cli.utils import import_dotenv
+from core.auth import ensure_claude_code_oauth_token, get_auth_token
+from core.dependency_validator import validate_platform_dependencies
+from phase_config import resolve_model_id
+
+try:
+    from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
+
+    SDK_AVAILABLE = True
+except ImportError:
+    SDK_AVAILABLE = False
+    ClaudeAgentOptions = None
+    ClaudeSDKClient = None
+
+validate_platform_dependencies()
+
+# Load .env file
+load_dotenv = import_dotenv()
+env_file = Path(__file__).parent.parent / ".env"
+if env_file.exists():
+    load_dotenv(env_file)
 
 
 class NaturalLanguageGitRunner:
@@ -28,10 +48,9 @@ class NaturalLanguageGitRunner:
     def __init__(self, project_path: str, command: str, model: Optional[str] = None, thinking_level: Optional[str] = None):
         self.project_path = Path(project_path)
         self.command = command
-        self.model = model
+        self.model = model or "sonnet"
         self.thinking_level = thinking_level
-        self.logger = TaskLogger("natural-language-git")
-        
+
         # Change to project directory
         os.chdir(self.project_path)
 
@@ -67,28 +86,48 @@ class NaturalLanguageGitRunner:
 
     def _generate_git_command(self) -> Optional[str]:
         """Generate Git command from natural language using AI."""
-        try:
-            import asyncio
-            from core.client import create_client
-            from core.session import run_agent_session
+        if not SDK_AVAILABLE:
+            self._log_error("Claude Agent SDK not available. Please install claude_agent_sdk.")
+            return None
 
+        # Ensure authentication
+        if not get_auth_token():
+            self._log_error("No authentication token found. Please check your Claude credentials in Settings.")
+            return None
+
+        ensure_claude_code_oauth_token()
+
+        try:
             self._log_status("Understanding command intent...")
 
             git_status = self._get_git_status()
             current_branch = self._get_current_branch()
             system_prompt = self._build_system_prompt(git_status, current_branch)
             user_prompt = f"Convert this natural language command to a Git command: '{self.command}'"
-            full_prompt = f"{system_prompt}\n\n{user_prompt}"
 
             async def _run_async() -> str:
-                client = create_client(
-                    project_dir=str(self.project_path),
-                    model=self.model,
-                    agent_type="coder",
-                )
+                options_kwargs = {
+                    "model": resolve_model_id(self.model),
+                    "system_prompt": system_prompt,
+                    "allowed_tools": [],  # No tools needed, just text generation
+                    "max_turns": 1,
+                    "cwd": str(self.project_path),
+                }
+
+                client = ClaudeSDKClient(options=ClaudeAgentOptions(**options_kwargs))
+
                 async with client:
-                    _, response = await run_agent_session(client, full_prompt, None)
-                return response or ""
+                    await client.query(user_prompt)
+
+                    response_text = ""
+                    async for msg in client.receive_response():
+                        msg_type = type(msg).__name__
+                        if msg_type == "AssistantMessage" and hasattr(msg, "content"):
+                            for block in msg.content:
+                                if type(block).__name__ == "TextBlock" and hasattr(block, "text"):
+                                    response_text += block.text
+
+                return response_text
 
             response = asyncio.run(_run_async())
             command = self._extract_command_from_response(response)
@@ -106,10 +145,7 @@ class NaturalLanguageGitRunner:
 
     def _build_system_prompt(self, git_status: str, current_branch: str) -> str:
         """Build the system prompt for Git command generation."""
-        model_info = get_current_model_info()
-        model_string = f" [{model_info['provider']}:{model_info['model_label']}]" if model_info else ""
-        
-        return f"""You are a Git expert assistant{model_string}. Your task is to convert natural language commands into precise Git commands.
+        return f"""You are a Git expert assistant. Your task is to convert natural language commands into precise Git commands.
 
 Current Git context:
 - Current branch: {current_branch}
@@ -167,7 +203,7 @@ Respond with ONLY the Git command, nothing else."""
     def _extract_command_from_response(self, response: str) -> Optional[str]:
         """Extract the Git command from AI response."""
         lines = response.strip().split('\n')
-        
+
         for line in lines:
             line = line.strip()
             # Look for lines that start with 'git '
@@ -178,7 +214,7 @@ Respond with ONLY the Git command, nothing else."""
                 cmd = line.strip('`')
                 if cmd.startswith('git '):
                     return cmd
-        
+
         # If no explicit git command found, try to find any command
         for line in lines:
             line = line.strip()
@@ -186,8 +222,8 @@ Respond with ONLY the Git command, nothing else."""
                 # Extract the git command part
                 parts = line.split('git ')
                 if len(parts) > 1:
-                    return 'git ' + parts[1].split()[0]
-        
+                    return 'git ' + parts[1].strip().rstrip('`')
+
         return None
 
     def _execute_git_command(self, command: str) -> Dict[str, Any]:
@@ -232,21 +268,21 @@ Respond with ONLY the Git command, nothing else."""
     def _output_result(self, command: str, result: Dict[str, Any]) -> None:
         """Output the execution result in the expected format."""
         explanation = self._generate_explanation(command, result)
-        
+
         output_result = {
             'generatedCommand': command,
             'explanation': explanation,
             'executionOutput': result['stdout'] + (result['stderr'] if result['stderr'] else ''),
             'success': result['success']
         }
-        
+
         # Output the structured result
         print(f"__GIT_RESULT__:{json.dumps(output_result)}")
 
     def _generate_explanation(self, command: str, result: Dict[str, Any]) -> str:
         """Generate an explanation of what the command does."""
         cmd_parts = command.split()[1:]  # Skip 'git'
-        
+
         explanations = {
             'status': 'Shows the working tree status',
             'log': 'Shows commit history',
@@ -261,7 +297,7 @@ Respond with ONLY the Git command, nothing else."""
             'reset': 'Resets current HEAD to specified state',
             'stash': 'Stashes away changes',
         }
-        
+
         if cmd_parts and cmd_parts[0] in explanations:
             return explanations[cmd_parts[0]]
         else:
@@ -270,12 +306,12 @@ Respond with ONLY the Git command, nothing else."""
     def _log_status(self, message: str) -> None:
         """Log status message."""
         print(f"__STATUS__:{message}")
-        self.logger.log(message)
+        sys.stdout.flush()
 
     def _log_error(self, message: str) -> None:
         """Log error message."""
         print(f"__ERROR__:{message}")
-        self.logger.log(f"ERROR: {message}")
+        sys.stdout.flush()
 
 
 def main():
@@ -285,20 +321,20 @@ def main():
     parser.add_argument("--command", required=True, help="Natural language command")
     parser.add_argument("--model", help="AI model to use")
     parser.add_argument("--thinking-level", help="Thinking level for AI")
-    
+
     args = parser.parse_args()
-    
+
     # Validate project directory
     if not os.path.isdir(args.project_dir):
         print(f"__ERROR__:Project directory not found: {args.project_dir}")
         sys.exit(1)
-    
+
     # Check if it's a Git repository
     git_dir = os.path.join(args.project_dir, ".git")
     if not os.path.exists(git_dir):
         print(f"__ERROR__:Not a Git repository: {args.project_dir}")
         sys.exit(1)
-    
+
     # Create and run the runner
     runner = NaturalLanguageGitRunner(
         project_path=args.project_dir,
@@ -306,7 +342,7 @@ def main():
         model=args.model,
         thinking_level=args.thinking_level
     )
-    
+
     runner.run()
 
 

@@ -6,7 +6,7 @@ import { ToastAction } from '../components/ui/toast';
 import type { TaskStatus } from '../../shared/types';
 import type { SidebarView } from '../components/Sidebar';
 
-const NOTIFY_STATUSES: TaskStatus[] = ['human_review', 'done', 'pr_created', 'error'];
+const NOTIFY_STATUSES: Set<TaskStatus> = new Set(['human_review', 'done', 'pr_created', 'error']);
 
 interface UseTaskNotificationsOptions {
   onNavigate: (view: SidebarView) => void;
@@ -33,7 +33,7 @@ export function useTaskNotifications({ onNavigate }: UseTaskNotificationsOptions
 
   useEffect(() => {
     const unregister = registerTaskStatusChangeListener((taskId, _oldStatus, newStatus) => {
-      if (!NOTIFY_STATUSES.includes(newStatus)) return;
+      if (!NOTIFY_STATUSES.has(newStatus)) return;
 
       const task = useTaskStore
         .getState()
@@ -53,8 +53,9 @@ export function useTaskNotifications({ onNavigate }: UseTaskNotificationsOptions
         title: translate(`statusNotifications.${newStatus}.title`),
         description: taskTitle,
         variant: newStatus === 'error' ? 'destructive' : 'default',
+        onClick: handleView,
         action: (
-          <ToastAction altText={viewLabel} onClick={handleView}>
+          <ToastAction altText={viewLabel} onClick={(e) => { e.stopPropagation(); handleView(); }}>
             {viewLabel}
           </ToastAction>
         ),

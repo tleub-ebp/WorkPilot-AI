@@ -69,7 +69,6 @@ export function IdeaCard({ idea, isSelected, onClick, onConvert, onGoToTask, onD
         >
           <Checkbox
             checked={isSelected}
-            onCheckedChange={() => onToggleSelect(idea.id)}
             className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
             aria-label={t('accessibility.selectIdeaAriaLabel', { title: idea.title })}
           />
