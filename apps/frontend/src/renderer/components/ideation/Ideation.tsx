@@ -73,17 +73,6 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
     getIdeasByType
   } = useIdeation(projectId, { onGoToTask, showArchived });
 
-  // Show loading skeleton while session is being fetched (prevents empty state flash)
-  if (isLoadingSession && !isGenerating) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center text-muted-foreground">
-          <div className="h-8 w-8 mx-auto mb-3 animate-spin rounded-full border-2 border-border border-t-primary" />
-        </div>
-      </div>
-    );
-  }
-
   // Show generation progress with streaming ideas (use isGenerating flag for reliable state)
   if (isGenerating) {
     return (
@@ -103,14 +92,14 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
     );
   }
 
-  // Show empty state only when no session exists (first run)
-  if (!session) {
+  // Show empty state while loading OR when no session exists
+  if (isLoadingSession || !session) {
     return (
       <>
         <IdeationEmptyState
           config={config}
           hasToken={hasToken}
-          isCheckingToken={isCheckingToken}
+          isCheckingToken={isCheckingToken || isLoadingSession}
           onGenerate={handleGenerate}
           onOpenConfig={() => setShowConfigDialog(true)}
           onToggleIdeationType={toggleIdeationType}

@@ -15,6 +15,7 @@ from pathlib import Path
 # Memory integration for cross-session learning
 from agents.memory_manager import get_graphiti_context, save_session_memory
 from claude_agent_sdk import ClaudeSDKClient
+from claude_agent_sdk.types import ResultMessage
 from debug import debug, debug_detailed, debug_error, debug_section, debug_success
 from prompts_pkg import get_qa_reviewer_prompt
 from security.tool_input_validator import get_safe_tool_input
@@ -282,6 +283,7 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
         debug_success("qa_reviewer", "Query sent successfully")
 
         response_text = ""
+        result_error: str | None = None
         debug("qa_reviewer", "Starting to receive response stream...")
         async for msg in client.receive_response():
             msg_type = type(msg).__name__
@@ -291,6 +293,27 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
                 f"Received message #{message_count}",
                 msg_type=msg_type,
             )
+
+            # Capture ResultMessage errors (e.g. rate limit, auth failure, crash)
+            if isinstance(msg, ResultMessage):
+                if msg.is_error:
+                    result_error = msg.result or f"SDK error (subtype={msg.subtype})"
+                    debug_error(
+                        "qa_reviewer",
+                        f"ResultMessage error: {result_error}",
+                        num_turns=msg.num_turns,
+                        duration_ms=msg.duration_ms,
+                    )
+                    print(f"\n❌ Claude session error: {result_error}")
+                else:
+                    debug(
+                        "qa_reviewer",
+                        "ResultMessage received (session complete)",
+                        num_turns=msg.num_turns,
+                        cost_usd=msg.total_cost_usd,
+                        duration_ms=msg.duration_ms,
+                    )
+                continue
 
             if msg_type == "AssistantMessage" and hasattr(msg, "content"):
                 for block in msg.content:
@@ -527,6 +550,9 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
 
             # Build informative error message for feedback loop
             error_details = []
+            if result_error:
+                # SDK-level error (rate limit, auth failure, subprocess crash)
+                return "error", f"Claude session error: {result_error}"
             if message_count == 0:
                 error_details.append("No messages received from agent")
             if tool_count == 0:
