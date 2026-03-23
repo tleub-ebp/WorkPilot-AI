@@ -473,6 +473,16 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
                 discoveries=qa_discoveries,
             )
             return "rejected", response_text
+        elif status and status.get("status") not in ("approved", "rejected"):
+            # Non-standard status (e.g. "awaiting_manual_verification") — treat as human escalation
+            non_standard = status.get("status", "unknown")
+            debug_warning(
+                "qa_reviewer",
+                f"QA agent wrote non-standard status: {non_standard} — treating as human escalation",
+            )
+            print(f"\n⚠️  QA agent set non-standard status: {non_standard}")
+            print("Treating as human escalation (manual verification required).")
+            return "human_escalation", response_text
         else:
             # Agent didn't update the file - try to extract verdict from response
             extracted_verdict = _extract_verdict_from_response(response_text)

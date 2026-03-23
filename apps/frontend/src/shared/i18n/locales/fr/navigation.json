@@ -95,7 +95,7 @@
     "downloadError": "Échec du téléchargement de la mise à jour",
     "readOnlyVolumeWarning": "Déplacez l'app dans le dossier Applications pour mettre à jour"
   },
-  "cli": {
+  "claudeCode": {
     "checking": "Vérification du CLI IA...",
     "upToDate": "Le CLI IA est à jour",
     "updateAvailable": "Mise à jour du CLI IA disponible",

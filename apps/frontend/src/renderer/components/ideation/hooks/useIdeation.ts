@@ -33,6 +33,7 @@ export function useIdeation(projectId: string, options: UseIdeationOptions = {})
   const session = useIdeationStore((state) => state.session);
   const generationStatus = useIdeationStore((state) => state.generationStatus);
   const isGenerating = useIdeationStore((state) => state.isGenerating);
+  const isLoadingSession = useIdeationStore((state) => state.isLoadingSession);
   const config = useIdeationStore((state) => state.config);
   const setConfig = useIdeationStore((state) => state.setConfig);
   const logs = useIdeationStore((state) => state.logs);
@@ -283,6 +284,7 @@ export function useIdeation(projectId: string, options: UseIdeationOptions = {})
     session,
     generationStatus,
     isGenerating,
+    isLoadingSession,
     config,
     logs,
     typeStates,

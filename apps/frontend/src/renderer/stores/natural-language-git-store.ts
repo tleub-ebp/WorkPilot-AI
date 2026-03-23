@@ -116,19 +116,19 @@ export function setupNaturalLanguageGitListeners() {
 
   const store = () => useNaturalLanguageGitStore.getState();
 
-  const handleStatus = (_event: unknown, status: string) => {
+  const handleStatus = (status: string) => {
     store().setStatus?.(status);
   };
 
-  const handleStreamChunk = (_event: unknown, chunk: string) => {
+  const handleStreamChunk = (chunk: string) => {
     store().appendStreamingOutput?.(chunk);
   };
 
-  const handleError = (_event: unknown, error: string) => {
+  const handleError = (error: string) => {
     store().setError?.(error);
   };
 
-  const handleComplete = (_event: unknown, result: {
+  const handleComplete = (result: {
     generatedCommand: string;
     explanation: string;
     executionOutput: string;

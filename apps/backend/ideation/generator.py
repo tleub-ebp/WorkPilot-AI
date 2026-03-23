@@ -19,7 +19,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.client import create_agent_client
 from phase_config import get_thinking_budget, resolve_model_id
 from ui import print_status
-from core.runtimes import create_agent_runtime
 
 # Ideation types
 IDEATION_TYPES = [
@@ -91,28 +90,29 @@ class IdeationGenerator:
         if additional_context:
             prompt += f"\n{additional_context}\n"
 
-        # Migration vers runtime provider-agnostique
-        phase_model = self.model
-        phase_thinking_budget = self.thinking_budget
-        config = None
-        runtime = create_agent_runtime(
-            spec_dir=None,  # À adapter selon le contexte réel
-            phase="ideation",
+        client = create_agent_client(
             project_dir=self.project_dir,
+            spec_dir=self.output_dir,
+            model=resolve_model_id(self.model),
+            max_thinking_tokens=self.thinking_budget,
             agent_type="ideation",
-            cli_provider=None,
-            cli_model=phase_model,
-            cli_thinking=phase_thinking_budget,
-            config=config,
         )
 
-        # Utilisation : await runtime.run_session(prompt)
-
         try:
-            result = await runtime.run_session(prompt)
-            return True, str(result) if result else ""
+            output_text = ""
+            async with client:
+                await client.query(prompt)
+                async for msg in client.receive_response():
+                    msg_type = type(msg).__name__
+                    if msg_type == "AssistantMessage" and hasattr(msg, "content"):
+                        for block in msg.content:
+                            if type(block).__name__ == "TextBlock" and hasattr(block, "text"):
+                                output_text += block.text
+            return True, output_text
         except Exception as e:
-            return False, str(e)
+            error_msg = str(e) or "Unknown error"
+            print_status(f"Agent session failed: {error_msg}", "error")
+            return False, error_msg
 
     async def run_recovery_agent(
         self,

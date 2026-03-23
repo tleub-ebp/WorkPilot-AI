@@ -1011,5 +1011,22 @@
       "openFolder": "Open folder",
       "done": "Done"
     }
+  },
+  "chatHistory": {
+    "title": "Chat History",
+    "noConversations": "No conversations yet",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}} days ago",
+    "messageCount_one": "{{count}} message",
+    "messageCount_other": "{{count}} messages",
+    "rename": "Rename",
+    "delete": "Delete",
+    "deleteDialog": {
+      "title": "Delete conversation?",
+      "description": "This will permanently delete this conversation and all its messages. This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    }
   }
 }

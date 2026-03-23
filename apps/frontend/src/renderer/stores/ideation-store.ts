@@ -36,10 +36,12 @@ interface IdeationState {
   typeStates: Record<IdeationType, IdeationTypeState>;
   selectedIds: Set<string>;
   isGenerating: boolean;
+  isLoadingSession: boolean;
 
   // Actions
   setCurrentProjectId: (projectId: string | null) => void;
   setSession: (session: IdeationSession | null) => void;
+  setIsLoadingSession: (loading: boolean) => void;
   setIsGenerating: (isGenerating: boolean) => void;
   setGenerationStatus: (status: IdeationGenerationStatus) => void;
   setConfig: (config: Partial<IdeationConfig>) => void;
@@ -98,6 +100,7 @@ export const useIdeationStore = create<IdeationState>((set) => ({
   typeStates: { ...initialTypeStates },
   selectedIds: new Set<string>(),
   isGenerating: false,
+  isLoadingSession: true,
 
   // Actions
   setCurrentProjectId: (projectId) =>
@@ -111,11 +114,13 @@ export const useIdeationStore = create<IdeationState>((set) => ({
           logs: [],
           typeStates: { ...initialTypeStates },
           selectedIds: new Set<string>(),
-          isGenerating: false
+          isGenerating: false,
+          isLoadingSession: true
         };
       }
       return { currentProjectId: projectId };
     }),
+  setIsLoadingSession: (loading) => set({ isLoadingSession: loading }),
 
   setSession: (session) => set({ session }),
 
@@ -377,6 +382,7 @@ export async function loadIdeation(projectId: string): Promise<void> {
   store.setCurrentProjectId(projectId);
 
   if (store.isGenerating) {
+    store.setIsLoadingSession(false);
     return;
   }
 
@@ -394,6 +400,7 @@ export async function loadIdeation(projectId: string): Promise<void> {
   } else {
     currentState.setSession(null);
   }
+  currentState.setIsLoadingSession(false);
 }
 
 export function generateIdeation(projectId: string): void {

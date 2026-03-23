@@ -1011,5 +1011,22 @@
       "openFolder": "Ouvrir le dossier",
       "done": "Terminé"
     }
+  },
+  "chatHistory": {
+    "title": "Historique des conversations",
+    "noConversations": "Aucune conversation pour le moment",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "daysAgo": "Il y a {{count}} jours",
+    "messageCount_one": "{{count}} message",
+    "messageCount_other": "{{count}} messages",
+    "rename": "Renommer",
+    "delete": "Supprimer",
+    "deleteDialog": {
+      "title": "Supprimer la conversation ?",
+      "description": "Cette action supprimera définitivement cette conversation et tous ses messages. Cette action est irréversible.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer"
+    }
   }
 }
