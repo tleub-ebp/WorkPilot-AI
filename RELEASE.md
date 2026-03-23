@@ -1,6 +1,6 @@
 # Release Process
 
-This document describes how releases are created for WorkPilot AI.
+This document describes how releases are created for Auto-Claude EBP (WorkPilot AI).
 
 ## Overview
 
@@ -19,14 +19,14 @@ WorkPilot AI uses an automated release pipeline that ensures releases are only p
 │        │                                 │                                  │
 │        ▼                                 │                                  │
 │   ┌─────────┐                            │                                  │
-│   │ v2.8.0  │  2. Create PR              │                                  │
+│   │ v1.0.0  │  2. Create PR              │                                  │
 │   │ commit  │ ────────────────────►      │                                  │
 │   └─────────┘                            │                                  │
 │                                          │                                  │
 │                           3. Merge PR    ▼                                  │
 │                                    ┌──────────┐                             │
-│                                    │ v2.8.0   │                             │
-│                                    │ on main  │                             │
+│                                    │  v1.0.0  │                             │
+│                                    │  on main │                             │
 │                                    └────┬─────┘                             │
 │                                         │                                   │
 │                     ┌───────────────────┴───────────────────┐               │
@@ -34,7 +34,7 @@ WorkPilot AI uses an automated release pipeline that ensures releases are only p
 │                     ├───────────────────────────────────────┤               │
 │                     │ 4. prepare-release.yml                │               │
 │                     │    - Detects version > latest tag     │               │
-│                     │    - Creates tag v2.8.0               │               │
+│                     │    - Creates tag v1.0.0               │               │
 │                     │                                       │               │
 │                     │ 5. release.yml (triggered by tag)     │               │
 │                     │    - Builds macOS (Intel + ARM)       │               │
@@ -56,13 +56,13 @@ On your development branch (typically `develop` or a feature branch):
 
 ```bash
 # Navigate to project root
-cd /path/to/auto-claude
+cd /path/to/auto-claude-ebp
 
 # Bump version (choose one)
-node scripts/bump-version.js patch   # 2.7.1 -> 2.7.2 (bug fixes)
-node scripts/bump-version.js minor   # 2.7.1 -> 2.8.0 (new features)
-node scripts/bump-version.js major   # 2.7.1 -> 3.0.0 (breaking changes)
-node scripts/bump-version.js 2.8.0   # Set specific version
+node scripts/bump-version.js patch   # 1.0.0 -> 1.0.1 (bug fixes)
+node scripts/bump-version.js minor   # 1.0.0 -> 1.1.0 (new features)
+node scripts/bump-version.js major   # 1.0.0 -> 2.0.0 (breaking changes)
+node scripts/bump-version.js 1.1.0   # Set specific version
 ```
 
 This will:
@@ -79,7 +79,7 @@ This will:
 Add release notes to `CHANGELOG.md` at the top of the file:
 
 ```markdown
-## 2.8.0 - Your Release Title
+## 1.1.0 - Your Release Title
 
 ### ✨ New Features
 - Feature description
@@ -107,7 +107,7 @@ git commit --amend --no-edit
 git push origin your-branch
 
 # Create PR to main (via GitHub UI or gh CLI)
-gh pr create --base main --title "Release v2.8.0"
+gh pr create --base main --title "Release v1.1.0"
 ```
 
 ### Step 4: Merge to Main
@@ -117,7 +117,7 @@ Once the PR is approved and merged to `main`, GitHub Actions will automatically:
 1. **Detect the version bump** (`prepare-release.yml`)
 2. **Validate CHANGELOG.md** has an entry for the new version (FAILS if missing)
 3. **Extract release notes** from CHANGELOG.md
-4. **Create a git tag** (e.g., `v2.8.0`)
+4. **Create a git tag** (e.g., `v1.1.0`)
 5. **Trigger the release workflow** (`release.yml`)
 6. **Build binaries** for all platforms:
    - macOS Intel (x64) - code signed & notarized
@@ -237,8 +237,8 @@ In rare cases where you need to bypass the automated flow:
 
 ```bash
 # Create tag manually (NOT RECOMMENDED)
-git tag -a v2.8.0 -m "Release v2.8.0"
-git push origin v2.8.0
+git tag -a v1.1.0 -m "Release v1.1.0"
+git push origin v1.1.0
 
 # This will trigger release.yml directly
 ```

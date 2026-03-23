@@ -225,6 +225,284 @@ AI-assisted feature planning with competitor analysis and audience targeting.
 
 ---
 
+## Architecture Détaillée
+
+### Vue d'Ensemble
+
+WorkPilot AI est une application de bureau autonome basée sur une architecture multi-agents qui orchestre le cycle de vie complet du développement logiciel. Le système combine un backend Python puissant avec une interface utilisateur Electron moderne pour offrir une expérience de développement transparente.
+
+### Architecture Multi-Agents
+
+#### Pipeline Autonome de Développement
+1. **Agent Planner** - Analyse la complexité et décompose les tâches en sous-tâches
+2. **Agent Coder** - Implémente les fonctionnalités avec des sous-agents parallèles
+3. **Agent QA Reviewer** - Valide les implémentations selon les critères d'acceptation
+4. **Agent QA Fixer** - Résout automatiquement les problèmes identifiés
+
+#### Agents Spécialisés
+- **Test Generator** - Génération de tests unitaires et d'intégration
+- **Refactorer** - Refactoring sécurisé du code avec détection de patterns
+- **Documenter** - Génération automatique de documentation
+- **Migration Agent** - Migration de frameworks et bibliothèques
+- **Memory Manager** - Gestion de la base de connaissances Graphiti
+
+### Architecture Technique
+
+#### Backend Python (`apps/backend/`)
+```
+apps/backend/
+├── core/                # Client, authentification, worktree, plateforme
+│   ├── client.py        # Client Claude Agent SDK
+│   ├── auth.py          # Gestion multi-profils OAuth
+│   ├── worktree.py      # Isolation des espaces de travail Git
+│   └── platform.py      # Abstraction cross-plateforme
+├── agents/              # Logique d'exécution des agents
+│   ├── planner/         # Agent de planification
+│   ├── coder/           # Agent de développement
+│   └── session/         # Gestion des sessions
+├── qa/                  # Pipeline de validation QA
+│   ├── reviewer/        # Validation des critères
+│   ├── fixer/           # Résolution automatique
+│   └── loop/            # Boucle de validation
+├── spec/                # Création et gestion des specs
+├── skills/              # Système de compétences AI optimisé
+├── cli/                 # Interface ligne de commande
+├── context/             # Construction du contexte des tâches
+├── services/            # Services d'intégration externes
+├── integrations/        # Connecteurs (GitHub, GitLab, etc.)
+├── project/             # Analyse et détection de projets
+└── merge/               # Système de fusion sémantique
+```
+
+#### Frontend Electron (`apps/frontend/`)
+```
+apps/frontend/src/
+├── main/                # Processus principal Electron
+│   ├── agent/           # Gestion des files d'attente
+│   ├── claude-profile/  # Gestion multi-profils
+│   ├── terminal/        # Daemon PTY et cycle de vie
+│   ├── platform/        # Abstraction cross-plateforme
+│   ├── ipc-handlers/    # 40+ modules de gestion IPC
+│   └── services/        # Récupération de session SDK
+├── renderer/            # Interface React
+│   ├── features/        # Modules fonctionnels auto-contenus
+│   │   ├── tasks/       # Gestion des tâches, kanban
+│   │   ├── terminals/   # Émulation de terminal
+│   │   ├── projects/    # Gestion de projet, explorateur
+│   │   ├── settings/    # Paramètres application/projet
+│   │   ├── roadmap/     # Génération de roadmap
+│   │   ├── insights/    # Analyse de code
+│   │   └── agents/      # Gestion profils Claude
+│   ├── shared/          # Ressources partagées
+│   └── hooks/           # Hooks au niveau application
+└── shared/              # Partagé main/renderer
+    ├── types/           # Définitions TypeScript
+    ├── constants/       # Constantes application
+    └── utils/           # Utilitaires partagés
+```
+
+### Flux de Données et État
+
+#### Flux d'Exécution des Agents
+1. **Création de Tâche** → Utilisateur crée une tâche dans l'UI/CLI
+2. **Génération de Spec** → L'AI analyse la complexité et crée une spécification
+3. **Phase de Planification** → Le Planner décompose en sous-tâches
+4. **Implémentation** → Le Coder exécute avec des sous-agents parallèles
+5. **Validation QA** → Le Reviewer valide l'implémentation
+6. **Résolution des Problèmes** → Le Fixer résout les problèmes identifiés
+7. **Phase de Fusion** → Fusion sémantique vers la branche principale
+
+#### Gestion d'État
+- **État Projet** → `project-store.ts`
+- **État Tâche/Spec** → `task-store.ts`
+- **État Terminal** → `terminal-store.ts`
+- **État Agent** → `agent-state.ts`
+- **État Paramètres** → `settings-store.ts`
+
+### Sécurité et Isolation
+
+#### Modèle de Sécurité à 3 Couches
+1. **Sandbox OS** → Commandes Bash exécutées en isolation
+2. **Restrictions Filesystem** → Opérations limitées au répertoire projet
+3. **Allowlist Dynamique** → Commandes approuvées selon la stack détectée
+
+#### Gestion des Credentials
+- **Système de Profils Claude** → Gestion OAuth multi-comptes
+- **Stockage Secure** → Keychain OS / Credential Manager
+- **Rotation Automatique** → Cycle de vie des tokens OAuth
+- **Validation Input** → Chemins et commandes sanitizées
+
+### Performance et Scalabilité
+
+#### Modèle de Concurrence
+- **Parallélisme d'Agents** → Jusqu'à 12 terminaux AI parallèles
+- **Opérations Async** → I/O non-bloquant partout
+- **Pooling de Ressources** → Connexions et sessions réutilisées
+- **Load Balancing** → Switching automatique multi-comptes
+
+#### Optimisations
+- **Optimisation Tokens** → Compression et cache du contexte
+- **Gestion Mémoire** → Cleanup agressif et checkpoints
+- **Optimisation Réseau** → Pooling de connexions et retries
+- **Performance UI** → Virtual scrolling et lazy loading
+
+---
+
+## Installation et Configuration
+
+### Prérequis Système
+
+#### Configuration Matérielle Minimale
+- **OS** : Windows 10+, macOS 10.15+, Ubuntu 20.04+
+- **RAM** : 8GB minimum (16GB recommandé)
+- **Stockage** : 2GB d'espace libre
+- **Réseau** : Connexion internet stable
+
+#### Dépendances Logicielles
+- **Node.js v24.12.0 LTS** (Requis)
+- **Python 3.12+** (Pour le backend)
+- **Git** (Dépôt initialisé obligatoire)
+- **Claude Code CLI** : `pnpm install -g @anthropic-ai/claude-code`
+
+### Méthodes d'Installation
+
+#### Option 1 : Application Bureau (Recommandé)
+
+1. **Téléchargement**
+   - Visitez [GitHub Releases](https://github.com/tleub-ebp/Auto-Claude_EBP/releases)
+   - Téléchargez la version stable pour votre plateforme
+
+2. **Installation**
+   - **Windows** : Exécutez `WorkPilot-AI-1.0.0-win32-x64.exe`
+   - **macOS** : Ouvrez `WorkPilot-AI-1.0.0-darwin-arm64.dmg`
+   - **Linux** : Lancez `WorkPilot-AI-1.0.0-linux-x86_64.AppImage`
+
+3. **Premier Lancement**
+   - Lancez l'application
+   - Suivez l'assistant de configuration
+   - Connectez votre provider AI
+
+#### Option 2 : Développement depuis Source
+
+1. **Clonage du Dépôt**
+   ```bash
+   git clone https://github.com/tleub-ebp/Auto-Claude_EBP.git
+   cd Auto-Claude_EBP
+   ```
+
+2. **Installation Automatique**
+   ```bash
+   pnpm install
+   pnpm run dev
+   ```
+   *Crée automatiquement l'environnement virtuel Python et installe toutes les dépendances*
+
+3. **Lancement Manuel**
+   ```bash
+   # Backend
+   cd apps/backend
+   python -m pip install -r requirements.txt
+   
+   # Frontend
+   cd ../frontend
+   pnpm install
+   pnpm run dev
+   ```
+
+### Configuration des Providers AI
+
+#### Authentification Claude (Recommandé)
+```bash
+claude
+# Tapez : /login
+# Appuyez sur Entrée pour ouvrir le navigateur
+```
+*Le token est automatiquement sauvegardé dans le Keychain OS*
+
+#### Configuration Multi-Providers
+| Provider | Méthode | Configuration |
+|----------|---------|---------------|
+| **Anthropic Claude** | OAuth ou API Key | `ANTHROPIC_API_KEY` |
+| **OpenAI** | API Key | `OPENAI_API_KEY` |
+| **Google Gemini** | API Key | `GOOGLE_API_KEY` |
+| **Grok / xAI** | API Key | `XAI_API_KEY` |
+| **Ollama** | Endpoint local | `OLLAMA_BASE_URL` |
+| **GitHub Copilot** | OAuth | Via interface |
+| **Azure OpenAI** | API Key + Endpoint | `AZURE_OPENAI_*` |
+
+#### Variables d'Environnement Optionnelles
+```bash
+# .env
+AUTO_BUILD_MODEL=claude-3-5-sonnet-20241022
+DEBUG=true
+LINEAR_API_KEY=votre_clé_linear
+GRAPHITI_ENABLED=true
+```
+
+### Configuration du Projet
+
+#### Structure de Projet Requise
+```
+votre-projet/
+├── .git/                # Obligatoire : dépôt Git initialisé
+├── package.json         # Pour projets Node.js
+├── requirements.txt     # Pour projets Python
+├── Cargo.toml           # Pour projets Rust
+└── ...                  # Vos fichiers de code
+```
+
+#### Détection Automatique de Stack
+WorkPilot AI détecte automatiquement :
+- **Framework** : React, Vue, Angular, Django, Flask, Express
+- **Language** : TypeScript, JavaScript, Python, Rust, Go
+- **Build Tools** : Vite, Webpack, Cargo, Poetry
+- **Testing** : Jest, Pytest, Vitest, Playwright
+
+### Validation de l'Installation
+
+#### Tests de Connexion
+```bash
+# Test du provider AI
+pnpm test:provider
+
+# Test du backend
+pnpm test:backend
+
+# Test complet de l'application
+pnpm test
+```
+
+#### Vérification de l'Environnement
+```bash
+# Version Node.js
+node --version  # v24.12.0
+
+# Version Python
+python --version  # 3.10+
+
+# Configuration Claude
+claude --version
+```
+
+### Dépannage Courant
+
+#### Problèmes d'Installation
+- **Node.js non trouvé** : Réinstallez depuis https://nodejs.org avec "Add to PATH"
+- **Modules natifs** : `pnpm run rebuild` dans `apps/frontend`
+- **Python manquant** : Installez Python 3.10+ et ajoutez au PATH
+
+#### Problèmes d'Authentification
+- **Token Claude expiré** : `claude` puis `/login`
+- **API Key invalide** : Vérifiez les variables d'environnement
+- **Problèmes OAuth** : Révoquez et réautorisez l'application
+
+#### Problèmes de Performance
+- **Mémoire insuffisante** : Fermez les applications inutiles
+- **Timeout réseau** : Vérifiez votre connexion internet
+- **Lenteur UI** : Redémarrez l'application
+
+---
+
 ## Project Structure
 
 ```
