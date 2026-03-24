@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshCw, KeyRound, Loader2, CheckCircle2, AlertCircle, User, Lock, Globe, ChevronDown, GitBranch } from 'lucide-react';
-import { LucideGithub } from '@/lib/icons';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Switch } from '../../ui/switch';
@@ -666,7 +665,7 @@ function IssuesAvailableInfo() {
   return (
     <div className="rounded-lg border border-info/30 bg-info/5 p-3">
       <div className="flex items-start gap-3">
-        <LucideGithub className="h-5 w-5 text-info mt-0.5" />
+        <Globe className="h-5 w-5 text-info mt-0.5" />
         <div className="flex-1">
           <p className="text-sm font-medium text-foreground">{t('projectSections.github.issuesAvailable')}</p>
           <p className="text-xs text-muted-foreground mt-1">

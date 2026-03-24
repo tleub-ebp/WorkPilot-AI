@@ -1,9 +1,9 @@
 import { Settings2 } from 'lucide-react';
-import { LucideGithub } from '@/lib/icons';
+import { Globe } from '@/lib/icons';
 import { Button } from '../../ui/button';
 import type { EmptyStateProps, NotConnectedStateProps } from '../types';
 
-export function EmptyState({ searchQuery, icon: Icon = LucideGithub, message }: EmptyStateProps) {
+export function EmptyState({ searchQuery, icon: Icon = Globe, message }: EmptyStateProps) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
       <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
@@ -20,7 +20,7 @@ export function NotConnectedState({ error, onOpenSettings }: NotConnectedStatePr
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
       <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-        <LucideGithub className="h-8 w-8 text-muted-foreground" />
+        <Globe className="h-8 w-8 text-muted-foreground" />
       </div>
       <h3 className="text-lg font-semibold text-foreground mb-2">
         GitHub Not Connected
