@@ -17,13 +17,13 @@ import { AzureDevOpsRemoteConfigModal } from './AzureDevOpsRemoteConfigModal';
 import { GitHubRemoteConfigModal } from './GitHubRemoteConfigModal';
 import { GitSetupModal } from './GitSetupModal';
 import { Radio } from 'lucide-react';
-import { Github } from '@/lib/icons';
+import { Globe } from '@/lib/icons';
 
 // Types explicites pour les props et états
 interface AddProjectModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onProjectAdded?: (project: any, skipped: boolean) => void | Promise<void>;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onProjectAdded?: (project: any, skipped: boolean) => void | Promise<void>;
 }
 
 type RemoteType = 'github' | 'azure' | null;
@@ -71,14 +71,10 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
 
   // Git setup modal handlers
   const handleGitInitialized = () => {
-    
     setShowGitCommitModal(false);
     setPendingProjectPath(null);
     
-    try {
-      onOpenChange(false);
-    } catch (error) {
-    }
+    onOpenChange(false);
     
     // Nettoyer tous les états pour éviter les ré-rendres
     setStep(0);
@@ -98,7 +94,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
     if (remoteType === 'azure' && (remoteConfig.azureOrg || remoteConfig.orgUrl)) {
       // Extract repo name from org URL or construct a default one
       const orgUrl = remoteConfig.azureOrg || remoteConfig.orgUrl || '';
-      const repoName = projectName?.replace(/[^A-Za-z0-9_.-]/g, '-') || 'project';
+      const repoName = projectName?.replaceAll(/[^A-Za-z0-9_.-]/g, '-') || 'project';
       const config = {
         url: `${orgUrl.replace(/\/$/, '')}/_git/${repoName}`,
         name: 'origin'
@@ -139,53 +135,43 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
       if (projectLocation && projectName && step === 0) {
         const projectPath = `${projectLocation}/${projectName.trim()}`;
         
-        try {
-          // Check if it's an existing git repository
-          const gitStatus = await window.electronAPI.checkGitStatus(projectPath);
+        // Check if it's an existing git repository
+        const gitStatus = await globalThis.electronAPI.checkGitStatus(projectPath);
+        
+        if (gitStatus?.success && gitStatus?.data?.isGitRepo) {
+          const detected = await detectRepositoryProvider(projectPath);
           
-          if (gitStatus && gitStatus.success && gitStatus.data && gitStatus.data.isGitRepo) {
-            const detected = await detectRepositoryProvider(projectPath);
-            
-            if (detected !== 'unknown') {
-              // Auto-select the detected provider
-              if (detected === 'github') {
-                setRemoteType('github');
-              } else if (detected === 'azure_devops') {
-                setRemoteType('azure');
-              }
-              setProviderSelected(true);
-            } else {
-              // Unknown provider detected, keep current selection or default to skip
-              if (!providerSelected) {
-                setRemoteType(null);
-                setProviderSelected(true);
-              }
-            }
-          } else {
-            // No git repo, don't auto-select anything unless user already selected
-            if (!providerSelected) {
-              setRemoteType(null);
-            }
+          if (detected === 'github') {
+            // Auto-select GitHub provider
+            setRemoteType('github');
+            setProviderSelected(true);
+          } else if (detected === 'azure_devops') {
+            // Auto-select Azure DevOps provider
+            setRemoteType('azure');
+            setProviderSelected(true);
+          } else if (!providerSelected) {
+            // Unknown provider detected, keep current selection or default to skip
+            setRemoteType(null);
+            setProviderSelected(true);
           }
-        } catch (error) {
-          // Error checking, don't change user's selection
+        } else if (!providerSelected) {
+          // No git repo, don't auto-select anything unless user already selected
+          setRemoteType(null);
         }
-      } else {
       }
     };
 
     autoDetectProvider();
-  }, [projectLocation, projectName, step]);
+  }, [projectLocation, projectName, step, providerSelected]);
 
   // Function to detect repository provider from existing git repository
   const detectRepositoryProvider = async (projectPath: string) => {
     
-    try {
-      // First try to read the .git/config file directly for more reliable detection
+    // First try to read the .git/config file directly for more reliable detection
       const gitConfigPath = `${projectPath}/.git/config`;
       
       try {
-        const result = await window.electronAPI.invoke('fileExplorer:read', gitConfigPath);
+        const result = await globalThis.electronAPI.invoke('fileExplorer:read', gitConfigPath);
         
         if (result.success && result.data) {
           const configContent = result.data;
@@ -195,7 +181,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
           
           if (urlMatches) {
             for (const match of urlMatches) {
-              const url = match.split('=', 2)[1].trim();
+              const url = match.split('=')[1].trim();
               
               // Check for Azure DevOps patterns
               if (url.includes('dev.azure.com') || url.includes('visualstudio.com')) {
@@ -212,13 +198,14 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
               }
             }
           }
-        } else {
         }
       } catch (configError) {
+        // Error reading config file, continue to fallback
+        console.error('Failed to read git config file:', configError);
       }
       
       // Fallback to the existing git command approach
-      const gitResult = await window.electronAPI.detectRepoProvider(projectPath);
+      const gitResult = await globalThis.electronAPI.detectRepoProvider(projectPath);
       
       if (gitResult.success && gitResult.data) {
         setDetectedProvider(gitResult.data.provider);
@@ -230,8 +217,6 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
         }
         return gitResult.data.provider;
       }
-    } catch (error) {
-    }
     
     return 'unknown';
   };
@@ -289,7 +274,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
               className="flex-1"
             />
             <Button variant="outline" type="button" onClick={async () => {
-              const path = await window.electronAPI.selectDirectory();
+              const path = await globalThis.electronAPI.selectDirectory();
               if (path) setProjectLocation(path);
             }}>{t('addProject.browse')}</Button>
           </div>
@@ -311,7 +296,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
                 className={`w-full flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:bg-accent hover:border-accent transition-all duration-200 text-left ${remoteType === 'github' ? 'ring-2 ring-primary' : ''}`}
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                  <Github className="h-6 w-6 text-primary" />
+                  <Globe className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-foreground">{t('repoProvider.githubTitle')}</h3>
@@ -423,7 +408,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
                 <h3 className="text-sm font-medium text-muted-foreground">{t('addProject.remoteTitle')}</h3>
                 {remoteType === 'github' && (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50">
-                    <Github className="h-4 w-4" />
+                    <Globe className="h-4 w-4" />
                     <span className="text-sm font-medium">GitHub</span>
                   </div>
                 )}
@@ -483,7 +468,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
     setError(null);
     try {
       // Créer le dossier projet
-      const result = await window.electronAPI.createProjectFolder(
+      const result = await globalThis.electronAPI.createProjectFolder(
         projectLocation,
         projectName.trim(),
         initGit
@@ -503,13 +488,13 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
       setCreatedProject(project);
       // Configure le remote si besoin
       if (project && remoteType === 'github') {
-        await window.electronAPI.updateProjectEnv(project.id, {
+        await globalThis.electronAPI.updateProjectEnv(project.id, {
           githubEnabled: true,
           githubToken: remoteConfig.githubToken || remoteConfig.token,
           githubRepo: remoteConfig.githubRepo || remoteConfig.repo,
         });
       } else if (project && remoteType === 'azure') {
-        await window.electronAPI.updateProjectEnv(project.id, {
+        await globalThis.electronAPI.updateProjectEnv(project.id, {
           azureDevOpsEnabled: true,
           azureDevOpsOrgUrl: remoteConfig.azureOrg || remoteConfig.orgUrl,
           azureDevOpsPat: remoteConfig.azurePat || remoteConfig.pat,
@@ -518,7 +503,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
 
       // Vérifie la présence d'un commit git si git a été initialisé
       if (initGit) {
-        const status = await window.electronAPI.checkGitStatus(result.data.path);
+        const status = await globalThis.electronAPI.checkGitStatus(result.data.path);
         if (status && status.success && status.data && !status.data.hasCommits && !showGitCommitModal) {
           // Finaliser le projet d'abord
           onProjectAdded?.(project, false);
@@ -585,38 +570,37 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
                   } else if (remoteType === 'azure') {
                     setRemoteConfigType('azure');
                     setShowRemoteConfigModal(true);
-                  } else {
+                  } else if (projectLocation && projectName) {
                     // Auto-detect repository type for existing git repositories
-                    if (projectLocation && projectName) {
-                      const projectPath = `${projectLocation}/${projectName.trim()}`;
-                      
-                      // Check if .git directory exists (indicating an existing repository)
-                      try {
-                        const gitStatus = await window.electronAPI.checkGitStatus(projectPath);
-                        if (gitStatus && gitStatus.success && gitStatus.data && gitStatus.data.isGitRepo) {
-                          const detected = await detectRepositoryProvider(projectPath);
-                          if (detected === 'github') {
-                            setRemoteConfigType('github');
-                            setShowRemoteConfigModal(true);
-                          } else if (detected === 'azure_devops') {
-                            setRemoteConfigType('azure');
-                            setShowRemoteConfigModal(true);
-                          } else {
-                            // Unknown provider, skip remote configuration
-                            setStep(1);
-                          }
+                    const projectPath = `${projectLocation}/${projectName.trim()}`;
+                    
+                    // Check if .git directory exists (indicating an existing repository)
+                    try {
+                      const gitStatus = await globalThis.electronAPI.checkGitStatus(projectPath);
+                      if (gitStatus?.success && gitStatus.data?.isGitRepo) {
+                        const detected = await detectRepositoryProvider(projectPath);
+                        if (detected === 'github') {
+                          setRemoteConfigType('github');
+                          setShowRemoteConfigModal(true);
+                        } else if (detected === 'azure_devops') {
+                          setRemoteConfigType('azure');
+                          setShowRemoteConfigModal(true);
                         } else {
-                          // No git repository found, skip remote configuration
+                          // Unknown provider, skip remote configuration
                           setStep(1);
                         }
-                      } catch (error) {
-                        // Error checking git status, skip remote configuration
+                      } else {
+                        // No git repository found, skip remote configuration
                         setStep(1);
                       }
-                    } else {
-                      // No project path yet, skip remote configuration
+                    } catch (error) {
+                      // Error checking git status, skip remote configuration
+                      console.error('Failed to check git status:', error);
                       setStep(1);
                     }
+                  } else {
+                    // No project path yet, skip remote configuration
+                    setStep(1);
                   }
                 }} disabled={!canNext() || isCreating}>
                   {t('addProject.next')}
@@ -642,7 +626,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
             setShowRemoteConfigModal(false);
             if (projectLocation && projectName) {
               const projectPath = `${projectLocation}/${projectName.trim()}`;
-              const status = await window.electronAPI.checkGitStatus(projectPath);
+              const status = await globalThis.electronAPI.checkGitStatus(projectPath);
 
               if (status && status.success && status.data && !status.data.hasCommits && !showGitCommitModal && !pendingProjectPath) {
                 setPendingProjectPath(projectPath);
@@ -667,7 +651,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
             setShowRemoteConfigModal(false);
             if (projectLocation && projectName) {
               const projectPath = `${projectLocation}/${projectName.trim()}`;
-              const status = await window.electronAPI.checkGitStatus(projectPath);
+              const status = await globalThis.electronAPI.checkGitStatus(projectPath);
               if (status && status.success && status.data && !status.data.hasCommits && !showGitCommitModal && !pendingProjectPath) {
                 setPendingProjectPath(projectPath);
                 setShowGitCommitModal(true);
@@ -683,51 +667,49 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
 
       {/* Git Setup Modal */}
       {showGitCommitModal && pendingProjectPath && (
-        <>
-          <GitSetupModal
-          open={showGitCommitModal}
-          onOpenChange={(isOpen) => {
-            setShowGitCommitModal(isOpen);
-            if (!isOpen) {
-              setPendingProjectPath(null);
-            }
-          }}
-          project={{
-            id: 'temp',
-            name: projectName?.trim() || 'temp-project',
-            path: pendingProjectPath,
-            autoBuildPath: '',
-            settings: {
-              model: 'claude-3-5-sonnet-20241022',
-              memoryBackend: 'file',
-              linearSync: false,
-              notifications: {
-                onTaskComplete: true,
-                onTaskFailed: true,
-                onReviewNeeded: true,
-                sound: true
-              },
-              graphitiMcpEnabled: false
-            },
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }}
-          gitStatus={{
-            isGitRepo: true,
-            hasCommits: false,
-            currentBranch: 'main'
-          }}
-          onGitInitialized={handleGitInitialized}
-          onSkip={() => {
-            setShowGitCommitModal(false);
+        <GitSetupModal
+        open={showGitCommitModal}
+        onOpenChange={(isOpen) => {
+          setShowGitCommitModal(isOpen);
+          if (!isOpen) {
             setPendingProjectPath(null);
-            setTimeout(() => {
-              onOpenChange(false);
-            }, 200);
-          }}
-          remoteConfig={getRemoteConfigForGitSetup()}
-        />
-        </>
+          }
+        }}
+        project={{
+          id: 'temp',
+          name: projectName?.trim() || 'temp-project',
+          path: pendingProjectPath,
+          autoBuildPath: '',
+          settings: {
+            model: 'claude-3-5-sonnet-20241022',
+            memoryBackend: 'file',
+            linearSync: false,
+            notifications: {
+              onTaskComplete: true,
+              onTaskFailed: true,
+              onReviewNeeded: true,
+              sound: true
+            },
+            graphitiMcpEnabled: false
+          },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }}
+        gitStatus={{
+          isGitRepo: true,
+          hasCommits: false,
+          currentBranch: 'main'
+        }}
+        onGitInitialized={handleGitInitialized}
+        onSkip={() => {
+          setShowGitCommitModal(false);
+          setPendingProjectPath(null);
+          setTimeout(() => {
+            onOpenChange(false);
+          }, 200);
+        }}
+        remoteConfig={getRemoteConfigForGitSetup()}
+      />
       )}
     </>
   );
