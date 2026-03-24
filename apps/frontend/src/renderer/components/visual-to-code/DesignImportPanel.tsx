@@ -11,7 +11,6 @@ import {
   Palette,
   TestTube,
   FileCode2,
-  Figma,
   Eye,
   Copy,
   ChevronRight,
@@ -46,7 +45,7 @@ const PHASE_CONFIG: Record<PipelinePhase, { icon: React.ElementType; labelKey: s
   code_generation: { icon: Code, labelKey: 'phases.code_generation', color: 'text-green-500' },
   design_token_integration: { icon: Palette, labelKey: 'phases.design_token_integration', color: 'text-amber-500' },
   visual_test_generation: { icon: TestTube, labelKey: 'phases.visual_test_generation', color: 'text-cyan-500' },
-  figma_sync: { icon: Figma, labelKey: 'phases.figma_sync', color: 'text-violet-500' },
+  figma_sync: { icon: Palette, labelKey: 'phases.figma_sync', color: 'text-violet-500' },
   complete: { icon: Check, labelKey: 'phases.complete', color: 'text-green-600' },
   error: { icon: AlertTriangle, labelKey: 'phases.error', color: 'text-red-500' },
 };
@@ -354,7 +353,7 @@ export function DesignImportPanel() {
                 {/* Figma URL Input */}
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium flex items-center gap-1.5">
-                    <Figma className="h-4 w-4" />
+                    <Palette className="h-4 w-4" />
                     {t('upload.figmaUrl')}
                   </label>
                   <input
