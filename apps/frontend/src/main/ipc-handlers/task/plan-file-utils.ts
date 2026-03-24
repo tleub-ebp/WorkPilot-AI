@@ -48,7 +48,7 @@ async function withPlanLock<T>(planPath: string, operation: () => Promise<T>): P
     return await operation();
   } finally {
     // Release the lock
-    resolve!();
+    resolve?.();
     // Clean up if this was the last operation
     if (planLocks.get(planPath) === newLock) {
       planLocks.delete(planPath);
@@ -252,7 +252,6 @@ export function persistPlanStatusAndReasonSync(
       plan = {
         created_at: new Date().toISOString()
       };
-      console.log(`[plan-file-utils] Creating minimal plan for XState persistence: ${planPath}`);
     }
 
     plan.status = status;

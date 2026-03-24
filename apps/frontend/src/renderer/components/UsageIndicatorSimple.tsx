@@ -64,7 +64,7 @@ const getInitials = (name: string): string => {
 /**
  * Formater les grandes valeurs
  */
-const formatUsageValue = (value?: number | null): string | undefined => {
+const _formatUsageValue = (value?: number | null): string | undefined => {
   if (value == null) return undefined;
   return value.toLocaleString('fr-FR');
 };

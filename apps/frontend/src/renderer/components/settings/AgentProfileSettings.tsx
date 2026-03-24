@@ -105,7 +105,7 @@ export function AgentProfileSettings() {
   // Reset per-phase custom model fields when provider changes
   useEffect(() => {
     setCustomModelPerPhase({ spec: '', planning: '', coding: '', qa: '' });
-  }, [provider]);
+  }, []);
 
   // Auto-initialize provider defaults when switching to a new provider
   useEffect(() => {
@@ -126,7 +126,7 @@ export function AgentProfileSettings() {
       
       saveSettings(updates);
     }
-  }, [provider, isClaude, supportsThinking, savedProviderModels]);
+  }, [provider, isClaude, supportsThinking, savedProviderModels, settings.providerPhaseModels, settings.providerPhaseThinking]);
 
   /**
    * Check if current config differs from profile defaults (Claude only)

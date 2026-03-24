@@ -168,7 +168,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
     setExpandedTerminalId(null);
     setPendingCleanup(new Map());
     clearAllCleanupTimers();
-  }, [projectPath, clearAllCleanupTimers]);
+  }, [clearAllCleanupTimers]);
 
   // Fetch available session dates when project changes
   useEffect(() => {

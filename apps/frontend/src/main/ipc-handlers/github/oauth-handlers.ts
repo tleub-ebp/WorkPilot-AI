@@ -784,7 +784,7 @@ export function registerCreateGitHubRepo(): void {
           // Configure the default branch tracking
           try {
             // Get the current branch
-            const currentBranch = execFileSync(getToolPath('git'), ['branch', '--show-current'], {
+            const _currentBranch = execFileSync(getToolPath('git'), ['branch', '--show-current'], {
               cwd: options.projectPath,
               encoding: 'utf-8',
               stdio: 'pipe'

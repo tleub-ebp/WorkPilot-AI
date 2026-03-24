@@ -34,7 +34,7 @@ except ImportError:
     AgentDefinition = None  # type: ignore[assignment,misc]
 
 try:
-    from ...core.client import create_agent_client, create_client
+    from ...core.client import create_agent_client
     from ...phase_config import get_thinking_budget, resolve_model_id
     from ..context_gatherer import _validate_git_ref
     from ..gh_client import GHClient
@@ -52,7 +52,7 @@ try:
     from .io_utils import safe_print
     from .pr_worktree_manager import PRWorktreeManager
     from .pydantic_models import ParallelFollowupResponse
-    from .sdk_utils import process_agent_stream, process_sdk_stream
+    from .sdk_utils import process_agent_stream
 except (ImportError, ValueError, SystemError):
     from context_gatherer import _validate_git_ref
     from core.client import create_agent_client

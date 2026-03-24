@@ -56,6 +56,8 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING
 
+from integrations.windsurf_proxy.auth import WindsurfError, WindsurfErrorCode
+
 if TYPE_CHECKING:
     from integrations.windsurf_proxy.auth import WindsurfCredentials
 

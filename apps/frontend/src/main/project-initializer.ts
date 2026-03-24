@@ -97,7 +97,6 @@ export function checkGitStatus(projectPath: string): GitStatus {
  * This is a user-friendly way to set up git for non-technical users.
  */
 export function initializeGit(projectPath: string, remoteConfig?: { url?: string; name?: string }): InitializationResult {
-  console.log('� GIT-SETUP: � Backend initializeGit called:', { projectPath, remoteConfig });
   debug('initializeGit called', { projectPath, remoteConfig });
 
   // Check current git status
@@ -142,15 +141,10 @@ export function initializeGit(projectPath: string, remoteConfig?: { url?: string
     }
 
     debug('Git initialization complete');
-
-    // Step 4: Configure remote if provided
-    console.log('🔥 GIT-SETUP: 🔍 Backend - Checking remote config:', { remoteConfig });
     if (remoteConfig?.url) {
-      console.log('� GIT-SETUP: � Backend - Configuring git remote', { url: remoteConfig.url, name: remoteConfig.name });
       
       try {
         const remoteName = remoteConfig.name || 'origin';
-        console.log('🔥 GIT-SETUP: 📍 Remote name:', remoteName);
         
         // Check if remote already exists
         try {
@@ -159,39 +153,31 @@ export function initializeGit(projectPath: string, remoteConfig?: { url?: string
             encoding: 'utf-8',
             stdio: 'pipe'
           }).trim();
-          console.log('� GIT-SETUP: � Existing remote found:', existingRemote);
           
           // Update if different
           if (existingRemote !== remoteConfig.url) {
-            console.log('🔥 GIT-SETUP: 🔄 Updating existing remote:', { remoteName, existingRemote, newUrl: remoteConfig.url });
             execFileSync(git, ['remote', 'set-url', remoteName, remoteConfig.url], {
               cwd: projectPath,
               encoding: 'utf-8',
               stdio: 'pipe'
             });
-            console.log('🔥 GIT-SETUP: ✅ Remote updated successfully');
           } else {
-            console.log('🔥 GIT-SETUP: ✅ Remote already exists with correct URL');
           }
-        } catch (error) {
-          // No remote exists, add it
-          console.log('🔥 GIT-SETUP: ➕ Adding new remote:', { remoteName, url: remoteConfig.url });
+        } catch (_error) {
           execFileSync(git, ['remote', 'add', remoteName, remoteConfig.url], {
             cwd: projectPath,
             encoding: 'utf-8',
             stdio: 'pipe'
           });
-          console.log('🔥 GIT-SETUP: ✅ Remote added successfully');
         }
 
         // Configure default branch tracking
         try {
-          const currentBranch = execFileSync(git, ['branch', '--show-current'], {
+          const _currentBranch = execFileSync(git, ['branch', '--show-current'], {
             cwd: projectPath,
             encoding: 'utf-8',
             stdio: 'pipe'
           }).trim();
-          console.log('🔥 GIT-SETUP: 🌿 Current branch:', currentBranch);
           
           // Try to set up tracking for main/master branches
           const mainBranches = ['main', 'master'];
@@ -202,28 +188,21 @@ export function initializeGit(projectPath: string, remoteConfig?: { url?: string
                 encoding: 'utf-8',
                 stdio: 'pipe'
               });
-              console.log('� GIT-SETUP: � Set up tracking for branch:', branch);
               break;
             } catch {
             }
           }
-        } catch (error) {
-          console.log('🔥 GIT-SETUP: ⚠️ Warning: Could not set up branch tracking:', error);
+        } catch (_error) {
           // Don't fail the operation, just log it
         }
-
-        console.log('🔥 GIT-SETUP: ✅ Git remote configuration completed successfully');
-      } catch (remoteError) {
-        console.log('🔥 GIT-SETUP: ❌ Warning: Failed to configure git remote:', remoteError);
+      } catch (_remoteError) {
         // Don't fail the git initialization, but log the issue
       }
     } else {
-      console.log('🔥 GIT-SETUP: ℹ️ No remote config provided, skipping remote configuration');
     }
 
     return { success: true };
   } catch (error) {
-    console.log('🔥 GIT-SETUP: ❌ Git initialization failed:', error);
     debug('Git initialization failed:', { error: (error as Error).message });
     return {
       success: false,

@@ -32,25 +32,16 @@ frontendInfoLog('[UsageMonitor:PROVIDER_DETECTION:API_KEY] Using API key authent
 frontendDebugLog('This is a message without a scope');
 
 // Example of using the formatter directly
-const formattedMessage = formatFrontendLog(
+const _formattedMessage = formatFrontendLog(
   '[CustomScope] This is a custom formatted message', 
   'INFO',
   'custom-module'
 );
-console.log('\nDirect formatter usage:');
-console.log(formattedMessage);
 
 // Example of getting just a colored scope
-const coloredScope = getColoredScope('MyScope');
-console.log('\nColored scope only:', coloredScope, 'Some message after the scope');
+const _coloredScope = getColoredScope('MyScope');
 
 // Demonstrate consistent color mapping
 frontendDebugLog('[MyScope] First message with this scope');
 frontendDebugLog('[MyScope] Second message - same color for consistency');
 frontendDebugLog('[AnotherScope] Different scope gets different color');
-
-console.log('\n=== Color Legend ===');
-console.log('Each unique scope gets a consistent color from the palette:');
-console.log('- UsageMonitor, UsageMonitor:TRACE, UsageMonitor:PROVIDER_DETECTION, etc.');
-console.log('- Different scopes get different colors for easy visual distinction');
-console.log('- Same scope always gets the same color for consistency');

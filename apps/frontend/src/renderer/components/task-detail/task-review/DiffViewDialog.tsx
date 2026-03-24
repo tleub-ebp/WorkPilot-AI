@@ -231,14 +231,6 @@ export function DiffViewDialog({
   const hasFiles = worktreeDiff?.files && worktreeDiff.files.length > 0;
 
   const handleFileClick = useCallback((file: WorktreeDiffFile) => {
-    console.log('[DiffViewDialog] File clicked:', file.path);
-    console.log('[DiffViewDialog] File data:', file);
-    console.log('[DiffViewDialog] File patch length:', file.patch?.length || 0);
-    console.log('[DiffViewDialog] File patch preview:', file.patch?.substring(0, 200) || 'No patch');
-    console.log('[DiffViewDialog] File patch type:', typeof file.patch);
-    console.log('[DiffViewDialog] File patch is undefined:', file.patch === undefined);
-    console.log('[DiffViewDialog] File patch is null:', file.patch === null);
-    console.log('[DiffViewDialog] File patch is empty string:', file.patch === '');
     setSelectedFile(file);
   }, []);
 
@@ -309,7 +301,7 @@ export function DiffViewDialog({
           ) : hasFiles ? (
             viewMode === 'list' ? (
               <div className="space-y-2">
-                {worktreeDiff!.files.map((file, idx) => (
+                {worktreeDiff?.files.map((file, idx) => (
                   <div
                     key={idx}
                     className="flex items-center justify-between p-2 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer"

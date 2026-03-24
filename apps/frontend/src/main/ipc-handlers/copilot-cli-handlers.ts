@@ -495,13 +495,11 @@ export function registerCopilotCliHandlers(): void {
     IPC_CHANNELS.COPILOT_CLI_GET_INSTALLATIONS,
     async (): Promise<IPCResult<CopilotInstallationList>> => {
       try {
-        console.log('[Copilot CLI] Scanning for installations...');
 
         const settings = readSettingsFile();
         const activePath = settings?.copilotPath as string | undefined;
 
         const installations = await scanCopilotInstallations(activePath || null);
-        console.log('[Copilot CLI] Found', installations.length, 'installations');
 
         return {
           success: true,
@@ -526,7 +524,6 @@ export function registerCopilotCliHandlers(): void {
     IPC_CHANNELS.COPILOT_CLI_SET_ACTIVE_PATH,
     async (_event, cliPath: string): Promise<IPCResult<{ path: string }>> => {
       try {
-        console.log('[Copilot CLI] Setting active path:', cliPath);
 
         if (!isSecurePath(cliPath)) {
           throw new Error('Invalid path: contains potentially unsafe characters');

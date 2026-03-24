@@ -5,7 +5,6 @@ import type {
   ArenaAnalytics,
   ArenaLabel,
   ArenaParticipant,
-  ArenaTaskType,
   ArenaBattleProgressEvent,
   ArenaBattleResultEvent,
   ArenaBattleCompleteEvent,

@@ -77,8 +77,9 @@ class WindsurMCPIntegration:
                 return json.loads(result.content[0].text)
         except Exception as e:
             self.logger.error(f"Erreur statut: {e}")
+            return {"connected": False, "error": str(e)}
 
-        return {"connected": False, "error": str(e)}
+        return {"connected": False, "error": "Unknown error"}
 
 
 # Instance globale de l'intégration MCP

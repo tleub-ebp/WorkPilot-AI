@@ -10,7 +10,7 @@ import { spawn, execFileSync } from 'child_process';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import * as fs from 'fs';
-import { getOllamaExecutablePaths, getOllamaInstallCommand as getPlatformOllamaInstallCommand, getWhichCommand, getCurrentOS } from '../platform';
+import { getOllamaExecutablePaths, getOllamaInstallCommand as getPlatformOllamaInstallCommand, getWhichCommand, } from '../platform';
 
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -229,7 +229,6 @@ async function executeOllamaDetector(
   const cached = ollamaDetectorCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < OLLAMA_CACHE_TTL_MS) {
     if (process.env.DEBUG) {
-      console.log('[OllamaDetector] Returning cached result for:', command);
     }
     return cached.promise;
   }
@@ -288,7 +287,6 @@ async function executeOllamaDetectorImpl(
   }
 
   if (process.env.DEBUG) {
-    console.log('[OllamaDetector] Using script at:', scriptPath);
   }
 
   const [pythonExe, baseArgs] = parsePythonCommand(pythonCmd);
@@ -606,12 +604,8 @@ export function registerMemoryHandlers(): void {
     async (): Promise<IPCResult<{ command: string }>> => {
       try {
         const command = getOllamaInstallCommand();
-        console.log('[Ollama] Platform:', getCurrentOS());
-        console.log('[Ollama] Install command:', command);
-        console.log('[Ollama] Opening terminal...');
 
         await openTerminalWithCommand(command);
-        console.log('[Ollama] Terminal opened successfully');
 
         return {
           success: true,

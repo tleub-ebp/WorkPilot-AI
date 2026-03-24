@@ -116,11 +116,6 @@ export function registerInsightsHandlers(getMainWindow: () => BrowserWindow | nu
         ...modelConfig,
       };
 
-      console.log("[Insights Handler] Using model config:", {
-        model: configWithSettings.model,
-        thinkingLevel: configWithSettings.thinkingLevel,
-      });
-
       // Await the async sendMessage to ensure proper error handling and
       // that all async operations (like getProcessEnv) complete before
       // the handler returns. This fixes race conditions on Windows where

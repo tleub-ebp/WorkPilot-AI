@@ -7,6 +7,7 @@ Provides endpoints for cache monitoring, management, and configuration.
 """
 
 import logging
+import time
 from pathlib import Path
 from typing import Annotated, Any
 

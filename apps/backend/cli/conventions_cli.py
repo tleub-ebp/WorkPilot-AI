@@ -163,7 +163,7 @@ This file defines project-specific conventions and patterns that all AI agents m
 - Follow PEP 8 with 4-space indentation
 - Type hints required for all public functions
 
-### TypeScript Frontend  
+### TypeScript Frontend
 - Use Biome for linting and formatting
 - Strict TypeScript mode enabled
 - Functional components with hooks

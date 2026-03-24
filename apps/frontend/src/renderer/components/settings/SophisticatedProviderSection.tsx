@@ -3,8 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { SettingsSection } from './SettingsSection';
 import { ElegantProviderGrid } from './ElegantProviderGrid';
 import { getAllConnectors } from './multiconnector/utils';
-import { useSettings } from './hooks/useSettings';
-import { Loader2, AlertCircle, CheckCircle2, Sparkles, Info } from 'lucide-react';
+import { Loader2, AlertCircle, Sparkles, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
@@ -137,7 +136,7 @@ export function SophisticatedProviderSection({
     };
   });
 
-  const handleConfigure = (providerId: string) => {
+  const handleConfigure = (_providerId: string) => {
     // Ouvrir la configuration du provider avec une animation
     // TODO: Implémenter la modale de configuration élégante
   };

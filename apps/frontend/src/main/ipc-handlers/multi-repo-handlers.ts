@@ -7,8 +7,6 @@ import type {
   MultiRepoCreateConfig,
   MultiRepoStatus,
   RepoExecutionState,
-  RepoDependencyGraph,
-  BreakingChange,
 } from '../../shared/types';
 import path from 'node:path';
 import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';

@@ -9,18 +9,16 @@ import type { GitLabInvestigationStatus, GitLabInvestigationResult } from '../..
 import { projectStore } from '../../project-store';
 import { getGitLabConfig, gitlabFetch, encodeProjectPath } from './utils';
 import type { GitLabAPIIssue, GitLabAPINote } from './types';
-import { buildIssueContext, createSpecForIssue } from './spec-utils';
+import { createSpecForIssue } from './spec-utils';
 import type { AgentManager } from '../../agent';
 
 // Debug logging helper
 const DEBUG = process.env.DEBUG === 'true' || process.env.NODE_ENV === 'development';
 
-function debugLog(message: string, data?: unknown): void {
+function debugLog(_message: string, data?: unknown): void {
   if (DEBUG) {
     if (data !== undefined) {
-      console.debug(`[GitLab Investigation] ${message}`, data);
     } else {
-      console.debug(`[GitLab Investigation] ${message}`);
     }
   }
 }
@@ -110,7 +108,7 @@ export function registerInvestigateIssue(
         ) as GitLabAPIIssue;
 
         // Fetch notes if any selected
-        let selectedNotes: GitLabAPINote[] = [];
+        let _selectedNotes: GitLabAPINote[] = [];
         if (selectedNoteIds && selectedNoteIds.length > 0) {
           const allNotes = await gitlabFetch(
             config.token,
@@ -118,7 +116,7 @@ export function registerInvestigateIssue(
             `/projects/${encodedProject}/issues/${issueIid}/notes`
           ) as GitLabAPINote[];
 
-          selectedNotes = allNotes.filter(note => selectedNoteIds.includes(note.id));
+          _selectedNotes = allNotes.filter(note => selectedNoteIds.includes(note.id));
         }
 
         // Phase 2: Analyzing

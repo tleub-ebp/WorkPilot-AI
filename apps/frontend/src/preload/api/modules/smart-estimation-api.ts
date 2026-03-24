@@ -23,27 +23,27 @@ export const createSmartEstimationAPI = (): SmartEstimationAPI => ({
   cancelSmartEstimation: () => 
     invokeIpc('smart-estimation:cancel'),
   
-  onSmartEstimationStreamChunk: (callback: (chunk: string) => void) => {
+  onSmartEstimationStreamChunk: (_callback: (chunk: string) => void) => {
     // TODO: Implement event listener setup
     return () => { /* TODO: Implement cleanup */ };
   },
   
-  onSmartEstimationStatus: (callback: (status: string) => void) => {
+  onSmartEstimationStatus: (_callback: (status: string) => void) => {
     // TODO: Implement event listener setup
     return () => { /* TODO: Implement cleanup */ };
   },
   
-  onSmartEstimationError: (callback: (error: string) => void) => {
+  onSmartEstimationError: (_callback: (error: string) => void) => {
     // TODO: Implement event listener setup
     return () => { /* TODO: Implement cleanup */ };
   },
   
-  onSmartEstimationComplete: (callback: (result: any) => void) => {
+  onSmartEstimationComplete: (_callback: (result: any) => void) => {
     // TODO: Implement event listener setup
     return () => { /* TODO: Implement cleanup */ };
   },
   
-  onSmartEstimationEvent: (callback: (event: any) => void) => {
+  onSmartEstimationEvent: (_callback: (event: any) => void) => {
     // TODO: Implement event listener setup
     return () => { /* TODO: Implement cleanup */ };
   },

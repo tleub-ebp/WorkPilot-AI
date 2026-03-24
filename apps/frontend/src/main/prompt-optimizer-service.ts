@@ -43,10 +43,6 @@ export class PromptOptimizerService extends EventEmitter {
   private pythonPath: string = 'python';
   private autoBuildSourcePath: string | null = null;
 
-  constructor() {
-    super();
-  }
-
   /**
    * Configure paths for Python and auto-claude source
    */

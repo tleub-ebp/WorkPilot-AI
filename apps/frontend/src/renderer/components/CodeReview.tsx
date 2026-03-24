@@ -147,7 +147,7 @@ export function CodeReview({ projectId }: CodeReviewProps) {
     } finally {
       setLoading(false);
     }
-  }, [diff]);
+  }, [diff, t]);
 
   const handlePaste = useCallback(async () => {
     try {

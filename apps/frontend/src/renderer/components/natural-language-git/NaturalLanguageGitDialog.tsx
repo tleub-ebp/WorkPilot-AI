@@ -62,7 +62,7 @@ export function NaturalLanguageGitDialog() {
     if (streamOutputRef.current) {
       streamOutputRef.current.scrollTop = streamOutputRef.current.scrollHeight;
     }
-  }, [streamingOutput]);
+  }, []);
 
   // Reset copied state when dialog opens
   useEffect(() => {

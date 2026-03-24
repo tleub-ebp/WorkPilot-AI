@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { render, fireEvent, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 import { AccountSettings } from '@/components/settings/AccountSettings';

@@ -20,7 +20,7 @@ interface DecisionLoggerState {
   setLoadingHistory: (loading: boolean) => void;
 }
 
-export const useDecisionLoggerStore = create<DecisionLoggerState>((set, get) => ({
+export const useDecisionLoggerStore = create<DecisionLoggerState>((set, _get) => ({
   entriesByTask: {},
   activeTaskId: null,
   isLoadingHistory: false,

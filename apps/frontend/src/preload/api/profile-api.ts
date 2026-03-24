@@ -107,27 +107,20 @@ export const createProfileAPI = (): ProfileAPI => ({
     apiKey: string,
     signal?: AbortSignal
   ): Promise<IPCResult<DiscoverModelsResult>> => {
-    console.log('[preload/profile-api] discoverModels START');
-    console.log('[preload/profile-api] baseUrl, apiKey:', baseUrl, apiKey?.slice(-4));
 
     const requestId = ++discoverModelsRequestId;
-    console.log('[preload/profile-api] Request ID:', requestId);
 
     // Check if already aborted before initiating request
     if (signal?.aborted) {
-      console.log('[preload/profile-api] Already aborted, rejecting');
       return Promise.reject(new DOMException('The operation was aborted.', 'AbortError'));
     }
 
     // Setup abort listener AFTER checking aborted status to avoid race condition
     if (signal && typeof signal.addEventListener === 'function') {
-      console.log('[preload/profile-api] Setting up abort listener...');
       try {
         signal.addEventListener('abort', () => {
-          console.log('[preload/profile-api] Abort signal received for request:', requestId);
           ipcRenderer.send(IPC_CHANNELS.PROFILES_DISCOVER_MODELS_CANCEL, requestId);
         }, { once: true });
-        console.log('[preload/profile-api] Abort listener added successfully');
       } catch (err) {
         console.error('[preload/profile-api] Error adding abort listener:', err);
       }
@@ -136,9 +129,7 @@ export const createProfileAPI = (): ProfileAPI => ({
     }
 
     const channel = 'profiles:discover-models';
-    console.log('[preload/profile-api] About to invoke IPC channel:', channel);
     const promise = ipcRenderer.invoke(channel, baseUrl, apiKey, requestId);
-    console.log('[preload/profile-api] IPC invoke called, promise returned');
     return promise;
   }
 });

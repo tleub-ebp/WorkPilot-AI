@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { FileText } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useTranslation } from 'react-i18next';
@@ -99,8 +99,8 @@ function parseDiff(patch: string): DiffLine[] {
       // Hunk header - extract line numbers
       const match = line.match(/@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
       if (match) {
-        oldLineNumber = parseInt(match[1]) - 1;
-        newLineNumber = parseInt(match[3]) - 1;
+        oldLineNumber = parseInt(match[1], 10) - 1;
+        newLineNumber = parseInt(match[3], 10) - 1;
       }
       diffLine = {
         content: line,

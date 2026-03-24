@@ -66,7 +66,7 @@ function RepositorySelect({
 
   useEffect(() => {
     fetchRepositories();
-  }, [projectId]);
+  }, [fetchRepositories]);
 
   // Auto-detect and select repository on first load
   useEffect(() => {

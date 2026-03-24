@@ -108,7 +108,7 @@ export function CleanProviderSection({
       loadProviderTestResults();
       loadCredentialManagerUsageData();
     }
-  }, [isOpen]);
+  }, [isOpen, loadConnectors, loadCredentialManagerUsageData, loadProfileUsageData, loadProviderTestResults]);
 
   // Subscribe to live usage updates so the card refreshes without reopening settings
   useEffect(() => {
@@ -125,7 +125,7 @@ export function CleanProviderSection({
       unsubscribeUsage?.();
       unsubscribeAllProfiles?.();
     };
-  }, [isOpen]);
+  }, [isOpen, handleAllProfilesUsageUpdated, handleUsageUpdated]);
 
   // Extracted callback handlers to reduce nesting
   const handleUsageUpdated = (snapshot: UsageSnapshot) => {
@@ -420,7 +420,7 @@ export function CleanProviderSection({
   // Charger les providers de manière asynchrone
   useEffect(() => {
     loadProviders();
-  }, [profiles, settings]);
+  }, [loadProviders]);
 
   // Extracted functions to reduce nesting
   const enrichSettingsWithOAuth = async (baseSettings: any) => {
@@ -518,19 +518,19 @@ export function CleanProviderSection({
 
       return mappedProvider;
     });
-  }, [staticProviders, providerStatus, profileUsageData, credentialUsageData, providerTestResults, profiles, t]);
+  }, [staticProviders, providerStatus, profileUsageData, credentialUsageData, providerTestResults, t, getApiKeyInfo]);
 
   // Synchronize providersState with providers (avoid infinite loop)
   useEffect(() => {
     setProvidersState(providers);
-  }, [providers.length, providers.map(p => `${p.id}-${p.isConfigured}-${p.lastTested}-${p.realUsageData?.isRateLimited}-${p.realUsageData?.sessionPercent}-${p.realUsageData?.weeklyPercent}`).join(',')]);
+  }, [providers.length, providers]);
 
   // Auto-test configured providers that have never been tested (runs after providers load)
   useEffect(() => {
     if (isOpen && providers.length > 0) {
       autoTestConfiguredProviders(providers);
     }
-  }, [isOpen, providers.length]);
+  }, [isOpen, providers.length, autoTestConfiguredProviders, providers]);
 
   const handleProviderActivated = async (providerId: string) => {
     // 1. Update ProviderContext so UI components (UsageIndicator, etc.) reflect the new provider

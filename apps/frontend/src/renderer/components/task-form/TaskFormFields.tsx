@@ -202,9 +202,7 @@ export function TaskFormFields({
           if (result.success && result.data) {
             thumbnailMap.set(image.id, result.data);
           }
-        } catch (error) {
-          // Log for debugging but don't block other images
-          console.debug('Failed to load thumbnail for image', image.id, error);
+        } catch (_error) {
         }
       }
 

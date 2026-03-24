@@ -217,7 +217,7 @@ export function ThemedProviderSection({
     };
   });
 
-  const handleConfigure = (providerId: string) => {
+  const handleConfigure = (_providerId: string) => {
     // Ouvrir la configuration du provider
     // TODO: Implémenter la modale de configuration
   };
@@ -260,8 +260,6 @@ export function ThemedProviderSection({
   };
 
   const handleAddProvider = () => {
-    // TODO: Ouvrir une modale pour ajouter un nouveau provider
-    console.log('Add provider clicked');
   };
 
   const handleRefresh = () => {

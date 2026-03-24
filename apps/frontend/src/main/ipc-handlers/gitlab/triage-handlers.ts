@@ -23,8 +23,7 @@ import type {
 import { sanitizeStringArray } from '../shared/sanitize';
 
 // Debug logging
-function debugLog(message: string, ...args: unknown[]): void {
-  console.log(`[GitLab Triage] ${message}`, ...args);
+function debugLog(_message: string, ..._args: unknown[]): void {
 }
 
 const TRIAGE_CATEGORIES: GitLabTriageCategory[] = [

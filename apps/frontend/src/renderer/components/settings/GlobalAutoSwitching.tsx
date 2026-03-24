@@ -126,7 +126,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, provid
     settings.globalGrokApiKey, 
     settings.globalDeepSeekApiKey, 
     settings.globalAWSApiKey, 
-    settings.globalMetaApiKey
+    settings.globalMetaApiKey, settings[key as keyof AppSettings]
   ]);
 
   // Sync autoSwitchEnabled with settings
@@ -250,7 +250,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, provid
     };
     
     loadUnifiedAccounts();
-  }, [claudeProfiles, apiProfiles, activeClaudeProfileId, activeApiProfileId, authenticatedProviders, priorityOrder, profileUsageData, settings]);
+  }, [buildUnifiedAccounts]);
 
   // Load priority order from ClaudeProfileManager
   const loadPriorityOrder = async () => {
@@ -290,7 +290,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, provid
       // Also refresh Claude profiles when opening
       loadGlobalClaudeProfiles();
     }
-  }, [isOpen]);
+  }, [isOpen, loadPriorityOrder]);
 
   const handleToggleAutoSwitch = async (enabled: boolean) => {
     // Update local state immediately for better UX

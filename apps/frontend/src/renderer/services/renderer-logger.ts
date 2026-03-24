@@ -169,13 +169,11 @@ function sendToMainProcess(logMessage: LogMessage): void {
     // Afficher le message original avec console standard
     switch (logMessage.level) {
       case 'debug':
-        console.debug(logMessage.message, ...(logMessage.args || []));
         break;
       case 'info':
         console.info(logMessage.message, ...(logMessage.args || []));
         break;
       case 'success':
-        console.log(`✅ ${logMessage.message}`, ...(logMessage.args || []));
         break;
       case 'warning':
         console.warn(`⚠️ ${logMessage.message}`, ...(logMessage.args || []));

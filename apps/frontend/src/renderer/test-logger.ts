@@ -4,9 +4,6 @@
 
 import { rendererLog } from './services/renderer-logger';
 
-// Test des différentes méthodes de logging
-console.log('=== Test Renderer Logger Service ===');
-
 rendererLog.debug('Test message de debug');
 rendererLog.info('Test message info');
 rendererLog.success('Test message success');
@@ -17,5 +14,3 @@ rendererLog.error('Test message error');
 rendererLog.context.debug('Context debug message');
 rendererLog.github.info('GitHub info message');
 rendererLog.azure.warning('Azure warning message');
-
-console.log('=== Fin du test ===');

@@ -526,7 +526,7 @@ export function registerTerminalHandlers(
   // the IPC response and event listeners receive updated usage.
   ipcMain.handle(
     IPC_CHANNELS.USAGE_REQUEST,
-    async (event: IpcMainInvokeEvent, providerName?: string): Promise<IPCResult<import('../../shared/types').UsageSnapshot | null>> => {
+    async (_event: IpcMainInvokeEvent, providerName?: string): Promise<IPCResult<import('../../shared/types').UsageSnapshot | null>> => {
       try {
         const monitor = getUsageMonitor();
 

@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
+import { ipcRenderer, IpcRendererEvent } from 'electron';
 import type { ContextAwareSnippetResult } from '../../../main/context-aware-snippets-service';
 
 /**
@@ -66,35 +66,35 @@ export const createContextAwareSnippetsAPI = (): ContextAwareSnippetsAPI => ({
   },
 
   onSnippetStreamChunk: (callback: (chunk: string) => void) => {
-    ipcRenderer.on('context-aware-snippets:stream-chunk', (event: IpcRendererEvent, chunk: string) => callback(chunk));
+    ipcRenderer.on('context-aware-snippets:stream-chunk', (_event: IpcRendererEvent, chunk: string) => callback(chunk));
   },
 
   onSnippetStatus: (callback: (status: string) => void) => {
-    ipcRenderer.on('context-aware-snippets:status', (event: IpcRendererEvent, status: string) => callback(status));
+    ipcRenderer.on('context-aware-snippets:status', (_event: IpcRendererEvent, status: string) => callback(status));
   },
 
   onSnippetError: (callback: (error: string) => void) => {
-    ipcRenderer.on('context-aware-snippets:error', (event: IpcRendererEvent, error: string) => callback(error));
+    ipcRenderer.on('context-aware-snippets:error', (_event: IpcRendererEvent, error: string) => callback(error));
   },
 
   onSnippetComplete: (callback: (result: ContextAwareSnippetResult) => void) => {
-    ipcRenderer.on('context-aware-snippets:complete', (event: IpcRendererEvent, result: ContextAwareSnippetResult) => callback(result));
+    ipcRenderer.on('context-aware-snippets:complete', (_event: IpcRendererEvent, result: ContextAwareSnippetResult) => callback(result));
   },
 
   removeSnippetStreamChunkListener: (callback: (chunk: string) => void) => {
-    ipcRenderer.removeListener('context-aware-snippets:stream-chunk', (event: IpcRendererEvent, chunk: string) => callback(chunk));
+    ipcRenderer.removeListener('context-aware-snippets:stream-chunk', (_event: IpcRendererEvent, chunk: string) => callback(chunk));
   },
 
   removeSnippetStatusListener: (callback: (status: string) => void) => {
-    ipcRenderer.removeListener('context-aware-snippets:status', (event: IpcRendererEvent, status: string) => callback(status));
+    ipcRenderer.removeListener('context-aware-snippets:status', (_event: IpcRendererEvent, status: string) => callback(status));
   },
 
   removeSnippetErrorListener: (callback: (error: string) => void) => {
-    ipcRenderer.removeListener('context-aware-snippets:error', (event: IpcRendererEvent, error: string) => callback(error));
+    ipcRenderer.removeListener('context-aware-snippets:error', (_event: IpcRendererEvent, error: string) => callback(error));
   },
 
   removeSnippetCompleteListener: (callback: (result: ContextAwareSnippetResult) => void) => {
-    ipcRenderer.removeListener('context-aware-snippets:complete', (event: IpcRendererEvent, result: ContextAwareSnippetResult) => callback(result));
+    ipcRenderer.removeListener('context-aware-snippets:complete', (_event: IpcRendererEvent, result: ContextAwareSnippetResult) => callback(result));
   },
 });
 

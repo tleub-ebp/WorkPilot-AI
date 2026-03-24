@@ -19,8 +19,6 @@ import {
   Clock,
   Brain,
   Wrench,
-  Settings2,
-  ChevronDown,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';

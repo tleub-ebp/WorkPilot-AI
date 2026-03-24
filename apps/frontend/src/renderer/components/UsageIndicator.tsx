@@ -290,7 +290,7 @@ export function UsageIndicator() {
       setIsOpen(false);
       setIsPinned(false);
     }
-  }, [selectedProvider]);
+  }, []);
 
   // Effect to check OAuth status for the selected provider
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron';
 import { visualProgrammingService, type VisualProgrammingRequest } from '../visual-programming-service';
 
-export function registerVisualProgrammingHandlers(getMainWindow: () => import('electron').BrowserWindow | null): void {
+export function registerVisualProgrammingHandlers(_getMainWindow: () => import('electron').BrowserWindow | null): void {
   ipcMain.handle('visualProgramming:run', async (_event, request: VisualProgrammingRequest) => {
     try {
       await visualProgrammingService.run(request);

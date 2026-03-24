@@ -450,7 +450,7 @@ export class AgentQueueManager {
     // Track completed types for progress calculation
     const completedTypes = new Set<string>();
     // Derive totalTypes from --types argument instead of hardcoding
-    const typesArgIndex = args.findIndex((arg) => arg === '--types');
+    const typesArgIndex = args.indexOf('--types');
     const totalTypes =
       typesArgIndex > -1 && args[typesArgIndex + 1]
         ? args[typesArgIndex + 1].split(',').length

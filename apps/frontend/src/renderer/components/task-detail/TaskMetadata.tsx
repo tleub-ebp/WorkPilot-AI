@@ -257,20 +257,11 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
         element.getBoundingClientRect();
         
         const scrollHeight = element.scrollHeight;
-        const clientHeight = element.clientHeight;
+        const _clientHeight = element.clientHeight;
         const hasContentOverflow = scrollHeight > COLLAPSED_HEIGHT;
         
         // Restore original max-height
         element.style.maxHeight = originalMaxHeight;
-        
-        console.log('[TaskMetadata] Overflow check:', {
-          scrollHeight,
-          clientHeight,
-          COLLAPSED_HEIGHT,
-          hasContentOverflow,
-          userManuallyExpanded,
-          taskId: task.id
-        });
         
         setHasOverflow(hasContentOverflow);
         

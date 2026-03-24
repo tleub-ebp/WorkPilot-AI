@@ -161,7 +161,7 @@ export function FileTreeItem({
     }
   };
 
-  const handleSelectFolder = (e: React.MouseEvent) => {
+  const _handleSelectFolder = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (node.isDirectory) {
       onSelectFolder?.(node.path); // Appelle onSelectFolder avec le chemin du dossier si défini

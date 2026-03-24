@@ -79,7 +79,7 @@ export function ProviderCard({
   const { t } = useTranslation('settings');
   const [isExpanded, setIsExpanded] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
-  const [apiKey, setApiKey] = useState('');
+  const [_apiKey, _setApiKey] = useState('');
 
   const Icon = providerIcons[provider.id] || Bot;
   const category = providerCategories[provider.category] || providerCategories['independent'];

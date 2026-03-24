@@ -174,7 +174,7 @@ describe('Settings Store', () => {
       const loadPromise = loadSettings();
       expect(useSettingsStore.getState().isLoading).toBe(true);
 
-      resolveSettings!({ success: true, data: { onboardingCompleted: true } });
+      resolveSettings?.({ success: true, data: { onboardingCompleted: true } });
       await loadPromise;
 
       expect(useSettingsStore.getState().isLoading).toBe(false);
@@ -412,8 +412,8 @@ describe('Settings Store', () => {
       const result = await useSettingsStore.getState().testConnection('https://api.test.com', 'bad-key');
 
       expect(result).toBeDefined();
-      expect(result!.success).toBe(false);
-      expect(result!.message).toBe('Invalid API key');
+      expect(result?.success).toBe(false);
+      expect(result?.message).toBe('Invalid API key');
       expect(useSettingsStore.getState().isTestingConnection).toBe(false);
     });
 
@@ -423,8 +423,8 @@ describe('Settings Store', () => {
       const result = await useSettingsStore.getState().testConnection('https://api.test.com', 'key');
 
       expect(result).toBeDefined();
-      expect(result!.success).toBe(false);
-      expect(result!.message).toBe('Network error');
+      expect(result?.success).toBe(false);
+      expect(result?.message).toBe('Network error');
     });
 
     it('should set isTestingConnection during test', async () => {
@@ -435,7 +435,7 @@ describe('Settings Store', () => {
       const testCall = useSettingsStore.getState().testConnection('https://api.test.com', 'key');
       expect(useSettingsStore.getState().isTestingConnection).toBe(true);
 
-      resolveTest!({ success: true, data: { success: true, message: 'OK' } });
+      resolveTest?.({ success: true, data: { success: true, message: 'OK' } });
       await testCall;
 
       expect(useSettingsStore.getState().isTestingConnection).toBe(false);

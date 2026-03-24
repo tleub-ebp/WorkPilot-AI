@@ -20,7 +20,7 @@ const RATE_LIMIT_PATTERNS = [
 ];
 
 /** @deprecated Use RATE_LIMIT_PATTERNS instead — kept for backward compatibility */
-const RATE_LIMIT_PATTERN = RATE_LIMIT_PATTERNS[0];
+const _RATE_LIMIT_PATTERN = RATE_LIMIT_PATTERNS[0];
 
 /**
  * Additional patterns that might indicate rate limiting.

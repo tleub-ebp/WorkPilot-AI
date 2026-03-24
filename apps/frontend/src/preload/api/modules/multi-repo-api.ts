@@ -4,10 +4,7 @@ import type {
   MultiRepoOrchestration,
   MultiRepoCreateConfig,
   MultiRepoStatus,
-  MultiRepoProgress,
   RepoExecutionState,
-  RepoDependencyGraph,
-  BreakingChange,
 } from '../../../shared/types';
 import { createIpcListener, invokeIpc, type IpcListenerCleanup } from './ipc-utils';
 

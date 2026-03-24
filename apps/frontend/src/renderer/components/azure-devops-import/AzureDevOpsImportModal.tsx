@@ -60,14 +60,14 @@ export function AzureDevOpsImportModal({
     if (open) {
       loadConnectionStatus();
     }
-  }, [open, projectId]);
+  }, [open, loadConnectionStatus]);
 
   // Load work items when modal opens
   useEffect(() => {
     if (open && syncStatus?.connected) {
       loadWorkItems();
     }
-  }, [open, syncStatus?.connected]);
+  }, [open, syncStatus?.connected, loadWorkItems]);
 
   const loadConnectionStatus = async () => {
     try {

@@ -10,10 +10,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   useCollaborationStore,
-  type ConnectedUser,
   type ChatMessage,
   type ConflictRecord,
-  type RealtimeEvent,
 } from '../stores/collaboration-store';
 
 // Helper to reset store

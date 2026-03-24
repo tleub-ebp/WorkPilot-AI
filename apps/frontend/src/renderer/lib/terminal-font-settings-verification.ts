@@ -64,8 +64,6 @@ export async function verifyTerminalSubscription(): Promise<boolean> {
       console.error('Store did not update font size');
       return false;
     }
-
-    console.log('✅ Terminal font settings subscription verified');
     return true;
   } catch (error) {
     console.error('❌ Terminal font settings subscription verification failed:', error);
@@ -84,14 +82,5 @@ export async function verifyTerminalSubscription(): Promise<boolean> {
  * Verify multiple terminals receive updates
  * This would be used in an integration test with actual xterm instances
  */
-export function verifyMultipleTerminalsUpdate(terminalCount: number): void {
-  console.log(`Verifying ${terminalCount} terminals update when settings change...`);
-
-  // In a real test, this would:
-  // 1. Create multiple terminal instances
-  // 2. Mock or spy on xterm.refresh()
-  // 3. Change store settings
-  // 4. Verify all terminals called refresh()
-
-  console.log('Note: Full integration test requires actual xterm instances');
+export function verifyMultipleTerminalsUpdate(_terminalCount: number): void {
 }

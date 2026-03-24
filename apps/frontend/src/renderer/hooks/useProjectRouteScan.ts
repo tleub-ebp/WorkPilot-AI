@@ -59,7 +59,7 @@ export function useProjectRouteScan() {
   );
 
   // Auto-scan whenever the active project changes
-  const projectId = activeProject?.id;
+  const _projectId = activeProject?.id;
   useEffect(() => {
     if (!activeProject) return;
     void scan(
@@ -69,7 +69,7 @@ export function useProjectRouteScan() {
     );
     // Only re-run when the project identity changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectId]);
+  }, [activeProject, scan]);
 
   const rescan = useCallback(() => {
     if (!activeProject) return;

@@ -3,7 +3,7 @@
  */
 
 import { ipcMain } from 'electron';
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, } from 'child_process';
 import path from 'path';
 
 export interface MigrationConfig {
@@ -27,7 +27,7 @@ class MigrationService {
 
   register() {
     // Start migration
-    ipcMain.handle('migration:start', async (event, config: MigrationConfig) => {
+    ipcMain.handle('migration:start', async (_event, config: MigrationConfig) => {
       try {
         const result = await this.startMigration(config);
         return { success: true, ...result };
@@ -37,7 +37,7 @@ class MigrationService {
     });
 
     // Get status
-    ipcMain.handle('migration:getStatus', async (event, migrationId: string) => {
+    ipcMain.handle('migration:getStatus', async (_event, migrationId: string) => {
       try {
         const status = await this.getMigrationStatus(migrationId);
         return { success: true, ...status };
@@ -47,7 +47,7 @@ class MigrationService {
     });
 
     // Pause migration
-    ipcMain.handle('migration:pause', async (event, migrationId: string) => {
+    ipcMain.handle('migration:pause', async (_event, migrationId: string) => {
       try {
         await this.pauseMigration(migrationId);
         return { success: true };
@@ -57,7 +57,7 @@ class MigrationService {
     });
 
     // Resume migration
-    ipcMain.handle('migration:resume', async (event, migrationId: string) => {
+    ipcMain.handle('migration:resume', async (_event, migrationId: string) => {
       try {
         const result = await this.resumeMigration(migrationId);
         return { success: true, ...result };
@@ -67,7 +67,7 @@ class MigrationService {
     });
 
     // Rollback migration
-    ipcMain.handle('migration:rollback', async (event, migrationId: string, checkpoint?: string) => {
+    ipcMain.handle('migration:rollback', async (_event, migrationId: string, checkpoint?: string) => {
       try {
         await this.rollbackMigration(migrationId, checkpoint);
         return { success: true };
@@ -277,7 +277,7 @@ class MigrationService {
           try {
             const status = JSON.parse(output);
             resolve(status);
-          } catch (error) {
+          } catch (_error) {
             reject(new Error('Failed to parse status'));
           }
         } else {

@@ -25,7 +25,7 @@ import { createTask, saveDraft, loadDraft, clearDraft, isDraftEmpty } from '../s
 import { useProjectStore } from '../stores/project-store';
 import { buildBranchOptions } from '../lib/branch-utils';
 import { cn } from '../lib/utils';
-import type { TaskCategory, TaskPriority, TaskComplexity, TaskImpact, TaskMetadata, ImageAttachment, TaskDraft, ModelType, ThinkingLevel, ReferencedFile, GitBranchDetail } from '../../shared/types';
+import type { TaskCategory, TaskPriority, TaskComplexity, TaskImpact, TaskMetadata, ImageAttachment, TaskDraft, ThinkingLevel, ReferencedFile, GitBranchDetail } from '../../shared/types';
 import type { PhaseModelConfig, PhaseThinkingConfig } from '../../shared/types/settings';
 import {
   DEFAULT_AGENT_PROFILES,

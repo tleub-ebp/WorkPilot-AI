@@ -25,8 +25,7 @@ import type {
 } from './types';
 
 // Debug logging
-function debugLog(message: string, ...args: unknown[]): void {
-  console.log(`[GitLab AutoFix] ${message}`, ...args);
+function debugLog(_message: string, ..._args: unknown[]): void {
 }
 
 function sanitizeIssueUrl(rawUrl: unknown, instanceUrl: string): string {

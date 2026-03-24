@@ -146,7 +146,6 @@ export function BrowserTab({ projectPath }: BrowserTabProps) {
             onKeyDown={(e) => { if (e.key === 'Enter') handleCapture(); }}
             placeholder={t('browserAgent:browser.screenshotNamePlaceholder')}
             className="flex-1 px-2.5 py-1 rounded bg-[var(--bg-primary)] border border-[var(--border-primary)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-purple-400/50"
-            autoFocus
           />
           <button
             type="button"

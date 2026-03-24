@@ -4,7 +4,7 @@
  * Composant pour configurer GitHub Copilot CLI (similaire à ClaudeCodeConfig)
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';

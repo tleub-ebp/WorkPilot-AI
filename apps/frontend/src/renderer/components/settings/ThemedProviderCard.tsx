@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
   Settings2,
   Key,
   Eye,
@@ -16,15 +13,12 @@ import {
   Bot,
   Cloud,
   Star,
-  MoreVertical,
-  Loader2
 } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../ui/tooltip';
+import { TooltipProvider } from '../ui/tooltip';
 
 interface ThemedProviderCardProps {
   provider: {

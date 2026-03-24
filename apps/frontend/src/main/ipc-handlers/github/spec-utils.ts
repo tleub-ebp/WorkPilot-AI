@@ -126,7 +126,7 @@ export async function createSpecForIssue(
     mkdirSync(specDir, { recursive: true });
 
     // Create initial files
-    const now = new Date().toISOString();
+    const _now = new Date().toISOString();
 
     // Do NOT pre-create implementation_plan.json with empty phases.
     // The spec pipeline's planning phase will create it properly with

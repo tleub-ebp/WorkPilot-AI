@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Activity, TrendingUp, AlertCircle, Clock, ChevronRight, Info, LogIn } from 'lucide-react';
+import { Activity, TrendingUp, AlertCircle, LogIn } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -19,7 +19,7 @@ import {
   TooltipTrigger,
 } from './ui/tooltip';
 import { useTranslation } from 'react-i18next';
-import { formatTimeRemaining, localizeUsageWindowLabel, hasHardcodedText } from '@shared/utils/format-time';
+import { formatTimeRemaining, } from '@shared/utils/format-time';
 import { credentialService, type UsageData, type CredentialConfig } from '@shared/services/credentialService';
 import { useProviderContext } from './ProviderContext';
 import {AppSection} from "@/components/settings/AppSettings";
@@ -66,7 +66,7 @@ const getInitials = (name: string): string => {
 /**
  * Formater les grandes valeurs avec notation compacte
  */
-const formatUsageValue = (value?: number | null): string | undefined => {
+const _formatUsageValue = (value?: number | null): string | undefined => {
   if (value == null) return undefined;
 
   if (typeof Intl !== 'undefined' && Intl.NumberFormat) {
@@ -121,7 +121,7 @@ export function UsageIndicatorDumb({ selectedProvider: propSelectedProvider }: U
   /**
    * Gérer le changement de provider
    */
-  const handleProviderSwitch = useCallback(async (e: React.MouseEvent, provider: string, type: 'oauth' | 'api_key', profileId?: string) => {
+  const _handleProviderSwitch = useCallback(async (e: React.MouseEvent, provider: string, type: 'oauth' | 'api_key', profileId?: string) => {
     e.preventDefault();
     e.stopPropagation();
     

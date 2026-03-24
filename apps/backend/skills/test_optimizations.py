@@ -103,7 +103,7 @@ def test_constants():
         assert MAX_CONTEXT_LIMIT_RATIO == 0.7
         assert DEFAULT_MAX_WORKERS == 3
         assert DEFAULT_TIMEOUT == 25
-        assert OPTIMIZATION_ENABLED == True
+        assert OPTIMIZATION_ENABLED
         assert SUBAGENT_THRESHOLD == 3
         assert CHECKPOINT_INTERVAL == 300
         assert PRIORITY_THRESHOLD == 0.5

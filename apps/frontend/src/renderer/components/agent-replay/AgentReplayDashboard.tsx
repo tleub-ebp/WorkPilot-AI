@@ -626,7 +626,7 @@ export const AgentReplayDashboard: React.FC<AgentReplayDashboardProps> = ({
     if (activeSession) {
       fetchHeatmap(activeSession.session_id);
     }
-  }, [activeSession?.session_id, fetchHeatmap]);
+  }, [activeSession?.session_id, fetchHeatmap, activeSession]);
 
   const currentStep = activeSession?.steps[currentStepIndex] ?? null;
 
@@ -743,7 +743,7 @@ export const AgentReplayDashboard: React.FC<AgentReplayDashboardProps> = ({
             min={0}
             max={activeSession.steps.length - 1}
             value={currentStepIndex}
-            onChange={(e) => goToStep(Number.parseInt(e.target.value))}
+            onChange={(e) => goToStep(Number.parseInt(e.target.value, 10))}
             className="flex-1"
           />
         </div>

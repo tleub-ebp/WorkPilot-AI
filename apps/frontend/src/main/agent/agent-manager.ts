@@ -61,9 +61,7 @@ export class AgentManager extends EventEmitter {
 
     // Listen for auto-swap restart events
     this.on('auto-swap-restart-task', (taskId: string, newProfileId: string) => {
-      console.log('[AgentManager] Received auto-swap-restart-task event:', { taskId, newProfileId });
-      const success = this.restartTask(taskId, newProfileId);
-      console.log('[AgentManager] Task restart result:', success ? 'SUCCESS' : 'FAILED');
+      const _success = this.restartTask(taskId, newProfileId);
     });
 
     // Listen for task completion to clean up context (prevent memory leak)
@@ -146,12 +144,6 @@ export class AgentManager extends EventEmitter {
       (newProfileId: string) => this.restartTask(taskId, newProfileId),
       { metadata }
     );
-    console.log('[AgentManager] Task registered with OperationRegistry:', {
-      taskId,
-      profileId: activeProfile.id,
-      profileName: activeProfile.name,
-      type: operationType
-    });
   }
 
   /**
@@ -509,22 +501,12 @@ export class AgentManager extends EventEmitter {
    * @param newProfileId - Optional new profile ID to apply (from auto-swap)
    */
   restartTask(taskId: string, newProfileId?: string): boolean {
-    console.log('[AgentManager] restartTask called for:', taskId, 'with newProfileId:', newProfileId);
 
     const context = this.taskExecutionContext.get(taskId);
     if (!context) {
       console.error('[AgentManager] No context for task:', taskId);
-      console.log('[AgentManager] Available task contexts:', Array.from(this.taskExecutionContext.keys()));
       return false;
     }
-
-    console.log('[AgentManager] Task context found:', {
-      taskId,
-      projectPath: context.projectPath,
-      specId: context.specId,
-      isSpecCreation: context.isSpecCreation,
-      swapCount: context.swapCount
-    });
 
     // Prevent infinite swap loops
     if (context.swapCount >= 2) {
@@ -533,28 +515,18 @@ export class AgentManager extends EventEmitter {
     }
 
     context.swapCount++;
-    console.log('[AgentManager] Incremented swap count to:', context.swapCount);
 
     // If a new profile was specified, ensure it's set as active before restart
     if (newProfileId) {
       const profileManager = getClaudeProfileManager();
       const currentActiveId = profileManager.getActiveProfile()?.id;
       if (currentActiveId !== newProfileId) {
-        console.log('[AgentManager] Setting active profile to:', newProfileId);
         profileManager.setActiveProfile(newProfileId);
       }
     }
-
-    // Kill current process
-    console.log('[AgentManager] Killing current process for task:', taskId);
     this.killTask(taskId);
-
-    // Wait for cleanup, then restart
-    console.log('[AgentManager] Scheduling task restart in 500ms');
     setTimeout(() => {
-      console.log('[AgentManager] Restarting task now:', taskId);
       if (context.isSpecCreation) {
-        console.log('[AgentManager] Restarting as spec creation');
         if (!context.taskDescription) {
           console.error('[AgentManager] Cannot restart spec creation: taskDescription is missing');
           return;
@@ -569,7 +541,6 @@ export class AgentManager extends EventEmitter {
           context.projectId
         );
       } else {
-        console.log('[AgentManager] Restarting as task execution');
         this.startTaskExecution(
           taskId,
           context.projectPath,

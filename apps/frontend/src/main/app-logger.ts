@@ -50,7 +50,7 @@ function getCurrentModelInfo(): { model: string; provider: string; modelLabel: s
     // Try to get settings first
     const settings = readSettingsFile();
     
-    if (settings && settings.selectedProvider && settings.defaultModel) {
+    if (settings?.selectedProvider && settings.defaultModel) {
       const provider = settings.selectedProvider as string;
       const modelId = settings.defaultModel as string;
       
@@ -78,7 +78,7 @@ function getCurrentModelInfo(): { model: string; provider: string; modelLabel: s
       provider: 'unknown',
       modelLabel: 'unknown'
     };
-  } catch (error) {
+  } catch (_error) {
     return {
       model: 'error',
       provider: 'error',

@@ -101,7 +101,7 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
     checkStreamingServer();
     const interval = setInterval(checkStreamingServer, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [checkStreamingServer]);
 
   React.useEffect(() => {
     if (sessionId) {
@@ -109,7 +109,7 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
       const interval = setInterval(checkConnection, 3000);
       return () => clearInterval(interval);
     }
-  }, [sessionId]);
+  }, [sessionId, checkConnection]);
 
   const availableTasks = tasks.filter(task => task.status === 'backlog' || task.status === 'queue');
 

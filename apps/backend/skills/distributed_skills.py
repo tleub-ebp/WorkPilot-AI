@@ -203,7 +203,7 @@ class ServiceHealthChecker:
                         return ServiceStatus.HEALTHY, response_time
                     else:
                         return ServiceStatus.DEGRADED, response_time
-                except:
+                except Exception:
                     return (
                         ServiceStatus.HEALTHY,
                         response_time,
@@ -646,7 +646,7 @@ class DistributedCache:
 
     def __init__(self, ttl: float = 300.0):
         self.ttl = ttl
-        self.cache: dict[str, Tuple[Any, float]] = {}
+        self.cache: dict[str, tuple[Any, float]] = {}
         self.lock = threading.Lock()
 
     def get(self, key: str) -> Any | None:

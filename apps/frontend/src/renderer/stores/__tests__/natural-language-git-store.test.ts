@@ -118,7 +118,7 @@ describe('NaturalLanguageGitStore', () => {
   describe('IPC Event Handling', () => {
     it('should handle status events', () => {
       const { result } = renderHook(() => useNaturalLanguageGitStore());
-      const mockCallback = vi.fn();
+      const _mockCallback = vi.fn();
       
       const cleanup = setupNaturalLanguageGitListeners();
       

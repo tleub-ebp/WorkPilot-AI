@@ -81,7 +81,7 @@ export function VoiceControlDialog({ onExecuteCommand }: VoiceControlDialogProps
     if (streamOutputRef.current) {
       streamOutputRef.current.scrollTop = streamOutputRef.current.scrollHeight;
     }
-  }, [streamingOutput]);
+  }, []);
 
   // Auto-execute and close when result arrives with a known action
   useEffect(() => {

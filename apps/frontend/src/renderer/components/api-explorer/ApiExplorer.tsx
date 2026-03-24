@@ -173,7 +173,7 @@ function getStatusColor(status: number): string {
   return STATUS_COLORS[String(status)[0]] ?? 'text-gray-400';
 }
 
-function prettyJson(value: string): string {
+function _prettyJson(value: string): string {
   try {
     return JSON.stringify(JSON.parse(value), null, 2);
   } catch {
@@ -515,7 +515,6 @@ function EnvironmentManager({ onClose }: EnvironmentManagerProps) {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder={t('apiExplorer:environments.namePlaceholder')}
-              autoFocus
             />
             <input
               className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded px-2 py-1 text-sm font-mono text-[var(--color-text-primary)]"

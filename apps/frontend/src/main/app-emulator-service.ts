@@ -1,9 +1,8 @@
 import { spawn, type ChildProcess } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync, readdirSync, statSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, readdirSync, statSync, } from 'node:fs';
 import path from 'node:path';
 import net from 'node:net';
 import http from 'node:http';
-import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import { app } from 'electron';
 
@@ -113,7 +112,6 @@ export class AppEmulatorService extends EventEmitter {
   async detectProject(projectDirRaw: string): Promise<AppEmulatorConfig> {
     // Decode URI-encoded paths (e.g. spaces stored as %20)
     const projectDir = decodeURIComponent(projectDirRaw);
-    console.log('[AppEmulator] detectProject called with projectDir:', projectDir, '(raw:', projectDirRaw, ')');
 
     if (!existsSync(projectDir)) {
       throw new Error(`Project directory not found: ${projectDir}`);
@@ -127,7 +125,6 @@ export class AppEmulatorService extends EventEmitter {
 
     // Try fast inline JS detection first (no Python needed)
     const jsResult = this.detectProjectInline(projectDir);
-    console.log('[AppEmulator] Inline detection result:', jsResult);
     if (jsResult) {
       // Use subdirectory projectDir if detection found a nested project, otherwise use root
       const resolvedProjectDir = (jsResult as any).projectDir || projectDir;
@@ -147,7 +144,6 @@ export class AppEmulatorService extends EventEmitter {
   private detectProjectInline(projectDir: string): Omit<AppEmulatorConfig, 'projectDir'> | null {
     // Node.js / frontend projects
     const pkgPath = path.join(projectDir, 'package.json');
-    console.log('[AppEmulator] Checking package.json at:', pkgPath, 'exists:', existsSync(pkgPath));
     if (existsSync(pkgPath)) {
       try {
         const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
@@ -298,7 +294,6 @@ export class AppEmulatorService extends EventEmitter {
         if (!dotnetDir) {
           const csprojFile = this.findFirstCsprojFile(projectDir, 5);
           dotnetDir = csprojFile ? path.dirname(csprojFile) : projectDir;
-          console.log('[AppEmulator] .sln fallback → csproj:', csprojFile, '→ dir:', dotnetDir);
         }
         const dotnetPort = this.readDotnetPort(dotnetDir) ?? 5000;
         const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
@@ -391,8 +386,6 @@ export class AppEmulatorService extends EventEmitter {
               if (framework === 'angular') {
                 startCommand = `npx ng serve --port ${port}`;
               }
-
-              console.log('[AppEmulator] Found frontend project in subdirectory:', fullPath, 'framework:', framework);
               // Return config with projectDir pointing to the subdirectory where package.json lives
               return { type, framework, startCommand, port, isWeb: type === 'web', projectDir: fullPath } as any;
             }
@@ -487,7 +480,6 @@ export class AppEmulatorService extends EventEmitter {
 
     const result = scan(rootDir, maxDepth);
     const finalResult = result ?? fallbackDir;
-    console.log('[AppEmulator] findDotnetProjectDir:', finalResult ?? 'null', '(root:', rootDir, ')');
     return finalResult;
   }
 
@@ -775,7 +767,6 @@ export class AppEmulatorService extends EventEmitter {
   async startServer(config: AppEmulatorConfig): Promise<void> {
     // Synchronous guard — prevents race condition when two calls arrive before either awaits
     if (this.startingInProgress) {
-      console.log('[AppEmulator] startServer called while already starting — ignoring');
       return;
     }
     this.startingInProgress = true;
@@ -817,7 +808,6 @@ export class AppEmulatorService extends EventEmitter {
         // Port is occupied — check if there's a working HTTP server we can reuse
         const alreadyServing = await this.isHttpReachable(config.port);
         if (alreadyServing) {
-          console.log(`[AppEmulator] Port ${config.port} already has a running server — reusing it`);
           this.serverUrl = `http://localhost:${config.port}`;
           this.emit('status', `Running at ${this.serverUrl}`);
           this.emit('ready', this.serverUrl);
@@ -1248,45 +1238,6 @@ export class AppEmulatorService extends EventEmitter {
     });
   }
 
-  /**
-   * Kill any process listening on the given port (Windows only, via PowerShell).
-   * Used to release ports held by orphaned processes from previous emulator sessions
-   * that were never properly stopped (e.g. after navigating away without closing).
-   */
-  /**
-   * On Windows, if `dir` contains spaces, create a persistent junction under
-   * C:\wpemu\<hash> so that tools like Angular CLI (which URL-encodes paths
-   * internally and then fails to resolve them) work correctly.
-   * Returns the junction path on success, or the original path as fallback.
-   */
-  private async ensureNoSpacesPath(dir: string): Promise<string> {
-    if (process.platform !== 'win32' || !dir.includes(' ')) return dir;
-    if (this.junctionMap.has(dir)) return this.junctionMap.get(dir)!;
-
-    const hash = crypto.createHash('md5').update(dir).digest('hex').slice(0, 8);
-    const junctionRoot = 'C:\\wpemu';
-    const junctionPath = path.join(junctionRoot, hash);
-
-    try {
-      mkdirSync(junctionRoot, { recursive: true });
-      await new Promise<void>((resolve) => {
-        const ps = spawn('powershell', [
-          '-NoProfile', '-NonInteractive', '-Command',
-          `if (-not (Test-Path '${junctionPath}')) { New-Item -ItemType Junction -Path '${junctionPath}' -Target '${dir}' | Out-Null }`,
-        ], { stdio: 'ignore' });
-        ps.on('close', () => resolve());
-        ps.on('error', () => resolve());
-        setTimeout(() => resolve(), 5000);
-      });
-
-      this.junctionMap.set(dir, junctionPath);
-      console.log(`[AppEmulator] Junction created: ${junctionPath} → ${dir}`);
-      return junctionPath;
-    } catch {
-      return dir;
-    }
-  }
-
   private killProcessOnPort(port: number): Promise<void> {
     if (process.platform !== 'win32') return Promise.resolve();
     return new Promise<void>((resolve) => {
@@ -1431,13 +1382,11 @@ export class AppEmulatorService extends EventEmitter {
       );
 
       if (patched === original) {
-        console.log('[AppEmulator] patchAngularWebpack: pattern not found in plugin.js, skipping');
         return;
       }
 
       writeFileSync(pluginPath, patched, 'utf-8');
       this.angularWebpackPatches.set(pluginPath, original);
-      console.log(`[AppEmulator] Patched @ngtools/webpack/plugin.js for spaces-in-path fix`);
     } catch (err) {
       console.warn('[AppEmulator] Could not patch @ngtools/webpack:', err);
     }
@@ -1450,7 +1399,6 @@ export class AppEmulatorService extends EventEmitter {
     for (const [indexPath, original] of this.angularWebpackPatches) {
       try {
         writeFileSync(indexPath, original, 'utf-8');
-        console.log(`[AppEmulator] Restored @ngtools/webpack: ${indexPath}`);
       } catch { /* ignore — file may have been deleted */ }
     }
     this.angularWebpackPatches.clear();
