@@ -5,8 +5,8 @@ import { config as dotenvConfig } from 'dotenv';
 
 // Load root .env first, then frontend .env with override priority
 // This ensures SENTRY_DSN and other vars are found in either location
-dotenvConfig({ path: resolve(__dirname, '../../.env') });
-dotenvConfig({ path: resolve(__dirname, '.env'), override: true });
+dotenvConfig({ path: resolve(__dirname, '../../.env-files/.env') });
+dotenvConfig({ path: resolve(__dirname, '.env-files/.env'), override: true });
 
 /**
  * Sentry configuration embedded at build time.
