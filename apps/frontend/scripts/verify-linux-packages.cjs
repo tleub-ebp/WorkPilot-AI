@@ -3,7 +3,7 @@
  * Verify Linux package contents to ensure alignment between AppImage, deb, and Flatpak.
  *
  * This script extracts and inspects each Linux package format to verify that critical
- * files (Python binary, backend code, Python packages) are present and correctly bundled.
+ * files (backend code) are present and correctly bundled.
  *
  * Usage: node scripts/verify-linux-packages.cjs [dist-dir]
  */
@@ -11,14 +11,6 @@
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
-
-// Critical Python packages that must be present
-const CRITICAL_PACKAGES = [
-  'secretstorage', // Linux OAuth token storage
-  'pydantic_core',
-  'claude_agent_sdk',
-  'dotenv',
-];
 
 // Minimum expected Flatpak file size (50 MB)
 // Flatpak files are large OCI archives; anything smaller is suspicious
@@ -109,37 +101,20 @@ function findPackages(distDir) {
 }
 
 /**
- * Common file list verification logic
- * @param {string[]} files - List of files from package
- * @param {string} packageType - Type of package (for error messages)
+ * Verify file list for required components
+ * @param {string[]} files - Array of file paths from package
+ * @param {string} packageType - Type of package (appimage, deb, flatpak)
  * @returns {Object} Verification result with verified flag and issues array
  *
  * File formats:
- * - AppImage (bsdtar): './resources/python', './resources/backend/file.py'
- * - deb (dpkg-deb -c): 'resources/python', 'resources/backend/file.py' (in last column)
+ * - AppImage (bsdtar): './resources/backend/file.py'
+ * - deb (dpkg-deb -c): 'resources/backend/file.py' (in last column)
  */
 function verifyFileList(files, packageType) {
   const issues = [];
 
   // Normalize paths by removing trailing slashes (archive tools commonly add these)
   const normalizePath = (p) => p.replace(/\/+$/, '');
-
-  // Check for Python binary directory
-  // AppImage: './resources/python' or './resources/python/' (with trailing slash)
-  // deb: 'resources/python' or 'resources/python/' (with trailing slash)
-  // Must NOT match 'resources/python-site-packages'
-  const pythonBinFound = files.some((f) => {
-    const normalized = normalizePath(f);
-    return (
-      (normalized === './resources/python' ||
-        normalized === 'resources/python' ||
-        normalized.endsWith('/resources/python')) &&
-      !f.includes('python-site-packages')
-    );
-  });
-  if (!pythonBinFound) {
-    issues.push(`Python binary directory not found in ${packageType}`);
-  }
 
   // Check for backend directory (must be under resources/)
   const backendFound = files.some((f) => {
@@ -155,23 +130,9 @@ function verifyFileList(files, packageType) {
     issues.push(`Backend directory not found in ${packageType}`);
   }
 
-  // Check for critical Python packages (must be under python-site-packages/)
-  for (const pkg of CRITICAL_PACKAGES) {
-    // Match: './resources/python-site-packages/secretstorage/__init__.py'
-    // Match: 'resources/python-site-packages/secretstorage/__init__.py'
-    // Don't match: '/some/other/path/secretstorage/'
-    const found = files.some(
-      (f) => f.includes(`python-site-packages/${pkg}/`) || f.includes(`python-site-packages/${pkg}.`),
-    );
-    if (!found) {
-      issues.push(`Python package not found: ${pkg}`);
-    }
-  }
-
   return {
     verified: issues.length === 0,
     issues,
-    fileCount: files.filter((f) => f.trim()).length,
   };
 }
 
