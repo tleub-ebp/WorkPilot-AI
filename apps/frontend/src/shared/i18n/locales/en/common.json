@@ -803,12 +803,10 @@
   "noProjectSelected": "No project selected",
   "noProject": {
     "greeting": "Welcome to WorkPilot AI!",
-    "explanation": "No project is open right now. To get started, add a project from your machine — WorkPilot AI will use it as the workspace for your AI agents.",
-    "step1": "Click the",
-    "step1b": "button in the tab bar above",
-    "step2": "Select or create a folder on your machine",
-    "step3": "Your project opens and AI agents are ready to work",
-    "arrowHint": "The + button is up there",
+    "explanation": "No project is open right now. Add a project from your machine to get started — WorkPilot AI will use it as the workspace for your AI agents.",
+    "feature1": "Isolated git worktrees keep your main branch safe",
+    "feature2": "Parallel AI agents plan, build and review your code",
+    "feature3": "Full task history, QA validation and PR creation",
     "ctaNew": "New project",
     "ctaExisting": "Open existing project"
   },

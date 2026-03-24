@@ -179,10 +179,6 @@ export function ProjectTabBar({
     };
   }, [selectedProvider]);
 
-  if (projects.length === 0) {
-    return null;
-  }
-
   return (
     <div className={cn(
       'flex items-center border-b border-border bg-background',
