@@ -66,7 +66,7 @@ async def run_analysis(
     try:
         if spec_id:
             # Single-build analysis
-            spec_dir = Path(project_dir) / ".auto-claude" / "specs" / spec_id
+            spec_dir = Path(project_dir) / ".workpilot" / "specs" / spec_id
             if not spec_dir.exists():
                 emit_event("error", message=f"Spec directory not found: {spec_id}")
                 return

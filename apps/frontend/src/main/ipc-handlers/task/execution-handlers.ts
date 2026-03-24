@@ -627,15 +627,15 @@ export function registerTaskExecutionHandlers(
           }
 
           // Step 3: Clean untracked files that came from the merge
-          // IMPORTANT: Exclude .auto-claude directory to preserve specs and worktree data
-          const cleanResult = spawnSync(getToolPath('git'), ['clean', '-fd', '-e', '.auto-claude'], {
+          // IMPORTANT: Exclude .workpilot directory to preserve specs and worktree data
+          const cleanResult = spawnSync(getToolPath('git'), ['clean', '-fd', '-e', '.workpilot'], {
             cwd: project.path,
             encoding: 'utf-8',
             stdio: 'pipe',
             env: getIsolatedGitEnv()
           });
           if (cleanResult.status === 0) {
-            appLog.info('[TASK_REVIEW] Cleaned untracked files in main (excluding .auto-claude)');
+            appLog.info('[TASK_REVIEW] Cleaned untracked files in main (excluding .workpilot)');
           }
 
           appLog.info('[TASK_REVIEW] Main branch restored to pre-merge state');
@@ -804,7 +804,7 @@ print(json.dumps(result))
 `;
 
             // Write temporary script
-            const tmpScriptPath = path.join(project.path, '.auto-claude', 'tmp_create_pr.py');
+            const tmpScriptPath = path.join(project.path, '.workpilot', 'tmp_create_pr.py');
             const tmpDir = path.dirname(tmpScriptPath);
             if (!existsSync(tmpDir)) {
               mkdirSync(tmpDir, { recursive: true });

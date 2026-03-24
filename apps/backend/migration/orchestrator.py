@@ -27,7 +27,7 @@ class MigrationOrchestrator:
 
     def __init__(self, project_dir: str, enable_llm: bool = True):
         self.project_dir = Path(project_dir)
-        self.state_dir = self.project_dir / ".auto-claude" / "migration"
+        self.state_dir = self.project_dir / ".workpilot" / "migration"
         self.state_dir.mkdir(parents=True, exist_ok=True)
         self.context: MigrationContext | None = None
         self.checkpoints: dict[str, RollbackCheckpoint] = {}

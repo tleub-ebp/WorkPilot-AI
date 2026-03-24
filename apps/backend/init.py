@@ -1,7 +1,7 @@
 """
 WorkPilot AI project initialization utilities.
 
-Handles first-time setup of .auto-claude directory and ensures proper gitignore configuration.
+Handles first-time setup of .workpilot directory and ensures proper gitignore configuration.
 """
 
 import logging
@@ -13,11 +13,11 @@ from core.git_executable import get_git_executable
 
 logger = logging.getLogger(__name__)
 
-# All entries that should be added to .gitignore for auto-claude projects
+# All entries that should be added to .gitignore for workpilot projects
 AUTO_CLAUDE_GITIGNORE_ENTRIES = [
-    ".auto-claude/",
-    ".auto-claude-security.json",
-    ".auto-claude-status",
+    ".workpilot/",
+    ".workpilot-security.json",
+    ".workpilot-status",
     ".claude_settings.json",
     ".worktrees/",
     ".security-key",
@@ -40,7 +40,7 @@ def _entry_exists_in_gitignore(lines: list[str], entry: str) -> bool:
     return False
 
 
-def ensure_gitignore_entry(project_dir: Path, entry: str = ".auto-claude/") -> bool:
+def ensure_gitignore_entry(project_dir: Path, entry: str = ".workpilot/") -> bool:
     """
     Ensure an entry exists in the project's .gitignore file.
 
@@ -48,7 +48,7 @@ def ensure_gitignore_entry(project_dir: Path, entry: str = ".auto-claude/") -> b
 
     Args:
         project_dir: The project root directory
-        entry: The gitignore entry to add (default: ".auto-claude/")
+        entry: The gitignore entry to add (default: ".workpilot/")
 
     Returns:
         True if entry was added, False if it already existed
@@ -139,7 +139,7 @@ def _commit_gitignore(project_dir: Path) -> bool:
                 "commit",
                 ".gitignore",
                 "-m",
-                "chore: add auto-claude entries to .gitignore",
+                "chore: add workpilot entries to .gitignore",
             ],
             cwd=project_dir,
             capture_output=True,
@@ -161,7 +161,7 @@ def ensure_all_gitignore_entries(
     project_dir: Path, auto_commit: bool = False
 ) -> list[str]:
     """
-    Ensure all auto-claude related entries exist in the project's .gitignore file.
+    Ensure all workpilot related entries exist in the project's .gitignore file.
 
     Creates .gitignore if it doesn't exist.
 
@@ -217,24 +217,52 @@ def ensure_all_gitignore_entries(
     return added_entries
 
 
-def init_auto_claude_dir(project_dir: Path) -> tuple[Path, bool]:
+def _migrate_legacy_auto_claude_dir(project_dir: Path) -> bool:
     """
-    Initialize the .auto-claude directory for a project.
+    Migrate legacy .auto-claude/ directory to .workpilot/ if needed.
 
-    Creates the directory if needed and ensures all auto-claude files are in .gitignore.
+    Called automatically during init_workpilot_dir to ensure backward
+    compatibility when upgrading from Auto-Claude_EBP to WorkPilot-AI.
+
+    Returns:
+        True if migration was performed, False if not needed.
+    """
+    import shutil
+
+    old_dir = project_dir / ".auto-claude"
+    new_dir = project_dir / ".workpilot"
+
+    if old_dir.exists() and not new_dir.exists():
+        try:
+            shutil.move(str(old_dir), str(new_dir))
+            logger.info(f"Migrated {old_dir} → {new_dir} (Auto-Claude_EBP → WorkPilot-AI)")
+            return True
+        except Exception as exc:
+            logger.warning(f"Could not migrate {old_dir} to {new_dir}: {exc}")
+    return False
+
+
+def init_workpilot_dir(project_dir: Path) -> tuple[Path, bool]:
+    """
+    Initialize the .workpilot directory for a project.
+
+    Creates the directory if needed and ensures all workpilot files are in .gitignore.
+    Also migrates legacy .auto-claude/ directories automatically.
 
     Args:
         project_dir: The project root directory
 
     Returns:
-        Tuple of (auto_claude_dir path, gitignore_was_updated)
+        Tuple of (workpilot_dir path, gitignore_was_updated)
     """
     project_dir = Path(project_dir)
-    auto_claude_dir = project_dir / ".auto-claude"
+    # Migrate legacy .auto-claude/ to .workpilot/ if needed
+    _migrate_legacy_auto_claude_dir(project_dir)
+    workpilot_dir = project_dir / ".workpilot"
 
     # Create the directory if it doesn't exist
-    dir_created = not auto_claude_dir.exists()
-    auto_claude_dir.mkdir(parents=True, exist_ok=True)
+    dir_created = not workpilot_dir.exists()
+    workpilot_dir.mkdir(parents=True, exist_ok=True)
 
     # Ensure all auto-claude entries are in .gitignore (only on first creation)
     # FIX (#1087): Auto-commit the changes to prevent merge failures
@@ -245,31 +273,31 @@ def init_auto_claude_dir(project_dir: Path) -> tuple[Path, bool]:
     else:
         # Even if dir exists, check gitignore on first run
         # Use a marker file to track if we've already checked
-        marker = auto_claude_dir / ".gitignore_checked"
+        marker = workpilot_dir / ".gitignore_checked"
         if not marker.exists():
             added = ensure_all_gitignore_entries(project_dir, auto_commit=True)
             gitignore_updated = len(added) > 0
             marker.touch()
 
-    return auto_claude_dir, gitignore_updated
+    return workpilot_dir, gitignore_updated
 
 
-def get_auto_claude_dir(project_dir: Path, ensure_exists: bool = True) -> Path:
+def get_workpilot_dir(project_dir: Path, ensure_exists: bool = True) -> Path:
     """
-    Get the .auto-claude directory path, optionally ensuring it exists.
+    Get the .workpilot directory path, optionally ensuring it exists.
 
     Args:
         project_dir: The project root directory
         ensure_exists: If True, create directory and update gitignore if needed
 
     Returns:
-        Path to the .auto-claude directory
+        Path to the .workpilot directory
     """
     if ensure_exists:
-        auto_claude_dir, _ = init_auto_claude_dir(project_dir)
-        return auto_claude_dir
+        workpilot_dir, _ = init_workpilot_dir(project_dir)
+        return workpilot_dir
 
-    return Path(project_dir) / ".auto-claude"
+    return Path(project_dir) / ".workpilot"
 
 
 def repair_gitignore(project_dir: Path) -> list[str]:
@@ -289,10 +317,10 @@ def repair_gitignore(project_dir: Path) -> list[str]:
         List of entries that were added (empty if all already existed)
     """
     project_dir = Path(project_dir)
-    auto_claude_dir = project_dir / ".auto-claude"
+    workpilot_dir = project_dir / ".workpilot"
 
     # Remove the marker file so future checks will also run
-    marker = auto_claude_dir / ".gitignore_checked"
+    marker = workpilot_dir / ".gitignore_checked"
     if marker.exists():
         marker.unlink()
 
@@ -300,7 +328,7 @@ def repair_gitignore(project_dir: Path) -> list[str]:
     added = ensure_all_gitignore_entries(project_dir, auto_commit=True)
 
     # Re-create the marker
-    if auto_claude_dir.exists():
+    if workpilot_dir.exists():
         marker.touch()
 
     return added

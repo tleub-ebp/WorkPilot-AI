@@ -36,7 +36,7 @@ vi.mock('../../../../shared/constants', () => ({
     TASK_LOGS_CHANGED: 'task:logsChanged',
     TASK_LOGS_STREAM: 'task:logsStream',
   },
-  getSpecsDir: vi.fn((_autoBuildPath: string) => '.auto-claude/specs'),
+  getSpecsDir: vi.fn((_autoBuildPath: string) => '.workpilot/specs'),
 }));
 
 vi.mock('../../../project-store', () => ({
@@ -112,7 +112,7 @@ describe('Task Logs Integration (Simplified)', () => {
       const mockProject = {
         id: 'project-123',
         path: '/absolute/path/to/project',
-        autoBuildPath: '.auto-claude'
+        autoBuildPath: '.workpilot'
       };
 
       const mockLogs: TaskLogs = {
@@ -141,9 +141,9 @@ describe('Task Logs Integration (Simplified)', () => {
       expect(result.data).toEqual(mockLogs);
       expect(projectStore.getProject).toHaveBeenCalledWith('project-123');
       expect(taskLogService.loadLogs).toHaveBeenCalledWith(
-        path.join('/absolute/path/to/project', '.auto-claude/specs', '001-test-task'),
+        path.join('/absolute/path/to/project', '.workpilot/specs', '001-test-task'),
         '/absolute/path/to/project',
-        '.auto-claude/specs',
+        '.workpilot/specs',
         '001-test-task'
       );
     });
@@ -189,7 +189,7 @@ describe('Task Logs Integration (Simplified)', () => {
       const mockProject = {
         id: 'project-123',
         path: '/absolute/path/to/project',
-        autoBuildPath: '.auto-claude'
+        autoBuildPath: '.workpilot'
       };
 
       (projectStore.getProject as Mock).mockReturnValue(mockProject);
@@ -205,9 +205,9 @@ describe('Task Logs Integration (Simplified)', () => {
       expect(result.success).toBe(true);
       expect(taskLogService.startWatching).toHaveBeenCalledWith(
         '001-test-task',
-        path.join('/absolute/path/to/project', '.auto-claude/specs', '001-test-task'),
+        path.join('/absolute/path/to/project', '.workpilot/specs', '001-test-task'),
         '/absolute/path/to/project',
-        '.auto-claude/specs'
+        '.workpilot/specs'
       );
     });
   });

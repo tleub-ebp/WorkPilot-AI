@@ -146,7 +146,7 @@ class CrossRepoSpecManager:
     Manages master spec directory and per-repo sub-specs.
 
     Directory structure:
-        .auto-claude/specs/XXX-multi-repo-task/
+        .workpilot/specs/XXX-multi-repo-task/
             spec.md                      # Master spec
             multi_repo_manifest.json     # Orchestration state
             requirements.json

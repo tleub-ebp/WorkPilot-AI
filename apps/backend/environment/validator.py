@@ -74,9 +74,9 @@ class EnvironmentValidator:
         # 1. Check if compose file exists
         compose_path = self.project_dir / self.compose_file
         if not compose_path.exists():
-            # Also check .auto-claude/environment/
+            # Also check .workpilot/environment/
             compose_path = (
-                self.project_dir / ".auto-claude" / "environment" / self.compose_file
+                self.project_dir / ".workpilot" / "environment" / self.compose_file
             )
             if not compose_path.exists():
                 result.errors.append(f"Compose file not found: {self.compose_file}")

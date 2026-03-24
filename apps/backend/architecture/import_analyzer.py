@@ -29,7 +29,7 @@ SKIP_DIRS = {
     "venv",
     "__pycache__",
     ".git",
-    ".auto-claude",
+    ".workpilot",
     "dist",
     "build",
     ".next",

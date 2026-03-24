@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/license-AGPL--3.0-green?style=flat-square)](./agpl-3.0.txt)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/KCXaPBr4Dj)
 [![YouTube](https://img.shields.io/badge/YouTube-Subscribe-FF0000?style=flat-square&logo=youtube&logoColor=white)](https://www.youtube.com/@AndreMikalsen)
-[![CI](https://img.shields.io/github/actions/workflow/status/tleub-ebp/Auto-Claude_EBP/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/tleub-ebp/Auto-Claude_EBP/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/tleub-ebp/WorkPilot-AI/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/tleub-ebp/WorkPilot-AI/actions)
 
 ---
 
@@ -15,21 +15,21 @@
 
 ### Beta Release
 
-> Beta releases may contain bugs and breaking changes. [View all releases](https://github.com/tleub-ebp/Auto-Claude_EBP/releases)
+> Beta releases may contain bugs and breaking changes. [View all releases](https://github.com/tleub-ebp/WorkPilot-AI/releases)
 
 <!-- BETA_VERSION_BADGE -->
-[![Beta](https://img.shields.io/badge/beta-1.0.0--alpha-orange?style=flat-square)](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/tag/v1.0.0-alpha.2)
+[![Beta](https://img.shields.io/badge/beta-1.0.0--alpha-orange?style=flat-square)](https://github.com/tleub-ebp/WorkPilot-AI/releases/tag/v1.0.0-alpha.2)
 <!-- BETA_VERSION_BADGE_END -->
 
 <!-- BETA_DOWNLOADS -->
 | Platform | Download |
 |----------|----------|
-| **Windows** | [WorkPilot-AI-1.0.0-alpha.2-win32-x64.exe](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-win32-x64.exe) |
-| **macOS (Apple Silicon)** | [WorkPilot-AI-1.0.0-alpha.2-darwin-arm64.dmg](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-darwin-arm64.dmg) |
-| **macOS (Intel)** | [WorkPilot-AI-1.0.0-alpha.2-darwin-x64.dmg](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-darwin-x64.dmg) |
-| **Linux** | [WorkPilot-AI-1.0.0-alpha.2-linux-x86_64.AppImage](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-linux-x86_64.AppImage) |
-| **Linux (Debian)** | [WorkPilot-AI-1.0.0-alpha.2-linux-amd64.deb](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-linux-amd64.deb) |
-| **Linux (Flatpak)** | [WorkPilot-AI-1.0.0-alpha.2-linux-x86_64.flatpak](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-linux-x86_64.flatpak) |
+| **Windows** | [WorkPilot-AI-1.0.0-alpha.2-win32-x64.exe](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-win32-x64.exe) |
+| **macOS (Apple Silicon)** | [WorkPilot-AI-1.0.0-alpha.2-darwin-arm64.dmg](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-darwin-arm64.dmg) |
+| **macOS (Intel)** | [WorkPilot-AI-1.0.0-alpha.2-darwin-x64.dmg](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-darwin-x64.dmg) |
+| **Linux** | [WorkPilot-AI-1.0.0-alpha.2-linux-x86_64.AppImage](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-linux-x86_64.AppImage) |
+| **Linux (Debian)** | [WorkPilot-AI-1.0.0-alpha.2-linux-amd64.deb](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-linux-amd64.deb) |
+| **Linux (Flatpak)** | [WorkPilot-AI-1.0.0-alpha.2-linux-x86_64.flatpak](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-linux-x86_64.flatpak) |
 <!-- BETA_DOWNLOADS_END -->
 
 > All releases include SHA256 checksums and VirusTotal scan results for security verification.
@@ -352,7 +352,7 @@ apps/frontend/src/
 #### Option 1 : Application Bureau (Recommandé)
 
 1. **Téléchargement**
-   - Visitez [GitHub Releases](https://github.com/tleub-ebp/Auto-Claude_EBP/releases)
+   - Visitez [GitHub Releases](https://github.com/tleub-ebp/WorkPilot-AI/releases)
    - Téléchargez la version stable pour votre plateforme
 
 2. **Installation**
@@ -369,7 +369,7 @@ apps/frontend/src/
 
 1. **Clonage du Dépôt**
    ```bash
-   git clone https://github.com/tleub-ebp/Auto-Claude_EBP.git
+   git clone https://github.com/tleub-ebp/WorkPilot-AI.git
    cd Auto-Claude_EBP
    ```
 
@@ -550,8 +550,8 @@ We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for dev
 
 ## Community
 
-- **Issues** — [Report bugs or request features](https://github.com/tleub-ebp/Auto-Claude_EBP/issues)
-- **Discussions** — [Ask questions](https://github.com/tleub-ebp/Auto-Claude_EBP/discussions)
+- **Issues** — [Report bugs or request features](https://github.com/tleub-ebp/WorkPilot-AI/issues)
+- **Discussions** — [Ask questions](https://github.com/tleub-ebp/WorkPilot-AI/discussions)
 
 ---
 
@@ -565,6 +565,6 @@ WorkPilot AI is free to use. If you modify and distribute it, or run it as a ser
 
 ## Star History
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/tleub-ebp/Auto-Claude_EBP?style=social)](https://github.com/tleub-ebp/Auto-Claude_EBP/stargazers)
+[![GitHub Repo stars](https://img.shields.io/github/stars/tleub-ebp/WorkPilot-AI?style=social)](https://github.com/tleub-ebp/WorkPilot-AI/stargazers)
 
-[![Star History Chart](https://api.star-history.com/svg?repos=tleub-ebp/Auto-Claude_EBP&type=Date)](https://star-history.com/#tleub-ebp/Auto-Claude_EBP&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=tleub-ebp/WorkPilot-AI&type=Date)](https://star-history.com/#tleub-ebp/WorkPilot-AI&Date)

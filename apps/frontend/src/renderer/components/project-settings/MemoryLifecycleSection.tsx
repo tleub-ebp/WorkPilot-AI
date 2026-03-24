@@ -66,7 +66,7 @@ export function MemoryLifecycleSection({ projectPath }: MemoryLifecycleSectionPr
   const handleExport = async () => {
     setExportPath(null);
     const ts = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
-    const outputPath = `${projectPath}/.auto-claude/memory-export-${ts}.json`;
+    const outputPath = `${projectPath}/.workpilot/memory-export-${ts}.json`;
     const result = await exportMemories(projectPath, outputPath);
     if (result) setExportPath(result.path);
   };

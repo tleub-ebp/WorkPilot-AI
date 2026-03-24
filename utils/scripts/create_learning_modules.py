@@ -6,7 +6,7 @@ Script to create missing learning module files
 from pathlib import Path
 
 # Base directory - use absolute path
-learning_dir = Path(r"C:\Users\thomas.leberre\Repositories\Auto-Claude_EBP\apps\backend\learning")
+learning_dir = Path(r"C:\Users\thomas.leberre\Repositories\WorkPilot-AI\apps\backend\learning")
 
 # Create documentation_generator.py
 doc_gen_content = '''"""

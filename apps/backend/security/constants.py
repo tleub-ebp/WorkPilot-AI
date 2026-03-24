@@ -12,5 +12,5 @@ PROJECT_DIR_ENV_VAR = "AUTO_CLAUDE_PROJECT_DIR"
 
 # Security configuration filenames
 # These are the files that control which commands are allowed to run.
-ALLOWLIST_FILENAME = ".auto-claude-allowlist"
-PROFILE_FILENAME = ".auto-claude-security.json"
+ALLOWLIST_FILENAME = ".workpilot-allowlist"
+PROFILE_FILENAME = ".workpilot-security.json"

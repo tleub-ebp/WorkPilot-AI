@@ -42,7 +42,7 @@ LABELS = {
     "phase": "phase",  # Phase label prefix (e.g., "phase-1")
     "service": "service",  # Service label prefix (e.g., "service-backend")
     "stuck": "stuck",  # Mark stuck subtasks
-    "auto_build": "auto-claude",  # All auto-claude issues
+    "auto_build": "workpilot",  # All auto-claude issues
     "needs_review": "needs-review",
 }
 

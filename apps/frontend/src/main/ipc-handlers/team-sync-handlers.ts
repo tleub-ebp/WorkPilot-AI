@@ -134,7 +134,7 @@ function writeSyncConfig(projectDir: string, config: Record<string, string>): vo
   fs.writeFileSync(envPath, content, 'utf-8');
 }
 
-/** Build a status object from local .auto-claude data without spawning Python. */
+/** Build a status object from local .workpilot data without spawning Python. */
 function getLocalStatus(projectDir: string): object {
   const config = readSyncConfig(projectDir);
   const syncPath = config['TEAM_SYNC_PATH'] || '';
@@ -170,7 +170,7 @@ function getLocalStatus(projectDir: string): object {
     }
   }
 
-  const peersDir = path.join(projectDir, '.auto-claude', 'team_sync', 'peers');
+  const peersDir = path.join(projectDir, '.workpilot', 'team_sync', 'peers');
   try {
     if (fs.existsSync(peersDir)) {
       for (const peer of fs.readdirSync(peersDir)) {
@@ -280,7 +280,7 @@ export function registerTeamSyncHandlers(): void {
     IPC_CHANNELS.TEAM_SYNC_GET_PEER_EPISODES,
     (_event, projectDir: string, memberId: string): { success: boolean; data?: object[]; error?: string } => {
       try {
-        const epFile = path.join(projectDir, '.auto-claude', 'team_sync', 'peers', memberId, 'imported_episodes.json');
+        const epFile = path.join(projectDir, '.workpilot', 'team_sync', 'peers', memberId, 'imported_episodes.json');
         if (!fs.existsSync(epFile)) return { success: true, data: [] };
         const data = JSON.parse(fs.readFileSync(epFile, 'utf-8'));
         return { success: true, data: Array.isArray(data) ? data : [] };

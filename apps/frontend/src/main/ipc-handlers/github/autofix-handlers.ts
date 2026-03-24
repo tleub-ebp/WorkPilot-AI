@@ -50,7 +50,7 @@ function createAuthFailureCallback(
 }
 
 /**
- * Auto-fix configuration stored in .auto-claude/github/config.json
+ * Auto-fix configuration stored in .workpilot/github/config.json
  */
 export interface AutoFixConfig {
   enabled: boolean;
@@ -121,7 +121,7 @@ export interface BatchProgress {
  * Get the GitHub directory for a project
  */
 function getGitHubDir(project: Project): string {
-  return path.join(project.path, '.auto-claude', 'github');
+  return path.join(project.path, '.workpilot', 'github');
 }
 
 /**

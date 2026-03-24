@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def _get_server_dir(project_dir: Path) -> Path:
     """Directory where the HTTP server stores incoming snapshots."""
-    d = project_dir / ".auto-claude" / "team_sync" / "server"
+    d = project_dir / ".workpilot" / "team_sync" / "server"
     d.mkdir(parents=True, exist_ok=True)
     return d
 

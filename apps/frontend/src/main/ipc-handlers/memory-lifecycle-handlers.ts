@@ -103,7 +103,7 @@ export function registerMemoryLifecycleHandlers(): void {
   ipcMain.handle('memoryLifecycle:getStatus', (_event, projectDir: string) => {
     try {
       const policy = readPolicy(projectDir);
-      const storageDir = path.join(projectDir, '.auto-claude', 'memory');
+      const storageDir = path.join(projectDir, '.workpilot', 'memory');
       let episodeCount = 0;
       let diskUsageBytes = 0;
       if (fs.existsSync(storageDir)) {
@@ -133,7 +133,7 @@ export function registerMemoryLifecycleHandlers(): void {
 
   ipcMain.handle('memoryLifecycle:listMemories', (_event, projectDir: string, page: number = 0, pageSize: number = 50) => {
     try {
-      const storageDir = path.join(projectDir, '.auto-claude', 'memory');
+      const storageDir = path.join(projectDir, '.workpilot', 'memory');
       if (!fs.existsSync(storageDir)) return { success: true, data: { items: [], total: 0 } };
       const files = fs.readdirSync(storageDir).filter(f => f.endsWith('.json'));
       const total = files.length;
@@ -190,7 +190,7 @@ export function registerMemoryLifecycleHandlers(): void {
 
   ipcMain.handle('memoryLifecycle:deleteMemory', (_event, projectDir: string, episodeId: string) => {
     try {
-      const filePath = path.join(projectDir, '.auto-claude', 'memory', `${episodeId}.json`);
+      const filePath = path.join(projectDir, '.workpilot', 'memory', `${episodeId}.json`);
       if (fs.existsSync(filePath)) { fs.unlinkSync(filePath); }
       return { success: true };
     } catch (err) {
@@ -200,7 +200,7 @@ export function registerMemoryLifecycleHandlers(): void {
 
   ipcMain.handle('memoryLifecycle:export', (_event, projectDir: string, outputPath: string) => {
     try {
-      const storageDir = path.join(projectDir, '.auto-claude', 'memory');
+      const storageDir = path.join(projectDir, '.workpilot', 'memory');
       const memories: unknown[] = [];
       if (fs.existsSync(storageDir)) {
         for (const f of fs.readdirSync(storageDir).filter(n => n.endsWith('.json'))) {

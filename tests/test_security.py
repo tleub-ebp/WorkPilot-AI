@@ -957,7 +957,7 @@ class TestShellCValidator:
             "created_at": "",
             "project_hash": actual_hash,
         }
-        (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
+        (tmp_path / ".workpilot-security.json").write_text(json.dumps(profile_data))
 
         # Reset cache to pick up the new profile
         reset_profile_cache()
@@ -1006,7 +1006,7 @@ class TestShellCValidator:
             "created_at": "",
             "project_hash": actual_hash,
         }
-        (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
+        (tmp_path / ".workpilot-security.json").write_text(json.dumps(profile_data))
 
         reset_profile_cache()
 
@@ -1053,7 +1053,7 @@ class TestShellCValidator:
             "created_at": "",
             "project_hash": actual_hash,
         }
-        (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
+        (tmp_path / ".workpilot-security.json").write_text(json.dumps(profile_data))
 
         reset_profile_cache()
 
@@ -1098,7 +1098,7 @@ class TestShellCValidator:
             "created_at": "",
             "project_hash": actual_hash,
         }
-        (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
+        (tmp_path / ".workpilot-security.json").write_text(json.dumps(profile_data))
 
         reset_profile_cache()
 
@@ -1148,7 +1148,7 @@ class TestShellCValidator:
             "created_at": "",
             "project_hash": actual_hash,
         }
-        (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
+        (tmp_path / ".workpilot-security.json").write_text(json.dumps(profile_data))
 
         reset_profile_cache()
 
@@ -1193,7 +1193,7 @@ class TestShellCValidator:
             "created_at": "",
             "project_hash": actual_hash,
         }
-        (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
+        (tmp_path / ".workpilot-security.json").write_text(json.dumps(profile_data))
 
         reset_profile_cache()
 
@@ -1238,7 +1238,7 @@ class TestShellCValidator:
             "created_at": "",
             "project_hash": actual_hash,
         }
-        (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
+        (tmp_path / ".workpilot-security.json").write_text(json.dumps(profile_data))
 
         reset_profile_cache()
 
@@ -1283,7 +1283,7 @@ class TestShellCValidator:
             "created_at": "",
             "project_hash": actual_hash,
         }
-        (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
+        (tmp_path / ".workpilot-security.json").write_text(json.dumps(profile_data))
 
         reset_profile_cache()
 
@@ -1327,7 +1327,7 @@ class TestShellCValidator:
             "created_at": "",
             "project_hash": actual_hash,
         }
-        (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
+        (tmp_path / ".workpilot-security.json").write_text(json.dumps(profile_data))
 
         reset_profile_cache()
 
@@ -1374,7 +1374,7 @@ class TestShellCValidator:
             "created_at": "",
             "project_hash": actual_hash,
         }
-        (tmp_path / ".auto-claude-security.json").write_text(json.dumps(profile_data))
+        (tmp_path / ".workpilot-security.json").write_text(json.dumps(profile_data))
 
         reset_profile_cache()
 
@@ -1481,7 +1481,7 @@ class TestInheritedSecurityProfile:
             "created_at": "",
             "project_hash": "parent_hash",
         }
-        (parent_dir / ".auto-claude-security.json").write_text(
+        (parent_dir / ".workpilot-security.json").write_text(
             json.dumps(parent_profile_data)
         )
 
@@ -1551,7 +1551,7 @@ class TestInheritedSecurityProfile:
             "created_at": "",
             "project_hash": "abc123",
         }
-        (parent_dir / ".auto-claude-security.json").write_text(
+        (parent_dir / ".workpilot-security.json").write_text(
             json.dumps(parent_profile_data)
         )
 
@@ -1622,7 +1622,7 @@ class TestInheritedSecurityProfile:
             "created_at": "",
             "project_hash": "abc123",
         }
-        (dir_a / ".auto-claude-security.json").write_text(json.dumps(profile_data))
+        (dir_a / ".workpilot-security.json").write_text(json.dumps(profile_data))
 
         # Create a profile pointing to dir_a from dir_b (not an ancestor)
         spoofed_profile = SecurityProfile(

@@ -409,10 +409,10 @@ Generated: 2026-02-09 14:30:00
 ## 📈 Metrics & Tracking
 
 ### Health History
-All health checks stored in `.auto-claude/health-history.json`
+All health checks stored in `.workpilot/health-history.json`
 
 ### Technical Debt Database
-Tracked in `.auto-claude/technical-debt.json`
+Tracked in `.workpilot/technical-debt.json`
 
 ### Alert History
 Available via `AlertManager.get_recent_alerts()`

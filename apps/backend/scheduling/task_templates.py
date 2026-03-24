@@ -521,7 +521,7 @@ class TaskTemplateManager:
         _project_dir: Optional project directory for custom templates.
     """
 
-    TEMPLATES_DIR = ".auto-claude/templates"
+    TEMPLATES_DIR = ".workpilot/templates"
 
     def __init__(self, project_dir: str | None = None) -> None:
         """Initialize the template manager.
@@ -554,7 +554,7 @@ class TaskTemplateManager:
 
         Args:
             directory: Path to the templates directory. Defaults to
-                ``{project_dir}/.auto-claude/templates/``.
+                ``{project_dir}/.workpilot/templates/``.
 
         Returns:
             The number of templates loaded.

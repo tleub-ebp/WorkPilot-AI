@@ -577,7 +577,7 @@ async def store_review_learnings(
         from integrations.graphiti.memory import get_graphiti_memory
 
         # Create a temporary spec dir for memory scoping
-        github_dir = project_dir / ".auto-claude" / "github"
+        github_dir = project_dir / ".workpilot" / "github"
         github_dir.mkdir(parents=True, exist_ok=True)
 
         memory = get_graphiti_memory(github_dir, project_dir)

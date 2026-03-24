@@ -171,7 +171,7 @@ class PRReviewResult:
         )
 
     def save(self, azdo_dir: Path) -> None:
-        """Save review result to .auto-claude/azure-devops/pr/"""
+        """Save review result to .workpilot/azure-devops/pr/"""
         pr_dir = azdo_dir / "pr"
         pr_dir.mkdir(parents=True, exist_ok=True)
 

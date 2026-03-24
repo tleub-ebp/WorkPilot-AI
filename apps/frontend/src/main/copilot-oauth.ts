@@ -176,7 +176,7 @@ async function storeCopilotToken(
   accessToken: string,
   profileName: string
 ): Promise<void> {
-  const configDir = path.join(os.homedir(), '.auto-claude', 'copilot-profiles');
+  const configDir = path.join(os.homedir(), '.workpilot', 'copilot-profiles');
   
   // For now, we'll store in a simple file
   // In production, this should use the system keychain like Claude OAuth
@@ -208,7 +208,7 @@ async function getCopilotToken(username: string): Promise<{
   profileName: string;
   createdAt: string;
 } | null> {
-  const configDir = path.join(os.homedir(), '.auto-claude', 'copilot-profiles');
+  const configDir = path.join(os.homedir(), '.workpilot', 'copilot-profiles');
   const tokenFile = path.join(configDir, `${username}.json`);
   
   try {
@@ -326,7 +326,7 @@ export async function getCopilotAuthStatus(): Promise<{
   }>;
 }> {
   try {
-    const configDir = path.join(os.homedir(), '.auto-claude', 'copilot-profiles');
+    const configDir = path.join(os.homedir(), '.workpilot', 'copilot-profiles');
     
     try {
       const files = await require('fs').promises.readdir(configDir);
@@ -388,7 +388,7 @@ export async function revokeCopilotAuth(username: string): Promise<{
     
     // Try to revoke the token (GitHub doesn't have a direct revoke endpoint for OAuth tokens)
     // We'll just delete the stored token
-    const configDir = path.join(os.homedir(), '.auto-claude', 'copilot-profiles');
+    const configDir = path.join(os.homedir(), '.workpilot', 'copilot-profiles');
     const tokenFile = path.join(configDir, `${username}.json`);
     
     await require('fs').promises.unlink(tokenFile);

@@ -3,7 +3,7 @@ Custom MCP Tools for WorkPilot AI Agents
 ========================================
 
 This module provides custom MCP tools that agents can use for reliable
-operations on auto-claude data structures. These tools replace prompt-based
+operations on workpilot data structures. These tools replace prompt-based
 JSON manipulation with guaranteed-correct operations.
 
 Benefits:
@@ -23,7 +23,7 @@ Usage:
 
     # Use in ClaudeAgentOptions
     options = ClaudeAgentOptions(
-        mcp_servers={"auto-claude": mcp_server},
+        mcp_servers={"workpilot": mcp_server},
         allowed_tools=allowed_tools,
         ...
     )

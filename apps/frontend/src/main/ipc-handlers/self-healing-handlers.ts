@@ -71,7 +71,7 @@ export function registerSelfHealingHandlers(
     } catch {
       // Read from persisted file (written by scan)
       try {
-        const filePath = path.join(projectPath, '.auto-claude', 'self-healing', 'fragility_reports.json');
+        const filePath = path.join(projectPath, '.workpilot', 'self-healing', 'fragility_reports.json');
         const raw = await readFile(filePath, 'utf-8');
         return { success: true, data: JSON.parse(raw) };
       } catch {
@@ -156,7 +156,7 @@ export function registerSelfHealingHandlers(
       try {
         const reports = await runBuiltinFragilityScan(projectPath);
         // Persist results so the dashboard can read them
-        const dataDir = path.join(projectPath, '.auto-claude', 'self-healing');
+        const dataDir = path.join(projectPath, '.workpilot', 'self-healing');
         await mkdir(dataDir, { recursive: true });
         await writeFile(
           path.join(dataDir, 'fragility_reports.json'),
@@ -409,7 +409,7 @@ function runShellCommand(cwd: string, command: string): Promise<string> {
 // ── Config helpers (Node.js fs — no Python dependency) ────────
 
 function getConfigPath(projectPath: string): string {
-  return path.join(projectPath, '.auto-claude', 'self-healing', 'config.json');
+  return path.join(projectPath, '.workpilot', 'self-healing', 'config.json');
 }
 
 async function readConfig(projectPath: string): Promise<Record<string, Record<string, unknown>>> {
@@ -452,7 +452,7 @@ async function readJsonFile(filePath: string): Promise<unknown[]> {
 }
 
 async function getEmptyDashboardWithPersistedData(projectPath: string) {
-  const dataDir = path.join(projectPath, '.auto-claude', 'self-healing');
+  const dataDir = path.join(projectPath, '.workpilot', 'self-healing');
   const incidents = await readJsonFile(path.join(dataDir, 'incidents.json')) as Record<string, unknown>[];
   const operations = await readJsonFile(path.join(dataDir, 'operations.json')) as Record<string, unknown>[];
   const fragilityReports = await readJsonFile(path.join(dataDir, 'fragility_reports.json'));

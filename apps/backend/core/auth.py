@@ -641,7 +641,7 @@ def _get_token_from_config_dir(config_dir: str) -> str | None:
     This function reads from a profile's custom configDir instead of the default location.
 
     Args:
-        config_dir: Path to the config directory (e.g., ~/.auto-claude/profiles/work)
+        config_dir: Path to the config directory (e.g., ~/.workpilot/profiles/work)
 
     Returns:
         Token string if found, None otherwise

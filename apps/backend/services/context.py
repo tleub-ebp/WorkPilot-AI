@@ -50,8 +50,8 @@ class ServiceContextGenerator:
         self.project_index = project_index or self._load_project_index()
 
     def _load_project_index(self) -> dict:
-        """Load project index from file (.auto-claude is the installed instance)."""
-        index_file = self.project_dir / ".auto-claude" / "project_index.json"
+        """Load project index from file (.workpilot is the installed instance)."""
+        index_file = self.project_dir / ".workpilot" / "project_index.json"
         if index_file.exists():
             with open(index_file, encoding="utf-8") as f:
                 return json.load(f)

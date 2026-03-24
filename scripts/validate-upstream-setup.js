@@ -90,7 +90,7 @@ class Validator {
 
       this.check('origin remote exists', hasOrigin, 'Please configure origin remote');
       
-      if (hasOrigin && remotes.includes('github.com/tleub-ebp/Auto-Claude_EBP')) {
+      if (hasOrigin && remotes.includes('github.com/tleub-ebp/WorkPilot-AI')) {
         this.check('origin points to fork (tleub-ebp)', true);
       } else if (hasOrigin) {
         this.log('  ⚠ origin points to different URL', 'warning');

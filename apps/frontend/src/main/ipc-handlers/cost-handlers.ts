@@ -1,7 +1,7 @@
 /**
  * Cost Estimator IPC Handlers
  *
- * Reads/writes {projectPath}/.auto-claude/cost_data.json directly in Node.js
+ * Reads/writes {projectPath}/.workpilot/cost_data.json directly in Node.js
  * to expose cost summary and budget info to the renderer without needing a
  * Python HTTP server.
  */
@@ -102,7 +102,7 @@ const _snapshotDebounceTimers = new Map<string, ReturnType<typeof setTimeout>>()
 function watchDashboardSnapshot(projectPath: string): void {
   if (_snapshotWatchers.has(projectPath)) return;
 
-  const filePath = path.join(projectPath, '.auto-claude', 'dashboard_snapshot.json');
+  const filePath = path.join(projectPath, '.workpilot', 'dashboard_snapshot.json');
   if (!fs.existsSync(filePath)) return;
 
   try {
@@ -170,7 +170,7 @@ interface CostDataFile {
 // ---------------------------------------------------------------------------
 
 function getCostDataPath(projectPath: string): string {
-  return path.join(projectPath, '.auto-claude', 'cost_data.json');
+  return path.join(projectPath, '.workpilot', 'cost_data.json');
 }
 
 function loadCostData(projectPath: string): CostDataFile {
@@ -336,12 +336,12 @@ export function registerCostHandlers(): void {
   });
 
   /**
-   * dashboard:getSnapshot — reads {projectPath}/.auto-claude/dashboard_snapshot.json
+   * dashboard:getSnapshot — reads {projectPath}/.workpilot/dashboard_snapshot.json
    */
   ipcMain.handle('dashboard:getSnapshot', async (_, projectPath: string) => {
     try {
       watchDashboardSnapshot(projectPath); // Start watching on first access
-      const snapPath = path.join(projectPath, '.auto-claude', 'dashboard_snapshot.json');
+      const snapPath = path.join(projectPath, '.workpilot', 'dashboard_snapshot.json');
       if (!fs.existsSync(snapPath)) {
         return {
           success: true,

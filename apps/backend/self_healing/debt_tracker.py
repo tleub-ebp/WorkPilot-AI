@@ -148,7 +148,7 @@ class TechnicalDebtTracker:
 
     def __init__(self, project_dir: str | Path):
         self.project_dir = Path(project_dir)
-        self.debt_file = self.project_dir / ".auto-claude" / "technical-debt.json"
+        self.debt_file = self.project_dir / ".workpilot" / "technical-debt.json"
         self.debt_items: dict[str, DebtItem] = {}
         self._load()
 

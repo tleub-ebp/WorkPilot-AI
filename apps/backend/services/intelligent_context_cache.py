@@ -396,7 +396,7 @@ class IntelligentContextCache:
 
     def _init_database(self):
         """Initialize SQLite database for persistent cache."""
-        self.db_path = self.project_path / ".auto-claude" / self.config.db_path
+        self.db_path = self.project_path / ".workpilot" / self.config.db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
         with sqlite3.connect(self.db_path) as conn:

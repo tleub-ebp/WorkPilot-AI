@@ -2,7 +2,7 @@
 Dependency Graph Cache
 =======================
 
-Persists the dependency graph to .auto-claude/dependency_graph.json.
+Persists the dependency graph to .workpilot/dependency_graph.json.
 Invalidates when the project file set changes (hash of sorted file paths + mtimes).
 """
 
@@ -29,7 +29,7 @@ class DependencyGraphCache:
 
     def __init__(self, project_dir: Path):
         self.project_dir = Path(project_dir).resolve()
-        self._cache_path = self.project_dir / ".auto-claude" / _CACHE_FILE
+        self._cache_path = self.project_dir / ".workpilot" / _CACHE_FILE
 
     # ── Public API ─────────────────────────────────────────────────────────
 

@@ -478,7 +478,7 @@ export function MemoryBackendSection({
           <div className="space-y-2">
             <Label className="text-sm font-medium text-foreground">Database Name</Label>
             <p className="text-xs text-muted-foreground">
-              Name for the memory database (stored in ~/.auto-claude/memories/)
+              Name for the memory database (stored in ~/.workpilot/memories/)
             </p>
             <Input
               placeholder="auto_claude_memory"
@@ -490,10 +490,10 @@ export function MemoryBackendSection({
           <div className="space-y-2">
             <Label className="text-sm font-medium text-foreground">Database Path (Optional)</Label>
             <p className="text-xs text-muted-foreground">
-              Custom storage location. Default: ~/.auto-claude/memories/
+              Custom storage location. Default: ~/.workpilot/memories/
             </p>
             <Input
-              placeholder="~/.auto-claude/memories"
+              placeholder="~/.workpilot/memories"
               value={envConfig.graphitiDbPath || ''}
               onChange={(e) => onUpdateConfig({ graphitiDbPath: e.target.value || undefined })}
             />

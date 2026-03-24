@@ -10,7 +10,7 @@ from pathlib import Path
 
 from core.client import create_agent_client
 from debug import debug, debug_error, debug_section, debug_success
-from init import init_auto_claude_dir
+from init import init_workpilot_dir
 from phase_config import get_thinking_budget
 from ui import Icons, box, icon, muted, print_section, print_status
 
@@ -41,14 +41,14 @@ class RoadmapOrchestrator:
         self.enable_competitor_analysis = enable_competitor_analysis
         self.refresh_competitor_analysis = refresh_competitor_analysis
 
-        # Default output to project's .auto-claude directory (installed instance)
-        # Note: auto-claude/ is source code, .auto-claude/ is the installed instance
+        # Default output to project's .workpilot directory (installed instance)
+        # Note: auto-claude/ is source code, .workpilot/ is the installed instance
         if output_dir:
             self.output_dir = Path(output_dir)
         else:
-            # Initialize .auto-claude directory and ensure it's in .gitignore
-            init_auto_claude_dir(self.project_dir)
-            self.output_dir = self.project_dir / ".auto-claude" / "roadmap"
+            # Initialize .workpilot directory and ensure it's in .gitignore
+            init_workpilot_dir(self.project_dir)
+            self.output_dir = self.project_dir / ".workpilot" / "roadmap"
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
 

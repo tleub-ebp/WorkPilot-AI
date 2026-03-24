@@ -65,7 +65,7 @@ def run_capture(project_dir: str, source: str = "auto") -> None:
             capture = capturer.capture_from_running_containers()
 
     # Save capture
-    output_dir = Path(project_dir) / ".auto-claude" / "environment"
+    output_dir = Path(project_dir) / ".workpilot" / "environment"
     saved_path = capturer.save_capture(capture, output_dir)
 
     emit_event(
@@ -90,7 +90,7 @@ def run_reproduce(project_dir: str) -> None:
     from environment.generator import ComposeGenerator
 
     capture_file = (
-        Path(project_dir) / ".auto-claude" / "environment" / "environment_capture.json"
+        Path(project_dir) / ".workpilot" / "environment" / "environment_capture.json"
     )
     if not capture_file.exists():
         emit_event("error", message="No capture found. Run --env-capture first.")
@@ -130,7 +130,7 @@ def run_reproduce(project_dir: str) -> None:
     )
 
     generator = ComposeGenerator(capture)
-    output_dir = Path(project_dir) / ".auto-claude" / "environment"
+    output_dir = Path(project_dir) / ".workpilot" / "environment"
     files = generator.write_all(output_dir)
 
     emit_event(

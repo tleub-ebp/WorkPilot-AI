@@ -29,7 +29,7 @@ export function isValidTaskId(taskId: string): boolean {
  * A task can exist in multiple locations (main + worktree), so return all paths
  *
  * @param projectPath - The root path of the project
- * @param specsBaseDir - The relative path to specs directory (e.g., '.auto-claude/specs')
+ * @param specsBaseDir - The relative path to specs directory (e.g., '.workpilot/specs')
  * @param taskId - The task/spec ID to find
  * @param logPrefix - Optional prefix for log messages (defaults to '[SpecPathHelpers]')
  * @returns Array of absolute paths where the spec exists

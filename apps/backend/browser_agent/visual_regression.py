@@ -20,9 +20,9 @@ class VisualRegressionEngine:
     def __init__(self, project_dir: Path, threshold: float = 95.0):
         self.project_dir = Path(project_dir)
         self.baselines_dir = (
-            self.project_dir / ".auto-claude" / "browser-agent" / "baselines"
+            self.project_dir / ".workpilot" / "browser-agent" / "baselines"
         )
-        self.diffs_dir = self.project_dir / ".auto-claude" / "browser-agent" / "diffs"
+        self.diffs_dir = self.project_dir / ".workpilot" / "browser-agent" / "diffs"
         self.threshold = threshold
 
         self.baselines_dir.mkdir(parents=True, exist_ok=True)

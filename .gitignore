@@ -67,12 +67,12 @@ lerna-debug.log*
 # ===========================
 # WorkPilot AI Generated
 # ===========================
-.auto-claude/
+.workpilot/
 .planning/
 .planning-archive/
 .auto-build-security.json
-.auto-claude-security.json
-.auto-claude-status
+.workpilot-security.json
+.workpilot-status
 .claude_settings.json
 .update-metadata.json
 

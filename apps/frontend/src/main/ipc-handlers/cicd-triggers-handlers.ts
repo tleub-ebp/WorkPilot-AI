@@ -100,7 +100,7 @@ function writeCicdConfig(projectDir: string, config: Record<string, string>): vo
 }
 
 function getRunsLogPath(projectDir: string): string {
-  return path.join(projectDir, '.auto-claude', 'cicd_runs.json');
+  return path.join(projectDir, '.workpilot', 'cicd_runs.json');
 }
 
 function loadRuns(projectDir: string): object[] {

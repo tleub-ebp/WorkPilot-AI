@@ -39,7 +39,7 @@ DEFAULT_EXCLUDED = {
     ".git",
     "dist",
     "build",
-    ".auto-claude",
+    ".workpilot",
     ".next",
     "coverage",
     ".tox",

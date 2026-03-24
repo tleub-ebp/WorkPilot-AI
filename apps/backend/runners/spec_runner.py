@@ -95,7 +95,7 @@ from cli.utils import import_dotenv
 load_dotenv = import_dotenv()
 
 env_file = Path(__file__).parent.parent.parent.parent / ".env-files" / ".env"
-dev_env_file = Path(__file__).parent.parent.parent / "dev" / "auto-claude" / ".env"
+dev_env_file = Path(__file__).parent.parent.parent / "dev" / "workpilot" / ".env"
 if env_file.exists():
     load_dotenv(env_file)
 elif dev_env_file.exists():
@@ -259,23 +259,23 @@ Examples:
     # Find project root (look for auto-claude folder)
     project_dir = args.project_dir
 
-    # Auto-detect if running from within auto-claude/apps/backend/ source directory.
+    # Auto-detect if running from within workpilot/apps/backend/ source directory.
     # This must be specific: check for run.py FILE (not dir) AND core/client.py to confirm
-    # we're in the actual backend source tree, not just a project named "auto-claude".
+    # we're in the actual backend source tree, not just a project named "workpilot".
     run_py_path = project_dir / "run.py"
     if (
-        project_dir.name == "auto-claude"
+        project_dir.name in ("auto-claude", "workpilot", "WorkPilot-AI")
         and run_py_path.exists()
         and run_py_path.is_file()
         and (project_dir / "core" / "client.py").exists()
     ):
-        # Running from within auto-claude/apps/backend/ source directory, go up 1 level
+        # Running from within workpilot/apps/backend/ source directory, go up 1 level
         project_dir = project_dir.parent
-    elif not (project_dir / ".auto-claude").exists():
-        # No .auto-claude folder found - try to find project root
-        # First check for .auto-claude (installed instance)
+    elif not (project_dir / ".workpilot").exists():
+        # No .workpilot folder found - try to find project root
+        # First check for .workpilot (installed instance)
         for parent in project_dir.parents:
-            if (parent / ".auto-claude").exists():
+            if (parent / ".workpilot").exists():
                 project_dir = parent
                 break
 

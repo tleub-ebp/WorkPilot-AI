@@ -17,10 +17,10 @@ import re
 from pathlib import Path
 
 # Worktree path patterns for detection
-# Matches paths like: .auto-claude/worktrees/tasks/{spec-name}/
+# Matches paths like: .workpilot/worktrees/tasks/{spec-name}/
 WORKTREE_PATH_PATTERNS = [
-    r"[/\\]\.auto-claude[/\\]worktrees[/\\]tasks[/\\]",
-    r"[/\\]\.auto-claude[/\\]github[/\\]pr[/\\]worktrees[/\\]",  # PR review worktrees
+    r"[/\\]\.workpilot[/\\]worktrees[/\\]tasks[/\\]",
+    r"[/\\]\.workpilot[/\\]github[/\\]pr[/\\]worktrees[/\\]",  # PR review worktrees
     r"[/\\]\.worktrees[/\\]",  # Legacy worktree location
 ]
 

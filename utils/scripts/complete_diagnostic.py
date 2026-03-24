@@ -67,7 +67,7 @@ def test_complete_chain():
     print(f"\n4. 🔄 Simulating getUsageForProvider logic...")
     
     # This simulates the logic in getUsageForProvider
-    profiles_file_path = "c:\\Users\\thomas.leberre\\Repositories\\Auto-Claude_EBP\\configured_providers.json"
+    profiles_file_path = "c:\\Users\\thomas.leberre\\Repositories\\WorkPilot-AI\\configured_providers.json"
     try:
         with open(profiles_file_path, 'r', encoding='utf-8') as f:
             providers_config = json.load(f)
@@ -92,7 +92,7 @@ def test_complete_chain():
     # Step 5: Check if our modifications are in the compiled code
     print(f"\n5. 🔍 Checking compiled code modifications...")
     
-    main_js_path = "c:\\Users\\thomas.leberre\\Repositories\\Auto-Claude_EBP\\apps\\frontend\\out\\main\\index.js"
+    main_js_path = "c:\\Users\\thomas.leberre\\Repositories\\WorkPilot-AI\\apps\\frontend\\out\\main\\index.js"
     try:
         with open(main_js_path, 'r', encoding='utf-8') as f:
             compiled_code = f.read()

@@ -6,7 +6,7 @@ Tests for Provider-Aware Agent Client Factory
 Unit tests for create_agent_client() and _get_active_provider() in core/client.py.
 Covers:
 - Provider detection from environment variables
-- Provider detection from project-level .auto-claude/.env
+- Provider detection from project-level .workpilot/.env
 - Default provider fallback
 - Claude provider path (wraps create_client)
 - Copilot provider path (creates CopilotAgentClient)
@@ -70,10 +70,10 @@ class TestGetActiveProvider:
         assert _get_active_provider(spec_dir=None) == "claude"
 
     def test_project_env_file_copilot(self, tmp_path, monkeypatch):
-        """Provider detected from .auto-claude/.env AI_PROVIDER=copilot."""
+        """Provider detected from .workpilot/.env AI_PROVIDER=copilot."""
         monkeypatch.delenv("AUTO_CLAUDE_PROVIDER", raising=False)
 
-        auto_claude_dir = tmp_path / ".auto-claude"
+        auto_claude_dir = tmp_path / ".workpilot"
         auto_claude_dir.mkdir()
         env_file = auto_claude_dir / ".env"
         env_file.write_text("AI_PROVIDER=copilot\nSOME_OTHER=value\n")
@@ -83,7 +83,7 @@ class TestGetActiveProvider:
     def test_project_env_file_claude(self, tmp_path, monkeypatch):
         monkeypatch.delenv("AUTO_CLAUDE_PROVIDER", raising=False)
 
-        auto_claude_dir = tmp_path / ".auto-claude"
+        auto_claude_dir = tmp_path / ".workpilot"
         auto_claude_dir.mkdir()
         env_file = auto_claude_dir / ".env"
         env_file.write_text("AI_PROVIDER=claude\n")
@@ -94,7 +94,7 @@ class TestGetActiveProvider:
         """Quoted values in .env should be handled."""
         monkeypatch.delenv("AUTO_CLAUDE_PROVIDER", raising=False)
 
-        auto_claude_dir = tmp_path / ".auto-claude"
+        auto_claude_dir = tmp_path / ".workpilot"
         auto_claude_dir.mkdir()
         env_file = auto_claude_dir / ".env"
         env_file.write_text('AI_PROVIDER="copilot"\n')
@@ -102,7 +102,7 @@ class TestGetActiveProvider:
         assert _get_active_provider(spec_dir=tmp_path) == "copilot"
 
     def test_project_env_file_missing(self, tmp_path, monkeypatch):
-        """No .auto-claude/.env -> default."""
+        """No .workpilot/.env -> default."""
         monkeypatch.delenv("AUTO_CLAUDE_PROVIDER", raising=False)
         assert _get_active_provider(spec_dir=tmp_path) == "claude"
 
@@ -110,7 +110,7 @@ class TestGetActiveProvider:
         """File exists but no AI_PROVIDER key -> default."""
         monkeypatch.delenv("AUTO_CLAUDE_PROVIDER", raising=False)
 
-        auto_claude_dir = tmp_path / ".auto-claude"
+        auto_claude_dir = tmp_path / ".workpilot"
         auto_claude_dir.mkdir()
         env_file = auto_claude_dir / ".env"
         env_file.write_text("GITHUB_TOKEN=ghp_test\n")
@@ -121,7 +121,7 @@ class TestGetActiveProvider:
         """Env var should override project file."""
         monkeypatch.setenv("AUTO_CLAUDE_PROVIDER", "claude")
 
-        auto_claude_dir = tmp_path / ".auto-claude"
+        auto_claude_dir = tmp_path / ".workpilot"
         auto_claude_dir.mkdir()
         env_file = auto_claude_dir / ".env"
         env_file.write_text("AI_PROVIDER=copilot\n")
@@ -129,11 +129,11 @@ class TestGetActiveProvider:
         assert _get_active_provider(spec_dir=tmp_path) == "claude"
 
     def test_parent_directory_traversal(self, tmp_path, monkeypatch):
-        """Spec dir inside .auto-claude should find .env in parent."""
+        """Spec dir inside .workpilot should find .env in parent."""
         monkeypatch.delenv("AUTO_CLAUDE_PROVIDER", raising=False)
 
-        # Create structure: tmp_path/.auto-claude/.env and tmp_path/.auto-claude/spec/
-        auto_claude_dir = tmp_path / ".auto-claude"
+        # Create structure: tmp_path/.workpilot/.env and tmp_path/.workpilot/spec/
+        auto_claude_dir = tmp_path / ".workpilot"
         auto_claude_dir.mkdir()
         env_file = auto_claude_dir / ".env"
         env_file.write_text("AI_PROVIDER=copilot\n")
@@ -141,8 +141,8 @@ class TestGetActiveProvider:
         spec_dir = auto_claude_dir / "spec"
         spec_dir.mkdir()
 
-        # spec_dir is tmp_path/.auto-claude/spec — parent traversal should
-        # find tmp_path/.auto-claude/.env
+        # spec_dir is tmp_path/.workpilot/spec — parent traversal should
+        # find tmp_path/.workpilot/.env
         assert _get_active_provider(spec_dir=spec_dir) == "copilot"
 
 

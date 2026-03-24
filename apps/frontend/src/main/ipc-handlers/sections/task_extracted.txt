@@ -258,7 +258,7 @@
           return { success: false, error: 'Task not found' };
         }
 
-        const autoBuildDir = project.autoBuildPath || '.auto-claude';
+        const autoBuildDir = project.autoBuildPath || '.workpilot';
         const specDir = path.join(project.path, autoBuildDir, 'specs', task.specId);
 
         if (!existsSync(specDir)) {
@@ -775,7 +775,7 @@
       }
 
       // Get the spec directory
-      const autoBuildDir = project.autoBuildPath || '.auto-claude';
+      const autoBuildDir = project.autoBuildPath || '.workpilot';
       const specDir = path.join(
         project.path,
         autoBuildDir,
@@ -1207,7 +1207,7 @@
         }
 
         const runScript = path.join(sourcePath, 'run.py');
-        const specDir = path.join(project.path, project.autoBuildPath || '.auto-claude', 'specs', task.specId);
+        const specDir = path.join(project.path, project.autoBuildPath || '.workpilot', 'specs', task.specId);
 
         if (!existsSync(specDir)) {
           return { success: false, error: 'Spec directory not found' };

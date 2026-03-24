@@ -134,7 +134,7 @@ class GitHubOrchestrator:
         self.progress_callback = progress_callback
 
         # GitHub directory for storing state
-        self.github_dir = self.project_dir / ".auto-claude" / "github"
+        self.github_dir = self.project_dir / ".workpilot" / "github"
         self.github_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize GH client with timeout protection

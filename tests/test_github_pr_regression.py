@@ -201,8 +201,8 @@ class TestGitHubCLIInvocation:
         spec_dir = tmp_path / "spec"
         spec_dir.mkdir()
 
-        # Create .auto-claude directories
-        auto_claude_dir = project_dir / ".auto-claude"
+        # Create .workpilot directories
+        auto_claude_dir = project_dir / ".workpilot"
         auto_claude_dir.mkdir(exist_ok=True)
 
         # Create WorktreeManager
@@ -271,8 +271,8 @@ class TestGitHubCLIInvocation:
         spec_dir = tmp_path / "spec"
         spec_dir.mkdir()
 
-        # Create .auto-claude directories
-        auto_claude_dir = project_dir / ".auto-claude"
+        # Create .workpilot directories
+        auto_claude_dir = project_dir / ".workpilot"
         auto_claude_dir.mkdir(exist_ok=True)
 
         # Create WorktreeManager
@@ -334,8 +334,8 @@ class TestGitHubErrorHandling:
         spec_dir = tmp_path / "spec"
         spec_dir.mkdir()
 
-        # Create .auto-claude directories
-        auto_claude_dir = project_dir / ".auto-claude"
+        # Create .workpilot directories
+        auto_claude_dir = project_dir / ".workpilot"
         auto_claude_dir.mkdir(exist_ok=True)
 
         # Create WorktreeManager
@@ -379,8 +379,8 @@ class TestGitHubErrorHandling:
         spec_dir = tmp_path / "spec"
         spec_dir.mkdir()
 
-        # Create .auto-claude directories
-        auto_claude_dir = project_dir / ".auto-claude"
+        # Create .workpilot directories
+        auto_claude_dir = project_dir / ".workpilot"
         auto_claude_dir.mkdir(exist_ok=True)
 
         # Create WorktreeManager

@@ -38,7 +38,7 @@ def load_env(project_dir: str) -> dict:
 
 
 def get_memory_dir(project_dir: str) -> Path:
-    return Path(project_dir) / ".auto-claude" / "memory"
+    return Path(project_dir) / ".workpilot" / "memory"
 
 
 def action_status(project_dir: str) -> dict:
@@ -233,7 +233,7 @@ def main():
         elif args.action == "export":
             output = args.output or str(
                 Path(args.project)
-                / ".auto-claude"
+                / ".workpilot"
                 / f"memory_export_{int(time.time())}.json"
             )
             result = action_export(args.project, output)

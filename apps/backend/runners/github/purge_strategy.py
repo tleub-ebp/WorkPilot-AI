@@ -12,7 +12,7 @@ Features:
 - Comprehensive error handling
 
 Usage:
-    strategy = PurgeStrategy(state_dir=Path(".auto-claude/github"))
+    strategy = PurgeStrategy(state_dir=Path(".workpilot/github"))
     result = await strategy.purge_by_criteria(
         pattern="issue",
         key="issue_number",

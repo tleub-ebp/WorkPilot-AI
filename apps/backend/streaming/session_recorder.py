@@ -78,7 +78,7 @@ class SessionRecorder:
 
     def __init__(self, recordings_dir: Path | None = None):
         self._recordings_dir = (
-            recordings_dir or Path.home() / ".auto-claude" / "recordings"
+            recordings_dir or Path.home() / ".workpilot" / "recordings"
         )
         self._recordings_dir.mkdir(parents=True, exist_ok=True)
 

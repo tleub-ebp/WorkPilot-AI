@@ -11,9 +11,9 @@ print("=" * 70)
 print()
 
 env_files = [
-    Path(".auto-claude/.env"),
+    Path(".workpilot/.env"),
     Path("apps/backend/.env"),
-    Path("auto-code-ebp/.auto-claude/.env"),
+    Path("auto-code-ebp/.workpilot/.env"),
 ]
 
 all_correct = True

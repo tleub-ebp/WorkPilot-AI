@@ -51,7 +51,7 @@ For each file, identify:
 ## Execution Rules
 
 1. Always work in the provided worktree (never modify main branch directly)
-2. Create a migration checkpoint in `.auto-claude/migration/` before each batch
+2. Create a migration checkpoint in `.workpilot/migration/` before each batch
 3. Run available tests after each batch: `npm test` / `pytest`
 4. If tests fail, rollback the batch and report the issue
 5. Update import paths when files are renamed

@@ -1,5 +1,5 @@
 {
-  "name": "auto-claude-ui",
+  "name": "workpilot-ai-ui",
   "version": "1.0.0",
   "type": "module",
   "description": "Desktop UI for WorkPilot AI autonomous coding framework",
@@ -165,7 +165,7 @@
       {
         "provider": "github",
         "owner": "tleub-ebp",
-        "repo": "Auto-Claude_EBP"
+        "repo": "WorkPilot-AI"
       }
     ],
     "directories": {

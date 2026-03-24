@@ -98,7 +98,7 @@ const SUPPORTED_LANGUAGES = [
 ];
 
 function getHistoryPath(projectDir: string): string {
-  return path.join(projectDir, '.auto-claude', 'translation_history.json');
+  return path.join(projectDir, '.workpilot', 'translation_history.json');
 }
 
 function loadHistory(projectDir: string): object[] {
@@ -158,7 +158,7 @@ export function registerCrossLanguageTranslationHandlers(): void {
     let tempFile: string | null = null;
     if (params.code && !params.filePath) {
       const ext = SUPPORTED_LANGUAGES.find(l => l.id === params.sourceLang)?.extension ?? '.txt';
-      tempFile = path.join(params.projectDir, `.auto-claude`, `_translate_temp${ext}`);
+      tempFile = path.join(params.projectDir, `.workpilot`, `_translate_temp${ext}`);
       fs.mkdirSync(path.dirname(tempFile), { recursive: true });
       fs.writeFileSync(tempFile, params.code, 'utf-8');
       args.splice(args.indexOf('--file') + 1, 1, tempFile);

@@ -160,7 +160,7 @@ class IncrementalMigration:
     def __init__(self, project_dir: str):
         self.project_dir = Path(project_dir)
         self.state_file = (
-            self.project_dir / ".auto-claude" / "migration" / "incremental_state.json"
+            self.project_dir / ".workpilot" / "migration" / "incremental_state.json"
         )
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
         self.state = self._load_state()

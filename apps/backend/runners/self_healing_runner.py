@@ -28,7 +28,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-AUTO_CLAUDE_DIR = ".auto-claude"
+AUTO_CLAUDE_DIR = ".workpilot"
 SELF_HEALING_DATA_DIR = AUTO_CLAUDE_DIR + "/self-healing"
 
 # Add the apps/backend directory to the Python path

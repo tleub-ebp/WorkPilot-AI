@@ -30,7 +30,7 @@ class TestWorktreeManagerInitialization:
         assert manager.project_dir == temp_git_repo
         assert (
             manager.worktrees_dir
-            == temp_git_repo / ".auto-claude" / "worktrees" / "tasks"
+            == temp_git_repo / ".workpilot" / "worktrees" / "tasks"
         )
         assert manager.base_branch is not None
 

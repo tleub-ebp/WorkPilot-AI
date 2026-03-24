@@ -131,9 +131,9 @@ Once the PR is approved and merged to `main`, GitHub Actions will automatically:
 ### Step 5: Verify
 
 After merging, check:
-- [GitHub Actions](https://github.com/tleub-ebp/Auto-Claude_EBP/actions) - ensure all workflows pass
-- [Releases](https://github.com/tleub-ebp/Auto-Claude_EBP/releases) - verify release was created
-- [README](https://github.com/tleub-ebp/Auto-Claude_EBP#download) - confirm version updated
+- [GitHub Actions](https://github.com/tleub-ebp/WorkPilot-AI/actions) - ensure all workflows pass
+- [Releases](https://github.com/tleub-ebp/WorkPilot-AI/releases) - verify release was created
+- [README](https://github.com/tleub-ebp/WorkPilot-AI#download) - confirm version updated
 
 ## Version Numbering
 

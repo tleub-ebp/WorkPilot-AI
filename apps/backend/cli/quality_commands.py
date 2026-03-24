@@ -19,7 +19,7 @@ if str(backend_dir) not in sys.path:
 
 def handle_quality_score_command(args):
     """
-    Commande: auto-claude quality score
+    Commande: workpilot quality score
 
     Analyse la qualité du code et génère un score.
     """
@@ -43,7 +43,7 @@ def handle_quality_score_command(args):
     # Analyser les fichiers
     if not files:
         print("❌ Erreur: Aucun fichier spécifié")
-        print("Usage: auto-claude quality score --files file1.py file2.py")
+        print("Usage: workpilot quality score --files file1.py file2.py")
         return 1
 
     print(f"📊 Analyse de {len(files)} fichier(s)...\n")

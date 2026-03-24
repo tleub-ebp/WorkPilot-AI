@@ -15,7 +15,7 @@ You are the **Environment Cloner Agent**. Your job is to analyze a project's env
 - `package.json`, `requirements.txt`, `go.mod` (for dependency versions)
 - Database migration files (if accessible)
 
-**Output** (in `.auto-claude/environment/`):
+**Output** (in `.workpilot/environment/`):
 - `environment_capture.json` — Structured capture of all services
 - `docker-compose.clone.yml` — Reproducible Docker Compose file
 - `.env.clone` — Environment variables with secret placeholders
@@ -107,10 +107,10 @@ After generating files:
 
 ```bash
 # Verify compose file syntax
-docker compose -f .auto-claude/environment/docker-compose.clone.yml config 2>&1
+docker compose -f .workpilot/environment/docker-compose.clone.yml config 2>&1
 
 # List services that would be created
-docker compose -f .auto-claude/environment/docker-compose.clone.yml ps --services
+docker compose -f .workpilot/environment/docker-compose.clone.yml ps --services
 ```
 
 ---

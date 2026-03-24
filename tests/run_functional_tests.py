@@ -27,7 +27,7 @@ async def test_complete_workflow():
         project_dir = Path(tmpdir) / "project"
         project_dir.mkdir()
         
-        spec_dir = Path(tmpdir) / ".auto-claude" / "specs" / "001-test"
+        spec_dir = Path(tmpdir) / ".workpilot" / "specs" / "001-test"
         spec_dir.mkdir(parents=True)
         
         # Créer implementation_plan.json

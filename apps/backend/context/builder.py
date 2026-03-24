@@ -36,8 +36,8 @@ class ContextBuilder:
         self._dep_cache = DependencyGraphCache(self.project_dir)
 
     def _load_project_index(self) -> dict:
-        """Load project index from file or create new one (.auto-claude is the installed instance)."""
-        index_file = self.project_dir / ".auto-claude" / "project_index.json"
+        """Load project index from file or create new one (.workpilot is the installed instance)."""
+        index_file = self.project_dir / ".workpilot" / "project_index.json"
         if index_file.exists():
             try:
                 with open(index_file, encoding="utf-8") as f:

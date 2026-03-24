@@ -49,7 +49,7 @@ npx @workpilot/plugin-sdk publish --registry https://plugins.workpilot.ai`,
     color: '#06b6d4',
     descKey: 'common:pluginMarketplace.sdk.testingLocallyDesc',
     codeSnippet: `# Load a local plugin in dev mode
-# Add to your .auto-claude/plugins/local.json:
+# Add to your .workpilot/plugins/local.json:
 {
   "localPlugins": [
     { "path": "/path/to/my-plugin", "enabled": true }
