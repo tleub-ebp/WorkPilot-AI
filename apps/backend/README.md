@@ -14,7 +14,7 @@ python -m pip install -r requirements.txt
 ### 2. Configure
 
 ```bash
-cp .env.example .env
+cp .env-files/backend.env.example .env-files/backend.env
 ```
 
 Authenticate with Claude Code (token auto-saved to Keychain):
