@@ -278,6 +278,20 @@ async def run_qa_fixer_session(
                                 print(f"   Input: {input_str}", flush=True)
                         current_tool = tool_name
 
+                        # Record tool use in replay
+                        if _rr and _rs_id:
+                            try:
+                                if tool_name in ("Edit", "Write") and inp and inp.get("file_path"):
+                                    _op = "update" if tool_name == "Edit" else "create"
+                                    _after = str(inp.get("new_string") or inp.get("content") or "")
+                                    _rr.record_file_change(_rs_id, inp["file_path"], operation=_op, after_content=_after)
+                                elif tool_name == "Bash" and inp and inp.get("command"):
+                                    _rr.record_command(_rs_id, inp["command"])
+                                else:
+                                    _rr.record_tool_call(_rs_id, tool_name, tool_input_dict=inp or {})
+                            except Exception:
+                                pass
+
             elif msg_type == "UserMessage" and hasattr(msg, "content"):
                 for block in msg.content:
                     block_type = type(block).__name__
@@ -334,6 +348,17 @@ async def run_qa_fixer_session(
                                     phase=LogPhase.VALIDATION,
                                 )
 
+                        # Record tool result in replay
+                        if _rr and _rs_id and current_tool:
+                            try:
+                                _result_str = str(result_content)[:2000]
+                                if current_tool == "Bash":
+                                    _rr.record_command_output(_rs_id, _result_str, is_error=is_error)
+                                elif current_tool not in ("Edit", "Write"):
+                                    _rr.record_tool_result(_rs_id, current_tool, output=_result_str, success=not is_error)
+                            except Exception:
+                                pass
+
                         current_tool = None
 
         print("\n" + "-" * 70 + "\n")
@@ -372,7 +397,6 @@ async def run_qa_fixer_session(
                 subtasks_completed=[f"qa_fixer_{fix_session}"],
                 discoveries=fixer_discoveries,
             )
-            return "fixed", response_text
         else:
             # Fixer didn't update the status properly, but we'll trust it worked
             debug_success("qa_fixer", "Fixes assumed applied (status not updated)")
@@ -386,7 +410,12 @@ async def run_qa_fixer_session(
                 subtasks_completed=[f"qa_fixer_{fix_session}"],
                 discoveries=fixer_discoveries,
             )
-            return "fixed", response_text
+        if _rr and _rs_id:
+            try:
+                _rr.end_session(_rs_id)
+            except Exception:
+                pass
+        return "fixed", response_text
 
     except Exception as e:
         debug_error(
@@ -397,4 +426,9 @@ async def run_qa_fixer_session(
         print(f"Error during fixer session: {e}")
         if task_logger:
             task_logger.log_error(f"QA fixer error: {e}", LogPhase.VALIDATION)
+        if _rr and _rs_id:
+            try:
+                _rr.end_session(_rs_id)
+            except Exception:
+                pass
         return "error", str(e)
