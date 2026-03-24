@@ -1,13 +1,12 @@
-﻿"""
+"""
 Rollback Manager: Handles migration rollback and recovery.
 """
 
-from typing import Dict, Optional, List
-from pathlib import Path
 import subprocess
 from datetime import datetime
+from pathlib import Path
 
-from .models import RollbackCheckpoint, MigrationContext
+from .models import MigrationContext, RollbackCheckpoint
 
 
 class RollbackManager:
@@ -17,7 +16,9 @@ class RollbackManager:
         self.context = context
         self.project_dir = Path(context.project_dir)
 
-    def create_checkpoint(self, phase_id: str, description: str = "") -> RollbackCheckpoint:
+    def create_checkpoint(
+        self, phase_id: str, description: str = ""
+    ) -> RollbackCheckpoint:
         """Create a rollback checkpoint."""
         # Get current git commit
         try:
@@ -49,7 +50,7 @@ class RollbackManager:
 
         return checkpoint
 
-    def rollback_to_checkpoint(self, phase_id: str) -> Dict:
+    def rollback_to_checkpoint(self, phase_id: str) -> dict:
         """Rollback to a specific checkpoint."""
         if phase_id not in self.context.checkpoints:
             return {
@@ -58,7 +59,7 @@ class RollbackManager:
             }
 
         commit_hash = self.context.checkpoints[phase_id]
-        
+
         try:
             result = subprocess.run(
                 ["git", "reset", "--hard", commit_hash],
@@ -85,7 +86,7 @@ class RollbackManager:
                 "error": str(e),
             }
 
-    def rollback_to_begin(self) -> Dict:
+    def rollback_to_begin(self) -> dict:
         """Rollback to the beginning (before any transformation started)."""
         if not self.context.checkpoints:
             return {
@@ -104,17 +105,19 @@ class RollbackManager:
         earliest_phase = "backup" if "backup" in phase_ids else phase_ids[0]
         return self.rollback_to_checkpoint(earliest_phase)
 
-    def list_checkpoints(self) -> List[Dict]:
+    def list_checkpoints(self) -> list[dict]:
         """List all available checkpoints."""
         checkpoints = []
         for phase_id, commit in self.context.checkpoints.items():
-            checkpoints.append({
-                "phase_id": phase_id,
-                "commit": commit,
-            })
+            checkpoints.append(
+                {
+                    "phase_id": phase_id,
+                    "commit": commit,
+                }
+            )
         return checkpoints
 
-    def cleanup_checkpoints(self) -> Dict:
+    def cleanup_checkpoints(self) -> dict:
         """Cleanup old checkpoints from git history."""
         try:
             # Run git gc to clean up
@@ -145,13 +148,13 @@ class RollbackManager:
         except Exception:
             return False
 
-    def get_rollback_plan(self, to_phase: str) -> Dict:
+    def get_rollback_plan(self, to_phase: str) -> dict:
         """Get detailed rollback plan."""
         if to_phase not in self.context.checkpoints:
             return {"error": f"Phase {to_phase} not found"}
 
         checkpoint_commit = self.context.checkpoints[to_phase]
-        
+
         # Get list of commits to be reverted
         try:
             result = subprocess.run(

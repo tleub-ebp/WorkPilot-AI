@@ -1,10 +1,10 @@
 """Documentation Updater - Detects and updates outdated documentation."""
-import re
-import uuid
-from pathlib import Path
-from typing import Callable, Dict, List, Optional
 
-from .models import DocSection, DocStatus, DocType
+import re
+from collections.abc import Callable
+from pathlib import Path
+
+from .models import DocSection, DocStatus
 
 
 class DocumentationUpdater:
@@ -12,14 +12,15 @@ class DocumentationUpdater:
 
     def __init__(self, project_dir: str):
         self.project_dir = Path(project_dir)
-        self._progress_callback: Optional[Callable] = None
+        self._progress_callback: Callable | None = None
 
     def set_progress_callback(self, callback: Callable) -> None:
         self._progress_callback = callback
 
-    def check_and_update(self) -> List[DocSection]:
+    def check_and_update(self) -> list[DocSection]:
         """Detect outdated docs and update them with placeholder improvements."""
         from .doc_analyzer import DocumentationAnalyzer
+
         analyzer = DocumentationAnalyzer(str(self.project_dir))
         outdated = analyzer.detect_outdated_docs()
         updated = []
@@ -48,7 +49,7 @@ class DocumentationUpdater:
     def insert_docstrings(
         self,
         file_path: str,
-        symbols_with_docs: List[Dict],
+        symbols_with_docs: list[dict],
         dry_run: bool = False,
     ) -> int:
         """Insert docstrings into source files. Returns count of insertions."""
@@ -107,7 +108,7 @@ class DocumentationUpdater:
             return source
 
         # Find the indentation of the next line
-        after_def = source[match.end():]
+        after_def = source[match.end() :]
         indent_match = re.match(r"([ \t]+)", after_def)
         indent = indent_match.group(1) if indent_match else "    "
 
@@ -126,9 +127,7 @@ class DocumentationUpdater:
         insert_pos = match.end()
         return source[:insert_pos] + formatted + source[insert_pos:]
 
-    def _insert_jsdoc(
-        self, source: str, function_name: str, jsdoc: str
-    ) -> str:
+    def _insert_jsdoc(self, source: str, function_name: str, jsdoc: str) -> str:
         """Insert JSDoc comment before a JavaScript/TypeScript function."""
         pattern = re.compile(
             rf"((?:export\s+)?(?:async\s+)?function\s+{re.escape(function_name)}\s*\(|"
@@ -140,7 +139,7 @@ class DocumentationUpdater:
             return source
 
         # Check if there's already a JSDoc comment just before
-        before = source[:match.start()]
+        before = source[: match.start()]
         if before.rstrip().endswith("*/"):
             return source
 
@@ -157,13 +156,13 @@ class DocumentationUpdater:
         formatted_lines.append(f"{indent} */\n")
         formatted_jsdoc = "\n".join(formatted_lines)
 
-        return source[:match.start()] + formatted_jsdoc + source[match.start():]
+        return source[: match.start()] + formatted_jsdoc + source[match.start() :]
 
     def watch_for_changes(self, callback: Callable) -> None:
         """Watch for code changes that invalidate docs (polling-based fallback)."""
         try:
-            from watchdog.observers import Observer
             from watchdog.events import FileSystemEventHandler
+            from watchdog.observers import Observer
 
             class CodeChangeHandler(FileSystemEventHandler):
                 def on_modified(self, event):
@@ -173,7 +172,9 @@ class DocumentationUpdater:
                         callback(event.src_path)
 
             observer = Observer()
-            observer.schedule(CodeChangeHandler(), str(self.project_dir), recursive=True)
+            observer.schedule(
+                CodeChangeHandler(), str(self.project_dir), recursive=True
+            )
             observer.start()
         except ImportError:
             print("[DocUpdater] watchdog not available — file watching disabled")

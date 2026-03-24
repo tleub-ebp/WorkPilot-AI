@@ -3,6 +3,7 @@
 Run this test with Windsurf IDE open:
     cd apps/backend && python test_windsurf_flow.py
 """
+
 import asyncio
 import sys
 

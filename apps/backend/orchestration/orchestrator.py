@@ -17,13 +17,12 @@ from __future__ import annotations
 
 import json
 import logging
-import sys
 from pathlib import Path
 from typing import Any
 
-from .repo_graph import RepoDependencyGraph, RepoDependency, DependencyType
+from .breaking_changes import BreakingChange, BreakingChangeDetector
 from .cross_repo_spec import CrossRepoSpecManager, MultiRepoManifest
-from .breaking_changes import BreakingChangeDetector, BreakingChange
+from .repo_graph import RepoDependencyGraph
 
 logger = logging.getLogger(__name__)
 
@@ -83,13 +82,19 @@ class MultiRepoOrchestrator:
         Returns True if all repos completed successfully.
         """
         try:
-            _emit_progress("status", {"status": "analyzing", "message": "Analyzing repositories..."})
+            _emit_progress(
+                "status",
+                {"status": "analyzing", "message": "Analyzing repositories..."},
+            )
 
             # 1. Analyze all repos
             analyses = await self._analyze_repos()
 
             # 2. Build dependency graph
-            _emit_progress("status", {"status": "analyzing", "message": "Building dependency graph..."})
+            _emit_progress(
+                "status",
+                {"status": "analyzing", "message": "Building dependency graph..."},
+            )
             self.graph = RepoDependencyGraph.from_analysis(analyses)
 
             # Add any repos that weren't detected by analysis
@@ -102,13 +107,19 @@ class MultiRepoOrchestrator:
                 _emit_progress("error", {"message": str(e)})
                 return False
 
-            _emit_progress("graph", {
-                "graph": self.graph.to_dict(),
-                "execution_order": execution_order,
-            })
+            _emit_progress(
+                "graph",
+                {
+                    "graph": self.graph.to_dict(),
+                    "execution_order": execution_order,
+                },
+            )
 
             # 3. Create master spec
-            _emit_progress("status", {"status": "planning", "message": "Creating cross-repo spec..."})
+            _emit_progress(
+                "status",
+                {"status": "planning", "message": "Creating cross-repo spec..."},
+            )
             self.manifest = self.spec_manager.create_master_spec(
                 task_description=self.task_description,
                 repos=self.repos,
@@ -117,7 +128,10 @@ class MultiRepoOrchestrator:
             )
 
             # 4. Execute per-repo in dependency order
-            _emit_progress("status", {"status": "executing", "message": "Starting per-repo execution..."})
+            _emit_progress(
+                "status",
+                {"status": "executing", "message": "Starting per-repo execution..."},
+            )
             self.manifest.status = "executing"
             self.spec_manager.save_manifest(self.manifest)
 
@@ -130,11 +144,14 @@ class MultiRepoOrchestrator:
                     logger.warning(f"No sub-spec found for {repo_name}, skipping")
                     continue
 
-                _emit_progress("repo_start", {
-                    "repo": repo_name,
-                    "status": "in_progress",
-                    "message": f"Starting pipeline for {repo_name}",
-                })
+                _emit_progress(
+                    "repo_start",
+                    {
+                        "repo": repo_name,
+                        "status": "in_progress",
+                        "message": f"Starting pipeline for {repo_name}",
+                    },
+                )
 
                 # Update sub-spec status
                 self.manifest.update_sub_spec_status(repo_name, "coding")
@@ -154,17 +171,23 @@ class MultiRepoOrchestrator:
                     )
                     completed_repos.append(repo_name)
 
-                    _emit_progress("repo_complete", {
-                        "repo": repo_name,
-                        "status": "completed",
-                    })
+                    _emit_progress(
+                        "repo_complete",
+                        {
+                            "repo": repo_name,
+                            "status": "completed",
+                        },
+                    )
 
                     # 5. Breaking change detection after each repo
                     if len(completed_repos) > 1:
-                        _emit_progress("status", {
-                            "status": "executing",
-                            "message": f"Checking for breaking changes after {repo_name}...",
-                        })
+                        _emit_progress(
+                            "status",
+                            {
+                                "status": "executing",
+                                "message": f"Checking for breaking changes after {repo_name}...",
+                            },
+                        )
                         repo_paths = {
                             r["repo"]: Path(r["repo_path"]) for r in self.repos
                         }
@@ -177,19 +200,28 @@ class MultiRepoOrchestrator:
                             self.manifest.breaking_changes.extend(
                                 [bc.to_dict() for bc in new_breaks]
                             )
-                            _emit_progress("breaking_changes", {
-                                "changes": [bc.to_dict() for bc in new_breaks],
-                                "summary": detector.build_detection_summary(new_breaks),
-                            })
+                            _emit_progress(
+                                "breaking_changes",
+                                {
+                                    "changes": [bc.to_dict() for bc in new_breaks],
+                                    "summary": detector.build_detection_summary(
+                                        new_breaks
+                                    ),
+                                },
+                            )
                 else:
                     self.manifest.update_sub_spec_status(
-                        repo_name, "failed",
+                        repo_name,
+                        "failed",
                         error_message=f"Pipeline failed for {repo_name}",
                     )
-                    _emit_progress("repo_complete", {
-                        "repo": repo_name,
-                        "status": "failed",
-                    })
+                    _emit_progress(
+                        "repo_complete",
+                        {
+                            "repo": repo_name,
+                            "status": "failed",
+                        },
+                    )
 
                     if self.fail_fast:
                         logger.error(f"Fail-fast: stopping after {repo_name} failed")
@@ -199,7 +231,10 @@ class MultiRepoOrchestrator:
 
             # 6. Create linked PRs
             if completed_repos:
-                _emit_progress("status", {"status": "creating_prs", "message": "Creating linked PRs..."})
+                _emit_progress(
+                    "status",
+                    {"status": "creating_prs", "message": "Creating linked PRs..."},
+                )
                 await self._create_linked_prs(completed_repos)
 
             # Final status
@@ -209,13 +244,16 @@ class MultiRepoOrchestrator:
             self.manifest.status = "completed" if all_completed else "failed"
             self.spec_manager.save_manifest(self.manifest)
 
-            _emit_progress("complete", {
-                "status": self.manifest.status,
-                "completed_repos": completed_repos,
-                "total_repos": len(self.repos),
-                "breaking_changes_count": len(all_breaking_changes),
-                "overall_progress": self.manifest.get_overall_progress(),
-            })
+            _emit_progress(
+                "complete",
+                {
+                    "status": self.manifest.status,
+                    "completed_repos": completed_repos,
+                    "total_repos": len(self.repos),
+                    "breaking_changes_count": len(all_breaking_changes),
+                    "overall_progress": self.manifest.get_overall_progress(),
+                },
+            )
 
             return all_completed
 
@@ -235,10 +273,13 @@ class MultiRepoOrchestrator:
             repo_name = repo_info["repo"]
             repo_path = Path(repo_info["repo_path"])
 
-            _emit_progress("repo_analyzing", {
-                "repo": repo_name,
-                "message": f"Analyzing {repo_name}...",
-            })
+            _emit_progress(
+                "repo_analyzing",
+                {
+                    "repo": repo_name,
+                    "message": f"Analyzing {repo_name}...",
+                },
+            )
 
             analysis = await self._analyze_single_repo(repo_name, repo_path)
             analyses[repo_name] = analysis
@@ -278,7 +319,11 @@ class MultiRepoOrchestrator:
                 if pkg.get("name"):
                     analysis["published_packages"].append(pkg["name"])
                 # Dependencies
-                for dep_section in ["dependencies", "devDependencies", "peerDependencies"]:
+                for dep_section in [
+                    "dependencies",
+                    "devDependencies",
+                    "peerDependencies",
+                ]:
                     for dep_name in pkg.get(dep_section, {}):
                         analysis["dependencies"].append(dep_name)
             except Exception:
@@ -295,7 +340,13 @@ class MultiRepoOrchestrator:
                         for line in content.strip().split("\n"):
                             line = line.strip()
                             if line and not line.startswith("#"):
-                                pkg_name = line.split("==")[0].split(">=")[0].split("<=")[0].split("[")[0].strip()
+                                pkg_name = (
+                                    line.split("==")[0]
+                                    .split(">=")[0]
+                                    .split("<=")[0]
+                                    .split("[")[0]
+                                    .strip()
+                                )
                                 if pkg_name:
                                     analysis["dependencies"].append(pkg_name)
                     except Exception:
@@ -304,8 +355,11 @@ class MultiRepoOrchestrator:
 
         # Detect monorepo indicators
         monorepo_indicators = [
-            "pnpm-workspace.yaml", "lerna.json", "nx.json",
-            "turbo.json", "rush.json",
+            "pnpm-workspace.yaml",
+            "lerna.json",
+            "nx.json",
+            "turbo.json",
+            "rush.json",
         ]
         for indicator in monorepo_indicators:
             if (repo_path / indicator).exists():
@@ -374,11 +428,14 @@ class MultiRepoOrchestrator:
             with open(sub_spec_dir / "requirements.json", "w", encoding="utf-8") as f:
                 json.dump(requirements, f, indent=2)
 
-            _emit_progress("repo_pipeline", {
-                "repo": repo_name,
-                "phase": "spec_ready",
-                "message": f"Spec prepared for {repo_name}, ready for build pipeline",
-            })
+            _emit_progress(
+                "repo_pipeline",
+                {
+                    "repo": repo_name,
+                    "phase": "spec_ready",
+                    "message": f"Spec prepared for {repo_name}, ready for build pipeline",
+                },
+            )
 
             # The actual build execution is handled by the runner
             # which spawns planner/coder/QA agents using existing infrastructure.
@@ -394,7 +451,7 @@ class MultiRepoOrchestrator:
         lines = [
             f"# Spec for {repo_name}",
             "",
-            f"## Part of Multi-Repo Orchestration",
+            "## Part of Multi-Repo Orchestration",
             "",
             f"**Master Task:** {self.task_description}",
             "",
@@ -407,16 +464,20 @@ class MultiRepoOrchestrator:
         if cross_repo_context:
             lines.append(cross_repo_context)
         else:
-            lines.append("This is the first repo in the execution order. No upstream repos have been modified yet.")
+            lines.append(
+                "This is the first repo in the execution order. No upstream repos have been modified yet."
+            )
 
-        lines.extend([
-            "",
-            "## Instructions",
-            "",
-            f"Implement the portion of the task that belongs in this repository ({repo_name}).",
-            "Consider the cross-repo context above when making changes.",
-            "Ensure your changes are compatible with the overall orchestration.",
-        ])
+        lines.extend(
+            [
+                "",
+                "## Instructions",
+                "",
+                f"Implement the portion of the task that belongs in this repository ({repo_name}).",
+                "Consider the cross-repo context above when making changes.",
+                "Ensure your changes are compatible with the overall orchestration.",
+            ]
+        )
 
         return "\n".join(lines) + "\n"
 
@@ -454,7 +515,9 @@ class MultiRepoOrchestrator:
                     f"{bc['description']}"
                 )
             lines.append("")
-            lines.append("**Important:** Address the above breaking changes in your implementation.")
+            lines.append(
+                "**Important:** Address the above breaking changes in your implementation."
+            )
 
         return "\n".join(lines)
 
@@ -473,10 +536,13 @@ class MultiRepoOrchestrator:
                 pr_urls[repo_name] = sub_spec.pr_url
 
         if not pr_urls:
-            _emit_progress("prs", {
-                "message": "No PRs to link (PRs will be created by individual repo pipelines)",
-                "pr_urls": {},
-            })
+            _emit_progress(
+                "prs",
+                {
+                    "message": "No PRs to link (PRs will be created by individual repo pipelines)",
+                    "pr_urls": {},
+                },
+            )
             return
 
         # Build cross-reference section for each PR
@@ -485,8 +551,11 @@ class MultiRepoOrchestrator:
         for repo, url in pr_urls.items():
             cross_ref_section += f"- [{repo}]({url})\n"
 
-        _emit_progress("prs", {
-            "message": f"Linked {len(pr_urls)} PRs across repos",
-            "pr_urls": pr_urls,
-            "cross_ref_section": cross_ref_section,
-        })
+        _emit_progress(
+            "prs",
+            {
+                "message": f"Linked {len(pr_urls)} PRs across repos",
+                "pr_urls": pr_urls,
+                "cross_ref_section": cross_ref_section,
+            },
+        )

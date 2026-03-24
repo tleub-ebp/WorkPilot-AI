@@ -16,9 +16,8 @@ Environment Variables:
 
 import getpass
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -36,7 +35,7 @@ class TeamSyncConfig:
     member_id: str = ""  # Defaults to OS username if empty
 
     # HTTP-mode settings
-    server_url: str = ""       # Remote server to connect to
+    server_url: str = ""  # Remote server to connect to
     server_host: str = "0.0.0.0"
     server_port: int = 7749
 
@@ -64,10 +63,16 @@ class TeamSyncConfig:
         except ValueError:
             server_port = 7749
         try:
-            auto_sync_interval = int(os.environ.get("TEAM_SYNC_AUTO_SYNC_INTERVAL", "30"))
+            auto_sync_interval = int(
+                os.environ.get("TEAM_SYNC_AUTO_SYNC_INTERVAL", "30")
+            )
         except ValueError:
             auto_sync_interval = 30
-        auto_push = os.environ.get("TEAM_SYNC_AUTO_PUSH", "true").lower() in ("true", "1", "yes")
+        auto_push = os.environ.get("TEAM_SYNC_AUTO_PUSH", "true").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
 
         return cls(
             mode=mode,
@@ -88,7 +93,7 @@ class TeamSyncConfig:
             return bool(self.server_url)
         return False
 
-    def get_sync_dir(self) -> Optional[Path]:
+    def get_sync_dir(self) -> Path | None:
         """Return the resolved team directory inside the shared folder."""
         if not self.sync_path:
             return None

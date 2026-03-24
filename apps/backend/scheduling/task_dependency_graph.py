@@ -22,7 +22,7 @@ from collections import defaultdict, deque
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +31,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class TaskNodeStatus(str, Enum):
     """Status of a task in the graph."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -43,6 +45,7 @@ class TaskNodeStatus(str, Enum):
 
 class DependencyType(str, Enum):
     """Type of dependency between tasks."""
+
     BLOCKS = "blocks"
     DEPENDS_ON = "depends_on"
     RELATED = "related"
@@ -50,6 +53,7 @@ class DependencyType(str, Enum):
 
 class GraphLayout(str, Enum):
     """Layout algorithm for graph visualization."""
+
     DAGRE = "dagre"
     FORCE = "force"
     TREE = "tree"
@@ -60,9 +64,11 @@ class GraphLayout(str, Enum):
 # Dataclasses
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class TaskNode:
     """A task represented as a node in the dependency graph."""
+
     task_id: str = ""
     title: str = ""
     status: str = "pending"
@@ -70,60 +76,68 @@ class TaskNode:
     estimated_hours: float = 0.0
     actual_hours: float = 0.0
     assignee: str = ""
-    tags: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    tags: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     @property
     def is_completed(self) -> bool:
-        return self.status in (TaskNodeStatus.COMPLETED.value, TaskNodeStatus.CANCELLED.value)
+        return self.status in (
+            TaskNodeStatus.COMPLETED.value,
+            TaskNodeStatus.CANCELLED.value,
+        )
 
 
 @dataclass
 class DependencyEdge:
     """A directed edge representing a dependency between two tasks."""
+
     edge_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     source_id: str = ""
     target_id: str = ""
     dependency_type: str = "depends_on"
     label: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 @dataclass
 class CriticalPath:
     """Result of critical path analysis."""
-    path: List[str] = field(default_factory=list)
+
+    path: list[str] = field(default_factory=list)
     total_estimated_hours: float = 0.0
     total_actual_hours: float = 0.0
-    bottleneck_task_id: Optional[str] = None
+    bottleneck_task_id: str | None = None
     completed_pct: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 @dataclass
 class GraphAnalysis:
     """Complete analysis of the task dependency graph."""
+
     total_tasks: int = 0
     total_edges: int = 0
-    tasks_by_status: Dict[str, int] = field(default_factory=dict)
-    blocked_tasks: List[str] = field(default_factory=list)
-    root_tasks: List[str] = field(default_factory=list)
-    leaf_tasks: List[str] = field(default_factory=list)
-    critical_path: Optional[CriticalPath] = None
+    tasks_by_status: dict[str, int] = field(default_factory=dict)
+    blocked_tasks: list[str] = field(default_factory=list)
+    root_tasks: list[str] = field(default_factory=list)
+    leaf_tasks: list[str] = field(default_factory=list)
+    critical_path: CriticalPath | None = None
     has_cycles: bool = False
     longest_chain: int = 0
-    parallelizable_groups: List[List[str]] = field(default_factory=list)
+    parallelizable_groups: list[list[str]] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         result = asdict(self)
         if self.critical_path:
             result["critical_path"] = self.critical_path.to_dict()
@@ -134,6 +148,7 @@ class GraphAnalysis:
 # Main class
 # ---------------------------------------------------------------------------
 
+
 class TaskDependencyGraph:
     """Directed acyclic graph of task dependencies.
 
@@ -143,12 +158,12 @@ class TaskDependencyGraph:
     """
 
     def __init__(self) -> None:
-        self._nodes: Dict[str, TaskNode] = {}
-        self._edges: Dict[str, DependencyEdge] = {}
+        self._nodes: dict[str, TaskNode] = {}
+        self._edges: dict[str, DependencyEdge] = {}
         # Adjacency: task_id -> list of task_ids it depends on
-        self._dependencies: Dict[str, Set[str]] = defaultdict(set)
+        self._dependencies: dict[str, set[str]] = defaultdict(set)
         # Reverse adjacency: task_id -> list of task_ids that depend on it
-        self._dependents: Dict[str, Set[str]] = defaultdict(set)
+        self._dependents: dict[str, set[str]] = defaultdict(set)
 
     # -- Task CRUD -----------------------------------------------------------
 
@@ -160,8 +175,8 @@ class TaskDependencyGraph:
         priority: int = 5,
         estimated_hours: float = 0.0,
         assignee: str = "",
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> TaskNode:
         """Add a task node to the graph."""
         if task_id in self._nodes:
@@ -193,7 +208,8 @@ class TaskDependencyGraph:
         self._get_node(task_id)
         # Remove all edges involving this task
         edges_to_remove = [
-            eid for eid, e in self._edges.items()
+            eid
+            for eid, e in self._edges.items()
             if e.source_id == task_id or e.target_id == task_id
         ]
         for eid in edges_to_remove:
@@ -209,7 +225,7 @@ class TaskDependencyGraph:
         """Get a task node by ID."""
         return self._get_node(task_id)
 
-    def list_tasks(self, status: Optional[str] = None) -> List[TaskNode]:
+    def list_tasks(self, status: str | None = None) -> list[TaskNode]:
         """List all tasks, optionally filtered by status."""
         nodes = list(self._nodes.values())
         if status:
@@ -260,30 +276,31 @@ class TaskDependencyGraph:
         self._dependencies[task_id].discard(depends_on_id)
         self._dependents[depends_on_id].discard(task_id)
         edges_to_remove = [
-            eid for eid, e in self._edges.items()
+            eid
+            for eid, e in self._edges.items()
             if e.source_id == task_id and e.target_id == depends_on_id
         ]
         for eid in edges_to_remove:
             del self._edges[eid]
         self._refresh_blocked_status()
 
-    def get_dependencies(self, task_id: str) -> List[str]:
+    def get_dependencies(self, task_id: str) -> list[str]:
         """Get the list of task IDs that this task depends on."""
         self._get_node(task_id)
         return list(self._dependencies.get(task_id, set()))
 
-    def get_dependents(self, task_id: str) -> List[str]:
+    def get_dependents(self, task_id: str) -> list[str]:
         """Get the list of task IDs that depend on this task."""
         self._get_node(task_id)
         return list(self._dependents.get(task_id, set()))
 
-    def get_edges(self) -> List[DependencyEdge]:
+    def get_edges(self) -> list[DependencyEdge]:
         """Get all edges."""
         return list(self._edges.values())
 
     # -- Graph analysis ------------------------------------------------------
 
-    def topological_sort(self) -> List[str]:
+    def topological_sort(self) -> list[str]:
         """Return tasks in topological order (dependencies first).
 
         Raises ValueError if the graph contains cycles.
@@ -291,7 +308,7 @@ class TaskDependencyGraph:
         if self._has_cycle():
             raise ValueError("Graph contains cycles — topological sort impossible")
 
-        in_degree: Dict[str, int] = {tid: 0 for tid in self._nodes}
+        in_degree: dict[str, int] = dict.fromkeys(self._nodes, 0)
         for tid, deps in self._dependencies.items():
             in_degree.setdefault(tid, 0)
             for dep in deps:
@@ -302,7 +319,7 @@ class TaskDependencyGraph:
             in_degree[tid] = len(deps)
 
         queue = deque(tid for tid, deg in in_degree.items() if deg == 0)
-        result: List[str] = []
+        result: list[str] = []
 
         while queue:
             tid = queue.popleft()
@@ -314,12 +331,12 @@ class TaskDependencyGraph:
 
         return result
 
-    def detect_cycles(self) -> List[List[str]]:
+    def detect_cycles(self) -> list[list[str]]:
         """Detect all cycles in the graph. Returns a list of cycle paths."""
-        cycles: List[List[str]] = []
-        visited: Set[str] = set()
-        rec_stack: Set[str] = set()
-        path: List[str] = []
+        cycles: list[list[str]] = []
+        visited: set[str] = set()
+        rec_stack: set[str] = set()
+        path: list[str] = []
 
         def _dfs(node: str) -> None:
             visited.add(node)
@@ -350,8 +367,8 @@ class TaskDependencyGraph:
         topo = self.topological_sort()
 
         # Longest path using estimated_hours as weight
-        dist: Dict[str, float] = {tid: 0.0 for tid in topo}
-        parent: Dict[str, Optional[str]] = {tid: None for tid in topo}
+        dist: dict[str, float] = dict.fromkeys(topo, 0.0)
+        parent: dict[str, str | None] = dict.fromkeys(topo)
 
         for tid in topo:
             node = self._nodes[tid]
@@ -367,7 +384,7 @@ class TaskDependencyGraph:
         end_node = max(dist, key=lambda t: dist[t] + self._nodes[t].estimated_hours)
 
         # Reconstruct path
-        path: List[str] = [end_node]
+        path: list[str] = [end_node]
         current = end_node
         while parent.get(current):
             current = parent[current]
@@ -380,7 +397,11 @@ class TaskDependencyGraph:
         completed_pct = (completed_count / len(path) * 100) if path else 0.0
 
         # Bottleneck = task with highest estimated hours on critical path
-        bottleneck = max(path, key=lambda tid: self._nodes[tid].estimated_hours) if path else None
+        bottleneck = (
+            max(path, key=lambda tid: self._nodes[tid].estimated_hours)
+            if path
+            else None
+        )
 
         return CriticalPath(
             path=path,
@@ -390,9 +411,9 @@ class TaskDependencyGraph:
             completed_pct=completed_pct,
         )
 
-    def get_blocked_tasks(self) -> List[str]:
+    def get_blocked_tasks(self) -> list[str]:
         """Return task IDs that are blocked by incomplete dependencies."""
-        blocked: List[str] = []
+        blocked: list[str] = []
         for tid, deps in self._dependencies.items():
             node = self._nodes.get(tid)
             if not node or node.is_completed:
@@ -404,41 +425,34 @@ class TaskDependencyGraph:
                     break
         return blocked
 
-    def get_ready_tasks(self) -> List[str]:
+    def get_ready_tasks(self) -> list[str]:
         """Return task IDs that have all dependencies met and are not completed."""
-        ready: List[str] = []
+        ready: list[str] = []
         for tid, node in self._nodes.items():
             if node.is_completed:
                 continue
             deps = self._dependencies.get(tid, set())
             all_met = all(
-                self._nodes.get(d) and self._nodes[d].is_completed
-                for d in deps
+                self._nodes.get(d) and self._nodes[d].is_completed for d in deps
             )
             if all_met:
                 ready.append(tid)
         return ready
 
-    def get_root_tasks(self) -> List[str]:
+    def get_root_tasks(self) -> list[str]:
         """Return tasks with no dependencies (entry points)."""
-        return [
-            tid for tid in self._nodes
-            if not self._dependencies.get(tid)
-        ]
+        return [tid for tid in self._nodes if not self._dependencies.get(tid)]
 
-    def get_leaf_tasks(self) -> List[str]:
+    def get_leaf_tasks(self) -> list[str]:
         """Return tasks with no dependents (endpoints)."""
-        return [
-            tid for tid in self._nodes
-            if not self._dependents.get(tid)
-        ]
+        return [tid for tid in self._nodes if not self._dependents.get(tid)]
 
-    def get_parallelizable_groups(self) -> List[List[str]]:
+    def get_parallelizable_groups(self) -> list[list[str]]:
         """Return groups of tasks that can be executed in parallel (same topological level)."""
         if not self._nodes:
             return []
 
-        levels: Dict[str, int] = {}
+        levels: dict[str, int] = {}
         topo = self.topological_sort()
 
         for tid in topo:
@@ -448,7 +462,7 @@ class TaskDependencyGraph:
             else:
                 levels[tid] = max(levels.get(d, 0) for d in deps) + 1
 
-        groups: Dict[int, List[str]] = defaultdict(list)
+        groups: dict[int, list[str]] = defaultdict(list)
         for tid, level in levels.items():
             groups[level].append(tid)
 
@@ -456,14 +470,14 @@ class TaskDependencyGraph:
 
     def analyze(self) -> GraphAnalysis:
         """Produce a complete analysis of the graph."""
-        status_counts: Dict[str, int] = {}
+        status_counts: dict[str, int] = {}
         for node in self._nodes.values():
             status_counts[node.status] = status_counts.get(node.status, 0) + 1
 
         # Longest chain
         topo = self.topological_sort() if not self._has_cycle() else []
         longest = 0
-        chain_len: Dict[str, int] = {}
+        chain_len: dict[str, int] = {}
         for tid in topo:
             deps = self._dependencies.get(tid, set())
             if not deps:
@@ -487,7 +501,7 @@ class TaskDependencyGraph:
 
     # -- Export for UI -------------------------------------------------------
 
-    def export_reactflow(self, layout: str = "dagre") -> Dict[str, Any]:
+    def export_reactflow(self, layout: str = "dagre") -> dict[str, Any]:
         """Export the graph in reactflow-compatible format for frontend rendering.
 
         Returns a dict with 'nodes' and 'edges' arrays ready for reactflow.
@@ -506,37 +520,42 @@ class TaskDependencyGraph:
 
         for tid, node in self._nodes.items():
             pos = positions.get(tid, {"x": 0, "y": 0})
-            rf_nodes.append({
-                "id": tid,
-                "type": "taskNode",
-                "position": pos,
-                "data": {
-                    "label": node.title,
-                    "status": node.status,
-                    "priority": node.priority,
-                    "assignee": node.assignee,
-                    "estimatedHours": node.estimated_hours,
-                    "tags": node.tags,
-                    "color": status_colors.get(node.status, "#94a3b8"),
-                    "isBlocked": tid in self.get_blocked_tasks(),
-                    "isReady": tid in self.get_ready_tasks(),
-                },
-            })
+            rf_nodes.append(
+                {
+                    "id": tid,
+                    "type": "taskNode",
+                    "position": pos,
+                    "data": {
+                        "label": node.title,
+                        "status": node.status,
+                        "priority": node.priority,
+                        "assignee": node.assignee,
+                        "estimatedHours": node.estimated_hours,
+                        "tags": node.tags,
+                        "color": status_colors.get(node.status, "#94a3b8"),
+                        "isBlocked": tid in self.get_blocked_tasks(),
+                        "isReady": tid in self.get_ready_tasks(),
+                    },
+                }
+            )
 
         rf_edges = []
         for edge in self._edges.values():
-            rf_edges.append({
-                "id": edge.edge_id,
-                "source": edge.target_id,
-                "target": edge.source_id,
-                "type": "smoothstep",
-                "animated": self._nodes.get(edge.target_id, TaskNode()).status == "in_progress",
-                "label": edge.label,
-                "style": {"stroke": "#64748b"},
-                "data": {
-                    "dependencyType": edge.dependency_type,
-                },
-            })
+            rf_edges.append(
+                {
+                    "id": edge.edge_id,
+                    "source": edge.target_id,
+                    "target": edge.source_id,
+                    "type": "smoothstep",
+                    "animated": self._nodes.get(edge.target_id, TaskNode()).status
+                    == "in_progress",
+                    "label": edge.label,
+                    "style": {"stroke": "#64748b"},
+                    "data": {
+                        "dependencyType": edge.dependency_type,
+                    },
+                }
+            )
 
         return {
             "nodes": rf_nodes,
@@ -557,7 +576,7 @@ class TaskDependencyGraph:
         for tid, node in self._nodes.items():
             safe_id = tid.replace("-", "_")
             style = status_styles.get(node.status, "")
-            lines.append(f"    {safe_id}[\"{node.title}\"){style}")
+            lines.append(f'    {safe_id}["{node.title}"){style}')
 
         for edge in self._edges.values():
             src = edge.source_id.replace("-", "_")
@@ -573,7 +592,7 @@ class TaskDependencyGraph:
 
         return "\n".join(lines)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Global graph statistics."""
         analysis = self.analyze()
         return {
@@ -586,7 +605,9 @@ class TaskDependencyGraph:
             "leaf_count": len(analysis.leaf_tasks),
             "has_cycles": analysis.has_cycles,
             "longest_chain": analysis.longest_chain,
-            "critical_path_length": len(analysis.critical_path.path) if analysis.critical_path else 0,
+            "critical_path_length": len(analysis.critical_path.path)
+            if analysis.critical_path
+            else 0,
             "parallelizable_groups_count": len(analysis.parallelizable_groups),
         }
 
@@ -599,8 +620,8 @@ class TaskDependencyGraph:
 
     def _has_cycle(self) -> bool:
         """Detect if the graph has any cycles using DFS."""
-        visited: Set[str] = set()
-        rec_stack: Set[str] = set()
+        visited: set[str] = set()
+        rec_stack: set[str] = set()
 
         def _dfs(node: str) -> bool:
             visited.add(node)
@@ -624,16 +645,20 @@ class TaskDependencyGraph:
         """Refresh the 'blocked' status for all tasks."""
         blocked_ids = set(self.get_blocked_tasks())
         for tid, node in self._nodes.items():
-            if node.status in (TaskNodeStatus.COMPLETED.value, TaskNodeStatus.CANCELLED.value, TaskNodeStatus.FAILED.value):
+            if node.status in (
+                TaskNodeStatus.COMPLETED.value,
+                TaskNodeStatus.CANCELLED.value,
+                TaskNodeStatus.FAILED.value,
+            ):
                 continue
             if tid in blocked_ids and node.status != TaskNodeStatus.BLOCKED.value:
                 node.status = TaskNodeStatus.BLOCKED.value
             elif tid not in blocked_ids and node.status == TaskNodeStatus.BLOCKED.value:
                 node.status = TaskNodeStatus.PENDING.value
 
-    def _compute_positions(self, layout: str) -> Dict[str, Dict[str, float]]:
+    def _compute_positions(self, layout: str) -> dict[str, dict[str, float]]:
         """Compute node positions for reactflow layout."""
-        positions: Dict[str, Dict[str, float]] = {}
+        positions: dict[str, dict[str, float]] = {}
         groups = self.get_parallelizable_groups()
 
         x_spacing = 250

@@ -3,17 +3,15 @@ Minimal Analytics API endpoints for the Build Analytics Dashboard.
 This version doesn't depend on database to avoid initialization issues.
 """
 
-from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, HTTPException, Query
+from datetime import datetime
+
+from fastapi import APIRouter, Query
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
 @router.get("/overview")
-async def get_dashboard_overview(
-    days: int = Query(default=30, ge=1, le=365)
-):
+async def get_dashboard_overview(days: int = Query(default=30, ge=1, le=365)):
     """Get dashboard overview with key metrics (mock data for now)."""
     # Return mock data for testing
     return {
@@ -25,7 +23,7 @@ async def get_dashboard_overview(
         "avg_build_duration": 0.0,
         "recent_builds": [],
         "top_error_types": [],
-        "phase_performance": []
+        "phase_performance": [],
     }
 
 
@@ -33,8 +31,8 @@ async def get_dashboard_overview(
 async def get_builds(
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
-    status: Optional[str] = Query(default=None),
-    spec_id: Optional[str] = Query(default=None)
+    status: str | None = Query(default=None),
+    spec_id: str | None = Query(default=None),
 ):
     """Get paginated list of builds with optional filtering (mock data)."""
     return []
@@ -43,42 +41,29 @@ async def get_builds(
 @router.get("/builds/{build_id}")
 async def get_build_details(build_id: str):
     """Get detailed information about a specific build (mock data)."""
-    return {
-        "build": None,
-        "phases": [],
-        "qa_results": [],
-        "errors": []
-    }
+    return {"build": None, "phases": [], "qa_results": [], "errors": []}
 
 
 @router.get("/metrics/tokens")
-async def get_token_metrics(
-    days: int = Query(default=30, ge=1, le=365)
-):
+async def get_token_metrics(days: int = Query(default=30, ge=1, le=365)):
     """Get token usage metrics over time (mock data)."""
     return []
 
 
 @router.get("/metrics/qa")
-async def get_qa_metrics(
-    days: int = Query(default=30, ge=1, le=365)
-):
+async def get_qa_metrics(days: int = Query(default=30, ge=1, le=365)):
     """Get QA performance metrics over time (mock data)."""
     return []
 
 
 @router.get("/metrics/agent-performance")
-async def get_agent_performance(
-    days: int = Query(default=30, ge=1, le=365)
-):
+async def get_agent_performance(days: int = Query(default=30, ge=1, le=365)):
     """Get agent performance metrics (mock data)."""
     return []
 
 
 @router.get("/metrics/errors")
-async def get_error_metrics(
-    days: int = Query(default=30, ge=1, le=365)
-):
+async def get_error_metrics(days: int = Query(default=30, ge=1, le=365)):
     """Get error metrics and patterns (mock data)."""
     return []
 

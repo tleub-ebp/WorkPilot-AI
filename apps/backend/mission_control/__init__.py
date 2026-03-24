@@ -13,9 +13,9 @@ Key features:
 - Provider mixing (Anthropic, OpenAI, Google, Grok, Ollama, local)
 """
 
-from .orchestrator import MissionControlOrchestrator, get_mission_control
-from .agent_slot import AgentSlot, AgentStatus, AgentRole
+from .agent_slot import AgentRole, AgentSlot, AgentStatus
 from .decision_tree import DecisionNode, DecisionTree
+from .orchestrator import MissionControlOrchestrator, get_mission_control
 
 __all__ = [
     "MissionControlOrchestrator",

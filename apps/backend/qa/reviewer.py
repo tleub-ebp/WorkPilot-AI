@@ -16,7 +16,14 @@ from pathlib import Path
 from agents.memory_manager import get_graphiti_context, save_session_memory
 from claude_agent_sdk import ClaudeSDKClient
 from claude_agent_sdk.types import ResultMessage
-from debug import debug, debug_detailed, debug_error, debug_section, debug_success, debug_warning
+from debug import (
+    debug,
+    debug_detailed,
+    debug_error,
+    debug_section,
+    debug_success,
+    debug_warning,
+)
 from prompts_pkg import get_qa_reviewer_prompt
 from security.tool_input_validator import get_safe_tool_input
 from task_logger import (
@@ -25,7 +32,11 @@ from task_logger import (
     get_task_logger,
 )
 
-from .criteria import get_qa_signoff_status, load_implementation_plan, save_implementation_plan
+from .criteria import (
+    get_qa_signoff_status,
+    load_implementation_plan,
+    save_implementation_plan,
+)
 
 try:
     from core.usage_tracker import record_qa_result as _ut_record_qa
@@ -34,6 +45,7 @@ except ImportError:
 
 try:
     from replay.recorder import get_replay_recorder as _get_replay_recorder
+
     _REPLAY_AVAILABLE = True
 except ImportError:
     _REPLAY_AVAILABLE = False
@@ -185,15 +197,20 @@ async def run_qa_agent_session(
     if _REPLAY_AVAILABLE:
         try:
             import uuid as _uuid_mod
+
             _rr = _get_replay_recorder()
             _rs_id = _uuid_mod.uuid4().hex[:16]
-            _rr.start_session(_rs_id, {
-                "agent_name": "QA Reviewer",
-                "agent_type": "qa_reviewer",
-                "task": spec_dir.name,
-                "project_path": str(spec_dir.parent.parent.parent),
-                "model": getattr(getattr(client, "options", None), "model", "") or "",
-            })
+            _rr.start_session(
+                _rs_id,
+                {
+                    "agent_name": "QA Reviewer",
+                    "agent_type": "qa_reviewer",
+                    "task": spec_dir.name,
+                    "project_path": str(spec_dir.parent.parent.parent),
+                    "model": getattr(getattr(client, "options", None), "model", "")
+                    or "",
+                },
+            )
         except Exception:
             _rr = None
             _rs_id = None
@@ -408,14 +425,29 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
                         # Record tool use in replay
                         if _rr and _rs_id:
                             try:
-                                if tool_name in ("Edit", "Write") and inp and inp.get("file_path"):
+                                if (
+                                    tool_name in ("Edit", "Write")
+                                    and inp
+                                    and inp.get("file_path")
+                                ):
                                     _op = "update" if tool_name == "Edit" else "create"
-                                    _after = str(inp.get("new_string") or inp.get("content") or "")
-                                    _rr.record_file_change(_rs_id, inp["file_path"], operation=_op, after_content=_after)
+                                    _after = str(
+                                        inp.get("new_string")
+                                        or inp.get("content")
+                                        or ""
+                                    )
+                                    _rr.record_file_change(
+                                        _rs_id,
+                                        inp["file_path"],
+                                        operation=_op,
+                                        after_content=_after,
+                                    )
                                 elif tool_name == "Bash" and inp and inp.get("command"):
                                     _rr.record_command(_rs_id, inp["command"])
                                 else:
-                                    _rr.record_tool_call(_rs_id, tool_name, tool_input_dict=inp or {})
+                                    _rr.record_tool_call(
+                                        _rs_id, tool_name, tool_input_dict=inp or {}
+                                    )
                             except Exception:
                                 pass
 
@@ -480,9 +512,16 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
                             try:
                                 _result_str = str(result_content)[:2000]
                                 if current_tool == "Bash":
-                                    _rr.record_command_output(_rs_id, _result_str, is_error=is_error)
+                                    _rr.record_command_output(
+                                        _rs_id, _result_str, is_error=is_error
+                                    )
                                 elif current_tool not in ("Edit", "Write"):
-                                    _rr.record_tool_result(_rs_id, current_tool, output=_result_str, success=not is_error)
+                                    _rr.record_tool_result(
+                                        _rs_id,
+                                        current_tool,
+                                        output=_result_str,
+                                        success=not is_error,
+                                    )
                             except Exception:
                                 pass
 

@@ -153,15 +153,31 @@ class ProjectAnalyzer:
                     continue
 
         # Directories to skip during recursive glob (large/irrelevant dirs)
-        _SKIP_DIRS = frozenset([
-            "node_modules", ".venv", "venv", ".env", "__pycache__",
-            "dist", "build", ".build", "out", ".out",
-            ".git", ".hg", ".svn",
-            "target",  # Rust/Java build output
-            ".gradle", ".idea", ".vs", ".vscode",
-            "vendor",  # Go/PHP vendor dirs
-            "coverage", ".nyc_output",
-        ])
+        _SKIP_DIRS = frozenset(
+            [
+                "node_modules",
+                ".venv",
+                "venv",
+                ".env",
+                "__pycache__",
+                "dist",
+                "build",
+                ".build",
+                "out",
+                ".out",
+                ".git",
+                ".hg",
+                ".svn",
+                "target",  # Rust/Java build output
+                ".gradle",
+                ".idea",
+                ".vs",
+                ".vscode",
+                "vendor",  # Go/PHP vendor dirs
+                "coverage",
+                ".nyc_output",
+            ]
+        )
 
         def _glob_excluding_large_dirs(pattern: str):
             """Glob recursively but skip known large/irrelevant directories."""

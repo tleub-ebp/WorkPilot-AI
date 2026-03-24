@@ -85,7 +85,7 @@ class RepoDependencyGraph:
         # Build adjacency list and in-degree count
         # Edge: source -> target means source depends on target
         # For execution order, target (provider) must come before source (consumer)
-        in_degree: dict[str, int] = {repo: 0 for repo in self.repos}
+        in_degree: dict[str, int] = dict.fromkeys(self.repos, 0)
         # Reverse edges: target provides to source, so source must wait for target
         adj: dict[str, list[str]] = defaultdict(list)
 
@@ -95,9 +95,7 @@ class RepoDependencyGraph:
             in_degree[dep.source_repo] = in_degree.get(dep.source_repo, 0) + 1
 
         # Start with nodes that have no dependencies (in_degree == 0)
-        queue = deque(
-            repo for repo in self.repos if in_degree.get(repo, 0) == 0
-        )
+        queue = deque(repo for repo in self.repos if in_degree.get(repo, 0) == 0)
         result: list[str] = []
 
         while queue:
@@ -120,19 +118,11 @@ class RepoDependencyGraph:
 
     def get_downstream_repos(self, repo: str) -> list[str]:
         """Get repos that depend on the given repo (consumers)."""
-        return [
-            dep.source_repo
-            for dep in self.dependencies
-            if dep.target_repo == repo
-        ]
+        return [dep.source_repo for dep in self.dependencies if dep.target_repo == repo]
 
     def get_upstream_repos(self, repo: str) -> list[str]:
         """Get repos that the given repo depends on (providers)."""
-        return [
-            dep.target_repo
-            for dep in self.dependencies
-            if dep.source_repo == repo
-        ]
+        return [dep.target_repo for dep in self.dependencies if dep.source_repo == repo]
 
     def get_dependencies_for_repo(self, repo: str) -> list[RepoDependency]:
         """Get all dependency edges involving a repo (as source or target)."""
@@ -222,9 +212,7 @@ class RepoDependencyGraph:
                     for other_repo in repo_names:
                         if other_repo == repo_name:
                             continue
-                        other_services = repo_analyses[other_repo].get(
-                            "services", []
-                        )
+                        other_services = repo_analyses[other_repo].get("services", [])
                         for other_svc in other_services:
                             if consumed_api in other_svc.get("provides", []):
                                 graph.add_dependency(

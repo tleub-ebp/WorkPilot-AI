@@ -1,4 +1,4 @@
-﻿"""
+"""
 Documentation Generator - Generate real-time documentation
 
 This module automatically generates documentation as code is created,
@@ -48,7 +48,7 @@ class DocumentationGenerator:
         description: str,
         features: list[str],
         installation: str | None = None,
-        usage: str | None = None
+        usage: str | None = None,
     ) -> str:
         """Generate a comprehensive README.md"""
         readme = f"# {project_name}\n\n{description}\n\n## Features\n\n"
@@ -57,28 +57,22 @@ class DocumentationGenerator:
         return readme
 
     async def generate_api_documentation(
-        self,
-        api_name: str,
-        endpoints: list[dict[str, Any]]
+        self, api_name: str, endpoints: list[dict[str, Any]]
     ) -> str:
         """Generate API documentation"""
         doc = f"# {api_name} API Documentation\n\n## Endpoints\n\n"
         for endpoint in endpoints:
-            method = endpoint.get('method', 'GET')
-            path = endpoint.get('path', '/')
-            description = endpoint.get('description', '')
-            
+            method = endpoint.get("method", "GET")
+            path = endpoint.get("path", "/")
+            description = endpoint.get("description", "")
+
             doc += f"### {method} {path}\n\n"
             if description:
                 doc += f"{description}\n\n"
         return doc
-    
+
     def generate_inline_comments(
-        self,
-        code: str,
-        language: str,
-        explanation_level: str = "intermediate"
+        self, code: str, language: str, explanation_level: str = "intermediate"
     ) -> str:
         """Add educational inline comments to code"""
         return code
-

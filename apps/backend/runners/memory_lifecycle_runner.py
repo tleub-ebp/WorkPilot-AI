@@ -13,11 +13,10 @@ Usage:
 
 import argparse
 import json
-import os
 import sys
 import time
-from pathlib import Path
 from datetime import datetime, timedelta
+from pathlib import Path
 
 
 def load_env(project_dir: str) -> dict:
@@ -33,7 +32,7 @@ def load_env(project_dir: str) -> dict:
             if eq < 0:
                 continue
             key = line[:eq].strip()
-            val = line[eq + 1:].strip().strip('"\'')
+            val = line[eq + 1 :].strip().strip("\"'")
             env[key] = val
     return env
 
@@ -98,9 +97,14 @@ def action_prune(
     graphiti_enabled = env.get("GRAPHITI_ENABLED", "false").lower() == "true"
     if graphiti_enabled:
         try:
-            return _prune_graphiti(project_dir, strategy, max_age_days, max_count, dry_run, env)
+            return _prune_graphiti(
+                project_dir, strategy, max_age_days, max_count, dry_run, env
+            )
         except Exception as e:
-            print(f"[MemoryLifecycle] Graphiti prune failed, falling back to file-based: {e}", file=sys.stderr)
+            print(
+                f"[MemoryLifecycle] Graphiti prune failed, falling back to file-based: {e}",
+                file=sys.stderr,
+            )
 
     # File-based pruning fallback
     files = sorted(memory_dir.glob("*.json"), key=lambda f: f.stat().st_mtime)
@@ -143,7 +147,12 @@ def action_prune(
         pruned = len(to_delete)
 
     remaining = len(list(memory_dir.glob("*.json"))) - (pruned if not dry_run else 0)
-    return {"pruned": pruned, "remaining": remaining, "dry_run": dry_run, "strategy": strategy}
+    return {
+        "pruned": pruned,
+        "remaining": remaining,
+        "dry_run": dry_run,
+        "strategy": strategy,
+    }
 
 
 def _prune_graphiti(
@@ -166,7 +175,9 @@ def _prune_graphiti(
 
     # This would call the actual Graphiti prune endpoint
     # For now, fall back to file-based since the exact Graphiti prune API varies
-    raise NotImplementedError("Graphiti prune via API not yet implemented; use file-based fallback")
+    raise NotImplementedError(
+        "Graphiti prune via API not yet implemented; use file-based fallback"
+    )
 
 
 def action_export(project_dir: str, output_path: str) -> dict:
@@ -190,14 +201,20 @@ def action_export(project_dir: str, output_path: str) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description="Memory Lifecycle Runner")
-    parser.add_argument("--action", choices=["status", "prune", "export"], required=True)
+    parser.add_argument(
+        "--action", choices=["status", "prune", "export"], required=True
+    )
     parser.add_argument("--project", required=True, help="Project directory")
-    parser.add_argument("--strategy", default="lru", choices=["lru", "oldest", "duplicates"])
+    parser.add_argument(
+        "--strategy", default="lru", choices=["lru", "oldest", "duplicates"]
+    )
     parser.add_argument("--max-age-days", type=int, default=None)
     parser.add_argument("--max-count", type=int, default=None)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--output", default=None, help="Export output path")
-    parser.add_argument("--output-json", action="store_true", help="Print result as JSON")
+    parser.add_argument(
+        "--output-json", action="store_true", help="Print result as JSON"
+    )
     args = parser.parse_args()
 
     try:
@@ -212,7 +229,11 @@ def main():
                 dry_run=args.dry_run,
             )
         elif args.action == "export":
-            output = args.output or str(Path(args.project) / ".auto-claude" / f"memory_export_{int(time.time())}.json")
+            output = args.output or str(
+                Path(args.project)
+                / ".auto-claude"
+                / f"memory_export_{int(time.time())}.json"
+            )
             result = action_export(args.project, output)
         else:
             result = {"error": f"Unknown action: {args.action}"}

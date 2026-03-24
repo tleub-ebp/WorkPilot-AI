@@ -16,9 +16,8 @@ Example:
 
 import ast
 import logging
-import os
 import re
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
@@ -30,8 +29,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class SmellType(str, Enum):
     """Types of code smells detected."""
+
     LONG_METHOD = "long_method"
     GOD_CLASS = "god_class"
     DUPLICATE_CODE = "duplicate_code"
@@ -48,6 +49,7 @@ class SmellType(str, Enum):
 
 class SmellSeverity(str, Enum):
     """Severity level of a code smell."""
+
     INFO = "info"
     LOW = "low"
     MEDIUM = "medium"
@@ -57,6 +59,7 @@ class SmellSeverity(str, Enum):
 
 class RefactoringPattern(str, Enum):
     """Design patterns / refactoring techniques supported."""
+
     EXTRACT_METHOD = "extract_method"
     EXTRACT_CLASS = "extract_class"
     RENAME = "rename"
@@ -73,6 +76,7 @@ class RefactoringPattern(str, Enum):
 
 class RefactoringStatus(str, Enum):
     """Status of a refactoring execution."""
+
     PROPOSED = "proposed"
     APPROVED = "approved"
     IN_PROGRESS = "in_progress"
@@ -101,6 +105,7 @@ SMELL_THRESHOLDS = {
 # Data models
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CodeSmell:
     """A detected code smell.
@@ -116,6 +121,7 @@ class CodeSmell:
         metric_value: The measured metric value (e.g. line count).
         threshold: The threshold that was exceeded.
     """
+
     smell_type: SmellType
     severity: SmellSeverity
     file_path: str
@@ -157,6 +163,7 @@ class RefactoringProposal:
         status: Current status of the proposal.
         risk_level: Risk level (low, medium, high).
     """
+
     proposal_id: str
     pattern: RefactoringPattern
     file_path: str
@@ -198,6 +205,7 @@ class RefactoringResult:
         error: Error message if failed.
         timestamp: When the refactoring was executed.
     """
+
     proposal: RefactoringProposal
     success: bool = True
     files_modified: list[str] = field(default_factory=list)
@@ -225,6 +233,7 @@ class RefactoringResult:
 # ---------------------------------------------------------------------------
 # AST-based smell detector
 # ---------------------------------------------------------------------------
+
 
 class SmellDetector:
     """Detects code smells using AST analysis and heuristics.
@@ -289,7 +298,7 @@ class SmellDetector:
         Raises:
             FileNotFoundError: If the file does not exist.
         """
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             source = f.read()
         return self.detect_from_source(source, file_path)
 
@@ -308,129 +317,150 @@ class SmellDetector:
         # Long method
         threshold = self.thresholds["max_method_lines"]
         if func_lines > threshold:
-            smells.append(CodeSmell(
-                smell_type=SmellType.LONG_METHOD,
-                severity=SmellSeverity.HIGH if func_lines > threshold * 2 else SmellSeverity.MEDIUM,
-                file_path=file_path,
-                line_start=node.lineno,
-                line_end=node.end_lineno or node.lineno,
-                message=f"Method '{node.name}' has {func_lines} lines (threshold: {threshold})",
-                symbol_name=node.name,
-                metric_value=func_lines,
-                threshold=threshold,
-            ))
+            smells.append(
+                CodeSmell(
+                    smell_type=SmellType.LONG_METHOD,
+                    severity=SmellSeverity.HIGH
+                    if func_lines > threshold * 2
+                    else SmellSeverity.MEDIUM,
+                    file_path=file_path,
+                    line_start=node.lineno,
+                    line_end=node.end_lineno or node.lineno,
+                    message=f"Method '{node.name}' has {func_lines} lines (threshold: {threshold})",
+                    symbol_name=node.name,
+                    metric_value=func_lines,
+                    threshold=threshold,
+                )
+            )
 
         # Long parameter list
         param_threshold = self.thresholds["max_parameters"]
         params = [a.arg for a in node.args.args if a.arg not in ("self", "cls")]
         if len(params) > param_threshold:
-            smells.append(CodeSmell(
-                smell_type=SmellType.LONG_PARAMETER_LIST,
-                severity=SmellSeverity.MEDIUM,
-                file_path=file_path,
-                line_start=node.lineno,
-                line_end=node.lineno,
-                message=f"Method '{node.name}' has {len(params)} parameters (threshold: {param_threshold})",
-                symbol_name=node.name,
-                metric_value=len(params),
-                threshold=param_threshold,
-            ))
+            smells.append(
+                CodeSmell(
+                    smell_type=SmellType.LONG_PARAMETER_LIST,
+                    severity=SmellSeverity.MEDIUM,
+                    file_path=file_path,
+                    line_start=node.lineno,
+                    line_end=node.lineno,
+                    message=f"Method '{node.name}' has {len(params)} parameters (threshold: {param_threshold})",
+                    symbol_name=node.name,
+                    metric_value=len(params),
+                    threshold=param_threshold,
+                )
+            )
 
         # Deep nesting
         max_depth = self._measure_nesting_depth(node)
         nesting_threshold = self.thresholds["max_nesting_depth"]
         if max_depth > nesting_threshold:
-            smells.append(CodeSmell(
-                smell_type=SmellType.DEEP_NESTING,
-                severity=SmellSeverity.HIGH if max_depth > nesting_threshold + 2 else SmellSeverity.MEDIUM,
-                file_path=file_path,
-                line_start=node.lineno,
-                line_end=node.end_lineno or node.lineno,
-                message=f"Method '{node.name}' has nesting depth {max_depth} (threshold: {nesting_threshold})",
-                symbol_name=node.name,
-                metric_value=max_depth,
-                threshold=nesting_threshold,
-            ))
+            smells.append(
+                CodeSmell(
+                    smell_type=SmellType.DEEP_NESTING,
+                    severity=SmellSeverity.HIGH
+                    if max_depth > nesting_threshold + 2
+                    else SmellSeverity.MEDIUM,
+                    file_path=file_path,
+                    line_start=node.lineno,
+                    line_end=node.end_lineno or node.lineno,
+                    message=f"Method '{node.name}' has nesting depth {max_depth} (threshold: {nesting_threshold})",
+                    symbol_name=node.name,
+                    metric_value=max_depth,
+                    threshold=nesting_threshold,
+                )
+            )
 
         # Too many returns
         return_count = sum(1 for n in ast.walk(node) if isinstance(n, ast.Return))
         return_threshold = self.thresholds["max_returns"]
         if return_count > return_threshold:
-            smells.append(CodeSmell(
-                smell_type=SmellType.TOO_MANY_RETURNS,
-                severity=SmellSeverity.LOW,
-                file_path=file_path,
-                line_start=node.lineno,
-                line_end=node.end_lineno or node.lineno,
-                message=f"Method '{node.name}' has {return_count} return statements (threshold: {return_threshold})",
-                symbol_name=node.name,
-                metric_value=return_count,
-                threshold=return_threshold,
-            ))
+            smells.append(
+                CodeSmell(
+                    smell_type=SmellType.TOO_MANY_RETURNS,
+                    severity=SmellSeverity.LOW,
+                    file_path=file_path,
+                    line_start=node.lineno,
+                    line_end=node.end_lineno or node.lineno,
+                    message=f"Method '{node.name}' has {return_count} return statements (threshold: {return_threshold})",
+                    symbol_name=node.name,
+                    metric_value=return_count,
+                    threshold=return_threshold,
+                )
+            )
 
         # Missing docstring
         docstring = ast.get_docstring(node)
         if not docstring and not node.name.startswith("_"):
-            smells.append(CodeSmell(
-                smell_type=SmellType.MISSING_DOCSTRING,
-                severity=SmellSeverity.INFO,
-                file_path=file_path,
-                line_start=node.lineno,
-                line_end=node.lineno,
-                message=f"Public method '{node.name}' is missing a docstring",
-                symbol_name=node.name,
-            ))
+            smells.append(
+                CodeSmell(
+                    smell_type=SmellType.MISSING_DOCSTRING,
+                    severity=SmellSeverity.INFO,
+                    file_path=file_path,
+                    line_start=node.lineno,
+                    line_end=node.lineno,
+                    message=f"Public method '{node.name}' is missing a docstring",
+                    symbol_name=node.name,
+                )
+            )
 
         return smells
 
     def _check_class(self, node: ast.ClassDef, file_path: str) -> list[CodeSmell]:
         smells: list[CodeSmell] = []
         methods = [
-            n for n in ast.iter_child_nodes(node)
+            n
+            for n in ast.iter_child_nodes(node)
             if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
         ]
         threshold = self.thresholds["max_class_methods"]
         if len(methods) > threshold:
-            smells.append(CodeSmell(
-                smell_type=SmellType.GOD_CLASS,
-                severity=SmellSeverity.HIGH,
-                file_path=file_path,
-                line_start=node.lineno,
-                line_end=node.end_lineno or node.lineno,
-                message=f"Class '{node.name}' has {len(methods)} methods (threshold: {threshold})",
-                symbol_name=node.name,
-                metric_value=len(methods),
-                threshold=threshold,
-            ))
+            smells.append(
+                CodeSmell(
+                    smell_type=SmellType.GOD_CLASS,
+                    severity=SmellSeverity.HIGH,
+                    file_path=file_path,
+                    line_start=node.lineno,
+                    line_end=node.end_lineno or node.lineno,
+                    message=f"Class '{node.name}' has {len(methods)} methods (threshold: {threshold})",
+                    symbol_name=node.name,
+                    metric_value=len(methods),
+                    threshold=threshold,
+                )
+            )
 
         # Missing class docstring
         docstring = ast.get_docstring(node)
         if not docstring and not node.name.startswith("_"):
-            smells.append(CodeSmell(
-                smell_type=SmellType.MISSING_DOCSTRING,
-                severity=SmellSeverity.INFO,
-                file_path=file_path,
-                line_start=node.lineno,
-                line_end=node.lineno,
-                message=f"Public class '{node.name}' is missing a docstring",
-                symbol_name=node.name,
-            ))
+            smells.append(
+                CodeSmell(
+                    smell_type=SmellType.MISSING_DOCSTRING,
+                    severity=SmellSeverity.INFO,
+                    file_path=file_path,
+                    line_start=node.lineno,
+                    line_end=node.lineno,
+                    message=f"Public class '{node.name}' is missing a docstring",
+                    symbol_name=node.name,
+                )
+            )
 
         return smells
 
     def _check_large_file(self, lines: list[str], file_path: str) -> list[CodeSmell]:
         threshold = self.thresholds["max_file_lines"]
         if len(lines) > threshold:
-            return [CodeSmell(
-                smell_type=SmellType.LARGE_FILE,
-                severity=SmellSeverity.MEDIUM,
-                file_path=file_path,
-                line_start=1,
-                line_end=len(lines),
-                message=f"File has {len(lines)} lines (threshold: {threshold})",
-                metric_value=len(lines),
-                threshold=threshold,
-            )]
+            return [
+                CodeSmell(
+                    smell_type=SmellType.LARGE_FILE,
+                    severity=SmellSeverity.MEDIUM,
+                    file_path=file_path,
+                    line_start=1,
+                    line_end=len(lines),
+                    message=f"File has {len(lines)} lines (threshold: {threshold})",
+                    metric_value=len(lines),
+                    threshold=threshold,
+                )
+            ]
         return []
 
     def _check_unused_imports(self, source: str, file_path: str) -> list[CodeSmell]:
@@ -452,15 +482,17 @@ class SmellDetector:
                         line for i, line in enumerate(lines) if i != node.lineno - 1
                     )
                     if name not in rest:
-                        smells.append(CodeSmell(
-                            smell_type=SmellType.UNUSED_IMPORT,
-                            severity=SmellSeverity.LOW,
-                            file_path=file_path,
-                            line_start=node.lineno,
-                            line_end=node.lineno,
-                            message=f"Import '{name}' appears unused",
-                            symbol_name=name,
-                        ))
+                        smells.append(
+                            CodeSmell(
+                                smell_type=SmellType.UNUSED_IMPORT,
+                                severity=SmellSeverity.LOW,
+                                file_path=file_path,
+                                line_start=node.lineno,
+                                line_end=node.lineno,
+                                message=f"Import '{name}' appears unused",
+                                symbol_name=name,
+                            )
+                        )
             elif isinstance(node, ast.ImportFrom):
                 for alias in node.names:
                     name = alias.asname or alias.name
@@ -468,15 +500,17 @@ class SmellDetector:
                         line for i, line in enumerate(lines) if i != node.lineno - 1
                     )
                     if name not in rest:
-                        smells.append(CodeSmell(
-                            smell_type=SmellType.UNUSED_IMPORT,
-                            severity=SmellSeverity.LOW,
-                            file_path=file_path,
-                            line_start=node.lineno,
-                            line_end=node.lineno,
-                            message=f"Import '{name}' from '{node.module}' appears unused",
-                            symbol_name=name,
-                        ))
+                        smells.append(
+                            CodeSmell(
+                                smell_type=SmellType.UNUSED_IMPORT,
+                                severity=SmellSeverity.LOW,
+                                file_path=file_path,
+                                line_start=node.lineno,
+                                line_end=node.lineno,
+                                message=f"Import '{name}' from '{node.module}' appears unused",
+                                symbol_name=name,
+                            )
+                        )
         return smells
 
     def _check_duplicates(self, lines: list[str], file_path: str) -> list[CodeSmell]:
@@ -487,20 +521,22 @@ class SmellDetector:
         seen_blocks: dict[str, int] = {}
 
         for i in range(len(stripped) - min_dup + 1):
-            block = "\n".join(stripped[i:i + min_dup])
-            if not block.strip() or all(l == "" for l in stripped[i:i + min_dup]):
+            block = "\n".join(stripped[i : i + min_dup])
+            if not block.strip() or all(l == "" for l in stripped[i : i + min_dup]):
                 continue
             if block in seen_blocks:
-                smells.append(CodeSmell(
-                    smell_type=SmellType.DUPLICATE_CODE,
-                    severity=SmellSeverity.MEDIUM,
-                    file_path=file_path,
-                    line_start=i + 1,
-                    line_end=i + min_dup,
-                    message=f"Duplicate block ({min_dup} lines) first seen at line {seen_blocks[block] + 1}",
-                    metric_value=min_dup,
-                    threshold=min_dup,
-                ))
+                smells.append(
+                    CodeSmell(
+                        smell_type=SmellType.DUPLICATE_CODE,
+                        severity=SmellSeverity.MEDIUM,
+                        file_path=file_path,
+                        line_start=i + 1,
+                        line_end=i + min_dup,
+                        message=f"Duplicate block ({min_dup} lines) first seen at line {seen_blocks[block] + 1}",
+                        metric_value=min_dup,
+                        threshold=min_dup,
+                    )
+                )
             else:
                 seen_blocks[block] = i
 
@@ -509,20 +545,24 @@ class SmellDetector:
     def _check_magic_numbers(self, tree: ast.AST, file_path: str) -> list[CodeSmell]:
         """Detect magic numbers (numeric literals not 0, 1, -1)."""
         smells: list[CodeSmell] = []
-        SAFE_NUMBERS = {0, 1, -1, 2, 10, 100, 0.0, 1.0}
+        SAFE_NUMBERS = {0, 1, -1, 2, 10, 100}
 
         for node in ast.walk(tree):
             if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
                 if node.value not in SAFE_NUMBERS and hasattr(node, "lineno"):
-                    smells.append(CodeSmell(
-                        smell_type=SmellType.MAGIC_NUMBER,
-                        severity=SmellSeverity.INFO,
-                        file_path=file_path,
-                        line_start=node.lineno,
-                        line_end=node.lineno,
-                        message=f"Magic number {node.value} found",
-                        metric_value=int(node.value) if isinstance(node.value, int) else 0,
-                    ))
+                    smells.append(
+                        CodeSmell(
+                            smell_type=SmellType.MAGIC_NUMBER,
+                            severity=SmellSeverity.INFO,
+                            file_path=file_path,
+                            line_start=node.lineno,
+                            line_end=node.lineno,
+                            message=f"Magic number {node.value} found",
+                            metric_value=int(node.value)
+                            if isinstance(node.value, int)
+                            else 0,
+                        )
+                    )
         return smells
 
     # -- Helpers -------------------------------------------------------------
@@ -534,10 +574,11 @@ class SmellDetector:
     ) -> int:
         """Count non-empty, non-comment lines in a function."""
         start = node.lineno - 1
-        end = (node.end_lineno or node.lineno)
+        end = node.end_lineno or node.lineno
         func_lines = lines[start:end]
         return sum(
-            1 for line in func_lines
+            1
+            for line in func_lines
             if line.strip() and not line.strip().startswith("#")
         )
 
@@ -559,6 +600,7 @@ class SmellDetector:
 # ---------------------------------------------------------------------------
 # Refactoring Agent
 # ---------------------------------------------------------------------------
+
 
 class RefactoringAgent:
     """Autonomous refactoring agent that detects smells and proposes refactoring.
@@ -629,7 +671,9 @@ class RefactoringAgent:
         """
         if smells is None:
             if source:
-                smells = self.detector.detect_from_source(source, file_path or "<source>")
+                smells = self.detector.detect_from_source(
+                    source, file_path or "<source>"
+                )
             elif file_path:
                 smells = self.detector.detect_from_file(file_path)
             else:
@@ -712,7 +756,10 @@ class RefactoringAgent:
         risk = "low"
         if pattern in (RefactoringPattern.EXTRACT_CLASS, RefactoringPattern.SPLIT_FILE):
             risk = "high"
-        elif pattern in (RefactoringPattern.EXTRACT_METHOD, RefactoringPattern.INTRODUCE_PARAMETER_OBJECT):
+        elif pattern in (
+            RefactoringPattern.EXTRACT_METHOD,
+            RefactoringPattern.INTRODUCE_PARAMETER_OBJECT,
+        ):
             risk = "medium"
 
         return RefactoringProposal(
@@ -799,7 +846,7 @@ class RefactoringAgent:
             "        assert True  # placeholder",
             "",
             f"    def test_{safe_target}_no_regressions(self):",
-            f'        """Verify no regressions introduced by the refactoring."""',
+            '        """Verify no regressions introduced by the refactoring."""',
             "        # TODO: Run existing tests and check",
             "        assert True  # placeholder",
         ]

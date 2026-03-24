@@ -22,7 +22,6 @@ import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +30,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class ThemeMode(str, Enum):
     """Appearance mode."""
+
     LIGHT = "light"
     DARK = "dark"
     SYSTEM = "system"
@@ -40,6 +41,7 @@ class ThemeMode(str, Enum):
 
 class ThemeSource(str, Enum):
     """Origin of a theme."""
+
     BUILTIN = "builtin"
     CUSTOM = "custom"
     IMPORTED = "imported"
@@ -55,11 +57,16 @@ BUILTIN_THEMES = [
         "name": "Default",
         "description": "Oscura-inspired with pale yellow accent",
         "colors": {
-            "bg": "#F2F2ED", "accent": "#E6E7A3",
-            "darkBg": "#0B0B0F", "darkAccent": "#E6E7A3",
-            "foreground": "#1a1a1a", "darkForeground": "#f0f0f0",
-            "muted": "#6b7280", "darkMuted": "#9ca3af",
-            "border": "#e5e7eb", "darkBorder": "#374151",
+            "bg": "#F2F2ED",
+            "accent": "#E6E7A3",
+            "darkBg": "#0B0B0F",
+            "darkAccent": "#E6E7A3",
+            "foreground": "#1a1a1a",
+            "darkForeground": "#f0f0f0",
+            "muted": "#6b7280",
+            "darkMuted": "#9ca3af",
+            "border": "#e5e7eb",
+            "darkBorder": "#374151",
         },
     },
     {
@@ -67,11 +74,16 @@ BUILTIN_THEMES = [
         "name": "Dusk",
         "description": "Warmer variant with slightly lighter dark mode",
         "colors": {
-            "bg": "#F5F5F0", "accent": "#E6E7A3",
-            "darkBg": "#131419", "darkAccent": "#E6E7A3",
-            "foreground": "#1a1a1a", "darkForeground": "#f0f0f0",
-            "muted": "#6b7280", "darkMuted": "#9ca3af",
-            "border": "#e5e7eb", "darkBorder": "#374151",
+            "bg": "#F5F5F0",
+            "accent": "#E6E7A3",
+            "darkBg": "#131419",
+            "darkAccent": "#E6E7A3",
+            "foreground": "#1a1a1a",
+            "darkForeground": "#f0f0f0",
+            "muted": "#6b7280",
+            "darkMuted": "#9ca3af",
+            "border": "#e5e7eb",
+            "darkBorder": "#374151",
         },
     },
     {
@@ -79,11 +91,16 @@ BUILTIN_THEMES = [
         "name": "Lime",
         "description": "Fresh, energetic lime with purple accents",
         "colors": {
-            "bg": "#E8F5A3", "accent": "#7C3AED",
-            "darkBg": "#0F0F1A", "darkAccent": "#A78BFA",
-            "foreground": "#1a1a1a", "darkForeground": "#f0f0f0",
-            "muted": "#6b7280", "darkMuted": "#9ca3af",
-            "border": "#e5e7eb", "darkBorder": "#374151",
+            "bg": "#E8F5A3",
+            "accent": "#7C3AED",
+            "darkBg": "#0F0F1A",
+            "darkAccent": "#A78BFA",
+            "foreground": "#1a1a1a",
+            "darkForeground": "#f0f0f0",
+            "muted": "#6b7280",
+            "darkMuted": "#9ca3af",
+            "border": "#e5e7eb",
+            "darkBorder": "#374151",
         },
     },
     {
@@ -91,11 +108,16 @@ BUILTIN_THEMES = [
         "name": "Ocean",
         "description": "Calm, professional blue tones",
         "colors": {
-            "bg": "#E0F2FE", "accent": "#0284C7",
-            "darkBg": "#082F49", "darkAccent": "#38BDF8",
-            "foreground": "#1a1a1a", "darkForeground": "#f0f0f0",
-            "muted": "#6b7280", "darkMuted": "#9ca3af",
-            "border": "#e5e7eb", "darkBorder": "#374151",
+            "bg": "#E0F2FE",
+            "accent": "#0284C7",
+            "darkBg": "#082F49",
+            "darkAccent": "#38BDF8",
+            "foreground": "#1a1a1a",
+            "darkForeground": "#f0f0f0",
+            "muted": "#6b7280",
+            "darkMuted": "#9ca3af",
+            "border": "#e5e7eb",
+            "darkBorder": "#374151",
         },
     },
     {
@@ -103,11 +125,16 @@ BUILTIN_THEMES = [
         "name": "Retro",
         "description": "Warm, nostalgic amber vibes",
         "colors": {
-            "bg": "#FEF3C7", "accent": "#D97706",
-            "darkBg": "#1C1917", "darkAccent": "#FBBF24",
-            "foreground": "#1a1a1a", "darkForeground": "#f0f0f0",
-            "muted": "#6b7280", "darkMuted": "#9ca3af",
-            "border": "#e5e7eb", "darkBorder": "#374151",
+            "bg": "#FEF3C7",
+            "accent": "#D97706",
+            "darkBg": "#1C1917",
+            "darkAccent": "#FBBF24",
+            "foreground": "#1a1a1a",
+            "darkForeground": "#f0f0f0",
+            "muted": "#6b7280",
+            "darkMuted": "#9ca3af",
+            "border": "#e5e7eb",
+            "darkBorder": "#374151",
         },
     },
     {
@@ -115,11 +142,16 @@ BUILTIN_THEMES = [
         "name": "Neo",
         "description": "Modern cyberpunk pink/magenta",
         "colors": {
-            "bg": "#FDF4FF", "accent": "#D946EF",
-            "darkBg": "#0F0720", "darkAccent": "#E879F9",
-            "foreground": "#1a1a1a", "darkForeground": "#f0f0f0",
-            "muted": "#6b7280", "darkMuted": "#9ca3af",
-            "border": "#e5e7eb", "darkBorder": "#374151",
+            "bg": "#FDF4FF",
+            "accent": "#D946EF",
+            "darkBg": "#0F0720",
+            "darkAccent": "#E879F9",
+            "foreground": "#1a1a1a",
+            "darkForeground": "#f0f0f0",
+            "muted": "#6b7280",
+            "darkMuted": "#9ca3af",
+            "border": "#e5e7eb",
+            "darkBorder": "#374151",
         },
     },
     {
@@ -127,18 +159,30 @@ BUILTIN_THEMES = [
         "name": "Forest",
         "description": "Natural, earthy green tones",
         "colors": {
-            "bg": "#DCFCE7", "accent": "#16A34A",
-            "darkBg": "#052E16", "darkAccent": "#4ADE80",
-            "foreground": "#1a1a1a", "darkForeground": "#f0f0f0",
-            "muted": "#6b7280", "darkMuted": "#9ca3af",
-            "border": "#e5e7eb", "darkBorder": "#374151",
+            "bg": "#DCFCE7",
+            "accent": "#16A34A",
+            "darkBg": "#052E16",
+            "darkAccent": "#4ADE80",
+            "foreground": "#1a1a1a",
+            "darkForeground": "#f0f0f0",
+            "muted": "#6b7280",
+            "darkMuted": "#9ca3af",
+            "border": "#e5e7eb",
+            "darkBorder": "#374151",
         },
     },
 ]
 
 # Required color keys for a valid theme
 REQUIRED_COLOR_KEYS = {"bg", "accent", "darkBg", "darkAccent"}
-OPTIONAL_COLOR_KEYS = {"foreground", "darkForeground", "muted", "darkMuted", "border", "darkBorder"}
+OPTIONAL_COLOR_KEYS = {
+    "foreground",
+    "darkForeground",
+    "muted",
+    "darkMuted",
+    "border",
+    "darkBorder",
+}
 ALL_COLOR_KEYS = REQUIRED_COLOR_KEYS | OPTIONAL_COLOR_KEYS
 
 # CSS hex color pattern
@@ -149,9 +193,11 @@ HEX_COLOR_RE = re.compile(r"^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ThemeColors:
     """Color palette for a theme (light + dark variants)."""
+
     bg: str = "#FFFFFF"
     accent: str = "#3B82F6"
     darkBg: str = "#0F172A"
@@ -189,6 +235,7 @@ class ThemeColors:
 @dataclass
 class CustomTheme:
     """A custom or imported theme definition."""
+
     theme_id: str
     name: str
     description: str = ""
@@ -210,12 +257,16 @@ class CustomTheme:
             colors = ThemeColors.from_dict(colors_data)
         else:
             colors = ThemeColors()
-        return cls(colors=colors, **{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+        return cls(
+            colors=colors,
+            **{k: v for k, v in data.items() if k in cls.__dataclass_fields__},
+        )
 
 
 @dataclass
 class ProjectThemeBinding:
     """Associates a project with a specific theme."""
+
     project_id: str
     theme_id: str
     mode: str = "system"  # light, dark, system
@@ -228,6 +279,7 @@ class ProjectThemeBinding:
 # ---------------------------------------------------------------------------
 # Theme Manager
 # ---------------------------------------------------------------------------
+
 
 class ThemeManager:
     """Manages custom themes, per-project bindings, and import/export.
@@ -285,7 +337,7 @@ class ThemeManager:
         """Return all built-in themes."""
         return [dict(t) for t in BUILTIN_THEMES]
 
-    def get_builtin_theme(self, theme_id: str) -> Optional[dict]:
+    def get_builtin_theme(self, theme_id: str) -> dict | None:
         """Get a built-in theme by ID."""
         for t in BUILTIN_THEMES:
             if t["id"] == theme_id:
@@ -297,7 +349,7 @@ class ThemeManager:
     def create_custom_theme(
         self,
         name: str,
-        colors: Optional[dict] = None,
+        colors: dict | None = None,
         description: str = "",
         author: str = "",
     ) -> CustomTheme:
@@ -321,10 +373,13 @@ class ThemeManager:
 
         theme_colors = ThemeColors()
         if colors:
-            theme_colors = ThemeColors(**{
-                k: v for k, v in colors.items()
-                if k in ThemeColors.__dataclass_fields__
-            })
+            theme_colors = ThemeColors(
+                **{
+                    k: v
+                    for k, v in colors.items()
+                    if k in ThemeColors.__dataclass_fields__
+                }
+            )
 
         errors = theme_colors.validate()
         if errors:
@@ -345,17 +400,17 @@ class ThemeManager:
         logger.info("Created custom theme %s: %s", theme_id, name)
         return theme
 
-    def get_custom_theme(self, theme_id: str) -> Optional[CustomTheme]:
+    def get_custom_theme(self, theme_id: str) -> CustomTheme | None:
         """Get a custom theme by ID."""
         return self._custom_themes.get(theme_id)
 
     def update_custom_theme(
         self,
         theme_id: str,
-        name: Optional[str] = None,
-        colors: Optional[dict] = None,
-        description: Optional[str] = None,
-    ) -> Optional[CustomTheme]:
+        name: str | None = None,
+        colors: dict | None = None,
+        description: str | None = None,
+    ) -> CustomTheme | None:
         """Update an existing custom theme.
 
         Returns:
@@ -370,10 +425,13 @@ class ThemeManager:
         if description is not None:
             theme.description = description
         if colors is not None:
-            new_colors = ThemeColors(**{
-                k: v for k, v in colors.items()
-                if k in ThemeColors.__dataclass_fields__
-            })
+            new_colors = ThemeColors(
+                **{
+                    k: v
+                    for k, v in colors.items()
+                    if k in ThemeColors.__dataclass_fields__
+                }
+            )
             errors = new_colors.validate()
             if errors:
                 raise ValueError(f"Invalid theme colors: {'; '.join(errors)}")
@@ -388,7 +446,8 @@ class ThemeManager:
             del self._custom_themes[theme_id]
             # Remove any project bindings using this theme
             to_remove = [
-                pid for pid, binding in self._project_bindings.items()
+                pid
+                for pid, binding in self._project_bindings.items()
                 if binding.theme_id == theme_id
             ]
             for pid in to_remove:
@@ -445,7 +504,7 @@ class ThemeManager:
         logger.info("Bound theme %s to project %s", theme_id, project_id)
         return binding
 
-    def get_project_theme(self, project_id: str) -> Optional[ProjectThemeBinding]:
+    def get_project_theme(self, project_id: str) -> ProjectThemeBinding | None:
         """Get the theme binding for a project."""
         return self._project_bindings.get(project_id)
 
@@ -462,7 +521,7 @@ class ThemeManager:
 
     # -- Import / Export ----------------------------------------------------
 
-    def export_theme(self, theme_id: str) -> Optional[str]:
+    def export_theme(self, theme_id: str) -> str | None:
         """Export a theme (custom or builtin) as JSON string.
 
         Returns:
@@ -513,7 +572,11 @@ class ThemeManager:
         theme_id = f"imported-{self._counter:04d}"
         now = datetime.now(timezone.utc).isoformat()
 
-        theme_colors = ThemeColors.from_dict(colors_data) if isinstance(colors_data, dict) else ThemeColors()
+        theme_colors = (
+            ThemeColors.from_dict(colors_data)
+            if isinstance(colors_data, dict)
+            else ThemeColors()
+        )
         errors = theme_colors.validate()
         if errors:
             raise ValueError(f"Invalid theme colors: {'; '.join(errors)}")
@@ -534,7 +597,7 @@ class ThemeManager:
 
     # -- CSS generation -----------------------------------------------------
 
-    def generate_css_variables(self, theme_id: str, mode: str = "light") -> Optional[str]:
+    def generate_css_variables(self, theme_id: str, mode: str = "light") -> str | None:
         """Generate CSS custom properties for a theme.
 
         Args:
@@ -561,10 +624,16 @@ class ThemeManager:
 
         css_vars = {
             "--theme-bg": colors.get("darkBg" if is_dark else "bg", "#ffffff"),
-            "--theme-accent": colors.get("darkAccent" if is_dark else "accent", "#3b82f6"),
-            "--theme-foreground": colors.get("darkForeground" if is_dark else "foreground", "#1a1a1a"),
+            "--theme-accent": colors.get(
+                "darkAccent" if is_dark else "accent", "#3b82f6"
+            ),
+            "--theme-foreground": colors.get(
+                "darkForeground" if is_dark else "foreground", "#1a1a1a"
+            ),
             "--theme-muted": colors.get("darkMuted" if is_dark else "muted", "#6b7280"),
-            "--theme-border": colors.get("darkBorder" if is_dark else "border", "#e5e7eb"),
+            "--theme-border": colors.get(
+                "darkBorder" if is_dark else "border", "#e5e7eb"
+            ),
         }
 
         lines = [":root {"]

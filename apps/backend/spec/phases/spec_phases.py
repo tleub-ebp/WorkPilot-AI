@@ -89,20 +89,21 @@ Create:
             # Check if we have sufficient context before running agent
             context_file = self.spec_dir / "context.json"
             requirements_file = self.spec_dir / "requirements.json"
-            
+
             # Create enhanced context for minimal scenarios
             additional_context = ""
             if context_file.exists():
                 try:
                     import json
+
                     with open(context_file, encoding="utf-8") as f:
                         ctx = json.load(f)
-                    
+
                     # If we're in fallback mode with minimal context, add helpful guidance
                     if ctx.get("fallback_mode") and not ctx.get("files_to_modify"):
                         additional_context = f"""
 **IMPORTANT**: You're working with minimal context because the context discovery script failed.
-The task description is: {ctx.get('task_description', 'Unknown')}
+The task description is: {ctx.get("task_description", "Unknown")}
 
 Since you have minimal context, create a SPECIFIC and ACTIONABLE spec based on the task description:
 1. Extract the main requirement from the task description
@@ -145,7 +146,11 @@ It's OK to make reasonable assumptions to create a complete spec. The goal is to
             self._create_fallback_spec()
             if spec_file.exists():
                 return PhaseResult(
-                    "spec_writing", True, [str(spec_file)], ["Created fallback spec"], MAX_RETRIES
+                    "spec_writing",
+                    True,
+                    [str(spec_file)],
+                    ["Created fallback spec"],
+                    MAX_RETRIES,
                 )
 
         return PhaseResult("spec_writing", False, [], errors, MAX_RETRIES)
@@ -154,23 +159,24 @@ It's OK to make reasonable assumptions to create a complete spec. The goal is to
         """Create a fallback spec.md when agent fails."""
         spec_file = self.spec_dir / "spec.md"
         requirements_file = self.spec_dir / "requirements.json"
-        
+
         # Load requirements for task description
         task_desc = "Unknown task"
         workflow_type = "feature"
-        
+
         if requirements_file.exists():
             try:
                 import json
+
                 with open(requirements_file, encoding="utf-8") as f:
                     req = json.load(f)
                 task_desc = req.get("task_description", task_desc)
                 workflow_type = req.get("workflow_type", workflow_type)
             except Exception:
                 pass
-        
+
         # Create a basic but complete spec
-        fallback_spec = f"""# Specification: {task_desc[:50]}{'...' if len(task_desc) > 50 else ''}
+        fallback_spec = f"""# Specification: {task_desc[:50]}{"..." if len(task_desc) > 50 else ""}
 
 ## Overview
 

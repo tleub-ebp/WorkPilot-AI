@@ -17,7 +17,6 @@ from pathlib import Path
 from .models import (
     ArchitectureConfig,
     ArchitectureViolation,
-    ForbiddenPattern,
     ImportEdge,
     ImportGraph,
     LayerConfig,
@@ -69,9 +68,7 @@ class ImportAnalyzer:
         self.project_dir = project_dir
         self.config = config
 
-    def analyze_imports(
-        self, changed_files: list[str] | None = None
-    ) -> ImportGraph:
+    def analyze_imports(self, changed_files: list[str] | None = None) -> ImportGraph:
         """
         Build an import graph from source files.
 
@@ -115,9 +112,7 @@ class ImportAnalyzer:
 
         return graph
 
-    def check_layer_violations(
-        self, graph: ImportGraph
-    ) -> list[ArchitectureViolation]:
+    def check_layer_violations(self, graph: ImportGraph) -> list[ArchitectureViolation]:
         """Check import edges against layer rules."""
         if not self.config.layers:
             return []
@@ -170,7 +165,9 @@ class ImportAnalyzer:
         violations = []
         for edge in graph.edges:
             for pattern in self.config.rules.forbidden_patterns:
-                if not self._file_matches_pattern(edge.source_file, pattern.from_pattern):
+                if not self._file_matches_pattern(
+                    edge.source_file, pattern.from_pattern
+                ):
                     continue
 
                 if re.search(pattern.import_pattern, edge.target_module, re.IGNORECASE):
@@ -182,7 +179,8 @@ class ImportAnalyzer:
                             file=edge.source_file,
                             line=edge.line,
                             import_target=edge.target_module,
-                            rule=pattern.description or f"Forbidden import pattern: {pattern.import_pattern}",
+                            rule=pattern.description
+                            or f"Forbidden import pattern: {pattern.import_pattern}",
                             description=(
                                 f"File '{edge.source_file}' imports '{edge.target_module}' "
                                 f"which matches forbidden pattern '{pattern.import_pattern}'"
@@ -199,9 +197,7 @@ class ImportAnalyzer:
     # Python import parsing
     # ---------------------------------------------------------------------------
 
-    def _parse_python_imports(
-        self, rel_path: str, content: str
-    ) -> list[ImportEdge]:
+    def _parse_python_imports(self, rel_path: str, content: str) -> list[ImportEdge]:
         """Parse Python imports using AST."""
         edges = []
         try:
@@ -224,9 +220,7 @@ class ImportAnalyzer:
                 module = node.module or ""
                 if node.level > 0:
                     # Relative import: resolve to absolute-ish path
-                    module = self._resolve_relative_import(
-                        rel_path, module, node.level
-                    )
+                    module = self._resolve_relative_import(rel_path, module, node.level)
                 if module:
                     edges.append(
                         ImportEdge(
@@ -261,9 +255,7 @@ class ImportAnalyzer:
     # JS/TS import parsing
     # ---------------------------------------------------------------------------
 
-    def _parse_js_ts_imports(
-        self, rel_path: str, content: str
-    ) -> list[ImportEdge]:
+    def _parse_js_ts_imports(self, rel_path: str, content: str) -> list[ImportEdge]:
         """Parse JavaScript/TypeScript imports using regex."""
         edges = []
 
@@ -348,9 +340,7 @@ class ImportAnalyzer:
 
         return None
 
-    def _import_to_file_paths(
-        self, import_target: str, source_file: str
-    ) -> list[str]:
+    def _import_to_file_paths(self, import_target: str, source_file: str) -> list[str]:
         """Convert an import target to potential file paths for matching."""
         candidates = []
 
@@ -370,12 +360,31 @@ class ImportAnalyzer:
                     resolved.append(part)
             base = "/".join(resolved)
             # Add potential extensions
-            for ext in ["", ".ts", ".tsx", ".js", ".jsx", "/index.ts", "/index.tsx", "/index.js"]:
+            for ext in [
+                "",
+                ".ts",
+                ".tsx",
+                ".js",
+                ".jsx",
+                "/index.ts",
+                "/index.tsx",
+                "/index.js",
+            ]:
                 candidates.append(base + ext)
         else:
             # Absolute/module import — convert dots to path separators
             as_path = import_target.replace(".", "/")
-            for ext in ["", ".py", ".ts", ".tsx", ".js", ".jsx", "/index.ts", "/index.js", "/__init__.py"]:
+            for ext in [
+                "",
+                ".py",
+                ".ts",
+                ".tsx",
+                ".js",
+                ".jsx",
+                "/index.ts",
+                "/index.js",
+                "/__init__.py",
+            ]:
                 candidates.append(as_path + ext)
 
         return candidates

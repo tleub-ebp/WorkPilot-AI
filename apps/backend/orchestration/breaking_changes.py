@@ -7,14 +7,13 @@ git diffs, API contracts, shared types, and package versions.
 
 from __future__ import annotations
 
-import json
 import logging
 import subprocess
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .repo_graph import RepoDependencyGraph, DependencyType
+from .repo_graph import DependencyType, RepoDependencyGraph
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +160,10 @@ class BreakingChangeDetector:
             for dep in dependency_graph.dependencies:
                 if dep.target_repo != repo:
                     continue
-                if dep.source_repo not in completed_repos and dep.source_repo not in paths:
+                if (
+                    dep.source_repo not in completed_repos
+                    and dep.source_repo not in paths
+                ):
                     continue
 
                 # Analyze based on dependency type
@@ -220,11 +222,14 @@ class BreakingChangeDetector:
 
         # Patterns indicating potential breaking changes
         export_patterns = [
-            "index.ts", "index.js", "index.d.ts",  # TS/JS exports
+            "index.ts",
+            "index.js",
+            "index.d.ts",  # TS/JS exports
             "__init__.py",  # Python exports
             "lib.rs",  # Rust exports
             "package.json",  # npm package config
-            "setup.py", "pyproject.toml",  # Python package config
+            "setup.py",
+            "pyproject.toml",  # Python package config
         ]
 
         for f in changed_files:
@@ -233,8 +238,10 @@ class BreakingChangeDetector:
                 diff = self._get_file_diff(repo_path, f)
                 # Check for removed exports (lines starting with -)
                 removed_lines = [
-                    line for line in diff.split("\n")
-                    if line.startswith("-") and not line.startswith("---")
+                    line
+                    for line in diff.split("\n")
+                    if line.startswith("-")
+                    and not line.startswith("---")
                     and ("export" in line.lower() or "def " in line or "class " in line)
                 ]
                 if removed_lines:
@@ -263,8 +270,15 @@ class BreakingChangeDetector:
         changes: list[BreakingChange] = []
 
         api_patterns = [
-            "routes", "router", "controller", "endpoint",
-            "api", "handler", "schema", "openapi", "swagger",
+            "routes",
+            "router",
+            "controller",
+            "endpoint",
+            "api",
+            "handler",
+            "schema",
+            "openapi",
+            "swagger",
         ]
 
         for f in changed_files:
@@ -272,9 +286,22 @@ class BreakingChangeDetector:
             if any(p in f_lower for p in api_patterns):
                 diff = self._get_file_diff(repo_path, f)
                 removed_endpoints = [
-                    line for line in diff.split("\n")
-                    if line.startswith("-") and not line.startswith("---")
-                    and any(m in line.lower() for m in ["get", "post", "put", "delete", "patch", "@app.", "@router."])
+                    line
+                    for line in diff.split("\n")
+                    if line.startswith("-")
+                    and not line.startswith("---")
+                    and any(
+                        m in line.lower()
+                        for m in [
+                            "get",
+                            "post",
+                            "put",
+                            "delete",
+                            "patch",
+                            "@app.",
+                            "@router.",
+                        ]
+                    )
                 ]
                 if removed_endpoints:
                     changes.append(
@@ -302,8 +329,14 @@ class BreakingChangeDetector:
         changes: list[BreakingChange] = []
 
         type_patterns = [
-            "types", "interfaces", "models", "dto",
-            "schema", "proto", "graphql", ".d.ts",
+            "types",
+            "interfaces",
+            "models",
+            "dto",
+            "schema",
+            "proto",
+            "graphql",
+            ".d.ts",
         ]
 
         for f in changed_files:
@@ -311,9 +344,14 @@ class BreakingChangeDetector:
             if any(p in f_lower for p in type_patterns):
                 diff = self._get_file_diff(repo_path, f)
                 removed_types = [
-                    line for line in diff.split("\n")
-                    if line.startswith("-") and not line.startswith("---")
-                    and any(t in line for t in ["interface ", "type ", "class ", "enum ", "message "])
+                    line
+                    for line in diff.split("\n")
+                    if line.startswith("-")
+                    and not line.startswith("---")
+                    and any(
+                        t in line
+                        for t in ["interface ", "type ", "class ", "enum ", "message "]
+                    )
                 ]
                 if removed_types:
                     changes.append(
@@ -330,9 +368,7 @@ class BreakingChangeDetector:
 
         return changes
 
-    def build_detection_summary(
-        self, breaking_changes: list[BreakingChange]
-    ) -> str:
+    def build_detection_summary(self, breaking_changes: list[BreakingChange]) -> str:
         """Build a human-readable summary of detected breaking changes."""
         if not breaking_changes:
             return "No breaking changes detected."

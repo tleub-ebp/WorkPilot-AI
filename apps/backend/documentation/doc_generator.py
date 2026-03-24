@@ -1,21 +1,21 @@
 """Documentation Generator - Generates documentation from code analysis."""
+
 import json
 import uuid
 from pathlib import Path
-from typing import Dict, List, Optional
 
-from .models import DocGenerationResult, DocSection, DocStatus, DocType
+from .models import DocSection, DocStatus, DocType
 
 
 class DocumentationGenerator:
     """Generates documentation files from codebase analysis."""
 
-    def __init__(self, project_dir: str, output_dir: Optional[str] = None):
+    def __init__(self, project_dir: str, output_dir: str | None = None):
         self.project_dir = Path(project_dir)
         self.output_dir = Path(output_dir) if output_dir else self.project_dir / "docs"
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def generate_readme(self, project_context: Dict) -> DocSection:
+    def generate_readme(self, project_context: dict) -> DocSection:
         """Generate a comprehensive README.md."""
         info = self._detect_project_info()
         name = info.get("name", self.project_dir.name)
@@ -25,11 +25,11 @@ class DocumentationGenerator:
 
         content = f"""# {name}
 
-{description or 'A software project.'}
+{description or "A software project."}
 
 ## Tech Stack
 
-{chr(10).join(f'- {t}' for t in tech_stack) if tech_stack else '- See package.json / requirements.txt'}
+{chr(10).join(f"- {t}" for t in tech_stack) if tech_stack else "- See package.json / requirements.txt"}
 
 ## Getting Started
 
@@ -72,7 +72,7 @@ cd {self.project_dir.name}
         self._write_section(section)
         return section
 
-    def generate_api_docs(self, api_endpoints: List[Dict]) -> List[DocSection]:
+    def generate_api_docs(self, api_endpoints: list[dict]) -> list[DocSection]:
         """Generate API documentation in Markdown."""
         if not api_endpoints:
             return []
@@ -162,7 +162,9 @@ Open a discussion or reach out to the maintainers.
         self._write_section(section)
         return section
 
-    def generate_docstrings(self, symbols: List[Dict], language: str) -> List[DocSection]:
+    def generate_docstrings(
+        self, symbols: list[dict], language: str
+    ) -> list[DocSection]:
         """Generate docstring templates for undocumented symbols."""
         sections = []
         for symbol in symbols[:50]:  # Limit to avoid overwhelming output
@@ -177,25 +179,27 @@ Open a discussion or reach out to the maintainers.
             else:
                 doc = self._generate_jsdoc(name, kind)
 
-            sections.append(DocSection(
-                section_id=str(uuid.uuid4())[:8],
-                file_path=file_path,
-                doc_type=DocType.INLINE_DOCSTRINGS,
-                title=f"{kind}: {name}",
-                content=doc,
-                status=DocStatus.MISSING,
-                related_code_file=file_path,
-            ))
+            sections.append(
+                DocSection(
+                    section_id=str(uuid.uuid4())[:8],
+                    file_path=file_path,
+                    doc_type=DocType.INLINE_DOCSTRINGS,
+                    title=f"{kind}: {name}",
+                    content=doc,
+                    status=DocStatus.MISSING,
+                    related_code_file=file_path,
+                )
+            )
         return sections
 
-    def generate_sequence_diagrams(self, workflows: List[Dict]) -> List[DocSection]:
+    def generate_sequence_diagrams(self, workflows: list[dict]) -> list[DocSection]:
         """Generate Mermaid sequence diagrams for key workflows."""
         sections = []
         for workflow in workflows:
             title = workflow.get("title", "Workflow")
             steps = workflow.get("steps", [])
 
-            mermaid = f"```mermaid\nsequenceDiagram\n"
+            mermaid = "```mermaid\nsequenceDiagram\n"
             mermaid += f"    title: {title}\n"
             for step in steps:
                 actor_a = step.get("from", "Client")
@@ -232,9 +236,9 @@ Open a discussion or reach out to the maintainers.
             print(f"[DocGen] Warning: could not write {target}: {e}")
             return ""
 
-    def _detect_project_info(self) -> Dict:
+    def _detect_project_info(self) -> dict:
         """Read package.json / pyproject.toml for project metadata."""
-        info: Dict = {}
+        info: dict = {}
 
         package_json = self.project_dir / "package.json"
         if package_json.exists():
@@ -244,15 +248,24 @@ Open a discussion or reach out to the maintainers.
                 info["description"] = data.get("description", "")
                 info["version"] = data.get("version", "")
                 scripts = data.get("scripts", {})
-                info["scripts"] = {k: v for k, v in scripts.items() if k in (
-                    "dev", "start", "build", "test", "lint", "install"
-                )}
-                deps = {**data.get("dependencies", {}), **data.get("devDependencies", {})}
+                info["scripts"] = {
+                    k: v
+                    for k, v in scripts.items()
+                    if k in ("dev", "start", "build", "test", "lint", "install")
+                }
+                deps = {
+                    **data.get("dependencies", {}),
+                    **data.get("devDependencies", {}),
+                }
                 tech = []
                 for pkg, tier in [
-                    ("react", "React"), ("vue", "Vue"), ("angular", "@angular"),
-                    ("next", "Next.js"), ("electron", "Electron"),
-                    ("typescript", "TypeScript"), ("tailwindcss", "Tailwind CSS"),
+                    ("react", "React"),
+                    ("vue", "Vue"),
+                    ("angular", "@angular"),
+                    ("next", "Next.js"),
+                    ("electron", "Electron"),
+                    ("typescript", "TypeScript"),
+                    ("tailwindcss", "Tailwind CSS"),
                 ]:
                     if any(pkg in d for d in deps):
                         tech.append(tier)

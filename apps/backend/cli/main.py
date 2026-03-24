@@ -16,7 +16,6 @@ from .batch_commands import (
     handle_batch_status_command,
 )
 from .browser_agent_commands import handle_browser_agent_command
-from .self_healing_commands import handle_self_healing_command
 from .build_commands import handle_build_command
 from .cost_commands import (
     handle_cost_budget_command,
@@ -35,6 +34,7 @@ from .qa_commands import (
     handle_qa_status_command,
     handle_review_status_command,
 )
+from .self_healing_commands import handle_self_healing_command
 from .spec_commands import print_specs_list
 from .streaming_commands import (
     handle_list_recordings_command,
@@ -466,11 +466,16 @@ Environment Variables:
 
 
 def handle_provider_command(args):
+    import json
+
     from src.connectors.llm_config import (
-        save_provider_config, load_provider_config, delete_provider_config, list_provider_configs
+        delete_provider_config,
+        list_provider_configs,
+        load_provider_config,
+        save_provider_config,
     )
     from src.connectors.llm_discovery import discover_llm_providers
-    import json
+
     if args.action == "list":
         print("Providers disponibles:")
         for cls in discover_llm_providers():

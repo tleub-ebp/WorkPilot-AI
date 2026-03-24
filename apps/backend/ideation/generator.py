@@ -106,7 +106,9 @@ class IdeationGenerator:
                     msg_type = type(msg).__name__
                     if msg_type == "AssistantMessage" and hasattr(msg, "content"):
                         for block in msg.content:
-                            if type(block).__name__ == "TextBlock" and hasattr(block, "text"):
+                            if type(block).__name__ == "TextBlock" and hasattr(
+                                block, "text"
+                            ):
                                 output_text += block.text
             return True, output_text
         except Exception as e:

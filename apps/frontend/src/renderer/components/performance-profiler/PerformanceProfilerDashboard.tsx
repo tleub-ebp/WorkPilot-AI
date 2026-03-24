@@ -33,7 +33,7 @@ const EFFORT_LABELS: Record<string, string> = {
 
 export function PerformanceProfilerDashboard(): React.ReactElement {
   const { t } = useTranslation(['common']);
-  const { activeProject } = useProjectStore();
+  const activeProject = useProjectStore((s) => s.getActiveProject());
   const {
     phase,
     status,
@@ -53,8 +53,8 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
     startPerformanceProfiling(activeProject.path);
   }
 
-  const criticalCount = result?.bottlenecks.filter((b) => b.severity === 'critical').length ?? 0;
-  const highCount = result?.bottlenecks.filter((b) => b.severity === 'high').length ?? 0;
+  const criticalCount = result?.report?.bottlenecks.filter((b) => b.severity === 'critical').length ?? 0;
+  const highCount = result?.report?.bottlenecks.filter((b) => b.severity === 'high').length ?? 0;
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-primary)]">
@@ -112,14 +112,14 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
           </div>
 
           {/* Summary stats */}
-          {isComplete && result?.summary && (
+          {isComplete && result?.report?.summary && (
             <div>
               <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
                 Summary
               </h3>
               <div className="flex flex-col gap-2">
                 <div className="bg-[var(--bg-secondary)] rounded-lg p-2.5">
-                  <div className="text-lg font-bold">{result.summary.total_bottlenecks}</div>
+                  <div className="text-lg font-bold">{result.report.summary.total_bottlenecks}</div>
                   <div className="text-xs text-[var(--text-secondary)]">Bottlenecks found</div>
                 </div>
                 {criticalCount > 0 && (
@@ -135,7 +135,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
                   </div>
                 )}
                 <div className="bg-[var(--bg-secondary)] rounded-lg p-2.5">
-                  <div className="text-lg font-bold">{result.summary.suggestions_count}</div>
+                  <div className="text-lg font-bold">{result.report.summary.total_suggestions}</div>
                   <div className="text-xs text-[var(--text-secondary)]">Optimizations</div>
                 </div>
               </div>
@@ -181,15 +181,15 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
               )}
 
               {/* Benchmarks */}
-              {result.benchmarks.length > 0 && (
+              {(result.report?.benchmarks?.length ?? 0) > 0 && (
                 <div>
                   <h2 className="text-sm font-semibold mb-2">Benchmarks</h2>
                   <div className="grid grid-cols-2 gap-2">
-                    {result.benchmarks.map((b, i) => (
+                    {result.report.benchmarks.map((b, i) => (
                       <div key={i} className="bg-[var(--bg-secondary)] rounded-lg p-3">
                         <div className="text-xs text-[var(--text-secondary)] mb-1">{b.name}</div>
                         <div className="text-sm font-mono">
-                          {b.duration_ms != null ? `${b.duration_ms.toFixed(1)}ms` : b.error ?? 'N/A'}
+                          {b.duration_ms != null ? `${b.duration_ms.toFixed(1)}ms` : 'N/A'}
                         </div>
                       </div>
                     ))}
@@ -198,13 +198,13 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
               )}
 
               {/* Bottlenecks */}
-              {result.bottlenecks.length > 0 ? (
+              {(result.report?.bottlenecks?.length ?? 0) > 0 ? (
                 <div>
                   <h2 className="text-sm font-semibold mb-2">
-                    Bottlenecks ({result.bottlenecks.length})
+                    Bottlenecks ({result.report.bottlenecks.length})
                   </h2>
                   <div className="flex flex-col gap-2">
-                    {result.bottlenecks.map((b, i) => (
+                    {result.report.bottlenecks.map((b, i) => (
                       <div
                         key={i}
                         className={`rounded-lg p-3 border ${SEVERITY_COLORS[b.severity] ?? 'border-[var(--border-color)]'}`}
@@ -217,10 +217,10 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
                         </div>
                         {b.file_path && (
                           <div className="text-xs opacity-70 font-mono mb-1">
-                            {b.file_path}{b.line_number ? `:${b.line_number}` : ''}
+                            {b.file_path}{b.line_start ? `:${b.line_start}` : ''}
                           </div>
                         )}
-                        <div className="text-xs opacity-80">{b.bottleneck_type.replace(/_/g, ' ')}</div>
+                        <div className="text-xs opacity-80">{b.type.replace(/_/g, ' ')}</div>
                       </div>
                     ))}
                   </div>
@@ -232,13 +232,13 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
               )}
 
               {/* Suggestions */}
-              {result.suggestions.length > 0 && (
+              {(result.report?.suggestions?.length ?? 0) > 0 && (
                 <div>
                   <h2 className="text-sm font-semibold mb-2">
-                    Optimizations ({result.suggestions.length})
+                    Optimizations ({result.report.suggestions.length})
                   </h2>
                   <div className="flex flex-col gap-3">
-                    {result.suggestions.map((s, i) => (
+                    {result.report.suggestions.map((s, i) => (
                       <div key={i} className="bg-[var(--bg-secondary)] rounded-lg p-3">
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <div className="font-medium text-sm">{s.title}</div>

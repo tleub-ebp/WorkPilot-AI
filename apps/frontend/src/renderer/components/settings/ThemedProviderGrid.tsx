@@ -57,7 +57,7 @@ export function ThemedProviderGrid({
 
   // Filtres et recherche
   const filteredAndSortedProviders = useMemo(() => {
-    let filtered = providers.filter(provider => {
+    const filtered = providers.filter(provider => {
       const matchesSearch = provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            provider.description?.toLowerCase().includes(searchQuery.toLowerCase());
       
@@ -76,10 +76,11 @@ export function ThemedProviderGrid({
           return a.name.localeCompare(b.name);
         case 'category':
           return a.category.localeCompare(b.category);
-        case 'status':
+        case 'status': {
           const statusA = a.isConfigured ? (a.isWorking === false ? -1 : 1) : 0;
           const statusB = b.isConfigured ? (b.isWorking === false ? -1 : 1) : 0;
           return statusB - statusA;
+        }
         case 'usage':
           return (b.usageCount || 0) - (a.usageCount || 0);
         default:

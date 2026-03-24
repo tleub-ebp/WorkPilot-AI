@@ -42,9 +42,12 @@ try:
             return _original_parse_message(data)
         except Exception as exc:
             if "Unknown message type" in str(exc):
-                msg_type = data.get("type", "unknown") if isinstance(data, dict) else "unknown"
+                msg_type = (
+                    data.get("type", "unknown") if isinstance(data, dict) else "unknown"
+                )
                 logging.getLogger(__name__).warning(
-                    "SDK received unknown message type '%s' — skipping gracefully", msg_type
+                    "SDK received unknown message type '%s' — skipping gracefully",
+                    msg_type,
                 )
                 return _SDKSystemMessage(subtype=msg_type, data=data)
             raise

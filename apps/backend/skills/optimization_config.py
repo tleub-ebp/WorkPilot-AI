@@ -7,12 +7,13 @@ This file ensures consistent optimization settings across the entire skills syst
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Any
+from typing import Any
 
 
 @dataclass
 class TokenOptimizationConfig:
     """Configuration for token optimization."""
+
     max_description_length: int = 512  # Limit skill descriptions to 512 chars
     max_triggers_count: int = 5  # Keep trigger lists under 5 items
     sampling_threshold: int = 5  # Sample file collections >5 items
@@ -24,6 +25,7 @@ class TokenOptimizationConfig:
 @dataclass
 class ContextOptimizationConfig:
     """Configuration for context optimization."""
+
     max_context_limit_ratio: float = 0.7  # Aggressive cleanup at 70% of limit
     default_max_workers: int = 3  # Reduced from 4 for stability
     default_timeout: int = 25  # Reduced from 30s for responsiveness
@@ -34,6 +36,7 @@ class ContextOptimizationConfig:
 @dataclass
 class PerformanceOptimizationConfig:
     """Configuration for performance optimization."""
+
     optimization_enabled: bool = True  # Enable optimization for all composite skills
     subagent_threshold: int = 3  # Use subagents for >3 skills combinations
     validation_cache_size: int = 500  # Cache for validation results
@@ -44,6 +47,7 @@ class PerformanceOptimizationConfig:
 @dataclass
 class ClaudeCodeOptimizationConfig:
     """Configuration specific to Claude Code optimizations."""
+
     oauth_token_support: bool = True  # Support OAuth tokens
     encrypted_token_validation: bool = True  # Validate encrypted tokens
     keychain_integration: bool = True  # Integrate with keychain
@@ -54,20 +58,27 @@ class ClaudeCodeOptimizationConfig:
 @dataclass
 class OptimizationConfig:
     """Main optimization configuration combining all settings."""
+
     token: TokenOptimizationConfig = field(default_factory=TokenOptimizationConfig)
-    context: ContextOptimizationConfig = field(default_factory=ContextOptimizationConfig)
-    performance: PerformanceOptimizationConfig = field(default_factory=PerformanceOptimizationConfig)
-    claude_code: ClaudeCodeOptimizationConfig = field(default_factory=ClaudeCodeOptimizationConfig)
-    
-    def to_dict(self) -> Dict[str, Any]:
+    context: ContextOptimizationConfig = field(
+        default_factory=ContextOptimizationConfig
+    )
+    performance: PerformanceOptimizationConfig = field(
+        default_factory=PerformanceOptimizationConfig
+    )
+    claude_code: ClaudeCodeOptimizationConfig = field(
+        default_factory=ClaudeCodeOptimizationConfig
+    )
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""
         return {
-            'token': self.token.__dict__,
-            'context': self.context.__dict__,
-            'performance': self.performance.__dict__,
-            'claude_code': self.claude_code.__dict__
+            "token": self.token.__dict__,
+            "context": self.context.__dict__,
+            "performance": self.performance.__dict__,
+            "claude_code": self.claude_code.__dict__,
         }
-    
+
     def validate(self) -> bool:
         """Validate configuration parameters."""
         # Validate token optimization
@@ -77,7 +88,7 @@ class OptimizationConfig:
             return False
         if self.token.sampling_threshold <= 0:
             return False
-        
+
         # Validate context optimization
         if not 0 < self.context.max_context_limit_ratio < 1:
             return False
@@ -85,13 +96,13 @@ class OptimizationConfig:
             return False
         if self.context.default_timeout <= 0:
             return False
-        
+
         # Validate performance optimization
         if self.performance.subagent_threshold <= 0:
             return False
         if self.performance.validation_cache_size <= 0:
             return False
-        
+
         return True
 
 
@@ -104,26 +115,45 @@ def get_optimization_config() -> OptimizationConfig:
     return OPTIMIZATION_CONFIG
 
 
-def update_optimization_config(config: Dict[str, Any]) -> bool:
+def update_optimization_config(config: dict[str, Any]) -> bool:
     """Update the global optimization configuration."""
     try:
-        if 'token' in config:
-            token_config = config['token']
-            OPTIMIZATION_CONFIG.token.max_description_length = token_config.get('max_description_length', OPTIMIZATION_CONFIG.token.max_description_length)
-            OPTIMIZATION_CONFIG.token.max_triggers_count = token_config.get('max_triggers_count', OPTIMIZATION_CONFIG.token.max_triggers_count)
-            OPTIMIZATION_CONFIG.token.sampling_threshold = token_config.get('sampling_threshold', OPTIMIZATION_CONFIG.token.sampling_threshold)
-        
-        if 'context' in config:
-            context_config = config['context']
-            OPTIMIZATION_CONFIG.context.max_context_limit_ratio = context_config.get('max_context_limit_ratio', OPTIMIZATION_CONFIG.context.max_context_limit_ratio)
-            OPTIMIZATION_CONFIG.context.default_max_workers = context_config.get('default_max_workers', OPTIMIZATION_CONFIG.context.default_max_workers)
-            OPTIMIZATION_CONFIG.context.default_timeout = context_config.get('default_timeout', OPTIMIZATION_CONFIG.context.default_timeout)
-        
-        if 'performance' in config:
-            perf_config = config['performance']
-            OPTIMIZATION_CONFIG.performance.optimization_enabled = perf_config.get('optimization_enabled', OPTIMIZATION_CONFIG.performance.optimization_enabled)
-            OPTIMIZATION_CONFIG.performance.subagent_threshold = perf_config.get('subagent_threshold', OPTIMIZATION_CONFIG.performance.subagent_threshold)
-        
+        if "token" in config:
+            token_config = config["token"]
+            OPTIMIZATION_CONFIG.token.max_description_length = token_config.get(
+                "max_description_length",
+                OPTIMIZATION_CONFIG.token.max_description_length,
+            )
+            OPTIMIZATION_CONFIG.token.max_triggers_count = token_config.get(
+                "max_triggers_count", OPTIMIZATION_CONFIG.token.max_triggers_count
+            )
+            OPTIMIZATION_CONFIG.token.sampling_threshold = token_config.get(
+                "sampling_threshold", OPTIMIZATION_CONFIG.token.sampling_threshold
+            )
+
+        if "context" in config:
+            context_config = config["context"]
+            OPTIMIZATION_CONFIG.context.max_context_limit_ratio = context_config.get(
+                "max_context_limit_ratio",
+                OPTIMIZATION_CONFIG.context.max_context_limit_ratio,
+            )
+            OPTIMIZATION_CONFIG.context.default_max_workers = context_config.get(
+                "default_max_workers", OPTIMIZATION_CONFIG.context.default_max_workers
+            )
+            OPTIMIZATION_CONFIG.context.default_timeout = context_config.get(
+                "default_timeout", OPTIMIZATION_CONFIG.context.default_timeout
+            )
+
+        if "performance" in config:
+            perf_config = config["performance"]
+            OPTIMIZATION_CONFIG.performance.optimization_enabled = perf_config.get(
+                "optimization_enabled",
+                OPTIMIZATION_CONFIG.performance.optimization_enabled,
+            )
+            OPTIMIZATION_CONFIG.performance.subagent_threshold = perf_config.get(
+                "subagent_threshold", OPTIMIZATION_CONFIG.performance.subagent_threshold
+            )
+
         return OPTIMIZATION_CONFIG.validate()
     except Exception:
         return False

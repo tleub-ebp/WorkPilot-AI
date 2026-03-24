@@ -38,18 +38,50 @@ def _find_extension_file() -> Path | None:
 
     if system == "Darwin":
         candidates = [
-            Path("/Applications/Windsurf.app/Contents/Resources/app/extensions/windsurf/dist/extension.js"),
-            home / "Applications" / "Windsurf.app" / "Contents" / "Resources" / "app" / "extensions" / "windsurf" / "dist" / "extension.js",
+            Path(
+                "/Applications/Windsurf.app/Contents/Resources/app/extensions/windsurf/dist/extension.js"
+            ),
+            home
+            / "Applications"
+            / "Windsurf.app"
+            / "Contents"
+            / "Resources"
+            / "app"
+            / "extensions"
+            / "windsurf"
+            / "dist"
+            / "extension.js",
         ]
     elif system == "Linux":
         candidates = [
-            Path("/usr/share/windsurf/resources/app/extensions/windsurf/dist/extension.js"),
-            home / ".local" / "share" / "windsurf" / "resources" / "app" / "extensions" / "windsurf" / "dist" / "extension.js",
+            Path(
+                "/usr/share/windsurf/resources/app/extensions/windsurf/dist/extension.js"
+            ),
+            home
+            / ".local"
+            / "share"
+            / "windsurf"
+            / "resources"
+            / "app"
+            / "extensions"
+            / "windsurf"
+            / "dist"
+            / "extension.js",
         ]
     elif system == "Windows":
         candidates = [
-            Path("C:/Program Files/Windsurf/resources/app/extensions/windsurf/dist/extension.js"),
-            Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Windsurf" / "resources" / "app" / "extensions" / "windsurf" / "dist" / "extension.js",
+            Path(
+                "C:/Program Files/Windsurf/resources/app/extensions/windsurf/dist/extension.js"
+            ),
+            Path(os.environ.get("LOCALAPPDATA", ""))
+            / "Programs"
+            / "Windsurf"
+            / "resources"
+            / "app"
+            / "extensions"
+            / "windsurf"
+            / "dist"
+            / "extension.js",
         ]
 
     for path in candidates:
@@ -70,7 +102,11 @@ def _parse_metadata_fields(content: str) -> dict[str, int] | None:
     for list_content in field_lists:
         # The Metadata message must contain both api_key and ide_name
         # AND must NOT contain event_name (which indicates telemetry)
-        if '"api_key"' in list_content and '"ide_name"' in list_content and '"event_name"' not in list_content:
+        if (
+            '"api_key"' in list_content
+            and '"ide_name"' in list_content
+            and '"event_name"' not in list_content
+        ):
             fields = dict(DEFAULT_METADATA_FIELDS)
 
             for field_name in fields:
@@ -105,7 +141,9 @@ def get_metadata_fields() -> dict[str, int]:
             content = ext_path.read_text(encoding="utf-8")
             discovered = _parse_metadata_fields(content)
             if discovered:
-                logger.debug(f"[WindsurfDiscovery] Discovered metadata fields: {discovered}")
+                logger.debug(
+                    f"[WindsurfDiscovery] Discovered metadata fields: {discovered}"
+                )
                 _cached_fields = discovered
                 return _cached_fields
     except Exception as e:

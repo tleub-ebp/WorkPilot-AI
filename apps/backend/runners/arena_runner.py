@@ -21,9 +21,10 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import AsyncGenerator
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, AsyncGenerator, Literal, Optional
+from typing import Literal
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ class ArenaParticipant:
     tokens_used: int = 0
     cost_usd: float = 0.0
     duration_ms: int = 0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -56,9 +57,9 @@ class ArenaBattle:
     participants: list[ArenaParticipant]
     status: str = "running"  # running | voting | completed | error
     created_at: int = field(default_factory=lambda: int(time.time() * 1000))
-    completed_at: Optional[int] = None
-    voted_at: Optional[int] = None
-    winner_label: Optional[ArenaLabel] = None
+    completed_at: int | None = None
+    voted_at: int | None = None
+    winner_label: ArenaLabel | None = None
     revealed: bool = False
 
 
@@ -87,6 +88,7 @@ class ArenaModelStats:
 
 
 # ─── Storage ────────────────────────────────────────────────────────────────────
+
 
 def _get_arena_data_dir() -> Path:
     """Returns the arena data directory, creating it if needed."""
@@ -127,10 +129,19 @@ def _save_votes(votes: list[dict]) -> None:
 
 # ─── Analytics ──────────────────────────────────────────────────────────────────
 
-TASK_TYPES: list[ArenaTaskType] = ["coding", "review", "test", "planning", "spec", "insights"]
+TASK_TYPES: list[ArenaTaskType] = [
+    "coding",
+    "review",
+    "test",
+    "planning",
+    "spec",
+    "insights",
+]
 
 
-def _get_or_create_model_stats(model_map: dict[str, ArenaModelStats], participant: dict) -> ArenaModelStats:
+def _get_or_create_model_stats(
+    model_map: dict[str, ArenaModelStats], participant: dict
+) -> ArenaModelStats:
     """Get existing model stats or create new ones for a participant."""
     pid = participant["profile_id"]
     if pid not in model_map:
@@ -142,7 +153,9 @@ def _get_or_create_model_stats(model_map: dict[str, ArenaModelStats], participan
     return model_map[pid]
 
 
-def _update_participant_stats(stats: ArenaModelStats, participant: dict, is_winner: bool) -> None:
+def _update_participant_stats(
+    stats: ArenaModelStats, participant: dict, is_winner: bool
+) -> None:
     """Update basic statistics for a participant."""
     stats.total += 1
     if is_winner:
@@ -154,20 +167,27 @@ def _update_participant_stats(stats: ArenaModelStats, participant: dict, is_winn
     dur = participant.get("duration_ms", 0)
     stats.total_cost_usd += cost
     stats.avg_duration_ms = (
-        (stats.avg_duration_ms * (stats.total - 1) + dur) / stats.total
-    )
+        stats.avg_duration_ms * (stats.total - 1) + dur
+    ) / stats.total
 
 
-def _update_task_type_stats(stats: ArenaModelStats, task_type: str, participant: dict, is_winner: bool) -> None:
+def _update_task_type_stats(
+    stats: ArenaModelStats, task_type: str, participant: dict, is_winner: bool
+) -> None:
     """Update task type specific statistics."""
     if task_type not in stats.by_task_type:
-        stats.by_task_type[task_type] = {"wins": 0, "total": 0, "win_rate": 0.0, "avg_cost_usd": 0.0}
-    
+        stats.by_task_type[task_type] = {
+            "wins": 0,
+            "total": 0,
+            "win_rate": 0.0,
+            "avg_cost_usd": 0.0,
+        }
+
     tt_data = stats.by_task_type[task_type]
     tt_data["total"] += 1
     if is_winner:
         tt_data["wins"] += 1
-    
+
     tt_data["win_rate"] = tt_data["wins"] / tt_data["total"]
     cost = participant.get("cost_usd", 0.0)
     tt_data["avg_cost_usd"] = (
@@ -194,14 +214,16 @@ def _determine_confidence_level(sample_size: int) -> str:
         return "low"
 
 
-def _build_auto_routing_recommendations(model_map: dict[str, ArenaModelStats]) -> dict[str, dict]:
+def _build_auto_routing_recommendations(
+    model_map: dict[str, ArenaModelStats],
+) -> dict[str, dict]:
     """Build auto-routing recommendations for each task type."""
     auto_routing: dict[str, dict] = {}
-    
+
     for task_type in TASK_TYPES:
-        best: Optional[ArenaModelStats] = None
+        best: ArenaModelStats | None = None
         best_wins = 0
-        
+
         for stats in model_map.values():
             tt_data = stats.by_task_type.get(task_type)
             if not tt_data or tt_data["total"] < 2:
@@ -209,18 +231,18 @@ def _build_auto_routing_recommendations(model_map: dict[str, ArenaModelStats]) -
             if tt_data["wins"] > best_wins:
                 best_wins = tt_data["wins"]
                 best = stats
-        
+
         if best:
             tt_data = best.by_task_type[task_type]
             confidence = _determine_confidence_level(tt_data["total"])
-            
+
             auto_routing[task_type] = {
                 "profile_id": best.profile_id,
                 "model_name": best.model_name,
                 "win_rate": tt_data["win_rate"],
                 "confidence": confidence,
             }
-    
+
     return auto_routing
 
 
@@ -232,9 +254,9 @@ def compute_analytics(battles: list[dict], votes: list[dict]) -> dict:
     for battle in battles:
         if battle.get("status") != "completed" or not battle.get("winner_label"):
             continue
-        
+
         task_type = battle.get("task_type", "coding")
-        
+
         for participant in battle.get("participants", []):
             is_winner = participant["label"] == battle["winner_label"]
             stats = _get_or_create_model_stats(model_map, participant)
@@ -243,14 +265,16 @@ def compute_analytics(battles: list[dict], votes: list[dict]) -> dict:
 
     # Finalize statistics
     _finalize_model_stats(model_map)
-    
+
     # Build recommendations
     auto_routing = _build_auto_routing_recommendations(model_map)
 
     return {
         "total_battles": len(battles),
         "total_votes": len(votes),
-        "by_model": [asdict(s) for s in sorted(model_map.values(), key=lambda x: -x.win_rate)],
+        "by_model": [
+            asdict(s) for s in sorted(model_map.values(), key=lambda x: -x.win_rate)
+        ],
         "auto_routing_recommendations": auto_routing,
         "last_updated": int(time.time() * 1000),
     }
@@ -290,7 +314,7 @@ async def run_participant(
     participant: ArenaParticipant,
     task_type: ArenaTaskType,
     prompt: str,
-    project_dir: Optional[str] = None,
+    project_dir: str | None = None,
 ) -> AsyncGenerator[dict, None]:
     """
     Run a single arena participant and yield streaming events.
@@ -383,7 +407,9 @@ async def run_participant(
         }
 
 
-def _generate_mock_output(task_type: ArenaTaskType, prompt: str, label: ArenaLabel) -> str:
+def _generate_mock_output(
+    task_type: ArenaTaskType, prompt: str, label: ArenaLabel
+) -> str:
     """Generate deterministic mock output for testing/demo mode."""
     templates = {
         "coding": f"```python\n# Solution for: {prompt[:50]}\ndef solution():\n    # Implementation by Model {label}\n    result = []\n    # ... core logic ...\n    return result\n```\n\nThis implementation uses an efficient approach with O(n) time complexity.",
@@ -400,7 +426,7 @@ async def run_arena_battle(
     task_type: ArenaTaskType,
     prompt: str,
     profile_ids: list[str],
-    project_dir: Optional[str] = None,
+    project_dir: str | None = None,
     on_progress=None,
 ) -> ArenaBattle:
     """
@@ -437,7 +463,9 @@ async def run_arena_battle(
         participants=participants,
     )
 
-    logger.info("[Arena] Starting battle %s with %d models", battle_id, len(participants))
+    logger.info(
+        "[Arena] Starting battle %s with %d models", battle_id, len(participants)
+    )
 
     # Run all participants in parallel
     async def run_one(participant: ArenaParticipant) -> None:
@@ -513,15 +541,21 @@ def get_analytics() -> dict:
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Arena Mode — Blind A/B model comparison")
-    parser.add_argument("--task-type", choices=list(SYSTEM_PROMPTS.keys()), default="coding")
+    parser = argparse.ArgumentParser(
+        description="Arena Mode — Blind A/B model comparison"
+    )
+    parser.add_argument(
+        "--task-type", choices=list(SYSTEM_PROMPTS.keys()), default="coding"
+    )
     parser.add_argument("--prompt", required=True, help="Prompt to send to all models")
     parser.add_argument(
         "--profiles",
         required=True,
         help="Comma-separated list of profile IDs (min 2, max 4)",
     )
-    parser.add_argument("--project-dir", default=None, help="Project directory for context")
+    parser.add_argument(
+        "--project-dir", default=None, help="Project directory for context"
+    )
     args = parser.parse_args()
 
     profile_ids = [p.strip() for p in args.profiles.split(",")]
@@ -531,7 +565,9 @@ if __name__ == "__main__":
             if event["type"] == "chunk":
                 print(f"[Model {event['label']}] {event['chunk']}", end="", flush=True)
             elif event["type"] == "result":
-                print(f"\n[Model {event['label']}] DONE — {event['tokens_used']} tokens, ${event['cost_usd']:.5f}")
+                print(
+                    f"\n[Model {event['label']}] DONE — {event['tokens_used']} tokens, ${event['cost_usd']:.5f}"
+                )
             elif event["type"] == "error":
                 print(f"\n[Model {event['label']}] ERROR: {event.get('error')}")
 
@@ -548,7 +584,9 @@ if __name__ == "__main__":
 
         print("\n\n=== BATTLE COMPLETE ===")
         for p in battle.participants:
-            print(f"Model {p.label}: {p.tokens_used} tokens, ${p.cost_usd:.5f}, {p.duration_ms}ms")
+            print(
+                f"Model {p.label}: {p.tokens_used} tokens, ${p.cost_usd:.5f}, {p.duration_ms}ms"
+            )
 
         print("\nAnalytics summary:")
         analytics = get_analytics()

@@ -24,7 +24,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from cli.utils import import_dotenv
 from debug import (
     debug,
-    debug_detailed,
     debug_error,
     debug_section,
     debug_success,
@@ -75,13 +74,17 @@ class DesignToCodeRunner:
         image_data = await self._resolve_image_data()
         if not image_data:
             debug_error("No image data provided")
-            return {"success": False, "error": "No image data provided. Provide --image-path or --image-data."}
+            return {
+                "success": False,
+                "error": "No image data provided. Provide --image-path or --image-data.",
+            }
 
         # Parse Figma URL if provided
         figma_file_key = None
         figma_node_id = None
         if self.figma_url:
             from src.connectors.figma_connector import FigmaConnector
+
             parsed = FigmaConnector.parse_figma_url(self.figma_url)
             if parsed:
                 figma_file_key = parsed.get("file_key")
@@ -133,6 +136,7 @@ class DesignToCodeRunner:
     async def _resolve_image_data(self) -> str:
         """Resolve image data from path, base64, or Figma URL."""
         import base64
+
         import aiofiles
 
         # Direct base64 data
@@ -183,9 +187,9 @@ class DesignToCodeRunner:
 
     async def _write_generated_files(self, result) -> None:
         """Write generated files to the output directory."""
+
         import aiofiles
-        import asyncio
-        
+
         output_base = Path(self.output_dir)
 
         print(f"\n📁 Writing {len(result.generated_files)} files:")
@@ -215,7 +219,9 @@ class DesignToCodeRunner:
             print(f"  🧪 Visual tests: {len(result.visual_tests)}")
             print(f"  🎨 Design tokens used: {len(result.design_tokens_used)}")
             if result.design_spec:
-                print(f"  🧩 Components identified: {len(result.design_spec.components)}")
+                print(
+                    f"  🧩 Components identified: {len(result.design_spec.components)}"
+                )
             if result.figma_sync_status:
                 sync = result.figma_sync_status.get("status", "unknown")
                 print(f"  🔄 Figma sync: {sync}")
@@ -234,7 +240,9 @@ class DesignToCodeRunner:
             "files_generated": len(result.generated_files),
             "visual_tests_generated": len(result.visual_tests),
             "design_tokens_used": len(result.design_tokens_used),
-            "components_identified": len(result.design_spec.components) if result.design_spec else 0,
+            "components_identified": len(result.design_spec.components)
+            if result.design_spec
+            else 0,
             "duration_seconds": result.duration_seconds,
             "errors": result.errors,
             "generated_files": [
@@ -249,8 +257,12 @@ async def main():
     parser = argparse.ArgumentParser(
         description="Design-to-Code Pipeline — Convert visual designs to production-ready code"
     )
-    parser.add_argument("--project-dir", required=True, help="Path to the project directory")
-    parser.add_argument("--image-path", default="", help="Path to the design image file")
+    parser.add_argument(
+        "--project-dir", required=True, help="Path to the project directory"
+    )
+    parser.add_argument(
+        "--image-path", default="", help="Path to the design image file"
+    )
     parser.add_argument("--image-data", default="", help="Base64-encoded image data")
     parser.add_argument(
         "--framework",
@@ -264,11 +276,21 @@ async def main():
         choices=["screenshot", "figma", "wireframe", "whiteboard", "photo"],
         help="Type of design source (default: screenshot)",
     )
-    parser.add_argument("--design-system-path", default="", help="Path to the project's design system")
-    parser.add_argument("--figma-url", default="", help="Figma file/node URL for bidirectional sync")
-    parser.add_argument("--no-tests", action="store_true", help="Skip visual test generation")
-    parser.add_argument("--instructions", default="", help="Additional instructions for code generation")
-    parser.add_argument("--output-dir", default="", help="Output directory (default: project dir)")
+    parser.add_argument(
+        "--design-system-path", default="", help="Path to the project's design system"
+    )
+    parser.add_argument(
+        "--figma-url", default="", help="Figma file/node URL for bidirectional sync"
+    )
+    parser.add_argument(
+        "--no-tests", action="store_true", help="Skip visual test generation"
+    )
+    parser.add_argument(
+        "--instructions", default="", help="Additional instructions for code generation"
+    )
+    parser.add_argument(
+        "--output-dir", default="", help="Output directory (default: project dir)"
+    )
     parser.add_argument("--json", action="store_true", help="Output result as JSON")
 
     args = parser.parse_args()

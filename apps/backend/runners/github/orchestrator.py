@@ -46,8 +46,11 @@ try:
         PRReviewEngine,
         TriageEngine,
     )
+    from .services.deep_context_provider import (
+        DeepContextProvider,
+        store_review_learnings,
+    )
     from .services.io_utils import safe_print
-    from .services.deep_context_provider import DeepContextProvider, store_review_learnings
 except (ImportError, ValueError, SystemError):
     # When imported directly (runner.py adds github dir to path)
     from bot_detection import BotDetector
@@ -76,8 +79,11 @@ except (ImportError, ValueError, SystemError):
         PRReviewEngine,
         TriageEngine,
     )
+    from services.deep_context_provider import (
+        DeepContextProvider,
+        store_review_learnings,
+    )
     from services.io_utils import safe_print
-    from services.deep_context_provider import DeepContextProvider, store_review_learnings
 
 
 @dataclass
@@ -357,7 +363,9 @@ class GitHubOrchestrator:
             )
 
             # Gather deep codebase context (runs in parallel, non-blocking)
-            safe_print("[DEBUG orchestrator] Gathering deep codebase context...", flush=True)
+            safe_print(
+                "[DEBUG orchestrator] Gathering deep codebase context...", flush=True
+            )
             try:
                 changed_paths = [f.path for f in pr_context.changed_files]
                 deep_context = await self.deep_context_provider.gather_deep_context(

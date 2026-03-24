@@ -57,7 +57,8 @@ async function runPythonRunner(
   extraEnv: Record<string, string> = {},
 ): Promise<{ success: boolean; data?: unknown; error?: string }> {
   const pythonPath = await getConfiguredPythonPath(projectDir);
-  const { cmd, cmdArgs } = parsePythonCommand(pythonPath, [getRunnerPath(), ...args]);
+  const [cmd, baseArgs] = parsePythonCommand(pythonPath);
+  const cmdArgs = [...baseArgs, getRunnerPath(), ...args];
 
   return new Promise((resolve) => {
     const env = buildEnv(projectDir, extraEnv);
@@ -340,12 +341,14 @@ export function registerTeamSyncHandlers(): void {
       }
       try {
         const pythonPath = await getConfiguredPythonPath(projectDir);
-        const { cmd, cmdArgs } = parsePythonCommand(pythonPath, [
+        const [cmd, baseArgs] = parsePythonCommand(pythonPath);
+        const cmdArgs = [
+          ...baseArgs,
           getRunnerPath(),
           '--serve',
           '--project', projectDir,
           ...(port ? ['--port', String(port)] : []),
-        ]);
+        ];
         _serverPort = port ?? 7749;
         _serverProcess = spawn(cmd, cmdArgs, {
           env: buildEnv(projectDir),

@@ -1,6 +1,6 @@
 """Diagram Generator - Converts ArchitectureDiagram objects to Mermaid syntax."""
+
 import re
-from typing import Dict
 
 from .models import ArchitectureDiagram, DiagramType, EdgeType, NodeType
 
@@ -24,7 +24,7 @@ class DiagramGenerator:
         lines = ["graph TD"]
 
         # Node type shapes
-        node_shapes: Dict[str, str] = {
+        node_shapes: dict[str, str] = {
             NodeType.MODULE.value: ("(", ")"),
             NodeType.PACKAGE.value: ("[", "]"),
             NodeType.SERVICE.value: ("[/", "/]"),
@@ -49,7 +49,9 @@ class DiagramGenerator:
 
         return "\n".join(lines)
 
-    def _generate_component_hierarchy_mermaid(self, diagram: ArchitectureDiagram) -> str:
+    def _generate_component_hierarchy_mermaid(
+        self, diagram: ArchitectureDiagram
+    ) -> str:
         """Generate graph TD Mermaid for component hierarchy."""
         lines = ["graph TD"]
         for node in diagram.nodes:
@@ -66,7 +68,11 @@ class DiagramGenerator:
         lines = ["flowchart LR"]
         for node in diagram.nodes:
             nid = self.sanitize_node_id(node.id)
-            shape = "[/" + node.name[:25] + "/]" if "service" in node.type.value else f'["{node.name[:25]}"]'
+            shape = (
+                "[/" + node.name[:25] + "/]"
+                if "service" in node.type.value
+                else f'["{node.name[:25]}"]'
+            )
             lines.append(f"    {nid}{shape}")
         for edge in diagram.edges:
             src = self.sanitize_node_id(edge.source_id)
@@ -86,8 +92,8 @@ class DiagramGenerator:
         # Add tables
         for node in diagram.nodes:
             lines.append(f"    {self.sanitize_node_id(node.name)} {{")
-            lines.append(f"        string id PK")
-            lines.append(f"    }}")
+            lines.append("        string id PK")
+            lines.append("    }")
         # Add relationships
         for edge in diagram.edges:
             src_name = ""
@@ -99,7 +105,7 @@ class DiagramGenerator:
                 if nid == edge.target_id:
                     tgt_name = self.sanitize_node_id(node.name)
             if src_name and tgt_name:
-                lines.append(f"    {src_name} ||--o{{ {tgt_name} : \"has\"")
+                lines.append(f'    {src_name} ||--o{{ {tgt_name} : "has"')
         return "\n".join(lines)
 
     def sanitize_node_id(self, name: str) -> str:

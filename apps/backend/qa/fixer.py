@@ -15,12 +15,15 @@ from pathlib import Path
 try:
     from agents.memory_manager import get_graphiti_context, save_session_memory
 except ImportError:
+
     def get_graphiti_context(*args, **kwargs):
         return ""
+
     def save_session_memory(*args, **kwargs):
         # Stub function: memory_manager module not available
         # This is a fallback that does nothing when the memory integration is missing
         pass
+
 
 try:
     from claude_agent_sdk import ClaudeSDKClient
@@ -30,32 +33,40 @@ except ImportError:
 try:
     from debug import debug, debug_detailed, debug_error, debug_section, debug_success
 except ImportError:
-    def debug(*args, **kwargs): 
-        # Stub function: debug module not available
-        # This is a fallback that does nothing when debug logging is missing
-        pass
-    def debug_detailed(*args, **kwargs): 
-        # Stub function: debug module not available
-        # This is a fallback that does nothing when debug logging is missing
-        pass
-    def debug_error(*args, **kwargs): 
-        # Stub function: debug module not available
-        # This is a fallback that does nothing when debug logging is missing
-        pass
-    def debug_section(*args, **kwargs): 
-        # Stub function: debug module not available
-        # This is a fallback that does nothing when debug logging is missing
-        pass
-    def debug_success(*args, **kwargs): 
+
+    def debug(*args, **kwargs):
         # Stub function: debug module not available
         # This is a fallback that does nothing when debug logging is missing
         pass
 
+    def debug_detailed(*args, **kwargs):
+        # Stub function: debug module not available
+        # This is a fallback that does nothing when debug logging is missing
+        pass
+
+    def debug_error(*args, **kwargs):
+        # Stub function: debug module not available
+        # This is a fallback that does nothing when debug logging is missing
+        pass
+
+    def debug_section(*args, **kwargs):
+        # Stub function: debug module not available
+        # This is a fallback that does nothing when debug logging is missing
+        pass
+
+    def debug_success(*args, **kwargs):
+        # Stub function: debug module not available
+        # This is a fallback that does nothing when debug logging is missing
+        pass
+
+
 try:
     from security.tool_input_validator import get_safe_tool_input
 except ImportError:
+
     def get_safe_tool_input(*args, **kwargs):
         return ""
+
 
 try:
     from task_logger import (
@@ -66,11 +77,14 @@ try:
 except ImportError:
     LogEntryType = None
     LogPhase = None
+
     def get_task_logger(*args, **kwargs):
         return None
 
+
 try:
     from replay.recorder import get_replay_recorder as _get_replay_recorder
+
     _REPLAY_AVAILABLE = True
 except ImportError:
     _REPLAY_AVAILABLE = False
@@ -152,15 +166,20 @@ async def run_qa_fixer_session(
     if _REPLAY_AVAILABLE:
         try:
             import uuid as _uuid_mod
+
             _rr = _get_replay_recorder()
             _rs_id = _uuid_mod.uuid4().hex[:16]
-            _rr.start_session(_rs_id, {
-                "agent_name": "QA Fixer",
-                "agent_type": "qa_fixer",
-                "task": spec_dir.name,
-                "project_path": str(project_dir),
-                "model": getattr(getattr(client, "options", None), "model", "") or "",
-            })
+            _rr.start_session(
+                _rs_id,
+                {
+                    "agent_name": "QA Fixer",
+                    "agent_type": "qa_fixer",
+                    "task": spec_dir.name,
+                    "project_path": str(project_dir),
+                    "model": getattr(getattr(client, "options", None), "model", "")
+                    or "",
+                },
+            )
         except Exception:
             _rr = None
             _rs_id = None
@@ -281,14 +300,29 @@ async def run_qa_fixer_session(
                         # Record tool use in replay
                         if _rr and _rs_id:
                             try:
-                                if tool_name in ("Edit", "Write") and inp and inp.get("file_path"):
+                                if (
+                                    tool_name in ("Edit", "Write")
+                                    and inp
+                                    and inp.get("file_path")
+                                ):
                                     _op = "update" if tool_name == "Edit" else "create"
-                                    _after = str(inp.get("new_string") or inp.get("content") or "")
-                                    _rr.record_file_change(_rs_id, inp["file_path"], operation=_op, after_content=_after)
+                                    _after = str(
+                                        inp.get("new_string")
+                                        or inp.get("content")
+                                        or ""
+                                    )
+                                    _rr.record_file_change(
+                                        _rs_id,
+                                        inp["file_path"],
+                                        operation=_op,
+                                        after_content=_after,
+                                    )
                                 elif tool_name == "Bash" and inp and inp.get("command"):
                                     _rr.record_command(_rs_id, inp["command"])
                                 else:
-                                    _rr.record_tool_call(_rs_id, tool_name, tool_input_dict=inp or {})
+                                    _rr.record_tool_call(
+                                        _rs_id, tool_name, tool_input_dict=inp or {}
+                                    )
                             except Exception:
                                 pass
 
@@ -353,9 +387,16 @@ async def run_qa_fixer_session(
                             try:
                                 _result_str = str(result_content)[:2000]
                                 if current_tool == "Bash":
-                                    _rr.record_command_output(_rs_id, _result_str, is_error=is_error)
+                                    _rr.record_command_output(
+                                        _rs_id, _result_str, is_error=is_error
+                                    )
                                 elif current_tool not in ("Edit", "Write"):
-                                    _rr.record_tool_result(_rs_id, current_tool, output=_result_str, success=not is_error)
+                                    _rr.record_tool_result(
+                                        _rs_id,
+                                        current_tool,
+                                        output=_result_str,
+                                        success=not is_error,
+                                    )
                             except Exception:
                                 pass
 

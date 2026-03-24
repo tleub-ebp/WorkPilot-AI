@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 import subprocess
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from .mcp_connector import MCPConnector, MCPSourceConfig
 from .models import (
@@ -146,9 +146,7 @@ class ProductionMode:
             "{{AFFECTED_USERS}}": str(data.get("affected_users", 0)),
             "{{ENVIRONMENT}}": data.get("environment", "production"),
             "{{SERVICE_NAME}}": data.get("service_name", "unknown"),
-            "{{AFFECTED_FILES}}": "\n".join(
-                f"- {f}" for f in incident.affected_files
-            ),
+            "{{AFFECTED_FILES}}": "\n".join(f"- {f}" for f in incident.affected_files),
         }
 
         for key, value in replacements.items():
@@ -219,7 +217,7 @@ class ProductionMode:
 
         return found_files[:20]  # Limit to 20 files
 
-    def _resolve_project_file(self, file_path: str) -> Optional[str]:
+    def _resolve_project_file(self, file_path: str) -> str | None:
         """Resolve a file path to a project-relative path."""
         path = Path(file_path)
 

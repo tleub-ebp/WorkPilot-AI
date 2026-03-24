@@ -77,7 +77,9 @@ async def run_architecture_ai_review(
             max_thinking_tokens=thinking_budget,
         )
     except Exception as e:
-        debug_error("architecture_ai", f"Failed to create architecture reviewer client: {e}")
+        debug_error(
+            "architecture_ai", f"Failed to create architecture reviewer client: {e}"
+        )
         return []
 
     # Run the review session
@@ -151,9 +153,13 @@ def _serialize_config(config: ArchitectureConfig) -> str:
             parts.append(f"  - {layer.name}:")
             parts.append(f"    Patterns: {', '.join(layer.patterns)}")
             if layer.allowed_imports:
-                parts.append(f"    Allowed imports from: {', '.join(layer.allowed_imports)}")
+                parts.append(
+                    f"    Allowed imports from: {', '.join(layer.allowed_imports)}"
+                )
             if layer.forbidden_imports:
-                parts.append(f"    Forbidden imports from: {', '.join(layer.forbidden_imports)}")
+                parts.append(
+                    f"    Forbidden imports from: {', '.join(layer.forbidden_imports)}"
+                )
 
     if config.bounded_contexts:
         parts.append("\nBounded Contexts:")

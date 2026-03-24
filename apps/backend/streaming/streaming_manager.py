@@ -1,4 +1,4 @@
-﻿"""
+"""
 Streaming Manager - WebSocket-based real-time event broadcasting.
 
 Broadcasts development session events to connected clients for the "Streaming Development" mode.
@@ -10,11 +10,12 @@ import json
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class EventType(str, Enum):
     """Types of streaming events."""
+
     SESSION_START = "session_start"
     SESSION_END = "session_end"
     CODE_CHANGE = "code_change"
@@ -40,6 +41,7 @@ class EventType(str, Enum):
 @dataclass
 class StreamingEvent:
     """A single streaming event."""
+
     event_type: EventType
     timestamp: float
     data: dict[str, Any]
@@ -68,7 +70,9 @@ class StreamingManager:
 
     def __init__(self):
         self._active_sessions: dict[str, dict[str, Any]] = {}
-        self._subscribers: dict[str, set[Any]] = {}  # session_id -> set of websocket connections
+        self._subscribers: dict[
+            str, set[Any]
+        ] = {}  # session_id -> set of websocket connections
         self._event_queue: asyncio.Queue = asyncio.Queue()
         self._is_broadcasting = False
 
@@ -83,7 +87,7 @@ class StreamingManager:
         # Preserve existing subscribers (frontend may connect before agent starts)
         if session_id not in self._subscribers:
             self._subscribers[session_id] = set()
-        
+
         event = StreamingEvent(
             event_type=EventType.SESSION_START,
             timestamp=time.time(),
@@ -94,34 +98,35 @@ class StreamingManager:
             session_id=session_id,
         )
         await self._broadcast_event(event)
-        
+
     async def end_session(self, session_id: str) -> None:
         """End a streaming session."""
         if session_id not in self._active_sessions:
             return
-            
+
         self._active_sessions[session_id]["status"] = "completed"
         self._active_sessions[session_id]["end_time"] = time.time()
-        
+
         event = StreamingEvent(
             event_type=EventType.SESSION_END,
             timestamp=time.time(),
             data={
                 "session_id": session_id,
-                "duration": time.time() - self._active_sessions[session_id]["start_time"],
+                "duration": time.time()
+                - self._active_sessions[session_id]["start_time"],
                 "event_count": self._active_sessions[session_id]["event_count"],
             },
             session_id=session_id,
         )
         await self._broadcast_event(event)
-        
+
     async def emit_code_change(
         self,
         session_id: str,
         file_path: str,
         change_type: str,
-        content: Optional[str] = None,
-        diff: Optional[str] = None,
+        content: str | None = None,
+        diff: str | None = None,
     ) -> None:
         """Emit a code change event."""
         event = StreamingEvent(
@@ -136,13 +141,13 @@ class StreamingManager:
             session_id=session_id,
         )
         await self._broadcast_event(event)
-        
+
     async def emit_file_operation(
         self,
         session_id: str,
         operation: str,
         file_path: str,
-        content: Optional[str] = None,
+        content: str | None = None,
     ) -> None:
         """Emit a file operation event (create/update/delete)."""
         event_type_map = {
@@ -150,7 +155,7 @@ class StreamingManager:
             "update": EventType.FILE_UPDATE,
             "delete": EventType.FILE_DELETE,
         }
-        
+
         event = StreamingEvent(
             event_type=event_type_map.get(operation, EventType.FILE_UPDATE),
             timestamp=time.time(),
@@ -161,12 +166,12 @@ class StreamingManager:
             session_id=session_id,
         )
         await self._broadcast_event(event)
-        
+
     async def emit_command(
         self,
         session_id: str,
         command: str,
-        cwd: Optional[str] = None,
+        cwd: str | None = None,
     ) -> None:
         """Emit a command execution event."""
         event = StreamingEvent(
@@ -179,7 +184,7 @@ class StreamingManager:
             session_id=session_id,
         )
         await self._broadcast_event(event)
-        
+
     async def emit_command_output(
         self,
         session_id: str,
@@ -197,7 +202,7 @@ class StreamingManager:
             session_id=session_id,
         )
         await self._broadcast_event(event)
-        
+
     async def emit_agent_thinking(
         self,
         session_id: str,
@@ -213,12 +218,12 @@ class StreamingManager:
             session_id=session_id,
         )
         await self._broadcast_event(event)
-        
+
     async def emit_agent_response(
         self,
         session_id: str,
         response: str,
-        tokens_used: Optional[int] = None,
+        tokens_used: int | None = None,
     ) -> None:
         """Emit agent response event."""
         event = StreamingEvent(
@@ -231,7 +236,7 @@ class StreamingManager:
             session_id=session_id,
         )
         await self._broadcast_event(event)
-        
+
     async def emit_test_run(
         self,
         session_id: str,
@@ -247,12 +252,12 @@ class StreamingManager:
             session_id=session_id,
         )
         await self._broadcast_event(event)
-        
+
     async def emit_test_result(
         self,
         session_id: str,
         success: bool,
-        details: Optional[str] = None,
+        details: str | None = None,
     ) -> None:
         """Emit test result event."""
         event = StreamingEvent(
@@ -265,7 +270,7 @@ class StreamingManager:
             session_id=session_id,
         )
         await self._broadcast_event(event)
-        
+
     async def emit_chat_message(
         self,
         session_id: str,
@@ -285,13 +290,13 @@ class StreamingManager:
             session_id=session_id,
         )
         await self._broadcast_event(event)
-        
+
     async def emit_progress(
         self,
         session_id: str,
         progress: float,
         status: str,
-        current_step: Optional[str] = None,
+        current_step: str | None = None,
     ) -> None:
         """Emit a progress update event."""
         event = StreamingEvent(
@@ -305,52 +310,52 @@ class StreamingManager:
             session_id=session_id,
         )
         await self._broadcast_event(event)
-        
+
     async def _broadcast_event(self, event: StreamingEvent) -> None:
         """Broadcast event to all subscribers of the session."""
         session_id = event.session_id
-        
+
         # Update event count
         if session_id in self._active_sessions:
             self._active_sessions[session_id]["event_count"] += 1
-        
+
         # Get subscribers for this session
         subscribers = self._subscribers.get(session_id, set())
-        
+
         # Broadcast to all subscribers
         event_dict = event.to_dict()
         disconnected = set()
-        
+
         for ws in subscribers:
             try:
                 await ws.send(json.dumps(event_dict))
             except Exception as e:
                 print(f"Failed to send to subscriber: {e}")
                 disconnected.add(ws)
-        
+
         # Remove disconnected subscribers
         for ws in disconnected:
             subscribers.discard(ws)
-            
+
     async def subscribe(self, session_id: str, websocket: Any) -> None:
         """Subscribe a websocket to a session."""
         if session_id not in self._subscribers:
             self._subscribers[session_id] = set()
         self._subscribers[session_id].add(websocket)
-        
+
     async def unsubscribe(self, session_id: str, websocket: Any) -> None:
         """Unsubscribe a websocket from a session."""
         if session_id in self._subscribers:
             self._subscribers[session_id].discard(websocket)
-            
+
     async def pause_session(self, session_id: str) -> None:
         """Pause a streaming session."""
         if session_id not in self._active_sessions:
             return
-            
+
         self._active_sessions[session_id]["status"] = "paused"
         self._active_sessions[session_id]["paused_at"] = time.time()
-        
+
         event = StreamingEvent(
             event_type=EventType.PROGRESS_UPDATE,
             timestamp=time.time(),
@@ -362,23 +367,25 @@ class StreamingManager:
             session_id=session_id,
         )
         await self._broadcast_event(event)
-        
+
     async def resume_session(self, session_id: str) -> None:
         """Resume a paused streaming session."""
         if session_id not in self._active_sessions:
             return
-            
+
         if self._active_sessions[session_id]["status"] != "paused":
             return
-            
+
         self._active_sessions[session_id]["status"] = "active"
-        
+
         # Adjust start time if session was paused
         if "paused_at" in self._active_sessions[session_id]:
-            pause_duration = time.time() - self._active_sessions[session_id]["paused_at"]
+            pause_duration = (
+                time.time() - self._active_sessions[session_id]["paused_at"]
+            )
             self._active_sessions[session_id]["start_time"] += pause_duration
             del self._active_sessions[session_id]["paused_at"]
-        
+
         event = StreamingEvent(
             event_type=EventType.PROGRESS_UPDATE,
             timestamp=time.time(),
@@ -390,7 +397,7 @@ class StreamingManager:
             session_id=session_id,
         )
         await self._broadcast_event(event)
-        
+
     def get_active_sessions(self) -> list[dict[str, Any]]:
         """Get list of active streaming sessions."""
         return [
@@ -403,7 +410,7 @@ class StreamingManager:
             if session_data["status"] == "active"
         ]
 
-    def get_session_info(self, session_id: str) -> Optional[dict[str, Any]]:
+    def get_session_info(self, session_id: str) -> dict[str, Any] | None:
         """Get info about a specific session."""
         if session_id not in self._active_sessions:
             return None
@@ -416,7 +423,7 @@ class StreamingManager:
 
 
 # Global instance
-_streaming_manager: Optional[StreamingManager] = None
+_streaming_manager: StreamingManager | None = None
 
 
 def get_streaming_manager() -> StreamingManager:

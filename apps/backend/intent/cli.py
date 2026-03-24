@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Intent Analysis CLI
 ===================
@@ -45,7 +45,9 @@ def cmd_analyze(args):
         analysis = recognizer.analyze_from_spec_dir(spec_dir)
     else:
         if not args.description:
-            console.print("[red]Error: Either --description or --spec-dir required[/red]")
+            console.print(
+                "[red]Error: Either --description or --spec-dir required[/red]"
+            )
             sys.exit(1)
 
         console.print(f"[cyan]Analyzing intent: {args.description}[/cyan]\n")
@@ -131,7 +133,9 @@ def cmd_metrics(args):
             metrics["by_category"].items(), key=lambda x: x[1]["accuracy"], reverse=True
         ):
             accuracy = stats["accuracy"]
-            color = "green" if accuracy >= 0.8 else "yellow" if accuracy >= 0.6 else "red"
+            color = (
+                "green" if accuracy >= 0.8 else "yellow" if accuracy >= 0.6 else "red"
+            )
             table.add_row(
                 category,
                 f"[{color}]{accuracy:.1%}[/{color}]",
@@ -175,7 +179,9 @@ def cmd_recommend(args):
         analysis = recognizer.analyze_from_spec_dir(spec_dir)
     else:
         if not args.description:
-            console.print("[red]Error: Either --description or --spec-dir required[/red]")
+            console.print(
+                "[red]Error: Either --description or --spec-dir required[/red]"
+            )
             sys.exit(1)
 
         analysis = recognizer.analyze_intent(args.description)
@@ -237,7 +243,9 @@ def _display_intent_analysis(analysis):
 def _display_recommendations(recs):
     """Display recommendations in a nice format."""
     # Header
-    console.print(f"\n[bold cyan]Recommendations for: {recs.task_description[:80]}[/bold cyan]\n")
+    console.print(
+        f"\n[bold cyan]Recommendations for: {recs.task_description[:80]}[/bold cyan]\n"
+    )
 
     # Estimates
     console.print(f"[bold]Estimated Complexity:[/bold] {recs.estimated_complexity}")
@@ -246,10 +254,14 @@ def _display_recommendations(recs):
     )
 
     if recs.required_skills:
-        console.print(f"[bold]Required Skills:[/bold] {', '.join(recs.required_skills)}")
+        console.print(
+            f"[bold]Required Skills:[/bold] {', '.join(recs.required_skills)}"
+        )
 
     if recs.suggested_tests:
-        console.print(f"[bold]Suggested Tests:[/bold] {', '.join(recs.suggested_tests)}")
+        console.print(
+            f"[bold]Suggested Tests:[/bold] {', '.join(recs.suggested_tests)}"
+        )
 
     # Recommendations
     if recs.recommendations:
@@ -292,26 +304,18 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Commands")
 
     # Analyze command
-    analyze_parser = subparsers.add_parser(
-        "analyze", help="Analyze task intent"
-    )
+    analyze_parser = subparsers.add_parser("analyze", help="Analyze task intent")
     analyze_parser.add_argument(
         "description", nargs="?", help="Task description to analyze"
     )
-    analyze_parser.add_argument(
-        "--spec-dir", help="Spec directory to analyze"
-    )
-    analyze_parser.add_argument(
-        "--output", "-o", help="Output file for analysis JSON"
-    )
+    analyze_parser.add_argument("--spec-dir", help="Spec directory to analyze")
+    analyze_parser.add_argument("--output", "-o", help="Output file for analysis JSON")
 
     # Feedback command
     feedback_parser = subparsers.add_parser(
         "feedback", help="Record feedback on intent detection"
     )
-    feedback_parser.add_argument(
-        "--task-id", required=True, help="Task identifier"
-    )
+    feedback_parser.add_argument("--task-id", required=True, help="Task identifier")
     feedback_parser.add_argument(
         "--detected", required=True, help="Detected intent category"
     )
@@ -321,37 +325,21 @@ def main():
     feedback_parser.add_argument(
         "--confidence", type=float, default=0.5, help="Detection confidence (0-1)"
     )
-    feedback_parser.add_argument(
-        "--description", help="Task description"
-    )
-    feedback_parser.add_argument(
-        "--notes", help="Additional notes"
-    )
-    feedback_parser.add_argument(
-        "--project-id", help="Project identifier"
-    )
+    feedback_parser.add_argument("--description", help="Task description")
+    feedback_parser.add_argument("--notes", help="Additional notes")
+    feedback_parser.add_argument("--project-id", help="Project identifier")
 
     # Metrics command
-    metrics_parser = subparsers.add_parser(
-        "metrics", help="Show accuracy metrics"
-    )
-    metrics_parser.add_argument(
-        "--project-id", help="Filter by project"
-    )
+    metrics_parser = subparsers.add_parser("metrics", help="Show accuracy metrics")
+    metrics_parser.add_argument("--project-id", help="Filter by project")
 
     # Recommend command
     recommend_parser = subparsers.add_parser(
         "recommend", help="Generate recommendations"
     )
-    recommend_parser.add_argument(
-        "description", nargs="?", help="Task description"
-    )
-    recommend_parser.add_argument(
-        "--spec-dir", help="Spec directory"
-    )
-    recommend_parser.add_argument(
-        "--project-id", help="Project identifier"
-    )
+    recommend_parser.add_argument("description", nargs="?", help="Task description")
+    recommend_parser.add_argument("--spec-dir", help="Spec directory")
+    recommend_parser.add_argument("--project-id", help="Project identifier")
 
     args = parser.parse_args()
 
@@ -372,4 +360,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

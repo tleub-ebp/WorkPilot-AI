@@ -9,7 +9,6 @@ import json
 import logging
 from difflib import SequenceMatcher
 from pathlib import Path
-from typing import Optional
 
 from .models import LearningPattern
 
@@ -46,7 +45,9 @@ class PatternStorage:
             encoding="utf-8",
         )
 
-    def add_patterns(self, new_patterns: list[LearningPattern]) -> list[LearningPattern]:
+    def add_patterns(
+        self, new_patterns: list[LearningPattern]
+    ) -> list[LearningPattern]:
         """Add new patterns, merging duplicates. Returns the updated list."""
         existing = self.load_patterns()
         for new_p in new_patterns:
@@ -71,7 +72,7 @@ class PatternStorage:
             return True
         return False
 
-    def toggle_pattern(self, pattern_id: str) -> Optional[bool]:
+    def toggle_pattern(self, pattern_id: str) -> bool | None:
         """Toggle a pattern's enabled state. Returns new state or None if not found."""
         patterns = self.load_patterns()
         for p in patterns:
@@ -89,9 +90,7 @@ class PatternStorage:
         return [
             p
             for p in patterns
-            if p.enabled
-            and p.agent_phase == phase
-            and p.confidence >= min_confidence
+            if p.enabled and p.agent_phase == phase and p.confidence >= min_confidence
         ]
 
     def get_top_patterns(

@@ -16,7 +16,6 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Dict, Optional
 
 # Add the apps/backend directory to the Python path
 backend_path = Path(__file__).parent.parent
@@ -32,8 +31,8 @@ class CodeMigrationRunner:
         self,
         project_dir: str,
         migration_description: str,
-        model: Optional[str] = None,
-        thinking_level: Optional[str] = None,
+        model: str | None = None,
+        thinking_level: str | None = None,
         dry_run: bool = False,
         batch_size: int = 10,
     ):
@@ -43,7 +42,7 @@ class CodeMigrationRunner:
         self.thinking_level = thinking_level or "high"
         self.dry_run = dry_run
         self.batch_size = batch_size
-        self.orchestrator: Optional[MigrationOrchestrator] = None
+        self.orchestrator: MigrationOrchestrator | None = None
 
     def setup(self):
         """Initialize the migration orchestrator."""
@@ -58,7 +57,7 @@ class CodeMigrationRunner:
         )
         print("✅ Migration orchestrator initialized")
 
-    def run_migration(self) -> Dict:
+    def run_migration(self) -> dict:
         """Run the full migration workflow."""
         if not self.orchestrator:
             self.setup()
@@ -67,7 +66,9 @@ class CodeMigrationRunner:
         # Parse migration description to extract source/target
         target_framework, target_language = self._parse_migration_description()
 
-        print(f"   Source tech detected, target: {target_framework or 'auto'} / {target_language or 'auto'}")
+        print(
+            f"   Source tech detected, target: {target_framework or 'auto'} / {target_language or 'auto'}"
+        )
 
         print("\n📝 Phase 2: Generating migration plan...")
         try:
@@ -76,8 +77,12 @@ class CodeMigrationRunner:
                 target_language=target_language or "auto",
             )
             plan_summary = {
-                "migration_id": context.migration_id if hasattr(context, "migration_id") else "unknown",
-                "source": str(context.source_stack) if hasattr(context, "source_stack") else "detected",
+                "migration_id": context.migration_id
+                if hasattr(context, "migration_id")
+                else "unknown",
+                "source": str(context.source_stack)
+                if hasattr(context, "source_stack")
+                else "detected",
                 "target": f"{target_framework or 'modern'} / {target_language or 'auto'}",
                 "description": self.migration_description,
             }
@@ -94,7 +99,10 @@ class CodeMigrationRunner:
             print("   [DRY RUN] Skipping actual file modifications")
             execution_summary = {"status": "dry_run", "files_modified": 0}
         else:
-            execution_summary = {"status": "queued", "note": "Migration queued for AI agent execution"}
+            execution_summary = {
+                "status": "queued",
+                "note": "Migration queued for AI agent execution",
+            }
 
         result = {
             "status": "success",
@@ -143,7 +151,7 @@ class CodeMigrationRunner:
 
         return framework, language
 
-    def _generate_summary(self, plan: Dict, execution: Dict) -> Dict:
+    def _generate_summary(self, plan: dict, execution: dict) -> dict:
         """Generate a human-readable summary."""
         return {
             "migration_id": plan.get("migration_id", "unknown"),
@@ -207,7 +215,7 @@ def main():
         result = runner.run_migration()
 
         print("__MIGRATION_RESULT__:" + json.dumps(result))
-        print(f"\n✅ Migration analysis complete!")
+        print("\n✅ Migration analysis complete!")
     except KeyboardInterrupt:
         print("\n⚠️ Migration interrupted.")
         sys.exit(1)

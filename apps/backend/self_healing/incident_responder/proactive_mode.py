@@ -157,7 +157,9 @@ class ProactiveMode:
         return {
             "scanned": True,
             "files_at_risk": len(self._last_reports),
-            "avg_risk": round(sum(risk_scores) / len(risk_scores), 1) if risk_scores else 0.0,
+            "avg_risk": round(sum(risk_scores) / len(risk_scores), 1)
+            if risk_scores
+            else 0.0,
             "max_risk": max(risk_scores) if risk_scores else 0.0,
             "top_files": [
                 {"file": r.file_path, "risk": r.risk_score}

@@ -2,15 +2,16 @@
 Data models and types for the migration system.
 """
 
-from dataclasses import dataclass, field, asdict
-from enum import Enum
-from typing import Dict, List, Optional, Any
-from datetime import datetime
 import json
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any
 
 
 class MigrationState(Enum):
     """Migration execution state."""
+
     PLANNING = "planning"
     ANALYZING = "analyzing"
     TRANSFORMING = "transforming"
@@ -23,6 +24,7 @@ class MigrationState(Enum):
 
 class RiskLevel(Enum):
     """Risk assessment levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -31,6 +33,7 @@ class RiskLevel(Enum):
 
 class ConfidenceLevel(Enum):
     """Transformation confidence levels."""
+
     VERY_LOW = 0.2
     LOW = 0.4
     MEDIUM = 0.6
@@ -41,45 +44,47 @@ class ConfidenceLevel(Enum):
 @dataclass
 class StackInfo:
     """Information about a technology stack."""
+
     framework: str  # e.g., "react", "vue", "django", "flask"
     language: str  # e.g., "typescript", "python", "java"
     version: str  # Version of the framework/language
-    database: Optional[str] = None  # e.g., "mysql", "postgresql"
-    db_version: Optional[str] = None
-    dependencies: Dict[str, str] = field(default_factory=dict)  # name → version
-    additional_tools: List[str] = field(default_factory=list)  # e.g., webpack, docker
+    database: str | None = None  # e.g., "mysql", "postgresql"
+    db_version: str | None = None
+    dependencies: dict[str, str] = field(default_factory=dict)  # name → version
+    additional_tools: list[str] = field(default_factory=list)  # e.g., webpack, docker
     package_manager: str = "npm"  # npm, pip, maven, etc.
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "StackInfo":
+    def from_dict(cls, data: dict[str, Any]) -> "StackInfo":
         return cls(**data)
 
 
 @dataclass
 class MigrationStep:
     """Atomic migration step."""
+
     id: str
     title: str
     description: str
     category: str  # e.g., "component", "database", "config", "api"
-    files_affected: List[str]
+    files_affected: list[str]
     transformation_type: str  # e.g., "api_mapping", "syntax_conversion"
-    
+
     # Execution details
     expected_changes: int  # Expected number of file changes
-    rollback_procedure: Optional[str] = None
-    validation_checks: List[str] = field(default_factory=list)
-    dependencies: List[str] = field(default_factory=list)  # Step IDs this depends on
-    
+    rollback_procedure: str | None = None
+    validation_checks: list[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)  # Step IDs this depends on
+
     # Status tracking
     status: str = "pending"  # pending, in_progress, completed, failed
-    error: Optional[str] = None
-    applied_at: Optional[datetime] = None
-    
-    def to_dict(self) -> Dict[str, Any]:
+    error: str | None = None
+    applied_at: datetime | None = None
+
+    def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         if self.applied_at:
             data["applied_at"] = self.applied_at.isoformat()
@@ -89,23 +94,24 @@ class MigrationStep:
 @dataclass
 class MigrationPhase:
     """Group of related migration steps."""
+
     id: str
     name: str  # e.g., "Components", "Database Schema", "API Layer"
     description: str
-    
+
     # Metadata
     estimated_effort: str = "medium"  # Low, Medium, High
-    
-    steps: List[MigrationStep] = field(default_factory=list)
+
+    steps: list[MigrationStep] = field(default_factory=list)
     risk_level: RiskLevel = RiskLevel.MEDIUM
     requires_approval: bool = False
-    
+
     # Status
     status: str = "pending"  # pending, in_progress, completed, failed
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    
-    def to_dict(self) -> Dict[str, Any]:
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+
+    def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data["steps"] = [step.to_dict() for step in self.steps]
         data["risk_level"] = self.risk_level.value
@@ -119,64 +125,72 @@ class MigrationPhase:
 @dataclass
 class TransformationResult:
     """Result of a single code transformation."""
+
     file_path: str
     transformation_type: str
     before: str  # Original content
-    after: str   # Transformed content
+    after: str  # Transformed content
     changes_count: int  # Number of lines changed
     confidence: float  # 0-1 confidence in transformation quality
-    
+
     # Validation
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
     validation_passed: bool = False
-    
+
     # Metadata
     applied: bool = False
-    applied_at: Optional[datetime] = None
-    
-    def to_dict(self) -> Dict[str, Any]:
+    applied_at: datetime | None = None
+
+    def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         if self.applied_at:
             data["applied_at"] = self.applied_at.isoformat()
         return data
-    
+
     def get_diff(self) -> str:
         """Generate unified diff representation."""
         from difflib import unified_diff
+
         before_lines = self.before.splitlines(keepends=True)
         after_lines = self.after.splitlines(keepends=True)
-        diff_lines = list(unified_diff(before_lines, after_lines, 
-                                       fromfile=f"{self.file_path}.before",
-                                       tofile=f"{self.file_path}.after"))
+        diff_lines = list(
+            unified_diff(
+                before_lines,
+                after_lines,
+                fromfile=f"{self.file_path}.before",
+                tofile=f"{self.file_path}.after",
+            )
+        )
         return "".join(diff_lines)
 
 
 @dataclass
 class MigrationPlan:
     """Complete migration plan."""
+
     id: str
     source_stack: StackInfo
     target_stack: StackInfo
-    
+
     # Plan details
-    phases: List[MigrationPhase] = field(default_factory=list)
+    phases: list[MigrationPhase] = field(default_factory=list)
     total_steps: int = 0
-    
+
     # Assessment
     estimated_effort: str = "medium"  # Low, Medium, High, Very High
     risk_level: RiskLevel = RiskLevel.MEDIUM
     estimated_duration_hours: float = 0.0
-    
+
     # Metadata
     created_at: datetime = field(default_factory=datetime.now)
     created_by: str = "claude"
     approvals_required: bool = False
-    
+
     # Status
     status: str = "pending"  # pending, approved, in_progress, completed, failed
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data["source_stack"] = self.source_stack.to_dict()
         data["target_stack"] = self.target_stack.to_dict()
@@ -184,9 +198,9 @@ class MigrationPlan:
         data["risk_level"] = self.risk_level.value
         data["created_at"] = self.created_at.isoformat()
         return data
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MigrationPlan":
+    def from_dict(cls, data: dict[str, Any]) -> "MigrationPlan":
         """Deserialize from dict."""
         data = dict(data)
         data["source_stack"] = StackInfo.from_dict(data["source_stack"])
@@ -202,31 +216,32 @@ class MigrationPlan:
 @dataclass
 class MigrationContext:
     """Holds all migration state and information."""
+
     migration_id: str
     source_stack: StackInfo
     target_stack: StackInfo
     project_dir: str
-    
+
     # Planning
-    plan: Optional[MigrationPlan] = None
-    
+    plan: MigrationPlan | None = None
+
     # Execution
     state: MigrationState = MigrationState.PLANNING
-    transformations: List[TransformationResult] = field(default_factory=list)
-    test_results: Dict[str, Any] = field(default_factory=dict)
-    
+    transformations: list[TransformationResult] = field(default_factory=list)
+    test_results: dict[str, Any] = field(default_factory=dict)
+
     # Tracking
-    checkpoints: Dict[str, str] = field(default_factory=dict)  # phase_id → git_commit
+    checkpoints: dict[str, str] = field(default_factory=dict)  # phase_id → git_commit
     rollback_available: bool = False
-    current_phase: Optional[str] = None
-    
+    current_phase: str | None = None
+
     # Metadata
-    started_at: Optional[datetime] = None
-    paused_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    last_error: Optional[str] = None
-    
-    def to_dict(self) -> Dict[str, Any]:
+    started_at: datetime | None = None
+    paused_at: datetime | None = None
+    completed_at: datetime | None = None
+    last_error: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data["source_stack"] = self.source_stack.to_dict()
         data["target_stack"] = self.target_stack.to_dict()
@@ -240,16 +255,16 @@ class MigrationContext:
         if self.completed_at:
             data["completed_at"] = self.completed_at.isoformat()
         return data
-    
+
     def save_to_file(self, filepath: str) -> None:
         """Save context to JSON file."""
         with open(filepath, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
-    
+
     @classmethod
     def load_from_file(cls, filepath: str) -> "MigrationContext":
         """Load context from JSON file."""
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             data = json.load(f)
         data["source_stack"] = StackInfo.from_dict(data["source_stack"])
         data["target_stack"] = StackInfo.from_dict(data["target_stack"])
@@ -260,30 +275,31 @@ class MigrationContext:
 @dataclass
 class ValidationReport:
     """Report of migration validation."""
+
     passed: bool
     total_tests: int = 0
     passed_tests: int = 0
     failed_tests: int = 0
     skipped_tests: int = 0
-    
+
     # Coverage
-    before_coverage: Optional[float] = None  # percentage
-    after_coverage: Optional[float] = None
-    coverage_change: Optional[float] = None
-    
+    before_coverage: float | None = None  # percentage
+    after_coverage: float | None = None
+    coverage_change: float | None = None
+
     # Regressions
     regression_detected: bool = False
-    regressions: List[str] = field(default_factory=list)
-    
+    regressions: list[str] = field(default_factory=list)
+
     # Issues
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+
     # Metadata
     duration_seconds: float = 0.0
     completed_at: datetime = field(default_factory=datetime.now)
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data["completed_at"] = self.completed_at.isoformat()
         return data
@@ -292,14 +308,15 @@ class ValidationReport:
 @dataclass
 class RollbackCheckpoint:
     """Checkpoint for rollback recovery."""
+
     phase_id: str
     checkpoint_id: str
     git_commit: str
     timestamp: datetime
     state_file: str  # Path to saved context
     description: str
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "phase_id": self.phase_id,
             "checkpoint_id": self.checkpoint_id,

@@ -21,7 +21,7 @@ describe('GitHub OAuth Handlers (Placeholder)', () => {
   it('should be able to import handlers', async () => {
     // This will fail until child_process mocking is fixed
     try {
-      await import('../oauth-handlers');
+      await import('./oauth-handlers');
       expect(true).toBe(true);
     } catch (error) {
       // Expected to fail due to child_process issues

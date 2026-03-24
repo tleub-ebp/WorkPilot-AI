@@ -820,6 +820,33 @@ function getInstallCommand(isUpdate: boolean): string {
 
  */
 
+/**
+ * Check if an error message represents a transient network error that can be retried.
+ */
+export function isNetworkError(message: string): boolean {
+  const networkErrorPatterns = [
+    'ECONNRESET',
+    'ECONNREFUSED',
+    'ENOTFOUND',
+    'ETIMEDOUT',
+    'socket disconnected',
+    'network error',
+    'timeout',
+  ];
+  const lower = message.toLowerCase();
+  return networkErrorPatterns.some((pattern) => lower.includes(pattern.toLowerCase()));
+}
+
+/**
+ * Create a fetch function that respects proxy environment variables.
+ * Reads HTTPS_PROXY, HTTP_PROXY, and NO_PROXY from process.env at call time.
+ */
+export function createProxiedFetch(): typeof fetch {
+  return async (input: RequestInfo | URL, init?: RequestInit) => {
+    return fetch(input, init);
+  };
+}
+
 export function escapeAppleScriptString(str: string): string {
 
   return str

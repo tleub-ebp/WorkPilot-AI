@@ -1,4 +1,4 @@
-﻿"""Streaming Development Mode - Real-time coding session broadcasting."""
+"""Streaming Development Mode - Real-time coding session broadcasting."""
 
 from .agent_wrapper import StreamingAgentWrapper, create_streaming_wrapper
 from .session_recorder import SessionRecorder

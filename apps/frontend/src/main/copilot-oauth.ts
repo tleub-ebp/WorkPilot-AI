@@ -356,8 +356,6 @@ export async function getCopilotAuthStatus(): Promise<{
               });
             }
           } catch (error) {
-            // Skip invalid token files
-            continue;
           }
         }
       }

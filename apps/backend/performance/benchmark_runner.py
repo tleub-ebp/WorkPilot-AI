@@ -1,13 +1,18 @@
 """Benchmark Runner - Runs available benchmarks and measures performance."""
+
 import subprocess
 import time
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 from .models import BenchmarkResult
 
 IGNORE_PATTERNS = {
-    "node_modules", ".git", "__pycache__", "dist", "build", ".venv",
+    "node_modules",
+    ".git",
+    "__pycache__",
+    "dist",
+    "build",
+    ".venv",
 }
 
 
@@ -23,6 +28,7 @@ class BenchmarkRunner:
         if package_json.exists():
             try:
                 import json
+
                 data = json.loads(package_json.read_text(encoding="utf-8"))
                 deps = {
                     **data.get("dependencies", {}),
@@ -50,7 +56,7 @@ class BenchmarkRunner:
 
         return "unknown"
 
-    def run_benchmarks(self, timeout_seconds: int = 60) -> List[BenchmarkResult]:
+    def run_benchmarks(self, timeout_seconds: int = 60) -> list[BenchmarkResult]:
         """Run available benchmarks and return results."""
         results = []
 
@@ -72,7 +78,9 @@ class BenchmarkRunner:
 
         return results
 
-    def run_python_profiling(self, entry_point: Optional[str] = None) -> Optional[BenchmarkResult]:
+    def run_python_profiling(
+        self, entry_point: str | None = None
+    ) -> BenchmarkResult | None:
         """Profile a Python entry point using cProfile."""
         if not entry_point:
             # Try to find a common entry point
@@ -87,7 +95,9 @@ class BenchmarkRunner:
 
         try:
             cmd = ["python", "-m", "cProfile", "-s", "cumulative", entry_point]
-            duration, output = self._run_command_timed(cmd, str(self.project_dir), timeout=30)
+            duration, output = self._run_command_timed(
+                cmd, str(self.project_dir), timeout=30
+            )
             return BenchmarkResult(
                 name="python_profiling",
                 duration_ms=duration,
@@ -100,7 +110,7 @@ class BenchmarkRunner:
                 metadata={"error": str(e)},
             )
 
-    def run_build_timing(self) -> Optional[BenchmarkResult]:
+    def run_build_timing(self) -> BenchmarkResult | None:
         """Time the build process if a build script is detected."""
         package_json = self.project_dir / "package.json"
         if not package_json.exists():
@@ -108,6 +118,7 @@ class BenchmarkRunner:
 
         try:
             import json
+
             data = json.loads(package_json.read_text(encoding="utf-8"))
             scripts = data.get("scripts", {})
             if "build" not in scripts:
@@ -125,7 +136,7 @@ class BenchmarkRunner:
         except Exception:
             return None
 
-    def _run_js_tests(self, framework: str, timeout: int) -> Optional[BenchmarkResult]:
+    def _run_js_tests(self, framework: str, timeout: int) -> BenchmarkResult | None:
         """Run JS test suite and capture timing."""
         cmds = {
             "vitest": ["npx", "vitest", "run", "--reporter=verbose"],
@@ -136,7 +147,9 @@ class BenchmarkRunner:
             return None
 
         try:
-            duration, output = self._run_command_timed(cmd, str(self.project_dir), timeout)
+            duration, output = self._run_command_timed(
+                cmd, str(self.project_dir), timeout
+            )
             return BenchmarkResult(
                 name=f"{framework}_tests",
                 duration_ms=duration,
@@ -149,11 +162,13 @@ class BenchmarkRunner:
                 metadata={"error": str(e)},
             )
 
-    def _run_pytest(self, timeout: int) -> Optional[BenchmarkResult]:
+    def _run_pytest(self, timeout: int) -> BenchmarkResult | None:
         """Run pytest and capture timing."""
         try:
             cmd = ["python", "-m", "pytest", "--tb=no", "-q"]
-            duration, output = self._run_command_timed(cmd, str(self.project_dir), timeout)
+            duration, output = self._run_command_timed(
+                cmd, str(self.project_dir), timeout
+            )
             return BenchmarkResult(
                 name="pytest",
                 duration_ms=duration,
@@ -167,8 +182,8 @@ class BenchmarkRunner:
             )
 
     def _run_command_timed(
-        self, cmd: List[str], cwd: str, timeout: int
-    ) -> Tuple[float, str]:
+        self, cmd: list[str], cwd: str, timeout: int
+    ) -> tuple[float, str]:
         """Run a command and return (duration_ms, stdout_output)."""
         start = time.time()
         try:

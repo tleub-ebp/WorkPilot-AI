@@ -1,10 +1,9 @@
-﻿"""
+"""
 React to Angular Transformer
 Transforms React components to Angular components with TypeScript
 """
 
 import re
-from typing import List
 from pathlib import Path
 
 from ..models import TransformationResult
@@ -15,29 +14,31 @@ class ReactToAngularTransformer:
 
     def __init__(self, project_dir: str):
         self.project_dir = Path(project_dir)
-        self.transformations: List[TransformationResult] = []
+        self.transformations: list[TransformationResult] = []
 
-    def transform_files(self, file_paths: List[str]) -> List[TransformationResult]:
+    def transform_files(self, file_paths: list[str]) -> list[TransformationResult]:
         """Transform React JSX files to Angular components."""
         results = []
-        
+
         for file_path in file_paths:
             try:
                 full_path = self.project_dir / file_path
                 if not full_path.exists():
                     continue
-                
+
                 content = full_path.read_text()
-                
+
                 # Skip if not a React component
                 if not self._is_react_component(content):
                     continue
-                
+
                 # Transform the content
                 transformed = self._transform_react_to_angular(content, file_path)
-                
+
                 result = TransformationResult(
-                    file_path=file_path.replace('.jsx', '.component.ts').replace('.tsx', '.component.ts'),
+                    file_path=file_path.replace(".jsx", ".component.ts").replace(
+                        ".tsx", ".component.ts"
+                    ),
                     transformation_type="react_to_angular",
                     before=content,
                     after=transformed,
@@ -46,7 +47,7 @@ class ReactToAngularTransformer:
                     validation_passed=False,
                 )
                 results.append(result)
-                
+
             except Exception as e:
                 result = TransformationResult(
                     file_path=file_path,
@@ -59,192 +60,181 @@ class ReactToAngularTransformer:
                     validation_passed=False,
                 )
                 results.append(result)
-        
+
         self.transformations = results
         return results
 
     def _is_react_component(self, content: str) -> bool:
         """Check if file is a React component."""
         return bool(
-            re.search(r'import.*from\s+[\'"]react[\'"]', content) or
-            re.search(r'from react import', content) or
-            re.search(r'React\.', content)
+            re.search(r'import.*from\s+[\'"]react[\'"]', content)
+            or re.search(r"from react import", content)
+            or re.search(r"React\.", content)
         )
 
     def _transform_react_to_angular(self, content: str, file_path: str) -> str:
         """Transform React component to Angular component."""
         angular_ts = content
-        
+
         # 1. Remove React imports
         angular_ts = re.sub(
             r'import\s+(?:React|{\s*React\s*})\s+from\s+[\'"]react[\'"];?\n?',
-            '',
-            angular_ts
+            "",
+            angular_ts,
         )
-        
+
         # 2. Extract component name from file path
         comp_name = Path(file_path).stem
-        comp_class_name = ''.join(word.capitalize() for word in comp_name.split('_') if word)
-        
+        comp_class_name = "".join(
+            word.capitalize() for word in comp_name.split("_") if word
+        )
+
         # 3. Convert function component to Angular class component
         angular_ts = self._convert_to_class_component(angular_ts, comp_class_name)
-        
+
         # 4. Transform props to @Input decorators
         angular_ts = self._transform_props_to_inputs(angular_ts)
-        
+
         # 5. Transform state to properties
         angular_ts = self._transform_state_to_properties(angular_ts)
-        
+
         # 6. Transform hooks to lifecycle hooks
         angular_ts = self._transform_hooks_to_lifecycle(angular_ts)
-        
+
         # 7. Transform JSX to template
         template = self._extract_and_transform_template(angular_ts)
-        
+
         # 8. Wrap in Angular component with decorator
         angular_ts = self._create_angular_component(
-            angular_ts, 
-            comp_class_name, 
-            comp_name, 
-            template
+            angular_ts, comp_class_name, comp_name, template
         )
-        
+
         return angular_ts
 
     def _is_react_component(self, content: str) -> bool:
         """Check if content is React component."""
         return bool(
-            re.search(r'import.*react', content, re.IGNORECASE) or
-            re.search(r'function\s+\w+\s*\(', content) or
-            re.search(r'const\s+\w+\s*=\s*\(', content)
+            re.search(r"import.*react", content, re.IGNORECASE)
+            or re.search(r"function\s+\w+\s*\(", content)
+            or re.search(r"const\s+\w+\s*=\s*\(", content)
         )
 
     def _convert_to_class_component(self, content: str, class_name: str) -> str:
         """Convert function component to Angular class component."""
         # Extract function body
-        func_pattern = r'(?:function|const)\s+\w+\s*\(([^)]*)\)\s*(?:=>)?\s*{([\s\S]*?)^}'
-        
+        func_pattern = (
+            r"(?:function|const)\s+\w+\s*\(([^)]*)\)\s*(?:=>)?\s*{([\s\S]*?)^}"
+        )
+
         match = re.search(func_pattern, content, re.MULTILINE)
         if match:
             params = match.group(1)
             body = match.group(2)
             return body
-        
+
         return content
 
     def _transform_props_to_inputs(self, content: str) -> str:
         """Transform props to @Input decorators."""
         # Detect prop access patterns
-        prop_pattern = r'props\.(\w+)'
-        
+        prop_pattern = r"props\.(\w+)"
+
         props = set()
         for match in re.finditer(prop_pattern, content):
             props.add(match.group(1))
-        
+
         # Add @Input decorators for each prop
         if props:
             imports = "import { Component, Input } from '@angular/core'\n\n"
-            
+
             input_declarations = []
             for prop in sorted(props):
                 input_declarations.append(f"  @Input() {prop}: any")
-            
-            inputs_str = '\n'.join(input_declarations)
+
+            inputs_str = "\n".join(input_declarations)
             return f"{imports}{inputs_str}\n\n{content}"
-        
+
         return content
 
     def _transform_state_to_properties(self, content: str) -> str:
         """Transform useState to class properties."""
         # useState(value) -> property: type = value
-        pattern = r'const\s+\[(\w+),\s*set(\w+)\]\s*=\s*useState\(([^)]*)\)'
-        
+        pattern = r"const\s+\[(\w+),\s*set(\w+)\]\s*=\s*useState\(([^)]*)\)"
+
         def replace_state(match):
             var_name = match.group(1)
             setter_name = match.group(2)
             initial_value = match.group(3)
-            
+
             return f"{var_name}: any = {initial_value}"
-        
+
         content = re.sub(pattern, replace_state, content)
-        
+
         # Replace setState calls with direct assignment
-        content = re.sub(
-            r'set(\w+)\(([^)]*)\)',
-            r'this.\1 = \2',
-            content
-        )
-        
+        content = re.sub(r"set(\w+)\(([^)]*)\)", r"this.\1 = \2", content)
+
         return content
 
     def _transform_hooks_to_lifecycle(self, content: str) -> str:
         """Transform React hooks to Angular lifecycle hooks."""
         # useEffect -> ngOnInit or ngOnChanges
-        pattern = r'useEffect\(\s*\(\)\s*=>\s*{([\s\S]*?)},\s*\[\]\s*\)'
-        content = re.sub(
-            pattern,
-            r'ngOnInit() {\1}',
-            content
-        )
-        
+        pattern = r"useEffect\(\s*\(\)\s*=>\s*{([\s\S]*?)},\s*\[\]\s*\)"
+        content = re.sub(pattern, r"ngOnInit() {\1}", content)
+
         # useEffect with deps -> ngOnChanges
-        pattern = r'useEffect\(\s*\(\)\s*=>\s*{([\s\S]*?)},\s*\[([^\]]+)\]\s*\)'
-        content = re.sub(
-            pattern,
-            r'ngOnChanges(changes: SimpleChanges) {\1}',
-            content
-        )
-        
+        pattern = r"useEffect\(\s*\(\)\s*=>\s*{([\s\S]*?)},\s*\[([^\]]+)\]\s*\)"
+        content = re.sub(pattern, r"ngOnChanges(changes: SimpleChanges) {\1}", content)
+
         return content
 
     def _extract_and_transform_template(self, content: str) -> str:
         """Extract JSX and convert to Angular template."""
         # Find return statement with JSX
-        jsx_pattern = r'return\s*\(([\s\S]*?)\)'
+        jsx_pattern = r"return\s*\(([\s\S]*?)\)"
         match = re.search(jsx_pattern, content)
-        
+
         if not match:
-            return '<div><!-- TODO: Add template --></div>'
-        
+            return "<div><!-- TODO: Add template --></div>"
+
         jsx = match.group(1)
-        
+
         # Convert JSX to template
         template = self._convert_jsx_to_template(jsx)
-        
+
         return template
 
     def _convert_jsx_to_template(self, jsx: str) -> str:
         """Convert JSX syntax to Angular template."""
         template = jsx
-        
+
         # className -> class
-        template = re.sub(r'className=', '[class]=', template)
-        template = re.sub(r'class=', 'class=', template)
-        
+        template = re.sub(r"className=", "[class]=", template)
+        template = re.sub(r"class=", "class=", template)
+
         # onClick -> (click)
-        template = re.sub(r'onClick=', '(click)=', template)
-        template = re.sub(r'onChange=', '(change)=', template)
-        
+        template = re.sub(r"onClick=", "(click)=", template)
+        template = re.sub(r"onChange=", "(change)=", template)
+
         # {variable} -> {{ variable }}
-        template = re.sub(r'{(\w+)}', r'{{ \1 }}', template)
-        
+        template = re.sub(r"{(\w+)}", r"{{ \1 }}", template)
+
         # condition && <JSX> -> *ngIf
         template = re.sub(
-            r'{(\w+)\s*&&\s*<(\w+)([^>]*)>',
-            r'<\2 *ngIf="\1"\3>',
-            template
+            r"{(\w+)\s*&&\s*<(\w+)([^>]*)>", r'<\2 *ngIf="\1"\3>', template
         )
-        
+
         # .map() -> *ngFor
         template = re.sub(
-            r'{(\w+)\.map\(\((\w+)\)\s*=>\s*<(\w+)([^>]*)>',
+            r"{(\w+)\.map\(\((\w+)\)\s*=>\s*<(\w+)([^>]*)>",
             r'<\3 *ngFor="let \2 of \1"\4>',
-            template
+            template,
         )
-        
+
         return template
 
-    def _create_angular_component(self, script: str, class_name: str, selector_name: str, template: str) -> str:
+    def _create_angular_component(
+        self, script: str, class_name: str, selector_name: str, template: str
+    ) -> str:
         """Create Angular component with decorator."""
         component_decorator = f"""
 import {{ Component, Input, OnInit }} from '@angular/core'
@@ -273,38 +263,38 @@ export class {class_name}Component implements OnInit {{
     def _extract_properties(self, content: str) -> str:
         """Extract properties from component."""
         lines = []
-        for line in content.split('\n'):
-            if '=' in line and not 'function' in line and not 'const' in line:
-                lines.append('  ' + line.strip())
-        return '\n'.join(lines) if lines else ''
+        for line in content.split("\n"):
+            if "=" in line and "function" not in line and "const" not in line:
+                lines.append("  " + line.strip())
+        return "\n".join(lines) if lines else ""
 
     def _extract_methods(self, content: str) -> str:
         """Extract methods from component."""
         methods = []
-        
+
         # Find arrow functions and regular functions
-        pattern = r'const\s+(\w+)\s*=\s*(?:\([^)]*\)\s*)?=>\s*{([\s\S]*?)(?=\n\s*(?:const|function|return)|\Z)}'
-        
+        pattern = r"const\s+(\w+)\s*=\s*(?:\([^)]*\)\s*)?=>\s*{([\s\S]*?)(?=\n\s*(?:const|function|return)|\Z)}"
+
         for match in re.finditer(pattern, content):
             method_name = match.group(1)
             method_body = match.group(2)
             methods.append(f"  {method_name}(): void {{\n{method_body}\n  }}")
-        
-        return '\n\n'.join(methods) if methods else ''
+
+        return "\n\n".join(methods) if methods else ""
 
     def _count_changes(self, before: str, after: str) -> int:
         """Count lines changed."""
-        before_lines = before.split('\n')
-        after_lines = after.split('\n')
-        
+        before_lines = before.split("\n")
+        after_lines = after.split("\n")
+
         changes = abs(len(before_lines) - len(after_lines))
-        
+
         for b, a in zip(before_lines, after_lines):
             if b != a:
                 changes += 1
-        
+
         return changes
 
-    def get_transformations(self) -> List[TransformationResult]:
+    def get_transformations(self) -> list[TransformationResult]:
         """Get all transformations."""
         return self.transformations

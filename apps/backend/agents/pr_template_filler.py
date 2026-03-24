@@ -9,7 +9,7 @@ fill them based on code changes, spec context, commit history, and branch info.
 import logging
 from pathlib import Path
 
-from core.client import create_client
+from core.client import create_agent_client
 from task_logger import LogPhase, get_task_logger
 
 from .session import run_agent_session

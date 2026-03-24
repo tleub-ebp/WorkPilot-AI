@@ -7,7 +7,6 @@ Interactive selection menus with keyboard navigation.
 
 import sys
 from dataclasses import dataclass
-from typing import Optional
 
 # Platform-specific imports for raw character input
 try:
@@ -93,7 +92,7 @@ def select_menu(
     options: list[MenuOption],
     subtitle: str = "",
     allow_quit: bool = True,
-) -> Optional[str]:
+) -> str | None:
     """
     Display an interactive selection menu.
 
@@ -209,7 +208,7 @@ def _fallback_menu(
     options: list[MenuOption],
     subtitle: str = "",
     allow_quit: bool = True,
-) -> Optional[str]:
+) -> str | None:
     """Fallback menu using simple numbered input."""
     print()
     print(divider())

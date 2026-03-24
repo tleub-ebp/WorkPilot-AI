@@ -32,17 +32,22 @@ class BrowserAgentRunner:
 
     def _get_controller(self):
         from browser_agent.browser_controller import BrowserController
+
         return BrowserController(project_dir=self.project_dir)
 
     def _get_regression_engine(self):
         from browser_agent.visual_regression import VisualRegressionEngine
+
         return VisualRegressionEngine(project_dir=self.project_dir)
 
     def _get_test_executor(self):
         from browser_agent.test_executor import TestExecutor
+
         return TestExecutor(project_dir=self.project_dir)
 
-    async def run_screenshot(self, url: str, name: str, full_page: bool = False) -> dict:
+    async def run_screenshot(
+        self, url: str, name: str, full_page: bool = False
+    ) -> dict:
         """Capture a screenshot of a URL."""
         controller = self._get_controller()
         try:
@@ -71,7 +76,10 @@ class BrowserAgentRunner:
             screenshots = controller.list_screenshots()
             matching = [s for s in screenshots if s.name == name]
             if not matching:
-                return {"success": False, "error": f"No screenshot found for '{name}'. Capture one first."}
+                return {
+                    "success": False,
+                    "error": f"No screenshot found for '{name}'. Capture one first.",
+                }
             current_path = Path(matching[0].path)
 
         result = engine.compare(name=name, current_path=current_path)
@@ -152,22 +160,28 @@ def main():
     parser.add_argument(
         "--project", type=str, required=True, help="Project directory path"
     )
-    parser.add_argument(
-        "--json", action="store_true", help="Output results as JSON"
-    )
+    parser.add_argument("--json", action="store_true", help="Output results as JSON")
 
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
     # screenshot
     screenshot_parser = subparsers.add_parser("screenshot", help="Capture a screenshot")
-    screenshot_parser.add_argument("--url", type=str, required=True, help="URL to screenshot")
-    screenshot_parser.add_argument("--name", type=str, required=True, help="Screenshot name")
-    screenshot_parser.add_argument("--full-page", action="store_true", help="Capture full page")
+    screenshot_parser.add_argument(
+        "--url", type=str, required=True, help="URL to screenshot"
+    )
+    screenshot_parser.add_argument(
+        "--name", type=str, required=True, help="Screenshot name"
+    )
+    screenshot_parser.add_argument(
+        "--full-page", action="store_true", help="Capture full page"
+    )
 
     # compare
     compare_parser = subparsers.add_parser("compare", help="Compare against baseline")
     compare_parser.add_argument("--name", type=str, required=True, help="Baseline name")
-    compare_parser.add_argument("--url", type=str, help="URL to capture fresh screenshot")
+    compare_parser.add_argument(
+        "--url", type=str, help="URL to capture fresh screenshot"
+    )
 
     # baseline
     baseline_parser = subparsers.add_parser("baseline", help="Manage baselines")
@@ -175,7 +189,9 @@ def main():
 
     set_parser = baseline_sub.add_parser("set", help="Set a baseline")
     set_parser.add_argument("--name", type=str, required=True, help="Baseline name")
-    set_parser.add_argument("--screenshot", type=str, help="Screenshot path (uses latest if omitted)")
+    set_parser.add_argument(
+        "--screenshot", type=str, help="Screenshot path (uses latest if omitted)"
+    )
 
     list_parser = baseline_sub.add_parser("list", help="List baselines")
 
@@ -219,7 +235,9 @@ def main():
     try:
         if args.command == "screenshot":
             print(f"📸 Capturing screenshot of {args.url}...")
-            result = asyncio.run(runner.run_screenshot(args.url, args.name, args.full_page))
+            result = asyncio.run(
+                runner.run_screenshot(args.url, args.name, args.full_page)
+            )
             if result["success"]:
                 print(f"✅ Screenshot saved: {result['data']['path']}")
             output(result)
@@ -230,7 +248,9 @@ def main():
             if result["success"]:
                 data = result["data"]
                 emoji = "✅" if data["passed"] else "❌"
-                print(f"{emoji} Match: {data['matchPercentage']}% (threshold: {data['threshold']}%)")
+                print(
+                    f"{emoji} Match: {data['matchPercentage']}% (threshold: {data['threshold']}%)"
+                )
                 if data["diffPixels"] > 0:
                     print(f"   Diff pixels: {data['diffPixels']}")
                     if data.get("diffImagePath"):
@@ -239,7 +259,9 @@ def main():
 
         elif args.command == "baseline":
             if args.baseline_action == "set":
-                result = runner.run_set_baseline(args.name, getattr(args, "screenshot", None))
+                result = runner.run_set_baseline(
+                    args.name, getattr(args, "screenshot", None)
+                )
                 if result["success"]:
                     print(f"✅ Baseline set for '{args.name}'")
                 output(result)
@@ -250,7 +272,9 @@ def main():
                     if baselines:
                         print(f"📋 {len(baselines)} baseline(s):")
                         for b in baselines:
-                            print(f"  - {b['name']} ({b['width']}x{b['height']}) created {b['createdAt']}")
+                            print(
+                                f"  - {b['name']} ({b['width']}x{b['height']}) created {b['createdAt']}"
+                            )
                     else:
                         print("No baselines found.")
                 output(result)
@@ -269,7 +293,9 @@ def main():
             result = runner.run_tests(getattr(args, "files", None))
             if result["success"]:
                 data = result["data"]
-                print(f"Results: {data['passed']} passed, {data['failed']} failed, {data['skipped']} skipped")
+                print(
+                    f"Results: {data['passed']} passed, {data['failed']} failed, {data['skipped']} skipped"
+                )
                 print(f"Duration: {data['durationMs']:.0f}ms")
             output(result)
 

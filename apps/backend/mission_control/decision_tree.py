@@ -12,11 +12,12 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class NodeType(str, Enum):
     """Type of decision node."""
+
     ROOT = "root"
     THINKING = "thinking"
     TOOL_CALL = "tool_call"
@@ -28,6 +29,7 @@ class NodeType(str, Enum):
 
 class NodeStatus(str, Enum):
     """Status of a decision node."""
+
     ACTIVE = "active"
     COMPLETED = "completed"
     FAILED = "failed"
@@ -37,8 +39,9 @@ class NodeStatus(str, Enum):
 @dataclass
 class DecisionNode:
     """A single node in the decision tree."""
+
     id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
-    parent_id: Optional[str] = None
+    parent_id: str | None = None
     node_type: NodeType = NodeType.THINKING
     status: NodeStatus = NodeStatus.ACTIVE
     label: str = ""
@@ -92,8 +95,8 @@ class DecisionTree:
     def __init__(self, agent_id: str):
         self.agent_id = agent_id
         self._nodes: dict[str, DecisionNode] = {}
-        self._root_id: Optional[str] = None
-        self._current_node_id: Optional[str] = None
+        self._root_id: str | None = None
+        self._current_node_id: str | None = None
 
     def create_root(self, label: str = "Start") -> DecisionNode:
         """Create the root node of the tree."""
@@ -107,7 +110,7 @@ class DecisionTree:
         self._current_node_id = node.id
         return node
 
-    def add_thinking(self, text: str, parent_id: Optional[str] = None) -> DecisionNode:
+    def add_thinking(self, text: str, parent_id: str | None = None) -> DecisionNode:
         """Add a thinking/reasoning node."""
         pid = parent_id or self._current_node_id
         node = DecisionNode(
@@ -126,7 +129,7 @@ class DecisionTree:
         self,
         tool_name: str,
         tool_input: str = "",
-        parent_id: Optional[str] = None,
+        parent_id: str | None = None,
     ) -> DecisionNode:
         """Add a tool call node."""
         pid = parent_id or self._current_node_id
@@ -149,7 +152,7 @@ class DecisionTree:
         options: list[str],
         chosen: str,
         reasoning: str = "",
-        parent_id: Optional[str] = None,
+        parent_id: str | None = None,
     ) -> DecisionNode:
         """Add a decision node with options considered."""
         pid = parent_id or self._current_node_id
@@ -172,7 +175,7 @@ class DecisionTree:
         label: str,
         description: str = "",
         success: bool = True,
-        parent_id: Optional[str] = None,
+        parent_id: str | None = None,
     ) -> DecisionNode:
         """Add a result node."""
         pid = parent_id or self._current_node_id

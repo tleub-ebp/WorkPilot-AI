@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, AlertCircle, AlertTriangle, Info, Bug } from 'lucide-react';
-import type { QualityScore, QualityIssue } from '../../../preload/api/modules/quality-api';
+import type { QualityScore, QualityIssue } from '../../preload/api/modules/quality-api';
 import { QualityScoreBadge } from './QualityScoreBadge';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';

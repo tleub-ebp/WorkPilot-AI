@@ -8,7 +8,7 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class PatternCategory(str, Enum):
@@ -101,9 +101,15 @@ class LearningPattern:
 class ImprovementMetrics:
     """Before/after metrics showing learning loop impact."""
 
-    qa_first_pass_rate: dict[str, float] = field(default_factory=lambda: {"before": 0.0, "after": 0.0})
-    avg_qa_iterations: dict[str, float] = field(default_factory=lambda: {"before": 0.0, "after": 0.0})
-    error_rate: dict[str, float] = field(default_factory=lambda: {"before": 0.0, "after": 0.0})
+    qa_first_pass_rate: dict[str, float] = field(
+        default_factory=lambda: {"before": 0.0, "after": 0.0}
+    )
+    avg_qa_iterations: dict[str, float] = field(
+        default_factory=lambda: {"before": 0.0, "after": 0.0}
+    )
+    error_rate: dict[str, float] = field(
+        default_factory=lambda: {"before": 0.0, "after": 0.0}
+    )
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -120,7 +126,7 @@ class LearningReport:
     project_path: str
     analyzed_builds: int
     patterns_found: list[LearningPattern]
-    improvement_metrics: Optional[ImprovementMetrics] = None
+    improvement_metrics: ImprovementMetrics | None = None
     generated_at: str = ""
     analysis_model: str = ""
 
@@ -133,7 +139,9 @@ class LearningReport:
             "project_path": self.project_path,
             "analyzed_builds": self.analyzed_builds,
             "patterns_found": [p.to_dict() for p in self.patterns_found],
-            "improvement_metrics": self.improvement_metrics.to_dict() if self.improvement_metrics else None,
+            "improvement_metrics": self.improvement_metrics.to_dict()
+            if self.improvement_metrics
+            else None,
             "generated_at": self.generated_at,
             "analysis_model": self.analysis_model,
         }
@@ -141,7 +149,9 @@ class LearningReport:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "LearningReport":
         data = dict(data)
-        data["patterns_found"] = [LearningPattern.from_dict(p) for p in data.get("patterns_found", [])]
+        data["patterns_found"] = [
+            LearningPattern.from_dict(p) for p in data.get("patterns_found", [])
+        ]
         metrics = data.get("improvement_metrics")
         if metrics:
             data["improvement_metrics"] = ImprovementMetrics.from_dict(metrics)

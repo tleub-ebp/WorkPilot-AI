@@ -175,10 +175,18 @@ def temp_git_repo(tmp_path):
 # Azure DevOps connector imports and fixtures
 # ---------------------------------------------------------------------------
 
-from src.config.settings import Settings
-from src.connectors.azure_devops.client import AzureDevOpsClient
-from src.connectors.azure_devops.repos import AzureReposClient
-from src.connectors.azure_devops.work_items import AzureWorkItemsClient
+try:
+    from src.config.settings import Settings
+    from src.connectors.azure_devops.client import AzureDevOpsClient
+    from src.connectors.azure_devops.repos import AzureReposClient
+    from src.connectors.azure_devops.work_items import AzureWorkItemsClient
+    AZURE_DEVOPS_FIXTURES_AVAILABLE = True
+except ImportError:
+    Settings = None  # type: ignore[assignment,misc]
+    AzureDevOpsClient = None  # type: ignore[assignment,misc]
+    AzureReposClient = None  # type: ignore[assignment,misc]
+    AzureWorkItemsClient = None  # type: ignore[assignment,misc]
+    AZURE_DEVOPS_FIXTURES_AVAILABLE = False
 
 # ── Constants for test data ──────────────────────────────────────────
 

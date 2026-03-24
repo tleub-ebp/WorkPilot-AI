@@ -25,7 +25,7 @@ const DIAGRAM_ICONS: Record<DiagramType, string> = {
 
 export function ArchitectureVisualizer(): React.ReactElement {
   const { t } = useTranslation(['common']);
-  const { activeProject } = useProjectStore();
+  const activeProject = useProjectStore((s) => s.getActiveProject());
   const {
     phase,
     status,

@@ -1,13 +1,13 @@
-﻿"""
+"""
 LLM-Enhanced Transformer
 Uses Claude to improve code transformation quality with context-aware refactoring
 """
 
 import asyncio
-from typing import Dict, List, Optional
-from pathlib import Path
-import anthropic
 import os
+from pathlib import Path
+
+import anthropic
 
 from .models import TransformationResult
 
@@ -15,10 +15,12 @@ from .models import TransformationResult
 class LLMTransformer:
     """Enhance transformations with LLM intelligence."""
 
-    def __init__(self, project_dir: str, api_key: Optional[str] = None):
+    def __init__(self, project_dir: str, api_key: str | None = None):
         self.project_dir = Path(project_dir)
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
-        self.client = anthropic.Anthropic(api_key=self.api_key) if self.api_key else None
+        self.client = (
+            anthropic.Anthropic(api_key=self.api_key) if self.api_key else None
+        )
 
     async def enhance_transformation(
         self,
@@ -29,13 +31,13 @@ class LLMTransformer:
     ) -> TransformationResult:
         """
         Enhance a transformation result using Claude.
-        
+
         Args:
             result: Base transformation result from rule-based transformer
             source_framework: Source framework/language
             target_framework: Target framework/language
             prompt_template: Template for the LLM prompt
-        
+
         Returns:
             Enhanced TransformationResult with improved code quality
         """
@@ -80,22 +82,22 @@ class LLMTransformer:
 
     async def enhance_transformations_batch(
         self,
-        results: List[TransformationResult],
+        results: list[TransformationResult],
         source_framework: str,
         target_framework: str,
         prompt_template: str,
         max_concurrent: int = 3,
-    ) -> List[TransformationResult]:
+    ) -> list[TransformationResult]:
         """
         Enhance multiple transformations in parallel.
-        
+
         Args:
             results: List of transformation results
             source_framework: Source framework
             target_framework: Target framework
             prompt_template: Template for prompts
             max_concurrent: Max concurrent LLM calls
-        
+
         Returns:
             List of enhanced results
         """
@@ -121,7 +123,7 @@ class LLMTransformer:
         """Build the LLM prompt from template."""
         # Load prompt template
         prompt_file = self.project_dir.parent / "prompts" / template
-        
+
         if prompt_file.exists():
             base_prompt = prompt_file.read_text()
         else:
@@ -129,7 +131,9 @@ class LLMTransformer:
             base_prompt = self._get_generic_prompt()
 
         # Fill in the template
-        prompt = base_prompt + f"""
+        prompt = (
+            base_prompt
+            + f"""
 
 ## Original Code ({source_framework}):
 ```
@@ -151,6 +155,7 @@ Review and enhance the transformation above. Make sure:
 
 Return ONLY the enhanced {target_framework} code without any markdown formatting or explanations.
 """
+        )
         return prompt
 
     def _get_generic_prompt(self) -> str:
@@ -166,15 +171,15 @@ Ensure the transformation:
 """
 
     async def validate_transformation(
-        self, result: TransformationResult, test_files: Optional[List[str]] = None
+        self, result: TransformationResult, test_files: list[str] | None = None
     ) -> bool:
         """
         Use LLM to validate if transformation is correct.
-        
+
         Args:
             result: Transformation result to validate
             test_files: Optional related test files for context
-        
+
         Returns:
             True if validation passes
         """
@@ -218,14 +223,15 @@ Respond with JSON:
 
             # Parse response
             import json
+
             validation = json.loads(response.content[0].text)
-            
+
             result.validation_passed = validation.get("valid", False)
             result.confidence = validation.get("confidence", result.confidence)
-            
+
             if validation.get("issues"):
                 result.errors.extend(validation["issues"])
-            
+
             return validation.get("valid", False)
 
         except Exception as e:
@@ -234,10 +240,10 @@ Respond with JSON:
 
     async def suggest_manual_changes(
         self, result: TransformationResult
-    ) -> List[Dict[str, str]]:
+    ) -> list[dict[str, str]]:
         """
         Generate suggestions for manual review.
-        
+
         Returns:
             List of suggestions with line numbers and descriptions
         """
@@ -281,8 +287,15 @@ Return JSON array:
             )
 
             import json
+
             suggestions = json.loads(response.content[0].text)
             return suggestions
 
         except Exception as e:
-            return [{"line_number": 0, "description": f"Error: {str(e)}", "severity": "high"}]
+            return [
+                {
+                    "line_number": 0,
+                    "description": f"Error: {str(e)}",
+                    "severity": "high",
+                }
+            ]

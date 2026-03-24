@@ -1,16 +1,23 @@
 """Documentation Analyzer - Detects coverage gaps and outdated documentation."""
+
 import ast
 import hashlib
 import re
 import uuid
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from .models import DocCoverage, DocSection, DocStatus, DocType
 
 IGNORE_PATTERNS = {
-    "node_modules", ".git", "__pycache__", "dist", "build", ".venv",
-    ".next", "out", "coverage",
+    "node_modules",
+    ".git",
+    "__pycache__",
+    "dist",
+    "build",
+    ".venv",
+    ".next",
+    "out",
+    "coverage",
 }
 
 PYTHON_EXTENSIONS = {".py"}
@@ -55,7 +62,7 @@ class DocumentationAnalyzer:
         coverage.compute_coverage()
         return coverage
 
-    def detect_outdated_docs(self) -> List[DocSection]:
+    def detect_outdated_docs(self) -> list[DocSection]:
         """Find documentation files whose related code has changed."""
         outdated = []
         doc_dirs = [
@@ -80,25 +87,27 @@ class DocumentationAnalyzer:
                 # Find recently modified code files (newer than the doc)
                 newer_code = self._find_newer_code_files(doc_mtime)
                 if newer_code:
-                    outdated.append(DocSection(
-                        section_id=str(uuid.uuid4())[:8],
-                        file_path=rel_path,
-                        doc_type=DocType.README,
-                        title=doc_file.name,
-                        status=DocStatus.OUTDATED,
-                        related_code_file=newer_code[0],
-                    ))
+                    outdated.append(
+                        DocSection(
+                            section_id=str(uuid.uuid4())[:8],
+                            file_path=rel_path,
+                            doc_type=DocType.README,
+                            title=doc_file.name,
+                            status=DocStatus.OUTDATED,
+                            related_code_file=newer_code[0],
+                        )
+                    )
             except Exception:
                 continue
 
         return outdated
 
-    def find_missing_docs(self) -> List[str]:
+    def find_missing_docs(self) -> list[str]:
         """Return list of 'file:line:name' entries without documentation."""
         coverage = self.analyze_coverage()
         return coverage.missing_docs
 
-    def analyze_readme(self) -> Optional[DocSection]:
+    def analyze_readme(self) -> DocSection | None:
         """Check README quality and completeness."""
         readme_candidates = [
             self.project_dir / "README.md",
@@ -110,7 +119,9 @@ class DocumentationAnalyzer:
                 try:
                     content = readme.read_text(encoding="utf-8", errors="ignore")
                     lines = content.count("\n")
-                    status = DocStatus.UP_TO_DATE if lines > 20 else DocStatus.INCOMPLETE
+                    status = (
+                        DocStatus.UP_TO_DATE if lines > 20 else DocStatus.INCOMPLETE
+                    )
                     return DocSection(
                         section_id=str(uuid.uuid4())[:8],
                         file_path=str(readme.relative_to(self.project_dir)),
@@ -130,12 +141,14 @@ class DocumentationAnalyzer:
             status=DocStatus.MISSING,
         )
 
-    def analyze_api_docs(self) -> List[DocSection]:
+    def analyze_api_docs(self) -> list[DocSection]:
         """Find API endpoints without documentation."""
         sections = []
         # FastAPI / Flask route patterns
         api_patterns = [
-            re.compile(r'@(?:app|router)\.(get|post|put|delete|patch)\s*\(\s*[\'"]([^\'"]+)[\'"]'),
+            re.compile(
+                r'@(?:app|router)\.(get|post|put|delete|patch)\s*\(\s*[\'"]([^\'"]+)[\'"]'
+            ),
             re.compile(r'@(?:app|router)\.route\s*\(\s*[\'"]([^\'"]+)[\'"]'),
         ]
 
@@ -148,16 +161,20 @@ class DocumentationAnalyzer:
 
             for pattern in api_patterns:
                 for m in pattern.finditer(content):
-                    endpoint = m.group(2) if m.lastindex and m.lastindex >= 2 else m.group(1)
-                    line = content[:m.start()].count("\n") + 1
-                    sections.append(DocSection(
-                        section_id=str(uuid.uuid4())[:8],
-                        file_path=rel_path,
-                        doc_type=DocType.API_DOCS,
-                        title=f"API: {endpoint}",
-                        status=DocStatus.MISSING,
-                        related_code_file=rel_path,
-                    ))
+                    endpoint = (
+                        m.group(2) if m.lastindex and m.lastindex >= 2 else m.group(1)
+                    )
+                    line = content[: m.start()].count("\n") + 1
+                    sections.append(
+                        DocSection(
+                            section_id=str(uuid.uuid4())[:8],
+                            file_path=rel_path,
+                            doc_type=DocType.API_DOCS,
+                            title=f"API: {endpoint}",
+                            status=DocStatus.MISSING,
+                            related_code_file=rel_path,
+                        )
+                    )
 
         return sections
 
@@ -169,7 +186,7 @@ class DocumentationAnalyzer:
         except Exception:
             return ""
 
-    def _extract_python_symbols(self, file_path: Path) -> List[Dict]:
+    def _extract_python_symbols(self, file_path: Path) -> list[dict]:
         """Extract Python functions/classes with docstring info using ast."""
         symbols = []
         try:
@@ -178,33 +195,45 @@ class DocumentationAnalyzer:
             for node in ast.walk(tree):
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     has_doc = (
-                        isinstance(node.body[0], ast.Expr)
-                        and isinstance(node.body[0].value, ast.Constant)
-                        and isinstance(node.body[0].value.value, str)
-                    ) if node.body else False
-                    symbols.append({
-                        "name": node.name,
-                        "kind": "function",
-                        "line": node.lineno,
-                        "has_doc": has_doc,
-                    })
+                        (
+                            isinstance(node.body[0], ast.Expr)
+                            and isinstance(node.body[0].value, ast.Constant)
+                            and isinstance(node.body[0].value.value, str)
+                        )
+                        if node.body
+                        else False
+                    )
+                    symbols.append(
+                        {
+                            "name": node.name,
+                            "kind": "function",
+                            "line": node.lineno,
+                            "has_doc": has_doc,
+                        }
+                    )
                 elif isinstance(node, ast.ClassDef):
                     has_doc = (
-                        isinstance(node.body[0], ast.Expr)
-                        and isinstance(node.body[0].value, ast.Constant)
-                        and isinstance(node.body[0].value.value, str)
-                    ) if node.body else False
-                    symbols.append({
-                        "name": node.name,
-                        "kind": "class",
-                        "line": node.lineno,
-                        "has_doc": has_doc,
-                    })
+                        (
+                            isinstance(node.body[0], ast.Expr)
+                            and isinstance(node.body[0].value, ast.Constant)
+                            and isinstance(node.body[0].value.value, str)
+                        )
+                        if node.body
+                        else False
+                    )
+                    symbols.append(
+                        {
+                            "name": node.name,
+                            "kind": "class",
+                            "line": node.lineno,
+                            "has_doc": has_doc,
+                        }
+                    )
         except Exception:
             pass
         return symbols
 
-    def _extract_js_symbols(self, file_path: Path) -> List[Dict]:
+    def _extract_js_symbols(self, file_path: Path) -> list[dict]:
         """Extract JS/TS functions/classes with JSDoc info."""
         symbols = []
         try:
@@ -224,26 +253,30 @@ class DocumentationAnalyzer:
                     if not name:
                         continue
                     # Check if previous line has JSDoc
-                    has_doc = i > 0 and "/**" in lines[max(0, i - 3):i + 1]
-                    symbols.append({
-                        "name": name,
-                        "kind": "function",
-                        "line": i + 1,
-                        "has_doc": has_doc,
-                    })
+                    has_doc = i > 0 and "/**" in lines[max(0, i - 3) : i + 1]
+                    symbols.append(
+                        {
+                            "name": name,
+                            "kind": "function",
+                            "line": i + 1,
+                            "has_doc": has_doc,
+                        }
+                    )
                 for m in class_pattern.finditer(line):
-                    has_doc = i > 0 and "/**" in lines[max(0, i - 3):i + 1]
-                    symbols.append({
-                        "name": m.group(1),
-                        "kind": "class",
-                        "line": i + 1,
-                        "has_doc": has_doc,
-                    })
+                    has_doc = i > 0 and "/**" in lines[max(0, i - 3) : i + 1]
+                    symbols.append(
+                        {
+                            "name": m.group(1),
+                            "kind": "class",
+                            "line": i + 1,
+                            "has_doc": has_doc,
+                        }
+                    )
         except Exception:
             pass
         return symbols
 
-    def _find_newer_code_files(self, doc_mtime: float) -> List[str]:
+    def _find_newer_code_files(self, doc_mtime: float) -> list[str]:
         """Find code files modified more recently than doc_mtime."""
         newer = []
         for file_path in self._get_source_files():
@@ -256,7 +289,7 @@ class DocumentationAnalyzer:
                 continue
         return newer
 
-    def _get_source_files(self, extensions: Optional[List[str]] = None) -> List[Path]:
+    def _get_source_files(self, extensions: list[str] | None = None) -> list[Path]:
         """Return source files, excluding ignored paths."""
         if extensions is None:
             extensions = list(PYTHON_EXTENSIONS | JS_EXTENSIONS)

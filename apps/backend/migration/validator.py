@@ -1,9 +1,9 @@
-﻿"""
+"""
 Migration Validator: Validates migration transformations and runs tests.
 """
 
-from typing import Dict, Any
 from pathlib import Path
+from typing import Any
 
 from .models import ValidationReport
 
@@ -38,19 +38,19 @@ class MigrationValidator:
 
         return report
 
-    def _run_tests(self) -> Dict[str, Any]:
+    def _run_tests(self) -> dict[str, Any]:
         """Run test suite."""
         return {"success": True, "total": 0, "passed": 0, "failed": 0}
 
-    def _check_build(self) -> Dict[str, Any]:
+    def _check_build(self) -> dict[str, Any]:
         """Check build."""
         return {"success": True}
 
-    def _check_lint(self) -> Dict[str, Any]:
+    def _check_lint(self) -> dict[str, Any]:
         """Check linting."""
         return {"success": True}
 
-    def detect_regressions(self, before_metrics: Dict, after_metrics: Dict) -> bool:
+    def detect_regressions(self, before_metrics: dict, after_metrics: dict) -> bool:
         """Detect if migration introduced regressions."""
         # Placeholder: Compare before/after metrics
         return False

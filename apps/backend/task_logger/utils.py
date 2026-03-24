@@ -16,7 +16,7 @@ _current_logger: Optional["TaskLogger"] = None
 
 
 def get_task_logger(
-    spec_dir: Optional[Path] = None, emit_markers: bool = True
+    spec_dir: Path | None = None, emit_markers: bool = True
 ) -> Optional["TaskLogger"]:
     """
     Get or create a task logger for the given spec directory.

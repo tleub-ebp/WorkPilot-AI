@@ -12,7 +12,6 @@ Analyzes a dependency graph to detect:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 from .models import DependencyGraph
 
@@ -20,7 +19,8 @@ from .models import DependencyGraph
 @dataclass
 class CircularDependency:
     """A detected import cycle."""
-    cycle: list[str]   # Ordered list of files forming the cycle
+
+    cycle: list[str]  # Ordered list of files forming the cycle
 
     def __str__(self) -> str:
         return " → ".join(self.cycle) + f" → {self.cycle[0]}"
@@ -32,7 +32,9 @@ class GraphInsights:
 
     circular_dependencies: list[CircularDependency] = field(default_factory=list)
     orphan_modules: list[str] = field(default_factory=list)
-    high_coupling_files: list[dict] = field(default_factory=list)  # {path, fan_in, fan_out}
+    high_coupling_files: list[dict] = field(
+        default_factory=list
+    )  # {path, fan_in, fan_out}
     total_nodes: int = 0
     total_edges: int = 0
 
@@ -54,7 +56,7 @@ class DependencyAnalyzer:
     # Files with more incoming/outgoing edges than these thresholds are flagged
     HIGH_FAN_IN_THRESHOLD = 15
     HIGH_FAN_OUT_THRESHOLD = 20
-    MAX_CYCLES_REPORTED = 10   # Limit cycle reporting for large codebases
+    MAX_CYCLES_REPORTED = 10  # Limit cycle reporting for large codebases
 
     def __init__(self, graph: DependencyGraph):
         self.graph = graph
@@ -97,12 +99,16 @@ class DependencyAnalyzer:
             # Direct dependencies (what this file needs)
             for dep in self.graph.get_dependencies(fp, depth=depth):
                 if dep not in input_set:
-                    scored[dep] = scored.get(dep, 0) + (2 if dep in self.graph.get_dependencies(fp, depth=1) else 1)
+                    scored[dep] = scored.get(dep, 0) + (
+                        2 if dep in self.graph.get_dependencies(fp, depth=1) else 1
+                    )
 
             # Dependents (who will be affected by changes)
             for dep in self.graph.get_dependents(fp, depth=depth):
                 if dep not in input_set:
-                    scored[dep] = scored.get(dep, 0) + (3 if dep in self.graph.get_dependents(fp, depth=1) else 1)
+                    scored[dep] = scored.get(dep, 0) + (
+                        3 if dep in self.graph.get_dependents(fp, depth=1) else 1
+                    )
 
         # Sort by score descending, return top N
         ranked = sorted(scored.keys(), key=lambda p: scored[p], reverse=True)
@@ -154,10 +160,20 @@ class DependencyAnalyzer:
         Excludes likely entry-points (main.py, index.ts, __init__.py, etc.).
         """
         entry_point_patterns = {
-            "main.py", "app.py", "run.py", "server.py", "manage.py",
-            "index.ts", "index.tsx", "index.js", "index.jsx",
-            "__init__.py", "vite.config.ts", "webpack.config.js",
-            "jest.config.ts", "vitest.config.ts",
+            "main.py",
+            "app.py",
+            "run.py",
+            "server.py",
+            "manage.py",
+            "index.ts",
+            "index.tsx",
+            "index.js",
+            "index.jsx",
+            "__init__.py",
+            "vite.config.ts",
+            "webpack.config.js",
+            "jest.config.ts",
+            "vitest.config.ts",
         }
 
         orphans = []
@@ -181,13 +197,18 @@ class DependencyAnalyzer:
         for path, node in self.graph.nodes.items():
             fan_in = node.in_degree
             fan_out = node.out_degree
-            if fan_in >= self.HIGH_FAN_IN_THRESHOLD or fan_out >= self.HIGH_FAN_OUT_THRESHOLD:
-                results.append({
-                    "path": path,
-                    "fan_in": fan_in,
-                    "fan_out": fan_out,
-                    "coupling_type": self._coupling_type(fan_in, fan_out),
-                })
+            if (
+                fan_in >= self.HIGH_FAN_IN_THRESHOLD
+                or fan_out >= self.HIGH_FAN_OUT_THRESHOLD
+            ):
+                results.append(
+                    {
+                        "path": path,
+                        "fan_in": fan_in,
+                        "fan_out": fan_out,
+                        "coupling_type": self._coupling_type(fan_in, fan_out),
+                    }
+                )
 
         return sorted(results, key=lambda x: x["fan_in"] + x["fan_out"], reverse=True)
 

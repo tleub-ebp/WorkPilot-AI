@@ -22,15 +22,12 @@ Example:
     >>> print(f"Selected: {selection.provider}/{selection.model}")
 """
 
-import json
 import logging
-import random
 import statistics
-import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +36,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class TaskType(str, Enum):
     """Types of tasks for routing decisions."""
+
     PLANNING = "planning"
     CODING = "coding"
     REVIEW = "review"
@@ -53,6 +52,7 @@ class TaskType(str, Enum):
 
 class ProviderStatus(str, Enum):
     """Health status of a provider."""
+
     AVAILABLE = "available"
     DEGRADED = "degraded"
     RATE_LIMITED = "rate_limited"
@@ -62,6 +62,7 @@ class ProviderStatus(str, Enum):
 
 class RoutingStrategy(str, Enum):
     """Strategy for selecting a provider."""
+
     BEST_PERFORMANCE = "best_performance"
     CHEAPEST = "cheapest"
     LOWEST_LATENCY = "lowest_latency"
@@ -72,6 +73,7 @@ class RoutingStrategy(str, Enum):
 
 class ABTestStatus(str, Enum):
     """Status of an A/B test."""
+
     RUNNING = "running"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
@@ -81,9 +83,11 @@ class ABTestStatus(str, Enum):
 # Data models
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ProviderConfig:
     """Configuration for a registered provider/model."""
+
     provider: str
     model: str
     capabilities: list[str] = field(default_factory=list)
@@ -116,6 +120,7 @@ class ProviderConfig:
 @dataclass
 class PerformanceRecord:
     """A performance measurement for a provider on a specific task type."""
+
     provider: str
     model: str
     task_type: str
@@ -137,6 +142,7 @@ class PerformanceRecord:
 @dataclass
 class RoutingDecision:
     """Result of a routing decision."""
+
     provider: str
     model: str
     reason: str
@@ -161,6 +167,7 @@ class RoutingDecision:
 @dataclass
 class PipelineConfig:
     """Per-phase pipeline configuration (planning → model A, coding → model B, etc.)."""
+
     pipeline_id: str
     name: str
     phase_routing: dict[str, dict[str, str]] = field(default_factory=dict)
@@ -180,6 +187,7 @@ class PipelineConfig:
 @dataclass
 class ABTest:
     """An A/B test comparing two provider configurations."""
+
     test_id: str
     name: str
     task_type: str
@@ -204,6 +212,7 @@ class ABTest:
 
     def get_summary(self) -> dict[str, Any]:
         """Get comparison summary."""
+
         def _avg(records: list[dict], key: str) -> float:
             vals = [r.get(key, 0) for r in records]
             return statistics.mean(vals) if vals else 0.0
@@ -214,14 +223,16 @@ class ABTest:
             "status": self.status.value,
             "total_runs": self.total_runs,
             "a": {
-                "provider": self.provider_a, "model": self.model_a,
+                "provider": self.provider_a,
+                "model": self.model_a,
                 "runs": len(self.results_a),
                 "avg_quality": round(_avg(self.results_a, "quality_score"), 1),
                 "avg_latency_ms": round(_avg(self.results_a, "latency_ms"), 0),
                 "avg_cost": round(_avg(self.results_a, "cost"), 6),
             },
             "b": {
-                "provider": self.provider_b, "model": self.model_b,
+                "provider": self.provider_b,
+                "model": self.model_b,
                 "runs": len(self.results_b),
                 "avg_quality": round(_avg(self.results_b, "quality_score"), 1),
                 "avg_latency_ms": round(_avg(self.results_b, "latency_ms"), 0),
@@ -282,6 +293,7 @@ DEFAULT_TASK_RECOMMENDATIONS: dict[str, list[dict[str, str]]] = {
 # ---------------------------------------------------------------------------
 # IntelligentRouter
 # ---------------------------------------------------------------------------
+
 
 class IntelligentRouter:
     """Routes LLM requests to the optimal provider based on context.
@@ -352,8 +364,12 @@ class IntelligentRouter:
         )
         key = config.provider_model_key
         self._providers[key] = config
-        logger.info("Registered provider %s (priority=%d, capabilities=%s)",
-                     key, priority, capabilities)
+        logger.info(
+            "Registered provider %s (priority=%d, capabilities=%s)",
+            key,
+            priority,
+            capabilities,
+        )
         return config
 
     def unregister_provider(self, provider: str, model: str) -> bool:
@@ -372,7 +388,9 @@ class IntelligentRouter:
         """Get all available providers, optionally filtered by capability."""
         results = [p for p in self._providers.values() if p.is_available]
         if task_type:
-            results = [p for p in results if task_type in p.capabilities or not p.capabilities]
+            results = [
+                p for p in results if task_type in p.capabilities or not p.capabilities
+            ]
         return sorted(results, key=lambda p: p.priority)
 
     def update_provider_status(self, provider: str, model: str, status: str) -> bool:
@@ -435,13 +453,16 @@ class IntelligentRouter:
 
         # Trim history
         if len(self._performance_history) > self.max_history:
-            self._performance_history = self._performance_history[-self.max_history:]
+            self._performance_history = self._performance_history[-self.max_history :]
 
         # Update provider avg latency
         key = f"{provider}/{model}"
         if key in self._providers:
-            relevant = [r for r in self._performance_history
-                        if r.provider == provider and r.model == model and r.success]
+            relevant = [
+                r
+                for r in self._performance_history
+                if r.provider == provider and r.model == model and r.success
+            ]
             if relevant:
                 self._providers[key].avg_latency_ms = statistics.mean(
                     r.latency_ms for r in relevant[-20:]
@@ -449,7 +470,9 @@ class IntelligentRouter:
 
         return record
 
-    def get_performance_scores(self, task_type: str = "") -> dict[str, dict[str, float]]:
+    def get_performance_scores(
+        self, task_type: str = ""
+    ) -> dict[str, dict[str, float]]:
         """Get aggregated performance scores per provider/model.
 
         Returns:
@@ -466,11 +489,19 @@ class IntelligentRouter:
         for key, records in grouped.items():
             successful = [r for r in records if r.success]
             scores[key] = {
-                "avg_quality": statistics.mean(r.quality_score for r in successful) if successful else 0.0,
-                "avg_latency_ms": statistics.mean(r.latency_ms for r in successful) if successful else 0.0,
-                "success_rate": len(successful) / len(records) * 100 if records else 0.0,
+                "avg_quality": statistics.mean(r.quality_score for r in successful)
+                if successful
+                else 0.0,
+                "avg_latency_ms": statistics.mean(r.latency_ms for r in successful)
+                if successful
+                else 0.0,
+                "success_rate": len(successful) / len(records) * 100
+                if records
+                else 0.0,
                 "total_requests": len(records),
-                "avg_cost": statistics.mean(r.cost for r in records) if records else 0.0,
+                "avg_cost": statistics.mean(r.cost for r in records)
+                if records
+                else 0.0,
             }
         return scores
 
@@ -505,11 +536,16 @@ class IntelligentRouter:
             phase_config = pipeline.get_provider_for_phase(task_type)
             if phase_config:
                 prov, mod = phase_config
-                if f"{prov}/{mod}" in self._providers and self._providers[f"{prov}/{mod}"].is_available:
+                if (
+                    f"{prov}/{mod}" in self._providers
+                    and self._providers[f"{prov}/{mod}"].is_available
+                ):
                     decision = RoutingDecision(
-                        provider=prov, model=mod,
+                        provider=prov,
+                        model=mod,
                         reason=f"Pipeline '{pipeline.name}' phase config for '{task_type}'",
-                        strategy=strat, score=100.0,
+                        strategy=strat,
+                        score=100.0,
                     )
                     self._routing_log.append(decision)
                     return decision
@@ -521,8 +557,11 @@ class IntelligentRouter:
 
         # Apply cost filter
         if max_cost > 0:
-            candidates = [c for c in candidates
-                          if c.cost_per_1m_input + c.cost_per_1m_output <= max_cost or c.is_local]
+            candidates = [
+                c
+                for c in candidates
+                if c.cost_per_1m_input + c.cost_per_1m_output <= max_cost or c.is_local
+            ]
             if not candidates:
                 return None
 
@@ -540,14 +579,19 @@ class IntelligentRouter:
 
         if decision:
             # Build fallback chain
-            chain = [f"{c.provider}/{c.model}" for c in candidates
-                     if f"{c.provider}/{c.model}" != f"{decision.provider}/{decision.model}"]
+            chain = [
+                f"{c.provider}/{c.model}"
+                for c in candidates
+                if f"{c.provider}/{c.model}" != f"{decision.provider}/{decision.model}"
+            ]
             decision.fallback_chain = chain[:3]
             self._routing_log.append(decision)
 
         return decision
 
-    def _route_best_performance(self, candidates: list[ProviderConfig], task_type: str) -> RoutingDecision:
+    def _route_best_performance(
+        self, candidates: list[ProviderConfig], task_type: str
+    ) -> RoutingDecision:
         """Select provider with best combined quality + success rate."""
         scores = self.get_performance_scores(task_type)
         best = None
@@ -558,9 +602,11 @@ class IntelligentRouter:
             if key in scores:
                 s = scores[key]
                 # Weighted: 60% quality, 30% success rate, 10% inverse latency
-                combined = (s["avg_quality"] * 0.6 +
-                            s["success_rate"] * 0.3 +
-                            max(0, 100 - s["avg_latency_ms"] / 100) * 0.1)
+                combined = (
+                    s["avg_quality"] * 0.6
+                    + s["success_rate"] * 0.3
+                    + max(0, 100 - s["avg_latency_ms"] / 100) * 0.1
+                )
             else:
                 # No history — use priority-based default score
                 combined = max(0, (10 - c.priority) * 10)
@@ -574,38 +620,50 @@ class IntelligentRouter:
             best_score = 50.0
 
         return RoutingDecision(
-            provider=best.provider, model=best.model,
+            provider=best.provider,
+            model=best.model,
             reason=f"Best performance score ({best_score:.1f}) for task '{task_type}'",
             strategy=RoutingStrategy.BEST_PERFORMANCE,
             score=best_score,
-            alternatives=[{"provider": c.provider, "model": c.model}
-                          for c in candidates if c != best][:3],
+            alternatives=[
+                {"provider": c.provider, "model": c.model}
+                for c in candidates
+                if c != best
+            ][:3],
         )
 
-    def _route_cheapest(self, candidates: list[ProviderConfig], task_type: str) -> RoutingDecision:
+    def _route_cheapest(
+        self, candidates: list[ProviderConfig], task_type: str
+    ) -> RoutingDecision:
         """Select cheapest provider."""
         # Local models first (free)
         local = [c for c in candidates if c.is_local]
         if local:
             best = local[0]
             return RoutingDecision(
-                provider=best.provider, model=best.model,
+                provider=best.provider,
+                model=best.model,
                 reason=f"Local model (free) for task '{task_type}'",
-                strategy=RoutingStrategy.CHEAPEST, score=100.0,
+                strategy=RoutingStrategy.CHEAPEST,
+                score=100.0,
             )
 
-        sorted_by_cost = sorted(candidates,
-                                key=lambda c: c.cost_per_1m_input + c.cost_per_1m_output)
+        sorted_by_cost = sorted(
+            candidates, key=lambda c: c.cost_per_1m_input + c.cost_per_1m_output
+        )
         best = sorted_by_cost[0]
         total_cost = best.cost_per_1m_input + best.cost_per_1m_output
         return RoutingDecision(
-            provider=best.provider, model=best.model,
+            provider=best.provider,
+            model=best.model,
             reason=f"Cheapest option (${total_cost:.2f}/1M tokens) for task '{task_type}'",
             strategy=RoutingStrategy.CHEAPEST,
             score=max(0, 100 - total_cost),
         )
 
-    def _route_lowest_latency(self, candidates: list[ProviderConfig], task_type: str) -> RoutingDecision:
+    def _route_lowest_latency(
+        self, candidates: list[ProviderConfig], task_type: str
+    ) -> RoutingDecision:
         """Select lowest latency provider."""
         # Prefer providers with measured latency
         with_latency = [c for c in candidates if c.avg_latency_ms > 0]
@@ -615,26 +673,32 @@ class IntelligentRouter:
             best = candidates[0]
 
         return RoutingDecision(
-            provider=best.provider, model=best.model,
+            provider=best.provider,
+            model=best.model,
             reason=f"Lowest latency ({best.avg_latency_ms:.0f}ms) for task '{task_type}'",
             strategy=RoutingStrategy.LOWEST_LATENCY,
             score=max(0, 100 - best.avg_latency_ms / 50),
         )
 
-    def _route_round_robin(self, candidates: list[ProviderConfig], task_type: str) -> RoutingDecision:
+    def _route_round_robin(
+        self, candidates: list[ProviderConfig], task_type: str
+    ) -> RoutingDecision:
         """Round-robin across available providers."""
         idx = self._round_robin_index.get(task_type, 0)
         selected = candidates[idx % len(candidates)]
         self._round_robin_index[task_type] = idx + 1
 
         return RoutingDecision(
-            provider=selected.provider, model=selected.model,
+            provider=selected.provider,
+            model=selected.model,
             reason=f"Round-robin selection (index={idx}) for task '{task_type}'",
             strategy=RoutingStrategy.ROUND_ROBIN,
             score=50.0,
         )
 
-    def _route_fallback(self, candidates: list[ProviderConfig], task_type: str) -> RoutingDecision:
+    def _route_fallback(
+        self, candidates: list[ProviderConfig], task_type: str
+    ) -> RoutingDecision:
         """Use configured fallback chain or priority order."""
         chain_key = task_type
         if chain_key in self._fallback_chains:
@@ -642,23 +706,29 @@ class IntelligentRouter:
                 if key in self._providers and self._providers[key].is_available:
                     prov, mod = key.split("/", 1)
                     return RoutingDecision(
-                        provider=prov, model=mod,
+                        provider=prov,
+                        model=mod,
                         reason=f"Fallback chain selection for task '{task_type}'",
                         strategy=RoutingStrategy.FALLBACK_CHAIN,
                         score=80.0,
-                        fallback_chain=[k for k in self._fallback_chains[chain_key] if k != key],
+                        fallback_chain=[
+                            k for k in self._fallback_chains[chain_key] if k != key
+                        ],
                     )
 
         # Default: use priority order
         best = candidates[0]
         return RoutingDecision(
-            provider=best.provider, model=best.model,
+            provider=best.provider,
+            model=best.model,
             reason=f"Priority fallback (priority={best.priority}) for task '{task_type}'",
             strategy=RoutingStrategy.FALLBACK_CHAIN,
             score=60.0,
         )
 
-    def get_fallback(self, provider: str, model: str, task_type: str) -> RoutingDecision | None:
+    def get_fallback(
+        self, provider: str, model: str, task_type: str
+    ) -> RoutingDecision | None:
         """Get fallback provider when the primary fails.
 
         Args:
@@ -780,14 +850,16 @@ class IntelligentRouter:
         use_a = len(test.results_a) <= len(test.results_b)
         if use_a:
             return RoutingDecision(
-                provider=test.provider_a, model=test.model_a,
+                provider=test.provider_a,
+                model=test.model_a,
                 reason=f"A/B test '{test.name}' — variant A",
                 strategy=RoutingStrategy.WEIGHTED,
                 score=50.0,
             )
         else:
             return RoutingDecision(
-                provider=test.provider_b, model=test.model_b,
+                provider=test.provider_b,
+                model=test.model_b,
                 reason=f"A/B test '{test.name}' — variant B",
                 strategy=RoutingStrategy.WEIGHTED,
                 score=50.0,
@@ -860,15 +932,19 @@ class IntelligentRouter:
         return {
             "total_providers": len(providers),
             "available_providers": len(available),
-            "rate_limited": sum(1 for p in providers if p.status == ProviderStatus.RATE_LIMITED),
+            "rate_limited": sum(
+                1 for p in providers if p.status == ProviderStatus.RATE_LIMITED
+            ),
             "down": sum(1 for p in providers if p.status == ProviderStatus.DOWN),
             "local_providers": sum(1 for p in providers if p.is_local),
             "performance_records": len(self._performance_history),
             "routing_decisions": len(self._routing_log),
             "active_pipelines": len(self._pipelines),
-            "ab_tests_running": sum(1 for t in self._ab_tests.values()
-                                    if t.status == ABTestStatus.RUNNING),
-            "ab_tests_completed": sum(1 for t in self._ab_tests.values()
-                                      if t.status == ABTestStatus.COMPLETED),
+            "ab_tests_running": sum(
+                1 for t in self._ab_tests.values() if t.status == ABTestStatus.RUNNING
+            ),
+            "ab_tests_completed": sum(
+                1 for t in self._ab_tests.values() if t.status == ABTestStatus.COMPLETED
+            ),
             "fallback_chains": len(self._fallback_chains),
         }

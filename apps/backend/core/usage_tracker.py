@@ -18,7 +18,6 @@ import threading
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +44,7 @@ def _atomic_write(path: Path, content: str) -> None:
     tmp.write_text(content, encoding="utf-8")
     tmp.replace(path)
 
+
 # ---------------------------------------------------------------------------
 # In-process build registry  (one entry per active spec_dir)
 # ---------------------------------------------------------------------------
@@ -56,7 +56,7 @@ def start_build(
     spec_dir: Path,
     project_dir: Path,
     spec_id: str,
-    spec_name: Optional[str],
+    spec_name: str | None,
     model: str,
     provider: str,
 ) -> str:
@@ -134,8 +134,15 @@ def record_session_usage(
     # 1 — cost_data.json (for CostEstimator IPC handler)
     try:
         _append_cost_data(
-            project_dir, spec_id, provider, model,
-            input_tokens, output_tokens, cost_usd, agent_type, phase,
+            project_dir,
+            spec_id,
+            provider,
+            model,
+            input_tokens,
+            output_tokens,
+            cost_usd,
+            agent_type,
+            phase,
         )
     except Exception as exc:
         logger.warning("[usage_tracker] cost_data.json write failed: %s", exc)
@@ -143,8 +150,14 @@ def record_session_usage(
     # 2 — analytics.db (for AnalyticsDashboard REST API)
     try:
         _append_token_usage_to_db(
-            key, spec_id, provider, model,
-            input_tokens, output_tokens, cost_usd, phase,
+            key,
+            spec_id,
+            provider,
+            model,
+            input_tokens,
+            output_tokens,
+            cost_usd,
+            phase,
         )
     except Exception as exc:
         logger.warning("[usage_tracker] analytics DB write failed: %s", exc)
@@ -152,8 +165,13 @@ def record_session_usage(
     # 3 — dashboard_snapshot.json (for DashboardMetrics REST API)
     try:
         _update_dashboard_snapshot(
-            project_dir, spec_id, provider, model,
-            input_tokens, output_tokens, cost_usd,
+            project_dir,
+            spec_id,
+            provider,
+            model,
+            input_tokens,
+            output_tokens,
+            cost_usd,
         )
     except Exception as exc:
         logger.warning("[usage_tracker] dashboard_snapshot write failed: %s", exc)
@@ -162,6 +180,7 @@ def record_session_usage(
 # ---------------------------------------------------------------------------
 # Destination 1: cost_data.json
 # ---------------------------------------------------------------------------
+
 
 def _append_cost_data(
     project_dir: Path,
@@ -188,19 +207,21 @@ def _append_cost_data(
             data = {"usages": [], "budgets": {}}
 
         data.setdefault("usages", [])
-        data["usages"].append({
-            "project_id": str(project_dir),
-            "provider": provider,
-            "model": model,
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
-            "cost": cost_usd,
-            "task_id": spec_id,
-            "agent_type": agent_type,
-            "phase": phase,
-            "spec_id": spec_id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+        data["usages"].append(
+            {
+                "project_id": str(project_dir),
+                "provider": provider,
+                "model": model,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "cost": cost_usd,
+                "task_id": spec_id,
+                "agent_type": agent_type,
+                "phase": phase,
+                "spec_id": spec_id,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
         _atomic_write(data_path, json.dumps(data, indent=2))
 
@@ -209,10 +230,12 @@ def _append_cost_data(
 # Destination 2: analytics.db  (SQLite via SQLAlchemy)
 # ---------------------------------------------------------------------------
 
+
 def _get_analytics_db_session():
     """Return an analytics DB session, or None if unavailable."""
     try:
         from analytics.database import SessionLocal, create_tables
+
         create_tables()
         return SessionLocal()
     except Exception:
@@ -236,7 +259,7 @@ def _append_token_usage_to_db(
         return
 
     try:
-        from analytics.database_schema import TokenUsage, Build, BuildStatus
+        from analytics.database_schema import Build, BuildStatus, TokenUsage
 
         build_info = _active_builds.get(build_key)
         build_id = build_info["build_id"] if build_info else str(uuid.uuid4())
@@ -247,7 +270,9 @@ def _append_token_usage_to_db(
             build = Build(
                 build_id=build_id,
                 spec_id=spec_id,
-                spec_name=build_info.get("spec_name", spec_id) if build_info else spec_id,
+                spec_name=build_info.get("spec_name", spec_id)
+                if build_info
+                else spec_id,
                 project_path=build_info.get("project_dir") if build_info else None,
                 started_at=datetime.now(timezone.utc),
                 status=BuildStatus.CODING,
@@ -258,7 +283,9 @@ def _append_token_usage_to_db(
             )
             db.add(build)
 
-        build.total_tokens_used = (build.total_tokens_used or 0) + input_tokens + output_tokens
+        build.total_tokens_used = (
+            (build.total_tokens_used or 0) + input_tokens + output_tokens
+        )
         build.total_cost_usd = (build.total_cost_usd or 0.0) + cost_usd
 
         # Insert TokenUsage row
@@ -295,10 +322,15 @@ def _write_build_to_analytics_db(info: dict) -> None:
         build = db.query(Build).filter(Build.build_id == info["build_id"]).first()
         if build:
             build.completed_at = datetime.now(timezone.utc)
-            build.status = BuildStatus.COMPLETE if info["status"] == "complete" else BuildStatus.FAILED
+            build.status = (
+                BuildStatus.COMPLETE
+                if info["status"] == "complete"
+                else BuildStatus.FAILED
+            )
             if build.started_at:
                 build.total_duration_seconds = (
-                    datetime.now(timezone.utc).replace(tzinfo=None) - build.started_at.replace(tzinfo=None)
+                    datetime.now(timezone.utc).replace(tzinfo=None)
+                    - build.started_at.replace(tzinfo=None)
                 ).total_seconds()
             db.commit()
     except Exception as exc:
@@ -311,6 +343,7 @@ def _write_build_to_analytics_db(info: dict) -> None:
 # ---------------------------------------------------------------------------
 # Destination 3: dashboard_snapshot.json
 # ---------------------------------------------------------------------------
+
 
 def _update_dashboard_snapshot(
     project_dir: Path,
@@ -328,7 +361,11 @@ def _update_dashboard_snapshot(
 
     with _get_file_lock(snap_path):
         try:
-            snap: dict = json.loads(snap_path.read_text(encoding="utf-8")) if snap_path.exists() else {}
+            snap: dict = (
+                json.loads(snap_path.read_text(encoding="utf-8"))
+                if snap_path.exists()
+                else {}
+            )
         except Exception:
             snap = {}
 
@@ -346,9 +383,13 @@ def _update_dashboard_snapshot(
         total = input_tokens + output_tokens
         snap["total_tokens"] += total
         snap["total_cost"] = (snap["total_cost"] or 0.0) + cost_usd
-        snap["tokens_by_provider"][provider] = snap["tokens_by_provider"].get(provider, 0) + total
+        snap["tokens_by_provider"][provider] = (
+            snap["tokens_by_provider"].get(provider, 0) + total
+        )
         model_key = f"{provider}/{model}"
-        snap["cost_by_model"][model_key] = (snap["cost_by_model"].get(model_key) or 0.0) + cost_usd
+        snap["cost_by_model"][model_key] = (
+            snap["cost_by_model"].get(model_key) or 0.0
+        ) + cost_usd
         snap["last_updated"] = datetime.now(timezone.utc).isoformat()
 
         _atomic_write(snap_path, json.dumps(snap, indent=2))
@@ -357,6 +398,7 @@ def _update_dashboard_snapshot(
 # ---------------------------------------------------------------------------
 # Dashboard snapshot: task/QA/merge helpers (called from run.py / qa runners)
 # ---------------------------------------------------------------------------
+
 
 def record_task_status(
     project_dir: Path,
@@ -372,7 +414,11 @@ def record_task_status(
 
         with _get_file_lock(snap_path):
             try:
-                snap: dict = json.loads(snap_path.read_text(encoding="utf-8")) if snap_path.exists() else {}
+                snap: dict = (
+                    json.loads(snap_path.read_text(encoding="utf-8"))
+                    if snap_path.exists()
+                    else {}
+                )
             except Exception:
                 snap = {}
 
@@ -407,7 +453,11 @@ def record_qa_result(
 
         with _get_file_lock(snap_path):
             try:
-                snap: dict = json.loads(snap_path.read_text(encoding="utf-8")) if snap_path.exists() else {}
+                snap: dict = (
+                    json.loads(snap_path.read_text(encoding="utf-8"))
+                    if snap_path.exists()
+                    else {}
+                )
             except Exception:
                 snap = {}
 
@@ -435,7 +485,11 @@ def record_merge(project_dir: Path, automatic: bool) -> None:
 
         with _get_file_lock(snap_path):
             try:
-                snap: dict = json.loads(snap_path.read_text(encoding="utf-8")) if snap_path.exists() else {}
+                snap: dict = (
+                    json.loads(snap_path.read_text(encoding="utf-8"))
+                    if snap_path.exists()
+                    else {}
+                )
             except Exception:
                 snap = {}
 

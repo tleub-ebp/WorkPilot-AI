@@ -21,9 +21,8 @@ Example:
 
 import json
 import logging
-import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -126,6 +125,7 @@ PROVIDER_PRICING: dict[str, dict[str, dict[str, float]]] = {
 
 class AlertLevel(Enum):
     """Budget alert severity levels."""
+
     INFO = "info"
     WARNING = "warning"
     CRITICAL = "critical"
@@ -149,6 +149,7 @@ class TokenUsage:
         spec_id: Spec identifier (e.g. '001-feature-name').
         timestamp: When the usage was recorded.
     """
+
     project_id: str
     provider: str
     model: str
@@ -191,6 +192,7 @@ class BudgetAlert:
         percentage: Spend as percentage of budget.
         timestamp: When the alert was generated.
     """
+
     project_id: str
     level: AlertLevel
     message: str
@@ -224,6 +226,7 @@ class ProjectBudget:
         critical_threshold: Percentage at which to send a CRITICAL alert.
         period: Budget period — ``'total'``, ``'monthly'``, or ``'weekly'``.
     """
+
     project_id: str
     limit: float
     currency: str = "USD"
@@ -244,6 +247,7 @@ class CostEstimate:
         estimated_cost: Estimated cost in USD.
         confidence: Confidence level of the estimate ('low', 'medium', 'high').
     """
+
     provider: str
     model: str
     estimated_input_tokens: int
@@ -299,9 +303,7 @@ class CostEstimator:
     # Pricing
     # ------------------------------------------------------------------
 
-    def get_token_price(
-        self, provider: str, model: str
-    ) -> dict[str, float]:
+    def get_token_price(self, provider: str, model: str) -> dict[str, float]:
         """Get the price per 1M tokens for a provider/model.
 
         Args:
@@ -679,24 +681,28 @@ class CostEstimator:
         for provider, models in PROVIDER_PRICING.items():
             if not models:
                 # Local/free providers
-                suggestions.append({
-                    "provider": provider,
-                    "model": "(local)",
-                    "estimated_cost": 0.0,
-                    "quality_tier": "varies",
-                })
+                suggestions.append(
+                    {
+                        "provider": provider,
+                        "model": "(local)",
+                        "estimated_cost": 0.0,
+                        "quality_tier": "varies",
+                    }
+                )
                 continue
 
             for model, pricing in models.items():
                 estimate = self.estimate_task_cost(provider, model, task_type)
                 if max_budget is not None and estimate.estimated_cost > max_budget:
                     continue
-                suggestions.append({
-                    "provider": provider,
-                    "model": model,
-                    "estimated_cost": estimate.estimated_cost,
-                    "quality_tier": _infer_quality_tier(provider, model),
-                })
+                suggestions.append(
+                    {
+                        "provider": provider,
+                        "model": model,
+                        "estimated_cost": estimate.estimated_cost,
+                        "quality_tier": _infer_quality_tier(provider, model),
+                    }
+                )
 
         suggestions.sort(key=lambda s: s["estimated_cost"])
         return suggestions
@@ -806,7 +812,9 @@ class CostEstimator:
             if u.task_id:
                 by_task[u.task_id] = by_task.get(u.task_id, 0.0) + u.cost
             if u.agent_type:
-                by_agent_type[u.agent_type] = by_agent_type.get(u.agent_type, 0.0) + u.cost
+                by_agent_type[u.agent_type] = (
+                    by_agent_type.get(u.agent_type, 0.0) + u.cost
+                )
             if u.phase:
                 by_phase[u.phase] = by_phase.get(u.phase, 0.0) + u.cost
             if u.spec_id:
@@ -826,7 +834,9 @@ class CostEstimator:
                 "period": budget.period,
                 "spent": round(total, 6),
                 "remaining": round(max(0, budget.limit - total), 6),
-                "percentage": round(total / budget.limit * 100, 1) if budget.limit > 0 else 0,
+                "percentage": round(total / budget.limit * 100, 1)
+                if budget.limit > 0
+                else 0,
             }
 
         return {
@@ -884,7 +894,6 @@ class CostEstimator:
             "providers_used": list(providers),
             "budgets_set": len(self._budgets),
         }
-
 
     # ------------------------------------------------------------------
     # Persistence
@@ -970,7 +979,9 @@ class CostEstimator:
 def _infer_quality_tier(provider: str, model: str) -> str:
     """Infer quality tier from model name heuristics."""
     model_lower = model.lower()
-    if any(kw in model_lower for kw in ("opus", "gpt-4", "gpt-5", "pro", "large", "o1")):
+    if any(
+        kw in model_lower for kw in ("opus", "gpt-4", "gpt-5", "pro", "large", "o1")
+    ):
         return "high"
     if any(kw in model_lower for kw in ("sonnet", "4o", "medium", "flash")):
         return "medium"

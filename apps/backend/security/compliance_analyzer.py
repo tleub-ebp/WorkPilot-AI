@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Compliance Analyzer Module
 ===========================
@@ -126,7 +126,7 @@ class ComplianceReport:
 class ComplianceAnalyzer:
     """
     Analyzes code for compliance with various security standards.
-    
+
     This analyzer detects:
     - Personal data handling (GDPR, CCPA)
     - Healthcare data (HIPAA)
@@ -201,9 +201,7 @@ class ComplianceAnalyzer:
         if frameworks is None:
             frameworks = list(ComplianceFramework)
 
-        report = ComplianceReport(
-            project_path=self.project_path, frameworks=frameworks
-        )
+        report = ComplianceReport(project_path=self.project_path, frameworks=frameworks)
 
         # Get all source files
         source_files = self._get_source_files()
@@ -230,7 +228,10 @@ class ComplianceAnalyzer:
             lines = content.split("\n")
 
             # GDPR/CCPA - Personal data handling
-            if ComplianceFramework.GDPR in frameworks or ComplianceFramework.CCPA in frameworks:
+            if (
+                ComplianceFramework.GDPR in frameworks
+                or ComplianceFramework.CCPA in frameworks
+            ):
                 self._check_personal_data(file_path, lines, report)
 
             # HIPAA - Health data
@@ -242,7 +243,10 @@ class ComplianceAnalyzer:
                 self._check_payment_data(file_path, lines, report)
 
             # SOC2/ISO 27001 - Security controls
-            if ComplianceFramework.SOC2 in frameworks or ComplianceFramework.ISO_27001 in frameworks:
+            if (
+                ComplianceFramework.SOC2 in frameworks
+                or ComplianceFramework.ISO_27001 in frameworks
+            ):
                 self._check_security_controls_in_file(file_path, lines, report)
 
         except Exception as e:
@@ -258,7 +262,9 @@ class ComplianceAnalyzer:
                 if re.search(pattern, line, re.IGNORECASE):
                     # Check if there's consent or purpose limitation
                     has_consent = any(
-                        re.search(r"\b(?:consent|permission|agree)\b", line, re.IGNORECASE)
+                        re.search(
+                            r"\b(?:consent|permission|agree)\b", line, re.IGNORECASE
+                        )
                         for line in lines[max(0, line_num - 5) : line_num + 5]
                     )
 
@@ -383,7 +389,9 @@ class ComplianceAnalyzer:
 
                     # Check for encryption
                     has_encryption = any(
-                        re.search(r"\b(?:encrypt|tokenize|vault)\b", line, re.IGNORECASE)
+                        re.search(
+                            r"\b(?:encrypt|tokenize|vault)\b", line, re.IGNORECASE
+                        )
                         for line in lines[max(0, line_num - 5) : line_num + 5]
                     )
 
@@ -538,4 +546,3 @@ class ComplianceAnalyzer:
         }
 
         return remediations.get(description, "Review and remediate this security issue")
-

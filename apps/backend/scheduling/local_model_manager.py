@@ -91,7 +91,12 @@ KNOWN_MODELS: dict[str, dict[str, Any]] = {
 }
 
 RECOMMENDED_MODELS_BY_TASK: dict[str, list[str]] = {
-    "coding": ["deepseek-coder-v2:16b", "qwen2.5-coder:7b", "codellama:13b", "llama3:8b"],
+    "coding": [
+        "deepseek-coder-v2:16b",
+        "qwen2.5-coder:7b",
+        "codellama:13b",
+        "llama3:8b",
+    ],
     "planning": ["llama3:70b", "llama3:8b", "mistral:7b"],
     "review": ["llama3:70b", "deepseek-coder-v2:16b", "llama3:8b"],
     "documentation": ["mistral:7b", "llama3:8b"],
@@ -515,19 +520,21 @@ class LocalModelManager:
             # Detect quantization from name
             quantization = self._detect_quantization(name)
 
-            models.append(LocalModel(
-                name=name,
-                size_bytes=size_bytes,
-                size_gb=round(size_bytes / (1024**3), 2),
-                family=family,
-                parameter_count=known.get("params", ""),
-                quantization=quantization,
-                modified_at=model_data.get("modified_at", ""),
-                runtime=RuntimeType.OLLAMA,
-                capabilities=capabilities,
-                ram_estimate_gb=round(ram_est, 1),
-                vram_estimate_gb=round(vram_est, 1),
-            ))
+            models.append(
+                LocalModel(
+                    name=name,
+                    size_bytes=size_bytes,
+                    size_gb=round(size_bytes / (1024**3), 2),
+                    family=family,
+                    parameter_count=known.get("params", ""),
+                    quantization=quantization,
+                    modified_at=model_data.get("modified_at", ""),
+                    runtime=RuntimeType.OLLAMA,
+                    capabilities=capabilities,
+                    ram_estimate_gb=round(ram_est, 1),
+                    vram_estimate_gb=round(vram_est, 1),
+                )
+            )
 
         return models
 
@@ -544,11 +551,13 @@ class LocalModelManager:
         models: list[LocalModel] = []
         for model_data in data.get("data", []):
             name = model_data.get("id", "")
-            models.append(LocalModel(
-                name=name,
-                runtime=RuntimeType.LMSTUDIO,
-                family=self._detect_model_family(name),
-            ))
+            models.append(
+                LocalModel(
+                    name=name,
+                    runtime=RuntimeType.LMSTUDIO,
+                    family=self._detect_model_family(name),
+                )
+            )
 
         return models
 
@@ -563,8 +572,16 @@ class LocalModelManager:
         """
         name_lower = name.lower()
         families = [
-            "llama", "mistral", "codellama", "deepseek", "phi",
-            "qwen", "gemma", "vicuna", "starcoder", "wizardcoder",
+            "llama",
+            "mistral",
+            "codellama",
+            "deepseek",
+            "phi",
+            "qwen",
+            "gemma",
+            "vicuna",
+            "starcoder",
+            "wizardcoder",
         ]
         for family in families:
             if family in name_lower:
@@ -582,10 +599,22 @@ class LocalModelManager:
         """
         name_upper = name.upper()
         quant_patterns = [
-            "Q2_K", "Q3_K_S", "Q3_K_M", "Q3_K_L",
-            "Q4_0", "Q4_1", "Q4_K_S", "Q4_K_M",
-            "Q5_0", "Q5_1", "Q5_K_S", "Q5_K_M",
-            "Q6_K", "Q8_0", "F16", "F32",
+            "Q2_K",
+            "Q3_K_S",
+            "Q3_K_M",
+            "Q3_K_L",
+            "Q4_0",
+            "Q4_1",
+            "Q4_K_S",
+            "Q4_K_M",
+            "Q5_0",
+            "Q5_1",
+            "Q5_K_S",
+            "Q5_K_M",
+            "Q6_K",
+            "Q8_0",
+            "F16",
+            "F32",
         ]
         for pattern in quant_patterns:
             if pattern in name_upper:
@@ -675,7 +704,10 @@ class LocalModelManager:
 
         logger.info(
             "Benchmark '%s': %.1f tok/s, quality=%.0f, total=%.1fs",
-            model_name, tokens_per_second, quality_score, total_time,
+            model_name,
+            tokens_per_second,
+            quality_score,
+            total_time,
         )
 
         return result
@@ -730,7 +762,9 @@ class LocalModelManager:
                 score += 10
 
         elif task_type == "review":
-            if any(w in text.lower() for w in ["improve", "suggest", "instead", "better"]):
+            if any(
+                w in text.lower() for w in ["improve", "suggest", "instead", "better"]
+            ):
                 score += 20
             if "None" in text or "is not" in text:
                 score += 15
@@ -831,7 +865,9 @@ class LocalModelManager:
                 if len(parts) >= 3:
                     resources.gpu_name = parts[0].strip()
                     resources.total_vram_gb = round(float(parts[1].strip()) / 1024, 1)
-                    resources.available_vram_gb = round(float(parts[2].strip()) / 1024, 1)
+                    resources.available_vram_gb = round(
+                        float(parts[2].strip()) / 1024, 1
+                    )
                     resources.gpu_detected = True
         except (FileNotFoundError, subprocess.TimeoutExpired, ValueError):
             pass
@@ -861,17 +897,19 @@ class LocalModelManager:
             usage_fraction = used_ram / resources.total_ram_gb
 
             if usage_fraction >= ram_threshold:
-                alerts.append(ResourceAlert(
-                    alert_type="ram",
-                    message=(
-                        f"RAM usage is at {usage_fraction:.0%} "
-                        f"({used_ram:.1f}/{resources.total_ram_gb:.1f} GB). "
-                        f"Consider unloading unused models."
-                    ),
-                    current_value=round(usage_fraction, 2),
-                    threshold=ram_threshold,
-                    severity="critical" if usage_fraction >= 0.95 else "warning",
-                ))
+                alerts.append(
+                    ResourceAlert(
+                        alert_type="ram",
+                        message=(
+                            f"RAM usage is at {usage_fraction:.0%} "
+                            f"({used_ram:.1f}/{resources.total_ram_gb:.1f} GB). "
+                            f"Consider unloading unused models."
+                        ),
+                        current_value=round(usage_fraction, 2),
+                        threshold=ram_threshold,
+                        severity="critical" if usage_fraction >= 0.95 else "warning",
+                    )
+                )
 
         # VRAM check
         if resources.total_vram_gb > 0:
@@ -879,17 +917,19 @@ class LocalModelManager:
             usage_fraction = used_vram / resources.total_vram_gb
 
             if usage_fraction >= vram_threshold:
-                alerts.append(ResourceAlert(
-                    alert_type="vram",
-                    message=(
-                        f"GPU VRAM usage is at {usage_fraction:.0%} "
-                        f"({used_vram:.1f}/{resources.total_vram_gb:.1f} GB). "
-                        f"May cause OOM errors with large models."
-                    ),
-                    current_value=round(usage_fraction, 2),
-                    threshold=vram_threshold,
-                    severity="critical" if usage_fraction >= 0.95 else "warning",
-                ))
+                alerts.append(
+                    ResourceAlert(
+                        alert_type="vram",
+                        message=(
+                            f"GPU VRAM usage is at {usage_fraction:.0%} "
+                            f"({used_vram:.1f}/{resources.total_vram_gb:.1f} GB). "
+                            f"May cause OOM errors with large models."
+                        ),
+                        current_value=round(usage_fraction, 2),
+                        threshold=vram_threshold,
+                        severity="critical" if usage_fraction >= 0.95 else "warning",
+                    )
+                )
 
         self._alerts = alerts
         return alerts
@@ -927,15 +967,17 @@ class LocalModelManager:
             if max_ram_gb and ram_needed > max_ram_gb:
                 fits_ram = False
 
-            recommendations.append({
-                "model": model_name,
-                "installed": model_name in installed_models,
-                "fits_resources": fits_ram,
-                "ram_gb": ram_needed,
-                "quality_tier": known.get("quality_tier", "unknown"),
-                "speed_tier": known.get("speed_tier", "unknown"),
-                "tasks": known.get("tasks", []),
-            })
+            recommendations.append(
+                {
+                    "model": model_name,
+                    "installed": model_name in installed_models,
+                    "fits_resources": fits_ram,
+                    "ram_gb": ram_needed,
+                    "quality_tier": known.get("quality_tier", "unknown"),
+                    "speed_tier": known.get("speed_tier", "unknown"),
+                    "tasks": known.get("tasks", []),
+                }
+            )
 
         return recommendations
 
@@ -973,13 +1015,20 @@ class LocalModelManager:
             "pipeline": [
                 {"step": "draft", "provider": "local", "model": local_model},
                 {"step": "validate", "provider": cloud_provider, "model": cloud_model},
-                {"step": "refine", "provider": "local", "model": local_model, "optional": True},
+                {
+                    "step": "refine",
+                    "provider": "local",
+                    "model": local_model,
+                    "optional": True,
+                },
             ],
         }
 
         logger.info(
             "Hybrid mode configured: %s (local) → %s/%s (cloud)",
-            local_model, cloud_provider, cloud_model,
+            local_model,
+            cloud_provider,
+            cloud_model,
         )
         return config
 

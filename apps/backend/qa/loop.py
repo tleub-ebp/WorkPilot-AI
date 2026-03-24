@@ -10,7 +10,7 @@ import os
 import time as time_module
 from pathlib import Path
 
-from core.client import create_agent_client, create_client
+from core.client import create_agent_client
 from core.task_event import TaskEventEmitter
 from debug import debug, debug_error, debug_section, debug_success, debug_warning
 from linear_updater import (
@@ -25,12 +25,11 @@ from phase_config import get_phase_model, get_phase_thinking_budget
 from phase_event import ExecutionPhase, emit_phase
 from progress import count_subtasks, is_build_complete
 from security.constants import PROJECT_DIR_ENV_VAR
+from security.qa_scanner import run_qa_security_scan
 from task_logger import (
     LogPhase,
     get_task_logger,
 )
-
-from security.qa_scanner import run_qa_security_scan
 
 from .criteria import (
     get_qa_iteration_count,
@@ -168,7 +167,9 @@ async def run_qa_validation_loop(
                 max_thinking_tokens=fixer_thinking_budget,
             )
         except Exception as e:
-            debug_error("qa_loop", f"Failed to create fixer client for human feedback: {e}")
+            debug_error(
+                "qa_loop", f"Failed to create fixer client for human feedback: {e}"
+            )
             print(f"\n❌ Failed to create fixer client: {e}")
             task_event_emitter.emit(
                 "QA_AGENT_ERROR",
@@ -213,9 +214,7 @@ async def run_qa_validation_loop(
     # when the QA reviewer agent reads it.
     print("\n🔐 Running security scan...")
     try:
-        sec_passed, _, sec_issues = await run_qa_security_scan(
-            project_dir, spec_dir
-        )
+        sec_passed, _, sec_issues = await run_qa_security_scan(project_dir, spec_dir)
         if not sec_passed:
             critical_count = sum(1 for i in sec_issues if i.get("type") == "critical")
             high_count = sum(1 for i in sec_issues if i.get("type") == "high")
@@ -230,7 +229,11 @@ async def run_qa_validation_loop(
             )
             task_event_emitter.emit(
                 "SECURITY_SCAN_ISSUES",
-                {"critical": critical_count, "high": high_count, "issues": sec_issues[:10]},
+                {
+                    "critical": critical_count,
+                    "high": high_count,
+                    "issues": sec_issues[:10],
+                },
             )
         else:
             print("   ✅ Security scan passed — no critical/high issues")
@@ -405,8 +408,7 @@ async def run_qa_validation_loop(
                             "iteration": qa_iteration,
                             "issueCount": len(arch_violations),
                             "issues": [
-                                v.get("description", "")
-                                for v in arch_violations[:5]
+                                v.get("description", "") for v in arch_violations[:5]
                             ],
                         },
                     )

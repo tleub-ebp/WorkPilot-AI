@@ -17,15 +17,19 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
 
 # Add the apps/backend directory to the Python path
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
 try:
-    from documentation import DocumentationAnalyzer, DocumentationGenerator, DocumentationUpdater
+    from documentation import (
+        DocumentationAnalyzer,
+        DocumentationGenerator,
+        DocumentationUpdater,
+    )
     from documentation.models import DocType
+
     _DOCUMENTATION_AVAILABLE = True
 except ImportError:
     _DOCUMENTATION_AVAILABLE = False
@@ -42,8 +46,12 @@ if _DOCUMENTATION_AVAILABLE:
     }
 else:
     DOC_TYPE_MAP = {
-        "api": "api", "readme": "readme", "contribution": "contribution",
-        "docstrings": "docstrings", "diagrams": "diagrams", "changelog": "changelog",
+        "api": "api",
+        "readme": "readme",
+        "contribution": "contribution",
+        "docstrings": "docstrings",
+        "diagrams": "diagrams",
+        "changelog": "changelog",
     }
 
 ALL_DOC_TYPES = list(DOC_TYPE_MAP.keys())
@@ -55,11 +63,11 @@ class DocumentationAgentRunner:
     def __init__(
         self,
         project_dir: str,
-        doc_types: Optional[List[str]] = None,
-        output_dir: Optional[str] = None,
+        doc_types: list[str] | None = None,
+        output_dir: str | None = None,
         insert_inline: bool = False,
-        model: Optional[str] = None,
-        thinking_level: Optional[str] = None,
+        model: str | None = None,
+        thinking_level: str | None = None,
     ):
         self.project_dir = Path(project_dir)
         self.doc_types = doc_types or ALL_DOC_TYPES
@@ -76,14 +84,16 @@ class DocumentationAgentRunner:
         if self.insert_inline:
             print("🔧 Inline docstring insertion enabled")
 
-    def run_documentation(self) -> Dict:
+    def run_documentation(self) -> dict:
         """Run the full documentation generation workflow."""
         print("\n🔍 Phase 1: Analyzing documentation coverage...")
         analyzer = DocumentationAnalyzer(str(self.project_dir))
         coverage_before = analyzer.analyze_coverage()
-        print(f"   Coverage: {coverage_before.coverage_percent:.1f}% "
-              f"({coverage_before.documented_functions}/{coverage_before.total_functions} functions, "
-              f"{coverage_before.documented_classes}/{coverage_before.total_classes} classes)")
+        print(
+            f"   Coverage: {coverage_before.coverage_percent:.1f}% "
+            f"({coverage_before.documented_functions}/{coverage_before.total_functions} functions, "
+            f"{coverage_before.documented_classes}/{coverage_before.total_classes} classes)"
+        )
 
         outdated = analyzer.detect_outdated_docs()
         if outdated:
@@ -109,8 +119,11 @@ class DocumentationAgentRunner:
                 }
                 section = generator.generate_readme(project_context)
                 generated_files.append(section.file_path)
-                results_by_type["readme"] = {"status": "success", "file": section.file_path}
-                print(f"      ✅ README.md written")
+                results_by_type["readme"] = {
+                    "status": "success",
+                    "file": section.file_path,
+                }
+                print("      ✅ README.md written")
             except Exception as e:
                 results_by_type["readme"] = {"status": "error", "error": str(e)}
 
@@ -120,8 +133,11 @@ class DocumentationAgentRunner:
             try:
                 section = generator.generate_contribution_guide()
                 generated_files.append(section.file_path)
-                results_by_type["contribution"] = {"status": "success", "file": section.file_path}
-                print(f"      ✅ CONTRIBUTING.md written")
+                results_by_type["contribution"] = {
+                    "status": "success",
+                    "file": section.file_path,
+                }
+                print("      ✅ CONTRIBUTING.md written")
             except Exception as e:
                 results_by_type["contribution"] = {"status": "error", "error": str(e)}
 
@@ -154,14 +170,18 @@ class DocumentationAgentRunner:
                 parts = entry.split(":")
                 if len(parts) >= 3:
                     file_path, line, name = parts[0], parts[1], parts[2]
-                    symbols_needing_docs.append({
-                        "file_path": str(self.project_dir / file_path),
-                        "name": name,
-                        "kind": "function",
-                        "has_doc": False,
-                    })
+                    symbols_needing_docs.append(
+                        {
+                            "file_path": str(self.project_dir / file_path),
+                            "name": name,
+                            "kind": "function",
+                            "has_doc": False,
+                        }
+                    )
             if symbols_needing_docs:
-                doc_sections = generator.generate_docstrings(symbols_needing_docs, language="python")
+                doc_sections = generator.generate_docstrings(
+                    symbols_needing_docs, language="python"
+                )
                 updater = DocumentationUpdater(str(self.project_dir))
                 total_inserted = 0
                 for sym in symbols_needing_docs:
@@ -198,19 +218,27 @@ class DocumentationAgentRunner:
             "coverage_before": coverage_before.to_dict(),
             "coverage_after": coverage_after.to_dict(),
             "outdated_found": len(outdated),
-            "summary": self._generate_summary(coverage_before, coverage_after, generated_files),
+            "summary": self._generate_summary(
+                coverage_before, coverage_after, generated_files
+            ),
         }
 
         return result
 
-    def _generate_summary(self, coverage_before, coverage_after, files: List[str]) -> Dict:
+    def _generate_summary(
+        self, coverage_before, coverage_after, files: list[str]
+    ) -> dict:
         """Generate a human-readable summary."""
-        coverage_delta = coverage_after.coverage_percent - coverage_before.coverage_percent
+        coverage_delta = (
+            coverage_after.coverage_percent - coverage_before.coverage_percent
+        )
         return {
             "files_written": len(files),
             "coverage_before": f"{coverage_before.coverage_percent:.1f}%",
             "coverage_after": f"{coverage_after.coverage_percent:.1f}%",
-            "coverage_delta": f"+{coverage_delta:.1f}%" if coverage_delta >= 0 else f"{coverage_delta:.1f}%",
+            "coverage_delta": f"+{coverage_delta:.1f}%"
+            if coverage_delta >= 0
+            else f"{coverage_delta:.1f}%",
             "missing_docs_before": len(coverage_before.missing_docs),
             "missing_docs_after": len(coverage_after.missing_docs),
         }
@@ -262,7 +290,9 @@ def main():
         print(f"❌ Project directory not found: {args.project_dir}")
         sys.exit(1)
 
-    doc_types = [t.strip() for t in args.doc_types.split(",") if t.strip() in ALL_DOC_TYPES]
+    doc_types = [
+        t.strip() for t in args.doc_types.split(",") if t.strip() in ALL_DOC_TYPES
+    ]
     if not doc_types:
         print(f"❌ No valid doc types specified. Valid: {','.join(ALL_DOC_TYPES)}")
         sys.exit(1)
@@ -280,7 +310,7 @@ def main():
         result = runner.run_documentation()
 
         print("__DOC_RESULT__:" + json.dumps(result))
-        print(f"\n✅ Documentation generation complete!")
+        print("\n✅ Documentation generation complete!")
     except KeyboardInterrupt:
         print("\n⚠️ Documentation generation interrupted.")
         sys.exit(1)

@@ -20,11 +20,10 @@ import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 from .vulnerability_scanner import (
-    Severity,
     ScanResult,
+    Severity,
     Vulnerability,
     VulnerabilityScanner,
     VulnerabilitySource,
@@ -34,17 +33,19 @@ from .vulnerability_scanner import (
 # WEB VULNERABILITY PATTERNS (no external tools required)
 # =============================================================================
 
+
 @dataclass
 class PatternRule:
     """A regex-based code pattern that signals a potential vulnerability."""
+
     id: str
     title: str
-    pattern: str               # Regex to search
+    pattern: str  # Regex to search
     severity: Severity
     description: str
     remediation: str
     file_extensions: set[str]  # Extensions to scan
-    cwe: Optional[str] = None
+    cwe: str | None = None
 
 
 _WEB_VULN_PATTERNS: list[PatternRule] = [
@@ -73,7 +74,7 @@ _WEB_VULN_PATTERNS: list[PatternRule] = [
     PatternRule(
         id="XSS-001",
         title="Potential XSS: innerHTML / dangerouslySetInnerHTML",
-        pattern=r'innerHTML\s*=|dangerouslySetInnerHTML\s*=\s*\{',
+        pattern=r"innerHTML\s*=|dangerouslySetInnerHTML\s*=\s*\{",
         severity=Severity.HIGH,
         description="Direct DOM manipulation or dangerouslySetInnerHTML can introduce XSS.",
         remediation="Sanitize user input with DOMPurify before inserting into DOM.",
@@ -83,7 +84,7 @@ _WEB_VULN_PATTERNS: list[PatternRule] = [
     PatternRule(
         id="XSS-002",
         title="Potential XSS: document.write",
-        pattern=r'document\.write\s*\(',
+        pattern=r"document\.write\s*\(",
         severity=Severity.HIGH,
         description="document.write with user-controlled data enables XSS.",
         remediation="Use safer DOM APIs (textContent, createElement) instead of document.write.",
@@ -116,7 +117,7 @@ _WEB_VULN_PATTERNS: list[PatternRule] = [
     PatternRule(
         id="CMD-001",
         title="Potential command injection",
-        pattern=r'subprocess\.(run|call|Popen|check_output)\s*\(.*shell\s*=\s*True',
+        pattern=r"subprocess\.(run|call|Popen|check_output)\s*\(.*shell\s*=\s*True",
         severity=Severity.HIGH,
         description="shell=True with user-controlled input enables command injection.",
         remediation="Use shell=False and pass arguments as a list. Validate all inputs.",
@@ -126,7 +127,7 @@ _WEB_VULN_PATTERNS: list[PatternRule] = [
     PatternRule(
         id="CMD-002",
         title="Potential command injection via exec/eval",
-        pattern=r'\beval\s*\(|\bexec\s*\(',
+        pattern=r"\beval\s*\(|\bexec\s*\(",
         severity=Severity.HIGH,
         description="eval/exec with user-controlled input enables code injection.",
         remediation="Avoid eval/exec. Use safe alternatives (ast.literal_eval for data).",
@@ -137,7 +138,7 @@ _WEB_VULN_PATTERNS: list[PatternRule] = [
     PatternRule(
         id="PATH-001",
         title="Potential path traversal",
-        pattern=r'open\s*\(\s*(?:request\.|user_input|params\[)',
+        pattern=r"open\s*\(\s*(?:request\.|user_input|params\[)",
         severity=Severity.HIGH,
         description="File path constructed from user input may enable path traversal.",
         remediation="Validate and sanitize file paths. Use os.path.abspath and check against allowed base.",
@@ -151,14 +152,15 @@ _WEB_VULN_PATTERNS: list[PatternRule] = [
 # QA SECURITY SCANNER
 # =============================================================================
 
+
 @dataclass
 class SecurityScanSummary:
     """Summary of a QA security scan — ready for embedding in a QA report."""
 
     scan_result: ScanResult
     pattern_findings: list[Vulnerability] = field(default_factory=list)
-    passed: bool = True         # True if no critical/high issues
-    blocking: bool = False      # True if build should be blocked (critical issues)
+    passed: bool = True  # True if no critical/high issues
+    blocking: bool = False  # True if build should be blocked (critical issues)
     duration_seconds: float = 0.0
 
     @property
@@ -167,7 +169,9 @@ class SecurityScanSummary:
 
     @property
     def critical_count(self) -> int:
-        return sum(1 for v in self.all_vulnerabilities if v.severity == Severity.CRITICAL)
+        return sum(
+            1 for v in self.all_vulnerabilities if v.severity == Severity.CRITICAL
+        )
 
     @property
     def high_count(self) -> int:
@@ -181,7 +185,9 @@ class SecurityScanSummary:
         all_vulns = self.all_vulnerabilities
         if not all_vulns:
             lines.append("✅ **No security issues detected.**\n")
-            lines.append(f"Scans run: {', '.join(self.scan_result.scans_run) or 'pattern-scan'}\n")
+            lines.append(
+                f"Scans run: {', '.join(self.scan_result.scans_run) or 'pattern-scan'}\n"
+            )
             return "\n".join(lines)
 
         # Summary table
@@ -191,24 +197,41 @@ class SecurityScanSummary:
         lo = sum(1 for v in all_vulns if v.severity == Severity.LOW)
 
         status_icon = "🚨" if self.blocking else ("⚠️" if not self.passed else "ℹ️")
-        lines.append(f"{status_icon} **Security Summary:** Critical: {c} | High: {h} | Medium: {m} | Low: {lo}\n")
+        lines.append(
+            f"{status_icon} **Security Summary:** Critical: {c} | High: {h} | Medium: {m} | Low: {lo}\n"
+        )
 
         if self.blocking:
-            lines.append("> ❌ **BUILD BLOCKED** — Critical security vulnerabilities must be fixed before merge.\n")
+            lines.append(
+                "> ❌ **BUILD BLOCKED** — Critical security vulnerabilities must be fixed before merge.\n"
+            )
         elif not self.passed:
-            lines.append("> ⚠️ High-severity issues found. Review and fix before merge.\n")
+            lines.append(
+                "> ⚠️ High-severity issues found. Review and fix before merge.\n"
+            )
 
-        lines.append(f"Scans run: {', '.join(self.scan_result.scans_run + ['pattern-scan'])}\n")
+        lines.append(
+            f"Scans run: {', '.join(self.scan_result.scans_run + ['pattern-scan'])}\n"
+        )
         lines.append(f"Scan duration: {self.duration_seconds:.1f}s\n")
 
         # Detail sections by severity
-        for severity in (Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW):
+        for severity in (
+            Severity.CRITICAL,
+            Severity.HIGH,
+            Severity.MEDIUM,
+            Severity.LOW,
+        ):
             group = [v for v in all_vulns if v.severity == severity]
             if not group:
                 continue
             lines.append(f"\n### {severity.value.upper()} ({len(group)})\n")
             for v in group:
-                location = f"`{v.file}:{v.line}`" if v.file and v.line else (f"`{v.file}`" if v.file else "")
+                location = (
+                    f"`{v.file}:{v.line}`"
+                    if v.file and v.line
+                    else (f"`{v.file}`" if v.file else "")
+                )
                 lines.append(f"- **[{v.id}] {v.title}**")
                 if location:
                     lines.append(f"  - Location: {location}")
@@ -230,14 +253,19 @@ class SecurityScanSummary:
         issues = []
         for v in self.all_vulnerabilities:
             if v.severity in (Severity.CRITICAL, Severity.HIGH):
-                issues.append({
-                    "type": v.severity.value,
-                    "title": f"Security: {v.title}",
-                    "location": f"{v.file}:{v.line}" if v.file and v.line else v.file or "",
-                    "fix_required": v.remediation or "Fix this security vulnerability",
-                    "source": v.source.value,
-                    "cwe": v.cwe,
-                })
+                issues.append(
+                    {
+                        "type": v.severity.value,
+                        "title": f"Security: {v.title}",
+                        "location": f"{v.file}:{v.line}"
+                        if v.file and v.line
+                        else v.file or "",
+                        "fix_required": v.remediation
+                        or "Fix this security vulnerability",
+                        "source": v.source.value,
+                        "cwe": v.cwe,
+                    }
+                )
         return issues
 
 
@@ -279,7 +307,6 @@ class QASecurityScanner:
                 include_containers=False,
             )
         else:
-            from datetime import datetime
             scan_result = ScanResult(project_path=self.project_dir)
 
         # Pattern-based scanning
@@ -315,7 +342,9 @@ class QASecurityScanner:
             ext = source_file.suffix.lower()
 
             try:
-                lines = source_file.read_text(encoding="utf-8", errors="ignore").splitlines()
+                lines = source_file.read_text(
+                    encoding="utf-8", errors="ignore"
+                ).splitlines()
             except OSError:
                 continue
 
@@ -345,12 +374,29 @@ class QASecurityScanner:
         return findings
 
     _SKIP_DIRS = {
-        "node_modules", "__pycache__", ".git", ".venv", "venv", "dist",
-        "build", "out", ".next", "coverage", ".auto-claude",
+        "node_modules",
+        "__pycache__",
+        ".git",
+        ".venv",
+        "venv",
+        "dist",
+        "build",
+        "out",
+        ".next",
+        "coverage",
+        ".auto-claude",
     }
     _SCAN_EXTENSIONS = {
-        ".py", ".js", ".jsx", ".ts", ".tsx", ".mjs",
-        ".env", ".yaml", ".yml", ".json",
+        ".py",
+        ".js",
+        ".jsx",
+        ".ts",
+        ".tsx",
+        ".mjs",
+        ".env",
+        ".yaml",
+        ".yml",
+        ".json",
     }
 
     def _iter_source_files(self):
@@ -366,6 +412,7 @@ class QASecurityScanner:
 # =============================================================================
 # INTEGRATION HELPER
 # =============================================================================
+
 
 async def run_qa_security_scan(
     project_dir: Path,

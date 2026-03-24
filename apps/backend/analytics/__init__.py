@@ -10,27 +10,31 @@ for the WorkPilot AI agent system, including:
 - Agent performance comparison
 """
 
-from .database import init_database, get_db
+from .database import get_db, init_database
 from .database_schema import (
-    Build, BuildPhase, TokenUsage, QAResult, 
-    BuildError, AgentPerformance, AnalyticsConfig,
-    BuildStatus, AgentType
+    AgentPerformance,
+    AgentType,
+    AnalyticsConfig,
+    Build,
+    BuildError,
+    BuildPhase,
+    BuildStatus,
+    QAResult,
+    TokenUsage,
 )
 
 __all__ = [
     # Database
     "init_database",
     "get_db",
-    
     # Models
     "Build",
-    "BuildPhase", 
+    "BuildPhase",
     "TokenUsage",
     "QAResult",
     "BuildError",
     "AgentPerformance",
     "AnalyticsConfig",
-    
     # Enums
     "BuildStatus",
     "AgentType",

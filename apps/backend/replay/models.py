@@ -9,11 +9,12 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class ReplayStepType(str, Enum):
     """Types of replay steps."""
+
     SESSION_START = "session_start"
     SESSION_END = "session_end"
     AGENT_THINKING = "agent_thinking"
@@ -36,6 +37,7 @@ class ReplayStepType(str, Enum):
 
 class BreakpointType(str, Enum):
     """Types of breakpoints for debug mode."""
+
     TOOL_CALL = "tool_call"
     FILE_CHANGE = "file_change"
     DECISION = "decision"
@@ -48,11 +50,12 @@ class BreakpointType(str, Enum):
 @dataclass
 class FileDiff:
     """Represents a file diff at a specific step."""
+
     file_path: str
     operation: str  # create, update, delete, read
-    before_content: Optional[str] = None
-    after_content: Optional[str] = None
-    diff_lines: Optional[list[str]] = None
+    before_content: str | None = None
+    after_content: str | None = None
+    diff_lines: list[str] | None = None
     line_count_before: int = 0
     line_count_after: int = 0
 
@@ -83,6 +86,7 @@ class FileDiff:
 @dataclass
 class ReplayStep:
     """A single step in the agent replay timeline."""
+
     id: str = field(default_factory=lambda: str(uuid.uuid4())[:12])
     step_index: int = 0
     step_type: ReplayStepType = ReplayStepType.AGENT_THINKING
@@ -95,9 +99,9 @@ class ReplayStep:
     reasoning: str = ""
 
     # Tool call details
-    tool_name: Optional[str] = None
-    tool_input: Optional[dict[str, Any]] = None
-    tool_output: Optional[str] = None
+    tool_name: str | None = None
+    tool_input: dict[str, Any] | None = None
+    tool_output: str | None = None
 
     # File changes at this step
     file_diffs: list[FileDiff] = field(default_factory=list)
@@ -110,17 +114,17 @@ class ReplayStep:
     cumulative_cost_usd: float = 0.0
 
     # Decision tree link
-    decision_node_id: Optional[str] = None
-    parent_step_id: Optional[str] = None
+    decision_node_id: str | None = None
+    parent_step_id: str | None = None
     children_step_ids: list[str] = field(default_factory=list)
 
     # Options considered at decision points
     options_considered: list[str] = field(default_factory=list)
-    chosen_option: Optional[str] = None
+    chosen_option: str | None = None
 
     # Breakpoint info
     is_breakpoint: bool = False
-    breakpoint_id: Optional[str] = None
+    breakpoint_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -177,15 +181,14 @@ class ReplayStep:
             is_breakpoint=data.get("is_breakpoint", False),
             breakpoint_id=data.get("breakpoint_id"),
         )
-        step.file_diffs = [
-            FileDiff.from_dict(d) for d in data.get("file_diffs", [])
-        ]
+        step.file_diffs = [FileDiff.from_dict(d) for d in data.get("file_diffs", [])]
         return step
 
 
 @dataclass
 class Breakpoint:
     """A debug breakpoint configuration."""
+
     id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
     breakpoint_type: BreakpointType = BreakpointType.TOOL_CALL
     enabled: bool = True
@@ -218,8 +221,9 @@ class Breakpoint:
 @dataclass
 class ReplaySession:
     """A complete recorded agent session for replay."""
+
     session_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    agent_id: Optional[str] = None
+    agent_id: str | None = None
     agent_name: str = ""
     agent_role: str = ""
 
@@ -234,7 +238,7 @@ class ReplaySession:
 
     # Timing
     start_time: float = field(default_factory=time.time)
-    end_time: Optional[float] = None
+    end_time: float | None = None
 
     # Steps
     steps: list[ReplayStep] = field(default_factory=list)
@@ -286,15 +290,17 @@ class ReplaySession:
         timeline = []
         for step in self.steps:
             if step.input_tokens > 0 or step.output_tokens > 0:
-                timeline.append({
-                    "step_index": step.step_index,
-                    "timestamp": step.timestamp,
-                    "input_tokens": step.input_tokens,
-                    "output_tokens": step.output_tokens,
-                    "cumulative": step.cumulative_tokens,
-                    "cost_usd": step.cost_usd,
-                    "cumulative_cost_usd": step.cumulative_cost_usd,
-                })
+                timeline.append(
+                    {
+                        "step_index": step.step_index,
+                        "timestamp": step.timestamp,
+                        "input_tokens": step.input_tokens,
+                        "output_tokens": step.output_tokens,
+                        "cumulative": step.cumulative_tokens,
+                        "cost_usd": step.cost_usd,
+                        "cumulative_cost_usd": step.cumulative_cost_usd,
+                    }
+                )
         return timeline
 
     def to_dict(self) -> dict[str, Any]:
@@ -369,9 +375,7 @@ class ReplaySession:
             status=data.get("status", "completed"),
             tags=data.get("tags", []),
         )
-        session.steps = [
-            ReplayStep.from_dict(s) for s in data.get("steps", [])
-        ]
+        session.steps = [ReplayStep.from_dict(s) for s in data.get("steps", [])]
         session.breakpoints = [
             Breakpoint.from_dict(b) for b in data.get("breakpoints", [])
         ]
@@ -381,6 +385,7 @@ class ReplaySession:
 @dataclass
 class ABComparison:
     """A/B comparison of two replay sessions."""
+
     id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
     session_a_id: str = ""
     session_b_id: str = ""

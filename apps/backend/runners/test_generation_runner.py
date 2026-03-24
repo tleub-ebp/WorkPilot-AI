@@ -53,7 +53,9 @@ def _status(message: str) -> None:
     print(message, flush=True)
 
 
-def _write_test_file(result, project_path: str | None, source_file_path: str | None = None) -> None:
+def _write_test_file(
+    result, project_path: str | None, source_file_path: str | None = None
+) -> None:
     """Resolve and write the generated test file to disk. Updates result.test_file_path."""
     content: str = getattr(result, "test_file_content", "")
     raw_path: str = getattr(result, "test_file_path", "")
@@ -189,18 +191,30 @@ def main() -> None:
         help="Action to perform",
     )
     parser.add_argument("--file-path", default=None, help="Path to source file")
-    parser.add_argument("--existing-test-path", default=None, help="Path to existing test file")
+    parser.add_argument(
+        "--existing-test-path", default=None, help="Path to existing test file"
+    )
     parser.add_argument(
         "--coverage-target",
         type=int,
         default=80,
         help="Coverage target percentage (default: 80)",
     )
-    parser.add_argument("--user-story", default=None, help="User story text for E2E generation")
-    parser.add_argument("--target-module", default=None, help="Module/file to test for E2E")
-    parser.add_argument("--description", default=None, help="Function description for TDD")
-    parser.add_argument("--language", default="python", help="Programming language for TDD")
-    parser.add_argument("--snippet-type", default="function", help="Snippet type for TDD")
+    parser.add_argument(
+        "--user-story", default=None, help="User story text for E2E generation"
+    )
+    parser.add_argument(
+        "--target-module", default=None, help="Module/file to test for E2E"
+    )
+    parser.add_argument(
+        "--description", default=None, help="Function description for TDD"
+    )
+    parser.add_argument(
+        "--language", default="python", help="Programming language for TDD"
+    )
+    parser.add_argument(
+        "--snippet-type", default="function", help="Snippet type for TDD"
+    )
     parser.add_argument(
         "--project-path",
         default=None,

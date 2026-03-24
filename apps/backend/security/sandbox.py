@@ -20,16 +20,14 @@ Example:
 """
 
 import hashlib
-import json
 import logging
 import os
-import shutil
 import time
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -38,8 +36,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class SandboxMode(str, Enum):
     """Execution mode for the sandbox."""
+
     NORMAL = "normal"
     DRY_RUN = "dry_run"
     DOCKER = "docker"
@@ -48,6 +48,7 @@ class SandboxMode(str, Enum):
 
 class SandboxStatus(str, Enum):
     """Status of a sandbox."""
+
     CREATED = "created"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -58,6 +59,7 @@ class SandboxStatus(str, Enum):
 
 class ResourceType(str, Enum):
     """Types of resources that can be limited."""
+
     CPU_PERCENT = "cpu_percent"
     MEMORY_MB = "memory_mb"
     DISK_IO_MB = "disk_io_mb"
@@ -69,6 +71,7 @@ class ResourceType(str, Enum):
 
 class FileAccessLevel(str, Enum):
     """Level of file access allowed."""
+
     READ = "read"
     WRITE = "write"
     NONE = "none"
@@ -76,6 +79,7 @@ class FileAccessLevel(str, Enum):
 
 class ViolationType(str, Enum):
     """Type of security violation detected."""
+
     PATH_VIOLATION = "path_violation"
     RESOURCE_EXCEEDED = "resource_exceeded"
     BLOCKED_OPERATION = "blocked_operation"
@@ -87,9 +91,11 @@ class ViolationType(str, Enum):
 # Data models
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ResourceLimits:
     """Resource limits for a sandbox."""
+
     cpu_percent: float = 80.0
     memory_mb: int = 2048
     disk_io_mb: int = 500
@@ -120,6 +126,7 @@ class ResourceLimits:
 @dataclass
 class PathRule:
     """A file/directory access rule."""
+
     path: str
     access: FileAccessLevel = FileAccessLevel.WRITE
     recursive: bool = True
@@ -143,6 +150,7 @@ class PathRule:
 @dataclass
 class SecurityViolation:
     """A security violation detected during sandbox execution."""
+
     violation_id: str
     violation_type: ViolationType
     description: str
@@ -168,6 +176,7 @@ class SecurityViolation:
 @dataclass
 class FileSnapshot:
     """Snapshot of a single file for rollback."""
+
     path: str
     content_hash: str
     content: bytes | None = None
@@ -186,6 +195,7 @@ class FileSnapshot:
 @dataclass
 class Snapshot:
     """A complete filesystem snapshot for rollback."""
+
     snapshot_id: str
     sandbox_id: str
     files: list[FileSnapshot] = field(default_factory=list)
@@ -213,6 +223,7 @@ class Snapshot:
 @dataclass
 class ExecutionResult:
     """Result of executing a function in a sandbox."""
+
     sandbox_id: str
     success: bool
     output: Any = None
@@ -231,6 +242,7 @@ class ExecutionResult:
 @dataclass
 class SandboxConfig:
     """Full configuration for a sandbox instance."""
+
     sandbox_id: str
     task_id: str
     agent_type: str
@@ -260,11 +272,17 @@ class SandboxConfig:
     def is_dry_run(self) -> bool:
         return self.mode == SandboxMode.DRY_RUN
 
-    def add_allowed_path(self, path: str, access: str = "write", recursive: bool = True) -> None:
+    def add_allowed_path(
+        self, path: str, access: str = "write", recursive: bool = True
+    ) -> None:
         """Add a path to the whitelist."""
-        self.allowed_paths.append(PathRule(
-            path=path, access=FileAccessLevel(access), recursive=recursive,
-        ))
+        self.allowed_paths.append(
+            PathRule(
+                path=path,
+                access=FileAccessLevel(access),
+                recursive=recursive,
+            )
+        )
 
     def add_blocked_path(self, path: str) -> None:
         """Add a path to the blocklist."""
@@ -294,7 +312,10 @@ class SandboxConfig:
                     return True
                 elif access_type == "write" and rule.access == FileAccessLevel.WRITE:
                     return True
-                elif access_type == "read" and rule.access in (FileAccessLevel.READ, FileAccessLevel.WRITE):
+                elif access_type == "read" and rule.access in (
+                    FileAccessLevel.READ,
+                    FileAccessLevel.WRITE,
+                ):
                     return True
         return False
 
@@ -352,6 +373,7 @@ DEFAULT_BLOCKED_COMMANDS = [
 # ---------------------------------------------------------------------------
 # SandboxManager
 # ---------------------------------------------------------------------------
+
 
 class SandboxManager:
     """Manages sandbox instances for agent execution.
@@ -437,8 +459,13 @@ class SandboxManager:
 
         self._sandboxes[sandbox_id] = sandbox
         self._snapshots[sandbox_id] = []
-        logger.info("Created sandbox %s for task=%s agent=%s mode=%s",
-                     sandbox_id, task_id, agent_type, sandbox.mode.value)
+        logger.info(
+            "Created sandbox %s for task=%s agent=%s mode=%s",
+            sandbox_id,
+            task_id,
+            agent_type,
+            sandbox.mode.value,
+        )
         return sandbox
 
     def get_sandbox(self, sandbox_id: str) -> SandboxConfig | None:
@@ -493,8 +520,12 @@ class SandboxManager:
                 blocked=True,
             )
             sandbox.violations.append(violation)
-            logger.warning("Sandbox %s: path violation — %s access to '%s'",
-                           sandbox_id, access_type, path)
+            logger.warning(
+                "Sandbox %s: path violation — %s access to '%s'",
+                sandbox_id,
+                access_type,
+                path,
+            )
         return allowed
 
     def validate_command(self, sandbox_id: str, command: str) -> bool:
@@ -578,17 +609,23 @@ class SandboxManager:
                 try:
                     with open(full_path, "rb") as f:
                         content = f.read()
-                    file_snapshots.append(FileSnapshot(
-                        path=path,
-                        content_hash=hashlib.sha256(content).hexdigest(),
-                        content=content,
-                        exists=True,
-                        size_bytes=len(content),
-                    ))
-                except (IOError, OSError):
-                    file_snapshots.append(FileSnapshot(
-                        path=path, content_hash="", exists=False,
-                    ))
+                    file_snapshots.append(
+                        FileSnapshot(
+                            path=path,
+                            content_hash=hashlib.sha256(content).hexdigest(),
+                            content=content,
+                            exists=True,
+                            size_bytes=len(content),
+                        )
+                    )
+                except OSError:
+                    file_snapshots.append(
+                        FileSnapshot(
+                            path=path,
+                            content_hash="",
+                            exists=False,
+                        )
+                    )
             elif os.path.isdir(full_path):
                 try:
                     for root, _dirs, files in os.walk(full_path):
@@ -598,22 +635,30 @@ class SandboxManager:
                             try:
                                 with open(fpath, "rb") as f:
                                     content = f.read()
-                                file_snapshots.append(FileSnapshot(
-                                    path=rel_path.replace("\\", "/"),
-                                    content_hash=hashlib.sha256(content).hexdigest(),
-                                    content=content,
-                                    exists=True,
-                                    size_bytes=len(content),
-                                ))
-                            except (IOError, OSError):
+                                file_snapshots.append(
+                                    FileSnapshot(
+                                        path=rel_path.replace("\\", "/"),
+                                        content_hash=hashlib.sha256(
+                                            content
+                                        ).hexdigest(),
+                                        content=content,
+                                        exists=True,
+                                        size_bytes=len(content),
+                                    )
+                                )
+                            except OSError:
                                 pass
-                except (IOError, OSError):
+                except OSError:
                     pass
             else:
                 # Path doesn't exist yet — record as non-existent
-                file_snapshots.append(FileSnapshot(
-                    path=path, content_hash="", exists=False,
-                ))
+                file_snapshots.append(
+                    FileSnapshot(
+                        path=path,
+                        content_hash="",
+                        exists=False,
+                    )
+                )
 
         snapshot = Snapshot(
             snapshot_id=snapshot_id,
@@ -622,8 +667,12 @@ class SandboxManager:
             description=description or f"Pre-execution snapshot for {sandbox.task_id}",
         )
         self._snapshots[sandbox_id].append(snapshot)
-        logger.info("Created snapshot %s for sandbox %s (%d files)",
-                     snapshot_id, sandbox_id, len(file_snapshots))
+        logger.info(
+            "Created snapshot %s for sandbox %s (%d files)",
+            snapshot_id,
+            sandbox_id,
+            len(file_snapshots),
+        )
         return snapshot_id
 
     def rollback_snapshot(self, sandbox_id: str, snapshot_id: str) -> bool:
@@ -657,7 +706,7 @@ class SandboxManager:
                 elif not file_snap.exists and os.path.exists(full_path):
                     os.remove(full_path)
                     restored += 1
-            except (IOError, OSError) as e:
+            except OSError as e:
                 logger.error("Failed to restore %s: %s", file_snap.path, e)
 
         sandbox = self._sandboxes.get(sandbox_id)
@@ -696,7 +745,8 @@ class SandboxManager:
         sandbox = self._sandboxes.get(sandbox_id)
         if not sandbox:
             return ExecutionResult(
-                sandbox_id=sandbox_id, success=False,
+                sandbox_id=sandbox_id,
+                success=False,
                 error="Sandbox not found",
             )
 
@@ -705,7 +755,8 @@ class SandboxManager:
             plan = self._generate_dry_run_plan(sandbox, func, args)
             sandbox.status = SandboxStatus.COMPLETED
             result = ExecutionResult(
-                sandbox_id=sandbox_id, success=True,
+                sandbox_id=sandbox_id,
+                success=True,
                 dry_run_plan=plan,
             )
             sandbox.execution_result = result
@@ -714,8 +765,9 @@ class SandboxManager:
         # Auto-snapshot
         snapshot_id = None
         if auto_snapshot:
-            snapshot_id = self.create_snapshot(sandbox_id,
-                                               description="Auto pre-execution snapshot")
+            snapshot_id = self.create_snapshot(
+                sandbox_id, description="Auto pre-execution snapshot"
+            )
 
         # Execute
         sandbox.status = SandboxStatus.RUNNING
@@ -728,13 +780,15 @@ class SandboxManager:
 
             # Check timeout
             if duration > sandbox.resource_limits.execution_time_s:
-                sandbox.violations.append(SecurityViolation(
-                    violation_id=self._next_violation_id(),
-                    violation_type=ViolationType.TIMEOUT,
-                    description=f"Execution exceeded time limit ({duration:.1f}s > {sandbox.resource_limits.execution_time_s}s)",
-                    value=duration,
-                    limit=float(sandbox.resource_limits.execution_time_s),
-                ))
+                sandbox.violations.append(
+                    SecurityViolation(
+                        violation_id=self._next_violation_id(),
+                        violation_type=ViolationType.TIMEOUT,
+                        description=f"Execution exceeded time limit ({duration:.1f}s > {sandbox.resource_limits.execution_time_s}s)",
+                        value=duration,
+                        limit=float(sandbox.resource_limits.execution_time_s),
+                    )
+                )
 
             sandbox.status = SandboxStatus.COMPLETED
             sandbox.completed_at = datetime.now(timezone.utc).isoformat()
@@ -809,10 +863,18 @@ class SandboxManager:
         total_snapshots = sum(len(v) for v in self._snapshots.values())
         return {
             "total_sandboxes": len(sandboxes),
-            "active_sandboxes": sum(1 for s in sandboxes if s.status == SandboxStatus.RUNNING),
-            "completed_sandboxes": sum(1 for s in sandboxes if s.status == SandboxStatus.COMPLETED),
-            "failed_sandboxes": sum(1 for s in sandboxes if s.status == SandboxStatus.FAILED),
-            "rolled_back_sandboxes": sum(1 for s in sandboxes if s.status == SandboxStatus.ROLLED_BACK),
+            "active_sandboxes": sum(
+                1 for s in sandboxes if s.status == SandboxStatus.RUNNING
+            ),
+            "completed_sandboxes": sum(
+                1 for s in sandboxes if s.status == SandboxStatus.COMPLETED
+            ),
+            "failed_sandboxes": sum(
+                1 for s in sandboxes if s.status == SandboxStatus.FAILED
+            ),
+            "rolled_back_sandboxes": sum(
+                1 for s in sandboxes if s.status == SandboxStatus.ROLLED_BACK
+            ),
             "total_violations": total_violations,
             "total_snapshots": total_snapshots,
             "dry_run_sandboxes": sum(1 for s in sandboxes if s.is_dry_run),

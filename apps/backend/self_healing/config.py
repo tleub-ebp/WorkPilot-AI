@@ -1,4 +1,4 @@
-﻿"""
+"""
 Self-Healing Configuration
 ===========================
 
@@ -12,7 +12,7 @@ from typing import Any
 
 class HealingMode(str, Enum):
     """Self-healing operation modes."""
-    
+
     PASSIVE = "passive"  # Only monitor and alert
     ACTIVE = "active"  # Auto-fix issues automatically
     AGGRESSIVE = "aggressive"  # Proactive refactoring + auto-fix
@@ -20,7 +20,7 @@ class HealingMode(str, Enum):
 
 class HealingPriority(str, Enum):
     """Priority levels for healing actions."""
-    
+
     CRITICAL = "critical"  # Security, crashes, data loss
     HIGH = "high"  # Performance degradation, major bugs
     MEDIUM = "medium"  # Code smells, minor bugs
@@ -29,7 +29,7 @@ class HealingPriority(str, Enum):
 
 class MonitoringFrequency(str, Enum):
     """How often to run health checks."""
-    
+
     REALTIME = "realtime"  # On every commit
     HOURLY = "hourly"  # Every hour
     DAILY = "daily"  # Once per day
@@ -38,7 +38,7 @@ class MonitoringFrequency(str, Enum):
 
 class AlertChannel(str, Enum):
     """Channels for sending alerts."""
-    
+
     EMAIL = "email"
     SLACK = "slack"
     GITHUB = "github"
@@ -48,24 +48,24 @@ class AlertChannel(str, Enum):
 @dataclass
 class HealingConfig:
     """Configuration for self-healing system."""
-    
+
     # Operation mode
     mode: HealingMode = HealingMode.ACTIVE
-    
+
     # Monitoring
     frequency: MonitoringFrequency = MonitoringFrequency.DAILY
     monitoring_enabled: bool = True
-    
+
     # Auto-healing settings
     auto_fix_enabled: bool = True
     auto_refactor_enabled: bool = True
     create_prs_for_fixes: bool = True
     max_fixes_per_run: int = 5
-    
+
     # Thresholds
     min_health_score: float = 70.0  # Trigger healing below this score
     critical_threshold: float = 50.0  # Critical alert threshold
-    
+
     # Priorities to act on
     priorities: list[HealingPriority] = field(
         default_factory=lambda: [
@@ -74,31 +74,31 @@ class HealingConfig:
             HealingPriority.MEDIUM,
         ]
     )
-    
+
     # Alert settings
     alert_channels: list[AlertChannel] = field(
         default_factory=lambda: [AlertChannel.CONSOLE]
     )
     alert_on_degradation: bool = True
     alert_threshold_change: float = 10.0  # Alert if score drops by this much
-    
+
     # Scheduling
     schedule_night_runs: bool = True  # Run intensive ops at night
     night_start_hour: int = 22  # 10 PM
     night_end_hour: int = 6  # 6 AM
-    
+
     # Technical debt
     track_debt: bool = True
     debt_max_age_days: int = 30  # Flag debt older than this
-    
+
     # Performance
     max_files_per_scan: int = 1000
     timeout_seconds: int = 300
-    
+
     # LLM settings
     model: str = "claude-3-5-sonnet-20241022"
     thinking_budget: str = "medium"
-    
+
     # Exclusions
     excluded_paths: list[str] = field(
         default_factory=lambda: [
@@ -110,12 +110,12 @@ class HealingConfig:
             "build",
         ]
     )
-    
+
     # Git settings
     create_branch_per_fix: bool = True
     branch_prefix: str = "self-healing/"
     commit_message_prefix: str = "🧬 Self-Healing:"
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary."""
         return {
@@ -146,12 +146,12 @@ class HealingConfig:
             "branch_prefix": self.branch_prefix,
             "commit_message_prefix": self.commit_message_prefix,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "HealingConfig":
         """Create config from dictionary."""
         config = cls()
-        
+
         if "mode" in data:
             config.mode = HealingMode(data["mode"])
         if "frequency" in data:
@@ -174,7 +174,7 @@ class HealingConfig:
             config.priorities = [HealingPriority(p) for p in data["priorities"]]
         if "alert_channels" in data:
             config.alert_channels = [AlertChannel(c) for c in data["alert_channels"]]
-        
+
         # Copy other simple fields
         for key in [
             "alert_on_degradation",
@@ -195,7 +195,7 @@ class HealingConfig:
         ]:
             if key in data:
                 setattr(config, key, data[key])
-        
+
         return config
 
 

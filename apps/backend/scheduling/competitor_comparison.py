@@ -17,6 +17,7 @@ from typing import Any
 @dataclass
 class CompetitorPlan:
     """Pricing plan for a competing AI coding tool."""
+
     name: str
     monthly_cost: float
     included_requests: str
@@ -102,16 +103,20 @@ def compare_to_competitors(
     results = []
     for plan in COMPETITOR_PLANS:
         diff = plan.monthly_cost - workpilot_monthly_cost
-        results.append({
-            "competitor": plan.name,
-            "competitor_monthly": plan.monthly_cost,
-            "workpilot_monthly": round(workpilot_monthly_cost, 2),
-            "savings": round(diff, 2),
-            "savings_pct": round(diff / plan.monthly_cost * 100, 1) if plan.monthly_cost > 0 else 0,
-            "included_requests": plan.included_requests,
-            "model_used": plan.model_used,
-            "notes": plan.notes,
-        })
+        results.append(
+            {
+                "competitor": plan.name,
+                "competitor_monthly": plan.monthly_cost,
+                "workpilot_monthly": round(workpilot_monthly_cost, 2),
+                "savings": round(diff, 2),
+                "savings_pct": round(diff / plan.monthly_cost * 100, 1)
+                if plan.monthly_cost > 0
+                else 0,
+                "included_requests": plan.included_requests,
+                "model_used": plan.model_used,
+                "notes": plan.notes,
+            }
+        )
     return sorted(results, key=lambda r: r["savings"], reverse=True)
 
 

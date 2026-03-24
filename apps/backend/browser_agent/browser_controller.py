@@ -6,8 +6,6 @@ Playwright-based browser controller for the Built-in Browser Agent.
 Provides async API for browser automation: navigation, screenshots, interaction.
 """
 
-import asyncio
-import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -21,7 +19,9 @@ class BrowserController:
     def __init__(self, project_dir: Path, headless: bool = True):
         self.project_dir = Path(project_dir)
         self.headless = headless
-        self.screenshots_dir = self.project_dir / ".auto-claude" / "browser-agent" / "screenshots"
+        self.screenshots_dir = (
+            self.project_dir / ".auto-claude" / "browser-agent" / "screenshots"
+        )
         self.screenshots_dir.mkdir(parents=True, exist_ok=True)
 
         self._playwright = None
@@ -44,10 +44,14 @@ class BrowserController:
 
         # Capture console errors
         self._console_errors = []
-        self._page.on("console", lambda msg: (
-            self._console_errors.append(f"[{msg.type}] {msg.text}")
-            if msg.type in ("error", "warning") else None
-        ))
+        self._page.on(
+            "console",
+            lambda msg: (
+                self._console_errors.append(f"[{msg.type}] {msg.text}")
+                if msg.type in ("error", "warning")
+                else None
+            ),
+        )
 
     async def navigate(self, url: str, wait_until: str = "networkidle") -> dict:
         """Navigate to a URL and return page info."""
@@ -150,9 +154,14 @@ class BrowserController:
         if not self.screenshots_dir.exists():
             return screenshots
 
-        for f in sorted(self.screenshots_dir.glob("*.png"), key=lambda p: p.stat().st_mtime, reverse=True):
+        for f in sorted(
+            self.screenshots_dir.glob("*.png"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        ):
             try:
                 from PIL import Image
+
                 with Image.open(f) as img:
                     w, h = img.size
             except Exception:
@@ -162,13 +171,15 @@ class BrowserController:
             parts = f.stem.rsplit("_", 2)
             name = parts[0] if len(parts) >= 3 else f.stem
 
-            screenshots.append(ScreenshotInfo(
-                name=name,
-                path=str(f),
-                url="",
-                timestamp=datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
-                width=w,
-                height=h,
-            ))
+            screenshots.append(
+                ScreenshotInfo(
+                    name=name,
+                    path=str(f),
+                    url="",
+                    timestamp=datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
+                    width=w,
+                    height=h,
+                )
+            )
 
         return screenshots

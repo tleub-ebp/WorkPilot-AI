@@ -29,7 +29,7 @@ export interface NaturalLanguageGitAPI {
 }
 
 // Track handler wrappers so removeListener can find the correct ipcRenderer handler
-const handlerMap = new WeakMap<Function, (...args: unknown[]) => void>();
+const handlerMap = new WeakMap<Function, (_event: Electron.IpcRendererEvent, ...args: unknown[]) => void>();
 
 function registerListener<T extends unknown[]>(channel: string, callback: (...args: T) => void): () => void {
   const handler = (_event: Electron.IpcRendererEvent, ...args: unknown[]) => {

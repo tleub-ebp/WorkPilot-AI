@@ -1221,7 +1221,7 @@ export class UsageMonitor extends EventEmitter {
     const backoffState = this.rateLimitBackoff.get(profileId);
     if (backoffState) {
       const cooldown = Math.min(
-        UsageMonitor.RATE_LIMIT_BASE_COOLDOWN_MS * Math.pow(2, backoffState.consecutiveHits - 1),
+        UsageMonitor.RATE_LIMIT_BASE_COOLDOWN_MS * 2 ** (backoffState.consecutiveHits - 1),
         UsageMonitor.RATE_LIMIT_MAX_COOLDOWN_MS
       );
       const elapsed = Date.now() - backoffState.lastHit;
@@ -1956,7 +1956,7 @@ export class UsageMonitor extends EventEmitter {
           this.rateLimitBackoff.set(profileId, backoffState);
 
           const cooldown = Math.min(
-            UsageMonitor.RATE_LIMIT_BASE_COOLDOWN_MS * Math.pow(2, backoffState.consecutiveHits - 1),
+            UsageMonitor.RATE_LIMIT_BASE_COOLDOWN_MS * 2 ** (backoffState.consecutiveHits - 1),
             UsageMonitor.RATE_LIMIT_MAX_COOLDOWN_MS
           );
           // Always use debugLog for 429 — this is expected rate limiting, not an error worth spamming
@@ -3710,4 +3710,4 @@ export function getUsageMonitor(): UsageMonitor {
 }
 
 declare const process: { env: { [key: string]: string | undefined } };
-export {type ApiProvider} from '../../shared/utils/provider-detection';
+export type {ApiProvider} from '../../shared/utils/provider-detection';

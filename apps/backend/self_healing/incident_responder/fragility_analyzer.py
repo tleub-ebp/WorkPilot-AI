@@ -17,7 +17,6 @@ import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 from .models import FragilityReport
 
@@ -34,8 +33,17 @@ MAX_CHURN = 30  # Commits in 30 days above this maps to 100
 
 # Default excluded directories
 DEFAULT_EXCLUDED = {
-    "node_modules", ".venv", "__pycache__", ".git", "dist", "build",
-    ".auto-claude", ".next", "coverage", ".tox", "egg-info",
+    "node_modules",
+    ".venv",
+    "__pycache__",
+    ".git",
+    "dist",
+    "build",
+    ".auto-claude",
+    ".next",
+    "coverage",
+    ".tox",
+    "egg-info",
 }
 
 
@@ -118,7 +126,18 @@ class FragilityAnalyzer:
                     continue
                 # Skip test files for fragility analysis
                 name_lower = f.name.lower()
-                if name_lower.startswith("test_") or name_lower.endswith(("_test.py", ".test.ts", ".test.tsx", ".test.js", ".test.jsx", ".spec.ts", ".spec.tsx", ".spec.js")):
+                if name_lower.startswith("test_") or name_lower.endswith(
+                    (
+                        "_test.py",
+                        ".test.ts",
+                        ".test.tsx",
+                        ".test.js",
+                        ".test.jsx",
+                        ".spec.ts",
+                        ".spec.tsx",
+                        ".spec.js",
+                    )
+                ):
                     continue
                 files.append(f)
                 if len(files) >= max_files:
@@ -160,8 +179,19 @@ class FragilityAnalyzer:
     def _heuristic_complexity(self, file_path: Path) -> float:
         """Heuristic complexity for non-Python files based on keyword counting."""
         control_keywords = {
-            "if", "else", "elif", "for", "while", "switch", "case",
-            "catch", "try", "throw", "&&", "||", "?",
+            "if",
+            "else",
+            "elif",
+            "for",
+            "while",
+            "switch",
+            "case",
+            "catch",
+            "try",
+            "throw",
+            "&&",
+            "||",
+            "?",
         }
         try:
             content = file_path.read_text(encoding="utf-8", errors="replace")
@@ -185,7 +215,8 @@ class FragilityAnalyzer:
         try:
             result = subprocess.run(
                 [
-                    "git", "log",
+                    "git",
+                    "log",
                     f"--since={self.churn_days} days ago",
                     "--format=",
                     "--name-only",
@@ -218,7 +249,9 @@ class FragilityAnalyzer:
                 if "files" in data:
                     for file_path, file_data in data["files"].items():
                         if "summary" in file_data:
-                            coverage[file_path] = file_data["summary"].get("percent_covered", 0.0)
+                            coverage[file_path] = file_data["summary"].get(
+                                "percent_covered", 0.0
+                            )
             except (json.JSONDecodeError, KeyError):
                 pass
 
@@ -235,7 +268,9 @@ class FragilityAnalyzer:
                             continue
                         rel_path = file_path
                         try:
-                            rel_path = str(Path(file_path).relative_to(self.project_dir))
+                            rel_path = str(
+                                Path(file_path).relative_to(self.project_dir)
+                            )
                         except ValueError:
                             pass
                         if isinstance(file_data, dict) and "lines" in file_data:
@@ -245,7 +280,7 @@ class FragilityAnalyzer:
 
         return coverage
 
-    def _find_test_file(self, source_file: Path) -> Optional[Path]:
+    def _find_test_file(self, source_file: Path) -> Path | None:
         """Find the corresponding test file for a source file."""
         stem = source_file.stem
         suffix = source_file.suffix

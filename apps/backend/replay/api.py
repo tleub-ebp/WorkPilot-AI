@@ -10,7 +10,6 @@ Provides endpoints for:
 """
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -27,6 +26,7 @@ SESSION_NOT_FOUND = "Replay session not found"
 # ---------------------------------------------------------------------------
 # Request models
 # ---------------------------------------------------------------------------
+
 
 class AddBreakpointRequest(BaseModel):
     breakpoint_type: str  # tool_call, file_change, decision, error, token_threshold, step_index, pattern_match
@@ -47,6 +47,7 @@ class DeleteSessionsRequest(BaseModel):
 # Session list / CRUD
 # ---------------------------------------------------------------------------
 
+
 @router.get("/sessions")
 async def list_sessions():
     """List all saved replay sessions (summaries)."""
@@ -55,7 +56,10 @@ async def list_sessions():
     return {"success": True, "sessions": sessions, "count": len(sessions)}
 
 
-@router.get("/sessions/{session_id}", responses={404: {"description": "Replay session not found"}})
+@router.get(
+    "/sessions/{session_id}",
+    responses={404: {"description": "Replay session not found"}},
+)
 async def get_session(session_id: str):
     """Get a complete replay session with all steps."""
     recorder = get_replay_recorder()
@@ -65,7 +69,10 @@ async def get_session(session_id: str):
     return {"success": True, "session": session.to_dict()}
 
 
-@router.delete("/sessions/{session_id}", responses={404: {"description": "Replay session not found"}})
+@router.delete(
+    "/sessions/{session_id}",
+    responses={404: {"description": "Replay session not found"}},
+)
 async def delete_session(session_id: str):
     """Delete a replay session."""
     recorder = get_replay_recorder()
@@ -90,12 +97,16 @@ async def bulk_delete_sessions(req: DeleteSessionsRequest):
 # Session details
 # ---------------------------------------------------------------------------
 
-@router.get("/sessions/{session_id}/steps", responses={404: {"description": "Replay session not found"}})
+
+@router.get(
+    "/sessions/{session_id}/steps",
+    responses={404: {"description": "Replay session not found"}},
+)
 async def get_session_steps(
     session_id: str,
     offset: int = 0,
     limit: int = 100,
-    step_type: Optional[str] = None,
+    step_type: str | None = None,
 ):
     """Get steps for a session with optional filtering and pagination."""
     recorder = get_replay_recorder()
@@ -108,7 +119,7 @@ async def get_session_steps(
         steps = [s for s in steps if s.step_type.value == step_type]
 
     total = len(steps)
-    steps = steps[offset:offset + limit]
+    steps = steps[offset : offset + limit]
 
     return {
         "success": True,
@@ -119,7 +130,10 @@ async def get_session_steps(
     }
 
 
-@router.get("/sessions/{session_id}/step/{step_index}", responses={404: {"description": "Session or step not found"}})
+@router.get(
+    "/sessions/{session_id}/step/{step_index}",
+    responses={404: {"description": "Session or step not found"}},
+)
 async def get_step_detail(session_id: str, step_index: int):
     """Get detailed info for a specific step."""
     recorder = get_replay_recorder()
@@ -138,7 +152,11 @@ async def get_step_detail(session_id: str, step_index: int):
 # Heatmap
 # ---------------------------------------------------------------------------
 
-@router.get("/sessions/{session_id}/heatmap", responses={404: {"description": "Replay session not found"}})
+
+@router.get(
+    "/sessions/{session_id}/heatmap",
+    responses={404: {"description": "Replay session not found"}},
+)
 async def get_file_heatmap(session_id: str):
     """Get file heatmap data — frequency of file touches by the agent."""
     recorder = get_replay_recorder()
@@ -170,7 +188,11 @@ async def get_file_heatmap(session_id: str):
 # Token timeline
 # ---------------------------------------------------------------------------
 
-@router.get("/sessions/{session_id}/token-timeline", responses={404: {"description": "Replay session not found"}})
+
+@router.get(
+    "/sessions/{session_id}/token-timeline",
+    responses={404: {"description": "Replay session not found"}},
+)
 async def get_token_timeline(session_id: str):
     """Get token consumption over time for charting."""
     recorder = get_replay_recorder()
@@ -190,7 +212,11 @@ async def get_token_timeline(session_id: str):
 # Tool usage stats
 # ---------------------------------------------------------------------------
 
-@router.get("/sessions/{session_id}/tool-stats", responses={404: {"description": "Replay session not found"}})
+
+@router.get(
+    "/sessions/{session_id}/tool-stats",
+    responses={404: {"description": "Replay session not found"}},
+)
 async def get_tool_stats(session_id: str):
     """Get tool usage statistics for a session."""
     recorder = get_replay_recorder()
@@ -210,7 +236,11 @@ async def get_tool_stats(session_id: str):
 # Breakpoints
 # ---------------------------------------------------------------------------
 
-@router.get("/sessions/{session_id}/breakpoints", responses={404: {"description": "Replay session not found"}})
+
+@router.get(
+    "/sessions/{session_id}/breakpoints",
+    responses={404: {"description": "Replay session not found"}},
+)
 async def get_breakpoints(session_id: str):
     """Get breakpoints for a session."""
     recorder = get_replay_recorder()
@@ -224,7 +254,10 @@ async def get_breakpoints(session_id: str):
     }
 
 
-@router.post("/sessions/{session_id}/breakpoints", responses={404: {"description": "Session not active or not found"}})
+@router.post(
+    "/sessions/{session_id}/breakpoints",
+    responses={404: {"description": "Session not active or not found"}},
+)
 async def add_breakpoint(session_id: str, req: AddBreakpointRequest):
     """Add a breakpoint to an active session."""
     recorder = get_replay_recorder()
@@ -239,7 +272,10 @@ async def add_breakpoint(session_id: str, req: AddBreakpointRequest):
     return {"success": True, "breakpoint": bp.to_dict()}
 
 
-@router.delete("/sessions/{session_id}/breakpoints/{breakpoint_id}", responses={404: {"description": "Session or breakpoint not found"}})
+@router.delete(
+    "/sessions/{session_id}/breakpoints/{breakpoint_id}",
+    responses={404: {"description": "Session or breakpoint not found"}},
+)
 async def remove_breakpoint(session_id: str, breakpoint_id: str):
     """Remove a breakpoint from a session."""
     recorder = get_replay_recorder()
@@ -253,7 +289,14 @@ async def remove_breakpoint(session_id: str, breakpoint_id: str):
 # A/B Comparison
 # ---------------------------------------------------------------------------
 
-@router.post("/compare", responses={404: {"description": "Session A or B not found"}, 500: {"description": "Failed to compare sessions"}})
+
+@router.post(
+    "/compare",
+    responses={
+        404: {"description": "Session A or B not found"},
+        500: {"description": "Failed to compare sessions"},
+    },
+)
 async def compare_sessions(req: CompareSessionsRequest):
     """Compare two replay sessions side by side (A/B comparison)."""
     recorder = get_replay_recorder()
@@ -262,9 +305,13 @@ async def compare_sessions(req: CompareSessionsRequest):
     session_b = recorder.load_session(req.session_b_id)
 
     if not session_a:
-        raise HTTPException(status_code=404, detail=f"Session A not found: {req.session_a_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Session A not found: {req.session_a_id}"
+        )
     if not session_b:
-        raise HTTPException(status_code=404, detail=f"Session B not found: {req.session_b_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Session B not found: {req.session_b_id}"
+        )
 
     comparison = recorder.compare_sessions(req.session_a_id, req.session_b_id)
     if not comparison:

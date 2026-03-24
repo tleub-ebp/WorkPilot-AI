@@ -170,7 +170,9 @@ try:
             return _original_parse_message(data)
         except Exception as exc:
             if "Unknown message type" in str(exc):
-                msg_type = data.get("type", "unknown") if isinstance(data, dict) else "unknown"
+                msg_type = (
+                    data.get("type", "unknown") if isinstance(data, dict) else "unknown"
+                )
                 logger.warning(
                     "SDK received unknown message type '%s' — skipping gracefully "
                     "(data keys: %s)",
@@ -198,10 +200,12 @@ except ImportError:
     def configure_sdk_authentication(*args, **kwargs):
         """No-op fallback - authentication not available in test environment"""
         pass
-    
+
     def get_sdk_env_vars(*args, **kwargs):
         """No-op fallback - returns empty dict when auth module unavailable"""
         return {}
+
+
 from linear_updater import is_linear_enabled
 from prompts_pkg.project_context import detect_project_capabilities, load_project_index
 from security import bash_security_hook
@@ -1043,15 +1047,18 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
         "grok": "grok",
         "aws": "aws",
         "windsurf": "windsurf",
-        "custom": "custom"
+        "custom": "custom",
     }
 
     # 1. Check provider selected via IPC (from frontend UI)
     try:
         from provider_api import get_selected_provider
+
         selected_provider = get_selected_provider()
         if selected_provider:
-            mapped_provider = provider_mapping.get(selected_provider.lower(), selected_provider.lower())
+            mapped_provider = provider_mapping.get(
+                selected_provider.lower(), selected_provider.lower()
+            )
             if mapped_provider:
                 return mapped_provider
     except Exception:
@@ -1062,7 +1069,9 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
     selected_env = os.environ.get("SELECTED_LLM_PROVIDER", "").lower().strip()
     if selected_env and selected_env in provider_mapping:
         resolved = provider_mapping.get(selected_env, selected_env)
-        logger.info(f"[_get_active_provider] Resolved provider from SELECTED_LLM_PROVIDER env var: '{selected_env}' -> '{resolved}'")
+        logger.info(
+            f"[_get_active_provider] Resolved provider from SELECTED_LLM_PROVIDER env var: '{selected_env}' -> '{resolved}'"
+        )
         return resolved
 
     # 1.7. Check task_metadata.json for provider.
@@ -1073,6 +1082,7 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
     if spec_dir:
         try:
             import json as _json
+
             metadata_path = Path(spec_dir) / "task_metadata.json"
             if not metadata_path.exists():
                 # spec_dir may be e.g. _AUTO_CLAUDE_DIR/specs/001-name — try parent dirs
@@ -1097,7 +1107,20 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
 
     # 2. Environment variable override
     env_provider = os.environ.get("AUTO_CLAUDE_PROVIDER", "").lower().strip()
-    if env_provider in ("claude", "copilot", "openai", "google", "ollama", "meta", "mistral", "deepseek", "grok", "aws", "windsurf", "custom"):
+    if env_provider in (
+        "claude",
+        "copilot",
+        "openai",
+        "google",
+        "ollama",
+        "meta",
+        "mistral",
+        "deepseek",
+        "grok",
+        "aws",
+        "windsurf",
+        "custom",
+    ):
         return env_provider
 
     # 3. Project-level setting from spec's parent project
@@ -1118,7 +1141,20 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
                         line = line.strip()
                         if line.startswith("AI_PROVIDER="):
                             value = line.split("=", 1)[1].strip().strip("\"'").lower()
-                            if value in ("claude", "copilot", "openai", "google", "ollama", "meta", "mistral", "deepseek", "grok", "aws", "windsurf", "custom"):
+                            if value in (
+                                "claude",
+                                "copilot",
+                                "openai",
+                                "google",
+                                "ollama",
+                                "meta",
+                                "mistral",
+                                "deepseek",
+                                "grok",
+                                "aws",
+                                "windsurf",
+                                "custom",
+                            ):
                                 return value
             except Exception:
                 pass
@@ -1164,7 +1200,6 @@ def create_agent_client(
         ValueError: If agent_type is unknown or provider is unsupported
     """
     from core.agent_client import (
-        AgentClient,
         ClaudeAgentClient,
         CopilotAgentClient,
         SubagentDefinition,
@@ -1180,7 +1215,9 @@ def create_agent_client(
     if provider is None:
         provider = _get_active_provider(spec_dir)
 
-    logger.info(f"Creating agent client: provider={provider}, agent_type={agent_type}, model={model}")
+    logger.info(
+        f"Creating agent client: provider={provider}, agent_type={agent_type}, model={model}"
+    )
 
     if provider == "copilot":
         # Build system prompt (reuse logic from create_client)
@@ -1315,7 +1352,9 @@ def create_agent_client(
 
     else:
         # For other providers (google, ollama, etc.), fall back to Claude SDK
-        logger.warning(f"Provider '{provider}' not directly supported, falling back to Claude SDK with provider selection")
+        logger.warning(
+            f"Provider '{provider}' not directly supported, falling back to Claude SDK with provider selection"
+        )
         sdk_client = create_client(
             project_dir=project_dir,
             spec_dir=spec_dir,

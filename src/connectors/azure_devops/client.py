@@ -29,8 +29,14 @@ while project_root_str in sys.path:
     sys.path.remove(project_root_str)
 sys.path.insert(0, project_root_str)
 
-from azure.devops.connection import Connection
-from msrest.authentication import BasicAuthentication
+try:
+    from azure.devops.connection import Connection
+    from msrest.authentication import BasicAuthentication
+    AZURE_DEVOPS_AVAILABLE = True
+except ImportError:
+    Connection = None  # type: ignore[assignment,misc]
+    BasicAuthentication = None  # type: ignore[assignment,misc]
+    AZURE_DEVOPS_AVAILABLE = False
 
 from src.config.settings import Settings
 from src.connectors.azure_devops.exceptions import (
@@ -78,7 +84,7 @@ class AzureDevOpsClient:
         """
         self._validate_settings(settings)
         self.settings = settings
-        self._connection: Connection | None = None
+        self._connection: Any | None = None
         self._git_client: Any | None = None
         self._wit_client: Any | None = None
 
@@ -167,6 +173,12 @@ class AzureDevOpsClient:
             "Connecting to Azure DevOps at %s",
             self.settings.organization_url,
         )
+
+        if not AZURE_DEVOPS_AVAILABLE:
+            raise ConfigurationError(
+                "The 'azure-devops' package is not installed. "
+                "Install it with: pip install azure-devops"
+            )
 
         try:
             # CRITICAL: Empty string for username with PAT authentication

@@ -16,14 +16,18 @@ from typing import TYPE_CHECKING
 
 from .platform import OS, get_current_os
 
+
 def is_linux():
     return get_current_os() == OS.LINUX
+
 
 def is_macos():
     return get_current_os() == OS.MACOS
 
+
 def is_windows():
     return get_current_os() == OS.WINDOWS
+
 
 logger = logging.getLogger(__name__)
 
@@ -1023,12 +1027,24 @@ def configure_sdk_authentication(config_dir: str | None = None) -> None:
         # IMPORTANT: Avoid printing words like "invalid", "401", "authentication_error"
         # in stdout — the frontend's auth failure detector scans process output and
         # those keywords would cause FALSE POSITIVE auth failure detection.
-        token_fp = f"{oauth_token[:8]}...{oauth_token[-4:]}" if len(oauth_token) > 16 else "(short)"
-        logger.info("Using OAuth authentication (token: %s, config_dir: %s)", token_fp, config_dir or "(default)")
+        token_fp = (
+            f"{oauth_token[:8]}...{oauth_token[-4:]}"
+            if len(oauth_token) > 16
+            else "(short)"
+        )
+        logger.info(
+            "Using OAuth authentication (token: %s, config_dir: %s)",
+            token_fp,
+            config_dir or "(default)",
+        )
 
         # Debug: Compare token sources to detect mismatches between env/file
         env_token = os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "")
-        env_fp = f"{env_token[:8]}...{env_token[-4:]}" if len(env_token) > 16 else "(not set)"
+        env_fp = (
+            f"{env_token[:8]}...{env_token[-4:]}"
+            if len(env_token) > 16
+            else "(not set)"
+        )
         if env_fp != token_fp:
             logger.warning("Token mismatch: env=%s resolved=%s", env_fp, token_fp)
 

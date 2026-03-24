@@ -10,14 +10,13 @@ Orchestrates deterministic rules engine + optional AI review.
 
 from __future__ import annotations
 
-import json
 import subprocess
 from pathlib import Path
 
 from debug import debug, debug_error, debug_section, debug_success, debug_warning
 
 from .config import infer_architecture_config, load_architecture_config
-from .models import ArchitectureReport, ArchitectureViolation
+from .models import ArchitectureViolation
 from .rules_engine import ArchitectureRulesEngine
 
 # Maximum files to analyze in AI review (to keep token usage reasonable)
@@ -172,9 +171,7 @@ async def run_architecture_validation(
     return report.passed, report_dict
 
 
-def _get_changed_files(
-    project_dir: Path, spec_dir: Path
-) -> list[str] | None:
+def _get_changed_files(project_dir: Path, spec_dir: Path) -> list[str] | None:
     """
     Get list of changed files from git diff against the base branch.
 
@@ -184,7 +181,13 @@ def _get_changed_files(
 
     try:
         result = subprocess.run(
-            ["git", "diff", f"{base_branch}...HEAD", "--name-only", "--diff-filter=ACMR"],
+            [
+                "git",
+                "diff",
+                f"{base_branch}...HEAD",
+                "--name-only",
+                "--diff-filter=ACMR",
+            ],
             cwd=project_dir,
             capture_output=True,
             text=True,
@@ -193,11 +196,7 @@ def _get_changed_files(
             timeout=10,
         )
         if result.returncode == 0:
-            files = [
-                f.strip()
-                for f in result.stdout.strip().split("\n")
-                if f.strip()
-            ]
+            files = [f.strip() for f in result.stdout.strip().split("\n") if f.strip()]
             return files if files else None
     except (subprocess.TimeoutExpired, OSError, FileNotFoundError):
         pass
@@ -215,9 +214,7 @@ def _detect_base_branch(spec_dir: Path, project_dir: Path) -> str:
         return "main"
 
 
-def write_architecture_fix_request(
-    spec_dir: Path, report_dict: dict
-) -> None:
+def write_architecture_fix_request(spec_dir: Path, report_dict: dict) -> None:
     """
     Write architecture violations to QA_FIX_REQUEST.md for the fixer agent.
 
@@ -240,7 +237,9 @@ def write_architecture_fix_request(
     ]
 
     for i, v in enumerate(violations, 1):
-        lines.append(f"### {i}. {v.get('type', 'unknown')} ({v.get('severity', 'error')})")
+        lines.append(
+            f"### {i}. {v.get('type', 'unknown')} ({v.get('severity', 'error')})"
+        )
         lines.append("")
         if v.get("file"):
             line_info = f" (line {v['line']})" if v.get("line") else ""

@@ -67,9 +67,24 @@ _SYSTEM = platform.system()  # "Windows", "Darwin", "Linux"
 VSCDB_FILENAME = "state.vscdb"
 
 _VSCDB_PATHS = {
-    "Windows": Path(os.environ.get("APPDATA", "")) / "Windsurf" / "User" / "globalStorage" / VSCDB_FILENAME,
-    "Darwin": Path.home() / "Library" / "Application Support" / "Windsurf" / "User" / "globalStorage" / VSCDB_FILENAME,
-    "Linux": Path.home() / ".config" / "Windsurf" / "User" / "globalStorage" / VSCDB_FILENAME,
+    "Windows": Path(os.environ.get("APPDATA", ""))
+    / "Windsurf"
+    / "User"
+    / "globalStorage"
+    / VSCDB_FILENAME,
+    "Darwin": Path.home()
+    / "Library"
+    / "Application Support"
+    / "Windsurf"
+    / "User"
+    / "globalStorage"
+    / VSCDB_FILENAME,
+    "Linux": Path.home()
+    / ".config"
+    / "Windsurf"
+    / "User"
+    / "globalStorage"
+    / VSCDB_FILENAME,
 }
 
 _LEGACY_CONFIG_PATH = Path.home() / ".codeium" / "config.json"
@@ -149,9 +164,18 @@ def _discover_language_server_process() -> str | None:
                 stderr=subprocess.DEVNULL,
             )
             # Filter lines containing the pattern
-            lines = [line for line in output.splitlines() if pattern in line and "grep" not in line]
+            lines = [
+                line
+                for line in output.splitlines()
+                if pattern in line and "grep" not in line
+            ]
             return "\n".join(lines) if lines else None
-    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError, UnicodeDecodeError):
+    except (
+        subprocess.TimeoutExpired,
+        subprocess.CalledProcessError,
+        FileNotFoundError,
+        UnicodeDecodeError,
+    ):
         return None
 
 
@@ -176,7 +200,12 @@ def _discover_via_powershell(pattern: str) -> str | None:
             stderr=subprocess.DEVNULL,
         )
         return output if output.strip() else None
-    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError, UnicodeDecodeError):
+    except (
+        subprocess.TimeoutExpired,
+        subprocess.CalledProcessError,
+        FileNotFoundError,
+        UnicodeDecodeError,
+    ):
         return None
 
 
@@ -184,7 +213,15 @@ def _discover_via_wmic(pattern: str) -> str | None:
     """Discover language server process via wmic (legacy fallback)."""
     try:
         output = subprocess.check_output(
-            ["wmic", "process", "where", f"name like '%{pattern}%'", "get", "CommandLine", "/format:list"],
+            [
+                "wmic",
+                "process",
+                "where",
+                f"name like '%{pattern}%'",
+                "get",
+                "CommandLine",
+                "/format:list",
+            ],
             encoding="utf-8",
             errors="replace",
             timeout=5,
@@ -193,14 +230,27 @@ def _discover_via_wmic(pattern: str) -> str | None:
         if not output.strip():
             # Try alternative with ProcessId
             output = subprocess.check_output(
-                ["wmic", "process", "where", f"commandline like '%{pattern}%'", "get", "CommandLine,ProcessId", "/format:list"],
+                [
+                    "wmic",
+                    "process",
+                    "where",
+                    f"commandline like '%{pattern}%'",
+                    "get",
+                    "CommandLine,ProcessId",
+                    "/format:list",
+                ],
                 encoding="utf-8",
                 errors="replace",
                 timeout=5,
                 stderr=subprocess.DEVNULL,
             )
         return output if output.strip() else None
-    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError, UnicodeDecodeError):
+    except (
+        subprocess.TimeoutExpired,
+        subprocess.CalledProcessError,
+        FileNotFoundError,
+        UnicodeDecodeError,
+    ):
         return None
 
 
@@ -253,7 +303,9 @@ def _get_csrf_token_from_process_env() -> str | None:
     try:
         import psutil
     except ImportError:
-        logger.debug("[WindsurfAuth] psutil not available for process env CSRF discovery")
+        logger.debug(
+            "[WindsurfAuth] psutil not available for process env CSRF discovery"
+        )
         return None
 
     pattern = _get_language_server_pattern()
@@ -267,7 +319,10 @@ def _get_csrf_token_from_process_env() -> str | None:
             # Match the language server process
             if pattern not in name.lower() and pattern not in cmdline_str.lower():
                 continue
-            if "windsurf" not in cmdline_str.lower() and "codeium" not in cmdline_str.lower():
+            if (
+                "windsurf" not in cmdline_str.lower()
+                and "codeium" not in cmdline_str.lower()
+            ):
                 continue
 
             env = proc.environ()
@@ -310,7 +365,9 @@ def get_csrf_token() -> str:
     # 3. Fallback: read from state.vscdb (may be stale but still useful)
     csrf = _get_csrf_token_from_state_db()
     if csrf:
-        logger.debug("[WindsurfAuth] Using state.vscdb CSRF (process env not available)")
+        logger.debug(
+            "[WindsurfAuth] Using state.vscdb CSRF (process env not available)"
+        )
         return csrf
 
     if not process_info:
@@ -377,7 +434,12 @@ def _get_listening_ports(pid: str) -> list[int]:
             port_matches = re.findall(r":(\d+)\s+\(LISTEN\)", output or "")
 
         return [int(p) for p in port_matches]
-    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError, UnicodeDecodeError):
+    except (
+        subprocess.TimeoutExpired,
+        subprocess.CalledProcessError,
+        FileNotFoundError,
+        UnicodeDecodeError,
+    ):
         return []
 
 
@@ -385,14 +447,16 @@ def _select_best_port(ports: list[int], ext_port: int | None) -> int | None:
     """Select the best port from available ports and extension port reference."""
     if not ports:
         return None
-        
+
     if ext_port:
         # Prefer the first port after extension_server_port
         candidates = sorted(p for p in ports if p > ext_port)
         if candidates:
-            logger.debug(f"[WindsurfAuth] Found ports {ports}, using {candidates[0]} (ext_port={ext_port})")
+            logger.debug(
+                f"[WindsurfAuth] Found ports {ports}, using {candidates[0]} (ext_port={ext_port})"
+            )
             return candidates[0]
-    
+
     return ports[0]
 
 
@@ -453,20 +517,26 @@ def _extract_api_key_from_auth_status(auth_data: dict) -> str | None:
     # Standard API key (sk-ws-... or sk-...)
     api_key = auth_data.get("apiKey")
     if api_key:
-        logger.debug("[WindsurfAuth] Found API key in state.vscdb (windsurfAuthStatus.apiKey)")
+        logger.debug(
+            "[WindsurfAuth] Found API key in state.vscdb (windsurfAuthStatus.apiKey)"
+        )
         return api_key
-    
+
     # SSO enterprise: token stored as accessToken or token (JWT format)
     api_key = auth_data.get("accessToken")
     if api_key:
-        logger.debug("[WindsurfAuth] Found SSO accessToken in state.vscdb (windsurfAuthStatus.accessToken)")
+        logger.debug(
+            "[WindsurfAuth] Found SSO accessToken in state.vscdb (windsurfAuthStatus.accessToken)"
+        )
         return api_key
-    
+
     api_key = auth_data.get("token")
     if api_key:
-        logger.debug("[WindsurfAuth] Found SSO token in state.vscdb (windsurfAuthStatus.token)")
+        logger.debug(
+            "[WindsurfAuth] Found SSO token in state.vscdb (windsurfAuthStatus.token)"
+        )
         return api_key
-    
+
     return None
 
 
@@ -474,7 +544,9 @@ def _get_api_key_from_main_db(state_path: Path) -> str | None:
     """Get API key from main windsurfAuthStatus entry."""
     try:
         conn = sqlite3.connect(str(state_path))
-        cursor = conn.execute("SELECT value FROM ItemTable WHERE key = 'windsurfAuthStatus'")
+        cursor = conn.execute(
+            "SELECT value FROM ItemTable WHERE key = 'windsurfAuthStatus'"
+        )
         row = cursor.fetchone()
         conn.close()
 
@@ -483,14 +555,14 @@ def _get_api_key_from_main_db(state_path: Path) -> str | None:
             return _extract_api_key_from_auth_status(parsed)
     except (sqlite3.Error, json.JSONDecodeError, KeyError) as e:
         logger.debug(f"[WindsurfAuth] Failed to read state.vscdb: {e}")
-    
+
     return None
 
 
 def _extract_api_key_from_value(value: str) -> str | None:
     """Extract API key from a database value (JSON or raw token)."""
     value = value.strip()
-    
+
     # Try to parse as JSON
     try:
         parsed = json.loads(value)
@@ -498,11 +570,11 @@ def _extract_api_key_from_value(value: str) -> str | None:
             return parsed["apiKey"]
     except json.JSONDecodeError:
         pass
-    
+
     # Use raw value if it looks like a token
     if value.startswith(("sk-", "eyJ")):
         return value
-    
+
     return None
 
 
@@ -511,8 +583,14 @@ def _get_api_key_from_alternative_db_keys(state_path: Path) -> str | None:
     try:
         conn = sqlite3.connect(str(state_path))
         try:
-            for key_name in ("windsurf.authToken", "codeium.apiKey", "service-auth/windsurf"):
-                cursor = conn.execute("SELECT value FROM ItemTable WHERE key = ?", (key_name,))
+            for key_name in (
+                "windsurf.authToken",
+                "codeium.apiKey",
+                "service-auth/windsurf",
+            ):
+                cursor = conn.execute(
+                    "SELECT value FROM ItemTable WHERE key = ?", (key_name,)
+                )
                 row = cursor.fetchone()
                 if row and row[0]:
                     api_key = _extract_api_key_from_value(row[0])
@@ -521,8 +599,10 @@ def _get_api_key_from_alternative_db_keys(state_path: Path) -> str | None:
         finally:
             conn.close()
     except sqlite3.Error as e:
-        logger.debug(f"[WindsurfAuth] Failed to read alternative keys from state.vscdb: {e}")
-    
+        logger.debug(
+            f"[WindsurfAuth] Failed to read alternative keys from state.vscdb: {e}"
+        )
+
     return None
 
 
@@ -531,12 +611,12 @@ def _get_api_key_from_state_db() -> str | None:
     state_path = _VSCDB_PATHS.get(_SYSTEM)
     if not state_path or not state_path.exists():
         return None
-    
+
     # Try main windsurfAuthStatus first
     api_key = _get_api_key_from_main_db(state_path)
     if api_key:
         return api_key
-    
+
     # Try alternative keys
     return _get_api_key_from_alternative_db_keys(state_path)
 
@@ -545,7 +625,7 @@ def _get_api_key_from_legacy_config() -> str | None:
     """Get API key from legacy ~/.codeium/config.json."""
     if not _LEGACY_CONFIG_PATH.exists():
         return None
-    
+
     try:
         config = json.loads(_LEGACY_CONFIG_PATH.read_text(encoding="utf-8"))
         api_key = config.get("apiKey") or config.get("api_key")
@@ -653,7 +733,9 @@ def is_windsurf_running() -> bool:
     try:
         process_info = _get_language_server_process()
         if process_info and _get_csrf_token_from_state_db():
-            logger.debug("[WindsurfAuth] Windsurf detected via process + state.vscdb CSRF")
+            logger.debug(
+                "[WindsurfAuth] Windsurf detected via process + state.vscdb CSRF"
+            )
             return True
     except Exception:
         pass

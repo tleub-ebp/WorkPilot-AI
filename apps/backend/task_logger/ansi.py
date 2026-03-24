@@ -6,7 +6,6 @@ It has no dependencies on other task_logger modules to avoid cyclic imports.
 """
 
 import re
-from typing import Optional
 
 # ANSI escape code patterns
 # ANSI CSI (Control Sequence Introducer) escape sequence pattern.
@@ -26,7 +25,7 @@ ANSI_OSC_BEL_PATTERN = re.compile(r"\x1b\][^\x07]*\x07")
 ANSI_OSC_ST_PATTERN = re.compile(r"\x1b\][^\x1b]*\x1b\\")
 
 
-def strip_ansi_codes(text: Optional[str]) -> str:
+def strip_ansi_codes(text: str | None) -> str:
     """
     Removes ANSI escape codes from a string.
 

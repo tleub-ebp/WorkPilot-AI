@@ -1,4 +1,4 @@
-﻿"""
+"""
 Learning Mode & Onboarding AI Module
 
 This module provides educational features to help developers learn from

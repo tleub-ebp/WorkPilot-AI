@@ -5,11 +5,11 @@ Spec Template Data Models
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 
 class TemplateCategory(str, Enum):
     """Template categories for organization."""
+
     CRUD = "crud"
     AUTH = "authentication"
     DASHBOARD = "dashboard"
@@ -32,14 +32,14 @@ class SpecTemplate:
     """
 
     # Identity
-    id: str                          # Unique slug (e.g. "crud-api", "jwt-auth")
-    name: str                        # Human-readable name
+    id: str  # Unique slug (e.g. "crud-api", "jwt-auth")
+    name: str  # Human-readable name
     category: TemplateCategory
-    description: str                 # One-line summary
+    description: str  # One-line summary
 
     # Pre-filled content
-    workflow_type: str = "feature"   # feature | bugfix | refactor | docs | test
-    task_description_template: str = ""   # Template text with {placeholders}
+    workflow_type: str = "feature"  # feature | bugfix | refactor | docs | test
+    task_description_template: str = ""  # Template text with {placeholders}
     additional_context: str = ""
 
     # Hints for the spec pipeline
@@ -51,7 +51,7 @@ class SpecTemplate:
 
     # Metadata
     is_builtin: bool = True
-    author: Optional[str] = None
+    author: str | None = None
     version: str = "1.0"
 
     def apply(self, substitutions: dict[str, str]) -> "AppliedTemplate":
@@ -128,7 +128,7 @@ class AppliedTemplate:
     template_name: str
     task_description: str
     workflow_type: str
-    additional_context: Optional[str]
+    additional_context: str | None
     suggested_keywords: list[str]
     suggested_services: list[str]
     qa_criteria: list[str]

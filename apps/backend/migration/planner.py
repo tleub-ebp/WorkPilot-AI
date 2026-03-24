@@ -1,20 +1,17 @@
-﻿"""
+"""
 Migration Planner: Generates detailed migration plans.
 """
 
 import uuid
-from datetime import datetime
-from typing import List, Dict, Set, Optional
-from pathlib import Path
 
+from .config import SUPPORTED_MIGRATIONS
 from .models import (
-    StackInfo,
-    MigrationPlan,
     MigrationPhase,
+    MigrationPlan,
     MigrationStep,
     RiskLevel,
+    StackInfo,
 )
-from .config import SUPPORTED_MIGRATIONS, MIGRATION_PHASES
 
 
 class MigrationPlanner:
@@ -41,16 +38,17 @@ class MigrationPlanner:
         config = SUPPORTED_MIGRATIONS.get(self.migration_key, {})
         plan.estimated_effort = self._calculate_effort(config)
         plan.risk_level = self._calculate_risk(plan.phases)
-        plan.estimated_duration_hours = float(
-            config.get("estimated_effort_hours", 20)
-        )
+        plan.estimated_duration_hours = float(config.get("estimated_effort_hours", 20))
 
         # Determine if approvals needed
-        plan.approvals_required = plan.risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]
+        plan.approvals_required = plan.risk_level in [
+            RiskLevel.HIGH,
+            RiskLevel.CRITICAL,
+        ]
 
         return plan
 
-    def _generate_phases(self) -> List[MigrationPhase]:
+    def _generate_phases(self) -> list[MigrationPhase]:
         """Generate migration phases."""
         phases = []
 
@@ -181,7 +179,7 @@ class MigrationPlanner:
         )
         return phase
 
-    def _create_transformation_phases(self) -> List[MigrationPhase]:
+    def _create_transformation_phases(self) -> list[MigrationPhase]:
         """Create transformation phases based on migration type."""
         phases = []
 
@@ -198,7 +196,7 @@ class MigrationPlanner:
 
         return phases
 
-    def _create_react_to_vue_phases(self) -> List[MigrationPhase]:
+    def _create_react_to_vue_phases(self) -> list[MigrationPhase]:
         """Create React to Vue transformation phases."""
         # Phase: Component Migration
         component_steps = [
@@ -310,7 +308,7 @@ class MigrationPlanner:
             styling_phase,
         ]
 
-    def _create_database_migration_phases(self) -> List[MigrationPhase]:
+    def _create_database_migration_phases(self) -> list[MigrationPhase]:
         """Create MySQL to PostgreSQL migration phases."""
         # Phase: Schema Migration
         schema_steps = [
@@ -411,7 +409,7 @@ class MigrationPlanner:
             app_phase,
         ]
 
-    def _create_python_migration_phases(self) -> List[MigrationPhase]:
+    def _create_python_migration_phases(self) -> list[MigrationPhase]:
         """Create Python 2 to Python 3 migration phases."""
         steps = [
             MigrationStep(
@@ -469,7 +467,7 @@ class MigrationPlanner:
         )
         return [phase]
 
-    def _create_rest_to_graphql_phases(self) -> List[MigrationPhase]:
+    def _create_rest_to_graphql_phases(self) -> list[MigrationPhase]:
         """Create REST to GraphQL migration phases."""
         steps = [
             MigrationStep(
@@ -517,7 +515,7 @@ class MigrationPlanner:
         )
         return [phase]
 
-    def _create_js_to_ts_phases(self) -> List[MigrationPhase]:
+    def _create_js_to_ts_phases(self) -> list[MigrationPhase]:
         """Create JavaScript to TypeScript migration phases."""
         steps = [
             MigrationStep(
@@ -669,7 +667,7 @@ class MigrationPlanner:
         )
         return phase
 
-    def _calculate_effort(self, config: Dict) -> str:
+    def _calculate_effort(self, config: dict) -> str:
         """Calculate effort level."""
         hours = config.get("estimated_effort_hours", 20)
         if hours < 10:
@@ -681,7 +679,7 @@ class MigrationPlanner:
         else:
             return "Very High"
 
-    def _calculate_risk(self, phases: List[MigrationPhase]) -> RiskLevel:
+    def _calculate_risk(self, phases: list[MigrationPhase]) -> RiskLevel:
         """Calculate overall risk from phases."""
         if not phases:
             return RiskLevel.LOW

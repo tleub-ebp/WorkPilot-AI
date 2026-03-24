@@ -5,27 +5,25 @@ Tool Executor for Agent Runtime
 Handles execution of tools during agent sessions.
 """
 
-from typing import Any, Dict, List, Optional
 import asyncio
-import json
-import subprocess
 from pathlib import Path
+from typing import Any
 
 
 class ToolExecutor:
     """Executes tools for agent sessions."""
-    
+
     def __init__(self, project_dir: str):
         self.project_dir = Path(project_dir)
-    
-    async def execute(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
+
+    async def execute(self, tool_name: str, arguments: dict[str, Any]) -> Any:
         """
         Execute a tool with the given arguments.
-        
+
         Args:
             tool_name: Name of the tool to execute
             arguments: Arguments to pass to the tool
-            
+
         Returns:
             Result of the tool execution
         """
@@ -33,47 +31,53 @@ class ToolExecutor:
         if tool_name == "read_file":
             return await self._read_file(arguments.get("path"))
         elif tool_name == "write_file":
-            return await self._write_file(arguments.get("path"), arguments.get("content"))
+            return await self._write_file(
+                arguments.get("path"), arguments.get("content")
+            )
         elif tool_name == "Write":  # Alias for planner compatibility
             return await self._write_file(
-                arguments.get("file_path"), 
+                arguments.get("file_path"),
                 arguments.get("CodeContent"),
-                arguments.get("EmptyFile", False)
+                arguments.get("EmptyFile", False),
             )
         elif tool_name == "list_files":
             return await self._list_files(arguments.get("directory", "."))
         elif tool_name == "run_command":
-            return await self._run_command(arguments.get("command"), arguments.get("cwd"))
+            return await self._run_command(
+                arguments.get("command"), arguments.get("cwd")
+            )
         elif tool_name == "create_directory":
             return await self._create_directory(arguments.get("path"))
         else:
             raise ValueError(f"Unknown tool: {tool_name}")
-    
-    async def _read_file(self, path: Optional[str]) -> str:
+
+    async def _read_file(self, path: str | None) -> str:
         """Read a file and return its contents."""
         if not path:
             raise ValueError("Path is required for read_file")
-        
+
         file_path = self.project_dir / path
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {path}")
-        
+
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 return f.read()
         except Exception as e:
             raise RuntimeError(f"Error reading file {path}: {e}")
-    
-    async def _write_file(self, path: Optional[str], content: Optional[str] = None, empty_file: bool = False) -> str:
+
+    async def _write_file(
+        self, path: str | None, content: str | None = None, empty_file: bool = False
+    ) -> str:
         """Write content to a file."""
         if not path:
             raise ValueError("Path is required for write_file")
-        
+
         file_path = self.project_dir / path
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         try:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 if empty_file:
                     # Create empty file
                     pass
@@ -85,13 +89,13 @@ class ToolExecutor:
             return f"Successfully wrote to {path}"
         except Exception as e:
             raise RuntimeError(f"Error writing file {path}: {e}")
-    
-    async def _list_files(self, directory: str) -> List[str]:
+
+    async def _list_files(self, directory: str) -> list[str]:
         """List files in a directory."""
         dir_path = self.project_dir / directory
         if not dir_path.exists():
             raise FileNotFoundError(f"Directory not found: {directory}")
-        
+
         try:
             files = []
             for item in dir_path.iterdir():
@@ -102,8 +106,8 @@ class ToolExecutor:
             return sorted(files)
         except Exception as e:
             raise RuntimeError(f"Error listing files in {directory}: {e}")
-    
-    async def _create_directory(self, path: Optional[str]) -> str:
+
+    async def _create_directory(self, path: str | None) -> str:
         """Create a directory (and parents)."""
         if not path:
             raise ValueError("Path is required for create_directory")
@@ -115,13 +119,13 @@ class ToolExecutor:
         except Exception as e:
             raise RuntimeError(f"Error creating directory {path}: {e}")
 
-    async def _run_command(self, command: Optional[str], cwd: Optional[str] = None) -> str:
+    async def _run_command(self, command: str | None, cwd: str | None = None) -> str:
         """Run a shell command."""
         if not command:
             raise ValueError("Command is required for run_command")
-        
+
         work_dir = self.project_dir / cwd if cwd else self.project_dir
-        
+
         try:
             process = await asyncio.create_subprocess_shell(
                 command,
@@ -131,24 +135,30 @@ class ToolExecutor:
             )
 
             stdout_bytes, stderr_bytes = await process.communicate()
-            stdout = stdout_bytes.decode("utf-8", errors="replace") if stdout_bytes else ""
-            stderr = stderr_bytes.decode("utf-8", errors="replace") if stderr_bytes else ""
+            stdout = (
+                stdout_bytes.decode("utf-8", errors="replace") if stdout_bytes else ""
+            )
+            stderr = (
+                stderr_bytes.decode("utf-8", errors="replace") if stderr_bytes else ""
+            )
 
             if process.returncode != 0:
-                raise RuntimeError(f"Command failed with code {process.returncode}: {stderr}")
+                raise RuntimeError(
+                    f"Command failed with code {process.returncode}: {stderr}"
+                )
 
             return stdout
         except Exception as e:
             raise RuntimeError(f"Error running command {command}: {e}")
 
 
-def get_tool_definitions(agent_type: str) -> List[Dict[str, Any]]:
+def get_tool_definitions(agent_type: str) -> list[dict[str, Any]]:
     """
     Get tool definitions for a specific agent type.
-    
+
     Args:
         agent_type: Type of agent (e.g., 'coder', 'planner')
-        
+
     Returns:
         List of tool definitions
     """
@@ -162,11 +172,11 @@ def get_tool_definitions(agent_type: str) -> List[Dict[str, Any]]:
                 "properties": {
                     "path": {
                         "type": "string",
-                        "description": "Path to the file to read"
+                        "description": "Path to the file to read",
                     }
                 },
-                "required": ["path"]
-            }
+                "required": ["path"],
+            },
         },
         {
             "name": "write_file",
@@ -176,15 +186,15 @@ def get_tool_definitions(agent_type: str) -> List[Dict[str, Any]]:
                 "properties": {
                     "path": {
                         "type": "string",
-                        "description": "Path to the file to write"
+                        "description": "Path to the file to write",
                     },
                     "content": {
                         "type": "string",
-                        "description": "Content to write to the file"
-                    }
+                        "description": "Content to write to the file",
+                    },
                 },
-                "required": ["path", "content"]
-            }
+                "required": ["path", "content"],
+            },
         },
         {
             "name": "list_files",
@@ -195,10 +205,10 @@ def get_tool_definitions(agent_type: str) -> List[Dict[str, Any]]:
                     "directory": {
                         "type": "string",
                         "description": "Directory to list files from",
-                        "default": "."
+                        "default": ".",
                     }
-                }
-            }
+                },
+            },
         },
         {
             "name": "run_command",
@@ -206,71 +216,69 @@ def get_tool_definitions(agent_type: str) -> List[Dict[str, Any]]:
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "command": {
-                        "type": "string",
-                        "description": "Command to run"
-                    },
+                    "command": {"type": "string", "description": "Command to run"},
                     "cwd": {
                         "type": "string",
-                        "description": "Working directory for the command"
-                    }
+                        "description": "Working directory for the command",
+                    },
                 },
-                "required": ["command"]
-            }
-        }
+                "required": ["command"],
+            },
+        },
     ]
-    
+
     # Add agent-specific tools
     if agent_type == "coder":
-        base_tools.extend([
-            {
-                "name": "create_directory",
-                "description": "Create a directory",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Path to the directory to create"
-                        }
+        base_tools.extend(
+            [
+                {
+                    "name": "create_directory",
+                    "description": "Create a directory",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "path": {
+                                "type": "string",
+                                "description": "Path to the directory to create",
+                            }
+                        },
+                        "required": ["path"],
                     },
-                    "required": ["path"]
                 }
-            }
-        ])
+            ]
+        )
     elif agent_type == "planner":
-        base_tools.extend([
-            {
-                "name": "Write",
-                "description": "Write content to a file (for creating implementation_plan.json)",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "file_path": {
-                            "type": "string",
-                            "description": "Path to the file to write"
+        base_tools.extend(
+            [
+                {
+                    "name": "Write",
+                    "description": "Write content to a file (for creating implementation_plan.json)",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "file_path": {
+                                "type": "string",
+                                "description": "Path to the file to write",
+                            },
+                            "CodeContent": {
+                                "type": "string",
+                                "description": "Content to write to the file",
+                            },
+                            "EmptyFile": {
+                                "type": "boolean",
+                                "description": "Whether to create an empty file",
+                                "default": False,
+                            },
                         },
-                        "CodeContent": {
-                            "type": "string",
-                            "description": "Content to write to the file"
-                        },
-                        "EmptyFile": {
-                            "type": "boolean",
-                            "description": "Whether to create an empty file",
-                            "default": False
-                        }
+                        "required": ["file_path", "CodeContent", "EmptyFile"],
                     },
-                    "required": ["file_path", "CodeContent", "EmptyFile"]
-                }
-            },
-            {
-                "name": "analyze_project",
-                "description": "Analyze the project structure",
-                "parameters": {
-                    "type": "object",
-                    "properties": {}
-                }
-            }
-        ])
-    
+                },
+                {
+                    "name": "analyze_project",
+                    "description": "Analyze the project structure",
+                    "parameters": {"type": "object", "properties": {}},
+                },
+            ]
+        )
+
     return base_tools

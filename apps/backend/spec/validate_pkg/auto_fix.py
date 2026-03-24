@@ -9,13 +9,12 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Optional
 
 from core.file_utils import write_json_atomic
 from core.plan_normalization import normalize_subtask_aliases
 
 
-def _repair_json_syntax(content: str) -> Optional[str]:
+def _repair_json_syntax(content: str) -> str | None:
     """
     Attempt to repair common JSON syntax errors.
 
@@ -204,7 +203,7 @@ def auto_fix_plan(spec_dir: Path) -> bool:
         if "phase" not in phase and "phase_id" in phase:
             phase_id = phase.get("phase_id")
             phase_id_str = str(phase_id).strip() if phase_id is not None else ""
-            phase_num: Optional[int] = None
+            phase_num: int | None = None
             if isinstance(phase_id, int) and not isinstance(phase_id, bool):
                 phase_num = phase_id
             elif (

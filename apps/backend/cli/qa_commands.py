@@ -148,13 +148,14 @@ def handle_auto_fix_command(
     """
     print_banner()
     print(f"\nRunning auto-fix loop for: {spec_dir.name}")
-    
+
     if not validate_environment(spec_dir):
         sys.exit(1)
 
     # Use default or environment variable if not specified
     if max_attempts is None:
         import os
+
         max_attempts = int(
             os.environ.get("AUTO_FIX_MAX_ATTEMPTS", DEFAULT_MAX_AUTO_FIX_ATTEMPTS)
         )

@@ -224,9 +224,7 @@ class CircularDependencyDetector:
 
         return dict(adjacency)
 
-    def _resolve_to_file(
-        self, import_target: str, known_files: set[str]
-    ) -> str | None:
+    def _resolve_to_file(self, import_target: str, known_files: set[str]) -> str | None:
         """
         Try to resolve an import target to one of the known source files.
 
@@ -270,9 +268,7 @@ class CircularDependencyDetector:
 
         return None
 
-    def _deduplicate_cycles(
-        self, cycles: list[list[str]]
-    ) -> list[list[str]]:
+    def _deduplicate_cycles(self, cycles: list[list[str]]) -> list[list[str]]:
         """
         Remove duplicate cycles (same nodes, different starting points).
 

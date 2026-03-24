@@ -18,7 +18,6 @@ Usage:
 import argparse
 import asyncio
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -101,7 +100,9 @@ def detect_project_stack(project_dir: Path) -> dict:
         except Exception:
             pass
 
-    if (project_dir / "requirements.txt").exists() or (project_dir / "pyproject.toml").exists():
+    if (project_dir / "requirements.txt").exists() or (
+        project_dir / "pyproject.toml"
+    ).exists():
         stack["languages"].append("python")
         if (project_dir / "pyproject.toml").exists():
             stack["package_managers"].append("uv/poetry/pip")
@@ -120,14 +121,18 @@ def detect_project_stack(project_dir: Path) -> dict:
         stack["languages"].append("java/kotlin")
         stack["package_managers"].append("maven")
 
-    if (project_dir / "build.gradle").exists() or (project_dir / "build.gradle.kts").exists():
+    if (project_dir / "build.gradle").exists() or (
+        project_dir / "build.gradle.kts"
+    ).exists():
         stack["languages"].append("java/kotlin")
         stack["package_managers"].append("gradle")
 
     # Docker
     if (project_dir / "Dockerfile").exists():
         stack["has_docker"] = True
-    if (project_dir / "docker-compose.yml").exists() or (project_dir / "docker-compose.yaml").exists():
+    if (project_dir / "docker-compose.yml").exists() or (
+        project_dir / "docker-compose.yaml"
+    ).exists():
         stack["has_docker_compose"] = True
 
     # Existing CI configs
@@ -223,7 +228,9 @@ async def generate_pipelines(
         out_file = output_dir / f"pipeline_{platform}.yml"
         if out_file.exists() and not refresh:
             existing_outputs[platform] = out_file.read_text(encoding="utf-8")
-            print(f"✅ {PLATFORM_LABELS[platform]} pipeline already exists (use --refresh to regenerate)")
+            print(
+                f"✅ {PLATFORM_LABELS[platform]} pipeline already exists (use --refresh to regenerate)"
+            )
 
     platforms_to_generate = [p for p in platforms if p not in existing_outputs]
 
@@ -232,7 +239,9 @@ async def generate_pipelines(
     if not platforms_to_generate:
         return {"status": "success", "pipelines": results, "stack": stack}
 
-    print(f"\n🤖 Generating pipelines for: {', '.join(PLATFORM_LABELS[p] for p in platforms_to_generate)}")
+    print(
+        f"\n🤖 Generating pipelines for: {', '.join(PLATFORM_LABELS[p] for p in platforms_to_generate)}"
+    )
     print("   This may take 30–60 seconds...\n")
 
     trace_id = workflow_logger.log_agent_start(
@@ -251,6 +260,7 @@ async def generate_pipelines(
         )
         async with client:
             from core.session import run_agent_session
+
             _, response_text = await run_agent_session(client, prompt, None)
 
         # Parse the response to extract each platform's pipeline
@@ -262,7 +272,9 @@ async def generate_pipelines(
             end_idx = response_text.find(end_marker)
 
             if start_idx != -1 and end_idx != -1:
-                yaml_content = response_text[start_idx + len(start_marker):end_idx].strip()
+                yaml_content = response_text[
+                    start_idx + len(start_marker) : end_idx
+                ].strip()
                 # Strip markdown code fences if present
                 if yaml_content.startswith("```"):
                     lines = yaml_content.split("\n")
@@ -271,9 +283,13 @@ async def generate_pipelines(
                     yaml_content = yaml_content[:-3].rstrip()
 
                 results[platform] = yaml_content
-                print(f"✅ {PLATFORM_LABELS[platform]} pipeline generated ({len(yaml_content)} chars)")
+                print(
+                    f"✅ {PLATFORM_LABELS[platform]} pipeline generated ({len(yaml_content)} chars)"
+                )
             else:
-                print(f"⚠️  Could not extract {PLATFORM_LABELS[platform]} pipeline from response")
+                print(
+                    f"⚠️  Could not extract {PLATFORM_LABELS[platform]} pipeline from response"
+                )
 
         workflow_logger.log_agent_end(
             "PipelineGenerator",
@@ -291,10 +307,17 @@ async def generate_pipelines(
             {"error": str(e)},
             trace_id=trace_id,
         )
-        return {"status": "error", "error": str(e), "pipelines": results, "stack": stack}
+        return {
+            "status": "error",
+            "error": str(e),
+            "pipelines": results,
+            "stack": stack,
+        }
 
 
-def save_pipelines(pipelines: dict, output_dir: Path, project_dir: Path, write_to_project: bool = False) -> dict:
+def save_pipelines(
+    pipelines: dict, output_dir: Path, project_dir: Path, write_to_project: bool = False
+) -> dict:
     """Save generated pipelines to the output directory (and optionally to the project)."""
     output_dir.mkdir(parents=True, exist_ok=True)
     saved_files = {}
@@ -396,7 +419,9 @@ def main():
         )
 
         if result["status"] != "success":
-            print(f"\n❌ Pipeline generation failed: {result.get('error', 'Unknown error')}")
+            print(
+                f"\n❌ Pipeline generation failed: {result.get('error', 'Unknown error')}"
+            )
             sys.exit(1)
 
         saved = save_pipelines(

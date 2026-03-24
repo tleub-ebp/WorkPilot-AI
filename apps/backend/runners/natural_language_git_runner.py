@@ -13,7 +13,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any
 
 # Add the apps/backend directory to the Python path
 backend_path = Path(__file__).parent.parent
@@ -45,7 +45,13 @@ if env_file.exists():
 class NaturalLanguageGitRunner:
     """Handles natural language to Git command conversion and execution."""
 
-    def __init__(self, project_path: str, command: str, model: Optional[str] = None, thinking_level: Optional[str] = None):
+    def __init__(
+        self,
+        project_path: str,
+        command: str,
+        model: str | None = None,
+        thinking_level: str | None = None,
+    ):
         self.project_path = Path(project_path)
         self.command = command
         self.model = model or "sonnet"
@@ -64,10 +70,10 @@ class NaturalLanguageGitRunner:
             if not git_command:
                 self._log_error("Failed to generate Git command")
                 error_result = {
-                    'generatedCommand': '',
-                    'explanation': 'Could not generate a Git command. Please check your Claude configuration.',
-                    'executionOutput': '',
-                    'success': False,
+                    "generatedCommand": "",
+                    "explanation": "Could not generate a Git command. Please check your Claude configuration.",
+                    "executionOutput": "",
+                    "success": False,
                 }
                 print(f"__GIT_RESULT__:{json.dumps(error_result)}")
                 return
@@ -84,15 +90,19 @@ class NaturalLanguageGitRunner:
             self._log_error(f"Unexpected error: {str(e)}")
             sys.exit(1)
 
-    def _generate_git_command(self) -> Optional[str]:
+    def _generate_git_command(self) -> str | None:
         """Generate Git command from natural language using AI."""
         if not SDK_AVAILABLE:
-            self._log_error("Claude Agent SDK not available. Please install claude_agent_sdk.")
+            self._log_error(
+                "Claude Agent SDK not available. Please install claude_agent_sdk."
+            )
             return None
 
         # Ensure authentication
         if not get_auth_token():
-            self._log_error("No authentication token found. Please check your Claude credentials in Settings.")
+            self._log_error(
+                "No authentication token found. Please check your Claude credentials in Settings."
+            )
             return None
 
         ensure_claude_code_oauth_token()
@@ -124,7 +134,9 @@ class NaturalLanguageGitRunner:
                         msg_type = type(msg).__name__
                         if msg_type == "AssistantMessage" and hasattr(msg, "content"):
                             for block in msg.content:
-                                if type(block).__name__ == "TextBlock" and hasattr(block, "text"):
+                                if type(block).__name__ == "TextBlock" and hasattr(
+                                    block, "text"
+                                ):
                                     response_text += block.text
 
                 return response_text
@@ -181,7 +193,7 @@ Respond with ONLY the Git command, nothing else."""
                 ["git", "status", "--porcelain"],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
             return result.stdout.strip() or "clean"
         except Exception:
@@ -194,108 +206,100 @@ Respond with ONLY the Git command, nothing else."""
                 ["git", "branch", "--show-current"],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
             return result.stdout.strip() or "unknown"
         except Exception:
             return "unknown"
 
-    def _extract_command_from_response(self, response: str) -> Optional[str]:
+    def _extract_command_from_response(self, response: str) -> str | None:
         """Extract the Git command from AI response."""
-        lines = response.strip().split('\n')
+        lines = response.strip().split("\n")
 
         for line in lines:
             line = line.strip()
             # Look for lines that start with 'git '
-            if line.startswith('git '):
+            if line.startswith("git "):
                 return line
             # Look for command patterns in backticks
-            if line.startswith('`') and line.endswith('`'):
-                cmd = line.strip('`')
-                if cmd.startswith('git '):
+            if line.startswith("`") and line.endswith("`"):
+                cmd = line.strip("`")
+                if cmd.startswith("git "):
                     return cmd
 
         # If no explicit git command found, try to find any command
         for line in lines:
             line = line.strip()
-            if 'git ' in line:
+            if "git " in line:
                 # Extract the git command part
-                parts = line.split('git ')
+                parts = line.split("git ")
                 if len(parts) > 1:
-                    return 'git ' + parts[1].strip().rstrip('`')
+                    return "git " + parts[1].strip().rstrip("`")
 
         return None
 
-    def _execute_git_command(self, command: str) -> Dict[str, Any]:
+    def _execute_git_command(self, command: str) -> dict[str, Any]:
         """Execute the Git command and return results."""
         try:
             self._log_status(f"Executing: {command}")
 
             parts = command.split()
-            if not parts or parts[0] != 'git':
+            if not parts or parts[0] != "git":
                 raise ValueError("Invalid Git command")
 
             result = subprocess.run(
-                parts,
-                capture_output=True,
-                text=True,
-                timeout=30,
-                cwd=self.project_path
+                parts, capture_output=True, text=True, timeout=30, cwd=self.project_path
             )
 
             return {
-                'success': result.returncode == 0,
-                'stdout': result.stdout,
-                'stderr': result.stderr,
-                'returncode': result.returncode
+                "success": result.returncode == 0,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "returncode": result.returncode,
             }
 
         except subprocess.TimeoutExpired:
             return {
-                'success': False,
-                'stdout': '',
-                'stderr': 'Command timed out after 30 seconds',
-                'returncode': -1
+                "success": False,
+                "stdout": "",
+                "stderr": "Command timed out after 30 seconds",
+                "returncode": -1,
             }
         except Exception as e:
-            return {
-                'success': False,
-                'stdout': '',
-                'stderr': str(e),
-                'returncode': -1
-            }
+            return {"success": False, "stdout": "", "stderr": str(e), "returncode": -1}
 
-    def _output_result(self, command: str, result: Dict[str, Any]) -> None:
+    def _output_result(self, command: str, result: dict[str, Any]) -> None:
         """Output the execution result in the expected format."""
         explanation = self._generate_explanation(command, result)
 
         output_result = {
-            'generatedCommand': command,
-            'explanation': explanation,
-            'executionOutput': result['stdout'] + (result['stderr'] if result['stderr'] else ''),
-            'success': result['success']
+            "generatedCommand": command,
+            "explanation": explanation,
+            "executionOutput": result["stdout"]
+            + (result["stderr"] if result["stderr"] else ""),
+            "success": result["success"],
         }
 
         # Output the structured result
         print(f"__GIT_RESULT__:{json.dumps(output_result)}")
 
-    def _generate_explanation(self, command: str, result: Dict[str, Any]) -> str:
+    def _generate_explanation(self, command: str, result: dict[str, Any]) -> str:
         """Generate an explanation of what the command does."""
         cmd_parts = command.split()[1:]  # Skip 'git'
 
         explanations = {
-            'status': 'Shows the working tree status',
-            'log': 'Shows commit history',
-            'diff': 'Shows changes between commits',
-            'add': 'Stages files for commit',
-            'commit': 'Creates a new commit',
-            'push': 'Pushes commits to remote repository',
-            'pull': 'Pulls changes from remote repository',
-            'branch': 'Lists, creates, or deletes branches',
-            'checkout': 'Switches branches or restores files',
-            'merge': 'Merges branches',
-            'reset': 'Resets current HEAD to specified state',
-            'stash': 'Stashes away changes',
+            "status": "Shows the working tree status",
+            "log": "Shows commit history",
+            "diff": "Shows changes between commits",
+            "add": "Stages files for commit",
+            "commit": "Creates a new commit",
+            "push": "Pushes commits to remote repository",
+            "pull": "Pulls changes from remote repository",
+            "branch": "Lists, creates, or deletes branches",
+            "checkout": "Switches branches or restores files",
+            "merge": "Merges branches",
+            "reset": "Resets current HEAD to specified state",
+            "stash": "Stashes away changes",
         }
 
         if cmd_parts and cmd_parts[0] in explanations:
@@ -340,7 +344,7 @@ def main():
         project_path=args.project_dir,
         command=args.command,
         model=args.model,
-        thinking_level=args.thinking_level
+        thinking_level=args.thinking_level,
     )
 
     runner.run()

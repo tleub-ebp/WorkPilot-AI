@@ -35,7 +35,6 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -259,7 +258,9 @@ class ClaudeAgentClient(AgentClient):
                 raw_msg, "text", ""
             )
             if thinking_text:
-                blocks.append(ContentBlock(type=ContentBlockType.THINKING, text=thinking_text))
+                blocks.append(
+                    ContentBlock(type=ContentBlockType.THINKING, text=thinking_text)
+                )
             return blocks
 
         # ToolUseBlock (top-level)
@@ -308,8 +309,13 @@ class ClaudeAgentClient(AgentClient):
             for item in raw_msg.content:
                 item_type = type(item).__name__
                 if item_type == "TextBlock" and hasattr(item, "text"):
-                    blocks.append(ContentBlock(type=ContentBlockType.TEXT, text=item.text))
-                elif item_type == "ToolUseBlock" or getattr(item, "type", "") == "tool_use":
+                    blocks.append(
+                        ContentBlock(type=ContentBlockType.TEXT, text=item.text)
+                    )
+                elif (
+                    item_type == "ToolUseBlock"
+                    or getattr(item, "type", "") == "tool_use"
+                ):
                     blocks.append(
                         ContentBlock(
                             type=ContentBlockType.TOOL_USE,
@@ -318,7 +324,10 @@ class ClaudeAgentClient(AgentClient):
                             tool_input=getattr(item, "input", {}),
                         )
                     )
-                elif item_type == "ToolResultBlock" or getattr(item, "type", "") == "tool_result":
+                elif (
+                    item_type == "ToolResultBlock"
+                    or getattr(item, "type", "") == "tool_result"
+                ):
                     result_content = getattr(item, "content", "")
                     if isinstance(result_content, list):
                         result_content = " ".join(
@@ -424,12 +433,18 @@ class CopilotAgentClient(AgentClient):
         self.cwd = cwd
         self.max_turns = max_turns
         self._agent_type = agent_type
-        self.github_token = github_token or os.environ.get("GITHUB_TOKEN", "") or self._get_github_token_from_cli()
+        self.github_token = (
+            github_token
+            or os.environ.get("GITHUB_TOKEN", "")
+            or self._get_github_token_from_cli()
+        )
 
         # Real Copilot chat endpoint (not api.github.com)
         self._api_base = "https://api.githubcopilot.com/chat/completions"
         # Fallback: GitHub Models API (works when org blocks api.githubcopilot.com)
-        self._github_models_api_base = "https://models.inference.ai.azure.com/chat/completions"
+        self._github_models_api_base = (
+            "https://models.inference.ai.azure.com/chat/completions"
+        )
         # Token-exchange endpoint: GitHub token → short-lived Copilot session token
         self._token_exchange_url = "https://api.github.com/copilot_internal/v2/token"
         # Whether we've fallen back to GitHub Models API
@@ -460,8 +475,8 @@ class CopilotAgentClient(AgentClient):
         Returns an empty string if `gh` is unavailable or not authenticated.
         """
         import os
-        import subprocess
         import shutil
+        import subprocess
 
         # Prefer GITHUB_CLI_PATH set by the Electron frontend (handles Windows where
         # the subprocess PATH may not include the user's `gh` installation).
@@ -492,8 +507,13 @@ class CopilotAgentClient(AgentClient):
                         text=True,
                         timeout=10,
                     )
-                    status_output = (status_result.stdout + status_result.stderr).lower()
-                    if "token scopes" in status_output and "'copilot'" not in status_output:
+                    status_output = (
+                        status_result.stdout + status_result.stderr
+                    ).lower()
+                    if (
+                        "token scopes" in status_output
+                        and "'copilot'" not in status_output
+                    ):
                         logger.warning(
                             "[CopilotAgentClient] GitHub token is missing the 'copilot' scope. "
                             "Run: gh auth refresh -s copilot --hostname github.com"
@@ -506,7 +526,9 @@ class CopilotAgentClient(AgentClient):
                 except Exception:
                     pass  # scope check is best-effort; proceed anyway
 
-                logger.info("[CopilotAgentClient] Retrieved GitHub token via `gh auth token`")
+                logger.info(
+                    "[CopilotAgentClient] Retrieved GitHub token via `gh auth token`"
+                )
                 return token
             else:
                 stderr = result.stderr.strip()
@@ -518,7 +540,9 @@ class CopilotAgentClient(AgentClient):
                 )
                 return ""
         except Exception as exc:
-            logger.warning("[CopilotAgentClient] Failed to call `gh auth token`: %s", exc)
+            logger.warning(
+                "[CopilotAgentClient] Failed to call `gh auth token`: %s", exc
+            )
             return ""
 
     def _get_http_client(self):
@@ -555,6 +579,7 @@ class CopilotAgentClient(AgentClient):
            "session token" with a 30-minute TTL to match normal behaviour.
         """
         import time
+
         import aiohttp
 
         # Return cached token if still valid (60-second safety buffer)
@@ -589,13 +614,19 @@ class CopilotAgentClient(AgentClient):
         }
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(self._token_exchange_url, headers=exchange_headers) as resp:
+            async with session.get(
+                self._token_exchange_url, headers=exchange_headers
+            ) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     self._copilot_token = data["token"]
                     # expires_at is a Unix timestamp; default to 30 min if absent
-                    self._copilot_token_expires_at = data.get("expires_at", time.time() + 1800)
-                    logger.info("[CopilotAgentClient] Session token refreshed via exchange")
+                    self._copilot_token_expires_at = data.get(
+                        "expires_at", time.time() + 1800
+                    )
+                    logger.info(
+                        "[CopilotAgentClient] Session token refreshed via exchange"
+                    )
                     return self._copilot_token
                 elif resp.status == 404:
                     # Copilot Business/Enterprise accounts managed by an organisation
@@ -663,7 +694,9 @@ class CopilotAgentClient(AgentClient):
                 "function": {
                     "name": td["name"],
                     "description": td.get("description", ""),
-                    "parameters": td.get("parameters", {"type": "object", "properties": {}}),
+                    "parameters": td.get(
+                        "parameters", {"type": "object", "properties": {}}
+                    ),
                 },
             }
             for td in self._tool_definitions
@@ -695,7 +728,11 @@ class CopilotAgentClient(AgentClient):
                 logger.error(f"[CopilotAgentClient] Token refresh failed: {e}")
                 yield AgentMessage(
                     role=MessageRole.SYSTEM,
-                    content=[ContentBlock(type=ContentBlockType.TEXT, text=f"Copilot auth error: {e}")],
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TEXT, text=f"Copilot auth error: {e}"
+                        )
+                    ],
                 )
                 return
 
@@ -716,14 +753,20 @@ class CopilotAgentClient(AgentClient):
             )
 
             # Determine which endpoint to use
-            api_url = self._github_models_api_base if self._using_github_models else self._api_base
+            api_url = (
+                self._github_models_api_base
+                if self._using_github_models
+                else self._api_base
+            )
 
             # For GitHub Models API, use the raw GitHub token directly (not the Copilot session token)
             if self._using_github_models:
                 request_headers["Authorization"] = f"Bearer {self.github_token}"
 
             try:
-                async with session.post(api_url, json=payload, headers=request_headers) as resp:
+                async with session.post(
+                    api_url, json=payload, headers=request_headers
+                ) as resp:
                     if resp.status == 403 and not self._using_github_models:
                         # Copilot API blocked (org restriction) — fallback to GitHub Models API
                         error_text = await resp.text()
@@ -739,10 +782,16 @@ class CopilotAgentClient(AgentClient):
                         self._using_github_models = True
                         request_headers["Authorization"] = f"Bearer {self.github_token}"
                         # Retry this turn with the GitHub Models API
-                        async with session.post(self._github_models_api_base, json=payload, headers=request_headers) as retry_resp:
+                        async with session.post(
+                            self._github_models_api_base,
+                            json=payload,
+                            headers=request_headers,
+                        ) as retry_resp:
                             if retry_resp.status != 200:
                                 retry_error = await retry_resp.text()
-                                logger.error(f"[CopilotAgentClient] GitHub Models API error ({retry_resp.status}): {retry_error[:500]}")
+                                logger.error(
+                                    f"[CopilotAgentClient] GitHub Models API error ({retry_resp.status}): {retry_error[:500]}"
+                                )
                                 yield AgentMessage(
                                     role=MessageRole.SYSTEM,
                                     content=[
@@ -756,7 +805,9 @@ class CopilotAgentClient(AgentClient):
                             data = await retry_resp.json()
                     elif resp.status != 200:
                         error_text = await resp.text()
-                        logger.error(f"[CopilotAgentClient] API error ({resp.status}): {error_text[:500]}")
+                        logger.error(
+                            f"[CopilotAgentClient] API error ({resp.status}): {error_text[:500]}"
+                        )
                         yield AgentMessage(
                             role=MessageRole.SYSTEM,
                             content=[
@@ -773,16 +824,25 @@ class CopilotAgentClient(AgentClient):
                 logger.error(f"[CopilotAgentClient] Request failed: {e}")
                 yield AgentMessage(
                     role=MessageRole.SYSTEM,
-                    content=[ContentBlock(type=ContentBlockType.TEXT, text=f"Copilot API error: {e}")],
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TEXT, text=f"Copilot API error: {e}"
+                        )
+                    ],
                 )
                 return
 
             choices = data.get("choices", [])
             if not choices:
-                logger.warning(f"[CopilotAgentClient] Empty choices in response")
+                logger.warning("[CopilotAgentClient] Empty choices in response")
                 yield AgentMessage(
                     role=MessageRole.ASSISTANT,
-                    content=[ContentBlock(type=ContentBlockType.TEXT, text="(Empty response from Copilot)")],
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TEXT,
+                            text="(Empty response from Copilot)",
+                        )
+                    ],
                 )
                 return
 
@@ -816,17 +876,26 @@ class CopilotAgentClient(AgentClient):
                     )
                     if content:
                         messages.append({"role": "assistant", "content": content})
-                    messages.append({
-                        "role": "user",
-                        "content": "Please proceed by calling the appropriate tools to complete your task.",
-                    })
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": "Please proceed by calling the appropriate tools to complete your task.",
+                        }
+                    )
                     continue  # retry — don't return early
                 if not content:
                     yield AgentMessage(
                         role=MessageRole.ASSISTANT,
-                        content=[ContentBlock(type=ContentBlockType.TEXT, text="(No response from Copilot)")],
+                        content=[
+                            ContentBlock(
+                                type=ContentBlockType.TEXT,
+                                text="(No response from Copilot)",
+                            )
+                        ],
                     )
-                logger.info(f"[CopilotAgentClient] Session complete after {turn + 1} turn(s)")
+                logger.info(
+                    f"[CopilotAgentClient] Session complete after {turn + 1} turn(s)"
+                )
                 return
 
             # Add assistant message (with tool_calls) to conversation history
@@ -875,7 +944,9 @@ class CopilotAgentClient(AgentClient):
                     except Exception as e:
                         result_text = f"Tool error: {e}"
                         is_error = True
-                        logger.warning(f"[CopilotAgentClient] Tool {tool_name} failed: {e}")
+                        logger.warning(
+                            f"[CopilotAgentClient] Tool {tool_name} failed: {e}"
+                        )
                 else:
                     result_text = "Tool executor not available"
                     is_error = True
@@ -894,18 +965,22 @@ class CopilotAgentClient(AgentClient):
                 )
 
                 # Add tool result for next API call
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tool_id,
-                    "content": result_text[:10000],  # Truncate large results
-                })
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_id,
+                        "content": result_text[:10000],  # Truncate large results
+                    }
+                )
 
             # Continue loop — next turn sends updated messages with tool results
 
         logger.warning(
             f"[CopilotAgentClient] Reached max_turns ({self.max_turns}) — stopping tool loop"
         )
-        print(f"[CopilotAgentClient] ⚠️ Reached max turns ({self.max_turns})", flush=True)
+        print(
+            f"[CopilotAgentClient] ⚠️ Reached max turns ({self.max_turns})", flush=True
+        )
 
     async def run_subagents(
         self,
@@ -949,7 +1024,9 @@ class CopilotAgentClient(AgentClient):
             }
 
             try:
-                async with session.post(self._api_base, json=payload, headers=request_headers) as resp:
+                async with session.post(
+                    self._api_base, json=payload, headers=request_headers
+                ) as resp:
                     if resp.status != 200:
                         error_text = await resp.text()
                         return (name, f"Error ({resp.status}): {error_text}")
@@ -986,7 +1063,10 @@ class CopilotAgentClient(AgentClient):
     async def __aenter__(self):
         if self.cwd:
             try:
-                from core.runtimes.tool_executor import ToolExecutor, get_tool_definitions
+                from core.runtimes.tool_executor import (
+                    ToolExecutor,
+                    get_tool_definitions,
+                )
 
                 self._tool_executor = ToolExecutor(self.cwd)
                 self._tool_definitions = get_tool_definitions(self._agent_type)
@@ -995,7 +1075,9 @@ class CopilotAgentClient(AgentClient):
                     f"{len(self._tool_definitions)} tools for agent_type={self._agent_type}"
                 )
             except Exception as e:
-                logger.warning(f"[CopilotAgentClient] Tool executor init failed (text-only mode): {e}")
+                logger.warning(
+                    f"[CopilotAgentClient] Tool executor init failed (text-only mode): {e}"
+                )
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -1011,20 +1093,20 @@ class CopilotAgentClient(AgentClient):
 
 # OpenAI pricing ($/M tokens, input/output) — update as rates change
 _OPENAI_PRICING: dict[str, tuple[float, float]] = {
-    "gpt-4o":           (2.50,  10.00),
-    "gpt-4o-mini":      (0.15,   0.60),
-    "gpt-4.1":          (2.00,   8.00),
-    "gpt-4.1-mini":     (0.40,   1.60),
-    "gpt-4.1-nano":     (0.10,   0.40),
-    "gpt-4-turbo":     (10.00,  30.00),
-    "gpt-4":           (30.00,  60.00),
-    "gpt-3.5-turbo":    (0.50,   1.50),
-    "o1":              (15.00,  60.00),
-    "o1-mini":          (3.00,  12.00),
-    "o1-pro":         (150.00, 600.00),
-    "o3":              (10.00,  40.00),
-    "o3-mini":          (1.10,   4.40),
-    "o4-mini":          (1.10,   4.40),
+    "gpt-4o": (2.50, 10.00),
+    "gpt-4o-mini": (0.15, 0.60),
+    "gpt-4.1": (2.00, 8.00),
+    "gpt-4.1-mini": (0.40, 1.60),
+    "gpt-4.1-nano": (0.10, 0.40),
+    "gpt-4-turbo": (10.00, 30.00),
+    "gpt-4": (30.00, 60.00),
+    "gpt-3.5-turbo": (0.50, 1.50),
+    "o1": (15.00, 60.00),
+    "o1-mini": (3.00, 12.00),
+    "o1-pro": (150.00, 600.00),
+    "o3": (10.00, 40.00),
+    "o3-mini": (1.10, 4.40),
+    "o4-mini": (1.10, 4.40),
 }
 
 
@@ -1096,7 +1178,10 @@ class OpenAIAgentClient(AgentClient):
     async def __aenter__(self):
         if self._project_dir:
             try:
-                from core.runtimes.tool_executor import ToolExecutor, get_tool_definitions
+                from core.runtimes.tool_executor import (
+                    ToolExecutor,
+                    get_tool_definitions,
+                )
 
                 self._tool_executor = ToolExecutor(self._project_dir)
                 self._tool_definitions = get_tool_definitions(self._agent_type)
@@ -1105,7 +1190,9 @@ class OpenAIAgentClient(AgentClient):
                     f"{len(self._tool_definitions)} tools for agent_type={self._agent_type}"
                 )
             except Exception as e:
-                logger.warning(f"[OpenAIAgentClient] Tool executor init failed (text-only mode): {e}")
+                logger.warning(
+                    f"[OpenAIAgentClient] Tool executor init failed (text-only mode): {e}"
+                )
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -1131,7 +1218,12 @@ class OpenAIAgentClient(AgentClient):
         if not self._api_key:
             yield AgentMessage(
                 role=MessageRole.SYSTEM,
-                content=[ContentBlock(type=ContentBlockType.TEXT, text="OpenAI auth error: OPENAI_API_KEY not set.")],
+                content=[
+                    ContentBlock(
+                        type=ContentBlockType.TEXT,
+                        text="OpenAI auth error: OPENAI_API_KEY not set.",
+                    )
+                ],
             )
             return
 
@@ -1149,7 +1241,9 @@ class OpenAIAgentClient(AgentClient):
                 "function": {
                     "name": td["name"],
                     "description": td.get("description", ""),
-                    "parameters": td.get("parameters", {"type": "object", "properties": {}}),
+                    "parameters": td.get(
+                        "parameters", {"type": "object", "properties": {}}
+                    ),
                 },
             }
             for td in self._tool_definitions
@@ -1190,10 +1284,14 @@ class OpenAIAgentClient(AgentClient):
             )
 
             try:
-                async with session.post(self._api_base, json=payload, headers=request_headers) as resp:
+                async with session.post(
+                    self._api_base, json=payload, headers=request_headers
+                ) as resp:
                     if resp.status != 200:
                         error_text = await resp.text()
-                        logger.error(f"[OpenAIAgentClient] API error ({resp.status}): {error_text[:500]}")
+                        logger.error(
+                            f"[OpenAIAgentClient] API error ({resp.status}): {error_text[:500]}"
+                        )
                         yield AgentMessage(
                             role=MessageRole.SYSTEM,
                             content=[
@@ -1209,7 +1307,11 @@ class OpenAIAgentClient(AgentClient):
                 logger.error(f"[OpenAIAgentClient] Request failed: {e}")
                 yield AgentMessage(
                     role=MessageRole.SYSTEM,
-                    content=[ContentBlock(type=ContentBlockType.TEXT, text=f"OpenAI API error: {e}")],
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TEXT, text=f"OpenAI API error: {e}"
+                        )
+                    ],
                 )
                 return
 
@@ -1222,7 +1324,12 @@ class OpenAIAgentClient(AgentClient):
             if not choices:
                 yield AgentMessage(
                     role=MessageRole.ASSISTANT,
-                    content=[ContentBlock(type=ContentBlockType.TEXT, text="(Empty response from OpenAI)")],
+                    content=[
+                        ContentBlock(
+                            type=ContentBlockType.TEXT,
+                            text="(Empty response from OpenAI)",
+                        )
+                    ],
                 )
                 return
 
@@ -1247,9 +1354,16 @@ class OpenAIAgentClient(AgentClient):
                 if not content:
                     yield AgentMessage(
                         role=MessageRole.ASSISTANT,
-                        content=[ContentBlock(type=ContentBlockType.TEXT, text="(No response from OpenAI)")],
+                        content=[
+                            ContentBlock(
+                                type=ContentBlockType.TEXT,
+                                text="(No response from OpenAI)",
+                            )
+                        ],
                     )
-                logger.info(f"[OpenAIAgentClient] Session complete after {turn + 1} turn(s)")
+                logger.info(
+                    f"[OpenAIAgentClient] Session complete after {turn + 1} turn(s)"
+                )
                 self.last_usage = {
                     "input_tokens": _total_in,
                     "output_tokens": _total_out,
@@ -1299,7 +1413,9 @@ class OpenAIAgentClient(AgentClient):
                     except Exception as e:
                         result_text = f"Tool error: {e}"
                         is_error = True
-                        logger.warning(f"[OpenAIAgentClient] Tool {tool_name} failed: {e}")
+                        logger.warning(
+                            f"[OpenAIAgentClient] Tool {tool_name} failed: {e}"
+                        )
                 else:
                     result_text = "Tool executor not available"
                     is_error = True
@@ -1316,11 +1432,13 @@ class OpenAIAgentClient(AgentClient):
                     ],
                 )
 
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tool_id,
-                    "content": result_text[:10000],
-                })
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_id,
+                        "content": result_text[:10000],
+                    }
+                )
 
         logger.warning(
             f"[OpenAIAgentClient] Reached max_turns ({self.max_turns}) — stopping tool loop"
@@ -1481,6 +1599,7 @@ class WindsurfAgentClient(AgentClient):
         if self._api_key and self._api_key.startswith("sk-ws-"):
             try:
                 from integrations.windsurf_proxy.auth import _get_api_key_from_state_db
+
                 db_key = _get_api_key_from_state_db()
                 if db_key and db_key != self._api_key:
                     logger.info(
@@ -1527,7 +1646,7 @@ class WindsurfAgentClient(AgentClient):
                         f"text-based tool execution)"
                     )
                     print(
-                        f"[WindsurfAgent] Using Windsurf IDE (gRPC) — credits will be consumed",
+                        "[WindsurfAgent] Using Windsurf IDE (gRPC) — credits will be consumed",
                         flush=True,
                     )
                 except Exception as e:
@@ -1559,7 +1678,7 @@ class WindsurfAgentClient(AgentClient):
                         f"(model={self.model})"
                     )
                     print(
-                        f"[WindsurfAgent] Using Windsurf IDE gRPC (SSO token, IDE running)",
+                        "[WindsurfAgent] Using Windsurf IDE gRPC (SSO token, IDE running)",
                         flush=True,
                     )
                 except Exception as e:
@@ -1617,17 +1736,26 @@ class WindsurfAgentClient(AgentClient):
         # REST mode uses OpenAI function calling (native tool_calls).
         if self._project_dir:
             try:
-                from core.runtimes.tool_executor import ToolExecutor, get_tool_definitions
+                from core.runtimes.tool_executor import (
+                    ToolExecutor,
+                    get_tool_definitions,
+                )
 
                 self._tool_executor = ToolExecutor(self._project_dir)
                 self._tool_definitions = get_tool_definitions(self._agent_type)
-                mode_label = "gRPC text-based" if self._use_local_grpc else "REST function calling"
+                mode_label = (
+                    "gRPC text-based"
+                    if self._use_local_grpc
+                    else "REST function calling"
+                )
                 logger.info(
                     f"[WindsurfAgent] Tool execution enabled ({mode_label}): "
                     f"{len(self._tool_definitions)} tools for agent_type={self._agent_type}"
                 )
             except Exception as e:
-                logger.warning(f"[WindsurfAgent] Tool executor init failed (text-only mode): {e}")
+                logger.warning(
+                    f"[WindsurfAgent] Tool executor init failed (text-only mode): {e}"
+                )
 
         return self
 
@@ -1669,8 +1797,11 @@ class WindsurfAgentClient(AgentClient):
     async def _grpc_response(self, prompt: str) -> AgentMessage:
         """Send prompt via gRPC to local Windsurf language server (no tools)."""
         from integrations.windsurf_proxy import grpc_client as _grpc_mod
+        from integrations.windsurf_proxy.auth import (
+            discover_credentials,
+            invalidate_process_cache,
+        )
         from integrations.windsurf_proxy.grpc_client import stream_chat
-        from integrations.windsurf_proxy.auth import discover_credentials, invalidate_process_cache
         from integrations.windsurf_proxy.models import resolve_model
 
         model_enum, model_name = resolve_model(self.model)
@@ -1687,16 +1818,21 @@ class WindsurfAgentClient(AgentClient):
                 # Refresh credentials to get a fresh CSRF token and re-init panel.
                 # IMPORTANT: invalidate the process-info cache first — without this,
                 # discover_credentials() returns the same stale CSRF token (10s TTL).
-                logger.warning("[WindsurfAgent] Refreshing credentials before retry (attempt 2)")
+                logger.warning(
+                    "[WindsurfAgent] Refreshing credentials before retry (attempt 2)"
+                )
                 _grpc_mod._panel_initialized = False
                 invalidate_process_cache()
                 # Brief pause: lets Windsurf's internal session recover before we re-init.
                 import asyncio as _asyncio
+
                 await _asyncio.sleep(1.5)
                 try:
                     self._credentials = discover_credentials()
                 except Exception as refresh_err:
-                    logger.error(f"[WindsurfAgent] Credential refresh failed: {refresh_err}")
+                    logger.error(
+                        f"[WindsurfAgent] Credential refresh failed: {refresh_err}"
+                    )
                     break
 
             text_parts = []
@@ -1713,8 +1849,12 @@ class WindsurfAgentClient(AgentClient):
             except Exception as e:
                 last_error = e
                 err_str = str(e).lower()
-                if attempt == 0 and ("failed_precondition" in err_str or "cascade session" in err_str):
-                    logger.warning(f"[WindsurfAgent] Cascade session error (exception), retrying: {e}")
+                if attempt == 0 and (
+                    "failed_precondition" in err_str or "cascade session" in err_str
+                ):
+                    logger.warning(
+                        f"[WindsurfAgent] Cascade session error (exception), retrying: {e}"
+                    )
                     _grpc_mod._panel_initialized = False
                     continue
                 logger.error(f"[WindsurfAgent] gRPC streaming error: {e}")
@@ -1728,15 +1868,20 @@ class WindsurfAgentClient(AgentClient):
                 and "cascade session" in full_text.lower()
                 and attempt == 0
             ):
-                logger.warning("[WindsurfAgent] Cascade session error in response text, retrying with fresh credentials")
+                logger.warning(
+                    "[WindsurfAgent] Cascade session error in response text, retrying with fresh credentials"
+                )
                 _grpc_mod._panel_initialized = False
                 invalidate_process_cache()
                 import asyncio as _asyncio
+
                 await _asyncio.sleep(1.5)
                 try:
                     self._credentials = discover_credentials()
                 except Exception as refresh_err:
-                    logger.error(f"[WindsurfAgent] Credential refresh failed: {refresh_err}")
+                    logger.error(
+                        f"[WindsurfAgent] Credential refresh failed: {refresh_err}"
+                    )
                     break
                 continue
 
@@ -1840,10 +1985,12 @@ class WindsurfAgentClient(AgentClient):
             try:
                 parsed = _json.loads(raw)
                 if isinstance(parsed, dict) and "name" in parsed:
-                    tool_calls.append({
-                        "name": parsed["name"],
-                        "arguments": parsed.get("arguments", {}),
-                    })
+                    tool_calls.append(
+                        {
+                            "name": parsed["name"],
+                            "arguments": parsed.get("arguments", {}),
+                        }
+                    )
                 else:
                     logger.warning(
                         f"[WindsurfAgent] Skipping malformed tool_call (no 'name'): {raw[:200]}"
@@ -1873,13 +2020,16 @@ class WindsurfAgentClient(AgentClient):
         This consumes Windsurf credits because all inference goes through
         the local Windsurf IDE language server → Codeium cloud.
         """
-        import json as _json
+
+        import asyncio as _asyncio
 
         from integrations.windsurf_proxy import grpc_client as _grpc_mod
+        from integrations.windsurf_proxy.auth import (
+            discover_credentials,
+            invalidate_process_cache,
+        )
         from integrations.windsurf_proxy.grpc_client import stream_chat
-        from integrations.windsurf_proxy.auth import discover_credentials, invalidate_process_cache
         from integrations.windsurf_proxy.models import resolve_model
-        import asyncio as _asyncio
 
         model_enum, model_name = resolve_model(self.model)
 
@@ -1917,14 +2067,18 @@ class WindsurfAgentClient(AgentClient):
                 if attempt > 0:
                     # Invalidate process cache so discover_credentials() fetches a
                     # fresh CSRF token instead of returning the cached stale one.
-                    logger.warning("[WindsurfAgent] Refreshing credentials before retry")
+                    logger.warning(
+                        "[WindsurfAgent] Refreshing credentials before retry"
+                    )
                     _grpc_mod._panel_initialized = False
                     invalidate_process_cache()
                     await _asyncio.sleep(1.5)
                     try:
                         self._credentials = discover_credentials()
                     except Exception as refresh_err:
-                        logger.error(f"[WindsurfAgent] Credential refresh failed: {refresh_err}")
+                        logger.error(
+                            f"[WindsurfAgent] Credential refresh failed: {refresh_err}"
+                        )
                         break
 
                 text_parts = []
@@ -1941,18 +2095,27 @@ class WindsurfAgentClient(AgentClient):
                 except Exception as e:
                     turn_error = e
                     err_str = str(e).lower()
-                    if attempt == 0 and ("failed_precondition" in err_str or "cascade session" in err_str):
-                        logger.warning(f"[WindsurfAgent] Cascade session error on turn {turn + 1}, retrying: {e}")
+                    if attempt == 0 and (
+                        "failed_precondition" in err_str or "cascade session" in err_str
+                    ):
+                        logger.warning(
+                            f"[WindsurfAgent] Cascade session error on turn {turn + 1}, retrying: {e}"
+                        )
                         _grpc_mod._panel_initialized = False
                         continue
-                    logger.error(f"[WindsurfAgent] gRPC streaming error (turn {turn + 1}): {e}")
+                    logger.error(
+                        f"[WindsurfAgent] gRPC streaming error (turn {turn + 1}): {e}"
+                    )
                     break
 
                 # Windsurf sometimes returns the Cascade session error as HTTP 200 text.
                 # Detect this and retry with fresh credentials (same as _grpc_response).
                 if turn_error is None and attempt == 0:
                     partial_text = "".join(text_parts).lower()
-                    if "failed_precondition" in partial_text and "cascade session" in partial_text:
+                    if (
+                        "failed_precondition" in partial_text
+                        and "cascade session" in partial_text
+                    ):
                         logger.warning(
                             f"[WindsurfAgent] Cascade session error in response text on turn {turn + 1}, "
                             "retrying with fresh credentials"
@@ -1963,7 +2126,9 @@ class WindsurfAgentClient(AgentClient):
                         try:
                             self._credentials = discover_credentials()
                         except Exception as refresh_err:
-                            logger.error(f"[WindsurfAgent] Credential refresh failed: {refresh_err}")
+                            logger.error(
+                                f"[WindsurfAgent] Credential refresh failed: {refresh_err}"
+                            )
                             break
                         continue  # retry with fresh credentials
 
@@ -2119,7 +2284,9 @@ class WindsurfAgentClient(AgentClient):
                 "function": {
                     "name": td["name"],
                     "description": td.get("description", ""),
-                    "parameters": td.get("parameters", {"type": "object", "properties": {}}),
+                    "parameters": td.get(
+                        "parameters", {"type": "object", "properties": {}}
+                    ),
                 },
             }
             for td in self._tool_definitions
@@ -2204,7 +2371,9 @@ class WindsurfAgentClient(AgentClient):
             # ----------------------------------------------------------
             urls_to_try: list[str]
             if not self._rest_url_probed:
-                urls_to_try = [f"{base}/chat/completions" for base in self._rest_base_urls]
+                urls_to_try = [
+                    f"{base}/chat/completions" for base in self._rest_base_urls
+                ]
             else:
                 urls_to_try = [url]
 
@@ -2224,8 +2393,13 @@ class WindsurfAgentClient(AgentClient):
                                 self._rest_base_url = base
                                 url = try_url
                                 self._rest_url_probed = True
-                                logger.info(f"[WindsurfAgent] ✅ Found working endpoint: {try_url}")
-                                print(f"[WindsurfAgent] ✅ Working endpoint: {try_url}", flush=True)
+                                logger.info(
+                                    f"[WindsurfAgent] ✅ Found working endpoint: {try_url}"
+                                )
+                                print(
+                                    f"[WindsurfAgent] ✅ Working endpoint: {try_url}",
+                                    flush=True,
+                                )
                             break  # success
                         else:
                             error_text = await resp.text()
@@ -2238,7 +2412,9 @@ class WindsurfAgentClient(AgentClient):
                             if resp_status not in (404, 502, 503):
                                 break
                 except Exception as probe_err:
-                    logger.warning(f"[WindsurfAgent] Endpoint {try_url} failed: {probe_err}")
+                    logger.warning(
+                        f"[WindsurfAgent] Endpoint {try_url} failed: {probe_err}"
+                    )
                     last_error_status = 0
                     last_error_text = str(probe_err)
 
@@ -2251,7 +2427,10 @@ class WindsurfAgentClient(AgentClient):
                     else f"Windsurf REST API error: {last_error_text}"
                 )
                 logger.error(f"[WindsurfAgent] {error_msg}")
-                print(f"[WindsurfAgent] ❌ All endpoints failed: {error_msg[:200]}", flush=True)
+                print(
+                    f"[WindsurfAgent] ❌ All endpoints failed: {error_msg[:200]}",
+                    flush=True,
+                )
                 yield AgentMessage(
                     role=MessageRole.SYSTEM,
                     content=[
@@ -2383,9 +2562,7 @@ class WindsurfAgentClient(AgentClient):
                     except Exception as e:
                         result_text = f"Tool error: {e}"
                         is_error = True
-                        logger.warning(
-                            f"[WindsurfAgent] Tool {tool_name} failed: {e}"
-                        )
+                        logger.warning(f"[WindsurfAgent] Tool {tool_name} failed: {e}")
                 else:
                     result_text = "Tool executor not available (no project_dir)"
                     is_error = True
@@ -2404,11 +2581,13 @@ class WindsurfAgentClient(AgentClient):
                 )
 
                 # Add tool result to conversation for next API call
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tool_id,
-                    "content": result_text[:10000],  # Truncate large results
-                })
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_id,
+                        "content": result_text[:10000],  # Truncate large results
+                    }
+                )
 
             # Continue loop — next turn will send updated messages with tool results
 

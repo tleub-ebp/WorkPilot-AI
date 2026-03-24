@@ -12,13 +12,12 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
 
 # Add the apps/backend directory to the Python path
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
-from architecture_visualizer import ArchitectureAnalyzer, DiagramGenerator
+from architecture_visualizer import ArchitectureAnalyzer
 
 
 class ArchitectureVisualizerRunner:
@@ -27,17 +26,26 @@ class ArchitectureVisualizerRunner:
     def __init__(
         self,
         project_dir: str,
-        output_dir: Optional[str] = None,
-        diagram_types: Optional[List[str]] = None,
-        model: Optional[str] = None,
-        thinking_level: Optional[str] = None,
+        output_dir: str | None = None,
+        diagram_types: list[str] | None = None,
+        model: str | None = None,
+        thinking_level: str | None = None,
     ):
         self.project_dir = Path(project_dir)
-        self.output_dir = Path(output_dir) if output_dir else self.project_dir / ".auto-claude" / "architecture"
-        self.diagram_types = diagram_types or ["module_dependencies", "component_hierarchy", "data_flow", "database_schema"]
+        self.output_dir = (
+            Path(output_dir)
+            if output_dir
+            else self.project_dir / ".auto-claude" / "architecture"
+        )
+        self.diagram_types = diagram_types or [
+            "module_dependencies",
+            "component_hierarchy",
+            "data_flow",
+            "database_schema",
+        ]
         self.model = model
         self.thinking_level = thinking_level or "medium"
-        self.analyzer: Optional[ArchitectureAnalyzer] = None
+        self.analyzer: ArchitectureAnalyzer | None = None
 
     def setup(self):
         """Initialize the analyzer."""
@@ -47,7 +55,7 @@ class ArchitectureVisualizerRunner:
         print(f"📁 Project: {self.project_dir}")
         print(f"📊 Diagram types: {', '.join(self.diagram_types)}")
 
-    def run_analysis(self) -> Dict:
+    def run_analysis(self) -> dict:
         """Run the architecture analysis and return structured results."""
         if not self.analyzer:
             self.setup()
@@ -59,7 +67,9 @@ class ArchitectureVisualizerRunner:
         for diagram_type, diagram in all_diagrams.items():
             if diagram_type not in self.diagram_types:
                 continue
-            print(f"✅ {diagram.title}: {len(diagram.nodes)} nodes, {len(diagram.edges)} edges")
+            print(
+                f"✅ {diagram.title}: {len(diagram.nodes)} nodes, {len(diagram.edges)} edges"
+            )
             results[diagram_type] = diagram.to_dict()
 
         return {
@@ -70,7 +80,7 @@ class ArchitectureVisualizerRunner:
             "summary": self._generate_summary(results),
         }
 
-    def save_diagrams(self, result: Dict) -> str:
+    def save_diagrams(self, result: dict) -> str:
         """Save diagrams to .auto-claude/architecture/ and return output path."""
         diagrams = result.get("diagrams", {})
         for diagram_type, diagram_data in diagrams.items():
@@ -89,7 +99,7 @@ class ArchitectureVisualizerRunner:
         json_file.write_text(json.dumps(result, indent=2), encoding="utf-8")
         return str(self.output_dir)
 
-    def _generate_summary(self, diagrams: Dict) -> Dict:
+    def _generate_summary(self, diagrams: dict) -> dict:
         """Generate a summary of the architecture analysis."""
         total_nodes = sum(len(d.get("nodes", [])) for d in diagrams.values())
         total_edges = sum(len(d.get("edges", [])) for d in diagrams.values())

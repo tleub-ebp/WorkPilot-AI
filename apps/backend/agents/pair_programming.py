@@ -33,8 +33,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class StepStatus(str, Enum):
     """Status of a pair programming step."""
+
     PROPOSED = "proposed"
     PREVIEWING = "previewing"
     APPROVED = "approved"
@@ -47,6 +49,7 @@ class StepStatus(str, Enum):
 
 class StepType(str, Enum):
     """Type of pair programming step."""
+
     PLAN = "plan"
     CODE = "code"
     TEST = "test"
@@ -59,6 +62,7 @@ class StepType(str, Enum):
 
 class SessionMode(str, Enum):
     """Pair programming interaction modes."""
+
     STEP_BY_STEP = "step_by_step"
     SUGGESTION = "suggestion"
     GUIDED = "guided"
@@ -66,6 +70,7 @@ class SessionMode(str, Enum):
 
 class SuggestionStatus(str, Enum):
     """Status of a real-time code suggestion."""
+
     PENDING = "pending"
     ACCEPTED = "accepted"
     REJECTED = "rejected"
@@ -75,6 +80,7 @@ class SuggestionStatus(str, Enum):
 # ---------------------------------------------------------------------------
 # Data models
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class UserComment:
@@ -87,6 +93,7 @@ class UserComment:
         line_number: Optional line reference in the code preview.
         timestamp: When the comment was made.
     """
+
     comment_id: str
     step_index: int
     content: str
@@ -119,6 +126,7 @@ class CodeSuggestion:
         explanation: Why this change is suggested.
         status: Whether the user accepted/rejected.
     """
+
     suggestion_id: str
     file_path: str
     line_start: int = 0
@@ -162,6 +170,7 @@ class PlanStep:
         suggestions: Code suggestions for this step.
         metadata: Additional context.
     """
+
     index: int
     step_type: StepType
     title: str
@@ -209,6 +218,7 @@ class PairProgrammingPlan:
         created_at: When the plan was created.
         approved: Whether the overall plan was approved.
     """
+
     task: str
     steps: list[PlanStep] = field(default_factory=list)
     created_at: str = ""
@@ -248,6 +258,7 @@ class PairProgrammingPlan:
 # Main session class
 # ---------------------------------------------------------------------------
 
+
 class PairProgrammingSession:
     """Interactive pair programming session with user-in-the-loop.
 
@@ -266,7 +277,11 @@ class PairProgrammingSession:
     ) -> None:
         self.project_id = project_id
         self.task = task
-        self.mode = SessionMode(mode) if mode in [m.value for m in SessionMode] else SessionMode.STEP_BY_STEP
+        self.mode = (
+            SessionMode(mode)
+            if mode in [m.value for m in SessionMode]
+            else SessionMode.STEP_BY_STEP
+        )
         self.llm_provider = llm_provider
 
         self.session_id = f"pair_{int(time.time())}"
@@ -302,13 +317,15 @@ class PairProgrammingSession:
             plan_steps = []
             for i, s in enumerate(steps):
                 step_type = StepType(s.get("step_type", "code"))
-                plan_steps.append(PlanStep(
-                    index=i,
-                    step_type=step_type,
-                    title=s.get("title", f"Step {i + 1}"),
-                    description=s.get("description", ""),
-                    file_path=s.get("file_path", ""),
-                ))
+                plan_steps.append(
+                    PlanStep(
+                        index=i,
+                        step_type=step_type,
+                        title=s.get("title", f"Step {i + 1}"),
+                        description=s.get("description", ""),
+                        file_path=s.get("file_path", ""),
+                    )
+                )
         else:
             plan_steps = self._generate_default_plan()
 
@@ -369,22 +386,27 @@ class PairProgrammingSession:
             start_idx = len(self.plan.steps)
             for i, s in enumerate(add_steps):
                 step_type = StepType(s.get("step_type", "code"))
-                self.plan.steps.append(PlanStep(
-                    index=start_idx + i,
-                    step_type=step_type,
-                    title=s.get("title", f"Step {start_idx + i + 1}"),
-                    description=s.get("description", ""),
-                    file_path=s.get("file_path", ""),
-                ))
+                self.plan.steps.append(
+                    PlanStep(
+                        index=start_idx + i,
+                        step_type=step_type,
+                        title=s.get("title", f"Step {start_idx + i + 1}"),
+                        description=s.get("description", ""),
+                        file_path=s.get("file_path", ""),
+                    )
+                )
 
         # Re-index
         for i, step in enumerate(self.plan.steps):
             step.index = i
 
-        self._log_event("plan_modified", {
-            "added": len(add_steps) if add_steps else 0,
-            "removed": len(remove_indices) if remove_indices else 0,
-        })
+        self._log_event(
+            "plan_modified",
+            {
+                "added": len(add_steps) if add_steps else 0,
+                "removed": len(remove_indices) if remove_indices else 0,
+            },
+        )
         return self.plan
 
     # -- Step execution ------------------------------------------------------
@@ -591,10 +613,15 @@ class PairProgrammingSession:
 
         for sug in step.suggestions:
             if sug.suggestion_id == suggestion_id:
-                sug.status = SuggestionStatus(action) if action in [s.value for s in SuggestionStatus] else SuggestionStatus.ACCEPTED
-                self._log_event("suggestion_responded", {
-                    "step": step_index, "suggestion": suggestion_id, "action": action
-                })
+                sug.status = (
+                    SuggestionStatus(action)
+                    if action in [s.value for s in SuggestionStatus]
+                    else SuggestionStatus.ACCEPTED
+                )
+                self._log_event(
+                    "suggestion_responded",
+                    {"step": step_index, "suggestion": suggestion_id, "action": action},
+                )
                 return sug
         return None
 
@@ -680,14 +707,30 @@ class PairProgrammingSession:
     def _generate_default_plan(self) -> list[PlanStep]:
         """Generate a default plan from the task description."""
         return [
-            PlanStep(index=0, step_type=StepType.PLAN, title="Analyze requirements",
-                     description=f"Analyze the task: {self.task}"),
-            PlanStep(index=1, step_type=StepType.CODE, title="Implement solution",
-                     description="Write the main implementation code"),
-            PlanStep(index=2, step_type=StepType.TEST, title="Write tests",
-                     description="Create unit tests for the implementation"),
-            PlanStep(index=3, step_type=StepType.REVIEW, title="Review code",
-                     description="Review the implementation for quality"),
+            PlanStep(
+                index=0,
+                step_type=StepType.PLAN,
+                title="Analyze requirements",
+                description=f"Analyze the task: {self.task}",
+            ),
+            PlanStep(
+                index=1,
+                step_type=StepType.CODE,
+                title="Implement solution",
+                description="Write the main implementation code",
+            ),
+            PlanStep(
+                index=2,
+                step_type=StepType.TEST,
+                title="Write tests",
+                description="Create unit tests for the implementation",
+            ),
+            PlanStep(
+                index=3,
+                step_type=StepType.REVIEW,
+                title="Review code",
+                description="Review the implementation for quality",
+            ),
         ]
 
     def _generate_preview(self, step: PlanStep, comments_context: str) -> str:
@@ -716,8 +759,10 @@ class PairProgrammingSession:
 
     def _log_event(self, event_type: str, data: dict[str, Any]) -> None:
         """Log an event to the session event log."""
-        self._event_log.append({
-            "event": event_type,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            **data,
-        })
+        self._event_log.append(
+            {
+                "event": event_type,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                **data,
+            }
+        )

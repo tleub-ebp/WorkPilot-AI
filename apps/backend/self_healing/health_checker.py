@@ -1,4 +1,4 @@
-﻿"""
+"""
 Health Checker Module
 =====================
 
@@ -19,19 +19,25 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 try:
     from debug import debug, debug_section, debug_warning
 except ImportError:
-    def debug(module: str, message: str, **kwargs): pass
-    def debug_section(module: str, message: str): pass
-    def debug_warning(module: str, message: str, **kwargs): pass
+
+    def debug(module: str, message: str, **kwargs):
+        pass
+
+    def debug_section(module: str, message: str):
+        pass
+
+    def debug_warning(module: str, message: str, **kwargs):
+        pass
 
 
 class HealthStatus(str, Enum):
     """Overall health status."""
-    
+
     EXCELLENT = "excellent"  # 90-100
     GOOD = "good"  # 70-89
     FAIR = "fair"  # 50-69
@@ -41,7 +47,7 @@ class HealthStatus(str, Enum):
 
 class IssueType(str, Enum):
     """Types of health issues."""
-    
+
     CODE_SMELL = "code_smell"
     PERFORMANCE = "performance"
     SECURITY = "security"
@@ -55,17 +61,17 @@ class IssueType(str, Enum):
 @dataclass
 class HealthIssue:
     """Represents a health issue found in the codebase."""
-    
+
     type: IssueType
     severity: str  # critical, high, medium, low
     title: str
     description: str
     file: str
-    line: Optional[int] = None
-    suggestion: Optional[str] = None
-    impact: Optional[str] = None
+    line: int | None = None
+    suggestion: str | None = None
+    impact: str | None = None
     effort: str = "medium"  # low, medium, high
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -84,7 +90,7 @@ class HealthIssue:
 @dataclass
 class MetricScore:
     """Score for a specific metric."""
-    
+
     name: str
     score: float  # 0-100
     weight: float  # How much this affects overall score
@@ -95,11 +101,11 @@ class MetricScore:
 @dataclass
 class HealthReport:
     """Complete health report of the codebase."""
-    
+
     timestamp: datetime
     overall_score: float  # 0-100
     status: HealthStatus
-    
+
     # Metric scores
     quality_score: MetricScore
     performance_score: MetricScore
@@ -107,27 +113,27 @@ class HealthReport:
     maintainability_score: MetricScore
     testing_score: MetricScore
     documentation_score: MetricScore
-    
+
     # All issues found
     all_issues: list[HealthIssue] = field(default_factory=list)
-    
+
     # Statistics
     total_files: int = 0
     total_lines: int = 0
     changed_files: int = 0
-    
+
     # Comparison with previous
-    score_change: Optional[float] = None
+    score_change: float | None = None
     is_degrading: bool = False
-    
+
     def get_critical_issues(self) -> list[HealthIssue]:
         """Get all critical issues."""
         return [i for i in self.all_issues if i.severity == "critical"]
-    
+
     def get_high_priority_issues(self) -> list[HealthIssue]:
         """Get critical and high severity issues."""
         return [i for i in self.all_issues if i.severity in ["critical", "high"]]
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -154,7 +160,7 @@ class HealthReport:
 
 class HealthChecker:
     """Main health checker for codebase analysis."""
-    
+
     def __init__(self, project_dir: str | Path):
         self.project_dir = Path(project_dir)
         self.excluded_patterns = [
@@ -165,13 +171,13 @@ class HealthChecker:
             "dist",
             "build",
         ]
-    
+
     async def check_health(self) -> HealthReport:
         """Run complete health check."""
         debug_section("self_healing", "🧬 Running Health Check")
-        
+
         timestamp = datetime.now()
-        
+
         # Analyze different aspects
         quality = await self._check_quality()
         performance = await self._check_performance()
@@ -179,7 +185,7 @@ class HealthChecker:
         maintainability = await self._check_maintainability()
         testing = await self._check_testing()
         documentation = await self._check_documentation()
-        
+
         # Collect all issues
         all_issues = (
             quality.issues
@@ -189,7 +195,7 @@ class HealthChecker:
             + testing.issues
             + documentation.issues
         )
-        
+
         # Calculate overall score (weighted average)
         overall_score = (
             quality.score * quality.weight
@@ -199,13 +205,13 @@ class HealthChecker:
             + testing.score * testing.weight
             + documentation.score * documentation.weight
         )
-        
+
         # Determine status
         status = self._determine_status(overall_score)
-        
+
         # Get statistics
         stats = self._get_file_stats()
-        
+
         report = HealthReport(
             timestamp=timestamp,
             overall_score=round(overall_score, 1),
@@ -219,26 +225,28 @@ class HealthChecker:
             all_issues=all_issues,
             **stats,
         )
-        
-        debug("self_healing", f"Health Score: {report.overall_score}/100 ({status.value})")
+
+        debug(
+            "self_healing", f"Health Score: {report.overall_score}/100 ({status.value})"
+        )
         debug("self_healing", f"Total Issues: {len(all_issues)}")
-        
+
         return report
-    
+
     async def _check_quality(self) -> MetricScore:
         """Check code quality."""
         issues = []
-        
+
         # Find Python files
         py_files = self._find_files("**/*.py")
-        
+
         for file_path in py_files[:50]:  # Limit for performance
             file_issues = self._analyze_python_quality(file_path)
             issues.extend(file_issues)
-        
+
         # Calculate score (100 - penalty for issues)
         score = max(0, 100 - len(issues) * 2)
-        
+
         return MetricScore(
             name="quality",
             score=score,
@@ -246,17 +254,17 @@ class HealthChecker:
             issues=issues,
             details={"files_analyzed": len(py_files)},
         )
-    
+
     def _analyze_python_quality(self, file_path: Path) -> list[HealthIssue]:
         """Analyze a Python file for quality issues."""
         issues = []
-        
+
         try:
             content = file_path.read_text(encoding="utf-8")
-            
+
             # Parse AST
             tree = ast.parse(content)
-            
+
             # Check for common issues
             for node in ast.walk(tree):
                 # Long functions
@@ -274,7 +282,7 @@ class HealthChecker:
                                 effort="medium",
                             )
                         )
-                
+
                 # Too many arguments
                 if isinstance(node, ast.FunctionDef):
                     arg_count = len(node.args.args)
@@ -291,7 +299,7 @@ class HealthChecker:
                                 effort="low",
                             )
                         )
-            
+
             # Check for TODO/FIXME comments
             for i, line in enumerate(content.split("\n"), 1):
                 if "TODO" in line or "FIXME" in line:
@@ -307,22 +315,22 @@ class HealthChecker:
                             effort="low",
                         )
                     )
-        
+
         except Exception as e:
             debug_warning("self_healing", f"Failed to analyze {file_path}: {e}")
-        
+
         return issues
-    
+
     async def _check_performance(self) -> MetricScore:
         """Check for performance issues."""
         issues = []
-        
+
         py_files = self._find_files("**/*.py")
-        
+
         for file_path in py_files[:50]:
             try:
                 content = file_path.read_text(encoding="utf-8")
-                
+
                 # Check for inefficient patterns
                 if "time.sleep" in content and "async" not in content:
                     issues.append(
@@ -336,7 +344,7 @@ class HealthChecker:
                             effort="low",
                         )
                     )
-                
+
                 # Nested loops
                 if re.search(r"for .+ in .+:\s+for .+ in", content, re.MULTILINE):
                     issues.append(
@@ -350,12 +358,12 @@ class HealthChecker:
                             effort="medium",
                         )
                     )
-            
+
             except Exception:
                 pass
-        
+
         score = max(0, 100 - len(issues) * 5)
-        
+
         return MetricScore(
             name="performance",
             score=score,
@@ -363,19 +371,21 @@ class HealthChecker:
             issues=issues,
             details={"files_analyzed": len(py_files)},
         )
-    
+
     async def _check_security(self) -> MetricScore:
         """Check for security issues."""
         issues = []
-        
+
         py_files = self._find_files("**/*.py")
-        
+
         for file_path in py_files[:50]:
             try:
                 content = file_path.read_text(encoding="utf-8")
-                
+
                 # Hardcoded secrets patterns
-                if re.search(r'password\s*=\s*["\'][^"\']+["\']', content, re.IGNORECASE):
+                if re.search(
+                    r'password\s*=\s*["\'][^"\']+["\']', content, re.IGNORECASE
+                ):
                     issues.append(
                         HealthIssue(
                             type=IssueType.SECURITY,
@@ -387,9 +397,9 @@ class HealthChecker:
                             effort="low",
                         )
                     )
-                
+
                 # SQL injection risk
-                if "execute(" in content and "f\"" in content:
+                if "execute(" in content and 'f"' in content:
                     issues.append(
                         HealthIssue(
                             type=IssueType.SECURITY,
@@ -401,7 +411,7 @@ class HealthChecker:
                             effort="medium",
                         )
                     )
-                
+
                 # Eval usage
                 if "eval(" in content:
                     issues.append(
@@ -415,12 +425,12 @@ class HealthChecker:
                             effort="low",
                         )
                     )
-            
+
             except Exception:
                 pass
-        
+
         score = max(0, 100 - len(issues) * 10)
-        
+
         return MetricScore(
             name="security",
             score=score,
@@ -428,19 +438,19 @@ class HealthChecker:
             issues=issues,
             details={"files_analyzed": len(py_files)},
         )
-    
+
     async def _check_maintainability(self) -> MetricScore:
         """Check code maintainability."""
         issues = []
-        
+
         py_files = self._find_files("**/*.py")
-        
+
         for file_path in py_files[:50]:
             try:
                 # Check file length
                 content = file_path.read_text(encoding="utf-8")
                 line_count = len(content.split("\n"))
-                
+
                 if line_count > 1000:
                     issues.append(
                         HealthIssue(
@@ -453,7 +463,7 @@ class HealthChecker:
                             effort="high",
                         )
                     )
-                
+
                 # Check for missing docstrings in classes/functions
                 tree = ast.parse(content)
                 for node in ast.walk(tree):
@@ -471,12 +481,12 @@ class HealthChecker:
                                     effort="low",
                                 )
                             )
-            
+
             except Exception:
                 pass
-        
+
         score = max(0, 100 - len(issues) * 1)
-        
+
         return MetricScore(
             name="maintainability",
             score=score,
@@ -484,16 +494,16 @@ class HealthChecker:
             issues=issues,
             details={"files_analyzed": len(py_files)},
         )
-    
+
     async def _check_testing(self) -> MetricScore:
         """Check test coverage and quality."""
         issues = []
-        
+
         # Find test files
         test_files = self._find_files("**/test_*.py") + self._find_files("**/*_test.py")
         source_files = self._find_files("**/*.py")
         source_files = [f for f in source_files if "test" not in str(f)]
-        
+
         if not test_files:
             issues.append(
                 HealthIssue(
@@ -511,7 +521,7 @@ class HealthChecker:
             # Calculate test ratio
             test_ratio = len(test_files) / max(len(source_files), 1)
             score = min(100, test_ratio * 200)  # Aim for 50% test files
-        
+
         return MetricScore(
             name="testing",
             score=score,
@@ -522,11 +532,11 @@ class HealthChecker:
                 "source_files": len(source_files),
             },
         )
-    
+
     async def _check_documentation(self) -> MetricScore:
         """Check documentation quality."""
         issues = []
-        
+
         # Check for README
         has_readme = (self.project_dir / "README.md").exists()
         if not has_readme:
@@ -541,17 +551,17 @@ class HealthChecker:
                     effort="medium",
                 )
             )
-        
+
         # Check for docs directory
         has_docs = (self.project_dir / "docs").exists()
-        
+
         score = 100.0
         if not has_readme:
             score -= 40
         if not has_docs:
             score -= 20
         score = max(0, score - len(issues) * 10)
-        
+
         return MetricScore(
             name="documentation",
             score=score,
@@ -562,7 +572,7 @@ class HealthChecker:
                 "has_docs": has_docs,
             },
         )
-    
+
     def _find_files(self, pattern: str) -> list[Path]:
         """Find files matching pattern, excluding certain directories."""
         files = []
@@ -572,24 +582,24 @@ class HealthChecker:
             if path.is_file():
                 files.append(path)
         return files
-    
+
     def _get_file_stats(self) -> dict[str, int]:
         """Get file statistics."""
         all_files = self._find_files("**/*.py")
         total_lines = 0
-        
+
         for file_path in all_files:
             try:
                 content = file_path.read_text(encoding="utf-8")
                 total_lines += len(content.split("\n"))
             except Exception:
                 pass
-        
+
         return {
             "total_files": len(all_files),
             "total_lines": total_lines,
         }
-    
+
     def _determine_status(self, score: float) -> HealthStatus:
         """Determine health status from score."""
         if score >= 90:

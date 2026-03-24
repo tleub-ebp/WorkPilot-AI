@@ -639,7 +639,9 @@ async def process_agent_stream(
 
     message_limit = max_messages if max_messages is not None else MAX_MESSAGE_COUNT
 
-    safe_print(f"[{context_name}] Processing agent stream (provider: {client.provider_name()})...")
+    safe_print(
+        f"[{context_name}] Processing agent stream (provider: {client.provider_name()})..."
+    )
 
     last_progress_log = 0
     PROGRESS_LOG_INTERVAL = 10
@@ -666,14 +668,18 @@ async def process_agent_stream(
                             f"[{context_name}] Processing... ({msg_count} messages, {pending} agent{'s' if pending > 1 else ''} working)"
                         )
                     else:
-                        safe_print(f"[{context_name}] Processing... ({msg_count} messages)")
+                        safe_print(
+                            f"[{context_name}] Processing... ({msg_count} messages)"
+                        )
                     last_progress_log = msg_count
 
                 # Process each content block in the normalized message
                 for block in agent_msg.content:
                     if block.type == ContentBlockType.THINKING:
                         if block.text:
-                            safe_print(f"[{context_name}] AI thinking: {len(block.text)} chars")
+                            safe_print(
+                                f"[{context_name}] AI thinking: {len(block.text)} chars"
+                            )
                             if on_thinking:
                                 on_thinking(block.text)
 
@@ -686,8 +692,12 @@ async def process_agent_stream(
                             agent_name = tool_input.get("subagent_type", "unknown")
                             agents_invoked.append(agent_name)
                             subagent_tool_ids[tool_id] = agent_name
-                            model_info = f" [{_short_model_name(model)}]" if model else ""
-                            safe_print(f"[{context_name}] Invoking agent: {agent_name}{model_info}")
+                            model_info = (
+                                f" [{_short_model_name(model)}]" if model else ""
+                            )
+                            safe_print(
+                                f"[{context_name}] Invoking agent: {agent_name}{model_info}"
+                            )
                         elif tool_name != "StructuredOutput":
                             tool_detail = _get_tool_detail(tool_name, tool_input)
                             safe_print(f"[{context_name}] {tool_detail}")
@@ -709,13 +719,17 @@ async def process_agent_stream(
                             agent_name = subagent_tool_ids[tool_id]
                             completed_agent_tool_ids.add(tool_id)
                             status = "ERROR" if is_error else "complete"
-                            result_preview = str(result_content)[:600].replace("\n", " ").strip()
+                            result_preview = (
+                                str(result_content)[:600].replace("\n", " ").strip()
+                            )
                             safe_print(
                                 f"[Agent:{agent_name}] {status}: {result_preview}{'...' if len(str(result_content)) > 600 else ''}"
                             )
                         else:
                             status = "ERROR" if is_error else "done"
-                            result_preview = str(result_content)[:100].replace("\n", " ").strip()
+                            result_preview = (
+                                str(result_content)[:100].replace("\n", " ").strip()
+                            )
                             if result_preview:
                                 safe_print(
                                     f"[{context_name}] Tool result [{status}]: {result_preview}{'...' if len(str(result_content)) > 100 else ''}"
@@ -729,8 +743,12 @@ async def process_agent_stream(
                             result_text += block.text
                             if _is_tool_concurrency_error(block.text):
                                 detected_concurrency_error = True
-                                logger.warning(f"[{context_name}] Detected tool concurrency error")
-                                safe_print(f"[{context_name}] WARNING: Tool concurrency error detected")
+                                logger.warning(
+                                    f"[{context_name}] Detected tool concurrency error"
+                                )
+                                safe_print(
+                                    f"[{context_name}] WARNING: Tool concurrency error detected"
+                                )
                             text_preview = block.text[:500].replace("\n", " ").strip()
                             if text_preview:
                                 safe_print(
@@ -760,7 +778,9 @@ async def process_agent_stream(
                                 on_structured_output(block.structured_output)
 
             except (AttributeError, TypeError, KeyError) as msg_error:
-                logger.warning(f"[{context_name}] Error processing message #{msg_count}: {msg_error}")
+                logger.warning(
+                    f"[{context_name}] Error processing message #{msg_count}: {msg_error}"
+                )
 
     except BrokenPipeError:
         stream_error = "Output pipe closed"

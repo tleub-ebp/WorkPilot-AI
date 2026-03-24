@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import logging
 import subprocess
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Optional, Sequence
 
 logger = logging.getLogger(__name__)
 
@@ -88,8 +88,8 @@ def _sanitize_for_log(args: Sequence[str]) -> str:
 def run_secure(
     args: Sequence[str],
     *,
-    timeout: Optional[int] = None,
-    cwd: Optional[str] = None,
+    timeout: int | None = None,
+    cwd: str | None = None,
     check: bool = False,
 ) -> SubprocessResult:
     """
@@ -112,7 +112,9 @@ def run_secure(
     effective_timeout = min(timeout or DEFAULT_TIMEOUT, MAX_TIMEOUT)
     cmd_str = _sanitize_for_log(args)
 
-    logger.debug("Executing secure subprocess: %s (timeout=%ds)", cmd_str, effective_timeout)
+    logger.debug(
+        "Executing secure subprocess: %s (timeout=%ds)", cmd_str, effective_timeout
+    )
 
     try:
         result = subprocess.run(

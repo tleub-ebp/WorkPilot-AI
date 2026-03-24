@@ -9,7 +9,6 @@ Always fails gracefully — returns empty string on any error.
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 def get_learning_context(
     project_dir: str | Path,
     phase: str,
-    task_context: Optional[dict] = None,
+    task_context: dict | None = None,
 ) -> str:
     """Get learning-based prompt augmentation for the given agent phase.
 

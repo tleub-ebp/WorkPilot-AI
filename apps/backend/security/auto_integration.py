@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Security Auto-Integration
 =========================
@@ -57,10 +57,10 @@ _check_tool_availability()
 def get_default_security_config() -> dict[str, Any]:
     """
     Get default security configuration.
-    
+
     This configuration is ALWAYS active for security.
     Users can customize behavior but cannot disable core features.
-    
+
     Returns:
         Default security configuration
     """
@@ -70,7 +70,9 @@ def get_default_security_config() -> dict[str, Any]:
         "scan_on_push": True,  # Full scan before push
         "scan_secrets": True,  # Built-in secret detection (always enabled)
         "scan_sast": SECURITY_TOOLS_AVAILABLE["bandit"],  # If Bandit available
-        "scan_dependencies": SECURITY_TOOLS_AVAILABLE["pip-audit"],  # If pip-audit available
+        "scan_dependencies": SECURITY_TOOLS_AVAILABLE[
+            "pip-audit"
+        ],  # If pip-audit available
         "block_on_secrets": True,  # Always block on secrets
         "block_on_critical": True,  # Always block on critical vulnerabilities
         "compliance_frameworks": ["GDPR", "SOC2"],  # Default compliance checks
@@ -82,7 +84,7 @@ def get_default_security_config() -> dict[str, Any]:
 def is_security_enabled() -> bool:
     """
     Check if security features are enabled.
-    
+
     Returns:
         Always True - security is non-optional
     """
@@ -92,7 +94,7 @@ def is_security_enabled() -> bool:
 def check_security_setup() -> dict[str, Any]:
     """
     Check security setup and provide recommendations.
-    
+
     Returns:
         Dictionary with setup status and recommendations
     """
@@ -105,9 +107,7 @@ def check_security_setup() -> dict[str, Any]:
 
     # Check optional tools
     if not SECURITY_TOOLS_AVAILABLE["bandit"]:
-        setup["warnings"].append(
-            "⚠️ Bandit not installed - Python SAST disabled"
-        )
+        setup["warnings"].append("⚠️ Bandit not installed - Python SAST disabled")
         setup["recommendations"].append(
             "Install Bandit for Python security analysis: pip install bandit"
         )
@@ -180,7 +180,7 @@ def print_security_status():
 def auto_install_git_hooks() -> bool:
     """
     Automatically install Git hooks if in a Git repository.
-    
+
     Returns:
         True if hooks were installed or already exist
     """
@@ -211,7 +211,7 @@ def auto_install_git_hooks() -> bool:
 def ensure_security_reports_dir() -> Path:
     """
     Ensure the security reports directory exists.
-    
+
     Returns:
         Path to security reports directory
     """
@@ -229,9 +229,9 @@ def ensure_security_reports_dir() -> Path:
 def run_quick_security_check() -> bool:
     """
     Run a quick security check (secrets only).
-    
+
     This is called automatically in development mode.
-    
+
     Returns:
         True if no issues found, False if issues detected
     """
@@ -261,6 +261,7 @@ def run_quick_security_check() -> bool:
 
 # This code runs when the module is imported
 # It ensures security features are always available
+
 
 def _initialize_security():
     """Initialize security features automatically."""
@@ -297,4 +298,3 @@ __all__ = [
     "run_quick_security_check",
     "SECURITY_TOOLS_AVAILABLE",
 ]
-

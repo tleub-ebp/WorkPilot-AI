@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import json
 import logging
 import sys
 from pathlib import Path
@@ -79,6 +78,7 @@ def create_master_spec_dir(project_dir: Path, task: str) -> Path:
 
     # Create a slug from the task description
     import re
+
     slug = re.sub(r"[^\w\s-]", "", task.lower())
     slug = re.sub(r"[\s]+", "-", slug)[:50].strip("-")
 
@@ -153,14 +153,20 @@ def main() -> int:
     # Parse repos
     repos = parse_repos(args.repos)
     if len(repos) < 2:
-        print("[MULTI_REPO] {\"event\": \"error\", \"message\": \"At least 2 repositories are required for multi-repo orchestration\"}", flush=True)
+        print(
+            '[MULTI_REPO] {"event": "error", "message": "At least 2 repositories are required for multi-repo orchestration"}',
+            flush=True,
+        )
         return 1
 
     # Validate repo paths exist
     for repo_info in repos:
         repo_path = Path(repo_info["repo_path"])
         if not repo_path.exists():
-            print(f"[MULTI_REPO] {{\"event\": \"error\", \"message\": \"Repository path not found: {repo_path}\"}}", flush=True)
+            print(
+                f'[MULTI_REPO] {{"event": "error", "message": "Repository path not found: {repo_path}"}}',
+                flush=True,
+            )
             return 1
 
     # Create or use existing spec dir
@@ -169,7 +175,9 @@ def main() -> int:
     else:
         master_spec_dir = create_master_spec_dir(args.project_dir, args.task)
 
-    logger.info(f"Multi-repo orchestration: {len(repos)} repos, spec dir: {master_spec_dir}")
+    logger.info(
+        f"Multi-repo orchestration: {len(repos)} repos, spec dir: {master_spec_dir}"
+    )
     for repo_info in repos:
         logger.info(f"  - {repo_info['repo']} @ {repo_info['repo_path']}")
 
