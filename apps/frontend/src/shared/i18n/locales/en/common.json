@@ -8,7 +8,9 @@
     "closeTab": "Close tab",
     "closeTabAriaLabel": "Close tab (removes project from app)",
     "addProjectAriaLabel": "Add project",
-    "addProjectTooltip": "Add new project"
+    "addProjectTooltip": "Add new project",
+    "selectTab": "Switch to {{projectName}}",
+    "renameAriaLabel": "Rename project"
   },
   "accessibility": {
     "deleteFeatureAriaLabel": "Delete feature",
@@ -1028,5 +1030,16 @@
       "cancel": "Cancel",
       "confirm": "Delete"
     }
+  },
+  "navigationConfirm": {
+    "title": "Task in progress",
+    "description": "A task is currently running. What would you like to do before navigating away?",
+    "taskLabel": "Running: {{taskTitle}}",
+    "continueTask": "Continue task",
+    "continueTaskDescription": "Stay on the current page",
+    "stopTask": "Stop task",
+    "stopTaskDescription": "Stop the task and navigate",
+    "pauseTask": "Pause task",
+    "pauseTaskDescription": "Navigate away and resume later"
   }
 }

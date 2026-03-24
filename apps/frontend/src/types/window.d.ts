@@ -60,7 +60,10 @@ declare global {
         onOperationComplete(callback: (data: unknown) => void): () => void;
       };
     };
+    DEBUG?: boolean;
   }
+  
+  var DEBUG: boolean;
 }
 
 // Electron webview JSX element type

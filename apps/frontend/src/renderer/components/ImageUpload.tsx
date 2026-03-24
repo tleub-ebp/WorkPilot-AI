@@ -11,10 +11,10 @@ import {
 } from '../../shared/constants';
 
 interface ImageUploadProps {
-  images: ImageAttachment[];
-  onImagesChange: (images: ImageAttachment[]) => void;
-  disabled?: boolean;
-  className?: string;
+  readonly images: ImageAttachment[];
+  readonly onImagesChange: (images: ImageAttachment[]) => void;
+  readonly disabled?: boolean;
+  readonly className?: string;
 }
 
 /**
@@ -88,11 +88,9 @@ export async function createThumbnail(dataUrl: string, maxSize = 200): Promise<s
           height = (height * maxSize) / width;
           width = maxSize;
         }
-      } else {
-        if (height > maxSize) {
-          width = (width * maxSize) / height;
-          height = maxSize;
-        }
+      } else if (height > maxSize) {
+        width = (width * maxSize) / height;
+        height = maxSize;
       }
 
       canvas.width = width;
@@ -115,8 +113,8 @@ export function resolveFilename(filename: string, existingFiles: string[]): stri
   }
 
   const lastDot = filename.lastIndexOf('.');
-  const name = lastDot !== -1 ? filename.substring(0, lastDot) : filename;
-  const ext = lastDot !== -1 ? filename.substring(lastDot) : '';
+  const name = lastDot >= 0 ? filename.substring(0, lastDot) : filename;
+  const ext = lastDot >= 0 ? filename.substring(lastDot) : '';
   const timestamp = Date.now();
 
   return `${name}-${timestamp}${ext}`;
@@ -351,7 +349,7 @@ export function ImageUpload({
               </div>
 
               {/* File info overlay */}
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+              <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-2">
                 <p className="text-xs text-white font-medium truncate">{image.filename}</p>
                 <p className="text-[10px] text-white/70">{formatFileSize(image.size)}</p>
               </div>

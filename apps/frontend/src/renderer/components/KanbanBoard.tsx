@@ -19,7 +19,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
-import { Plus, Inbox, Loader2, Eye, CheckCircle2, Archive, RefreshCw, GitPullRequest, X, Settings, ListPlus, ChevronLeft, ChevronRight, ChevronsRight, Lock, Unlock, Trash2, Settings2, Download, Ban } from 'lucide-react';
+import { Plus, Inbox, Loader2, Eye, CheckCircle2, CheckCheck, Archive, RefreshCw, GitPullRequest, X, Settings, ListPlus, ChevronLeft, ChevronRight, ChevronsRight, Lock, Unlock, Trash2, Ban } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
@@ -71,6 +71,16 @@ function isValidDropColumn(id: string): id is typeof TASK_STATUS_COLUMNS[number]
 // Columns where external work items (Azure DevOps / Jira) can be dropped
 const IMPORT_ALLOWED_COLUMNS = new Set<string>(['backlog', 'queue', 'in_progress']);
 
+// Valid target columns for bulk drag (multi-selection). Mirrors the action bar rules.
+const VALID_BULK_TRANSITIONS: Record<typeof TASK_STATUS_COLUMNS[number], typeof TASK_STATUS_COLUMNS[number][]> = {
+  backlog:       ['queue', 'in_progress'],
+  queue:         ['backlog', 'in_progress'],
+  in_progress:   ['queue', 'ai_review'],
+  ai_review:     ['in_progress', 'human_review'],
+  human_review:  ['ai_review', 'done'],
+  done:          [],
+};
+
 /**
  * Get the visual column for a task status.
  * pr_created tasks are displayed in the 'done' column, so we map them accordingly.
@@ -84,14 +94,14 @@ function getVisualColumn(status: TaskStatus): typeof TASK_STATUS_COLUMNS[number]
 }
 
 interface KanbanBoardProps {
-  tasks: Task[];
-  onTaskClick: (task: Task) => void;
-  onNewTaskClick?: () => void;
-  onRefresh?: () => void;
-  isRefreshing?: boolean;
-  onWorkItemsImported?: (workItems: AzureDevOpsWorkItem[], targetStatus: TaskStatus) => void;
-  onOpenJiraSettings?: () => void;
-  onOpenAzureDevOpsSettings?: () => void;
+  readonly tasks: Task[];
+  readonly onTaskClick: (task: Task) => void;
+  readonly onNewTaskClick?: () => void;
+  readonly onRefresh?: () => void;
+  readonly isRefreshing?: boolean;
+  readonly onWorkItemsImported?: (workItems: AzureDevOpsWorkItem[], targetStatus: TaskStatus) => void;
+  readonly onOpenJiraSettings?: () => void;
+  readonly onOpenAzureDevOpsSettings?: () => void;
 }
 
 interface DroppableColumnProps {
@@ -203,7 +213,7 @@ function droppableColumnPropsAreEqual(
   const tasksEqual = tasksAreEquivalent(prevProps.tasks, nextProps.tasks);
 
   // Only log when re-rendering (reduces noise)
-  if (window.DEBUG && !tasksEqual) {
+  if (globalThis.DEBUG && !tasksEqual) {
     console.log(`[DroppableColumn] Re-render: ${nextProps.status} column (${nextProps.tasks.length} tasks)`);
   }
 
@@ -270,11 +280,15 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
   const isSomeSelected = columnSelectedCount > 0 && columnSelectedCount < taskCount;
 
   // Determine checkbox checked state: true (all), 'indeterminate' (some), false (none)
-  const selectAllCheckedState: boolean | 'indeterminate' = isAllSelected
-    ? true
-    : isSomeSelected
-      ? 'indeterminate'
-      : false;
+  let selectAllCheckedState: boolean | 'indeterminate';
+
+  if (isAllSelected) {
+    selectAllCheckedState = true;
+  } else if (isSomeSelected) {
+    selectAllCheckedState = 'indeterminate';
+  } else {
+    selectAllCheckedState = false;
+  }
 
   // Handle select all checkbox change
   const handleSelectAllChange = useCallback(() => {
@@ -850,8 +864,14 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   // Selection state for bulk actions (Human Review column)
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
 
+  // True when the currently dragged task is part of a multi-selection
+  const [isDraggingBulkSelected, setIsDraggingBulkSelected] = useState(false);
+
   // Bulk PR dialog state
   const [bulkPRDialogOpen, setBulkPRDialogOpen] = useState(false);
+
+  // Bulk "mark as done" confirmation dialog state (human_review → done)
+  const [bulkMarkDoneConfirmOpen, setBulkMarkDoneConfirmOpen] = useState(false);
 
   // Delete confirmation dialog state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -1067,6 +1087,13 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     return filteredTasks.filter(task => selectedTaskIds.has(task.id));
   }, [filteredTasks, selectedTaskIds]);
 
+  // Determine which visual column all selected tasks belong to (null = mixed selection)
+  const selectedColumnStatus = useMemo<typeof TASK_STATUS_COLUMNS[number] | null>(() => {
+    if (selectedTaskIds.size === 0) return null;
+    const columns = new Set(selectedTasks.map(t => getVisualColumn(t.status)));
+    return columns.size === 1 ? [...columns][0] : null;
+  }, [selectedTasks, selectedTaskIds.size]);
+
   // Handle opening the bulk PR dialog
   const handleOpenBulkPRDialog = useCallback(() => {
     if (selectedTaskIds.size > 0) {
@@ -1110,6 +1137,32 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       }
     }
   }, [selectedTaskIds, deselectAllTasks, toast, t]);
+
+  // Handle bulk move of all selected tasks to a target status
+  const handleBulkMove = useCallback(async (targetStatus: TaskStatus) => {
+    if (selectedTaskIds.size === 0) return;
+    const taskIds = Array.from(selectedTaskIds);
+    let failedCount = 0;
+    for (const taskId of taskIds) {
+      const result = await persistTaskStatus(taskId, targetStatus);
+      if (!result.success) failedCount++;
+    }
+    if (failedCount === 0) {
+      toast({ title: t('kanban.bulkMoveSuccess', { count: taskIds.length }) });
+      deselectAllTasks();
+    } else {
+      toast({
+        title: t('kanban.bulkMoveError', { failed: failedCount, total: taskIds.length }),
+        variant: 'destructive'
+      });
+    }
+  }, [selectedTaskIds, deselectAllTasks, toast, t]);
+
+  // Open BulkPRDialog after user confirms "mark as done" for human_review tasks
+  const handleBulkMarkDoneConfirm = useCallback(() => {
+    setBulkMarkDoneConfirmOpen(false);
+    setBulkPRDialogOpen(true);
+  }, []);
 
   // Handle bulk PR dialog completion - clear selection
   const handleBulkPRComplete = useCallback(() => {
@@ -1265,12 +1318,27 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           metadata.jiraState = jiraItem.state;
           metadata.jiraType = jiraItem.workItemType;
           metadata.importSource = 'jira';
-          metadata.priority = jiraItem.priority?.toLowerCase() === 'highest' || jiraItem.priority?.toLowerCase() === 'critical' ? 'urgent' :
-                             jiraItem.priority?.toLowerCase() === 'high' ? 'high' :
-                             jiraItem.priority?.toLowerCase() === 'medium' ? 'medium' : 'low';
-          metadata.category = jiraItem.workItemType?.toLowerCase() === 'bug' ? 'bug_fix' :
-                             jiraItem.workItemType?.toLowerCase() === 'story' ? 'feature' :
-                             jiraItem.workItemType?.toLowerCase() === 'task' ? 'feature' : 'documentation';
+
+          const jiraPriority = jiraItem.priority?.toLowerCase();
+          if (jiraPriority === 'highest' || jiraPriority === 'critical') {
+            metadata.priority = 'urgent';
+          } else if (jiraPriority === 'high') {
+            metadata.priority = 'high';
+          } else if (jiraPriority === 'medium') {
+            metadata.priority = 'medium';
+          } else {
+            metadata.priority = 'low';
+          }
+
+          if (jiraItem.workItemType?.toLowerCase() === 'bug') {
+            metadata.category = 'bug_fix';
+          } else if (jiraItem.workItemType?.toLowerCase() === 'story') {
+            metadata.category = 'feature';
+          } else if (jiraItem.workItemType?.toLowerCase() === 'task') {
+            metadata.category = 'feature';
+          } else {
+            metadata.category = 'documentation';
+          }
         } else {
           // Azure DevOps metadata (default)
           const adoItem = workItem as unknown as AzureDevOpsWorkItem;
@@ -1279,12 +1347,26 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           metadata.azureDevOpsState = adoItem.state;
           metadata.azureDevOpsType = adoItem.workItemType;
           metadata.importSource = 'azure-devops';
-          metadata.priority = adoItem.priority === 1 ? 'urgent' :
-                             adoItem.priority === 2 ? 'high' :
-                             adoItem.priority === 3 ? 'medium' : 'low';
-          metadata.category = adoItem.workItemType === 'Bug' ? 'bug_fix' :
-                             adoItem.workItemType === 'User Story' ? 'feature' :
-                             adoItem.workItemType === 'Task' ? 'feature' : 'documentation';
+
+          if (adoItem.priority === 1) {
+            metadata.priority = 'urgent';
+          } else if (adoItem.priority === 2) {
+            metadata.priority = 'high';
+          } else if (adoItem.priority === 3) {
+            metadata.priority = 'medium';
+          } else {
+            metadata.priority = 'low';
+          }
+
+          if (adoItem.workItemType === 'Bug') {
+            metadata.category = 'bug_fix';
+          } else if (adoItem.workItemType === 'User Story') {
+            metadata.category = 'feature';
+          } else if (adoItem.workItemType === 'Task') {
+            metadata.category = 'feature';
+          } else {
+            metadata.category = 'documentation';
+          }
         }
 
         if (requireReviewBeforeCoding) {
@@ -1323,7 +1405,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         if (onRefresh) {
           onRefresh();
         } else if (projectId) {
-          await window.electronAPI.getTasks(projectId, { forceRefresh: true });
+          await globalThis.electronAPI.getTasks(projectId, { forceRefresh: true });
         }
       } catch (error) {
         console.error('[Import] Failed to refresh tasks after import:', error);
@@ -1351,18 +1433,20 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
-    
+
     // Check if this is an Azure DevOps work item drag
     if (active.id.toString().startsWith('azure-devops-')) {
       // This is handled by native drag events, not dnd-kit
       return;
     }
-    
+
     const task = useTaskStore.getState().tasks.find((t) => t.id === active.id);
     if (task) {
       setActiveTask(task);
+      // Track if this drag involves a multi-selection (for bulk drop validation)
+      setIsDraggingBulkSelected(selectedTaskIds.has(task.id) && selectedTaskIds.size > 1);
     }
-  }, []);
+  }, [selectedTaskIds]);
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
     const { over } = event;
@@ -1487,7 +1571,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         }
 
         // Get the oldest task in queue (FIFO ordering)
-        const nextTask = queuedTasks.sort((a, b) => {
+        const nextTask = [...queuedTasks].sort((a: Task, b: Task) => {
           const dateA = new Date(a.createdAt).getTime();
           const dateB = new Date(b.createdAt).getTime();
           return dateA - dateB; // Ascending order (oldest first)
@@ -1609,10 +1693,10 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
             
             // Find the column we're over
             const target = event.target as HTMLElement;
-            const columnElement = target.closest('[data-column-status]');
+            const columnElement = target.closest('[data-column-status]') as HTMLElement;
 
             if (columnElement) {
-              const columnStatus = columnElement.getAttribute('data-column-status');
+              const columnStatus = columnElement.dataset.columnStatus;
               if (columnStatus && isValidDropColumn(columnStatus)) {
                 setOverColumnId(columnStatus);
                 if (event.dataTransfer) {
@@ -1679,10 +1763,10 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         const isJira = parsed.type === 'jira-workitems' && parsed.workItems?.length > 0;
         
         if (isAdo || isJira) {
-          const columnElement = findTargetColumn(event);
+          const columnElement = findTargetColumn(event) as HTMLElement;
           
           if (columnElement) {
-            const columnStatus = columnElement.getAttribute('data-column-status');
+            const columnStatus = columnElement.dataset.columnStatus;
             
             if (columnStatus && isValidDropColumn(columnStatus) && IMPORT_ALLOWED_COLUMNS.has(columnStatus)) {
               // Show the import confirmation dialog
@@ -1777,7 +1861,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         const buffer = 20;
         if (mouseX >= rect.left - buffer && mouseX <= rect.right + buffer &&
             mouseY >= rect.top - buffer && mouseY <= rect.bottom + buffer) {
-          const columnStatus = column.getAttribute('data-column-status');
+          const columnStatus = (column as HTMLElement).dataset.columnStatus;
           if (columnStatus && isValidDropColumn(columnStatus)) {
             setOverColumnId(columnStatus);
             if (event.dataTransfer) {
@@ -2024,6 +2108,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     const { active, over } = event;
     setActiveTask(null);
     setOverColumnId(null);
+    setIsDraggingBulkSelected(false);
 
     if (!over) return;
 
@@ -2094,6 +2179,36 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     if (!newStatus || newStatus === oldStatus) return;
 
     // ============================================
+    // BULK DRAG: Move all selected tasks together
+    // ============================================
+    const isDraggedTaskInSelection = selectedTaskIds.has(activeTaskId) && selectedTaskIds.size > 1;
+    if (isDraggedTaskInSelection) {
+      const targetVisualColumn = getVisualColumn(newStatus);
+
+      // Mixed selection: abort with warning
+      if (selectedColumnStatus === null) {
+        toast({ title: t('kanban.mixedColumnWarning'), variant: 'destructive' });
+        return;
+      }
+
+      // Invalid transition: abort with toast
+      if (!VALID_BULK_TRANSITIONS[selectedColumnStatus].includes(targetVisualColumn)) {
+        toast({ title: t('kanban.invalidBulkTransition'), variant: 'destructive' });
+        return;
+      }
+
+      // human_review → done requires confirmation before opening BulkPRDialog
+      if (selectedColumnStatus === 'human_review' && targetVisualColumn === 'done') {
+        setBulkMarkDoneConfirmOpen(true);
+        return;
+      }
+
+      // Valid transition: move all selected tasks
+      await handleBulkMove(newStatus);
+      return;
+    }
+
+    // ============================================
     // QUEUE SYSTEM: Enforce parallel task limit
     // ============================================
     if (newStatus === 'in_progress') {
@@ -2147,7 +2262,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       // Clear manually queued protection after queue processing completes
       manuallyQueuedTaskIdsRef.current.delete(activeTaskId);
     }
-  }, [tasks, taskOrder, tasksByStatus, setTaskOrder, reorderTasksInColumn, moveTaskToColumnTop, saveTaskOrder, projectId, maxParallelTasks, handleStatusChange, processQueue]);
+  }, [tasks, taskOrder, tasksByStatus, setTaskOrder, reorderTasksInColumn, moveTaskToColumnTop, saveTaskOrder, projectId, maxParallelTasks, handleStatusChange, processQueue, selectedTaskIds, selectedColumnStatus, handleBulkMove, toast, t]);
 
   // Ajout ou correction de la déclaration de l'état pour la boîte de dialogue de paramètres projet
   // Ajout d'un compteur pour forcer le remount d'AppSettingsDialog
@@ -2254,8 +2369,15 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
               tasks={tasksByStatus[status]}
               onTaskClick={onTaskClick}
               onStatusChange={handleStatusChange}
-              isOver={overColumnId === status && (!isDraggingAzureDevOps || IMPORT_ALLOWED_COLUMNS.has(status))}
-              isImportForbidden={isDraggingAzureDevOps && overColumnId === status && !IMPORT_ALLOWED_COLUMNS.has(status)}
+              isOver={
+                overColumnId === status &&
+                (!isDraggingAzureDevOps || IMPORT_ALLOWED_COLUMNS.has(status)) &&
+                (!isDraggingBulkSelected || selectedColumnStatus === null || VALID_BULK_TRANSITIONS[selectedColumnStatus].includes(status))
+              }
+              isImportForbidden={
+                (isDraggingAzureDevOps && overColumnId === status && !IMPORT_ALLOWED_COLUMNS.has(status)) ||
+                (isDraggingBulkSelected && overColumnId === status && selectedColumnStatus !== null && !VALID_BULK_TRANSITIONS[selectedColumnStatus].includes(status))
+              }
               onAddClick={status === 'backlog' ? onNewTaskClick : undefined}
               onQueueAll={status === 'backlog' ? handleQueueAll : undefined}
               onQueueSettings={status === 'queue' ? () => {
@@ -2291,8 +2413,13 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         {/* Drag overlay - enhanced visual feedback */}
         <DragOverlay>
           {activeTask ? (
-            <div className="drag-overlay-card">
+            <div className="drag-overlay-card relative">
               <TaskCard task={activeTask} onClick={() => {}} />
+              {isDraggingBulkSelected && (
+                <div className="absolute -top-2 -right-2 flex items-center justify-center h-6 min-w-6 px-1.5 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-lg border-2 border-background">
+                  {selectedTaskIds.size}
+                </div>
+              )}
             </div>
           ) : null}
         </DragOverlay>
@@ -2305,15 +2432,76 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
               {t('kanban.selectedCountOther', { count: selectedTaskIds.size })}
             </span>
             <div className="w-px h-5 bg-border" />
-            <Button
-              variant="default"
-              size="sm"
-              className="gap-2"
-              onClick={handleOpenBulkPRDialog}
-            >
-              <GitPullRequest className="h-4 w-4" />
-              {t('kanban.createPRs')}
-            </Button>
+
+            {/* Context-sensitive move actions based on selected column */}
+            {selectedColumnStatus === null ? (
+              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Ban className="h-3.5 w-3.5" />
+                {t('kanban.mixedColumnWarning')}
+              </span>
+            ) : selectedColumnStatus === 'backlog' ? (
+              <>
+                <Button variant="outline" size="sm" className="gap-2" onClick={() => handleBulkMove('queue')}>
+                  <ChevronRight className="h-4 w-4" />
+                  {t('columns.queue')}
+                </Button>
+                <Button variant="default" size="sm" className="gap-2" onClick={() => handleBulkMove('in_progress')}>
+                  <ChevronsRight className="h-4 w-4" />
+                  {t('columns.in_progress')}
+                </Button>
+              </>
+            ) : selectedColumnStatus === 'queue' ? (
+              <>
+                <Button variant="outline" size="sm" className="gap-2" onClick={() => handleBulkMove('backlog')}>
+                  <ChevronLeft className="h-4 w-4" />
+                  {t('columns.backlog')}
+                </Button>
+                <Button variant="default" size="sm" className="gap-2" onClick={() => handleBulkMove('in_progress')}>
+                  <ChevronsRight className="h-4 w-4" />
+                  {t('columns.in_progress')}
+                </Button>
+              </>
+            ) : selectedColumnStatus === 'in_progress' ? (
+              <>
+                <Button variant="outline" size="sm" className="gap-2" onClick={() => handleBulkMove('queue')}>
+                  <ChevronLeft className="h-4 w-4" />
+                  {t('columns.queue')}
+                </Button>
+                <Button variant="default" size="sm" className="gap-2" onClick={() => handleBulkMove('ai_review')}>
+                  <ChevronsRight className="h-4 w-4" />
+                  {t('columns.ai_review')}
+                </Button>
+              </>
+            ) : selectedColumnStatus === 'ai_review' ? (
+              <>
+                <Button variant="outline" size="sm" className="gap-2" onClick={() => handleBulkMove('in_progress')}>
+                  <ChevronLeft className="h-4 w-4" />
+                  {t('columns.in_progress')}
+                </Button>
+                <Button variant="default" size="sm" className="gap-2" onClick={() => handleBulkMove('human_review')}>
+                  <ChevronsRight className="h-4 w-4" />
+                  {t('columns.human_review')}
+                </Button>
+              </>
+            ) : selectedColumnStatus === 'human_review' ? (
+              <>
+                <Button variant="outline" size="sm" className="gap-2" onClick={() => handleBulkMove('ai_review')}>
+                  <ChevronLeft className="h-4 w-4" />
+                  {t('columns.ai_review')}
+                </Button>
+                <Button variant="default" size="sm" className="gap-2" onClick={() => setBulkMarkDoneConfirmOpen(true)}>
+                  <CheckCheck className="h-4 w-4" />
+                  {t('kanban.markAsDone')}
+                </Button>
+              </>
+            ) : selectedColumnStatus === 'done' ? (
+              <Button variant="default" size="sm" className="gap-2" onClick={handleOpenBulkPRDialog}>
+                <GitPullRequest className="h-4 w-4" />
+                {t('kanban.createPRs')}
+              </Button>
+            ) : null}
+
+            <div className="w-px h-5 bg-border" />
             <Button
               variant="ghost"
               size="sm"
@@ -2335,6 +2523,84 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           </div>
         </div>
       )}
+
+      {/* Bulk "mark as done" confirmation dialog (human_review → done + PR creation) */}
+      <AlertDialog open={bulkMarkDoneConfirmOpen} onOpenChange={setBulkMarkDoneConfirmOpen}>
+        <AlertDialogPortal>
+          <AlertDialogOverlay className="bg-black/60 backdrop-blur-md" />
+          <AlertDialogContent className="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] border-0 bg-linear-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] duration-300">
+            <div className="absolute inset-0 rounded-2xl bg-linear-to-r from-emerald-500/20 via-green-500/20 to-emerald-500/20 p-px">
+              <div className="h-full w-full rounded-2xl bg-slate-900/95" />
+            </div>
+            <div className="relative z-10 p-8">
+              <AlertDialogHeader className="text-center space-y-4">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-emerald-500/20 to-emerald-600/30 p-px">
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-900/90">
+                    <CheckCheck className="h-8 w-8 text-emerald-400" />
+                  </div>
+                </div>
+                <AlertDialogTitle className="text-2xl font-bold text-white">
+                  {t('kanban.markAsDoneConfirmTitle')}
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-base text-slate-300 leading-relaxed">
+                  {t('kanban.markAsDoneConfirmDescription', { count: selectedTaskIds.size })}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              {/* Task list preview */}
+              <div className="mt-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-slate-200">{t('kanban.tasksToComplete')}</label>
+                  <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-300">
+                    {selectedTaskIds.size} {selectedTaskIds.size === 1 ? 'tâche' : 'tâches'}
+                  </span>
+                </div>
+                <ScrollArea className="h-32 rounded-xl border border-slate-700/50 bg-slate-800/50 p-3 backdrop-blur-sm">
+                  <div className="space-y-2">
+                    {selectedTasks.map((task, idx) => (
+                      <div
+                        key={task.id}
+                        className="group flex items-center gap-3 rounded-lg bg-slate-700/30 px-3 py-2.5 text-sm transition-all hover:bg-slate-700/50"
+                      >
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600/30 text-xs font-medium text-emerald-300">
+                          {idx + 1}
+                        </div>
+                        <span className="flex-1 truncate text-slate-200">{task.title}</span>
+                        <CheckCheck className="h-4 w-4 text-emerald-400/60 opacity-0 transition-opacity group-hover:opacity-100" />
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+
+              {/* Info message */}
+              <div className="mt-6 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 backdrop-blur-sm">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20">
+                    <GitPullRequest className="h-3 w-3 text-emerald-400" />
+                  </div>
+                  <p className="text-sm font-medium text-emerald-300 leading-relaxed">
+                    {t('kanban.markAsDoneConfirmInfo')}
+                  </p>
+                </div>
+              </div>
+
+              <AlertDialogFooter className="mt-8 gap-3">
+                <AlertDialogCancel className="flex-1 rounded-xl border border-slate-600/50 bg-slate-700/50 text-slate-200 backdrop-blur-sm transition-all hover:bg-slate-700/70 hover:border-slate-500/50 hover:text-white">
+                  {t('common:buttons.cancel')}
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleBulkMarkDoneConfirm}
+                  className="flex-1 rounded-xl border-0 bg-linear-to-r from-emerald-500 to-emerald-600 text-white font-semibold shadow-lg transition-all hover:from-emerald-600 hover:to-emerald-700 hover:shadow-emerald-500/25 hover:shadow-xl"
+                >
+                  <CheckCheck className="h-4 w-4 mr-2" />
+                  {t('kanban.markAsDoneConfirmButton')}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </div>
+          </AlertDialogContent>
+        </AlertDialogPortal>
+      </AlertDialog>
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
@@ -2508,7 +2774,6 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           onOpenChange={setIsProjectSettingsOpen}
           initialProjectSection="general"
           initialProjectId={settingsDialogProjectId}
-          debugOpen={!!isProjectSettingsOpen}
         />
       )}
 
@@ -2525,8 +2790,8 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
             // Show the import confirmation dialog
             setImportConfirmDialog({
               open: true,
-              workItems: workItems as AzureDevOpsWorkItem[],
-              targetColumn: targetStatus as TaskStatus,
+              workItems,
+              targetColumn: targetStatus,
               isImporting: false,
               source: 'azure-devops',
             });
@@ -2547,8 +2812,8 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
             // Show the import confirmation dialog
             setImportConfirmDialog({
               open: true,
-              workItems: workItems as JiraWorkItem[],
-              targetColumn: targetStatus as TaskStatus,
+              workItems,
+              targetColumn: targetStatus,
               isImporting: false,
               source: 'jira',
             });

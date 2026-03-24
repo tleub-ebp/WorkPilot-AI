@@ -143,7 +143,23 @@ class AgentExecutor:
                 async for msg in client.receive_response():
                     msg_type = type(msg).__name__
 
-                    if msg_type == "AssistantMessage" and hasattr(msg, "content"):
+                    # Support both raw SDK messages (AssistantMessage/TextBlock/ToolUseBlock)
+                    # and wrapped AgentMessage objects from ClaudeAgentClient
+                    if msg_type == "AgentMessage":
+                        # AgentMessage from ClaudeAgentClient — content is list[ContentBlock]
+                        role_val = str(getattr(getattr(msg, "role", None), "value", ""))
+                        if role_val == "assistant" and hasattr(msg, "content"):
+                            for block in msg.content:
+                                block_type_str = str(getattr(block, "type", ""))
+                                if "text" in block_type_str and getattr(block, "text", None):
+                                    response_text += block.text
+                                    print(block.text, end="", flush=True)
+                                elif "tool_use" in block_type_str and getattr(block, "tool_name", None):
+                                    debug_detailed(
+                                        "roadmap_executor", f"Tool called: {block.tool_name}"
+                                    )
+                                    print(f"\n[Tool: {block.tool_name}]", flush=True)
+                    elif msg_type == "AssistantMessage" and hasattr(msg, "content"):
                         for block in msg.content:
                             block_type = type(block).__name__
                             if block_type == "TextBlock" and hasattr(block, "text"):

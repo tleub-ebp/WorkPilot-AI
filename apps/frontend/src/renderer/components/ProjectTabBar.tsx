@@ -16,6 +16,7 @@ interface ProjectTabBarProps {
   readonly onProjectSelect: (projectId: string) => void;
   readonly onProjectClose: (projectId: string) => void;
   readonly onAddProject: () => void;
+  readonly onProjectRename?: (projectId: string, name: string) => void;
   readonly className?: string;
   readonly onSettingsClick?: () => void;
 }
@@ -26,6 +27,7 @@ export function ProjectTabBar({
   onProjectSelect,
   onProjectClose,
   onAddProject,
+  onProjectRename,
   className,
   onSettingsClick
 }: ProjectTabBarProps) {
@@ -226,6 +228,7 @@ export function ProjectTabBar({
                 e.stopPropagation();
                 onProjectClose(project.id);
               }}
+              onRename={onProjectRename}
               // Pass control props only for the active tab
               onSettingsClick={isActiveTab ? onSettingsClick : undefined}
             />

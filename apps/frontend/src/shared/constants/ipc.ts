@@ -9,6 +9,7 @@ export const IPC_CHANNELS = {
   PROJECT_REMOVE: 'project:remove',
   PROJECT_LIST: 'project:list',
   PROJECT_UPDATE_SETTINGS: 'project:updateSettings',
+  PROJECT_RENAME: 'project:rename',
   PROJECT_INITIALIZE: 'project:initialize',
   PROJECT_CHECK_VERSION: 'project:checkVersion',
 

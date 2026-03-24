@@ -152,10 +152,7 @@ let streamingServerProcess: ChildProcessWithoutNullStreams | null = null;
 // Fixes: pty.node SIGABRT crash caused by environment teardown before PTY cleanup (GitHub #1469)
 let isQuitting = false;
 
-function createWindow(): void {
-  // Get the primary display's work area (accounts for taskbar, dock, etc.)
-  // Wrapped in try/catch to handle potential failures with fallback to safe defaults
-  let workAreaSize: { width: number; height: number };
+function getWorkAreaSize(): { width: number; height: number } {
   try {
     const display = screen.getPrimaryDisplay();
     // Validate the returned object has expected structure with valid dimensions
@@ -166,19 +163,21 @@ function createWindow(): void {
       display.workAreaSize.width > 0 &&
       display.workAreaSize.height > 0
     ) {
-      workAreaSize = display.workAreaSize;
+      return display.workAreaSize;
     } else {
       console.error(
         '[main] screen.getPrimaryDisplay() returned unexpected structure:',
         JSON.stringify(display)
       );
-      workAreaSize = { width: DEFAULT_SCREEN_WIDTH, height: DEFAULT_SCREEN_HEIGHT };
+      return { width: DEFAULT_SCREEN_WIDTH, height: DEFAULT_SCREEN_HEIGHT };
     }
   } catch (error: unknown) {
     console.error('[main] Failed to get primary display, using fallback dimensions:', error);
-    workAreaSize = { width: DEFAULT_SCREEN_WIDTH, height: DEFAULT_SCREEN_HEIGHT };
+    return { width: DEFAULT_SCREEN_WIDTH, height: DEFAULT_SCREEN_HEIGHT };
   }
+}
 
+function calculateWindowDimensions(workAreaSize: { width: number; height: number }) {
   // Calculate available space with a small margin to avoid edge-to-edge windows
   const availableWidth: number = workAreaSize.width - WINDOW_SCREEN_MARGIN;
   const availableHeight: number = workAreaSize.height - WINDOW_SCREEN_MARGIN;
@@ -191,33 +190,10 @@ function createWindow(): void {
   const minWidth: number = Math.min(WINDOW_MIN_WIDTH, width);
   const minHeight: number = Math.min(WINDOW_MIN_HEIGHT, height);
 
-  // Create the browser window
-  mainWindow = new BrowserWindow({
-    width,
-    height,
-    minWidth,
-    minHeight,
-    show: false,
-    autoHideMenuBar: true,
-    titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 15, y: 10 },
-    icon: getIconPath(),
-    webPreferences: {
-      preload: join(__dirname, '../preload/index.mjs'),
-      sandbox: false,
-      contextIsolation: true,
-      nodeIntegration: false,
-      backgroundThrottling: false, // Prevent terminal lag when window loses focus
-      spellcheck: true, // Enable spell check for text inputs
-      webviewTag: true, // Required for App Emulator preview (bypasses X-Frame-Options)
-    }
-  });
+  return { width, height, minWidth, minHeight };
+}
 
-  // Show window when ready to avoid visual flash
-  mainWindow.on('ready-to-show', () => {
-    mainWindow?.show();
-  });
-
+function initializeSpellCheckLanguages(): void {
   // Initialize spell check languages
   const defaultSpellCheckLanguages = Object.keys(SPELL_CHECK_LANGUAGE_MAP);
   const availableSpellCheckLanguages = session.defaultSession.availableSpellCheckerLanguages;
@@ -241,7 +217,9 @@ function createWindow(): void {
   } else {
     console.warn('[SPELLCHECK] No spell check languages available on this system');
   }
+}
 
+function setupContextMenu(mainWindow: BrowserWindow): void {
   // Handle context menu with spell check and standard editing options
   mainWindow?.webContents.on('context-menu', (_event: Electron.Event, params: Electron.ContextMenuParams) => {
     const menu = new Menu();
@@ -303,7 +281,9 @@ function createWindow(): void {
       menu.popup();
     }
   });
+}
 
+function setupExternalLinkHandler(mainWindow: BrowserWindow): void {
   // Handle external links with URL scheme allowlist for security
   // Note: Terminal links now use IPC via WebLinksAddon callback, but this handler
   // catches any other window.open() calls (e.g., from third-party libraries)
@@ -326,6 +306,47 @@ function createWindow(): void {
       return { action: 'deny' };
     }
   });
+}
+
+function createWindow(): void {
+  // Get the primary display's work area (accounts for taskbar, dock, etc.)
+  // Wrapped in try/catch to handle potential failures with fallback to safe defaults
+  const workAreaSize = getWorkAreaSize();
+  const { width, height, minWidth, minHeight } = calculateWindowDimensions(workAreaSize);
+
+  // Create the browser window
+  mainWindow = new BrowserWindow({
+    width,
+    height,
+    minWidth,
+    minHeight,
+    show: false,
+    autoHideMenuBar: true,
+    titleBarStyle: 'hiddenInset',
+    trafficLightPosition: { x: 15, y: 10 },
+    icon: getIconPath(),
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.mjs'),
+      sandbox: false,
+      contextIsolation: true,
+      nodeIntegration: false,
+      backgroundThrottling: false, // Prevent terminal lag when window loses focus
+      spellcheck: true, // Enable spell check for text inputs
+      webviewTag: true, // Required for App Emulator preview (bypasses X-Frame-Options)
+    }
+  });
+
+  // Show window when ready to avoid visual flash
+  mainWindow.on('ready-to-show', () => {
+    mainWindow?.show();
+  });
+
+  // Initialize spell check languages
+  initializeSpellCheckLanguages();
+
+  // Setup context menu and external link handlers
+  setupContextMenu(mainWindow);
+  setupExternalLinkHandler(mainWindow);
 
   // Load the renderer
   if (mainWindow) {
@@ -512,6 +533,235 @@ try {
   console.error('[main] Erreur lors de l\'initialisation du PythonEnvManager:', err);
 }
 
+// Clear cache on Windows to prevent permission errors from stale cache
+async function clearWindowsCache() {
+  if (!isWindows()) {
+    return;
+  }
+  
+  try {
+    await session.defaultSession.clearCache();
+    console.log('[main] Cleared cache on startup');
+  } catch (err) {
+    console.warn('[main] Failed to clear cache:', err);
+  }
+}
+
+// Set dock icon on macOS
+async function setupMacOSDockIcon() {
+  if (!isMacOS()) {
+    return;
+  }
+  
+  const iconPath = getIconPath();
+  try {
+    const icon = nativeImage.createFromPath(iconPath);
+    if (!icon.isEmpty()) {
+      app.dock?.setIcon(icon);
+    }
+  } catch (e) {
+    console.warn('Could not set dock icon:', e);
+  }
+}
+
+// Load and validate settings for agent manager configuration
+function loadAndValidateSettings() {
+  const settingsPath = join(app.getPath('userData'), 'settings.json');
+  
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
+    let validAutoBuildPath = settings.autoBuildPath;
+
+    // Validate and migrate autoBuildPath if it exists
+    if (validAutoBuildPath) {
+      validAutoBuildPath = validateAndMigrateAutoBuildPath(validAutoBuildPath, settingsPath, settings);
+    }
+
+    // Configure agent manager if we have valid settings
+    if (settings.pythonPath || validAutoBuildPath) {
+      console.warn('[main] Configuring AgentManager with settings:', {
+        pythonPath: settings.pythonPath,
+        autoBuildPath: validAutoBuildPath
+      });
+      agentManager!.configure(settings.pythonPath, validAutoBuildPath);
+    }
+  } catch (error: unknown) {
+    // ENOENT means no settings file yet - that's fine, use defaults
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+      // No settings file, use defaults - this is expected on first run
+    } else {
+      console.warn('[main] Failed to load settings for agent configuration:', error);
+    }
+  }
+}
+
+// Validate and migrate autoBuildPath - must contain runners/spec_runner.py
+function validateAndMigrateAutoBuildPath(autoBuildPath: string, settingsPath: string, settings: any): string | undefined {
+  const specRunnerPath = join(autoBuildPath, 'runners', 'spec_runner.py');
+  let specRunnerExists = false;
+  
+  try {
+    accessSync(specRunnerPath);
+    specRunnerExists = true;
+  } catch {
+    // File doesn't exist or isn't accessible
+  }
+
+  if (specRunnerExists) {
+    return autoBuildPath;
+  }
+
+  // Migration: Try to fix stale paths from old project structure
+  // Old structure: /path/to/project/auto-claude
+  // New structure: /path/to/project/apps/backend
+  if (autoBuildPath.endsWith('/auto-claude') || autoBuildPath.endsWith(String.raw`\auto-claude`)) {
+    const basePath = autoBuildPath.replace(/[/\\]auto-claude$/, '');
+    const correctedPath = join(basePath, 'apps', 'backend');
+    const correctedSpecRunnerPath = join(correctedPath, 'runners', 'spec_runner.py');
+
+    let correctedPathExists = false;
+    try {
+      accessSync(correctedSpecRunnerPath);
+      correctedPathExists = true;
+    } catch {
+      // Corrected path doesn't exist
+    }
+
+    if (correctedPathExists) {
+      console.log('[main] Migrating autoBuildPath from old structure:', autoBuildPath, '->', correctedPath);
+      settings.autoBuildPath = correctedPath;
+      
+      // Save the corrected setting - we're the only process modifying settings at startup
+      try {
+        writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+        console.log('[main] Successfully saved migrated autoBuildPath to settings');
+      } catch (writeError) {
+        console.warn('[main] Failed to save migrated autoBuildPath:', writeError);
+      }
+      
+      return correctedPath;
+    }
+  }
+
+  console.warn('[main] Configured autoBuildPath is invalid (missing runners/spec_runner.py), will use auto-detection:', autoBuildPath);
+  return undefined; // Let auto-detection find the correct path
+}
+
+// ... (rest of the code remains the same)
+
+// Initialize profile manager and handle migrated profiles
+async function initializeProfileManager() {
+  try {
+    await initializeClaudeProfileManager();
+    
+    // Only start monitoring if window is still available (app not quitting)
+    if (mainWindow) {
+      // Setup event forwarding from usage monitor to renderer
+      initializeUsageMonitorForwarding(mainWindow);
+
+      // Start the usage monitor (uses unified OperationRegistry for proactive restart)
+      const usageMonitor = getUsageMonitor();
+      usageMonitor.start();
+      console.warn('[main] Usage monitor initialized and started (after profile load)');
+
+      // Handle migrated profiles
+      handleMigratedProfiles();
+    }
+  } catch (error) {
+    console.warn('[main] Failed to initialize profile manager:', error);
+    // Fallback: try starting usage monitor anyway (might use defaults)
+    if (mainWindow) {
+      initializeUsageMonitorForwarding(mainWindow);
+      const usageMonitor = getUsageMonitor();
+      usageMonitor.start();
+    }
+  }
+}
+
+// Handle migrated profiles that need re-authentication
+function handleMigratedProfiles() {
+  const profileManager = getClaudeProfileManager();
+  const migratedProfileIds = profileManager.getMigratedProfileIds();
+  const activeProfile = profileManager.getActiveProfile();
+
+  if (migratedProfileIds.length === 0) {
+    return;
+  }
+
+  console.warn('[main] Found migrated profiles that need re-authentication:', migratedProfileIds);
+
+  // Check ALL migrated profiles for valid credentials, not just the active one
+  // This prevents stale migrated flags from triggering unnecessary re-auth prompts
+  // when the user switches to a different profile later
+  for (const profileId of migratedProfileIds) {
+    const profile = profileManager.getProfile(profileId);
+    if (profile && isProfileAuthenticated(profile)) {
+      // Credentials are valid - clear the migrated flag
+      console.warn('[main] Migrated profile has valid credentials via file fallback, clearing migrated flag:', profile.name);
+      profileManager.clearMigratedProfile(profileId);
+    }
+  }
+
+  // Re-check if the active profile still needs re-auth after clearing valid ones
+  const remainingMigratedIds = profileManager.getMigratedProfileIds();
+  if (mainWindow && remainingMigratedIds.includes(activeProfile.id)) {
+    // Active profile still needs re-auth - show the modal
+    mainWindow.webContents.once('did-finish-load', () => {
+      // Small delay to ensure stores are initialized
+      setTimeout(() => {
+        const authFailureInfo: AuthFailureInfo = {
+          profileId: activeProfile.id,
+          profileName: activeProfile.name,
+          failureType: 'missing',
+          message: `Profile "${activeProfile.name}" was migrated to an isolated directory and needs re-authentication.`,
+          detectedAt: new Date()
+        };
+        console.warn('[main] Sending auth failure for migrated active profile:', activeProfile.name);
+        mainWindow?.webContents.send(IPC_CHANNELS.CLAUDE_AUTH_FAILURE, authFailureInfo);
+      }, 1000);
+    });
+  }
+}
+
+// Initialize app updater based on environment
+function initializeAppUpdaterIfNeeded() {
+  if (!mainWindow) {
+    return;
+  }
+
+  // Log debug mode status
+  const isDebugMode = process.env.DEBUG === 'true';
+  if (isDebugMode) {
+    console.warn('[main] ========================================');
+    console.warn('[main] DEBUG MODE ENABLED (DEBUG=true)');
+    console.warn('[main] ========================================');
+  }
+
+  // Initialize app auto-updater (only in production, or when DEBUG_UPDATER is set)
+  const forceUpdater = process.env.DEBUG_UPDATER === 'true';
+  if (app.isPackaged || forceUpdater) {
+    // Load settings to get beta updates preference
+    const settings = loadSettingsSync();
+    const betaUpdates = settings.betaUpdates ?? false;
+
+    initializeAppUpdater(mainWindow, betaUpdates);
+    console.warn('[main] App auto-updater initialized');
+    
+    const betaUpdatesStatus = betaUpdates ? 'enabled' : 'disabled';
+    console.warn(`[main] Beta updates: ${betaUpdatesStatus}`);
+    if (forceUpdater && !app.isPackaged) {
+      console.warn('[main] Updater forced in dev mode via DEBUG_UPDATER=true');
+      console.warn('[main] Note: Updates won\'t actually work in dev mode');
+    }
+  } else {
+    console.warn('[main] ========================================');
+    console.warn('[main] App auto-updater DISABLED (development mode)');
+    console.warn('[main] To test updater logging, set DEBUG_UPDATER=true');
+    console.warn('[main] Note: Actual updates only work in packaged builds');
+    console.warn('[main] ========================================');
+  }
+}
+
 // Initialize the application
 async function main() {
   await app.whenReady();
@@ -519,14 +769,7 @@ async function main() {
   electronApp.setAppUserModelId('com.workpilotai.app');
 
   // Clear cache on Windows to prevent permission errors from stale cache
-  if (isWindows()) {
-    try {
-      await session.defaultSession.clearCache();
-      console.log('[main] Cleared cache on startup');
-    } catch (err) {
-      console.warn('[main] Failed to clear cache:', err);
-    }
-  }
+  await clearWindowsCache();
 
   // Initialize app language from OS locale for main process i18n (context menus)
   initAppLanguage();
@@ -536,17 +779,7 @@ async function main() {
   cleanupStaleUpdateMetadata();
 
   // Set dock icon on macOS
-  if (isMacOS()) {
-    const iconPath = getIconPath();
-    try {
-      const icon = nativeImage.createFromPath(iconPath);
-      if (!icon.isEmpty()) {
-        app.dock?.setIcon(icon);
-      }
-    } catch (e) {
-      console.warn('Could not set dock icon:', e);
-    }
-  }
+  await setupMacOSDockIcon();
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
@@ -557,81 +790,8 @@ async function main() {
   // Initialize agent manager
   agentManager = new AgentManager();
 
-  // Load settings and configure agent manager with Python and auto-claude paths
-  // Uses EAFP pattern (try/catch) instead of LBYL (existsSync) to avoid TOCTOU race conditions
-  const settingsPath = join(app.getPath('userData'), 'settings.json');
-  try {
-    const settings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
-
-    // Validate and migrate autoBuildPath - must contain runners/spec_runner.py
-    // Uses EAFP pattern (try/catch with accessSync) instead of existsSync to avoid TOCTOU race conditions
-    let validAutoBuildPath = settings.autoBuildPath;
-    if (validAutoBuildPath) {
-      const specRunnerPath = join(validAutoBuildPath, 'runners', 'spec_runner.py');
-      let specRunnerExists = false;
-      try {
-        accessSync(specRunnerPath);
-        specRunnerExists = true;
-      } catch {
-        // File doesn't exist or isn't accessible
-      }
-
-      if (!specRunnerExists) {
-        // Migration: Try to fix stale paths from old project structure
-        // Old structure: /path/to/project/auto-claude
-        // New structure: /path/to/project/apps/backend
-        let migrated = false;
-        if (validAutoBuildPath.endsWith('/auto-claude') || validAutoBuildPath.endsWith(String.raw`\auto-claude`)) {
-          const basePath = validAutoBuildPath.replace(/[/\\]auto-claude$/, '');
-          const correctedPath = join(basePath, 'apps', 'backend');
-          const correctedSpecRunnerPath = join(correctedPath, 'runners', 'spec_runner.py');
-
-          let correctedPathExists = false;
-          try {
-            accessSync(correctedSpecRunnerPath);
-            correctedPathExists = true;
-          } catch {
-            // Corrected path doesn't exist
-          }
-
-          if (correctedPathExists) {
-            console.log('[main] Migrating autoBuildPath from old structure:', validAutoBuildPath, '->', correctedPath);
-            settings.autoBuildPath = correctedPath;
-            validAutoBuildPath = correctedPath;
-            migrated = true;
-
-            // Save the corrected setting - we're the only process modifying settings at startup
-            try {
-              writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
-              console.log('[main] Successfully saved migrated autoBuildPath to settings');
-            } catch (writeError) {
-              console.warn('[main] Failed to save migrated autoBuildPath:', writeError);
-            }
-          }
-        }
-
-        if (!migrated) {
-          console.warn('[main] Configured autoBuildPath is invalid (missing runners/spec_runner.py), will use auto-detection:', validAutoBuildPath);
-          validAutoBuildPath = undefined; // Let auto-detection find the correct path
-        }
-      }
-    }
-
-    if (settings.pythonPath || validAutoBuildPath) {
-      console.warn('[main] Configuring AgentManager with settings:', {
-        pythonPath: settings.pythonPath,
-        autoBuildPath: validAutoBuildPath
-      });
-      agentManager.configure(settings.pythonPath, validAutoBuildPath);
-    }
-  } catch (error: unknown) {
-    // ENOENT means no settings file yet - that's fine, use defaults
-    if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
-      // No settings file, use defaults - this is expected on first run
-    } else {
-      console.warn('[main] Failed to load settings for agent configuration:', error);
-    }
-  }
+  // Load and validate settings for agent manager configuration
+  loadAndValidateSettings();
 
   // Initialize terminal manager
   terminalManager = new TerminalManager(() => mainWindow);
@@ -656,109 +816,11 @@ async function main() {
     });
   });
 
-  // Initialize Claude profile manager, then start usage monitor
-  // We do this sequentially to ensure profile data (including auto-switch settings)
-  // is loaded BEFORE the usage monitor attempts to read settings.
-  // This prevents the "UsageMonitor disabled" error due to race condition.
-  initializeClaudeProfileManager()
-    .then(() => {
-      // Only start monitoring if window is still available (app not quitting)
-      if (mainWindow) {
-        // Setup event forwarding from usage monitor to renderer
-        initializeUsageMonitorForwarding(mainWindow);
+  // Initialize profile manager and handle migrated profiles
+  await initializeProfileManager();
 
-        // Start the usage monitor (uses unified OperationRegistry for proactive restart)
-        const usageMonitor = getUsageMonitor();
-        usageMonitor.start();
-        console.warn('[main] Usage monitor initialized and started (after profile load)');
-
-        // Check for migrated profiles that need re-authentication
-        // These profiles were moved from shared ~/.claude to isolated directories
-        // and need new credentials since they now use a different keychain entry
-        const profileManager = getClaudeProfileManager();
-        const migratedProfileIds = profileManager.getMigratedProfileIds();
-        const activeProfile = profileManager.getActiveProfile();
-
-        if (migratedProfileIds.length > 0) {
-          console.warn('[main] Found migrated profiles that need re-authentication:', migratedProfileIds);
-
-          // Check ALL migrated profiles for valid credentials, not just the active one
-          // This prevents stale migrated flags from triggering unnecessary re-auth prompts
-          // when the user switches to a different profile later
-          for (const profileId of migratedProfileIds) {
-            const profile = profileManager.getProfile(profileId);
-            if (profile && isProfileAuthenticated(profile)) {
-              // Credentials are valid - clear the migrated flag
-              console.warn('[main] Migrated profile has valid credentials via file fallback, clearing migrated flag:', profile.name);
-              profileManager.clearMigratedProfile(profileId);
-            }
-          }
-
-          // Re-check if the active profile still needs re-auth after clearing valid ones
-          const remainingMigratedIds = profileManager.getMigratedProfileIds();
-          if (remainingMigratedIds.includes(activeProfile.id)) {
-            // Active profile still needs re-auth - show the modal
-            mainWindow.webContents.once('did-finish-load', () => {
-              // Small delay to ensure stores are initialized
-              setTimeout(() => {
-                const authFailureInfo: AuthFailureInfo = {
-                  profileId: activeProfile.id,
-                  profileName: activeProfile.name,
-                  failureType: 'missing',
-                  message: `Profile "${activeProfile.name}" was migrated to an isolated directory and needs re-authentication.`,
-                  detectedAt: new Date()
-                };
-                console.warn('[main] Sending auth failure for migrated active profile:', activeProfile.name);
-                mainWindow?.webContents.send(IPC_CHANNELS.CLAUDE_AUTH_FAILURE, authFailureInfo);
-              }, 1000);
-            });
-          }
-        }
-      }
-    })
-    .catch((error) => {
-      console.warn('[main] Failed to initialize profile manager:', error);
-      // Fallback: try starting usage monitor anyway (might use defaults)
-      if (mainWindow) {
-        initializeUsageMonitorForwarding(mainWindow);
-        const usageMonitor = getUsageMonitor();
-        usageMonitor.start();
-      }
-    });
-
-  if (mainWindow) {
-    // Log debug mode status
-    const isDebugMode = process.env.DEBUG === 'true';
-    if (isDebugMode) {
-      console.warn('[main] ========================================');
-      console.warn('[main] DEBUG MODE ENABLED (DEBUG=true)');
-      console.warn('[main] ========================================');
-    }
-
-    // Initialize app auto-updater (only in production, or when DEBUG_UPDATER is set)
-    const forceUpdater = process.env.DEBUG_UPDATER === 'true';
-    if (app.isPackaged || forceUpdater) {
-      // Load settings to get beta updates preference
-      const settings = loadSettingsSync();
-      const betaUpdates = settings.betaUpdates ?? false;
-
-      initializeAppUpdater(mainWindow, betaUpdates);
-      console.warn('[main] App auto-updater initialized');
-      
-      const betaUpdatesStatus = betaUpdates ? 'enabled' : 'disabled';
-      console.warn(`[main] Beta updates: ${betaUpdatesStatus}`);
-      if (forceUpdater && !app.isPackaged) {
-        console.warn('[main] Updater forced in dev mode via DEBUG_UPDATER=true');
-        console.warn('[main] Note: Updates won\'t actually work in dev mode');
-      }
-    } else {
-      console.warn('[main] ========================================');
-      console.warn('[main] App auto-updater DISABLED (development mode)');
-      console.warn('[main] To test updater logging, set DEBUG_UPDATER=true');
-      console.warn('[main] Note: Actual updates only work in packaged builds');
-      console.warn('[main] ========================================');
-    }
-  }
+  // Initialize app updater based on environment
+  initializeAppUpdaterIfNeeded();
 
   // macOS: re-create window when dock icon is clicked
   app.on('activate', () => {
