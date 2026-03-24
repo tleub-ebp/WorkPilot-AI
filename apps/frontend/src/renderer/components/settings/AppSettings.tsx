@@ -11,7 +11,6 @@ import {
   Bell,
   Settings2,
   Zap,
-  Github,
   Database,
   Monitor,
   Globe,
@@ -138,7 +137,7 @@ const createSettingsThemes = (t: any): Record<SettingsTheme, {
       { id: 'memory', icon: Database, label: t('projectSections.memory.title'), type: 'project' },
       { id: 'azure-devops', icon: Cloud, label: 'Azure DevOps', type: 'project' },
       { id: 'jira', icon: JiraIcon, label: 'Jira', type: 'project' },
-      { id: 'github', icon: Github, label: 'GitHub', type: 'project' },
+      { id: 'github', icon: Globe, label: 'GitHub', type: 'project' },
       { id: 'gitlab', icon: GitLabIcon, label: 'GitLab', type: 'project' },
       { id: 'linear', icon: Zap, label: 'Linear', type: 'project' },
       { id: 'teams', icon: MessageSquare, label: 'Microsoft Teams', type: 'project' }
