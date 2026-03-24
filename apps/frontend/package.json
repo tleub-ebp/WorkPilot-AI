@@ -199,8 +199,7 @@
           "!**/venv",
           "!**/.env",
           "!**/tests",
-          "!**/*.egg-info",
-          "!**/.pytest_cache"
+          "!**/*.egg-info"
         ]
       }
     ],
@@ -213,8 +212,7 @@
       "entitlementsInherit": "resources/entitlements.mac.plist",
       "target": [
         "dmg",
-        "zip",
-        "mas"
+        "zip"
       ]
     },
     "win": {

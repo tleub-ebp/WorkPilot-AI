@@ -14,10 +14,24 @@ function main() {
     args.push('--win', '--mac', '--linux');
   }
 
-  console.log('🚀 Starting packaging for platforms:', args.join(' '));
+  // Remove duplicate arguments and clean up
+  const cleanArgs = [];
+  const seen = new Set();
+  
+  for (const arg of args) {
+    if (!seen.has(arg)) {
+      seen.add(arg);
+      cleanArgs.push(arg);
+    }
+  }
+
+  // Ensure we use 'mac' instead of 'mas' for standard distribution
+  const finalArgs = cleanArgs.map(arg => arg === '--mas' ? '--mac' : arg);
+
+  console.log('🚀 Starting packaging for platforms:', finalArgs.join(' '));
   
   // Run electron-builder with the provided arguments
-  const result = spawnSync('electron-builder', args, {
+  const result = spawnSync('electron-builder', finalArgs, {
     stdio: 'inherit',
     shell: true,
     cwd: process.cwd()
