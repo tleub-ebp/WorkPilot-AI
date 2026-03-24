@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Slack, Video, Github } from 'lucide-react'
+import { Slack, Video, Globe } from 'lucide-react'
 import { Card, Toggle } from '../components'
 
 export function IntegrationsCard() {
@@ -8,9 +8,9 @@ export function IntegrationsCard() {
   const [github, setGithub] = useState(false)
 
   const integrations = [
+    { icon: Globe, name: 'Github', desc: 'Enables automated workflows, code synchronization', enabled: github, toggle: setGithub, color: '#333' },
     { icon: Slack, name: 'Slack', desc: 'Used as a main source of communication', enabled: slack, toggle: setSlack, color: '#E91E63' },
-    { icon: Video, name: 'Google meet', desc: 'Used for all types of calls', enabled: meet, toggle: setMeet, color: '#00897B' },
-    { icon: Github, name: 'Github', desc: 'Enables automated workflows, code synchronization', enabled: github, toggle: setGithub, color: '#333' }
+    { icon: Video, name: 'Google meet', desc: 'Used for all types of calls', enabled: meet, toggle: setMeet, color: '#00897B' }
   ]
 
   return (
@@ -18,8 +18,8 @@ export function IntegrationsCard() {
       <h3 className="text-heading-medium mb-4">Integrations</h3>
 
       <div className="space-y-4">
-        {integrations.map((int, i) => (
-          <div key={i} className="flex items-center gap-3">
+        {integrations.map((int) => (
+          <div key={int.name} className="flex items-center gap-3">
             <div
               className="w-10 h-10 rounded-lg flex items-center justify-center"
               style={{ backgroundColor: `${int.color}15` }}
