@@ -85,16 +85,28 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Install Python dependencies
         run: pip install python-dotenv
 
-      - name: Setup Node.js and install dependencies
-        uses: ./.github/actions/setup-node-frontend
+      # Setup Node.js and dependencies removed - using direct setup below
 
       - name: Install node-pty in frontend
         run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+
+      - name: Install pnpm and frontend dependencies
+        run: |
+          npm install -g pnpm
+          rm -rf apps/frontend/node_modules
+          cd apps/frontend && pnpm install --ignore-scripts
 
       - name: Install Rust toolchain (for building native Python packages)
         uses: dtolnay/rust-toolchain@stable
@@ -179,16 +191,28 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Install Python dependencies
         run: pip install python-dotenv
 
-      - name: Setup Node.js and install dependencies
-        uses: ./.github/actions/setup-node-frontend
+      # Setup Node.js and dependencies removed - using direct setup below
 
       - name: Install node-pty in frontend
         run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+
+      - name: Install pnpm and frontend dependencies
+        run: |
+          npm install -g pnpm
+          rm -rf apps/frontend/node_modules
+          cd apps/frontend && pnpm install --ignore-scripts
 
       - name: Cache pip wheel cache
         uses: actions/cache@v5
@@ -272,16 +296,28 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Install Python dependencies
         run: pip install python-dotenv
 
-      - name: Setup Node.js and install dependencies
-        uses: ./.github/actions/setup-node-frontend
+      # Setup Node.js and dependencies removed - using direct setup below
 
       - name: Install node-pty in frontend
         run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+
+      - name: Install pnpm and frontend dependencies
+        run: |
+          npm install -g pnpm
+          rm -rf apps/frontend/node_modules
+          cd apps/frontend && pnpm install --ignore-scripts
 
       - name: Cache pip wheel cache
         uses: actions/cache@v5
@@ -453,16 +489,28 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Install Python dependencies
         run: pip install python-dotenv
 
-      - name: Setup Node.js and install dependencies
-        uses: ./.github/actions/setup-node-frontend
+      # Setup Node.js and dependencies removed - using direct setup below
 
       - name: Install node-pty in frontend
         run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+
+      - name: Install pnpm and frontend dependencies
+        run: |
+          npm install -g pnpm
+          rm -rf apps/frontend/node_modules
+          cd apps/frontend && pnpm install --ignore-scripts
 
       - name: Setup Flatpak and verification tools
         run: |

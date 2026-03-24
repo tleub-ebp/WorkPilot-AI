@@ -34,21 +34,27 @@ runs:
       uses: actions/cache@v5
       with:
         path: ${{ steps.pnpm-cache-dir.outputs.dir }}
-        key: ${{ runner.os }}-pnpm-v2-${{ hashFiles('pnpm-lock.yaml') }}
+        key: ${{ runner.os }}-pnpm-migrate-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('package.json') }}
         restore-keys: |
-          ${{ runner.os }}-pnpm-v2-
-          ${{ runner.os }}-pnpm-
+          ${{ runner.os }}-pnpm-migrate-
 
     - name: Install dependencies
       shell: bash
       # Install pnpm first since the project uses pnpm workspaces
-      run: npm install -g pnpm
+      run: |
+        # Clear any existing npm cache to avoid conflicts
+        npm cache clean --force
+        npm install -g pnpm
 
     - name: Install frontend dependencies with pnpm
       shell: bash
       # Use pnpm to install dependencies since the project uses pnpm workspaces
       # Ignore scripts to avoid electron-rebuild issues in CI
-      run: cd apps/frontend && pnpm install --ignore-scripts
+      run: |
+        # Remove any existing node_modules to avoid conflicts
+        rm -rf apps/frontend/node_modules
+        rm -rf node_modules
+        cd apps/frontend && pnpm install --ignore-scripts
 
     - name: Verify pnpm installation
       shell: bash
