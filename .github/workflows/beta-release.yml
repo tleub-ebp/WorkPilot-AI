@@ -79,8 +79,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # Use tag for real releases, develop branch for dry runs
-          ref: ${{ github.event.inputs.dry_run == 'true' && 'develop' || format('v{0}', needs.create-tag.outputs.version) }}
+          # Use develop branch for both dry runs and testing to ensure latest fixes
+          ref: develop
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -209,8 +209,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # Use tag for real releases, develop branch for dry runs
-          ref: ${{ github.event.inputs.dry_run == 'true' && 'develop' || format('v{0}', needs.create-tag.outputs.version) }}
+          # Use develop branch for both dry runs and testing to ensure latest fixes
+          ref: develop
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -338,8 +338,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # Use tag for real releases, develop branch for dry runs
-          ref: ${{ github.event.inputs.dry_run == 'true' && 'develop' || format('v{0}', needs.create-tag.outputs.version) }}
+          # Use develop branch for both dry runs and testing to ensure latest fixes
+          ref: develop
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -555,8 +555,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # Use tag for real releases, develop branch for dry runs
-          ref: ${{ github.event.inputs.dry_run == 'true' && 'develop' || format('v{0}', needs.create-tag.outputs.version) }}
+          # Use develop branch for both dry runs and testing to ensure latest fixes
+          ref: develop
 
       - name: Setup Python
         uses: actions/setup-python@v6
