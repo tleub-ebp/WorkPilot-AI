@@ -15,9 +15,11 @@ from pathlib import Path
 try:
     from agents.memory_manager import get_graphiti_context, save_session_memory
 except ImportError:
-    async def get_graphiti_context(*args, **kwargs):
+    def get_graphiti_context(*args, **kwargs):
         return ""
-    async def save_session_memory(*args, **kwargs):
+    def save_session_memory(*args, **kwargs):
+        # Stub function: memory_manager module not available
+        # This is a fallback that does nothing when the memory integration is missing
         pass
 
 try:
@@ -28,11 +30,26 @@ except ImportError:
 try:
     from debug import debug, debug_detailed, debug_error, debug_section, debug_success
 except ImportError:
-    def debug(*args, **kwargs): pass
-    def debug_detailed(*args, **kwargs): pass
-    def debug_error(*args, **kwargs): pass
-    def debug_section(*args, **kwargs): pass
-    def debug_success(*args, **kwargs): pass
+    def debug(*args, **kwargs): 
+        # Stub function: debug module not available
+        # This is a fallback that does nothing when debug logging is missing
+        pass
+    def debug_detailed(*args, **kwargs): 
+        # Stub function: debug module not available
+        # This is a fallback that does nothing when debug logging is missing
+        pass
+    def debug_error(*args, **kwargs): 
+        # Stub function: debug module not available
+        # This is a fallback that does nothing when debug logging is missing
+        pass
+    def debug_section(*args, **kwargs): 
+        # Stub function: debug module not available
+        # This is a fallback that does nothing when debug logging is missing
+        pass
+    def debug_success(*args, **kwargs): 
+        # Stub function: debug module not available
+        # This is a fallback that does nothing when debug logging is missing
+        pass
 
 try:
     from security.tool_input_validator import get_safe_tool_input
@@ -51,6 +68,13 @@ except ImportError:
     LogPhase = None
     def get_task_logger(*args, **kwargs):
         return None
+
+try:
+    from replay.recorder import get_replay_recorder as _get_replay_recorder
+    _REPLAY_AVAILABLE = True
+except ImportError:
+    _REPLAY_AVAILABLE = False
+    _get_replay_recorder = None  # type: ignore[assignment]
 
 from .criteria import get_qa_signoff_status
 
@@ -122,6 +146,25 @@ async def run_qa_fixer_session(
     message_count = 0
     tool_count = 0
 
+    # Initialize replay recorder for this QA fix session (non-blocking, best-effort)
+    _rs_id = None
+    _rr = None
+    if _REPLAY_AVAILABLE:
+        try:
+            import uuid as _uuid_mod
+            _rr = _get_replay_recorder()
+            _rs_id = _uuid_mod.uuid4().hex[:16]
+            _rr.start_session(_rs_id, {
+                "agent_name": "QA Fixer",
+                "agent_type": "qa_fixer",
+                "task": spec_dir.name,
+                "project_path": str(project_dir),
+                "model": getattr(getattr(client, "options", None), "model", "") or "",
+            })
+        except Exception:
+            _rr = None
+            _rs_id = None
+
     # Check that fix request file exists
     fix_request_file = spec_dir / "QA_FIX_REQUEST.md"
     if not fix_request_file.exists():
@@ -184,6 +227,12 @@ async def run_qa_fixer_session(
                                 LogPhase.VALIDATION,
                                 print_to_console=False,
                             )
+                        # Record agent response in replay
+                        if _rr and _rs_id and block.text.strip():
+                            try:
+                                _rr.record_response(_rs_id, block.text)
+                            except Exception:
+                                pass
                     elif block_type == "ToolUseBlock" and hasattr(block, "name"):
                         tool_name = block.name
                         tool_input_display = None

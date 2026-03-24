@@ -58,6 +58,13 @@ try:
 except ImportError:
     _record_usage = None  # type: ignore[assignment]
 
+try:
+    from replay.recorder import get_replay_recorder as _get_replay_recorder
+    _REPLAY_AVAILABLE = True
+except ImportError:
+    _REPLAY_AVAILABLE = False
+    _get_replay_recorder = None  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 
 
@@ -490,6 +497,32 @@ async def run_agent_session(
     message_count = 0
     tool_count = 0
 
+    # Initialize replay recorder for this session (non-blocking, best-effort)
+    _rs_id = None
+    _rr = None
+    if _REPLAY_AVAILABLE and spec_dir is not None:
+        try:
+            import uuid as _uuid_mod
+            _rr = _get_replay_recorder()
+            _rs_id = _uuid_mod.uuid4().hex[:16]
+            _phase_to_role_replay = {
+                LogPhase.PLANNING: "planner",
+                LogPhase.CODING: "coder",
+                LogPhase.VALIDATION: "qa_reviewer",
+                LogPhase.QA_FIX: "qa_fixer",
+            }
+            _agent_role = _phase_to_role_replay.get(phase, phase.value if hasattr(phase, "value") else str(phase))
+            _rr.start_session(_rs_id, {
+                "agent_name": _agent_role.replace("_", " ").title(),
+                "agent_type": _agent_role,
+                "task": spec_dir.name,
+                "project_path": str(spec_dir.parent.parent.parent),
+                "model": getattr(getattr(client, "options", None), "model", "") or "",
+            })
+        except Exception:
+            _rr = None
+            _rs_id = None
+
     # Decision logger — structured record of agent decisions (non-blocking)
     _phase_to_agent = {
         LogPhase.PLANNING: "planner",
@@ -552,6 +585,12 @@ async def run_agent_session(
                                 await streaming_wrapper.emit_agent_thinking(block.text[:300])
                             except Exception:
                                 pass
+                        # Record agent response in replay
+                        if _rr and _rs_id and block.text.strip():
+                            try:
+                                _rr.record_response(_rs_id, block.text)
+                            except Exception:
+                                pass
                     elif block_type == "ToolUseBlock" and hasattr(block, "name"):
                         tool_name = block.name
                         tool_input_display = None
@@ -602,6 +641,20 @@ async def run_agent_session(
                             else:
                                 print(f"   Input: {input_str}", flush=True)
                         current_tool = tool_name
+
+                        # Record tool use in replay
+                        if _rr and _rs_id:
+                            try:
+                                if tool_name in ("Edit", "Write") and inp and inp.get("file_path"):
+                                    _op = "update" if tool_name == "Edit" else "create"
+                                    _after = str(inp.get("new_string") or inp.get("content") or "")
+                                    _rr.record_file_change(_rs_id, inp["file_path"], operation=_op, after_content=_after)
+                                elif tool_name == "Bash" and inp and inp.get("command"):
+                                    _rr.record_command(_rs_id, inp["command"])
+                                else:
+                                    _rr.record_tool_call(_rs_id, tool_name, tool_input_dict=inp or {})
+                            except Exception:
+                                pass
 
                         # Record tool call in decision log (non-blocking)
                         if _decision_logger and inp is not None:
@@ -715,6 +768,17 @@ async def run_agent_session(
                             except Exception:
                                 pass
 
+                        # Record tool result in replay
+                        if _rr and _rs_id and current_tool:
+                            try:
+                                _result_str = str(result_content)[:2000]
+                                if current_tool == "Bash":
+                                    _rr.record_command_output(_rs_id, _result_str, is_error=is_error)
+                                elif current_tool not in ("Edit", "Write"):
+                                    _rr.record_tool_result(_rs_id, current_tool, output=_result_str, success=not is_error)
+                            except Exception:
+                                pass
+
                         current_tool = None
 
         print("\n" + "-" * 70 + "\n")
@@ -763,6 +827,11 @@ async def run_agent_session(
                 tool_count=tool_count,
                 response_length=len(response_text),
             )
+            if _rr and _rs_id:
+                try:
+                    _rr.end_session(_rs_id)
+                except Exception:
+                    pass
             return "complete", response_text, {}
 
         debug_success(
@@ -772,6 +841,11 @@ async def run_agent_session(
             tool_count=tool_count,
             response_length=len(response_text),
         )
+        if _rr and _rs_id:
+            try:
+                _rr.end_session(_rs_id)
+            except Exception:
+                pass
         return "continue", response_text, {}
 
     except Exception as e:
@@ -827,6 +901,11 @@ async def run_agent_session(
             "message": sanitized_error,
             "exception_type": type(e).__name__,
         }
+        if _rr and _rs_id:
+            try:
+                _rr.end_session(_rs_id)
+            except Exception:
+                pass
         return "error", sanitized_error, error_info
 
 
