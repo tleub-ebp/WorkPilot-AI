@@ -87,7 +87,7 @@ WorkPilot AI is a desktop application (+ CLI) where users describe a goal and AI
 
 **No time estimates** — Never provide duration predictions. Use priority-based ordering instead.
 
-**PR target** — Always target the `develop` branch for PRs to tleub-ebp/Auto-Claude_EBP, NOT `main`.
+**PR target** — Always target the `develop` branch for PRs to tleub-ebp/WorkPilot-AI, NOT `main`.
 
 ## Project Structure
 
@@ -247,7 +247,7 @@ Working examples: `agents/planner.py`, `agents/coder.py`, `qa/reviewer.py`, `qa/
 
 ### Spec Directory Structure
 
-Each spec in `.auto-claude/specs/XXX-name/` contains: `spec.md`, `requirements.json`, `context.json`, `implementation_plan.json`, `qa_report.md`, `QA_FIX_REQUEST.md`
+Each spec in `.workpilot/specs/XXX-name/` contains: `spec.md`, `requirements.json`, `context.json`, `implementation_plan.json`, `qa_report.md`, `QA_FIX_REQUEST.md`
 
 ### Memory System (Graphiti)
 
@@ -465,7 +465,7 @@ cd apps/backend && python run.py --spec 001
 npm start          # Production build + run
 npm run dev        # Development mode with HMR
 
-# Project data: .auto-claude/specs/ (gitignored)
+# Project data: .workpilot/specs/ (gitignored)
 ```
 
 ## Integrated Tools

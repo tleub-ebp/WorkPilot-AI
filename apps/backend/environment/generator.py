@@ -9,7 +9,7 @@ Example:
     >>> capturer = EnvironmentCapturer(Path("/my/project"))
     >>> capture = capturer.capture_from_compose()
     >>> generator = ComposeGenerator(capture)
-    >>> files = generator.write_all(Path(".auto-claude/environment"))
+    >>> files = generator.write_all(Path(".workpilot/environment"))
 """
 
 import logging

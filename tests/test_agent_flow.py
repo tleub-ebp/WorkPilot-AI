@@ -1765,7 +1765,7 @@ class TestWorktreeIsolation:
         info = manager.create_worktree("spec-dir-test")
 
         # Create a spec directory structure in the worktree
-        worktree_spec_dir = info.path / ".auto-claude" / "specs" / "spec-dir-test"
+        worktree_spec_dir = info.path / ".workpilot" / "specs" / "spec-dir-test"
         worktree_spec_dir.mkdir(parents=True)
 
         # Create implementation plan in the worktree's spec directory
@@ -1788,8 +1788,8 @@ class TestWorktreeIsolation:
         assert worktree_spec_dir.exists(), "Spec dir should exist in worktree"
 
         # Main project directory should not have this spec directory
-        # (the .auto-claude/specs path may exist but not this specific spec)
-        main_spec_dir = project_dir / ".auto-claude" / "specs" / "spec-dir-test"
+        # (the .workpilot/specs path may exist but not this specific spec)
+        main_spec_dir = project_dir / ".workpilot" / "specs" / "spec-dir-test"
         assert not main_spec_dir.exists(), (
             "Worktree spec dir should NOT exist in main project"
         )

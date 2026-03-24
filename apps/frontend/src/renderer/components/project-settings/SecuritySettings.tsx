@@ -482,7 +482,7 @@ export function SecuritySettings({
                   {t('projectSections.memory.databasePathDescription')}
                 </p>
                 <Input
-                  placeholder="~/.auto-claude/memories"
+                  placeholder="~/.workpilot/memories"
                   value={envConfig.graphitiDbPath || ''}
                   onChange={(e) => updateEnvConfig({ graphitiDbPath: e.target.value || undefined })}
                 />

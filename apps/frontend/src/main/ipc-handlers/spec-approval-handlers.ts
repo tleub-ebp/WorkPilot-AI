@@ -29,7 +29,7 @@ interface SpecApprovalRecord {
 }
 
 function getApprovalDbPath(projectDir: string): string {
-  return path.join(projectDir, '.auto-claude', 'spec_approvals.json');
+  return path.join(projectDir, '.workpilot', 'spec_approvals.json');
 }
 
 function loadApprovals(projectDir: string): SpecApprovalRecord[] {
@@ -53,9 +53,9 @@ function upsertApproval(projectDir: string, record: SpecApprovalRecord): void {
   saveApprovals(projectDir, records.slice(0, 500));
 }
 
-/** Scan .auto-claude/specs/ for specs with status file showing 'awaiting_approval' */
+/** Scan .workpilot/specs/ for specs with status file showing 'awaiting_approval' */
 function scanPendingSpecs(projectDir: string): SpecApprovalRecord[] {
-  const specsDir = path.join(projectDir, '.auto-claude', 'specs');
+  const specsDir = path.join(projectDir, '.workpilot', 'specs');
   if (!fs.existsSync(specsDir)) return [];
 
   const pending: SpecApprovalRecord[] = [];
@@ -103,7 +103,7 @@ export function registerSpecApprovalHandlers(): void {
 
   ipcMain.handle('specApproval:getSpec', (_event, projectDir: string, specNumber: string) => {
     try {
-      const specsDir = path.join(projectDir, '.auto-claude', 'specs');
+      const specsDir = path.join(projectDir, '.workpilot', 'specs');
       const entries = fs.readdirSync(specsDir).filter(e => e.startsWith(specNumber + '-') || e === specNumber);
       if (entries.length === 0) return { success: false, error: 'Spec not found' };
 
@@ -129,7 +129,7 @@ export function registerSpecApprovalHandlers(): void {
     autoApproveThreshold?: number;
   }) => {
     try {
-      const specsDir = path.join(projectDir, '.auto-claude', 'specs');
+      const specsDir = path.join(projectDir, '.workpilot', 'specs');
       const entries = fs.readdirSync(specsDir).filter(e => e.startsWith(params.specNumber + '-') || e === params.specNumber);
       if (entries.length === 0) return { success: false, error: 'Spec not found' };
 
@@ -173,7 +173,7 @@ export function registerSpecApprovalHandlers(): void {
     feedback: string;
   }) => {
     try {
-      const specsDir = path.join(projectDir, '.auto-claude', 'specs');
+      const specsDir = path.join(projectDir, '.workpilot', 'specs');
       const entries = fs.readdirSync(specsDir).filter(e => e.startsWith(params.specNumber + '-') || e === params.specNumber);
       if (entries.length === 0) return { success: false, error: 'Spec not found' };
 
@@ -207,7 +207,7 @@ export function registerSpecApprovalHandlers(): void {
     feedback: string;
   }) => {
     try {
-      const specsDir = path.join(projectDir, '.auto-claude', 'specs');
+      const specsDir = path.join(projectDir, '.workpilot', 'specs');
       const entries = fs.readdirSync(specsDir).filter(e => e.startsWith(params.specNumber + '-') || e === params.specNumber);
       if (entries.length === 0) return { success: false, error: 'Spec not found' };
 

@@ -55,7 +55,7 @@ class MultiRepoOrchestrator:
         """
         Args:
             master_spec_dir: Path to the master spec directory
-            project_dir: Base project directory (where .auto-claude lives)
+            project_dir: Base project directory (where .workpilot lives)
             repos: List of repo dicts with 'repo' and 'repo_path' keys
             task_description: The cross-repo task description
             model: Model to use for AI agents

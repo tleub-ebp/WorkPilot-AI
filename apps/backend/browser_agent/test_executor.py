@@ -119,7 +119,7 @@ class TestExecutor:
         try:
             json_report = (
                 self.project_dir
-                / ".auto-claude"
+                / ".workpilot"
                 / "browser-agent"
                 / "playwright-report.json"
             )

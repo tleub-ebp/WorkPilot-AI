@@ -198,7 +198,7 @@ recognizer = IntentRecognizer(model="claude-3-opus-20240229")
 
 ### Storage Location
 
-Learning data is stored in `~/.auto-claude/intent/`:
+Learning data is stored in `~/.workpilot/intent/`:
 - `feedback.jsonl` - User feedback records
 - `project_patterns.json` - Learned project patterns
 

@@ -200,7 +200,7 @@ Escaping the worktree causes:
 pwd
 
 # 2. Verify the target is within your worktree
-# If pwd shows: /path/to/.auto-claude/worktrees/tasks/spec-name/
+# If pwd shows: /path/to/.workpilot/worktrees/tasks/spec-name/
 # Then: cd ./apps/backend  ✅ SAFE
 # But:  cd /path/to/parent/project  ❌ FORBIDDEN - ESCAPES ISOLATION
 
@@ -334,8 +334,8 @@ ls -la [path-to-files]  # Make sure the path is correct from your current locati
 # FIRST: Make sure you're in the working directory root
 pwd  # Should match your working directory
 
-# Add all files EXCEPT .auto-claude directory (spec files should never be committed)
-git add . ':!.auto-claude'
+# Add all files EXCEPT .workpilot directory (spec files should never be committed)
+git add . ':!.workpilot'
 
 # If git add fails with "pathspec did not match", you have a path problem:
 # 1. Run pwd to see where you are
@@ -356,7 +356,7 @@ Verified:
 QA Fix Session: [N]"
 ```
 
-**CRITICAL**: The `:!.auto-claude` pathspec exclusion ensures spec files are NEVER committed.
+**CRITICAL**: The `:!.workpilot` pathspec exclusion ensures spec files are NEVER committed.
 
 **NOTE**: Do NOT push to remote. All work stays local until user reviews and approves.
 

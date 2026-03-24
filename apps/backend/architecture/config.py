@@ -23,11 +23,11 @@ CONFIG_FILENAME = "architecture_rules.json"
 
 def load_architecture_config(project_dir: Path) -> ArchitectureConfig | None:
     """
-    Load explicit architecture rules from .auto-claude/architecture_rules.json.
+    Load explicit architecture rules from .workpilot/architecture_rules.json.
 
     Returns None if no config file exists.
     """
-    config_path = project_dir / ".auto-claude" / CONFIG_FILENAME
+    config_path = project_dir / ".workpilot" / CONFIG_FILENAME
     if not config_path.exists():
         return None
 
@@ -174,8 +174,8 @@ def infer_architecture_config(
 
 
 def _load_project_index(project_dir: Path) -> dict:
-    """Load project_index.json from .auto-claude/."""
-    index_path = project_dir / ".auto-claude" / "project_index.json"
+    """Load project_index.json from .workpilot/."""
+    index_path = project_dir / ".workpilot" / "project_index.json"
     if not index_path.exists():
         return {}
     try:

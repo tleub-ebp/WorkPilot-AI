@@ -57,9 +57,9 @@ You may see absolute paths like `/e/projects/myapp/prod/src/file.ts` in:
 ```bash
 # Verify you're still in the worktree
 pwd
-# Should show: .../.auto-claude/worktrees/tasks/{spec-name}/
+# Should show: .../.workpilot/worktrees/tasks/{spec-name}/
 # Or (legacy): .../.worktrees/{spec-name}/
-# Or (PR review): .../.auto-claude/github/pr/worktrees/{pr-number}/
+# Or (PR review): .../.workpilot/github/pr/worktrees/{pr-number}/
 # NOT: /path/to/main/project
 ```
 
@@ -791,7 +791,7 @@ The system **automatically scans for secrets** before every commit. If secrets a
    api_key = os.environ.get("API_KEY")
    ```
 3. **Update .env.example** - Add placeholder for the new variable
-4. **Re-stage and retry** - `git add . ':!.auto-claude' && git commit ...`
+4. **Re-stage and retry** - `git add . ':!.workpilot' && git commit ...`
 
 **If it's a false positive:**
 - Add the file pattern to `.secretsignore` in the project root
@@ -803,8 +803,8 @@ The system **automatically scans for secrets** before every commit. If secrets a
 # FIRST: Make sure you're in the working directory root (check YOUR ENVIRONMENT section at top)
 pwd  # Should match your working directory
 
-# Add all files EXCEPT .auto-claude directory (spec files should never be committed)
-git add . ':!.auto-claude'
+# Add all files EXCEPT .workpilot directory (spec files should never be committed)
+git add . ':!.workpilot'
 
 # If git add fails with "pathspec did not match", you have a path problem:
 # 1. Run pwd to see where you are
@@ -818,7 +818,7 @@ git commit -m "auto-claude: Complete [subtask-id] - [subtask description]
 - Phase progress: [X]/[Y] subtasks complete"
 ```
 
-**CRITICAL**: The `:!.auto-claude` pathspec exclusion ensures spec files are NEVER committed.
+**CRITICAL**: The `:!.workpilot` pathspec exclusion ensures spec files are NEVER committed.
 These are internal tracking files that must stay local.
 
 ### DO NOT Push to Remote
@@ -851,7 +851,7 @@ Next phase (if applicable): [phase-name]
 === END SESSION N ===
 ```
 
-**Note:** The `build-progress.txt` file is in `.auto-claude/specs/` which is gitignored.
+**Note:** The `build-progress.txt` file is in `.workpilot/specs/` which is gitignored.
 Do NOT try to commit it - the framework tracks progress automatically.
 
 ---

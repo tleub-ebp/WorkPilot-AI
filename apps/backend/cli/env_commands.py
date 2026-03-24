@@ -32,7 +32,7 @@ def handle_env_capture_command(project_dir: Path, source: str = "auto") -> None:
         )
         return
 
-    output_dir = project_dir / ".auto-claude" / "environment"
+    output_dir = project_dir / ".workpilot" / "environment"
     saved = capturer.save_capture(capture, output_dir)
 
     print(f"\nCaptured {len(capture.services)} services:")
@@ -63,7 +63,7 @@ def handle_env_reproduce_command(project_dir: Path) -> None:
     from environment.generator import ComposeGenerator
 
     capture_file = (
-        project_dir / ".auto-claude" / "environment" / "environment_capture.json"
+        project_dir / ".workpilot" / "environment" / "environment_capture.json"
     )
     if not capture_file.exists():
         print("No capture found. Run --env-capture first.")
@@ -98,7 +98,7 @@ def handle_env_reproduce_command(project_dir: Path) -> None:
     )
 
     generator = ComposeGenerator(capture)
-    output_dir = project_dir / ".auto-claude" / "environment"
+    output_dir = project_dir / ".workpilot" / "environment"
     files = generator.write_all(output_dir)
 
     print("Generated files:")

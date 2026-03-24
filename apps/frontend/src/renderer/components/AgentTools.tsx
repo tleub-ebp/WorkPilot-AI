@@ -289,12 +289,12 @@ const MCP_SERVERS: Record<string, { name: string; description: string; icon: Rea
     description: 'Build progress tracking, session context, discoveries & gotchas recording',
     icon: ListChecks,
     tools: [
-      'mcp__auto-claude__update_subtask_status',
-      'mcp__auto-claude__get_build_progress',
-      'mcp__auto-claude__record_discovery',
-      'mcp__auto-claude__record_gotcha',
-      'mcp__auto-claude__get_session_context',
-      'mcp__auto-claude__update_qa_status',
+      'mcp__workpilot__update_subtask_status',
+      'mcp__workpilot__get_build_progress',
+      'mcp__workpilot__record_discovery',
+      'mcp__workpilot__record_gotcha',
+      'mcp__workpilot__get_session_context',
+      'mcp__workpilot__update_qa_status',
     ],
   },
   linear: {

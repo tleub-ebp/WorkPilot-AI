@@ -807,7 +807,7 @@ async function performCIWaitCheck(
  * Get the GitHub directory for a project
  */
 function getGitHubDir(project: Project): string {
-  return path.join(project.path, ".auto-claude", "github");
+  return path.join(project.path, ".workpilot", "github");
 }
 
 /**
@@ -2035,7 +2035,7 @@ export function registerPRHandlers(getMainWindow: () => BrowserWindow | null): v
           }
 
           // Use temp file to avoid shell escaping issues
-          const tmpFile = join(project.path, ".auto-claude", "tmp_comment_body.txt");
+          const tmpFile = join(project.path, ".workpilot", "tmp_comment_body.txt");
           try {
             writeFileSync(tmpFile, body, "utf-8");
             // Use execFileSync with arguments array to prevent command injection
@@ -2263,7 +2263,7 @@ export function registerPRHandlers(getMainWindow: () => BrowserWindow | null): v
 
       const result = await withProjectOrNull(projectId, async (project) => {
         // Check if review exists and has reviewed_commit_sha
-        const githubDir = path.join(project.path, ".auto-claude", "github");
+        const githubDir = path.join(project.path, ".workpilot", "github");
         const reviewPath = path.join(githubDir, "pr", `review_${prNumber}.json`);
 
         let review: PRReviewResult;

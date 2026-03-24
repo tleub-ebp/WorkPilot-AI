@@ -287,7 +287,7 @@ learning_mode.explain_code(...)
 report = learning_mode.generate_markdown_report()
 
 # Sauvegarder la session
-session_file = learning_mode.save_session(Path(".auto-claude/learning"))
+session_file = learning_mode.save_session(Path(".workpilot/learning"))
 ```
 
 ### Dans l'UI (Insights)

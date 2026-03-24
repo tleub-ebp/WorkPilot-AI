@@ -67,7 +67,7 @@ class SelfHealingMonitor:
 
         # State
         self.last_report: HealthReport | None = None
-        self.history_file = self.project_dir / ".auto-claude" / "health-history.json"
+        self.history_file = self.project_dir / ".workpilot" / "health-history.json"
         self.history: list[dict[str, Any]] = []
 
         self._load_history()

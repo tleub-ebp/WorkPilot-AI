@@ -76,24 +76,24 @@ def parse_args() -> argparse.Namespace:
         epilog="""
 Examples:
   # List all specs
-  python auto-claude/run.py --list
+  python workpilot/run.py --list
 
   # Run a specific spec (by number or full name)
-  python auto-claude/run.py --spec 001
-  python auto-claude/run.py --spec 001-initial-app
+  python workpilot/run.py --spec 001
+  python workpilot/run.py --spec 001-initial-app
 
   # Workspace management (after build completes)
-  python auto-claude/run.py --spec 001 --merge     # Add build to your project
-  python auto-claude/run.py --spec 001 --review    # See what was built
-  python auto-claude/run.py --spec 001 --discard   # Delete build (with confirmation)
+  python workpilot/run.py --spec 001 --merge     # Add build to your project
+  python workpilot/run.py --spec 001 --review    # See what was built
+  python workpilot/run.py --spec 001 --discard   # Delete build (with confirmation)
 
   # Advanced options
-  python auto-claude/run.py --spec 001 --direct       # Skip workspace isolation
-  python auto-claude/run.py --spec 001 --isolated     # Force workspace isolation
+  python workpilot/run.py --spec 001 --direct       # Skip workspace isolation
+  python workpilot/run.py --spec 001 --isolated     # Force workspace isolation
 
   # Status checks
-  python auto-claude/run.py --spec 001 --review-status  # Check human review status
-  python auto-claude/run.py --spec 001 --qa-status      # Check QA validation status
+  python workpilot/run.py --spec 001 --review-status  # Check human review status
+  python workpilot/run.py --spec 001 --qa-status      # Check QA validation status
 
 Prerequisites:
   1. Authenticate: Run 'claude' and type '/login'
@@ -650,8 +650,8 @@ def _run_cli() -> None:
         print_banner()
         print("\nError: --spec is required")
         print("\nUsage:")
-        print("  python auto-claude/run.py --list           # See all specs")
-        print("  python auto-claude/run.py --spec 001       # Run a spec")
+        print("  python workpilot/run.py --list           # See all specs")
+        print("  python workpilot/run.py --spec 001       # Run a spec")
         print("\nCreate a new spec with:")
         print("  claude /spec")
         sys.exit(1)

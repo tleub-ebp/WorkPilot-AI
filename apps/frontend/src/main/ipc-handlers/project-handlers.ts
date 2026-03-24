@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron';
-import { existsSync, } from 'node:fs';
+import { existsSync, renameSync } from 'node:fs';
+import * as path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { IPC_CHANNELS } from '../../shared/constants';
 import type {
@@ -421,6 +422,18 @@ export function registerProjectHandlers(
           return { success: false, error: 'Directory does not exist' };
         }
 
+        // Migrate legacy .auto-claude/ to .workpilot/ if needed
+        const oldDir = path.join(projectPath, '.auto-claude');
+        const newDir = path.join(projectPath, '.workpilot');
+        if (existsSync(oldDir) && !existsSync(newDir)) {
+          try {
+            renameSync(oldDir, newDir);
+            console.log(`[Project] Migrated .auto-claude → .workpilot in ${projectPath}`);
+          } catch (migrateErr) {
+            console.warn(`[Project] Could not migrate .auto-claude to .workpilot: ${migrateErr}`);
+          }
+        }
+
         const project = projectStore.addProject(projectPath);
         return { success: true, data: project };
       } catch (error) {
@@ -443,11 +456,27 @@ export function registerProjectHandlers(
   ipcMain.handle(
     IPC_CHANNELS.PROJECT_LIST,
     async (): Promise<IPCResult<Project[]>> => {
-      // Validate that .auto-claude folders still exist for all projects
+      // Migrate legacy .auto-claude/ to .workpilot/ for all existing projects
+      const allProjects = projectStore.getProjects();
+      for (const proj of allProjects) {
+        if (!proj.path) continue;
+        const oldDir = path.join(proj.path, '.auto-claude');
+        const newDir = path.join(proj.path, '.workpilot');
+        if (existsSync(oldDir) && !existsSync(newDir)) {
+          try {
+            renameSync(oldDir, newDir);
+            console.log(`[Project] Migrated .auto-claude → .workpilot in ${proj.path}`);
+          } catch (migrateErr) {
+            console.warn(`[Project] Could not migrate .auto-claude to .workpilot: ${migrateErr}`);
+          }
+        }
+      }
+
+      // Validate that .workpilot folders still exist for all projects
       // If a folder was deleted, reset autoBuildPath so UI prompts for reinitialization
       const resetIds = projectStore.validateProjects();
       if (resetIds.length > 0) {
-        console.warn('[IPC] PROJECT_LIST: Detected missing .auto-claude folders for', resetIds.length, 'project(s)');
+        console.warn('[IPC] PROJECT_LIST: Detected missing .workpilot folders for', resetIds.length, 'project(s)');
       }
 
       const projects = projectStore.getProjects();
@@ -609,7 +638,7 @@ export function registerProjectHandlers(
 
         if (result.success) {
           // Update project's autoBuildPath
-          projectStore.updateAutoBuildPath(projectId, '.auto-claude');
+          projectStore.updateAutoBuildPath(projectId, '.workpilot');
         }
 
         return { success: result.success, data: result, error: result.error };
@@ -623,7 +652,7 @@ export function registerProjectHandlers(
   );
 
   // PROJECT_CHECK_VERSION now just checks if project is initialized
-  // Version tracking for .auto-claude is removed since it only contains data
+  // Version tracking for .workpilot is removed since it only contains data
   ipcMain.handle(
     IPC_CHANNELS.PROJECT_CHECK_VERSION,
     async (_, projectId: string): Promise<IPCResult<AutoBuildVersionInfo>> => {
@@ -637,7 +666,7 @@ export function registerProjectHandlers(
           success: true,
           data: {
             isInitialized: isInitialized(project.path),
-            updateAvailable: false // No updates for .auto-claude - it's just data
+            updateAvailable: false // No updates for .workpilot - it's just data
           }
         };
       } catch (error) {

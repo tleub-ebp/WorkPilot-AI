@@ -16,7 +16,7 @@ def handle_cost_report_command(project_dir: Path, period: str = "monthly") -> No
     from scheduling.cost_estimator import CostEstimator
 
     estimator = CostEstimator()
-    data_path = project_dir / ".auto-claude" / "cost_data.json"
+    data_path = project_dir / ".workpilot" / "cost_data.json"
     estimator.load_from_file(data_path)
 
     if period == "weekly":
@@ -80,7 +80,7 @@ def handle_cost_compare_command(project_dir: Path) -> None:
     from scheduling.cost_estimator import CostEstimator
 
     estimator = CostEstimator()
-    data_path = project_dir / ".auto-claude" / "cost_data.json"
+    data_path = project_dir / ".workpilot" / "cost_data.json"
     estimator.load_from_file(data_path)
 
     monthly_report = estimator.get_monthly_report(str(project_dir))
@@ -107,7 +107,7 @@ def handle_cost_budget_command(
     from scheduling.cost_estimator import CostEstimator
 
     estimator = CostEstimator()
-    data_path = project_dir / ".auto-claude" / "cost_data.json"
+    data_path = project_dir / ".workpilot" / "cost_data.json"
     estimator.load_from_file(data_path)
 
     project_id = str(project_dir)

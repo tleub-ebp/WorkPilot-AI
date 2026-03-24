@@ -15,19 +15,18 @@ jobs:
     steps:
       - uses: actions/first-interaction@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          issue-message: |
+          issue_message: |
             👋 Thanks for opening your first issue!
 
             A maintainer will triage this soon. In the meantime:
             - Make sure you've provided all the requested info
             - Join our [Discord](https://discord.gg/QhRnz9m5HE) for faster help
-          pr-message: |
+          pr_message: |
             🎉 Thanks for your first PR!
 
             A maintainer will review it soon. Please make sure:
             - Your branch is synced with `develop`
             - CI checks pass
-            - You've followed our [contribution guide](https://github.com/tleub-ebp/Auto-Claude_EBP/blob/develop/CONTRIBUTING.md)
+            - You've followed our [contribution guide](https://github.com/tleub-ebp/WorkPilot-AI/blob/develop/CONTRIBUTING.md)
 
             Welcome to the WorkPilot AI community!

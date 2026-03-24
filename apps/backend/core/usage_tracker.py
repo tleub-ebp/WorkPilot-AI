@@ -2,9 +2,9 @@
 Usage Tracker — Records LLM token usage and costs from agent sessions.
 
 Writes to three destinations:
-  1. {project_dir}/.auto-claude/cost_data.json       (CostEstimator IPC handler)
+  1. {project_dir}/.workpilot/cost_data.json       (CostEstimator IPC handler)
   2. analytics.db SQLite                              (AnalyticsDashboard REST API)
-  3. {project_dir}/.auto-claude/dashboard_snapshot.json (DashboardMetrics REST API)
+  3. {project_dir}/.workpilot/dashboard_snapshot.json (DashboardMetrics REST API)
 
 Called from agents/session.py after each run_agent_session() call.
 All writes are best-effort: errors are logged but never propagated to the caller.
@@ -112,7 +112,7 @@ def record_session_usage(
     Record usage from one agent session. All writes are best-effort.
 
     Args:
-        spec_dir:       Spec directory (.auto-claude/specs/001-name/)
+        spec_dir:       Spec directory (.workpilot/specs/001-name/)
         project_dir:    Project root directory
         phase:          Phase name ("planning", "coding", "qa_review", etc.)
         agent_type:     Agent type ("planner", "coder", "qa_reviewer", etc.)
@@ -193,8 +193,8 @@ def _append_cost_data(
     agent_type: str,
     phase: str,
 ) -> None:
-    """Append a usage record to {project_dir}/.auto-claude/cost_data.json."""
-    data_path = project_dir / ".auto-claude" / "cost_data.json"
+    """Append a usage record to {project_dir}/.workpilot/cost_data.json."""
+    data_path = project_dir / ".workpilot" / "cost_data.json"
     data_path.parent.mkdir(parents=True, exist_ok=True)
 
     with _get_file_lock(data_path):
@@ -354,9 +354,9 @@ def _update_dashboard_snapshot(
     output_tokens: int,
     cost_usd: float,
 ) -> None:
-    """Update {project_dir}/.auto-claude/dashboard_snapshot.json.
+    """Update {project_dir}/.workpilot/dashboard_snapshot.json.
     Accumulates token/cost totals and per-provider/model breakdowns."""
-    snap_path = project_dir / ".auto-claude" / "dashboard_snapshot.json"
+    snap_path = project_dir / ".workpilot" / "dashboard_snapshot.json"
     snap_path.parent.mkdir(parents=True, exist_ok=True)
 
     with _get_file_lock(snap_path):
@@ -409,7 +409,7 @@ def record_task_status(
 ) -> None:
     """Increment tasks_by_status counter in dashboard_snapshot.json."""
     try:
-        snap_path = project_dir / ".auto-claude" / "dashboard_snapshot.json"
+        snap_path = project_dir / ".workpilot" / "dashboard_snapshot.json"
         snap_path.parent.mkdir(parents=True, exist_ok=True)
 
         with _get_file_lock(snap_path):
@@ -448,7 +448,7 @@ def record_qa_result(
 ) -> None:
     """Update QA first-pass rate in dashboard_snapshot.json (running average)."""
     try:
-        snap_path = project_dir / ".auto-claude" / "dashboard_snapshot.json"
+        snap_path = project_dir / ".workpilot" / "dashboard_snapshot.json"
         snap_path.parent.mkdir(parents=True, exist_ok=True)
 
         with _get_file_lock(snap_path):
@@ -480,7 +480,7 @@ def record_qa_result(
 def record_merge(project_dir: Path, automatic: bool) -> None:
     """Increment merge counters in dashboard_snapshot.json."""
     try:
-        snap_path = project_dir / ".auto-claude" / "dashboard_snapshot.json"
+        snap_path = project_dir / ".workpilot" / "dashboard_snapshot.json"
         snap_path.parent.mkdir(parents=True, exist_ok=True)
 
         with _get_file_lock(snap_path):

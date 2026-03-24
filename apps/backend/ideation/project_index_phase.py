@@ -37,7 +37,7 @@ class ProjectIndexPhase:
             IdeationPhaseResult with project index data
         """
         project_index = self.output_dir / "project_index.json"
-        auto_build_index = self.project_dir / ".auto-claude" / "project_index.json"
+        auto_build_index = self.project_dir / ".workpilot" / "project_index.json"
 
         # Check if we can copy existing index
         if auto_build_index.exists():

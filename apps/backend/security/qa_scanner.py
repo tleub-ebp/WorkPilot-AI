@@ -384,7 +384,7 @@ class QASecurityScanner:
         "out",
         ".next",
         "coverage",
-        ".auto-claude",
+        ".workpilot",
     }
     _SCAN_EXTENSIONS = {
         ".py",

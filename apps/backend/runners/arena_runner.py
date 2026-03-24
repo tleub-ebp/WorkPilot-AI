@@ -92,7 +92,7 @@ class ArenaModelStats:
 
 def _get_arena_data_dir() -> Path:
     """Returns the arena data directory, creating it if needed."""
-    data_dir = Path.home() / ".auto-claude" / "arena"
+    data_dir = Path.home() / ".workpilot" / "arena"
     data_dir.mkdir(parents=True, exist_ok=True)
     return data_dir
 

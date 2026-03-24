@@ -56,7 +56,7 @@ class IncidentResponderOrchestrator:
         self.data_dir = (
             Path(data_dir)
             if data_dir
-            else self.project_dir / ".auto-claude" / "self-healing"
+            else self.project_dir / ".workpilot" / "self-healing"
         )
         self.auto_fix = auto_fix
         self.auto_create_pr = auto_create_pr

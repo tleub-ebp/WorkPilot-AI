@@ -357,7 +357,7 @@ def main():
     parser.add_argument(
         "--output",
         type=Path,
-        help="Output directory for generated pipelines (default: project/.auto-claude/pipelines/)",
+        help="Output directory for generated pipelines (default: project/.workpilot/pipelines/)",
     )
     parser.add_argument(
         "--platforms",
@@ -404,7 +404,7 @@ def main():
         print(f"Valid platforms: {SUPPORTED_PLATFORMS}")
         sys.exit(1)
 
-    output_dir = args.output or project_dir / ".auto-claude" / "pipelines"
+    output_dir = args.output or project_dir / ".workpilot" / "pipelines"
 
     try:
         result = asyncio.run(

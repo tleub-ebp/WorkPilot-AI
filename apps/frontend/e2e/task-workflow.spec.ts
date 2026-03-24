@@ -22,7 +22,7 @@ function setupTestEnvironment(): void {
   // Create secure temp directory with random suffix
   TEST_DATA_DIR = mkdtempSync(path.join(tmpdir(), 'auto-claude-task-workflow-e2e-'));
   TEST_PROJECT_DIR = path.join(TEST_DATA_DIR, 'test-project');
-  SPECS_DIR = path.join(TEST_PROJECT_DIR, '.auto-claude', 'specs');
+  SPECS_DIR = path.join(TEST_PROJECT_DIR, '.workpilot', 'specs');
   mkdirSync(TEST_PROJECT_DIR, { recursive: true });
   mkdirSync(SPECS_DIR, { recursive: true });
 }

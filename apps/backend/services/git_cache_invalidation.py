@@ -520,7 +520,7 @@ class GitBasedCacheInvalidator:
 
                 db_path = (
                     self.context_cache.project_path
-                    / ".auto-claude"
+                    / ".workpilot"
                     / self.context_cache.config.db_path
                 )
                 with sqlite3.connect(db_path) as conn:

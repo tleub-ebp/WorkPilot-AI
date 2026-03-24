@@ -12,7 +12,7 @@ def check_compiled_js():
     print("🔍 Checking compiled JavaScript for our modifications...")
     
     # Check the compiled main process file
-    main_js_path = "c:\\Users\\thomas.leberre\\Repositories\\Auto-Claude_EBP\\apps\\frontend\\out\\main\\index.js"
+    main_js_path = "c:\\Users\\thomas.leberre\\Repositories\\WorkPilot-AI\\apps\\frontend\\out\\main\\index.js"
     
     if not os.path.exists(main_js_path):
         print("❌ Compiled main.js not found")

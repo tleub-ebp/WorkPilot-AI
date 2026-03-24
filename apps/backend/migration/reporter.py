@@ -60,7 +60,7 @@ class MigrationReporter:
         if not output_path:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             output_path = str(
-                self.project_dir / f".auto-claude/migration/report_{timestamp}.md"
+                self.project_dir / f".workpilot/migration/report_{timestamp}.md"
             )
 
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)

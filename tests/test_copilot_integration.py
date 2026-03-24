@@ -315,7 +315,7 @@ class TestProviderSwitching:
     def test_project_env_file_switch(
         self, mock_tools, mock_mcp, mock_cache, tmp_path, monkeypatch
     ):
-        """Project .auto-claude/.env AI_PROVIDER=copilot → CopilotAgentClient."""
+        """Project .workpilot/.env AI_PROVIDER=copilot → CopilotAgentClient."""
         from core.client import create_agent_client
 
         monkeypatch.delenv("AUTO_CLAUDE_PROVIDER", raising=False)
@@ -326,7 +326,7 @@ class TestProviderSwitching:
         monkeypatch.setattr("core.client.is_linear_enabled", lambda: False)
 
         # Create project env file
-        auto_claude_dir = tmp_path / ".auto-claude"
+        auto_claude_dir = tmp_path / ".workpilot"
         auto_claude_dir.mkdir()
         env_file = auto_claude_dir / ".env"
         env_file.write_text("AI_PROVIDER=copilot\n")

@@ -24,7 +24,7 @@ class QualityReviewIntegration:
         self.project_dir = project_dir
         self.scorer = QualityScorer(project_dir)
         self.formatter = QualityBadgeFormatter()
-        self.history_dir = project_dir / ".auto-claude" / "quality"
+        self.history_dir = project_dir / ".workpilot" / "quality"
         self.history_dir.mkdir(parents=True, exist_ok=True)
 
     async def review_pr(

@@ -452,7 +452,7 @@ ${existingVars['OLLAMA_EMBEDDING_DIM'] ? `OLLAMA_EMBEDDING_DIM=${existingVars['O
 
 # LadybugDB Database (embedded - no Docker required)
 ${existingVars['GRAPHITI_DATABASE'] ? `GRAPHITI_DATABASE=${existingVars['GRAPHITI_DATABASE']}` : '# GRAPHITI_DATABASE=auto_claude_memory'}
-${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_DB_PATH']}` : '# GRAPHITI_DB_PATH=~/.auto-claude/memories'}
+${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_DB_PATH']}` : '# GRAPHITI_DB_PATH=~/.workpilot/memories'}
 `;
 
     return content;
@@ -752,7 +752,7 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
         // Generate new content
         const newContent = generateEnvContent(config, existingContent);
 
-        // Ensure parent directory exists (handles case where .auto-claude was deleted or not created)
+        // Ensure parent directory exists (handles case where .workpilot was deleted or not created)
         const envDir = path.dirname(envPath);
         if (!existsSync(envDir)) {
           mkdirSync(envDir, { recursive: true });

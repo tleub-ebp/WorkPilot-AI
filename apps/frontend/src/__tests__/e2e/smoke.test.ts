@@ -127,7 +127,7 @@ function setupTestDirs(): void {
   TEST_PROJECT_PATH = path.join(TEST_DIR, 'test-project');
   mkdirSync(TEST_PROJECT_PATH, { recursive: true });
   // Create a minimal project structure
-  mkdirSync(path.join(TEST_PROJECT_PATH, '.auto-claude'), { recursive: true });
+  mkdirSync(path.join(TEST_PROJECT_PATH, '.workpilot'), { recursive: true });
 }
 
 // Cleanup test directories
