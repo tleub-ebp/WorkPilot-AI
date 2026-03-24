@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from '../ui/alert';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Loader2, CheckCircle, XCircle, AlertCircle, LogIn, LogOut, Key, Settings } from 'lucide-react';
-import { LucideGithub } from '@/lib/icons';
+import { Globe } from '@/lib/icons';
 import { useTranslation } from 'react-i18next';
 import { useGitHubCopilot } from '../../hooks/useGitHubCopilot';
 import { useToast } from '@/hooks/use-toast';
@@ -267,7 +267,7 @@ export function GitHubCopilotConfig() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div className="flex items-center space-x-2">
-            <LucideGithub className="w-5 h-5" />
+            <Globe className="w-5 h-5" />
             <CardTitle className="text-lg">{t('githubCopilot.title')}</CardTitle>
           </div>
           <div className="flex items-center space-x-2">
