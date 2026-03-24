@@ -131,14 +131,22 @@ jobs:
       - name: Fix Electron and rebuild native modules
         run: cd apps/frontend && node ../../scripts/fix-electron.js && npx @electron/rebuild -m ../.. -w better-sqlite3
 
+      - name: Configure macOS code signing
+        env:
+          CERT: ${{ secrets.MAC_CERTIFICATE }}
+          CERT_PWD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ -n "$CERT" ]; then
+            echo "CSC_LINK=$CERT" >> $GITHUB_ENV
+            echo "CSC_KEY_PASSWORD=$CERT_PWD" >> $GITHUB_ENV
+          fi
+
       - name: Package macOS (Intel)
         run: |
           VERSION="${{ needs.create-tag.outputs.version }}"
           cd apps/frontend && npm run package:mac -- --x64 --config.extraMetadata.version="$VERSION"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_LINK: ${{ secrets.MAC_CERTIFICATE }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_TRACES_SAMPLE_RATE: ${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}
@@ -214,14 +222,22 @@ jobs:
       - name: Fix Electron and rebuild native modules
         run: cd apps/frontend && node ../../scripts/fix-electron.js && npx @electron/rebuild -m ../.. -w better-sqlite3
 
+      - name: Configure macOS code signing
+        env:
+          CERT: ${{ secrets.MAC_CERTIFICATE }}
+          CERT_PWD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ -n "$CERT" ]; then
+            echo "CSC_LINK=$CERT" >> $GITHUB_ENV
+            echo "CSC_KEY_PASSWORD=$CERT_PWD" >> $GITHUB_ENV
+          fi
+
       - name: Package macOS (Apple Silicon)
         run: |
           VERSION="${{ needs.create-tag.outputs.version }}"
           cd apps/frontend && npm run package:mac -- --arm64 --config.extraMetadata.version="$VERSION"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_LINK: ${{ secrets.MAC_CERTIFICATE }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_TRACES_SAMPLE_RATE: ${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}
