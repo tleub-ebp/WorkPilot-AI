@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Github,
+  Globe,
   GitBranch,
   Key,
   Loader2,
@@ -11,7 +11,6 @@ import {
   Plus,
   Link,
   Lock,
-  Globe,
   Building,
   User
 } from 'lucide-react';
@@ -38,11 +37,11 @@ import { ClaudeOAuthFlow } from './project-settings/ClaudeOAuthFlow';
 import type { Project} from '@shared/types';
 
 interface GitHubSetupModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  project: Project;
-  onComplete: (settings: { githubToken: string; githubRepo: string; mainBranch: string; githubAuthMethod?: 'oauth' | 'pat' }) => void;
-  onSkip?: () => void;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly project: Project;
+  readonly onComplete: (settings: { githubToken: string; githubRepo: string; mainBranch: string; githubAuthMethod?: 'oauth' | 'pat' }) => void;
+  readonly onSkip?: () => void;
 }
 
 type SetupStep = 'github-auth' | 'claude-auth' | 'repo-confirm' | 'repo' | 'branch' | 'complete';
@@ -101,7 +100,7 @@ export function GitHubSetupModal({
       setError(null);
       // Reset repo setup state
       setRepoAction(null);
-      setNewRepoName(project.name.replace(/[^A-Za-z0-9_.-]/g, '-'));
+      setNewRepoName(project.name.replaceAll(/[^A-Za-z0-9_.-]/g, '-'));
       setIsPrivateRepo(true);
       setExistingRepoName('');
       setIsCreatingRepo(false);
@@ -115,11 +114,11 @@ export function GitHubSetupModal({
       const checkExistingAuth = async () => {
         try {
           // Check for existing GitHub token
-          const ghTokenResult = await window.electronAPI.getGitHubToken();
+          const ghTokenResult = await globalThis.electronAPI.getGitHubToken();
           const hasGitHubAuth = ghTokenResult.success && ghTokenResult.data?.token;
 
           // Check for existing Claude authentication
-          const profilesResult = await window.electronAPI.getClaudeProfiles();
+          const profilesResult = await globalThis.electronAPI.getClaudeProfiles();
           let hasClaudeAuth = false;
           if (profilesResult.success && profilesResult.data) {
             const activeProfile = profilesResult.data.profiles.find(
@@ -159,14 +158,14 @@ export function GitHubSetupModal({
     setIsLoadingOrgs(true);
     try {
       // Get current user
-      const userResult = await window.electronAPI.getGitHubUser();
+      const userResult = await globalThis.electronAPI.getGitHubUser();
       if (userResult.success && userResult.data) {
         setGithubUsername(userResult.data.username);
         setSelectedOwner(userResult.data.username); // Default to personal account
       }
 
       // Get organizations
-      const orgsResult = await window.electronAPI.listGitHubOrgs();
+      const orgsResult = await globalThis.electronAPI.listGitHubOrgs();
       if (orgsResult.success && orgsResult.data) {
         setOrganizations(orgsResult.data.orgs);
       }
@@ -184,7 +183,7 @@ export function GitHubSetupModal({
 
     try {
       // Try to detect repo from git remote
-      const result = await window.electronAPI.detectGitHubRepo(project.path);
+      const result = await globalThis.electronAPI.detectGitHubRepo(project.path);
       if (result.success && result.data) {
         setDetectedRepo(result.data);
         setGithubRepo(result.data);
@@ -211,7 +210,7 @@ export function GitHubSetupModal({
 
     try {
       // Get branches from GitHub API
-      const result = await window.electronAPI.getGitHubBranches(repo, githubToken!);
+      const result = await globalThis.electronAPI.getGitHubBranches(repo, githubToken!);
       if (result.success && result.data) {
         setBranches(result.data);
 
@@ -246,7 +245,7 @@ export function GitHubSetupModal({
 
     // Check if Claude is already authenticated before showing auth step
     try {
-      const profilesResult = await window.electronAPI.getClaudeProfiles();
+      const profilesResult = await globalThis.electronAPI.getClaudeProfiles();
       if (profilesResult.success && profilesResult.data) {
         const activeProfile = profilesResult.data.profiles.find(
           (p) => p.id === profilesResult.data!.activeProfileId
@@ -290,10 +289,10 @@ export function GitHubSetupModal({
     setError(null);
 
     try {
-      const result = await window.electronAPI.createGitHubRepo(newRepoName.trim(), {
+      const result = await globalThis.electronAPI.createGitHubRepo(newRepoName.trim(), {
         isPrivate: isPrivateRepo,
         projectPath: project.path,
-        owner: selectedOwner !== githubUsername ? selectedOwner : undefined // Only pass owner if it's an org
+        owner: selectedOwner === githubUsername ? undefined : selectedOwner // Only pass owner if it's an org
       });
 
       if (result.success && result.data) {
@@ -343,7 +342,7 @@ export function GitHubSetupModal({
     setError(null);
 
     try {
-      const result = await window.electronAPI.addGitRemote(project.path, existingRepoName.trim());
+      const result = await globalThis.electronAPI.addGitRemote(project.path, existingRepoName.trim());
 
       if (result.success) {
         setGithubRepo(existingRepoName.trim());
@@ -372,6 +371,12 @@ export function GitHubSetupModal({
     }
   };
 
+  // Helper function to get step progress index
+  const getStepProgressIndex = (currentStep: SetupStep): number => {
+    const authSteps: SetupStep[] = ['github-auth', 'claude-auth', 'repo-confirm', 'repo'];
+    return authSteps.includes(currentStep) ? 0 : 1;
+  };
+
   // Render step content
   const renderStepContent = () => {
     switch (step) {
@@ -380,7 +385,7 @@ export function GitHubSetupModal({
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Github className="h-5 w-5" />
+                <Globe className="h-5 w-5" />
                 {t('githubSetup.connectTitle')}
               </DialogTitle>
               <DialogDescription>
@@ -424,7 +429,7 @@ export function GitHubSetupModal({
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Github className="h-5 w-5" />
+                <Globe className="h-5 w-5" />
                 Confirm Repository
               </DialogTitle>
               <DialogDescription>
@@ -473,7 +478,7 @@ export function GitHubSetupModal({
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Github className="h-5 w-5" />
+                <Globe className="h-5 w-5" />
                 Connect to GitHub
               </DialogTitle>
               <DialogDescription>
@@ -618,9 +623,9 @@ export function GitHubSetupModal({
                       <button
                         onClick={() => setIsPrivateRepo(false)}
                         className={`flex items-center gap-2 px-3 py-2 rounded-md border ${
-                          !isPrivateRepo
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-muted hover:border-primary/50'
+                          isPrivateRepo
+                            ? 'border-muted hover:border-primary/50'
+                            : 'border-primary bg-primary/10 text-primary'
                         }`}
                         disabled={isCreatingRepo}
                         role="radio"
@@ -741,7 +746,7 @@ export function GitHubSetupModal({
               {/* Show detected repo */}
               {detectedRepo && (
                 <div className="flex items-center gap-2 text-sm">
-                  <Github className="h-4 w-4 text-muted-foreground" />
+                  <Globe className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Repository:</span>
                   <code className="px-2 py-0.5 bg-muted rounded font-mono text-xs">
                     {detectedRepo}
@@ -856,6 +861,17 @@ export function GitHubSetupModal({
   };
 
   // Progress indicator
+  // Helper function to get step progress styling
+  const getStepProgressClass = (stepIndex: number, currentProgressIndex: number): string => {
+    if (stepIndex < currentProgressIndex) {
+      return 'bg-success text-success-foreground';
+    }
+    if (stepIndex === currentProgressIndex) {
+      return 'bg-primary text-primary-foreground';
+    }
+    return 'bg-muted text-muted-foreground';
+  };
+
   const renderProgress = () => {
     const steps: { label: string }[] = [
       { label: 'Authenticate' },
@@ -866,26 +882,16 @@ export function GitHubSetupModal({
     if (step === 'complete') return null;
 
     // Map steps to progress indices
-    // Auth steps (github-auth, claude-auth, repo) = 0
+    // Auth steps (github-auth, claude-auth, repo-confirm, repo) = 0
     // Config steps (branch) = 1
-    const currentIndex =
-      step === 'github-auth' ? 0 :
-      step === 'claude-auth' ? 0 :
-      step === 'repo' ? 0 :
-      1;
+    const currentIndex = getStepProgressIndex(step);
 
     return (
       <div className="flex items-center justify-center gap-2 mb-4">
         {steps.map((s, index) => (
-          <div key={index} className="flex items-center">
+          <div key={s.label} className="flex items-center">
             <div
-              className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
-                index < currentIndex
-                  ? 'bg-success text-success-foreground'
-                  : index === currentIndex
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground'
-              }`}
+              className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${getStepProgressClass(index, currentIndex)}`}
             >
               {index < currentIndex ? (
                 <CheckCircle2 className="h-4 w-4" />
