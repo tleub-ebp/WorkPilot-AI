@@ -536,13 +536,13 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Download Intel DMG
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: macos-intel-builds
           path: intel
 
       - name: Download ARM64 DMG
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: macos-arm64-builds
           path: arm64
@@ -583,7 +583,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: dist
 
@@ -767,7 +767,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: dist
 
