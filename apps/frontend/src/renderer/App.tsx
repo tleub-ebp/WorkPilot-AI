@@ -91,7 +91,6 @@ import { NoProjectPage } from './components/NoProjectPage';
 import { AlertCircle } from 'lucide-react';
 import { CommandPalette } from './components/CommandPalette';
 import { KeyboardShortcutsOverlay } from './components/KeyboardShortcutsOverlay';
-import { PromptOptimizerDialog } from './components/prompt-optimizer';
 import { VoiceControlDialog } from './components/voice-control';
 import { NavigationConfirmDialog } from './components/NavigationConfirmDialog';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -203,7 +202,7 @@ export function App() {
   const [isRefreshingTasks, setIsRefreshingTasks] = useState(false);
 
   // Task completion toast notifications (human_review, done, pr_created, error)
-  useTaskNotifications({ onNavigate: (view) => setActiveView(view as SidebarView) });
+  useTaskNotifications({ onNavigate: (view) => setActiveView(view) });
 
   // Command Palette & Keyboard Shortcuts state (Features 9.4 & 9.5)
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -436,9 +435,7 @@ export function App() {
     // Check if either auth method is configured
     // API profiles: if profiles exist, auth is configured (user has gone through setup)
     const hasAPIProfileConfigured = profiles.length > 0;
-    const hasOAuthConfigured = claudeProfiles.some(p =>
-        p.oauthToken || (p.isDefault && p.configDir)
-    );
+    const hasOAuthConfigured = claudeProfiles.some(p => p.oauthToken);
     const hasAnyAuth = hasAPIProfileConfigured || hasOAuthConfigured;
 
     // Only show wizard if onboarding not completed AND no auth is configured
@@ -1093,7 +1090,7 @@ export function App() {
                   </div>
 
                   {/* Project Tabs */}
-                  {projectTabs.length > 0 && (
+                  {(
                       <DndContext
                           sensors={sensors}
                           collisionDetection={closestCenter}
@@ -1125,7 +1122,6 @@ export function App() {
                         </DragOverlay>
                       </DndContext>
                   )}
-
                   {/* Main content area */}
                   <main className="flex-1 overflow-hidden">
                     <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
