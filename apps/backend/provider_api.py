@@ -15,6 +15,7 @@ from typing import Annotated, Any
 import httpx
 from fastapi import Body, FastAPI, HTTPException, Path, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from urllib.parse import urlparse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -666,8 +667,43 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
 
     # --- Ollama (local — no key needed) ---
     if provider == "ollama":
+        def build_ollama_url(raw_base_url: str | None) -> str:
+            """
+            Build a safe Ollama URL from an optional base URL.
+
+            Only allow localhost/127.0.0.1 on the standard Ollama port.
+            Fall back to the default if validation fails.
+            """
+            default_base = "http://localhost:11434"
+            if not raw_base_url:
+                return default_base + "/api/tags"
+
+            try:
+                parsed = urlparse(raw_base_url)
+            except Exception:
+                # Malformed URL; use safe default
+                return default_base + "/api/tags"
+
+            # Require HTTP scheme
+            if parsed.scheme not in ("http",):
+                return default_base + "/api/tags"
+
+            # Only allow localhost-style hosts
+            hostname = parsed.hostname or ""
+            allowed_hosts = {"localhost", "127.0.0.1"}
+            if hostname not in allowed_hosts:
+                return default_base + "/api/tags"
+
+            # Enforce allowed port (default 11434 if missing)
+            port = parsed.port or 11434
+            if port != 11434:
+                return default_base + "/api/tags"
+
+            safe_base = f"{parsed.scheme}://{hostname}:{port}"
+            return safe_base + "/api/tags"
+
         try:
-            url = (base_url or "http://localhost:11434") + "/api/tags"
+            url = build_ollama_url(base_url)
             async with httpx.AsyncClient() as client:
                 resp = await client.get(url, timeout=5)
             if resp.status_code == 200:
