@@ -24,7 +24,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +33,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class MigrationType(str, Enum):
     """Types of migration supported."""
+
     VERSION_UPGRADE = "version_upgrade"
     FRAMEWORK_SWITCH = "framework_switch"
     LANGUAGE_MIGRATION = "language_migration"
@@ -44,6 +46,7 @@ class MigrationType(str, Enum):
 
 class MigrationStatus(str, Enum):
     """Status of a migration plan or step."""
+
     DRAFT = "draft"
     PLANNED = "planned"
     IN_PROGRESS = "in_progress"
@@ -55,6 +58,7 @@ class MigrationStatus(str, Enum):
 
 class StepRisk(str, Enum):
     """Risk level for a migration step."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -63,6 +67,7 @@ class StepRisk(str, Enum):
 
 class BreakingChangeType(str, Enum):
     """Categories of breaking changes."""
+
     API_REMOVED = "api_removed"
     API_RENAMED = "api_renamed"
     API_SIGNATURE_CHANGED = "api_signature_changed"
@@ -77,12 +82,14 @@ class BreakingChangeType(str, Enum):
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class DetectedDependency:
     """A dependency detected in the project."""
+
     name: str
     current_version: str
-    latest_version: Optional[str] = None
+    latest_version: str | None = None
     dep_type: str = "production"  # production, dev, peer
     has_breaking_update: bool = False
     ecosystem: str = "npm"  # npm, pip, cargo, etc.
@@ -94,13 +101,14 @@ class DetectedDependency:
 @dataclass
 class BreakingChange:
     """A breaking change that must be addressed during migration."""
+
     change_id: str
     change_type: str
     description: str
     affected_files: list[str] = field(default_factory=list)
-    old_api: Optional[str] = None
-    new_api: Optional[str] = None
-    migration_guide: Optional[str] = None
+    old_api: str | None = None
+    new_api: str | None = None
+    migration_guide: str | None = None
     auto_fixable: bool = False
 
     def to_dict(self) -> dict:
@@ -110,6 +118,7 @@ class BreakingChange:
 @dataclass
 class MigrationStep:
     """A single step in a migration plan."""
+
     step_id: str
     order: int
     title: str
@@ -118,13 +127,15 @@ class MigrationStep:
     risk: str = "low"
     status: str = "planned"
     affected_files: list[str] = field(default_factory=list)
-    breaking_changes: list[str] = field(default_factory=list)  # IDs of related breaking changes
+    breaking_changes: list[str] = field(
+        default_factory=list
+    )  # IDs of related breaking changes
     commands: list[str] = field(default_factory=list)
     code_transforms: list[dict] = field(default_factory=list)
     rollback_commands: list[str] = field(default_factory=list)
     estimated_minutes: float = 5.0
-    actual_minutes: Optional[float] = None
-    error: Optional[str] = None
+    actual_minutes: float | None = None
+    error: str | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -133,6 +144,7 @@ class MigrationStep:
 @dataclass
 class StackAnalysis:
     """Result of analysing the project's current technology stack."""
+
     project_root: str
     detected_languages: list[str] = field(default_factory=list)
     detected_frameworks: list[str] = field(default_factory=list)
@@ -150,6 +162,7 @@ class StackAnalysis:
 @dataclass
 class MigrationPlan:
     """A complete migration plan."""
+
     plan_id: str
     migration_type: str
     source_framework: str
@@ -160,7 +173,7 @@ class MigrationPlan:
     steps: list[MigrationStep] = field(default_factory=list)
     breaking_changes: list[BreakingChange] = field(default_factory=list)
     estimated_total_minutes: float = 0.0
-    actual_total_minutes: Optional[float] = None
+    actual_total_minutes: float | None = None
     created_at: str = ""
     updated_at: str = ""
     rollback_available: bool = True
@@ -188,6 +201,7 @@ class MigrationPlan:
 @dataclass
 class MigrationResult:
     """Result of executing a migration (or a single step)."""
+
     plan_id: str
     success: bool
     steps_completed: int = 0
@@ -195,7 +209,7 @@ class MigrationResult:
     steps_total: int = 0
     files_modified: list[str] = field(default_factory=list)
     tests_generated: int = 0
-    test_code: Optional[str] = None
+    test_code: str | None = None
     errors: list[str] = field(default_factory=list)
     duration_seconds: float = 0.0
     rollback_performed: bool = False
@@ -269,7 +283,12 @@ STACK_INDICATORS: dict[str, list[str]] = {
     "fastify": ["package.json:fastify"],
     "django": ["manage.py", "requirements.txt:django", "settings.py"],
     "flask": ["requirements.txt:flask"],
-    "nextjs": ["next.config.js", "next.config.mjs", "next.config.ts", "package.json:next"],
+    "nextjs": [
+        "next.config.js",
+        "next.config.mjs",
+        "next.config.ts",
+        "package.json:next",
+    ],
     "typescript": ["tsconfig.json"],
     "webpack": ["webpack.config.js", "webpack.config.ts"],
     "vite": ["vite.config.js", "vite.config.ts", "vite.config.mjs"],
@@ -279,6 +298,7 @@ STACK_INDICATORS: dict[str, list[str]] = {
 # ---------------------------------------------------------------------------
 # Stack Analyser
 # ---------------------------------------------------------------------------
+
 
 class StackAnalyzer:
     """Analyses a project to detect its technology stack."""
@@ -299,10 +319,18 @@ class StackAnalyzer:
 
         # Detect languages by file extension
         lang_map = {
-            ".py": "python", ".js": "javascript", ".ts": "typescript",
-            ".jsx": "javascript-react", ".tsx": "typescript-react",
-            ".vue": "vue", ".rb": "ruby", ".go": "go", ".rs": "rust",
-            ".java": "java", ".kt": "kotlin", ".swift": "swift",
+            ".py": "python",
+            ".js": "javascript",
+            ".ts": "typescript",
+            ".jsx": "javascript-react",
+            ".tsx": "typescript-react",
+            ".vue": "vue",
+            ".rb": "ruby",
+            ".go": "go",
+            ".rs": "rust",
+            ".java": "java",
+            ".kt": "kotlin",
+            ".swift": "swift",
         }
 
         detected_langs = set()
@@ -310,7 +338,11 @@ class StackAnalyzer:
 
         try:
             for fp in root.rglob("*"):
-                if fp.is_file() and "node_modules" not in str(fp) and ".git" not in str(fp):
+                if (
+                    fp.is_file()
+                    and "node_modules" not in str(fp)
+                    and ".git" not in str(fp)
+                ):
                     file_count += 1
                     ext = fp.suffix.lower()
                     if ext in lang_map:
@@ -329,7 +361,9 @@ class StackAnalyzer:
                     config_path = root / fname
                     if config_path.exists():
                         try:
-                            content = config_path.read_text(encoding="utf-8", errors="ignore")
+                            content = config_path.read_text(
+                                encoding="utf-8", errors="ignore"
+                            )
                             if pkg in content:
                                 analysis.detected_frameworks.append(framework)
                                 break
@@ -343,10 +377,18 @@ class StackAnalyzer:
 
         # Detect config files
         config_patterns = [
-            "package.json", "tsconfig.json", "webpack.config.*",
-            "vite.config.*", ".babelrc", "babel.config.*",
-            "requirements.txt", "setup.py", "pyproject.toml",
-            "Cargo.toml", "go.mod", "Gemfile",
+            "package.json",
+            "tsconfig.json",
+            "webpack.config.*",
+            "vite.config.*",
+            ".babelrc",
+            "babel.config.*",
+            "requirements.txt",
+            "setup.py",
+            "pyproject.toml",
+            "Cargo.toml",
+            "go.mod",
+            "Gemfile",
         ]
         for pattern in config_patterns:
             for match in root.glob(pattern):
@@ -364,7 +406,9 @@ class StackAnalyzer:
                         dep = DetectedDependency(
                             name=name,
                             current_version=version,
-                            dep_type="production" if section == "dependencies" else "dev",
+                            dep_type="production"
+                            if section == "dependencies"
+                            else "dev",
                             ecosystem="npm",
                         )
                         analysis.dependencies.append(dep)
@@ -379,11 +423,15 @@ class StackAnalyzer:
                 for line in req_txt.read_text(encoding="utf-8").splitlines():
                     line = line.strip()
                     if line and not line.startswith("#"):
-                        match = re.match(r"^([a-zA-Z0-9_-]+)\s*([><=!~]+\s*[\d.]+)?", line)
+                        match = re.match(
+                            r"^([a-zA-Z0-9_-]+)\s*([><=!~]+\s*[\d.]+)?", line
+                        )
                         if match:
                             dep = DetectedDependency(
                                 name=match.group(1),
-                                current_version=match.group(2).strip() if match.group(2) else "any",
+                                current_version=match.group(2).strip()
+                                if match.group(2)
+                                else "any",
                                 ecosystem="pip",
                             )
                             analysis.dependencies.append(dep)
@@ -394,9 +442,9 @@ class StackAnalyzer:
 
     def analyze_from_data(
         self,
-        languages: Optional[list[str]] = None,
-        frameworks: Optional[list[str]] = None,
-        dependencies: Optional[list[dict]] = None,
+        languages: list[str] | None = None,
+        frameworks: list[str] | None = None,
+        dependencies: list[dict] | None = None,
     ) -> StackAnalysis:
         """Create a stack analysis from provided data (for testing or when filesystem is unavailable)."""
         analysis = StackAnalysis(
@@ -414,6 +462,7 @@ class StackAnalyzer:
 # ---------------------------------------------------------------------------
 # Migration Agent
 # ---------------------------------------------------------------------------
+
 
 class MigrationAgent:
     """Agent specialised in framework and version migrations.
@@ -455,9 +504,9 @@ class MigrationAgent:
         source_framework: str,
         source_version: str,
         target_version: str,
-        target_framework: Optional[str] = None,
+        target_framework: str | None = None,
         migration_type: str = "version_upgrade",
-        custom_steps: Optional[list[dict]] = None,
+        custom_steps: list[dict] | None = None,
     ) -> MigrationPlan:
         """Create a migration plan.
 
@@ -507,113 +556,142 @@ class MigrationAgent:
 
         # Step 1: always backup / create snapshot
         step_counter += 1
-        plan.steps.append(MigrationStep(
-            step_id=f"{plan_id}-step-{step_counter:03d}",
-            order=step_counter,
-            title="Create backup snapshot",
-            description="Create a snapshot of the current codebase before migration",
-            step_type="manual",
-            risk="low",
-            estimated_minutes=2.0,
-        ))
+        plan.steps.append(
+            MigrationStep(
+                step_id=f"{plan_id}-step-{step_counter:03d}",
+                order=step_counter,
+                title="Create backup snapshot",
+                description="Create a snapshot of the current codebase before migration",
+                step_type="manual",
+                risk="low",
+                estimated_minutes=2.0,
+            )
+        )
 
         # Step 2: update dependencies
         dep_updates = known.get("dependency_updates", {})
         if dep_updates or target_fw != source_framework:
             step_counter += 1
-            plan.steps.append(MigrationStep(
-                step_id=f"{plan_id}-step-{step_counter:03d}",
-                order=step_counter,
-                title=f"Update dependencies to {target_fw} {target_version}",
-                description=f"Update package dependencies: {json.dumps(dep_updates) if dep_updates else 'update to target version'}",
-                step_type="dependency_update",
-                risk="medium",
-                commands=[f"npm install {k}@{v}" for k, v in dep_updates.items()] if dep_updates else [],
-                rollback_commands=["git checkout -- package.json package-lock.json && npm install"],
-                estimated_minutes=5.0,
-            ))
+            plan.steps.append(
+                MigrationStep(
+                    step_id=f"{plan_id}-step-{step_counter:03d}",
+                    order=step_counter,
+                    title=f"Update dependencies to {target_fw} {target_version}",
+                    description=f"Update package dependencies: {json.dumps(dep_updates) if dep_updates else 'update to target version'}",
+                    step_type="dependency_update",
+                    risk="medium",
+                    commands=[f"npm install {k}@{v}" for k, v in dep_updates.items()]
+                    if dep_updates
+                    else [],
+                    rollback_commands=[
+                        "git checkout -- package.json package-lock.json && npm install"
+                    ],
+                    estimated_minutes=5.0,
+                )
+            )
 
         # Step 3+: address each breaking change
         for bc in plan.breaking_changes:
             if bc.auto_fixable:
                 step_counter += 1
-                plan.steps.append(MigrationStep(
-                    step_id=f"{plan_id}-step-{step_counter:03d}",
-                    order=step_counter,
-                    title=f"Fix: {bc.description[:60]}",
-                    description=bc.description,
-                    step_type="code_change",
-                    risk="medium" if bc.change_type != "api_removed" else "high",
-                    breaking_changes=[bc.change_id],
-                    code_transforms=[{
-                        "old": bc.old_api,
-                        "new": bc.new_api,
-                        "description": bc.description,
-                    }] if bc.old_api and bc.new_api else [],
-                    estimated_minutes=10.0,
-                ))
+                plan.steps.append(
+                    MigrationStep(
+                        step_id=f"{plan_id}-step-{step_counter:03d}",
+                        order=step_counter,
+                        title=f"Fix: {bc.description[:60]}",
+                        description=bc.description,
+                        step_type="code_change",
+                        risk="medium" if bc.change_type != "api_removed" else "high",
+                        breaking_changes=[bc.change_id],
+                        code_transforms=[
+                            {
+                                "old": bc.old_api,
+                                "new": bc.new_api,
+                                "description": bc.description,
+                            }
+                        ]
+                        if bc.old_api and bc.new_api
+                        else [],
+                        estimated_minutes=10.0,
+                    )
+                )
             else:
                 step_counter += 1
-                plan.steps.append(MigrationStep(
-                    step_id=f"{plan_id}-step-{step_counter:03d}",
-                    order=step_counter,
-                    title=f"Manual review: {bc.description[:50]}",
-                    description=f"MANUAL: {bc.description}",
-                    step_type="manual",
-                    risk="high",
-                    breaking_changes=[bc.change_id],
-                    estimated_minutes=15.0,
-                ))
+                plan.steps.append(
+                    MigrationStep(
+                        step_id=f"{plan_id}-step-{step_counter:03d}",
+                        order=step_counter,
+                        title=f"Manual review: {bc.description[:50]}",
+                        description=f"MANUAL: {bc.description}",
+                        step_type="manual",
+                        risk="high",
+                        breaking_changes=[bc.change_id],
+                        estimated_minutes=15.0,
+                    )
+                )
 
         # Add custom steps
         if custom_steps:
             for cs in custom_steps:
                 step_counter += 1
-                plan.steps.append(MigrationStep(
-                    step_id=f"{plan_id}-step-{step_counter:03d}",
-                    order=step_counter,
-                    title=cs.get("title", "Custom step"),
-                    description=cs.get("description", ""),
-                    step_type=cs.get("step_type", "code_change"),
-                    risk=cs.get("risk", "medium"),
-                    estimated_minutes=cs.get("estimated_minutes", 10.0),
-                ))
+                plan.steps.append(
+                    MigrationStep(
+                        step_id=f"{plan_id}-step-{step_counter:03d}",
+                        order=step_counter,
+                        title=cs.get("title", "Custom step"),
+                        description=cs.get("description", ""),
+                        step_type=cs.get("step_type", "code_change"),
+                        risk=cs.get("risk", "medium"),
+                        estimated_minutes=cs.get("estimated_minutes", 10.0),
+                    )
+                )
 
         # Final step: run tests
         step_counter += 1
-        plan.steps.append(MigrationStep(
-            step_id=f"{plan_id}-step-{step_counter:03d}",
-            order=step_counter,
-            title="Run regression tests",
-            description="Execute the test suite to verify migration success",
-            step_type="test_update",
-            risk="low",
-            commands=["npm test", "npm run lint"],
-            estimated_minutes=5.0,
-        ))
+        plan.steps.append(
+            MigrationStep(
+                step_id=f"{plan_id}-step-{step_counter:03d}",
+                order=step_counter,
+                title="Run regression tests",
+                description="Execute the test suite to verify migration success",
+                step_type="test_update",
+                risk="low",
+                commands=["npm test", "npm run lint"],
+                estimated_minutes=5.0,
+            )
+        )
 
         plan.estimated_total_minutes = sum(s.estimated_minutes for s in plan.steps)
         plan.test_commands = ["npm test"]
 
         self._plans[plan_id] = plan
-        logger.info("Created migration plan %s: %s %s → %s %s (%d steps)",
-                     plan_id, source_framework, source_version, target_fw, target_version, len(plan.steps))
+        logger.info(
+            "Created migration plan %s: %s %s → %s %s (%d steps)",
+            plan_id,
+            source_framework,
+            source_version,
+            target_fw,
+            target_version,
+            len(plan.steps),
+        )
         return plan
 
     # -- Plan management ----------------------------------------------------
 
-    def get_plan(self, plan_id: str) -> Optional[MigrationPlan]:
+    def get_plan(self, plan_id: str) -> MigrationPlan | None:
         """Get a migration plan by ID."""
         return self._plans.get(plan_id)
 
-    def list_plans(self, status: Optional[str] = None) -> list[MigrationPlan]:
+    def list_plans(self, status: str | None = None) -> list[MigrationPlan]:
         """List all plans, optionally filtered by status."""
         plans = list(self._plans.values())
         if status:
             plans = [p for p in plans if p.status == status]
         return plans
 
-    def update_step_status(self, plan_id: str, step_id: str, status: str, error: Optional[str] = None) -> Optional[MigrationStep]:
+    def update_step_status(
+        self, plan_id: str, step_id: str, status: str, error: str | None = None
+    ) -> MigrationStep | None:
         """Update the status of a single step."""
         plan = self._plans.get(plan_id)
         if not plan:
@@ -642,14 +720,16 @@ class MigrationAgent:
         plan = self._plans.get(plan_id)
         if not plan:
             return MigrationResult(
-                plan_id=plan_id, success=False,
+                plan_id=plan_id,
+                success=False,
                 errors=[f"Plan {plan_id} not found"],
             )
 
         start = time.time()
         plan.status = "in_progress"
         result = MigrationResult(
-            plan_id=plan_id, success=True,
+            plan_id=plan_id,
+            success=True,
             steps_total=len(plan.steps),
         )
 
@@ -689,18 +769,25 @@ class MigrationAgent:
         plan.actual_total_minutes = result.duration_seconds / 60
 
         self._results[plan_id] = result
-        logger.info("Migration %s %s in %.2fs",
-                     plan_id, "completed" if result.success else "failed", result.duration_seconds)
+        logger.info(
+            "Migration %s %s in %.2fs",
+            plan_id,
+            "completed" if result.success else "failed",
+            result.duration_seconds,
+        )
         return result
 
     def rollback_migration(self, plan_id: str) -> MigrationResult:
         """Rollback a migration by executing rollback commands in reverse."""
         plan = self._plans.get(plan_id)
         if not plan:
-            return MigrationResult(plan_id=plan_id, success=False, errors=["Plan not found"])
+            return MigrationResult(
+                plan_id=plan_id, success=False, errors=["Plan not found"]
+            )
 
         result = MigrationResult(
-            plan_id=plan_id, success=True,
+            plan_id=plan_id,
+            success=True,
             steps_total=len(plan.steps),
             rollback_performed=True,
         )
@@ -731,11 +818,15 @@ class MigrationAgent:
 
         # Test that old APIs are no longer used
         for bc in plan.breaking_changes:
-            safe_name = re.sub(r"[^a-zA-Z0-9]", "_", bc.description[:40]).lower().strip("_")
+            safe_name = (
+                re.sub(r"[^a-zA-Z0-9]", "_", bc.description[:40]).lower().strip("_")
+            )
             lines.append(f"    def test_breaking_change_{safe_name}(self):")
             lines.append(f'        """Verify: {bc.description[:70]}"""')
             if bc.old_api:
-                lines.append(f"        # Ensure old API '{bc.old_api}' is no longer used")
+                lines.append(
+                    f"        # Ensure old API '{bc.old_api}' is no longer used"
+                )
             lines.append("        assert True  # Replace with real assertion")
             lines.append("")
 
@@ -747,14 +838,16 @@ class MigrationAgent:
 
         # Test that the app still works
         lines.append("    def test_application_starts(self):")
-        lines.append('        """Verify the application starts successfully after migration."""')
+        lines.append(
+            '        """Verify the application starts successfully after migration."""'
+        )
         lines.append("        assert True  # Replace with real smoke test")
 
         return "\n".join(lines)
 
     # -- Statistics ---------------------------------------------------------
 
-    def get_results(self, plan_id: Optional[str] = None) -> list[MigrationResult]:
+    def get_results(self, plan_id: str | None = None) -> list[MigrationResult]:
         """Get migration results."""
         if plan_id:
             r = self._results.get(plan_id)
@@ -764,14 +857,20 @@ class MigrationAgent:
     def get_stats(self) -> dict:
         """Get overall migration statistics."""
         plans = list(self._plans.values())
-        results = list(self._results.values()) if isinstance(self._results, dict) else self._results
+        results = (
+            list(self._results.values())
+            if isinstance(self._results, dict)
+            else self._results
+        )
 
         return {
             "total_plans": len(plans),
             "plans_by_status": {
                 s: sum(1 for p in plans if p.status == s)
                 for s in set(p.status for p in plans)
-            } if plans else {},
+            }
+            if plans
+            else {},
             "total_migrations_executed": len(results),
             "successful_migrations": sum(1 for r in results if r.success),
             "failed_migrations": sum(1 for r in results if not r.success),

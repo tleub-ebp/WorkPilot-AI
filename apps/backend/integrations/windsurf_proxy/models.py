@@ -164,7 +164,6 @@ MODEL_NAME_TO_ENUM: dict[str, ChatModelType] = {
     "swe-1.5-thinking": ChatModelType.SWE_1_5_THINKING,
     "swe-1.5-slow": ChatModelType.SWE_1_5_SLOW,
     "swe-1.5-fast": ChatModelType.SWE_1_5,  # alias
-
     # Claude
     "claude-3-opus": ChatModelType.CLAUDE_3_OPUS_20240229,
     "claude-3-sonnet": ChatModelType.CLAUDE_3_SONNET_20240229,
@@ -189,7 +188,6 @@ MODEL_NAME_TO_ENUM: dict[str, ChatModelType] = {
     "claude-opus-4": ChatModelType.CLAUDE_4_OPUS,
     "claude-sonnet-4.5": ChatModelType.CLAUDE_4_5_SONNET,
     "claude-opus-4.5": ChatModelType.CLAUDE_4_5_OPUS,
-
     # GPT
     "gpt-4": ChatModelType.GPT_4,
     "gpt-4o": ChatModelType.GPT_4O_2024_08_06,
@@ -205,7 +203,6 @@ MODEL_NAME_TO_ENUM: dict[str, ChatModelType] = {
     "gpt-5.2-low": ChatModelType.GPT_5_2_LOW,
     "gpt-5.2": ChatModelType.GPT_5_2_MEDIUM,
     "gpt-5.2-high": ChatModelType.GPT_5_2_HIGH,
-
     # O-series
     "o1": ChatModelType.O1,
     "o1-mini": ChatModelType.O1_MINI,
@@ -217,7 +214,6 @@ MODEL_NAME_TO_ENUM: dict[str, ChatModelType] = {
     "o4-mini": ChatModelType.O4_MINI,
     "o4-mini-low": ChatModelType.O4_MINI_LOW,
     "o4-mini-high": ChatModelType.O4_MINI_HIGH,
-
     # Gemini
     "gemini-2.0-flash": ChatModelType.GEMINI_2_0_FLASH,
     "gemini-2.5-pro": ChatModelType.GEMINI_2_5_PRO,
@@ -228,32 +224,27 @@ MODEL_NAME_TO_ENUM: dict[str, ChatModelType] = {
     "gemini-3-flash-high": ChatModelType.GEMINI_3_0_FLASH_HIGH,
     "gemini-3-pro-low": ChatModelType.GEMINI_3_0_PRO_LOW,
     "gemini-3-pro-high": ChatModelType.GEMINI_3_0_PRO_HIGH,
-
     # DeepSeek
     "deepseek-v3": ChatModelType.DEEPSEEK_V3,
     "deepseek-v3-2": ChatModelType.DEEPSEEK_V3_2,
     "deepseek-r1": ChatModelType.DEEPSEEK_R1,
     "deepseek-r1-fast": ChatModelType.DEEPSEEK_R1_FAST,
     "deepseek-r1-slow": ChatModelType.DEEPSEEK_R1_SLOW,
-
     # Llama
     "llama-3.1-8b": ChatModelType.LLAMA_3_1_8B_INSTRUCT,
     "llama-3.1-70b": ChatModelType.LLAMA_3_1_70B_INSTRUCT,
     "llama-3.1-405b": ChatModelType.LLAMA_3_1_405B_INSTRUCT,
     "llama-3.3-70b": ChatModelType.LLAMA_3_3_70B_INSTRUCT,
-
     # Qwen
     "qwen-2.5-32b": ChatModelType.QWEN_2_5_32B_INSTRUCT,
     "qwen-2.5-72b": ChatModelType.QWEN_2_5_72B_INSTRUCT,
     "qwen-3-235b": ChatModelType.QWEN_3_235B_INSTRUCT,
     "qwen-3-coder": ChatModelType.QWEN_3_CODER_480B_INSTRUCT,
-
     # Grok
     "grok-2": ChatModelType.GROK_2,
     "grok-3": ChatModelType.GROK_3,
     "grok-3-mini": ChatModelType.GROK_3_MINI_REASONING,
     "grok-code": ChatModelType.GROK_CODE_FAST,
-
     # Other
     "mistral-7b": ChatModelType.MISTRAL_7B,
     "kimi-k2": ChatModelType.KIMI_K2,
@@ -287,11 +278,15 @@ def resolve_model(name: str) -> tuple[int, str]:
     # Try fuzzy matching: remove common prefixes/suffixes
     for key, val in MODEL_NAME_TO_ENUM.items():
         if name_lower in key or key in name_lower:
-            logger.debug(f"[WindsurfModels] Fuzzy matched '{name}' -> '{key}' ({val.name})")
+            logger.debug(
+                f"[WindsurfModels] Fuzzy matched '{name}' -> '{key}' ({val.name})"
+            )
             return (int(val), f"MODEL_{val.name}")
 
     # Fallback to default
-    logger.warning(f"[WindsurfModels] Unknown model '{name}', falling back to {DEFAULT_MODEL}")
+    logger.warning(
+        f"[WindsurfModels] Unknown model '{name}', falling back to {DEFAULT_MODEL}"
+    )
     default_enum = MODEL_NAME_TO_ENUM[DEFAULT_MODEL]
     return (int(default_enum), f"MODEL_{default_enum.name}")
 

@@ -14,7 +14,7 @@ import asyncio
 import json
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # Add the apps/backend directory to the Python path
 backend_path = Path(__file__).parent.parent
@@ -28,7 +28,10 @@ def emit_event(event_type: str, data: Any = None, message: str = "") -> None:
         event["data"] = data
     if message:
         event["message"] = message
-    print(f"LEARNING_LOOP_EVENT:{json.dumps(event, default=str, ensure_ascii=False)}", flush=True)
+    print(
+        f"LEARNING_LOOP_EVENT:{json.dumps(event, default=str, ensure_ascii=False)}",
+        flush=True,
+    )
 
 
 def emit_status(message: str, progress: int = 0) -> None:
@@ -43,7 +46,7 @@ def emit_stream_chunk(chunk: str) -> None:
 
 async def run_analysis(
     project_dir: str,
-    spec_id: Optional[str] = None,
+    spec_id: str | None = None,
     model: str = "sonnet",
     thinking_level: str = "medium",
 ) -> None:
@@ -86,11 +89,14 @@ async def run_analysis(
         summary = service.get_summary()
         patterns = service.get_patterns()
 
-        emit_event("complete", data={
-            "report": report.to_dict(),
-            "summary": summary,
-            "patterns": patterns,
-        })
+        emit_event(
+            "complete",
+            data={
+                "report": report.to_dict(),
+                "summary": summary,
+                "patterns": patterns,
+            },
+        )
 
     except Exception as e:
         emit_event("error", message=str(e))
@@ -99,19 +105,23 @@ async def run_analysis(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Learning Loop Runner")
-    parser.add_argument("--project-dir", required=True, help="Path to the project directory")
+    parser.add_argument(
+        "--project-dir", required=True, help="Path to the project directory"
+    )
     parser.add_argument("--spec-id", help="Analyze a specific build (spec ID)")
     parser.add_argument("--model", default="sonnet", help="LLM model to use")
     parser.add_argument("--thinking-level", default="medium", help="Thinking level")
     args = parser.parse_args()
 
     try:
-        asyncio.run(run_analysis(
-            project_dir=args.project_dir,
-            spec_id=args.spec_id,
-            model=args.model,
-            thinking_level=args.thinking_level,
-        ))
+        asyncio.run(
+            run_analysis(
+                project_dir=args.project_dir,
+                spec_id=args.spec_id,
+                model=args.model,
+                thinking_level=args.thinking_level,
+            )
+        )
     except KeyboardInterrupt:
         emit_event("error", message="Analysis cancelled by user")
         sys.exit(1)

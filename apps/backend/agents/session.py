@@ -17,7 +17,7 @@ try:
 except ImportError:
     ClaudeSDKClient = None  # type: ignore[assignment,misc]
 
-from core.agent_client import AgentClient, ClaudeAgentClient, ContentBlockType
+from core.agent_client import AgentClient, ContentBlockType
 from debug import debug, debug_detailed, debug_error, debug_section, debug_success
 from insight_extractor import extract_session_insights
 from linear_updater import (
@@ -60,6 +60,7 @@ except ImportError:
 
 try:
     from replay.recorder import get_replay_recorder as _get_replay_recorder
+
     _REPLAY_AVAILABLE = True
 except ImportError:
     _REPLAY_AVAILABLE = False
@@ -115,8 +116,8 @@ def is_rate_limit_error(error: Exception) -> bool:
         for p in [
             "limit reached",
             "rate limit",
-            "rate_limit",       # SDK may use underscore variant (e.g., "rate_limit_event")
-            "hit your limit",   # Claude CLI format: "You've hit your limit"
+            "rate_limit",  # SDK may use underscore variant (e.g., "rate_limit_event")
+            "hit your limit",  # Claude CLI format: "You've hit your limit"
             "too many requests",
             "usage limit",
             "quota exceeded",
@@ -478,7 +479,14 @@ async def run_agent_session(
     """
     # If client is an AgentClient, delegate to the provider-agnostic session runner
     if isinstance(client, AgentClient):
-        return await _run_agent_client_session(client, message, spec_dir, verbose, phase, streaming_wrapper=streaming_wrapper)
+        return await _run_agent_client_session(
+            client,
+            message,
+            spec_dir,
+            verbose,
+            phase,
+            streaming_wrapper=streaming_wrapper,
+        )
 
     debug_section("session", f"Agent Session - {phase.value}")
     debug(
@@ -503,6 +511,7 @@ async def run_agent_session(
     if _REPLAY_AVAILABLE and spec_dir is not None:
         try:
             import uuid as _uuid_mod
+
             _rr = _get_replay_recorder()
             _rs_id = _uuid_mod.uuid4().hex[:16]
             _phase_to_role_replay = {
@@ -511,14 +520,20 @@ async def run_agent_session(
                 LogPhase.VALIDATION: "qa_reviewer",
                 LogPhase.QA_FIX: "qa_fixer",
             }
-            _agent_role = _phase_to_role_replay.get(phase, phase.value if hasattr(phase, "value") else str(phase))
-            _rr.start_session(_rs_id, {
-                "agent_name": _agent_role.replace("_", " ").title(),
-                "agent_type": _agent_role,
-                "task": spec_dir.name,
-                "project_path": str(spec_dir.parent.parent.parent),
-                "model": getattr(getattr(client, "options", None), "model", "") or "",
-            })
+            _agent_role = _phase_to_role_replay.get(
+                phase, phase.value if hasattr(phase, "value") else str(phase)
+            )
+            _rr.start_session(
+                _rs_id,
+                {
+                    "agent_name": _agent_role.replace("_", " ").title(),
+                    "agent_type": _agent_role,
+                    "task": spec_dir.name,
+                    "project_path": str(spec_dir.parent.parent.parent),
+                    "model": getattr(getattr(client, "options", None), "model", "")
+                    or "",
+                },
+            )
         except Exception:
             _rr = None
             _rs_id = None
@@ -582,7 +597,9 @@ async def run_agent_session(
                         # Stream agent thinking to live view
                         if streaming_wrapper and block.text.strip():
                             try:
-                                await streaming_wrapper.emit_agent_thinking(block.text[:300])
+                                await streaming_wrapper.emit_agent_thinking(
+                                    block.text[:300]
+                                )
                             except Exception:
                                 pass
                         # Record agent response in replay
@@ -645,14 +662,29 @@ async def run_agent_session(
                         # Record tool use in replay
                         if _rr and _rs_id:
                             try:
-                                if tool_name in ("Edit", "Write") and inp and inp.get("file_path"):
+                                if (
+                                    tool_name in ("Edit", "Write")
+                                    and inp
+                                    and inp.get("file_path")
+                                ):
                                     _op = "update" if tool_name == "Edit" else "create"
-                                    _after = str(inp.get("new_string") or inp.get("content") or "")
-                                    _rr.record_file_change(_rs_id, inp["file_path"], operation=_op, after_content=_after)
+                                    _after = str(
+                                        inp.get("new_string")
+                                        or inp.get("content")
+                                        or ""
+                                    )
+                                    _rr.record_file_change(
+                                        _rs_id,
+                                        inp["file_path"],
+                                        operation=_op,
+                                        after_content=_after,
+                                    )
                                 elif tool_name == "Bash" and inp and inp.get("command"):
                                     _rr.record_command(_rs_id, inp["command"])
                                 else:
-                                    _rr.record_tool_call(_rs_id, tool_name, tool_input_dict=inp or {})
+                                    _rr.record_tool_call(
+                                        _rs_id, tool_name, tool_input_dict=inp or {}
+                                    )
                             except Exception:
                                 pass
 
@@ -666,15 +698,24 @@ async def run_agent_session(
                         # Stream tool use events to live view
                         if streaming_wrapper and inp:
                             try:
-                                await streaming_wrapper.emit_tool_use(tool_name, tool_input_display)
-                                if tool_name in ("Edit", "Write") and inp.get("file_path"):
-                                    content = inp.get("content") or inp.get("new_string", "")
+                                await streaming_wrapper.emit_tool_use(
+                                    tool_name, tool_input_display
+                                )
+                                if tool_name in ("Edit", "Write") and inp.get(
+                                    "file_path"
+                                ):
+                                    content = inp.get("content") or inp.get(
+                                        "new_string", ""
+                                    )
                                     await streaming_wrapper.emit_file_change(
-                                        inp["file_path"], "update",
+                                        inp["file_path"],
+                                        "update",
                                         content[:2000] if content else None,
                                     )
                                 elif tool_name == "Bash" and inp.get("command"):
-                                    await streaming_wrapper.emit_command(inp["command"][:500])
+                                    await streaming_wrapper.emit_command(
+                                        inp["command"][:500]
+                                    )
                             except Exception:
                                 pass
 
@@ -773,9 +814,16 @@ async def run_agent_session(
                             try:
                                 _result_str = str(result_content)[:2000]
                                 if current_tool == "Bash":
-                                    _rr.record_command_output(_rs_id, _result_str, is_error=is_error)
+                                    _rr.record_command_output(
+                                        _rs_id, _result_str, is_error=is_error
+                                    )
                                 elif current_tool not in ("Edit", "Write"):
-                                    _rr.record_tool_result(_rs_id, current_tool, output=_result_str, success=not is_error)
+                                    _rr.record_tool_result(
+                                        _rs_id,
+                                        current_tool,
+                                        output=_result_str,
+                                        success=not is_error,
+                                    )
                             except Exception:
                                 pass
 
@@ -787,8 +835,12 @@ async def run_agent_session(
         if _sdk_result_msg is not None and _record_usage is not None:
             try:
                 usage = getattr(_sdk_result_msg, "usage", None) or {}
-                input_tokens = usage.get("input_tokens", 0) if isinstance(usage, dict) else 0
-                output_tokens = usage.get("output_tokens", 0) if isinstance(usage, dict) else 0
+                input_tokens = (
+                    usage.get("input_tokens", 0) if isinstance(usage, dict) else 0
+                )
+                output_tokens = (
+                    usage.get("output_tokens", 0) if isinstance(usage, dict) else 0
+                )
                 cost_usd = getattr(_sdk_result_msg, "total_cost_usd", None) or 0.0
                 # Derive project_dir from spec_dir (spec_dir = project/.auto-claude/specs/XXX)
                 _project_dir = spec_dir.parent.parent.parent
@@ -799,9 +851,12 @@ async def run_agent_session(
                 _provider = "anthropic"
                 try:
                     from core.client import _get_active_provider
+
                     _active = _get_active_provider(spec_dir)
                     # _get_active_provider returns "claude" for Anthropic; normalise to "anthropic"
-                    _provider = "anthropic" if _active in ("claude", "anthropic") else _active
+                    _provider = (
+                        "anthropic" if _active in ("claude", "anthropic") else _active
+                    )
                 except Exception:
                     pass
                 _record_usage(
@@ -985,7 +1040,9 @@ async def _run_agent_client_session(
                     # Stream agent thinking to live view
                     if streaming_wrapper and block.text.strip():
                         try:
-                            await streaming_wrapper.emit_agent_thinking(block.text[:300])
+                            await streaming_wrapper.emit_agent_thinking(
+                                block.text[:300]
+                            )
                         except Exception:
                             pass
 
@@ -1038,15 +1095,22 @@ async def _run_agent_client_session(
                     # Stream tool use events to live view
                     if streaming_wrapper and inp:
                         try:
-                            await streaming_wrapper.emit_tool_use(tool_name, tool_input_display)
+                            await streaming_wrapper.emit_tool_use(
+                                tool_name, tool_input_display
+                            )
                             if tool_name in ("Edit", "Write") and inp.get("file_path"):
-                                content = inp.get("content") or inp.get("new_string", "")
+                                content = inp.get("content") or inp.get(
+                                    "new_string", ""
+                                )
                                 await streaming_wrapper.emit_file_change(
-                                    inp["file_path"], "update",
+                                    inp["file_path"],
+                                    "update",
                                     content[:2000] if content else None,
                                 )
                             elif tool_name == "Bash" and inp.get("command"):
-                                await streaming_wrapper.emit_command(inp["command"][:500])
+                                await streaming_wrapper.emit_command(
+                                    inp["command"][:500]
+                                )
                         except Exception:
                             pass
 
@@ -1098,7 +1162,13 @@ async def _run_agent_client_session(
                             print("   [Done]", flush=True)
                         if task_logger and current_tool:
                             detail_content = None
-                            if current_tool in ("Read", "Grep", "Bash", "Edit", "Write"):
+                            if current_tool in (
+                                "Read",
+                                "Grep",
+                                "Bash",
+                                "Edit",
+                                "Write",
+                            ):
                                 result_str = str(result_content)
                                 if len(result_str) < 50000:
                                     detail_content = result_str
@@ -1141,7 +1211,9 @@ async def _run_agent_client_session(
                         cost_usd=_usage.get("cost_usd", 0.0),
                     )
             except Exception as _ute:
-                logger.debug("[usage_tracker] AgentClient usage recording failed: %s", _ute)
+                logger.debug(
+                    "[usage_tracker] AgentClient usage recording failed: %s", _ute
+                )
 
         if is_build_complete(spec_dir):
             debug_success(

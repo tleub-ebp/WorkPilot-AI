@@ -46,7 +46,7 @@ def load_env(project_dir: str) -> dict:
             if eq < 0:
                 continue
             key = line[:eq].strip()
-            val = line[eq + 1:].strip().strip('"\'')
+            val = line[eq + 1 :].strip().strip("\"'")
             env[key] = val
     return env
 
@@ -136,7 +136,12 @@ async def translate_with_claude(
         from core.client import create_client  # type: ignore
 
         prompt = build_translation_prompt(
-            source_lang, target_lang, source_code, source_file, preserve_comments, generate_tests
+            source_lang,
+            target_lang,
+            source_code,
+            source_file,
+            preserve_comments,
+            generate_tests,
         )
 
         client = create_client(
@@ -181,9 +186,13 @@ def action_translate(args: argparse.Namespace, env: dict) -> dict:
     target_lang = args.target_lang.lower()
 
     if source_lang not in SUPPORTED_LANGUAGES:
-        return {"error": f"Unsupported source language: {source_lang}. Supported: {list(SUPPORTED_LANGUAGES)}"}
+        return {
+            "error": f"Unsupported source language: {source_lang}. Supported: {list(SUPPORTED_LANGUAGES)}"
+        }
     if target_lang not in SUPPORTED_LANGUAGES:
-        return {"error": f"Unsupported target language: {target_lang}. Supported: {list(SUPPORTED_LANGUAGES)}"}
+        return {
+            "error": f"Unsupported target language: {target_lang}. Supported: {list(SUPPORTED_LANGUAGES)}"
+        }
 
     # Load source code
     if args.file:
@@ -196,15 +205,17 @@ def action_translate(args: argparse.Namespace, env: dict) -> dict:
         return {"error": "--file is required"}
 
     # Run translation
-    result = asyncio.run(translate_with_claude(
-        source_lang=source_lang,
-        target_lang=target_lang,
-        source_code=source_code,
-        source_file=source_file,
-        project_dir=args.project,
-        preserve_comments=args.preserve_comments,
-        generate_tests=args.generate_tests,
-    ))
+    result = asyncio.run(
+        translate_with_claude(
+            source_lang=source_lang,
+            target_lang=target_lang,
+            source_code=source_code,
+            source_file=source_file,
+            project_dir=args.project,
+            preserve_comments=args.preserve_comments,
+            generate_tests=args.generate_tests,
+        )
+    )
 
     if "error" in result:
         return result
@@ -243,7 +254,9 @@ def action_translate(args: argparse.Namespace, env: dict) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description="Cross-Language Translation Runner")
-    parser.add_argument("--action", choices=["translate", "list-languages"], default="translate")
+    parser.add_argument(
+        "--action", choices=["translate", "list-languages"], default="translate"
+    )
     parser.add_argument("--project", required=False, default=".")
     parser.add_argument("--source-lang", default="")
     parser.add_argument("--target-lang", default="")

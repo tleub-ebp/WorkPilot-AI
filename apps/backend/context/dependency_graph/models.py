@@ -6,16 +6,15 @@ Dependency Graph Data Models
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
 class DependencyNode:
     """A file/module node in the dependency graph."""
 
-    path: str                           # Relative path from project root
-    language: str = "unknown"           # python | typescript | javascript | unknown
-    imports: list[str] = field(default_factory=list)    # Paths this file imports
+    path: str  # Relative path from project root
+    language: str = "unknown"  # python | typescript | javascript | unknown
+    imports: list[str] = field(default_factory=list)  # Paths this file imports
     imported_by: list[str] = field(default_factory=list)  # Paths that import this file
     export_symbols: list[str] = field(default_factory=list)  # Top-level exports
 
@@ -39,7 +38,7 @@ class DependencyNode:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "DependencyNode":
+    def from_dict(cls, data: dict) -> DependencyNode:
         return cls(
             path=data["path"],
             language=data.get("language", "unknown"),
@@ -53,9 +52,9 @@ class DependencyNode:
 class DependencyEdge:
     """A directed dependency edge from source → target."""
 
-    source: str   # Relative path of the importing file
-    target: str   # Relative path of the imported file
-    symbol: Optional[str] = None   # Imported symbol (if known)
+    source: str  # Relative path of the importing file
+    target: str  # Relative path of the imported file
+    symbol: str | None = None  # Imported symbol (if known)
 
 
 @dataclass
@@ -73,7 +72,7 @@ class DependencyGraph:
     def add_node(self, node: DependencyNode) -> None:
         self.nodes[node.path] = node
 
-    def get_node(self, path: str) -> Optional[DependencyNode]:
+    def get_node(self, path: str) -> DependencyNode | None:
         return self.nodes.get(path)
 
     def get_dependents(self, path: str, depth: int = 1) -> list[str]:
@@ -122,7 +121,7 @@ class DependencyGraph:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "DependencyGraph":
+    def from_dict(cls, data: dict) -> DependencyGraph:
         graph = cls(
             file_count=data.get("file_count", 0),
             build_timestamp=data.get("build_timestamp", ""),

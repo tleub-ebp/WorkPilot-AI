@@ -1,6 +1,6 @@
 """Performance Optimizer - Generates and applies optimization suggestions."""
+
 import uuid
-from typing import Dict, List
 
 from .models import (
     Bottleneck,
@@ -8,7 +8,6 @@ from .models import (
     OptimizationEffort,
     OptimizationSuggestion,
     PerformanceReport,
-    Severity,
 )
 
 
@@ -19,7 +18,7 @@ class PerformanceOptimizer:
         self.project_dir = project_dir
         self.report = report
 
-    def generate_suggestions(self) -> List[OptimizationSuggestion]:
+    def generate_suggestions(self) -> list[OptimizationSuggestion]:
         """Generate optimization suggestions for all bottlenecks in the report."""
         suggestions = []
         dispatch = {
@@ -250,7 +249,7 @@ class PerformanceOptimizer:
 
     def implement_suggestion(
         self, suggestion: OptimizationSuggestion, dry_run: bool = True
-    ) -> Dict:
+    ) -> dict:
         """Attempt to auto-implement a suggestion if it's marked auto_implementable."""
         if not suggestion.auto_implementable:
             return {

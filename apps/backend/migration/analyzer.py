@@ -1,16 +1,13 @@
-﻿"""
+"""
 Stack Analyzer: Detects and analyzes technology stacks.
 """
 
-import os
 import json
 import re
-from typing import Dict, Optional, List, Tuple
 from pathlib import Path
-from dataclasses import asdict
 
-from .models import StackInfo, RiskLevel
-from .config import SUPPORTED_MIGRATIONS, RISK_ASSESSMENT_THRESHOLDS
+from .config import RISK_ASSESSMENT_THRESHOLDS, SUPPORTED_MIGRATIONS
+from .models import RiskLevel, StackInfo
 
 
 class StackAnalyzer:
@@ -18,7 +15,7 @@ class StackAnalyzer:
 
     def __init__(self, project_dir: str):
         self.project_dir = Path(project_dir)
-        self.cache: Dict = {}
+        self.cache: dict = {}
 
     def detect_stack(self) -> StackInfo:
         """Detect the technology stack of the project."""
@@ -57,8 +54,10 @@ class StackAnalyzer:
         # Check package.json
         package_json = self._read_package_json()
         if package_json:
-            deps = {**package_json.get("dependencies", {}), 
-                    **package_json.get("devDependencies", {})}
+            deps = {
+                **package_json.get("dependencies", {}),
+                **package_json.get("devDependencies", {}),
+            }
             if "react" in deps:
                 return "react"
             if "vue" in deps:
@@ -69,7 +68,9 @@ class StackAnalyzer:
                 return "svelte"
 
         # Check for backend frameworks
-        if self._check_file_exists("requirements.txt") or self._check_file_exists("pyproject.toml"):
+        if self._check_file_exists("requirements.txt") or self._check_file_exists(
+            "pyproject.toml"
+        ):
             reqs = self._read_requirements_txt()
             if "django" in reqs.lower():
                 return "django"
@@ -81,8 +82,10 @@ class StackAnalyzer:
 
         # Check for Node.js backends
         if package_json:
-            deps = {**package_json.get("dependencies", {}), 
-                    **package_json.get("devDependencies", {})}
+            deps = {
+                **package_json.get("dependencies", {}),
+                **package_json.get("devDependencies", {}),
+            }
             if "express" in deps:
                 return "express"
             if "fastify" in deps:
@@ -100,11 +103,15 @@ class StackAnalyzer:
             return "typescript"
 
         # Check for Python
-        if self._check_file_exists("setup.py") or self._check_file_exists("pyproject.toml"):
+        if self._check_file_exists("setup.py") or self._check_file_exists(
+            "pyproject.toml"
+        ):
             return "python"
 
         # Check for Java
-        if self._check_file_exists("pom.xml") or self._check_file_exists("build.gradle"):
+        if self._check_file_exists("pom.xml") or self._check_file_exists(
+            "build.gradle"
+        ):
             return "java"
 
         # Check for Go
@@ -167,16 +174,20 @@ class StackAnalyzer:
             if framework == "vue":
                 return package_json.get("dependencies", {}).get("vue", "unknown")
             if language == "typescript":
-                return package_json.get("devDependencies", {}).get("typescript", "unknown")
+                return package_json.get("devDependencies", {}).get(
+                    "typescript", "unknown"
+                )
 
         return "unknown"
 
-    def _detect_database(self) -> Optional[str]:
+    def _detect_database(self) -> str | None:
         """Detect database technology."""
         package_json = self._read_package_json()
         if package_json:
-            deps = {**package_json.get("dependencies", {}), 
-                    **package_json.get("devDependencies", {})}
+            deps = {
+                **package_json.get("dependencies", {}),
+                **package_json.get("devDependencies", {}),
+            }
             if "mysql" in deps or "mysql2" in deps:
                 return "mysql"
             if "pg" in deps or "postgres" in deps or "postgresql" in deps:
@@ -207,15 +218,17 @@ class StackAnalyzer:
 
         return None
 
-    def _detect_db_version(self, database: Optional[str]) -> Optional[str]:
+    def _detect_db_version(self, database: str | None) -> str | None:
         """Detect database version."""
         if not database:
             return None
 
         package_json = self._read_package_json()
         if package_json:
-            deps = {**package_json.get("dependencies", {}), 
-                    **package_json.get("devDependencies", {})}
+            deps = {
+                **package_json.get("dependencies", {}),
+                **package_json.get("devDependencies", {}),
+            }
             if database == "mysql":
                 return deps.get("mysql") or deps.get("mysql2")
             if database == "postgresql":
@@ -229,7 +242,7 @@ class StackAnalyzer:
 
         return None
 
-    def _extract_dependencies(self) -> Dict[str, str]:
+    def _extract_dependencies(self) -> dict[str, str]:
         """Extract all project dependencies."""
         dependencies = {}
 
@@ -255,7 +268,7 @@ class StackAnalyzer:
         sorted_deps = sorted(dependencies.items())[:30]
         return dict(sorted_deps)
 
-    def _detect_tools(self) -> List[str]:
+    def _detect_tools(self) -> list[str]:
         """Detect build tools and additional frameworks."""
         tools = []
 
@@ -266,7 +279,9 @@ class StackAnalyzer:
         if self._check_file_exists("vite.config.js"):
             tools.append("vite")
         # Check for babel
-        if self._check_file_exists(".babelrc") or self._check_file_exists("babel.config.js"):
+        if self._check_file_exists(".babelrc") or self._check_file_exists(
+            "babel.config.js"
+        ):
             tools.append("babel")
         # Check for docker
         if self._check_file_exists("Dockerfile"):
@@ -305,7 +320,7 @@ class StackAnalyzer:
 
         return "unknown"
 
-    def assess_migration_complexity(self, source: StackInfo, target: StackInfo) -> Dict:
+    def assess_migration_complexity(self, source: StackInfo, target: StackInfo) -> dict:
         """Assess complexity of migrating from source to target."""
         key = (source.framework, target.framework)
         if key not in SUPPORTED_MIGRATIONS:
@@ -315,16 +330,18 @@ class StackAnalyzer:
             }
 
         config = SUPPORTED_MIGRATIONS[key]
-        
+
         # Count affected files
         affected_files = self._count_affected_files(key)
-        
+
         # Calculate complexity score
-        complexity_score = self._calculate_complexity_score(source, target, affected_files)
-        
+        complexity_score = self._calculate_complexity_score(
+            source, target, affected_files
+        )
+
         # Determine risk level
         risk_level = self._determine_risk_level(affected_files, complexity_score)
-        
+
         return {
             "supported": True,
             "affected_files": affected_files,
@@ -335,10 +352,10 @@ class StackAnalyzer:
             "data_preservation": config.get("data_preservation", False),
         }
 
-    def _count_affected_files(self, migration_key: Tuple[str, str]) -> int:
+    def _count_affected_files(self, migration_key: tuple[str, str]) -> int:
         """Count files affected by migration."""
         source_framework, target_framework = migration_key
-        
+
         patterns = []
         if source_framework == "react":
             patterns = ["**/*.jsx", "**/*.tsx"]
@@ -355,8 +372,9 @@ class StackAnalyzer:
 
         return count
 
-    def _calculate_complexity_score(self, source: StackInfo, target: StackInfo, 
-                                   affected_files: int) -> float:
+    def _calculate_complexity_score(
+        self, source: StackInfo, target: StackInfo, affected_files: int
+    ) -> float:
         """Calculate migration complexity score (0-10)."""
         score = 1.0
 
@@ -381,10 +399,12 @@ class StackAnalyzer:
 
         return min(score, 10.0)
 
-    def _determine_risk_level(self, affected_files: int, complexity_score: float) -> RiskLevel:
+    def _determine_risk_level(
+        self, affected_files: int, complexity_score: float
+    ) -> RiskLevel:
         """Determine risk level based on various factors."""
         thresholds = RISK_ASSESSMENT_THRESHOLDS
-        
+
         if affected_files > thresholds["high"]["max_affected_files"]:
             return RiskLevel.CRITICAL
         elif complexity_score > 8.0:
@@ -412,7 +432,7 @@ class StackAnalyzer:
                 pass
         return False
 
-    def _read_package_json(self) -> Optional[Dict]:
+    def _read_package_json(self) -> dict | None:
         """Read package.json."""
         if "package_json" in self.cache:
             return self.cache["package_json"]
@@ -439,22 +459,24 @@ class StackAnalyzer:
             return content
         return ""
 
-    def _read_pyproject_toml(self) -> Optional[Dict]:
+    def _read_pyproject_toml(self) -> dict | None:
         """Read pyproject.toml."""
         path = self.project_dir / "pyproject.toml"
         if path.exists():
             try:
                 import tomllib  # Python 3.11+
+
                 return tomllib.loads(path.read_text())
             except (ImportError, Exception):
                 try:
                     import tomli
+
                     return tomli.loads(path.read_text())
                 except Exception:
                     pass
         return None
 
-    def _read_tsconfig(self) -> Optional[Dict]:
+    def _read_tsconfig(self) -> dict | None:
         """Read tsconfig.json."""
         path = self.project_dir / "tsconfig.json"
         if path.exists():

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Auto-Fix Metrics Module
 ========================
 
@@ -243,7 +243,7 @@ class AutoFixMetricsTracker:
 
         summary = f"""Auto-Fix Metrics Summary:
 - Total Runs: {stats.total_runs}
-- Successful: {stats.successful_runs} ({stats.success_rate*100:.1f}%)
+- Successful: {stats.successful_runs} ({stats.success_rate * 100:.1f}%)
 - Average Attempts: {stats.average_attempts:.1f}
 """
 

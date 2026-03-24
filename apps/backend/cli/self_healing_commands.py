@@ -36,10 +36,12 @@ def handle_self_healing_command(
             sys.exit(1)
 
         print(f"🔄 Running CI/CD healing for commit {commit[:7]} on {branch}...")
-        success = asyncio.run(runner.run_cicd(
-            commit_sha=commit,
-            branch=branch,
-        ))
+        success = asyncio.run(
+            runner.run_cicd(
+                commit_sha=commit,
+                branch=branch,
+            )
+        )
         if not success:
             sys.exit(1)
 

@@ -119,12 +119,20 @@ def _encode_tag(field_number: int, wire_type: int) -> bytes:
 def _encode_string_field(field_number: int, value: str) -> bytes:
     """Encode a string as a length-delimited protobuf field."""
     encoded = value.encode("utf-8")
-    return _encode_tag(field_number, WIRE_LENGTH_DELIMITED) + _encode_varint(len(encoded)) + encoded
+    return (
+        _encode_tag(field_number, WIRE_LENGTH_DELIMITED)
+        + _encode_varint(len(encoded))
+        + encoded
+    )
 
 
 def _encode_bytes_field(field_number: int, value: bytes) -> bytes:
     """Encode raw bytes as a length-delimited protobuf field."""
-    return _encode_tag(field_number, WIRE_LENGTH_DELIMITED) + _encode_varint(len(value)) + value
+    return (
+        _encode_tag(field_number, WIRE_LENGTH_DELIMITED)
+        + _encode_varint(len(value))
+        + value
+    )
 
 
 def _encode_varint_field(field_number: int, value: int) -> bytes:
@@ -163,9 +171,9 @@ def _build_metadata(credentials: WindsurfCredentials) -> bytes:
         Field 12: extension_name (string)
         Field 26: plan_name (string)
     """
-    from integrations.windsurf_proxy.discovery import get_metadata_fields
-
     import platform
+
+    from integrations.windsurf_proxy.discovery import get_metadata_fields
 
     fields = get_metadata_fields()
     parts = bytearray()
@@ -225,9 +233,9 @@ def _build_chat_message(role: str, content: str, conversation_id: str) -> bytes:
     parts.extend(_encode_string_field(4, conversation_id))  # conversation_id
 
     # 3-level nesting: intent(f5) → IntentGeneric(f1) → text(f1)
-    text_field = _encode_string_field(1, content)          # IntentGeneric.text
-    intent_generic = _encode_bytes_field(1, text_field)     # ChatMessageIntent.generic
-    parts.extend(_encode_bytes_field(5, intent_generic))    # ChatMessage.intent
+    text_field = _encode_string_field(1, content)  # IntentGeneric.text
+    intent_generic = _encode_bytes_field(1, text_field)  # ChatMessageIntent.generic
+    parts.extend(_encode_bytes_field(5, intent_generic))  # ChatMessage.intent
 
     return bytes(parts)
 
@@ -457,12 +465,14 @@ async def _ensure_panel_initialized(credentials: WindsurfCredentials) -> None:
         try:
             import httpx
         except ImportError:
-            raise ImportError("httpx is required for Windsurf gRPC client. Install with: pip install httpx[http2]")
+            raise ImportError(
+                "httpx is required for Windsurf gRPC client. Install with: pip install httpx[http2]"
+            )
 
         metadata = _build_metadata(credentials)
         init_req = bytearray()
         init_req.extend(_encode_bytes_field(1, metadata))  # metadata
-        init_req.extend(_encode_varint_field(3, 1))         # workspace_trusted = true
+        init_req.extend(_encode_varint_field(3, 1))  # workspace_trusted = true
 
         url = f"http://localhost:{credentials.port}{INIT_PANEL_PATH}"
         headers = {
@@ -527,7 +537,9 @@ async def stream_chat(
     try:
         import httpx
     except ImportError:
-        raise ImportError("httpx is required for Windsurf gRPC client. Install with: pip install httpx[http2]")
+        raise ImportError(
+            "httpx is required for Windsurf gRPC client. Install with: pip install httpx[http2]"
+        )
 
     # Ensure panel is initialized (required for RawGetChatMessage)
     await _ensure_panel_initialized(credentials)
@@ -551,11 +563,15 @@ async def stream_chat(
         "user-agent": "workpilot-windsurf-proxy/1.0",
     }
 
-    logger.debug(f"[WindsurfGRPC] POST {url} (model={model_name}, {len(messages)} messages)")
+    logger.debug(
+        f"[WindsurfGRPC] POST {url} (model={model_name}, {len(messages)} messages)"
+    )
 
     try:
         async with httpx.AsyncClient(http2=True, timeout=CHAT_TIMEOUT) as client:
-            async with client.stream("POST", url, content=grpc_data, headers=headers) as response:
+            async with client.stream(
+                "POST", url, content=grpc_data, headers=headers
+            ) as response:
                 if response.status_code != 200:
                     error_body = b""
                     async for chunk in response.aiter_bytes():
@@ -590,7 +606,9 @@ async def stream_chat(
                                 if "failed_precondition" in error_msg.lower():
                                     global _panel_initialized
                                     _panel_initialized = False
-                                    logger.info("[WindsurfGRPC] Cascade session expired, panel reset for re-initialization")
+                                    logger.info(
+                                        "[WindsurfGRPC] Cascade session expired, panel reset for re-initialization"
+                                    )
                                 raise WindsurfError(
                                     f"Windsurf server error: {error_msg}",
                                     WindsurfErrorCode.STREAM_ERROR,
@@ -628,6 +646,8 @@ async def chat(
     Non-streaming convenience wrapper around stream_chat().
     """
     text_parts = []
-    async for chunk in stream_chat(credentials, messages, model_enum, model_name, system_prompt):
+    async for chunk in stream_chat(
+        credentials, messages, model_enum, model_name, system_prompt
+    ):
         text_parts.append(chunk)
     return "".join(text_parts)

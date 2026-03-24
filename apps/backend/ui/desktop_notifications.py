@@ -17,10 +17,11 @@ Example:
 
 import logging
 import uuid
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +30,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class NotificationType(str, Enum):
     """Types of desktop notifications."""
+
     TASK_COMPLETED = "task_completed"
     TASK_FAILED = "task_failed"
     QA_PASSED = "qa_passed"
@@ -48,6 +51,7 @@ class NotificationType(str, Enum):
 
 class NotificationPriority(str, Enum):
     """Priority levels for notifications."""
+
     LOW = "low"
     NORMAL = "normal"
     HIGH = "high"
@@ -56,6 +60,7 @@ class NotificationPriority(str, Enum):
 
 class NotificationActionType(str, Enum):
     """Types of quick actions available from notifications."""
+
     APPROVE_MERGE = "approve_merge"
     RERUN_QA = "rerun_qa"
     VIEW_DETAILS = "view_details"
@@ -69,41 +74,46 @@ class NotificationActionType(str, Enum):
 # Dataclasses
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class NotificationAction:
     """A quick action button attached to a notification."""
+
     action_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     action_type: str = "view_details"
     label: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 @dataclass
 class DesktopNotification:
     """A rich desktop notification with optional actions."""
+
     notification_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     notification_type: str = "custom"
     title: str = ""
     body: str = ""
     icon: str = ""
     priority: str = "normal"
-    actions: List[NotificationAction] = field(default_factory=list)
-    task_id: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    actions: list[NotificationAction] = field(default_factory=list)
+    task_id: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    timestamp: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
     read: bool = False
     clicked: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         result = asdict(self)
         return result
 
-    def to_electron_payload(self) -> Dict[str, Any]:
+    def to_electron_payload(self) -> dict[str, Any]:
         """Convert to Electron Notification API payload."""
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "title": self.title,
             "body": self.body,
             "silent": self.priority == "low",
@@ -118,8 +128,7 @@ class DesktopNotification:
             payload["icon"] = self.icon
         if self.actions:
             payload["actions"] = [
-                {"type": "button", "text": a.label}
-                for a in self.actions[:3]
+                {"type": "button", "text": a.label} for a in self.actions[:3]
             ]
         return payload
 
@@ -127,6 +136,7 @@ class DesktopNotification:
 @dataclass
 class PeriodicSummary:
     """A periodic summary notification with aggregated stats."""
+
     summary_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     period: str = "hourly"
     tasks_completed: int = 0
@@ -134,17 +144,21 @@ class PeriodicSummary:
     qa_pass_rate: float = 0.0
     total_tokens: int = 0
     total_cost: float = 0.0
-    highlights: List[str] = field(default_factory=list)
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    highlights: list[str] = field(default_factory=list)
+    timestamp: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     def to_notification_body(self) -> str:
         parts = []
         total = self.tasks_completed + self.tasks_failed
         if total > 0:
-            parts.append(f"{self.tasks_completed} completed, {self.tasks_failed} failed")
+            parts.append(
+                f"{self.tasks_completed} completed, {self.tasks_failed} failed"
+            )
         if self.qa_pass_rate > 0:
             parts.append(f"QA pass rate: {self.qa_pass_rate:.0f}%")
         if self.total_cost > 0:
@@ -157,6 +171,7 @@ class PeriodicSummary:
 @dataclass
 class NotificationPreferences:
     """User preferences for desktop notifications."""
+
     enabled: bool = True
     task_completed: bool = True
     task_failed: bool = True
@@ -166,11 +181,11 @@ class NotificationPreferences:
     security_alerts: bool = True
     periodic_summary: bool = True
     summary_interval_minutes: int = 60
-    quiet_hours_start: Optional[int] = None
-    quiet_hours_end: Optional[int] = None
+    quiet_hours_start: int | None = None
+    quiet_hours_end: int | None = None
     min_priority: str = "low"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     def is_quiet_hours(self) -> bool:
@@ -221,6 +236,7 @@ PRIORITY_MAP = {
 # Main class
 # ---------------------------------------------------------------------------
 
+
 class DesktopNotificationManager:
     """Manages rich native desktop notifications for the application.
 
@@ -235,22 +251,22 @@ class DesktopNotificationManager:
     def __init__(
         self,
         project_id: str = "",
-        preferences: Optional[NotificationPreferences] = None,
+        preferences: NotificationPreferences | None = None,
     ) -> None:
         self._project_id = project_id
         self._preferences = preferences or NotificationPreferences()
-        self._notifications: List[DesktopNotification] = []
-        self._summaries: List[PeriodicSummary] = []
-        self._action_handlers: Dict[str, Callable] = {}
-        self._dispatch_callback: Optional[Callable] = None
+        self._notifications: list[DesktopNotification] = []
+        self._summaries: list[PeriodicSummary] = []
+        self._action_handlers: dict[str, Callable] = {}
+        self._dispatch_callback: Callable | None = None
 
         # Counters for periodic summaries
         self._period_tasks_completed: int = 0
         self._period_tasks_failed: int = 0
-        self._period_qa_results: List[float] = []
+        self._period_qa_results: list[float] = []
         self._period_tokens: int = 0
         self._period_cost: float = 0.0
-        self._period_highlights: List[str] = []
+        self._period_highlights: list[str] = []
 
     # -- Configuration -------------------------------------------------------
 
@@ -277,8 +293,8 @@ class DesktopNotificationManager:
         task_id: str,
         task_title: str,
         agent_type: str = "coder",
-        duration_s: Optional[float] = None,
-    ) -> Optional[DesktopNotification]:
+        duration_s: float | None = None,
+    ) -> DesktopNotification | None:
         """Notify that a task has been completed successfully."""
         if not self._preferences.task_completed:
             return None
@@ -308,7 +324,7 @@ class DesktopNotificationManager:
         task_title: str,
         error: str = "",
         agent_type: str = "coder",
-    ) -> Optional[DesktopNotification]:
+    ) -> DesktopNotification | None:
         """Notify that a task has failed."""
         if not self._preferences.task_failed:
             return None
@@ -336,12 +352,16 @@ class DesktopNotificationManager:
         passed: bool,
         score: float = 0.0,
         task_title: str = "",
-    ) -> Optional[DesktopNotification]:
+    ) -> DesktopNotification | None:
         """Notify of a QA result with score."""
         if not self._preferences.qa_results:
             return None
 
-        ntype = NotificationType.QA_PASSED.value if passed else NotificationType.QA_FAILED.value
+        ntype = (
+            NotificationType.QA_PASSED.value
+            if passed
+            else NotificationType.QA_FAILED.value
+        )
         status = "passed" if passed else "failed"
         title = f"QA {status.capitalize()}"
         body = f"Score: {score:.1f}/100"
@@ -368,7 +388,7 @@ class DesktopNotificationManager:
         provider: str,
         model: str,
         retry_after_s: int = 60,
-    ) -> Optional[DesktopNotification]:
+    ) -> DesktopNotification | None:
         """Notify of a rate limit hit."""
         if not self._preferences.rate_limit:
             return None
@@ -378,10 +398,16 @@ class DesktopNotificationManager:
             title="Rate Limit Reached",
             body=f"{provider}/{model} — retry in {retry_after_s}s",
             actions=[
-                NotificationAction(action_type="switch_provider", label="Switch Provider"),
+                NotificationAction(
+                    action_type="switch_provider", label="Switch Provider"
+                ),
                 NotificationAction(action_type="dismiss", label="Wait"),
             ],
-            metadata={"provider": provider, "model": model, "retry_after_s": retry_after_s},
+            metadata={
+                "provider": provider,
+                "model": model,
+                "retry_after_s": retry_after_s,
+            },
         )
 
     def notify_merge_ready(
@@ -389,7 +415,7 @@ class DesktopNotificationManager:
         task_id: str,
         task_title: str,
         branch: str = "",
-    ) -> Optional[DesktopNotification]:
+    ) -> DesktopNotification | None:
         """Notify that a merge is ready for approval."""
         if not self._preferences.merge_ready:
             return None
@@ -414,7 +440,7 @@ class DesktopNotificationManager:
         title: str,
         description: str,
         severity: str = "high",
-    ) -> Optional[DesktopNotification]:
+    ) -> DesktopNotification | None:
         """Notify of a security alert."""
         if not self._preferences.security_alerts:
             return None
@@ -434,7 +460,7 @@ class DesktopNotificationManager:
         current_cost: float,
         budget_limit: float,
         percentage: float,
-    ) -> Optional[DesktopNotification]:
+    ) -> DesktopNotification | None:
         """Notify of a budget threshold being reached."""
         return self._create_notification(
             notification_type=NotificationType.BUDGET_ALERT.value,
@@ -443,7 +469,11 @@ class DesktopNotificationManager:
             actions=[
                 NotificationAction(action_type="view_details", label="View Costs"),
             ],
-            metadata={"current_cost": current_cost, "budget_limit": budget_limit, "percentage": percentage},
+            metadata={
+                "current_cost": current_cost,
+                "budget_limit": budget_limit,
+                "percentage": percentage,
+            },
         )
 
     def notify_custom(
@@ -451,9 +481,9 @@ class DesktopNotificationManager:
         title: str,
         body: str,
         priority: str = "normal",
-        task_id: Optional[str] = None,
-        actions: Optional[List[NotificationAction]] = None,
-    ) -> Optional[DesktopNotification]:
+        task_id: str | None = None,
+        actions: list[NotificationAction] | None = None,
+    ) -> DesktopNotification | None:
         """Send a custom notification."""
         return self._create_notification(
             notification_type=NotificationType.CUSTOM.value,
@@ -504,7 +534,7 @@ class DesktopNotificationManager:
 
     # -- Action handling -----------------------------------------------------
 
-    def handle_action(self, notification_id: str, action_type: str) -> Dict[str, Any]:
+    def handle_action(self, notification_id: str, action_type: str) -> dict[str, Any]:
         """Handle a quick action clicked from a notification."""
         notif = self._get_notification(notification_id)
         notif.clicked = True
@@ -536,10 +566,10 @@ class DesktopNotificationManager:
 
     def get_notifications(
         self,
-        notification_type: Optional[str] = None,
+        notification_type: str | None = None,
         unread_only: bool = False,
         limit: int = 50,
-    ) -> List[DesktopNotification]:
+    ) -> list[DesktopNotification]:
         """Get notifications, optionally filtered."""
         result = list(self._notifications)
         if notification_type:
@@ -553,15 +583,17 @@ class DesktopNotificationManager:
         """Get the count of unread notifications."""
         return sum(1 for n in self._notifications if not n.read)
 
-    def get_summaries(self) -> List[PeriodicSummary]:
+    def get_summaries(self) -> list[PeriodicSummary]:
         """Get all periodic summaries."""
         return list(self._summaries)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get notification statistics."""
-        type_counts: Dict[str, int] = {}
+        type_counts: dict[str, int] = {}
         for n in self._notifications:
-            type_counts[n.notification_type] = type_counts.get(n.notification_type, 0) + 1
+            type_counts[n.notification_type] = (
+                type_counts.get(n.notification_type, 0) + 1
+            )
 
         return {
             "total_notifications": len(self._notifications),
@@ -580,15 +612,17 @@ class DesktopNotificationManager:
         notification_type: str,
         title: str,
         body: str,
-        task_id: Optional[str] = None,
-        actions: Optional[List[NotificationAction]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        priority_override: Optional[str] = None,
-    ) -> Optional[DesktopNotification]:
+        task_id: str | None = None,
+        actions: list[NotificationAction] | None = None,
+        metadata: dict[str, Any] | None = None,
+        priority_override: str | None = None,
+    ) -> DesktopNotification | None:
         if not self._preferences.enabled:
             return None
         if self._preferences.is_quiet_hours():
-            priority = priority_override or PRIORITY_MAP.get(notification_type, "normal")
+            priority = priority_override or PRIORITY_MAP.get(
+                notification_type, "normal"
+            )
             if priority != "urgent":
                 return None
 

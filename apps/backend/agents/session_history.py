@@ -18,7 +18,6 @@ Example:
 
 import json
 import logging
-import os
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -32,8 +31,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class ActionType(str, Enum):
     """Type of action recorded in a session."""
+
     PROMPT = "prompt"
     RESPONSE = "response"
     TOOL_CALL = "tool_call"
@@ -49,6 +50,7 @@ class ActionType(str, Enum):
 
 class SessionStatus(str, Enum):
     """Status of a recorded session."""
+
     RECORDING = "recording"
     COMPLETED = "completed"
     FAILED = "failed"
@@ -59,6 +61,7 @@ class SessionStatus(str, Enum):
 # ---------------------------------------------------------------------------
 # Data models
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class SessionAction:
@@ -72,6 +75,7 @@ class SessionAction:
         metadata: Additional context (e.g. tool name, file path, tokens used).
         duration_ms: How long the action took in milliseconds.
     """
+
     action_id: str
     action_type: ActionType
     content: str
@@ -85,7 +89,11 @@ class SessionAction:
 
     def to_dict(self) -> dict:
         data = asdict(self)
-        data["action_type"] = self.action_type.value if isinstance(self.action_type, ActionType) else self.action_type
+        data["action_type"] = (
+            self.action_type.value
+            if isinstance(self.action_type, ActionType)
+            else self.action_type
+        )
         return data
 
     @classmethod
@@ -105,6 +113,7 @@ class FileChange:
         change_type: Type of change (create, modify, delete).
         timestamp: When the change happened.
     """
+
     file_path: str
     before: str
     after: str
@@ -165,6 +174,7 @@ class AgentSession:
         total_tokens_out: Total output tokens consumed.
         metadata: Additional session metadata.
     """
+
     session_id: str
     project_id: str
     task_id: str
@@ -208,7 +218,9 @@ class AgentSession:
             "project_id": self.project_id,
             "task_id": self.task_id,
             "agent_type": self.agent_type,
-            "status": self.status.value if isinstance(self.status, SessionStatus) else self.status,
+            "status": self.status.value
+            if isinstance(self.status, SessionStatus)
+            else self.status,
             "actions": [a.to_dict() for a in self.actions],
             "file_changes": [f.to_dict() for f in self.file_changes],
             "started_at": self.started_at,
@@ -246,6 +258,7 @@ class TimelineEntry:
         summary: Short human-readable summary.
         details: Detailed content (truncated).
     """
+
     index: int
     timestamp: str
     action_type: str
@@ -259,6 +272,7 @@ class TimelineEntry:
 # ---------------------------------------------------------------------------
 # SessionRecorder
 # ---------------------------------------------------------------------------
+
 
 class SessionRecorder:
     """Records agent sessions for later replay and analysis.
@@ -330,11 +344,17 @@ class SessionRecorder:
             return None
 
         if session.status != SessionStatus.RECORDING:
-            logger.warning("Session %s is not recording (status: %s)", session_id, session.status)
+            logger.warning(
+                "Session %s is not recording (status: %s)", session_id, session.status
+            )
             return None
 
         self._action_counter += 1
-        at = ActionType(action_type) if action_type in [a.value for a in ActionType] else ActionType.RESPONSE
+        at = (
+            ActionType(action_type)
+            if action_type in [a.value for a in ActionType]
+            else ActionType.RESPONSE
+        )
 
         action = SessionAction(
             action_id=f"act_{self._action_counter}",
@@ -408,7 +428,11 @@ class SessionRecorder:
         if not session:
             return None
 
-        session.status = SessionStatus(status) if status in [s.value for s in SessionStatus] else SessionStatus.COMPLETED
+        session.status = (
+            SessionStatus(status)
+            if status in [s.value for s in SessionStatus]
+            else SessionStatus.COMPLETED
+        )
         session.ended_at = datetime.now(timezone.utc).isoformat()
         logger.info("Ended session %s with status %s", session_id, status)
         return session
@@ -449,13 +473,15 @@ class SessionRecorder:
         for i, action in enumerate(session.actions):
             summary = self._summarize_action(action)
             details = action.content[:500] if action.content else ""
-            entries.append(TimelineEntry(
-                index=i,
-                timestamp=action.timestamp,
-                action_type=action.action_type.value,
-                summary=summary,
-                details=details,
-            ))
+            entries.append(
+                TimelineEntry(
+                    index=i,
+                    timestamp=action.timestamp,
+                    action_type=action.action_type.value,
+                    summary=summary,
+                    details=details,
+                )
+            )
         return entries
 
     def get_file_diffs(self, session_id: str) -> list[dict]:
@@ -504,9 +530,13 @@ class SessionRecorder:
         sessions = list(self._sessions.values())
         return {
             "total_sessions": len(sessions),
-            "completed": sum(1 for s in sessions if s.status == SessionStatus.COMPLETED),
+            "completed": sum(
+                1 for s in sessions if s.status == SessionStatus.COMPLETED
+            ),
             "failed": sum(1 for s in sessions if s.status == SessionStatus.FAILED),
-            "recording": sum(1 for s in sessions if s.status == SessionStatus.RECORDING),
+            "recording": sum(
+                1 for s in sessions if s.status == SessionStatus.RECORDING
+            ),
             "total_actions": sum(s.action_count for s in sessions),
             "total_file_changes": sum(s.file_change_count for s in sessions),
             "total_tokens_in": sum(s.total_tokens_in for s in sessions),
@@ -531,12 +561,15 @@ class SessionRecorder:
             ActionType.DECISION: "Made decision",
             ActionType.PLAN: "Updated plan",
         }
-        return type_summaries.get(action.action_type, f"Action: {action.action_type.value}")
+        return type_summaries.get(
+            action.action_type, f"Action: {action.action_type.value}"
+        )
 
 
 # ---------------------------------------------------------------------------
 # SessionReplayer
 # ---------------------------------------------------------------------------
+
 
 class SessionReplayer:
     """Replay recorded sessions with optional prompt modifications.
@@ -579,7 +612,11 @@ class SessionReplayer:
         # Copy actions, replacing prompts where specified
         for i, action in enumerate(original_session.actions):
             new_content = action.content
-            if modified_prompts and i in modified_prompts and action.action_type == ActionType.PROMPT:
+            if (
+                modified_prompts
+                and i in modified_prompts
+                and action.action_type == ActionType.PROMPT
+            ):
                 new_content = modified_prompts[i]
 
             replay_action = SessionAction(

@@ -3,7 +3,6 @@
 Provides cost report, competitor comparison, and budget management.
 """
 
-import sys
 from pathlib import Path
 
 
@@ -32,33 +31,37 @@ def handle_cost_report_command(project_dir: Path, period: str = "monthly") -> No
     print(f"\n  Cost Report ({period})")
     print(f"  {'=' * 50}")
     print(f"  Total cost: ${report['total_cost']:.4f}")
-    print(f"  Total tokens: {report['total_tokens']['input']:,} in / {report['total_tokens']['output']:,} out")
+    print(
+        f"  Total tokens: {report['total_tokens']['input']:,} in / {report['total_tokens']['output']:,} out"
+    )
     print(f"  Usage records: {report['usage_count']}")
 
     if report.get("by_agent_type"):
-        print(f"\n  By Agent Type:")
+        print("\n  By Agent Type:")
         for agent, cost in sorted(report["by_agent_type"].items(), key=lambda x: -x[1]):
             print(f"    {agent:<20} ${cost:.4f}")
 
     if report.get("by_phase"):
-        print(f"\n  By Phase:")
+        print("\n  By Phase:")
         for phase, cost in sorted(report["by_phase"].items(), key=lambda x: -x[1]):
             print(f"    {phase:<20} ${cost:.4f}")
 
     if report.get("by_spec"):
-        print(f"\n  By Spec:")
+        print("\n  By Spec:")
         for spec, cost in sorted(report["by_spec"].items(), key=lambda x: -x[1]):
             print(f"    {spec:<30} ${cost:.4f}")
 
     if report.get("by_model"):
-        print(f"\n  By Model:")
+        print("\n  By Model:")
         for model, cost in sorted(report["by_model"].items(), key=lambda x: -x[1]):
             print(f"    {model:<40} ${cost:.4f}")
 
     if report.get("budget"):
         b = report["budget"]
         print(f"\n  Budget ({b.get('period', 'total')}):")
-        print(f"    Limit: ${b['limit']:.2f} | Spent: ${b['spent']:.4f} | Remaining: ${b['remaining']:.4f}")
+        print(
+            f"    Limit: ${b['limit']:.2f} | Spent: ${b['spent']:.4f} | Remaining: ${b['remaining']:.4f}"
+        )
         print(f"    Usage: {b['percentage']:.1f}%")
 
     print()
@@ -70,7 +73,10 @@ def handle_cost_compare_command(project_dir: Path) -> None:
     Args:
         project_dir: Path to the project root.
     """
-    from scheduling.competitor_comparison import compare_to_competitors, format_comparison_table
+    from scheduling.competitor_comparison import (
+        compare_to_competitors,
+        format_comparison_table,
+    )
     from scheduling.cost_estimator import CostEstimator
 
     estimator = CostEstimator()

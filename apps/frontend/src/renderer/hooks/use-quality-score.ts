@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import type { QualityScore } from '../../../preload/api/modules/quality-api';
+import type { QualityScore } from '../../preload/api/modules/quality-api';
 
 export function useQualityScore() {
   const [score, setScore] = useState<QualityScore | null>(null);

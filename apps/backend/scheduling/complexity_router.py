@@ -30,7 +30,7 @@ COMPLEXITY_MODEL_MAP: dict[str, dict[str, str]] = {
     "simple": {
         "spec": "haiku",
         "planning": "haiku",
-        "coding": "sonnet",      # Even simple tasks need competent coding
+        "coding": "sonnet",  # Even simple tasks need competent coding
         "qa": "haiku",
     },
     "standard": {
@@ -42,7 +42,7 @@ COMPLEXITY_MODEL_MAP: dict[str, dict[str, str]] = {
     "complex": {
         "spec": "opus",
         "planning": "opus",
-        "coding": "sonnet",      # Sonnet for coding to manage cost
+        "coding": "sonnet",  # Sonnet for coding to manage cost
         "qa": "opus",
     },
 }
@@ -88,6 +88,7 @@ class ComplexityRouting:
         estimated_cost_multiplier: Cost multiplier relative to standard baseline.
         source: Where the complexity was determined from.
     """
+
     complexity: str
     phase_models: dict[str, str]
     phase_thinking: dict[str, str]
@@ -151,7 +152,9 @@ def get_complexity_routing(
             source = "default"
 
     if complexity not in COMPLEXITY_MODEL_MAP:
-        logger.warning("Invalid complexity '%s', falling back to 'standard'", complexity)
+        logger.warning(
+            "Invalid complexity '%s', falling back to 'standard'", complexity
+        )
         complexity = "standard"
 
     return ComplexityRouting(

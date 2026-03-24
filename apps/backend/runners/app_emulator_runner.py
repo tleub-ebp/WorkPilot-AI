@@ -56,7 +56,7 @@ class AppEmulatorRunner:
             return None
 
         try:
-            with open(pkg_path, "r", encoding="utf-8") as f:
+            with open(pkg_path, encoding="utf-8") as f:
                 pkg = json.load(f)
         except (json.JSONDecodeError, OSError):
             return None
@@ -103,7 +103,11 @@ class AppEmulatorRunner:
             if script_name in scripts:
                 # Detect package manager
                 pm = self._detect_package_manager()
-                start_command = f"{pm} run {script_name}" if script_name != "start" else f"{pm} start"
+                start_command = (
+                    f"{pm} run {script_name}"
+                    if script_name != "start"
+                    else f"{pm} start"
+                )
                 break
 
         if not start_command and scripts:
@@ -126,7 +130,9 @@ class AppEmulatorRunner:
             return "pnpm"
         if (self.project_dir / "yarn.lock").exists():
             return "yarn"
-        if (self.project_dir / "bun.lockb").exists() or (self.project_dir / "bun.lock").exists():
+        if (self.project_dir / "bun.lockb").exists() or (
+            self.project_dir / "bun.lock"
+        ).exists():
             return "bun"
         return "npm"
 
@@ -139,7 +145,13 @@ class AppEmulatorRunner:
         app_py = self.project_dir / "app.py"
         main_py = self.project_dir / "main.py"
 
-        if not (pyproject.exists() or requirements.exists() or manage_py.exists() or app_py.exists() or main_py.exists()):
+        if not (
+            pyproject.exists()
+            or requirements.exists()
+            or manage_py.exists()
+            or app_py.exists()
+            or main_py.exists()
+        ):
             return None
 
         # Read all dependency sources to detect framework
@@ -256,7 +268,12 @@ class AppEmulatorRunner:
         except OSError:
             content = ""
 
-        is_web = "actix" in content or "rocket" in content or "axum" in content or "warp" in content
+        is_web = (
+            "actix" in content
+            or "rocket" in content
+            or "axum" in content
+            or "warp" in content
+        )
 
         return {
             "type": "web" if is_web else "cli",
@@ -294,8 +311,12 @@ class AppEmulatorRunner:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="App Emulator — Detect project type and start command")
-    parser.add_argument("--project-dir", required=True, help="Path to the project directory")
+    parser = argparse.ArgumentParser(
+        description="App Emulator — Detect project type and start command"
+    )
+    parser.add_argument(
+        "--project-dir", required=True, help="Path to the project directory"
+    )
     args = parser.parse_args()
 
     project_dir = args.project_dir

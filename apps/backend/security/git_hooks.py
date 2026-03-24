@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Git Hooks for Security Scanning
 ================================
@@ -397,4 +397,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

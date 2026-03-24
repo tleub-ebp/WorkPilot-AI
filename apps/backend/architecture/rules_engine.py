@@ -32,9 +32,7 @@ class ArchitectureRulesEngine:
         self.project_dir = project_dir
         self.config = config
 
-    def validate(
-        self, changed_files: list[str] | None = None
-    ) -> ArchitectureReport:
+    def validate(self, changed_files: list[str] | None = None) -> ArchitectureReport:
         """
         Run all deterministic architecture validations.
 
@@ -108,7 +106,9 @@ class ArchitectureRulesEngine:
 
         parts = []
         if passed:
-            parts.append(f"Architecture validation PASSED with {len(warnings)} warning(s).")
+            parts.append(
+                f"Architecture validation PASSED with {len(warnings)} warning(s)."
+            )
         else:
             parts.append(
                 f"Architecture validation FAILED with {len(errors)} error(s) "

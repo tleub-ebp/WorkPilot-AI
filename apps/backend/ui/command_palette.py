@@ -16,12 +16,12 @@ Example:
 """
 
 import logging
-import re
 import uuid
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +30,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class CommandCategory(str, Enum):
     """Categories for palette commands."""
+
     TASKS = "tasks"
     NAVIGATION = "navigation"
     AGENTS = "agents"
@@ -45,6 +47,7 @@ class CommandCategory(str, Enum):
 
 class CommandScope(str, Enum):
     """Scope where a command is available."""
+
     GLOBAL = "global"
     KANBAN = "kanban"
     TERMINAL = "terminal"
@@ -57,9 +60,11 @@ class CommandScope(str, Enum):
 # Dataclasses
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class PaletteCommand:
     """A command registered in the palette."""
+
     command_id: str = ""
     label: str = ""
     description: str = ""
@@ -67,11 +72,11 @@ class PaletteCommand:
     icon: str = ""
     shortcut: str = ""
     scope: str = "global"
-    keywords: List[str] = field(default_factory=list)
+    keywords: list[str] = field(default_factory=list)
     enabled: bool = True
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     @property
@@ -84,6 +89,7 @@ class PaletteCommand:
 @dataclass
 class SearchResult:
     """A search result from the palette."""
+
     command_id: str = ""
     label: str = ""
     description: str = ""
@@ -91,23 +97,26 @@ class SearchResult:
     icon: str = ""
     shortcut: str = ""
     score: float = 0.0
-    match_positions: List[int] = field(default_factory=list)
+    match_positions: list[int] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 @dataclass
 class CommandExecution:
     """Record of a command execution."""
+
     execution_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     command_id: str = ""
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
     success: bool = True
     result: Any = None
-    error: Optional[str] = None
+    error: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "execution_id": self.execution_id,
             "command_id": self.command_id,
@@ -120,6 +129,7 @@ class CommandExecution:
 # ---------------------------------------------------------------------------
 # Fuzzy matching
 # ---------------------------------------------------------------------------
+
 
 def fuzzy_match(query: str, text: str) -> tuple:
     """Fuzzy match a query against text. Returns (score, match_positions).
@@ -151,7 +161,7 @@ def fuzzy_match(query: str, text: str) -> tuple:
 
     # Fuzzy character-by-character matching
     qi = 0
-    positions: List[int] = []
+    positions: list[int] = []
     score = 0.0
     prev_match = -2
 
@@ -459,6 +469,7 @@ BUILTIN_COMMANDS = [
 # Main class
 # ---------------------------------------------------------------------------
 
+
 class CommandPalette:
     """Universal command palette with fuzzy search and command execution.
 
@@ -470,11 +481,11 @@ class CommandPalette:
     """
 
     def __init__(self, max_history: int = 50) -> None:
-        self._commands: Dict[str, PaletteCommand] = {}
-        self._handlers: Dict[str, Callable] = {}
-        self._history: List[CommandExecution] = []
+        self._commands: dict[str, PaletteCommand] = {}
+        self._handlers: dict[str, Callable] = {}
+        self._history: list[CommandExecution] = []
         self._max_history = max_history
-        self._recent_command_ids: List[str] = []
+        self._recent_command_ids: list[str] = []
 
         # Register built-in commands
         for cmd in BUILTIN_COMMANDS:
@@ -491,8 +502,8 @@ class CommandPalette:
         icon: str = "",
         shortcut: str = "",
         scope: str = "global",
-        keywords: Optional[List[str]] = None,
-        handler: Optional[Callable] = None,
+        keywords: list[str] | None = None,
+        handler: Callable | None = None,
     ) -> PaletteCommand:
         """Register a new command in the palette."""
         cmd = PaletteCommand(
@@ -527,9 +538,9 @@ class CommandPalette:
 
     def list_commands(
         self,
-        category: Optional[str] = None,
-        scope: Optional[str] = None,
-    ) -> List[PaletteCommand]:
+        category: str | None = None,
+        scope: str | None = None,
+    ) -> list[PaletteCommand]:
         """List all registered commands, optionally filtered."""
         cmds = list(self._commands.values())
         if category:
@@ -543,14 +554,14 @@ class CommandPalette:
     def search(
         self,
         query: str,
-        scope: Optional[str] = None,
+        scope: str | None = None,
         limit: int = 10,
-    ) -> List[SearchResult]:
+    ) -> list[SearchResult]:
         """Fuzzy search commands. Returns results sorted by relevance."""
         if not query.strip():
             return self._get_default_results(scope, limit)
 
-        results: List[SearchResult] = []
+        results: list[SearchResult] = []
         for cmd in self._commands.values():
             if not cmd.enabled:
                 continue
@@ -565,16 +576,18 @@ class CommandPalette:
                     idx = self._recent_command_ids.index(cmd.command_id)
                     recency_boost = max(0, 10 - idx)
 
-                results.append(SearchResult(
-                    command_id=cmd.command_id,
-                    label=cmd.label,
-                    description=cmd.description,
-                    category=cmd.category,
-                    icon=cmd.icon,
-                    shortcut=cmd.shortcut,
-                    score=score + recency_boost,
-                    match_positions=positions,
-                ))
+                results.append(
+                    SearchResult(
+                        command_id=cmd.command_id,
+                        label=cmd.label,
+                        description=cmd.description,
+                        category=cmd.category,
+                        icon=cmd.icon,
+                        shortcut=cmd.shortcut,
+                        score=score + recency_boost,
+                        match_positions=positions,
+                    )
+                )
 
         results.sort(key=lambda r: r.score, reverse=True)
         return results[:limit]
@@ -604,7 +617,7 @@ class CommandPalette:
 
         self._history.append(execution)
         if len(self._history) > self._max_history:
-            self._history = self._history[-self._max_history:]
+            self._history = self._history[-self._max_history :]
 
         # Update recent commands
         if command_id in self._recent_command_ids:
@@ -616,13 +629,13 @@ class CommandPalette:
 
     # -- History -------------------------------------------------------------
 
-    def get_history(self, limit: int = 20) -> List[CommandExecution]:
+    def get_history(self, limit: int = 20) -> list[CommandExecution]:
         """Get recent command execution history."""
         return list(reversed(self._history[-limit:]))
 
-    def get_recent_commands(self, limit: int = 5) -> List[PaletteCommand]:
+    def get_recent_commands(self, limit: int = 5) -> list[PaletteCommand]:
         """Get recently used commands."""
-        result: List[PaletteCommand] = []
+        result: list[PaletteCommand] = []
         for cid in self._recent_command_ids[:limit]:
             if cid in self._commands:
                 result.append(self._commands[cid])
@@ -630,13 +643,13 @@ class CommandPalette:
 
     # -- Stats ---------------------------------------------------------------
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get palette statistics."""
-        category_counts: Dict[str, int] = {}
+        category_counts: dict[str, int] = {}
         for cmd in self._commands.values():
             category_counts[cmd.category] = category_counts.get(cmd.category, 0) + 1
 
-        execution_counts: Dict[str, int] = {}
+        execution_counts: dict[str, int] = {}
         for ex in self._history:
             execution_counts[ex.command_id] = execution_counts.get(ex.command_id, 0) + 1
 
@@ -646,15 +659,17 @@ class CommandPalette:
             "total_executions": len(self._history),
             "successful_executions": sum(1 for e in self._history if e.success),
             "failed_executions": sum(1 for e in self._history if not e.success),
-            "most_used": sorted(execution_counts.items(), key=lambda x: x[1], reverse=True)[:5],
+            "most_used": sorted(
+                execution_counts.items(), key=lambda x: x[1], reverse=True
+            )[:5],
             "recent_commands_count": len(self._recent_command_ids),
         }
 
     # -- Internal helpers ----------------------------------------------------
 
-    def _get_default_results(self, scope: Optional[str], limit: int) -> List[SearchResult]:
+    def _get_default_results(self, scope: str | None, limit: int) -> list[SearchResult]:
         """Return default results when query is empty (recent + popular)."""
-        results: List[SearchResult] = []
+        results: list[SearchResult] = []
 
         # Add recent commands first
         for cid in self._recent_command_ids:
@@ -662,15 +677,17 @@ class CommandPalette:
                 cmd = self._commands[cid]
                 if scope and cmd.scope not in (scope, "global"):
                     continue
-                results.append(SearchResult(
-                    command_id=cmd.command_id,
-                    label=cmd.label,
-                    description=cmd.description,
-                    category="recent",
-                    icon=cmd.icon,
-                    shortcut=cmd.shortcut,
-                    score=100.0,
-                ))
+                results.append(
+                    SearchResult(
+                        command_id=cmd.command_id,
+                        label=cmd.label,
+                        description=cmd.description,
+                        category="recent",
+                        icon=cmd.icon,
+                        shortcut=cmd.shortcut,
+                        score=100.0,
+                    )
+                )
 
         # Fill with navigation commands
         for cmd in self._commands.values():
@@ -679,14 +696,16 @@ class CommandPalette:
             if scope and cmd.scope not in (scope, "global"):
                 continue
             if cmd.category == "navigation":
-                results.append(SearchResult(
-                    command_id=cmd.command_id,
-                    label=cmd.label,
-                    description=cmd.description,
-                    category=cmd.category,
-                    icon=cmd.icon,
-                    shortcut=cmd.shortcut,
-                    score=50.0,
-                ))
+                results.append(
+                    SearchResult(
+                        command_id=cmd.command_id,
+                        label=cmd.label,
+                        description=cmd.description,
+                        category=cmd.category,
+                        icon=cmd.icon,
+                        shortcut=cmd.shortcut,
+                        score=50.0,
+                    )
+                )
 
         return results[:limit]

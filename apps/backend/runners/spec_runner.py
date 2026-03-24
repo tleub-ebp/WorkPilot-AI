@@ -285,6 +285,7 @@ Examples:
     # did not inject it (e.g. settings.json.selectedProvider is null).
     if args.provider and args.provider not in ("anthropic", "claude"):
         import os as _os
+
         _os.environ["SELECTED_LLM_PROVIDER"] = args.provider
         debug(
             "spec_runner",
@@ -298,7 +299,8 @@ Examples:
     if (
         args.provider
         and args.provider not in ("anthropic", "claude")
-        and args.model == "sonnet"  # argparse default — user didn't explicitly set a model
+        and args.model
+        == "sonnet"  # argparse default — user didn't explicitly set a model
     ):
         provider_defaults = PROVIDER_DEFAULT_MODELS.get(args.provider, {})
         resolved_model = provider_defaults.get("spec", args.model)

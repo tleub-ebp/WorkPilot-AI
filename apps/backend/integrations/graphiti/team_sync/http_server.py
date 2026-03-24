@@ -88,7 +88,9 @@ def create_app(project_dir: Path, team_id: str, member_id: str):
         """Download a specific member's snapshot."""
         snap_file = server_dir / f"{member}_snapshot.json"
         if not snap_file.exists():
-            raise HTTPException(status_code=404, detail=f"No snapshot for member: {member}")
+            raise HTTPException(
+                status_code=404, detail=f"No snapshot for member: {member}"
+            )
         try:
             with open(snap_file, encoding="utf-8") as f:
                 return JSONResponse(content=json.load(f))
@@ -110,8 +112,14 @@ def create_app(project_dir: Path, team_id: str, member_id: str):
             with open(snap_file, "w", encoding="utf-8") as f:
                 json.dump(request_body, f, indent=2, ensure_ascii=False)
             episode_count = request_body.get("episode_count", 0)
-            logger.info(f"[TeamSync Server] Received {episode_count} episodes from {incoming_member}")
-            return {"success": True, "stored_as": str(snap_file), "episode_count": episode_count}
+            logger.info(
+                f"[TeamSync Server] Received {episode_count} episodes from {incoming_member}"
+            )
+            return {
+                "success": True,
+                "stored_as": str(snap_file),
+                "episode_count": episode_count,
+            }
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e)) from e
 

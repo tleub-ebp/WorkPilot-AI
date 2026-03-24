@@ -11,7 +11,6 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 # State file name
 REVIEW_STATE_FILE = "review_state.json"
@@ -86,7 +85,7 @@ class ReviewState:
     def save(self, spec_dir: Path) -> None:
         """Save state to the spec directory with inverted filename/root."""
         # Inversion: spec_dir devient le nom du fichier, REVIEW_STATE_FILE devient le dossier
-        inverted_dir = Path.home() / REVIEW_STATE_FILE.replace('.json', '')
+        inverted_dir = Path.home() / REVIEW_STATE_FILE.replace(".json", "")
         inverted_dir.mkdir(parents=True, exist_ok=True)
         state_file = inverted_dir / f"{Path(spec_dir).name}.json"
         with open(state_file, "w", encoding="utf-8") as f:
@@ -174,7 +173,7 @@ class ReviewState:
     def add_feedback(
         self,
         feedback: str,
-        spec_dir: Optional[Path] = None,
+        spec_dir: Path | None = None,
         auto_save: bool = True,
     ) -> None:
         """

@@ -479,7 +479,7 @@ class RouteDetector(BaseAnalyzer):
             # Extract XML doc <summary> + [HttpVerb] pairs
             # Walk through file looking for method-level attributes
             method_pattern = re.compile(
-                r'(?:///\s*<summary>\s*((?:///[^\n]*\n?)*?)///\s*</summary>[\s\S]{0,500}?)?'
+                r"(?:///\s*<summary>\s*((?:///[^\n]*\n?)*?)///\s*</summary>[\s\S]{0,500}?)?"
                 r'\[Http(Get|Post|Put|Delete|Patch)(?:\(["\']?([^"\')\]]*)["\']?\))?\]',
                 re.MULTILINE,
             )
@@ -487,11 +487,14 @@ class RouteDetector(BaseAnalyzer):
             for m in method_pattern.finditer(content):
                 raw_summary = m.group(1) or ""
                 # Strip leading /// and whitespace from each summary line
-                summary = " ".join(
-                    line.lstrip("/ ").strip()
-                    for line in raw_summary.splitlines()
-                    if line.strip().lstrip("/ ")
-                ) or None
+                summary = (
+                    " ".join(
+                        line.lstrip("/ ").strip()
+                        for line in raw_summary.splitlines()
+                        if line.strip().lstrip("/ ")
+                    )
+                    or None
+                )
 
                 verb = m.group(2)
                 sub_path = (m.group(3) or "").strip().strip('"').strip("'")
@@ -544,9 +547,7 @@ class RouteDetector(BaseAnalyzer):
                 continue
 
             # Only process controller files
-            if not re.search(
-                r"@(?:Rest)?Controller|@RequestMapping", content
-            ):
+            if not re.search(r"@(?:Rest)?Controller|@RequestMapping", content):
                 continue
 
             # Class-level @RequestMapping
@@ -559,9 +560,9 @@ class RouteDetector(BaseAnalyzer):
 
             # Method-level mappings
             method_pattern = (
-                r'@(?:(GetMapping|PostMapping|PutMapping|DeleteMapping|PatchMapping)'
+                r"@(?:(GetMapping|PostMapping|PutMapping|DeleteMapping|PatchMapping)"
                 r'(?:\((?:value\s*=\s*)?["\']?([^"\')\s]*)["\']?\))?'
-                r'|RequestMapping\([^)]*method\s*=\s*RequestMethod\.(\w+)[^)]*'
+                r"|RequestMapping\([^)]*method\s*=\s*RequestMethod\.(\w+)[^)]*"
                 r'(?:value|path)\s*=\s*["\']?([^"\')\s]+)["\']?[^)]*\))'
             )
             for m in re.finditer(method_pattern, content):
@@ -572,7 +573,11 @@ class RouteDetector(BaseAnalyzer):
                     method = (m.group(3) or "GET").upper()
                     sub = (m.group(4) or "").strip()
 
-                full_path = f"{class_base}/{sub}".replace("//", "/") if sub else (class_base or "/")
+                full_path = (
+                    f"{class_base}/{sub}".replace("//", "/")
+                    if sub
+                    else (class_base or "/")
+                )
                 if not full_path.startswith("/"):
                     full_path = f"/{full_path}"
 

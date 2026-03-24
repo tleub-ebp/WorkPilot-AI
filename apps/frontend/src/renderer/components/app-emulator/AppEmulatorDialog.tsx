@@ -74,7 +74,7 @@ function classifyLogLevel(keyword: string): string {
  */
 function classifyLogLine(line: string): string {
   // 1. Bracket notation: [LEVEL], (LEVEL), {LEVEL}
-  const bracketMatch = line.match(/[\[({]([a-z]+)[\])}]/i);
+  const bracketMatch = line.match(/[[({]([a-z]+)[\])}]/i);
   if (bracketMatch) {
     const cls = classifyLogLevel(bracketMatch[1]);
     if (cls) return cls;

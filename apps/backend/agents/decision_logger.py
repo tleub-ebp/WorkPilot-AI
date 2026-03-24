@@ -25,9 +25,8 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
-from core.task_event import TaskEventEmitter, load_task_event_context
+from core.task_event import TaskEventEmitter
 
 # Maximum entries kept in the JSON file (oldest are dropped when exceeded)
 MAX_LOG_ENTRIES = 500
@@ -51,32 +50,32 @@ class DecisionType:
 class DecisionEntry:
     """A single logged agent decision."""
 
-    id: int                              # Auto-incremented within a session
-    session_id: str                      # Identifies the agent session
-    agent_type: str                      # planner | coder | qa_reviewer | qa_fixer
-    decision_type: str                   # See DecisionType constants
-    timestamp: str                       # ISO8601 UTC
+    id: int  # Auto-incremented within a session
+    session_id: str  # Identifies the agent session
+    agent_type: str  # planner | coder | qa_reviewer | qa_fixer
+    decision_type: str  # See DecisionType constants
+    timestamp: str  # ISO8601 UTC
 
     # Content (all optional — populated depending on decision_type)
-    summary: str = ""                    # One-line description shown in the timeline
-    tool_name: Optional[str] = None      # For tool_call entries
-    tool_input_summary: Optional[str] = None
-    tool_outcome: Optional[str] = None   # success | error | partial
+    summary: str = ""  # One-line description shown in the timeline
+    tool_name: str | None = None  # For tool_call entries
+    tool_input_summary: str | None = None
+    tool_outcome: str | None = None  # success | error | partial
     files: list[str] = field(default_factory=list)  # Paths for file_read/write
     alternatives: list[str] = field(default_factory=list)  # For decision entries
-    selected: Optional[str] = None       # Chosen option for decision entries
-    reasoning_text: Optional[str] = None # Truncated reasoning for reasoning entries
-    phase_from: Optional[str] = None
-    phase_to: Optional[str] = None
-    error_type: Optional[str] = None
-    recovery_approach: Optional[str] = None
-    subtask_id: Optional[str] = None     # Current subtask being worked on
+    selected: str | None = None  # Chosen option for decision entries
+    reasoning_text: str | None = None  # Truncated reasoning for reasoning entries
+    phase_from: str | None = None
+    phase_to: str | None = None
+    error_type: str | None = None
+    recovery_approach: str | None = None
+    subtask_id: str | None = None  # Current subtask being worked on
 
     def to_dict(self) -> dict:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "DecisionEntry":
+    def from_dict(cls, data: dict) -> DecisionEntry:
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
@@ -110,7 +109,7 @@ class AgentDecisionLogger:
             self._counter = max((e.get("id", 0) for e in existing), default=0) + 1
 
         # Lazy-init emitter only when needed
-        self._emitter: Optional[TaskEventEmitter] = None
+        self._emitter: TaskEventEmitter | None = None
 
     # ── Public logging API ─────────────────────────────────────────────────
 
@@ -119,7 +118,7 @@ class AgentDecisionLogger:
         tool_name: str,
         tool_input: dict,
         outcome: str = "success",
-        subtask_id: Optional[str] = None,
+        subtask_id: str | None = None,
     ) -> None:
         """Log a tool invocation with a concise input summary."""
         input_summary = self._summarize_tool_input(tool_name, tool_input)
@@ -133,7 +132,7 @@ class AgentDecisionLogger:
         )
         self._record(entry)
 
-    def log_file_read(self, file_path: str, subtask_id: Optional[str] = None) -> None:
+    def log_file_read(self, file_path: str, subtask_id: str | None = None) -> None:
         """Log that the agent read a file for context."""
         entry = self._make_entry(
             decision_type=DecisionType.FILE_READ,
@@ -147,7 +146,7 @@ class AgentDecisionLogger:
         self,
         file_path: str,
         action: str = "write",
-        subtask_id: Optional[str] = None,
+        subtask_id: str | None = None,
     ) -> None:
         """Log that the agent created or modified a file."""
         entry = self._make_entry(
@@ -158,9 +157,11 @@ class AgentDecisionLogger:
         )
         self._record(entry)
 
-    def log_reasoning(self, text: str, subtask_id: Optional[str] = None) -> None:
+    def log_reasoning(self, text: str, subtask_id: str | None = None) -> None:
         """Log a notable reasoning block."""
-        truncated = text[:MAX_SUMMARY_LENGTH] + ("…" if len(text) > MAX_SUMMARY_LENGTH else "")
+        truncated = text[:MAX_SUMMARY_LENGTH] + (
+            "…" if len(text) > MAX_SUMMARY_LENGTH else ""
+        )
         entry = self._make_entry(
             decision_type=DecisionType.REASONING,
             summary=truncated[:120],
@@ -174,8 +175,8 @@ class AgentDecisionLogger:
         topic: str,
         alternatives: list[str],
         selected: str,
-        reasoning: Optional[str] = None,
-        subtask_id: Optional[str] = None,
+        reasoning: str | None = None,
+        subtask_id: str | None = None,
     ) -> None:
         """Log an explicit decision point with alternatives and chosen option."""
         entry = self._make_entry(
@@ -202,7 +203,7 @@ class AgentDecisionLogger:
         self,
         error_type: str,
         recovery_approach: str,
-        subtask_id: Optional[str] = None,
+        subtask_id: str | None = None,
     ) -> None:
         """Log how the agent handled an error."""
         entry = self._make_entry(
@@ -300,10 +301,11 @@ class AgentDecisionLogger:
 # Convenience function for session.py integration
 # =============================================================================
 
+
 def create_decision_logger(
     spec_dir: Path,
     agent_type: str,
-    subtask_id: Optional[str] = None,
+    subtask_id: str | None = None,
 ) -> AgentDecisionLogger:
     """
     Create a session-scoped decision logger.

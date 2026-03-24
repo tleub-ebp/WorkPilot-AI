@@ -14,10 +14,9 @@ Each source is accessed via standard MCP protocol through external MCP servers.
 
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from .models import IncidentSource, ProductionIncidentData
 
@@ -30,8 +29,8 @@ class MCPSourceConfig:
 
     source: IncidentSource = IncidentSource.SENTRY
     server_url: str = ""
-    api_key: Optional[str] = None
-    project_id: Optional[str] = None
+    api_key: str | None = None
+    project_id: str | None = None
     environment: str = "production"
     enabled: bool = True
     poll_interval_seconds: int = 60
@@ -98,7 +97,7 @@ class MCPSourceAdapter:
         # the MCP server tools via the Claude SDK runtime.
         return []
 
-    async def get_incident_details(self, event_id: str) -> Optional[dict[str, Any]]:
+    async def get_incident_details(self, event_id: str) -> dict[str, Any] | None:
         """Get detailed information about a specific incident."""
         if not self._connected:
             return None
@@ -148,7 +147,7 @@ class SentryAdapter(MCPSourceAdapter):
             filename = frame.get("filename", "?")
             lineno = frame.get("lineno", "?")
             function = frame.get("function", "?")
-            stack_lines.append(f"  File \"{filename}\", line {lineno}, in {function}")
+            stack_lines.append(f'  File "{filename}", line {lineno}, in {function}')
 
         return ProductionIncidentData(
             error_type=first_exc.get("type", "Unknown"),
@@ -268,7 +267,7 @@ class MCPConnector:
 
     async def get_incident_details(
         self, source: IncidentSource, event_id: str
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Get detailed incident information from a specific source."""
         adapter = self._adapters.get(source)
         if not adapter:
@@ -279,8 +278,5 @@ class MCPConnector:
         """Get connector status for dashboard display."""
         return {
             "connected_sources": [s.value for s in self.connected_sources],
-            "configs": {
-                s.value: c.to_dict()
-                for s, c in self._configs.items()
-            },
+            "configs": {s.value: c.to_dict() for s, c in self._configs.items()},
         }

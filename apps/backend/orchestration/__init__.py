@@ -8,10 +8,10 @@ The orchestrator coordinates modifications, manages inter-repo dependencies,
 detects breaking changes, and creates linked PRs.
 """
 
-from .repo_graph import RepoDependencyGraph, RepoDependency, DependencyType
+from .breaking_changes import BreakingChange, BreakingChangeDetector
 from .cross_repo_spec import CrossRepoSpecManager, MultiRepoManifest, RepoSubSpec
-from .breaking_changes import BreakingChangeDetector, BreakingChange
 from .orchestrator import MultiRepoOrchestrator
+from .repo_graph import DependencyType, RepoDependency, RepoDependencyGraph
 
 __all__ = [
     "MultiRepoOrchestrator",

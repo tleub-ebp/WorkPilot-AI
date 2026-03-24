@@ -29,8 +29,10 @@ logger = logging.getLogger(__name__)
 # Enums and models
 # ---------------------------------------------------------------------------
 
+
 class ReviewSeverity(Enum):
     """Severity levels for review comments."""
+
     INFO = "info"
     SUGGESTION = "suggestion"
     WARNING = "warning"
@@ -40,6 +42,7 @@ class ReviewSeverity(Enum):
 
 class ReviewCategory(Enum):
     """Categories for review findings."""
+
     STYLE = "style"
     BUG_RISK = "bug_risk"
     PERFORMANCE = "performance"
@@ -67,6 +70,7 @@ class ReviewComment:
         suggestion: Optional code suggestion/fix.
         rule_id: Identifier of the rule that triggered this finding.
     """
+
     file_path: str
     line: int
     severity: ReviewSeverity
@@ -101,6 +105,7 @@ class DiffFile:
         is_new_file: Whether this file is newly created.
         is_deleted: Whether this file was deleted.
     """
+
     file_path: str
     added_lines: dict[int, str] = field(default_factory=dict)
     removed_lines: dict[int, str] = field(default_factory=dict)
@@ -140,6 +145,7 @@ class ReviewResult:
         potential_regressions: List of potential regression descriptions.
         timestamp: When the review was performed.
     """
+
     comments: list[ReviewComment] = field(default_factory=list)
     overall_score: int = 100
     category_scores: dict[str, int] = field(default_factory=dict)
@@ -162,7 +168,8 @@ class ReviewResult:
     def error_count(self) -> int:
         """Number of error-level or higher findings."""
         return sum(
-            1 for c in self.comments
+            1
+            for c in self.comments
             if c.severity in (ReviewSeverity.ERROR, ReviewSeverity.CRITICAL)
         )
 
@@ -193,6 +200,7 @@ class ReviewResult:
 # Static analysis rules
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ReviewRule:
     """A static analysis rule for code review.
@@ -206,6 +214,7 @@ class ReviewRule:
         suggestion: Optional fix suggestion.
         languages: Languages this rule applies to. Empty = all.
     """
+
     rule_id: str
     pattern: str
     message: str
@@ -377,6 +386,7 @@ BUILTIN_RULES: list[ReviewRule] = [
 # Diff parser
 # ---------------------------------------------------------------------------
 
+
 def parse_unified_diff(diff_text: str) -> list[DiffFile]:
     """Parse a unified diff into structured DiffFile objects.
 
@@ -480,6 +490,7 @@ def _detect_language(file_path: str) -> str:
 # Main reviewer class
 # ---------------------------------------------------------------------------
 
+
 class AICodeReviewer:
     """AI-assisted code reviewer with static analysis and scoring.
 
@@ -557,11 +568,15 @@ class AICodeReviewer:
 
         # If no valid diff structure, treat as raw code changes
         if not files and diff_text.strip():
-            files = [DiffFile(
-                file_path=file_path or "unknown",
-                added_lines={i + 1: line for i, line in enumerate(diff_text.splitlines())},
-                language=language,
-            )]
+            files = [
+                DiffFile(
+                    file_path=file_path or "unknown",
+                    added_lines={
+                        i + 1: line for i, line in enumerate(diff_text.splitlines())
+                    },
+                    language=language,
+                )
+            ]
 
         all_comments: list[ReviewComment] = []
         total_additions = 0
@@ -578,14 +593,16 @@ class AICodeReviewer:
 
             # Check for large file changes
             if diff_file.total_changes > 300:
-                all_comments.append(ReviewComment(
-                    file_path=diff_file.file_path,
-                    line=0,
-                    severity=ReviewSeverity.WARNING,
-                    category=ReviewCategory.COMPLEXITY,
-                    message=f"Large change ({diff_file.total_changes} lines) — consider splitting into smaller commits.",
-                    rule_id="META001",
-                ))
+                all_comments.append(
+                    ReviewComment(
+                        file_path=diff_file.file_path,
+                        line=0,
+                        severity=ReviewSeverity.WARNING,
+                        category=ReviewCategory.COMPLEXITY,
+                        message=f"Large change ({diff_file.total_changes} lines) — consider splitting into smaller commits.",
+                        rule_id="META001",
+                    )
+                )
 
             # Check for potential regressions
             regression_comments = self._detect_regressions(diff_file)
@@ -680,15 +697,17 @@ class AICodeReviewer:
             for rule in applicable_rules:
                 try:
                     if re.search(rule.pattern, line_content):
-                        comments.append(ReviewComment(
-                            file_path=diff_file.file_path,
-                            line=line_num,
-                            severity=rule.severity,
-                            category=rule.category,
-                            message=rule.message,
-                            suggestion=rule.suggestion,
-                            rule_id=rule.rule_id,
-                        ))
+                        comments.append(
+                            ReviewComment(
+                                file_path=diff_file.file_path,
+                                line=line_num,
+                                severity=rule.severity,
+                                category=rule.category,
+                                message=rule.message,
+                                suggestion=rule.suggestion,
+                                rule_id=rule.rule_id,
+                            )
+                        )
                 except re.error:
                     pass  # Skip invalid regex patterns
 
@@ -708,39 +727,45 @@ class AICodeReviewer:
         # Check if test files are being modified with deletions
         if "test" in diff_file.file_path.lower() and diff_file.total_deletions > 0:
             if diff_file.total_deletions > diff_file.total_additions:
-                comments.append(ReviewComment(
-                    file_path=diff_file.file_path,
-                    line=0,
-                    severity=ReviewSeverity.WARNING,
-                    category=ReviewCategory.REGRESSION,
-                    message="Test file has net deletions — test coverage may decrease.",
-                    rule_id="REG001",
-                ))
+                comments.append(
+                    ReviewComment(
+                        file_path=diff_file.file_path,
+                        line=0,
+                        severity=ReviewSeverity.WARNING,
+                        category=ReviewCategory.REGRESSION,
+                        message="Test file has net deletions — test coverage may decrease.",
+                        rule_id="REG001",
+                    )
+                )
 
         # Check for removal of error handling patterns
         for line_num, content in diff_file.removed_lines.items():
             if any(kw in content for kw in ["try:", "except", "catch", "finally"]):
-                comments.append(ReviewComment(
-                    file_path=diff_file.file_path,
-                    line=line_num,
-                    severity=ReviewSeverity.WARNING,
-                    category=ReviewCategory.REGRESSION,
-                    message="Error handling code was removed — verify this is intentional.",
-                    rule_id="REG002",
-                ))
+                comments.append(
+                    ReviewComment(
+                        file_path=diff_file.file_path,
+                        line=line_num,
+                        severity=ReviewSeverity.WARNING,
+                        category=ReviewCategory.REGRESSION,
+                        message="Error handling code was removed — verify this is intentional.",
+                        rule_id="REG002",
+                    )
+                )
                 break  # One regression warning per pattern type
 
         # Check for removal of validation patterns
         for line_num, content in diff_file.removed_lines.items():
             if any(kw in content for kw in ["validate", "assert", "check", "verify"]):
-                comments.append(ReviewComment(
-                    file_path=diff_file.file_path,
-                    line=line_num,
-                    severity=ReviewSeverity.WARNING,
-                    category=ReviewCategory.REGRESSION,
-                    message="Validation code was removed — verify this is intentional.",
-                    rule_id="REG003",
-                ))
+                comments.append(
+                    ReviewComment(
+                        file_path=diff_file.file_path,
+                        line=line_num,
+                        severity=ReviewSeverity.WARNING,
+                        category=ReviewCategory.REGRESSION,
+                        message="Validation code was removed — verify this is intentional.",
+                        rule_id="REG003",
+                    )
+                )
                 break
 
         return comments
@@ -804,10 +829,14 @@ class AICodeReviewer:
         Returns:
             A Markdown-formatted summary string.
         """
-        critical_count = sum(1 for c in comments if c.severity == ReviewSeverity.CRITICAL)
+        critical_count = sum(
+            1 for c in comments if c.severity == ReviewSeverity.CRITICAL
+        )
         error_count = sum(1 for c in comments if c.severity == ReviewSeverity.ERROR)
         warning_count = sum(1 for c in comments if c.severity == ReviewSeverity.WARNING)
-        suggestion_count = sum(1 for c in comments if c.severity == ReviewSeverity.SUGGESTION)
+        suggestion_count = sum(
+            1 for c in comments if c.severity == ReviewSeverity.SUGGESTION
+        )
         info_count = sum(1 for c in comments if c.severity == ReviewSeverity.INFO)
 
         if score >= 90:
@@ -821,10 +850,10 @@ class AICodeReviewer:
 
         lines = [
             f"**Code Review — {verdict}** (Score: {score}/100)",
-            f"",
+            "",
             f"Reviewed {files_count} file(s): +{additions} / -{deletions} lines",
-            f"",
-            f"**Findings:**",
+            "",
+            "**Findings:**",
         ]
 
         if critical_count:
@@ -842,7 +871,9 @@ class AICodeReviewer:
 
         if critical_count or error_count:
             lines.append("")
-            lines.append("**Action required:** Please address critical/error findings before merge.")
+            lines.append(
+                "**Action required:** Please address critical/error findings before merge."
+            )
 
         return "\n".join(lines)
 
@@ -989,8 +1020,10 @@ class AICodeReviewer:
         """
         total_findings = sum(len(r.comments) for r in self._review_history)
         avg_score = (
-            sum(r.overall_score for r in self._review_history) / len(self._review_history)
-            if self._review_history else 0
+            sum(r.overall_score for r in self._review_history)
+            / len(self._review_history)
+            if self._review_history
+            else 0
         )
         return {
             "total_reviews": len(self._review_history),

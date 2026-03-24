@@ -2,11 +2,8 @@
 Configuration and constants for the migration system.
 """
 
-from typing import Dict, Tuple
-
 # Supported migrations configuration
-SUPPORTED_MIGRATIONS: Dict[Tuple[str, str], Dict] = {
-
+SUPPORTED_MIGRATIONS: dict[tuple[str, str], dict] = {
     # =========================
     # Frontend Frameworks
     # =========================
@@ -76,7 +73,6 @@ SUPPORTED_MIGRATIONS: Dict[Tuple[str, str], Dict] = {
         "estimated_effort_hours": 35,
         "breaking_changes": True,
     },
-
     # =========================
     # Databases
     # =========================
@@ -124,7 +120,6 @@ SUPPORTED_MIGRATIONS: Dict[Tuple[str, str], Dict] = {
         "estimated_effort_hours": 15,
         "breaking_changes": False,
     },
-
     # =========================
     # Languages
     # =========================
@@ -194,7 +189,6 @@ SUPPORTED_MIGRATIONS: Dict[Tuple[str, str], Dict] = {
         "estimated_effort_hours": 80,
         "breaking_changes": True,
     },
-
     # =========================
     # API Styles
     # =========================
@@ -220,7 +214,6 @@ SUPPORTED_MIGRATIONS: Dict[Tuple[str, str], Dict] = {
         "estimated_effort_hours": 50,
         "breaking_changes": True,
     },
-
     # =========================
     # Backend Frameworks
     # =========================
@@ -257,7 +250,6 @@ SUPPORTED_MIGRATIONS: Dict[Tuple[str, str], Dict] = {
         "estimated_effort_hours": 35,
         "breaking_changes": False,
     },
-
     # =========================
     # Build Tools
     # =========================
@@ -272,7 +264,6 @@ SUPPORTED_MIGRATIONS: Dict[Tuple[str, str], Dict] = {
         "estimated_effort_hours": 20,
         "breaking_changes": False,
     },
-
     # =========================
     # Testing
     # =========================
@@ -298,7 +289,6 @@ SUPPORTED_MIGRATIONS: Dict[Tuple[str, str], Dict] = {
         "estimated_effort_hours": 18,
         "breaking_changes": False,
     },
-
     # =========================
     # Mobile
     # =========================
@@ -313,7 +303,6 @@ SUPPORTED_MIGRATIONS: Dict[Tuple[str, str], Dict] = {
         "estimated_effort_hours": 120,
         "breaking_changes": True,
     },
-
     # =========================
     # Package Managers
     # =========================
@@ -386,13 +375,41 @@ RISK_ASSESSMENT_THRESHOLDS = {
 # Migration phases
 # ============================================================
 MIGRATION_PHASES = [
-    {"id": "analysis", "name": "Analysis", "description": "Analyze source code and create migration plan"},
-    {"id": "planning", "name": "Planning", "description": "Generate detailed step-by-step migration plan"},
-    {"id": "backup", "name": "Backup & Checkpoint", "description": "Create backup and checkpoint for rollback"},
-    {"id": "transformation", "name": "Code Transformation", "description": "Apply code transformations"},
-    {"id": "validation", "name": "Validation & Testing", "description": "Validate transformations and run tests"},
-    {"id": "fixup", "name": "Auto-Fix Issues", "description": "Automatically fix validation failures"},
-    {"id": "reporting", "name": "Report Generation", "description": "Generate migration report and documentation"},
+    {
+        "id": "analysis",
+        "name": "Analysis",
+        "description": "Analyze source code and create migration plan",
+    },
+    {
+        "id": "planning",
+        "name": "Planning",
+        "description": "Generate detailed step-by-step migration plan",
+    },
+    {
+        "id": "backup",
+        "name": "Backup & Checkpoint",
+        "description": "Create backup and checkpoint for rollback",
+    },
+    {
+        "id": "transformation",
+        "name": "Code Transformation",
+        "description": "Apply code transformations",
+    },
+    {
+        "id": "validation",
+        "name": "Validation & Testing",
+        "description": "Validate transformations and run tests",
+    },
+    {
+        "id": "fixup",
+        "name": "Auto-Fix Issues",
+        "description": "Automatically fix validation failures",
+    },
+    {
+        "id": "reporting",
+        "name": "Report Generation",
+        "description": "Generate migration report and documentation",
+    },
 ]
 
 # ============================================================

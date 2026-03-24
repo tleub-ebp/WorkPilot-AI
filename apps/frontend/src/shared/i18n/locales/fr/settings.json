@@ -1631,7 +1631,7 @@
     },
     "memory": {
       "description": "Backend mémoire Graphiti",
-      "title": "Mémoire",
+      "title": "Mémoire (Graphiti)",
       "integrationTitle": "Paramètres de mémoire",
       "integrationDescription": "Configurer le backend mémoire Graphiti pour le contexte inter-sessions",
       "syncDescription": "Activer la mémoire persistante entre les sessions d'agents",

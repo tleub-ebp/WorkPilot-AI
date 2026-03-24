@@ -14,22 +14,21 @@ import os
 import re
 import time
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 from .models import (
     Action,
     ActionType,
     ExecutionStatus,
     Hook,
-    HookConnection,
     HookEvent,
     HookExecution,
     HookStatus,
     Trigger,
     TriggerCondition,
-    TriggerType,
 )
 from .templates import get_hook_templates, get_template_by_id
 
@@ -39,6 +38,7 @@ logger = logging.getLogger(__name__)
 # ─────────────────────────────────────────────────────────────────────────────
 # Persistence
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _get_hooks_dir() -> Path:
     """Return the directory where hooks are persisted."""
@@ -59,6 +59,7 @@ def _get_executions_file() -> Path:
 # ─────────────────────────────────────────────────────────────────────────────
 # Condition matching
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _match_condition(condition: TriggerCondition, event_data: dict[str, Any]) -> bool:
     """Check if a single condition matches the event data."""
@@ -105,7 +106,10 @@ def _match_trigger(trigger: Trigger, event: HookEvent) -> bool:
 # Action executors
 # ─────────────────────────────────────────────────────────────────────────────
 
-async def _execute_action(action: Action, event: HookEvent, hook: Hook) -> dict[str, Any]:
+
+async def _execute_action(
+    action: Action, event: HookEvent, hook: Hook
+) -> dict[str, Any]:
     """Execute a single action and return the result."""
     result: dict[str, Any] = {
         "action_id": action.id,
@@ -120,19 +124,27 @@ async def _execute_action(action: Action, event: HookEvent, hook: Hook) -> dict[
             await asyncio.sleep(action.delay_ms / 1000.0)
 
         if action.type == ActionType.LOG_EVENT:
-            msg = action.config.get("message", f"Hook '{hook.name}' triggered by {event.type.value}")
+            msg = action.config.get(
+                "message", f"Hook '{hook.name}' triggered by {event.type.value}"
+            )
             logger.info("[HookEngine] %s", msg)
             result["output"] = {"message": msg}
 
         elif action.type == ActionType.SEND_NOTIFICATION:
-            title = _interpolate(action.config.get("title", "Hook Notification"), event.data)
+            title = _interpolate(
+                action.config.get("title", "Hook Notification"), event.data
+            )
             message = _interpolate(action.config.get("message", ""), event.data)
             notif_type = action.config.get("type", "info")
-            logger.info("[HookEngine] Notification [%s]: %s — %s", notif_type, title, message)
+            logger.info(
+                "[HookEngine] Notification [%s]: %s — %s", notif_type, title, message
+            )
             result["output"] = {"title": title, "message": message, "type": notif_type}
 
         elif action.type == ActionType.RUN_COMMAND:
-            command = _interpolate(action.config.get("command", "echo 'no command'"), event.data)
+            command = _interpolate(
+                action.config.get("command", "echo 'no command'"), event.data
+            )
             cwd = action.config.get("cwd", os.getcwd())
             logger.info("[HookEngine] Running command: %s", command)
             proc = await asyncio.create_subprocess_shell(
@@ -155,36 +167,80 @@ async def _execute_action(action: Action, event: HookEvent, hook: Hook) -> dict[
                 result["error"] = f"Command exited with code {proc.returncode}"
 
         elif action.type == ActionType.RUN_LINT:
-            logger.info("[HookEngine] Running lint action (auto_fix=%s)", action.config.get("auto_fix", False))
-            result["output"] = {"action": "lint", "auto_fix": action.config.get("auto_fix", False), "status": "executed"}
+            logger.info(
+                "[HookEngine] Running lint action (auto_fix=%s)",
+                action.config.get("auto_fix", False),
+            )
+            result["output"] = {
+                "action": "lint",
+                "auto_fix": action.config.get("auto_fix", False),
+                "status": "executed",
+            }
 
         elif action.type == ActionType.RUN_TESTS:
             scope = action.config.get("scope", "related")
             logger.info("[HookEngine] Running tests (scope=%s)", scope)
-            result["output"] = {"action": "run_tests", "scope": scope, "status": "executed"}
+            result["output"] = {
+                "action": "run_tests",
+                "scope": scope,
+                "status": "executed",
+            }
 
         elif action.type == ActionType.GENERATE_TESTS:
-            logger.info("[HookEngine] Generating tests (type=%s)", action.config.get("test_type", "unit"))
-            result["output"] = {"action": "generate_tests", "test_type": action.config.get("test_type", "unit"), "status": "executed"}
+            logger.info(
+                "[HookEngine] Generating tests (type=%s)",
+                action.config.get("test_type", "unit"),
+            )
+            result["output"] = {
+                "action": "generate_tests",
+                "test_type": action.config.get("test_type", "unit"),
+                "status": "executed",
+            }
 
         elif action.type == ActionType.RUN_AGENT:
             agent_type = action.config.get("agent_type", "coder")
-            instructions = _interpolate(action.config.get("instructions", ""), event.data)
-            logger.info("[HookEngine] Running agent '%s': %s", agent_type, instructions[:100])
-            result["output"] = {"action": "run_agent", "agent_type": agent_type, "instructions": instructions, "status": "queued"}
+            instructions = _interpolate(
+                action.config.get("instructions", ""), event.data
+            )
+            logger.info(
+                "[HookEngine] Running agent '%s': %s", agent_type, instructions[:100]
+            )
+            result["output"] = {
+                "action": "run_agent",
+                "agent_type": agent_type,
+                "instructions": instructions,
+                "status": "queued",
+            }
 
         elif action.type == ActionType.CREATE_SPEC:
-            logger.info("[HookEngine] Creating spec: %s", action.config.get("title", "New Spec"))
-            result["output"] = {"action": "create_spec", "title": action.config.get("title", ""), "status": "created"}
+            logger.info(
+                "[HookEngine] Creating spec: %s", action.config.get("title", "New Spec")
+            )
+            result["output"] = {
+                "action": "create_spec",
+                "title": action.config.get("title", ""),
+                "status": "created",
+            }
 
         elif action.type == ActionType.TRIGGER_PIPELINE:
             pipeline = action.config.get("pipeline", "default")
             logger.info("[HookEngine] Triggering pipeline: %s", pipeline)
-            result["output"] = {"action": "trigger_pipeline", "pipeline": pipeline, "status": "triggered"}
+            result["output"] = {
+                "action": "trigger_pipeline",
+                "pipeline": pipeline,
+                "status": "triggered",
+            }
 
         elif action.type == ActionType.UPDATE_DOCS:
-            logger.info("[HookEngine] Updating docs (type=%s)", action.config.get("doc_type", "general"))
-            result["output"] = {"action": "update_docs", "doc_type": action.config.get("doc_type", "general"), "status": "executed"}
+            logger.info(
+                "[HookEngine] Updating docs (type=%s)",
+                action.config.get("doc_type", "general"),
+            )
+            result["output"] = {
+                "action": "update_docs",
+                "doc_type": action.config.get("doc_type", "general"),
+                "status": "executed",
+            }
 
         elif action.type == ActionType.CREATE_PR:
             logger.info("[HookEngine] Creating PR")
@@ -194,7 +250,12 @@ async def _execute_action(action: Action, event: HookEvent, hook: Hook) -> dict[
             channel = action.config.get("channel", "#general")
             message = _interpolate(action.config.get("message", ""), event.data)
             logger.info("[HookEngine] Slack → %s: %s", channel, message[:100])
-            result["output"] = {"action": "send_slack", "channel": channel, "message": message, "status": "sent"}
+            result["output"] = {
+                "action": "send_slack",
+                "channel": channel,
+                "message": message,
+                "status": "sent",
+            }
 
         elif action.type == ActionType.SEND_WEBHOOK:
             url = action.config.get("url", "")
@@ -204,11 +265,19 @@ async def _execute_action(action: Action, event: HookEvent, hook: Hook) -> dict[
         elif action.type == ActionType.CHAIN_HOOK:
             target_hook_id = action.config.get("hook_id", "")
             logger.info("[HookEngine] Chaining to hook: %s", target_hook_id)
-            result["output"] = {"action": "chain_hook", "target_hook_id": target_hook_id, "status": "chained"}
+            result["output"] = {
+                "action": "chain_hook",
+                "target_hook_id": target_hook_id,
+                "status": "chained",
+            }
 
         elif action.type == ActionType.CUSTOM:
             logger.info("[HookEngine] Custom action: %s", action.config)
-            result["output"] = {"action": "custom", "config": action.config, "status": "executed"}
+            result["output"] = {
+                "action": "custom",
+                "config": action.config,
+                "status": "executed",
+            }
 
         else:
             result["status"] = "skipped"
@@ -236,10 +305,11 @@ def _interpolate(template: str, data: dict[str, Any]) -> str:
 # Hook Service
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class HookService:
     """Core service for managing event-driven hooks."""
 
-    _instance: Optional["HookService"] = None
+    _instance: HookService | None = None
 
     def __init__(self):
         self._hooks: dict[str, Hook] = {}
@@ -249,7 +319,7 @@ class HookService:
         self._load()
 
     @classmethod
-    def get_instance(cls) -> "HookService":
+    def get_instance(cls) -> HookService:
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
@@ -274,11 +344,13 @@ class HookService:
             try:
                 data = json.loads(exec_file.read_text(encoding="utf-8"))
                 self._executions = [
-                    HookExecution(**{
-                        **ex,
-                        "status": ExecutionStatus(ex.get("status", "pending")),
-                    })
-                    for ex in data.get("executions", [])[-self._max_executions:]
+                    HookExecution(
+                        **{
+                            **ex,
+                            "status": ExecutionStatus(ex.get("status", "pending")),
+                        }
+                    )
+                    for ex in data.get("executions", [])[-self._max_executions :]
                 ]
             except Exception as e:
                 logger.warning("[HookService] Failed to load executions: %s", e)
@@ -294,15 +366,17 @@ class HookService:
     def _save_executions(self):
         """Persist recent executions to disk."""
         try:
-            trimmed = self._executions[-self._max_executions:]
+            trimmed = self._executions[-self._max_executions :]
             data = {"executions": [ex.to_dict() for ex in trimmed]}
-            _get_executions_file().write_text(json.dumps(data, indent=2), encoding="utf-8")
+            _get_executions_file().write_text(
+                json.dumps(data, indent=2), encoding="utf-8"
+            )
         except Exception as e:
             logger.error("[HookService] Failed to save executions: %s", e)
 
     # ── CRUD ──────────────────────────────────────────────────────────────
 
-    def list_hooks(self, project_id: Optional[str] = None) -> list[dict]:
+    def list_hooks(self, project_id: str | None = None) -> list[dict]:
         """List all hooks, optionally filtered by project."""
         hooks = list(self._hooks.values())
         if project_id:
@@ -379,7 +453,9 @@ class HookService:
         """Return all available templates."""
         return [t.to_dict() for t in get_hook_templates()]
 
-    def create_from_template(self, template_id: str, project_id: Optional[str] = None) -> dict | None:
+    def create_from_template(
+        self, template_id: str, project_id: str | None = None
+    ) -> dict | None:
         """Create a hook from a template."""
         template = get_template_by_id(template_id)
         if not template:
@@ -387,7 +463,11 @@ class HookService:
         hook = template.to_hook(project_id)
         self._hooks[hook.id] = hook
         self._save_hooks()
-        logger.info("[HookService] Created hook from template '%s' → '%s'", template_id, hook.name)
+        logger.info(
+            "[HookService] Created hook from template '%s' → '%s'",
+            template_id,
+            hook.name,
+        )
         return hook.to_dict()
 
     # ── Event processing ──────────────────────────────────────────────────
@@ -396,9 +476,14 @@ class HookService:
         """Emit an event and execute matching hooks."""
         results = []
         matching_hooks = [
-            h for h in self._hooks.values()
+            h
+            for h in self._hooks.values()
             if h.status == HookStatus.ACTIVE
-            and (h.project_id == event.project_id or h.cross_project or event.project_id is None)
+            and (
+                h.project_id == event.project_id
+                or h.cross_project
+                or event.project_id is None
+            )
             and any(_match_trigger(t, event) for t in h.triggers)
         ]
 
@@ -414,6 +499,7 @@ class HookService:
             loop = asyncio.get_event_loop()
             if loop.is_running():
                 import concurrent.futures
+
                 with concurrent.futures.ThreadPoolExecutor() as pool:
                     future = pool.submit(asyncio.run, self.emit_event(event))
                     return future.result(timeout=60)
@@ -469,8 +555,14 @@ class HookService:
                         should_execute = (
                             conn.condition is None
                             or conn.condition == "always"
-                            or (conn.condition == "on_success" and result["status"] == "success")
-                            or (conn.condition == "on_failure" and result["status"] in ("failed", "timeout"))
+                            or (
+                                conn.condition == "on_success"
+                                and result["status"] == "success"
+                            )
+                            or (
+                                conn.condition == "on_failure"
+                                and result["status"] in ("failed", "timeout")
+                            )
                         )
                         if should_execute:
                             queue.append(conn.target_id)
@@ -499,7 +591,7 @@ class HookService:
         # Store execution
         self._executions.append(execution)
         if len(self._executions) > self._max_executions:
-            self._executions = self._executions[-self._max_executions:]
+            self._executions = self._executions[-self._max_executions :]
         self._save_executions()
 
         # Notify listeners
@@ -513,7 +605,7 @@ class HookService:
 
     # ── Execution history ─────────────────────────────────────────────────
 
-    def get_executions(self, hook_id: Optional[str] = None, limit: int = 50) -> list[dict]:
+    def get_executions(self, hook_id: str | None = None, limit: int = 50) -> list[dict]:
         """Get execution history."""
         execs = self._executions
         if hook_id:
@@ -534,7 +626,9 @@ class HookService:
             "paused_hooks": paused,
             "total_executions": total_executions,
             "total_errors": total_errors,
-            "success_rate": round((total_executions - total_errors) / max(total_executions, 1) * 100, 1),
+            "success_rate": round(
+                (total_executions - total_errors) / max(total_executions, 1) * 100, 1
+            ),
             "recent_executions": len(self._executions),
         }
 

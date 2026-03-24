@@ -17,6 +17,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 try:
+    from ..github.services.deep_context_provider import (
+        DeepContextProvider,
+        store_review_learnings,
+    )
     from .glab_client import GitLabClient, GitLabConfig
     from .models import (
         GitLabRunnerConfig,
@@ -25,7 +29,6 @@ try:
         MRReviewResult,
     )
     from .services import MRReviewEngine
-    from ..github.services.deep_context_provider import DeepContextProvider, store_review_learnings
 except ImportError:
     # Fallback for direct script execution (not as a module)
     from glab_client import GitLabClient, GitLabConfig
@@ -36,8 +39,12 @@ except ImportError:
         MRReviewResult,
     )
     from services import MRReviewEngine
+
     try:
-        from services.deep_context_provider import DeepContextProvider, store_review_learnings
+        from services.deep_context_provider import (
+            DeepContextProvider,
+            store_review_learnings,
+        )
     except ImportError:
         DeepContextProvider = None
         store_review_learnings = None
@@ -106,7 +113,11 @@ class GitLabOrchestrator:
         )
 
         # Initialize deep context provider (shared with GitHub)
-        self.deep_context_provider = DeepContextProvider(project_dir=self.project_dir) if DeepContextProvider else None
+        self.deep_context_provider = (
+            DeepContextProvider(project_dir=self.project_dir)
+            if DeepContextProvider
+            else None
+        )
 
         # Initialize review engine
         self.review_engine = MRReviewEngine(
@@ -245,7 +256,9 @@ class GitLabOrchestrator:
                         f"arch_violations={len(deep_ctx.architecture_violations)}"
                     )
                 except Exception as e:
-                    safe_print(f"[GitLab] Deep context gathering failed (non-blocking): {e}")
+                    safe_print(
+                        f"[GitLab] Deep context gathering failed (non-blocking): {e}"
+                    )
 
             self._report_progress(
                 "analyzing", 30, "Running AI review...", mr_iid=mr_iid
@@ -309,7 +322,9 @@ class GitLabOrchestrator:
                         changed_files=changed_paths,
                     )
                 except Exception as e:
-                    safe_print(f"[GitLab] Failed to store review learnings (non-blocking): {e}")
+                    safe_print(
+                        f"[GitLab] Failed to store review learnings (non-blocking): {e}"
+                    )
 
             self._report_progress("complete", 100, "Review complete!", mr_iid=mr_iid)
 

@@ -19,11 +19,10 @@ Example:
 import json
 import logging
 import statistics
-import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +31,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class FeedbackRating(str, Enum):
     """Rating for an agent action."""
+
     POSITIVE = "positive"
     NEGATIVE = "negative"
     NEUTRAL = "neutral"
@@ -41,6 +42,7 @@ class FeedbackRating(str, Enum):
 
 class FeedbackCategory(str, Enum):
     """Categories for structured feedback."""
+
     CODE_QUALITY = "code_quality"
     RELEVANCE = "relevance"
     STYLE = "style"
@@ -53,6 +55,7 @@ class FeedbackCategory(str, Enum):
 
 class AgentPhase(str, Enum):
     """Phase of the agent pipeline."""
+
     PLANNING = "planning"
     CODING = "coding"
     REVIEW = "review"
@@ -64,6 +67,7 @@ class AgentPhase(str, Enum):
 
 class PatternType(str, Enum):
     """Type of feedback pattern detected."""
+
     CONSISTENT_NEGATIVE = "consistent_negative"
     CONSISTENT_POSITIVE = "consistent_positive"
     DECLINING_QUALITY = "declining_quality"
@@ -77,9 +81,11 @@ class PatternType(str, Enum):
 # Data models
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class FeedbackEntry:
     """A single feedback entry from a user on an agent action."""
+
     feedback_id: str
     session_id: str
     action_id: str
@@ -132,6 +138,7 @@ class FeedbackEntry:
 @dataclass
 class FeedbackPattern:
     """A pattern detected from analyzing feedback history."""
+
     pattern_type: PatternType
     description: str
     confidence: float  # 0.0 to 1.0
@@ -150,6 +157,7 @@ class FeedbackPattern:
 @dataclass
 class PromptAdjustment:
     """An adjustment to apply to a system prompt based on feedback."""
+
     adjustment_id: str
     original_instruction: str
     adjusted_instruction: str
@@ -170,6 +178,7 @@ class PromptAdjustment:
 @dataclass
 class FeedbackSummary:
     """Summary of feedback for a project or session."""
+
     total_feedback: int = 0
     positive_count: int = 0
     negative_count: int = 0
@@ -189,6 +198,7 @@ class FeedbackSummary:
 # ---------------------------------------------------------------------------
 # FeedbackCollector
 # ---------------------------------------------------------------------------
+
 
 class FeedbackCollector:
     """Collects and analyzes user feedback on agent actions.
@@ -244,7 +254,9 @@ class FeedbackCollector:
         if categories:
             for key, val in categories.items():
                 if not (1 <= val <= 5):
-                    raise ValueError(f"Category score must be 1-5, got {val} for '{key}'")
+                    raise ValueError(
+                        f"Category score must be 1-5, got {val} for '{key}'"
+                    )
 
         entry = FeedbackEntry(
             feedback_id=self._next_id(),
@@ -262,8 +274,13 @@ class FeedbackCollector:
             user_id=user_id,
         )
         self._feedback.append(entry)
-        logger.info("Recorded feedback %s: %s for session=%s action=%s",
-                     entry.feedback_id, rating, session_id, action_id)
+        logger.info(
+            "Recorded feedback %s: %s for session=%s action=%s",
+            entry.feedback_id,
+            rating,
+            session_id,
+            action_id,
+        )
         return entry
 
     # -- Querying -----------------------------------------------------------
@@ -321,7 +338,9 @@ class FeedbackCollector:
         for e in entries:
             for cat, score in e.categories.items():
                 cat_scores.setdefault(cat, []).append(score)
-        avg_scores = {cat: statistics.mean(scores) for cat, scores in cat_scores.items()}
+        avg_scores = {
+            cat: statistics.mean(scores) for cat, scores in cat_scores.items()
+        }
 
         # By phase
         by_phase: dict[str, dict[str, int]] = {}
@@ -372,24 +391,28 @@ class FeedbackCollector:
         # Pattern: Consistent negative feedback
         negative_rate = sum(1 for e in entries if e.is_negative) / len(entries)
         if negative_rate >= 0.6 and len(entries) >= 5:
-            patterns.append(FeedbackPattern(
-                pattern_type=PatternType.CONSISTENT_NEGATIVE,
-                description="More than 60% of feedback is negative",
-                confidence=min(negative_rate, 0.95),
-                sample_size=len(entries),
-                recommendation="Review and adjust system prompts to address common complaints",
-            ))
+            patterns.append(
+                FeedbackPattern(
+                    pattern_type=PatternType.CONSISTENT_NEGATIVE,
+                    description="More than 60% of feedback is negative",
+                    confidence=min(negative_rate, 0.95),
+                    sample_size=len(entries),
+                    recommendation="Review and adjust system prompts to address common complaints",
+                )
+            )
 
         # Pattern: Consistent positive feedback
         positive_rate = sum(1 for e in entries if e.is_positive) / len(entries)
         if positive_rate >= 0.8 and len(entries) >= 5:
-            patterns.append(FeedbackPattern(
-                pattern_type=PatternType.CONSISTENT_POSITIVE,
-                description="More than 80% of feedback is positive",
-                confidence=min(positive_rate, 0.95),
-                sample_size=len(entries),
-                recommendation="Current approach is working well, maintain current prompts",
-            ))
+            patterns.append(
+                FeedbackPattern(
+                    pattern_type=PatternType.CONSISTENT_POSITIVE,
+                    description="More than 80% of feedback is positive",
+                    confidence=min(positive_rate, 0.95),
+                    sample_size=len(entries),
+                    recommendation="Current approach is working well, maintain current prompts",
+                )
+            )
 
         # Pattern: Category weaknesses
         cat_scores: dict[str, list[int]] = {}
@@ -401,23 +424,27 @@ class FeedbackCollector:
             if len(scores) >= 3:
                 avg = statistics.mean(scores)
                 if avg <= 2.5:
-                    patterns.append(FeedbackPattern(
-                        pattern_type=PatternType.CATEGORY_WEAKNESS,
-                        description=f"Low average score ({avg:.1f}/5) for category '{cat}'",
-                        confidence=min(len(scores) / 10, 0.9),
-                        affected_category=cat,
-                        sample_size=len(scores),
-                        recommendation=f"Add specific instructions to improve '{cat}' in prompts",
-                    ))
+                    patterns.append(
+                        FeedbackPattern(
+                            pattern_type=PatternType.CATEGORY_WEAKNESS,
+                            description=f"Low average score ({avg:.1f}/5) for category '{cat}'",
+                            confidence=min(len(scores) / 10, 0.9),
+                            affected_category=cat,
+                            sample_size=len(scores),
+                            recommendation=f"Add specific instructions to improve '{cat}' in prompts",
+                        )
+                    )
                 elif avg >= 4.0:
-                    patterns.append(FeedbackPattern(
-                        pattern_type=PatternType.CATEGORY_STRENGTH,
-                        description=f"High average score ({avg:.1f}/5) for category '{cat}'",
-                        confidence=min(len(scores) / 10, 0.9),
-                        affected_category=cat,
-                        sample_size=len(scores),
-                        recommendation=f"Maintain current approach for '{cat}'",
-                    ))
+                    patterns.append(
+                        FeedbackPattern(
+                            pattern_type=PatternType.CATEGORY_STRENGTH,
+                            description=f"High average score ({avg:.1f}/5) for category '{cat}'",
+                            confidence=min(len(scores) / 10, 0.9),
+                            affected_category=cat,
+                            sample_size=len(scores),
+                            recommendation=f"Maintain current approach for '{cat}'",
+                        )
+                    )
 
         # Pattern: Phase-specific issues
         phase_feedback: dict[str, list[FeedbackEntry]] = {}
@@ -427,16 +454,20 @@ class FeedbackCollector:
 
         for phase, phase_entries in phase_feedback.items():
             if len(phase_entries) >= 3:
-                neg_rate = sum(1 for e in phase_entries if e.is_negative) / len(phase_entries)
+                neg_rate = sum(1 for e in phase_entries if e.is_negative) / len(
+                    phase_entries
+                )
                 if neg_rate >= 0.5:
-                    patterns.append(FeedbackPattern(
-                        pattern_type=PatternType.PHASE_ISSUE,
-                        description=f"High negative rate ({neg_rate:.0%}) in phase '{phase}'",
-                        confidence=min(len(phase_entries) / 10, 0.85),
-                        affected_phase=phase,
-                        sample_size=len(phase_entries),
-                        recommendation=f"Revise prompts for the '{phase}' phase",
-                    ))
+                    patterns.append(
+                        FeedbackPattern(
+                            pattern_type=PatternType.PHASE_ISSUE,
+                            description=f"High negative rate ({neg_rate:.0%}) in phase '{phase}'",
+                            confidence=min(len(phase_entries) / 10, 0.85),
+                            affected_phase=phase,
+                            sample_size=len(phase_entries),
+                            recommendation=f"Revise prompts for the '{phase}' phase",
+                        )
+                    )
 
         # Pattern: Declining quality (last 5 entries trend)
         if len(entries) >= 6:
@@ -446,21 +477,25 @@ class FeedbackCollector:
                 recent_pos = sum(1 for e in recent if e.is_positive) / len(recent)
                 older_pos = sum(1 for e in older if e.is_positive) / len(older)
                 if older_pos - recent_pos >= 0.3:
-                    patterns.append(FeedbackPattern(
-                        pattern_type=PatternType.DECLINING_QUALITY,
-                        description=f"Positive rate dropped from {older_pos:.0%} to {recent_pos:.0%}",
-                        confidence=0.7,
-                        sample_size=len(recent) + len(older),
-                        recommendation="Investigate recent changes that may have degraded quality",
-                    ))
+                    patterns.append(
+                        FeedbackPattern(
+                            pattern_type=PatternType.DECLINING_QUALITY,
+                            description=f"Positive rate dropped from {older_pos:.0%} to {recent_pos:.0%}",
+                            confidence=0.7,
+                            sample_size=len(recent) + len(older),
+                            recommendation="Investigate recent changes that may have degraded quality",
+                        )
+                    )
                 elif recent_pos - older_pos >= 0.3:
-                    patterns.append(FeedbackPattern(
-                        pattern_type=PatternType.IMPROVING_QUALITY,
-                        description=f"Positive rate improved from {older_pos:.0%} to {recent_pos:.0%}",
-                        confidence=0.7,
-                        sample_size=len(recent) + len(older),
-                        recommendation="Recent changes are improving quality, continue this approach",
-                    ))
+                    patterns.append(
+                        FeedbackPattern(
+                            pattern_type=PatternType.IMPROVING_QUALITY,
+                            description=f"Positive rate improved from {older_pos:.0%} to {recent_pos:.0%}",
+                            confidence=0.7,
+                            sample_size=len(recent) + len(older),
+                            recommendation="Recent changes are improving quality, continue this approach",
+                        )
+                    )
 
         self._patterns = patterns
         return patterns
@@ -494,8 +529,15 @@ class FeedbackCollector:
         """Get global statistics."""
         entries = self._feedback
         if not entries:
-            return {"total": 0, "positive": 0, "negative": 0, "neutral": 0,
-                    "positive_rate": 0.0, "categories_tracked": 0, "patterns_detected": 0}
+            return {
+                "total": 0,
+                "positive": 0,
+                "negative": 0,
+                "neutral": 0,
+                "positive_rate": 0.0,
+                "categories_tracked": 0,
+                "patterns_detected": 0,
+            }
 
         positive = sum(1 for e in entries if e.is_positive)
         negative = sum(1 for e in entries if e.is_negative)
@@ -512,7 +554,9 @@ class FeedbackCollector:
             "categories_tracked": len(cats),
             "patterns_detected": len(self._patterns),
             "phases_covered": len(set(e.agent_phase for e in entries if e.agent_phase)),
-            "agent_types_covered": len(set(e.agent_type for e in entries if e.agent_type)),
+            "agent_types_covered": len(
+                set(e.agent_type for e in entries if e.agent_type)
+            ),
         }
 
 

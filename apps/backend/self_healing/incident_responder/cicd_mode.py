@@ -20,11 +20,9 @@ from __future__ import annotations
 import logging
 import subprocess
 from pathlib import Path
-from typing import Any, Optional
 
 from .models import (
     CICDIncidentData,
-    HealingOperation,
     HealingStatus,
     Incident,
     IncidentMode,
@@ -93,7 +91,9 @@ class CICDMode:
 
         incident = Incident(
             mode=IncidentMode.CICD,
-            source=IncidentSource.CI_FAILURE if pipeline_id else IncidentSource.GIT_PUSH,
+            source=IncidentSource.CI_FAILURE
+            if pipeline_id
+            else IncidentSource.GIT_PUSH,
             severity=severity,
             title=f"Test regression: {len(failing_tests)} test(s) failing after {commit_sha[:7]}",
             description=f"Tests broke after commit {commit_sha[:7]} on branch {branch}. "
@@ -115,7 +115,11 @@ class CICDMode:
         Injects the diff, test failures, and commit context into the prompt template.
         """
         data = incident.source_data
-        prompt_path = Path(__file__).parent.parent.parent / "prompts" / "incident_cicd_analyzer.md"
+        prompt_path = (
+            Path(__file__).parent.parent.parent
+            / "prompts"
+            / "incident_cicd_analyzer.md"
+        )
 
         try:
             template = prompt_path.read_text(encoding="utf-8")
@@ -139,7 +143,9 @@ class CICDMode:
 
         return template
 
-    async def run_tests(self, working_dir: Path | None = None) -> tuple[bool, str, list[str]]:
+    async def run_tests(
+        self, working_dir: Path | None = None
+    ) -> tuple[bool, str, list[str]]:
         """Run the project test suite and return results.
 
         Returns:
@@ -179,6 +185,7 @@ class CICDMode:
         # Node.js
         if (project / "package.json").exists():
             import json
+
             try:
                 pkg = json.loads((project / "package.json").read_text())
                 scripts = pkg.get("scripts", {})

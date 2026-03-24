@@ -1,4 +1,4 @@
-﻿"""
+"""
 Onboarding Assistant - Help new developers get started
 
 This module provides an interactive onboarding experience for new team members.
@@ -54,23 +54,18 @@ class OnboardingAssistant:
         self.progress: dict[str, OnboardingProgress] = {}
 
     async def start_onboarding(
-        self,
-        developer_name: str,
-        experience_level: str = "intermediate"
+        self, developer_name: str, experience_level: str = "intermediate"
     ) -> OnboardingProgress:
         """Start onboarding for a new developer"""
         progress = OnboardingProgress(
             developer_name=developer_name,
             start_date=datetime.now(),
-            current_step=OnboardingStep.WELCOME
+            current_step=OnboardingStep.WELCOME,
         )
         self.progress[developer_name] = progress
         return progress
 
-    async def get_next_step(
-        self,
-        developer_name: str
-    ) -> dict[str, Any] | None:
+    async def get_next_step(self, developer_name: str) -> dict[str, Any] | None:
         """Get the next onboarding step"""
         if developer_name not in self.progress:
             return None
@@ -79,14 +74,13 @@ class OnboardingAssistant:
         return {
             "step": progress.current_step.value,
             "completed": progress.completed_steps,
-            "progress_percent": len(progress.completed_steps) / len(OnboardingStep) * 100
+            "progress_percent": len(progress.completed_steps)
+            / len(OnboardingStep)
+            * 100,
         }
-    
+
     async def complete_step(
-        self,
-        developer_name: str,
-        step: OnboardingStep,
-        notes: str | None = None
+        self, developer_name: str, step: OnboardingStep, notes: str | None = None
     ) -> bool:
         """Mark a step as completed"""
         if developer_name not in self.progress:
@@ -102,26 +96,32 @@ class OnboardingAssistant:
         return True
 
     async def generate_onboarding_checklist(
-        self,
-        experience_level: str = "intermediate"
+        self, experience_level: str = "intermediate"
     ) -> list[dict[str, Any]]:
         """Generate a personalized onboarding checklist"""
         checklist = [
             {
                 "step": OnboardingStep.WELCOME.value,
                 "title": "Welcome to the Team",
-                "tasks": ["Meet the team", "Get access to tools", "Read project overview"]
+                "tasks": [
+                    "Meet the team",
+                    "Get access to tools",
+                    "Read project overview",
+                ],
             },
             {
                 "step": OnboardingStep.PROJECT_OVERVIEW.value,
                 "title": "Understand the Project",
-                "tasks": ["Read architecture docs", "Explore codebase", "Review tech stack"]
+                "tasks": [
+                    "Read architecture docs",
+                    "Explore codebase",
+                    "Review tech stack",
+                ],
             },
             {
                 "step": OnboardingStep.SETUP_ENVIRONMENT.value,
                 "title": "Setup Development Environment",
-                "tasks": ["Install dependencies", "Configure IDE", "Run tests"]
-            }
+                "tasks": ["Install dependencies", "Configure IDE", "Run tests"],
+            },
         ]
         return checklist
-

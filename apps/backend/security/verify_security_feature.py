@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Security Feature Verification Script
 =====================================
@@ -33,6 +33,7 @@ def main():
     print("✓ Test 1: Importing security module...")
     try:
         import importlib.util
+
         spec = importlib.util.find_spec("security")
         if spec is not None:
             passed.append("Security module imports successfully")
@@ -50,6 +51,7 @@ def main():
     print("✓ Test 2: Checking auto-integration...")
     try:
         from security.auto_integration import is_security_enabled
+
         if is_security_enabled():
             passed.append("Auto-integration is active")
             print("  ✅ PASSED - Security is always enabled")
@@ -70,6 +72,7 @@ def main():
             SecurityReportGenerator,
             VulnerabilityScanner,
         )
+
         # Verify classes are callable
         assert callable(SecurityOrchestrator)
         assert callable(VulnerabilityScanner)
@@ -86,6 +89,7 @@ def main():
     print("✓ Test 4: Checking dependencies...")
     try:
         import importlib.util
+
         if importlib.util.find_spec("rich") is not None:
             passed.append("Rich is installed")
             print("  ✅ Rich installed")
@@ -111,6 +115,7 @@ def main():
     print("✓ Test 5: Checking security tools...")
     try:
         from security.auto_integration import SECURITY_TOOLS_AVAILABLE
+
         available = [tool for tool, avail in SECURITY_TOOLS_AVAILABLE.items() if avail]
         if available:
             passed.append(f"Security tools available: {', '.join(available)}")
@@ -126,6 +131,7 @@ def main():
     print("✓ Test 6: Checking configuration...")
     try:
         from security.auto_integration import get_default_security_config
+
         config = get_default_security_config()
         if config["enabled"] is True:
             passed.append("Security is enabled in config")
@@ -167,6 +173,7 @@ def main():
     print("✓ Test 8: Verifying non-optional status...")
     try:
         from security.auto_integration import is_security_enabled
+
         # Try to "disable" security (should have no effect)
         result = is_security_enabled()
         if result is True:
@@ -220,4 +227,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

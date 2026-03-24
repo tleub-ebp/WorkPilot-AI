@@ -19,7 +19,9 @@ class VisualRegressionEngine:
 
     def __init__(self, project_dir: Path, threshold: float = 95.0):
         self.project_dir = Path(project_dir)
-        self.baselines_dir = self.project_dir / ".auto-claude" / "browser-agent" / "baselines"
+        self.baselines_dir = (
+            self.project_dir / ".auto-claude" / "browser-agent" / "baselines"
+        )
         self.diffs_dir = self.project_dir / ".auto-claude" / "browser-agent" / "diffs"
         self.threshold = threshold
 
@@ -39,6 +41,7 @@ class VisualRegressionEngine:
         # Save metadata
         try:
             from PIL import Image
+
             with Image.open(baseline_path) as img:
                 w, h = img.size
         except Exception:
@@ -69,7 +72,9 @@ class VisualRegressionEngine:
         baseline_path = self.baselines_dir / f"{safe_name}.png"
 
         if not baseline_path.exists():
-            raise FileNotFoundError(f"No baseline found for '{name}'. Set a baseline first.")
+            raise FileNotFoundError(
+                f"No baseline found for '{name}'. Set a baseline first."
+            )
         if not current_path.exists():
             raise FileNotFoundError(f"Current screenshot not found: {current_path}")
 
@@ -83,7 +88,9 @@ class VisualRegressionEngine:
 
         # Resize current to match baseline if dimensions differ
         if current_img.size != baseline_img.size:
-            current_img = current_img.resize(baseline_img.size, Image.Resampling.LANCZOS)
+            current_img = current_img.resize(
+                baseline_img.size, Image.Resampling.LANCZOS
+            )
 
         # Compute pixel diff
         diff = ImageChops.difference(baseline_img, current_img)
@@ -93,11 +100,16 @@ class VisualRegressionEngine:
         # Count pixels that differ (with small tolerance for anti-aliasing)
         tolerance = 10
         diff_pixels = sum(
-            1 for pixel in diff_data
+            1
+            for pixel in diff_data
             if any(channel > tolerance for channel in pixel[:3])
         )
 
-        match_percentage = ((total_pixels - diff_pixels) / total_pixels) * 100 if total_pixels > 0 else 100.0
+        match_percentage = (
+            ((total_pixels - diff_pixels) / total_pixels) * 100
+            if total_pixels > 0
+            else 100.0
+        )
         passed = match_percentage >= self.threshold
 
         # Generate diff image (highlight differences in red)
@@ -112,7 +124,9 @@ class VisualRegressionEngine:
                     highlighted.append((255, 0, 0, 200))  # Red highlight
                 else:
                     orig = diff_visual_data[i]
-                    highlighted.append((orig[0], orig[1], orig[2], 128))  # Semi-transparent original
+                    highlighted.append(
+                        (orig[0], orig[1], orig[2], 128)
+                    )  # Semi-transparent original
 
             diff_highlight = Image.new("RGBA", baseline_img.size)
             diff_highlight.putdata(highlighted)
@@ -144,13 +158,15 @@ class VisualRegressionEngine:
                 meta = json.loads(meta_file.read_text())
                 png_path = meta_file.with_suffix(".png")
                 if png_path.exists():
-                    baselines.append(BaselineInfo(
-                        name=meta.get("name", meta_file.stem),
-                        path=str(png_path),
-                        created_at=meta.get("created_at", ""),
-                        width=meta.get("width", 0),
-                        height=meta.get("height", 0),
-                    ))
+                    baselines.append(
+                        BaselineInfo(
+                            name=meta.get("name", meta_file.stem),
+                            path=str(png_path),
+                            created_at=meta.get("created_at", ""),
+                            width=meta.get("width", 0),
+                            height=meta.get("height", 0),
+                        )
+                    )
             except (json.JSONDecodeError, KeyError):
                 continue
 

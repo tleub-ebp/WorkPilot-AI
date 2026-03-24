@@ -6,7 +6,6 @@ Handles the execution of AI agents for the spec creation pipeline.
 """
 
 from pathlib import Path
-from typing import Optional
 
 # Configure safe encoding before any output (fixes Windows encoding errors)
 from ui.capabilities import configure_safe_encoding
@@ -34,7 +33,7 @@ class AgentRunner:
         project_dir: Path,
         spec_dir: Path,
         model: str,
-        task_logger: Optional[TaskLogger] = None,
+        task_logger: TaskLogger | None = None,
     ):
         """Initialize the agent runner.
 
@@ -54,8 +53,8 @@ class AgentRunner:
         prompt_file: str,
         additional_context: str = "",
         interactive: bool = False,
-        thinking_budget: Optional[int] = None,
-        prior_phase_summaries: Optional[str] = None,
+        thinking_budget: int | None = None,
+        prior_phase_summaries: str | None = None,
     ) -> tuple[bool, str]:
         """Run an agent with the given prompt.
 
@@ -137,6 +136,7 @@ class AgentRunner:
 
         # Determine which provider to use
         from core.client import _get_active_provider
+
         active_provider = _get_active_provider(self.spec_dir)
         debug("agent_runner", f"Active provider resolved: {active_provider}")
 
@@ -144,10 +144,11 @@ class AgentRunner:
             # Non-Claude providers: use create_agent_client which routes to
             # WindsurfAgentClient/CopilotAgentClient with tool execution loop
             from core.client import create_agent_client
+
             debug(
                 "agent_runner",
                 f"Using create_agent_client for provider '{active_provider}' "
-                f"(tokens will be consumed from {active_provider}, NOT Anthropic)"
+                f"(tokens will be consumed from {active_provider}, NOT Anthropic)",
             )
             client = create_agent_client(
                 project_dir=self.project_dir,
@@ -168,7 +169,7 @@ class AgentRunner:
             agent_type="spec_writer",  # Use spec_writer type for spec creation
             max_thinking_tokens=thinking_budget,
         )
-        
+
         # Debug: Check if input files exist for spec_writer
         if prompt_file == "spec_writer.md":
             input_files = ["project_index.json", "requirements.json", "context.json"]
@@ -291,7 +292,9 @@ class AgentRunner:
                             )
                             debug(
                                 "agent_runner",
-                                "Rate limit event received (subtype=" + msg_subtype + "), "
+                                "Rate limit event received (subtype="
+                                + msg_subtype
+                                + "), "
                                 "session continues — CLI handles retry internally",
                             )
                         else:
@@ -503,7 +506,7 @@ class AgentRunner:
             return False, str(e)
 
     @staticmethod
-    def _extract_tool_input_display(inp: dict) -> Optional[str]:
+    def _extract_tool_input_display(inp: dict) -> str | None:
         """Extract meaningful tool input for display.
 
         Args:
@@ -533,7 +536,7 @@ class AgentRunner:
         return None
 
     @staticmethod
-    def _get_tool_detail_content(tool_name: str, result_content: str) -> Optional[str]:
+    def _get_tool_detail_content(tool_name: str, result_content: str) -> str | None:
         """Get detail content for specific tools.
 
         Args:

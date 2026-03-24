@@ -10,7 +10,6 @@ Provides REST endpoints for:
 """
 
 import logging
-from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -29,6 +28,7 @@ router = APIRouter(prefix="/api/mission-control", tags=["mission-control"])
 # Request / Response models
 # ---------------------------------------------------------------------------
 
+
 class CreateAgentRequest(BaseModel):
     name: str
     role: str = "custom"
@@ -38,11 +38,11 @@ class CreateAgentRequest(BaseModel):
 
 
 class UpdateAgentConfigRequest(BaseModel):
-    provider: Optional[str] = None
-    model: Optional[str] = None
-    model_label: Optional[str] = None
-    name: Optional[str] = None
-    role: Optional[str] = None
+    provider: str | None = None
+    model: str | None = None
+    model_label: str | None = None
+    name: str | None = None
+    role: str | None = None
 
 
 class StartAgentRequest(BaseModel):
@@ -51,18 +51,19 @@ class StartAgentRequest(BaseModel):
 
 class AgentStateUpdateRequest(BaseModel):
     """Used by agent processes to push live state updates."""
-    thinking: Optional[str] = None
-    tool_name: Optional[str] = None
-    tool_input: Optional[str] = None
-    file_path: Optional[str] = None
-    file_operation: Optional[str] = None
-    input_tokens: Optional[int] = None
-    output_tokens: Optional[int] = None
-    cost_usd: Optional[float] = None
-    progress: Optional[float] = None
-    current_step: Optional[str] = None
-    status: Optional[str] = None
-    error: Optional[str] = None
+
+    thinking: str | None = None
+    tool_name: str | None = None
+    tool_input: str | None = None
+    file_path: str | None = None
+    file_operation: str | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    cost_usd: float | None = None
+    progress: float | None = None
+    current_step: str | None = None
+    status: str | None = None
+    error: str | None = None
 
 
 class StartSessionRequest(BaseModel):
@@ -72,6 +73,7 @@ class StartSessionRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Session endpoints
 # ---------------------------------------------------------------------------
+
 
 @router.post("/session/start")
 async def start_session(req: StartSessionRequest):
@@ -100,6 +102,7 @@ async def get_session():
 # Full state
 # ---------------------------------------------------------------------------
 
+
 @router.get("/state")
 async def get_full_state():
     """Get the complete Mission Control state (all agents, trees, events)."""
@@ -110,6 +113,7 @@ async def get_full_state():
 # ---------------------------------------------------------------------------
 # Agent CRUD
 # ---------------------------------------------------------------------------
+
 
 @router.post("/agents")
 async def create_agent(req: CreateAgentRequest):
@@ -173,7 +177,10 @@ async def remove_agent(agent_id: str):
 # Agent control
 # ---------------------------------------------------------------------------
 
-@router.post("/agents/{agent_id}/start", responses={404: {"description": AGENT_NOT_FOUND}})
+
+@router.post(
+    "/agents/{agent_id}/start", responses={404: {"description": AGENT_NOT_FOUND}}
+)
 async def start_agent(agent_id: str, req: StartAgentRequest):
     """Start an agent with a task."""
     mc = get_mission_control()
@@ -183,7 +190,9 @@ async def start_agent(agent_id: str, req: StartAgentRequest):
     return {"success": True}
 
 
-@router.post("/agents/{agent_id}/pause", responses={404: {"description": AGENT_NOT_FOUND}})
+@router.post(
+    "/agents/{agent_id}/pause", responses={404: {"description": AGENT_NOT_FOUND}}
+)
 async def pause_agent(agent_id: str):
     """Pause a running agent."""
     mc = get_mission_control()
@@ -193,7 +202,9 @@ async def pause_agent(agent_id: str):
     return {"success": True}
 
 
-@router.post("/agents/{agent_id}/resume", responses={404: {"description": AGENT_NOT_FOUND}})
+@router.post(
+    "/agents/{agent_id}/resume", responses={404: {"description": AGENT_NOT_FOUND}}
+)
 async def resume_agent(agent_id: str):
     """Resume a paused agent."""
     mc = get_mission_control()
@@ -203,7 +214,9 @@ async def resume_agent(agent_id: str):
     return {"success": True}
 
 
-@router.post("/agents/{agent_id}/stop", responses={404: {"description": AGENT_NOT_FOUND}})
+@router.post(
+    "/agents/{agent_id}/stop", responses={404: {"description": AGENT_NOT_FOUND}}
+)
 async def stop_agent(agent_id: str):
     """Stop an agent."""
     mc = get_mission_control()
@@ -217,7 +230,10 @@ async def stop_agent(agent_id: str):
 # Live state updates (called by agent processes)
 # ---------------------------------------------------------------------------
 
-@router.post("/agents/{agent_id}/update", responses={404: {"description": AGENT_NOT_FOUND}})
+
+@router.post(
+    "/agents/{agent_id}/update", responses={404: {"description": AGENT_NOT_FOUND}}
+)
 async def update_agent_state(agent_id: str, req: AgentStateUpdateRequest):
     """Push a live state update from an agent process."""
     mc = get_mission_control()
@@ -250,7 +266,11 @@ async def update_agent_state(agent_id: str, req: AgentStateUpdateRequest):
 # Decision tree
 # ---------------------------------------------------------------------------
 
-@router.get("/agents/{agent_id}/decision-tree", responses={404: {"description": AGENT_NOT_FOUND}})
+
+@router.get(
+    "/agents/{agent_id}/decision-tree",
+    responses={404: {"description": AGENT_NOT_FOUND}},
+)
 async def get_decision_tree(agent_id: str):
     """Get the full decision tree for an agent."""
     mc = get_mission_control()
@@ -271,6 +291,7 @@ async def get_decision_path(agent_id: str):
 # ---------------------------------------------------------------------------
 # Event log
 # ---------------------------------------------------------------------------
+
 
 @router.get("/events")
 async def get_events(limit: int = 50):

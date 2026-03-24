@@ -135,6 +135,7 @@ const createSettingsThemes = (t: any): Record<SettingsTheme, {
     color: 'text-purple-600',
     sections: [
       { id: 'accounts', icon: Users, label: 'Comptes IA', type: 'app' },
+      { id: 'memory', icon: Database, label: t('projectSections.memory.title'), type: 'project' },
       { id: 'azure-devops', icon: Cloud, label: 'Azure DevOps', type: 'project' },
       { id: 'jira', icon: JiraIcon, label: 'Jira', type: 'project' },
       { id: 'github', icon: Github, label: 'GitHub', type: 'project' },
@@ -176,8 +177,7 @@ const createSettingsThemes = (t: any): Record<SettingsTheme, {
     color: 'text-orange-600',
     sections: [
       { id: 'sandbox', icon: Shield, label: t('sections.sandbox.title'), type: 'app' },
-      { id: 'anomaly-detection', icon: ShieldAlert, label: t('sections.anomaly-detection.title'), type: 'app' },
-      { id: 'memory', icon: Database, label: t('projectSections.memory.title'), type: 'project' }
+      { id: 'anomaly-detection', icon: ShieldAlert, label: t('sections.anomaly-detection.title'), type: 'app' }
     ],
     description: 'Sécurité et performance du système',
     priority: 5

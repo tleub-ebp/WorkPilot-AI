@@ -1,9 +1,9 @@
 """Architecture Analyzer - Scans codebase and extracts architectural structure."""
+
 import ast
 import hashlib
 import re
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
 
 from .models import (
     ArchitectureDiagram,
@@ -15,8 +15,17 @@ from .models import (
 )
 
 IGNORE_PATTERNS = {
-    "node_modules", ".git", "__pycache__", "dist", "build",
-    ".venv", "venv", ".next", "out", "coverage", ".cache",
+    "node_modules",
+    ".git",
+    "__pycache__",
+    "dist",
+    "build",
+    ".venv",
+    "venv",
+    ".next",
+    "out",
+    "coverage",
+    ".cache",
 }
 
 PYTHON_EXTENSIONS = {".py"}
@@ -30,7 +39,7 @@ class ArchitectureAnalyzer:
     def __init__(self, project_dir: str):
         self.project_dir = Path(project_dir)
 
-    def analyze_all(self) -> Dict[str, ArchitectureDiagram]:
+    def analyze_all(self) -> dict[str, ArchitectureDiagram]:
         """Run all analyses and return diagrams by type name."""
         results = {}
         analyses = [
@@ -48,9 +57,9 @@ class ArchitectureAnalyzer:
 
     def analyze_module_dependencies(self) -> ArchitectureDiagram:
         """Build module dependency graph from imports."""
-        nodes: Dict[str, ModuleNode] = {}
-        edges: List[DependencyEdge] = []
-        seen_edges: Set[Tuple[str, str]] = set()
+        nodes: dict[str, ModuleNode] = {}
+        edges: list[DependencyEdge] = []
+        seen_edges: set[tuple[str, str]] = set()
 
         source_files = self._get_source_files(list(ALL_EXTENSIONS))
 
@@ -92,12 +101,14 @@ class ArchitectureAnalyzer:
                     edge_key = (node_id, target_id)
                     if edge_key not in seen_edges:
                         seen_edges.add(edge_key)
-                        edges.append(DependencyEdge(
-                            source_id=node_id,
-                            target_id=target_id,
-                            edge_type=EdgeType.IMPORT,
-                            label=imp[:40],
-                        ))
+                        edges.append(
+                            DependencyEdge(
+                                source_id=node_id,
+                                target_id=target_id,
+                                edge_type=EdgeType.IMPORT,
+                                label=imp[:40],
+                            )
+                        )
 
         # Only keep nodes that have at least one edge
         connected_ids = {e.source_id for e in edges} | {e.target_id for e in edges}
@@ -105,15 +116,20 @@ class ArchitectureAnalyzer:
 
         # Limit to top 50 most connected nodes
         if len(filtered_nodes) > 50:
-            counts: Dict[str, int] = {}
+            counts: dict[str, int] = {}
             for e in edges:
                 counts[e.source_id] = counts.get(e.source_id, 0) + 1
                 counts[e.target_id] = counts.get(e.target_id, 0) + 1
-            top_ids = set(sorted(counts.keys(), key=lambda x: counts[x], reverse=True)[:50])
+            top_ids = set(
+                sorted(counts.keys(), key=lambda x: counts[x], reverse=True)[:50]
+            )
             filtered_nodes = {k: v for k, v in filtered_nodes.items() if k in top_ids}
-            edges = [e for e in edges if e.source_id in top_ids and e.target_id in top_ids]
+            edges = [
+                e for e in edges if e.source_id in top_ids and e.target_id in top_ids
+            ]
 
         from .diagram_generator import DiagramGenerator
+
         diagram = ArchitectureDiagram(
             diagram_type=DiagramType.MODULE_DEPENDENCIES,
             title="Module Dependencies",
@@ -127,8 +143,8 @@ class ArchitectureAnalyzer:
 
     def analyze_component_hierarchy(self) -> ArchitectureDiagram:
         """Build React component hierarchy."""
-        nodes: Dict[str, ModuleNode] = {}
-        edges: List[DependencyEdge] = []
+        nodes: dict[str, ModuleNode] = {}
+        edges: list[DependencyEdge] = []
 
         react_files = self._get_source_files([".tsx", ".jsx"])
         component_pattern = re.compile(
@@ -175,14 +191,17 @@ class ArchitectureAnalyzer:
                         for src_comp in components:
                             src_id = f"comp_{src_comp}"
                             if src_id != target_id:
-                                edges.append(DependencyEdge(
-                                    source_id=src_id,
-                                    target_id=target_id,
-                                    edge_type=EdgeType.RENDERS,
-                                    label="renders",
-                                ))
+                                edges.append(
+                                    DependencyEdge(
+                                        source_id=src_id,
+                                        target_id=target_id,
+                                        edge_type=EdgeType.RENDERS,
+                                        label="renders",
+                                    )
+                                )
 
         from .diagram_generator import DiagramGenerator
+
         diagram = ArchitectureDiagram(
             diagram_type=DiagramType.COMPONENT_HIERARCHY,
             title="Component Hierarchy",
@@ -196,8 +215,8 @@ class ArchitectureAnalyzer:
 
     def analyze_data_flow(self) -> ArchitectureDiagram:
         """Identify services/agents and their data flow."""
-        nodes: Dict[str, ModuleNode] = {}
-        edges: List[DependencyEdge] = []
+        nodes: dict[str, ModuleNode] = {}
+        edges: list[DependencyEdge] = []
 
         # Look for service-like patterns in the project
         patterns = {
@@ -245,14 +264,17 @@ class ArchitectureAnalyzer:
             for imp in imports:
                 target_id = self._import_to_id(imp, file_path)
                 if target_id and target_id in service_ids and target_id != src_id:
-                    edges.append(DependencyEdge(
-                        source_id=src_id,
-                        target_id=target_id,
-                        edge_type=EdgeType.USES,
-                        label="uses",
-                    ))
+                    edges.append(
+                        DependencyEdge(
+                            source_id=src_id,
+                            target_id=target_id,
+                            edge_type=EdgeType.USES,
+                            label="uses",
+                        )
+                    )
 
         from .diagram_generator import DiagramGenerator
+
         diagram = ArchitectureDiagram(
             diagram_type=DiagramType.DATA_FLOW,
             title="Data Flow",
@@ -265,8 +287,8 @@ class ArchitectureAnalyzer:
 
     def analyze_database_schema(self) -> ArchitectureDiagram:
         """Extract DB tables from ORM models."""
-        nodes: Dict[str, ModuleNode] = {}
-        edges: List[DependencyEdge] = []
+        nodes: dict[str, ModuleNode] = {}
+        edges: list[DependencyEdge] = []
 
         # Patterns for different ORMs
         sqlalchemy_model = re.compile(
@@ -309,14 +331,17 @@ class ArchitectureAnalyzer:
                 for match in sqlalchemy_model.finditer(content):
                     src_id = f"table_{match.group(1).lower()}"
                     if src_id in nodes and ref_id in nodes and src_id != ref_id:
-                        edges.append(DependencyEdge(
-                            source_id=src_id,
-                            target_id=ref_id,
-                            edge_type=EdgeType.FOREIGN_KEY,
-                            label="FK",
-                        ))
+                        edges.append(
+                            DependencyEdge(
+                                source_id=src_id,
+                                target_id=ref_id,
+                                edge_type=EdgeType.FOREIGN_KEY,
+                                label="FK",
+                            )
+                        )
 
         from .diagram_generator import DiagramGenerator
+
         diagram = ArchitectureDiagram(
             diagram_type=DiagramType.DATABASE_SCHEMA,
             title="Database Schema",
@@ -327,7 +352,7 @@ class ArchitectureAnalyzer:
         diagram.mermaid_code = gen.generate_mermaid(diagram)
         return diagram
 
-    def _get_source_files(self, extensions: List[str]) -> List[Path]:
+    def _get_source_files(self, extensions: list[str]) -> list[Path]:
         """Return source files matching extensions, excluding ignored paths."""
         files = []
         ext_set = set(extensions)
@@ -341,7 +366,7 @@ class ArchitectureAnalyzer:
             files.append(file_path)
         return files
 
-    def _extract_python_imports(self, file_path: Path) -> List[str]:
+    def _extract_python_imports(self, file_path: Path) -> list[str]:
         """Extract import module names from a Python file using ast."""
         try:
             content = file_path.read_text(encoding="utf-8", errors="ignore")
@@ -358,7 +383,7 @@ class ArchitectureAnalyzer:
         except Exception:
             return []
 
-    def _extract_js_imports(self, file_path: Path) -> List[str]:
+    def _extract_js_imports(self, file_path: Path) -> list[str]:
         """Extract import/require paths from JS/TS files."""
         try:
             content = file_path.read_text(encoding="utf-8", errors="ignore")
@@ -384,9 +409,11 @@ class ArchitectureAnalyzer:
         # Relative import
         if import_str.startswith("."):
             try:
-                resolved = (from_file.parent / import_str.lstrip("./").replace(".", "/"))
+                resolved = from_file.parent / import_str.lstrip("./").replace(".", "/")
                 for ext in list(ALL_EXTENSIONS) + [""]:
-                    candidate = resolved.with_suffix(ext) if ext else resolved / "__init__.py"
+                    candidate = (
+                        resolved.with_suffix(ext) if ext else resolved / "__init__.py"
+                    )
                     if candidate.exists():
                         rel = str(candidate.relative_to(self.project_dir))
                         return self._path_to_id(rel)
@@ -398,7 +425,11 @@ class ArchitectureAnalyzer:
         for i in range(len(parts), 0, -1):
             candidate_path = self.project_dir / Path(*parts[:i])
             for ext in list(ALL_EXTENSIONS) + [""]:
-                f = candidate_path.with_suffix(ext) if ext else candidate_path / "__init__.py"
+                f = (
+                    candidate_path.with_suffix(ext)
+                    if ext
+                    else candidate_path / "__init__.py"
+                )
                 if f.exists():
                     rel = str(f.relative_to(self.project_dir))
                     return self._path_to_id(rel)

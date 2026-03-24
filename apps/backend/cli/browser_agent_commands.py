@@ -56,7 +56,9 @@ def handle_browser_agent_command(
         if result["success"]:
             data = result["data"]
             emoji = "✅" if data["passed"] else "❌"
-            print(f"{emoji} Match: {data['matchPercentage']}% (threshold: {data['threshold']}%)")
+            print(
+                f"{emoji} Match: {data['matchPercentage']}% (threshold: {data['threshold']}%)"
+            )
         else:
             print(f"❌ {result.get('error', 'Failed')}")
             sys.exit(1)
@@ -66,7 +68,9 @@ def handle_browser_agent_command(
         result = runner.run_tests()
         if result["success"]:
             data = result["data"]
-            print(f"Results: {data['passed']} passed, {data['failed']} failed, {data['skipped']} skipped")
+            print(
+                f"Results: {data['passed']} passed, {data['failed']} failed, {data['skipped']} skipped"
+            )
         else:
             print(f"❌ {result.get('error', 'Failed')}")
             sys.exit(1)

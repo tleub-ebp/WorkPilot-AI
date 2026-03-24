@@ -68,7 +68,11 @@ def _build_generate_code_prompt(diagram: dict, framework: str) -> str:
     )
     edges_desc = "\n".join(
         f"  - {e.get('source', '?')} → {e.get('target', '?')}"
-        + (f" [{e.get('data', {}).get('label', '')}]" if e.get("data", {}).get("label") else "")
+        + (
+            f" [{e.get('data', {}).get('label', '')}]"
+            if e.get("data", {}).get("label")
+            else ""
+        )
         for e in edges
     )
 
@@ -78,13 +82,13 @@ The user has designed a {diagram_type} diagram using a visual no-code editor.
 Your task is to generate production-ready source code that implements the architecture shown.
 
 ## Diagram Nodes
-{nodes_desc or '  (no nodes)'}
+{nodes_desc or "  (no nodes)"}
 
 ## Connections (Edges)
-{edges_desc or '  (no connections)'}
+{edges_desc or "  (no connections)"}
 
 ## Target Framework / Technology
-{framework or 'Auto-detect from node labels'}
+{framework or "Auto-detect from node labels"}
 
 ## Instructions
 1. Analyse the diagram structure carefully.
@@ -171,7 +175,6 @@ async def action_generate_code(diagram_json: str, framework: str) -> None:
 
     try:
         from core.simple_client import create_simple_client
-        from claude_agent_sdk import run
 
         client = create_simple_client(
             agent_type="merge_resolver",  # text-only, no tools needed
@@ -201,9 +204,7 @@ async def action_generate_code(diagram_json: str, framework: str) -> None:
         if raw_response.startswith("```"):
             # Strip markdown fences if present
             lines = raw_response.split("\n")
-            raw_response = "\n".join(
-                l for l in lines if not l.startswith("```")
-            )
+            raw_response = "\n".join(l for l in lines if not l.startswith("```"))
 
         result = json.loads(raw_response)
         _print_result({"action": "generate-code", "data": result})
@@ -263,9 +264,7 @@ async def action_code_to_visual(file_path: str) -> None:
         raw_response = raw_response.strip()
         if raw_response.startswith("```"):
             lines = raw_response.split("\n")
-            raw_response = "\n".join(
-                l for l in lines if not l.startswith("```")
-            )
+            raw_response = "\n".join(l for l in lines if not l.startswith("```"))
 
         result = json.loads(raw_response)
         _print_result({"action": "code-to-visual", "data": result})
@@ -286,7 +285,9 @@ def main() -> None:
         help="Action to perform",
     )
     # generate-code args
-    parser.add_argument("--diagram-json", help="JSON string of the diagram (nodes + edges)")
+    parser.add_argument(
+        "--diagram-json", help="JSON string of the diagram (nodes + edges)"
+    )
     parser.add_argument("--framework", default="", help="Target framework/technology")
     # code-to-visual args
     parser.add_argument("--file-path", help="Path to the source file to analyse")

@@ -52,17 +52,17 @@ from .state import (
 )
 
 try:
-    from .quality_autofix import AutoFixEngine, AutoFix
+    from .quality_autofix import AutoFix, AutoFixEngine
     from .quality_badge import QualityBadgeFormatter
     from .quality_coverage import TestCoverageAnalyzer, analyze_project_coverage
-    from .quality_custom_rules import CustomRuleEngine, CustomRule, load_project_rules
+    from .quality_custom_rules import CustomRule, CustomRuleEngine, load_project_rules
     from .quality_extended import ExtendedQualityScorer, create_extended_scorer
     from .quality_integration import (
         QualityReviewIntegration,
         display_quality_report,
         review_current_pr,
     )
-    from .quality_ml import MLPatternDetector, LearnedPattern, learn_and_detect
+    from .quality_ml import LearnedPattern, MLPatternDetector, learn_and_detect
     from .quality_multilang import (
         CSharpAnalyzer,
         GoAnalyzer,
@@ -72,7 +72,11 @@ try:
         get_analyzer,
     )
     from .quality_performance import PerformanceAnalyzer, analyze_project_performance
-    from .quality_similarity import CodeClone, CodeSimilarityDetector, detect_clones_in_project
+    from .quality_similarity import (
+        CodeClone,
+        CodeSimilarityDetector,
+        detect_clones_in_project,
+    )
 except ImportError:
     # Quality scoring module not yet available
     QualityScorer = None

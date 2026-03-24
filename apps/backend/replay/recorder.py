@@ -10,7 +10,7 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from .models import (
     ABComparison,
@@ -38,7 +38,7 @@ class ReplayRecorder:
     - Persistent storage to disk (JSON)
     """
 
-    def __init__(self, storage_dir: Optional[Path] = None):
+    def __init__(self, storage_dir: Path | None = None):
         self._storage_dir = storage_dir or Path.home() / ".auto-claude" / "replays"
         self._storage_dir.mkdir(parents=True, exist_ok=True)
         self._active_sessions: dict[str, ReplaySession] = {}
@@ -73,15 +73,19 @@ class ReplayRecorder:
         self._step_counter[session_id] = 0
 
         # Record session start step
-        self._add_step(session_id, ReplayStepType.SESSION_START, {
-            "label": "Session Started",
-            "description": f"Agent '{session.agent_name}' started task: {session.task_description[:200]}",
-        })
+        self._add_step(
+            session_id,
+            ReplayStepType.SESSION_START,
+            {
+                "label": "Session Started",
+                "description": f"Agent '{session.agent_name}' started task: {session.task_description[:200]}",
+            },
+        )
 
         logger.info(f"Replay recording started: {session_id}")
         return session
 
-    def end_session(self, session_id: str) -> Optional[ReplaySession]:
+    def end_session(self, session_id: str) -> ReplaySession | None:
         """End recording and persist the session."""
         session = self._active_sessions.get(session_id)
         if not session:
@@ -91,11 +95,15 @@ class ReplayRecorder:
         session.status = "completed"
 
         # Record session end step
-        self._add_step(session_id, ReplayStepType.SESSION_END, {
-            "label": "Session Completed",
-            "description": f"Completed in {session.duration_seconds:.1f}s — "
-                          f"{session.total_tokens} tokens, {session.total_tool_calls} tool calls",
-        })
+        self._add_step(
+            session_id,
+            ReplayStepType.SESSION_END,
+            {
+                "label": "Session Completed",
+                "description": f"Completed in {session.duration_seconds:.1f}s — "
+                f"{session.total_tokens} tokens, {session.total_tool_calls} tool calls",
+            },
+        )
 
         # Compute final stats
         self._finalize_stats(session)
@@ -107,20 +115,26 @@ class ReplayRecorder:
         del self._active_sessions[session_id]
         del self._step_counter[session_id]
 
-        logger.info(f"Replay recording ended: {session_id} ({session.step_count} steps)")
+        logger.info(
+            f"Replay recording ended: {session_id} ({session.step_count} steps)"
+        )
         return session
 
     # -------------------------------------------------------------------
     # Event recording
     # -------------------------------------------------------------------
 
-    def record_thinking(self, session_id: str, thinking: str) -> Optional[ReplayStep]:
+    def record_thinking(self, session_id: str, thinking: str) -> ReplayStep | None:
         """Record an agent thinking/reasoning event."""
-        return self._add_step(session_id, ReplayStepType.AGENT_THINKING, {
-            "label": "Agent Thinking",
-            "reasoning": thinking[:2000],
-            "description": thinking[:200],
-        })
+        return self._add_step(
+            session_id,
+            ReplayStepType.AGENT_THINKING,
+            {
+                "label": "Agent Thinking",
+                "reasoning": thinking[:2000],
+                "description": thinking[:200],
+            },
+        )
 
     def record_response(
         self,
@@ -129,58 +143,72 @@ class ReplayRecorder:
         input_tokens: int = 0,
         output_tokens: int = 0,
         cost_usd: float = 0.0,
-    ) -> Optional[ReplayStep]:
+    ) -> ReplayStep | None:
         """Record an agent response with token usage."""
-        return self._add_step(session_id, ReplayStepType.AGENT_RESPONSE, {
-            "label": "Agent Response",
-            "description": response[:500],
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
-            "cost_usd": cost_usd,
-        })
+        return self._add_step(
+            session_id,
+            ReplayStepType.AGENT_RESPONSE,
+            {
+                "label": "Agent Response",
+                "description": response[:500],
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "cost_usd": cost_usd,
+            },
+        )
 
     def record_tool_call(
         self,
         session_id: str,
         tool_name: str,
-        tool_input: Optional[str] = None,
-        tool_input_dict: Optional[dict[str, Any]] = None,
-    ) -> Optional[ReplayStep]:
+        tool_input: str | None = None,
+        tool_input_dict: dict[str, Any] | None = None,
+    ) -> ReplayStep | None:
         """Record a tool call event."""
         session = self._active_sessions.get(session_id)
         if session:
             session.total_tool_calls += 1
 
-        return self._add_step(session_id, ReplayStepType.TOOL_CALL, {
-            "label": f"Tool: {tool_name}",
-            "tool_name": tool_name,
-            "tool_input": tool_input_dict or {},
-            "description": f"{tool_name}: {tool_input[:200]}" if tool_input else tool_name,
-        })
+        return self._add_step(
+            session_id,
+            ReplayStepType.TOOL_CALL,
+            {
+                "label": f"Tool: {tool_name}",
+                "tool_name": tool_name,
+                "tool_input": tool_input_dict or {},
+                "description": f"{tool_name}: {tool_input[:200]}"
+                if tool_input
+                else tool_name,
+            },
+        )
 
     def record_tool_result(
         self,
         session_id: str,
         tool_name: str,
-        output: Optional[str] = None,
+        output: str | None = None,
         success: bool = True,
-    ) -> Optional[ReplayStep]:
+    ) -> ReplayStep | None:
         """Record a tool result event."""
-        return self._add_step(session_id, ReplayStepType.TOOL_RESULT, {
-            "label": f"Result: {tool_name}",
-            "tool_name": tool_name,
-            "tool_output": output[:2000] if output else "",
-            "description": f"{'✓' if success else '✗'} {tool_name}",
-        })
+        return self._add_step(
+            session_id,
+            ReplayStepType.TOOL_RESULT,
+            {
+                "label": f"Result: {tool_name}",
+                "tool_name": tool_name,
+                "tool_output": output[:2000] if output else "",
+                "description": f"{'✓' if success else '✗'} {tool_name}",
+            },
+        )
 
     def record_file_change(
         self,
         session_id: str,
         file_path: str,
         operation: str = "update",
-        before_content: Optional[str] = None,
-        after_content: Optional[str] = None,
-    ) -> Optional[ReplayStep]:
+        before_content: str | None = None,
+        after_content: str | None = None,
+    ) -> ReplayStep | None:
         """Record a file change with diff information."""
         session = self._active_sessions.get(session_id)
         if not session:
@@ -211,10 +239,14 @@ class ReplayRecorder:
         if before_content and after_content:
             diff.diff_lines = _compute_simple_diff(before_content, after_content)
 
-        step = self._add_step(session_id, step_type, {
-            "label": f"File {operation}: {_short_path(file_path)}",
-            "description": f"{operation.title()} {file_path}",
-        })
+        step = self._add_step(
+            session_id,
+            step_type,
+            {
+                "label": f"File {operation}: {_short_path(file_path)}",
+                "description": f"{operation.title()} {file_path}",
+            },
+        )
 
         if step:
             step.file_diffs.append(diff)
@@ -225,27 +257,35 @@ class ReplayRecorder:
         self,
         session_id: str,
         command: str,
-        cwd: Optional[str] = None,
-    ) -> Optional[ReplayStep]:
+        cwd: str | None = None,
+    ) -> ReplayStep | None:
         """Record a command execution."""
-        return self._add_step(session_id, ReplayStepType.COMMAND_RUN, {
-            "label": f"Command: {command[:60]}",
-            "description": command,
-            "tool_input": {"command": command, "cwd": cwd},
-        })
+        return self._add_step(
+            session_id,
+            ReplayStepType.COMMAND_RUN,
+            {
+                "label": f"Command: {command[:60]}",
+                "description": command,
+                "tool_input": {"command": command, "cwd": cwd},
+            },
+        )
 
     def record_command_output(
         self,
         session_id: str,
         output: str,
         is_error: bool = False,
-    ) -> Optional[ReplayStep]:
+    ) -> ReplayStep | None:
         """Record command output."""
-        return self._add_step(session_id, ReplayStepType.COMMAND_OUTPUT, {
-            "label": "Command Output" + (" (Error)" if is_error else ""),
-            "description": output[:500],
-            "tool_output": output[:5000],
-        })
+        return self._add_step(
+            session_id,
+            ReplayStepType.COMMAND_OUTPUT,
+            {
+                "label": "Command Output" + (" (Error)" if is_error else ""),
+                "description": output[:500],
+                "tool_output": output[:5000],
+            },
+        )
 
     def record_decision(
         self,
@@ -254,50 +294,66 @@ class ReplayRecorder:
         options: list[str],
         chosen: str,
         reasoning: str = "",
-    ) -> Optional[ReplayStep]:
+    ) -> ReplayStep | None:
         """Record a decision point."""
-        return self._add_step(session_id, ReplayStepType.DECISION, {
-            "label": f"Decision: {description[:60]}",
-            "description": description,
-            "reasoning": reasoning,
-            "options_considered": options,
-            "chosen_option": chosen,
-        })
+        return self._add_step(
+            session_id,
+            ReplayStepType.DECISION,
+            {
+                "label": f"Decision: {description[:60]}",
+                "description": description,
+                "reasoning": reasoning,
+                "options_considered": options,
+                "chosen_option": chosen,
+            },
+        )
 
     def record_error(
         self,
         session_id: str,
         error_message: str,
         error_type: str = "unknown",
-    ) -> Optional[ReplayStep]:
+    ) -> ReplayStep | None:
         """Record an error event."""
-        return self._add_step(session_id, ReplayStepType.ERROR, {
-            "label": f"Error: {error_type}",
-            "description": error_message[:500],
-        })
+        return self._add_step(
+            session_id,
+            ReplayStepType.ERROR,
+            {
+                "label": f"Error: {error_type}",
+                "description": error_message[:500],
+            },
+        )
 
     def record_progress(
         self,
         session_id: str,
         progress: float,
         current_step: str = "",
-    ) -> Optional[ReplayStep]:
+    ) -> ReplayStep | None:
         """Record a progress update."""
-        return self._add_step(session_id, ReplayStepType.PROGRESS, {
-            "label": f"Progress: {progress:.0%}",
-            "description": current_step,
-        })
+        return self._add_step(
+            session_id,
+            ReplayStepType.PROGRESS,
+            {
+                "label": f"Progress: {progress:.0%}",
+                "description": current_step,
+            },
+        )
 
     def record_test(
         self,
         session_id: str,
         test_command: str,
-        success: Optional[bool] = None,
-        details: Optional[str] = None,
-    ) -> Optional[ReplayStep]:
+        success: bool | None = None,
+        details: str | None = None,
+    ) -> ReplayStep | None:
         """Record test run/result."""
-        step_type = ReplayStepType.TEST_RESULT if success is not None else ReplayStepType.TEST_RUN
-        
+        step_type = (
+            ReplayStepType.TEST_RESULT
+            if success is not None
+            else ReplayStepType.TEST_RUN
+        )
+
         # Extract the test status icon for better readability
         if success is True:
             status_icon = "✓"
@@ -305,13 +361,17 @@ class ReplayRecorder:
             status_icon = "✗"
         else:
             status_icon = "⟳"
-        
-        return self._add_step(session_id, step_type, {
-            "label": f"Test {status_icon}: {test_command[:60]}",
-            "description": details or test_command,
-            "tool_input": {"command": test_command},
-            "tool_output": details,
-        })
+
+        return self._add_step(
+            session_id,
+            step_type,
+            {
+                "label": f"Test {status_icon}: {test_command[:60]}",
+                "description": details or test_command,
+                "tool_input": {"command": test_command},
+                "tool_output": details,
+            },
+        )
 
     # -------------------------------------------------------------------
     # Breakpoints
@@ -323,7 +383,7 @@ class ReplayRecorder:
         breakpoint_type: str,
         condition: str,
         description: str = "",
-    ) -> Optional[Breakpoint]:
+    ) -> Breakpoint | None:
         """Add a breakpoint to a session."""
         session = self._active_sessions.get(session_id)
         if not session:
@@ -343,9 +403,7 @@ class ReplayRecorder:
         if not session:
             return False
 
-        session.breakpoints = [
-            b for b in session.breakpoints if b.id != breakpoint_id
-        ]
+        session.breakpoints = [b for b in session.breakpoints if b.id != breakpoint_id]
         return True
 
     def check_breakpoints(self, session_id: str, step: ReplayStep) -> list[Breakpoint]:
@@ -378,7 +436,7 @@ class ReplayRecorder:
         logger.info(f"Replay session saved: {filepath}")
         return filepath
 
-    def load_session(self, session_id: str) -> Optional[ReplaySession]:
+    def load_session(self, session_id: str) -> ReplaySession | None:
         """Load a replay session from disk."""
         filepath = self._storage_dir / f"{session_id}.json"
         if not filepath.exists():
@@ -417,7 +475,9 @@ class ReplayRecorder:
     # A/B Comparison
     # -------------------------------------------------------------------
 
-    def compare_sessions(self, session_a_id: str, session_b_id: str) -> Optional[ABComparison]:
+    def compare_sessions(
+        self, session_a_id: str, session_b_id: str
+    ) -> ABComparison | None:
         """Compare two replay sessions side by side."""
         a = self.load_session(session_a_id)
         b = self.load_session(session_b_id)
@@ -458,7 +518,7 @@ class ReplayRecorder:
         session_id: str,
         step_type: ReplayStepType,
         data: dict[str, Any],
-    ) -> Optional[ReplayStep]:
+    ) -> ReplayStep | None:
         """Add a step to the active session."""
         session = self._active_sessions.get(session_id)
         if not session:
@@ -517,8 +577,10 @@ class ReplayRecorder:
             1 for s in session.steps if s.step_type == ReplayStepType.TOOL_CALL
         )
         session.total_file_changes = sum(
-            1 for s in session.steps
-            if s.step_type in (
+            1
+            for s in session.steps
+            if s.step_type
+            in (
                 ReplayStepType.FILE_CREATE,
                 ReplayStepType.FILE_UPDATE,
                 ReplayStepType.FILE_DELETE,
@@ -534,20 +596,17 @@ class ReplayRecorder:
     def _breakpoint_matches(bp: Breakpoint, step: ReplayStep) -> bool:
         """Check if a breakpoint matches a step."""
         if bp.breakpoint_type == BreakpointType.TOOL_CALL:
-            return (
-                step.step_type == ReplayStepType.TOOL_CALL
-                and (not bp.condition or bp.condition == step.tool_name)
+            return step.step_type == ReplayStepType.TOOL_CALL and (
+                not bp.condition or bp.condition == step.tool_name
             )
         elif bp.breakpoint_type == BreakpointType.FILE_CHANGE:
-            return (
-                step.step_type in (
-                    ReplayStepType.FILE_CREATE,
-                    ReplayStepType.FILE_UPDATE,
-                    ReplayStepType.FILE_DELETE,
-                )
-                and (not bp.condition or any(
-                    bp.condition in d.file_path for d in step.file_diffs
-                ))
+            return step.step_type in (
+                ReplayStepType.FILE_CREATE,
+                ReplayStepType.FILE_UPDATE,
+                ReplayStepType.FILE_DELETE,
+            ) and (
+                not bp.condition
+                or any(bp.condition in d.file_path for d in step.file_diffs)
             )
         elif bp.breakpoint_type == BreakpointType.DECISION:
             return step.step_type == ReplayStepType.DECISION
@@ -599,7 +658,7 @@ def _compute_simple_diff(before: str, after: str) -> list[str]:
 
 
 # Global instance
-_replay_recorder: Optional[ReplayRecorder] = None
+_replay_recorder: ReplayRecorder | None = None
 
 
 def get_replay_recorder() -> ReplayRecorder:

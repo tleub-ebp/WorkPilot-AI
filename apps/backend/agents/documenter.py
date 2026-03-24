@@ -17,7 +17,6 @@ Example:
 import ast
 import logging
 import os
-import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -30,8 +29,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class DocFormat(str, Enum):
     """Supported documentation output formats."""
+
     MARKDOWN = "markdown"
     JSDOC = "jsdoc"
     SPHINX = "sphinx"
@@ -42,6 +43,7 @@ class DocFormat(str, Enum):
 
 class DiagramType(str, Enum):
     """Types of architecture diagrams."""
+
     CLASS_DIAGRAM = "class_diagram"
     MODULE_DEPENDENCY = "module_dependency"
     SEQUENCE = "sequence"
@@ -50,6 +52,7 @@ class DiagramType(str, Enum):
 
 class DocStatus(str, Enum):
     """Documentation coverage status for a symbol."""
+
     DOCUMENTED = "documented"
     PARTIAL = "partial"
     MISSING = "missing"
@@ -58,6 +61,7 @@ class DocStatus(str, Enum):
 # ---------------------------------------------------------------------------
 # Data models
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class SymbolDoc:
@@ -74,6 +78,7 @@ class SymbolDoc:
         args: Function arguments (for functions).
         return_type: Return type annotation (for functions).
     """
+
     name: str
     symbol_type: str = "function"
     file_path: str = ""
@@ -112,6 +117,7 @@ class ModuleInfo:
         dependencies: Imported modules/packages.
         submodules: Sub-directories that are packages.
     """
+
     module_path: str
     name: str = ""
     description: str = ""
@@ -139,6 +145,7 @@ class DocGenerationResult:
         diagram_content: Generated diagram content (if applicable).
         output_format: Format used.
     """
+
     source_path: str
     symbols_analyzed: int = 0
     symbols_documented: int = 0
@@ -165,6 +172,7 @@ class DocGenerationResult:
 # Code analyzer for documentation
 # ---------------------------------------------------------------------------
 
+
 class DocAnalyzer:
     """Analyzes Python source code to extract symbols and documentation status."""
 
@@ -177,11 +185,13 @@ class DocAnalyzer:
         Returns:
             List of SymbolDoc with documentation status for each symbol.
         """
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             source = f.read()
         return self.analyze_source(source, file_path)
 
-    def analyze_source(self, source: str, file_path: str = "<source>") -> list[SymbolDoc]:
+    def analyze_source(
+        self, source: str, file_path: str = "<source>"
+    ) -> list[SymbolDoc]:
         """Analyze Python source code for documentation coverage.
 
         Args:
@@ -212,22 +222,21 @@ class DocAnalyzer:
             if isinstance(child, ast.ClassDef):
                 docstring = ast.get_docstring(child) or ""
                 status = DocStatus.DOCUMENTED if docstring else DocStatus.MISSING
-                symbols.append(SymbolDoc(
-                    name=child.name,
-                    symbol_type="class",
-                    file_path=file_path,
-                    line_number=child.lineno,
-                    status=status,
-                    existing_doc=docstring,
-                ))
+                symbols.append(
+                    SymbolDoc(
+                        name=child.name,
+                        symbol_type="class",
+                        file_path=file_path,
+                        line_number=child.lineno,
+                        status=status,
+                        existing_doc=docstring,
+                    )
+                )
                 self._visit(child, symbols, file_path, class_name=child.name)
 
             elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 docstring = ast.get_docstring(child) or ""
-                args = [
-                    a.arg for a in child.args.args
-                    if a.arg not in ("self", "cls")
-                ]
+                args = [a.arg for a in child.args.args if a.arg not in ("self", "cls")]
                 return_type = None
                 if child.returns:
                     try:
@@ -238,7 +247,8 @@ class DocAnalyzer:
                 if docstring:
                     # Check if partial (has docstring but missing args docs)
                     has_args_doc = any(
-                        kw in docstring for kw in ("Args:", "Parameters:", ":param", "@param")
+                        kw in docstring
+                        for kw in ("Args:", "Parameters:", ":param", "@param")
                     )
                     if args and not has_args_doc:
                         status = DocStatus.PARTIAL
@@ -248,16 +258,18 @@ class DocAnalyzer:
                     status = DocStatus.MISSING
 
                 name = f"{class_name}.{child.name}" if class_name else child.name
-                symbols.append(SymbolDoc(
-                    name=name,
-                    symbol_type="method" if class_name else "function",
-                    file_path=file_path,
-                    line_number=child.lineno,
-                    status=status,
-                    existing_doc=docstring,
-                    args=args,
-                    return_type=return_type,
-                ))
+                symbols.append(
+                    SymbolDoc(
+                        name=name,
+                        symbol_type="method" if class_name else "function",
+                        file_path=file_path,
+                        line_number=child.lineno,
+                        status=status,
+                        existing_doc=docstring,
+                        args=args,
+                        return_type=return_type,
+                    )
+                )
 
     def analyze_directory(self, dir_path: str) -> ModuleInfo:
         """Analyze a Python module directory.
@@ -291,7 +303,7 @@ class DocAnalyzer:
 
                 # Extract imports for dependencies
                 try:
-                    with open(full_path, "r", encoding="utf-8") as f:
+                    with open(full_path, encoding="utf-8") as f:
                         source = f.read()
                     tree = ast.parse(source)
                     for node in ast.iter_child_nodes(tree):
@@ -316,7 +328,7 @@ class DocAnalyzer:
         init_path = os.path.join(dir_path, "__init__.py")
         if os.path.isfile(init_path):
             try:
-                with open(init_path, "r", encoding="utf-8") as f:
+                with open(init_path, encoding="utf-8") as f:
                     source = f.read()
                 tree = ast.parse(source)
                 docstring = ast.get_docstring(tree)
@@ -331,6 +343,7 @@ class DocAnalyzer:
 # ---------------------------------------------------------------------------
 # Documentation Generator
 # ---------------------------------------------------------------------------
+
 
 class DocGenerator:
     """Generates documentation content from analyzed symbols."""
@@ -410,7 +423,7 @@ class DocGenerator:
                 parts.append(f"    :type {arg}: TODO")
 
         if symbol.return_type and symbol.return_type != "None":
-            parts.append(f"    :returns: TODO — describe return value.")
+            parts.append("    :returns: TODO — describe return value.")
             parts.append(f"    :rtype: {symbol.return_type}")
 
         docstring = '    """' + "\n".join(parts) + '\n    """'
@@ -418,12 +431,14 @@ class DocGenerator:
 
     def _generate_jsdoc(self, symbol: SymbolDoc) -> str:
         """Generate JSDoc-style documentation."""
-        parts = [f"/**", f" * {self._infer_description(symbol)}"]
+        parts = ["/**", f" * {self._infer_description(symbol)}"]
         if symbol.args:
             for arg in symbol.args:
                 parts.append(f" * @param {{*}} {arg} - TODO describe parameter")
         if symbol.return_type and symbol.return_type != "None":
-            parts.append(f" * @returns {{{symbol.return_type}}} TODO describe return value")
+            parts.append(
+                f" * @returns {{{symbol.return_type}}} TODO describe return value"
+            )
         parts.append(" */")
         return "\n".join(parts)
 
@@ -498,7 +513,9 @@ class DocGenerator:
             lines.append("")
 
         lines.append("---")
-        lines.append(f"*Auto-generated by WorkPilot AI Documentation Agent on {datetime.now(timezone.utc).strftime('%Y-%m-%d')}*")
+        lines.append(
+            f"*Auto-generated by WorkPilot AI Documentation Agent on {datetime.now(timezone.utc).strftime('%Y-%m-%d')}*"
+        )
 
         return "\n".join(lines)
 
@@ -523,7 +540,9 @@ class DocGenerator:
                 args_str = ", ".join(sym.args) if sym.args else ""
                 ret = f" {sym.return_type}" if sym.return_type else ""
                 prefix = "+" if not method.startswith("_") else "-"
-                classes[cls_name].append(f"    {cls_name} : {prefix}{method}({args_str}){ret}")
+                classes[cls_name].append(
+                    f"    {cls_name} : {prefix}{method}({args_str}){ret}"
+                )
 
         for cls_name, methods in classes.items():
             lines.append(f"    class {cls_name}")
@@ -561,6 +580,7 @@ class DocGenerator:
 # ---------------------------------------------------------------------------
 # Documentation Agent (main entry point)
 # ---------------------------------------------------------------------------
+
 
 class DocumentationAgent:
     """Autonomous documentation agent.
@@ -616,7 +636,9 @@ class DocumentationAgent:
 
         for sym in symbols:
             if sym.status in (DocStatus.MISSING, DocStatus.PARTIAL):
-                sym.generated_doc = self.generator.generate_docstring(sym, output_format)
+                sym.generated_doc = self.generator.generate_docstring(
+                    sym, output_format
+                )
                 result.symbols_documented += 1
             else:
                 result.symbols_already_documented += 1
@@ -687,7 +709,9 @@ class DocumentationAgent:
         result = DocGenerationResult(
             source_path=dir_path or file_path or "<source>",
             diagram_content=diagram,
-            symbols_analyzed=len(symbols) if diagram_type != DiagramType.MODULE_DEPENDENCY else 0,
+            symbols_analyzed=len(symbols)
+            if diagram_type != DiagramType.MODULE_DEPENDENCY
+            else 0,
         )
         self._history.append(result)
         return result
@@ -713,7 +737,13 @@ class DocumentationAgent:
         elif file_path:
             symbols = self.analyzer.analyze_file(file_path)
         else:
-            return {"total": 0, "documented": 0, "partial": 0, "missing": 0, "coverage_pct": 0.0}
+            return {
+                "total": 0,
+                "documented": 0,
+                "partial": 0,
+                "missing": 0,
+                "coverage_pct": 0.0,
+            }
 
         documented = sum(1 for s in symbols if s.status == DocStatus.DOCUMENTED)
         partial = sum(1 for s in symbols if s.status == DocStatus.PARTIAL)
@@ -741,7 +771,13 @@ class DocumentationAgent:
         return {
             "total_runs": len(self._history),
             "total_symbols_analyzed": sum(r.symbols_analyzed for r in self._history),
-            "total_symbols_documented": sum(r.symbols_documented for r in self._history),
-            "total_readmes_generated": sum(1 for r in self._history if r.readme_content),
-            "total_diagrams_generated": sum(1 for r in self._history if r.diagram_content),
+            "total_symbols_documented": sum(
+                r.symbols_documented for r in self._history
+            ),
+            "total_readmes_generated": sum(
+                1 for r in self._history if r.readme_content
+            ),
+            "total_diagrams_generated": sum(
+                1 for r in self._history if r.diagram_content
+            ),
         }

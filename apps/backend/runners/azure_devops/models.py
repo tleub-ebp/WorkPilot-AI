@@ -162,7 +162,9 @@ class PRReviewResult:
             is_followup_review=data.get("is_followup_review", False),
             resolved_findings=data.get("resolved_findings", []),
             unresolved_findings=data.get("unresolved_findings", []),
-            new_findings_since_last_review=data.get("new_findings_since_last_review", []),
+            new_findings_since_last_review=data.get(
+                "new_findings_since_last_review", []
+            ),
             has_posted_findings=data.get("has_posted_findings", False),
             posted_finding_ids=data.get("posted_finding_ids", []),
             deep_context=data.get("deep_context", {}),

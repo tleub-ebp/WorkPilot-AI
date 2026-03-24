@@ -1,8 +1,14 @@
 """Performance Profiler Agent - Code profiling, bottleneck identification, and optimization."""
-from .profiler import PerformanceProfiler
+
 from .benchmark_runner import BenchmarkRunner
+from .models import (
+    BenchmarkResult,
+    Bottleneck,
+    OptimizationSuggestion,
+    PerformanceReport,
+)
 from .optimizer import PerformanceOptimizer
-from .models import PerformanceReport, Bottleneck, OptimizationSuggestion, BenchmarkResult
+from .profiler import PerformanceProfiler
 
 __all__ = [
     "PerformanceProfiler",

@@ -14,7 +14,7 @@ import asyncio
 import json
 import logging
 import time
-from typing import Any, Optional
+from typing import Any
 
 from .session_recorder import SessionRecorder
 
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 # Try to import websockets for client connection
 try:
     import websockets
+
     WEBSOCKETS_AVAILABLE = True
 except ImportError:
     WEBSOCKETS_AVAILABLE = False
@@ -38,15 +39,20 @@ class StreamingAgentWrapper:
     through it.
     """
 
-    def __init__(self, session_id: str, enable_recording: bool = True,
-                 ws_host: str = "localhost", ws_port: int = 8765):
+    def __init__(
+        self,
+        session_id: str,
+        enable_recording: bool = True,
+        ws_host: str = "localhost",
+        ws_port: int = 8765,
+    ):
         self.session_id = session_id
         self.enable_recording = enable_recording
         self.recorder = SessionRecorder() if enable_recording else None
         self._is_active = False
         self._ws_host = ws_host
         self._ws_port = ws_port
-        self._ws: Optional[Any] = None
+        self._ws: Any | None = None
         self._connected = False
 
     async def _connect(self) -> bool:
@@ -74,11 +80,15 @@ class StreamingAgentWrapper:
                     timeout=5.0,
                 )
                 # Send init_session to subscribe to the correct session
-                await self._ws.send(json.dumps({
-                    "type": "init_session",
-                    "session_id": self.session_id,
-                    "role": "agent",
-                }))
+                await self._ws.send(
+                    json.dumps(
+                        {
+                            "type": "init_session",
+                            "session_id": self.session_id,
+                            "role": "agent",
+                        }
+                    )
+                )
                 self._connected = True
                 return True
             except asyncio.TimeoutError:
@@ -128,25 +138,32 @@ class StreamingAgentWrapper:
         # Connect to WebSocket server
         connected = await self._connect()
         if not connected:
-            logger.warning(f"Session {self.session_id} started but WebSocket not connected")
+            logger.warning(
+                f"Session {self.session_id} started but WebSocket not connected"
+            )
 
         # Send session_start event
-        await self._send_event("session_start", {
-            "session_id": self.session_id,
-            "metadata": metadata,
-        })
+        await self._send_event(
+            "session_start",
+            {
+                "session_id": self.session_id,
+                "metadata": metadata,
+            },
+        )
 
         if self.recorder:
             self.recorder.start_recording(self.session_id, metadata)
-
 
     async def end_session(self):
         """End a streaming session."""
         self._is_active = False
 
-        await self._send_event("session_end", {
-            "session_id": self.session_id,
-        })
+        await self._send_event(
+            "session_end",
+            {
+                "session_id": self.session_id,
+            },
+        )
 
         if self.recorder:
             recording = self.recorder.stop_recording(self.session_id)
@@ -160,91 +177,118 @@ class StreamingAgentWrapper:
         self,
         file_path: str,
         operation: str = "update",
-        content: Optional[str] = None,
+        content: str | None = None,
     ):
         """Emit a file change event."""
         if not self._is_active:
             return
-        await self._send_event(f"file_{operation}", {
-            "file_path": file_path,
-            "content": content,
-        })
+        await self._send_event(
+            f"file_{operation}",
+            {
+                "file_path": file_path,
+                "content": content,
+            },
+        )
 
-    async def emit_command(self, command: str, cwd: Optional[str] = None):
+    async def emit_command(self, command: str, cwd: str | None = None):
         """Emit a command execution event."""
         if not self._is_active:
             return
-        await self._send_event("command_run", {
-            "command": command,
-            "cwd": cwd,
-        })
+        await self._send_event(
+            "command_run",
+            {
+                "command": command,
+                "cwd": cwd,
+            },
+        )
 
     async def emit_command_output(self, output: str, is_error: bool = False):
         """Emit command output event."""
         if not self._is_active:
             return
-        await self._send_event("command_output", {
-            "output": output,
-            "is_error": is_error,
-        })
+        await self._send_event(
+            "command_output",
+            {
+                "output": output,
+                "is_error": is_error,
+            },
+        )
 
     async def emit_agent_thinking(self, thinking: str):
         """Emit agent thinking/reasoning event."""
         if not self._is_active:
             return
-        await self._send_event("agent_thinking", {
-            "thinking": thinking,
-        })
+        await self._send_event(
+            "agent_thinking",
+            {
+                "thinking": thinking,
+            },
+        )
 
-    async def emit_agent_response(self, response: str, tokens_used: Optional[int] = None):
+    async def emit_agent_response(self, response: str, tokens_used: int | None = None):
         """Emit agent response event."""
         if not self._is_active:
             return
-        await self._send_event("agent_response", {
-            "response": response,
-            "tokens_used": tokens_used,
-        })
+        await self._send_event(
+            "agent_response",
+            {
+                "response": response,
+                "tokens_used": tokens_used,
+            },
+        )
 
     async def emit_test_run(self, test_command: str):
         """Emit test run event."""
         if not self._is_active:
             return
-        await self._send_event("test_run", {
-            "test_command": test_command,
-        })
+        await self._send_event(
+            "test_run",
+            {
+                "test_command": test_command,
+            },
+        )
 
-    async def emit_test_result(self, success: bool, details: Optional[str] = None):
+    async def emit_test_result(self, success: bool, details: str | None = None):
         """Emit test result event."""
         if not self._is_active:
             return
-        await self._send_event("test_result", {
-            "success": success,
-            "details": details,
-        })
+        await self._send_event(
+            "test_result",
+            {
+                "success": success,
+                "details": details,
+            },
+        )
 
     async def emit_progress(
         self,
         progress: float,
         status: str,
-        current_step: Optional[str] = None,
+        current_step: str | None = None,
     ):
         """Emit progress update event."""
         if not self._is_active:
             return
-        await self._send_event("progress_update", {
-            "progress": progress,
-            "status": status,
-            "current_step": current_step,
-        })
+        await self._send_event(
+            "progress_update",
+            {
+                "progress": progress,
+                "status": status,
+                "current_step": current_step,
+            },
+        )
 
-    async def emit_tool_use(self, tool_name: str, tool_input: Optional[str] = None):
+    async def emit_tool_use(self, tool_name: str, tool_input: str | None = None):
         """Emit a tool use event for real-time activity display."""
         if not self._is_active:
             return
-        await self._send_event("tool_use", {
-            "tool_name": tool_name,
-            "tool_input": tool_input,
-        })
+        await self._send_event(
+            "tool_use",
+            {
+                "tool_name": tool_name,
+                "tool_input": tool_input,
+            },
+        )
 
     async def emit_chat_message(
         self,
@@ -255,14 +299,19 @@ class StreamingAgentWrapper:
         """Emit a chat message from the agent."""
         if not self._is_active:
             return
-        await self._send_event("chat_message", {
-            "message": message,
-            "author": author,
-            "author_type": author_type,
-        })
+        await self._send_event(
+            "chat_message",
+            {
+                "message": message,
+                "author": author,
+                "author_type": author_type,
+            },
+        )
 
 
 # Convenience function to create a wrapper
-def create_streaming_wrapper(session_id: str, enable_recording: bool = True) -> StreamingAgentWrapper:
+def create_streaming_wrapper(
+    session_id: str, enable_recording: bool = True
+) -> StreamingAgentWrapper:
     """Create a streaming agent wrapper."""
     return StreamingAgentWrapper(session_id, enable_recording)

@@ -20,7 +20,7 @@ import io
 import json
 import logging
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -31,8 +31,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class TaskStatus(str, Enum):
     """Task statuses tracked by the dashboard."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -42,6 +44,7 @@ class TaskStatus(str, Enum):
 
 class TaskComplexity(str, Enum):
     """Task complexity levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -50,12 +53,14 @@ class TaskComplexity(str, Enum):
 
 class MergeResolution(str, Enum):
     """How a merge conflict was resolved."""
+
     AUTOMATIC = "automatic"
     MANUAL = "manual"
 
 
 class ExportFormat(str, Enum):
     """Supported export formats."""
+
     JSON = "json"
     CSV = "csv"
 
@@ -63,6 +68,7 @@ class ExportFormat(str, Enum):
 # ---------------------------------------------------------------------------
 # Data models
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class TaskRecord:
@@ -78,6 +84,7 @@ class TaskRecord:
         created_at: When the task was created.
         completed_at: When the task was completed (None if not yet).
     """
+
     project_id: str
     task_id: str
     title: str
@@ -96,8 +103,12 @@ class TaskRecord:
             "project_id": self.project_id,
             "task_id": self.task_id,
             "title": self.title,
-            "status": self.status.value if isinstance(self.status, TaskStatus) else self.status,
-            "complexity": self.complexity.value if isinstance(self.complexity, TaskComplexity) else self.complexity,
+            "status": self.status.value
+            if isinstance(self.status, TaskStatus)
+            else self.status,
+            "complexity": self.complexity.value
+            if isinstance(self.complexity, TaskComplexity)
+            else self.complexity,
             "completion_seconds": self.completion_seconds,
             "created_at": self.created_at,
             "completed_at": self.completed_at,
@@ -116,6 +127,7 @@ class QARecord:
         attempt: Which attempt number (1 = first pass).
         timestamp: When the QA was run.
     """
+
     project_id: str
     task_id: str
     passed: bool
@@ -151,6 +163,7 @@ class TokenRecord:
         cost: Cost in USD.
         timestamp: When the usage occurred.
     """
+
     project_id: str
     provider: str
     model: str
@@ -186,6 +199,7 @@ class MergeRecord:
         files_affected: Number of files with conflicts.
         timestamp: When the merge happened.
     """
+
     project_id: str
     task_id: str
     resolution: MergeResolution = MergeResolution.AUTOMATIC
@@ -200,7 +214,9 @@ class MergeRecord:
         return {
             "project_id": self.project_id,
             "task_id": self.task_id,
-            "resolution": self.resolution.value if isinstance(self.resolution, MergeResolution) else self.resolution,
+            "resolution": self.resolution.value
+            if isinstance(self.resolution, MergeResolution)
+            else self.resolution,
             "files_affected": self.files_affected,
             "timestamp": self.timestamp,
         }
@@ -225,6 +241,7 @@ class DashboardSnapshot:
         merge_auto_count: Number of automatic merge resolutions.
         merge_manual_count: Number of manual merge resolutions.
     """
+
     project_id: str
     generated_at: str = ""
     tasks_by_status: dict[str, int] = field(default_factory=dict)
@@ -250,6 +267,7 @@ class DashboardSnapshot:
 # ---------------------------------------------------------------------------
 # Main class
 # ---------------------------------------------------------------------------
+
 
 class DashboardMetrics:
     """Centralized project metrics dashboard.
@@ -284,8 +302,16 @@ class DashboardMetrics:
         Returns:
             The created or updated TaskRecord.
         """
-        task_status = TaskStatus(status) if status in [s.value for s in TaskStatus] else TaskStatus.PENDING
-        task_complexity = TaskComplexity(complexity) if complexity in [c.value for c in TaskComplexity] else TaskComplexity.MEDIUM
+        task_status = (
+            TaskStatus(status)
+            if status in [s.value for s in TaskStatus]
+            else TaskStatus.PENDING
+        )
+        task_complexity = (
+            TaskComplexity(complexity)
+            if complexity in [c.value for c in TaskComplexity]
+            else TaskComplexity.MEDIUM
+        )
 
         # Update existing task if present
         for existing in self._tasks:
@@ -294,7 +320,10 @@ class DashboardMetrics:
                 existing.complexity = task_complexity
                 existing.completion_seconds = completion_seconds
                 existing.title = title
-                if task_status == TaskStatus.COMPLETED and existing.completed_at is None:
+                if (
+                    task_status == TaskStatus.COMPLETED
+                    and existing.completed_at is None
+                ):
                     existing.completed_at = datetime.now(timezone.utc).isoformat()
                 return existing
 
@@ -359,7 +388,11 @@ class DashboardMetrics:
         files_affected: int = 1,
     ) -> MergeRecord:
         """Record a merge conflict resolution."""
-        merge_res = MergeResolution(resolution) if resolution in [m.value for m in MergeResolution] else MergeResolution.AUTOMATIC
+        merge_res = (
+            MergeResolution(resolution)
+            if resolution in [m.value for m in MergeResolution]
+            else MergeResolution.AUTOMATIC
+        )
         record = MergeRecord(
             project_id=project_id,
             task_id=task_id,
@@ -414,7 +447,9 @@ class DashboardMetrics:
         for t in tasks:
             if t.status == TaskStatus.COMPLETED and t.completion_seconds > 0:
                 key = t.complexity.value
-                completion_by_complexity.setdefault(key, []).append(t.completion_seconds)
+                completion_by_complexity.setdefault(key, []).append(
+                    t.completion_seconds
+                )
         avg_completion: dict[str, float] = {
             k: sum(v) / len(v) for k, v in completion_by_complexity.items() if v
         }
@@ -441,13 +476,17 @@ class DashboardMetrics:
         total_tokens = sum(t.input_tokens + t.output_tokens for t in token_records)
         tokens_by_provider: dict[str, int] = {}
         for t in token_records:
-            tokens_by_provider[t.provider] = tokens_by_provider.get(t.provider, 0) + t.input_tokens + t.output_tokens
+            tokens_by_provider[t.provider] = (
+                tokens_by_provider.get(t.provider, 0) + t.input_tokens + t.output_tokens
+            )
 
         # Tokens by day (last 7 days)
         tokens_by_day: dict[str, int] = {}
         for t in token_records:
             day = t.timestamp[:10] if t.timestamp else "unknown"
-            tokens_by_day[day] = tokens_by_day.get(day, 0) + t.input_tokens + t.output_tokens
+            tokens_by_day[day] = (
+                tokens_by_day.get(day, 0) + t.input_tokens + t.output_tokens
+            )
 
         # Cost
         total_cost = sum(t.cost for t in token_records)
@@ -458,8 +497,12 @@ class DashboardMetrics:
             cost_by_task[t.model] = cost_by_task.get(t.model, 0) + t.cost
 
         # Merges
-        auto_count = sum(1 for m in merge_records if m.resolution == MergeResolution.AUTOMATIC)
-        manual_count = sum(1 for m in merge_records if m.resolution == MergeResolution.MANUAL)
+        auto_count = sum(
+            1 for m in merge_records if m.resolution == MergeResolution.AUTOMATIC
+        )
+        manual_count = sum(
+            1 for m in merge_records if m.resolution == MergeResolution.MANUAL
+        )
 
         return DashboardSnapshot(
             project_id=project_id,

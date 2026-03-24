@@ -226,6 +226,7 @@ Provide your review in the following JSON format:
         if hasattr(context, "deep_context") and context.deep_context:
             try:
                 from ..github.services.deep_context_provider import DeepContext
+
                 dc = DeepContext.from_dict(context.deep_context)
                 deep_context_section = dc.to_prompt_section()
             except Exception:

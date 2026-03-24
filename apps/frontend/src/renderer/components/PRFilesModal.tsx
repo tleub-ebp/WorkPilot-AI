@@ -81,7 +81,7 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
     try {
       // Extract PR number from URL (GitHub format: https://github.com/owner/repo/pull/123)
       // or Azure DevOps format: https://dev.azure.com/org/project/_git/repo/pullrequest/123
-      let prMatch = prUrl.match(/\/pull\/(\d+)/);
+      const prMatch = prUrl.match(/\/pull\/(\d+)/);
       let prNumber: number;
       
       if (!prMatch) {

@@ -12,7 +12,6 @@ import sys
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 from ui import (
     Icons,
@@ -87,7 +86,7 @@ def get_review_menu_options() -> list[MenuOption]:
     ]
 
 
-def prompt_feedback() -> Optional[str]:
+def prompt_feedback() -> str | None:
     """
     Prompt user to enter feedback text.
 

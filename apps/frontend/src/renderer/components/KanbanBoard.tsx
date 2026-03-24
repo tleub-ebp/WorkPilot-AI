@@ -17,9 +17,13 @@ import {
 import {
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy
+  verticalListSortingStrategy,
+  horizontalListSortingStrategy,
+  useSortable,
+  arrayMove
 } from '@dnd-kit/sortable';
-import { Plus, Inbox, Loader2, Eye, CheckCircle2, CheckCheck, Archive, RefreshCw, GitPullRequest, X, Settings, ListPlus, ChevronLeft, ChevronRight, ChevronsRight, Lock, Unlock, Trash2, Ban } from 'lucide-react';
+import { CSS } from '@dnd-kit/utilities';
+import { Plus, Inbox, Loader2, Eye, CheckCircle2, CheckCheck, Archive, RefreshCw, GitPullRequest, X, Settings, ListPlus, ChevronLeft, ChevronRight, ChevronsRight, Lock, Unlock, Trash2, Ban, GripVertical } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
@@ -138,6 +142,11 @@ interface DroppableColumnProps {
   // Lock props
   isLocked?: boolean;
   onToggleLocked?: () => void;
+  // Column drag handle props (for column reordering)
+  dragHandleProps?: {
+    listeners: Record<string, unknown> | undefined;
+    attributes: Record<string, unknown>;
+  };
 }
 
 /**
@@ -197,6 +206,7 @@ function droppableColumnPropsAreEqual(
   if (prevProps.onToggleLocked !== nextProps.onToggleLocked) return false;
   if (prevProps.onViewPRFiles !== nextProps.onViewPRFiles) return false;
   if (prevProps.onPreviewApp !== nextProps.onPreviewApp) return false;
+  if (prevProps.dragHandleProps !== nextProps.dragHandleProps) return false;
 
   // Compare selection props
   const prevSelected = prevProps.selectedTaskIds;
@@ -267,7 +277,7 @@ const getEmptyStateContent = (status: TaskStatus, t: (key: string) => string): {
   }
 };
 
-const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskClick, onStatusChange, isOver, isImportForbidden, onAddClick, onArchiveAll, onQueueSettings, onQueueAll, maxParallelTasks, archivedCount, showArchived, onToggleArchived, selectedTaskIds, onSelectAll, onDeselectAll, onToggleSelect, onDeleteTask, onViewPRFiles, onPreviewApp, isCollapsed, onToggleCollapsed, columnWidth, isResizing, onResizeStart, onResizeEnd, isLocked, onToggleLocked }: DroppableColumnProps) {
+const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskClick, onStatusChange, isOver, isImportForbidden, onAddClick, onArchiveAll, onQueueSettings, onQueueAll, maxParallelTasks, archivedCount, showArchived, onToggleArchived, selectedTaskIds, onSelectAll, onDeselectAll, onToggleSelect, onDeleteTask, onViewPRFiles, onPreviewApp, isCollapsed, onToggleCollapsed, columnWidth, isResizing, onResizeStart, onResizeEnd, isLocked, onToggleLocked, dragHandleProps }: DroppableColumnProps) {
   const { t } = useTranslation(['tasks', 'common']);
   const { setNodeRef } = useDroppable({
     id: status
@@ -534,6 +544,23 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
         {/* Column header - enhanced styling */}
         <div className="flex items-center justify-between p-4 border-b border-white/5">
           <div className="flex items-center gap-2.5">
+            {/* Column drag handle for reordering */}
+            {dragHandleProps && (
+              <Tooltip delayDuration={400}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="h-6 w-5 flex items-center justify-center cursor-grab active:cursor-grabbing text-muted-foreground/30 hover:text-muted-foreground/70 transition-colors touch-none"
+                    {...(dragHandleProps.listeners as React.HTMLAttributes<HTMLButtonElement>)}
+                    {...(dragHandleProps.attributes as React.HTMLAttributes<HTMLButtonElement>)}
+                    aria-label={t('kanban.dragColumn')}
+                  >
+                    <GripVertical className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{t('kanban.dragColumn')}</TooltipContent>
+              </Tooltip>
+            )}
             {/* Collapse button */}
             {onToggleCollapsed && (
               <Tooltip delayDuration={200}>
@@ -779,6 +806,48 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
   );
 }, droppableColumnPropsAreEqual);
 
+// ============================================
+// SortableColumnWrapper — enables column drag-to-reorder
+// ============================================
+
+interface SortableColumnWrapperProps extends Omit<React.ComponentProps<typeof DroppableColumn>, 'dragHandleProps'> {
+  sortableId: string;
+}
+
+function SortableColumnWrapper({ sortableId, ...columnProps }: SortableColumnWrapperProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: sortableId });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    position: 'relative'
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'flex h-full shrink-0',
+        isDragging && 'opacity-50'
+      )}
+    >
+      <DroppableColumn
+        {...columnProps}
+        dragHandleProps={{ listeners, attributes }}
+      />
+    </div>
+  );
+}
+
 export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isRefreshing, onWorkItemsImported, onOpenJiraSettings, onOpenAzureDevOpsSettings }: KanbanBoardProps) {
   const { t } = useTranslation(['tasks', 'dialogs', 'common']);
   const { toast } = useToast();
@@ -793,14 +862,19 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   // Project environment store for Azure DevOps configuration
   const envConfig = useProjectEnvStore((state) => state.envConfig);
 
-  // Kanban settings store for column preferences (collapse state, width, lock state)
+  // Kanban settings store for column preferences (collapse state, width, lock state, order)
   const columnPreferences = useKanbanSettingsStore((state) => state.columnPreferences);
+  const columnOrder = useKanbanSettingsStore((state) => state.columnOrder);
   const loadKanbanPreferences = useKanbanSettingsStore((state) => state.loadPreferences);
   const saveKanbanPreferences = useKanbanSettingsStore((state) => state.savePreferences);
   const toggleColumnCollapsed = useKanbanSettingsStore((state) => state.toggleColumnCollapsed);
   const setColumnCollapsed = useKanbanSettingsStore((state) => state.setColumnCollapsed);
   const setColumnWidth = useKanbanSettingsStore((state) => state.setColumnWidth);
   const toggleColumnLocked = useKanbanSettingsStore((state) => state.toggleColumnLocked);
+  const setColumnOrder = useKanbanSettingsStore((state) => state.setColumnOrder);
+
+  // Column drag state
+  const [isDraggingColumn, setIsDraggingColumn] = useState(false);
 
   // Column resize state
   const [resizingColumn, setResizingColumn] = useState<typeof TASK_STATUS_COLUMNS[number] | null>(null);
@@ -1440,6 +1514,12 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       return;
     }
 
+    // Check if this is a column drag
+    if (active.id.toString().startsWith('col-')) {
+      setIsDraggingColumn(true);
+      return;
+    }
+
     const task = useTaskStore.getState().tasks.find((t) => t.id === active.id);
     if (task) {
       setActiveTask(task);
@@ -1449,7 +1529,10 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   }, [selectedTaskIds]);
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
-    const { over } = event;
+    const { active, over } = event;
+
+    // Ignore column drags — no task drop highlighting needed
+    if (active.id.toString().startsWith('col-')) return;
 
     if (!over) {
       setOverColumnId(null);
@@ -2109,11 +2192,28 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     setActiveTask(null);
     setOverColumnId(null);
     setIsDraggingBulkSelected(false);
+    setIsDraggingColumn(false);
 
     if (!over) return;
 
     const activeTaskId = active.id as string;
     const overId = over.id as string;
+
+    // Handle column reordering
+    if (activeTaskId.startsWith('col-') && overId.startsWith('col-')) {
+      const activeStatus = activeTaskId.slice(4) as typeof TASK_STATUS_COLUMNS[number];
+      const overStatus = overId.slice(4) as typeof TASK_STATUS_COLUMNS[number];
+      if (activeStatus !== overStatus) {
+        const currentOrder = useKanbanSettingsStore.getState().columnOrder;
+        const oldIndex = currentOrder.indexOf(activeStatus);
+        const newIndex = currentOrder.indexOf(overStatus);
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const newOrder = arrayMove([...currentOrder], oldIndex, newIndex);
+          setColumnOrder(newOrder, projectId ?? undefined);
+        }
+      }
+      return;
+    }
 
     // Determine target status
     let newStatus: TaskStatus | null = null;

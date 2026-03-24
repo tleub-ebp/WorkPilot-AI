@@ -15,7 +15,7 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 class QualityCategory(str, Enum):
@@ -45,8 +45,8 @@ class QualityIssue:
     title: str
     description: str
     file: str
-    line: Optional[int] = None
-    suggestion: Optional[str] = None
+    line: int | None = None
+    suggestion: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -116,9 +116,7 @@ class QualityScorer:
         overall_score = self._calculate_score()
         grade = self._calculate_grade(overall_score)
 
-        critical = sum(
-            1 for i in self.issues if i.severity == IssueSeverity.CRITICAL
-        )
+        critical = sum(1 for i in self.issues if i.severity == IssueSeverity.CRITICAL)
 
         return QualityScore(
             overall_score=overall_score,
@@ -213,7 +211,9 @@ class QualityScorer:
         if not self.issues:
             return 100.0
 
-        total_penalty = sum(self.SEVERITY_PENALTIES[issue.severity] for issue in self.issues)
+        total_penalty = sum(
+            self.SEVERITY_PENALTIES[issue.severity] for issue in self.issues
+        )
         score = max(0, 100 - total_penalty)
         return float(score)
 

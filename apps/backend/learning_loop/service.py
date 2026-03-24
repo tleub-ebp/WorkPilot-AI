@@ -13,7 +13,7 @@ import json
 import logging
 from collections import Counter
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from .models import (
     ImprovementMetrics,
@@ -34,18 +34,20 @@ class LearningLoopService:
     def __init__(
         self,
         project_dir: Path,
-        model: Optional[str] = None,
-        thinking_level: Optional[str] = None,
+        model: str | None = None,
+        thinking_level: str | None = None,
     ):
         self.project_dir = Path(project_dir)
         self.storage = PatternStorage(self.project_dir)
-        self.extractor = PatternExtractor(self.project_dir, model=model, thinking_level=thinking_level)
+        self.extractor = PatternExtractor(
+            self.project_dir, model=model, thinking_level=thinking_level
+        )
         self.applicator = PatternApplicator(self.storage)
 
     async def run_post_build_analysis(
         self,
         spec_dir: Path,
-        status_callback: Optional[Any] = None,
+        status_callback: Any | None = None,
     ) -> LearningReport:
         """Run analysis on a single completed build.
 
@@ -62,7 +64,7 @@ class LearningLoopService:
     async def run_full_analysis(
         self,
         limit: int = 20,
-        status_callback: Optional[Any] = None,
+        status_callback: Any | None = None,
     ) -> LearningReport:
         """Run analysis across all historical builds for the project.
 
@@ -84,7 +86,7 @@ class LearningLoopService:
     async def _run_analysis(
         self,
         builds_data: list[dict[str, Any]],
-        status_callback: Optional[Any] = None,
+        status_callback: Any | None = None,
     ) -> LearningReport:
         """Core analysis logic using Claude Agent SDK."""
         if status_callback:
@@ -115,7 +117,9 @@ class LearningLoopService:
             if status_callback:
                 status_callback("Extracting patterns from analysis...")
 
-            patterns = self.extractor.parse_patterns_from_response(response, builds_data)
+            patterns = self.extractor.parse_patterns_from_response(
+                response, builds_data
+            )
         except ImportError:
             # Fallback: if SDK is not available, use basic heuristic extraction
             logger.warning("Claude Agent SDK not available, using heuristic extraction")
@@ -147,7 +151,7 @@ class LearningLoopService:
         return report
 
     def get_prompt_augmentation(
-        self, phase: str, task_context: Optional[dict] = None
+        self, phase: str, task_context: dict | None = None
     ) -> str:
         """Get learning-based prompt augmentation for an agent phase."""
         return self.applicator.get_instructions_for_phase(
@@ -195,17 +199,21 @@ class LearningLoopService:
             "disabled_count": sum(1 for p in patterns if not p.enabled),
         }
 
-    def get_patterns(self, filters: Optional[dict] = None) -> list[dict[str, Any]]:
+    def get_patterns(self, filters: dict | None = None) -> list[dict[str, Any]]:
         """Get all patterns, optionally filtered."""
         patterns = self.storage.load_patterns()
 
         if filters:
             if "category" in filters:
-                patterns = [p for p in patterns if p.category.value == filters["category"]]
+                patterns = [
+                    p for p in patterns if p.category.value == filters["category"]
+                ]
             if "phase" in filters:
                 patterns = [p for p in patterns if p.agent_phase == filters["phase"]]
             if "type" in filters:
-                patterns = [p for p in patterns if p.pattern_type.value == filters["type"]]
+                patterns = [
+                    p for p in patterns if p.pattern_type.value == filters["type"]
+                ]
             if "enabled" in filters:
                 patterns = [p for p in patterns if p.enabled == filters["enabled"]]
 
@@ -214,7 +222,7 @@ class LearningLoopService:
     def delete_pattern(self, pattern_id: str) -> bool:
         return self.storage.delete_pattern(pattern_id)
 
-    def toggle_pattern(self, pattern_id: str) -> Optional[bool]:
+    def toggle_pattern(self, pattern_id: str) -> bool | None:
         return self.storage.toggle_pattern(pattern_id)
 
     def export_patterns(self) -> str:
@@ -233,7 +241,7 @@ class LearningLoopService:
             logger.error(f"Failed to import patterns: {e}")
             return 0
 
-    def _compute_improvement_metrics(self) -> Optional[ImprovementMetrics]:
+    def _compute_improvement_metrics(self) -> ImprovementMetrics | None:
         """Compute before/after metrics based on pattern application data."""
         patterns = self.storage.load_patterns()
         applied = [p for p in patterns if p.applied_count > 0]
@@ -252,7 +260,9 @@ class LearningLoopService:
             error_rate={"before": 0.0, "after": 0.0},
         )
 
-    def _heuristic_extract(self, builds_data: list[dict[str, Any]]) -> list[LearningPattern]:
+    def _heuristic_extract(
+        self, builds_data: list[dict[str, Any]]
+    ) -> list[LearningPattern]:
         """Basic heuristic pattern extraction as fallback when AI is not available."""
         patterns = []
 

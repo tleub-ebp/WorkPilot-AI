@@ -6,7 +6,6 @@ Data models for the Built-in Browser Agent feature.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
 
 
@@ -26,6 +25,7 @@ class TestStatus(str, Enum):
 @dataclass
 class ComparisonResult:
     """Result of comparing a screenshot against its baseline."""
+
     name: str
     baseline_path: str
     current_path: str
@@ -51,6 +51,7 @@ class ComparisonResult:
 @dataclass
 class BaselineInfo:
     """Metadata about a stored visual baseline."""
+
     name: str
     path: str
     created_at: str
@@ -70,6 +71,7 @@ class BaselineInfo:
 @dataclass
 class ScreenshotInfo:
     """Metadata about a captured screenshot."""
+
     name: str
     path: str
     url: str
@@ -91,6 +93,7 @@ class ScreenshotInfo:
 @dataclass
 class TestInfo:
     """Metadata about a discovered test file."""
+
     name: str
     path: str
     type: str  # 'playwright' | 'pytest' | 'custom'
@@ -106,6 +109,7 @@ class TestInfo:
 @dataclass
 class TestResult:
     """Result of a single test execution."""
+
     name: str
     path: str
     status: str
@@ -127,6 +131,7 @@ class TestResult:
 @dataclass
 class TestRunResult:
     """Aggregated result of a test run."""
+
     total: int
     passed: int
     failed: int
@@ -148,6 +153,7 @@ class TestRunResult:
 @dataclass
 class BrowserAgentStats:
     """Dashboard statistics for the Browser Agent."""
+
     total_tests: int = 0
     pass_rate: float = 0.0
     screenshots_captured: int = 0

@@ -259,9 +259,7 @@ def extract_azure_devops_org(
             return unquote(ssh_match.group(1))
 
         # git@ format: git@ssh.dev.azure.com:v3/{org}/{project}/{repo}
-        scp_match = re.search(
-            r"^git@ssh\.dev\.azure\.com:v3/([^/]+)/", remote_url
-        )
+        scp_match = re.search(r"^git@ssh\.dev\.azure\.com:v3/([^/]+)/", remote_url)
         if scp_match:
             return unquote(scp_match.group(1))
 

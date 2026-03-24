@@ -19,15 +19,15 @@ Example:
     >>> scheduler.start()
 """
 
-import hashlib
 import logging
 import threading
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -126,9 +126,7 @@ class CronExpression:
                 range_part, step_str = part.split("/", 1)
                 step = int(step_str)
                 if step <= 0:
-                    raise ValueError(
-                        f"Invalid step value in {field_name}: {step}"
-                    )
+                    raise ValueError(f"Invalid step value in {field_name}: {step}")
 
                 if range_part == "*":
                     start, end = min_val, max_val
@@ -160,8 +158,7 @@ class CronExpression:
                     values.add(v)
                 else:
                     raise ValueError(
-                        f"Value {v} out of range [{min_val}-{max_val}] "
-                        f"for {field_name}"
+                        f"Value {v} out of range [{min_val}-{max_val}] for {field_name}"
                     )
 
         if not values:
@@ -294,7 +291,9 @@ class ScheduledTask:
                 cron_expr = CronExpression(self.cron)
                 self.next_run = cron_expr.next_occurrence()
             except (ValueError, RuntimeError) as e:
-                logger.warning("Invalid cron '%s' for task '%s': %s", self.cron, self.task_id, e)
+                logger.warning(
+                    "Invalid cron '%s' for task '%s': %s", self.cron, self.task_id, e
+                )
                 self.next_run = None
         elif self.run_at and self.run_at > datetime.now(timezone.utc):
             self.next_run = self.run_at
@@ -307,7 +306,10 @@ class ScheduledTask:
     @property
     def is_due(self) -> bool:
         """Check if the task is due for execution."""
-        if not self.enabled or self.status in (TaskStatus.RUNNING, TaskStatus.CANCELLED):
+        if not self.enabled or self.status in (
+            TaskStatus.RUNNING,
+            TaskStatus.CANCELLED,
+        ):
             return False
         if self.next_run is None:
             return False
@@ -341,14 +343,19 @@ class ScheduledTask:
             self.next_run = datetime.now(timezone.utc) + backoff
             logger.info(
                 "Task '%s' failed (attempt %d/%d), retrying at %s: %s",
-                self.task_id, self.retry_count, self.max_retries,
-                self.next_run, error,
+                self.task_id,
+                self.retry_count,
+                self.max_retries,
+                self.next_run,
+                error,
             )
         else:
             self.status = TaskStatus.FAILED
             logger.error(
                 "Task '%s' permanently failed after %d attempts: %s",
-                self.task_id, self.retry_count, error,
+                self.task_id,
+                self.retry_count,
+                error,
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -610,7 +617,9 @@ class TaskScheduler:
         """
         logger.info(
             "Adding task '%s' (%s) — next run: %s",
-            task.name, task.task_id, task.next_run,
+            task.name,
+            task.task_id,
+            task.next_run,
         )
         self._queue.push(task)
         return task
@@ -703,7 +712,8 @@ class TaskScheduler:
         self._chains[chain.chain_id] = chain
         logger.info(
             "Registered chain '%s' with %d tasks.",
-            chain.chain_id, len(chain.task_ids),
+            chain.chain_id,
+            len(chain.task_ids),
         )
 
         # Enable the first task in the chain
@@ -732,16 +742,15 @@ class TaskScheduler:
                         next_task.next_run = datetime.now(timezone.utc)
                         logger.info(
                             "Chain '%s': advancing to task '%s'.",
-                            chain.chain_id, next_id,
+                            chain.chain_id,
+                            next_id,
                         )
                 else:
                     logger.info("Chain '%s' completed.", chain.chain_id)
 
     # ── Action handlers ─────────────────────────────────────────
 
-    def register_handler(
-        self, action: str, handler: Callable[..., Any]
-    ) -> None:
+    def register_handler(self, action: str, handler: Callable[..., Any]) -> None:
         """Register a handler function for an action type.
 
         Args:
@@ -863,9 +872,7 @@ class TaskScheduler:
 
     # ── Reporting ───────────────────────────────────────────────
 
-    def get_execution_log(
-        self, limit: int = 50
-    ) -> list[dict[str, Any]]:
+    def get_execution_log(self, limit: int = 50) -> list[dict[str, Any]]:
         """Get recent execution history.
 
         Args:

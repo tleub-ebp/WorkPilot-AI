@@ -210,7 +210,16 @@ def _get_languages(project_index: dict) -> list[str]:
 
 def _has_frontend_framework(frameworks: list[str]) -> bool:
     """Check if any frontend framework is detected."""
-    frontend_fws = {"react", "vue", "angular", "svelte", "next", "nuxt", "nextjs", "gatsby"}
+    frontend_fws = {
+        "react",
+        "vue",
+        "angular",
+        "svelte",
+        "next",
+        "nuxt",
+        "nextjs",
+        "gatsby",
+    }
     return bool(frontend_fws & set(frameworks))
 
 

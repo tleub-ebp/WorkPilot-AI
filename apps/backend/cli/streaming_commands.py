@@ -1,4 +1,4 @@
-﻿"""
+"""
 Streaming Commands - Start/manage streaming server
 """
 
@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 def handle_streaming_server_command(args):
     """Handle streaming server command."""
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🎥 Starting Streaming Development Server")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
     # Start the WebSocket server
     try:
@@ -42,7 +42,9 @@ async def _run_streaming_server(args):
 
     server = get_websocket_server()
     print(f"✅ Streaming server running on ws://{server.host}:{server.port}")
-    print("\n📺 Open the frontend and click 'Watch Live' on any task to start streaming")
+    print(
+        "\n📺 Open the frontend and click 'Watch Live' on any task to start streaming"
+    )
     print("\n💡 Press Ctrl+C to stop the server\n")
 
     # Keep running until interrupted
@@ -53,7 +55,9 @@ async def _run_streaming_server(args):
             # Print active sessions periodically
             active_sessions = server.get_active_sessions()
             if active_sessions:
-                print(f"\r📊 Active sessions: {len(active_sessions)}", end="", flush=True)
+                print(
+                    f"\r📊 Active sessions: {len(active_sessions)}", end="", flush=True
+                )
     finally:
         print("\n\n🛑 Shutting down streaming server...")
         await stop_streaming_server()
@@ -70,9 +74,9 @@ def handle_list_recordings_command(args):
         print("\n📼 No recordings found\n")
         return 0
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print(f"📼 Streaming Session Recordings ({len(recordings)})")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
     for i, recording in enumerate(recordings, 1):
         duration_mins = recording["duration"] / 60
@@ -97,25 +101,25 @@ def handle_replay_recording_command(args):
         return 1
 
     recorder = SessionRecorder()
-    
+
     try:
         recording_path = Path(args.recording_file)
         recording = recorder.load_recording(recording_path)
-        
-        print("\n" + "="*70)
+
+        print("\n" + "=" * 70)
         print(f"▶️  Replaying Session: {recording.session_id}")
-        print("="*70 + "\n")
-        
+        print("=" * 70 + "\n")
+
         print(f"Duration: {recording.duration() / 60:.1f} minutes")
         print(f"Events: {len(recording.events)}")
         print(f"\nSpeed: {args.speed}x")
         print("\nStarting replay...\n")
-        
+
         # Run replay
         asyncio.run(_replay_session(recording, args.speed))
-        
+
         print("\n✅ Replay completed\n")
-        
+
     except FileNotFoundError:
         print(f"\n❌ Recording file not found: {args.recording_file}")
         return 1
@@ -123,18 +127,18 @@ def handle_replay_recording_command(args):
         logger.error(f"Error replaying recording: {e}")
         print(f"\n❌ Failed to replay recording: {e}")
         return 1
-    
+
     return 0
 
 
 async def _replay_session(recording, speed: float):
     """Replay a session asynchronously."""
     from streaming import SessionRecorder
-    
+
     recorder = SessionRecorder()
-    
+
     async def print_event(event):
         """Print event during replay."""
         print(f"[{event.event_type.value}] {event.data}")
-    
+
     await recorder.replay_session(recording, speed=speed, callback=print_event)

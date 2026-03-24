@@ -21,6 +21,8 @@ export type KanbanColumnPreferences = Record<TaskStatusColumn, ColumnPreferences
 interface KanbanSettingsState {
   /** Column preferences for each status column */
   columnPreferences: KanbanColumnPreferences | null;
+  /** Column display order (drag-to-reorder) */
+  columnOrder: TaskStatusColumn[];
 
   // Actions
   /** Initialize column preferences (call on mount) */
@@ -35,6 +37,8 @@ interface KanbanSettingsState {
   toggleColumnLocked: (column: TaskStatusColumn) => void;
   /** Set column locked state explicitly */
   setColumnLocked: (column: TaskStatusColumn, isLocked: boolean) => void;
+  /** Set column display order and persist to localStorage */
+  setColumnOrder: (order: TaskStatusColumn[], projectId?: string) => void;
   /** Load preferences from main process (IPC), falling back to localStorage */
   loadPreferences: (projectId: string) => void;
   /** Save preferences to localStorage (sync cache) and main process (debounced IPC) */
@@ -51,6 +55,9 @@ interface KanbanSettingsState {
 
 /** localStorage key prefix for kanban settings persistence (sync cache) */
 const KANBAN_SETTINGS_KEY_PREFIX = 'kanban-column-prefs';
+
+/** localStorage key prefix for kanban column order persistence */
+const KANBAN_COLUMN_ORDER_KEY_PREFIX = 'kanban-column-order';
 
 /** Default column width in pixels */
 export const DEFAULT_COLUMN_WIDTH = 320;
@@ -82,6 +89,21 @@ let currentLoadingProjectId: string | null = null;
  */
 function getKanbanSettingsKey(projectId: string): string {
   return `${KANBAN_SETTINGS_KEY_PREFIX}-${projectId}`;
+}
+
+/**
+ * Get the localStorage key for a project's kanban column order
+ */
+function getColumnOrderKey(projectId: string): string {
+  return `${KANBAN_COLUMN_ORDER_KEY_PREFIX}-${projectId}`;
+}
+
+/**
+ * Validate column order array — must contain all expected columns (extras ignored)
+ */
+function validateColumnOrder(data: unknown): data is TaskStatusColumn[] {
+  if (!Array.isArray(data)) return false;
+  return TASK_STATUS_COLUMNS.every((col) => data.includes(col));
 }
 
 /**
@@ -177,11 +199,23 @@ function saveKanbanPreferencesToMain(projectId: string): void {
 
 export const useKanbanSettingsStore = create<KanbanSettingsState>((set, get) => ({
   columnPreferences: null,
+  columnOrder: [...TASK_STATUS_COLUMNS],
 
   initializePreferences: () => {
     const state = get();
     if (!state.columnPreferences) {
       set({ columnPreferences: createDefaultPreferences() });
+    }
+  },
+
+  setColumnOrder: (order, projectId) => {
+    set({ columnOrder: order });
+    if (projectId) {
+      try {
+        localStorage.setItem(getColumnOrderKey(projectId), JSON.stringify(order));
+      } catch {
+        // localStorage write failed, non-critical
+      }
     }
   },
 
@@ -301,6 +335,24 @@ export const useKanbanSettingsStore = create<KanbanSettingsState>((set, get) => 
       set({ columnPreferences: createDefaultPreferences() });
     }
 
+    // Load column order from localStorage
+    try {
+      const orderKey = getColumnOrderKey(projectId);
+      const storedOrder = localStorage.getItem(orderKey);
+      if (storedOrder) {
+        const parsed = JSON.parse(storedOrder);
+        if (validateColumnOrder(parsed)) {
+          set({ columnOrder: parsed });
+        } else {
+          set({ columnOrder: [...TASK_STATUS_COLUMNS] });
+        }
+      } else {
+        set({ columnOrder: [...TASK_STATUS_COLUMNS] });
+      }
+    } catch {
+      set({ columnOrder: [...TASK_STATUS_COLUMNS] });
+    }
+
     // Then, async load from main process via IPC (source of truth)
     (async () => {
       try {
@@ -357,7 +409,9 @@ export const useKanbanSettingsStore = create<KanbanSettingsState>((set, get) => 
     try {
       const key = getKanbanSettingsKey(projectId);
       localStorage.removeItem(key);
-      set({ columnPreferences: createDefaultPreferences() });
+      const orderKey = getColumnOrderKey(projectId);
+      localStorage.removeItem(orderKey);
+      set({ columnPreferences: createDefaultPreferences(), columnOrder: [...TASK_STATUS_COLUMNS] });
 
       // Also save reset state to main process
       saveKanbanPreferencesToMain(projectId);

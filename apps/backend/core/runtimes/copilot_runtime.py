@@ -12,9 +12,8 @@ via the factory in __init__.py.
 """
 
 import asyncio
-import json
 import shutil
-from typing import Any, Dict, Optional, List
+from typing import Any
 
 from core.runtime import AgentRuntime, SessionResult, SessionStatus
 
@@ -29,8 +28,8 @@ class CopilotRuntime(AgentRuntime):
         project_dir: str,
         agent_type: str,
         config: Any = None,
-        cli_thinking: Optional[int] = None,
-        gh_path: Optional[str] = None,
+        cli_thinking: int | None = None,
+        gh_path: str | None = None,
     ):
         self.spec_dir = spec_dir
         self.phase = phase
@@ -76,7 +75,7 @@ class CopilotRuntime(AgentRuntime):
     async def run_session(
         self,
         prompt: str,
-        tools: Optional[List[Dict[str, Any]]] = None,
+        tools: list[dict[str, Any]] | None = None,
         **kwargs,
     ) -> SessionResult:
         """
@@ -109,7 +108,7 @@ class CopilotRuntime(AgentRuntime):
     async def stream_session(
         self,
         prompt: str,
-        tools: Optional[List[Dict[str, Any]]] = None,
+        tools: list[dict[str, Any]] | None = None,
         **kwargs,
     ):
         """

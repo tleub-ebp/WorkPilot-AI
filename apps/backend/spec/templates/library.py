@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
 
 from .models import SpecTemplate, TemplateCategory
 
@@ -37,7 +36,14 @@ _BUILTIN_TEMPLATES: list[SpecTemplate] = [
             "Follow existing API conventions in the project. "
             "Add appropriate authentication middleware if the project already has auth."
         ),
-        suggested_keywords=["router", "controller", "model", "schema", "validation", "endpoint"],
+        suggested_keywords=[
+            "router",
+            "controller",
+            "model",
+            "schema",
+            "validation",
+            "endpoint",
+        ],
         suggested_services=["backend", "api"],
         qa_criteria=[
             "All 5 CRUD endpoints return correct HTTP status codes",
@@ -47,7 +53,6 @@ _BUILTIN_TEMPLATES: list[SpecTemplate] = [
             "Unit tests cover happy path and error cases for each endpoint",
         ],
     ),
-
     # ── AUTHENTICATION ────────────────────────────────────────────────────────
     SpecTemplate(
         id="jwt-authentication",
@@ -66,7 +71,15 @@ _BUILTIN_TEMPLATES: list[SpecTemplate] = [
             "Store refresh tokens securely (DB or Redis). "
             "Access token expiry: 15 min. Refresh token expiry: 7 days."
         ),
-        suggested_keywords=["auth", "login", "token", "jwt", "password", "middleware", "session"],
+        suggested_keywords=[
+            "auth",
+            "login",
+            "token",
+            "jwt",
+            "password",
+            "middleware",
+            "session",
+        ],
         suggested_services=["backend", "auth"],
         qa_criteria=[
             "Registration rejects duplicate emails with clear error",
@@ -77,7 +90,6 @@ _BUILTIN_TEMPLATES: list[SpecTemplate] = [
             "Passwords are never stored in plaintext",
         ],
     ),
-
     # ── DASHBOARD ─────────────────────────────────────────────────────────────
     SpecTemplate(
         id="analytics-dashboard",
@@ -97,7 +109,15 @@ _BUILTIN_TEMPLATES: list[SpecTemplate] = [
             "Implement server-side aggregation for large datasets. "
             "Cache aggregated results for 5 minutes."
         ),
-        suggested_keywords=["chart", "dashboard", "metrics", "analytics", "graph", "stats", "kpi"],
+        suggested_keywords=[
+            "chart",
+            "dashboard",
+            "metrics",
+            "analytics",
+            "graph",
+            "stats",
+            "kpi",
+        ],
         suggested_services=["frontend", "backend", "api"],
         qa_criteria=[
             "KPI cards display correct values matching the database",
@@ -107,7 +127,6 @@ _BUILTIN_TEMPLATES: list[SpecTemplate] = [
             "Charts are responsive on mobile viewport",
         ],
     ),
-
     # ── FORM ──────────────────────────────────────────────────────────────────
     SpecTemplate(
         id="form-with-validation",
@@ -135,7 +154,6 @@ _BUILTIN_TEMPLATES: list[SpecTemplate] = [
             "Form is keyboard-navigable and screen-reader accessible",
         ],
     ),
-
     # ── DB MIGRATION ──────────────────────────────────────────────────────────
     SpecTemplate(
         id="db-migration",
@@ -154,7 +172,15 @@ _BUILTIN_TEMPLATES: list[SpecTemplate] = [
             "Test the migration on a copy of production data if possible. "
             "Document any manual steps required."
         ),
-        suggested_keywords=["migration", "schema", "database", "alter", "table", "index", "column"],
+        suggested_keywords=[
+            "migration",
+            "schema",
+            "database",
+            "alter",
+            "table",
+            "index",
+            "column",
+        ],
         suggested_services=["backend", "database"],
         qa_criteria=[
             "Forward migration applies cleanly on empty and populated DB",
@@ -164,7 +190,6 @@ _BUILTIN_TEMPLATES: list[SpecTemplate] = [
             "Application functions correctly after migration",
         ],
     ),
-
     # ── REFACTORING ───────────────────────────────────────────────────────────
     SpecTemplate(
         id="code-refactoring",
@@ -182,7 +207,14 @@ _BUILTIN_TEMPLATES: list[SpecTemplate] = [
             "Run existing tests before and after to confirm no regressions. "
             "Keep changes focused — avoid unrelated fixes in the same PR."
         ),
-        suggested_keywords=["refactor", "cleanup", "extract", "simplify", "rename", "reorganize"],
+        suggested_keywords=[
+            "refactor",
+            "cleanup",
+            "extract",
+            "simplify",
+            "rename",
+            "reorganize",
+        ],
         suggested_services=[],
         qa_criteria=[
             "All existing tests pass after refactoring",
@@ -191,7 +223,6 @@ _BUILTIN_TEMPLATES: list[SpecTemplate] = [
             "No new linting errors introduced",
         ],
     ),
-
     # ── THIRD-PARTY INTEGRATION ───────────────────────────────────────────────
     SpecTemplate(
         id="third-party-integration",
@@ -212,7 +243,14 @@ _BUILTIN_TEMPLATES: list[SpecTemplate] = [
             "Implement circuit breaker or fallback for service outages. "
             "Add integration tests using mock/sandbox environment."
         ),
-        suggested_keywords=["integration", "api", "webhook", "client", "service", "external"],
+        suggested_keywords=[
+            "integration",
+            "api",
+            "webhook",
+            "client",
+            "service",
+            "external",
+        ],
         suggested_services=["backend"],
         qa_criteria=[
             "Authentication with the external service works",
@@ -222,7 +260,6 @@ _BUILTIN_TEMPLATES: list[SpecTemplate] = [
             "Service unavailability does not crash the application",
         ],
     ),
-
     # ── REST API ENDPOINT ─────────────────────────────────────────────────────
     SpecTemplate(
         id="rest-endpoint",
@@ -244,7 +281,6 @@ _BUILTIN_TEMPLATES: list[SpecTemplate] = [
             "Unit test covers happy path and error cases",
         ],
     ),
-
     # ── TEST SUITE ────────────────────────────────────────────────────────────
     SpecTemplate(
         id="test-suite",
@@ -259,7 +295,15 @@ _BUILTIN_TEMPLATES: list[SpecTemplate] = [
             "edge cases and error scenarios, "
             "and mocks for dependencies."
         ),
-        suggested_keywords=["test", "spec", "mock", "assert", "coverage", "unit", "integration"],
+        suggested_keywords=[
+            "test",
+            "spec",
+            "mock",
+            "assert",
+            "coverage",
+            "unit",
+            "integration",
+        ],
         suggested_services=[],
         qa_criteria=[
             "Test coverage reaches at least 80% for the target module",
@@ -278,6 +322,7 @@ _BUILTIN_BY_ID: dict[str, SpecTemplate] = {t.id: t for t in _BUILTIN_TEMPLATES}
 # =============================================================================
 # TEMPLATE LIBRARY
 # =============================================================================
+
 
 class TemplateLibrary:
     """
@@ -298,7 +343,7 @@ class TemplateLibrary:
 
     def list_templates(
         self,
-        category: Optional[TemplateCategory] = None,
+        category: TemplateCategory | None = None,
         include_custom: bool = True,
     ) -> list[SpecTemplate]:
         """List all available templates, optionally filtered by category."""
@@ -309,9 +354,11 @@ class TemplateLibrary:
             templates = [t for t in templates if t.category == category]
         return templates
 
-    def get_template(self, template_id: str) -> Optional[SpecTemplate]:
+    def get_template(self, template_id: str) -> SpecTemplate | None:
         """Get a template by ID (builtin or custom)."""
-        return _BUILTIN_BY_ID.get(template_id) or self._custom_templates.get(template_id)
+        return _BUILTIN_BY_ID.get(template_id) or self._custom_templates.get(
+            template_id
+        )
 
     def save_custom_template(self, template: SpecTemplate) -> None:
         """Persist a custom template to the project's template store."""
@@ -354,8 +401,8 @@ class TemplateLibrary:
     def apply_template(
         self,
         template_id: str,
-        substitutions: Optional[dict[str, str]] = None,
-    ) -> Optional[dict]:
+        substitutions: dict[str, str] | None = None,
+    ) -> dict | None:
         """
         Apply a template and return a requirements patch dict.
 

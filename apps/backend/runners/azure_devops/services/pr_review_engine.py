@@ -17,8 +17,8 @@ from pathlib import Path
 
 try:
     from ..models import (
-        AzureDevOpsRunnerConfig,
         AzDOPRContext,
+        AzureDevOpsRunnerConfig,
         MergeVerdict,
         PRReviewFinding,
         ReviewCategory,
@@ -26,8 +26,8 @@ try:
     )
 except ImportError:
     from models import (
-        AzureDevOpsRunnerConfig,
         AzDOPRContext,
+        AzureDevOpsRunnerConfig,
         MergeVerdict,
         PRReviewFinding,
         ReviewCategory,
@@ -96,10 +96,14 @@ class PRReviewEngine:
         self.config = config
         self.progress_callback = progress_callback
 
-    def _report_progress(self, phase: str, progress: int, message: str, pr_id: int | None = None):
+    def _report_progress(
+        self, phase: str, progress: int, message: str, pr_id: int | None = None
+    ):
         if self.progress_callback:
             self.progress_callback(
-                ProgressCallback(phase=phase, progress=progress, message=message, pr_id=pr_id)
+                ProgressCallback(
+                    phase=phase, progress=progress, message=message, pr_id=pr_id
+                )
             )
 
     def _get_review_prompt(self) -> str:
@@ -146,7 +150,9 @@ Also provide:
         """
         from core.client import create_agent_client
 
-        self._report_progress("analyzing", 30, "Running AI analysis...", pr_id=context.pr_id)
+        self._report_progress(
+            "analyzing", 30, "Running AI analysis...", pr_id=context.pr_id
+        )
 
         # Build file list
         files_list = []
@@ -227,7 +233,9 @@ Also provide:
         try:
             async with client:
                 result = await client.process_prompt(prompt)
-                result_text = result.response if hasattr(result, "response") else str(result)
+                result_text = (
+                    result.response if hasattr(result, "response") else str(result)
+                )
         except Exception as e:
             safe_print(f"[AzDO] Review failed: {e}")
             return [], MergeVerdict.READY_TO_MERGE, f"Review failed: {e}", []
@@ -256,7 +264,9 @@ Also provide:
                             finding = PRReviewFinding(
                                 id=f"azdo-{uuid.uuid4().hex[:8]}",
                                 severity=ReviewSeverity(item.get("severity", "low")),
-                                category=ReviewCategory(item.get("category", "quality")),
+                                category=ReviewCategory(
+                                    item.get("category", "quality")
+                                ),
                                 title=item.get("title", ""),
                                 description=item.get("description", ""),
                                 file=item.get("file", "unknown"),
@@ -316,7 +326,9 @@ Also provide:
         """Generate a human-readable review summary."""
         severity_counts = {}
         for f in findings:
-            severity_counts[f.severity.value] = severity_counts.get(f.severity.value, 0) + 1
+            severity_counts[f.severity.value] = (
+                severity_counts.get(f.severity.value, 0) + 1
+            )
 
         parts = []
 
@@ -334,7 +346,9 @@ Also provide:
 
         # Severity breakdown
         if severity_counts:
-            breakdown = ", ".join(f"{count} {sev}" for sev, count in severity_counts.items())
+            breakdown = ", ".join(
+                f"{count} {sev}" for sev, count in severity_counts.items()
+            )
             parts.append(f"\n**Findings:** {breakdown}")
 
         # Blockers

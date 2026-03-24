@@ -149,7 +149,7 @@ async function getAzureDevOpsPRDetails(prNumber: number, prUrl: string, project:
     }
 
     // Parse Azure DevOps URL to extract organization and project
-    const urlMatch = prUrl.match(/https:\/\/dev\.azure\.com\/([^\/]+)\/([^\/]+)\/_git\/([^\/]+)\/pullrequest\/(\d+)/);
+    const urlMatch = prUrl.match(/https:\/\/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)\/pullrequest\/(\d+)/);
     if (!urlMatch) {
       return {
         success: false,
@@ -642,7 +642,7 @@ async function getMockAzureDevOpsPRDetails(prNumber: number, prUrl: string): Pro
   console.log('[PR_DETAILS] Using enhanced mock Azure DevOps data for PR:', prNumber);
   
   // Extract real info from URL for more realistic mock data
-  const urlMatch = prUrl.match(/https:\/\/dev\.azure\.com\/([^\/]+)\/([^\/]+)\/_git\/([^\/]+)\/pullrequest\/(\d+)/);
+  const urlMatch = prUrl.match(/https:\/\/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)\/pullrequest\/(\d+)/);
   const [, organization, projectName, repository] = urlMatch || [, 'Unknown Org', 'Unknown Project', 'Unknown Repo'];
   
   return {

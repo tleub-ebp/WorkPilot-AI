@@ -1,8 +1,8 @@
 """Data models for the Performance Profiler Agent."""
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
 
 
 class BottleneckType(Enum):
@@ -42,9 +42,9 @@ class Bottleneck:
     description: str
     estimated_impact: str = ""
     code_snippet: str = ""
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "bottleneck_id": self.bottleneck_id,
             "file_path": self.file_path,
@@ -69,7 +69,7 @@ class OptimizationSuggestion:
     effort: OptimizationEffort = OptimizationEffort.MEDIUM
     auto_implementable: bool = False
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "suggestion_id": self.suggestion_id,
             "bottleneck_id": self.bottleneck_id,
@@ -89,9 +89,9 @@ class BenchmarkResult:
     memory_mb: float = 0.0
     cpu_percent: float = 0.0
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "name": self.name,
             "duration_ms": self.duration_ms,
@@ -104,13 +104,13 @@ class BenchmarkResult:
 @dataclass
 class PerformanceReport:
     project_dir: str
-    bottlenecks: List[Bottleneck] = field(default_factory=list)
-    suggestions: List[OptimizationSuggestion] = field(default_factory=list)
-    benchmarks: List[BenchmarkResult] = field(default_factory=list)
-    summary: Dict = field(default_factory=dict)
+    bottlenecks: list[Bottleneck] = field(default_factory=list)
+    suggestions: list[OptimizationSuggestion] = field(default_factory=list)
+    benchmarks: list[BenchmarkResult] = field(default_factory=list)
+    summary: dict = field(default_factory=dict)
     generated_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
-    def compute_summary(self) -> Dict:
+    def compute_summary(self) -> dict:
         critical = sum(1 for b in self.bottlenecks if b.severity == Severity.CRITICAL)
         high = sum(1 for b in self.bottlenecks if b.severity == Severity.HIGH)
         auto_fix = sum(1 for s in self.suggestions if s.auto_implementable)
@@ -118,7 +118,9 @@ class PerformanceReport:
             "total_bottlenecks": len(self.bottlenecks),
             "critical_count": critical,
             "high_count": high,
-            "medium_count": sum(1 for b in self.bottlenecks if b.severity == Severity.MEDIUM),
+            "medium_count": sum(
+                1 for b in self.bottlenecks if b.severity == Severity.MEDIUM
+            ),
             "low_count": sum(1 for b in self.bottlenecks if b.severity == Severity.LOW),
             "total_suggestions": len(self.suggestions),
             "auto_implementable_suggestions": auto_fix,
@@ -126,7 +128,7 @@ class PerformanceReport:
         }
         return self.summary
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         self.compute_summary()
         return {
             "project_dir": self.project_dir,

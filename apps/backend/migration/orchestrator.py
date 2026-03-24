@@ -1,29 +1,25 @@
-﻿"""
+"""
 Migration Orchestrator: Coordinates the migration pipeline.
 """
 
-import os
 import json
 import subprocess
+import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Dict, List, Any
-import uuid
+from typing import Any
 
+from .analyzer import StackAnalyzer
+from .llm_transformer import LLMTransformer
 from .models import (
     MigrationContext,
     MigrationState,
-    StackInfo,
-    MigrationPlan,
-    ValidationReport,
     RollbackCheckpoint,
+    StackInfo,
+    ValidationReport,
 )
-from .analyzer import StackAnalyzer
 from .planner import MigrationPlanner
 from .transformer import TransformationEngine
-from .llm_transformer import LLMTransformer
-from .validator import MigrationValidator
-from .reporter import MigrationReporter
 
 
 class MigrationOrchestrator:
@@ -33,12 +29,16 @@ class MigrationOrchestrator:
         self.project_dir = Path(project_dir)
         self.state_dir = self.project_dir / ".auto-claude" / "migration"
         self.state_dir.mkdir(parents=True, exist_ok=True)
-        self.context: Optional[MigrationContext] = None
-        self.checkpoints: Dict[str, RollbackCheckpoint] = {}
+        self.context: MigrationContext | None = None
+        self.checkpoints: dict[str, RollbackCheckpoint] = {}
         self.enable_llm = enable_llm
-        self.llm_transformer = LLMTransformer(str(self.project_dir)) if enable_llm else None
+        self.llm_transformer = (
+            LLMTransformer(str(self.project_dir)) if enable_llm else None
+        )
 
-    def start_migration(self, target_framework: str, target_language: str) -> MigrationContext:
+    def start_migration(
+        self, target_framework: str, target_language: str
+    ) -> MigrationContext:
         """Start a new migration process."""
         # Analyze source stack
         analyzer = StackAnalyzer(str(self.project_dir))
@@ -54,6 +54,7 @@ class MigrationOrchestrator:
         # Validate migration is supported
         migration_key = (source_stack.framework, target_stack.framework)
         from .config import SUPPORTED_MIGRATIONS
+
         if migration_key not in SUPPORTED_MIGRATIONS:
             raise ValueError(
                 f"Migration from {source_stack.framework} to {target_stack.framework} "
@@ -86,9 +87,9 @@ class MigrationOrchestrator:
             raise FileNotFoundError(f"Migration {migration_id} not found")
 
         # Load context
-        with open(state_file, "r") as f:
+        with open(state_file) as f:
             data = json.load(f)
-        
+
         self.context = self._deserialize_context(data)
         return self.context
 
@@ -96,12 +97,12 @@ class MigrationOrchestrator:
         """Pause the current migration."""
         if not self.context:
             raise ValueError("No active migration")
-        
+
         self.context.state = MigrationState.PAUSED
         self.context.paused_at = datetime.now()
         self._save_context()
 
-    def plan_phase(self) -> Dict[str, Any]:
+    def plan_phase(self) -> dict[str, Any]:
         """Execute planning phase."""
         if not self.context:
             raise ValueError("No active migration")
@@ -125,7 +126,7 @@ class MigrationOrchestrator:
             "complexity": complexity,
         }
 
-    def analyze_phase(self) -> Dict[str, Any]:
+    def analyze_phase(self) -> dict[str, Any]:
         """Execute analysis phase."""
         if not self.context:
             raise ValueError("No active migration")
@@ -143,7 +144,7 @@ class MigrationOrchestrator:
             "affected_files": self._count_affected_files(),
         }
 
-    def transform_phase(self) -> Dict[str, Any]:
+    def transform_phase(self) -> dict[str, Any]:
         """Execute transformation phase."""
         if not self.context or not self.context.plan:
             raise ValueError("No active migration or plan")
@@ -166,17 +167,21 @@ class MigrationOrchestrator:
         )
 
         # Execute transformations
-        print(f"Starting transformation from {self.context.source_stack.framework} to {self.context.target_stack.framework}...")
+        print(
+            f"Starting transformation from {self.context.source_stack.framework} to {self.context.target_stack.framework}..."
+        )
         transformation_results = transformer.transform_code()
-        
+
         # Enhance with LLM if enabled
         if self.enable_llm and self.llm_transformer and transformation_results:
-            print(f"Enhancing {len(transformation_results)} transformations with LLM...")
+            print(
+                f"Enhancing {len(transformation_results)} transformations with LLM..."
+            )
             import asyncio
-            
+
             # Determine prompt template
             prompt_template = f"{self.context.source_stack.framework}_to_{self.context.target_stack.framework}.md"
-            
+
             # Run async enhancement
             enhanced_results = asyncio.run(
                 self.llm_transformer.enhance_transformations_batch(
@@ -263,7 +268,7 @@ class MigrationOrchestrator:
         self._save_context()
         return report
 
-    def rollback_migration(self, to_checkpoint: Optional[str] = None) -> Dict[str, Any]:
+    def rollback_migration(self, to_checkpoint: str | None = None) -> dict[str, Any]:
         """Rollback the migration to a previous state."""
         if not self.context:
             raise ValueError("No active migration")
@@ -274,7 +279,10 @@ class MigrationOrchestrator:
         # Get checkpoint to rollback to
         if to_checkpoint:
             if to_checkpoint not in self.context.checkpoints:
-                return {"status": "error", "message": f"Checkpoint {to_checkpoint} not found"}
+                return {
+                    "status": "error",
+                    "message": f"Checkpoint {to_checkpoint} not found",
+                }
             checkpoint_commit = self.context.checkpoints[to_checkpoint]
         else:
             # Rollback to the first checkpoint (before transformation started)
@@ -309,7 +317,7 @@ class MigrationOrchestrator:
             "commit": checkpoint_commit,
         }
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get current migration status."""
         if not self.context:
             return {"status": "no_migration"}
@@ -319,7 +327,9 @@ class MigrationOrchestrator:
             "state": self.context.state.value,
             "source_stack": self.context.source_stack.to_dict(),
             "target_stack": self.context.target_stack.to_dict(),
-            "started_at": self.context.started_at.isoformat() if self.context.started_at else None,
+            "started_at": self.context.started_at.isoformat()
+            if self.context.started_at
+            else None,
             "current_phase": self.context.current_phase,
             "plan": self.context.plan.to_dict() if self.context.plan else None,
             "checkpoints": list(self.context.checkpoints.keys()),
@@ -337,7 +347,7 @@ class MigrationOrchestrator:
                 capture_output=True,
                 timeout=30,
             )
-            
+
             result = subprocess.run(
                 ["git", "commit", "-m", f"Migration checkpoint: {phase_id}"],
                 cwd=self.project_dir,
@@ -345,15 +355,15 @@ class MigrationOrchestrator:
                 text=True,
                 timeout=30,
             )
-            
+
             if result.returncode == 0:
                 # Extract commit hash
                 commit_hash = result.stdout.strip().split(" ")[-2]
-                
+
                 # Save to context
                 if self.context:
                     self.context.checkpoints[phase_id] = commit_hash
-                
+
                 return commit_hash
         except Exception as e:
             print(f"Warning: Could not create git checkpoint: {e}")
@@ -372,7 +382,7 @@ class MigrationOrchestrator:
 
         return len(affected_files)
 
-    def _run_tests(self) -> Dict[str, Any]:
+    def _run_tests(self) -> dict[str, Any]:
         """Run test suite and return results."""
         try:
             # Try to detect test command
@@ -405,7 +415,7 @@ class MigrationOrchestrator:
 
         return {"success": False, "error": "No test command found"}
 
-    def _check_build(self) -> Dict[str, Any]:
+    def _check_build(self) -> dict[str, Any]:
         """Check if project builds successfully."""
         try:
             build_commands = [
@@ -432,7 +442,7 @@ class MigrationOrchestrator:
 
         return {"success": False, "error": "Build failed or no build command found"}
 
-    def _check_lint(self) -> Dict[str, Any]:
+    def _check_lint(self) -> dict[str, Any]:
         """Check linting."""
         try:
             lint_commands = [
@@ -466,7 +476,7 @@ class MigrationOrchestrator:
         with open(state_file, "w") as f:
             json.dump(self.context.to_dict(), f, indent=2)
 
-    def _deserialize_context(self, data: Dict) -> MigrationContext:
+    def _deserialize_context(self, data: dict) -> MigrationContext:
         """Deserialize migration context from dict."""
         # Simplified deserialization - full implementation in models.py
         return MigrationContext.load_from_file("")  # Placeholder

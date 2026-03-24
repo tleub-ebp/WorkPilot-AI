@@ -12,7 +12,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from .builder import DependencyGraphBuilder, _PYTHON_EXTS, _JS_TS_EXTS, _SKIP_DIRS
+from .builder import _JS_TS_EXTS, _PYTHON_EXTS, _SKIP_DIRS, DependencyGraphBuilder
 from .models import DependencyGraph
 
 _CACHE_FILE = "dependency_graph.json"

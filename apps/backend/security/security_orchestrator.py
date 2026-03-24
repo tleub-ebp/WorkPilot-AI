@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Security Orchestrator
 =====================
@@ -95,9 +95,7 @@ class SecurityScanResult:
         """Get summary of scan results."""
         vuln_summary = self.vulnerability_scan.get("summary", {})
         comp_summary = (
-            self.compliance_report.get("summary", {})
-            if self.compliance_report
-            else {}
+            self.compliance_report.get("summary", {}) if self.compliance_report else {}
         )
 
         return {
@@ -122,7 +120,7 @@ class SecurityScanResult:
 class SecurityOrchestrator:
     """
     Main orchestrator for security-first features.
-    
+
     This class:
     1. Runs comprehensive security scans
     2. Generates multiple report formats
@@ -282,7 +280,9 @@ class SecurityOrchestrator:
         # Update summary
         vuln_dict["summary"] = {
             "critical": sum(
-                1 for v in vuln_dict["vulnerabilities"] if v.get("severity") == "critical"
+                1
+                for v in vuln_dict["vulnerabilities"]
+                if v.get("severity") == "critical"
             ),
             "high": sum(
                 1 for v in vuln_dict["vulnerabilities"] if v.get("severity") == "high"
@@ -494,4 +494,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

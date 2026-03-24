@@ -11,7 +11,7 @@ import json
 import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from init import init_auto_claude_dir
 from task_logger import update_task_logger_path
@@ -83,7 +83,7 @@ def cleanup_orphaned_pending_folders(specs_dir: Path) -> None:
             pass
 
 
-def create_spec_dir(specs_dir: Path, lock: Optional[SpecNumberLock] = None) -> Path:
+def create_spec_dir(specs_dir: Path, lock: SpecNumberLock | None = None) -> Path:
     """Create a new spec directory with incremented number and placeholder name.
 
     Args:

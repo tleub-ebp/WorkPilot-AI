@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Intent Learning Module
 ======================
@@ -189,9 +189,7 @@ class IntentLearner:
         # Create new patterns for unknown project
         return ProjectPatterns(project_id=project_id)
 
-    def get_accuracy_metrics(
-        self, project_id: str | None = None
-    ) -> dict[str, Any]:
+    def get_accuracy_metrics(self, project_id: str | None = None) -> dict[str, Any]:
         """
         Get accuracy metrics for intent detection.
 
@@ -214,9 +212,7 @@ class IntentLearner:
             }
 
         # Calculate overall accuracy
-        correct = sum(
-            1 for f in feedbacks if f.detected_category == f.actual_category
-        )
+        correct = sum(1 for f in feedbacks if f.detected_category == f.actual_category)
         total = len(feedbacks)
         overall_accuracy = correct / total if total > 0 else 0.0
 
@@ -246,9 +242,7 @@ class IntentLearner:
             "by_category": by_category,
         }
 
-    def get_common_misclassifications(
-        self, limit: int = 10
-    ) -> list[dict[str, Any]]:
+    def get_common_misclassifications(self, limit: int = 10) -> list[dict[str, Any]]:
         """
         Get the most common misclassifications.
 
@@ -348,4 +342,3 @@ class IntentLearner:
             logger.debug(f"Saved patterns for {len(data)} projects")
         except OSError as e:
             logger.error(f"Failed to save patterns: {e}")
-

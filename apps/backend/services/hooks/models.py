@@ -7,10 +7,10 @@ Defines all core types: HookEvent, Trigger, Action, Hook, HookExecution, HookTem
 from __future__ import annotations
 
 import uuid
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 def _utcnow_iso() -> str:
@@ -80,9 +80,11 @@ class ExecutionStatus(str, Enum):
 # Data classes
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 @dataclass
 class TriggerCondition:
     """A filter/condition on a trigger (e.g. file glob, branch name, pattern)."""
+
     field: str
     operator: str  # equals, contains, matches, startsWith, endsWith, glob
     value: str
@@ -91,12 +93,13 @@ class TriggerCondition:
 @dataclass
 class Trigger:
     """Defines *when* a hook fires."""
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     type: TriggerType = TriggerType.MANUAL
     conditions: list[TriggerCondition] = field(default_factory=list)
     config: dict[str, Any] = field(default_factory=dict)
     # For SCHEDULE type
-    cron_expression: Optional[str] = None
+    cron_expression: str | None = None
     # Visual editor position
     position: dict[str, float] = field(default_factory=lambda: {"x": 0, "y": 0})
 
@@ -104,14 +107,17 @@ class Trigger:
         return {
             "id": self.id,
             "type": self.type.value,
-            "conditions": [{"field": c.field, "operator": c.operator, "value": c.value} for c in self.conditions],
+            "conditions": [
+                {"field": c.field, "operator": c.operator, "value": c.value}
+                for c in self.conditions
+            ],
             "config": self.config,
             "cron_expression": self.cron_expression,
             "position": self.position,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Trigger":
+    def from_dict(cls, data: dict) -> Trigger:
         return cls(
             id=data.get("id", str(uuid.uuid4())),
             type=TriggerType(data.get("type", "manual")),
@@ -125,6 +131,7 @@ class Trigger:
 @dataclass
 class Action:
     """Defines *what* happens when a hook fires."""
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     type: ActionType = ActionType.LOG_EVENT
     config: dict[str, Any] = field(default_factory=dict)
@@ -151,7 +158,7 @@ class Action:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Action":
+    def from_dict(cls, data: dict) -> Action:
         return cls(
             id=data.get("id", str(uuid.uuid4())),
             type=ActionType(data.get("type", "log_event")),
@@ -167,11 +174,12 @@ class Action:
 @dataclass
 class HookConnection:
     """Visual connection between nodes in the editor."""
+
     source_id: str
     target_id: str
     source_handle: str = "output"
     target_handle: str = "input"
-    condition: Optional[str] = None  # e.g. "on_success", "on_failure", "always"
+    condition: str | None = None  # e.g. "on_success", "on_failure", "always"
 
     def to_dict(self) -> dict:
         return {
@@ -183,17 +191,18 @@ class HookConnection:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "HookConnection":
+    def from_dict(cls, data: dict) -> HookConnection:
         return cls(**data)
 
 
 @dataclass
 class Hook:
     """A complete event-driven hook with trigger(s) + action(s) + connections."""
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     name: str = ""
     description: str = ""
-    project_id: Optional[str] = None
+    project_id: str | None = None
     # Can apply across projects
     cross_project: bool = False
     status: HookStatus = HookStatus.ACTIVE
@@ -203,11 +212,11 @@ class Hook:
     # Metadata
     created_at: str = field(default_factory=_utcnow_iso)
     updated_at: str = field(default_factory=_utcnow_iso)
-    last_triggered: Optional[str] = None
+    last_triggered: str | None = None
     execution_count: int = 0
     error_count: int = 0
     # Template origin
-    template_id: Optional[str] = None
+    template_id: str | None = None
     tags: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
@@ -231,7 +240,7 @@ class Hook:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Hook":
+    def from_dict(cls, data: dict) -> Hook:
         return cls(
             id=data.get("id", str(uuid.uuid4())),
             name=data.get("name", ""),
@@ -241,7 +250,9 @@ class Hook:
             status=HookStatus(data.get("status", "active")),
             triggers=[Trigger.from_dict(t) for t in data.get("triggers", [])],
             actions=[Action.from_dict(a) for a in data.get("actions", [])],
-            connections=[HookConnection.from_dict(c) for c in data.get("connections", [])],
+            connections=[
+                HookConnection.from_dict(c) for c in data.get("connections", [])
+            ],
             created_at=data.get("created_at", _utcnow_iso()),
             updated_at=data.get("updated_at", _utcnow_iso()),
             last_triggered=data.get("last_triggered"),
@@ -255,17 +266,18 @@ class Hook:
 @dataclass
 class HookExecution:
     """Record of a single hook execution."""
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     hook_id: str = ""
     hook_name: str = ""
     trigger_type: str = ""
     status: ExecutionStatus = ExecutionStatus.PENDING
     started_at: str = field(default_factory=_utcnow_iso)
-    completed_at: Optional[str] = None
-    duration_ms: Optional[int] = None
+    completed_at: str | None = None
+    duration_ms: int | None = None
     trigger_event: dict[str, Any] = field(default_factory=dict)
     action_results: list[dict[str, Any]] = field(default_factory=list)
-    error: Optional[str] = None
+    error: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -286,9 +298,10 @@ class HookExecution:
 @dataclass
 class HookEvent:
     """An event emitted by the system that can trigger hooks."""
+
     type: TriggerType
     data: dict[str, Any] = field(default_factory=dict)
-    project_id: Optional[str] = None
+    project_id: str | None = None
     timestamp: str = field(default_factory=_utcnow_iso)
     source: str = "system"
 
@@ -305,6 +318,7 @@ class HookEvent:
 @dataclass
 class HookTemplate:
     """Pre-configured hook template."""
+
     id: str
     name: str
     description: str
@@ -330,7 +344,7 @@ class HookTemplate:
             "popularity": self.popularity,
         }
 
-    def to_hook(self, project_id: Optional[str] = None) -> Hook:
+    def to_hook(self, project_id: str | None = None) -> Hook:
         """Create a Hook instance from this template."""
         return Hook(
             name=self.name,

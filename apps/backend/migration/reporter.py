@@ -1,12 +1,11 @@
-﻿"""
+"""
 Migration Report Generator: Creates comprehensive migration reports.
 """
 
-from typing import Dict, Any, List
 from datetime import datetime
 from pathlib import Path
 
-from .models import MigrationContext, MigrationPlan, ValidationReport
+from .models import MigrationContext
 
 
 class MigrationReporter:
@@ -103,14 +102,14 @@ class MigrationReporter:
 ### Source Stack
 - **Framework:** {source.framework} (v{source.version})
 - **Language:** {source.language}
-- **Database:** {source.database or 'N/A'}
+- **Database:** {source.database or "N/A"}
 - **Package Manager:** {source.package_manager}
 - **Dependencies:** {len(source.dependencies)}
 
 ### Target Stack
 - **Framework:** {target.framework} (v{target.version})
 - **Language:** {target.language}
-- **Database:** {target.database or 'N/A'}
+- **Database:** {target.database or "N/A"}
 - **Package Manager:** {target.package_manager}
 """
 
@@ -122,10 +121,10 @@ class MigrationReporter:
         return f"""## Risk Assessment
 
 - **Overall Risk Level:** {self.context.plan.risk_level.value.upper()}
-- **Breaking Changes:** {'Yes' if any(p.risk_level.value in ['high', 'critical'] for p in self.context.plan.phases) else 'No'}
+- **Breaking Changes:** {"Yes" if any(p.risk_level.value in ["high", "critical"] for p in self.context.plan.phases) else "No"}
 - **Data Preservation:** Required
-- **Rollback Available:** {'Yes' if self.context.rollback_available else 'No'}
-- **Approval Required:** {'Yes' if self.context.plan.approvals_required else 'No'}
+- **Rollback Available:** {"Yes" if self.context.rollback_available else "No"}
+- **Approval Required:** {"Yes" if self.context.plan.approvals_required else "No"}
 """
 
     def _migration_plan(self) -> str:
@@ -157,8 +156,10 @@ class MigrationReporter:
         if not self.context.transformations:
             return "## Transformations\n\nNo transformations applied.\n"
 
-        trans_section = f"## Transformations\n\n**Total:** {len(self.context.transformations)}\n\n"
-        
+        trans_section = (
+            f"## Transformations\n\n**Total:** {len(self.context.transformations)}\n\n"
+        )
+
         for trans in self.context.transformations[:10]:  # Show first 10
             trans_section += f"### {trans.file_path}\n"
             trans_section += f"- **Type:** {trans.transformation_type}\n"
@@ -185,16 +186,16 @@ class MigrationReporter:
         return f"""## Validation Results
 
 ### Tests
-- **Status:** {'✓ Passed' if test_info.get('success') else '✗ Failed'}
-- **Total:** {test_info.get('total', 'N/A')}
-- **Passed:** {test_info.get('passed', 'N/A')}
-- **Failed:** {test_info.get('failed', 'N/A')}
+- **Status:** {"✓ Passed" if test_info.get("success") else "✗ Failed"}
+- **Total:** {test_info.get("total", "N/A")}
+- **Passed:** {test_info.get("passed", "N/A")}
+- **Failed:** {test_info.get("failed", "N/A")}
 
 ### Build
-- **Status:** {'✓ Success' if build_info.get('success') else '✗ Failed'}
+- **Status:** {"✓ Success" if build_info.get("success") else "✗ Failed"}
 
 ### Linting
-- **Status:** {'✓ Passed' if lint_info.get('success') else '⚠ Issues'}
+- **Status:** {"✓ Passed" if lint_info.get("success") else "⚠ Issues"}
 """
 
     def _timeline(self) -> str:
@@ -219,7 +220,7 @@ class MigrationReporter:
         if self.context.plan:
             if self.context.plan.risk_level.value == "critical":
                 recs += "- **Review manually:** This is a high-risk migration, review changes carefully\n"
-            
+
             if any(p.risk_level.value == "high" for p in self.context.plan.phases):
                 recs += "- **Stage the migration:** Consider applying changes in smaller batches\n"
 

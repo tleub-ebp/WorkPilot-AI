@@ -23,7 +23,7 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +32,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class AnomalyType(str, Enum):
     """Types of behavioral anomalies detected."""
+
     MASS_FILE_DELETION = "mass_file_deletion"
     UNEXPECTED_NETWORK_ACCESS = "unexpected_network_access"
     SYSTEM_CONFIG_MODIFICATION = "system_config_modification"
@@ -48,6 +50,7 @@ class AnomalyType(str, Enum):
 
 class AnomalySeverity(str, Enum):
     """Severity levels for anomalies."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -56,6 +59,7 @@ class AnomalySeverity(str, Enum):
 
 class SessionStatus(str, Enum):
     """Status of a monitored session."""
+
     ACTIVE = "active"
     PAUSED = "paused"
     COMPLETED = "completed"
@@ -64,6 +68,7 @@ class SessionStatus(str, Enum):
 
 class EventType(str, Enum):
     """Types of events that agents can produce."""
+
     FILE_READ = "file_read"
     FILE_WRITE = "file_write"
     FILE_DELETE = "file_delete"
@@ -79,50 +84,60 @@ class EventType(str, Enum):
 # Dataclasses
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class AgentEvent:
     """A single event recorded during an agent session."""
+
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     event_type: str = ""
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    timestamp: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
+    metadata: dict[str, Any] = field(default_factory=dict)
     session_id: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 @dataclass
 class Anomaly:
     """A detected behavioral anomaly."""
+
     anomaly_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     anomaly_type: str = ""
     severity: str = "medium"
     description: str = ""
     session_id: str = ""
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    evidence: Dict[str, Any] = field(default_factory=dict)
+    timestamp: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
+    evidence: dict[str, Any] = field(default_factory=dict)
     score_impact: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 @dataclass
 class MonitoredSession:
     """An agent session being monitored for anomalies."""
+
     session_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     task_id: str = ""
     agent_type: str = ""
     status: str = "active"
     trust_score: float = 100.0
-    started_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    ended_at: Optional[str] = None
-    events: List[AgentEvent] = field(default_factory=list)
-    anomalies: List[Anomaly] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    started_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
+    ended_at: str | None = None
+    events: list[AgentEvent] = field(default_factory=list)
+    anomalies: list[Anomaly] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         result = {
             "session_id": self.session_id,
             "task_id": self.task_id,
@@ -138,7 +153,7 @@ class MonitoredSession:
         return result
 
     @property
-    def duration_seconds(self) -> Optional[float]:
+    def duration_seconds(self) -> float | None:
         if self.ended_at:
             start = datetime.fromisoformat(self.started_at)
             end = datetime.fromisoformat(self.ended_at)
@@ -149,6 +164,7 @@ class MonitoredSession:
 @dataclass
 class BehaviorBaseline:
     """Baseline behavior statistics for a given agent type."""
+
     agent_type: str = ""
     avg_files_written: float = 10.0
     avg_files_deleted: float = 1.0
@@ -158,23 +174,26 @@ class BehaviorBaseline:
     avg_errors: float = 2.0
     sample_count: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 @dataclass
 class AnomalyAlert:
     """Alert emitted when trust score drops below threshold."""
+
     alert_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     session_id: str = ""
     task_id: str = ""
     agent_type: str = ""
     trust_score: float = 0.0
-    anomalies: List[Dict[str, Any]] = field(default_factory=list)
+    anomalies: list[dict[str, Any]] = field(default_factory=list)
     action_taken: str = ""
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -194,15 +213,36 @@ DEFAULT_THRESHOLDS = {
 }
 
 SENSITIVE_PATHS = [
-    ".env", ".git/", ".ssh/", ".aws/", ".gnupg/",
-    "id_rsa", "id_ed25519", "credentials", "secrets",
-    "/etc/passwd", "/etc/shadow", "node_modules/.cache",
+    ".env",
+    ".git/",
+    ".ssh/",
+    ".aws/",
+    ".gnupg/",
+    "id_rsa",
+    "id_ed25519",
+    "credentials",
+    "secrets",
+    "/etc/passwd",
+    "/etc/shadow",
+    "node_modules/.cache",
 ]
 
 DANGEROUS_COMMANDS = [
-    "rm -rf /", "sudo", "curl", "wget", "ssh", "scp",
-    "nc ", "netcat", "eval", "exec", "mkfs", "dd if=",
-    "chmod 777", "> /dev/", "base64 -d",
+    "rm -rf /",
+    "sudo",
+    "curl",
+    "wget",
+    "ssh",
+    "scp",
+    "nc ",
+    "netcat",
+    "eval",
+    "exec",
+    "mkfs",
+    "dd if=",
+    "chmod 777",
+    "> /dev/",
+    "base64 -d",
 ]
 
 ANOMALY_SCORE_IMPACT = {
@@ -223,6 +263,7 @@ ANOMALY_SCORE_IMPACT = {
 # Main class
 # ---------------------------------------------------------------------------
 
+
 class AnomalyDetector:
     """Monitors agent sessions for behavioral anomalies.
 
@@ -237,18 +278,18 @@ class AnomalyDetector:
 
     def __init__(
         self,
-        thresholds: Optional[Dict[str, Any]] = None,
-        baselines: Optional[Dict[str, BehaviorBaseline]] = None,
+        thresholds: dict[str, Any] | None = None,
+        baselines: dict[str, BehaviorBaseline] | None = None,
     ) -> None:
-        self._thresholds: Dict[str, Any] = {**DEFAULT_THRESHOLDS}
+        self._thresholds: dict[str, Any] = {**DEFAULT_THRESHOLDS}
         if thresholds:
             self._thresholds.update(thresholds)
 
-        self._sessions: Dict[str, MonitoredSession] = {}
-        self._baselines: Dict[str, BehaviorBaseline] = baselines or {}
-        self._alerts: List[AnomalyAlert] = []
-        self._listeners: List[Any] = []
-        self._completed_sessions: List[MonitoredSession] = []
+        self._sessions: dict[str, MonitoredSession] = {}
+        self._baselines: dict[str, BehaviorBaseline] = baselines or {}
+        self._alerts: list[AnomalyAlert] = []
+        self._listeners: list[Any] = []
+        self._completed_sessions: list[MonitoredSession] = []
 
     # -- Session lifecycle ---------------------------------------------------
 
@@ -256,7 +297,7 @@ class AnomalyDetector:
         self,
         task_id: str,
         agent_type: str = "coder",
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> MonitoredSession:
         """Start monitoring a new agent session."""
         session = MonitoredSession(
@@ -265,10 +306,14 @@ class AnomalyDetector:
             metadata=metadata or {},
         )
         self._sessions[session.session_id] = session
-        logger.info("Started monitoring session %s for task %s", session.session_id, task_id)
+        logger.info(
+            "Started monitoring session %s for task %s", session.session_id, task_id
+        )
         return session
 
-    def end_session(self, session_id: str, status: str = "completed") -> MonitoredSession:
+    def end_session(
+        self, session_id: str, status: str = "completed"
+    ) -> MonitoredSession:
         """End monitoring of a session."""
         session = self._get_session(session_id)
         session.status = status
@@ -283,9 +328,9 @@ class AnomalyDetector:
 
     def list_sessions(
         self,
-        status: Optional[str] = None,
-        agent_type: Optional[str] = None,
-    ) -> List[MonitoredSession]:
+        status: str | None = None,
+        agent_type: str | None = None,
+    ) -> list[MonitoredSession]:
         """List all sessions, optionally filtered."""
         all_sessions = list(self._sessions.values()) + self._completed_sessions
         if status:
@@ -300,12 +345,14 @@ class AnomalyDetector:
         self,
         session_id: str,
         event_type: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> AgentEvent:
         """Record an event and run anomaly detection rules."""
         session = self._get_session(session_id)
         if session.status not in ("active",):
-            raise ValueError(f"Cannot record events on session with status '{session.status}'")
+            raise ValueError(
+                f"Cannot record events on session with status '{session.status}'"
+            )
 
         event = AgentEvent(
             event_type=event_type,
@@ -326,15 +373,15 @@ class AnomalyDetector:
 
     def get_anomalies(
         self,
-        session_id: Optional[str] = None,
-        anomaly_type: Optional[str] = None,
-        min_severity: Optional[str] = None,
-    ) -> List[Anomaly]:
+        session_id: str | None = None,
+        anomaly_type: str | None = None,
+        min_severity: str | None = None,
+    ) -> list[Anomaly]:
         """Get detected anomalies, optionally filtered."""
         severity_order = {"low": 0, "medium": 1, "high": 2, "critical": 3}
         all_sessions = list(self._sessions.values()) + self._completed_sessions
 
-        anomalies: List[Anomaly] = []
+        anomalies: list[Anomaly] = []
         for s in all_sessions:
             if session_id and s.session_id != session_id:
                 continue
@@ -344,11 +391,13 @@ class AnomalyDetector:
             anomalies = [a for a in anomalies if a.anomaly_type == anomaly_type]
         if min_severity:
             min_level = severity_order.get(min_severity, 0)
-            anomalies = [a for a in anomalies if severity_order.get(a.severity, 0) >= min_level]
+            anomalies = [
+                a for a in anomalies if severity_order.get(a.severity, 0) >= min_level
+            ]
 
         return anomalies
 
-    def get_alerts(self, session_id: Optional[str] = None) -> List[AnomalyAlert]:
+    def get_alerts(self, session_id: str | None = None) -> list[AnomalyAlert]:
         """Get alerts emitted."""
         if session_id:
             return [a for a in self._alerts if a.session_id == session_id]
@@ -374,15 +423,15 @@ class AnomalyDetector:
 
     # -- Analysis helpers ----------------------------------------------------
 
-    def analyze_session(self, session_id: str) -> Dict[str, Any]:
+    def analyze_session(self, session_id: str) -> dict[str, Any]:
         """Produce a post-mortem analysis for a session."""
         session = self._get_session(session_id)
 
-        event_counts: Dict[str, int] = {}
+        event_counts: dict[str, int] = {}
         for ev in session.events:
             event_counts[ev.event_type] = event_counts.get(ev.event_type, 0) + 1
 
-        anomaly_counts: Dict[str, int] = {}
+        anomaly_counts: dict[str, int] = {}
         for an in session.anomalies:
             anomaly_counts[an.anomaly_type] = anomaly_counts.get(an.anomaly_type, 0) + 1
 
@@ -400,16 +449,18 @@ class AnomalyDetector:
             "was_paused": session.status in ("paused", "terminated"),
         }
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Global statistics across all sessions."""
         all_sessions = list(self._sessions.values()) + self._completed_sessions
         total_anomalies = sum(len(s.anomalies) for s in all_sessions)
         total_events = sum(len(s.events) for s in all_sessions)
 
-        anomaly_type_counts: Dict[str, int] = {}
+        anomaly_type_counts: dict[str, int] = {}
         for s in all_sessions:
             for a in s.anomalies:
-                anomaly_type_counts[a.anomaly_type] = anomaly_type_counts.get(a.anomaly_type, 0) + 1
+                anomaly_type_counts[a.anomaly_type] = (
+                    anomaly_type_counts.get(a.anomaly_type, 0) + 1
+                )
 
         scores = [s.trust_score for s in all_sessions]
 
@@ -417,7 +468,9 @@ class AnomalyDetector:
             "total_sessions": len(all_sessions),
             "active_sessions": len([s for s in all_sessions if s.status == "active"]),
             "paused_sessions": len([s for s in all_sessions if s.status == "paused"]),
-            "terminated_sessions": len([s for s in all_sessions if s.status == "terminated"]),
+            "terminated_sessions": len(
+                [s for s in all_sessions if s.status == "terminated"]
+            ),
             "total_events": total_events,
             "total_anomalies": total_anomalies,
             "total_alerts": len(self._alerts),
@@ -458,7 +511,7 @@ class AnomalyDetector:
         anomaly_type: str,
         severity: str,
         description: str,
-        evidence: Optional[Dict[str, Any]] = None,
+        evidence: dict[str, Any] | None = None,
     ) -> Anomaly:
         score_impact = ANOMALY_SCORE_IMPACT.get(anomaly_type, 10.0)
         anomaly = Anomaly(
@@ -473,17 +526,28 @@ class AnomalyDetector:
         session.trust_score = max(0.0, session.trust_score - score_impact)
         logger.warning(
             "Anomaly detected in session %s: [%s] %s (score now %.1f)",
-            session.session_id, anomaly_type, description, session.trust_score,
+            session.session_id,
+            anomaly_type,
+            description,
+            session.trust_score,
         )
         return anomaly
 
-    def _check_mass_deletion(self, session: MonitoredSession, event: AgentEvent) -> None:
+    def _check_mass_deletion(
+        self, session: MonitoredSession, event: AgentEvent
+    ) -> None:
         if event.event_type != EventType.FILE_DELETE.value:
             return
-        delete_count = sum(1 for e in session.events if e.event_type == EventType.FILE_DELETE.value)
+        delete_count = sum(
+            1 for e in session.events if e.event_type == EventType.FILE_DELETE.value
+        )
         threshold = self._thresholds["mass_deletion_count"]
         if delete_count >= threshold:
-            existing = [a for a in session.anomalies if a.anomaly_type == AnomalyType.MASS_FILE_DELETION.value]
+            existing = [
+                a
+                for a in session.anomalies
+                if a.anomaly_type == AnomalyType.MASS_FILE_DELETION.value
+            ]
             if not existing:
                 self._register_anomaly(
                     session,
@@ -493,8 +557,14 @@ class AnomalyDetector:
                     {"delete_count": delete_count, "threshold": threshold},
                 )
 
-    def _check_sensitive_file_access(self, session: MonitoredSession, event: AgentEvent) -> None:
-        if event.event_type not in (EventType.FILE_READ.value, EventType.FILE_WRITE.value, EventType.FILE_DELETE.value):
+    def _check_sensitive_file_access(
+        self, session: MonitoredSession, event: AgentEvent
+    ) -> None:
+        if event.event_type not in (
+            EventType.FILE_READ.value,
+            EventType.FILE_WRITE.value,
+            EventType.FILE_DELETE.value,
+        ):
             return
         path = event.metadata.get("path", "")
         for sensitive in SENSITIVE_PATHS:
@@ -504,11 +574,17 @@ class AnomalyDetector:
                     AnomalyType.SENSITIVE_FILE_ACCESS.value,
                     "high",
                     f"Access to sensitive path detected: {path}",
-                    {"path": path, "matched_pattern": sensitive, "event_type": event.event_type},
+                    {
+                        "path": path,
+                        "matched_pattern": sensitive,
+                        "event_type": event.event_type,
+                    },
                 )
                 return
 
-    def _check_dangerous_command(self, session: MonitoredSession, event: AgentEvent) -> None:
+    def _check_dangerous_command(
+        self, session: MonitoredSession, event: AgentEvent
+    ) -> None:
         if event.event_type != EventType.COMMAND_EXEC.value:
             return
         command = event.metadata.get("command", "")
@@ -523,7 +599,9 @@ class AnomalyDetector:
                 )
                 return
 
-    def _check_network_access(self, session: MonitoredSession, event: AgentEvent) -> None:
+    def _check_network_access(
+        self, session: MonitoredSession, event: AgentEvent
+    ) -> None:
         if event.event_type != EventType.NETWORK_REQUEST.value:
             return
         url = event.metadata.get("url", "")
@@ -535,8 +613,13 @@ class AnomalyDetector:
             {"url": url},
         )
 
-    def _check_path_traversal(self, session: MonitoredSession, event: AgentEvent) -> None:
-        if event.event_type not in (EventType.FILE_READ.value, EventType.FILE_WRITE.value):
+    def _check_path_traversal(
+        self, session: MonitoredSession, event: AgentEvent
+    ) -> None:
+        if event.event_type not in (
+            EventType.FILE_READ.value,
+            EventType.FILE_WRITE.value,
+        ):
             return
         path = event.metadata.get("path", "")
         if ".." in path or path.startswith("/etc/") or path.startswith("/root/"):
@@ -551,7 +634,9 @@ class AnomalyDetector:
     def _check_rapid_file_changes(self, session: MonitoredSession) -> None:
         threshold_count = self._thresholds["rapid_file_change_count"]
         window_s = self._thresholds["rapid_file_change_window_s"]
-        write_events = [e for e in session.events if e.event_type == EventType.FILE_WRITE.value]
+        write_events = [
+            e for e in session.events if e.event_type == EventType.FILE_WRITE.value
+        ]
         if len(write_events) < threshold_count:
             return
 
@@ -561,7 +646,11 @@ class AnomalyDetector:
         elapsed = (last_ts - first_ts).total_seconds()
 
         if elapsed <= window_s:
-            existing = [a for a in session.anomalies if a.anomaly_type == AnomalyType.RAPID_FILE_CHANGES.value]
+            existing = [
+                a
+                for a in session.anomalies
+                if a.anomaly_type == AnomalyType.RAPID_FILE_CHANGES.value
+            ]
             if not existing:
                 self._register_anomaly(
                     session,
@@ -571,7 +660,9 @@ class AnomalyDetector:
                     {"write_count": len(write_events), "window_seconds": elapsed},
                 )
 
-    def _check_excessive_tokens(self, session: MonitoredSession, event: AgentEvent) -> None:
+    def _check_excessive_tokens(
+        self, session: MonitoredSession, event: AgentEvent
+    ) -> None:
         if event.event_type != EventType.TOKEN_USAGE.value:
             return
         total_tokens = sum(
@@ -582,21 +673,34 @@ class AnomalyDetector:
         baseline = self.get_baseline(session.agent_type)
         max_tokens = baseline.avg_token_usage * self._thresholds["max_token_multiplier"]
         if total_tokens > max_tokens:
-            existing = [a for a in session.anomalies if a.anomaly_type == AnomalyType.EXCESSIVE_TOKEN_USAGE.value]
+            existing = [
+                a
+                for a in session.anomalies
+                if a.anomaly_type == AnomalyType.EXCESSIVE_TOKEN_USAGE.value
+            ]
             if not existing:
                 self._register_anomaly(
                     session,
                     AnomalyType.EXCESSIVE_TOKEN_USAGE.value,
                     "medium",
                     f"Excessive token usage: {total_tokens} (baseline avg: {baseline.avg_token_usage})",
-                    {"total_tokens": total_tokens, "baseline_avg": baseline.avg_token_usage},
+                    {
+                        "total_tokens": total_tokens,
+                        "baseline_avg": baseline.avg_token_usage,
+                    },
                 )
 
     def _check_repetitive_errors(self, session: MonitoredSession) -> None:
-        error_count = sum(1 for e in session.events if e.event_type == EventType.ERROR.value)
+        error_count = sum(
+            1 for e in session.events if e.event_type == EventType.ERROR.value
+        )
         threshold = self._thresholds["max_error_count"]
         if error_count >= threshold:
-            existing = [a for a in session.anomalies if a.anomaly_type == AnomalyType.REPETITIVE_ERRORS.value]
+            existing = [
+                a
+                for a in session.anomalies
+                if a.anomaly_type == AnomalyType.REPETITIVE_ERRORS.value
+            ]
             if not existing:
                 self._register_anomaly(
                     session,
@@ -606,7 +710,9 @@ class AnomalyDetector:
                     {"error_count": error_count, "threshold": threshold},
                 )
 
-    def _check_config_modification(self, session: MonitoredSession, event: AgentEvent) -> None:
+    def _check_config_modification(
+        self, session: MonitoredSession, event: AgentEvent
+    ) -> None:
         if event.event_type != EventType.CONFIG_CHANGE.value:
             return
         path = event.metadata.get("path", "")
@@ -628,14 +734,18 @@ class AnomalyDetector:
             alert = self._emit_alert(session, "terminated")
             logger.critical(
                 "Session %s TERMINATED — trust score %.1f below threshold %.1f",
-                session.session_id, session.trust_score, terminate_threshold,
+                session.session_id,
+                session.trust_score,
+                terminate_threshold,
             )
         elif session.trust_score <= pause_threshold and session.status == "active":
             session.status = "paused"
             alert = self._emit_alert(session, "paused")
             logger.warning(
                 "Session %s PAUSED — trust score %.1f below threshold %.1f",
-                session.session_id, session.trust_score, pause_threshold,
+                session.session_id,
+                session.trust_score,
+                pause_threshold,
             )
 
     def _emit_alert(self, session: MonitoredSession, action: str) -> AnomalyAlert:
@@ -660,9 +770,15 @@ class AnomalyDetector:
         baseline = self.get_baseline(session.agent_type)
         n = baseline.sample_count
 
-        files_written = sum(1 for e in session.events if e.event_type == EventType.FILE_WRITE.value)
-        files_deleted = sum(1 for e in session.events if e.event_type == EventType.FILE_DELETE.value)
-        commands = sum(1 for e in session.events if e.event_type == EventType.COMMAND_EXEC.value)
+        files_written = sum(
+            1 for e in session.events if e.event_type == EventType.FILE_WRITE.value
+        )
+        files_deleted = sum(
+            1 for e in session.events if e.event_type == EventType.FILE_DELETE.value
+        )
+        commands = sum(
+            1 for e in session.events if e.event_type == EventType.COMMAND_EXEC.value
+        )
         tokens = sum(
             e.metadata.get("tokens", 0)
             for e in session.events
@@ -679,10 +795,18 @@ class AnomalyDetector:
 
         # Only update baseline from non-anomalous sessions
         if len(session.anomalies) == 0:
-            baseline.avg_files_written = _update_avg(baseline.avg_files_written, files_written, n)
-            baseline.avg_files_deleted = _update_avg(baseline.avg_files_deleted, files_deleted, n)
-            baseline.avg_commands_executed = _update_avg(baseline.avg_commands_executed, commands, n)
+            baseline.avg_files_written = _update_avg(
+                baseline.avg_files_written, files_written, n
+            )
+            baseline.avg_files_deleted = _update_avg(
+                baseline.avg_files_deleted, files_deleted, n
+            )
+            baseline.avg_commands_executed = _update_avg(
+                baseline.avg_commands_executed, commands, n
+            )
             baseline.avg_token_usage = _update_avg(baseline.avg_token_usage, tokens, n)
-            baseline.avg_session_duration_s = _update_avg(baseline.avg_session_duration_s, duration, n)
+            baseline.avg_session_duration_s = _update_avg(
+                baseline.avg_session_duration_s, duration, n
+            )
             baseline.avg_errors = _update_avg(baseline.avg_errors, errors, n)
             baseline.sample_count = n + 1

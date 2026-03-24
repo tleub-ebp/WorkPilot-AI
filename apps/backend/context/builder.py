@@ -131,7 +131,10 @@ class ContextBuilder:
 
         # Enrich context with structural dependency graph (Feature 28)
         dependency_hints = self._build_dependency_hints(
-            [f.path if isinstance(f, FileMatch) else f.get("path", "") for f in files_to_modify]
+            [
+                f.path if isinstance(f, FileMatch) else f.get("path", "")
+                for f in files_to_modify
+            ]
         )
 
         return TaskContext(
@@ -218,7 +221,10 @@ class ContextBuilder:
 
         # Enrich context with structural dependency graph (Feature 28)
         dependency_hints = self._build_dependency_hints(
-            [f.path if isinstance(f, FileMatch) else f.get("path", "") for f in files_to_modify]
+            [
+                f.path if isinstance(f, FileMatch) else f.get("path", "")
+                for f in files_to_modify
+            ]
         )
 
         return TaskContext(
@@ -259,14 +265,12 @@ class ContextBuilder:
             # Only report cycles that involve at least one of our target files
             all_cycles = analyzer.detect_cycles()
             relevant_cycles = [
-                c.cycle for c in all_cycles
-                if any(p in c.cycle for p in valid_paths)
+                c.cycle for c in all_cycles if any(p in c.cycle for p in valid_paths)
             ]
 
             # Coupling warnings for target files
             coupling = [
-                e for e in analyzer.detect_high_coupling()
-                if e["path"] in valid_paths
+                e for e in analyzer.detect_high_coupling() if e["path"] in valid_paths
             ]
 
             return {

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial Generator - Create personalized tutorials
 
 This module generates step-by-step tutorials based on the code being created.
@@ -20,6 +20,7 @@ class TutorialTopic(str, Enum):
     DEBUGGING = "debugging"
     TESTING = "testing"
     DEPLOYMENT = "deployment"
+
 
 @dataclass
 class TutorialStep:
@@ -59,7 +60,7 @@ class TutorialGenerator:
         self,
         topic: TutorialTopic,
         code_context: dict[str, Any],
-        target_audience: str = "intermediate"
+        target_audience: str = "intermediate",
     ) -> Tutorial:
         """Generate a tutorial for a specific topic"""
         tutorial = Tutorial(
@@ -67,11 +68,10 @@ class TutorialGenerator:
             title=f"{topic.value.replace('_', ' ').title()} Tutorial",
             description="Learn how to use this feature",
             difficulty=target_audience,
-            estimated_time_minutes=30
+            estimated_time_minutes=30,
         )
         return tutorial
-    
+
     def add_step(self, tutorial: Tutorial, step: TutorialStep) -> None:
         """Add a step to a tutorial"""
         tutorial.steps.append(step)
-

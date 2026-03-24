@@ -223,20 +223,22 @@ class GitHubIssueSource(DetectionSource):
             severity = self._assess_severity(issue_labels)
             self._seen_issues.add(issue_number)
 
-            findings.append(DetectionFinding(
-                detection_type=DetectionType.GITHUB_ISSUE,
-                severity=severity,
-                title=f"[#{issue_number}] {issue.get('title', 'Untitled')}",
-                description=issue.get("body", "")[:500],
-                source=self.source_name,
-                metadata={
-                    "issue_number": issue_number,
-                    "labels": issue_labels,
-                    "url": issue.get("html_url", ""),
-                },
-                suggested_action="implement_feature",
-                suggested_tags=["github", "auto-detected"] + issue_labels,
-            ))
+            findings.append(
+                DetectionFinding(
+                    detection_type=DetectionType.GITHUB_ISSUE,
+                    severity=severity,
+                    title=f"[#{issue_number}] {issue.get('title', 'Untitled')}",
+                    description=issue.get("body", "")[:500],
+                    source=self.source_name,
+                    metadata={
+                        "issue_number": issue_number,
+                        "labels": issue_labels,
+                        "url": issue.get("html_url", ""),
+                    },
+                    suggested_action="implement_feature",
+                    suggested_tags=["github", "auto-detected"] + issue_labels,
+                )
+            )
 
         return findings
 
@@ -313,22 +315,24 @@ class SecurityVulnerabilitySource(DetectionSource):
             }
             severity = severity_map.get(severity_str, DetectionSeverity.MEDIUM)
 
-            findings.append(DetectionFinding(
-                detection_type=DetectionType.SECURITY_VULNERABILITY,
-                severity=severity,
-                title=f"Security: {pkg} — {vuln.get('title', vuln_id)}",
-                description=vuln.get("description", "")[:500],
-                source=self.source_name,
-                metadata={
-                    "package": pkg,
-                    "current_version": vuln.get("version", ""),
-                    "fix_version": vuln.get("fix_version", ""),
-                    "vuln_id": vuln_id,
-                    "cve": vuln.get("cve", ""),
-                },
-                suggested_action="fix_vulnerability",
-                suggested_tags=["security", "dependency", "auto-detected"],
-            ))
+            findings.append(
+                DetectionFinding(
+                    detection_type=DetectionType.SECURITY_VULNERABILITY,
+                    severity=severity,
+                    title=f"Security: {pkg} — {vuln.get('title', vuln_id)}",
+                    description=vuln.get("description", "")[:500],
+                    source=self.source_name,
+                    metadata={
+                        "package": pkg,
+                        "current_version": vuln.get("version", ""),
+                        "fix_version": vuln.get("fix_version", ""),
+                        "vuln_id": vuln_id,
+                        "cve": vuln.get("cve", ""),
+                    },
+                    suggested_action="fix_vulnerability",
+                    suggested_tags=["security", "dependency", "auto-detected"],
+                )
+            )
 
         return findings
 
@@ -486,9 +490,7 @@ class MergeConflictSource(DetectionSource):
         Returns:
             A finding if the threshold is reached, None otherwise.
         """
-        self._conflict_counts[file_path] = (
-            self._conflict_counts.get(file_path, 0) + 1
-        )
+        self._conflict_counts[file_path] = self._conflict_counts.get(file_path, 0) + 1
 
         if (
             self._conflict_counts[file_path] >= self.conflict_threshold
@@ -515,9 +517,7 @@ class MergeConflictSource(DetectionSource):
 
         return None
 
-    def scan_from_data(
-        self, conflict_files: list[str]
-    ) -> list[DetectionFinding]:
+    def scan_from_data(self, conflict_files: list[str]) -> list[DetectionFinding]:
         """Record multiple conflict files and return findings.
 
         Args:
@@ -590,12 +590,14 @@ class AutoDetector:
             except Exception as e:
                 logger.error(
                     "Error scanning source '%s': %s",
-                    source.source_name, e,
+                    source.source_name,
+                    e,
                 )
 
         logger.info(
             "Scan complete: %d new findings from %d sources.",
-            len(new_findings), len(self._sources),
+            len(new_findings),
+            len(self._sources),
         )
         return new_findings
 
@@ -659,7 +661,8 @@ class AutoDetector:
         """
         if findings is None:
             findings = [
-                f for f in self._findings.values()
+                f
+                for f in self._findings.values()
                 if f.finding_id not in self._created_task_ids
             ]
 

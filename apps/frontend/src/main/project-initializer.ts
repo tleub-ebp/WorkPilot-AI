@@ -205,8 +205,6 @@ export function initializeGit(projectPath: string, remoteConfig?: { url?: string
               console.log('� GIT-SETUP: � Set up tracking for branch:', branch);
               break;
             } catch {
-              // Branch doesn't exist remotely, try next
-              continue;
             }
           }
         } catch (error) {

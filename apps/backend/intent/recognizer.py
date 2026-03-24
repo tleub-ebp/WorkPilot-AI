@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Intent Recognizer
 =================
@@ -157,9 +157,7 @@ class IntentRecognizer:
 
         return json.loads(text)
 
-    def _parse_analysis(
-        self, data: dict, task_description: str
-    ) -> IntentAnalysis:
+    def _parse_analysis(self, data: dict, task_description: str) -> IntentAnalysis:
         """Parse raw JSON response into IntentAnalysis object."""
         primary_data = data["primary_intent"]
         primary_intent = Intent(
@@ -229,4 +227,3 @@ class IntentRecognizer:
         """Clear the intent analysis cache."""
         self._cache.clear()
         logger.debug("Cleared intent recognition cache")
-

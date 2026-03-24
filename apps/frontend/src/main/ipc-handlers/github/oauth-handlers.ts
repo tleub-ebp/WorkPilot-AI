@@ -802,8 +802,6 @@ export function registerCreateGitHubRepo(): void {
                 debugLog('Set up tracking for branch:', branch);
                 break;
               } catch {
-                // Branch doesn't exist, try next
-                continue;
               }
             }
           } catch (error) {

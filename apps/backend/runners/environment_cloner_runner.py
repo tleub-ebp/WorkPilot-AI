@@ -59,7 +59,9 @@ def run_capture(project_dir: str, source: str = "auto") -> None:
         # "auto" or "compose" — try compose first
         capture = capturer.capture_from_compose()
         if not capture.services and source == "auto":
-            emit_event("status", message="No compose file found, trying running containers...")
+            emit_event(
+                "status", message="No compose file found, trying running containers..."
+            )
             capture = capturer.capture_from_running_containers()
 
     # Save capture
@@ -154,7 +156,9 @@ def run_validate(project_dir: str) -> None:
     emit_event(
         "complete",
         data=result.to_dict(),
-        message="Validation passed" if result.success else f"Validation failed: {', '.join(result.errors)}",
+        message="Validation passed"
+        if result.success
+        else f"Validation failed: {', '.join(result.errors)}",
     )
 
 

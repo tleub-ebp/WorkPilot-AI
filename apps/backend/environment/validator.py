@@ -31,6 +31,7 @@ class ValidationResult:
         port_checks: Port connectivity results.
         errors: Error messages.
     """
+
     success: bool = False
     services_up: list[str] = field(default_factory=list)
     services_down: list[str] = field(default_factory=list)
@@ -114,9 +115,7 @@ class EnvironmentValidator:
         result.success = not result.services_down and not failed_ports
         return result
 
-    def _get_compose_status(
-        self, compose_path: Path
-    ) -> dict[str, bool] | None:
+    def _get_compose_status(self, compose_path: Path) -> dict[str, bool] | None:
         """Get running status of docker-compose services."""
         docker_cmd = self._get_docker_compose_cmd(compose_path)
         if not docker_cmd:
@@ -126,14 +125,18 @@ class EnvironmentValidator:
             proc = subprocess.run(
                 docker_cmd + ["ps", "--format", "json"],
                 cwd=self.project_dir,
-                capture_output=True, text=True, timeout=15,
+                capture_output=True,
+                text=True,
+                timeout=15,
             )
             if proc.returncode != 0:
                 # Fallback: try without --format json
                 proc = subprocess.run(
                     docker_cmd + ["ps"],
                     cwd=self.project_dir,
-                    capture_output=True, text=True, timeout=15,
+                    capture_output=True,
+                    text=True,
+                    timeout=15,
                 )
                 if proc.returncode != 0:
                     return None
@@ -169,6 +172,7 @@ class EnvironmentValidator:
             content = compose_path.read_text(encoding="utf-8")
             # Simple port extraction from YAML
             import re
+
             current_service = ""
             for line in content.splitlines():
                 # Match service name (2-space indent, ending with colon)
@@ -198,7 +202,8 @@ class EnvironmentValidator:
         try:
             proc = subprocess.run(
                 ["docker", "compose", "version"],
-                capture_output=True, timeout=5,
+                capture_output=True,
+                timeout=5,
             )
             if proc.returncode == 0:
                 return ["docker", "compose", "-f", str(compose_path)]
@@ -208,7 +213,8 @@ class EnvironmentValidator:
         try:
             proc = subprocess.run(
                 ["docker-compose", "version"],
-                capture_output=True, timeout=5,
+                capture_output=True,
+                timeout=5,
             )
             if proc.returncode == 0:
                 return ["docker-compose", "-f", str(compose_path)]

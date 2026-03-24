@@ -82,28 +82,88 @@ COPILOT_MODEL = "claude-sonnet-4.6"
 
 PROVIDER_DEFAULT_MODELS: dict[str, dict[str, str]] = {
     # Anthropic / Claude — use Claude shorthands (resolved by resolve_model_id)
-    "anthropic": {"spec": "sonnet", "planning": "sonnet", "coding": "sonnet", "qa": "sonnet"},
-    "claude":    {"spec": "sonnet", "planning": "sonnet", "coding": "sonnet", "qa": "sonnet"},
+    "anthropic": {
+        "spec": "sonnet",
+        "planning": "sonnet",
+        "coding": "sonnet",
+        "qa": "sonnet",
+    },
+    "claude": {
+        "spec": "sonnet",
+        "planning": "sonnet",
+        "coding": "sonnet",
+        "qa": "sonnet",
+    },
     # OpenAI
-    "openai":    {"spec": "gpt-4o", "planning": "gpt-4o", "coding": "gpt-4o", "qa": "gpt-4o"},
+    "openai": {
+        "spec": "gpt-4o",
+        "planning": "gpt-4o",
+        "coding": "gpt-4o",
+        "qa": "gpt-4o",
+    },
     # GitHub Copilot
-    "copilot":   {"spec": COPILOT_MODEL, "planning": COPILOT_MODEL, "coding": COPILOT_MODEL, "qa": COPILOT_MODEL},
+    "copilot": {
+        "spec": COPILOT_MODEL,
+        "planning": COPILOT_MODEL,
+        "coding": COPILOT_MODEL,
+        "qa": COPILOT_MODEL,
+    },
     # Google Gemini
-    "google":    {"spec": GOOGLE_GEMINI_MODEL, "planning": GOOGLE_GEMINI_MODEL, "coding": GOOGLE_GEMINI_MODEL, "qa": GOOGLE_GEMINI_MODEL},
+    "google": {
+        "spec": GOOGLE_GEMINI_MODEL,
+        "planning": GOOGLE_GEMINI_MODEL,
+        "coding": GOOGLE_GEMINI_MODEL,
+        "qa": GOOGLE_GEMINI_MODEL,
+    },
     # Mistral AI
-    "mistral":   {"spec": "mistral-large-2", "planning": "mistral-large-2", "coding": "mistral-large-2", "qa": "mistral-large-2"},
+    "mistral": {
+        "spec": "mistral-large-2",
+        "planning": "mistral-large-2",
+        "coding": "mistral-large-2",
+        "qa": "mistral-large-2",
+    },
     # DeepSeek
-    "deepseek":  {"spec": "deepseek-v3", "planning": "deepseek-v3", "coding": "deepseek-v3", "qa": "deepseek-v3"},
+    "deepseek": {
+        "spec": "deepseek-v3",
+        "planning": "deepseek-v3",
+        "coding": "deepseek-v3",
+        "qa": "deepseek-v3",
+    },
     # Grok (xAI)
-    "grok":      {"spec": "grok-2", "planning": "grok-2", "coding": "grok-2", "qa": "grok-2"},
+    "grok": {
+        "spec": "grok-2",
+        "planning": "grok-2",
+        "coding": "grok-2",
+        "qa": "grok-2",
+    },
     # Meta (LLaMA)
-    "meta":      {"spec": META_LLAMA_MODEL, "planning": META_LLAMA_MODEL, "coding": META_LLAMA_MODEL, "qa": META_LLAMA_MODEL},
+    "meta": {
+        "spec": META_LLAMA_MODEL,
+        "planning": META_LLAMA_MODEL,
+        "coding": META_LLAMA_MODEL,
+        "qa": META_LLAMA_MODEL,
+    },
     # AWS Bedrock
-    "aws":       {"spec": AWS_BEDROCK_MODEL, "planning": AWS_BEDROCK_MODEL, "coding": AWS_BEDROCK_MODEL, "qa": AWS_BEDROCK_MODEL},
+    "aws": {
+        "spec": AWS_BEDROCK_MODEL,
+        "planning": AWS_BEDROCK_MODEL,
+        "coding": AWS_BEDROCK_MODEL,
+        "qa": AWS_BEDROCK_MODEL,
+    },
     # Ollama (local)
-    "ollama":    {"spec": OLLAMA_MODEL, "planning": OLLAMA_MODEL, "coding": OLLAMA_MODEL, "qa": OLLAMA_MODEL},
+    "ollama": {
+        "spec": OLLAMA_MODEL,
+        "planning": OLLAMA_MODEL,
+        "coding": OLLAMA_MODEL,
+        "qa": OLLAMA_MODEL,
+    },
     # Windsurf (Codeium) — SWE-1.5 is the flagship proprietary model
-    "windsurf":  {"spec": WINDSURF_MODEL, "planning": WINDSURF_MODEL, "coding": WINDSURF_MODEL, "qa": WINDSURF_MODEL},
+    "windsurf": {
+        "spec": WINDSURF_MODEL,
+        "planning": WINDSURF_MODEL,
+        "coding": WINDSURF_MODEL,
+        "qa": WINDSURF_MODEL,
+    },
 }
 
 DEFAULT_PHASE_THINKING: dict[str, str] = {
@@ -252,6 +312,7 @@ def get_phase_provider(
     # Check provider selected via IPC (from frontend UI)
     try:
         import provider_api
+
         selected_provider = provider_api.get_selected_provider()
         if selected_provider:
             return selected_provider
@@ -310,14 +371,12 @@ def _resolve_cli_model(cli_model: str | None) -> str | None:
 
 
 def _resolve_auto_profile_model(
-    metadata: TaskMetadataConfig, 
-    phase: Phase, 
-    cli_provider: str | None
+    metadata: TaskMetadataConfig, phase: Phase, cli_provider: str | None
 ) -> str | None:
     """Resolve model from auto profile configuration."""
     if not metadata.get("isAutoProfile") or not metadata.get("phaseModels"):
         return None
-    
+
     phase_models = metadata["phaseModels"]
     provider = cli_provider or metadata.get("provider")
     model = phase_models.get(phase, DEFAULT_PHASE_MODELS[phase])
@@ -325,33 +384,33 @@ def _resolve_auto_profile_model(
 
 
 def _resolve_single_model(
-    metadata: TaskMetadataConfig, 
-    cli_provider: str | None
+    metadata: TaskMetadataConfig, cli_provider: str | None
 ) -> str | None:
     """Resolve model from single model configuration."""
     if not metadata.get("model"):
         return None
-    
+
     provider = cli_provider or metadata.get("provider")
     return _resolve_provider_model(metadata["model"], provider)
 
 
 def _resolve_complexity_routing(
-    spec_dir: Path, 
-    phase: Phase, 
-    cli_provider: str | None, 
-    metadata: TaskMetadataConfig | None
+    spec_dir: Path,
+    phase: Phase,
+    cli_provider: str | None,
+    metadata: TaskMetadataConfig | None,
 ) -> str | None:
     """Resolve model using complexity-based routing."""
     if metadata and not metadata.get("isAutoProfile"):
         return None
-    
+
     try:
         from scheduling.complexity_router import get_complexity_routing
+
         routing = get_complexity_routing(spec_dir)
         if routing.source == "default":
             return None
-        
+
         model = routing.phase_models.get(phase, DEFAULT_PHASE_MODELS[phase])
         provider = cli_provider or (metadata.get("provider") if metadata else None)
         return _resolve_provider_model(model, provider)
@@ -360,10 +419,10 @@ def _resolve_complexity_routing(
 
 
 def _resolve_provider_default(
-    spec_dir: Path, 
-    phase: Phase, 
-    cli_provider: str | None, 
-    metadata: TaskMetadataConfig | None
+    spec_dir: Path,
+    phase: Phase,
+    cli_provider: str | None,
+    metadata: TaskMetadataConfig | None,
 ) -> str | None:
     """Resolve model from provider-specific defaults."""
     provider = cli_provider
@@ -371,12 +430,12 @@ def _resolve_provider_default(
         provider = metadata.get("provider")
     if not provider:
         provider = get_phase_provider(spec_dir)
-    
+
     if provider and provider in PROVIDER_DEFAULT_MODELS:
         provider_models = PROVIDER_DEFAULT_MODELS[provider]
         model = provider_models.get(phase, DEFAULT_PHASE_MODELS[phase])
         return _resolve_provider_model(model, provider)
-    
+
     return None
 
 
@@ -418,14 +477,16 @@ def get_phase_model(
         auto_profile_result = _resolve_auto_profile_model(metadata, phase, cli_provider)
         if auto_profile_result:
             return auto_profile_result
-        
+
         # 4. Non-auto profile: use single model
         single_model_result = _resolve_single_model(metadata, cli_provider)
         if single_model_result:
             return single_model_result
 
     # 5. Complexity-based routing
-    complexity_result = _resolve_complexity_routing(spec_dir, phase, cli_provider, metadata)
+    complexity_result = _resolve_complexity_routing(
+        spec_dir, phase, cli_provider, metadata
+    )
     if complexity_result:
         return complexity_result
 
@@ -481,6 +542,7 @@ def get_phase_thinking(
     if not metadata or metadata.get("isAutoProfile"):
         try:
             from scheduling.complexity_router import get_complexity_routing
+
             routing = get_complexity_routing(spec_dir)
             if routing.source != "default":
                 return routing.phase_thinking.get(phase, DEFAULT_PHASE_THINKING[phase])

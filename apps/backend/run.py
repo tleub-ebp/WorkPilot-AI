@@ -28,17 +28,18 @@ Prerequisites:
     - Claude Code CLI installed
 """
 
-import sys
-import subprocess
-import socket
+import importlib.util
 import io
 import os
-import importlib.util
+import socket
+import subprocess
+import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Charger les variables d'environnement à partir du fichier .env
-load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 # Ensure apps/backend is in path for core/cli/agents imports
 _BACKEND_DIR = Path(__file__).parent.resolve()
@@ -96,6 +97,7 @@ validate_platform_dependencies()
 
 from cli import main
 
+
 def is_uvicorn_running(host="127.0.0.1", port=9000):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.settimeout(1)
@@ -105,21 +107,36 @@ def is_uvicorn_running(host="127.0.0.1", port=9000):
         except (ConnectionRefusedError, OSError):
             return False
 
+
 def is_uvicorn_installed():
     return importlib.util.find_spec("uvicorn") is not None
+
 
 if not is_uvicorn_running():
     if is_uvicorn_installed():
         try:
-            subprocess.Popen([
-                sys.executable, '-m', 'uvicorn', 'provider_api:app',
-                '--host', '127.0.0.1', '--port', '9000', '--reload'
-            ], cwd=os.path.dirname(__file__), env=os.environ.copy())
+            subprocess.Popen(
+                [
+                    sys.executable,
+                    "-m",
+                    "uvicorn",
+                    "provider_api:app",
+                    "--host",
+                    "127.0.0.1",
+                    "--port",
+                    "9000",
+                    "--reload",
+                ],
+                cwd=os.path.dirname(__file__),
+                env=os.environ.copy(),
+            )
             print("[INFO] Lancement automatique du backend FastAPI (uvicorn)...")
         except Exception as e:
             print(f"[ERREUR] Impossible de lancer uvicorn automatiquement: {e}")
     else:
-        print("[ERREUR] uvicorn n'est pas installé dans l'environnement Python courant. Veuillez exécuter 'pip install -r requirements.txt' dans apps/backend ou activer le bon venv.")
+        print(
+            "[ERREUR] uvicorn n'est pas installé dans l'environnement Python courant. Veuillez exécuter 'pip install -r requirements.txt' dans apps/backend ou activer le bon venv."
+        )
 
 if __name__ == "__main__":
     main()

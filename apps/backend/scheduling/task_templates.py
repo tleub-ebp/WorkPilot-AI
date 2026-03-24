@@ -14,10 +14,8 @@ Example:
     >>> print(task["title"])
 """
 
-import copy
 import logging
 import os
-import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -28,6 +26,7 @@ logger = logging.getLogger(__name__)
 # YAML is optional — graceful degradation if not installed
 try:
     import yaml  # type: ignore[import-untyped]
+
     HAS_YAML = True
 except ImportError:
     HAS_YAML = False
@@ -35,6 +34,7 @@ except ImportError:
 
 class TemplateCategory(Enum):
     """Categories of task templates."""
+
     FEATURE = "feature"
     BUGFIX = "bugfix"
     REFACTORING = "refactoring"
@@ -56,6 +56,7 @@ class TemplateVariable:
         default: Default value if not provided during rendering.
         required: Whether this variable must be provided.
     """
+
     name: str
     description: str = ""
     default: str = ""
@@ -101,6 +102,7 @@ class TaskTemplate:
         created_at: When the template was created.
         is_builtin: Whether this is a builtin (non-deletable) template.
     """
+
     id: str
     name: str
     category: TemplateCategory
@@ -208,9 +210,7 @@ class TaskTemplate:
         except ValueError:
             category = TemplateCategory.CUSTOM
 
-        variables = [
-            TemplateVariable.from_dict(v) for v in data.get("variables", [])
-        ]
+        variables = [TemplateVariable.from_dict(v) for v in data.get("variables", [])]
 
         created_at_str = data.get("created_at")
         created_at = datetime.now(timezone.utc)
@@ -264,7 +264,11 @@ BUILTIN_TEMPLATES: list[dict[str, Any]] = [
             {"name": "component", "description": "Component name", "required": True},
             {"name": "feature_name", "description": "Feature name", "required": True},
             {"name": "endpoint", "description": "API endpoint", "default": "/api/v1/"},
-            {"name": "description", "description": "Feature description", "default": ""},
+            {
+                "name": "description",
+                "description": "Feature description",
+                "default": "",
+            },
         ],
         "tags": ["feature", "implementation"],
         "priority": 5,
@@ -296,11 +300,31 @@ BUILTIN_TEMPLATES: list[dict[str, Any]] = [
             "3. Add regression test\n"
         ),
         "variables": [
-            {"name": "bug_title", "description": "Short bug description", "required": True},
-            {"name": "component", "description": "Affected component", "required": True},
-            {"name": "reproduction_steps", "description": "Steps to reproduce", "default": "TBD"},
-            {"name": "expected_behavior", "description": "Expected behavior", "default": "TBD"},
-            {"name": "actual_behavior", "description": "Actual behavior", "default": "TBD"},
+            {
+                "name": "bug_title",
+                "description": "Short bug description",
+                "required": True,
+            },
+            {
+                "name": "component",
+                "description": "Affected component",
+                "required": True,
+            },
+            {
+                "name": "reproduction_steps",
+                "description": "Steps to reproduce",
+                "default": "TBD",
+            },
+            {
+                "name": "expected_behavior",
+                "description": "Expected behavior",
+                "default": "TBD",
+            },
+            {
+                "name": "actual_behavior",
+                "description": "Actual behavior",
+                "default": "TBD",
+            },
         ],
         "tags": ["bugfix", "fix"],
         "priority": 3,
@@ -331,9 +355,21 @@ BUILTIN_TEMPLATES: list[dict[str, Any]] = [
             "- Maintain backward compatibility\n"
         ),
         "variables": [
-            {"name": "target", "description": "Target module/class/function", "required": True},
-            {"name": "refactoring_type", "description": "Type (Extract Method, Split Class, etc.)", "default": "General cleanup"},
-            {"name": "motivation", "description": "Why this refactoring", "default": "Improve code quality and maintainability"},
+            {
+                "name": "target",
+                "description": "Target module/class/function",
+                "required": True,
+            },
+            {
+                "name": "refactoring_type",
+                "description": "Type (Extract Method, Split Class, etc.)",
+                "default": "General cleanup",
+            },
+            {
+                "name": "motivation",
+                "description": "Why this refactoring",
+                "default": "Improve code quality and maintainability",
+            },
         ],
         "tags": ["refactoring", "cleanup"],
         "priority": 6,
@@ -366,8 +402,16 @@ BUILTIN_TEMPLATES: list[dict[str, Any]] = [
             "Revert the dependency change and restore original files.\n"
         ),
         "variables": [
-            {"name": "source", "description": "Source framework/version", "required": True},
-            {"name": "target", "description": "Target framework/version", "required": True},
+            {
+                "name": "source",
+                "description": "Source framework/version",
+                "required": True,
+            },
+            {
+                "name": "target",
+                "description": "Target framework/version",
+                "required": True,
+            },
             {"name": "context", "description": "Migration context", "default": ""},
         ],
         "tags": ["migration", "upgrade"],
@@ -400,7 +444,11 @@ BUILTIN_TEMPLATES: list[dict[str, Any]] = [
         ),
         "variables": [
             {"name": "module", "description": "Module/file to test", "required": True},
-            {"name": "additional_notes", "description": "Additional test notes", "default": ""},
+            {
+                "name": "additional_notes",
+                "description": "Additional test notes",
+                "default": "",
+            },
         ],
         "tags": ["testing", "coverage"],
         "priority": 5,
@@ -432,10 +480,22 @@ BUILTIN_TEMPLATES: list[dict[str, Any]] = [
             "- [ ] Security scan passes\n"
         ),
         "variables": [
-            {"name": "vulnerability", "description": "Vulnerability name/CVE", "required": True},
-            {"name": "component", "description": "Affected component", "required": True},
+            {
+                "name": "vulnerability",
+                "description": "Vulnerability name/CVE",
+                "required": True,
+            },
+            {
+                "name": "component",
+                "description": "Affected component",
+                "required": True,
+            },
             {"name": "severity", "description": "Severity level", "default": "high"},
-            {"name": "description", "description": "Vulnerability description", "default": ""},
+            {
+                "name": "description",
+                "description": "Vulnerability description",
+                "default": "",
+            },
             {"name": "remediation", "description": "Suggested fix", "default": ""},
         ],
         "tags": ["security", "vulnerability"],
@@ -522,7 +582,7 @@ class TaskTemplateManager:
             if filename.endswith((".yaml", ".yml")):
                 filepath = os.path.join(directory, filename)
                 try:
-                    with open(filepath, "r", encoding="utf-8") as f:
+                    with open(filepath, encoding="utf-8") as f:
                         data = yaml.safe_load(f)
                     if data and isinstance(data, dict):
                         tpl = TaskTemplate.from_dict(data)

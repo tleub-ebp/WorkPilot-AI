@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Intent Recognition Prompt
 =========================
@@ -201,12 +201,9 @@ Task: "Add OAuth2 authentication with Google and GitHub"
 Now analyze the task and respond with JSON only."""
 
 
-def format_intent_prompt(
-    task_description: str, additional_context: str = ""
-) -> str:
+def format_intent_prompt(task_description: str, additional_context: str = "") -> str:
     """Format the intent recognition prompt with task details."""
     return INTENT_RECOGNITION_PROMPT.format(
         task_description=task_description,
         additional_context=additional_context or "(No additional context provided)",
     )
-

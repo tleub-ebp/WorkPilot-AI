@@ -129,11 +129,12 @@ class ContextLoader:
         if self.use_llm_intent and self.intent_recognizer:
             try:
                 intent_file = self.spec_dir / "intent_analysis.json"
-                
+
                 # Check if we have cached intent analysis
                 if intent_file.exists():
                     with open(intent_file, encoding="utf-8") as f:
                         from intent import IntentAnalysis
+
                         intent_data = json.load(f)
                         analysis = IntentAnalysis.from_dict(intent_data)
                         logger.info(
@@ -144,22 +145,26 @@ class ContextLoader:
                 else:
                     # Perform fresh intent analysis
                     logger.info("Performing LLM intent recognition...")
-                    analysis = self.intent_recognizer.analyze_from_spec_dir(self.spec_dir)
-                    
+                    analysis = self.intent_recognizer.analyze_from_spec_dir(
+                        self.spec_dir
+                    )
+
                     # Cache the result
                     with open(intent_file, "w", encoding="utf-8") as f:
                         json.dump(analysis.to_dict(), f, indent=2)
-                    
+
                     logger.info(
                         f"Intent detected: {analysis.primary_intent.category.value} "
                         f"(confidence: {analysis.primary_intent.confidence_score:.2f}) "
                         f"-> workflow: {analysis.primary_intent.workflow_type.value}"
                     )
-                    
+
                     return analysis.primary_intent.workflow_type
-                    
+
             except Exception as e:
-                logger.warning(f"LLM intent recognition failed, falling back to keywords: {e}")
+                logger.warning(
+                    f"LLM intent recognition failed, falling back to keywords: {e}"
+                )
 
         # 4. & 5. Fall back to spec content detection
         return self._detect_workflow_type_from_spec(spec_content)

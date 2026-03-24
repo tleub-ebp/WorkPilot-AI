@@ -7,12 +7,12 @@ Unit tests for the StreamingAgentWrapper and related streaming functionality.
 
 import asyncio
 import json
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from pathlib import Path
-import tempfile
 import os
+import tempfile
+from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from agent_wrapper import StreamingAgentWrapper, create_streaming_wrapper
 from websocket_server import StreamingManager
 
@@ -32,7 +32,9 @@ class TestStreamingAgentWrapper:
     @pytest.fixture
     def streaming_wrapper(self, mock_streaming_manager):
         """Create streaming wrapper with mocked dependencies."""
-        with patch('agent_wrapper.get_streaming_manager', return_value=mock_streaming_manager):
+        with patch(
+            "agent_wrapper.get_streaming_manager", return_value=mock_streaming_manager
+        ):
             wrapper = StreamingAgentWrapper("test-session-123", enable_recording=False)
             return wrapper
 
@@ -57,7 +59,9 @@ class TestStreamingAgentWrapper:
         await streaming_wrapper.start_session(metadata)
 
         assert streaming_wrapper._is_active is True
-        mock_streaming_manager.start_session.assert_called_once_with("test-session-123", metadata)
+        mock_streaming_manager.start_session.assert_called_once_with(
+            "test-session-123", metadata
+        )
 
     @pytest.mark.asyncio
     async def test_end_session(self, streaming_wrapper, mock_streaming_manager):
@@ -76,20 +80,17 @@ class TestStreamingAgentWrapper:
     async def test_emit_agent_thinking(self, streaming_wrapper, mock_streaming_manager):
         """Test emitting agent thinking events."""
         await streaming_wrapper.start_session({"session_id": "test-session-123"})
-        
+
         thinking = "Analyzing the code structure..."
         await streaming_wrapper.emit_agent_thinking(thinking)
 
         expected_event = {
             "event_type": "agent_thinking",
             "timestamp": pytest.approx(float, rel=1e-6),
-            "data": {
-                "thinking": thinking,
-                "session_id": "test-session-123"
-            },
-            "session_id": "test-session-123"
+            "data": {"thinking": thinking, "session_id": "test-session-123"},
+            "session_id": "test-session-123",
         }
-        
+
         mock_streaming_manager.broadcast_event.assert_called_once()
         call_args = mock_streaming_manager.broadcast_event.call_args[0]
         assert call_args[0] == "test-session-123"
@@ -100,7 +101,7 @@ class TestStreamingAgentWrapper:
     async def test_emit_agent_response(self, streaming_wrapper, mock_streaming_manager):
         """Test emitting agent response events."""
         await streaming_wrapper.start_session({"session_id": "test-session-123"})
-        
+
         response = "I'll implement the feature using React hooks..."
         await streaming_wrapper.emit_agent_response(response)
 
@@ -113,7 +114,7 @@ class TestStreamingAgentWrapper:
     async def test_emit_file_change(self, streaming_wrapper, mock_streaming_manager):
         """Test emitting file change events."""
         await streaming_wrapper.start_session({"session_id": "test-session-123"})
-        
+
         file_path = "/test/path/src/components/Test.tsx"
         content = "export default function Test() { return <div>Test</div>; }"
         await streaming_wrapper.emit_file_change(file_path, content)
@@ -128,7 +129,7 @@ class TestStreamingAgentWrapper:
     async def test_emit_command(self, streaming_wrapper, mock_streaming_manager):
         """Test emitting command events."""
         await streaming_wrapper.start_session({"session_id": "test-session-123"})
-        
+
         command = "npm install"
         await streaming_wrapper.emit_command(command, "/test/path")
 
@@ -142,7 +143,7 @@ class TestStreamingAgentWrapper:
     async def test_emit_error(self, streaming_wrapper, mock_streaming_manager):
         """Test emitting error events."""
         await streaming_wrapper.start_session({"session_id": "test-session-123"})
-        
+
         error_msg = "Failed to compile TypeScript"
         await streaming_wrapper.emit_error(error_msg)
 
@@ -152,7 +153,9 @@ class TestStreamingAgentWrapper:
         assert call_args[1]["data"]["error"] == error_msg
 
     @pytest.mark.asyncio
-    async def test_no_emit_when_inactive(self, streaming_wrapper, mock_streaming_manager):
+    async def test_no_emit_when_inactive(
+        self, streaming_wrapper, mock_streaming_manager
+    ):
         """Test that events are not emitted when session is inactive."""
         # Don't start the session
         assert streaming_wrapper._is_active is False
@@ -168,34 +171,40 @@ class TestStreamingAgentWrapper:
 class TestCreateStreamingWrapper:
     """Test cases for create_streaming_wrapper function."""
 
-    @patch('agent_wrapper.StreamingAgentWrapper')
-    @patch('agent_wrapper.get_streaming_manager')
+    @patch("agent_wrapper.StreamingAgentWrapper")
+    @patch("agent_wrapper.get_streaming_manager")
     def test_create_wrapper_success(self, mock_get_manager, mock_wrapper_class):
         """Test successful wrapper creation."""
         mock_manager = MagicMock()
         mock_get_manager.return_value = mock_manager
-        
+
         mock_wrapper = MagicMock()
         mock_wrapper_class.return_value = mock_wrapper
 
         result = create_streaming_wrapper("test-session", enable_recording=True)
 
-        mock_wrapper_class.assert_called_once_with("test-session", enable_recording=True)
+        mock_wrapper_class.assert_called_once_with(
+            "test-session", enable_recording=True
+        )
         assert result == mock_wrapper
 
-    @patch('agent_wrapper.StreamingAgentWrapper')
-    @patch('agent_wrapper.get_streaming_manager')
-    def test_create_wrapper_default_recording(self, mock_get_manager, mock_wrapper_class):
+    @patch("agent_wrapper.StreamingAgentWrapper")
+    @patch("agent_wrapper.get_streaming_manager")
+    def test_create_wrapper_default_recording(
+        self, mock_get_manager, mock_wrapper_class
+    ):
         """Test wrapper creation with default recording setting."""
         mock_manager = MagicMock()
         mock_get_manager.return_value = mock_manager
-        
+
         mock_wrapper = MagicMock()
         mock_wrapper_class.return_value = mock_wrapper
 
         result = create_streaming_wrapper("test-session")
 
-        mock_wrapper_class.assert_called_once_with("test-session", enable_recording=True)
+        mock_wrapper_class.assert_called_once_with(
+            "test-session", enable_recording=True
+        )
         assert result == mock_wrapper
 
 
@@ -207,14 +216,15 @@ class TestStreamingIntegration:
         """Test complete session lifecycle with multiple events."""
         # Create a real streaming manager for integration test
         manager = StreamingManager()
-        
+
         # Mock the broadcast to capture events
         events = []
+
         async def capture_broadcast(session_id, event):
             events.append((session_id, event))
-        
+
         manager.broadcast_event = capture_broadcast
-        
+
         # Create wrapper
         wrapper = StreamingAgentWrapper("integration-test", enable_recording=False)
         wrapper.streaming_manager = manager
@@ -224,7 +234,7 @@ class TestStreamingIntegration:
             "session_id": "integration-test",
             "task": "integration-test-task",
             "project_path": "/test",
-            "agent_type": "coder"
+            "agent_type": "coder",
         }
         await wrapper.start_session(metadata)
 

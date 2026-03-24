@@ -16,11 +16,16 @@ from pathlib import Path
 from core.client import create_agent_client
 from core.task_event import TaskEventEmitter
 from core.workflow_logger import workflow_logger
+
 try:
     from core.usage_tracker import (
-        start_build as _ut_start_build,
         finish_build as _ut_finish_build,
+    )
+    from core.usage_tracker import (
         record_task_status as _ut_record_task,
+    )
+    from core.usage_tracker import (
+        start_build as _ut_start_build,
     )
 except ImportError:
     _ut_start_build = _ut_finish_build = _ut_record_task = None  # type: ignore[assignment]
@@ -98,6 +103,7 @@ from .utils import (
 # Import streaming support
 try:
     from streaming.agent_wrapper import create_streaming_wrapper
+
     STREAMING_AVAILABLE = True
 except ImportError:
     STREAMING_AVAILABLE = False
@@ -308,15 +314,15 @@ def _parse_relative_time(message: str) -> int | None:
     in_time_match = re.search(r"in\s+(\d+)\s*(minute|hour|min|hr)s?", message, re.I)
     if not in_time_match:
         return None
-    
+
     amount = int(in_time_match.group(1))
     unit = in_time_match.group(2).lower()
-    
+
     if unit.startswith("hour") or unit.startswith("hr"):
         delta = timedelta(hours=amount)
     else:
         delta = timedelta(minutes=amount)
-    
+
     return int((datetime.now() + delta).timestamp())
 
 
@@ -344,7 +350,7 @@ def _parse_absolute_time(message: str) -> int | None:
     at_time_match = re.search(r"at\s+(\d{1,2}):(\d{2})(?:\s*(am|pm))?", message, re.I)
     if not at_time_match:
         return None
-    
+
     try:
         hour = int(at_time_match.group(1))
         minute = int(at_time_match.group(2))
@@ -442,8 +448,8 @@ async def run_autonomous_agent(
             "spec_dir": str(spec_dir),
             "model": model,
             "max_iterations": max_iterations,
-            "streaming_session_id": streaming_session_id
-        }
+            "streaming_session_id": streaming_session_id,
+        },
     )
 
     # Start build tracking (best-effort)
@@ -459,7 +465,7 @@ async def run_autonomous_agent(
             )
         except Exception:
             pass
-    
+
     # Set environment variable for security hooks to find the correct project directory
     # This is needed because os.getcwd() may return the wrong directory in worktree mode
     os.environ[PROJECT_DIR_ENV_VAR] = str(project_dir.resolve())
@@ -468,16 +474,22 @@ async def run_autonomous_agent(
     streaming_wrapper = None
     if STREAMING_AVAILABLE and streaming_session_id:
         try:
-            streaming_wrapper = create_streaming_wrapper(streaming_session_id, enable_recording=True)
-            await streaming_wrapper.start_session({
-                "session_id": streaming_session_id,
-                "task": spec_dir.name,
-                "project_path": str(project_dir),
-                "agent_type": "coder",
-                "model": model,
-                "max_iterations": max_iterations,
-            })
-            print_status(f"Streaming session started: {streaming_session_id}", "success")
+            streaming_wrapper = create_streaming_wrapper(
+                streaming_session_id, enable_recording=True
+            )
+            await streaming_wrapper.start_session(
+                {
+                    "session_id": streaming_session_id,
+                    "task": spec_dir.name,
+                    "project_path": str(project_dir),
+                    "agent_type": "coder",
+                    "model": model,
+                    "max_iterations": max_iterations,
+                }
+            )
+            print_status(
+                f"Streaming session started: {streaming_session_id}", "success"
+            )
         except Exception as e:
             logger.warning(f"Failed to start streaming session: {e}")
             streaming_wrapper = None
@@ -822,7 +834,11 @@ async def run_autonomous_agent(
                         f"Subtask {subtask_id} marked as STUCK after {attempt_count} failed validation attempts",
                         "error",
                     )
-                    print(muted("Consider: update implementation plan with correct filenames"))
+                    print(
+                        muted(
+                            "Consider: update implementation plan with correct filenames"
+                        )
+                    )
 
                 # Update status
                 status_manager.update(state=BuildState.ERROR)
@@ -890,20 +906,31 @@ async def run_autonomous_agent(
         # Initialize status before async with block in case client context manager fails
         status = "error"
         response = None
-        error_info = {"type": "client_error", "message": "Client session failed to start"}
+        error_info = {
+            "type": "client_error",
+            "message": "Client session failed to start",
+        }
         async with client:
             # Emit agent thinking event
             if streaming_wrapper:
-                await streaming_wrapper.emit_agent_thinking(f"Starting {agent_type} session {iteration} for subtask {subtask_id or 'planning'}")
+                await streaming_wrapper.emit_agent_thinking(
+                    f"Starting {agent_type} session {iteration} for subtask {subtask_id or 'planning'}"
+                )
 
             status, response, error_info = await run_agent_session(
-                client, prompt, spec_dir, verbose=verbose, phase=current_log_phase,
+                client,
+                prompt,
+                spec_dir,
+                verbose=verbose,
+                phase=current_log_phase,
                 streaming_wrapper=streaming_wrapper,
             )
 
             # Emit agent response event
             if streaming_wrapper and response:
-                await streaming_wrapper.emit_agent_response(response[:500])  # Limit response length
+                await streaming_wrapper.emit_agent_response(
+                    response[:500]
+                )  # Limit response length
 
         plan_validated = False
         if is_planning_phase and status != "error":
@@ -1359,9 +1386,9 @@ async def run_autonomous_agent(
                 "completed_subtasks": completed,
                 "total_subtasks": total,
                 "project_dir": str(project_dir),
-                "spec_dir": str(spec_dir.name)
+                "spec_dir": str(spec_dir.name),
             },
-            agent_trace_id
+            agent_trace_id,
         )
     else:
         status_manager.update(state=BuildState.PAUSED)
@@ -1386,9 +1413,9 @@ async def run_autonomous_agent(
                 "total_subtasks": total,
                 "remaining": total - completed,
                 "project_dir": str(project_dir),
-                "spec_dir": str(spec_dir.name)
+                "spec_dir": str(spec_dir.name),
             },
-            agent_trace_id
+            agent_trace_id,
         )
 
     # Clean up streaming session

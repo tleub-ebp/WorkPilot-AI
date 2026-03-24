@@ -175,7 +175,7 @@ export function DecisionTimeline({
   useEffect(() => {
     const api = globalThis.electronAPI;
     if (!api?.onDecisionLogEntry) return;
-    const unsub = api.onDecisionLogEntry((incomingTaskId, entry) => {
+    const unsub = api.onDecisionLogEntry((incomingTaskId: string, entry: DecisionEntry) => {
       if (incomingTaskId === taskId) {
         store.addLiveEntry(taskId, entry);
       }

@@ -21,7 +21,6 @@ import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -30,9 +29,10 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DetectedDependency:
     """A dependency detected in the project."""
+
     name: str
     current_version: str
-    latest_version: Optional[str] = None
+    latest_version: str | None = None
     dep_type: str = "production"  # production, dev, peer
     has_breaking_update: bool = False
     ecosystem: str = "npm"  # npm, pip, cargo, etc.
@@ -44,6 +44,7 @@ class DetectedDependency:
 @dataclass
 class StackAnalysis:
     """Result of analyzing the project's current technology stack."""
+
     project_root: str
     detected_languages: list[str] = field(default_factory=list)
     detected_frameworks: list[str] = field(default_factory=list)
@@ -67,7 +68,12 @@ STACK_INDICATORS = {
     "fastify": ["package.json:fastify"],
     "django": ["manage.py", "requirements.txt:django", "settings.py"],
     "flask": ["requirements.txt:flask"],
-    "nextjs": ["next.config.js", "next.config.mjs", "next.config.ts", "package.json:next"],
+    "nextjs": [
+        "next.config.js",
+        "next.config.mjs",
+        "next.config.ts",
+        "package.json:next",
+    ],
     "typescript": ["tsconfig.json"],
     "webpack": ["webpack.config.js", "webpack.config.ts"],
     "vite": ["vite.config.js", "vite.config.ts", "vite.config.mjs"],
@@ -94,10 +100,18 @@ class StackAnalyzer:
 
         # Detect languages by file extension
         lang_map = {
-            ".py": "python", ".js": "javascript", ".ts": "typescript",
-            ".jsx": "javascript-react", ".tsx": "typescript-react",
-            ".vue": "vue", ".rb": "ruby", ".go": "go", ".rs": "rust",
-            ".java": "java", ".kt": "kotlin", ".swift": "swift",
+            ".py": "python",
+            ".js": "javascript",
+            ".ts": "typescript",
+            ".jsx": "javascript-react",
+            ".tsx": "typescript-react",
+            ".vue": "vue",
+            ".rb": "ruby",
+            ".go": "go",
+            ".rs": "rust",
+            ".java": "java",
+            ".kt": "kotlin",
+            ".swift": "swift",
         }
 
         detected_langs = set()
@@ -105,7 +119,11 @@ class StackAnalyzer:
 
         try:
             for fp in root.rglob("*"):
-                if fp.is_file() and "node_modules" not in str(fp) and ".git" not in str(fp):
+                if (
+                    fp.is_file()
+                    and "node_modules" not in str(fp)
+                    and ".git" not in str(fp)
+                ):
                     file_count += 1
                     ext = fp.suffix.lower()
                     if ext in lang_map:
@@ -124,7 +142,9 @@ class StackAnalyzer:
                     config_path = root / fname
                     if config_path.exists():
                         try:
-                            content = config_path.read_text(encoding="utf-8", errors="ignore")
+                            content = config_path.read_text(
+                                encoding="utf-8", errors="ignore"
+                            )
                             if pkg in content:
                                 analysis.detected_frameworks.append(framework)
                                 break
@@ -138,10 +158,18 @@ class StackAnalyzer:
 
         # Detect config files
         config_patterns = [
-            "package.json", "tsconfig.json", "webpack.config.*",
-            "vite.config.*", ".babelrc", "babel.config.*",
-            "requirements.txt", "setup.py", "pyproject.toml",
-            "Cargo.toml", "go.mod", "Gemfile",
+            "package.json",
+            "tsconfig.json",
+            "webpack.config.*",
+            "vite.config.*",
+            ".babelrc",
+            "babel.config.*",
+            "requirements.txt",
+            "setup.py",
+            "pyproject.toml",
+            "Cargo.toml",
+            "go.mod",
+            "Gemfile",
         ]
         for pattern in config_patterns:
             for match in root.glob(pattern):
@@ -159,7 +187,9 @@ class StackAnalyzer:
                         dep = DetectedDependency(
                             name=name,
                             current_version=version,
-                            dep_type="production" if section == "dependencies" else "dev",
+                            dep_type="production"
+                            if section == "dependencies"
+                            else "dev",
                             ecosystem="npm",
                         )
                         analysis.dependencies.append(dep)
@@ -174,28 +204,34 @@ class StackAnalyzer:
                 for line in req_txt.read_text(encoding="utf-8").splitlines():
                     line = line.strip()
                     if line and not line.startswith("#"):
-                        match = re.match(r"^([a-zA-Z0-9_-]+)\s*([><=!~]+\s*[\d.]+)?", line)
+                        match = re.match(
+                            r"^([a-zA-Z0-9_-]+)\s*([><=!~]+\s*[\d.]+)?", line
+                        )
                         if match:
                             dep = DetectedDependency(
                                 name=match.group(1),
-                                current_version=match.group(2).strip() if match.group(2) else "any",
+                                current_version=match.group(2).strip()
+                                if match.group(2)
+                                else "any",
                                 ecosystem="pip",
                             )
                             analysis.dependencies.append(dep)
             except OSError as e:
                 logger.warning(f"Error reading requirements.txt: {e}")
 
-        logger.info(f"Analysis complete: {len(analysis.detected_languages)} languages, "
-                   f"{len(analysis.detected_frameworks)} frameworks, "
-                   f"{len(analysis.dependencies)} dependencies")
+        logger.info(
+            f"Analysis complete: {len(analysis.detected_languages)} languages, "
+            f"{len(analysis.detected_frameworks)} frameworks, "
+            f"{len(analysis.dependencies)} dependencies"
+        )
 
         return analysis
 
     def analyze_from_data(
         self,
-        languages: Optional[list[str]] = None,
-        frameworks: Optional[list[str]] = None,
-        dependencies: Optional[list[dict]] = None,
+        languages: list[str] | None = None,
+        frameworks: list[str] | None = None,
+        dependencies: list[dict] | None = None,
     ) -> StackAnalysis:
         """Create a stack analysis from provided data (for testing or when filesystem is unavailable)."""
         analysis = StackAnalysis(
@@ -213,12 +249,24 @@ class StackAnalyzer:
 def main():
     """Main entry point for the script."""
     parser = argparse.ArgumentParser(description="Analyze project technology stack")
-    parser.add_argument("--project-root", default=".", help="Path to project root directory")
-    parser.add_argument("--output", help="Output file for analysis results (JSON format)")
-    parser.add_argument("--languages", help="Comma-separated list of languages (for testing)")
-    parser.add_argument("--frameworks", help="Comma-separated list of frameworks (for testing)")
-    parser.add_argument("--dependencies", help="JSON string of dependencies (for testing)")
-    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
+    parser.add_argument(
+        "--project-root", default=".", help="Path to project root directory"
+    )
+    parser.add_argument(
+        "--output", help="Output file for analysis results (JSON format)"
+    )
+    parser.add_argument(
+        "--languages", help="Comma-separated list of languages (for testing)"
+    )
+    parser.add_argument(
+        "--frameworks", help="Comma-separated list of frameworks (for testing)"
+    )
+    parser.add_argument(
+        "--dependencies", help="JSON string of dependencies (for testing)"
+    )
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose logging"
+    )
 
     args = parser.parse_args()
 
@@ -238,7 +286,7 @@ def main():
 
     # Output results
     if args.output:
-        with open(args.output, 'w') as f:
+        with open(args.output, "w") as f:
             json.dump(analysis.to_dict(), f, indent=2)
         logger.info(f"Analysis results saved to {args.output}")
     else:

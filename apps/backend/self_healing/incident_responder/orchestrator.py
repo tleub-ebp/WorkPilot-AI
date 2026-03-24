@@ -15,27 +15,23 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from .cicd_mode import CICDMode
-from .fragility_analyzer import FragilityAnalyzer
 from .mcp_connector import MCPSourceConfig
 from .models import (
     FragilityReport,
     HealingOperation,
     HealingStatus,
-    HealingStep,
     Incident,
     IncidentMode,
-    IncidentSeverity,
     IncidentSource,
     SelfHealingStats,
     _now_iso,
 )
-from .production_mode import ProductionMode
 from .proactive_mode import ProactiveMode
+from .production_mode import ProductionMode
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +53,11 @@ class IncidentResponderOrchestrator:
         auto_create_pr: bool = True,
     ):
         self.project_dir = Path(project_dir)
-        self.data_dir = Path(data_dir) if data_dir else self.project_dir / ".auto-claude" / "self-healing"
+        self.data_dir = (
+            Path(data_dir)
+            if data_dir
+            else self.project_dir / ".auto-claude" / "self-healing"
+        )
         self.auto_fix = auto_fix
         self.auto_create_pr = auto_create_pr
 
@@ -168,7 +168,7 @@ class IncidentResponderOrchestrator:
 
     # ── Common Operations ───────────────────────────────────────
 
-    async def trigger_fix(self, incident_id: str) -> Optional[HealingOperation]:
+    async def trigger_fix(self, incident_id: str) -> HealingOperation | None:
         """Manually trigger a fix for a specific incident."""
         incident = self._find_incident(incident_id)
         if not incident:
@@ -184,7 +184,7 @@ class IncidentResponderOrchestrator:
         self._save_state()
         return operation
 
-    async def retry_incident(self, incident_id: str) -> Optional[HealingOperation]:
+    async def retry_incident(self, incident_id: str) -> HealingOperation | None:
         """Retry healing for a failed incident."""
         incident = self._find_incident(incident_id)
         if not incident:
@@ -222,9 +222,7 @@ class IncidentResponderOrchestrator:
         return {
             "incidents": [i.to_dict() for i in self._incidents],
             "activeOperations": [
-                o.to_dict()
-                for o in self._operations
-                if not o.completed_at
+                o.to_dict() for o in self._operations if not o.completed_at
             ],
             "fragilityReports": [r.to_dict() for r in self._fragility_reports],
             "stats": self.get_stats().to_dict(),
@@ -272,9 +270,7 @@ class IncidentResponderOrchestrator:
             if op.success and op.duration_seconds:
                 resolution_times.append(op.duration_seconds)
         avg_time = (
-            sum(resolution_times) / len(resolution_times)
-            if resolution_times
-            else 0.0
+            sum(resolution_times) / len(resolution_times) if resolution_times else 0.0
         )
 
         # Auto-fix rate
@@ -319,7 +315,9 @@ class IncidentResponderOrchestrator:
                 incident.status = HealingStatus.FAILED
                 return
 
-            operation.complete_step(step, "completed", f"Prompt built ({len(prompt)} chars)")
+            operation.complete_step(
+                step, "completed", f"Prompt built ({len(prompt)} chars)"
+            )
 
             # Step 2: Create worktree and apply fix
             step = operation.add_step("Generating fix in isolated worktree")
@@ -330,7 +328,9 @@ class IncidentResponderOrchestrator:
             # agent session system (create_agent_runtime + run_agent_session).
             # This is a placeholder for the pipeline integration point.
             incident.fix_branch = f"self-healing/{incident.id}"
-            operation.complete_step(step, "completed", f"Fix branch: {incident.fix_branch}")
+            operation.complete_step(
+                step, "completed", f"Fix branch: {incident.fix_branch}"
+            )
 
             # Step 3: QA validation
             step = operation.add_step("Running QA validation")
@@ -360,7 +360,7 @@ class IncidentResponderOrchestrator:
         self._operations.append(operation)
         return operation
 
-    def _find_incident(self, incident_id: str) -> Optional[Incident]:
+    def _find_incident(self, incident_id: str) -> Incident | None:
         """Find an incident by ID."""
         for incident in self._incidents:
             if incident.id == incident_id:

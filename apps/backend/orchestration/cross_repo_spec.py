@@ -22,7 +22,9 @@ class RepoSubSpec:
     repo_path: str  # Local filesystem path to the repo
     spec_dir: str = ""  # Path to sub-spec directory (set after creation)
     worktree_path: str = ""  # Worktree path once created
-    status: str = "pending"  # pending | analyzing | planning | coding | qa | completed | failed
+    status: str = (
+        "pending"  # pending | analyzing | planning | coding | qa | completed | failed
+    )
     pr_url: str = ""
     branch_name: str = ""
     progress: float = 0.0  # 0-100
@@ -89,9 +91,7 @@ class MultiRepoManifest:
                 return sub
         return None
 
-    def update_sub_spec_status(
-        self, repo: str, status: str, **kwargs: Any
-    ) -> None:
+    def update_sub_spec_status(self, repo: str, status: str, **kwargs: Any) -> None:
         """Update status and optional fields for a repo sub-spec."""
         sub = self.get_sub_spec(repo)
         if sub:
@@ -137,9 +137,7 @@ class MultiRepoManifest:
             cross_repo_context=data.get("cross_repo_context", ""),
             breaking_changes=data.get("breaking_changes", []),
         )
-        manifest.repos = [
-            RepoSubSpec.from_dict(r) for r in data.get("repos", [])
-        ]
+        manifest.repos = [RepoSubSpec.from_dict(r) for r in data.get("repos", [])]
         return manifest
 
 
@@ -217,9 +215,7 @@ class CrossRepoSpecManager:
         spec_content = self._generate_master_spec_md(
             task_description, repos, execution_order
         )
-        (self.master_spec_dir / "spec.md").write_text(
-            spec_content, encoding="utf-8"
-        )
+        (self.master_spec_dir / "spec.md").write_text(spec_content, encoding="utf-8")
 
         # Save manifest
         self.save_manifest(manifest)

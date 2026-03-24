@@ -24,8 +24,6 @@ Usage:
     )
 """
 
-import asyncio
-import base64
 import json
 import logging
 import os
@@ -34,7 +32,7 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +48,7 @@ DEFAULT_FONT_FAMILY = "Inter, sans-serif"
 
 class PipelinePhase(str, Enum):
     """Phases of the design-to-code pipeline."""
+
     IDLE = "idle"
     ANALYZING = "analyzing"
     SPEC_GENERATION = "spec_generation"
@@ -63,6 +62,7 @@ class PipelinePhase(str, Enum):
 
 class FrameworkType(str, Enum):
     """Supported frontend frameworks."""
+
     REACT = "react"
     VUE = "vue"
     ANGULAR = "angular"
@@ -73,6 +73,7 @@ class FrameworkType(str, Enum):
 
 class DesignSourceType(str, Enum):
     """Types of design sources."""
+
     SCREENSHOT = "screenshot"
     FIGMA = "figma"
     WIREFRAME = "wireframe"
@@ -83,44 +84,48 @@ class DesignSourceType(str, Enum):
 @dataclass
 class ComponentSpec:
     """Specification for a single UI component."""
+
     name: str
     type: str  # button, input, card, header, nav, etc.
-    props: Dict[str, Any] = field(default_factory=dict)
-    children: List["ComponentSpec"] = field(default_factory=list)
-    styles: Dict[str, str] = field(default_factory=dict)
-    interactions: List[str] = field(default_factory=list)
-    accessibility: Dict[str, str] = field(default_factory=dict)
+    props: dict[str, Any] = field(default_factory=dict)
+    children: list["ComponentSpec"] = field(default_factory=list)
+    styles: dict[str, str] = field(default_factory=dict)
+    interactions: list[str] = field(default_factory=list)
+    accessibility: dict[str, str] = field(default_factory=dict)
     description: str = ""
 
 
 @dataclass
 class LayoutSpec:
     """Layout specification extracted from design."""
+
     type: str  # flex, grid, absolute
     direction: str = "column"  # row, column
     gap: str = "0"
     padding: str = "0"
     alignment: str = "start"
     justify: str = "start"
-    responsive_breakpoints: Dict[str, Dict[str, str]] = field(default_factory=dict)
+    responsive_breakpoints: dict[str, dict[str, str]] = field(default_factory=dict)
 
 
 @dataclass
 class DesignSpec:
     """Complete structured specification from design analysis."""
-    components: List[ComponentSpec] = field(default_factory=list)
-    layout: Optional[LayoutSpec] = None
-    color_palette: Dict[str, str] = field(default_factory=dict)
-    typography: Dict[str, Dict[str, str]] = field(default_factory=dict)
-    spacing_scale: List[str] = field(default_factory=list)
-    interactions: List[Dict[str, Any]] = field(default_factory=list)
-    responsive_notes: List[str] = field(default_factory=list)
+
+    components: list[ComponentSpec] = field(default_factory=list)
+    layout: LayoutSpec | None = None
+    color_palette: dict[str, str] = field(default_factory=dict)
+    typography: dict[str, dict[str, str]] = field(default_factory=dict)
+    spacing_scale: list[str] = field(default_factory=list)
+    interactions: list[dict[str, Any]] = field(default_factory=list)
+    responsive_notes: list[str] = field(default_factory=list)
     raw_analysis: str = ""
 
 
 @dataclass
 class DesignToken:
     """A design token from the project's design system."""
+
     name: str
     value: str
     category: str  # color, spacing, typography, shadow, border, etc.
@@ -130,6 +135,7 @@ class DesignToken:
 @dataclass
 class GeneratedFile:
     """A generated code file."""
+
     path: str
     content: str
     language: str
@@ -139,6 +145,7 @@ class GeneratedFile:
 @dataclass
 class VisualTest:
     """A generated visual test."""
+
     name: str
     test_code: str
     reference_screenshot: str = ""  # base64
@@ -149,15 +156,16 @@ class VisualTest:
 @dataclass
 class PipelineResult:
     """Complete result of the design-to-code pipeline."""
+
     success: bool = False
     phase: PipelinePhase = PipelinePhase.IDLE
-    design_spec: Optional[DesignSpec] = None
-    generated_files: List[GeneratedFile] = field(default_factory=list)
-    visual_tests: List[VisualTest] = field(default_factory=list)
-    design_tokens_used: List[DesignToken] = field(default_factory=list)
-    figma_sync_status: Optional[Dict[str, Any]] = None
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    design_spec: DesignSpec | None = None
+    generated_files: list[GeneratedFile] = field(default_factory=list)
+    visual_tests: list[VisualTest] = field(default_factory=list)
+    design_tokens_used: list[DesignToken] = field(default_factory=list)
+    figma_sync_status: dict[str, Any] | None = None
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
     duration_seconds: float = 0.0
     tokens_used: int = 0
 
@@ -187,20 +195,22 @@ class DesignTokenExtractor:
 
     def __init__(self, project_path: Path):
         self.project_path = project_path
-        self.tokens: List[DesignToken] = []
+        self.tokens: list[DesignToken] = []
 
-    def extract(self, design_system_path: Optional[str] = None) -> List[DesignToken]:
+    def extract(self, design_system_path: str | None = None) -> list[DesignToken]:
         """Extract design tokens from the project."""
         search_paths = []
         if design_system_path:
             search_paths.append(self.project_path / design_system_path)
-        search_paths.extend([
-            self.project_path / "src",
-            self.project_path / "styles",
-            self.project_path / "theme",
-            self.project_path / "design-system",
-            self.project_path,
-        ])
+        search_paths.extend(
+            [
+                self.project_path / "src",
+                self.project_path / "styles",
+                self.project_path / "theme",
+                self.project_path / "design-system",
+                self.project_path,
+            ]
+        )
 
         for search_path in search_paths:
             if not search_path.exists():
@@ -218,7 +228,9 @@ class DesignTokenExtractor:
             for item in directory.iterdir():
                 if item.is_file() and item.name in self.SUPPORTED_TOKEN_FILES:
                     self._parse_token_file(item)
-                elif item.is_dir() and not item.name.startswith((".", "node_modules", "__")):
+                elif item.is_dir() and not item.name.startswith(
+                    (".", "node_modules", "__")
+                ):
                     self._scan_directory(item, depth + 1)
         except PermissionError:
             pass
@@ -253,20 +265,24 @@ class DesignTokenExtractor:
         if isinstance(data, dict):
             if "$value" in data:
                 category = data.get("$type", self._guess_category(prefix))
-                self.tokens.append(DesignToken(
-                    name=prefix.strip("."),
-                    value=str(data["$value"]),
-                    category=category,
-                    description=data.get("$description", ""),
-                ))
+                self.tokens.append(
+                    DesignToken(
+                        name=prefix.strip("."),
+                        value=str(data["$value"]),
+                        category=category,
+                        description=data.get("$description", ""),
+                    )
+                )
             elif "value" in data and isinstance(data["value"], (str, int, float)):
                 category = data.get("type", self._guess_category(prefix))
-                self.tokens.append(DesignToken(
-                    name=prefix.strip("."),
-                    value=str(data["value"]),
-                    category=str(category),
-                    description=data.get("description", ""),
-                ))
+                self.tokens.append(
+                    DesignToken(
+                        name=prefix.strip("."),
+                        value=str(data["value"]),
+                        category=str(category),
+                        description=data.get("description", ""),
+                    )
+                )
             else:
                 for key, value in data.items():
                     if not key.startswith("$"):
@@ -279,22 +295,26 @@ class DesignTokenExtractor:
         for match in css_var_pattern.finditer(content):
             name = match.group(1)
             value = match.group(2).strip()
-            self.tokens.append(DesignToken(
-                name=f"--{name}",
-                value=value,
-                category=self._guess_category(name),
-            ))
+            self.tokens.append(
+                DesignToken(
+                    name=f"--{name}",
+                    value=value,
+                    category=self._guess_category(name),
+                )
+            )
 
         # SCSS variables: $color-primary: #3b82f6;
         scss_var_pattern = re.compile(r"\$([\w-]+)\s*:\s*([^;]+);")
         for match in scss_var_pattern.finditer(content):
             name = match.group(1)
             value = match.group(2).strip()
-            self.tokens.append(DesignToken(
-                name=f"${name}",
-                value=value,
-                category=self._guess_category(name),
-            ))
+            self.tokens.append(
+                DesignToken(
+                    name=f"${name}",
+                    value=value,
+                    category=self._guess_category(name),
+                )
+            )
 
     def _parse_js_tokens(self, content: str) -> None:
         """Parse JS/TS theme config files (Tailwind, Stitches, etc.)."""
@@ -305,21 +325,45 @@ class DesignTokenExtractor:
         for match in color_pattern.finditer(content):
             name = match.group(1)
             value = match.group(2)
-            self.tokens.append(DesignToken(
-                name=name,
-                value=value,
-                category="color",
-            ))
+            self.tokens.append(
+                DesignToken(
+                    name=name,
+                    value=value,
+                    category="color",
+                )
+            )
 
     @staticmethod
     def _guess_category(name: str) -> str:
         """Guess the token category from its name."""
         name_lower = name.lower()
-        if any(k in name_lower for k in ("color", "bg", "background", "text", "border-color", "fill", "stroke")):
+        if any(
+            k in name_lower
+            for k in (
+                "color",
+                "bg",
+                "background",
+                "text",
+                "border-color",
+                "fill",
+                "stroke",
+            )
+        ):
             return "color"
-        if any(k in name_lower for k in ("font", "text-size", "line-height", "letter-spacing", "typography")):
+        if any(
+            k in name_lower
+            for k in (
+                "font",
+                "text-size",
+                "line-height",
+                "letter-spacing",
+                "typography",
+            )
+        ):
             return "typography"
-        if any(k in name_lower for k in ("spacing", "gap", "margin", "padding", "space")):
+        if any(
+            k in name_lower for k in ("spacing", "gap", "margin", "padding", "space")
+        ):
             return "spacing"
         if any(k in name_lower for k in ("shadow", "elevation")):
             return "shadow"
@@ -334,7 +378,7 @@ class DesignTokenExtractor:
         if not self.tokens:
             return "No design tokens found in the project."
 
-        grouped: Dict[str, List[DesignToken]] = {}
+        grouped: dict[str, list[DesignToken]] = {}
         for token in self.tokens:
             grouped.setdefault(token.category, []).append(token)
 
@@ -363,8 +407,8 @@ class VisualTestGenerator:
 
     def generate_tests(
         self,
-        generated_files: List[GeneratedFile],
-    ) -> List[VisualTest]:
+        generated_files: list[GeneratedFile],
+    ) -> list[VisualTest]:
         """Generate visual tests for the generated components."""
         tests = []
         for gf in generated_files:
@@ -383,7 +427,7 @@ class VisualTestGenerator:
         """Check if a file is a component file."""
         return gf.language in ("tsx", "jsx", "vue", "svelte")
 
-    def _extract_component_name(self, gf: GeneratedFile) -> Optional[str]:
+    def _extract_component_name(self, gf: GeneratedFile) -> str | None:
         """Extract the component name from a generated file."""
         path = Path(gf.path)
         name = path.stem
@@ -544,7 +588,6 @@ FRAMEWORK_SYSTEM_PROMPTS = {
 - data-testid attributes for testing
 - Semantic HTML and ARIA attributes for accessibility
 - Responsive design with mobile-first approach""",
-
     FrameworkType.VUE: """You are an expert Vue.js developer. Generate production-ready Vue 3 code using:
 - Composition API with <script setup lang="ts">
 - TypeScript for type safety
@@ -553,7 +596,6 @@ FRAMEWORK_SYSTEM_PROMPTS = {
 - data-testid attributes for testing
 - Semantic HTML and ARIA attributes for accessibility
 - Responsive design with mobile-first approach""",
-
     FrameworkType.ANGULAR: """You are an expert Angular developer. Generate production-ready Angular code using:
 - Standalone components with TypeScript
 - Angular signals where appropriate
@@ -562,7 +604,6 @@ FRAMEWORK_SYSTEM_PROMPTS = {
 - data-testid attributes for testing
 - Semantic HTML and ARIA attributes for accessibility
 - Responsive design with mobile-first approach""",
-
     FrameworkType.SVELTE: """You are an expert Svelte developer. Generate production-ready Svelte code using:
 - Svelte 5 with TypeScript
 - Scoped styles or Tailwind CSS
@@ -594,11 +635,15 @@ class DesignToCodeService:
         self.project_path = Path(project_path)
         self.token_extractor = DesignTokenExtractor(self.project_path)
         self.phase = PipelinePhase.IDLE
-        self.phase_callbacks: List[Any] = []
+        self.phase_callbacks: list[Any] = []
 
         # Configuration
-        self.vision_model = os.getenv("DESIGN_TO_CODE_VISION_MODEL", "claude-3-5-sonnet-20241022")
-        self.code_model = os.getenv("DESIGN_TO_CODE_CODE_MODEL", "claude-3-5-sonnet-20241022")
+        self.vision_model = os.getenv(
+            "DESIGN_TO_CODE_VISION_MODEL", "claude-3-5-sonnet-20241022"
+        )
+        self.code_model = os.getenv(
+            "DESIGN_TO_CODE_CODE_MODEL", "claude-3-5-sonnet-20241022"
+        )
 
     def on_phase_change(self, callback) -> None:
         """Register a callback for phase changes."""
@@ -617,10 +662,10 @@ class DesignToCodeService:
         self,
         image_data: str,
         framework: str = "react",
-        design_system_path: Optional[str] = None,
+        design_system_path: str | None = None,
         source_type: str = "screenshot",
-        figma_file_key: Optional[str] = None,
-        figma_node_id: Optional[str] = None,
+        figma_file_key: str | None = None,
+        figma_node_id: str | None = None,
         generate_tests: bool = True,
         custom_instructions: str = "",
     ) -> PipelineResult:
@@ -642,42 +687,61 @@ class DesignToCodeService:
         """
         start_time = time.time()
         result = PipelineResult()
-        fw = FrameworkType(framework) if framework in FrameworkType._value2member_map_ else FrameworkType.REACT
+        fw = (
+            FrameworkType(framework)
+            if framework in FrameworkType._value2member_map_
+            else FrameworkType.REACT
+        )
 
         try:
             # Phase 1: Vision Analysis
-            self._set_phase(PipelinePhase.ANALYZING, "Analyzing design with Vision AI...")
-            design_spec = await self._analyze_design(image_data, source_type, custom_instructions)
+            self._set_phase(
+                PipelinePhase.ANALYZING, "Analyzing design with Vision AI..."
+            )
+            design_spec = await self._analyze_design(
+                image_data, source_type, custom_instructions
+            )
             result.design_spec = design_spec
 
             # Phase 2: Extract design tokens
-            self._set_phase(PipelinePhase.DESIGN_TOKEN_INTEGRATION, "Extracting design tokens...")
+            self._set_phase(
+                PipelinePhase.DESIGN_TOKEN_INTEGRATION, "Extracting design tokens..."
+            )
             tokens = self.token_extractor.extract(design_system_path)
             result.design_tokens_used = tokens
 
             # Phase 3: Generate structured spec
-            self._set_phase(PipelinePhase.SPEC_GENERATION, "Generating component specification...")
+            self._set_phase(
+                PipelinePhase.SPEC_GENERATION, "Generating component specification..."
+            )
             enriched_spec = self._enrich_spec_with_tokens(design_spec, tokens)
             result.design_spec = enriched_spec
 
             # Phase 4: Generate code
-            self._set_phase(PipelinePhase.CODE_GENERATION, "Generating production-ready code...")
-            generated_files = await self._generate_code(enriched_spec, fw, tokens, custom_instructions)
+            self._set_phase(
+                PipelinePhase.CODE_GENERATION, "Generating production-ready code..."
+            )
+            generated_files = await self._generate_code(
+                enriched_spec, fw, tokens, custom_instructions
+            )
             result.generated_files = generated_files
 
             # Phase 5: Visual test generation
             if generate_tests:
-                self._set_phase(PipelinePhase.VISUAL_TEST_GENERATION, "Generating visual regression tests...")
-                test_gen = VisualTestGenerator(fw)
-                visual_tests = test_gen.generate_tests(
-                    generated_files
+                self._set_phase(
+                    PipelinePhase.VISUAL_TEST_GENERATION,
+                    "Generating visual regression tests...",
                 )
+                test_gen = VisualTestGenerator(fw)
+                visual_tests = test_gen.generate_tests(generated_files)
                 result.visual_tests = visual_tests
 
             # Phase 6: Figma sync (if configured)
             if figma_file_key:
                 self._set_phase(PipelinePhase.FIGMA_SYNC, "Syncing with Figma...")
-                sync_status = await self._sync_figma(figma_file_key, figma_node_id, generated_files)
+                sync_status = await self._sync_figma(
+                    figma_file_key, figma_node_id, generated_files
+                )
                 result.figma_sync_status = sync_status
 
             # Complete
@@ -779,8 +843,6 @@ Return ONLY the JSON, no additional text."""
     async def _call_vision_ai(self, image_data: str, prompt: str) -> str:
         """Call Vision AI (Claude or OpenAI) for image analysis."""
         try:
-            import httpx
-
             # Try Claude Vision first
             anthropic_key = os.getenv("ANTHROPIC_API_KEY")
             if anthropic_key:
@@ -799,7 +861,9 @@ Return ONLY the JSON, no additional text."""
             logger.error(f"Vision AI call failed: {e}")
             raise RuntimeError(f"Vision AI analysis failed: {e}")
 
-    async def _call_claude_vision(self, api_key: str, image_data: str, prompt: str) -> str:
+    async def _call_claude_vision(
+        self, api_key: str, image_data: str, prompt: str
+    ) -> str:
         """Call Claude Vision API for image analysis."""
         import httpx
 
@@ -823,27 +887,31 @@ Return ONLY the JSON, no additional text."""
                 json={
                     "model": self.vision_model,
                     "max_tokens": 4096,
-                    "messages": [{
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "image",
-                                "source": {
-                                    "type": "base64",
-                                    "media_type": media_type,
-                                    "data": b64_data,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "image",
+                                    "source": {
+                                        "type": "base64",
+                                        "media_type": media_type,
+                                        "data": b64_data,
+                                    },
                                 },
-                            },
-                            {"type": "text", "text": prompt},
-                        ],
-                    }],
+                                {"type": "text", "text": prompt},
+                            ],
+                        }
+                    ],
                 },
             )
             response.raise_for_status()
             data = response.json()
             return data["content"][0]["text"]
 
-    async def _call_openai_vision(self, api_key: str, image_data: str, prompt: str) -> str:
+    async def _call_openai_vision(
+        self, api_key: str, image_data: str, prompt: str
+    ) -> str:
         """Call OpenAI GPT-4o Vision API for image analysis."""
         import httpx
 
@@ -857,16 +925,18 @@ Return ONLY the JSON, no additional text."""
                 json={
                     "model": "gpt-4o",
                     "max_tokens": 4096,
-                    "messages": [{
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": prompt},
-                            {
-                                "type": "image_url",
-                                "image_url": {"url": image_data, "detail": "high"},
-                            },
-                        ],
-                    }],
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": prompt},
+                                {
+                                    "type": "image_url",
+                                    "image_url": {"url": image_data, "detail": "high"},
+                                },
+                            ],
+                        }
+                    ],
                 },
             )
             response.raise_for_status()
@@ -875,43 +945,114 @@ Return ONLY the JSON, no additional text."""
 
     def _mock_vision_analysis(self) -> str:
         """Return a mock analysis for development/testing when no API key is available."""
-        return json.dumps({
-            "components": [
-                {
-                    "name": "Header",
-                    "type": "header",
-                    "props": {},
-                    "styles": {"backgroundColor": "#ffffff", "padding": "16px 24px", "borderBottom": "1px solid #e5e7eb"},
-                    "interactions": [],
-                    "accessibility": {"role": "banner"},
-                    "children": [
-                        {"name": "Logo", "type": "image", "props": {"alt": "Logo"}, "styles": {"height": "32px"}, "interactions": [], "accessibility": {}, "children": [], "description": "Company logo"},
-                        {"name": "Navigation", "type": "nav", "props": {}, "styles": {"display": "flex", "gap": "24px"}, "interactions": ["hover highlight"], "accessibility": {"role": "navigation"}, "children": [], "description": "Main navigation links"}
-                    ],
-                    "description": "Page header with logo and navigation"
+        return json.dumps(
+            {
+                "components": [
+                    {
+                        "name": "Header",
+                        "type": "header",
+                        "props": {},
+                        "styles": {
+                            "backgroundColor": "#ffffff",
+                            "padding": "16px 24px",
+                            "borderBottom": "1px solid #e5e7eb",
+                        },
+                        "interactions": [],
+                        "accessibility": {"role": "banner"},
+                        "children": [
+                            {
+                                "name": "Logo",
+                                "type": "image",
+                                "props": {"alt": "Logo"},
+                                "styles": {"height": "32px"},
+                                "interactions": [],
+                                "accessibility": {},
+                                "children": [],
+                                "description": "Company logo",
+                            },
+                            {
+                                "name": "Navigation",
+                                "type": "nav",
+                                "props": {},
+                                "styles": {"display": "flex", "gap": "24px"},
+                                "interactions": ["hover highlight"],
+                                "accessibility": {"role": "navigation"},
+                                "children": [],
+                                "description": "Main navigation links",
+                            },
+                        ],
+                        "description": "Page header with logo and navigation",
+                    },
+                    {
+                        "name": "HeroSection",
+                        "type": "section",
+                        "props": {},
+                        "styles": {
+                            "padding": "64px 24px",
+                            "textAlign": "center",
+                            "backgroundColor": "#f9fafb",
+                        },
+                        "interactions": [],
+                        "accessibility": {"role": "region", "aria-label": "Hero"},
+                        "children": [],
+                        "description": "Hero section with title and call to action",
+                    },
+                ],
+                "layout": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": "0",
+                    "padding": "0",
+                    "alignment": "stretch",
+                    "justify": "start",
                 },
-                {
-                    "name": "HeroSection",
-                    "type": "section",
-                    "props": {},
-                    "styles": {"padding": "64px 24px", "textAlign": "center", "backgroundColor": "#f9fafb"},
-                    "interactions": [],
-                    "accessibility": {"role": "region", "aria-label": "Hero"},
-                    "children": [],
-                    "description": "Hero section with title and call to action"
-                }
-            ],
-            "layout": {"type": "flex", "direction": "column", "gap": "0", "padding": "0", "alignment": "stretch", "justify": "start"},
-            "color_palette": {"primary": "#3b82f6", "secondary": "#6366f1", "background": "#ffffff", "text": "#111827", "accent": "#10b981"},
-            "typography": {
-                "heading": {"fontFamily": DEFAULT_FONT_FAMILY, "fontSize": "36px", "fontWeight": "700"},
-                "body": {"fontFamily": DEFAULT_FONT_FAMILY, "fontSize": "16px", "fontWeight": "400"},
-                "small": {"fontFamily": DEFAULT_FONT_FAMILY, "fontSize": "14px", "fontWeight": "400"}
-            },
-            "spacing_scale": ["4px", "8px", "12px", "16px", "24px", "32px", "48px", "64px"],
-            "interactions": [{"trigger": "click", "target": "CTA Button", "action": "Navigate to signup"}],
-            "responsive_notes": ["Mobile-first layout", "Navigation collapses to hamburger on mobile"]
-        })
+                "color_palette": {
+                    "primary": "#3b82f6",
+                    "secondary": "#6366f1",
+                    "background": "#ffffff",
+                    "text": "#111827",
+                    "accent": "#10b981",
+                },
+                "typography": {
+                    "heading": {
+                        "fontFamily": DEFAULT_FONT_FAMILY,
+                        "fontSize": "36px",
+                        "fontWeight": "700",
+                    },
+                    "body": {
+                        "fontFamily": DEFAULT_FONT_FAMILY,
+                        "fontSize": "16px",
+                        "fontWeight": "400",
+                    },
+                    "small": {
+                        "fontFamily": DEFAULT_FONT_FAMILY,
+                        "fontSize": "14px",
+                        "fontWeight": "400",
+                    },
+                },
+                "spacing_scale": [
+                    "4px",
+                    "8px",
+                    "12px",
+                    "16px",
+                    "24px",
+                    "32px",
+                    "48px",
+                    "64px",
+                ],
+                "interactions": [
+                    {
+                        "trigger": "click",
+                        "target": "CTA Button",
+                        "action": "Navigate to signup",
+                    }
+                ],
+                "responsive_notes": [
+                    "Mobile-first layout",
+                    "Navigation collapses to hamburger on mobile",
+                ],
+            }
+        )
 
     def _parse_design_analysis(self, raw_json: str) -> DesignSpec:
         """Parse the raw JSON analysis into a DesignSpec."""
@@ -983,7 +1124,7 @@ Return ONLY the JSON, no additional text."""
     # =========================================================================
 
     def _enrich_spec_with_tokens(
-        self, spec: DesignSpec, tokens: List[DesignToken]
+        self, spec: DesignSpec, tokens: list[DesignToken]
     ) -> DesignSpec:
         """Map design spec colors/typography to existing design tokens."""
         if not tokens:
@@ -995,12 +1136,14 @@ Return ONLY the JSON, no additional text."""
         for key, color in spec.color_palette.items():
             closest = self._find_closest_token(color, color_tokens)
             if closest:
-                spec.color_palette[key] = f"var({closest})" if closest.startswith("--") else closest
+                spec.color_palette[key] = (
+                    f"var({closest})" if closest.startswith("--") else closest
+                )
 
         return spec
 
     @staticmethod
-    def _find_closest_token(value: str, tokens: Dict[str, str]) -> Optional[str]:
+    def _find_closest_token(value: str, tokens: dict[str, str]) -> str | None:
         """Find the closest matching token for a given value."""
         value_lower = value.lower().strip()
         for token_name, token_value in tokens.items():
@@ -1016,11 +1159,13 @@ Return ONLY the JSON, no additional text."""
         self,
         spec: DesignSpec,
         framework: FrameworkType,
-        tokens: List[DesignToken],
+        tokens: list[DesignToken],
         custom_instructions: str = "",
-    ) -> List[GeneratedFile]:
+    ) -> list[GeneratedFile]:
         """Generate production-ready code from the design spec."""
-        system_prompt = FRAMEWORK_SYSTEM_PROMPTS.get(framework, FRAMEWORK_SYSTEM_PROMPTS[FrameworkType.REACT])
+        system_prompt = FRAMEWORK_SYSTEM_PROMPTS.get(
+            framework, FRAMEWORK_SYSTEM_PROMPTS[FrameworkType.REACT]
+        )
 
         token_context = self.token_extractor.get_tokens_as_context() if tokens else ""
 
@@ -1110,7 +1255,9 @@ Return ONLY the JSON array."""
                 if comp.accessibility:
                     lines.append(f"Accessibility: {json.dumps(comp.accessibility)}")
                 if comp.children:
-                    lines.append(f"Children: {', '.join(c.name for c in comp.children)}")
+                    lines.append(
+                        f"Children: {', '.join(c.name for c in comp.children)}"
+                    )
             lines.append("")
 
         if spec.interactions:
@@ -1180,10 +1327,11 @@ Return ONLY the JSON array."""
 
     def _mock_code_generation(self) -> str:
         """Return mock generated code for development/testing."""
-        return json.dumps([
-            {
-                "path": "src/components/DesignComponent/DesignComponent.tsx",
-                "content": """import React from 'react';
+        return json.dumps(
+            [
+                {
+                    "path": "src/components/DesignComponent/DesignComponent.tsx",
+                    "content": """import React from 'react';
 import styles from './DesignComponent.module.css';
 
 interface DesignComponentProps {
@@ -1212,12 +1360,12 @@ export const DesignComponent: React.FC<DesignComponentProps> = ({ className }) =
 
 export default DesignComponent;
 """,
-                "language": "tsx",
-                "description": "Main component generated from design"
-            },
-            {
-                "path": "src/components/DesignComponent/DesignComponent.module.css",
-                "content": """.container {
+                    "language": "tsx",
+                    "description": "Main component generated from design",
+                },
+                {
+                    "path": "src/components/DesignComponent/DesignComponent.module.css",
+                    "content": """.container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -1305,18 +1453,19 @@ export default DesignComponent;
   }
 }
 """,
-                "language": "css",
-                "description": "Component styles"
-            },
-            {
-                "path": "src/components/DesignComponent/index.ts",
-                "content": "export { DesignComponent, default } from './DesignComponent';\n",
-                "language": "ts",
-                "description": "Barrel export"
-            }
-        ])
+                    "language": "css",
+                    "description": "Component styles",
+                },
+                {
+                    "path": "src/components/DesignComponent/index.ts",
+                    "content": "export { DesignComponent, default } from './DesignComponent';\n",
+                    "language": "ts",
+                    "description": "Barrel export",
+                },
+            ]
+        )
 
-    def _parse_generated_files(self, raw_response: str) -> List[GeneratedFile]:
+    def _parse_generated_files(self, raw_response: str) -> list[GeneratedFile]:
         """Parse the generated files from the AI response."""
         cleaned = raw_response.strip()
         if cleaned.startswith("```"):
@@ -1330,21 +1479,25 @@ export default DesignComponent;
             files_data = json.loads(cleaned)
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse generated files JSON: {e}")
-            return [GeneratedFile(
-                path="generated_output.txt",
-                content=raw_response,
-                language="text",
-                description="Raw AI output (JSON parsing failed)"
-            )]
+            return [
+                GeneratedFile(
+                    path="generated_output.txt",
+                    content=raw_response,
+                    language="text",
+                    description="Raw AI output (JSON parsing failed)",
+                )
+            ]
 
         files = []
         for fd in files_data:
-            files.append(GeneratedFile(
-                path=fd.get("path", "unknown"),
-                content=fd.get("content", ""),
-                language=fd.get("language", "text"),
-                description=fd.get("description", ""),
-            ))
+            files.append(
+                GeneratedFile(
+                    path=fd.get("path", "unknown"),
+                    content=fd.get("content", ""),
+                    language=fd.get("language", "text"),
+                    description=fd.get("description", ""),
+                )
+            )
         return files
 
     # =========================================================================
@@ -1354,9 +1507,9 @@ export default DesignComponent;
     async def _sync_figma(
         self,
         file_key: str,
-        node_id: Optional[str],
-        generated_files: List[GeneratedFile],
-    ) -> Dict[str, Any]:
+        node_id: str | None,
+        generated_files: list[GeneratedFile],
+    ) -> dict[str, Any]:
         """Sync generated code metadata back to Figma (bidirectional)."""
         try:
             from src.connectors.figma_connector import FigmaConnector
@@ -1406,12 +1559,12 @@ async def run_design_to_code_pipeline(
     project_path: str,
     image_data: str,
     framework: str = "react",
-    design_system_path: Optional[str] = None,
+    design_system_path: str | None = None,
     source_type: str = "screenshot",
-    figma_file_key: Optional[str] = None,
+    figma_file_key: str | None = None,
     generate_tests: bool = True,
     custom_instructions: str = "",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Convenience function to run the complete design-to-code pipeline.
 
@@ -1429,11 +1582,11 @@ async def run_design_to_code_pipeline(
     )
 
     design_spec = result.design_spec
-    
+
     # Extract design spec properties to avoid nested conditionals
     color_palette = design_spec.color_palette if design_spec else {}
     typography = design_spec.typography if design_spec else {}
-    
+
     return {
         "success": result.success,
         "phase": result.phase.value,
@@ -1443,13 +1596,17 @@ async def run_design_to_code_pipeline(
                     "name": c.name,
                     "type": c.type,
                     "description": c.description,
-                    "children": [{"name": ch.name, "type": ch.type} for ch in c.children],
+                    "children": [
+                        {"name": ch.name, "type": ch.type} for ch in c.children
+                    ],
                 }
                 for c in (design_spec.components if design_spec else [])
             ],
             "color_palette": color_palette,
             "typography": typography,
-        } if design_spec else None,
+        }
+        if design_spec
+        else None,
         "generated_files": [
             {
                 "path": f.path,

@@ -28,7 +28,7 @@ const EXAMPLE_MIGRATIONS = [
 
 export function CodeMigrationDashboard(): React.ReactElement {
   const { t } = useTranslation(['common']);
-  const { activeProject } = useProjectStore();
+  const activeProject = useProjectStore((s) => s.getActiveProject());
   const {
     phase,
     status,

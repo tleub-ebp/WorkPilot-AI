@@ -30,10 +30,9 @@ import asyncio
 import hashlib
 import json
 import logging
-import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from core.sentry import capture_exception
 
@@ -48,6 +47,7 @@ IMPORT_MARKER_FILE = ".team_sync_imported.json"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _episode_id(episode: dict) -> str:
     """Stable ID for deduplication: hash of (member_id + type + content[:200])."""
@@ -82,6 +82,7 @@ def _save_imported_ids(project_dir: Path, ids: set[str]) -> None:
 # Export helpers
 # ---------------------------------------------------------------------------
 
+
 def _collect_file_based_episodes(project_dir: Path, member_id: str) -> list[dict]:
     """
     Walk all spec directories and gather episodes from memory/*.json files.
@@ -108,7 +109,9 @@ def _collect_file_based_episodes(project_dir: Path, member_id: str) -> list[dict
                 # data may be a dict or list
                 if isinstance(data, list):
                     for entry in data:
-                        episodes.append(_normalise_episode(entry, spec_dir.name, member_id))
+                        episodes.append(
+                            _normalise_episode(entry, spec_dir.name, member_id)
+                        )
                 elif isinstance(data, dict):
                     episodes.append(_normalise_episode(data, spec_dir.name, member_id))
             except Exception as e:
@@ -120,8 +123,14 @@ def _collect_file_based_episodes(project_dir: Path, member_id: str) -> list[dict
 def _normalise_episode(raw: Any, spec_name: str, member_id: str) -> dict:
     """Normalise a raw episode dict into the canonical snapshot format."""
     ep_type = raw.get("type") or raw.get("episode_type") or "session_insight"
-    content = raw.get("content") or raw.get("summary") or raw.get("text") or json.dumps(raw)
-    timestamp = raw.get("timestamp") or raw.get("created_at") or datetime.now(timezone.utc).isoformat()
+    content = (
+        raw.get("content") or raw.get("summary") or raw.get("text") or json.dumps(raw)
+    )
+    timestamp = (
+        raw.get("timestamp")
+        or raw.get("created_at")
+        or datetime.now(timezone.utc).isoformat()
+    )
     return {
         "type": ep_type,
         "content": str(content),
@@ -129,13 +138,18 @@ def _normalise_episode(raw: Any, spec_name: str, member_id: str) -> dict:
         "timestamp": timestamp,
         "member_id": member_id,
         "tags": raw.get("tags", []),
-        "metadata": {k: v for k, v in raw.items() if k not in ("type", "content", "timestamp", "tags")},
+        "metadata": {
+            k: v
+            for k, v in raw.items()
+            if k not in ("type", "content", "timestamp", "tags")
+        },
     }
 
 
 # ---------------------------------------------------------------------------
 # TeamSyncManager
 # ---------------------------------------------------------------------------
+
 
 class TeamSyncManager:
     """
@@ -189,7 +203,9 @@ class TeamSyncManager:
         try:
             with open(snapshot_path, "w", encoding="utf-8") as f:
                 json.dump(snapshot, f, indent=2, ensure_ascii=False)
-            logger.info(f"[TeamSync] Pushed {snapshot['episode_count']} episodes → {snapshot_path}")
+            logger.info(
+                f"[TeamSync] Pushed {snapshot['episode_count']} episodes → {snapshot_path}"
+            )
             return {
                 "success": True,
                 "path": str(snapshot_path),
@@ -203,17 +219,28 @@ class TeamSyncManager:
         try:
             import aiohttp  # type: ignore
         except ImportError:
-            return {"success": False, "error": "aiohttp not installed; use directory mode or install aiohttp"}
+            return {
+                "success": False,
+                "error": "aiohttp not installed; use directory mode or install aiohttp",
+            }
 
         snapshot = self.export_snapshot()
         try:
             async with aiohttp.ClientSession() as session:
                 url = self.config.server_url.rstrip("/") + "/push"
-                async with session.post(url, json=snapshot, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                async with session.post(
+                    url, json=snapshot, timeout=aiohttp.ClientTimeout(total=30)
+                ) as resp:
                     if resp.status == 200:
-                        return {"success": True, "episode_count": snapshot["episode_count"]}
+                        return {
+                            "success": True,
+                            "episode_count": snapshot["episode_count"],
+                        }
                     text = await resp.text()
-                    return {"success": False, "error": f"Server returned {resp.status}: {text}"}
+                    return {
+                        "success": False,
+                        "error": f"Server returned {resp.status}: {text}",
+                    }
         except Exception as e:
             capture_exception(e, component="team_sync", operation="push_http")
             return {"success": False, "error": str(e)}
@@ -266,7 +293,10 @@ class TeamSyncManager:
         try:
             import aiohttp  # type: ignore
         except ImportError:
-            return {"success": False, "error": "aiohttp not installed; use directory mode"}
+            return {
+                "success": False,
+                "error": "aiohttp not installed; use directory mode",
+            }
 
         imported_ids = _load_imported_ids(self.project_dir)
         total_imported = 0
@@ -275,9 +305,14 @@ class TeamSyncManager:
         try:
             async with aiohttp.ClientSession() as session:
                 url = self.config.server_url.rstrip("/") + "/snapshots"
-                async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                async with session.get(
+                    url, timeout=aiohttp.ClientTimeout(total=30)
+                ) as resp:
                     if resp.status != 200:
-                        return {"success": False, "error": f"Server returned {resp.status}"}
+                        return {
+                            "success": False,
+                            "error": f"Server returned {resp.status}",
+                        }
                     snapshots: list[dict] = await resp.json()
 
             for snapshot in snapshots:
@@ -415,21 +450,25 @@ class TeamSyncManager:
                 try:
                     with open(snap_file, encoding="utf-8") as f:
                         snap = json.load(f)
-                    result.append({
-                        "member_id": snap.get("member_id", snap_file.stem),
-                        "exported_at": snap.get("exported_at"),
-                        "episode_count": snap.get("episode_count", 0),
-                        "project": snap.get("project", ""),
-                        "is_self": snap.get("member_id") == self.config.member_id,
-                    })
+                    result.append(
+                        {
+                            "member_id": snap.get("member_id", snap_file.stem),
+                            "exported_at": snap.get("exported_at"),
+                            "episode_count": snap.get("episode_count", 0),
+                            "project": snap.get("project", ""),
+                            "is_self": snap.get("member_id") == self.config.member_id,
+                        }
+                    )
                 except Exception:
-                    result.append({
-                        "member_id": snap_file.stem.replace("_snapshot", ""),
-                        "exported_at": None,
-                        "episode_count": 0,
-                        "project": "",
-                        "is_self": False,
-                    })
+                    result.append(
+                        {
+                            "member_id": snap_file.stem.replace("_snapshot", ""),
+                            "exported_at": None,
+                            "episode_count": 0,
+                            "project": "",
+                            "is_self": False,
+                        }
+                    )
 
         return result
 

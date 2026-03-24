@@ -43,6 +43,7 @@ class ServiceCapture:
         health_check: Health check configuration.
         command: Override command.
     """
+
     name: str
     image: str = ""
     tag: str = "latest"
@@ -81,6 +82,7 @@ class EnvironmentCapture:
         source: Capture source (compose_file, running_containers, manual).
         captured_at: ISO timestamp of capture.
     """
+
     project_name: str
     services: list[ServiceCapture] = field(default_factory=list)
     env_vars: dict[str, str] = field(default_factory=dict)
@@ -143,6 +145,7 @@ class EnvironmentCapturer:
 
         try:
             import yaml
+
             with open(compose_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
 
@@ -170,9 +173,7 @@ class EnvironmentCapturer:
             captured_at=datetime.now(timezone.utc).isoformat(),
         )
 
-    def capture_from_running_containers(
-        self, prefix: str = ""
-    ) -> EnvironmentCapture:
+    def capture_from_running_containers(self, prefix: str = "") -> EnvironmentCapture:
         """Capture config from currently running Docker containers.
 
         Args:
@@ -186,7 +187,9 @@ class EnvironmentCapturer:
         try:
             result = subprocess.run(
                 ["docker", "ps", "--format", "{{.ID}}\t{{.Names}}\t{{.Image}}"],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
             if result.returncode != 0:
                 logger.warning("docker ps failed: %s", result.stderr.strip())
@@ -220,9 +223,7 @@ class EnvironmentCapturer:
             captured_at=datetime.now(timezone.utc).isoformat(),
         )
 
-    def capture_env_files(
-        self, patterns: list[str] | None = None
-    ) -> dict[str, str]:
+    def capture_env_files(self, patterns: list[str] | None = None) -> dict[str, str]:
         """Capture environment variables from .env files.
 
         Secrets are automatically sanitized (replaced with ``<REPLACE_ME>``).
@@ -382,7 +383,9 @@ class EnvironmentCapturer:
         try:
             result = subprocess.run(
                 ["docker", "inspect", container_id],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
             if result.returncode != 0:
                 return ServiceCapture(name=name, image=image)

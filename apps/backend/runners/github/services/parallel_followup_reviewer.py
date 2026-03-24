@@ -55,7 +55,7 @@ try:
     from .sdk_utils import process_agent_stream, process_sdk_stream
 except (ImportError, ValueError, SystemError):
     from context_gatherer import _validate_git_ref
-    from core.client import create_agent_client, create_client
+    from core.client import create_agent_client
     from gh_client import GHClient
     from models import (
         BRANCH_BEHIND_BLOCKER_MSG,
@@ -72,7 +72,7 @@ except (ImportError, ValueError, SystemError):
     from services.io_utils import safe_print
     from services.pr_worktree_manager import PRWorktreeManager
     from services.pydantic_models import ParallelFollowupResponse
-    from services.sdk_utils import process_agent_stream, process_sdk_stream
+    from services.sdk_utils import process_agent_stream
 
 
 logger = logging.getLogger(__name__)

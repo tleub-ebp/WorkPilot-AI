@@ -1,8 +1,9 @@
 """Documentation Agent - Automatic generation and maintenance of technical documentation."""
+
 from .doc_analyzer import DocumentationAnalyzer
 from .doc_generator import DocumentationGenerator
 from .doc_updater import DocumentationUpdater
-from .models import DocSection, DocCoverage, DocGenerationResult, DocType
+from .models import DocCoverage, DocGenerationResult, DocSection, DocType
 
 __all__ = [
     "DocumentationAnalyzer",

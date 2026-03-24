@@ -27,7 +27,9 @@ def handle_env_capture_command(project_dir: Path, source: str = "auto") -> None:
             capture = capturer.capture_from_running_containers()
 
     if not capture.services:
-        print("No services detected. Make sure you have a docker-compose file or running containers.")
+        print(
+            "No services detected. Make sure you have a docker-compose file or running containers."
+        )
         return
 
     output_dir = project_dir / ".auto-claude" / "environment"
@@ -56,6 +58,7 @@ def handle_env_reproduce_command(project_dir: Path) -> None:
         project_dir: Path to the project root.
     """
     import json
+
     from environment.capturer import EnvironmentCapture, ServiceCapture
     from environment.generator import ComposeGenerator
 

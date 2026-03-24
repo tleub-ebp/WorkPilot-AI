@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Intent Recommendations Module
 ==============================
@@ -323,9 +323,7 @@ class IntentRecommender:
             IntentCategory.RESEARCH: ("medium", (4.0, 12.0)),
         }
 
-        complexity, duration = estimates.get(
-            category, ("medium", (4.0, 12.0))
-        )
+        complexity, duration = estimates.get(category, ("medium", (4.0, 12.0)))
 
         # Adjust based on confidence
         if analysis.primary_intent.confidence_score < 0.5:
@@ -368,4 +366,3 @@ class IntentRecommender:
             return ["unit", "visual", "e2e"]
         else:
             return ["unit", "integration"]
-

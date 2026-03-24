@@ -50,7 +50,6 @@ if env_file.exists():
     load_dotenv(env_file)
 
 import argparse
-import json
 import logging
 
 from integrations.graphiti.team_sync.config import TeamSyncConfig
@@ -86,7 +85,9 @@ def cmd_pull(manager: TeamSyncManager) -> None:
     if result.get("success"):
         peers = result.get("peers", [])
         imported = result.get("imported", 0)
-        print(f"  ✓ Imported {imported} new episodes from {len(peers)} peer(s): {', '.join(peers) or '(none)'}")
+        print(
+            f"  ✓ Imported {imported} new episodes from {len(peers)} peer(s): {', '.join(peers) or '(none)'}"
+        )
 
 
 def cmd_status(manager: TeamSyncManager) -> None:
@@ -102,17 +103,22 @@ def cmd_status(manager: TeamSyncManager) -> None:
         print("  " + "─" * 55)
         for p in peers:
             marker = " (you)" if p.get("is_self") else ""
-            print(f"  {p['member_id']:<20} {p['episode_count']:>8}  {p['exported_at'] or '?'}{marker}")
+            print(
+                f"  {p['member_id']:<20} {p['episode_count']:>8}  {p['exported_at'] or '?'}{marker}"
+            )
     else:
         print("  No peer snapshots found.")
 
 
 def cmd_serve(config: TeamSyncConfig, project_dir: Path) -> None:
-    print(f"Starting Team Knowledge Sync HTTP server on {config.server_host}:{config.server_port}…")
+    print(
+        f"Starting Team Knowledge Sync HTTP server on {config.server_host}:{config.server_port}…"
+    )
     print(f"  Team ID  : {config.team_id}")
     print(f"  Member   : {config.member_id}")
-    print(f"  Ctrl+C to stop")
+    print("  Ctrl+C to stop")
     from integrations.graphiti.team_sync.http_server import start_server
+
     start_server(
         project_dir=project_dir,
         team_id=config.team_id,
@@ -140,7 +146,9 @@ def main() -> None:
     parser.add_argument("--sync-path", help="Override TEAM_SYNC_PATH")
     parser.add_argument("--team-id", help="Override TEAM_SYNC_TEAM_ID")
     parser.add_argument("--member-id", help="Override TEAM_SYNC_MEMBER_ID")
-    parser.add_argument("--mode", choices=["directory", "http"], help="Override TEAM_SYNC_MODE")
+    parser.add_argument(
+        "--mode", choices=["directory", "http"], help="Override TEAM_SYNC_MODE"
+    )
     parser.add_argument("--server-url", help="Override TEAM_SYNC_SERVER_URL")
     parser.add_argument("--port", type=int, help="Override TEAM_SYNC_SERVER_PORT")
     args = parser.parse_args()

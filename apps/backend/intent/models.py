@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Intent Recognition Data Models
 ==============================
@@ -87,7 +87,9 @@ class IntentAnalysis:
     primary_intent: Intent
     alternative_intents: list[Intent] = field(default_factory=list)
     task_description: str = ""
-    analyzed_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    analyzed_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
     model_used: str = "claude-3-5-sonnet-20241022"
     requires_clarification: bool = False
     clarification_questions: list[str] = field(default_factory=list)
@@ -155,4 +157,3 @@ class IntentAnalysis:
             requires_clarification=data.get("requires_clarification", False),
             clarification_questions=data.get("clarification_questions", []),
         )
-

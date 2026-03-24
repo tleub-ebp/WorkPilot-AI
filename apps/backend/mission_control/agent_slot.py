@@ -14,11 +14,12 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class AgentStatus(str, Enum):
     """Runtime status of an agent slot."""
+
     IDLE = "idle"
     RUNNING = "running"
     PAUSED = "paused"
@@ -29,6 +30,7 @@ class AgentStatus(str, Enum):
 
 class AgentRole(str, Enum):
     """Pre-defined agent roles with recommended model tiers."""
+
     ARCHITECT = "architect"
     CODER = "coder"
     TESTER = "tester"
@@ -55,6 +57,7 @@ ROLE_MODEL_RECOMMENDATIONS: dict[AgentRole, str] = {
 @dataclass
 class TokenUsage:
     """Token consumption tracking for an agent."""
+
     input_tokens: int = 0
     output_tokens: int = 0
     total_tokens: int = 0
@@ -82,6 +85,7 @@ class AgentSlot:
 
     Represents one running (or idle) agent with its full state.
     """
+
     id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
     name: str = ""
     role: AgentRole = AgentRole.CUSTOM
@@ -110,12 +114,12 @@ class AgentSlot:
     decision_path: list[str] = field(default_factory=list)
 
     # Timing
-    started_at: Optional[float] = None
-    completed_at: Optional[float] = None
-    paused_at: Optional[float] = None
+    started_at: float | None = None
+    completed_at: float | None = None
+    paused_at: float | None = None
 
     # Streaming session link
-    streaming_session_id: Optional[str] = None
+    streaming_session_id: str | None = None
 
     # Error info
     error_message: str = ""

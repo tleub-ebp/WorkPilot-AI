@@ -28,12 +28,12 @@ Output (one JSON object per line):
 """
 
 import argparse
+import asyncio
 import json
+import logging
 import os
 import sys
 import time
-import asyncio
-import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Structured output helpers
 # ---------------------------------------------------------------------------
+
 
 def emit(event: dict) -> None:
     """Emit a JSON event to stdout and flush immediately."""
@@ -57,21 +58,25 @@ def emit_stream(content: str) -> None:
 
 
 def emit_action(action_type: str, description: str, file_path: str = "") -> None:
-    emit({
-        "type": "action",
-        "action_type": action_type,
-        "description": description,
-        "file_path": file_path,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    })
+    emit(
+        {
+            "type": "action",
+            "action_type": action_type,
+            "description": description,
+            "file_path": file_path,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    )
 
 
 def emit_question(content: str) -> None:
-    emit({
-        "type": "question",
-        "content": content,
-        "message_id": f"q_{int(time.time())}",
-    })
+    emit(
+        {
+            "type": "question",
+            "content": content,
+            "message_id": f"q_{int(time.time())}",
+        }
+    )
 
 
 def emit_conflict(file_path: str, message: str) -> None:
@@ -90,12 +95,13 @@ def emit_error(message: str) -> None:
 # Message file helpers (bidirectional communication)
 # ---------------------------------------------------------------------------
 
+
 def read_pending_messages(messages_file: str) -> list[dict]:
     """Read and clear pending messages from the messages file."""
     try:
         if not os.path.exists(messages_file):
             return []
-        with open(messages_file, "r", encoding="utf-8") as f:
+        with open(messages_file, encoding="utf-8") as f:
             data = json.load(f)
         messages = data.get("pending", [])
         if messages:
@@ -110,6 +116,7 @@ def read_pending_messages(messages_file: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 # Main runner
 # ---------------------------------------------------------------------------
+
 
 async def run_pair_programming_session(
     project_dir: str,
@@ -130,8 +137,8 @@ async def run_pair_programming_session(
         sys.path.insert(0, str(backend_dir))
 
     try:
-        from core.client import create_agent_client
         from core.agent_client import ContentBlockType
+        from core.client import create_agent_client
         from core.workflow_logger import workflow_logger
     except ImportError as e:
         emit_error(f"Failed to import backend modules: {e}")
@@ -201,7 +208,9 @@ Begin now. Be systematic and thorough."""
                     last_message_check = time.time()
                     pending = read_pending_messages(messages_file)
                     for pending_msg in pending:
-                        emit_stream(f"\n\n[Developer says: {pending_msg.get('content', '')}]\n\n")
+                        emit_stream(
+                            f"\n\n[Developer says: {pending_msg.get('content', '')}]\n\n"
+                        )
 
                 for block in msg.content:
                     if block.type == ContentBlockType.TEXT and block.text:
@@ -210,9 +219,17 @@ Begin now. Be systematic and thorough."""
 
                         # Detect file operations in the stream
                         lower = block.text.lower()
-                        if "creating file" in lower or "writing file" in lower or "create file" in lower:
+                        if (
+                            "creating file" in lower
+                            or "writing file" in lower
+                            or "create file" in lower
+                        ):
                             emit_action("file_created", block.text[:120].strip())
-                        elif "modifying" in lower or "updating" in lower or "editing" in lower:
+                        elif (
+                            "modifying" in lower
+                            or "updating" in lower
+                            or "editing" in lower
+                        ):
                             emit_action("file_modified", block.text[:120].strip())
 
                     elif block.type == ContentBlockType.TOOL_USE:
@@ -221,27 +238,40 @@ Begin now. Be systematic and thorough."""
 
                         if tool_name in ("create_file", "write_file"):
                             file_path = inp.get("path", inp.get("file_path", ""))
-                            emit_action("file_created", f"Created {file_path}", file_path)
+                            emit_action(
+                                "file_created", f"Created {file_path}", file_path
+                            )
                         elif tool_name in ("edit_file", "str_replace_editor"):
                             file_path = inp.get("path", inp.get("file_path", ""))
-                            emit_action("file_modified", f"Modified {file_path}", file_path)
+                            emit_action(
+                                "file_modified", f"Modified {file_path}", file_path
+                            )
                         elif tool_name == "bash":
                             cmd = str(inp.get("command", ""))[:80]
                             emit_action("command_run", f"Running: {cmd}")
 
         # Check for any dev scope conflicts (simple heuristic)
         full_response = "".join(accumulated_response)
-        dev_scope_keywords = [kw.strip().lower() for kw in dev_scope.split() if len(kw) > 4]
+        dev_scope_keywords = [
+            kw.strip().lower() for kw in dev_scope.split() if len(kw) > 4
+        ]
         for keyword in dev_scope_keywords[:3]:  # Check first 3 keywords
-            if keyword in full_response.lower() and "avoid" not in full_response.lower():
+            if (
+                keyword in full_response.lower()
+                and "avoid" not in full_response.lower()
+            ):
                 emit_conflict(
                     keyword,
-                    f"AI output may touch developer's scope area: '{keyword}'. Review recommended."
+                    f"AI output may touch developer's scope area: '{keyword}'. Review recommended.",
                 )
                 break
 
-        summary = f"Completed AI scope: {ai_scope}. See chat for implementation details."
-        workflow_logger.log_agent_end("PairProgrammingAgent", "pair_programming", "success", trace_id=trace_id)
+        summary = (
+            f"Completed AI scope: {ai_scope}. See chat for implementation details."
+        )
+        workflow_logger.log_agent_end(
+            "PairProgrammingAgent", "pair_programming", "success", trace_id=trace_id
+        )
         emit_done(summary)
 
     except ImportError:
@@ -251,16 +281,21 @@ Begin now. Be systematic and thorough."""
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
-        workflow_logger.log_agent_end("PairProgrammingAgent", "pair_programming", "error", trace_id=trace_id)
+        workflow_logger.log_agent_end(
+            "PairProgrammingAgent", "pair_programming", "error", trace_id=trace_id
+        )
         emit_error(f"Session failed: {e}")
 
 
-def _run_demo_session(goal: str, dev_scope: str, ai_scope: str, messages_file: str) -> None:
+def _run_demo_session(
+    goal: str, dev_scope: str, ai_scope: str, messages_file: str
+) -> None:
     """Demo mode when the SDK is not available — streams a simulated response."""
     steps = [
         ("planning", f"Analyzing requirements for: {ai_scope}"),
-        ("active",   f"Starting implementation of {ai_scope}..."),
+        ("active", f"Starting implementation of {ai_scope}..."),
     ]
     for status, msg in steps:
         emit_status(status, msg)
@@ -305,14 +340,17 @@ def _run_demo_session(goal: str, dev_scope: str, ai_scope: str, messages_file: s
         emit_stream(f"\n\n[Responding to your message: {msg.get('content', '')}]\n")
         emit_stream("Got it! I'll incorporate that into my implementation.\n")
 
-    emit_stream("\n### Summary\n\nDemo session complete. "
-                "Configure the Claude SDK to enable real pair programming.\n")
+    emit_stream(
+        "\n### Summary\n\nDemo session complete. "
+        "Configure the Claude SDK to enable real pair programming.\n"
+    )
     emit_done(f"Demo completed for scope: {ai_scope}")
 
 
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="AI Pair Programming Runner")
@@ -327,15 +365,17 @@ def main() -> None:
 
     logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
 
-    asyncio.run(run_pair_programming_session(
-        project_dir=args.project_dir,
-        project_id=args.project_id,
-        session_id=args.session_id,
-        goal=args.goal,
-        dev_scope=args.dev_scope,
-        ai_scope=args.ai_scope,
-        messages_file=args.messages_file,
-    ))
+    asyncio.run(
+        run_pair_programming_session(
+            project_dir=args.project_dir,
+            project_id=args.project_id,
+            session_id=args.session_id,
+            goal=args.goal,
+            dev_scope=args.dev_scope,
+            ai_scope=args.ai_scope,
+            messages_file=args.messages_file,
+        )
+    )
 
 
 if __name__ == "__main__":

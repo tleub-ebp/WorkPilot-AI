@@ -1,4 +1,4 @@
-﻿"""
+"""
 Auto-Fix Loop Module
 ====================
 
@@ -31,8 +31,10 @@ except ImportError:
     # Fallback if memory manager not available
     async def get_graphiti_context(*args, **kwargs):
         return ""
+
     async def save_session_memory(*args, **kwargs):
         pass
+
 
 try:
     from analysis.test_discovery import TestDiscovery
@@ -42,10 +44,13 @@ except ImportError:
 try:
     from core.client import create_agent_client, create_client
 except ImportError:
+
     def create_client(*args, **kwargs):
         return None
+
     def create_agent_client(*args, **kwargs):
         return None
+
 
 try:
     from core.task_event import TaskEventEmitter
@@ -55,23 +60,42 @@ except ImportError:
 try:
     from debug import debug, debug_error, debug_section, debug_success, debug_warning
 except ImportError:
-    def debug(*args, **kwargs): pass
-    def debug_error(*args, **kwargs): pass
-    def debug_section(*args, **kwargs): pass
-    def debug_success(*args, **kwargs): pass
-    def debug_warning(*args, **kwargs): pass
+
+    def debug(*args, **kwargs):
+        pass
+
+    def debug_error(*args, **kwargs):
+        pass
+
+    def debug_section(*args, **kwargs):
+        pass
+
+    def debug_success(*args, **kwargs):
+        pass
+
+    def debug_warning(*args, **kwargs):
+        pass
+
 
 try:
     from phase_config import get_phase_model, get_phase_thinking_budget
 except ImportError:
-    def get_phase_model(*args, **kwargs): return None
-    def get_phase_thinking_budget(*args, **kwargs): return "medium"
+
+    def get_phase_model(*args, **kwargs):
+        return None
+
+    def get_phase_thinking_budget(*args, **kwargs):
+        return "medium"
+
 
 try:
     from task_logger import LogPhase, get_task_logger
 except ImportError:
     LogPhase = None
-    def get_task_logger(*args, **kwargs): return None
+
+    def get_task_logger(*args, **kwargs):
+        return None
+
 
 from .fixer import run_qa_fixer_session
 
@@ -232,9 +256,7 @@ class AutoFixLoop:
                 print("\n" + "=" * 70)
                 print("  ✅ ALL TESTS PASSED!")
                 print("=" * 70)
-                print(
-                    f"\nTests fixed successfully after {attempt_number} attempt(s)."
-                )
+                print(f"\nTests fixed successfully after {attempt_number} attempt(s).")
 
                 # Save success to memory
                 await self._save_success_to_memory(attempt_number, memory_context)
@@ -351,9 +373,7 @@ class AutoFixLoop:
                 "attempts": attempt_number,
                 "maxAttempts": max_attempts,
                 "finalFailures": (
-                    self.attempts[-1].test_result.failed_count
-                    if self.attempts
-                    else 0
+                    self.attempts[-1].test_result.failed_count if self.attempts else 0
                 ),
             },
         )
@@ -597,9 +617,7 @@ The automated tests have failed. Please analyze the test output below and apply 
             debug_error("auto_fix_loop", f"Failed to load memory context: {e}")
             return "Memory context unavailable."
 
-    async def _save_success_to_memory(
-        self, attempts: int, memory_context: str
-    ) -> None:
+    async def _save_success_to_memory(self, attempts: int, memory_context: str) -> None:
         """Save successful fix to memory for learning."""
         try:
             if not self.attempts:
@@ -632,9 +650,7 @@ The automated tests have failed. Please analyze the test output below and apply 
         except Exception as e:
             debug_error("auto_fix_loop", f"Failed to save success to memory: {e}")
 
-    async def _save_failure_to_memory(
-        self, attempts: int, memory_context: str
-    ) -> None:
+    async def _save_failure_to_memory(self, attempts: int, memory_context: str) -> None:
         """Save failure to memory for learning."""
         try:
             if not self.attempts:
@@ -664,7 +680,8 @@ The automated tests have failed. Please analyze the test output below and apply 
             plan_file = self.spec_dir / "implementation_plan.json"
             if not plan_file.exists():
                 debug_warning(
-                    "auto_fix_loop", "implementation_plan.json not found, skipping metrics"
+                    "auto_fix_loop",
+                    "implementation_plan.json not found, skipping metrics",
                 )
                 return
 
@@ -746,7 +763,7 @@ The automated test-fix loop was unable to resolve all test failures after {len(s
 
 ### Last Test Output
 ```
-{self.attempts[-1].test_result.output if self.attempts else 'No output'}
+{self.attempts[-1].test_result.output if self.attempts else "No output"}
 ```
 
 ### Next Steps

@@ -6,10 +6,8 @@ into agent system prompts before each build.
 """
 
 import logging
-from pathlib import Path
-from typing import Optional
 
-from .models import LearningPattern, PatternType
+from .models import PatternType
 from .pattern_storage import PatternStorage
 
 logger = logging.getLogger(__name__)
@@ -28,8 +26,8 @@ class PatternApplicator:
     def get_instructions_for_phase(
         self,
         phase: str,
-        min_confidence: Optional[float] = None,
-        task_context: Optional[dict] = None,
+        min_confidence: float | None = None,
+        task_context: dict | None = None,
     ) -> str:
         """Generate a learning-based instruction block to append to agent prompts.
 
@@ -60,9 +58,15 @@ class PatternApplicator:
         patterns.sort(key=lambda p: (p.confidence, p.occurrence_count), reverse=True)
 
         # Split into success and failure patterns
-        success_patterns = [p for p in patterns if p.pattern_type == PatternType.SUCCESS]
-        failure_patterns = [p for p in patterns if p.pattern_type == PatternType.FAILURE]
-        optimization_patterns = [p for p in patterns if p.pattern_type == PatternType.OPTIMIZATION]
+        success_patterns = [
+            p for p in patterns if p.pattern_type == PatternType.SUCCESS
+        ]
+        failure_patterns = [
+            p for p in patterns if p.pattern_type == PatternType.FAILURE
+        ]
+        optimization_patterns = [
+            p for p in patterns if p.pattern_type == PatternType.OPTIMIZATION
+        ]
 
         # Limit each section
         success_patterns = success_patterns[: self.MAX_PATTERNS_PER_SECTION]
@@ -116,7 +120,9 @@ class PatternApplicator:
 
     def get_applied_pattern_ids(self, phase: str) -> list[str]:
         """Get pattern IDs that would be applied for the given phase."""
-        patterns = self.storage.get_patterns_for_phase(phase, min_confidence=self.MIN_CONFIDENCE)
+        patterns = self.storage.get_patterns_for_phase(
+            phase, min_confidence=self.MIN_CONFIDENCE
+        )
         patterns.sort(key=lambda p: p.confidence, reverse=True)
         return [p.pattern_id for p in patterns[: self.MAX_TOTAL_PATTERNS]]
 

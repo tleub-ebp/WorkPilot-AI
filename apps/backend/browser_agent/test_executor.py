@@ -22,10 +22,14 @@ class TestExecutor:
 
     # Common test file patterns
     TEST_PATTERNS = [
-        "*.spec.ts", "*.spec.js",
-        "*.test.ts", "*.test.js",
-        "*.e2e.ts", "*.e2e.js",
-        "*_test.py", "test_*.py",
+        "*.spec.ts",
+        "*.spec.js",
+        "*.test.ts",
+        "*.test.js",
+        "*.e2e.ts",
+        "*.e2e.js",
+        "*_test.py",
+        "test_*.py",
     ]
 
     def __init__(self, project_dir: Path):
@@ -56,11 +60,13 @@ class TestExecutor:
                     else:
                         test_type = "custom"
 
-                    tests.append(TestInfo(
-                        name=test_file.stem,
-                        path=rel_path,
-                        type=test_type,
-                    ))
+                    tests.append(
+                        TestInfo(
+                            name=test_file.stem,
+                            path=rel_path,
+                            type=test_type,
+                        )
+                    )
 
         return tests
 
@@ -68,7 +74,9 @@ class TestExecutor:
         """Run E2E tests and return structured results."""
         discovered = self.discover_tests()
         if not discovered:
-            return TestRunResult(total=0, passed=0, failed=0, skipped=0, duration_ms=0, results=[])
+            return TestRunResult(
+                total=0, passed=0, failed=0, skipped=0, duration_ms=0, results=[]
+            )
 
         # Separate by type
         playwright_tests = [t for t in discovered if t.type == "playwright"]
@@ -109,11 +117,18 @@ class TestExecutor:
         test_paths = [t.path for t in tests]
 
         try:
-            json_report = self.project_dir / ".auto-claude" / "browser-agent" / "playwright-report.json"
+            json_report = (
+                self.project_dir
+                / ".auto-claude"
+                / "browser-agent"
+                / "playwright-report.json"
+            )
             json_report.parent.mkdir(parents=True, exist_ok=True)
 
             cmd = [
-                "npx", "playwright", "test",
+                "npx",
+                "playwright",
+                "test",
                 "--reporter=json",
                 *test_paths,
             ]
@@ -138,32 +153,40 @@ class TestExecutor:
                 # Fallback: create results from test list based on exit code
                 status = "passed" if proc.returncode == 0 else "failed"
                 for test in tests:
-                    results.append(TestResult(
-                        name=test.name,
-                        path=test.path,
-                        status=status,
-                        duration_ms=duration / len(tests),
-                        error_message=proc.stderr[:500] if status == "failed" else None,
-                    ))
+                    results.append(
+                        TestResult(
+                            name=test.name,
+                            path=test.path,
+                            status=status,
+                            duration_ms=duration / len(tests),
+                            error_message=proc.stderr[:500]
+                            if status == "failed"
+                            else None,
+                        )
+                    )
 
         except subprocess.TimeoutExpired:
             for test in tests:
-                results.append(TestResult(
-                    name=test.name,
-                    path=test.path,
-                    status="error",
-                    duration_ms=300000,
-                    error_message="Test execution timed out (300s)",
-                ))
+                results.append(
+                    TestResult(
+                        name=test.name,
+                        path=test.path,
+                        status="error",
+                        duration_ms=300000,
+                        error_message="Test execution timed out (300s)",
+                    )
+                )
         except FileNotFoundError:
             for test in tests:
-                results.append(TestResult(
-                    name=test.name,
-                    path=test.path,
-                    status="error",
-                    duration_ms=0,
-                    error_message="npx/playwright not found. Install with: npm install @playwright/test",
-                ))
+                results.append(
+                    TestResult(
+                        name=test.name,
+                        path=test.path,
+                        status="error",
+                        duration_ms=0,
+                        error_message="npx/playwright not found. Install with: npm install @playwright/test",
+                    )
+                )
 
         return results
 
@@ -184,13 +207,15 @@ class TestExecutor:
                     if result.get("error"):
                         error_msg = result["error"].get("message", "")[:500]
 
-                    results.append(TestResult(
-                        name=spec.get("title", "unknown"),
-                        path=spec.get("file", ""),
-                        status=status,
-                        duration_ms=result.get("duration", 0),
-                        error_message=error_msg,
-                    ))
+                    results.append(
+                        TestResult(
+                            name=spec.get("title", "unknown"),
+                            path=spec.get("file", ""),
+                            status=status,
+                            duration_ms=result.get("duration", 0),
+                            error_message=error_msg,
+                        )
+                    )
 
         # Recurse into child suites
         for child in suite.get("suites", []):
@@ -205,7 +230,9 @@ class TestExecutor:
 
         try:
             cmd = [
-                "python", "-m", "pytest",
+                "python",
+                "-m",
+                "pytest",
                 "--tb=short",
                 "-q",
                 "--json-report",
@@ -231,33 +258,43 @@ class TestExecutor:
                     if status == "xfailed":
                         status = "skipped"
 
-                    results.append(TestResult(
-                        name=test_data.get("nodeid", "unknown").split("::")[-1],
-                        path=test_data.get("nodeid", "").split("::")[0],
-                        status=status,
-                        duration_ms=test_data.get("duration", 0) * 1000,
-                        error_message=test_data.get("call", {}).get("longrepr", None),
-                    ))
+                    results.append(
+                        TestResult(
+                            name=test_data.get("nodeid", "unknown").split("::")[-1],
+                            path=test_data.get("nodeid", "").split("::")[0],
+                            status=status,
+                            duration_ms=test_data.get("duration", 0) * 1000,
+                            error_message=test_data.get("call", {}).get(
+                                "longrepr", None
+                            ),
+                        )
+                    )
             except (json.JSONDecodeError, KeyError):
                 # Fallback: basic status from exit code
                 status = "passed" if proc.returncode == 0 else "failed"
                 for test in tests:
-                    results.append(TestResult(
-                        name=test.name,
-                        path=test.path,
-                        status=status,
-                        duration_ms=duration / len(tests),
-                        error_message=proc.stderr[:500] if status == "failed" else None,
-                    ))
+                    results.append(
+                        TestResult(
+                            name=test.name,
+                            path=test.path,
+                            status=status,
+                            duration_ms=duration / len(tests),
+                            error_message=proc.stderr[:500]
+                            if status == "failed"
+                            else None,
+                        )
+                    )
 
         except subprocess.TimeoutExpired:
             for test in tests:
-                results.append(TestResult(
-                    name=test.name,
-                    path=test.path,
-                    status="error",
-                    duration_ms=300000,
-                    error_message="Test execution timed out (300s)",
-                ))
+                results.append(
+                    TestResult(
+                        name=test.name,
+                        path=test.path,
+                        status="error",
+                        duration_ms=300000,
+                        error_message="Test execution timed out (300s)",
+                    )
+                )
 
         return results

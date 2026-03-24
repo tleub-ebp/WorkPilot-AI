@@ -12,7 +12,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class IncidentMode(str, Enum):
@@ -79,21 +79,21 @@ class Incident:
     description: str = ""
     status: HealingStatus = HealingStatus.PENDING
     created_at: str = field(default_factory=_now_iso)
-    resolved_at: Optional[str] = None
+    resolved_at: str | None = None
     # Source-specific data
     source_data: dict[str, Any] = field(default_factory=dict)
     # Analysis results
-    root_cause: Optional[str] = None
+    root_cause: str | None = None
     affected_files: list[str] = field(default_factory=list)
-    regression_commit: Optional[str] = None
+    regression_commit: str | None = None
     # Fix tracking
-    fix_branch: Optional[str] = None
-    fix_pr_url: Optional[str] = None
-    fix_worktree: Optional[str] = None
-    qa_result: Optional[dict[str, Any]] = None
+    fix_branch: str | None = None
+    fix_pr_url: str | None = None
+    fix_worktree: str | None = None
+    qa_result: dict[str, Any] | None = None
     # Error info
-    error_message: Optional[str] = None
-    stack_trace: Optional[str] = None
+    error_message: str | None = None
+    stack_trace: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -151,8 +151,8 @@ class CICDIncidentData:
     branch: str = ""
     failing_tests: list[str] = field(default_factory=list)
     diff_summary: str = ""
-    ci_log_url: Optional[str] = None
-    pipeline_id: Optional[str] = None
+    ci_log_url: str | None = None
+    pipeline_id: str | None = None
     test_output: str = ""
 
     def to_dict(self) -> dict[str, Any]:
@@ -179,8 +179,8 @@ class ProductionIncidentData:
     last_seen: str = field(default_factory=_now_iso)
     affected_users: int = 0
     environment: str = "production"
-    service_name: Optional[str] = None
-    event_url: Optional[str] = None
+    service_name: str | None = None
+    event_url: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -206,7 +206,7 @@ class FragilityReport:
     cyclomatic_complexity: float = 0.0
     git_churn_count: int = 0  # commits in last 30 days
     test_coverage_percent: float = 0.0
-    last_incident_days: Optional[int] = None
+    last_incident_days: int | None = None
     suggested_tests: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -239,9 +239,9 @@ class HealingStep:
 
     name: str = ""
     status: str = "pending"  # pending, running, completed, failed
-    detail: Optional[str] = None
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
+    detail: str | None = None
+    started_at: str | None = None
+    completed_at: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -258,11 +258,11 @@ class HealingOperation:
     """Tracks a complete healing operation from detection to resolution."""
 
     id: str = field(default_factory=_generate_id)
-    incident: Optional[Incident] = None
+    incident: Incident | None = None
     started_at: str = field(default_factory=_now_iso)
-    completed_at: Optional[str] = None
+    completed_at: str | None = None
     steps: list[HealingStep] = field(default_factory=list)
-    duration_seconds: Optional[float] = None
+    duration_seconds: float | None = None
     success: bool = False
 
     def to_dict(self) -> dict[str, Any]:
@@ -276,7 +276,9 @@ class HealingOperation:
             "success": self.success,
         }
 
-    def add_step(self, name: str, status: str = "running", detail: str | None = None) -> HealingStep:
+    def add_step(
+        self, name: str, status: str = "running", detail: str | None = None
+    ) -> HealingStep:
         step = HealingStep(
             name=name,
             status=status,
@@ -286,7 +288,9 @@ class HealingOperation:
         self.steps.append(step)
         return step
 
-    def complete_step(self, step: HealingStep, status: str = "completed", detail: str | None = None) -> None:
+    def complete_step(
+        self, step: HealingStep, status: str = "completed", detail: str | None = None
+    ) -> None:
         step.status = status
         step.completed_at = _now_iso()
         if detail:

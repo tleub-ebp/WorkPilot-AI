@@ -19,7 +19,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 
 class FailureType(Enum):
@@ -204,7 +203,7 @@ class RecoveryManager:
         session: int,
         success: bool,
         approach: str,
-        error: Optional[str] = None,
+        error: str | None = None,
     ) -> None:
         """
         Record an attempt at a subtask.

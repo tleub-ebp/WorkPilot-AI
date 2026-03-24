@@ -8,7 +8,7 @@ actionable success/failure patterns.
 import json
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from .models import LearningPattern, PatternCategory, PatternSource, PatternType
 
@@ -18,7 +18,12 @@ logger = logging.getLogger(__name__)
 class PatternExtractor:
     """Extracts learning patterns from completed build data using AI analysis."""
 
-    def __init__(self, project_dir: Path, model: Optional[str] = None, thinking_level: Optional[str] = None):
+    def __init__(
+        self,
+        project_dir: Path,
+        model: str | None = None,
+        thinking_level: str | None = None,
+    ):
         self.project_dir = Path(project_dir)
         self.specs_dir = self.project_dir / ".auto-claude" / "specs"
         self.model = model or "sonnet"
@@ -208,7 +213,7 @@ Output ONLY a JSON array of pattern objects with these fields:
 - Each instruction must be specific enough to guide an agent
 - Limit to 15 most impactful patterns"""
 
-    def _extract_json_array(self, text: str) -> Optional[str]:
+    def _extract_json_array(self, text: str) -> str | None:
         """Extract a JSON array from text, handling markdown code blocks."""
         # Try to find JSON in code blocks
         import re

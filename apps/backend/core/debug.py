@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any
 
 # Import the colored logs utility
-from .colored_logs import format_backend_log, write_backend_log
+from .colored_logs import write_backend_log
 
 
 # ANSI color codes for terminal output

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Learning Mode - Explains everything Claude does in real-time
 
 This module provides detailed explanations of AI actions, decisions,
@@ -86,30 +86,34 @@ class LearningMode:
         tool_name: str,
         tool_input: dict[str, Any],
         reason: str,
-        expected_outcome: str
+        expected_outcome: str,
     ) -> LearningExplanation | None:
         """Explain why a tool is being used"""
         if not self.config.enabled or not self.config.explain_tools:
             return None
-        
+
         explanations_by_level = {
             ExplanationLevel.BEGINNER: self._explain_tool_beginner,
             ExplanationLevel.INTERMEDIATE: self._explain_tool_intermediate,
             ExplanationLevel.ADVANCED: self._explain_tool_advanced,
             ExplanationLevel.EXPERT: self._explain_tool_expert,
         }
-        
+
         explanation = explanations_by_level[self.config.explanation_level](
             tool_name, tool_input, reason, expected_outcome
         )
-        
+
         if explanation:
             self.explanations.append(explanation)
-        
+
         return explanation
 
     def _explain_tool_beginner(
-        self, tool_name: str, tool_input: dict[str, Any], reason: str, expected_outcome: str
+        self,
+        tool_name: str,
+        tool_input: dict[str, Any],
+        reason: str,
+        expected_outcome: str,
     ) -> LearningExplanation:
         """Beginner-level tool explanation"""
         tool_descriptions = {
@@ -119,7 +123,7 @@ class LearningMode:
         }
 
         base_desc = tool_descriptions.get(tool_name, f"The {tool_name} tool")
-        
+
         explanation_text = f"""{base_desc}
 
 **Why I'm using it now:**
@@ -135,7 +139,7 @@ class LearningMode:
 
 **Learning tip:** This tool helps me understand your codebase better. The more I explore, the better I can help you!
 """
-        
+
         return LearningExplanation(
             timestamp=datetime.now(),
             category="tool_use",
@@ -144,12 +148,18 @@ class LearningMode:
             difficulty=ExplanationLevel.BEGINNER,
             references=[
                 "https://en.wikipedia.org/wiki/Grep" if tool_name == "Grep" else None,
-                "https://en.wikipedia.org/wiki/Glob_(programming)" if tool_name == "Glob" else None,
-            ]
+                "https://en.wikipedia.org/wiki/Glob_(programming)"
+                if tool_name == "Glob"
+                else None,
+            ],
         )
 
     def _explain_tool_intermediate(
-        self, tool_name: str, tool_input: dict[str, Any], reason: str, expected_outcome: str
+        self,
+        tool_name: str,
+        tool_input: dict[str, Any],
+        reason: str,
+        expected_outcome: str,
     ) -> LearningExplanation:
         """Intermediate-level tool explanation"""
         explanation_text = f"""I'm using the **{tool_name}** tool to gather information from your codebase.
@@ -170,7 +180,11 @@ class LearningMode:
         )
 
     def _explain_tool_advanced(
-        self, tool_name: str, tool_input: dict[str, Any], reason: str, expected_outcome: str
+        self,
+        tool_name: str,
+        tool_input: dict[str, Any],
+        reason: str,
+        expected_outcome: str,
     ) -> LearningExplanation:
         """Advanced-level tool explanation"""
         explanation_text = f"""**{tool_name}** → {reason}
@@ -187,7 +201,11 @@ Target: `{tool_input}`
         )
 
     def _explain_tool_expert(
-        self, tool_name: str, tool_input: dict[str, Any], reason: str, expected_outcome: str
+        self,
+        tool_name: str,
+        tool_input: dict[str, Any],
+        reason: str,
+        expected_outcome: str,
     ) -> LearningExplanation:
         """Expert-level tool explanation (minimal)"""
         return LearningExplanation(
@@ -197,11 +215,12 @@ Target: `{tool_input}`
             explanation=reason,
             difficulty=ExplanationLevel.EXPERT,
         )
+
     def explain_decision(
         self,
         decision: str,
         reasoning: str,
-        alternatives_considered: list[dict[str, str]] | None = None
+        alternatives_considered: list[dict[str, str]] | None = None,
     ) -> LearningExplanation | None:
         """Explain a decision made during code generation"""
         if not self.config.enabled or not self.config.explain_decisions:
@@ -219,7 +238,9 @@ Target: `{tool_input}`
                 explanation_text += f"\n{i}. **{alt['name']}**\n"
                 explanation_text += f"   - Pros: {alt.get('pros', 'N/A')}\n"
                 explanation_text += f"   - Cons: {alt.get('cons', 'N/A')}\n"
-                explanation_text += f"   - Why not chosen: {alt.get('reason_rejected', 'N/A')}\n"
+                explanation_text += (
+                    f"   - Why not chosen: {alt.get('reason_rejected', 'N/A')}\n"
+                )
 
         explanation = LearningExplanation(
             timestamp=datetime.now(),
@@ -239,7 +260,7 @@ Target: `{tool_input}`
         purpose: str,
         key_concepts: list[str],
         pattern: str | None = None,
-        best_practices: list[str] | None = None
+        best_practices: list[str] | None = None,
     ) -> LearningExplanation | None:
         """Explain code being generated"""
         if not self.config.enabled or not self.config.explain_code:
@@ -251,15 +272,15 @@ Target: `{tool_input}`
 """
         for concept in key_concepts:
             explanation_text += f"- {concept}\n"
-        
+
         if pattern and self.config.explain_patterns:
             explanation_text += f"\n**Design pattern:** {pattern}\n"
-        
+
         if best_practices and self.config.explain_best_practices:
             explanation_text += "\n**Best practices applied:**\n"
             for practice in best_practices:
                 explanation_text += f"- {practice}\n"
-        
+
         explanation = LearningExplanation(
             timestamp=datetime.now(),
             category="code",
@@ -268,22 +289,22 @@ Target: `{tool_input}`
             code_snippet=code,
             difficulty=self.config.explanation_level,
         )
-        
+
         self.explanations.append(explanation)
         return explanation
-    
+
     def explain_pattern(
         self,
         pattern_name: str,
         description: str,
         when_to_use: str,
         example_code: str | None = None,
-        diagram: str | None = None
+        diagram: str | None = None,
     ) -> LearningExplanation | None:
         """Explain a design pattern being used"""
         if not self.config.enabled or not self.config.explain_patterns:
             return None
-        
+
         explanation_text = f"""**Pattern: {pattern_name}**
 
 {description}
@@ -291,7 +312,7 @@ Target: `{tool_input}`
 **When to use:**
 {when_to_use}
 """
-        
+
         explanation = LearningExplanation(
             timestamp=datetime.now(),
             category="pattern",
@@ -301,35 +322,35 @@ Target: `{tool_input}`
             diagram=diagram,
             difficulty=self.config.explanation_level,
         )
-        
+
         self.explanations.append(explanation)
         return explanation
-    
+
     def generate_session_summary(self) -> dict[str, Any]:
         """Generate a summary of the learning session"""
         if not self.config.enabled or not self.config.generate_summary:
             return {}
-        
+
         session_duration = (datetime.now() - self.session_start).total_seconds()
-        
+
         # Group explanations by category
         by_category = {}
         for exp in self.explanations:
             if exp.category not in by_category:
                 by_category[exp.category] = []
             by_category[exp.category].append(exp)
-        
+
         # Extract key learnings
         key_concepts = []
         patterns_used = []
         tools_used = set()
-        
+
         for exp in self.explanations:
             if exp.category == "pattern":
                 patterns_used.append(exp.title)
             elif exp.category == "tool_use":
                 tools_used.add(exp.title.split()[0])
-        
+
         summary = {
             "session_duration_seconds": session_duration,
             "total_explanations": len(self.explanations),
@@ -342,18 +363,21 @@ Target: `{tool_input}`
             "explanation_level": self.config.explanation_level.value,
             "timestamp": datetime.now().isoformat(),
         }
-        
+
         return summary
-    
+
     def save_session(self, output_dir: Path) -> Path:
         """Save the learning session to a file"""
         if not self.config.enabled or not self.config.save_learnings:
             return None
-        
+
         output_dir.mkdir(parents=True, exist_ok=True)
-        
-        session_file = output_dir / f"learning_session_{self.session_start.strftime('%Y%m%d_%H%M%S')}.json"
-        
+
+        session_file = (
+            output_dir
+            / f"learning_session_{self.session_start.strftime('%Y%m%d_%H%M%S')}.json"
+        )
+
         session_data = {
             "config": {
                 "explanation_level": self.config.explanation_level.value,
@@ -363,22 +387,22 @@ Target: `{tool_input}`
                     "code": self.config.explain_code,
                     "patterns": self.config.explain_patterns,
                     "best_practices": self.config.explain_best_practices,
-                }
+                },
             },
             "summary": self.generate_session_summary(),
             "explanations": [exp.to_dict() for exp in self.explanations],
         }
-        
-        with open(session_file, 'w', encoding='utf-8') as f:
+
+        with open(session_file, "w", encoding="utf-8") as f:
             json.dump(session_data, f, indent=2, ensure_ascii=False)
-        
+
         return session_file
-    
+
     def generate_markdown_report(self) -> str:
         """Generate a markdown report of the learning session"""
         md = f"""# Learning Session Report
 
-**Date:** {self.session_start.strftime('%Y-%m-%d %H:%M:%S')}
+**Date:** {self.session_start.strftime("%Y-%m-%d %H:%M:%S")}
 **Duration:** {(datetime.now() - self.session_start).total_seconds():.1f}s
 **Explanation Level:** {self.config.explanation_level.value}
 **Total Explanations:** {len(self.explanations)}
@@ -386,14 +410,14 @@ Target: `{tool_input}`
 ---
 
 """
-        
+
         # Group by category
         by_category = {}
         for exp in self.explanations:
             if exp.category not in by_category:
                 by_category[exp.category] = []
             by_category[exp.category].append(exp)
-        
+
         # Write each category
         category_names = {
             "tool_use": "🔧 Tool Usage",
@@ -402,48 +426,47 @@ Target: `{tool_input}`
             "pattern": "🎨 Design Patterns",
             "best_practice": "✨ Best Practices",
         }
-        
+
         for category, exps in by_category.items():
             md += f"## {category_names.get(category, category.title())}\n\n"
-            
+
             for exp in exps:
                 md += f"### {exp.title}\n\n"
                 md += f"*{exp.timestamp.strftime('%H:%M:%S')}*\n\n"
                 md += f"{exp.explanation}\n\n"
-                
+
                 if exp.code_snippet:
                     md += "```python\n"
                     md += exp.code_snippet
                     md += "\n```\n\n"
-                
+
                 if exp.diagram:
                     md += "```mermaid\n"
                     md += exp.diagram
                     md += "\n```\n\n"
-                
+
                 if exp.alternative_approaches:
                     md += "**Alternative Approaches:**\n\n"
                     for alt in exp.alternative_approaches:
                         md += f"- **{alt.get('name', 'Unknown')}**: {alt.get('description', '')}\n"
                     md += "\n"
-                
+
                 if exp.references:
                     md += "**References:**\n\n"
                     for ref in exp.references:
                         if ref:
                             md += f"- {ref}\n"
                     md += "\n"
-                
+
                 md += "---\n\n"
-        
+
         # Add summary
         summary = self.generate_session_summary()
         md += "## 📊 Session Summary\n\n"
         md += f"- **Duration:** {summary['session_duration_seconds']:.1f}s\n"
         md += f"- **Total Explanations:** {summary['total_explanations']}\n"
         md += f"- **Tools Used:** {', '.join(summary['tools_used'])}\n"
-        if summary['patterns_used']:
+        if summary["patterns_used"]:
             md += f"- **Design Patterns:** {', '.join(summary['patterns_used'])}\n"
-        
-        return md
 
+        return md

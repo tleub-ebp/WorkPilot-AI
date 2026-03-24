@@ -15,8 +15,8 @@ import argparse
 import json
 import os
 import sys
-import urllib.request
 import urllib.error
+import urllib.request
 from pathlib import Path
 
 
@@ -32,12 +32,17 @@ def load_env(project_dir: str) -> dict:
             if eq < 0:
                 continue
             key = line[:eq].strip()
-            val = line[eq + 1:].strip().strip('"\'')
+            val = line[eq + 1 :].strip().strip("\"'")
             env[key] = val
     return env
 
 
-def http_request(url: str, method: str = "GET", headers: dict | None = None, body: bytes | None = None) -> dict:
+def http_request(
+    url: str,
+    method: str = "GET",
+    headers: dict | None = None,
+    body: bytes | None = None,
+) -> dict:
     """Simple HTTP request wrapper using only stdlib."""
     req = urllib.request.Request(url, data=body, headers=headers or {}, method=method)
     try:
@@ -56,7 +61,10 @@ def http_request(url: str, method: str = "GET", headers: dict | None = None, bod
 
 # ── GitHub Actions ────────────────────────────────────────────────────────────
 
-def trigger_github(env: dict, branch: str, workflow: str | None = None, pr_url: str | None = None) -> dict:
+
+def trigger_github(
+    env: dict, branch: str, workflow: str | None = None, pr_url: str | None = None
+) -> dict:
     token = env.get("CICD_GITHUB_TOKEN", "")
     workflow_file = workflow or env.get("CICD_GITHUB_WORKFLOW", "")
     ref = env.get("CICD_GITHUB_REF", branch or "main")
@@ -73,7 +81,9 @@ def trigger_github(env: dict, branch: str, workflow: str | None = None, pr_url: 
             repo = f"{parts[0]}/{parts[1]}"
 
     if not repo:
-        return {"error": "Could not determine GitHub repo (set CICD_GITHUB_REPO or pass --pr-url)"}
+        return {
+            "error": "Could not determine GitHub repo (set CICD_GITHUB_REPO or pass --pr-url)"
+        }
 
     if not workflow_file:
         return {"error": "CICD_GITHUB_WORKFLOW not configured (e.g. 'deploy.yml')"}
@@ -84,15 +94,28 @@ def trigger_github(env: dict, branch: str, workflow: str | None = None, pr_url: 
         "Accept": "application/vnd.github.v3+json",
         "Content-Type": "application/json",
     }
-    body = json.dumps({"ref": ref, "inputs": {"pr_url": pr_url or "", "branch": branch or ""}}).encode()
+    body = json.dumps(
+        {"ref": ref, "inputs": {"pr_url": pr_url or "", "branch": branch or ""}}
+    ).encode()
     resp = http_request(url, method="POST", headers=headers, body=body)
 
     if resp["status"] in (204, 201, 200):
-        return {"provider": "github", "status": "triggered", "workflow": workflow_file, "ref": ref, "repo": repo}
-    return {"provider": "github", "error": resp.get("error") or str(resp.get("body", "")), "status_code": resp["status"]}
+        return {
+            "provider": "github",
+            "status": "triggered",
+            "workflow": workflow_file,
+            "ref": ref,
+            "repo": repo,
+        }
+    return {
+        "provider": "github",
+        "error": resp.get("error") or str(resp.get("body", "")),
+        "status_code": resp["status"],
+    }
 
 
 # ── GitLab CI ─────────────────────────────────────────────────────────────────
+
 
 def trigger_gitlab(env: dict, branch: str, pr_url: str | None = None) -> dict:
     token = env.get("CICD_GITLAB_TOKEN", "")
@@ -119,10 +142,15 @@ def trigger_gitlab(env: dict, branch: str, pr_url: str | None = None) -> dict:
             "ref": ref,
             "web_url": pipeline.get("web_url") if isinstance(pipeline, dict) else None,
         }
-    return {"provider": "gitlab", "error": resp.get("error") or str(resp.get("body", "")), "status_code": resp["status"]}
+    return {
+        "provider": "gitlab",
+        "error": resp.get("error") or str(resp.get("body", "")),
+        "status_code": resp["status"],
+    }
 
 
 # ── Azure DevOps ──────────────────────────────────────────────────────────────
+
 
 def trigger_azure(env: dict, branch: str, pr_url: str | None = None) -> dict:
     token = env.get("CICD_AZURE_TOKEN", "")
@@ -132,16 +160,21 @@ def trigger_azure(env: dict, branch: str, pr_url: str | None = None) -> dict:
     ref = env.get("CICD_AZURE_REF", branch or "main")
 
     if not token or not org or not project or not pipeline_id:
-        return {"error": "Azure DevOps config incomplete (need CICD_AZURE_TOKEN, CICD_AZURE_ORG, CICD_AZURE_PROJECT, CICD_AZURE_PIPELINE_ID)"}
+        return {
+            "error": "Azure DevOps config incomplete (need CICD_AZURE_TOKEN, CICD_AZURE_ORG, CICD_AZURE_PROJECT, CICD_AZURE_PIPELINE_ID)"
+        }
 
     import base64
+
     encoded = base64.b64encode(f":{token}".encode()).decode()
     url = f"https://dev.azure.com/{org}/{project}/_apis/pipelines/{pipeline_id}/runs?api-version=7.0"
     headers = {
         "Authorization": f"Basic {encoded}",
         "Content-Type": "application/json",
     }
-    body = json.dumps({"resources": {"repositories": {"self": {"refName": f"refs/heads/{ref}"}}}}).encode()
+    body = json.dumps(
+        {"resources": {"repositories": {"self": {"refName": f"refs/heads/{ref}"}}}}
+    ).encode()
     resp = http_request(url, method="POST", headers=headers, body=body)
 
     if resp["status"] in (200, 201):
@@ -151,12 +184,19 @@ def trigger_azure(env: dict, branch: str, pr_url: str | None = None) -> dict:
             "status": "triggered",
             "run_id": run.get("id") if isinstance(run, dict) else None,
             "pipeline_id": pipeline_id,
-            "web_url": run.get("_links", {}).get("web", {}).get("href") if isinstance(run, dict) else None,
+            "web_url": run.get("_links", {}).get("web", {}).get("href")
+            if isinstance(run, dict)
+            else None,
         }
-    return {"provider": "azure", "error": resp.get("error") or str(resp.get("body", "")), "status_code": resp["status"]}
+    return {
+        "provider": "azure",
+        "error": resp.get("error") or str(resp.get("body", "")),
+        "status_code": resp["status"],
+    }
 
 
 # ── Jenkins ───────────────────────────────────────────────────────────────────
+
 
 def trigger_jenkins(env: dict, branch: str, pr_url: str | None = None) -> dict:
     jenkins_url = env.get("CICD_JENKINS_URL", "").rstrip("/")
@@ -165,12 +205,15 @@ def trigger_jenkins(env: dict, branch: str, pr_url: str | None = None) -> dict:
     user = env.get("CICD_JENKINS_USER", "")
 
     if not jenkins_url or not job:
-        return {"error": "Jenkins config incomplete (need CICD_JENKINS_URL, CICD_JENKINS_JOB)"}
+        return {
+            "error": "Jenkins config incomplete (need CICD_JENKINS_URL, CICD_JENKINS_JOB)"
+        }
 
     url = f"{jenkins_url}/job/{job}/buildWithParameters?BRANCH={branch or 'main'}&PR_URL={pr_url or ''}"
     headers: dict = {}
     if user and token:
         import base64
+
         encoded = base64.b64encode(f"{user}:{token}".encode()).decode()
         headers["Authorization"] = f"Basic {encoded}"
     elif token:
@@ -178,13 +221,25 @@ def trigger_jenkins(env: dict, branch: str, pr_url: str | None = None) -> dict:
 
     resp = http_request(url, method="POST", headers=headers)
     if resp["status"] in (200, 201, 302):
-        return {"provider": "jenkins", "status": "triggered", "job": job, "branch": branch}
-    return {"provider": "jenkins", "error": resp.get("error") or str(resp.get("body", "")), "status_code": resp["status"]}
+        return {
+            "provider": "jenkins",
+            "status": "triggered",
+            "job": job,
+            "branch": branch,
+        }
+    return {
+        "provider": "jenkins",
+        "error": resp.get("error") or str(resp.get("body", "")),
+        "status_code": resp["status"],
+    }
 
 
 # ── Dispatch ──────────────────────────────────────────────────────────────────
 
-def action_trigger(env: dict, provider: str, branch: str, workflow: str | None, pr_url: str | None) -> dict:
+
+def action_trigger(
+    env: dict, provider: str, branch: str, workflow: str | None, pr_url: str | None
+) -> dict:
     p = provider.lower()
     if p in ("github", "github_actions"):
         return trigger_github(env, branch, workflow, pr_url)
@@ -195,7 +250,9 @@ def action_trigger(env: dict, provider: str, branch: str, workflow: str | None, 
     elif p == "jenkins":
         return trigger_jenkins(env, branch, pr_url)
     else:
-        return {"error": f"Unknown CI/CD provider: {provider}. Supported: github, gitlab, azure, jenkins"}
+        return {
+            "error": f"Unknown CI/CD provider: {provider}. Supported: github, gitlab, azure, jenkins"
+        }
 
 
 def action_status(env: dict, provider: str, run_id: str) -> dict:
@@ -208,14 +265,25 @@ def action_status(env: dict, provider: str, run_id: str) -> dict:
         if not repo or not token:
             return {"error": "Missing CICD_GITHUB_REPO or CICD_GITHUB_TOKEN"}
         url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}"
-        headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+        headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json",
+        }
         resp = http_request(url, headers=headers)
         if resp["status"] == 200:
             run = resp["body"]
-            return {"run_id": run_id, "status": run.get("status"), "conclusion": run.get("conclusion"), "url": run.get("html_url")}
+            return {
+                "run_id": run_id,
+                "status": run.get("status"),
+                "conclusion": run.get("conclusion"),
+                "url": run.get("html_url"),
+            }
         return {"error": resp.get("error") or str(resp.get("body", ""))}
 
-    return {"status": "unknown", "note": f"Status polling not implemented for provider: {provider}"}
+    return {
+        "status": "unknown",
+        "note": f"Status polling not implemented for provider: {provider}",
+    }
 
 
 def action_cancel(env: dict, provider: str, run_id: str) -> dict:
@@ -228,16 +296,24 @@ def action_cancel(env: dict, provider: str, run_id: str) -> dict:
         if not repo or not token:
             return {"error": "Missing CICD_GITHUB_REPO or CICD_GITHUB_TOKEN"}
         url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/cancel"
-        headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+        headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json",
+        }
         resp = http_request(url, method="POST", headers=headers)
         return {"cancelled": resp["status"] == 202}
 
-    return {"cancelled": False, "note": f"Cancel not implemented for provider: {provider}"}
+    return {
+        "cancelled": False,
+        "note": f"Cancel not implemented for provider: {provider}",
+    }
 
 
 def main():
     parser = argparse.ArgumentParser(description="CI/CD Triggers Runner")
-    parser.add_argument("--action", choices=["trigger", "status", "cancel"], required=True)
+    parser.add_argument(
+        "--action", choices=["trigger", "status", "cancel"], required=True
+    )
     parser.add_argument("--project", required=True)
     parser.add_argument("--provider", default="")
     parser.add_argument("--pr-url", default="")
@@ -252,7 +328,9 @@ def main():
 
     try:
         if args.action == "trigger":
-            result = action_trigger(env, provider, args.branch, args.workflow, args.pr_url)
+            result = action_trigger(
+                env, provider, args.branch, args.workflow, args.pr_url
+            )
         elif args.action == "status":
             result = action_status(env, provider, args.run_id)
         elif args.action == "cancel":

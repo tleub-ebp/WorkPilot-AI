@@ -1,4 +1,4 @@
-﻿"""
+"""
 Service de complétion de tâches
 ================================
 
@@ -19,7 +19,7 @@ import os
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, TypedDict, Union
+from typing import TypedDict
 
 from core.worktree import WorktreeManager
 
@@ -108,12 +108,15 @@ _TEAMS_STRINGS: dict[str, dict[str, str]] = {
 
 def _send_teams_notification(
     task_title: str,
-    pr_url: Optional[str],
+    pr_url: str | None,
     project_path: Path,
 ) -> None:
     """Send a Teams Incoming Webhook notification when a task is done."""
     webhook_url = os.environ.get("TEAMS_WEBHOOK_URL", "").strip()
-    if not webhook_url or os.environ.get("TEAMS_NOTIFICATIONS_ENABLED", "").lower() != "true":
+    if (
+        not webhook_url
+        or os.environ.get("TEAMS_NOTIFICATIONS_ENABLED", "").lower() != "true"
+    ):
         return
 
     lang = _get_app_language()
@@ -121,9 +124,19 @@ def _send_teams_notification(
     project_name = project_path.name
 
     body: list[dict] = [
-        {"type": "TextBlock", "text": s["task_done_title"], "weight": "bolder", "size": "large"},
+        {
+            "type": "TextBlock",
+            "text": s["task_done_title"],
+            "weight": "bolder",
+            "size": "large",
+        },
         {"type": "TextBlock", "text": task_title, "weight": "bolder", "wrap": True},
-        {"type": "TextBlock", "text": s["task_done_body"], "wrap": True, "spacing": "small"},
+        {
+            "type": "TextBlock",
+            "text": s["task_done_body"],
+            "wrap": True,
+            "spacing": "small",
+        },
         {
             "type": "FactSet",
             "facts": [{"title": s["project_label"], "value": project_name}],
@@ -133,26 +146,37 @@ def _send_teams_notification(
 
     actions: list[dict] = []
     if pr_url:
-        body.append({"type": "TextBlock", "text": s["review_prompt"], "wrap": True, "spacing": "small"})
-        actions.append({
-            "type": "Action.OpenUrl",
-            "title": s["review_button"],
-            "url": pr_url,
-        })
+        body.append(
+            {
+                "type": "TextBlock",
+                "text": s["review_prompt"],
+                "wrap": True,
+                "spacing": "small",
+            }
+        )
+        actions.append(
+            {
+                "type": "Action.OpenUrl",
+                "title": s["review_button"],
+                "url": pr_url,
+            }
+        )
 
     payload = {
         "type": "message",
-        "attachments": [{
-            "contentType": "application/vnd.microsoft.card.adaptive",
-            "content": {
-                "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                "type": "AdaptiveCard",
-                "version": "1.4",
-                "body": body,
-                "actions": actions,
-                "msteams": {"width": "Full"},
-            },
-        }],
+        "attachments": [
+            {
+                "contentType": "application/vnd.microsoft.card.adaptive",
+                "content": {
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "type": "AdaptiveCard",
+                    "version": "1.4",
+                    "body": body,
+                    "actions": actions,
+                    "msteams": {"width": "Full"},
+                },
+            }
+        ],
     }
 
     try:
@@ -176,9 +200,9 @@ class TaskCompletionResult(TypedDict):
     """Résultat de la complétion d'une tâche"""
 
     success: bool
-    pr_url: Optional[str]
+    pr_url: str | None
     pr_already_exists: bool
-    error: Optional[str]
+    error: str | None
 
 
 @dataclass
@@ -198,8 +222,8 @@ class TaskCompletionService:
         self,
         spec_id: str,
         task_title: str,
-        task_description: Optional[str] = None,
-        target_branch: Optional[str] = None,
+        task_description: str | None = None,
+        target_branch: str | None = None,
     ) -> TaskCompletionResult:
         """
         Complète une tâche en créant une PR pour validation humaine.
@@ -250,9 +274,7 @@ class TaskCompletionService:
         pr_title = self._build_pr_title(task_title)
         pr_body = self._build_pr_body(task_title, task_description)
 
-        logger.info(
-            f"[TaskCompletionService] Création de la PR vers {target}..."
-        )
+        logger.info(f"[TaskCompletionService] Création de la PR vers {target}...")
         pr_result = self.worktree_manager.create_pull_request(
             spec_name=spec_id,
             target_branch=target,
@@ -274,13 +296,9 @@ class TaskCompletionService:
         pr_already_exists = pr_result.get("already_exists", False)
 
         if pr_already_exists:
-            logger.info(
-                f"[TaskCompletionService] PR déjà existante: {pr_url}"
-            )
+            logger.info(f"[TaskCompletionService] PR déjà existante: {pr_url}")
         else:
-            logger.info(
-                f"[TaskCompletionService] PR créée avec succès: {pr_url}"
-            )
+            logger.info(f"[TaskCompletionService] PR créée avec succès: {pr_url}")
 
         # Send Teams notification (no-op if not configured)
         if not pr_already_exists:
@@ -313,9 +331,7 @@ class TaskCompletionService:
         title = title.rstrip(".")
         return f"{prefix}: {title}"
 
-    def _build_pr_body(
-        self, task_title: str, task_description: Optional[str]
-    ) -> str:
+    def _build_pr_body(self, task_title: str, task_description: str | None) -> str:
         """
         Build a rich Markdown PR body with a human-review checklist.
 

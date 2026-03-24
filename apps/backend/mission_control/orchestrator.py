@@ -6,14 +6,12 @@ broadcasts state changes via WebSocket, and provides the API
 surface for the frontend Mission Control dashboard.
 """
 
-import asyncio
-import json
 import logging
 import time
 import uuid
-from typing import Any, Optional
+from typing import Any
 
-from .agent_slot import AgentSlot, AgentStatus, AgentRole, TokenUsage
+from .agent_slot import AgentRole, AgentSlot, AgentStatus
 from .decision_tree import DecisionTree
 
 logger = logging.getLogger(__name__)
@@ -65,15 +63,12 @@ class MissionControlOrchestrator:
             "created_at": self._created_at,
             "agent_count": len(self._slots),
             "running_count": sum(
-                1 for s in self._slots.values()
-                if s.status == AgentStatus.RUNNING
+                1 for s in self._slots.values() if s.status == AgentStatus.RUNNING
             ),
-            "total_tokens": sum(
-                s.tokens.total_tokens for s in self._slots.values()
+            "total_tokens": sum(s.tokens.total_tokens for s in self._slots.values()),
+            "total_cost_usd": round(
+                sum(s.tokens.estimated_cost_usd for s in self._slots.values()), 6
             ),
-            "total_cost_usd": round(sum(
-                s.tokens.estimated_cost_usd for s in self._slots.values()
-            ), 6),
             "elapsed_seconds": round(time.time() - self._created_at, 1),
         }
 
@@ -105,13 +100,16 @@ class MissionControlOrchestrator:
         self._slots[slot.id] = slot
         self._decision_trees[slot.id] = DecisionTree(slot.id)
 
-        self._log_event("agent_created", {
-            "agent_id": slot.id,
-            "name": name,
-            "role": role,
-            "provider": provider,
-            "model": model,
-        })
+        self._log_event(
+            "agent_created",
+            {
+                "agent_id": slot.id,
+                "name": name,
+                "role": role,
+                "provider": provider,
+                "model": model,
+            },
+        )
         logger.info(f"Agent created: {slot.id} ({name}, {role}, {provider}:{model})")
         return slot
 
@@ -127,7 +125,7 @@ class MissionControlOrchestrator:
         self._log_event("agent_removed", {"agent_id": agent_id})
         return True
 
-    def get_agent(self, agent_id: str) -> Optional[AgentSlot]:
+    def get_agent(self, agent_id: str) -> AgentSlot | None:
         """Get a specific agent slot."""
         return self._slots.get(agent_id)
 
@@ -138,12 +136,12 @@ class MissionControlOrchestrator:
     def update_agent_config(
         self,
         agent_id: str,
-        provider: Optional[str] = None,
-        model: Optional[str] = None,
-        model_label: Optional[str] = None,
-        name: Optional[str] = None,
-        role: Optional[str] = None,
-    ) -> Optional[AgentSlot]:
+        provider: str | None = None,
+        model: str | None = None,
+        model_label: str | None = None,
+        name: str | None = None,
+        role: str | None = None,
+    ) -> AgentSlot | None:
         """Update agent configuration (provider, model, name, role)."""
         slot = self._slots.get(agent_id)
         if not slot:
@@ -163,11 +161,14 @@ class MissionControlOrchestrator:
             except ValueError:
                 pass
 
-        self._log_event("agent_config_updated", {
-            "agent_id": agent_id,
-            "provider": slot.provider,
-            "model": slot.model,
-        })
+        self._log_event(
+            "agent_config_updated",
+            {
+                "agent_id": agent_id,
+                "provider": slot.provider,
+                "model": slot.model,
+            },
+        )
         return slot
 
     # ---------------------------------------------------------------
@@ -183,10 +184,13 @@ class MissionControlOrchestrator:
         tree = self._decision_trees.get(agent_id)
         if tree:
             tree.create_root(f"Task: {task[:80]}" if task else "Start")
-        self._log_event("agent_started", {
-            "agent_id": agent_id,
-            "task": task,
-        })
+        self._log_event(
+            "agent_started",
+            {
+                "agent_id": agent_id,
+                "task": task,
+            },
+        )
         return True
 
     def pause_agent(self, agent_id: str) -> bool:
@@ -300,7 +304,7 @@ class MissionControlOrchestrator:
     # Decision tree access
     # ---------------------------------------------------------------
 
-    def get_decision_tree(self, agent_id: str) -> Optional[dict[str, Any]]:
+    def get_decision_tree(self, agent_id: str) -> dict[str, Any] | None:
         """Get the decision tree for a specific agent."""
         tree = self._decision_trees.get(agent_id)
         if not tree:
@@ -324,8 +328,7 @@ class MissionControlOrchestrator:
             "session": self.get_session_info(),
             "agents": self.get_all_agents(),
             "decision_trees": {
-                aid: tree.to_dict()
-                for aid, tree in self._decision_trees.items()
+                aid: tree.to_dict() for aid, tree in self._decision_trees.items()
             },
             "recent_events": self._event_log[-50:],
         }
@@ -355,7 +358,7 @@ class MissionControlOrchestrator:
 # Singleton access
 # ---------------------------------------------------------------------------
 
-_mission_control: Optional[MissionControlOrchestrator] = None
+_mission_control: MissionControlOrchestrator | None = None
 
 
 def get_mission_control() -> MissionControlOrchestrator:

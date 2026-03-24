@@ -37,7 +37,7 @@ const DOC_TYPE_ICONS: Record<DocTypeKey, string> = {
 
 export function DocumentationAgentDashboard(): React.ReactElement {
   const { t } = useTranslation(['common']);
-  const { activeProject } = useProjectStore();
+  const activeProject = useProjectStore((s) => s.getActiveProject());
   const {
     phase,
     status,
@@ -185,7 +185,7 @@ export function DocumentationAgentDashboard(): React.ReactElement {
                 <div>
                   <h3 className="font-medium">Documentation Generated</h3>
                   <p className="text-sm text-[var(--text-secondary)]">
-                    {result.doc_types_generated.length} types • {result.files_created.length} files created
+                    {result.doc_types_processed.length} types • {result.generated_files.length} files created
                   </p>
                 </div>
               </div>
@@ -195,13 +195,13 @@ export function DocumentationAgentDashboard(): React.ReactElement {
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div className="bg-[var(--bg-secondary)] rounded-lg p-3 text-center">
                     <div className="text-xl font-bold">
-                      {Math.round(result.coverage_before.overall_coverage * 100)}%
+                      {Math.round(result.coverage_before.coverage_percent * 100)}%
                     </div>
                     <div className="text-xs text-[var(--text-secondary)]">Coverage before</div>
                   </div>
                   <div className="bg-[var(--bg-secondary)] rounded-lg p-3 text-center">
                     <div className="text-xl font-bold text-green-400">
-                      {Math.round(result.coverage_after.overall_coverage * 100)}%
+                      {Math.round(result.coverage_after.coverage_percent * 100)}%
                     </div>
                     <div className="text-xs text-[var(--text-secondary)]">Coverage after</div>
                   </div>
@@ -209,13 +209,13 @@ export function DocumentationAgentDashboard(): React.ReactElement {
               )}
 
               {/* Files created */}
-              {result.files_created.length > 0 && (
+              {result.generated_files.length > 0 && (
                 <div>
                   <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
                     Files Created
                   </h4>
                   <div className="flex flex-col gap-0.5">
-                    {result.files_created.map((f, i) => (
+                    {result.generated_files.map((f, i) => (
                       <div key={i} className="text-xs font-mono text-[var(--text-secondary)] truncate">
                         {f}
                       </div>
@@ -224,18 +224,14 @@ export function DocumentationAgentDashboard(): React.ReactElement {
                 </div>
               )}
 
-              {/* Outdated docs updated */}
-              {result.outdated_docs_updated && result.outdated_docs_updated.length > 0 && (
+              {/* Outdated docs found */}
+              {result.outdated_found > 0 && (
                 <div className="mt-2">
                   <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
-                    Outdated Docs Updated
+                    Outdated Docs Found
                   </h4>
-                  <div className="flex flex-col gap-0.5">
-                    {result.outdated_docs_updated.map((f, i) => (
-                      <div key={i} className="text-xs font-mono text-yellow-400/80 truncate">
-                        {f}
-                      </div>
-                    ))}
+                  <div className="text-xs text-yellow-400/80">
+                    {result.outdated_found} outdated documentation entries detected
                   </div>
                 </div>
               )}

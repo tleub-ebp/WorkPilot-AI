@@ -47,6 +47,7 @@ T = TypeVar("T")
 
 # ── i18n helpers for PR / MR body fallback ────────────────────────────────
 
+
 def _get_app_language() -> str:
     """Return the UI language configured by the frontend (``APP_LANGUAGE`` env var)."""
     return os.environ.get("APP_LANGUAGE", "en")
@@ -1478,9 +1479,7 @@ class WorktreeManager:
                             f"&searchCriteria.targetRefName=refs/heads/{target}"
                             f"&searchCriteria.status=active"
                         )
-                        search_resp = requests.get(
-                            search_url, auth=auth, timeout=30
-                        )
+                        search_resp = requests.get(search_url, auth=auth, timeout=30)
                         if search_resp.status_code == 200:
                             prs = search_resp.json().get("value", [])
                             if prs:
@@ -2268,7 +2267,7 @@ class WorktreeManager:
                 spec_name=spec_name,
                 target_branch=target_branch,
                 title=title,
-                draft=draft
+                draft=draft,
             )
         elif provider == "github":
             pr_result = self.create_pull_request(

@@ -1,16 +1,18 @@
 import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react';
+import { vi } from 'vitest';
 import { AccountSettings } from '@/components/settings/AccountSettings';
 
 // Minimal props mock
 const settings = {} as any;
-const onSettingsChange = jest.fn();
+const onSettingsChange = vi.fn();
 const isOpen = true;
+const defaultConnector = { id: 'anthropic', label: 'Anthropic' };
 
 describe('AccountSettings add form', () => {
   it('toggles add form and handles input', () => {
     render(
-      <AccountSettings settings={settings} onSettingsChange={onSettingsChange} isOpen={isOpen} />
+      <AccountSettings settings={settings} onSettingsChange={onSettingsChange} isOpen={isOpen} connector={defaultConnector} />
     );
     // Find and click the add button
     const addButton = screen.getByRole('button', { name: /ajouter|add/i });

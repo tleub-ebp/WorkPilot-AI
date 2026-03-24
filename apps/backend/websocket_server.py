@@ -9,7 +9,6 @@ Runs the WebSocket server in a separate process to avoid conflicts with FastAPI.
 import asyncio
 import logging
 import sys
-import os
 from pathlib import Path
 
 # Add backend to path
@@ -18,43 +17,44 @@ sys.path.insert(0, str(Path(__file__).parent))
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s] %(name)s - %(levelname)s - %(message)s',
+    format="[%(asctime)s] %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler('websocket_server.log')
-    ]
+        logging.FileHandler("websocket_server.log"),
+    ],
 )
 
 logger = logging.getLogger(__name__)
+
 
 async def main():
     """Main entry point for standalone WebSocket server."""
     try:
         logger.info("Starting standalone WebSocket server...")
-        
-        from streaming.websocket_server import get_websocket_server
+
         from streaming.session_recorder import SessionRecorder
         from streaming.streaming_manager import get_streaming_manager
-        
+        from streaming.websocket_server import get_websocket_server
+
         # Initialize components
         server = get_websocket_server()
         session_recorder = SessionRecorder()
         streaming_manager = get_streaming_manager()
-        
+
         logger.info("WebSocket server components initialized")
-        
+
         # Start the server
         await server.start()
-        
+
         logger.info("WebSocket server started successfully")
-        
+
         # Keep the server running
         try:
             while True:
                 await asyncio.sleep(1)
         except (KeyboardInterrupt, asyncio.CancelledError):
             logger.info("Shutdown signal received")
-        
+
     except (KeyboardInterrupt, asyncio.CancelledError):
         logger.info("WebSocket server shutdown requested")
         # Don't re-raise these exceptions for clean shutdown
@@ -65,11 +65,13 @@ async def main():
         # Cleanup
         try:
             from streaming.websocket_server import get_websocket_server
+
             server = get_websocket_server()
             await server.stop()
             logger.info("WebSocket server stopped")
         except Exception as e:
             logger.error(f"Error stopping WebSocket server: {e}")
+
 
 if __name__ == "__main__":
     try:

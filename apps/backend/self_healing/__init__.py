@@ -1,4 +1,4 @@
-﻿"""
+"""
 Self-Healing Codebase Module
 ============================
 
@@ -15,10 +15,10 @@ Key Features:
 
 Usage:
     from self_healing import SelfHealingMonitor, HealthCheckScheduler
-    
+
     monitor = SelfHealingMonitor(project_dir)
     health = await monitor.check_health()
-    
+
     scheduler = HealthCheckScheduler(project_dir)
     await scheduler.start_monitoring()
 """
@@ -64,11 +64,14 @@ __all__ = [
     "IncidentResponderOrchestrator",
 ]
 
+
 # Incident Responder - lazy import to avoid circular dependencies
 def __getattr__(name):
     if name == "IncidentResponderOrchestrator":
         from .incident_responder import IncidentResponderOrchestrator
+
         return IncidentResponderOrchestrator
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __version__ = "1.1.0"

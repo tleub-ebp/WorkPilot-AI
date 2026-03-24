@@ -21,9 +21,23 @@ _JS_TS_EXTS = {".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"}
 
 # Directories to skip during traversal
 _SKIP_DIRS = {
-    "node_modules", "__pycache__", ".git", ".venv", "venv", "env",
-    "dist", "build", "out", ".next", ".nuxt", ".cache", "coverage",
-    ".mypy_cache", ".pytest_cache", ".tox", "site-packages",
+    "node_modules",
+    "__pycache__",
+    ".git",
+    ".venv",
+    "venv",
+    "env",
+    "dist",
+    "build",
+    "out",
+    ".next",
+    ".nuxt",
+    ".cache",
+    "coverage",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".tox",
+    "site-packages",
 }
 
 # Maximum number of files to index (prevents runaway on huge repos)
@@ -115,7 +129,9 @@ class DependencyGraphBuilder:
                         node.imports.append(resolved)
 
             # Collect top-level exports (function/class defs at module level)
-            elif isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            elif isinstance(
+                stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+            ):
                 if not stmt.col_offset:  # Top-level only
                     node.export_symbols.append(stmt.name)
 
@@ -132,7 +148,7 @@ class DependencyGraphBuilder:
         """
         if level > 0:
             # Relative import
-            base_parts = from_file.split("/")[: -(level)]
+            base_parts = from_file.split("/")[:-(level)]
             module_parts = module.split(".") if module else []
             candidate_parts = base_parts + module_parts
         else:
@@ -162,7 +178,11 @@ class DependencyGraphBuilder:
     )
 
     def _parse_js_ts(self, file_path: Path, rel_path: str) -> DependencyNode:
-        lang = "typescript" if file_path.suffix.lower() in {".ts", ".tsx"} else "javascript"
+        lang = (
+            "typescript"
+            if file_path.suffix.lower() in {".ts", ".tsx"}
+            else "javascript"
+        )
         node = DependencyNode(path=rel_path, language=lang)
 
         try:
@@ -187,7 +207,16 @@ class DependencyGraphBuilder:
         node.imports = list(dict.fromkeys(node.imports))
         return node
 
-    _JS_EXTENSIONS_TRY = ["", ".ts", ".tsx", ".js", ".jsx", "/index.ts", "/index.tsx", "/index.js"]
+    _JS_EXTENSIONS_TRY = [
+        "",
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        "/index.ts",
+        "/index.tsx",
+        "/index.js",
+    ]
 
     def _resolve_js_import(self, raw: str, from_dir: str) -> str | None:
         """Resolve a JS/TS import specifier to a relative path, or None if external."""

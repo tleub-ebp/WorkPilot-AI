@@ -54,6 +54,7 @@ class SelfHealingRunner:
 
     def _get_orchestrator(self):
         from self_healing.incident_responder import IncidentResponderOrchestrator
+
         config = self._load_config()
         cicd_cfg = config.get("cicd", {})
         proactive_cfg = config.get("proactive", {})
@@ -92,7 +93,9 @@ class SelfHealingRunner:
         )
 
         if operation.success:
-            print(f"✅ Healing complete! Fix applied in branch: {operation.incident.fix_branch}")
+            print(
+                f"✅ Healing complete! Fix applied in branch: {operation.incident.fix_branch}"
+            )
             if operation.incident.fix_pr_url:
                 print(f"   PR: {operation.incident.fix_pr_url}")
             return True
@@ -116,7 +119,9 @@ class SelfHealingRunner:
         try:
             incident_source = IncidentSource(source)
         except ValueError:
-            print(f"❌ Unknown source: {source}. Valid: {[s.value for s in IncidentSource]}")
+            print(
+                f"❌ Unknown source: {source}. Valid: {[s.value for s in IncidentSource]}"
+            )
             return False
 
         operation = await orchestrator.handle_production_incident(
@@ -130,18 +135,24 @@ class SelfHealingRunner:
         )
 
         if operation.success:
-            print(f"✅ Incident resolved! Fix in branch: {operation.incident.fix_branch}")
+            print(
+                f"✅ Incident resolved! Fix in branch: {operation.incident.fix_branch}"
+            )
             return True
         else:
             print("❌ Incident requires manual review.")
             return False
 
-    async def run_proactive(self, risk_threshold: float = 40.0, top_n: int = 10, json_output: bool = False) -> bool:
+    async def run_proactive(
+        self, risk_threshold: float = 40.0, top_n: int = 10, json_output: bool = False
+    ) -> bool:
         """Run proactive fragility scan."""
         orchestrator = self._get_orchestrator()
 
         if not json_output:
-            print(f"🔍 Running proactive fragility scan (threshold={risk_threshold})...")
+            print(
+                f"🔍 Running proactive fragility scan (threshold={risk_threshold})..."
+            )
 
         reports = await orchestrator.run_proactive_scan()
 
@@ -154,7 +165,9 @@ class SelfHealingRunner:
             return True
 
         print(f"\n📊 Found {len(reports)} file(s) above risk threshold:\n")
-        print(f"{'File':<60} {'Risk':>6} {'Complexity':>11} {'Churn':>6} {'Coverage':>9}")
+        print(
+            f"{'File':<60} {'Risk':>6} {'Complexity':>11} {'Churn':>6} {'Coverage':>9}"
+        )
         print("-" * 95)
 
         for report in reports[:top_n]:
@@ -172,7 +185,7 @@ class SelfHealingRunner:
         print(f"\n📈 Average risk score: {summary['avg_risk']}")
         print(f"   Maximum risk score: {summary['max_risk']}")
 
-        max_risk = summary.get('max_risk', 0)
+        max_risk = summary.get("max_risk", 0)
         return max_risk <= risk_threshold
 
     def run_dashboard(self, json_output: bool = False) -> bool:
@@ -202,9 +215,12 @@ class SelfHealingRunner:
             print(f"\n📋 Recent incidents ({len(incidents)}):")
             for inc in incidents[:10]:
                 status_icon = {
-                    "resolved": "✅", "pr_created": "🔗",
-                    "analyzing": "🔍", "fixing": "🔧",
-                    "pending": "⏳", "failed": "❌",
+                    "resolved": "✅",
+                    "pr_created": "🔗",
+                    "analyzing": "🔍",
+                    "fixing": "🔧",
+                    "pending": "⏳",
+                    "failed": "❌",
                     "escalated": "⚠️",
                 }.get(inc["status"], "❓")
                 print(f"  {status_icon} [{inc['mode']}] {inc['title']}")
@@ -259,26 +275,47 @@ class SelfHealingRunner:
 
         incident = orchestrator._find_incident(incident_id)
         if not incident:
-            print(json.dumps({"step": "failed", "error": f"Incident {incident_id} not found"}))
+            print(
+                json.dumps(
+                    {"step": "failed", "error": f"Incident {incident_id} not found"}
+                )
+            )
             return False
 
-        print(json.dumps({
-            "step": "analyzing",
-            "incident_id": incident_id,
-            "title": incident.title,
-        }), flush=True)
+        print(
+            json.dumps(
+                {
+                    "step": "analyzing",
+                    "incident_id": incident_id,
+                    "title": incident.title,
+                }
+            ),
+            flush=True,
+        )
 
         operation = await orchestrator.trigger_fix(incident_id)
 
         if operation is None:
-            print(json.dumps({"step": "failed", "error": "Incident already resolved or no fix needed"}))
+            print(
+                json.dumps(
+                    {
+                        "step": "failed",
+                        "error": "Incident already resolved or no fix needed",
+                    }
+                )
+            )
             return False
 
-        print(json.dumps({
-            "step": "complete",
-            "success": operation.success,
-            "operation": operation.to_dict(),
-        }, default=str))
+        print(
+            json.dumps(
+                {
+                    "step": "complete",
+                    "success": operation.success,
+                    "operation": operation.to_dict(),
+                },
+                default=str,
+            )
+        )
         return operation.success
 
     def run_dismiss(self, incident_id: str) -> bool:
@@ -294,26 +331,44 @@ class SelfHealingRunner:
 
         incident = orchestrator._find_incident(incident_id)
         if not incident:
-            print(json.dumps({"step": "failed", "error": f"Incident {incident_id} not found"}))
+            print(
+                json.dumps(
+                    {"step": "failed", "error": f"Incident {incident_id} not found"}
+                )
+            )
             return False
 
-        print(json.dumps({
-            "step": "retrying",
-            "incident_id": incident_id,
-            "title": incident.title,
-        }), flush=True)
+        print(
+            json.dumps(
+                {
+                    "step": "retrying",
+                    "incident_id": incident_id,
+                    "title": incident.title,
+                }
+            ),
+            flush=True,
+        )
 
         operation = await orchestrator.retry_incident(incident_id)
 
         if operation is None:
-            print(json.dumps({"step": "failed", "error": "Retry failed: incident not found"}))
+            print(
+                json.dumps(
+                    {"step": "failed", "error": "Retry failed: incident not found"}
+                )
+            )
             return False
 
-        print(json.dumps({
-            "step": "complete",
-            "success": operation.success,
-            "operation": operation.to_dict(),
-        }, default=str))
+        print(
+            json.dumps(
+                {
+                    "step": "complete",
+                    "success": operation.success,
+                    "operation": operation.to_dict(),
+                },
+                default=str,
+            )
+        )
         return operation.success
 
     def run_cancel(self, operation_id: str) -> bool:
@@ -334,13 +389,19 @@ class SelfHealingRunner:
 
         operation = next((o for o in operations if o.get("id") == operation_id), None)
         if not operation:
-            print(json.dumps({"success": False, "error": f"Operation {operation_id} not found"}))
+            print(
+                json.dumps(
+                    {"success": False, "error": f"Operation {operation_id} not found"}
+                )
+            )
             return False
 
         # Mark operation as cancelled
         operation["success"] = False
         operation["completed_at"] = datetime.now(timezone.utc).isoformat()
-        ops_file.write_text(json.dumps(operations, indent=2, default=str), encoding="utf-8")
+        ops_file.write_text(
+            json.dumps(operations, indent=2, default=str), encoding="utf-8"
+        )
 
         # Update the linked incident to "failed"
         if operation.get("incident") and inc_file.exists():
@@ -351,7 +412,9 @@ class SelfHealingRunner:
                     if inc.get("id") == incident_id:
                         inc["status"] = "failed"
                         break
-                inc_file.write_text(json.dumps(incidents, indent=2, default=str), encoding="utf-8")
+                inc_file.write_text(
+                    json.dumps(incidents, indent=2, default=str), encoding="utf-8"
+                )
             except (json.JSONDecodeError, OSError):
                 pass
 
@@ -390,7 +453,14 @@ class SelfHealingRunner:
             source_enum = IncidentSource(source)
         except ValueError:
             valid = [s.value for s in IncidentSource]
-            print(json.dumps({"success": False, "error": f"Unknown source '{source}'. Valid: {valid}"}))
+            print(
+                json.dumps(
+                    {
+                        "success": False,
+                        "error": f"Unknown source '{source}'. Valid: {valid}",
+                    }
+                )
+            )
             return False
 
         try:
@@ -420,7 +490,14 @@ class SelfHealingRunner:
             source_enum = IncidentSource(source)
         except ValueError:
             valid = [s.value for s in IncidentSource]
-            print(json.dumps({"success": False, "error": f"Unknown source '{source}'. Valid: {valid}"}))
+            print(
+                json.dumps(
+                    {
+                        "success": False,
+                        "error": f"Unknown source '{source}'. Valid: {valid}",
+                    }
+                )
+            )
             return False
 
         orchestrator = self._get_orchestrator()
@@ -453,63 +530,115 @@ def main():
     cicd_parser = subparsers.add_parser("cicd", help="Handle CI/CD test failure")
     cicd_parser.add_argument("--commit", required=True, help="Failing commit SHA")
     cicd_parser.add_argument("--branch", default="main", help="Branch name")
-    cicd_parser.add_argument("--test-output", help="Raw test output (reads stdin if omitted)")
+    cicd_parser.add_argument(
+        "--test-output", help="Raw test output (reads stdin if omitted)"
+    )
     cicd_parser.add_argument("--ci-log-url", help="URL to CI pipeline logs")
 
     # Production subcommand
     prod_parser = subparsers.add_parser("production", help="Handle production incident")
-    prod_parser.add_argument("--source", required=True, help="Source: sentry|datadog|cloudwatch|new_relic|pagerduty")
-    prod_parser.add_argument("--error-type", required=True, help="Error type (e.g., TypeError)")
+    prod_parser.add_argument(
+        "--source",
+        required=True,
+        help="Source: sentry|datadog|cloudwatch|new_relic|pagerduty",
+    )
+    prod_parser.add_argument(
+        "--error-type", required=True, help="Error type (e.g., TypeError)"
+    )
     prod_parser.add_argument("--error-message", required=True, help="Error message")
     prod_parser.add_argument("--stack-trace", default="", help="Stack trace")
-    prod_parser.add_argument("--occurrences", type=int, default=1, help="Occurrence count")
+    prod_parser.add_argument(
+        "--occurrences", type=int, default=1, help="Occurrence count"
+    )
 
     # Proactive subcommand
-    proactive_parser = subparsers.add_parser("proactive", help="Run proactive fragility scan")
-    proactive_parser.add_argument("--threshold", type=float, default=40.0, help="Risk threshold (0-100)")
-    proactive_parser.add_argument("--top-n", type=int, default=10, help="Show top N files")
-    proactive_parser.add_argument("--json", action="store_true", dest="json_output", help="Output as JSON array")
+    proactive_parser = subparsers.add_parser(
+        "proactive", help="Run proactive fragility scan"
+    )
+    proactive_parser.add_argument(
+        "--threshold", type=float, default=40.0, help="Risk threshold (0-100)"
+    )
+    proactive_parser.add_argument(
+        "--top-n", type=int, default=10, help="Show top N files"
+    )
+    proactive_parser.add_argument(
+        "--json", action="store_true", dest="json_output", help="Output as JSON array"
+    )
 
     # Dashboard subcommand
-    dashboard_parser = subparsers.add_parser("dashboard", help="Show self-healing dashboard")
-    dashboard_parser.add_argument("--json", action="store_true", dest="json_output", help="Output dashboard data as JSON")
+    dashboard_parser = subparsers.add_parser(
+        "dashboard", help="Show self-healing dashboard"
+    )
+    dashboard_parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="json_output",
+        help="Output dashboard data as JSON",
+    )
 
     # Incidents subcommand
     incidents_parser = subparsers.add_parser("incidents", help="List incidents as JSON")
-    incidents_parser.add_argument("--mode", choices=["cicd", "production", "proactive"], help="Filter by mode")
+    incidents_parser.add_argument(
+        "--mode", choices=["cicd", "production", "proactive"], help="Filter by mode"
+    )
 
     # Operations subcommand
     subparsers.add_parser("operations", help="List healing operations as JSON")
 
     # Fix subcommand
-    fix_parser = subparsers.add_parser("fix", help="Trigger fix for a specific incident")
+    fix_parser = subparsers.add_parser(
+        "fix", help="Trigger fix for a specific incident"
+    )
     fix_parser.add_argument("--incident-id", required=True, help="Incident ID to fix")
 
     # Dismiss subcommand
     dismiss_parser = subparsers.add_parser("dismiss", help="Dismiss an incident")
-    dismiss_parser.add_argument("--incident-id", required=True, help="Incident ID to dismiss")
+    dismiss_parser.add_argument(
+        "--incident-id", required=True, help="Incident ID to dismiss"
+    )
 
     # Retry subcommand
     retry_parser = subparsers.add_parser("retry", help="Retry a failed incident")
-    retry_parser.add_argument("--incident-id", required=True, help="Incident ID to retry")
+    retry_parser.add_argument(
+        "--incident-id", required=True, help="Incident ID to retry"
+    )
 
     # Cancel subcommand
-    cancel_parser = subparsers.add_parser("cancel", help="Cancel an in-progress operation")
-    cancel_parser.add_argument("--operation-id", required=True, help="Operation ID to cancel")
+    cancel_parser = subparsers.add_parser(
+        "cancel", help="Cancel an in-progress operation"
+    )
+    cancel_parser.add_argument(
+        "--operation-id", required=True, help="Operation ID to cancel"
+    )
 
     # Config subcommand
     config_parser = subparsers.add_parser("config", help="Save mode configuration")
-    config_parser.add_argument("--mode", required=True, choices=["cicd", "production", "proactive"], help="Config mode")
+    config_parser.add_argument(
+        "--mode",
+        required=True,
+        choices=["cicd", "production", "proactive"],
+        help="Config mode",
+    )
     config_parser.add_argument("--data", required=True, help="JSON config data")
 
     # Connect subcommand
-    connect_parser = subparsers.add_parser("connect", help="Connect a production monitoring source")
-    connect_parser.add_argument("--source", required=True, help="Source name (sentry, datadog, etc.)")
-    connect_parser.add_argument("--config", required=True, dest="config_json", help="JSON source configuration")
+    connect_parser = subparsers.add_parser(
+        "connect", help="Connect a production monitoring source"
+    )
+    connect_parser.add_argument(
+        "--source", required=True, help="Source name (sentry, datadog, etc.)"
+    )
+    connect_parser.add_argument(
+        "--config", required=True, dest="config_json", help="JSON source configuration"
+    )
 
     # Disconnect subcommand
-    disconnect_parser = subparsers.add_parser("disconnect", help="Disconnect a production monitoring source")
-    disconnect_parser.add_argument("--source", required=True, help="Source name to disconnect")
+    disconnect_parser = subparsers.add_parser(
+        "disconnect", help="Disconnect a production monitoring source"
+    )
+    disconnect_parser.add_argument(
+        "--source", required=True, help="Source name to disconnect"
+    )
 
     args = parser.parse_args()
 
@@ -522,7 +651,11 @@ def main():
     sys.exit(0 if success else 1)
 
 
-def _dispatch(runner: "SelfHealingRunner", args: argparse.Namespace, parser: argparse.ArgumentParser) -> bool:
+def _dispatch(
+    runner: "SelfHealingRunner",
+    args: argparse.Namespace,
+    parser: argparse.ArgumentParser,
+) -> bool:
     """Dispatch parsed CLI args to the appropriate runner method."""
     cmd = args.command
 
@@ -530,26 +663,32 @@ def _dispatch(runner: "SelfHealingRunner", args: argparse.Namespace, parser: arg
         test_output = args.test_output
         if not test_output and not sys.stdin.isatty():
             test_output = sys.stdin.read()
-        return asyncio.run(runner.run_cicd(
-            commit_sha=args.commit,
-            branch=args.branch,
-            test_output=test_output,
-            ci_log_url=args.ci_log_url,
-        ))
+        return asyncio.run(
+            runner.run_cicd(
+                commit_sha=args.commit,
+                branch=args.branch,
+                test_output=test_output,
+                ci_log_url=args.ci_log_url,
+            )
+        )
     if cmd == "production":
-        return asyncio.run(runner.run_production(
-            source=args.source,
-            error_type=args.error_type,
-            error_message=args.error_message,
-            stack_trace=args.stack_trace,
-            occurrence_count=args.occurrences,
-        ))
+        return asyncio.run(
+            runner.run_production(
+                source=args.source,
+                error_type=args.error_type,
+                error_message=args.error_message,
+                stack_trace=args.stack_trace,
+                occurrence_count=args.occurrences,
+            )
+        )
     if cmd == "proactive":
-        return asyncio.run(runner.run_proactive(
-            risk_threshold=args.threshold,
-            top_n=args.top_n,
-            json_output=args.json_output,
-        ))
+        return asyncio.run(
+            runner.run_proactive(
+                risk_threshold=args.threshold,
+                top_n=args.top_n,
+                json_output=args.json_output,
+            )
+        )
     if cmd == "dashboard":
         return runner.run_dashboard(json_output=args.json_output)
     if cmd == "incidents":
@@ -567,7 +706,9 @@ def _dispatch(runner: "SelfHealingRunner", args: argparse.Namespace, parser: arg
     if cmd == "config":
         return runner.run_config(mode=args.mode, data_json=args.data)
     if cmd == "connect":
-        return asyncio.run(runner.run_connect(source=args.source, config_json=args.config_json))
+        return asyncio.run(
+            runner.run_connect(source=args.source, config_json=args.config_json)
+        )
     if cmd == "disconnect":
         return asyncio.run(runner.run_disconnect(source=args.source))
 

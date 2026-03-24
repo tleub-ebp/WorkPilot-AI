@@ -14,11 +14,9 @@ the knowledge of a senior dev who knows the entire project.
 from __future__ import annotations
 
 import asyncio
-import json
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 try:
     from .io_utils import safe_print
@@ -163,8 +161,7 @@ class DeepContext:
         if self.historical_insights:
             sections.append("### Historical Insights (from project memory)")
             sections.append(
-                "Past learnings relevant to this PR's area. "
-                "Watch for similar issues."
+                "Past learnings relevant to this PR's area. Watch for similar issues."
             )
             for hint in self.historical_insights[:5]:
                 if isinstance(hint, dict):
@@ -346,6 +343,7 @@ class DeepContextProvider:
         """Gather project patterns and conventions using the Context Builder."""
         try:
             import sys
+
             backend_dir = self.project_dir / "apps" / "backend"
             if backend_dir.exists():
                 sys.path.insert(0, str(backend_dir))
@@ -376,8 +374,14 @@ class DeepContextProvider:
             # Build related code list
             related_code = []
             for f in task_context.files_to_reference[:10]:
-                path = f.get("path", "") if isinstance(f, dict) else getattr(f, "path", "")
-                reason = f.get("reason", "") if isinstance(f, dict) else getattr(f, "reason", "")
+                path = (
+                    f.get("path", "") if isinstance(f, dict) else getattr(f, "path", "")
+                )
+                reason = (
+                    f.get("reason", "")
+                    if isinstance(f, dict)
+                    else getattr(f, "reason", "")
+                )
                 if path:
                     related_code.append({"path": path, "reason": reason})
 
@@ -400,7 +404,10 @@ class DeepContextProvider:
     ) -> dict:
         """Query Graphiti memory for historical insights."""
         try:
-            from context.graphiti_integration import fetch_graph_hints, is_graphiti_enabled
+            from context.graphiti_integration import (
+                fetch_graph_hints,
+                is_graphiti_enabled,
+            )
 
             if not is_graphiti_enabled():
                 return {"insights": [], "past_bugs": [], "regression_risks": []}
@@ -424,7 +431,10 @@ class DeepContextProvider:
 
                     if episode_type in ("gotcha", "qa_result"):
                         past_bugs.append(hint)
-                    elif "regression" in str(fact).lower() or "broke" in str(fact).lower():
+                    elif (
+                        "regression" in str(fact).lower()
+                        or "broke" in str(fact).lower()
+                    ):
                         regression_risks.append(fact)
                     else:
                         insights.append(hint)
@@ -448,9 +458,7 @@ class DeepContextProvider:
                 for hint in dir_hints:
                     if isinstance(hint, dict):
                         fact = hint.get("fact", hint.get("content", str(hint)))
-                        regression_risks.append(
-                            f"In `{dir_path}`: {fact}"
-                        )
+                        regression_risks.append(f"In `{dir_path}`: {fact}")
                     elif hint:
                         regression_risks.append(f"In `{dir_path}`: {hint}")
 
@@ -493,32 +501,38 @@ class DeepContextProvider:
             # Format layers
             layers = []
             for layer in config.layers:
-                layers.append({
-                    "name": layer.name,
-                    "patterns": layer.patterns[:3],
-                    "allowed_imports": layer.allowed_imports[:3],
-                    "forbidden_imports": layer.forbidden_imports[:3],
-                })
+                layers.append(
+                    {
+                        "name": layer.name,
+                        "patterns": layer.patterns[:3],
+                        "allowed_imports": layer.allowed_imports[:3],
+                        "forbidden_imports": layer.forbidden_imports[:3],
+                    }
+                )
 
             # Format violations
             violations = []
             for v in report.violations:
-                violations.append({
-                    "type": v.type,
-                    "severity": v.severity,
-                    "file": v.file,
-                    "line": v.line,
-                    "description": v.description,
-                    "suggestion": v.suggestion,
-                })
+                violations.append(
+                    {
+                        "type": v.type,
+                        "severity": v.severity,
+                        "file": v.file,
+                        "line": v.line,
+                        "description": v.description,
+                        "suggestion": v.suggestion,
+                    }
+                )
             for w in report.warnings:
-                violations.append({
-                    "type": w.type,
-                    "severity": "warning",
-                    "file": w.file,
-                    "description": w.description,
-                    "suggestion": w.suggestion,
-                })
+                violations.append(
+                    {
+                        "type": w.type,
+                        "severity": "warning",
+                        "file": w.file,
+                        "description": w.description,
+                        "suggestion": w.suggestion,
+                    }
+                )
 
             return {
                 "style": config.architecture_style,

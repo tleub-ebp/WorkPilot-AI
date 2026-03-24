@@ -8,13 +8,16 @@ Integrates deep codebase context from the shared DeepContextProvider.
 
 from __future__ import annotations
 
-import json
 import traceback
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
 try:
+    from ..github.services.deep_context_provider import (
+        DeepContextProvider,
+        store_review_learnings,
+    )
     from .azdo_client import AzDOClient
     from .models import (
         AzDOPRContext,
@@ -23,7 +26,6 @@ try:
         PRReviewResult,
     )
     from .services import PRReviewEngine
-    from ..github.services.deep_context_provider import DeepContextProvider, store_review_learnings
 except ImportError:
     from azdo_client import AzDOClient
     from models import (
@@ -33,8 +35,12 @@ except ImportError:
         PRReviewResult,
     )
     from services import PRReviewEngine
+
     try:
-        from services.deep_context_provider import DeepContextProvider, store_review_learnings
+        from services.deep_context_provider import (
+            DeepContextProvider,
+            store_review_learnings,
+        )
     except ImportError:
         DeepContextProvider = None
         store_review_learnings = None
@@ -98,7 +104,9 @@ class AzureDevOpsOrchestrator:
 
         # Initialize deep context provider (shared with GitHub/GitLab)
         self.deep_context_provider = (
-            DeepContextProvider(project_dir=self.project_dir) if DeepContextProvider else None
+            DeepContextProvider(project_dir=self.project_dir)
+            if DeepContextProvider
+            else None
         )
 
         # Initialize review engine
@@ -118,7 +126,9 @@ class AzureDevOpsOrchestrator:
     ) -> None:
         if self.progress_callback:
             self.progress_callback(
-                ProgressCallback(phase=phase, progress=progress, message=message, pr_id=pr_id)
+                ProgressCallback(
+                    phase=phase, progress=progress, message=message, pr_id=pr_id
+                )
             )
 
     def _forward_progress(self, callback) -> None:
@@ -141,7 +151,11 @@ class AzureDevOpsOrchestrator:
 
         # Get author
         created_by = pr_data.get("createdBy", {})
-        author = created_by.get("displayName", "unknown") if isinstance(created_by, dict) else "unknown"
+        author = (
+            created_by.get("displayName", "unknown")
+            if isinstance(created_by, dict)
+            else "unknown"
+        )
 
         return AzDOPRContext(
             pr_id=pr_id,
@@ -170,7 +184,10 @@ class AzureDevOpsOrchestrator:
         safe_print(f"[AzDO] Starting review for PR #{pr_id}")
 
         self._report_progress(
-            "gathering_context", 10, f"Gathering context for PR #{pr_id}...", pr_id=pr_id
+            "gathering_context",
+            10,
+            f"Gathering context for PR #{pr_id}...",
+            pr_id=pr_id,
         )
 
         try:
@@ -185,7 +202,9 @@ class AzureDevOpsOrchestrator:
             if self.deep_context_provider:
                 try:
                     changed_paths = [
-                        f.get("path", "") for f in context.changed_files if f.get("path")
+                        f.get("path", "")
+                        for f in context.changed_files
+                        if f.get("path")
                     ]
                     deep_ctx = await self.deep_context_provider.gather_deep_context(
                         pr_title=context.title,
@@ -200,12 +219,16 @@ class AzureDevOpsOrchestrator:
                         f"arch_violations={len(deep_ctx.architecture_violations)}"
                     )
                 except Exception as e:
-                    safe_print(f"[AzDO] Deep context gathering failed (non-blocking): {e}")
+                    safe_print(
+                        f"[AzDO] Deep context gathering failed (non-blocking): {e}"
+                    )
 
             self._report_progress("analyzing", 30, "Running AI review...", pr_id=pr_id)
 
             # Run review
-            findings, verdict, summary, blockers = await self.review_engine.run_review(context)
+            findings, verdict, summary, blockers = await self.review_engine.run_review(
+                context
+            )
             safe_print(f"[AzDO] Review complete: {len(findings)} findings")
 
             # Map verdict to overall_status
@@ -248,7 +271,9 @@ class AzureDevOpsOrchestrator:
             if store_review_learnings and findings:
                 try:
                     changed_paths = [
-                        f.get("path", "") for f in context.changed_files if f.get("path")
+                        f.get("path", "")
+                        for f in context.changed_files
+                        if f.get("path")
                     ]
                     await store_review_learnings(
                         project_dir=self.project_dir,
@@ -258,7 +283,9 @@ class AzureDevOpsOrchestrator:
                         changed_files=changed_paths,
                     )
                 except Exception as e:
-                    safe_print(f"[AzDO] Failed to store review learnings (non-blocking): {e}")
+                    safe_print(
+                        f"[AzDO] Failed to store review learnings (non-blocking): {e}"
+                    )
 
             self._report_progress("complete", 100, "Review complete!", pr_id=pr_id)
 

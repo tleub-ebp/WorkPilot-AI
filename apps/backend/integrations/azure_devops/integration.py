@@ -28,6 +28,7 @@ except ImportError:
         def extract_azure_devops_project(path):
             return None
 
+
 from src.config.settings import Settings
 from src.connectors.azure_devops import AzureDevOpsConnector
 

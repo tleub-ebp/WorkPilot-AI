@@ -1,4 +1,4 @@
-﻿"""
+"""
 Session Recorder - Record and replay streaming sessions.
 
 Allows recording of streaming sessions for later replay, perfect for learning,
@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from .streaming_manager import EventType, StreamingEvent
 
@@ -18,18 +18,19 @@ from .streaming_manager import EventType, StreamingEvent
 @dataclass
 class SessionRecording:
     """A recorded streaming session."""
+
     session_id: str
     start_time: float
-    end_time: Optional[float]
+    end_time: float | None
     metadata: dict[str, Any]
     events: list[StreamingEvent]
-    
+
     def duration(self) -> float:
         """Get session duration in seconds."""
         if self.end_time:
             return self.end_time - self.start_time
         return time.time() - self.start_time
-        
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
@@ -41,7 +42,7 @@ class SessionRecording:
             "event_count": len(self.events),
             "events": [event.to_dict() for event in self.events],
         }
-        
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "SessionRecording":
         """Create from dictionary."""
@@ -54,7 +55,7 @@ class SessionRecording:
             )
             for event in data["events"]
         ]
-        
+
         return cls(
             session_id=data["session_id"],
             start_time=data["start_time"],
@@ -67,20 +68,22 @@ class SessionRecording:
 class SessionRecorder:
     """
     Records streaming sessions for replay.
-    
+
     Features:
     - Automatic recording of all streaming events
     - Save/load recordings to disk
     - Replay sessions at different speeds
     - Export to video format (future enhancement)
     """
-    
-    def __init__(self, recordings_dir: Optional[Path] = None):
-        self._recordings_dir = recordings_dir or Path.home() / ".auto-claude" / "recordings"
+
+    def __init__(self, recordings_dir: Path | None = None):
+        self._recordings_dir = (
+            recordings_dir or Path.home() / ".auto-claude" / "recordings"
+        )
         self._recordings_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self._active_recordings: dict[str, SessionRecording] = {}
-        
+
     def start_recording(self, session_id: str, metadata: dict[str, Any]) -> None:
         """Start recording a session."""
         recording = SessionRecording(
@@ -91,32 +94,34 @@ class SessionRecorder:
             events=[],
         )
         self._active_recordings[session_id] = recording
-        
+
     def record_event(self, event: StreamingEvent) -> None:
         """Record an event to the active session."""
         session_id = event.session_id
         if session_id in self._active_recordings:
             self._active_recordings[session_id].events.append(event)
-            
-    def stop_recording(self, session_id: str) -> Optional[SessionRecording]:
+
+    def stop_recording(self, session_id: str) -> SessionRecording | None:
         """Stop recording a session and return the recording."""
         if session_id not in self._active_recordings:
             return None
-            
+
         recording = self._active_recordings[session_id]
         recording.end_time = time.time()
-        
+
         # Save to disk
         self.save_recording(recording)
-        
+
         # Remove from active recordings
         del self._active_recordings[session_id]
-        
+
         return recording
-        
+
     def save_recording(self, recording: SessionRecording) -> Path:
         """Save a recording to disk with inverted filename/root."""
-        timestamp = datetime.fromtimestamp(recording.start_time).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.fromtimestamp(recording.start_time).strftime(
+            "%Y%m%d_%H%M%S"
+        )
         # Inversion: recordings_dir devient le nom du fichier, filename devient le dossier
         filename = f"{timestamp}_{recording.session_id}"
         inverted_dir = Path.home() / filename
@@ -144,14 +149,16 @@ class SessionRecorder:
                 with open(filepath) as f:
                     data = json.load(f)
 
-                recordings.append({
-                    "filepath": str(filepath),
-                    "session_id": data["session_id"],
-                    "start_time": data["start_time"],
-                    "duration": data.get("duration", 0),
-                    "event_count": data.get("event_count", 0),
-                    "metadata": data.get("metadata", {}),
-                })
+                recordings.append(
+                    {
+                        "filepath": str(filepath),
+                        "session_id": data["session_id"],
+                        "start_time": data["start_time"],
+                        "duration": data.get("duration", 0),
+                        "event_count": data.get("event_count", 0),
+                        "metadata": data.get("metadata", {}),
+                    }
+                )
             except Exception as e:
                 print(f"Failed to load recording {filepath}: {e}")
 
@@ -170,7 +177,7 @@ class SessionRecorder:
         self,
         recording: SessionRecording,
         speed: float = 1.0,
-        callback: Optional[Any] = None,
+        callback: Any | None = None,
     ) -> None:
         """
         Replay a recorded session.
@@ -202,9 +209,15 @@ class SessionRecorder:
         commands_run = 0
 
         for event in recording.events:
-            event_types[event.event_type.value] = event_types.get(event.event_type.value, 0) + 1
+            event_types[event.event_type.value] = (
+                event_types.get(event.event_type.value, 0) + 1
+            )
 
-            if event.event_type in [EventType.FILE_CREATE, EventType.FILE_UPDATE, EventType.FILE_DELETE]:
+            if event.event_type in [
+                EventType.FILE_CREATE,
+                EventType.FILE_UPDATE,
+                EventType.FILE_DELETE,
+            ]:
                 file_changes += 1
             elif event.event_type == EventType.COMMAND_RUN:
                 commands_run += 1
@@ -219,7 +232,7 @@ class SessionRecorder:
 
 
 # Global instance
-_session_recorder: Optional[SessionRecorder] = None
+_session_recorder: SessionRecorder | None = None
 
 
 def get_session_recorder() -> SessionRecorder:

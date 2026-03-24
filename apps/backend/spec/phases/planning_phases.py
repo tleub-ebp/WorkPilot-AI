@@ -147,12 +147,8 @@ class PlanningPhaseMixin:
 
         # Fall back to agent
         self.ui.print_status("Falling back to planner agent...", "progress")
-        self.ui.print_status(
-            f"  Spec dir: {self.spec_dir}", "info"
-        )
-        self.ui.print_status(
-            f"  Project dir: {self.project_dir}", "info"
-        )
+        self.ui.print_status(f"  Spec dir: {self.spec_dir}", "info")
+        self.ui.print_status(f"  Project dir: {self.project_dir}", "info")
 
         for attempt in range(MAX_RETRIES):
             # CRITICAL: Delete any stale/invalid plan file before each agent attempt.
@@ -185,9 +181,7 @@ class PlanningPhaseMixin:
                 )
 
             if success and plan_file.exists():
-                self._log_plan_content(
-                    plan_file, f"agent attempt {attempt + 1} output"
-                )
+                self._log_plan_content(plan_file, f"agent attempt {attempt + 1} output")
                 result = self.spec_validator.validate_implementation_plan()
                 if result.valid:
                     self.ui.print_status(
@@ -221,6 +215,7 @@ class PlanningPhaseMixin:
                         plan_file,
                     )
                     import shutil
+
                     shutil.move(str(wrong_path), str(plan_file))
                     # Re-validate the moved file
                     result = self.spec_validator.validate_implementation_plan()

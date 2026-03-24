@@ -178,9 +178,7 @@ class ProjectAnalyzer:
             current = parent
         return None
 
-    def _scan_framework(
-        self, project_root: str, language: str
-    ) -> tuple[str, str]:
+    def _scan_framework(self, project_root: str, language: str) -> tuple[str, str]:
         """Scan config files to detect the test framework in use."""
         root = Path(project_root)
         for detector in (
@@ -195,9 +193,7 @@ class ProjectAnalyzer:
                 return result
         return self._default_framework(language), ""
 
-    def _detect_js_framework(
-        self, root: Path, language: str
-    ) -> tuple[str, str] | None:
+    def _detect_js_framework(self, root: Path, language: str) -> tuple[str, str] | None:
         pkg_json = root / "package.json"
         if not pkg_json.exists():
             return None
@@ -224,9 +220,15 @@ class ProjectAnalyzer:
         return None
 
     def _detect_python_framework(
-        self, root: Path, language: str  # noqa: ARG002
+        self,
+        root: Path,
+        language: str,  # noqa: ARG002
     ) -> tuple[str, str] | None:
-        for fname in ("requirements.txt", "requirements-dev.txt", "requirements-test.txt"):
+        for fname in (
+            "requirements.txt",
+            "requirements-dev.txt",
+            "requirements-test.txt",
+        ):
             req_path = root / fname
             if req_path.exists():
                 try:
@@ -250,7 +252,9 @@ class ProjectAnalyzer:
         return None
 
     def _detect_java_framework(
-        self, root: Path, language: str  # noqa: ARG002
+        self,
+        root: Path,
+        language: str,  # noqa: ARG002
     ) -> tuple[str, str] | None:
         pom = root / "pom.xml"
         if pom.exists():
@@ -276,7 +280,9 @@ class ProjectAnalyzer:
         return None
 
     def _detect_csharp_framework(
-        self, root: Path, language: str  # noqa: ARG002
+        self,
+        root: Path,
+        language: str,  # noqa: ARG002
     ) -> tuple[str, str] | None:
         try:
             for entry in root.iterdir():
@@ -296,7 +302,9 @@ class ProjectAnalyzer:
         return None
 
     def _detect_ruby_framework(
-        self, root: Path, language: str  # noqa: ARG002
+        self,
+        root: Path,
+        language: str,  # noqa: ARG002
     ) -> tuple[str, str] | None:
         gemfile = root / "Gemfile"
         if not gemfile.exists():
@@ -422,7 +430,9 @@ class TestGeneratorAgent:
         )
         print("Asking Claude to analyse coverage gaps...", flush=True)
 
-        prompt = self._analyze_coverage_prompt(source, file_path, framework_info, existing)
+        prompt = self._analyze_coverage_prompt(
+            source, file_path, framework_info, existing
+        )
         response = await self._call_claude(prompt)
         return self._parse_gaps(response, file_path)
 
@@ -454,7 +464,9 @@ class TestGeneratorAgent:
             source, file_path, framework_info, existing, max_tests_per_function
         )
         response = await self._call_claude(prompt)
-        return self._parse_generation_result(response, file_path, "unit", framework_info)
+        return self._parse_generation_result(
+            response, file_path, "unit", framework_info
+        )
 
     async def _generate_e2e_async(
         self, user_story: str, target_module: str, project_path: str | None
@@ -482,7 +494,9 @@ class TestGeneratorAgent:
 
         prompt = self._generate_e2e_prompt(user_story, target_module, framework_info)
         response = await self._call_claude(prompt)
-        return self._parse_generation_result(response, target_module, "e2e", framework_info)
+        return self._parse_generation_result(
+            response, target_module, "e2e", framework_info
+        )
 
     async def _generate_tdd_async(
         self, spec: dict[str, Any], project_path: str | None
@@ -525,7 +539,9 @@ class TestGeneratorAgent:
         prompt = self._generate_tdd_prompt(spec, framework_info)
         response = await self._call_claude(prompt)
         slug = re.sub(r"[^a-z0-9_]", "_", spec.get("snippet_type", "feature").lower())
-        return self._parse_generation_result(response, f"tdd_{slug}", "unit", framework_info)
+        return self._parse_generation_result(
+            response, f"tdd_{slug}", "unit", framework_info
+        )
 
     # ── Claude call ──────────────────────────────────────────────────
 
@@ -551,9 +567,8 @@ class TestGeneratorAgent:
             async with client:
                 await client.query(prompt)
                 async for msg in client.receive_response():
-                    if (
-                        type(msg).__name__ == "AssistantMessage"
-                        and hasattr(msg, "content")
+                    if type(msg).__name__ == "AssistantMessage" and hasattr(
+                        msg, "content"
                     ):
                         for block in msg.content:
                             if hasattr(block, "text"):
@@ -703,7 +718,7 @@ Requirements:
 Return ONLY a raw JSON object (no markdown) matching this schema:
 {{
   "test_file_content": "<complete test file as a single escaped string>",
-  "test_file_path": "e2e/test_{stem}.{language == 'typescript' and 'ts' or language == 'python' and 'py' or 'js'}",
+  "test_file_path": "e2e/test_{stem}.{language == "typescript" and "ts" or language == "python" and "py" or "js"}",
   "tests_generated": <integer>,
   "functions_analyzed": 0,
   "generated_tests": [
@@ -745,7 +760,7 @@ Requirements:
 Return ONLY a raw JSON object (no markdown) matching this schema:
 {{
   "test_file_content": "<complete test file as a single escaped string>",
-  "test_file_path": "tests/test_{slug}.{language == 'python' and 'py' or language in ('typescript',) and 'ts' or 'js'}",
+  "test_file_path": "tests/test_{slug}.{language == "python" and "py" or language in ("typescript",) and "ts" or "js"}",
   "tests_generated": <integer>,
   "functions_analyzed": 0,
   "generated_tests": [

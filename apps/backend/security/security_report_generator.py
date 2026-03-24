@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Security Report Generator
 =========================
@@ -34,7 +34,7 @@ except ImportError:
 class SecurityReportGenerator:
     """
     Generates security reports in various formats.
-    
+
     This generator combines:
     - Vulnerability scan results
     - Compliance analysis results
@@ -107,7 +107,9 @@ class SecurityReportGenerator:
         # Header
         md_lines.append("# 🔒 Security Scan Report")
         md_lines.append("")
-        md_lines.append(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        md_lines.append(
+            f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        )
         md_lines.append(
             f"**Project:** {vulnerability_results.get('project_path', 'Unknown')}"
         )
@@ -120,7 +122,9 @@ class SecurityReportGenerator:
         summary = vulnerability_results.get("summary", {})
         risk = self._calculate_risk_score(vulnerability_results, compliance_results)
 
-        md_lines.append(f"**Overall Risk Score:** {risk['score']}/100 - {risk['level']}")
+        md_lines.append(
+            f"**Overall Risk Score:** {risk['score']}/100 - {risk['level']}"
+        )
         md_lines.append("")
         md_lines.append("### Vulnerability Summary")
         md_lines.append("")
@@ -134,7 +138,9 @@ class SecurityReportGenerator:
         # Scan Details
         md_lines.append("### Scan Details")
         md_lines.append("")
-        md_lines.append(f"- **Scans Run:** {', '.join(vulnerability_results.get('scans_run', []))}")
+        md_lines.append(
+            f"- **Scans Run:** {', '.join(vulnerability_results.get('scans_run', []))}"
+        )
         md_lines.append(
             f"- **Files Scanned:** {vulnerability_results.get('total_files_scanned', 0)}"
         )
@@ -145,9 +151,13 @@ class SecurityReportGenerator:
 
         # Blocking Status
         if vulnerability_results.get("should_block", False):
-            md_lines.append("⛔ **STATUS: BLOCKING** - Critical vulnerabilities must be fixed before deployment")
+            md_lines.append(
+                "⛔ **STATUS: BLOCKING** - Critical vulnerabilities must be fixed before deployment"
+            )
         elif vulnerability_results.get("should_warn", False):
-            md_lines.append("⚠️ **STATUS: WARNING** - High/Medium vulnerabilities should be reviewed")
+            md_lines.append(
+                "⚠️ **STATUS: WARNING** - High/Medium vulnerabilities should be reviewed"
+            )
         else:
             md_lines.append("✅ **STATUS: PASSED** - No critical issues detected")
         md_lines.append("")
@@ -220,7 +230,9 @@ class SecurityReportGenerator:
                 f"**Frameworks Checked:** {', '.join(compliance_results.get('frameworks', []))}"
             )
             md_lines.append("")
-            md_lines.append(f"- 🔴 **Critical Violations:** {comp_summary.get('critical', 0)}")
+            md_lines.append(
+                f"- 🔴 **Critical Violations:** {comp_summary.get('critical', 0)}"
+            )
             md_lines.append(f"- 🟠 **High Violations:** {comp_summary.get('high', 0)}")
             md_lines.append(f"- **Total Violations:** {comp_summary.get('total', 0)}")
             md_lines.append("")
@@ -246,7 +258,9 @@ class SecurityReportGenerator:
                         f"{i}. **{violation.get('framework', 'N/A')} - {violation.get('rule_id', 'N/A')}:** {violation.get('title', 'Unknown')}"
                     )
                     md_lines.append(f"   - Location: `{violation.get('file', 'N/A')}`")
-                    md_lines.append(f"   - Remediation: {violation.get('remediation', 'See documentation')}")
+                    md_lines.append(
+                        f"   - Remediation: {violation.get('remediation', 'See documentation')}"
+                    )
                     md_lines.append("")
 
         # Recommendations
@@ -262,9 +276,15 @@ class SecurityReportGenerator:
         # Next Steps
         md_lines.append("## 🎯 Next Steps")
         md_lines.append("")
-        md_lines.append("1. **Address Critical Issues:** Fix all critical vulnerabilities immediately")
-        md_lines.append("2. **Review High Severity:** Assess and prioritize high severity issues")
-        md_lines.append("3. **Update Dependencies:** Check for available security patches")
+        md_lines.append(
+            "1. **Address Critical Issues:** Fix all critical vulnerabilities immediately"
+        )
+        md_lines.append(
+            "2. **Review High Severity:** Assess and prioritize high severity issues"
+        )
+        md_lines.append(
+            "3. **Update Dependencies:** Check for available security patches"
+        )
         md_lines.append("4. **Run Tests:** Ensure fixes don't break functionality")
         md_lines.append("5. **Re-scan:** Run security scan again after fixes")
         md_lines.append("")
@@ -440,32 +460,32 @@ class SecurityReportGenerator:
     <div class="header">
         <h1>🔒 Security Scan Report</h1>
         <div class="subtitle">
-            Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}<br>
-            Project: {vulnerability_results.get('project_path', 'Unknown')}
+            Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}<br>
+            Project: {vulnerability_results.get("project_path", "Unknown")}
         </div>
     </div>
 
     <div class="summary">
         <div class="card">
             <h3>Risk Score</h3>
-            <div class="risk-score risk-{risk['level'].lower()}">{risk['score']}/100</div>
-            <div>{risk['level']}</div>
+            <div class="risk-score risk-{risk["level"].lower()}">{risk["score"]}/100</div>
+            <div>{risk["level"]}</div>
         </div>
         <div class="card">
             <h3>Critical</h3>
-            <div class="metric critical">{summary.get('critical', 0)}</div>
+            <div class="metric critical">{summary.get("critical", 0)}</div>
         </div>
         <div class="card">
             <h3>High</h3>
-            <div class="metric high">{summary.get('high', 0)}</div>
+            <div class="metric high">{summary.get("high", 0)}</div>
         </div>
         <div class="card">
             <h3>Medium</h3>
-            <div class="metric medium">{summary.get('medium', 0)}</div>
+            <div class="metric medium">{summary.get("medium", 0)}</div>
         </div>
         <div class="card">
             <h3>Low</h3>
-            <div class="metric low">{summary.get('low', 0)}</div>
+            <div class="metric low">{summary.get("low", 0)}</div>
         </div>
     </div>
 """
@@ -492,10 +512,10 @@ class SecurityReportGenerator:
                 <div class="vulnerability critical">
                     <h4>
                         <span class="badge critical">CRITICAL</span>
-                        {vuln.get('title', 'Unknown')}
+                        {vuln.get("title", "Unknown")}
                     </h4>
-                    <p><strong>ID:</strong> {vuln.get('id', 'N/A')}</p>
-                    <p><strong>Source:</strong> {vuln.get('source', 'N/A')}</p>
+                    <p><strong>ID:</strong> {vuln.get("id", "N/A")}</p>
+                    <p><strong>Source:</strong> {vuln.get("source", "N/A")}</p>
                 """
                 if vuln.get("file"):
                     location = vuln["file"]
@@ -506,7 +526,9 @@ class SecurityReportGenerator:
                 html += f"<p>{vuln.get('description', 'N/A')}</p>"
 
                 if vuln.get("remediation"):
-                    html += f"<p><strong>Remediation:</strong> {vuln['remediation']}</p>"
+                    html += (
+                        f"<p><strong>Remediation:</strong> {vuln['remediation']}</p>"
+                    )
 
                 html += "</div>"
 
@@ -583,7 +605,9 @@ class SecurityReportGenerator:
             result = {
                 "ruleId": vuln.get("id", "unknown"),
                 "level": level_map.get(vuln.get("severity", "medium"), "warning"),
-                "message": {"text": vuln.get("description", vuln.get("title", "Security issue"))},
+                "message": {
+                    "text": vuln.get("description", vuln.get("title", "Security issue"))
+                },
             }
 
             if vuln.get("file"):
@@ -639,9 +663,15 @@ class SecurityReportGenerator:
         table.add_column("Severity", style="bold")
         table.add_column("Count", justify="right")
 
-        table.add_row("🔴 Critical", f"[bold red]{summary.get('critical', 0)}[/bold red]")
-        table.add_row("🟠 High", f"[bold orange1]{summary.get('high', 0)}[/bold orange1]")
-        table.add_row("🟡 Medium", f"[bold yellow]{summary.get('medium', 0)}[/bold yellow]")
+        table.add_row(
+            "🔴 Critical", f"[bold red]{summary.get('critical', 0)}[/bold red]"
+        )
+        table.add_row(
+            "🟠 High", f"[bold orange1]{summary.get('high', 0)}[/bold orange1]"
+        )
+        table.add_row(
+            "🟡 Medium", f"[bold yellow]{summary.get('medium', 0)}[/bold yellow]"
+        )
         table.add_row("🟢 Low", f"[bold green]{summary.get('low', 0)}[/bold green]")
         table.add_row("[bold]Total[/bold]", f"[bold]{summary.get('total', 0)}[/bold]")
 
@@ -788,4 +818,3 @@ class SecurityReportGenerator:
         )
 
         return recommendations
-

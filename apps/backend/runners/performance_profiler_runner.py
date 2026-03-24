@@ -11,14 +11,19 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Dict, Optional
 
 # Add the apps/backend directory to the Python path
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
 try:
-    from performance import PerformanceProfiler, BenchmarkRunner, PerformanceOptimizer, PerformanceReport
+    from performance import (
+        BenchmarkRunner,
+        PerformanceOptimizer,
+        PerformanceProfiler,
+        PerformanceReport,
+    )
+
     _PERFORMANCE_AVAILABLE = True
 except ImportError:
     _PERFORMANCE_AVAILABLE = False
@@ -33,8 +38,8 @@ class PerformanceProfilerRunner:
         self,
         project_dir: str,
         auto_implement: bool = False,
-        model: Optional[str] = None,
-        thinking_level: Optional[str] = None,
+        model: str | None = None,
+        thinking_level: str | None = None,
     ):
         self.project_dir = Path(project_dir)
         self.auto_implement = auto_implement
@@ -48,7 +53,7 @@ class PerformanceProfilerRunner:
         if self.auto_implement:
             print("🔧 Auto-implementation enabled")
 
-    def run_profiling(self) -> Dict:
+    def run_profiling(self) -> dict:
         """Run the full performance profiling workflow."""
         print("\n🔍 Phase 1: Static code analysis...")
         profiler = PerformanceProfiler(str(self.project_dir))
@@ -56,7 +61,9 @@ class PerformanceProfilerRunner:
 
         print(f"\n📊 Found {len(report.bottlenecks)} bottlenecks")
         for b in report.bottlenecks[:5]:
-            print(f"   [{b.severity.value.upper()}] {b.file_path}:{b.line_start} — {b.description[:60]}")
+            print(
+                f"   [{b.severity.value.upper()}] {b.file_path}:{b.line_start} — {b.description[:60]}"
+            )
 
         print("\n🏃 Phase 2: Running benchmarks...")
         benchmark_runner = BenchmarkRunner(str(self.project_dir))
@@ -89,7 +96,9 @@ class PerformanceProfilerRunner:
             impl_results = []
             for suggestion in suggestions:
                 if suggestion.auto_implementable:
-                    impl_result = optimizer.implement_suggestion(suggestion, dry_run=False)
+                    impl_result = optimizer.implement_suggestion(
+                        suggestion, dry_run=False
+                    )
                     impl_results.append(impl_result)
                     print(f"   ✅ {suggestion.title}")
             result["implementation"] = impl_results
@@ -97,15 +106,19 @@ class PerformanceProfilerRunner:
 
         return result
 
-    def _generate_summary(self, report: PerformanceReport) -> Dict:
+    def _generate_summary(self, report: PerformanceReport) -> dict:
         """Generate a human-readable summary."""
         summary = report.summary.copy()
         if report.bottlenecks:
             top_severity = max(
                 report.bottlenecks,
-                key=lambda b: ["low", "medium", "high", "critical"].index(b.severity.value),
+                key=lambda b: ["low", "medium", "high", "critical"].index(
+                    b.severity.value
+                ),
             )
-            summary["top_issue"] = f"{top_severity.file_path}: {top_severity.description[:80]}"
+            summary["top_issue"] = (
+                f"{top_severity.file_path}: {top_severity.description[:80]}"
+            )
         return summary
 
 
@@ -163,7 +176,12 @@ def main():
         print("\n⚠️ Profiling interrupted.")
         sys.exit(1)
     except Exception as e:
-        error_result = {"status": "error", "error": str(e), "report": None, "summary": {}}
+        error_result = {
+            "status": "error",
+            "error": str(e),
+            "report": None,
+            "summary": {},
+        }
         print(PERF_RESULT_MARKER + json.dumps(error_result))
         sys.exit(1)
 

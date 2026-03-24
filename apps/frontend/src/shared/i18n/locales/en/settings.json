@@ -735,6 +735,13 @@
       "integrationDescription": "Connect to Azure DevOps for work item management",
       "syncDescription": "Sync with Azure DevOps Backlog"
     },
+    "memory": {
+      "title": "Memory (Graphiti)",
+      "description": "Graphiti memory backend",
+      "integrationTitle": "Memory Settings",
+      "integrationDescription": "Configure Graphiti memory backend for cross-session context",
+      "syncDescription": "Configure Graphiti memory"
+    },
     "flagshipModel": "Flagship model: {{model}}",
     "tierFlagship": "Flagship",
     "supportsThinking": "Thinking",

@@ -18,11 +18,9 @@ Example:
 import hashlib
 import json
 import logging
-import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +29,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class AuditAction(str, Enum):
     """All auditable actions in the application."""
+
     TASK_CREATED = "task_created"
     TASK_UPDATED = "task_updated"
     TASK_DELETED = "task_deleted"
@@ -60,6 +60,7 @@ class AuditAction(str, Enum):
 
 class AuditSeverity(str, Enum):
     """Severity levels for audit entries."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -68,6 +69,7 @@ class AuditSeverity(str, Enum):
 
 class ExportFormat(str, Enum):
     """Supported export formats."""
+
     JSON = "json"
     CSV = "csv"
     JSONL = "jsonl"
@@ -77,22 +79,24 @@ class ExportFormat(str, Enum):
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class AuditEntry:
     """A single audit log entry — immutable once created."""
+
     entry_id: str
     timestamp: str
     action: str
     user: str
     project_id: str
-    target: Optional[str] = None
-    target_type: Optional[str] = None
+    target: str | None = None
+    target_type: str | None = None
     severity: str = "info"
     details: dict = field(default_factory=dict)
     metadata: dict = field(default_factory=dict)
-    result: Optional[str] = None
-    ip_address: Optional[str] = None
-    session_id: Optional[str] = None
+    result: str | None = None
+    ip_address: str | None = None
+    session_id: str | None = None
     checksum: str = ""
 
     def compute_checksum(self) -> str:
@@ -115,15 +119,16 @@ class AuditEntry:
 @dataclass
 class AuditFilter:
     """Filter criteria for searching audit entries."""
-    action: Optional[str] = None
-    user: Optional[str] = None
-    target: Optional[str] = None
-    target_type: Optional[str] = None
-    severity: Optional[str] = None
-    from_date: Optional[str] = None
-    to_date: Optional[str] = None
-    keyword: Optional[str] = None
-    session_id: Optional[str] = None
+
+    action: str | None = None
+    user: str | None = None
+    target: str | None = None
+    target_type: str | None = None
+    severity: str | None = None
+    from_date: str | None = None
+    to_date: str | None = None
+    keyword: str | None = None
+    session_id: str | None = None
     limit: int = 100
     offset: int = 0
 
@@ -131,14 +136,15 @@ class AuditFilter:
 @dataclass
 class AuditSummary:
     """Summary statistics for audit entries."""
+
     total_entries: int = 0
     entries_by_action: dict = field(default_factory=dict)
     entries_by_severity: dict = field(default_factory=dict)
     entries_by_user: dict = field(default_factory=dict)
     unique_users: int = 0
     unique_actions: int = 0
-    first_entry_date: Optional[str] = None
-    last_entry_date: Optional[str] = None
+    first_entry_date: str | None = None
+    last_entry_date: str | None = None
     integrity_valid: bool = True
     integrity_errors: int = 0
 
@@ -149,6 +155,7 @@ class AuditSummary:
 # ---------------------------------------------------------------------------
 # Main audit trail class
 # ---------------------------------------------------------------------------
+
 
 class AuditTrail:
     """Append-only audit trail for tracking all application actions.
@@ -173,14 +180,14 @@ class AuditTrail:
         self,
         action: str,
         user: str = "system",
-        target: Optional[str] = None,
-        target_type: Optional[str] = None,
+        target: str | None = None,
+        target_type: str | None = None,
         severity: str = "info",
-        details: Optional[dict] = None,
-        metadata: Optional[dict] = None,
-        result: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        session_id: Optional[str] = None,
+        details: dict | None = None,
+        metadata: dict | None = None,
+        result: str | None = None,
+        ip_address: str | None = None,
+        session_id: str | None = None,
     ) -> AuditEntry:
         """Record a new audit entry (append-only).
 
@@ -223,13 +230,16 @@ class AuditTrail:
 
         logger.debug(
             "Audit entry %s: %s by %s on %s",
-            entry_id, action, user, target,
+            entry_id,
+            action,
+            user,
+            target,
         )
         return entry
 
     # -- Querying -----------------------------------------------------------
 
-    def get_entry(self, entry_id: str) -> Optional[AuditEntry]:
+    def get_entry(self, entry_id: str) -> AuditEntry | None:
         """Get a single entry by ID."""
         for entry in self._entries:
             if entry.entry_id == entry_id:
@@ -238,14 +248,14 @@ class AuditTrail:
 
     def get_entries(
         self,
-        action: Optional[str] = None,
-        user: Optional[str] = None,
-        severity: Optional[str] = None,
-        target: Optional[str] = None,
-        target_type: Optional[str] = None,
-        session_id: Optional[str] = None,
-        from_date: Optional[str] = None,
-        to_date: Optional[str] = None,
+        action: str | None = None,
+        user: str | None = None,
+        severity: str | None = None,
+        target: str | None = None,
+        target_type: str | None = None,
+        session_id: str | None = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[AuditEntry]:
@@ -269,18 +279,20 @@ class AuditTrail:
         if to_date:
             results = [e for e in results if e.timestamp <= to_date]
 
-        return results[offset: offset + limit]
+        return results[offset : offset + limit]
 
     def search(
         self,
-        keyword: Optional[str] = None,
-        action: Optional[str] = None,
-        user: Optional[str] = None,
-        severity: Optional[str] = None,
+        keyword: str | None = None,
+        action: str | None = None,
+        user: str | None = None,
+        severity: str | None = None,
         limit: int = 100,
     ) -> list[AuditEntry]:
         """Full-text search across audit entries."""
-        results = self.get_entries(action=action, user=user, severity=severity, limit=len(self._entries))
+        results = self.get_entries(
+            action=action, user=user, severity=severity, limit=len(self._entries)
+        )
 
         if keyword:
             keyword_lower = keyword.lower()
@@ -296,7 +308,7 @@ class AuditTrail:
 
         return results[:limit]
 
-    def count(self, action: Optional[str] = None, user: Optional[str] = None) -> int:
+    def count(self, action: str | None = None, user: str | None = None) -> int:
         """Count entries matching criteria."""
         return len(self.get_entries(action=action, user=user, limit=len(self._entries)))
 
@@ -434,9 +446,7 @@ class AuditTrail:
 
         security_entries = self.get_entries(
             severity="critical", limit=len(self._entries)
-        ) + self.get_entries(
-            action="security_violation", limit=len(self._entries)
-        )
+        ) + self.get_entries(action="security_violation", limit=len(self._entries))
         # Deduplicate
         seen = set()
         unique_security: list[AuditEntry] = []

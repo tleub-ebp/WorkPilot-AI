@@ -1,8 +1,8 @@
 """Data models for the Architecture Visualizer."""
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
 
 
 class DiagramType(Enum):
@@ -42,7 +42,7 @@ class ModuleNode:
     language: str = "unknown"
     size_lines: int = 0
     description: str = ""
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -51,20 +51,20 @@ class DependencyEdge:
     target_id: str
     edge_type: EdgeType = EdgeType.IMPORT
     label: str = ""
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
 
 @dataclass
 class ArchitectureDiagram:
     diagram_type: DiagramType
     title: str
-    nodes: List[ModuleNode] = field(default_factory=list)
-    edges: List[DependencyEdge] = field(default_factory=list)
+    nodes: list[ModuleNode] = field(default_factory=list)
+    edges: list[DependencyEdge] = field(default_factory=list)
     mermaid_code: str = ""
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
     generated_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "diagram_type": self.diagram_type.value,
             "title": self.title,

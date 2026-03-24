@@ -12,7 +12,6 @@ import subprocess
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 
 def open_editor_for_input(field_name: str) -> str:
@@ -171,7 +170,7 @@ def apply_template_to_requirements(
     requirements: dict,
     template_id: str,
     project_dir: Path,
-    substitutions: Optional[dict] = None,
+    substitutions: dict | None = None,
 ) -> dict:
     """
     Apply a spec template to a requirements dict, enriching it with
@@ -200,8 +199,14 @@ def apply_template_to_requirements(
             merged["task_description"] = patch["task_description"]
 
     # Merge non-overwriting fields
-    for key in ("workflow_type", "additional_context", "template_id",
-                "template_name", "template_keywords", "qa_criteria_hints"):
+    for key in (
+        "workflow_type",
+        "additional_context",
+        "template_id",
+        "template_name",
+        "template_keywords",
+        "qa_criteria_hints",
+    ):
         if key in patch and key not in merged:
             merged[key] = patch[key]
 
@@ -223,7 +228,7 @@ def save_requirements(spec_dir: Path, requirements: dict) -> Path:
     return requirements_file
 
 
-def load_requirements(spec_dir: Path) -> Optional[dict]:
+def load_requirements(spec_dir: Path) -> dict | None:
     """Load requirements from file if it exists."""
     requirements_file = spec_dir / "requirements.json"
     if not requirements_file.exists():

@@ -35,7 +35,9 @@ def main():
     # review-pr command
     review_parser = subparsers.add_parser("review-pr", help="Review a PR")
     review_parser.add_argument("pr_id", type=int, help="Pull Request ID")
-    review_parser.add_argument("--project", required=True, help="Azure DevOps project name")
+    review_parser.add_argument(
+        "--project", required=True, help="Azure DevOps project name"
+    )
     review_parser.add_argument("--repo", required=True, help="Repository ID or name")
     review_parser.add_argument("--project-dir", help="Project directory")
     review_parser.add_argument("--model", default="sonnet", help="Model to use")
@@ -53,7 +55,10 @@ def main():
         org_url = os.environ.get("AZURE_DEVOPS_ORG_URL")
 
         if not pat or not org_url:
-            print("Error: AZURE_DEVOPS_PAT and AZURE_DEVOPS_ORG_URL must be set", file=sys.stderr)
+            print(
+                "Error: AZURE_DEVOPS_PAT and AZURE_DEVOPS_ORG_URL must be set",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
         project_dir = Path(args.project_dir) if args.project_dir else Path.cwd()

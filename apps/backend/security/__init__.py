@@ -47,16 +47,24 @@ Main classes:
 
 Quick Start:
     from security import SecurityOrchestrator
-    
+
     orchestrator = SecurityOrchestrator(project_path)
     result = orchestrator.run_full_scan()
-    
+
     if result.should_block:
         print("Security issues found!")
 
 Validators:
 - All validators are available via the VALIDATORS dict
 """
+
+# Import from parent modules
+from project_analyzer import (
+    BASE_COMMANDS,
+    SecurityProfile,
+    is_command_allowed,
+    needs_validation,
+)
 
 from . import auto_integration  # noqa: F401
 from .compliance_analyzer import (
@@ -77,28 +85,21 @@ from .profile import (
     get_security_profile,
     reset_profile_cache,
 )
-from .security_orchestrator import (
-    SecurityOrchestrator,
-    SecurityScanConfig,
-    SecurityScanResult,
-)
-from .security_report_generator import SecurityReportGenerator
 from .secure_subprocess import (
     SubprocessResult,
     SubprocessSecurityError,
     check_tool_available,
     run_secure,
 )
+from .security_orchestrator import (
+    SecurityOrchestrator,
+    SecurityScanConfig,
+    SecurityScanResult,
+)
+from .security_report_generator import SecurityReportGenerator
 from .tool_input_validator import (
     get_safe_tool_input,
     validate_tool_input,
-)
-from .vulnerability_scanner import (
-    VulnerabilityScanner,
-    Vulnerability,
-    ScanResult,
-    Severity,
-    VulnerabilitySource,
 )
 from .validator import (
     VALIDATORS,
@@ -123,13 +124,12 @@ from .validator import (
     validate_shell_c_command,
     validate_zsh_command,
 )
-
-# Import from parent modules
-from project_analyzer import (
-    BASE_COMMANDS,
-    SecurityProfile,
-    is_command_allowed,
-    needs_validation,
+from .vulnerability_scanner import (
+    ScanResult,
+    Severity,
+    Vulnerability,
+    VulnerabilityScanner,
+    VulnerabilitySource,
 )
 
 __all__ = [

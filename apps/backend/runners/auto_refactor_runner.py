@@ -11,7 +11,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any
 
 # Add the apps/backend directory to the Python path
 backend_path = Path(__file__).parent.parent
@@ -19,9 +19,11 @@ sys.path.insert(0, str(backend_path))
 
 try:
     from agents.coder_agent import CoderAgent
-    from core.model_info import get_model_info_for_logs
     from core.context import ProjectContext
+    from core.model_info import get_model_info_for_logs
+
     from memory.bmad_memory import BMadMemory
+
     _AVAILABLE = True
 except ImportError:
     _AVAILABLE = False
@@ -29,40 +31,45 @@ except ImportError:
 
 class AutoRefactorRunner:
     """Runner for the Auto-Refactor Agent functionality."""
-    
-    def __init__(self, project_dir: str, model: Optional[str] = None, thinking_level: Optional[str] = None):
+
+    def __init__(
+        self,
+        project_dir: str,
+        model: str | None = None,
+        thinking_level: str | None = None,
+    ):
         self.project_dir = Path(project_dir)
         self.model = model
         self.thinking_level = thinking_level or "medium"
         self.project_context = None
         self.memory = None
         self.agent = None
-        
+
     def setup(self):
         """Initialize the agent and context."""
         print("🔧 Initializing Auto-Refactor Agent...")
-        
+
         # Initialize project context
         self.project_context = ProjectContext(str(self.project_dir))
         print(f"📁 Project context loaded for: {self.project_dir}")
-        
+
         # Initialize memory
         self.memory = BMadMemory()
-        
+
         # Initialize coder agent with specified model
         agent_config = {
             "model": self.model,
             "thinking_level": self.thinking_level,
         }
         self.agent = CoderAgent(config=agent_config)
-        
+
         model_info = get_model_info_for_logs()
         print(f"🤖 Auto-Refactor Agent initialized with {model_info}")
-        
-    def analyze_codebase(self) -> Dict[str, Any]:
+
+    def analyze_codebase(self) -> dict[str, Any]:
         """Analyze the codebase for code smells and technical debt."""
         print("🔍 Analyzing codebase for code smells and technical debt...")
-        
+
         analysis_prompt = """
         Analyze this codebase for the following issues:
         
@@ -97,26 +104,26 @@ class AutoRefactorRunner:
         
         Focus on issues that would have the most impact on code quality, maintainability, and performance.
         """
-        
+
         try:
             # Get project structure and key files
             project_files = self._get_project_files()
-            
+
             # Analyze using the agent
             analysis_result = self.agent.analyze_code(
                 prompt=analysis_prompt,
                 context={
                     "project_files": project_files,
                     "project_context": self.project_context.get_summary(),
-                }
+                },
             )
-            
+
             return {
                 "status": "success",
                 "analysis": analysis_result,
                 "files_analyzed": len(project_files),
             }
-            
+
         except Exception as e:
             print(f"❌ Error during analysis: {str(e)}")
             return {
@@ -124,37 +131,64 @@ class AutoRefactorRunner:
                 "error": str(e),
                 "files_analyzed": 0,
             }
-    
-    def _get_project_files(self) -> List[Dict[str, Any]]:
+
+    def _get_project_files(self) -> list[dict[str, Any]]:
         """Get relevant project files for analysis."""
-        relevant_extensions = {'.py', '.js', '.ts', '.tsx', '.jsx', '.java', '.cpp', '.c', '.h', '.cs', '.go', '.rs'}
+        relevant_extensions = {
+            ".py",
+            ".js",
+            ".ts",
+            ".tsx",
+            ".jsx",
+            ".java",
+            ".cpp",
+            ".c",
+            ".h",
+            ".cs",
+            ".go",
+            ".rs",
+        }
         files = []
-        
-        for file_path in self.project_dir.rglob('*'):
+
+        for file_path in self.project_dir.rglob("*"):
             if file_path.is_file() and file_path.suffix in relevant_extensions:
                 # Skip common ignore patterns
-                if any(pattern in str(file_path) for pattern in ['node_modules', '.git', '__pycache__', 'dist', 'build', '.venv']):
+                if any(
+                    pattern in str(file_path)
+                    for pattern in [
+                        "node_modules",
+                        ".git",
+                        "__pycache__",
+                        "dist",
+                        "build",
+                        ".venv",
+                    ]
+                ):
                     continue
-                
+
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
-                    
-                    files.append({
-                        "path": str(file_path.relative_to(self.project_dir)),
-                        "size": len(content),
-                        "lines": content.count('\n') + 1,
-                        "extension": file_path.suffix,
-                    })
+
+                    files.append(
+                        {
+                            "path": str(file_path.relative_to(self.project_dir)),
+                            "size": len(content),
+                            "lines": content.count("\n") + 1,
+                            "extension": file_path.suffix,
+                        }
+                    )
                 except Exception as e:
                     print(f"⚠️ Could not read {file_path}: {str(e)}")
-        
-        return sorted(files, key=lambda x: x['size'], reverse=True)[:50]  # Limit to 50 largest files
-    
-    def generate_refactoring_plan(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
+
+        return sorted(files, key=lambda x: x["size"], reverse=True)[
+            :50
+        ]  # Limit to 50 largest files
+
+    def generate_refactoring_plan(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate a prioritized refactoring plan based on analysis."""
         print("📋 Generating refactoring plan...")
-        
+
         planning_prompt = f"""
         Based on the following codebase analysis, create a prioritized refactoring plan:
         
@@ -183,46 +217,47 @@ class AutoRefactorRunner:
         
         Format the response as a structured JSON with clear action items.
         """
-        
+
         try:
             plan_result = self.agent.plan_refactoring(
-                prompt=planning_prompt,
-                analysis_data=analysis
+                prompt=planning_prompt, analysis_data=analysis
             )
-            
+
             return {
                 "status": "success",
                 "plan": plan_result,
             }
-            
+
         except Exception as e:
             print(f"❌ Error generating plan: {str(e)}")
             return {
                 "status": "error",
                 "error": str(e),
             }
-    
-    def execute_refactoring(self, plan: Dict[str, Any], auto_execute: bool = False) -> Dict[str, Any]:
+
+    def execute_refactoring(
+        self, plan: dict[str, Any], auto_execute: bool = False
+    ) -> dict[str, Any]:
         """Execute the refactoring plan."""
         print("🔨 Executing refactoring plan...")
-        
+
         if not auto_execute:
             print("⚠️ Auto-execution disabled. Generating preview only...")
-        
+
         try:
             execution_result = self.agent.execute_refactoring(
                 plan=plan,
                 project_dir=str(self.project_dir),
                 auto_execute=auto_execute,
-                dry_run=not auto_execute
+                dry_run=not auto_execute,
             )
-            
+
             return {
                 "status": "success",
                 "execution": execution_result,
                 "auto_executed": auto_execute,
             }
-            
+
         except Exception as e:
             print(f"❌ Error during execution: {str(e)}")
             return {
@@ -230,24 +265,24 @@ class AutoRefactorRunner:
                 "error": str(e),
                 "auto_executed": auto_execute,
             }
-    
-    def run_full_analysis(self) -> Dict[str, Any]:
+
+    def run_full_analysis(self) -> dict[str, Any]:
         """Run the complete auto-refactor workflow."""
         print("🚀 Starting Auto-Refactor analysis...")
-        
+
         # Step 1: Analyze codebase
         analysis = self.analyze_codebase()
         if analysis["status"] != "success":
             return analysis
-        
+
         # Step 2: Generate refactoring plan
         plan = self.generate_refactoring_plan(analysis)
         if plan["status"] != "success":
             return plan
-        
+
         # Step 3: Execute refactoring (preview only by default)
         execution = self.execute_refactoring(plan, auto_execute=False)
-        
+
         result = {
             "status": "success",
             "analysis": analysis,
@@ -255,29 +290,47 @@ class AutoRefactorRunner:
             "execution": execution,
             "summary": self._generate_summary(analysis, plan, execution),
         }
-        
+
         print("✅ Auto-Refactor analysis completed!")
         return result
-    
-    def _generate_summary(self, analysis: Dict[str, Any], plan: Dict[str, Any], execution: Dict[str, Any]) -> Dict[str, Any]:
+
+    def _generate_summary(
+        self, analysis: dict[str, Any], plan: dict[str, Any], execution: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate a summary of the refactoring analysis."""
         return {
             "issues_found": len(analysis.get("analysis", {}).get("issues", [])),
             "files_analyzed": analysis.get("files_analyzed", 0),
             "refactoring_items": len(plan.get("plan", {}).get("items", [])),
-            "quick_wins": len([item for item in plan.get("plan", {}).get("items", []) if item.get("priority") == "high"]),
+            "quick_wins": len(
+                [
+                    item
+                    for item in plan.get("plan", {}).get("items", [])
+                    if item.get("priority") == "high"
+                ]
+            ),
             "estimated_effort": plan.get("plan", {}).get("estimated_effort", "Unknown"),
-            "risk_level": execution.get("execution", {}).get("risk_assessment", {}).get("overall_risk", "Medium"),
+            "risk_level": execution.get("execution", {})
+            .get("risk_assessment", {})
+            .get("overall_risk", "Medium"),
         }
 
 
 def main():
     """Main entry point for the auto-refactor runner."""
     parser = argparse.ArgumentParser(description="Auto-Refactor Agent Runner")
-    parser.add_argument("--project-dir", required=True, help="Project directory to analyze")
+    parser.add_argument(
+        "--project-dir", required=True, help="Project directory to analyze"
+    )
     parser.add_argument("--model", help="AI model to use")
-    parser.add_argument("--thinking-level", default="medium", help="Thinking level for the agent")
-    parser.add_argument("--auto-execute", action="store_true", help="Automatically execute refactoring (use with caution)")
+    parser.add_argument(
+        "--thinking-level", default="medium", help="Thinking level for the agent"
+    )
+    parser.add_argument(
+        "--auto-execute",
+        action="store_true",
+        help="Automatically execute refactoring (use with caution)",
+    )
 
     args = parser.parse_args()
 
@@ -289,8 +342,12 @@ def main():
             "plan": {"status": "error", "plan": None},
             "execution": {"status": "error", "execution": None, "auto_executed": False},
             "summary": {
-                "issues_found": 0, "files_analyzed": 0, "refactoring_items": 0,
-                "quick_wins": 0, "estimated_effort": "N/A", "risk_level": "N/A",
+                "issues_found": 0,
+                "files_analyzed": 0,
+                "refactoring_items": 0,
+                "quick_wins": 0,
+                "estimated_effort": "N/A",
+                "risk_level": "N/A",
             },
         }
         print("__AUTO_REFACTOR_RESULT__:" + json.dumps(error_result))
@@ -300,30 +357,34 @@ def main():
     if not os.path.exists(args.project_dir):
         print(f"❌ Error: Project directory '{args.project_dir}' does not exist")
         sys.exit(1)
-    
+
     try:
         # Initialize runner
         runner = AutoRefactorRunner(
             project_dir=args.project_dir,
             model=args.model,
-            thinking_level=args.thinking_level
+            thinking_level=args.thinking_level,
         )
-        
+
         # Setup agent and context
         runner.setup()
-        
+
         # Run analysis
         result = runner.run_full_analysis()
-        
+
         # Output structured result
         print("__AUTO_REFACTOR_RESULT__:" + json.dumps(result, indent=2))
-        
+
         # If auto-execute is requested, run execution
         if args.auto_execute:
             print("🔨 Auto-executing refactoring plan...")
-            execution_result = runner.execute_refactoring(result["plan"], auto_execute=True)
-            print("__AUTO_REFACTOR_EXECUTION__:" + json.dumps(execution_result, indent=2))
-        
+            execution_result = runner.execute_refactoring(
+                result["plan"], auto_execute=True
+            )
+            print(
+                "__AUTO_REFACTOR_EXECUTION__:" + json.dumps(execution_result, indent=2)
+            )
+
     except KeyboardInterrupt:
         print("\n⚠️ Auto-refactor analysis interrupted by user")
         sys.exit(1)

@@ -174,7 +174,9 @@ async def run_with_sdk(
             }
             config = LearningModeConfig(
                 enabled=True,
-                explanation_level=level_map.get(explanation_level, ExplanationLevel.INTERMEDIATE)
+                explanation_level=level_map.get(
+                    explanation_level, ExplanationLevel.INTERMEDIATE
+                ),
             )
             learning_mode = LearningMode(config)
             debug("insights_runner", "Learning Mode enabled", level=explanation_level)
@@ -278,28 +280,37 @@ Current question: {message}"""
                                 f"__TOOL_START__:{json.dumps({'name': tool_name, 'input': tool_input})}",
                                 flush=True,
                             )
-                            
+
                             # Learning Mode: Explain tool usage
                             if learning_mode:
                                 try:
                                     explanation = learning_mode.explain_tool_use(
                                         tool_name=tool_name,
-                                        tool_input={"input": tool_input} if tool_input else {},
+                                        tool_input={"input": tool_input}
+                                        if tool_input
+                                        else {},
                                         reason="Exploring codebase to answer user question",
-                                        expected_outcome="Find relevant information"
+                                        expected_outcome="Find relevant information",
                                     )
                                     if explanation:
                                         print(
-                                            f"__EXPLANATION__:{json.dumps({
-                                                'category': explanation.category,
-                                                'title': explanation.title,
-                                                'explanation': explanation.explanation,
-                                                'difficulty': explanation.difficulty.value
-                                            })}",
-                                            flush=True
+                                            f"__EXPLANATION__:{
+                                                json.dumps(
+                                                    {
+                                                        'category': explanation.category,
+                                                        'title': explanation.title,
+                                                        'explanation': explanation.explanation,
+                                                        'difficulty': explanation.difficulty.value,
+                                                    }
+                                                )
+                                            }",
+                                            flush=True,
                                         )
                                 except Exception as e:
-                                    debug_error("insights_runner", f"Learning Mode explanation error: {e}")
+                                    debug_error(
+                                        "insights_runner",
+                                        f"Learning Mode explanation error: {e}",
+                                    )
 
                 elif msg_type == "ToolResult":
                     # Tool finished executing
@@ -458,15 +469,17 @@ def main():
 
     # Run the async SDK function
     debug("insights_runner", "Running SDK query")
-    asyncio.run(run_with_sdk(
-        project_dir,
-        user_message,
-        history,
-        model,
-        thinking_level,
-        learning_mode_enabled,
-        explanation_level
-    ))
+    asyncio.run(
+        run_with_sdk(
+            project_dir,
+            user_message,
+            history,
+            model,
+            thinking_level,
+            learning_mode_enabled,
+            explanation_level,
+        )
+    )
     debug_success("insights_runner", "Query completed")
 
 
