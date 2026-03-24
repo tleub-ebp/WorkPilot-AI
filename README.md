@@ -432,7 +432,7 @@ claude
 
 #### Variables d'Environnement Optionnelles
 ```bash
-# .env
+# .env-files/.env
 AUTO_BUILD_MODEL=claude-3-5-sonnet-20241022
 DEBUG=true
 LINEAR_API_KEY=votre_clé_linear
