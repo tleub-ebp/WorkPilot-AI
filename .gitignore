@@ -12,16 +12,20 @@ Desktop.ini
 # Security - Environment & Secrets
 # ===========================
 # All environment files centralized in .env-files directory
-.env-files/
-.env
-.env.*
-!.env.example
+# Secret files ignored, example templates tracked
+.env-files/*.env
+.env-files/*.env.*
+!.env-files/*.example
+# Safety nets (root-anchored to avoid matching inside .env-files/)
+/.env
+/.env.*
 /apps/backend/.env
 /apps/frontend/.env
-.env.local
-.env.development
-.env.production
-.env.test
+/apps/frontend/.env-files/.env
+/.env.local
+/.env.development
+/.env.production
+/.env.test
 /config.json
 *.pem
 *.key
