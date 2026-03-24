@@ -36,7 +36,7 @@ vi.mock('../../../../shared/constants', () => ({
     TASK_LOGS_CHANGED: 'task:logsChanged',
     TASK_LOGS_STREAM: 'task:logsStream',
   },
-  getSpecsDir: vi.fn((autoBuildPath: string) => '.auto-claude/specs'),
+  getSpecsDir: vi.fn((_autoBuildPath: string) => '.auto-claude/specs'),
 }));
 
 vi.mock('../../../project-store', () => ({
@@ -136,14 +136,6 @@ describe('Task Logs Integration (Simplified)', () => {
 
       const handler = ipcHandlers[IPC_CHANNELS.TASK_LOGS_GET];
       const result = await handler({}, 'project-123', '001-test-task') as IPCResult<TaskLogs>;
-
-      // Debug: print the result to see what's happening
-      console.log('Test result:', result);
-      console.log('Mock calls:', {
-        projectStore: (projectStore.getProject as Mock).mock.calls,
-        existsSync: mockExistsSync.mock.calls,
-        taskLogService: (taskLogService.loadLogs as Mock).mock.calls
-      });
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockLogs);

@@ -56,11 +56,6 @@ export class CredentialManager extends EventEmitter {
   private activeCredential: CredentialConfig | null = null;
   private readonly usageData: Map<string, UsageData> = new Map();
 
-  constructor() {
-    super();
-    // L'initialisation est maintenant asynchrone et doit être appelée explicitement
-  }
-
   /**
    * Initialisation du service
    */
@@ -86,13 +81,11 @@ export class CredentialManager extends EventEmitter {
         const key = p.apiKey || '';
         const isFake = key.includes('placeholder') || key.startsWith('test-') || (key.startsWith('sk-ant-test') && key.length < 20) || key.length < 20;
         if (isFake) {
-          console.log(`[CredentialManager] Removing fake test profile: "${p.name}" (key: ${key.substring(0, 10)}...)`);
         }
         return !isFake;
       });
       if (profilesFile.profiles.length < before) {
         await saveProfilesFile(profilesFile);
-        console.log(`[CredentialManager] Cleaned up ${before - profilesFile.profiles.length} fake test profile(s)`);
       }
     } catch {
       // Non-critical — skip cleanup
@@ -134,7 +127,6 @@ export class CredentialManager extends EventEmitter {
       const windsurfKey = (settings?.globalWindsurfApiKey as string | undefined)?.trim();
 
       if (savedProvider && savedProvider !== 'anthropic' && savedProvider !== 'claude') {
-        console.log(`[CredentialManager] Restoring saved provider from settings: ${savedProvider}`);
         this.activeCredential = {
           provider: savedProvider,
           type: windsurfKey && savedProvider === 'windsurf' ? 'api_key' : 'oauth',
@@ -145,11 +137,6 @@ export class CredentialManager extends EventEmitter {
           lastValidated: Date.now()
         };
       } else if (windsurfKey && !savedProvider) {
-        // No provider explicitly saved AND globalWindsurfApiKey exists — user configured Windsurf.
-        // IMPORTANT: only auto-restore windsurf when savedProvider is null/undefined (first run).
-        // If savedProvider is 'claude'/'anthropic' the user explicitly chose Claude Code, so we
-        // must NOT override with windsurf even though the key exists in settings.
-        console.log('[CredentialManager] Restoring windsurf provider from globalWindsurfApiKey');
         this.activeCredential = {
           provider: 'windsurf',
           type: 'api_key',
@@ -261,7 +248,6 @@ export class CredentialManager extends EventEmitter {
         const settings = readSettingsFile() || {};
         settings.selectedProvider = provider;
         writeSettingsFile(settings);
-        console.log(`[CredentialManager] Persisted selectedProvider to settings.json: ${provider}`);
       } catch (e) {
         console.warn('[CredentialManager] Failed to persist selectedProvider to settings.json:', e);
       }
@@ -412,7 +398,7 @@ export class CredentialManager extends EventEmitter {
       let apiKey: string | undefined;
       let baseUrl: string | undefined;
       let profileName: string | undefined;
-      let source = '';
+      let _source = '';
 
       try {
         const profilesFile = await loadProfilesFile();
@@ -423,7 +409,7 @@ export class CredentialManager extends EventEmitter {
           apiKey = apiProfile.apiKey;
           baseUrl = apiProfile.baseUrl;
           profileName = apiProfile.name;
-          source = 'API profile (' + (profileName || 'unnamed') + ')';
+          _source = 'API profile (' + (profileName || 'unnamed') + ')';
         }
       } catch {
         // profiles.json not available
@@ -452,7 +438,7 @@ export class CredentialManager extends EventEmitter {
               if (globalKey?.trim()) {
                 apiKey = globalKey.trim();
                 profileName = provider;
-                source = 'global settings (' + settingsKey + ')';
+                _source = 'global settings (' + settingsKey + ')';
                 break;
               }
             }
@@ -467,7 +453,7 @@ export class CredentialManager extends EventEmitter {
         apiKey = this.activeCredential.credentials.apiKey;
         baseUrl = this.activeCredential.credentials.baseUrl;
         profileName = this.activeCredential.credentials.profileName;
-        source = 'active credential';
+        _source = 'active credential';
       }
 
       if (!apiKey) {
@@ -478,8 +464,7 @@ export class CredentialManager extends EventEmitter {
       }
 
       // Debug: log which source provided the key (mask most of the key for security)
-      const maskedKey = apiKey.length > 8 ? apiKey.substring(0, 8) + '...' : '***';
-      console.log(`[CredentialManager] testProvider(${provider}): key from ${source}, starts with "${maskedKey}", baseUrl=${baseUrl || 'default'}`);
+      const _maskedKey = apiKey.length > 8 ? apiKey.substring(0, 8) + '...' : '***';
 
       // Tester la connexion avec le endpoint approprié pour chaque provider
       try {
@@ -638,7 +623,6 @@ export class CredentialManager extends EventEmitter {
       // For personal sk-ws- keys, these team/enterprise endpoints may always return 4xx.
       // Trust the local IDE state.vscdb as the source of truth instead.
       if (source !== 'local IDE detection') {
-        console.log(`[CredentialManager] Windsurf API endpoints returned errors (source: ${source}), checking local IDE`);
         try {
           const detected = await detectWindsurfLocalToken();
           if (detected.success && detected.apiKey) {
@@ -891,49 +875,8 @@ export class CredentialManager extends EventEmitter {
     return this.checkClaudeOAuthStatus();
   }
 
-  /**
-   * Check if OpenAI Codex CLI OAuth is configured.
-   * Checks multiple sources:
-   *   1. Codex CLI config files (~/.codex/ or ~/.config/codex/)
-   *   2. App's own profiles.json for OpenAI API profiles
-   *   3. Global settings for globalOpenAIApiKey
-   *   4. Global settings for globalOpenAICodexOAuthToken (previously saved OAuth)
-   */
-  private readCodexCliApiKey(): string {
-    try {
-      const path = require('node:path') as typeof import('node:path');
-      const os = require('node:os') as typeof import('node:os');
-      const { readFileSync, existsSync } = require('node:fs') as typeof import('node:fs');
-
-      const candidatePaths = [
-        process.env.APPDATA ? path.join(process.env.APPDATA, 'codex', 'auth.json') : null,
-        path.join(os.homedir(), '.config', 'codex', 'auth.json'),
-        path.join(os.homedir(), '.codex', 'auth.json'),
-        process.env.APPDATA ? path.join(process.env.APPDATA, 'openai', 'auth.json') : null,
-        path.join(os.homedir(), '.config', 'openai', 'auth.json'),
-        path.join(os.homedir(), '.openai', 'auth.json'),
-      ].filter(Boolean) as string[];
-
-      for (const configPath of candidatePaths) {
-        if (existsSync(configPath)) {
-          const auth = JSON.parse(readFileSync(configPath, 'utf-8'));
-          const apiKey = (auth.OPENAI_API_KEY as string | undefined)?.trim()
-            || (auth.api_key as string | undefined)?.trim()
-            || (auth.tokens?.access_token as string | undefined)?.trim()
-            || (auth.access_token as string | undefined)?.trim();
-          if (apiKey) {
-            console.log(`[CredentialManager] readCodexCliApiKey: found credentials at ${configPath}`);
-            return apiKey;
-          }
-        }
-      }
-    } catch { /* ignore */ }
-    return '';
-  }
-
   private async checkOpenAICodexOAuthStatus(): Promise<{ isAuthenticated: boolean; profileName?: string }> {
     try {
-      console.debug('[CredentialManager] Checking OpenAI Codex OAuth status...');
       const fs = require('node:fs').promises;
       const path = require('node:path');
       const os = require('node:os');
@@ -952,11 +895,8 @@ export class CredentialManager extends EventEmitter {
         path.join(os.homedir(), '.openai', 'auth.json'),
       ].filter(Boolean) as string[];
 
-      console.debug('[CredentialManager] Checking Codex config paths:', candidatePaths);
-
       for (const configPath of candidatePaths) {
         try {
-          console.debug(`[CredentialManager] Checking config path: ${configPath}`);
           const authData = await fs.readFile(configPath, 'utf-8');
           const auth = JSON.parse(authData);
 
@@ -967,14 +907,6 @@ export class CredentialManager extends EventEmitter {
           const hasRefreshToken = !!(tokens.refresh_token || auth.refresh_token);
           const hasApiKey = !!(auth.OPENAI_API_KEY?.trim() || auth.api_key?.trim());
           const hasAnyAuth = hasAccessToken || hasRefreshToken || hasApiKey;
-
-          console.debug(`[CredentialManager] Found auth data at ${configPath}:`, {
-            authMode: auth.auth_mode,
-            hasAccessToken,
-            hasRefreshToken,
-            hasApiKey,
-            hasTokensObject: !!auth.tokens,
-          });
 
           if (hasAnyAuth) {
             // Try to extract email from id_token JWT payload
@@ -997,29 +929,24 @@ export class CredentialManager extends EventEmitter {
             } catch {
               // JWT decode failed, use fallback name
             }
-
-            console.debug(`[CredentialManager] Codex CLI authentication found: ${profileName}`);
             return {
               isAuthenticated: true,
               profileName
             };
           }
-        } catch (error) {
-          console.debug(`[CredentialManager] No auth data at ${configPath}:`, error instanceof Error ? error.message : 'Unknown error');
+        } catch (_error) {
           // This path doesn't exist, try next
         }
       }
 
       // Source 2: Check app's own profiles.json for OpenAI API profile
       try {
-        console.log('[CredentialManager] Checking profiles.json for OpenAI API profile...');
         const profilesFile = await loadProfilesFile();
         const openaiProfile = profilesFile.profiles.find(p => {
           const detected = detectProvider(p.baseUrl);
           return detected === 'openai';
         });
         if (openaiProfile?.apiKey && !openaiProfile.apiKey.includes('placeholder') && !openaiProfile.apiKey.startsWith('test-') && openaiProfile.apiKey.length >= 20) {
-          console.log('[CredentialManager] OpenAI API profile found:', openaiProfile.name);
           return {
             isAuthenticated: true,
             profileName: openaiProfile.name || 'OpenAI (API Key)'
@@ -1031,11 +958,9 @@ export class CredentialManager extends EventEmitter {
 
       // Source 3: Check global settings for globalOpenAIApiKey
       try {
-        console.log('[CredentialManager] Checking global settings for OpenAI API key...');
         const settings = readSettingsFile();
         const openaiKey = (settings as any)?.globalOpenAIApiKey as string | undefined;
         if (openaiKey?.trim()) {
-          console.log('[CredentialManager] Global OpenAI API key found');
           return {
             isAuthenticated: true,
             profileName: 'OpenAI (API Key)'
@@ -1045,7 +970,6 @@ export class CredentialManager extends EventEmitter {
         // Source 4: Also check for Codex OAuth token in settings
         const codexOAuthToken = (settings as any)?.globalOpenAICodexOAuthToken as string | undefined;
         if (codexOAuthToken?.trim()) {
-          console.log('[CredentialManager] Saved Codex OAuth token found:', codexOAuthToken);
           return {
             isAuthenticated: true,
             profileName: codexOAuthToken
@@ -1054,8 +978,6 @@ export class CredentialManager extends EventEmitter {
       } catch (error) {
         console.warn('[CredentialManager] Failed to check settings:', error);
       }
-
-      console.log('[CredentialManager] No OpenAI Codex authentication found');
       return { isAuthenticated: false };
     } catch (error) {
       console.warn('[CredentialManager] Failed to check OpenAI Codex OAuth status:', error);
@@ -1126,7 +1048,6 @@ export class CredentialManager extends EventEmitter {
       }
 
       if (!serviceKey) {
-        console.log('[CredentialManager] Windsurf — no service key found in profiles, settings, or local IDE');
         return null;
       }
 
@@ -1372,7 +1293,6 @@ export class CredentialManager extends EventEmitter {
         // The active credential from profiles.json may be a Claude profile —
         // still force SELECTED_LLM_PROVIDER so the backend routes to the right client.
         env.SELECTED_LLM_PROVIDER = selectedProvider;
-        console.log(`[CredentialManager] getEnvironmentVariables: injecting SELECTED_LLM_PROVIDER=${selectedProvider} from settings.json (overrides active Claude profile)`);
 
         // For Copilot: auth is via `gh auth token` CLI — no extra env vars needed.
         if (selectedProvider === 'copilot') {
@@ -1421,7 +1341,7 @@ export class CredentialManager extends EventEmitter {
           const profile = profiles?.profiles.find(p => {
             try {
               return (p as any).provider === selectedProvider
-                || (p.baseUrl && p.baseUrl.toLowerCase().includes(selectedProvider));
+                || (p.baseUrl?.toLowerCase().includes(selectedProvider));
             } catch { return false; }
           });
           if ((profile as any)?.apiKey) {
@@ -2007,7 +1927,6 @@ export async function readWindsurfCachedPlanInfo(): Promise<{ success: boolean; 
               // The cachedPlanInfo is stale if its endTimestamp <= the protobuf's startTimestamp
               // (meaning it's from the previous billing cycle)
               if (planInfo.endTimestamp <= protoStartMs) {
-                console.log('[readWindsurfCachedPlanInfo] Cached plan info is from previous billing cycle, updating from protobuf');
                 planInfo.startTimestamp = protoStartMs;
                 planInfo.endTimestamp = protoEndMs;
                 planInfo.isStale = true;
@@ -2029,39 +1948,18 @@ export async function readWindsurfCachedPlanInfo(): Promise<{ success: boolean; 
                 planInfo.usage.remainingFlowActions = Math.max(0, planInfo.usage.flowActions - billing.usedFlowActions);
                 planInfo.usage.usedFlexCredits = 0;
                 planInfo.usage.remainingFlexCredits = planInfo.usage.flexCredits;
-
-                console.log('[readWindsurfCachedPlanInfo] Updated from protobuf:', {
-                  totalMessages: planInfo.usage.messages,
-                  usedMessages: planInfo.usage.usedMessages,
-                  remainingMessages: planInfo.usage.remainingMessages,
-                  totalFlowActions: planInfo.usage.flowActions,
-                  usedFlowActions: planInfo.usage.usedFlowActions,
-                  remainingFlowActions: planInfo.usage.remainingFlowActions,
-                });
               }
               // Cache is current billing cycle — both sources may have been updated at
               // different times. Since usage can only increase within a billing cycle,
               // take the HIGHER value to avoid showing stale (lower) numbers.
               if (billing.usedMessages > 0) {
                   if (billing.usedMessages > planInfo.usage.usedMessages) {
-                    console.log('[readWindsurfCachedPlanInfo] Protobuf has higher usedMessages than cache — using protobuf value', {
-                      cached: planInfo.usage.usedMessages,
-                      protobuf: billing.usedMessages,
-                    });
                     planInfo.usage.usedMessages = billing.usedMessages;
                     planInfo.usage.remainingMessages = Math.max(0, planInfo.usage.messages - billing.usedMessages);
                   } else if (billing.usedMessages < planInfo.usage.usedMessages) {
-                    console.log('[readWindsurfCachedPlanInfo] Cache has higher usedMessages than protobuf — keeping cache value', {
-                      cached: planInfo.usage.usedMessages,
-                      protobuf: billing.usedMessages,
-                    });
                   }
               }
               if (billing.usedFlowActions > 0 && billing.usedFlowActions > planInfo.usage.usedFlowActions) {
-                  console.log('[readWindsurfCachedPlanInfo] Protobuf has higher usedFlowActions than cache — using protobuf value', {
-                    cached: planInfo.usage.usedFlowActions,
-                    protobuf: billing.usedFlowActions,
-                  });
                   planInfo.usage.usedFlowActions = billing.usedFlowActions;
                   planInfo.usage.remainingFlowActions = Math.max(0, planInfo.usage.flowActions - billing.usedFlowActions);
               }
@@ -2088,18 +1986,10 @@ export async function readWindsurfCachedPlanInfo(): Promise<{ success: boolean; 
               if (proto3StartMs >= planInfo.startTimestamp) {
                 // Take the max of all sources for usage counters
                 if (billing3.usedMessages > planInfo.usage.usedMessages) {
-                  console.log('[readWindsurfCachedPlanInfo] cachedUserStatus has higher usedMessages — using it', {
-                    current: planInfo.usage.usedMessages,
-                    cachedUserStatus: billing3.usedMessages,
-                  });
                   planInfo.usage.usedMessages = billing3.usedMessages;
                   planInfo.usage.remainingMessages = Math.max(0, planInfo.usage.messages - billing3.usedMessages);
                 }
                 if (billing3.usedFlowActions > planInfo.usage.usedFlowActions) {
-                  console.log('[readWindsurfCachedPlanInfo] cachedUserStatus has higher usedFlowActions — using it', {
-                    current: planInfo.usage.usedFlowActions,
-                    cachedUserStatus: billing3.usedFlowActions,
-                  });
                   planInfo.usage.usedFlowActions = billing3.usedFlowActions;
                   planInfo.usage.remainingFlowActions = Math.max(0, planInfo.usage.flowActions - billing3.usedFlowActions);
                 }

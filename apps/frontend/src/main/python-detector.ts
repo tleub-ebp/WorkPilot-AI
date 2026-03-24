@@ -25,11 +25,8 @@ export function getBundledPythonPath(): string | null {
     : path.join(resourcesPath, 'python', 'bin', 'python3');
 
   if (existsSync(pythonPath)) {
-    console.log(`[Python] Found bundled Python at: ${pythonPath}`);
     return pythonPath;
   }
-
-  console.log(`[Python] Bundled Python not found at: ${pythonPath}`);
   return null;
 }
 
@@ -58,7 +55,6 @@ export function findPythonCommand(): string | null {
     try {
       const validation = validatePythonVersion(bundledPython);
       if (validation.valid) {
-        console.log(`[Python] Using bundled Python: ${bundledPython} (${validation.version})`);
         return bundledPython;
       } else {
         console.warn(`[Python] Bundled Python version issue: ${validation.message}`);
@@ -67,9 +63,6 @@ export function findPythonCommand(): string | null {
       console.warn(`[Python] Bundled Python error: ${err}`);
     }
   }
-
-  // 2. Fall back to system Python
-  console.log(`[Python] Searching for system Python...`);
 
   // Build candidate list prioritizing Homebrew Python on macOS
   let candidates: string[];
@@ -87,7 +80,6 @@ export function findPythonCommand(): string | null {
       // Validate version meets minimum requirement (Python 3.10+)
       const validation = validatePythonVersion(cmd);
       if (validation.valid) {
-        console.log(`[Python] Found valid system Python: ${cmd} (${validation.version})`);
         return cmd;
       } else {
         console.warn(`[Python] ${cmd} version too old: ${validation.message}`);

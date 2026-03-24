@@ -93,7 +93,7 @@ function initializeModelStats(participant: ArenaParticipant): ArenaModelStats {
 function updateModelStats(
   stats: ArenaModelStats,
   participant: ArenaParticipant,
-  battle: ArenaBattle,
+  _battle: ArenaBattle,
   isWinner: boolean
 ): void {
   stats.total += 1;

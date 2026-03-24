@@ -474,7 +474,7 @@ class PersonalizedSkillManager:
         # Apply learning-based predictions (reduced limit)
         if context:
             predicted_skills = self.learner.predict_next_skills(
-                query, context, limit=2
+                query, context, limit=2  # noqa: F821
             )  # Reduced from 3
             predicted_skill_names = [skill[0] for skill in predicted_skills]
 
@@ -705,8 +705,8 @@ class PersonalizedSkillManager:
                 self.user_profiles[uid] = UserProfile(**profile_data)
 
             # Restore project contexts
-            for pid, context_data in context_data.get("project_contexts", {}).items():
-                self.project_contexts[pid] = ProjectContext(**context_data)
+            for pid, ctx_data in context_data.get("project_contexts", {}).items():
+                self.project_contexts[pid] = ProjectContext(**ctx_data)
 
             # Restore optimization stats
             self.optimization_stats = context_data.get("optimization_stats", {})

@@ -16,7 +16,6 @@ import { getUsageMonitor } from '../claude-profile/usage-monitor';
  */
 export async function initializeCredentialIntegration(): Promise<void> {
   try {
-    console.log('[CredentialIntegration] Initializing credential management integration...');
 
     // Obtenir l'instance du monitor d'usage existant
     const usageMonitor = getUsageMonitor();
@@ -54,14 +53,10 @@ export async function initializeCredentialIntegration(): Promise<void> {
           credentialManager.setActiveProvider('anthropic', 'api_key', profileData.activeProfileId);
         }
       });
-
-      console.log('[CredentialIntegration] Connected to existing usage monitor');
     }
 
     // Initialiser le CredentialManager avec les données existantes
     await credentialManager.initialize?.();
-
-    console.log('[CredentialIntegration] Credential management integration initialized successfully');
   } catch (error) {
     console.error('[CredentialIntegration] Failed to initialize credential integration:', error);
     throw error;
@@ -91,7 +86,7 @@ export async function switchToProvider(
   
   // Notifier les systèmes existants du changement
   const usageMonitor = getUsageMonitor();
-  if (usageMonitor && usageMonitor.emit) {
+  if (usageMonitor?.emit) {
     usageMonitor.emit('provider-switched', { provider, type, profileId });
   }
 }

@@ -55,8 +55,7 @@ export async function detectRepositoryProvider(projectPath: string): Promise<Rep
           }
         }
       }
-    } catch (configError) {
-      console.log('⚠️ Could not read git config file, falling back to git command:', configError);
+    } catch (_configError) {
     }
 
     // Fallback to the existing git command approach

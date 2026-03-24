@@ -4,7 +4,6 @@ import { IPC_CHANNELS, AUTO_BUILD_PATHS, getSpecsDir } from '../../shared/consta
 import type {
   IPCResult,
   AzureDevOpsWorkItem,
-  AzureDevOpsProject,
   AzureDevOpsImportResult,
   AzureDevOpsSyncStatus,
   Project,
@@ -34,7 +33,7 @@ const backendPath = path.resolve(__dirname, '..', '..', '..', 'backend');
  * Register all Azure DevOps-related IPC handlers
  */
 export function registerAzureDevOpsHandlers(
-  agentManager: AgentManager,
+  _agentManager: AgentManager,
   _getMainWindow: () => BrowserWindow | null
 ): void {
   // ============================================
@@ -244,7 +243,7 @@ except Exception as e:
           } else {
             resolve(result.data);
           }
-        } catch (e) {
+        } catch (_e) {
           reject(new Error(`Failed to parse response: ${stdout}`));
         }
       });
@@ -417,7 +416,7 @@ except Exception as e:
               } else {
                 resolve(parsed.data);
               }
-            } catch (e) {
+            } catch (_e) {
               reject(new Error(`Failed to parse response: ${stdout}`));
             }
           });
@@ -441,7 +440,7 @@ except Exception as e:
     async (
       _,
       projectId: string,
-      azureProject?: string,
+      _azureProject?: string,
       itemTypes?: string[],
       maxItems?: number
     ): Promise<IPCResult<AzureDevOpsWorkItem[]>> => {
@@ -927,10 +926,10 @@ print(json.dumps({'success': True}))
             },
           });
 
-          let stdout = '';
+          let _stdout = '';
           let stderr = '';
 
-          child.stdout?.on('data', (data: Buffer) => { stdout += data.toString(); });
+          child.stdout?.on('data', (data: Buffer) => { _stdout += data.toString(); });
           child.stderr?.on('data', (data: Buffer) => { stderr += data.toString(); });
 
           child.on('close', (code: number | null) => {

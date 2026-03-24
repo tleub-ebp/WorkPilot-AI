@@ -50,7 +50,6 @@ export function registerQueueRoutingHandlers(
       try {
         // If no profile manager is available, return null (no preference)
         if (!profileManager) {
-          console.log('[QueueRouting] Profile manager not available, returning null');
           return { success: true, data: null };
         }
 
@@ -59,7 +58,6 @@ export function registerQueueRoutingHandlers(
 
         // If auto-switching is disabled, return null (no preference)
         if (!settings.enabled) {
-          console.log('[QueueRouting] Auto-switching disabled, returning null');
           return { success: true, data: null };
         }
 
@@ -73,13 +71,7 @@ export function registerQueueRoutingHandlers(
         );
 
         if (bestProfile) {
-          console.log('[QueueRouting] Best profile selected:', {
-            profileId: bestProfile.id,
-            profileName: bestProfile.name,
-            excludedId: options?.excludeProfileId
-          });
         } else {
-          console.log('[QueueRouting] No suitable profile found for task routing');
         }
 
         return { success: true, data: bestProfile };
@@ -189,6 +181,4 @@ export function registerQueueRoutingHandlers(
       });
     }
   });
-
-  console.log('[QueueRouting] IPC handlers registered');
 }

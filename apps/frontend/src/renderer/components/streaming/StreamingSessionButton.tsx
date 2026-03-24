@@ -28,9 +28,6 @@ export function StreamingSessionButton({ taskId, projectPath }: StreamingSession
   const { t } = useTranslation(['tasks', 'streaming']);
 
   const handleWatchLive = () => {
-    // Just open the streaming dialog — do NOT restart the task.
-    // Streaming is already enabled by default when the task was started.
-    console.log(`[StreamingSessionButton] Opening streaming viewer for task: ${taskId}`);
     setIsOpen(true);
   };
 

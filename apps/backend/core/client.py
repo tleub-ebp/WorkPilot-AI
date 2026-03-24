@@ -1172,7 +1172,7 @@ def create_agent_client(
     output_format: dict | None = None,
     agents: dict | None = None,
     provider: str | None = None,
-) -> "AgentClient":
+) -> "AgentClient":  # noqa: F821
     """
     Create a provider-agnostic agent client for Kanban task execution.
 

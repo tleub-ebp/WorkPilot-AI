@@ -63,7 +63,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
   const [remoteConfig, setRemoteConfig] = useState<RemoteConfig>({});
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [createdProject, setCreatedProject] = useState<any>(null);
+  const [_createdProject, setCreatedProject] = useState<any>(null);
   const [providerSelected, setProviderSelected] = useState<boolean>(false);
   const [showGitCommitModal, setShowGitCommitModal] = useState<boolean>(false);
   const [pendingProjectPath, setPendingProjectPath] = useState<string | null>(null);
@@ -105,7 +105,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
   };
 
   useEffect(() => {
-  }, [open]);
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -127,42 +127,6 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
       setShowRemoteConfigModal(false);
     }
   }, [step]);
-
-  // Auto-detect repository type when project path changes
-  useEffect(() => {
-    const autoDetectProvider = async () => {
-      
-      if (projectLocation && projectName && step === 0) {
-        const projectPath = `${projectLocation}/${projectName.trim()}`;
-        
-        // Check if it's an existing git repository
-        const gitStatus = await globalThis.electronAPI.checkGitStatus(projectPath);
-        
-        if (gitStatus?.success && gitStatus?.data?.isGitRepo) {
-          const detected = await detectRepositoryProvider(projectPath);
-          
-          if (detected === 'github') {
-            // Auto-select GitHub provider
-            setRemoteType('github');
-            setProviderSelected(true);
-          } else if (detected === 'azure_devops') {
-            // Auto-select Azure DevOps provider
-            setRemoteType('azure');
-            setProviderSelected(true);
-          } else if (!providerSelected) {
-            // Unknown provider detected, keep current selection or default to skip
-            setRemoteType(null);
-            setProviderSelected(true);
-          }
-        } else if (!providerSelected) {
-          // No git repo, don't auto-select anything unless user already selected
-          setRemoteType(null);
-        }
-      }
-    };
-
-    autoDetectProvider();
-  }, [projectLocation, projectName, step, providerSelected]);
 
   // Function to detect repository provider from existing git repository
   const detectRepositoryProvider = async (projectPath: string) => {
@@ -220,6 +184,42 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
     
     return 'unknown';
   };
+
+  // Auto-detect repository type when project path changes
+  useEffect(() => {
+    const autoDetectProvider = async () => {
+
+      if (projectLocation && projectName && step === 0) {
+        const projectPath = `${projectLocation}/${projectName.trim()}`;
+
+        // Check if it's an existing git repository
+        const gitStatus = await globalThis.electronAPI.checkGitStatus(projectPath);
+
+        if (gitStatus?.success && gitStatus?.data?.isGitRepo) {
+          const detected = await detectRepositoryProvider(projectPath);
+
+          if (detected === 'github') {
+            // Auto-select GitHub provider
+            setRemoteType('github');
+            setProviderSelected(true);
+          } else if (detected === 'azure_devops') {
+            // Auto-select Azure DevOps provider
+            setRemoteType('azure');
+            setProviderSelected(true);
+          } else if (!providerSelected) {
+            // Unknown provider detected, keep current selection or default to skip
+            setRemoteType(null);
+            setProviderSelected(true);
+          }
+        } else if (!providerSelected) {
+          // No git repo, don't auto-select anything unless user already selected
+          setRemoteType(null);
+        }
+      }
+    };
+
+    autoDetectProvider();
+  }, [projectLocation, projectName, step, providerSelected, detectRepositoryProvider]);
 
   // Determine which provider options to show
   const shouldShowProviderOptions = () => {
@@ -504,7 +504,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
       // Vérifie la présence d'un commit git si git a été initialisé
       if (initGit) {
         const status = await globalThis.electronAPI.checkGitStatus(result.data.path);
-        if (status && status.success && status.data && !status.data.hasCommits && !showGitCommitModal) {
+        if (status?.success && status.data && !status.data.hasCommits && !showGitCommitModal) {
           // Finaliser le projet d'abord
           onProjectAdded?.(project, false);
           
@@ -628,7 +628,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
               const projectPath = `${projectLocation}/${projectName.trim()}`;
               const status = await globalThis.electronAPI.checkGitStatus(projectPath);
 
-              if (status && status.success && status.data && !status.data.hasCommits && !showGitCommitModal && !pendingProjectPath) {
+              if (status?.success && status.data && !status.data.hasCommits && !showGitCommitModal && !pendingProjectPath) {
                 setPendingProjectPath(projectPath);
                 setShowGitCommitModal(true);
               } else {
@@ -652,7 +652,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
             if (projectLocation && projectName) {
               const projectPath = `${projectLocation}/${projectName.trim()}`;
               const status = await globalThis.electronAPI.checkGitStatus(projectPath);
-              if (status && status.success && status.data && !status.data.hasCommits && !showGitCommitModal && !pendingProjectPath) {
+              if (status?.success && status.data && !status.data.hasCommits && !showGitCommitModal && !pendingProjectPath) {
                 setPendingProjectPath(projectPath);
                 setShowGitCommitModal(true);
               } else {

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { CiPlatform, PipelineGeneratorResult, DetectedStack } from '../../main/pipeline-generator-service';
+import type { CiPlatform, PipelineGeneratorResult, } from '../../main/pipeline-generator-service';
 
 export type PipelineGeneratorPhase = 'idle' | 'generating' | 'complete' | 'error';
 

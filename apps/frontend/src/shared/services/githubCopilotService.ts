@@ -225,7 +225,7 @@ class GitHubCopilotServiceClass {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, new Set());
     }
-    this.eventListeners.get(event)!.add(callback);
+    this.eventListeners.get(event)?.add(callback);
   }
 
   /**
@@ -238,22 +238,6 @@ class GitHubCopilotServiceClass {
       if (listeners.size === 0) {
         this.eventListeners.delete(event);
       }
-    }
-  }
-
-  /**
-   * Émettre un événement
-   */
-  private emit(event: string, data: any): void {
-    const listeners = this.eventListeners.get(event);
-    if (listeners) {
-      listeners.forEach(callback => {
-        try {
-          callback(data);
-        } catch (error) {
-          console.error(`[GitHubCopilotService] Error in event listener for ${event}:`, error);
-        }
-      });
     }
   }
 

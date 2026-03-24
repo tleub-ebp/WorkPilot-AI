@@ -7,7 +7,7 @@
 
 import { ipcMain } from 'electron';
 import { IPC_CHANNELS } from '../../shared/constants';
-import type { IPCResult, PRDetailsResult, Project, Task } from '../../shared/types';
+import type { IPCResult, PRDetailsResult, Project, } from '../../shared/types';
 import { findTaskAndProject } from './task/shared';
 
 /**
@@ -18,7 +18,6 @@ export function registerPRDetailsHandlers(): void {
     IPC_CHANNELS.PR_DETAILS,
     async (_, prNumber: number, taskId?: string): Promise<IPCResult<PRDetailsResult>> => {
       try {
-        console.log(`[PR_DETAILS] Getting details for PR #${prNumber}, taskId: ${taskId || 'none'}`);
 
         // If taskId is provided, get the task and project to detect PR URL
         let prUrl: string | null = null;
@@ -29,26 +28,21 @@ export function registerPRDetailsHandlers(): void {
           if (result.task && result.project) {
             prUrl = result.task.metadata?.prUrl || null;
             project = result.project;
-            console.log(`[PR_DETAILS] Found PR URL from task: ${prUrl}`);
           }
         }
 
         // If no PR URL from task, we need to determine the platform
         // For now, we'll default to GitHub if no URL is found
         if (!prUrl) {
-          console.log(`[PR_DETAILS] No PR URL found, defaulting to GitHub`);
           return getGitHubPRDetails(prNumber, project);
         }
 
         // Detect platform from URL and route accordingly
         if (prUrl.includes('dev.azure.com') || prUrl.includes('/pullrequest/')) {
-          console.log(`[PR_DETAILS] Detected Azure DevOps PR`);
           return getAzureDevOpsPRDetails(prNumber, prUrl, project);
         } else if (prUrl.includes('github.com') || prUrl.includes('/pull/')) {
-          console.log(`[PR_DETAILS] Detected GitHub PR`);
           return getGitHubPRDetails(prNumber, project);
         } else {
-          console.log(`[PR_DETAILS] Unknown PR platform: ${prUrl}`);
           return {
             success: false,
             error: `Unsupported PR URL format: ${prUrl}. Only GitHub and Azure DevOps are supported.`
@@ -68,7 +62,7 @@ export function registerPRDetailsHandlers(): void {
 /**
  * Get GitHub PR details
  */
-async function getGitHubPRDetails(prNumber: number, project: Project | null): Promise<IPCResult<PRDetailsResult>> {
+async function getGitHubPRDetails(prNumber: number, _project: Project | null): Promise<IPCResult<PRDetailsResult>> {
   try {
     // For now, return a mock implementation for GitHub too
     // TODO: Implement actual GitHub API call
@@ -157,21 +151,18 @@ async function getAzureDevOpsPRDetails(prNumber: number, prUrl: string, project:
       };
     }
 
-    const [, organization, projectName, repository, prNumFromUrl] = urlMatch;
+    const [, _organization, _projectName, repository, prNumFromUrl] = urlMatch;
     
     // Validate PR number matches URL
-    if (parseInt(prNumFromUrl) !== prNumber) {
+    if (parseInt(prNumFromUrl, 10) !== prNumber) {
       return {
         success: false,
         error: `PR number mismatch: requested ${prNumber} but URL contains ${prNumFromUrl}`
       };
     }
 
-    console.log(`[PR_DETAILS] Azure DevOps - Org: ${organization}, Project: ${projectName}, Repo: ${repository}, PR: ${prNumber}`);
-
     // Try to call Azure DevOps Python connector using existing project configuration
     try {
-      console.log('[PR_DETAILS] Attempting to call Azure DevOps Python with existing config...');
       const result = await callAzureDevOpsPythonWithExistingConfig(
         project.path,
         repository,
@@ -179,10 +170,7 @@ async function getAzureDevOpsPRDetails(prNumber: number, prUrl: string, project:
         prUrl
       );
       
-      console.log('[PR_DETAILS] Python call result:', result);
-      
       if (result && !result.error) {
-        console.log('[PR_DETAILS] Successfully got PR data from Python');
         return transformAzureDevOpsData(result.data, prUrl);
       } else {
         console.warn('[PR_DETAILS] Python call returned error:', result?.error);
@@ -210,20 +198,15 @@ async function getAzureDevOpsPRDetails(prNumber: number, prUrl: string, project:
  */
 async function callAzureDevOpsPythonWithExistingConfig(
   projectPath: string,
-  repository: string,
+  _repository: string,
   prNumber: number,
   prUrl: string
 ): Promise<any> {
   return new Promise((resolve, reject) => {
     // Debug: Check Python executable and project path
     const { exec } = require('child_process');
-    exec('python --version', (error: Error | null, stdout: string, stderr: string) => {
-      console.log('[PR_DETAILS] Python version check:', stdout || stderr || error);
+    exec('python --version', (_error: Error | null, _stdout: string, _stderr: string) => {
     });
-    
-    console.log('[PR_DETAILS] Project path:', projectPath);
-    console.log('[PR_DETAILS] Repository:', repository);
-    console.log('[PR_DETAILS] PR Number:', prNumber);
     
     const pythonScript = `
 import sys
@@ -523,7 +506,6 @@ except Exception as e:
     pythonProcess.stdout.on('data', (data: Buffer) => {
       const dataStr = data.toString();
       output += dataStr;
-      console.log('[PR_DETAILS] Python stdout:', dataStr);
     });
 
     pythonProcess.stderr.on('data', (data: Buffer) => {
@@ -533,9 +515,6 @@ except Exception as e:
     });
 
     pythonProcess.on('close', (code: number) => {
-      console.log(`[PR_DETAILS] Python process exited with code ${code}`);
-      console.log(`[PR_DETAILS] Total stdout: ${output.length} chars`);
-      console.log(`[PR_DETAILS] Total stderr: ${errorOutput.length} chars`);
       
       if (code === 0) {
         try {
@@ -639,11 +618,10 @@ function transformAzureDevOpsData(prData: any, prUrl: string): IPCResult<PRDetai
  * Mock Azure DevOps PR details for fallback
  */
 async function getMockAzureDevOpsPRDetails(prNumber: number, prUrl: string): Promise<IPCResult<PRDetailsResult>> {
-  console.log('[PR_DETAILS] Using enhanced mock Azure DevOps data for PR:', prNumber);
   
   // Extract real info from URL for more realistic mock data
   const urlMatch = prUrl.match(/https:\/\/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)\/pullrequest\/(\d+)/);
-  const [, organization, projectName, repository] = urlMatch || [, 'Unknown Org', 'Unknown Project', 'Unknown Repo'];
+  const [, organization, projectName, repository] = urlMatch || [undefined, 'Unknown Org', 'Unknown Project', 'Unknown Repo'];
   
   return {
     success: true,
@@ -703,7 +681,7 @@ async function getMockAzureDevOpsPRDetails(prNumber: number, prUrl: string): Pro
  * Helper functions
  */
 
-function mapGitHubChangeType(changeType: string): 'added' | 'modified' | 'renamed' {
+function _mapGitHubChangeType(changeType: string): 'added' | 'modified' | 'renamed' {
   switch (changeType) {
     case 'ADDED': return 'added';
     case 'MODIFIED': return 'modified';

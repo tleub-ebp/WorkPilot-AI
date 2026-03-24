@@ -13,12 +13,10 @@ import type { GitLabAPIProject } from './types';
 // Debug logging helper
 const DEBUG = process.env.DEBUG === 'true' || process.env.NODE_ENV === 'development';
 
-function debugLog(message: string, data?: unknown): void {
+function debugLog(_message: string, data?: unknown): void {
   if (DEBUG) {
     if (data !== undefined) {
-      console.debug(`[GitLab Repo] ${message}`, data);
     } else {
-      console.debug(`[GitLab Repo] ${message}`);
     }
   }
 }

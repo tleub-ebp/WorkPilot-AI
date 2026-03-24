@@ -44,7 +44,7 @@ interface SettingsState {
   setProviderPriorityOrder: (order: import('../components/settings/multiconnector/types').LLMProvider[]) => void;
 }
 
-export const useSettingsStore = create<SettingsState>((set, get) => ({
+export const useSettingsStore = create<SettingsState>((set, _get) => ({
   settings: DEFAULT_APP_SETTINGS as AppSettings,
   isLoading: true,  // Start as true since we load settings on app init
   error: null,
@@ -254,7 +254,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   discoverModels: async (baseUrl: string, apiKey: string, signal?: AbortSignal): Promise<ModelInfo[] | null> => {
-    console.log('[settings-store] discoverModels called with:', { baseUrl, apiKey: `${apiKey.slice(-4)}` });
     // Generate cache key from baseUrl and apiKey (last 4 chars)
     const cacheKey = `${baseUrl}::${apiKey.slice(-4)}`;
 
@@ -262,16 +261,13 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const state = useSettingsStore.getState();
     const cached = state.discoveredModels.get(cacheKey);
     if (cached) {
-      console.log('[settings-store] Returning cached models');
       return cached;
     }
 
     // Fetch from API
     set({ modelsLoading: true, modelsError: null });
     try {
-      console.log('[settings-store] Calling window.electronAPI.discoverModels...');
       const result = await window.electronAPI.discoverModels(baseUrl, apiKey, signal);
-      console.log('[settings-store] discoverModels result:', result);
 
       if (result.success && result.data) {
         const models = result.data.models;

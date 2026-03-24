@@ -21,7 +21,7 @@ const DEBUG = process.env.NODE_ENV === 'development' && process.env.DEBUG === 't
 /**
  * Redact sensitive information from data before logging
  */
-function redactSensitiveData(data: unknown): unknown {
+function _redactSensitiveData(data: unknown): unknown {
   if (typeof data === 'string') {
     // Redact anything that looks like a token (glpat-*, private token patterns)
     return data.replace(/glpat-[A-Za-z0-9_-]+/g, 'glpat-[REDACTED]')
@@ -29,7 +29,7 @@ function redactSensitiveData(data: unknown): unknown {
   }
   if (typeof data === 'object' && data !== null) {
     if (Array.isArray(data)) {
-      return data.map(redactSensitiveData);
+      return data.map(_redactSensitiveData);
     }
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(data)) {
@@ -37,7 +37,7 @@ function redactSensitiveData(data: unknown): unknown {
       if (/token|password|secret|credential|auth/i.test(key)) {
         result[key] = '[REDACTED]';
       } else {
-        result[key] = redactSensitiveData(value);
+        result[key] = _redactSensitiveData(value);
       }
     }
     return result;
@@ -45,12 +45,10 @@ function redactSensitiveData(data: unknown): unknown {
   return data;
 }
 
-function debugLog(message: string, data?: unknown): void {
+function debugLog(_message: string, data?: unknown): void {
   if (DEBUG) {
     if (data !== undefined) {
-      console.debug(`[GitLab OAuth] ${message}`, redactSensitiveData(data));
     } else {
-      console.debug(`[GitLab OAuth] ${message}`);
     }
   }
 }

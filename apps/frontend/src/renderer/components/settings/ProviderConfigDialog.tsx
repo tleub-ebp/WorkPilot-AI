@@ -54,7 +54,7 @@ export function ProviderConfigDialog({
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [isTestPending, setIsTestPending] = useState(false);
+  const [_isTestPending, setIsTestPending] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('api');
   const [showApiKey, setShowApiKey] = useState(false);
   
@@ -85,7 +85,6 @@ export function ProviderConfigDialog({
         
         // Only log every 10th attempt to reduce noise
         if (checkCount % 10 === 1) {
-          console.log(`[ProviderConfigDialog] Checking Codex OAuth status (attempt ${checkCount}/${maxChecks})`);
         }
         
         try {
@@ -93,7 +92,6 @@ export function ProviderConfigDialog({
           
           if (result?.isAuthenticated) {
             clearInterval(checkInterval);
-            console.log('[ProviderConfigDialog] Codex OAuth authentication detected:', result);
             
             const profileLabel = result.profileName || 'Codex CLI';
             setTestResult({ 
@@ -138,7 +136,7 @@ export function ProviderConfigDialog({
 
       return () => clearInterval(checkInterval);
     }
-  }, [provider?.id, activeTab, authTerminal?.terminalId, isAuthenticating, settings, onSettingsChange, onProviderActivated]);
+  }, [provider?.id, activeTab, authTerminal?.terminalId, isAuthenticating, settings, onSettingsChange, onProviderActivated, handleAuthTerminalClose]);
 
   const providerConfig = provider ? providerFields[provider.id] : null;
   const supportsOAuth = ['anthropic', 'claude', 'windsurf', 'openai'].includes(provider?.id || '');
@@ -197,7 +195,7 @@ export function ProviderConfigDialog({
     if (provider.id === 'windsurf') {
       loadWindsurfAccountInfo();
     }
-  }, [provider, providerConfig, settings, isOpen, supportsOAuth]);
+  }, [provider, providerConfig, settings, isOpen, supportsOAuth, getDefaultActiveTab, initializeFormData, loadWindsurfAccountInfo, setWindsurfAccountInfo]);
 
   const handleSave = async () => {
     if (!provider || !providerConfig) return;
@@ -303,9 +301,7 @@ export function ProviderConfigDialog({
       // On OAuth tab for OpenAI: check Codex CLI OAuth status via IPC
       if (activeTab === 'oauth' && provider.id === 'openai') {
         try {
-          console.log('[ProviderConfigDialog] Checking Codex OAuth status...');
           const result = await globalThis.electronAPI?.checkOpenAICodexOAuth?.();
-          console.log('[ProviderConfigDialog] Codex OAuth check result:', result);
           
           if (result?.isAuthenticated) {
             setTestResult({ 
@@ -318,12 +314,6 @@ export function ProviderConfigDialog({
             // Check if there's an active Codex authentication terminal
             const hasActiveCodexTerminal = authTerminal?.terminalId?.startsWith('auth-codex-');
             const isAuthenticatingCodex = hasActiveCodexTerminal && isAuthenticating;
-            
-            console.log('[ProviderConfigDialog] Codex auth state:', { 
-              hasActiveCodexTerminal, 
-              isAuthenticatingCodex, 
-              terminalId: authTerminal?.terminalId 
-            });
             
             if (isAuthenticatingCodex) {
               setTestResult({ 

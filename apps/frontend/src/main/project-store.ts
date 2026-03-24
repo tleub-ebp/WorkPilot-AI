@@ -663,7 +663,7 @@ export class ProjectStore {
   /**
    * Get JSON error information
    */
-  private getJsonErrorInfo(plan: ImplementationPlan | null, specName: string): { hasJsonError: boolean; jsonErrorMessage: string } {
+  private getJsonErrorInfo(plan: ImplementationPlan | null, _specName: string): { hasJsonError: boolean; jsonErrorMessage: string } {
     if (plan !== null) {
       return { hasJsonError: false, jsonErrorMessage: '' };
     }

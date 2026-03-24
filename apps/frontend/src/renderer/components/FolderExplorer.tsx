@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 export const FolderExplorer = ({ selectedFolder, setSelectedFolder }: {
   selectedFolder: string;
@@ -21,7 +21,7 @@ export const FolderExplorer = ({ selectedFolder, setSelectedFolder }: {
             }
           }
           setFolders(entries);
-        } catch (e) {
+        } catch (_e) {
           setFolders([]);
         }
       } else {

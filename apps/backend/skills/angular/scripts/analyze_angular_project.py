@@ -191,7 +191,7 @@ class AngularProjectAnalyzer:
                                 analysis.is_standalone = True
                             if "signal(" in content or "Signal(" in content:
                                 analysis.uses_signals = True
-                    except:
+                    except Exception:
                         pass
 
                 elif path_str.endswith(".module.ts"):

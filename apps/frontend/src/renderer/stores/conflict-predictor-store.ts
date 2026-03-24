@@ -196,7 +196,6 @@ const handleConflictPredictionEvent = (data: any) => {
       }));
       break;
     default:
-      console.log('Unknown conflict prediction event type:', type, eventData);
   }
 };
 

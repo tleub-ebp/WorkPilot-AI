@@ -88,7 +88,7 @@ export function PromptOptimizerDialog({ onUsePrompt }: PromptOptimizerDialogProp
     if (streamOutputRef.current) {
       streamOutputRef.current.scrollTop = streamOutputRef.current.scrollHeight;
     }
-  }, [streamingOutput]);
+  }, []);
 
   const handleOptimize = useCallback(() => {
     if (!selectedProjectId) return;

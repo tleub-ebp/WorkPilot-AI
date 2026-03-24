@@ -8,6 +8,7 @@ and analytics insights.
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy import asc, desc, func
 from sqlalchemy.orm import Session
 
@@ -40,6 +41,17 @@ def serialize_build_summary(build):
         "llm_provider": build.llm_provider,
         "llm_model": build.llm_model,
     }
+
+
+class BuildSummary(BaseModel):
+    build_id: str
+    spec_id: str
+    spec_name: str | None
+    started_at: datetime | None
+    completed_at: datetime | None
+    status: str
+    total_duration_seconds: float | None
+    total_tokens_used: int
     total_cost_usd: float
     qa_iterations: int
     qa_success_rate: float

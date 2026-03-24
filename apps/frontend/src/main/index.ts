@@ -30,7 +30,6 @@ const possibleEnvPaths = [
 for (const envPath of possibleEnvPaths) {
   if (existsSync(envPath)) {
     config({ path: envPath, quiet: true });
-    console.log(`[dotenv] Loaded environment from: ${envPath}`);
     break;
   }
 }
@@ -213,7 +212,6 @@ function initializeSpellCheckLanguages(): void {
 
   if (initialSpellCheckLanguages.length > 0) {
     session.defaultSession.setSpellCheckerLanguages(initialSpellCheckLanguages);
-    console.log(`[SPELLCHECK] Initial languages set to: ${initialSpellCheckLanguages.join(', ')}`);
   } else {
     console.warn('[SPELLCHECK] No spell check languages available on this system');
   }
@@ -380,7 +378,6 @@ if (isMacOS()) {
 if (isWindows()) {
   app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
   app.commandLine.appendSwitch('disable-gpu-program-cache');
-  console.log('[main] Applied Windows GPU cache fixes');
 }
 
 // Fonction pour attendre que le backend soit prêt
@@ -412,7 +409,6 @@ async function launchBackendIfNeeded() {
   // Vérifie si le backend répond déjà
   try {
     await waitForBackendReady('http://127.0.0.1:9000/providers', 1500);
-    console.log('[main] Backend LLM déjà démarré.');
     return;
   } catch {}
   // Détermine le chemin Python dynamique via pythonEnvManager
@@ -428,7 +424,6 @@ async function launchBackendIfNeeded() {
     detached: false,
     env: { ...process.env, UVICORN_CMD: '1' }
   });
-  console.log('[main] Backend LLM lancé via python -m uvicorn:', pythonPath, providerApiModule);
   // Attend qu'il soit prêt
   await waitForBackendReady('http://127.0.0.1:9000/providers', 10000);
 }
@@ -478,7 +473,6 @@ async function launchStreamingServer() {
         .listen(8765, '127.0.0.1');
     });
     if (!isPortFree) {
-      console.log('[main] Streaming server port 8765 already in use, skipping launch');
       return;
     }
   } catch {
@@ -492,8 +486,7 @@ async function launchStreamingServer() {
     env: { ...process.env }
   });
 
-  streamingServerProcess.stdout?.on('data', (data: Buffer) => {
-    console.log('[streaming-server]', data.toString().trim());
+  streamingServerProcess.stdout?.on('data', (_data: Buffer) => {
   });
   streamingServerProcess.stderr?.on('data', (data: Buffer) => {
     console.warn('[streaming-server]', data.toString().trim());
@@ -502,8 +495,6 @@ async function launchStreamingServer() {
     console.warn(`[streaming-server] Process exited with code ${code}`);
     streamingServerProcess = null;
   });
-
-  console.log('[main] Streaming WebSocket server launched on ws://localhost:8765');
 }
 
 async function ensureStreamingServerLaunched() {
@@ -541,7 +532,6 @@ async function clearWindowsCache() {
   
   try {
     await session.defaultSession.clearCache();
-    console.log('[main] Cleared cache on startup');
   } catch (err) {
     console.warn('[main] Failed to clear cache:', err);
   }
@@ -583,7 +573,7 @@ function loadAndValidateSettings() {
         pythonPath: settings.pythonPath,
         autoBuildPath: validAutoBuildPath
       });
-      agentManager!.configure(settings.pythonPath, validAutoBuildPath);
+      agentManager?.configure(settings.pythonPath, validAutoBuildPath);
     }
   } catch (error: unknown) {
     // ENOENT means no settings file yet - that's fine, use defaults
@@ -628,13 +618,11 @@ function validateAndMigrateAutoBuildPath(autoBuildPath: string, settingsPath: st
     }
 
     if (correctedPathExists) {
-      console.log('[main] Migrating autoBuildPath from old structure:', autoBuildPath, '->', correctedPath);
       settings.autoBuildPath = correctedPath;
       
       // Save the corrected setting - we're the only process modifying settings at startup
       try {
         writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
-        console.log('[main] Successfully saved migrated autoBuildPath to settings');
       } catch (writeError) {
         console.warn('[main] Failed to save migrated autoBuildPath:', writeError);
       }

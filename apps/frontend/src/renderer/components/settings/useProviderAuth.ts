@@ -23,7 +23,7 @@ export function useProviderAuth() {
   const [windsurfSsoToken, setWindsurfSsoToken] = useState('');
   const [windsurfAccountInfo, setWindsurfAccountInfo] = useState<WindsurfAccountInfo | null>(null);
 
-  const handleClaudeAuth = useCallback(async (providerId: string, providerName: string) => {
+  const handleClaudeAuth = useCallback(async (_providerId: string, providerName: string) => {
     try {
       const profilesResult = await globalThis.electronAPI.getClaudeProfiles();
       const activeProfileId = profilesResult.success && profilesResult.data
@@ -107,7 +107,7 @@ export function useProviderAuth() {
     }
   }, []);
 
-  const handleAuthTerminalError = useCallback((error: string) => {
+  const handleAuthTerminalError = useCallback((_error: string) => {
     setAuthTerminal(null);
     setIsAuthenticating(false);
   }, []);

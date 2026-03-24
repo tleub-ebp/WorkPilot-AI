@@ -26,7 +26,7 @@ import type { GenerateCodeResult, CodeToVisualResult } from '@preload/api/module
 import { useVisualToCodeStore } from '../../stores/visual-to-code-store';
 import type { DiagramType } from '../../stores/visual-to-code-store';
 
-export type { DiagramType };
+export type { DiagramType } from '../../stores/visual-to-code-store';
 
 export const CanvasPanel: React.FC = () => {
   const { t } = useTranslation('visualProgramming');
@@ -151,7 +151,7 @@ export const CanvasPanel: React.FC = () => {
       offComplete?.();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [handleVisualProgrammingComplete, handleVisualProgrammingError, handleVisualProgrammingStatus]);
 
   const handleGenerateCode = async () => {
     if (!globalThis.electronAPI?.runVisualProgramming) {
@@ -342,8 +342,8 @@ export const CanvasPanel: React.FC = () => {
     setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, label: newLabel, onRename: handleRenameNode } } : n));
   };
 
-  const handleEdgeLabelChange = (id: string, newLabel: string) => {
-    setEdges((eds) => eds.map((e) => e.id === id ? { ...e, data: { ...e.data, label: newLabel }, onEdgeLabelChange: handleEdgeLabelChange } : e));
+  const _handleEdgeLabelChange = (id: string, newLabel: string) => {
+    setEdges((eds) => eds.map((e) => e.id === id ? { ...e, data: { ...e.data, label: newLabel }, onEdgeLabelChange: _handleEdgeLabelChange } : e));
   };
 
   const [nextDiagramType, setNextDiagramType] = useState<DiagramType | null>(null);
@@ -410,14 +410,14 @@ export const CanvasPanel: React.FC = () => {
   React.useEffect(() => {
     globalThis.addEventListener('keydown', handleKeyDown);
     return () => globalThis.removeEventListener('keydown', handleKeyDown);
-  }, [setNodes, setEdges]);
+  }, [handleKeyDown]);
 
   React.useEffect(() => {
     if (!showSaveAsDialog && nextDiagramType !== null) {
       handleNewDiagram(nextDiagramType);
       setNextDiagramType(null);
     }
-  }, [showSaveAsDialog, nextDiagramType]);
+  }, [showSaveAsDialog, nextDiagramType, handleNewDiagram]);
 
   const handleSaveAs = () => {
     setSaveAsFileName(getDefaultFileName());
@@ -451,7 +451,7 @@ export const CanvasPanel: React.FC = () => {
       );
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [handleRenameNode, setNodes, storedNodes.length]);
 
   const handleNodesChange = (changes: any) => {
     setIsJsonSaved(false);
@@ -477,7 +477,7 @@ export const CanvasPanel: React.FC = () => {
     if (showSaveAsDialog) {
       setSaveAsFileName(getDefaultFileName());
     }
-  }, [showSaveAsDialog]);
+  }, [showSaveAsDialog, getDefaultFileName]);
 
   const DIAGRAM_OPTIONS: { type: DiagramType; icon: React.ReactNode; label: string }[] = [
     { type: 'flowchart', icon: <GitBranch className="h-3.5 w-3.5" />, label: t('newFlowchart') },

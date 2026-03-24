@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
   Settings2,
   Key,
   Eye,
@@ -11,18 +8,11 @@ import {
   ChevronDown,
   ChevronUp,
   Zap,
-  Globe,
-  Shield,
-  Bot,
-  Cloud,
   Star,
-  MoreVertical,
-  Sparkles,
-  Loader2
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../ui/tooltip';
+import { TooltipProvider } from '../ui/tooltip';
 
 interface ElegantProviderCardProps {
   provider: {
@@ -178,7 +168,7 @@ const providerIcons: Record<string, React.ReactNode> = {
 };
 
 // Fonction pour obtenir l'icône du provider avec le bon thème
-const getProviderIcon = (providerId: string, category: string, isConfigured: boolean) => {
+const getProviderIcon = (providerId: string, _category: string, isConfigured: boolean) => {
   const icon = providerIcons[providerId];
   if (!icon) {
     // Fallback générique avec initiale

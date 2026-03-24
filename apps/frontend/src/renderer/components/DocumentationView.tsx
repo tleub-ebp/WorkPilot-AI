@@ -8,8 +8,6 @@ import {
   FileText,
   CheckCircle2,
   XCircle,
-  ClipboardPaste,
-  Trash2,
   Copy,
   Check
 } from 'lucide-react';
@@ -160,7 +158,7 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
     } finally {
       setLoading(false);
     }
-  }, [filePath]);
+  }, [filePath, t]);
 
   const handleGenerateDocstrings = useCallback(async () => {
     if (!filePath.trim()) return;
@@ -184,7 +182,7 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
     } finally {
       setLoadingDocs(false);
     }
-  }, [filePath]);
+  }, [filePath, t]);
 
   const handleGenerateReadme = useCallback(async () => {
     if (!dirPath.trim()) return;
@@ -208,7 +206,7 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
     } finally {
       setLoadingReadme(false);
     }
-  }, [dirPath]);
+  }, [dirPath, t]);
 
   return (
     <ScrollArea className="h-full">

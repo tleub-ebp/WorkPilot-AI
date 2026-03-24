@@ -169,7 +169,9 @@ def _prune_graphiti(
 
     # Import only if available
     try:
-        from integrations.graphiti.client import get_graphiti_client  # type: ignore
+        from integrations.graphiti.client import (
+            get_graphiti_client,  # type: ignore  # noqa: F401
+        )
     except ImportError:
         raise RuntimeError("Graphiti client not available")
 

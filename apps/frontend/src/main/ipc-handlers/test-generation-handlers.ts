@@ -90,8 +90,6 @@ export function setupTestGenerationHandlers(getMainWindow: () => BrowserWindow |
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   });
-
-  console.log('[TestGeneration] IPC handlers registered');
 }
 
 /**
@@ -107,6 +105,4 @@ export function cleanupTestGenerationHandlers(): void {
 
   testGenerationService.removeAllListeners();
   testGenerationService.cancel();
-
-  console.log('[TestGeneration] IPC handlers cleaned up');
 }

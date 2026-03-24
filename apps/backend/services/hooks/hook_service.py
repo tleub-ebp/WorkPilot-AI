@@ -640,4 +640,4 @@ class HookService:
 
     def remove_listener(self, callback: Callable):
         """Remove a listener."""
-        self._listeners = [l for l in self._listeners if l is not callback]
+        self._listeners = [listener for listener in self._listeners if listener is not callback]

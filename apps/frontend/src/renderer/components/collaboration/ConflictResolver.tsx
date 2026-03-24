@@ -9,7 +9,6 @@
 
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Check, X } from 'lucide-react';
-import { cn } from '../../lib/utils';
 import { useCollaborationStore, type ConflictRecord } from '../../stores/collaboration-store';
 import { Button } from '../ui/button';
 import {

@@ -186,9 +186,7 @@ function saveKanbanPreferencesToMain(projectId: string): void {
   saveKanbanPrefsTimeout = setTimeout(async () => {
     try {
       await globalThis.electronAPI.saveKanbanPreferences(projectId, preferencesToSave);
-    } catch (err) {
-      // IPC save failed — localStorage sync cache is still available as fallback
-      console.debug('[KanbanSettings] IPC save failed, using localStorage fallback:', err);
+    } catch (_err) {
     }
   }, 100);
 }

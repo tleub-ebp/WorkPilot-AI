@@ -67,28 +67,28 @@ export function createVoiceControlAPI(): VoiceControlAPI {
     
     // Event listeners
     onVoiceControlStatus: (callback) => {
-      ipcRenderer.on('voice-control:status', (event: IpcRendererEvent, status: string) => callback(status));
+      ipcRenderer.on('voice-control:status', (_event: IpcRendererEvent, status: string) => callback(status));
       return () => {
         ipcRenderer.removeAllListeners('voice-control:status');
       };
     },
     
     onVoiceControlStreamChunk: (callback) => {
-      ipcRenderer.on('voice-control:stream-chunk', (event: IpcRendererEvent, chunk: string) => callback(chunk));
+      ipcRenderer.on('voice-control:stream-chunk', (_event: IpcRendererEvent, chunk: string) => callback(chunk));
       return () => {
         ipcRenderer.removeAllListeners('voice-control:stream-chunk');
       };
     },
     
     onVoiceControlError: (callback) => {
-      ipcRenderer.on('voice-control:error', (event: IpcRendererEvent, error: string) => callback(error));
+      ipcRenderer.on('voice-control:error', (_event: IpcRendererEvent, error: string) => callback(error));
       return () => {
         ipcRenderer.removeAllListeners('voice-control:error');
       };
     },
     
     onVoiceControlComplete: (callback) => {
-      ipcRenderer.on('voice-control:complete', (event: IpcRendererEvent, result: {
+      ipcRenderer.on('voice-control:complete', (_event: IpcRendererEvent, result: {
         transcript: string;
         command: string;
         action: string;
@@ -101,14 +101,14 @@ export function createVoiceControlAPI(): VoiceControlAPI {
     },
     
     onVoiceControlAudioLevel: (callback) => {
-      ipcRenderer.on('voice-control:audio-level', (event: IpcRendererEvent, level: number) => callback(level));
+      ipcRenderer.on('voice-control:audio-level', (_event: IpcRendererEvent, level: number) => callback(level));
       return () => {
         ipcRenderer.removeAllListeners('voice-control:audio-level');
       };
     },
     
     onVoiceControlDuration: (callback) => {
-      ipcRenderer.on('voice-control:duration', (event: IpcRendererEvent, duration: number) => callback(duration));
+      ipcRenderer.on('voice-control:duration', (_event: IpcRendererEvent, duration: number) => callback(duration));
       return () => {
         ipcRenderer.removeAllListeners('voice-control:duration');
       };

@@ -421,7 +421,6 @@ export function useProjectSettings(
     // Debug: log Azure DevOps-specific updates
     const azureKeys = Object.keys(updates).filter(k => k.startsWith('azureDevOps'));
     if (azureKeys.length > 0) {
-      console.log('[useProjectSettings] Azure DevOps update:', azureKeys.map(k => `${k}=${(updates as any)[k]}`).join(', '));
     }
 
     // OPTIMISTIC UPDATES: Update local state IMMEDIATELY for responsive UI
@@ -446,7 +445,6 @@ export function useProjectSettings(
         return;
       }
       if (azureKeys.length > 0) {
-        console.log('[useProjectSettings] Azure DevOps save SUCCESS');
       }
     } catch (err) {
       console.error('[useProjectSettings] Error auto-saving env config:', err);

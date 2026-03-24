@@ -16,9 +16,9 @@ Example:
 """
 
 import logging
-from typing import Any
 import sys
 from pathlib import Path
+from typing import Any
 
 # Ensure project root is in sys.path for module resolution
 project_root = Path(__file__).resolve().parent.parent.parent.parent

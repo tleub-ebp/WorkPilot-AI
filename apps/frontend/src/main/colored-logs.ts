@@ -13,7 +13,6 @@
  * frontendLog.error('Failed to load config');
  */
 
-import { app } from 'electron';
 
 // Helper function to get model info without circular dependency
 function getModelInfoForLogs(): { provider: string; modelLabel: string } {
@@ -24,7 +23,7 @@ function getModelInfoForLogs(): { provider: string; modelLabel: string } {
     
     const settings = readSettingsFile();
     
-    if (settings && settings.selectedProvider && settings.defaultModel) {
+    if (settings?.selectedProvider && settings.defaultModel) {
       const provider = settings.selectedProvider as string;
       const modelId = settings.defaultModel as string;
       
@@ -45,7 +44,7 @@ function getModelInfoForLogs(): { provider: string; modelLabel: string } {
     // Fallback: try to detect from environment like backend does
     return detectProviderFromEnv();
     
-  } catch (error) {
+  } catch (_error) {
     // Final fallback: try environment detection
     try {
       return detectProviderFromEnv();
@@ -147,7 +146,7 @@ function formatValue(value: any, maxLength: number = 200): string {
     try {
       const formatted = JSON.stringify(value, null, 2);
       return formatted.length > maxLength ? formatted.substring(0, maxLength) + '...' : formatted;
-    } catch (error) {
+    } catch (_error) {
       return String(value).substring(0, maxLength);
     }
   }
@@ -218,18 +217,18 @@ function formatFrontendLog(
 function writeFrontendLog(message: string, level: string = 'DEBUG', module?: string, ...kwargs: any[]): void {
   const formatted = formatFrontendLog(message, level, module, undefined, ...kwargs);
   // Use process.stderr.write to avoid recursion with overridden console methods
-  if (process.stderr && process.stderr.write) {
+  if (process.stderr?.write) {
     process.stderr.write(formatted + '\n');
   } else {
     // Fallback to original console if available
     const originalConsole = (console as any).original;
-    if (originalConsole && originalConsole.error) {
+    if (originalConsole?.error) {
       originalConsole.error(formatted);
     } else {
       // Last resort - use writeFileSync
       try {
         require('fs').writeFileSync(1, formatted + '\n');
-      } catch (e) {
+      } catch (_e) {
         // If all else fails, stay silent to avoid infinite recursion
       }
     }

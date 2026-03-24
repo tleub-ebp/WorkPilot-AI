@@ -26,7 +26,7 @@ from typing import Any
 
 # Import optimization configuration
 try:
-    from .optimization_config import (
+    from .optimization_config import (  # noqa: F401
         CHECKPOINT_INTERVAL,
         DEFAULT_MAX_WORKERS,
         DEFAULT_TIMEOUT,

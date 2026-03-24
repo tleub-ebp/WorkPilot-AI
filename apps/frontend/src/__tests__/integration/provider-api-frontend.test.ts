@@ -135,8 +135,8 @@ describe('Frontend ↔ Backend Provider API Integration', () => {
       );
 
       expect(result).toBeDefined();
-      expect(result!.success).toBe(true);
-      expect(result!.message).toContain('successful');
+      expect(result?.success).toBe(true);
+      expect(result?.message).toContain('successful');
       expect(useSettingsStore.getState().isTestingConnection).toBe(false);
     });
 
@@ -156,8 +156,8 @@ describe('Frontend ↔ Backend Provider API Integration', () => {
       );
 
       expect(result).toBeDefined();
-      expect(result!.success).toBe(false);
-      expect(result!.errorType).toBe('auth');
+      expect(result?.success).toBe(false);
+      expect(result?.errorType).toBe('auth');
     });
 
     it('should handle network errors during testing', async () => {
@@ -176,8 +176,8 @@ describe('Frontend ↔ Backend Provider API Integration', () => {
       );
 
       expect(result).toBeDefined();
-      expect(result!.success).toBe(false);
-      expect(result!.errorType).toBe('network');
+      expect(result?.success).toBe(false);
+      expect(result?.errorType).toBe('network');
     });
 
     it('should handle timeout during testing', async () => {
@@ -195,7 +195,7 @@ describe('Frontend ↔ Backend Provider API Integration', () => {
         'sk-key'
       );
 
-      expect(result!.errorType).toBe('timeout');
+      expect(result?.errorType).toBe('timeout');
     });
   });
 
@@ -218,7 +218,7 @@ describe('Frontend ↔ Backend Provider API Integration', () => {
 
       expect(models).toBeDefined();
       expect(models).toHaveLength(2);
-      expect(models![0].id).toBe('gpt-4');
+      expect(models?.[0].id).toBe('gpt-4');
     });
 
     it('should cache models and reuse for same endpoint', async () => {
@@ -290,7 +290,7 @@ describe('Frontend ↔ Backend Provider API Integration', () => {
         'https://api.openai.com/v1',
         'sk-test-lifecycle'
       );
-      expect(testResult!.success).toBe(true);
+      expect(testResult?.success).toBe(true);
 
       // Step 3: Activate profile
       mockSetActiveAPIProfile.mockResolvedValue({ success: true });

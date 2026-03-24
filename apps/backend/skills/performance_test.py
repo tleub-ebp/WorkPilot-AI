@@ -516,7 +516,7 @@ def main():
 
         # Run existing tests if legacy is available
         if LEGACY_AVAILABLE:
-            test_token_usage()
+            test_token_usage()  # noqa: F821
             test_cache_efficiency()
             test_summary_loading()
             test_semantic_indexing()

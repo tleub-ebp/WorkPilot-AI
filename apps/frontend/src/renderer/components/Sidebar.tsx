@@ -309,7 +309,7 @@ export function Sidebar({
   const [showGitSetupModal, setShowGitSetupModal] = useState(false);
   const gitSetupSkippedForProjectRef = useRef<string | null>(null);
   const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
-  const [pendingProject, setPendingProject] = useState<Project | null>(null);
+  const [_pendingProject, setPendingProject] = useState<Project | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['workspace'])); // Workspace group expanded by default
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -494,7 +494,7 @@ export function Sidebar({
 
     globalThis.addEventListener('keydown', handleKeyDown);
     return () => globalThis.removeEventListener('keydown', handleKeyDown);
-  }, [selectedProjectId, onViewChange, visibleNavItems]);
+  }, [selectedProjectId, onViewChange, visibleNavItems, isCollapsed]);
 
   // Check git status when a project changes
   useEffect(() => {

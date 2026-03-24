@@ -30,7 +30,7 @@ export function registerGitHubCopilotHandlers(): void {
   /**
    * Configurer le token GitHub Copilot
    */
-  ipcMain.handle('github-copilot:setToken', async (event, token: string): Promise<void> => {
+  ipcMain.handle('github-copilot:setToken', async (_event, token: string): Promise<void> => {
     await gitHubCopilotService.setToken(token);
   });
 
@@ -104,6 +104,4 @@ export function registerGitHubCopilotHandlers(): void {
       gitHubCopilotService.off('config-updated', onConfigUpdated);
     });
   });
-
-  console.log('[GitHubCopilotHandlers] IPC handlers registered');
 }

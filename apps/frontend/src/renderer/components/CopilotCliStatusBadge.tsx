@@ -48,9 +48,9 @@ interface CopilotIconProps {
 
 type StatusType = "loading" | "installed" | "outdated" | "not-found" | "gh-missing" | "error";
 
-const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const _CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const VERSION_RECHECK_DELAY_MS = 5000;
-const UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000; // Check for updates every 5 minutes when outdated
+const _UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000; // Check for updates every 5 minutes when outdated
 
 /**
  * GitHub Copilot icon (simplified SVG)

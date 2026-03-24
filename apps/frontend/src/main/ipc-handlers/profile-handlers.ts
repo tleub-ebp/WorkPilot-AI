@@ -266,7 +266,6 @@ export function registerProfileHandlers(): void {
   ipcMain.handle(
     IPC_CHANNELS.PROFILES_DISCOVER_MODELS,
     async (_event, baseUrl: string, apiKey: string, requestId: number): Promise<IPCResult<DiscoverModelsResult>> => {
-      console.log('[discoverModels] Called with:', { baseUrl, requestId });
 
       // Create AbortController for timeout and cancellation
       const controller = new AbortController();
@@ -362,7 +361,6 @@ export function registerProfileHandlers(): void {
    * - Returns the created directory path or an error
    */
   ipcMain.handle('claude:profileCreateDir', async (_event, profileName: string) => {
-    console.log('[main] IPC claude:profileCreateDir called with:', profileName);
     try {
       const dir = await createProfileDirectoryImpl(profileName);
       return { success: true, data: dir };

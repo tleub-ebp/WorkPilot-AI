@@ -9,7 +9,7 @@ Provides integration with Azure DevOps for:
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from .base import BaseIntegratedConnector
 from .config import Settings

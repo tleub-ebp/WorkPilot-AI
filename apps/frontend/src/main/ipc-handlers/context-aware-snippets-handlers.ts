@@ -39,8 +39,6 @@ export function setupContextAwareSnippetsHandlers(): void {
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   });
-
-  console.log('[ContextAwareSnippets] IPC handlers registered');
 }
 
 /**
@@ -55,6 +53,4 @@ export function cleanupContextAwareSnippetsHandlers(): void {
   
   // Cancel any active generation
   contextAwareSnippetsService.cancel();
-  
-  console.log('[ContextAwareSnippets] IPC handlers cleaned up');
 }

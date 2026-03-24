@@ -285,7 +285,7 @@ export function AnalyticsDashboard({ className, projectPath }: AnalyticsDashboar
   const successRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
   const totalCost = cs?.total_cost ?? sn?.total_cost ?? 0;
   const totalTokens = cs?.total_tokens ?? sn?.total_tokens ?? 0;
-  const qaPassRate = sn?.qa_first_pass_rate ?? 0;
+  const _qaPassRate = sn?.qa_first_pass_rate ?? 0;
 
   const trendPct = cs?.trend_pct ?? 0;
   const TrendIcon = trendPct >= 0 ? TrendingUp : TrendingDown;

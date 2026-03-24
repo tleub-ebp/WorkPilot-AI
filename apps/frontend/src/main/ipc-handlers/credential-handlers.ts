@@ -23,7 +23,7 @@ export function registerCredentialHandlers(): void {
   /**
    * Définir le provider actif
    */
-  ipcMain.handle('credential:setActive', async (event, provider: string, type: 'oauth' | 'api_key', profileId?: string): Promise<void> => {
+  ipcMain.handle('credential:setActive', async (_event, provider: string, type: 'oauth' | 'api_key', profileId?: string): Promise<void> => {
     await credentialManager.setActiveProvider(provider, type, profileId);
   });
 
@@ -31,7 +31,7 @@ export function registerCredentialHandlers(): void {
    * Obtenir les données d'usage pour un provider
    * For windsurf: fetches on-demand from Codeium API if no cached data or stale (>5 min)
    */
-  ipcMain.handle('usage:getData', async (event, provider: string): Promise<UsageData | null> => {
+  ipcMain.handle('usage:getData', async (_event, provider: string): Promise<UsageData | null> => {
     const cached = credentialManager.getUsageData(provider);
 
     // For windsurf: fetch on-demand if no data or stale (>5 minutes)
@@ -58,7 +58,7 @@ export function registerCredentialHandlers(): void {
   /**
    * Mettre à jour les données d'usage (appelé par les services d'usage)
    */
-  ipcMain.handle('usage:updateData', (event, provider: string, usageData: Partial<UsageData>): void => {
+  ipcMain.handle('usage:updateData', (_event, provider: string, usageData: Partial<UsageData>): void => {
     credentialManager.updateUsageData(provider, usageData);
   });
 
@@ -72,7 +72,7 @@ export function registerCredentialHandlers(): void {
   /**
    * Tester un provider (incluant les cas spéciaux)
    */
-  ipcMain.handle('credential:testProvider', async (event, provider: string): Promise<{ success: boolean; message: string; details?: any }> => {
+  ipcMain.handle('credential:testProvider', async (_event, provider: string): Promise<{ success: boolean; message: string; details?: any }> => {
     return await credentialManager.testProvider(provider);
   });
 
@@ -191,6 +191,4 @@ export function registerCredentialHandlers(): void {
   ipcMain.handle('credential:checkOpenAICodexOAuth', async (): Promise<{ isAuthenticated: boolean; profileName?: string }> => {
     return await credentialManager.checkOpenAICodexOAuthStatusPublic();
   });
-
-  console.log('[CredentialHandlers] IPC handlers registered');
 }

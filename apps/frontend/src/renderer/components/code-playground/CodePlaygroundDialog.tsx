@@ -90,7 +90,7 @@ export function CodePlaygroundDialog({ onIntegrate }: CodePlaygroundDialogProps)
     if (streamOutputRef.current) {
       streamOutputRef.current.scrollTop = streamOutputRef.current.scrollHeight;
     }
-  }, [streamingOutput]);
+  }, []);
 
   // Update preview when result changes
   useEffect(() => {

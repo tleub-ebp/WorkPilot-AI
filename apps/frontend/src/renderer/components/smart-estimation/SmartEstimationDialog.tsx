@@ -9,7 +9,6 @@ import {
   Clock, 
   DollarSign, 
   RotateCcw, 
-  X, 
   Info,
   Target,
   Zap,
@@ -88,7 +87,7 @@ export function SmartEstimationDialog() {
     if (streamOutputRef.current) {
       streamOutputRef.current.scrollTop = streamOutputRef.current.scrollHeight;
     }
-  }, [streamingOutput]);
+  }, []);
 
   const handleEstimate = useCallback(() => {
     if (!selectedProjectId) return;

@@ -6,6 +6,7 @@ Integrates intelligent context caching into existing agent workflows
 to accelerate repetitive and similar builds.
 """
 
+import json
 import logging
 import time
 from dataclasses import dataclass

@@ -183,9 +183,8 @@ class ClaudeOperationRegistry extends EventEmitter {
     this.debugMode = process.env.DEBUG === 'true';
   }
 
-  private debugLog(...args: unknown[]): void {
+  private debugLog(..._args: unknown[]): void {
     if (this.debugMode) {
-      console.log('[OperationRegistry]', ...args);
     }
   }
 
@@ -378,12 +377,6 @@ class ClaudeOperationRegistry extends EventEmitter {
       return 0;
     }
 
-    console.log('[OperationRegistry] Restarting', operations.length, 'operations:', {
-      from: oldProfileId,
-      to: newProfileId,
-      operations: operations.map(op => ({ id: op.id, type: op.type })),
-    });
-
     let restartedCount = 0;
 
     for (const op of operations) {
@@ -409,13 +402,7 @@ class ClaudeOperationRegistry extends EventEmitter {
 
           // Re-fetch from Map to get the current object (restartFn may have
           // re-registered the operation with a new object)
-          const currentOp = this.operations.get(op.id);
-
-          console.log('[OperationRegistry] Operation restarted successfully:', {
-            id: op.id,
-            type: currentOp?.type ?? op.type,
-            newProfile: newProfileName,
-          });
+          const _currentOp = this.operations.get(op.id);
 
           this.emit('operation-restarted', op.id, oldProfileId, newProfileId);
         } else {
@@ -429,12 +416,6 @@ class ClaudeOperationRegistry extends EventEmitter {
     if (restartedCount > 0) {
       this.emit('operations-restarted', restartedCount, oldProfileId, newProfileId);
     }
-
-    console.log('[OperationRegistry] Restart complete:', {
-      total: operations.length,
-      succeeded: restartedCount,
-      failed: operations.length - restartedCount,
-    });
 
     return restartedCount;
   }

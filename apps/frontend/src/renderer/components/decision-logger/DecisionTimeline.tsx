@@ -201,7 +201,7 @@ export function DecisionTimeline({
   // Auto-scroll to bottom on new entries
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [entries.length]);
+  }, []);
 
   const toggleType = (t: DecisionType) =>
     setVisibleTypes((prev) => {

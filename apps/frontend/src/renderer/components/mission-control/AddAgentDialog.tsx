@@ -136,7 +136,7 @@ export function AddAgentDialog({ open, onOpenChange, onAdd }: AddAgentDialogProp
         setName(`Agent ${roleData.label.split(' ')[1]}`);
       }
     }
-  }, [role]);
+  }, [role, name]);
 
   const providerData = PROVIDERS.find((p) => p.value === provider);
   const modelData = providerData?.models.find((m) => m.value === model);

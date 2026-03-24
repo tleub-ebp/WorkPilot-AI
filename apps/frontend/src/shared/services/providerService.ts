@@ -172,10 +172,8 @@ class ProviderServiceClass {
 
     try {
       const result = await globalThis.electronAPI.invoke('credential:testProvider', providerName);
-      console.log(`[ProviderService] Used CredentialManager for ${providerName}:`, result);
       return result;
-    } catch (credentialError) {
-      console.log(`[ProviderService] CredentialManager test failed for ${providerName}, falling back to legacy:`, credentialError);
+    } catch (_credentialError) {
       return null;
     }
   }
@@ -283,15 +281,11 @@ class ProviderServiceClass {
     const profiles = this.getCurrentProfiles();
     const { detectProvider } = await import('@shared/utils/provider-detection');
 
-    console.log(`[ProviderService] Testing ${providerName}, available profiles:`, profiles.length);
-
     const profile = this.findProviderProfile(profiles, providerName, detectProvider);
 
     if (profile) {
-      console.log(`[ProviderService] Found matching profile for ${providerName}:`, { name: profile.name, baseUrl: profile.baseUrl });
       return { apiKey: profile.apiKey, baseUrl: profile.baseUrl };
     } else {
-      console.log(`[ProviderService] No matching profile found for ${providerName}`);
       return {};
     }
   }
@@ -360,8 +354,6 @@ class ProviderServiceClass {
     const { useSettingsStore } = await import('@/stores/settings-store');
     const { testConnection } = useSettingsStore.getState();
     
-    console.log(`[ProviderService] Testing Anthropic with OAuth/Claude Code authentication`);
-    
     const result = await testConnection('https://api.anthropic.com', 'test-oauth-check');
     
     if (!result) {
@@ -427,47 +419,6 @@ class ProviderServiceClass {
           success: true, 
           message: 'Connection successful',
           details: { modelCount: data.data?.length || 0 }
-        };
-      } else {
-        return { 
-          success: false, 
-          message: `HTTP ${response.status}: ${response.statusText}` 
-        };
-      }
-    } catch (error) {
-      return { 
-        success: false, 
-        message: error instanceof Error ? error.message : 'Connection failed' 
-      };
-    }
-  }
-
-  /**
-   * Test de connexion pour Anthropic/Claude
-   */
-  private async testAnthropicConnection(apiKey: string, baseUrl?: string): Promise<{ success: boolean; message: string; details?: any }> {
-    try {
-      const response = await fetch(`${baseUrl || 'https://api.anthropic.com'}/v1/messages`, {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'Content-Type': 'application/json',
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: 'claude-3-haiku-20240307',
-          max_tokens: 10,
-          messages: [{ role: 'user', content: 'test' }]
-        }),
-        signal: AbortSignal.timeout(10000),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return { 
-          success: true, 
-          message: 'Connection successful',
-          details: { model: data.model }
         };
       } else {
         return { 

@@ -461,7 +461,7 @@ def _handle_build_interrupt(
                     model=model,
                     max_iterations=max_iterations,
                     verbose=verbose,
-                    streaming_session_id=streaming_session_id,
+                    streaming_session_id=streaming_session_id,  # noqa: F821
                 )
             )
             # Build completed or was interrupted again - exit

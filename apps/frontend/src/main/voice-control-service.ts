@@ -47,10 +47,6 @@ export class VoiceControlService extends EventEmitter {
   private autoBuildSourcePath: string | null = null;
   private isRecording: boolean = false;
 
-  constructor() {
-    super();
-  }
-
   /**
    * Configure paths for Python and auto-claude source
    */
@@ -83,10 +79,8 @@ export class VoiceControlService extends EventEmitter {
 
     for (const p of possiblePaths) {
       const runnerPath = path.join(p, 'runners', 'voice_control_runner.py');
-      console.log('[VoiceControl] Checking path:', runnerPath);
       if (existsSync(runnerPath)) {
         this.autoBuildSourcePath = p;
-        console.log('[VoiceControl] Found runner at:', p);
         return p;
       }
     }

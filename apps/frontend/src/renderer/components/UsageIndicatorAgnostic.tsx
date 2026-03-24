@@ -12,9 +12,7 @@ import {
   AlertCircle, 
   Clock, 
   ChevronRight, 
-  Info, 
   LogIn,
-  Settings,
   RefreshCw
 } from 'lucide-react';
 import {

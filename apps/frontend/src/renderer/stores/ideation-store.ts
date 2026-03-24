@@ -408,13 +408,6 @@ export function generateIdeation(projectId: string): void {
   const config = store.config;
 
   if (window.DEBUG) {
-    console.log('[Ideation] Starting generation:', {
-      projectId,
-      enabledTypes: config.enabledTypes,
-      includeRoadmapContext: config.includeRoadmapContext,
-      includeKanbanContext: config.includeKanbanContext,
-      maxIdeasPerType: config.maxIdeasPerType
-    });
   }
 
   clearGenerationTimeout(projectId);
@@ -458,7 +451,6 @@ export async function stopIdeation(projectId: string): Promise<boolean> {
 
   // Debug logging
   if (window.DEBUG) {
-    console.log('[Ideation] Stop requested:', { projectId });
   }
 
   store.setIsGenerating(false);
@@ -473,7 +465,6 @@ export async function stopIdeation(projectId: string): Promise<boolean> {
 
   // Debug logging
   if (window.DEBUG) {
-    console.log('[Ideation] Stop result:', { projectId, success: result.success });
   }
 
   if (!result.success) {
@@ -661,19 +652,12 @@ export function setupIdeationListeners(): () => void {
     // Only process events for the current project
     if (!isCurrentProject(projectId)) {
       if (window.DEBUG) {
-        console.log('[Ideation] Ignoring progress for different project:', projectId);
       }
       return;
     }
 
     // Debug logging
     if (window.DEBUG) {
-      console.log('[Ideation] Progress update:', {
-        projectId,
-        phase: status.phase,
-        progress: status.progress,
-        message: status.message
-      });
     }
     store().setGenerationStatus(status);
   });
@@ -690,19 +674,12 @@ export function setupIdeationListeners(): () => void {
       // Only process events for the current project
       if (!isCurrentProject(projectId)) {
         if (window.DEBUG) {
-          console.log('[Ideation] Ignoring type complete for different project:', projectId);
         }
         return;
       }
 
       // Debug logging
       if (window.DEBUG) {
-        console.log('[Ideation] Type completed:', {
-          projectId,
-          ideationType,
-          ideasCount: ideas.length,
-          ideas: ideas.map(i => ({ id: i.id, title: i.title, type: i.type }))
-        });
       }
 
       store().addIdeasForType(ideationType, ideas);
@@ -754,20 +731,11 @@ export function setupIdeationListeners(): () => void {
     // Only process events for the current project
     if (!isCurrentProject(projectId)) {
       if (window.DEBUG) {
-        console.log('[Ideation] Ignoring complete for different project:', projectId);
       }
       return;
     }
 
     if (window.DEBUG) {
-      console.log('[Ideation] Generation complete:', {
-        projectId,
-        totalIdeas: session.ideas.length,
-        ideaTypes: session.ideas.reduce((acc, idea) => {
-          acc[idea.type] = (acc[idea.type] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>)
-      });
     }
 
     clearGenerationTimeout(projectId);
@@ -809,7 +777,6 @@ export function setupIdeationListeners(): () => void {
     if (!isCurrentProject(projectId)) return;
 
     if (window.DEBUG) {
-      console.log('[Ideation] Stopped:', { projectId });
     }
 
     clearGenerationTimeout(projectId);

@@ -29,7 +29,6 @@ export function registerCopilotOAuthHandlers(): void {
       error?: string;
     }>> => {
       try {
-        console.log('[Copilot OAuth] Starting OAuth flow for profile:', profileName);
         const result = await startCopilotOAuth(profileName);
         return result;
       } catch (error) {
@@ -53,7 +52,6 @@ export function registerCopilotOAuthHandlers(): void {
       error?: string;
     }>> => {
       try {
-        console.log('[Copilot OAuth] Handling OAuth callback');
         const result = await handleCopilotOAuthCallback(code, state, profileName);
         return result;
       } catch (error) {
@@ -80,7 +78,6 @@ export function registerCopilotOAuthHandlers(): void {
       }>;
     }>> => {
       try {
-        console.log('[Copilot OAuth] Getting auth status');
         const result = await getCopilotAuthStatus();
         return {
           success: true,
@@ -105,7 +102,6 @@ export function registerCopilotOAuthHandlers(): void {
       error?: string;
     }>> => {
       try {
-        console.log('[Copilot OAuth] Revoking auth for:', username);
         const result = await revokeCopilotAuth(username);
         return result;
       } catch (error) {
@@ -118,6 +114,4 @@ export function registerCopilotOAuthHandlers(): void {
       }
     }
   );
-
-  console.log('[IPC] Copilot OAuth handlers registered');
 }

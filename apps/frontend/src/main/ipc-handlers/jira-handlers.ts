@@ -23,7 +23,7 @@ const connectorSrcPath = path.resolve(__dirname, '..', '..', '..', '..', 'src');
  * Register all Jira-related IPC handlers
  */
 export function registerJiraHandlers(
-  agentManager: AgentManager,
+  _agentManager: AgentManager,
   _getMainWindow: () => BrowserWindow | null
 ): void {
   /**
@@ -166,7 +166,7 @@ except Exception as e:
           } else {
             resolve(result.data);
           }
-        } catch (e) {
+        } catch (_e) {
           reject(new Error(`Failed to parse response: ${stdout}`));
         }
       });
@@ -289,7 +289,7 @@ except Exception as e:
         };
 
         // Test connection using a temporary path (current working directory)
-        const result = await callJiraPython(process.cwd(), 'test_connection', {}, envOverrides);
+        const _result = await callJiraPython(process.cwd(), 'test_connection', {}, envOverrides);
 
         return {
           success: true,

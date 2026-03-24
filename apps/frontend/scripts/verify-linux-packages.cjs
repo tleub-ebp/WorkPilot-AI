@@ -27,8 +27,7 @@ const colors = {
   cyan: '\x1b[36m',
 };
 
-function log(message, color = colors.reset) {
-  console.log(`${color}${message}${colors.reset}`);
+function log(_message, _color = colors.reset) {
 }
 
 function logSuccess(message) {

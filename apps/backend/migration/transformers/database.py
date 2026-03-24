@@ -169,12 +169,12 @@ class DatabaseTransformer:
             # Handle type definitions with parameters
             pattern = f"\\b{mysql_type}\\b(?:\\(([^)]+)\\))?"
 
-            def replace_type(match):
+            def replace_type(match, _mysql_type=mysql_type, _pg_type=pg_type):
                 params = match.group(1)
-                if params and mysql_type in ["VARCHAR", "CHAR", "DECIMAL"]:
-                    return f"{pg_type}({params})"
+                if params and _mysql_type in ["VARCHAR", "CHAR", "DECIMAL"]:
+                    return f"{_pg_type}({params})"
                 else:
-                    return pg_type
+                    return _pg_type
 
             sql = re.sub(pattern, replace_type, sql, flags=re.IGNORECASE)
 

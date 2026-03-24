@@ -88,7 +88,7 @@ export function ProjectTabBar({
       container.removeEventListener('scroll', checkScrollPosition);
       globalThis.removeEventListener('resize', checkScrollPosition);
     };
-  }, [projects]);
+  }, [checkScrollPosition]);
 
   // Keyboard shortcuts for tab navigation
   useEffect(() => {

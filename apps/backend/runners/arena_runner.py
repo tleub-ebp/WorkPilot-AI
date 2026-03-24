@@ -328,7 +328,6 @@ async def run_participant(
     try:
         # Import the client factory — uses the configured profile
         from core.client import create_client
-        from core.run_agent_session import run_agent_session
 
         system_prompt = SYSTEM_PROMPTS.get(task_type, SYSTEM_PROMPTS["coding"])
 

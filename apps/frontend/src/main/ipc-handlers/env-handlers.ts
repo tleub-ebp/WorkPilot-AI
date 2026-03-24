@@ -739,12 +739,6 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
 
       const envPath = path.join(project.path, project.autoBuildPath, '.env');
 
-      // Debug: Log Azure DevOps specific updates
-      const azureKeys = Object.keys(config).filter(k => k.startsWith('azureDevOps'));
-      if (azureKeys.length > 0) {
-        console.log('[ENV_UPDATE] Azure DevOps config update:', azureKeys.map(k => `${k}=${(config as any)[k] === 'string' && (config as any)[k].includes('token') ? '[REDACTED]' : (config as any)[k]}`).join(', '));
-      }
-
       try {
         // Read existing content if file exists (atomic read, no TOCTOU)
         let existingContent: string | undefined;
@@ -766,10 +760,6 @@ ${existingVars['GRAPHITI_DB_PATH'] ? `GRAPHITI_DB_PATH=${existingVars['GRAPHITI_
 
         // Write to file
         writeFileSync(envPath, newContent, 'utf-8');
-
-        if (azureKeys.length > 0) {
-          console.log('[ENV_UPDATE] Azure DevOps config saved successfully to:', envPath);
-        }
 
         return { success: true };
       } catch (error) {

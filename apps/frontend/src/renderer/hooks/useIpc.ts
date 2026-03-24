@@ -200,13 +200,6 @@ export function useIpcListeners(): void {
 
     const cleanupStatus = window.electronAPI.onTaskStatusChange(
       (taskId: string, status: TaskStatus, projectId?: string, reviewReason?: import('../../shared/types').ReviewReason) => {
-        // Debug: Log received status change
-        console.log(`[useIpc] Received TASK_STATUS_CHANGE:`, {
-          taskId,
-          status,
-          reviewReason,
-          projectId
-        });
         // Filter by project to prevent multi-project interference
         if (!isTaskForCurrentProject(projectId)) return;
         queueUpdate(taskId, { status, reviewReason });

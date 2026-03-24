@@ -160,7 +160,6 @@ export function registerProjectContextHandlers(
         // Get configured Python path (venv if ready, otherwise bundled/system)
         // This ensures we use the venv Python which has dependencies installed
         const pythonCmd = getConfiguredPythonPath();
-        console.log('[project-context] Using Python:', pythonCmd);
 
         const [pythonCommand, pythonBaseArgs] = parsePythonCommand(pythonCmd);
 
@@ -193,7 +192,6 @@ export function registerProjectContextHandlers(
 
           proc.on('close', (code: number) => {
             if (code === 0) {
-              console.log('[project-context] Analyzer stdout:', stdout);
               resolve();
             } else {
               console.error('[project-context] Analyzer failed with code', code);

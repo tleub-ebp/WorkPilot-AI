@@ -162,34 +162,25 @@ async function downloadPrebuilds() {
   const electronAbi = getElectronAbi();
 
   if (!electronAbi) {
-    console.log('[prebuilds] Could not determine Electron ABI version');
     return { success: false, reason: 'unknown-abi' };
   }
-
-  console.log(`[prebuilds] Looking for prebuilds: win32-${arch}, Electron ABI ${electronAbi}`);
 
   // Check for prebuilds in GitHub releases
   let release;
   try {
     release = await getLatestRelease();
-  } catch (err) {
-    console.log(`[prebuilds] Could not fetch releases: ${err.message}`);
+  } catch (_err) {
     return { success: false, reason: 'fetch-failed' };
   }
 
   if (!release) {
-    console.log('[prebuilds] No releases found');
     return { success: false, reason: 'no-releases' };
   }
 
   const asset = findPrebuildAsset(release, arch, electronAbi);
   if (!asset) {
-    console.log(`[prebuilds] No prebuild found for win32-${arch}-electron-${electronAbi}`);
-    console.log('[prebuilds] Available assets:', release.assets?.map((a) => a.name).join(', ') || 'none');
     return { success: false, reason: 'no-matching-prebuild' };
   }
-
-  console.log(`[prebuilds] Found prebuild: ${asset.name}`);
 
   // Download the prebuild
   const tempDir = path.join(__dirname, '..', '.prebuild-temp');
@@ -200,11 +191,7 @@ async function downloadPrebuilds() {
   try {
     // Create temp directory
     fs.mkdirSync(tempDir, { recursive: true });
-
-    console.log(`[prebuilds] Downloading ${asset.name}...`);
     await downloadFile(asset.browser_download_url, zipPath);
-
-    console.log('[prebuilds] Extracting...');
     extractZip(zipPath, tempDir);
 
     // Find the extracted prebuild directory
@@ -223,20 +210,16 @@ async function downloadPrebuilds() {
       const src = path.join(extractedDir, file);
       const dest = path.join(buildDir, file);
       fs.copyFileSync(src, dest);
-      console.log(`[prebuilds] Installed: ${file}`);
     }
 
     // Cleanup temp directory
     fs.rmSync(tempDir, { recursive: true, force: true });
-
-    console.log('[prebuilds] Successfully installed prebuilt binaries!');
     return { success: true };
   } catch (err) {
     // Cleanup on error
     if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
-    console.log(`[prebuilds] Download/extract failed: ${err.message}`);
     return { success: false, reason: 'install-failed', error: err.message };
   }
 }

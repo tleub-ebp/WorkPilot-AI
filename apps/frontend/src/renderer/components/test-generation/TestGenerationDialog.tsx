@@ -295,7 +295,7 @@ export function TestGenerationDialog({ onApplyTests }: TestGenerationDialogProps
                   max="100"
                   step="5"
                   value={coverageTarget}
-                  onChange={(e) => setCoverageTarget(Number.parseInt(e.target.value))}
+                  onChange={(e) => setCoverageTarget(Number.parseInt(e.target.value, 10))}
                   className="mt-1"
                 />
               </div>

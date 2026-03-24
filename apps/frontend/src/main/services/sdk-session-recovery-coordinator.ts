@@ -189,7 +189,6 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
     };
 
     this.operations.set(id, operation);
-    console.log(`[RecoveryCoordinator] Registered operation: ${id} (${type}) on profile ${profileName}`);
 
     return operation;
   }
@@ -202,7 +201,6 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
     if (operation) {
       operation.sessionId = sessionId;
       operation.lastActivityAt = new Date();
-      console.log(`[RecoveryCoordinator] Session captured for ${id}: ${sessionId.substring(0, 16)}...`);
     }
   }
 
@@ -223,7 +221,6 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
     const operation = this.operations.get(id);
     if (operation) {
       this.operations.delete(id);
-      console.log(`[RecoveryCoordinator] Unregistered operation: ${id}`);
     }
   }
 
@@ -298,10 +295,6 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
       sessionId: operation.sessionId,
     });
 
-    console.log(
-      `[RecoveryCoordinator] Rate limit recovery: ${operationId} swapped from ${rateLimitedProfileId} to ${newProfile.profileId}`
-    );
-
     return {
       profileId: newProfile.profileId,
       profileName: newProfile.profileName,
@@ -327,16 +320,10 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
 
     const cooldown = this.profileCooldowns.get(profile.profileId);
     if (cooldown && cooldown.cooldownUntil > now) {
-      console.log(
-        `[RecoveryCoordinator] Profile ${profile.profileName} in cooldown until ${cooldown.cooldownUntil.toISOString()}`
-      );
       return false;
     }
 
     if (cooldown && cooldown.rateLimitCount >= this.config.maxConsecutiveRateLimits) {
-      console.log(
-        `[RecoveryCoordinator] Profile ${profile.profileName} exceeded max rate limits (${cooldown.rateLimitCount})`
-      );
       return false;
     }
 
@@ -390,9 +377,6 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
     }
 
     const best = candidates[0];
-    console.log(
-      `[RecoveryCoordinator] Selected profile: ${best.profileName} (score: ${best.score})`
-    );
 
     return { profileId: best.profileId, profileName: best.profileName };
   }
@@ -412,9 +396,6 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
     };
 
     this.profileCooldowns.set(profileId, cooldown);
-    console.log(
-      `[RecoveryCoordinator] Profile ${profileId} in cooldown until ${cooldown.cooldownUntil.toISOString()} (count: ${cooldown.rateLimitCount})`
-    );
   }
 
   /**
@@ -422,7 +403,6 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
    */
   clearProfileCooldown(profileId: string): void {
     this.profileCooldowns.delete(profileId);
-    console.log(`[RecoveryCoordinator] Cleared cooldown for profile ${profileId}`);
   }
 
   /**
@@ -472,9 +452,6 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
         );
       }
       if (swaps.length > this.config.maxNotificationsPerBatch) {
-        console.log(
-          `[RecoveryCoordinator] ${swaps.length - this.config.maxNotificationsPerBatch} swap notifications suppressed`
-        );
       }
     }
 
@@ -483,7 +460,7 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
       safeSendToRenderer(
         this.getMainWindow,
         IPC_CHANNELS.QUEUE_BLOCKED_NO_PROFILES,
-        blocked.at(-1)!.data
+        blocked.at(-1)?.data
       );
     }
 

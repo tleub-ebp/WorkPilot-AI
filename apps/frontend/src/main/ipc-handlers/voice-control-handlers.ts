@@ -7,7 +7,7 @@ import type { VoiceControlRequest } from '../voice-control-service';
  */
 export function registerVoiceControlHandlers(): void {
   // Start voice recording
-  ipcMain.handle('voice-control:startRecording', async (event, request?: VoiceControlRequest) => {
+  ipcMain.handle('voice-control:startRecording', async (_event, request?: VoiceControlRequest) => {
     try {
       await voiceControlService.startRecording(request);
       return { success: true };
@@ -51,7 +51,7 @@ export function registerVoiceControlHandlers(): void {
   });
 
   // Configure voice control service
-  ipcMain.handle('voice-control:configure', async (event, config: { pythonPath?: string; autoBuildSourcePath?: string }) => {
+  ipcMain.handle('voice-control:configure', async (_event, config: { pythonPath?: string; autoBuildSourcePath?: string }) => {
     try {
       voiceControlService.configure(config.pythonPath, config.autoBuildSourcePath);
       return { success: true };

@@ -397,7 +397,7 @@ class SkillMetrics:
             try:
                 process = psutil.Process()
                 memory_usage = process.memory_info().rss
-            except:
+            except Exception:
                 memory_usage = 0
 
             # Check if this was a cache hit (simplified)

@@ -104,7 +104,7 @@ export function ContextAwareSnippetsDialog({ onCopySnippet }: ContextAwareSnippe
     if (streamOutputRef.current) {
       streamOutputRef.current.scrollTop = streamOutputRef.current.scrollHeight;
     }
-  }, [streamingOutput]);
+  }, []);
 
   const handleGenerate = useCallback(() => {
     if (!selectedProjectId) return;

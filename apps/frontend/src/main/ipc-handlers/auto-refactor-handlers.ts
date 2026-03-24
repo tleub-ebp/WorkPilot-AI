@@ -6,7 +6,7 @@ import { autoRefactorService, type AutoRefactorRequest } from '../auto-refactor-
  */
 export function registerAutoRefactorHandlers(): void {
   // Start auto-refactor analysis
-  ipcMain.handle('auto-refactor:start', async (event, request: AutoRefactorRequest) => {
+  ipcMain.handle('auto-refactor:start', async (_event, request: AutoRefactorRequest) => {
     try {
       await autoRefactorService.analyze(request);
       return { success: true };
@@ -28,7 +28,7 @@ export function registerAutoRefactorHandlers(): void {
   });
 
   // Configure service paths
-  ipcMain.handle('auto-refactor:configure', async (event, config: { pythonPath?: string; autoBuildSourcePath?: string }) => {
+  ipcMain.handle('auto-refactor:configure', async (_event, config: { pythonPath?: string; autoBuildSourcePath?: string }) => {
     try {
       autoRefactorService.configure(config.pythonPath, config.autoBuildSourcePath);
       return { success: true };

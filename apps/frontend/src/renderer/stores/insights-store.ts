@@ -7,7 +7,6 @@ import type {
   InsightsStreamChunk,
   InsightsToolUsage,
   InsightsModelConfig,
-  LearningModeConfig,
   LearningExplanation,
   TaskMetadata,
   Task

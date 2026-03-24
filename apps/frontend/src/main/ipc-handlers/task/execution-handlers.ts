@@ -352,7 +352,7 @@ function determineStartEvent(taskId: string, task: Task): { type: TaskEvent['typ
  */
 async function validateTaskPrerequisites(
   taskId: string,
-  mainWindow: BrowserWindow
+  _mainWindow: BrowserWindow
 ): Promise<{ success: true; profileManager: ClaudeProfileManager; task: Task; project: Project } | { success: false; error: string }> {
   // Ensure profile manager is initialized before checking auth
   const initResult = await ensureProfileManagerInitialized();
@@ -744,7 +744,7 @@ export function registerTaskExecutionHandlers(
       _,
       taskId: string,
       status: TaskStatus,
-      options?: { forceCleanup?: boolean }
+      _options?: { forceCleanup?: boolean }
     ): Promise<IPCResult & { worktreeExists?: boolean; worktreePath?: string }> => {
       // Find task and project first (needed for worktree check)
       const { task, project } = findTaskAndProject(taskId);
@@ -1159,7 +1159,7 @@ print(json.dumps(result))
   /**
    * Check if provider changed and update metadata if needed
    */
-  async function handleProviderSwitch(task: any, project: any, specDir: string): Promise<{ changed: boolean; currentProvider: string }> {
+  async function handleProviderSwitch(task: any, _project: any, specDir: string): Promise<{ changed: boolean; currentProvider: string }> {
     // Normalize 'anthropic' -> 'claude' for comparison purposes.
     const normalizeProvider = (p: string) => (p === 'anthropic' ? 'claude' : p.toLowerCase());
     const globalSettings = readSettingsFile() ?? {};
@@ -1181,7 +1181,7 @@ print(json.dumps(result))
   /**
    * Restart task with new provider
    */
-  async function restartTaskWithNewProvider(task: any, project: any, specDir: string, currentProvider: string): Promise<IPCResult> {
+  async function restartTaskWithNewProvider(task: any, project: any, _specDir: string, _currentProvider: string): Promise<IPCResult> {
     // Kill paused subprocess, then restart with new provider credentials.
     // agentManager.startTaskExecution() will call credentialManager.getEnvironmentVariables()
     // at spawn time, picking up the currently active provider credentials.
@@ -1367,7 +1367,7 @@ print(json.dumps(result))
   /**
    * Get all plan file paths that need updating
    */
-  function getPlanPaths(specPaths: ReturnType<typeof getSpecPaths>, project: any): { primary: string; all: string[] } {
+  function getPlanPaths(specPaths: ReturnType<typeof getSpecPaths>, _project: any): { primary: string; all: string[] } {
     const planPath = path.join(specPaths.specDir, AUTO_BUILD_PATHS.IMPLEMENTATION_PLAN);
     const planPathsToUpdate: string[] = [planPath];
     
@@ -1596,7 +1596,7 @@ print(json.dumps(result))
     task: any,
     project: any,
     taskId: string,
-    newStatus: TaskStatus,
+    _newStatus: TaskStatus,
     plan: Record<string, unknown>,
     planPaths: ReturnType<typeof getPlanPaths>
   ): Promise<boolean> {

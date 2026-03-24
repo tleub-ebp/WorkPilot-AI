@@ -22,10 +22,6 @@ export class TestGenerationService extends EventEmitter {
   private pythonPath: string = 'python';
   private backendPath: string | null = null;
 
-  constructor() {
-    super();
-  }
-
   /**
    * Configure paths for Python and backend
    */
@@ -59,7 +55,6 @@ export class TestGenerationService extends EventEmitter {
       const runnerPath = path.join(p, 'runners', 'test_generation_runner.py');
       if (existsSync(runnerPath)) {
         this.backendPath = p;
-        console.log('[TestGeneration] Backend found at:', p);
         return p;
       }
     }

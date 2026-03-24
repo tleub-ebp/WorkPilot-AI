@@ -131,14 +131,14 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
   // ============================================
   // Auto-switch settings state (shared)
   // ============================================
-  const [autoSwitchSettings, setAutoSwitchSettings] = useState<ClaudeAutoSwitchSettings | null>(null);
-  const [isLoadingAutoSwitch, setIsLoadingAutoSwitch] = useState(false);
+  const [_autoSwitchSettings, setAutoSwitchSettings] = useState<ClaudeAutoSwitchSettings | null>(null);
+  const [_isLoadingAutoSwitch, setIsLoadingAutoSwitch] = useState(false);
 
   // ============================================
   // Priority order state
   // ============================================
   const [priorityOrder, setPriorityOrder] = useState<string[]>([]);
-  const [isSavingPriority, setIsSavingPriority] = useState(false);
+  const [_isSavingPriority, setIsSavingPriority] = useState(false);
 
   // ============================================
   // Usage data state (for priority list visualization)
@@ -151,7 +151,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
   }>>([]);
 
   // Providers LLM state
-  const [providers, setProviders] = useState<CanonicalProvider[]>([]);
+  const [_providers, setProviders] = useState<CanonicalProvider[]>([]);
 
   // Gestion dynamique des connecteurs LLM (hors Claude)
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
@@ -369,7 +369,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
           setAuthStatus('idle');
           setAuthMessage('');
       }
-    } catch (e) {
+    } catch (_e) {
       setAuthStatus('error');
       setAuthMessage('Erreur réseau ou clé invalide.');
     }
@@ -491,7 +491,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
     return unifiedList;
   }, [claudeProfiles, apiProfiles, activeClaudeProfileId, activeApiProfileId, priorityOrder, profileUsageData, authenticatedProviders, t]);
 
-  const unifiedAccounts = buildUnifiedAccounts();
+  const _unifiedAccounts = buildUnifiedAccounts();
 
   // Load priority order from settings
   const loadPriorityOrder = async () => {
@@ -534,7 +534,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
       loadProfileUsageData(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, loadProfileUsageData]);
+  }, [isOpen, loadProfileUsageData, loadAutoSwitchSettings, loadClaudeProfiles, loadPriorityOrder]);
 
   // Subscribe to usage updates for real-time data
   useEffect(() => {
@@ -942,7 +942,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
     }
   };
 
-  const handleUpdateAutoSwitch = async (updates: Partial<ClaudeAutoSwitchSettings>) => {
+  const _handleUpdateAutoSwitch = async (updates: Partial<ClaudeAutoSwitchSettings>) => {
     setIsLoadingAutoSwitch(true);
     try {
       const result = await globalThis.electronAPI.updateAutoSwitchSettings(updates);
@@ -1675,7 +1675,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
           </div>
         ) : connector.id === 'copilot' ? (
           <CopilotOAuthAuth 
-            onAuthSuccess={(username, profileName) => {
+            onAuthSuccess={(username, _profileName) => {
               toast({
                 title: 'GitHub Copilot Connected',
                 description: `Successfully authenticated as ${username}`,

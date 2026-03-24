@@ -350,7 +350,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
             variant="outline"
             size="sm"
             className="h-7 px-2 hover:bg-primary/10 transition-colors"
-            onClick={() => onViewPRFiles(task.metadata!.prUrl!, task.id)}
+            onClick={() => onViewPRFiles(task.metadata?.prUrl!, task.id)}
             title={t('tooltips.viewPRFiles')}
           >
             <FileText className="h-3 w-3 mr-1" />
@@ -595,7 +595,6 @@ function taskCardPropsAreEqual(prevProps: TaskCardProps, nextProps: TaskCardProp
     if (prevTask.subtasks.length !== nextTask.subtasks.length) {
       changes.push(`subtasks: ${prevTask.subtasks.length} -> ${nextTask.subtasks.length}`);
     }
-    console.log(`[TaskCard] Re-render: ${prevTask.id} | ${changes.join(', ') || 'other fields'}`);
   }
 
   return isEqual;

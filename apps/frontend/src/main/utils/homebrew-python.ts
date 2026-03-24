@@ -58,7 +58,6 @@ export function findHomebrewPython(
           // Validate that this Python meets version requirements
           const validation = validateFn(pythonPath);
           if (validation.valid) {
-            console.log(`${logPrefix} Found valid Homebrew Python: ${pythonPath} (${validation.version})`);
             return pythonPath;
           } else {
             console.warn(`${logPrefix} ${pythonPath} rejected: ${validation.message}`);
@@ -70,7 +69,5 @@ export function findHomebrewPython(
       }
     }
   }
-
-  console.log(`${logPrefix} No valid Homebrew Python found in ${homebrewDirs.join(', ')}`);
   return null;
 }

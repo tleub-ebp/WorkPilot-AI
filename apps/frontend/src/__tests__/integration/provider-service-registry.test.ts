@@ -4,7 +4,7 @@
  * work correctly across the service and registry layers.
  * Improvement 6.2: Integration tests Frontend ↔ Backend (provider API)
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, } from 'vitest';
 import { providerRegistry, getProviders, getProvider, getModelsForProvider } from '../../shared/services/providerRegistry';
 
 describe('ProviderRegistry — Unit & Integration', () => {

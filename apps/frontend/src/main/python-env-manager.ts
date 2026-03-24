@@ -37,7 +37,6 @@ export class PythonEnvManager extends EventEmitter {
   private pythonPath: string | null = null;
   private sitePackagesPath: string | null = null;
   private usingBundledPackages = false;
-  private isInitializing = false;
   private isReady = false;
   private initializationPromise: Promise<PythonEnvStatus> | null = null;
   private activeProcesses: Set<ChildProcess> = new Set();
@@ -77,15 +76,6 @@ export class PythonEnvManager extends EventEmitter {
   }
 
   /**
-   * Get the path to pip in the venv
-   * Returns null - we use python -m pip instead for better compatibility
-   * @deprecated Use getVenvPythonPath() with -m pip instead
-   */
-  private getVenvPipPath(): string | null {
-    return null; // Not used - we use python -m pip
-  }
-
-  /**
    * Check if venv exists
    */
   private venvExists(): boolean {
@@ -105,11 +95,8 @@ export class PythonEnvManager extends EventEmitter {
     const sitePackagesPath = path.join(process.resourcesPath, 'python-site-packages');
 
     if (existsSync(sitePackagesPath)) {
-      console.log(`[PythonEnvManager] Found bundled site-packages at: ${sitePackagesPath}`);
       return sitePackagesPath;
     }
-
-    console.log(`[PythonEnvManager] Bundled site-packages not found at: ${sitePackagesPath}`);
     return null;
   }
 
@@ -160,10 +147,7 @@ export class PythonEnvManager extends EventEmitter {
     const missingOptional = optionalPackages.filter((pkg) => !packageExists(pkg));
 
     // Log missing packages for debugging
-    for (const pkg of missingPackages) {
-      console.log(
-        `[PythonEnvManager] Missing critical package: ${pkg} at ${path.join(sitePackagesPath, pkg)}`
-      );
+    for (const _pkg of missingPackages) {
     }
     // Log warnings for missing optional packages (non-blocking)
     for (const pkg of missingOptional) {
@@ -177,9 +161,7 @@ export class PythonEnvManager extends EventEmitter {
       // Also check marker for logging purposes
       const markerPath = path.join(sitePackagesPath, '.bundled');
       if (existsSync(markerPath)) {
-        console.log(`[PythonEnvManager] Found bundle marker and all critical packages`);
       } else {
-        console.log(`[PythonEnvManager] Found critical packages (marker missing)`);
       }
       return true;
     }
@@ -241,7 +223,6 @@ if sys.version_info >= (3, 12):
     // If this is the bundled Python path, use it directly
     const bundledPath = getBundledPythonPath();
     if (bundledPath && pythonCmd === bundledPath) {
-      console.log(`[PythonEnvManager] Using bundled Python: ${bundledPath}`);
       return bundledPath;
     }
 
@@ -253,8 +234,6 @@ if sys.version_info >= (3, 12):
         timeout: 5000,
         encoding: 'utf-8'
       }).trim();
-
-      console.log(`[PythonEnvManager] Found Python at: ${pythonPath}`);
       return pythonPath;
     } catch (err) {
       console.error(`[PythonEnvManager] Failed to get Python path for ${pythonCmd}:`, err);

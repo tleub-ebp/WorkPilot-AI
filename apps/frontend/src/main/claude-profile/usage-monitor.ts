@@ -972,7 +972,6 @@ export class UsageMonitor extends EventEmitter {
       const tokenResult = await ensureValidToken(profile.configDir);
 
       if (tokenResult.wasRefreshed) {
-        console.log('[UsageMonitor:getCredentialForProfile] Proactively refreshed token for:', profile.name);
         if (tokenResult.persistenceFailed) {
           console.warn('[UsageMonitor:getCredentialForProfile] Token refreshed but persistence failed for:', profile.name);
           this.needsReauthProfiles.add(profile.id);
@@ -999,7 +998,6 @@ export class UsageMonitor extends EventEmitter {
     // Fallback: direct keychain read
     const keychainCreds = getCredentialsFromKeychain(profile.configDir);
     if (keychainCreds.token) {
-      console.log('[UsageMonitor:getCredentialForProfile] Using fallback keychain token for:', profile.name);
       return keychainCreds.token;
     }
 
@@ -2339,90 +2337,6 @@ export class UsageMonitor extends EventEmitter {
   }
 
   /**
-   * Check GitHub Copilot CLI status
-   * Returns whether the CLI is available and authenticated
-   */
-  private async checkCopilotCliStatus(): Promise<{ available: boolean; isAuth?: boolean; username?: string }> {
-    try {
-      // Check if gh CLI is available
-      const { spawn } = await import('node:child_process');
-      
-      const result = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
-        const process = spawn('gh', ['auth', 'status'], {
-          shell: true,
-          stdio: ['pipe', 'pipe', 'pipe']
-        });
-        
-        let stdout = '';
-        let stderr = '';
-        
-        process.stdout.on('data', (data) => {
-          stdout += data.toString();
-        });
-        
-        process.stderr.on('data', (data) => {
-          stderr += data.toString();
-        });
-        
-        process.on('close', (code) => {
-          if (code === 0) {
-            resolve({ stdout, stderr });
-          } else {
-            reject(new Error(`gh auth status failed with code ${code}`));
-          }
-        });
-      });
-      
-      const output = result.stdout + result.stderr;
-      this.debugLog('[UsageMonitor:Copilot] gh auth status output:', output);
-      
-      const isAuth = output.includes('Logged in to github.com');
-      
-      // Extract username if authenticated
-      let username: string | undefined;
-      if (isAuth) {
-        const match = /Logged in to github\.com as ([^\s]+)/.exec(output);
-        username = match ? match[1] : undefined;
-      }
-      
-      // Even if not fully authenticated, if gh CLI is available, we consider it available
-      // The placeholder response will still be created
-      return {
-        available: true, // gh CLI exists and can be run
-        isAuth,
-        username
-      };
-    } catch (error) {
-      this.debugLog('[UsageMonitor:Copilot] Failed to check Copilot CLI status:', error);
-      // Even if gh auth status fails, if gh CLI exists, we should still return available
-      // Let's try a simpler check
-      try {
-        const { spawn } = await import('node:child_process');
-        await new Promise<void>((resolve, reject) => {
-          const process = spawn('gh', ['--version'], {
-            shell: true,
-            stdio: ['pipe', 'pipe', 'pipe']
-          });
-          
-          process.on('close', (code) => {
-            if (code === 0) {
-              resolve();
-            } else {
-              reject(new Error('gh CLI not found'));
-            }
-          });
-        });
-        
-        this.debugLog('[UsageMonitor:Copilot] gh CLI is available but auth status check failed');
-        return { available: true };
-      } catch (versionError) {
-        this.debugLog('[UsageMonitor:Copilot] gh CLI not available:', versionError);
-        return { available: false };
-      }
-    }
-  }
-
-  /**
    * Normalize GitHub Copilot CLI response to UsageSnapshot
    *
    * GitHub Copilot doesn't have a public usage API, so we create a placeholder
@@ -3050,18 +2964,7 @@ export class UsageMonitor extends EventEmitter {
     const operationSummary = operationRegistry.getSummary();
     const operationIdsOnOldProfile = operationSummary.byProfile[currentProfileId] || [];
 
-    // Always log running operations info for debugging
-    console.log('[UsageMonitor] PROACTIVE-SWAP: Checking running operations:', {
-      oldProfileId: currentProfileId,
-      newProfileId: bestAccount.id,
-      totalRunning: operationSummary.totalRunning,
-      byProfile: operationSummary.byProfile,
-      byType: operationSummary.byType,
-      operationIdsOnOldProfile: operationIdsOnOldProfile
-    });
-
     if (operationIdsOnOldProfile.length > 0) {
-      console.log('[UsageMonitor] PROACTIVE-SWAP: Found', operationIdsOnOldProfile.length, 'operations to restart:', operationIdsOnOldProfile);
 
       // Restart all operations on the old profile with the new profile
       const restartedCount = await operationRegistry.restartOperationsOnProfile(
@@ -3080,7 +2983,6 @@ export class UsageMonitor extends EventEmitter {
         timestamp: new Date()
       });
     } else {
-      console.log('[UsageMonitor] PROACTIVE-SWAP: No operations running on old profile', currentProfileId, '- swap complete without restart');
     }
 
     // Note: Don't immediately check new profile - let normal interval handle it
@@ -3582,121 +3484,6 @@ export class UsageMonitor extends EventEmitter {
       providerName: providerName,
       fetchedAt: new Date(),
     } as UsageSnapshot;
-  }
-
-  /**
-   * Fetch OpenAI usage data (special case — different API format)
-   */
-  private async fetchOpenAIUsage(apiProfile: {
-    id: string;
-    name: string;
-    apiKey: string;
-    baseUrl: string
-  }): Promise<UsageSnapshot | null> {
-    const apiKey = apiProfile.apiKey;
-    if (!apiKey) return null;
-
-    try {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const startDate = `${year}-${month}-01`;
-      const endDate = `${year}-${month}-${day}`;
-      // 1. Récupérer le coût total (historique)
-      const usageUrl = `https://api.openai.com/v1/dashboard/billing/usage?start_date=${startDate}&end_date=${endDate}`;
-      const usageResp = await fetch(usageUrl, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!usageResp.ok) {
-        this.debugLog('[UsageMonitor:OpenAI] Failed to fetch usage - STATUS:', usageResp.status);
-        this.debugLog('[UsageMonitor:OpenAI] Failed to fetch usage - TEXT:', await usageResp.text());
-        (globalThis as any).lastOpenAIUsageError = `HTTP ${usageResp.status}: ${(await usageResp.text())}`;
-        return null;
-      }
-      const usageData = await usageResp.json();
-      const totalCost = typeof usageData.total_usage === 'number' ? usageData.total_usage / 100 : 0;
-
-      // 2. Récupérer les métriques détaillées (tokens, par modèle, etc.)
-      // Utilise l’API Usage Completions
-      const unixStart = Math.floor(new Date(`${startDate}T00:00:00Z`).getTime() / 1000);
-      const unixEnd = Math.floor(now.getTime() / 1000);
-      const completionsUrl = `https://api.openai.com/v1/organization/usage/completions?start_time=${unixStart}&end_time=${unixEnd}&group_by=model`;
-      const completionsResp = await fetch(completionsUrl, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      let completionsData = null;
-      if (completionsResp.ok) {
-        completionsData = await completionsResp.json();
-      }
-      // 3. Récupérer le breakdown des coûts
-      const costUrl = `https://api.openai.com/v1/organization/usage/cost?start_time=${unixStart}&end_time=${unixEnd}&group_by=model`;
-      const costResp = await fetch(costUrl, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      let costData = null;
-      if (costResp.ok) {
-        costData = await costResp.json();
-      }
-      // 4. Embeddings (optionnel)
-      const embeddingsUrl = `https://api.openai.com/v1/organization/usage/embeddings?start_time=${unixStart}&end_time=${unixEnd}&group_by=model`;
-      const embeddingsResp = await fetch(embeddingsUrl, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      let embeddingsData = null;
-      if (embeddingsResp.ok) {
-        embeddingsData = await embeddingsResp.json();
-      }
-      // 5. Moderations (optionnel)
-      const moderationsUrl = `https://api.openai.com/v1/organization/usage/moderations?start_time=${unixStart}&end_time=${unixEnd}`;
-      const moderationsResp = await fetch(moderationsUrl, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      let moderationsData = null;
-      if (moderationsResp.ok) {
-        moderationsData = await moderationsResp.json();
-      }
-
-      // 6. Construction du snapshot enrichi
-      return {
-        sessionPercent: 0,
-        weeklyPercent: 0,
-        profileId: apiProfile.id,
-        profileName: apiProfile.name,
-        fetchedAt: new Date(),
-        providerName: 'openai',
-        usageWindows: {
-          sessionWindowLabel: 'common:usage.windowMonthly',
-          weeklyWindowLabel: 'common:usage.windowMonthly'
-        },
-        weeklyUsageValue: Math.round(totalCost * 100) / 100, // Total cost in dollars
-        openaiUsageDetails: {
-          completions: completionsData,
-          cost: costData,
-          embeddings: embeddingsData,
-          moderations: moderationsData
-        }
-      };
-    } catch (error) {
-      this.debugLog('[UsageMonitor:OpenAI] Error fetching usage:', error);
-      (globalThis as any).lastOpenAIUsageError = String(error);
-      return null;
-    }
   }
 
   public override emit: EventEmitter['emit'] = super.emit;

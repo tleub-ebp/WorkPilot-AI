@@ -386,7 +386,7 @@ describe('Smart Estimation Store', () => {
       const eventCallback = mockElectronAPI.onSmartEstimationEvent.mock.calls[0][0];
 
       const { result } = renderHook(() => useSmartEstimationStore());
-      const store = result.current;
+      const _store = result.current;
 
       act(() => {
         eventCallback({

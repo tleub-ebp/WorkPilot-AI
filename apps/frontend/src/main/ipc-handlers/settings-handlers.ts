@@ -396,7 +396,6 @@ export function registerSettingsHandlers(
     IPC_CHANNELS.PROVIDER_SELECT,
     async (_, provider: string): Promise<IPCResult<string>> => {
       try {
-        console.log(`[IPC:PROVIDER_SELECT] Selecting provider: ${provider}`);
 
         // CRITICAL: Update CredentialManager and persist to settings.json FIRST,
         // regardless of whether the optional FastAPI backend is running.
@@ -406,7 +405,6 @@ export function registerSettingsHandlers(
         // the FastAPI server is down.
         try {
           await credentialManager.setActiveProvider(provider, 'oauth');
-          console.log(`[IPC:PROVIDER_SELECT] CredentialManager updated: selectedProvider=${provider}`);
         } catch (e) {
           console.warn('[IPC:PROVIDER_SELECT] Failed to update CredentialManager:', e);
         }
@@ -425,7 +423,6 @@ export function registerSettingsHandlers(
           { method: 'POST', headers: { 'Content-Type': 'application/json' } }
         ).then(result => {
           if (result.success) {
-            console.log(`[IPC:PROVIDER_SELECT] FastAPI backend notified: ${provider}`);
           }
         }).catch(() => {
           // Backend not running — not an error, provider is already persisted above
@@ -446,14 +443,12 @@ export function registerSettingsHandlers(
     IPC_CHANNELS.PROVIDER_GET_SELECTED,
     async (): Promise<IPCResult<string | null>> => {
       try {
-        console.log(`[IPC:PROVIDER_GET_SELECTED] Getting current provider`);
         
         const result = await makeBackendRequest<{ selected: string | null }>(
           'http://127.0.0.1:9000/providers/selected'
         );
         
         if (result.success && result.data) {
-          console.log(`[IPC:PROVIDER_GET_SELECTED] Current provider:`, result.data.selected);
           return { success: true, data: result.data.selected };
         } else {
           console.error('[IPC:PROVIDER_GET_SELECTED] Failed to get selected provider:', result.error);
@@ -780,7 +775,6 @@ export function registerSettingsHandlers(
   ipcMain.handle(IPC_CHANNELS.APP_VERSION, async (): Promise<string> => {
     // Return the actual bundled version from package.json
     const version = app.getVersion();
-    console.log('[settings-handlers] APP_VERSION returning:', version);
     return version;
   });
 
@@ -1139,7 +1133,6 @@ ipcMain.handle(
 
         if (languagesToSet.length > 0) {
           session.defaultSession.setSpellCheckerLanguages(languagesToSet);
-          console.log(`[SPELLCHECK] Languages set to: ${languagesToSet.join(', ')} for app language: ${language}`);
         } else {
           console.warn(`[SPELLCHECK] No valid spell check languages available for: ${language}`);
         }

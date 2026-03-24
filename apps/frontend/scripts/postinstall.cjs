@@ -68,7 +68,6 @@ function runElectronRebuild() {
     // Explicitly pass electron version if detected
     if (electronVersion) {
       args.push('-v', electronVersion);
-      console.log(`[postinstall] Using Electron version: ${electronVersion}`);
     }
 
     const child = spawn(npx, args, {
@@ -133,17 +132,13 @@ function isNodePtyBuilt() {
  * Main postinstall logic
  */
 async function main() {
-  console.log('[postinstall] Setting up native modules for Electron...\n');
 
   // If node-pty is already built (e.g., from a previous successful install), skip
   if (isNodePtyBuilt()) {
-    console.log('[postinstall] Native modules already built, skipping rebuild.');
     return;
   }
 
   if (isWindows) {
-    // On Windows, try prebuilds first
-    console.log('[postinstall] Windows detected - checking for prebuilt binaries...\n');
 
     try {
       // Dynamic import to handle case where the script doesn't exist yet
@@ -151,24 +146,15 @@ async function main() {
       const result = await downloadPrebuilds();
 
       if (result.success) {
-        console.log('\n[postinstall] Successfully installed prebuilt binaries!');
-        console.log('[postinstall] No Visual Studio Build Tools required.\n');
         return;
       }
-
-      console.log(`\n[postinstall] Prebuilds not available (${result.reason})`);
-      console.log('[postinstall] Falling back to electron-rebuild...\n');
-    } catch (err) {
-      console.log('[postinstall] Could not check for prebuilds:', err.message);
-      console.log('[postinstall] Falling back to electron-rebuild...\n');
+    } catch (_err) {
     }
   }
 
   // Run electron-rebuild
   try {
-    console.log('[postinstall] Running electron-rebuild...\n');
     await runElectronRebuild();
-    console.log('\n[postinstall] Native modules built successfully!');
   } catch (error) {
     console.error('\n[postinstall] Failed to build native modules.\n');
 

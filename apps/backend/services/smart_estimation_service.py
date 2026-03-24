@@ -23,6 +23,7 @@ from analytics.database_schema import (
     QAResult,
 )
 from core.model_info import get_current_model_info
+from sqlalchemy import desc
 
 
 @dataclass

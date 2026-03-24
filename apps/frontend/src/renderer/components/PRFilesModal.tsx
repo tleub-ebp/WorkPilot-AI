@@ -12,7 +12,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { DiffViewer } from './ui/diff-viewer';
-import { Loader2, FileText, GitPullRequest, ExternalLink, Plus, Minus, ChevronRight, ChevronDown } from 'lucide-react';
+import { Loader2, FileText, GitPullRequest, ExternalLink, Plus, Minus, ChevronRight, } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface PRFileData {
@@ -48,10 +48,10 @@ interface PRData {
 }
 
 interface PRFilesModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  prUrl: string;
-  taskId?: string;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly prUrl: string;
+  readonly taskId?: string;
 }
 
 export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModalProps) {
@@ -60,17 +60,6 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
   const [error, setError] = useState<string | null>(null);
   const [prData, setPrData] = useState<PRData | null>(null);
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
-
-  // Reset state when modal opens/closes
-  useEffect(() => {
-    if (open && prUrl) {
-      fetchPRDetails();
-    } else {
-      setPrData(null);
-      setError(null);
-      setExpandedFiles(new Set());
-    }
-  }, [open, prUrl]);
 
   const fetchPRDetails = async () => {
     if (!prUrl) return;
@@ -81,22 +70,24 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
     try {
       // Extract PR number from URL (GitHub format: https://github.com/owner/repo/pull/123)
       // or Azure DevOps format: https://dev.azure.com/org/project/_git/repo/pullrequest/123
-      const prMatch = prUrl.match(/\/pull\/(\d+)/);
+      const githubRegex = /\/pull\/(\d+)/;
+      const prMatch = githubRegex.exec(prUrl);
       let prNumber: number;
       
-      if (!prMatch) {
+      if (prMatch) {
+        prNumber = Number.parseInt(prMatch[1], 10);
+      } else {
         // Try Azure DevOps format
-        const adoMatch = prUrl.match(/\/pullrequest\/(\d+)/);
+        const adoRegex = /\/pullrequest\/(\d+)/;
+        const adoMatch = adoRegex.exec(prUrl);
         if (!adoMatch) {
           throw new Error('Invalid PR URL format - expected GitHub or Azure DevOps URL');
         }
-        prNumber = parseInt(adoMatch[1]);
-      } else {
-        prNumber = parseInt(prMatch[1]);
+        prNumber = Number.parseInt(adoMatch[1], 10);
       }
       
       // Call IPC to get PR details with files
-      const result = await window.electronAPI?.getPRDetails?.(prNumber, taskId);
+      const result = await globalThis.electronAPI?.getPRDetails?.(prNumber, taskId);
       
       if (!result?.success) {
         throw new Error(result?.error || 'Failed to fetch PR details');
@@ -112,6 +103,17 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
     }
   };
 
+  // Reset state when modal opens/closes
+  useEffect(() => {
+    if (open && prUrl) {
+      fetchPRDetails();
+    } else {
+      setPrData(null);
+      setError(null);
+      setExpandedFiles(new Set());
+    }
+  }, [open, prUrl]);
+
   const getFilePatch = (file: PRFileData): string => {
     // If file has its own patch, use it
     if (file.patch) {
@@ -126,9 +128,7 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
         let inFileSection = false;
         let fileLines: string[] = [];
         
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          
+        for (const line of lines) {
           // Check if we're starting this file's section
           if (line.startsWith(`diff --git a/${file.filename} b/${file.filename}`) ||
               line.includes(` b/${file.filename}`)) {
@@ -185,7 +185,7 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
     }
   };
 
-  const getFileStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
+  const _getFileStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case 'added':
         return 'default';
@@ -201,8 +201,8 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
   };
 
   const openPRInBrowser = () => {
-    if (prUrl && window.electronAPI?.openExternal) {
-      window.electronAPI.openExternal(prUrl);
+    if (prUrl && globalThis.electronAPI?.openExternal) {
+      globalThis.electronAPI.openExternal(prUrl);
     }
   };
 
@@ -347,9 +347,9 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
           <TabsContent value="files" className="mt-4">
             <ScrollArea className="h-[500px] rounded-md border">
               <div className="p-4 space-y-2">
-                {prData.files.map((file, index) => (
+                {prData.files.map((file) => (
                   <div
-                    key={index}
+                    key={file.filename}
                     className="border rounded-lg overflow-hidden"
                   >
                     <div

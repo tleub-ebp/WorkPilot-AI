@@ -69,7 +69,7 @@ export function FileTree({ rootPath, onSelectFolder, selectedFolder }: FileTreeP
           // Navigue vers le parent
           const parent = rootPath.replace(/\\$/, "");
           const parentPath = parent.substring(0, parent.lastIndexOf("\\")) || "C:\\";
-          onSelectFolder && onSelectFolder(parentPath);
+          onSelectFolder?.(parentPath);
         }}>⬆ Parent</button>
         {/* The large inner element to hold all of the items */}
         <div
