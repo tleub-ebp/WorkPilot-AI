@@ -119,6 +119,13 @@ jobs:
           if [ -d "apps/frontend/node_modules" ]; then
             rm -rf apps/frontend/node_modules
           fi
+          # Clear any build cache
+          if [ -d "apps/frontend/dist" ]; then
+            rm -rf apps/frontend/dist
+          fi
+          if [ -d "apps/frontend/out" ]; then
+            rm -rf apps/frontend/out
+          fi
           cd apps/frontend && pnpm install --ignore-scripts --no-frozen-lockfile
         shell: bash
 
@@ -242,6 +249,13 @@ jobs:
           if [ -d "apps/frontend/node_modules" ]; then
             rm -rf apps/frontend/node_modules
           fi
+          # Clear any build cache
+          if [ -d "apps/frontend/dist" ]; then
+            rm -rf apps/frontend/dist
+          fi
+          if [ -d "apps/frontend/out" ]; then
+            rm -rf apps/frontend/out
+          fi
           cd apps/frontend && pnpm install --ignore-scripts --no-frozen-lockfile
         shell: bash
 
@@ -363,6 +377,13 @@ jobs:
           # Remove node_modules directory (cross-platform)
           if [ -d "apps/frontend/node_modules" ]; then
             rm -rf apps/frontend/node_modules
+          fi
+          # Clear any build cache
+          if [ -d "apps/frontend/dist" ]; then
+            rm -rf apps/frontend/dist
+          fi
+          if [ -d "apps/frontend/out" ]; then
+            rm -rf apps/frontend/out
           fi
           cd apps/frontend && pnpm install --ignore-scripts --no-frozen-lockfile
         shell: bash
@@ -573,6 +594,13 @@ jobs:
           # Remove node_modules directory (cross-platform)
           if [ -d "apps/frontend/node_modules" ]; then
             rm -rf apps/frontend/node_modules
+          fi
+          # Clear any build cache
+          if [ -d "apps/frontend/dist" ]; then
+            rm -rf apps/frontend/dist
+          fi
+          if [ -d "apps/frontend/out" ]; then
+            rm -rf apps/frontend/out
           fi
           cd apps/frontend && pnpm install --ignore-scripts --no-frozen-lockfile
         shell: bash
