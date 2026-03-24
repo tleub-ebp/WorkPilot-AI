@@ -14,13 +14,11 @@ import {
   BookOpen,
   Lightbulb,
   Download,
-  Github,
-  GitlabIcon,
+  GitBranch,
   GitPullRequest,
   GitMerge,
   FileText,
   Sparkles,
-  GitBranch,
   HelpCircle,
   Wrench,
   PanelLeft,
@@ -286,13 +284,13 @@ const navGroups: NavGroup[] = [
 
 // GitHub nav items shown when GitHub is enabled
 const githubNavItems: NavItem[] = [
-  { id: 'github-issues', labelKey: 'navigation:items.githubIssues', icon: Github, shortcut: 'G' },
+  { id: 'github-issues', labelKey: 'navigation:items.githubIssues', icon: Globe, shortcut: 'G' },
   { id: 'github-prs', labelKey: 'navigation:items.githubPRs', icon: GitPullRequest, shortcut: 'P' }
 ];
 
 // GitLab nav items shown when GitLab is enabled
 const gitlabNavItems: NavItem[] = [
-  { id: 'gitlab-issues', labelKey: 'navigation:items.gitlabIssues', icon: GitlabIcon, shortcut: 'B' },
+  { id: 'gitlab-issues', labelKey: 'navigation:items.gitlabIssues', icon: Globe, shortcut: 'B' },
   { id: 'gitlab-merge-requests', labelKey: 'navigation:items.gitlabMRs', icon: GitMerge, shortcut: 'R' }
 ];
 
