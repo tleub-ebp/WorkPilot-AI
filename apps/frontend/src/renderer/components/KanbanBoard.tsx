@@ -12,8 +12,10 @@ import {
   useDroppable,
   type DragStartEvent,
   type DragEndEvent,
-  type DragOverEvent
+  type DragOverEvent,
+  type DraggableAttributes
 } from '@dnd-kit/core';
+import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 import {
   SortableContext,
   sortableKeyboardCoordinates,
@@ -144,8 +146,8 @@ interface DroppableColumnProps {
   onToggleLocked?: () => void;
   // Column drag handle props (for column reordering)
   dragHandleProps?: {
-    listeners: Record<string, unknown> | undefined;
-    attributes: Record<string, unknown>;
+    listeners: SyntheticListenerMap | undefined;
+    attributes: DraggableAttributes;
   };
 }
 
@@ -551,8 +553,8 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
                   <button
                     type="button"
                     className="h-6 w-5 flex items-center justify-center cursor-grab active:cursor-grabbing text-muted-foreground/30 hover:text-muted-foreground/70 transition-colors touch-none"
-                    {...(dragHandleProps.listeners as React.HTMLAttributes<HTMLButtonElement>)}
-                    {...(dragHandleProps.attributes as React.HTMLAttributes<HTMLButtonElement>)}
+                    {...dragHandleProps.listeners}
+                    {...dragHandleProps.attributes}
                     aria-label={t('kanban.dragColumn')}
                   >
                     <GripVertical className="h-4 w-4" />
@@ -835,10 +837,7 @@ function SortableColumnWrapper({ sortableId, ...columnProps }: SortableColumnWra
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(
-        'flex h-full shrink-0',
-        isDragging && 'opacity-50'
-      )}
+      className={cn(isDragging && 'opacity-50')}
     >
       <DroppableColumn
         {...columnProps}
@@ -2461,54 +2460,62 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex flex-1 gap-3 overflow-x-auto overflow-y-hidden min-h-0 p-2">
-          {TASK_STATUS_COLUMNS.map((status) => (
-            <DroppableColumn
-              key={status}
-              status={status}
-              tasks={tasksByStatus[status]}
-              onTaskClick={onTaskClick}
-              onStatusChange={handleStatusChange}
-              isOver={
-                overColumnId === status &&
-                (!isDraggingAzureDevOps || IMPORT_ALLOWED_COLUMNS.has(status)) &&
-                (!isDraggingBulkSelected || selectedColumnStatus === null || VALID_BULK_TRANSITIONS[selectedColumnStatus].includes(status))
-              }
-              isImportForbidden={
-                (isDraggingAzureDevOps && overColumnId === status && !IMPORT_ALLOWED_COLUMNS.has(status)) ||
-                (isDraggingBulkSelected && overColumnId === status && selectedColumnStatus !== null && !VALID_BULK_TRANSITIONS[selectedColumnStatus].includes(status))
-              }
-              onAddClick={status === 'backlog' ? onNewTaskClick : undefined}
-              onQueueAll={status === 'backlog' ? handleQueueAll : undefined}
-              onQueueSettings={status === 'queue' ? () => {
-                // Only open modal if we have a valid projectId
-                if (!projectId) return;
-                queueSettingsProjectIdRef.current = projectId;
-                setShowQueueSettings(true);
-              } : undefined}
-              onArchiveAll={status === 'done' ? handleArchiveAll : undefined}
-              maxParallelTasks={status === 'in_progress' ? maxParallelTasks : undefined}
-              archivedCount={status === 'done' ? archivedCount : undefined}
-              showArchived={status === 'done' ? showArchived : undefined}
-              onToggleArchived={status === 'done' ? toggleShowArchived : undefined}
-              selectedTaskIds={selectedTaskIds}
-              onSelectAll={() => selectAllTasks(status)}
-              onDeselectAll={deselectAllTasks}
-              onToggleSelect={toggleTaskSelection}
-              onDeleteTask={handleDeleteTask}
-              onViewPRFiles={handleViewPRFiles}
-              onPreviewApp={handlePreviewApp}
-              isCollapsed={columnPreferences?.[status]?.isCollapsed}
-              onToggleCollapsed={() => handleToggleColumnCollapsed(status)}
-              columnWidth={columnPreferences?.[status]?.width}
-              isResizing={resizingColumn === status}
-              onResizeStart={(startX) => handleResizeStart(status, startX)}
-              onResizeEnd={handleResizeEnd}
-              isLocked={columnPreferences?.[status]?.isLocked}
-              onToggleLocked={() => handleToggleColumnLocked(status)}
-            />
-          ))}
-        </div>
+        <SortableContext
+          items={columnOrder.map((s) => `col-${s}`)}
+          strategy={horizontalListSortingStrategy}
+        >
+          <div className="flex flex-1 gap-3 overflow-x-auto overflow-y-hidden min-h-0 p-2">
+            {columnOrder.map((status) => (
+              <SortableColumnWrapper
+                key={status}
+                sortableId={`col-${status}`}
+                status={status}
+                tasks={tasksByStatus[status]}
+                onTaskClick={onTaskClick}
+                onStatusChange={handleStatusChange}
+                isOver={
+                  !isDraggingColumn &&
+                  overColumnId === status &&
+                  (!isDraggingAzureDevOps || IMPORT_ALLOWED_COLUMNS.has(status)) &&
+                  (!isDraggingBulkSelected || selectedColumnStatus === null || VALID_BULK_TRANSITIONS[selectedColumnStatus].includes(status))
+                }
+                isImportForbidden={
+                  !isDraggingColumn && (
+                    (isDraggingAzureDevOps && overColumnId === status && !IMPORT_ALLOWED_COLUMNS.has(status)) ||
+                    (isDraggingBulkSelected && overColumnId === status && selectedColumnStatus !== null && !VALID_BULK_TRANSITIONS[selectedColumnStatus].includes(status))
+                  )
+                }
+                onAddClick={status === 'backlog' ? onNewTaskClick : undefined}
+                onQueueAll={status === 'backlog' ? handleQueueAll : undefined}
+                onQueueSettings={status === 'queue' ? () => {
+                  if (!projectId) return;
+                  queueSettingsProjectIdRef.current = projectId;
+                  setShowQueueSettings(true);
+                } : undefined}
+                onArchiveAll={status === 'done' ? handleArchiveAll : undefined}
+                maxParallelTasks={status === 'in_progress' ? maxParallelTasks : undefined}
+                archivedCount={status === 'done' ? archivedCount : undefined}
+                showArchived={status === 'done' ? showArchived : undefined}
+                onToggleArchived={status === 'done' ? toggleShowArchived : undefined}
+                selectedTaskIds={selectedTaskIds}
+                onSelectAll={() => selectAllTasks(status)}
+                onDeselectAll={deselectAllTasks}
+                onToggleSelect={toggleTaskSelection}
+                onDeleteTask={handleDeleteTask}
+                onViewPRFiles={handleViewPRFiles}
+                onPreviewApp={handlePreviewApp}
+                isCollapsed={columnPreferences?.[status]?.isCollapsed}
+                onToggleCollapsed={() => handleToggleColumnCollapsed(status)}
+                columnWidth={columnPreferences?.[status]?.width}
+                isResizing={resizingColumn === status}
+                onResizeStart={(startX) => handleResizeStart(status, startX)}
+                onResizeEnd={handleResizeEnd}
+                isLocked={columnPreferences?.[status]?.isLocked}
+                onToggleLocked={() => handleToggleColumnLocked(status)}
+              />
+            ))}
+          </div>
+        </SortableContext>
 
         {/* Drag overlay - enhanced visual feedback */}
         <DragOverlay>

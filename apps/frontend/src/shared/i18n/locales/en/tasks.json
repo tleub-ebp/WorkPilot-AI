@@ -158,6 +158,7 @@
     "tasksToComplete": "Tasks to complete",
     "bulkMoveSuccess": "{{count}} task(s) moved successfully",
     "bulkMoveError": "Failed to move {{failed}} of {{total}} tasks",
+    "dragColumn": "Drag to reorder column",
     "collapseColumn": "Collapse column",
     "expandColumn": "Expand column",
     "resizeColumn": "Resize column",

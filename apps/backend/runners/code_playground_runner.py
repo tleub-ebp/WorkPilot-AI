@@ -35,7 +35,7 @@ validate_platform_dependencies()
 # Load .env file with centralized error handling
 load_dotenv = import_dotenv()
 
-env_file = Path(__file__).parent.parent / ".env"
+env_file = Path(__file__).parent.parent.parent.parent / ".env-files" / ".env"
 if env_file.exists():
     load_dotenv(env_file)
 

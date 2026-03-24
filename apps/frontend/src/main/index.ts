@@ -18,13 +18,13 @@ import { accessSync, readFileSync, writeFileSync, rmSync,existsSync } from 'node
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load .env from apps/frontend directory
-// In development: __dirname is out/main (compiled), so go up 2 levels
+// Load .env from centralized .env-files directory at project root
+// In development: __dirname is out/main (compiled), so go up 4 levels to reach project root
 // In production: app resources directory
 const possibleEnvPaths = [
-  resolve(__dirname, '../../.env'),             // Development: out/main -> apps/frontend/.env
-  resolve(__dirname, '../../../.env'),          // Alternative: might be in different location
-  resolve(process.cwd(), 'apps/frontend/.env'), // Fallback: from workspace root
+  resolve(__dirname, '../../../../.env-files/.env'), // Development: out/main -> root/.env-files/.env
+  resolve(__dirname, '../../../.env-files/.env'),    // Alternative depth
+  resolve(process.cwd(), '.env-files/.env'),         // Fallback: from workspace root
 ];
 
 for (const envPath of possibleEnvPaths) {
