@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RefreshCw, KeyRound, Info, CheckCircle2 } from 'lucide-react';
-import { Github } from '@/lib/icons';
+import { RefreshCw, KeyRound, Info, CheckCircle2, Globe } from 'lucide-react';
 import { CollapsibleSection } from './CollapsibleSection';
 import { StatusBadge } from './StatusBadge';
 import { PasswordInput } from './PasswordInput';
@@ -139,7 +138,7 @@ export function GitHubIntegrationSection({
   return (
     <CollapsibleSection
       title="GitHub Integration"
-      icon={<Github className="h-4 w-4" />}
+      icon={<Globe className="h-4 w-4" />}
       isExpanded={isExpanded}
       onToggle={onToggle}
       badge={badge}
@@ -205,7 +204,7 @@ export function GitHubIntegrationSection({
           {gitHubConnectionStatus?.connected && (
             <div className="rounded-lg border border-info/30 bg-info/5 p-3">
               <div className="flex items-start gap-3">
-                <Github className="h-5 w-5 text-info mt-0.5" />
+                <Globe className="h-5 w-5 text-info mt-0.5" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-foreground">Issues Available</p>
                   <p className="text-xs text-muted-foreground mt-1">
