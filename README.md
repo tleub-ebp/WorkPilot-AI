@@ -41,12 +41,12 @@
 <!-- BETA_DOWNLOADS -->
 | Platform | Download |
 |----------|----------|
-| **Windows** | [WorkPilot-AI-1.0.0-alpha-win32-x64.exe](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha/WorkPilot-AI-1.0.0-alpha-win32-x64.exe) |
-| **macOS (Apple Silicon)** | [WorkPilot-AI-1.0.0-alpha-darwin-arm64.dmg](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha/WorkPilot-AI-1.0.0-alpha-darwin-arm64.dmg) |
-| **macOS (Intel)** | [WorkPilot-AI-1.0.0-alpha-darwin-x64.dmg](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha/WorkPilot-AI-1.0.0-alpha-darwin-x64.dmg) |
-| **Linux** | [WorkPilot-AI-1.0.0-alpha-linux-x86_64.AppImage](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha/WorkPilot-AI-1.0.0-alpha-linux-x86_64.AppImage) |
-| **Linux (Debian)** | [WorkPilot-AI-1.0.0-alpha-linux-amd64.deb](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha/WorkPilot-AI-1.0.0-alpha-linux-amd64.deb) |
-| **Linux (Flatpak)** | [WorkPilot-AI-1.0.0-alpha-linux-x86_64.flatpak](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha/WorkPilot-AI-1.0.0-alpha-linux-x86_64.flatpak) |
+| **Windows** | [WorkPilot-AI-1.0.0-alpha.1-alpha-win32-x64.exe](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha/WorkPilot-AI-1.0.0-alpha.1-alpha-win32-x64.exe) |
+| **macOS (Apple Silicon)** | [WorkPilot-AI-1.0.0-alpha.1-alpha-darwin-arm64.dmg](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha/WorkPilot-AI-1.0.0-alpha.1-alpha-darwin-arm64.dmg) |
+| **macOS (Intel)** | [WorkPilot-AI-1.0.0-alpha.1-alpha-darwin-x64.dmg](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha/WorkPilot-AI-1.0.0-alpha.1-alpha-darwin-x64.dmg) |
+| **Linux** | [WorkPilot-AI-1.0.0-alpha.1-alpha-linux-x86_64.AppImage](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha/WorkPilot-AI-1.0.0-alpha.1-alpha-linux-x86_64.AppImage) |
+| **Linux (Debian)** | [WorkPilot-AI-1.0.0-alpha.1-alpha-linux-amd64.deb](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha/WorkPilot-AI-1.0.0-alpha.1-alpha-linux-amd64.deb) |
+| **Linux (Flatpak)** | [WorkPilot-AI-1.0.0-alpha.1-alpha-linux-x86_64.flatpak](https://github.com/tleub-ebp/Auto-Claude_EBP/releases/download/v1.0.0-alpha/WorkPilot-AI-1.0.0-alpha.1-alpha-linux-x86_64.flatpak) |
 <!-- BETA_DOWNLOADS_END -->
 
 > All releases include SHA256 checksums and VirusTotal scan results for security verification.
