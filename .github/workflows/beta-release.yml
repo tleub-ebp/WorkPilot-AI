@@ -115,8 +115,12 @@ jobs:
 
       - name: Install frontend dependencies
         run: |
-          rm -rf apps/frontend/node_modules
+          # Remove node_modules directory (cross-platform)
+          if [ -d "apps/frontend/node_modules" ]; then
+            rm -rf apps/frontend/node_modules
+          fi
           cd apps/frontend && pnpm install --ignore-scripts --no-frozen-lockfile
+        shell: bash
 
       - name: Install node-pty in frontend
         run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
@@ -234,8 +238,12 @@ jobs:
 
       - name: Install frontend dependencies
         run: |
-          rm -rf apps/frontend/node_modules
+          # Remove node_modules directory (cross-platform)
+          if [ -d "apps/frontend/node_modules" ]; then
+            rm -rf apps/frontend/node_modules
+          fi
           cd apps/frontend && pnpm install --ignore-scripts --no-frozen-lockfile
+        shell: bash
 
       - name: Install node-pty in frontend
         run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
@@ -352,8 +360,12 @@ jobs:
 
       - name: Install frontend dependencies
         run: |
-          rm -rf apps/frontend/node_modules
+          # Remove node_modules directory (cross-platform)
+          if [ -d "apps/frontend/node_modules" ]; then
+            rm -rf apps/frontend/node_modules
+          fi
           cd apps/frontend && pnpm install --ignore-scripts --no-frozen-lockfile
+        shell: bash
 
       - name: Install node-pty in frontend
         run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
@@ -558,8 +570,12 @@ jobs:
 
       - name: Install frontend dependencies
         run: |
-          rm -rf apps/frontend/node_modules
+          # Remove node_modules directory (cross-platform)
+          if [ -d "apps/frontend/node_modules" ]; then
+            rm -rf apps/frontend/node_modules
+          fi
           cd apps/frontend && pnpm install --ignore-scripts --no-frozen-lockfile
+        shell: bash
 
       - name: Install node-pty in frontend
         run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
