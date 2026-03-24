@@ -1,8 +1,8 @@
 import React from 'react';
-import { Button, Input, Label, Tooltip, TooltipContent, TooltipTrigger } from '../../ui';
-import { Info, Check, Star, Loader2, LogIn, RefreshCw, Pencil, Trash2, ChevronDown, ChevronRight, Eye, EyeOff, AlertCircle, Plus } from 'lucide-react';
+import { Button, } from '../../ui';
+import { Info, Check, Star, Trash2, AlertCircle, Plus } from 'lucide-react';
 import type { MultiConnectorProvider, MultiConnectorAccount } from './types';
-import { saveConfiguredProviders, saveUserProviderConfig } from './utils';
+import { saveUserProviderConfig } from './utils';
 
 interface Props {
   provider: MultiConnectorProvider;
@@ -35,7 +35,7 @@ const AccountConnectorCard: React.FC<Props> = ({ provider }) => {
         saveUserProviderConfig(provider, { api_key: apiKey, base_url: baseUrl, validated: false });
         alert('Clé API invalide ou refusée.');
       }
-    } catch (e) {
+    } catch (_e) {
       saveUserProviderConfig(provider, { api_key: apiKey, base_url: baseUrl, validated: false });
       alert('Erreur lors du test de la clé API.');
     }

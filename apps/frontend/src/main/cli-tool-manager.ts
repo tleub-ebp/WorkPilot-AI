@@ -310,9 +310,6 @@ class CLIToolManager {
     // Check cache first
     const cached = this.cache.get(tool);
     if (cached) {
-      console.debug(
-        `[CLI Tools] Using cached ${tool}: ${cached.path} (${cached.source})`
-      );
       return cached.path;
     }
 
@@ -1318,9 +1315,6 @@ class CLIToolManager {
     // Check cache first (instant return if cached)
     const cached = this.cache.get(tool);
     if (cached) {
-      console.debug(
-        `[CLI Tools] Using cached ${tool}: ${cached.path} (${cached.source})`
-      );
       return cached.path;
     }
 

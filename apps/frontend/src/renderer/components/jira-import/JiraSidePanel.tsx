@@ -57,7 +57,7 @@ export function JiraSidePanel({
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       // Don't close if clicking inside the panel
-      if (panelRef.current && panelRef.current.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
       // Don't close if clicking inside a dialog/alert dialog (e.g., ImportConfirmDialog portal)
       const targetEl = target instanceof Element ? target : target.parentElement;
       if (targetEl?.closest('[role="alertdialog"], [role="dialog"], [data-radix-portal]')) return;
@@ -92,13 +92,12 @@ export function JiraSidePanel({
         const savedWidth = localStorage.getItem(`jira-panel-width-${projectId}`);
         if (savedWidth) {
           const width = parseInt(savedWidth, 10);
-          if (!isNaN(width) && width >= 320 && width <= 800) {
+          if (!Number.isNaN(width) && width >= 320 && width <= 800) {
             setPanelWidth(width);
             setIsCollapsed(width <= 320);
           }
         }
-      } catch (error) {
-        console.debug('[Jira] Failed to load saved panel width:', error);
+      } catch (_error) {
       }
     };
 
@@ -112,65 +111,10 @@ export function JiraSidePanel({
     if (projectId && !isCollapsed) {
       try {
         localStorage.setItem(`jira-panel-width-${projectId}`, panelWidth.toString());
-      } catch (error) {
-        console.debug('[Jira] Failed to save panel width:', error);
+      } catch (_error) {
       }
     }
   }, [panelWidth, projectId, isCollapsed]);
-
-  // Load connection status
-  useEffect(() => {
-    if (open) {
-      loadConnectionStatus();
-    }
-  }, [open, projectId]);
-
-  // Load cached work items on component mount
-  useEffect(() => {
-    const loadCachedWorkItems = () => {
-      try {
-        const cacheKey = `jira-workitems-cache-${projectId}`;
-        const cacheTimeKey = `jira-workitems-cache-time-${projectId}`;
-
-        const cachedData = localStorage.getItem(cacheKey);
-        const cachedTime = localStorage.getItem(cacheTimeKey);
-
-        if (cachedData && cachedTime) {
-          const cacheTime = parseInt(cachedTime, 10);
-          const now = Date.now();
-          const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-          if (now - cacheTime < CACHE_DURATION) {
-            const workItems = JSON.parse(cachedData);
-            setWorkItems(workItems);
-            setLastCacheTime(cacheTime);
-            console.debug('[Jira] Using cached work items');
-            return;
-          }
-        }
-      } catch (error) {
-        console.debug('[Jira] Failed to load cached work items:', error);
-      }
-    };
-
-    if (projectId) {
-      loadCachedWorkItems();
-    }
-  }, [projectId]);
-
-  // Load work items when panel opens (with cache logic)
-  useEffect(() => {
-    if (open && syncStatus?.connected) {
-      const now = Date.now();
-      const CACHE_DURATION = 5 * 60 * 1000;
-
-      if (!lastCacheTime || now - lastCacheTime > CACHE_DURATION) {
-        loadWorkItems();
-      } else {
-        console.debug('[Jira] Using recent cache, skipping refresh');
-      }
-    }
-  }, [open, syncStatus?.connected, lastCacheTime]);
 
   const loadConnectionStatus = async () => {
     try {
@@ -193,7 +137,6 @@ export function JiraSidePanel({
       const now = Date.now();
       const CACHE_DURATION = 5 * 60 * 1000;
       if (now - lastCacheTime < CACHE_DURATION) {
-        console.debug('[Jira] Using recent cache, skipping load');
         return;
       }
     }
@@ -216,10 +159,7 @@ export function JiraSidePanel({
           localStorage.setItem(cacheKey, JSON.stringify(workItems));
           localStorage.setItem(cacheTimeKey, now.toString());
           setLastCacheTime(now);
-
-          console.debug('[Jira] Work items cached successfully');
-        } catch (cacheError) {
-          console.debug('[Jira] Failed to cache work items:', cacheError);
+        } catch (_cacheError) {
         }
       } else {
         setError(result.error || 'Failed to load Jira issues');
@@ -230,6 +170,57 @@ export function JiraSidePanel({
       setIsLoadingItems(false);
     }
   };
+
+  // Load connection status
+  useEffect(() => {
+    if (open) {
+      loadConnectionStatus();
+    }
+  }, [open, loadConnectionStatus]);
+
+  // Load cached work items on component mount
+  useEffect(() => {
+    const loadCachedWorkItems = () => {
+      try {
+        const cacheKey = `jira-workitems-cache-${projectId}`;
+        const cacheTimeKey = `jira-workitems-cache-time-${projectId}`;
+
+        const cachedData = localStorage.getItem(cacheKey);
+        const cachedTime = localStorage.getItem(cacheTimeKey);
+
+        if (cachedData && cachedTime) {
+          const cacheTime = parseInt(cachedTime, 10);
+          const now = Date.now();
+          const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+          if (now - cacheTime < CACHE_DURATION) {
+            const workItems = JSON.parse(cachedData);
+            setWorkItems(workItems);
+            setLastCacheTime(cacheTime);
+            return;
+          }
+        }
+      } catch (_error) {
+      }
+    };
+
+    if (projectId) {
+      loadCachedWorkItems();
+    }
+  }, [projectId]);
+
+  // Load work items when panel opens (with cache logic)
+  useEffect(() => {
+    if (open && syncStatus?.connected) {
+      const now = Date.now();
+      const CACHE_DURATION = 5 * 60 * 1000;
+
+      if (!lastCacheTime || now - lastCacheTime > CACHE_DURATION) {
+        loadWorkItems();
+      } else {
+      }
+    }
+  }, [open, syncStatus?.connected, lastCacheTime, loadWorkItems]);
 
   const handleRefresh = () => {
     setSelectedIds(new Set());
@@ -250,7 +241,7 @@ export function JiraSidePanel({
         const matchesSearch =
           item.title.toLowerCase().includes(query) ||
           item.id.toLowerCase().includes(query) ||
-          (item.description && item.description.toLowerCase().includes(query));
+          (item.description?.toLowerCase().includes(query));
         if (!matchesSearch) return false;
       }
 
@@ -325,12 +316,11 @@ export function JiraSidePanel({
         const savedWidth = localStorage.getItem(`jira-panel-width-${projectId}`);
         if (savedWidth) {
           const width = parseInt(savedWidth, 10);
-          if (!isNaN(width) && width >= 320 && width <= 800) {
+          if (!Number.isNaN(width) && width >= 320 && width <= 800) {
             restoredWidth = width;
           }
         }
-      } catch (error) {
-        console.debug('[Jira] Failed to load saved panel width for restore:', error);
+      } catch (_error) {
       }
 
       setPanelWidth(restoredWidth);
@@ -338,8 +328,7 @@ export function JiraSidePanel({
     } else {
       try {
         localStorage.setItem(`jira-panel-width-${projectId}`, panelWidth.toString());
-      } catch (error) {
-        console.debug('[Jira] Failed to save panel width before collapse:', error);
+      } catch (_error) {
       }
 
       setPanelWidth(320);
@@ -361,7 +350,6 @@ export function JiraSidePanel({
 
   // Drag handlers - uses 'jira-workitems' type to distinguish from Azure DevOps
   const handleDragStart = useCallback((e: React.DragEvent, workItemIds: string[]) => {
-    console.log('[Jira] Drag start:', workItemIds);
     const itemsToDrag = workItemIds
       .map(id => workItems.find(item => item.id === id))
       .filter((item): item is JiraWorkItem => item !== undefined);
@@ -370,8 +358,6 @@ export function JiraSidePanel({
       type: 'jira-workitems',
       workItems: itemsToDrag
     };
-
-    console.log('[Jira] Drag data:', dragData);
     e.dataTransfer.setData('application/json', JSON.stringify(dragData));
     e.dataTransfer.effectAllowed = 'copy';
     setDraggedIds(new Set(workItemIds));
@@ -408,7 +394,6 @@ export function JiraSidePanel({
   }, [workItems]);
 
   const handleDragEnd = useCallback(() => {
-    console.log('[Jira] Drag end');
     setDraggedIds(new Set());
 
     // Nettoyer le ghost du drag image
@@ -454,7 +439,7 @@ export function JiraSidePanel({
         // We don't handle the drop here, the kanban will handle it
         return;
       }
-    } catch (error) {
+    } catch (_error) {
       // Not our data, ignore
       return;
     }
@@ -695,7 +680,6 @@ export function JiraSidePanel({
                   onClick={() => toggleItem(item.id)}
                   draggable={true} // Toujours draggable, pas seulement si sélectionné
                   onDragStart={(e) => {
-                    console.log('[Jira] Drag start triggered for item:', item.id);
                     // Si l'item est déjà sélectionné, dragger tous les items sélectionnés
                     if (selectedIds.has(item.id)) {
                       handleDragStart(e, Array.from(selectedIds));

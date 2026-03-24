@@ -157,7 +157,6 @@ export function GitHubRemoteConfigModal({ open, onOpenChange, onSave, initialCon
         return 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400';
       case 'error':
         return 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400';
-      case 'testing':
       default:
         return 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400';
     }

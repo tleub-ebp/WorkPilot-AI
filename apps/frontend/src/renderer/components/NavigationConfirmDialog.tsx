@@ -7,7 +7,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui';
-import { Button } from '@/components/ui';
 import type { Task } from '@shared/types/task';
 
 interface NavigationConfirmDialogProps {

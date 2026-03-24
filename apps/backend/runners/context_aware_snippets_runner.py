@@ -19,7 +19,6 @@ sys.path.insert(0, str(backend_path))
 
 try:
     from core.context_manager import ContextManager
-    from core.model_info import get_model_info_for_logs
     from services.project_analyzer import ProjectAnalyzer
 
     from memory.bmad_memory import BMadMemory

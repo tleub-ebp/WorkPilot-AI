@@ -45,7 +45,6 @@ export const EditableNode: React.FC<NodeProps> = ({ id, data, selected, xPos, yP
     >
       {editing ? (
         <input
-          autoFocus
           value={label}
           onChange={handleChange}
           onBlur={handleBlur}

@@ -25,7 +25,7 @@ interface CodexIconProps {
 
 type StatusType = "loading" | "installed" | "outdated" | "not-found" | "error";
 
-const CHECK_INTERVAL_MS = 60 * 1000; // Re-check every 60s
+const _CHECK_INTERVAL_MS = 60 * 1000; // Re-check every 60s
 
 /**
  * OpenAI Codex icon (simplified)

@@ -11,11 +11,11 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 import json
 import os
 from typing import Annotated, Any
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import Body, FastAPI, HTTPException, Path, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from urllib.parse import urlparse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address

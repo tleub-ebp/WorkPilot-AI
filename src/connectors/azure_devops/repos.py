@@ -23,7 +23,12 @@ from src.connectors.azure_devops.exceptions import (
     AzureDevOpsError,
     RepositoryNotFoundError,
 )
-from src.connectors.azure_devops.models import FileItem, PullRequest, PullRequestFileChange, Repository
+from src.connectors.azure_devops.models import (
+    FileItem,
+    PullRequest,
+    PullRequestFileChange,
+    Repository,
+)
 
 logger = logging.getLogger(__name__)
 

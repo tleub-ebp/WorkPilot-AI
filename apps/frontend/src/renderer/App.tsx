@@ -169,11 +169,11 @@ export function App() {
   const claudeProfiles = useClaudeProfileStore((state) => state.profiles);
 
   // Initialize dialog state
-  const [showInitDialog, setShowInitDialog] = useState(false);
-  const [pendingProject, setPendingProject] = useState<Project | null>(null);
-  const [isInitializing, setIsInitializing] = useState(false);
+  const [_showInitDialog, setShowInitDialog] = useState(false);
+  const [_pendingProject, setPendingProject] = useState<Project | null>(null);
+  const [isInitializing, _setIsInitializing] = useState(false);
   const [initSuccess, setInitSuccess] = useState(false);
-  const [initError, setInitError] = useState<string | null>(null);
+  const [_initError, setInitError] = useState<string | null>(null);
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
 
   // GitHub setup state (shown after WorkPilot AI init)
@@ -181,9 +181,9 @@ export function App() {
   const [gitHubSetupProject, setGitHubSetupProject] = useState<Project | null>(null);
 
   // Repo provider setup state (GitHub vs Azure DevOps)
-  const [showRepoProviderSetup, setShowRepoProviderSetup] = useState(false);
-  const [repoProviderProject, setRepoProviderProject] = useState<Project | null>(null);
-  const [pendingRepoProvider, setPendingRepoProvider] = useState<'github' | 'azure_devops' | null>(null);
+  const [_showRepoProviderSetup, setShowRepoProviderSetup] = useState(false);
+  const [_repoProviderProject, setRepoProviderProject] = useState<Project | null>(null);
+  const [_pendingRepoProvider, setPendingRepoProvider] = useState<'github' | 'azure_devops' | null>(null);
   const [showAzureDevOpsSetup, setShowAzureDevOpsSetup] = useState(false);
   const [azureDevOpsSetupProject, setAzureDevOpsSetupProject] = useState<Project | null>(null);
 
@@ -267,7 +267,7 @@ export function App() {
         isRestoringView.current = false;
       }, 100);
     }
-  }, [settingsLoading, settings.activeView]);
+  }, [settingsLoading, settings.activeView, hasRestoredView]);
 
   // Remove project confirmation state
   const [showRemoveProjectDialog, setShowRemoveProjectDialog] = useState(false);
@@ -291,10 +291,10 @@ export function App() {
   const selectedProject = projects.find((p) => p.id === (activeProjectId || selectedProjectId));
 
   // State global pour provider LLM actif et modèles associés
-  const [providers, setProviders] = useState<string[]>([]);
+  const [_providers, setProviders] = useState<string[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<string>("");
-  const [providerModels, setProviderModels] = useState<string[]>([]);
-  const [providerModelsError, setProviderModelsError] = useState<string>("");
+  const [_providerModels, setProviderModels] = useState<string[]>([]);
+  const [_providerModelsError, setProviderModelsError] = useState<string>("");
 
   // Initial load
   useEffect(() => {
@@ -382,7 +382,7 @@ export function App() {
       // Run detection with a small delay to ensure UI is responsive
       setTimeout(() => detectProjectsWithDelay(projectsToDetect), 500);
     }
-  }, [projects.length, activeProjectId]); // Trigger when projects change or active project changes
+  }, [projects.length, activeProjectId, detectProjectsWithDelay, getProjectsToDetect]); // Trigger when projects change or active project changes
 
   // Restore tab state and open tabs for loaded projects
   useEffect(() => {
@@ -417,7 +417,7 @@ export function App() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- projectTabs is intentionally omitted to avoid infinite re-render (computed array creates new reference each render)
-  }, [projects, activeProjectId, selectedProjectId, openProjectIds, openProjectTab, setActiveProject, projectTabs.length, projectTabs.map]);
+  }, [projects, activeProjectId, selectedProjectId, openProjectIds, openProjectTab, setActiveProject]);
 
   // Track if settings have been loaded at least once
   const [settingsHaveLoaded, setSettingsHaveLoaded] = useState(false);
@@ -731,7 +731,7 @@ export function App() {
       setSelectedTask(updatedTask);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentionally omit selectedTask object to prevent infinite re-render loop
-  }, [tasks, selectedTask?.id, selectedTask?.specId, selectedTask]);
+  }, [tasks, selectedTask?.id, selectedTask?.specId, selectedTask, compareTaskFields]);
 
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
@@ -990,7 +990,7 @@ export function App() {
           }
           setProviders([]);
         });
-  }, []);
+  }, [selectedProvider]);
 
   // Récupère les modèles du provider sélectionné
   useEffect(() => {
@@ -1155,20 +1155,16 @@ export function App() {
                         <BrowserAgentDashboard />
                     )}
                     {activeView === 'kanban' && !selectedProject && (
-                              <>
-                                {isLoadingProjects && projects.length === 0 ? (
+                              isLoadingProjects && projects.length === 0 ? (
                                   <KanbanSkeleton />
                                 ) : (
                                   <NoProjectPage onAddProject={handleAddProject} />
-                                )}
-                              </>
+                                )
                           )}
                     {selectedProject ? (
                         <>
                           {activeView === 'kanban' && (
-                              <>
-                                {getKanbanContent()}
-                              </>
+                              getKanbanContent()
                           )}
                           {/* TerminalGrid is always mounted but hidden when not active to preserve terminal state */}
                           <div className={activeView === 'terminals' ? 'h-full' : 'hidden'}>

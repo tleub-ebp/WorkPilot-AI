@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Copy, Loader2, RefreshCw, X, AlertTriangle, TrendingUp, Zap, Shield } from 'lucide-react';
+import { Check, Copy, Loader2, RefreshCw, AlertTriangle, TrendingUp, Zap, Shield } from 'lucide-react';
 
 import {
   Dialog,
@@ -79,7 +79,7 @@ export function AutoRefactorDialog() {
     if (streamOutputRef.current) {
       streamOutputRef.current.scrollTop = streamOutputRef.current.scrollHeight;
     }
-  }, [streamingOutput]);
+  }, []);
 
   const handleStart = useCallback(() => {
     if (!selectedProjectId) return;

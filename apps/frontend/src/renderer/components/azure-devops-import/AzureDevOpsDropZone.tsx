@@ -112,7 +112,7 @@ export function AzureDevOpsDropZone({
               
               {hasItems && (
                 <div className="text-sm text-muted-foreground">
-                  {draggedWorkItems.slice(0, 3).map((item, idx) => (
+                  {draggedWorkItems.slice(0, 3).map((item, _idx) => (
                     <div key={item.id} className="flex items-center gap-2 justify-center">
                       <span className="font-mono text-xs">#{item.id}</span>
                       <span className="truncate max-w-[200px]">{item.title}</span>

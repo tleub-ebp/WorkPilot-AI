@@ -50,7 +50,7 @@ export function RateLimitModal() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isModalOpen, rateLimitInfo?.suggestedProfileId]);
+  }, [isModalOpen, rateLimitInfo?.suggestedProfileId, loadAutoSwitchSettings]);
 
   // Reset selection when modal closes
   useEffect(() => {

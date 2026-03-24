@@ -85,7 +85,7 @@ export function GitLabIntegration({
       fetchUserProjects();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authMode]);
+  }, [authMode, fetchUserProjects]);
 
   // Check glab CLI on mount
   useEffect(() => {
@@ -120,7 +120,7 @@ export function GitLabIntegration({
       debugLog('useEffect[branches] - Skipping fetchBranches (conditions not met)');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [envConfig?.gitlabEnabled, projectPath]);
+  }, [envConfig?.gitlabEnabled, projectPath, fetchBranches]);
 
   /**
    * Handler for branch selection changes.

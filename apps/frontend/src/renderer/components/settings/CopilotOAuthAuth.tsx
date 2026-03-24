@@ -43,7 +43,7 @@ export const CopilotOAuthAuth: React.FC<CopilotOAuthAuthProps> = ({
   // Check authentication status on mount
   useEffect(() => {
     checkAuthStatus();
-  }, []);
+  }, [checkAuthStatus]);
 
   const checkAuthStatus = async () => {
     try {

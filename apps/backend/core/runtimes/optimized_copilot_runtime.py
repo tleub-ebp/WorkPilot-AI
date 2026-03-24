@@ -7,6 +7,7 @@ This extends the original CopilotRuntime without affecting Claude Code agents.
 """
 
 import asyncio
+import logging
 from pathlib import Path
 from typing import Any
 

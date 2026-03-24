@@ -266,7 +266,7 @@ class SkillMatcher(PipelineStage):
         try:
             summary = self.skill_manager.load_skill_summary(skill_name)
             return summary.token_count
-        except:
+        except Exception:
             return 1000  # Default estimate
 
     @property

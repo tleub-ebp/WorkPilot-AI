@@ -7,11 +7,7 @@ import {
   Terminal,
   Sparkles,
   Settings,
-  Play,
   Sun,
-  Moon,
-  Users,
-  Clock,
   Download,
   GitBranch,
   Keyboard,
@@ -20,7 +16,6 @@ import {
   BookOpen,
   Wrench,
   FileText,
-  Cpu,
   BarChart3,
   FileCode2,
   Wand2,
@@ -514,7 +509,7 @@ export function CommandPalette({
   // Reset selection when results change
   useEffect(() => {
     setSelectedIndex(0);
-  }, [results.length]);
+  }, []);
 
   // Scroll selected item into view
   useEffect(() => {
@@ -528,7 +523,7 @@ export function CommandPalette({
       onOpenChange(false);
       if (cmd.handler) {
         // Delay slightly so the palette closes first
-        requestAnimationFrame(() => cmd.handler!());
+        requestAnimationFrame(() => cmd.handler?.());
       }
     },
     [onOpenChange]

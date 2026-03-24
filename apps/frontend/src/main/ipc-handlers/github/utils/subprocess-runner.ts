@@ -195,13 +195,6 @@ export function runPythonSubprocess<T = unknown>(
           metadata: { ...metadata, pythonPath: options.pythonPath, cwd: options.cwd }
         }
       );
-
-      console.log('[SubprocessRunner] Operation registered with OperationRegistry:', {
-        operationId,
-        operationType,
-        profileId: activeProfile.id,
-        profileName: activeProfile.name
-      });
     }
   }
 
@@ -224,7 +217,6 @@ export function runPythonSubprocess<T = unknown>(
       const authResult = detectAuthFailure(line);
       if (authResult.isAuthFailure) {
         authFailureEmitted = true;
-        console.log('[SubprocessRunner] Auth failure detected in real-time:', authResult);
 
         // Get profile info for display
         const profileManager = getClaudeProfileManager();
@@ -249,8 +241,6 @@ export function runPythonSubprocess<T = unknown>(
 
         // Kill the subprocess to stop the auth failure spam
         killedDueToAuthFailure = true;
-        // The process is stuck in a loop of 401 errors - no point continuing
-        console.log('[SubprocessRunner] Killing subprocess due to auth failure, pid:', child.pid);
 
         // Use process.kill with negative PID to kill the entire process group on Unix
         // This ensures child processes (like the Claude SDK subprocess) are also killed
@@ -265,9 +255,7 @@ export function runPythonSubprocess<T = unknown>(
                 if (err) console.warn('[SubprocessRunner] taskkill error (process may have already exited):', err.message);
               });
             }
-          } catch (err) {
-            // Fallback to regular kill if process group kill fails
-            console.log('[SubprocessRunner] Process group kill failed, using regular kill:', err);
+          } catch (_err) {
             child.kill('SIGKILL');
           }
         } else {
@@ -283,7 +271,6 @@ export function runPythonSubprocess<T = unknown>(
       const billingResult = detectBillingFailure(line);
       if (billingResult.isBillingFailure) {
         billingFailureEmitted = true;
-        console.log('[SubprocessRunner] Billing failure detected in real-time:', billingResult);
 
         // Get profile info for display
         const profileManager = getClaudeProfileManager();
@@ -308,8 +295,6 @@ export function runPythonSubprocess<T = unknown>(
 
         // Kill the subprocess to stop the billing failure spam
         killedDueToBillingFailure = true;
-        // The process is stuck in billing errors - no point continuing
-        console.log('[SubprocessRunner] Killing subprocess due to billing failure, pid:', child.pid);
 
         // Use process.kill with negative PID to kill the entire process group on Unix
         // This ensures child processes (like the Claude SDK subprocess) are also killed
@@ -324,9 +309,7 @@ export function runPythonSubprocess<T = unknown>(
                 if (err) console.warn('[SubprocessRunner] taskkill error (process may have already exited):', err.message);
               });
             }
-          } catch (err) {
-            // Fallback to regular kill if process group kill fails
-            console.log('[SubprocessRunner] Process group kill failed, using regular kill:', err);
+          } catch (_err) {
             child.kill('SIGKILL');
           }
         } else {
@@ -705,7 +688,7 @@ export function parseJSONFromOutput<T>(stdout: string): T {
     try {
       // Debug: log the exact string we're trying to parse
       return JSON.parse(jsonStr);
-    } catch (parseError) {
+    } catch (_parseError) {
       // Provide a more helpful error message with details
       throw new Error('Failed to parse JSON response from backend. The analysis completed but the response format was invalid.');
     }

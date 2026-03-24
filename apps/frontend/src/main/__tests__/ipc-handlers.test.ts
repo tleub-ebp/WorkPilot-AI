@@ -3,10 +3,9 @@
  * Tests all IPC communication patterns between main and renderer processes
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { EventEmitter } from "events";
-import { mkdtempSync, writeFileSync, mkdirSync } from "fs";
-import { tmpdir } from "os";
-import path from "path";
+import { EventEmitter } from "node:events";
+import { writeFileSync, mkdirSync } from "node:fs";
+import path from "node:path";
 
 // Test data directory
 const TEST_DIR = path.join('..', '..', 'tmp', 'ipc-handlers-test');
@@ -113,7 +112,7 @@ vi.mock("../cli-tool-manager", () => ({
 // Mock modules before importing
 vi.mock("electron", () => {
   const mockIpcMain = new (class extends EventEmitter {
-    private handlers: Map<string, Function> = new Map();
+    private readonly handlers: Map<string, Function> = new Map();
 
     handle(channel: string, handler: Function): void {
       this.handlers.set(channel, handler);
@@ -514,7 +513,7 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
         return false;
       });
       
-      fs.readFileSync.mockImplementation((path: string, encoding?: string) => {
+      fs.readFileSync.mockImplementation((path: string, _encoding?: string) => {
         if (path.includes('implementation_plan.json')) {
           return JSON.stringify({
             feature: "Test Feature",
@@ -538,7 +537,7 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
         return '{}';
       });
       
-      fs.readdirSync.mockImplementation((path: string, options?: any) => {
+      fs.readdirSync.mockImplementation((path: string, _options?: any) => {
         if (path.includes('.auto-claude/specs')) {
           // Return our spec directory as a simple string array
           return ['001-test-feature'];

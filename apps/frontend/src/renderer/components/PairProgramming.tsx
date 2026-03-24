@@ -243,12 +243,12 @@ export function PairProgramming({ projectId }: PairProgrammingProps) {
   // Auto-scroll chat
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, []);
 
   // Auto-scroll AI stream
   useEffect(() => {
     streamEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [streamingContent]);
+  }, []);
 
   const handleStart = (params: StartSessionParams) => {
     startPairSession({ ...params, projectId });

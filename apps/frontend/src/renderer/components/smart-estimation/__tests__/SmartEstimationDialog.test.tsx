@@ -2,7 +2,7 @@
  * Tests for Smart Estimation Dialog Component
  */
 
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import userEvent from '@testing-library/user-event';
 

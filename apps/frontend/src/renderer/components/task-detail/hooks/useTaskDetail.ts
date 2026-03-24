@@ -157,7 +157,7 @@ export function useTaskDetail({ task }: UseTaskDetailOptions) {
         logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
       }
     }
-  }, [activeTab, isUserScrolledUp, logOrder, phaseLogs]);
+  }, [activeTab, isUserScrolledUp, logOrder]);
 
   // Reset scroll state when switching to logs tab
   useEffect(() => {
@@ -415,7 +415,6 @@ export function useTaskDetail({ task }: UseTaskDetailOptions) {
 
     // Check if subtasks are valid
     if (validateTaskSubtasks(task)) {
-      console.log('[reloadPlanForIncompleteTask] Subtasks are valid, no reload needed');
       return true; // Subtasks are valid, proceed
     }
 
@@ -447,11 +446,6 @@ export function useTaskDetail({ task }: UseTaskDetailOptions) {
         console.error('[reloadPlanForIncompleteTask] Reloaded task still has invalid subtasks');
         return false;
       }
-
-      console.log('[reloadPlanForIncompleteTask] Successfully reloaded plan with valid subtasks:', {
-        taskId: task.id,
-        subtaskCount: updatedTask.subtasks?.length ?? 0
-      });
 
       // FIX (PR Review): Update the Zustand store with the reloaded task data
       // Without this, the UI continues to display stale/invalid subtasks

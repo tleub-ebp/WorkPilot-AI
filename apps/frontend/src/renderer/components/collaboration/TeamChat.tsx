@@ -28,7 +28,7 @@ function formatTime(iso: string): string {
   }
 }
 
-function formatDateSeparator(iso: string, t: (key: string) => string): string {
+function _formatDateSeparator(iso: string, t: (key: string) => string): string {
   try {
     const d = new Date(iso);
     const today = new Date();
@@ -107,7 +107,7 @@ export function TeamChat() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages.length]);
+  }, []);
 
   useEffect(() => {
     if (chatOpen) inputRef.current?.focus();

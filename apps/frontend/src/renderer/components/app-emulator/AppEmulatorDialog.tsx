@@ -151,7 +151,7 @@ export function AppEmulatorDialog() {
   useEffect(() => {
     setActiveTab(null);
     setSearchQuery('');
-  }, [config]);
+  }, []);
 
   // Auto-switch to Preview tab when the server becomes ready (web apps)
   useEffect(() => {
@@ -175,7 +175,7 @@ export function AppEmulatorDialog() {
   // Reset search when active tab changes
   useEffect(() => {
     setSearchQuery('');
-  }, [resolvedTab]);
+  }, []);
 
   const showPreview = resolvedTab === PREVIEW_TAB && phase === 'running' && isWeb && !!url;
 
@@ -211,13 +211,12 @@ export function AppEmulatorDialog() {
     if (!showPreview && !searchQuery && outputRef.current) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
-  }, [searchFilteredOutput, showPreview, searchQuery]);
+  }, [showPreview, searchQuery]);
 
   // Auto-detect and start when dialog opens
   useEffect(() => {
     if (isOpen && phase === 'idle') {
       if (selectedProject?.path) {
-        console.log('[AppEmulator] Starting with project path:', selectedProject.path);
         startAppEmulator(selectedProject.path);
       } else {
         console.warn('[AppEmulator] No project path available. selectedProjectId:', selectedProjectId, 'projects:', projects.length);
@@ -303,7 +302,7 @@ export function AppEmulatorDialog() {
           <div className="flex items-center gap-3 text-sm flex-wrap">
             {isMultiService ? (
               <>
-                {services!.map((svc) => (
+                {services?.map((svc) => (
                   <Badge
                     key={svc.label}
                     variant="outline"

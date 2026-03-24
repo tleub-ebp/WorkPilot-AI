@@ -92,7 +92,6 @@ export function useProfileSwapNotifications() {
       }
 
       if (remainingSwaps > 0) {
-        console.log(`[ProfileSwapNotifications] ${remainingSwaps} additional swaps suppressed`);
       }
 
       queue.swaps = [];
@@ -138,14 +137,12 @@ export function useProfileSwapNotifications() {
   useEffect(() => {
     // Check if electronAPI and queue methods are available
     if (!window.electronAPI?.queue) {
-      console.log('[ProfileSwapNotifications] Queue API not available');
       return;
     }
 
     // Subscribe to profile swap events
     const unsubscribeSwap = window.electronAPI.queue.onQueueProfileSwapped(
       (event: QueueProfileSwapEvent) => {
-        console.log('[ProfileSwapNotifications] Profile swap event:', event);
         queueNotification('swap', event);
       }
     );
@@ -153,7 +150,6 @@ export function useProfileSwapNotifications() {
     // Subscribe to queue blocked events
     const unsubscribeBlocked = window.electronAPI.queue.onQueueBlockedNoProfiles(
       (info: { reason: string; timestamp: string }) => {
-        console.log('[ProfileSwapNotifications] Queue blocked event:', info);
         queueNotification('blocked', info);
       }
     );

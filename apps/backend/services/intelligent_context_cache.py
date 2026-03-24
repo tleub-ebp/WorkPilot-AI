@@ -419,12 +419,12 @@ class IntelligentContextCache:
             """)
 
             conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_semantic_signature 
+                CREATE INDEX IF NOT EXISTS idx_semantic_signature
                 ON context_cache(semantic_signature)
             """)
 
             conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_created_at 
+                CREATE INDEX IF NOT EXISTS idx_created_at
                 ON context_cache(created_at)
             """)
 

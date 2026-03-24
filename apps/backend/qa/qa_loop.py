@@ -92,21 +92,4 @@ __all__ = [
     "run_qa_agent_session",
     "load_qa_fixer_prompt",
     "run_qa_fixer_session",
-)
-
-# Migration vers runtime provider-agnostique
-# À adapter selon la logique QA (phase, model, etc.)
-phase_model = None
-phase_thinking_budget = None
-config = None
-runtime = create_agent_runtime(
-    spec_dir=None,  # À adapter selon le contexte réel
-    phase="qa",
-    project_dir=None,  # À adapter
-    agent_type="qa",
-    cli_provider=None,
-    cli_model=phase_model,
-    cli_thinking=phase_thinking_budget,
-    config=config,
-)
-# Utilisation : await runtime.run_session(prompt)
+]

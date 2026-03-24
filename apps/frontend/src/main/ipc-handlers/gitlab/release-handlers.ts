@@ -13,12 +13,10 @@ import type { GitLabReleaseOptions } from './types';
 // Debug logging helper
 const DEBUG = process.env.DEBUG === 'true' || process.env.NODE_ENV === 'development';
 
-function debugLog(message: string, data?: unknown): void {
+function debugLog(_message: string, data?: unknown): void {
   if (DEBUG) {
     if (data !== undefined) {
-      console.debug(`[GitLab Release] ${message}`, data);
     } else {
-      console.debug(`[GitLab Release] ${message}`);
     }
   }
 }

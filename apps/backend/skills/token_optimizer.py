@@ -25,7 +25,7 @@ from typing import Any
 
 # Import optimization configuration
 try:
-    from .optimization_config import (
+    from .optimization_config import (  # noqa: F401
         COMPRESSION_THRESHOLD,
         DEDUPLICATION_MIN_LENGTH,
         MAX_DESCRIPTION_LENGTH,

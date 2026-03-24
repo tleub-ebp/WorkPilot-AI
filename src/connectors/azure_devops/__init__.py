@@ -28,14 +28,31 @@ sys.path.insert(0, project_root_str)
 
 # Verify the path is correct
 import os
+
 if not os.path.exists(project_root / 'src' / 'config' / 'settings.py'):
     raise ImportError(f"Project root path incorrect: {project_root}")
 
 import logging
-from typing import Optional
+
 from src.config.settings import Settings
 from src.connectors.azure_devops.client import AzureDevOpsClient
-from src.connectors.azure_devops.models import FileItem, PullRequest, PullRequestFileChange, Repository, WorkItem
+from src.connectors.azure_devops.exceptions import (
+    APIError,
+    AuthenticationError,
+    AzureDevOpsError,
+    ConfigurationError,
+    RateLimitError,
+    RepositoryNotFoundError,
+    ResourceNotFoundError,
+    WorkItemNotFoundError,
+)
+from src.connectors.azure_devops.models import (
+    FileItem,
+    PullRequest,
+    PullRequestFileChange,
+    Repository,
+    WorkItem,
+)
 from src.connectors.azure_devops.repos import AzureReposClient
 from src.connectors.azure_devops.work_items import AzureWorkItemsClient
 from src.connectors.base import BaseIntegratedConnector

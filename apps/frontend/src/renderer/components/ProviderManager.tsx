@@ -7,8 +7,8 @@ const API_BASE = typeof import.meta.env?.VITE_BACKEND_URL ? import.meta.env.VITE
 export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) => {
   const { t } = useTranslation(['providers', 'common']);
 
-  const [providers, setProviders] = useState<string[]>([]);
-  const [status, setStatus] = useState<Record<string, boolean>>({});
+  const [_providers, setProviders] = useState<string[]>([]);
+  const [_status, setStatus] = useState<Record<string, boolean>>({});
   const [configs, setConfigs] = useState<string[]>([]);
   const [capabilities, setCapabilities] = useState<any>(null);
   const [configForm, setConfigForm] = useState<any>({});
@@ -18,14 +18,14 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
   const [generation, setGeneration] = useState<string>("");
 
   // Ajout : hook pour profils Claude Code
-  const [claudeProfiles, setClaudeProfiles] = useState<any[]>([]);
+  const [_claudeProfiles, setClaudeProfiles] = useState<any[]>([]);
   const [activeClaudeProfile, setActiveClaudeProfile] = useState<any>(null);
   const [claudeModels, setClaudeModels] = useState<string[]>([]);
   const [claudeAuthChecked, setClaudeAuthChecked] = useState(false);
 
   // Ajout d'un état pour l'erreur
   const [claudeModelsError, setClaudeModelsError] = useState<string>("");
-  const [providersError, setProvidersError] = useState<string>("");
+  const [_providersError, setProvidersError] = useState<string>("");
 
   useEffect(() => {
     fetch(`${API_BASE}/providers`)
@@ -249,8 +249,6 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
         setGeneration(`Failed to generate: ${err.message}`);
       });
   }, [selected, prompt]);
-
-  console.log('[DEBUG ProviderManager] selected:', selected, 'claudeModels:', claudeModels);
 
   return (
     <div>

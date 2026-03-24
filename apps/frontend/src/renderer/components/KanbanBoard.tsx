@@ -226,7 +226,6 @@ function droppableColumnPropsAreEqual(
 
   // Only log when re-rendering (reduces noise)
   if (globalThis.DEBUG && !tasksEqual) {
-    console.log(`[DroppableColumn] Re-render: ${nextProps.status} column (${nextProps.tasks.length} tasks)`);
   }
 
   return tasksEqual;
@@ -346,7 +345,7 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
   const onDeleteHandlers = useMemo(() => {
     const handlers = new Map<string, () => void>();
     tasks.forEach((task) => {
-      handlers.set(task.id, () => onDeleteTask!(task.id));
+      handlers.set(task.id, () => onDeleteTask?.(task.id));
     });
     return handlers;
   }, [tasks, onDeleteTask]);
@@ -908,7 +907,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       setAzureDevOpsConnected(null);
       setAzureDevOpsProjectName(null);
     }
-  }, [selectedProjectId, envConfig?.azureDevOpsEnabled, envConfig?.azureDevOpsPat, envConfig?.azureDevOpsOrgUrl]);
+  }, [selectedProjectId, envConfig?.azureDevOpsEnabled]);
 
   // Check Jira connection status when enabled
   useEffect(() => {
@@ -921,7 +920,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     } else {
       setJiraConnected(null);
     }
-  }, [selectedProjectId, envConfig?.jiraEnabled, envConfig?.jiraApiToken, envConfig?.jiraInstanceUrl]);
+  }, [selectedProjectId, envConfig?.jiraEnabled]);
 
   // Queue settings modal state
   const [showQueueSettings, setShowQueueSettings] = useState(false);
@@ -962,7 +961,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   });
 
   // Store recently deleted tasks for undo functionality
-  const [recentlyDeletedTasks, setRecentlyDeletedTasks] = useState<Map<string, Task>>(new Map());
+  const [_recentlyDeletedTasks, setRecentlyDeletedTasks] = useState<Map<string, Task>>(new Map());
 
   // Worktree cleanup dialog state
   const [worktreeCleanupDialog, setWorktreeCleanupDialog] = useState<{
@@ -984,7 +983,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   // Azure DevOps import panel state
   const [azureDevOpsPanelOpen, setAzureDevOpsPanelOpen] = useState(false);
   const [azureDevOpsConnected, setAzureDevOpsConnected] = useState<boolean | null>(null);
-  const [azureDevOpsProjectName, setAzureDevOpsProjectName] = useState<string | null>(null);
+  const [_azureDevOpsProjectName, setAzureDevOpsProjectName] = useState<string | null>(null);
 
   // Jira import panel state
   const [jiraPanelOpen, setJiraPanelOpen] = useState(false);
@@ -992,7 +991,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
 
   // Azure DevOps drag state
   const [isDraggingAzureDevOps, setIsDraggingAzureDevOps] = useState(false);
-  const [draggedAzureDevOpsItems, setDraggedAzureDevOpsItems] = useState<AzureDevOpsWorkItem[]>([]);
+  const [_draggedAzureDevOpsItems, setDraggedAzureDevOpsItems] = useState<AzureDevOpsWorkItem[]>([]);
 
   // Import confirm dialog state (shown after dropping work items from Azure DevOps / Jira)
   const [importConfirmDialog, setImportConfirmDialog] = useState<{
@@ -1283,6 +1282,39 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     });
   }, []);
 
+  // Handle undo delete
+  const handleUndoDelete = useCallback(async (taskId: string) => {
+    try {
+      const result = await restoreTask(taskId);
+
+      if (result.success) {
+        // Remove from recently deleted tasks (for UI state consistency)
+        setRecentlyDeletedTasks(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(taskId);
+          return newMap;
+        });
+
+        toast({
+          title: t('kanban.restoreSuccess'),
+          variant: 'default'
+        });
+      } else {
+        toast({
+          title: t('kanban.restoreError'),
+          description: result.error,
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      toast({
+        title: t('kanban.restoreError'),
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive'
+      });
+    }
+  }, [toast, t]);
+
   // Handle confirmed single task delete
   const handleConfirmSingleDelete = useCallback(async () => {
     if (!singleDeleteConfirm.taskId) return;
@@ -1327,40 +1359,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         setSelectedTaskIds(remainingIds);
       }
     }
-  }, [singleDeleteConfirm.taskId, singleDeleteConfirm.taskTitle, toast, t]);
-
-  // Handle undo delete
-  const handleUndoDelete = useCallback(async (taskId: string) => {
-    try {
-      const result = await restoreTask(taskId);
-      
-      if (result.success) {
-        // Remove from recently deleted tasks (for UI state consistency)
-        setRecentlyDeletedTasks(prev => {
-          const newMap = new Map(prev);
-          newMap.delete(taskId);
-          return newMap;
-        });
-
-        toast({
-          title: t('kanban.restoreSuccess'),
-          variant: 'default'
-        });
-      } else {
-        toast({
-          title: t('kanban.restoreError'),
-          description: result.error,
-          variant: 'destructive'
-        });
-      }
-    } catch (error) {
-      toast({
-        title: t('kanban.restoreError'),
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive'
-      });
-    }
-  }, [toast, t]);
+  }, [singleDeleteConfirm.taskId, singleDeleteConfirm.taskTitle, toast, t, handleUndoDelete]);
 
   /**
    * Handle import confirmation from the ImportConfirmDialog.
@@ -1374,7 +1373,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     setImportConfirmDialog(prev => ({ ...prev, isImporting: true }));
 
     let successCount = 0;
-    let errorCount = 0;
+    let _errorCount = 0;
     let firstImportedTitle = '';
 
     for (const workItem of workItems) {
@@ -1456,18 +1455,17 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         if (result) {
           if (successCount === 0) firstImportedTitle = workItem.title;
           successCount++;
-          console.log('[Import] Created task from work item:', result.id);
 
           const statusResult = await persistTaskStatus(result.id, targetColumn);
           if (!statusResult.success) {
             console.error('[Import] Task created but status update failed:', result.id, statusResult.error);
           }
         } else {
-          errorCount++;
+          _errorCount++;
           console.error('[Import] Failed to persist task from work item:', workItem.id);
         }
       } catch (error) {
-        errorCount++;
+        _errorCount++;
         console.error('[Import] Failed to create task from work item:', workItem.id, error);
       }
     }
@@ -1619,7 +1617,6 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   const processQueue = useCallback(async () => {
     // Prevent concurrent executions to avoid race conditions
     if (isProcessingQueueRef.current) {
-      console.log('[Queue] Already processing queue, skipping duplicate call');
       return;
     }
 
@@ -1658,8 +1655,6 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           const dateB = new Date(b.createdAt).getTime();
           return dateA - dateB; // Ascending order (oldest first)
         })[0];
-
-        console.log(`[Queue] Auto-promoting task ${nextTask.id} from Queue to In Progress (${inProgressCount + 1}/${maxParallelTasks})`);
         const result = await persistTaskStatus(nextTask.id, 'in_progress');
 
         if (result.success) {
@@ -1892,7 +1887,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       document.removeEventListener('drop', handleDrop);
       document.removeEventListener('dragend', handleDragEnd);
     };
-  }, [onWorkItemsImported, toast, t, onRefresh, projectId]);
+  }, [toast, t]);
 
   // Simple Jira drag highlighting using custom events
   useEffect(() => {
@@ -1986,10 +1981,9 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   // This ensures processQueue() is called whenever a task leaves in_progress
   useEffect(() => {
     const unregister = useTaskStore.getState().registerTaskStatusChangeListener(
-      (taskId, oldStatus, newStatus) => {
+      (_taskId, oldStatus, newStatus) => {
         // When a task leaves in_progress (e.g., goes to human_review), process the queue
         if (oldStatus === 'in_progress' && newStatus !== 'in_progress') {
-          console.log(`[Queue] Task ${taskId} left in_progress, processing queue to fill slot`);
           processQueue();
         }
       }
@@ -2324,7 +2318,6 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         const isAutoPromotionInProgress = oldStatus === 'queue' && isProcessingQueueRef.current;
 
         if (!isAutoPromotionInProgress) {
-          console.log(`[Queue] In Progress full (${inProgressCount}/${maxParallelTasks}), moving task to Queue`);
           newStatus = 'queue';
         }
       }
@@ -2361,13 +2354,13 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       // Clear manually queued protection after queue processing completes
       manuallyQueuedTaskIdsRef.current.delete(activeTaskId);
     }
-  }, [tasks, taskOrder, tasksByStatus, setTaskOrder, reorderTasksInColumn, moveTaskToColumnTop, saveTaskOrder, projectId, maxParallelTasks, handleStatusChange, processQueue, selectedTaskIds, selectedColumnStatus, handleBulkMove, toast, t]);
+  }, [taskOrder, tasksByStatus, setTaskOrder, reorderTasksInColumn, moveTaskToColumnTop, saveTaskOrder, projectId, maxParallelTasks, handleStatusChange, processQueue, selectedTaskIds, selectedColumnStatus, handleBulkMove, toast, t, setColumnOrder]);
 
   // Ajout ou correction de la déclaration de l'état pour la boîte de dialogue de paramètres projet
   // Ajout d'un compteur pour forcer le remount d'AppSettingsDialog
-  const [settingsDialogKey, setSettingsDialogKey] = useState(0);
+  const [settingsDialogKey, _setSettingsDialogKey] = useState(0);
   const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
-  const [settingsDialogProjectId, setSettingsDialogProjectId] = useState<string | undefined>(undefined);
+  const [settingsDialogProjectId, _setSettingsDialogProjectId] = useState<string | undefined>(undefined);
 
   return (
     <div className="flex h-full flex-col">
@@ -2892,7 +2885,6 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           projectId={projectId}
           onOpenSettings={onOpenAzureDevOpsSettings}
           onWorkItemsImported={async (workItems, targetStatus) => {
-            console.log('Side panel imported work items:', workItems, 'to status:', targetStatus);
             
             // Show the import confirmation dialog
             setImportConfirmDialog({
@@ -2914,7 +2906,6 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           projectId={projectId}
           onOpenSettings={onOpenJiraSettings}
           onWorkItemsImported={async (workItems, targetStatus) => {
-            console.log('Jira side panel imported work items:', workItems, 'to status:', targetStatus);
             
             // Show the import confirmation dialog
             setImportConfirmDialog({

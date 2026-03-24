@@ -27,7 +27,7 @@ from .token_optimizer import create_skill_optimizer
 
 # Import optimization configuration
 try:
-    from .optimization_config import (
+    from .optimization_config import (  # noqa: F401
         DEFAULT_MAX_WORKERS,
         DEFAULT_TIMEOUT,
         OPTIMIZATION_ENABLED,
@@ -119,9 +119,9 @@ class DynamicSkill:
                 return False
 
         # Check required fields
-        for field in rule.required_fields:
-            if field not in self.metadata:
-                logger.error(f"Skill {self.name} missing required field: {field}")
+        for required_field in rule.required_fields:
+            if required_field not in self.metadata:
+                logger.error(f"Skill {self.name} missing required field: {required_field}")
                 return False
 
         # Check token limits

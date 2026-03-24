@@ -494,7 +494,6 @@ export function registerProjectHandlers(
     IPC_CHANNELS.TAB_STATE_GET,
     async (): Promise<IPCResult<{ openProjectIds: string[]; activeProjectId: string | null; tabOrder: string[] }>> => {
       const tabState = projectStore.getTabState();
-      console.log('[IPC] TAB_STATE_GET returning:', tabState);
       return { success: true, data: tabState };
     }
   );
@@ -505,7 +504,6 @@ export function registerProjectHandlers(
       _,
       tabState: { openProjectIds: string[]; activeProjectId: string | null; tabOrder: string[] }
     ): Promise<IPCResult> => {
-      console.log('[IPC] TAB_STATE_SAVE called with:', tabState);
       projectStore.saveTabState(tabState);
       return { success: true };
     }
@@ -792,7 +790,6 @@ export function registerProjectHandlers(
   ipcMain.handle(
     IPC_CHANNELS.GIT_INITIALIZE,
     async (_, projectPath: string, remoteConfig?: { url?: string; name?: string }): Promise<IPCResult<InitializationResult>> => {
-      console.log('🔥 GIT-SETUP: IPC Handler called with:', { projectPath, remoteConfig });
       try {
         if (!existsSync(projectPath)) {
           return { success: false, error: 'Directory does not exist' };

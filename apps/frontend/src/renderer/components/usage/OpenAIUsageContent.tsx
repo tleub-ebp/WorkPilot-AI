@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { TrendingUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { UsageSnapshot } from '@shared/types';

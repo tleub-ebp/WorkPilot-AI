@@ -286,7 +286,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         wsRef.current.close(1000, 'Component unmounted');
       }
     };
-  }, [sessionId, connectWebSocket, initializeConnection]);
+  }, [initializeConnection]);
 
   // Send chat message
   const sendChatMessage = useCallback(() => {
@@ -380,9 +380,6 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
         // Fallback: copy session data to clipboard
         const sessionText = JSON.stringify(recording, null, 2);
         await navigator.clipboard.writeText(sessionText);
-        
-        // Show toast notification (if toast is available)
-        console.log('Session data copied to clipboard');
       }
     } catch (error) {
       console.error('Error sharing session:', error);

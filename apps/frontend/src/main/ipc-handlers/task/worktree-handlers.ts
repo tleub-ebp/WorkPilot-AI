@@ -1107,10 +1107,7 @@ async function detectInstalledTools(): Promise<DetectedTools> {
   const platform = process.platform as 'darwin' | 'win32' | 'linux';
   const ides: DetectedTool[] = [];
   const terminals: DetectedTool[] = [];
-
-  // Build app cache using platform-native detection (fast!)
-  console.log('[DevTools] Starting smart app detection...');
-  const startTime = Date.now();
+  const _startTime = Date.now();
 
   if (platform === 'darwin') {
     installedAppsCache = await detectMacApps();
@@ -1119,8 +1116,6 @@ async function detectInstalledTools(): Promise<DetectedTools> {
   } else {
     installedAppsCache = await detectLinuxApps();
   }
-
-  console.log(`[DevTools] Found ${installedAppsCache.size} apps in ${Date.now() - startTime}ms`);
 
   // Detect IDEs using cached app list + specific path checks
   for (const [id, config] of Object.entries(IDE_DETECTION)) {
@@ -1195,8 +1190,6 @@ async function detectInstalledTools(): Promise<DetectedTools> {
       installed: true
     });
   }
-
-  console.log(`[DevTools] Detection complete: ${ides.length} IDEs, ${terminals.length} terminals`);
   return { ides, terminals };
 }
 
@@ -1866,9 +1859,6 @@ export function registerWorktreeHandlers(
             stdio: ['pipe', 'pipe', 'pipe']
           }).trim();
 
-          console.log(`[DEBUG] Full diff length: ${fullDiff.length}`);
-          console.log(`[DEBUG] Full diff preview:`, fullDiff.substring(0, 500));
-
           // Parse name-status to get file statuses
           const statusMap: Record<string, 'added' | 'modified' | 'deleted' | 'renamed'> = {};
           nameStatus.split('\n').filter(Boolean).forEach((line: string) => {
@@ -1884,7 +1874,7 @@ export function registerWorktreeHandlers(
           });
 
           // Function to extract patch for a specific file from full diff
-          const extractFilePatch = (filePath: string, fileStatus: string): string => {
+          const extractFilePatch = (filePath: string, _fileStatus: string): string => {
             const lines = fullDiff.split('\n');
             let fileLines: string[] = [];
             let foundFile = false;
@@ -1919,11 +1909,6 @@ export function registerWorktreeHandlers(
             }
             
             const patch = fileLines.join('\n');
-            console.log(`[DEBUG] Extracting patch for ${filePath}:`, {
-              foundFile,
-              patchLength: patch.length,
-              patchPreview: patch.substring(0, 200)
-            });
             
             return patch;
           };

@@ -364,7 +364,7 @@ describe('AnalyticsDashboard', () => {
     });
     
     // Clear the error
-    mockFetch.mockImplementation((url) => {
+    mockFetch.mockImplementation((_url) => {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve(mockDashboardOverview)
@@ -429,7 +429,7 @@ describe('AnalyticsDashboard', () => {
 
   it('shows empty state when no data is available', async () => {
     // Mock empty responses
-    mockFetch.mockImplementation((url) => {
+    mockFetch.mockImplementation((_url) => {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({

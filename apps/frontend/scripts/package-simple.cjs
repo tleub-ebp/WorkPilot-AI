@@ -27,8 +27,6 @@ function main() {
 
   // Ensure we use 'mac' instead of 'mas' for standard distribution
   const finalArgs = cleanArgs.map(arg => arg === '--mas' ? '--mac' : arg);
-
-  console.log('🚀 Starting packaging for platforms:', finalArgs.join(' '));
   
   // Run electron-builder with the provided arguments
   const result = spawnSync('electron-builder', finalArgs, {
@@ -41,8 +39,6 @@ function main() {
     console.error('❌ Packaging failed');
     process.exit(result.status || 1);
   }
-
-  console.log('✅ Packaging completed successfully');
 }
 
 if (require.main === module) {

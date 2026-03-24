@@ -36,7 +36,6 @@ export class OAuthServer {
         });
 
         this.server.listen(this.port, () => {
-          console.log(`[OAuth Server] OAuth callback server listening on port ${this.port}`);
           resolve();
         });
 
@@ -57,7 +56,6 @@ export class OAuthServer {
     return new Promise((resolve) => {
       if (this.server) {
         this.server.close(() => {
-          console.log('[OAuth Server] OAuth server stopped');
           this.server = null;
           resolve();
         });
@@ -105,13 +103,6 @@ export class OAuthServer {
     const error = url.searchParams.get('error');
     const errorDescription = url.searchParams.get('error_description');
 
-    console.log('[OAuth Server] OAuth callback received:', { 
-      hasCode: !!code, 
-      hasState: !!state, 
-      hasError: !!error,
-      errorDescription 
-    });
-
     if (error) {
       // OAuth error occurred
       const html = this.generateErrorPage(error, errorDescription || 'Unknown error occurred');
@@ -147,8 +138,6 @@ export class OAuthServer {
         }
       }
 
-      console.log('[OAuth Server] Processing OAuth callback for profile:', profileName);
-
       // Handle the OAuth callback
       const result = await handleCopilotOAuthCallback(code, state, profileName);
 
@@ -172,7 +161,7 @@ export class OAuthServer {
   /**
    * Handle status check
    */
-  private handleStatusCheck(req: any, res: any): void {
+  private handleStatusCheck(_req: any, res: any): void {
     const status = {
       server: 'running',
       port: this.port,
@@ -188,7 +177,6 @@ export class OAuthServer {
    */
   storePendingCallback(state: string, callbackData: OAuthCallbackData): void {
     this.pendingCallbacks.set(state, callbackData);
-    console.log(`[OAuth Server] Stored pending callback for state: ${state.substring(0, 8)}...`);
   }
 
   /**
@@ -353,12 +341,9 @@ export async function ensureOAuthServerRunning(): Promise<void> {
   try {
     const response = await fetch('http://localhost:3000/oauth/status');
     if (response.ok) {
-      console.log('[OAuth Server] Server already running');
       return;
     }
-  } catch (error) {
-    // Server not running, start it
-    console.log('[OAuth Server] Starting OAuth server...');
+  } catch (_error) {
     await server.start();
   }
 }

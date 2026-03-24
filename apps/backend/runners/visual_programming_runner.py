@@ -204,7 +204,7 @@ async def action_generate_code(diagram_json: str, framework: str) -> None:
         if raw_response.startswith("```"):
             # Strip markdown fences if present
             lines = raw_response.split("\n")
-            raw_response = "\n".join(l for l in lines if not l.startswith("```"))
+            raw_response = "\n".join(line for line in lines if not line.startswith("```"))
 
         result = json.loads(raw_response)
         _print_result({"action": "generate-code", "data": result})
@@ -264,7 +264,7 @@ async def action_code_to_visual(file_path: str) -> None:
         raw_response = raw_response.strip()
         if raw_response.startswith("```"):
             lines = raw_response.split("\n")
-            raw_response = "\n".join(l for l in lines if not l.startswith("```"))
+            raw_response = "\n".join(line for line in lines if not line.startswith("```"))
 
         result = json.loads(raw_response)
         _print_result({"action": "code-to-visual", "data": result})

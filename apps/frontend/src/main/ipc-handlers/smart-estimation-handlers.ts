@@ -6,7 +6,6 @@
 
 import { ipcMain } from 'electron';
 import { spawn, ChildProcess } from 'child_process';
-import { resolve } from 'path';
 import { app } from 'electron';
 
 interface SmartEstimationRequest {

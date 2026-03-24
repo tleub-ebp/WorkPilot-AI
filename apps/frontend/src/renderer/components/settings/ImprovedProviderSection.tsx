@@ -3,8 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { SettingsSection } from './SettingsSection';
 import { ProviderGrid } from './ProviderGrid';
 import { getAllConnectors } from './multiconnector/utils';
-import { useSettings } from './hooks/useSettings';
-import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Loader2, AlertCircle, } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
 
@@ -124,7 +123,7 @@ export function ImprovedProviderSection({
     };
   });
 
-  const handleConfigure = (providerId: string) => {
+  const handleConfigure = (_providerId: string) => {
     // Ouvrir la configuration du provider
     // TODO: Implémenter la modale de configuration
   };

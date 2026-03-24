@@ -85,24 +85,11 @@ export function forceEnableWindowsColors(): boolean {
 export function printColorDiagnostics(): void {
   const diagnostics = getColorDiagnostics();
   
-  console.log('=== Frontend Color Diagnostics ===');
-  console.log(`Platform: ${diagnostics.platform}`);
-  console.log(`TTY Support: ${diagnostics.isTTY}`);
-  console.log(`Color Support: ${diagnostics.supportsColor}`);
-  console.log('\nEnvironment Variables:');
-  
-  Object.entries(diagnostics.envVars).forEach(([key, value]) => {
-    console.log(`  ${key}: ${value || 'undefined'}`);
+  Object.entries(diagnostics.envVars).forEach(([_key, _value]) => {
   });
   
   if (diagnostics.recommendations.length > 0) {
-    console.log('\nRecommendations:');
-    diagnostics.recommendations.forEach((rec, index) => {
-      console.log(`  ${index + 1}. ${rec}`);
+    diagnostics.recommendations.forEach((_rec, _index) => {
     });
   }
-  
-  console.log('\n=== Test Colors ===');
-  console.log('\x1b[31mRed\x1b[0m, \x1b[32mGreen\x1b[0m, \x1b[33mYellow\x1b[0m, \x1b[34mBlue\x1b[0m, \x1b[35mMagenta\x1b[0m, \x1b[36mCyan\x1b[0m');
-  console.log('If you see colors above, the terminal supports them');
 }

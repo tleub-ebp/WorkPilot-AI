@@ -91,7 +91,7 @@ export const usePairProgrammingStore = create<PairProgrammingState>((set, get) =
       status,
       statusMessage: message,
       session: get().session
-        ? { ...get().session!, status: status === 'idle' ? get().session!.status : (status as PairSession['status']), updatedAt: new Date().toISOString() }
+        ? { ...get().session!, status: status === 'idle' ? get().session?.status : (status as PairSession['status']), updatedAt: new Date().toISOString() }
         : null,
     }),
 

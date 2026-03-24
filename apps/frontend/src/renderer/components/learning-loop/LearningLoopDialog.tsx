@@ -103,7 +103,7 @@ export function LearningLoopDialog() {
     if (streamOutputRef.current) {
       streamOutputRef.current.scrollTop = streamOutputRef.current.scrollHeight;
     }
-  }, [streamingOutput]);
+  }, []);
 
   const handleStartAnalysis = useCallback(() => {
     if (!selectedProject?.path) return;

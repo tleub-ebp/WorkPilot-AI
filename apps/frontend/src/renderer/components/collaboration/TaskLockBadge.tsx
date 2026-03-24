@@ -10,7 +10,7 @@
 import { Lock, Bot, Unlock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
-import { useCollaborationStore, type TaskLock } from '../../stores/collaboration-store';
+import { useCollaborationStore, } from '../../stores/collaboration-store';
 import {
   Tooltip,
   TooltipContent,

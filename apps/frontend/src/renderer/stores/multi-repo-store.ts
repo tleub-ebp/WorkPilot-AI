@@ -6,7 +6,6 @@ import type {
   RepoExecutionState,
   RepoDependencyGraph,
   BreakingChange,
-  MultiRepoCreateConfig,
 } from '@shared/types';
 
 interface MultiRepoState {

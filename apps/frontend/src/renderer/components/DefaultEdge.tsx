@@ -58,7 +58,6 @@ export const DefaultEdge: React.FC<EdgeProps> = (props) => {
           >
             {editing ? (
               <input
-                autoFocus
                 value={label}
                 onChange={handleChange}
                 onBlur={handleBlur}

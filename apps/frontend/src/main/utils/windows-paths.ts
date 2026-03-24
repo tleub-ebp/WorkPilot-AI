@@ -190,7 +190,6 @@ export function findWindowsExecutableViaWhere(
 
       // Validate the path exists and is secure
       if (existsSync(foundPath) && isSecurePath(foundPath)) {
-        console.log(`${logPrefix} Found via where: ${foundPath}`);
         return foundPath;
       }
     }
@@ -296,7 +295,6 @@ export async function findWindowsExecutableViaWhereAsync(
       try {
         await access(foundPath, constants.F_OK);
         if (isSecurePath(foundPath)) {
-          console.log(`${logPrefix} Found via where: ${foundPath}`);
           return foundPath;
         }
       } catch {

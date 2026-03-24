@@ -232,7 +232,6 @@ function stageRuntimePackages(frontendDir, platform, arch) {
     }
 
     const localDir = path.join(outModulesDir, ...pkgName.split('/'));
-    console.log(`[package] Staging ${pkgName} into build output...`);
     copyPackage(rootDirPath, localDir);
 
     const pkgJson = readPackageJson(rootDirPath);
@@ -250,7 +249,6 @@ function stageRuntimePackages(frontendDir, platform, arch) {
       if (fs.existsSync(optionalPath)) {
         stagePackage(depName);
       } else {
-        console.log(`[package] Skipping optional dependency not installed: ${depName}`);
       }
     }
   }

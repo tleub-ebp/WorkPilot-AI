@@ -5,7 +5,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, } from 'child_process';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import { app } from 'electron';
@@ -64,7 +64,7 @@ export class GitHubCopilotService extends EventEmitter {
     try {
       const data = await fs.readFile(this.configPath, 'utf-8');
       this.config = JSON.parse(data);
-    } catch (error) {
+    } catch (_error) {
       // Fichier n'existe pas, utiliser la configuration par défaut
       this.config = { enabled: false };
     }
@@ -107,7 +107,7 @@ export class GitHubCopilotService extends EventEmitter {
         } else {
           this.status.authenticated = false;
         }
-      } catch (authError) {
+      } catch (_authError) {
         this.status.authenticated = false;
       }
 
@@ -117,7 +117,7 @@ export class GitHubCopilotService extends EventEmitter {
         if (tokenOutput.trim()) {
           this.status.token = tokenOutput.trim();
         }
-      } catch (tokenError) {
+      } catch (_tokenError) {
         // Pas de token configuré
         this.status.token = undefined;
       }
@@ -163,8 +163,6 @@ export class GitHubCopilotService extends EventEmitter {
       this.status.token = token;
       this.emit('config-updated', this.config);
       this.emit('status-updated', this.status);
-
-      console.log('[GitHubCopilotService] Token configured successfully');
     } catch (error) {
       console.error('[GitHubCopilotService] Failed to set token:', error);
       throw error;
@@ -183,8 +181,6 @@ export class GitHubCopilotService extends EventEmitter {
       this.status.token = undefined;
       this.emit('config-updated', this.config);
       this.emit('status-updated', this.status);
-
-      console.log('[GitHubCopilotService] Token removed successfully');
     } catch (error) {
       console.error('[GitHubCopilotService] Failed to remove token:', error);
       throw error;
@@ -230,7 +226,6 @@ export class GitHubCopilotService extends EventEmitter {
       await execAsync('gh auth logout', { timeout: 10000 });
       await this.checkStatus();
       this.emit('status-updated', this.status);
-      console.log('[GitHubCopilotService] Logged out successfully');
     } catch (error) {
       console.error('[GitHubCopilotService] Failed to logout:', error);
       throw error;

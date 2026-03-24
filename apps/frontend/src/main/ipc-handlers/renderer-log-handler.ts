@@ -36,7 +36,7 @@ function processLogMessage(logMessage: any): void {
 
 export function setupRendererLogHandler(): void {
   // Handler pour les logs du renderer
-  ipcMain.handle('renderer-log', (event, logMessage) => {
+  ipcMain.handle('renderer-log', (_event, logMessage) => {
     try {
       processLogMessage(logMessage);
       return { success: true };
@@ -48,13 +48,11 @@ export function setupRendererLogHandler(): void {
   });
 
   // Alternative: utiliser .on au lieu de .handle pour les logs unidirectionnels
-  ipcMain.on('renderer-log', (event, logMessage) => {
+  ipcMain.on('renderer-log', (_event, logMessage) => {
     try {
       processLogMessage(logMessage);
     } catch (error) {
       console.error('Failed to handle renderer log:', error);
     }
   });
-
-  console.log('Renderer log handler initialized');
 }

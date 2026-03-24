@@ -14,11 +14,14 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from core.client import create_client
+    from core.client import create_agent_client, create_client
     from phase_config import get_phase_model, get_phase_thinking_budget
 except ImportError:
 
     def create_client(*args, **kwargs):
+        return None
+
+    def create_agent_client(*args, **kwargs):
         return None
 
     def get_phase_model(*args, **kwargs):

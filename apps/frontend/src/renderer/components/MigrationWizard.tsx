@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, { useState, } from 'react';
 import {
   ChevronRight,
   Check,
@@ -9,7 +9,7 @@ import {
   Shield,
   Zap,
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/card';
+import { Card, } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Checkbox } from './ui/checkbox';
@@ -41,7 +41,7 @@ export const MigrationWizard: React.FC = () => {
   const selectedProject = useProjectStore((state) => state.getSelectedProject?.());
   const defaultProjectPath = selectedProject?.path || t('defaultProjectPath', { defaultValue: './' });
   const [currentStep, setCurrentStep] = useState(0);
-  const [migrationId, setMigrationId] = useState<string | null>(null);
+  const [_migrationId, setMigrationId] = useState<string | null>(null);
   const [config, setConfig] = useState<MigrationConfig>({
     sourceFramework: '',
     targetFramework: '',
@@ -50,7 +50,7 @@ export const MigrationWizard: React.FC = () => {
     autoFix: true,
     backupEnabled: true,
   });
-  const [migrating, setMigrating] = useState(false);
+  const [_migrating, setMigrating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [transformations, setTransformations] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');

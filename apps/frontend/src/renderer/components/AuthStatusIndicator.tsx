@@ -81,7 +81,7 @@ export function AuthStatusIndicator() {
   // Subscribe to provider/profile change events
   useEffect(() => {
     // This effect can be used for future provider/profile change handling
-  }, [selectedProvider, activeProfileId]);
+  }, []);
 
   // Fetch GitHub CLI status when Copilot provider is selected
   useEffect(() => {

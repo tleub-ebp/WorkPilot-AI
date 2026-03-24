@@ -1,5 +1,5 @@
 import { ipcRenderer } from 'electron';
-import { invokeIpc, createIpcListener } from './modules/ipc-utils';
+import { invokeIpc, } from './modules/ipc-utils';
 
 export interface NaturalLanguageGitRequest {
   projectPath: string;

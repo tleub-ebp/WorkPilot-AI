@@ -391,7 +391,7 @@ export const integrationMock = {
   onGitHubAuthDeviceCode: () => () => {},
 
   // GitHub PR Operations
-  getPRDetails: async (prNumber: number, taskId?: string) => ({
+  getPRDetails: async (prNumber: number, _taskId?: string) => ({
     success: true,
     data: {
       success: true,

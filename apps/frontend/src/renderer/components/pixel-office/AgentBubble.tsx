@@ -174,7 +174,7 @@ function LogStream({ taskId }: { readonly taskId: string }) {
     if (open && atBottomRef.current && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [logs.length, open]);
+  }, [open]);
 
   const copyLogs = useCallback(() => {
     navigator.clipboard.writeText(visibleLines.join('\n')).then(() => {
@@ -437,7 +437,7 @@ function TerminalPanel({
 
   useEffect(() => {
     if (!isExited) setTimeout(() => inputRef.current?.focus(), 50);
-  }, [agent.id, isExited]);
+  }, [isExited]);
 
   const handleSend = () => {
     const trimmed = command.trim();

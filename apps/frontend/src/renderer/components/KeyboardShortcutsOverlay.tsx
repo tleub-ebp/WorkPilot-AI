@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { Keyboard, X } from 'lucide-react';
-import { cn } from '../lib/utils';
 
 // ---------------------------------------------------------------------------
 // Types

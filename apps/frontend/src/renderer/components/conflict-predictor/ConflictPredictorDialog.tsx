@@ -77,7 +77,7 @@ export function ConflictPredictorDialog() {
     if (streamOutputRef.current) {
       streamOutputRef.current.scrollTop = streamOutputRef.current.scrollHeight;
     }
-  }, [streamingOutput]);
+  }, []);
 
   const handleAnalyze = useCallback(() => {
     if (!selectedProjectId) return;
@@ -93,15 +93,6 @@ export function ConflictPredictorDialog() {
     closeDialog();
     reset();
   }, [closeDialog, reset]);
-
-  const handleCopyResults = useCallback(async () => {
-    if (!result) return;
-
-    const reportText = generateReportText(result);
-    await navigator.clipboard.writeText(reportText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [result]);
 
   const getRiskLevelColor = (level: string) => {
     switch (level) {
@@ -179,6 +170,15 @@ export function ConflictPredictorDialog() {
     
     return report;
   };
+
+  const handleCopyResults = useCallback(async () => {
+    if (!result) return;
+
+    const reportText = generateReportText(result);
+    await navigator.clipboard.writeText(reportText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [result, generateReportText]);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -417,7 +417,7 @@ export function ConflictPredictorDialog() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-2">
-                          {result.high_risk_areas.map((area, index) => (
+                          {result.high_risk_areas.map((area, _index) => (
                             <div key={area.substring(0, 20).replaceAll(/\s+/g, '-')} className="flex items-center gap-2 text-sm">
                               <div className="w-2 h-2 rounded-full bg-red-500"></div>
                               <span>{area}</span>

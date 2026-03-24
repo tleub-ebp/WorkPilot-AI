@@ -2,7 +2,6 @@ import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Wand2,
-  Play,
   Loader2,
   AlertTriangle,
   Bug,
@@ -123,7 +122,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
     } finally {
       setLoading(false);
     }
-  }, [source]);
+  }, [source, primaryLanguage, t]);
 
   const handleProposeRefactoring = useCallback(async () => {
     if (!source.trim()) return;
@@ -147,7 +146,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
     } finally {
       setLoadingProposals(false);
     }
-  }, [source]);
+  }, [source, primaryLanguage, t]);
 
   const handlePaste = useCallback(async () => {
     try {

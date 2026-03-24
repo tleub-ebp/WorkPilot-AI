@@ -6,6 +6,7 @@ Optimized version of CopilotAgentClient with token awareness and prompt optimiza
 This extends the original CopilotAgentClient without affecting Claude Code agents.
 """
 
+import logging
 from pathlib import Path
 from typing import Any
 

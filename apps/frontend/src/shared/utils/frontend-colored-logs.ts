@@ -176,9 +176,8 @@ export function frontendInfoLog(message: string, ...args: any[]): void {
   console.info(formattedMessage, ...args);
 }
 
-export function frontendSuccessLog(message: string, ...args: any[]): void {
-  const formattedMessage = formatFrontendLog(message, 'SUCCESS');
-  console.log(formattedMessage, ...args);
+export function frontendSuccessLog(message: string, ..._args: any[]): void {
+  const _formattedMessage = formatFrontendLog(message, 'SUCCESS');
 }
 
 export function frontendWarningLog(message: string, ...args: any[]): void {

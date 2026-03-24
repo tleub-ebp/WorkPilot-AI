@@ -18,10 +18,9 @@ import { execFile } from 'child_process';
 import path from 'path';
 import os from 'os';
 import { app } from 'electron';
-import { getAugmentedEnv } from './env-utils';
 import { isWindows } from './platform';
 
-const execFileAsync = promisify(execFile);
+const _execFileAsync = promisify(execFile);
 
 // GitHub OAuth configuration
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || 'Ov23liF2F5qF1M2x0v3K'; // Default Copilot client ID
@@ -195,7 +194,6 @@ async function storeCopilotToken(
     };
     
     await require('fs').promises.writeFile(tokenFile, JSON.stringify(tokenData, null, 2));
-    console.log(`[Copilot OAuth] Token stored for ${username}`);
   } catch (error) {
     throw new Error(`Failed to store Copilot token: ${error}`);
   }
@@ -216,7 +214,7 @@ async function getCopilotToken(username: string): Promise<{
   try {
     const data = await require('fs').promises.readFile(tokenFile, 'utf-8');
     return JSON.parse(data);
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }
@@ -231,7 +229,6 @@ export async function startCopilotOAuth(profileName: string): Promise<{
   error?: string;
 }> {
   try {
-    console.log('[Copilot OAuth] Starting OAuth flow for profile:', profileName);
     
     // Generate state and build OAuth URL
     const state = generateOAuthState();
@@ -243,8 +240,6 @@ export async function startCopilotOAuth(profileName: string): Promise<{
     
     // Open browser for OAuth
     await openOAuthBrowser(oauthUrl);
-    
-    console.log('[Copilot OAuth] OAuth browser opened, waiting for callback...');
     
     return {
       success: true,
@@ -274,7 +269,6 @@ export async function handleCopilotOAuthCallback(
   error?: string;
 }> {
   try {
-    console.log('[Copilot OAuth] Handling OAuth callback');
     
     // Verify state
     const stateFile = path.join(app.getPath('temp'), 'copilot-oauth-state.txt');
@@ -285,7 +279,7 @@ export async function handleCopilotOAuthCallback(
       }
       // Clean up state file
       await require('fs').promises.unlink(stateFile);
-    } catch (error) {
+    } catch (_error) {
       throw new Error('Invalid or missing OAuth state');
     }
     
@@ -303,8 +297,6 @@ export async function handleCopilotOAuthCallback(
     
     // Store token
     await storeCopilotToken(userProfile.login, tokenData.access_token, profileName);
-    
-    console.log(`[Copilot OAuth] Successfully authenticated ${userProfile.login}`);
     
     return {
       success: true,
@@ -355,7 +347,7 @@ export async function getCopilotAuthStatus(): Promise<{
                 createdAt: tokenData.createdAt,
               });
             }
-          } catch (error) {
+          } catch (_error) {
           }
         }
       }
@@ -364,13 +356,13 @@ export async function getCopilotAuthStatus(): Promise<{
         authenticated: profiles.length > 0,
         profiles,
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         authenticated: false,
         profiles: [],
       };
     }
-  } catch (error) {
+  } catch (_error) {
     return {
       authenticated: false,
       profiles: [],
@@ -400,8 +392,6 @@ export async function revokeCopilotAuth(username: string): Promise<{
     const tokenFile = path.join(configDir, `${username}.json`);
     
     await require('fs').promises.unlink(tokenFile);
-    
-    console.log(`[Copilot OAuth] Revoked authentication for ${username}`);
     
     return {
       success: true,

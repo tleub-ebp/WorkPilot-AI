@@ -120,12 +120,80 @@ export function AzureDevOpsSidePanel({
     }
   }, [panelWidth, projectId, isCollapsed]);
 
+  const loadConnectionStatus = async () => {
+    try {
+      const result = await globalThis.electronAPI.checkAzureDevOpsConnection(projectId);
+      if (result.success) {
+        setSyncStatus(result.data ?? null);
+        if (result.data?.connected) {
+          // Clear error when connection is successful
+          setError(null);
+        } else {
+          setError(result.data?.error || t('azureDevOpsImport.errorNotConfigured'));
+        }
+      } else {
+        setError(result.error || t('azureDevOpsImport.errorCheckConnectionFailed'));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('azureDevOpsImport.errorUnknown'));
+    }
+  };
+
+  const loadWorkItems = async (forceRefresh = false) => {
+    // Don't load if not forcing refresh and we have recent cache
+    if (!forceRefresh && lastCacheTime) {
+      const now = Date.now();
+      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+      if (now - lastCacheTime < CACHE_DURATION) {
+        rendererLog.azure.debug('[AzureDevOps] Using recent cache, skipping load');
+        return;
+      }
+    }
+
+    setIsLoadingItems(true);
+    setError(null);
+    try {
+      const result = await globalThis.electronAPI.getAzureDevOpsWorkItems(
+        projectId,
+        undefined, // Use default project from config
+        undefined, // Use default item types (Bug, Task, User Story)
+        1000 // Max items
+      );
+
+      if (result.success) {
+        const workItems = result.data || [];
+        setWorkItems(workItems);
+
+        // Save to cache
+        try {
+          const cacheKey = `azure-devops-workitems-cache-${projectId}`;
+          const cacheTimeKey = `azure-devops-workitems-cache-time-${projectId}`;
+          const now = Date.now();
+
+          localStorage.setItem(cacheKey, JSON.stringify(workItems));
+          localStorage.setItem(cacheTimeKey, now.toString());
+          setLastCacheTime(now);
+
+          rendererLog.azure.debug('[AzureDevOps] Work items cached successfully');
+        } catch (cacheError) {
+          rendererLog.azure.debug('[AzureDevOps] Failed to cache work items:', cacheError);
+        }
+      } else {
+        setError(result.error || t('azureDevOpsImport.errorLoadWorkItemsFailed'));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('azureDevOpsImport.errorUnknown'));
+    } finally {
+      setIsLoadingItems(false);
+    }
+  };
+
   // Load connection status
   useEffect(() => {
     if (open) {
       loadConnectionStatus();
     }
-  }, [open, projectId]);
+  }, [open, loadConnectionStatus]);
 
   // Load cached work items on component mount
   useEffect(() => {
@@ -174,75 +242,7 @@ export function AzureDevOpsSidePanel({
         rendererLog.azure.debug('[AzureDevOps] Using recent cache, skipping refresh');
       }
     }
-  }, [open, syncStatus?.connected, lastCacheTime]);
-
-  const loadConnectionStatus = async () => {
-    try {
-      const result = await globalThis.electronAPI.checkAzureDevOpsConnection(projectId);
-      if (result.success) {
-        setSyncStatus(result.data ?? null);
-        if (result.data?.connected) {
-          // Clear error when connection is successful
-          setError(null);
-        } else {
-          setError(result.data?.error || t('azureDevOpsImport.errorNotConfigured'));
-        }
-      } else {
-        setError(result.error || t('azureDevOpsImport.errorCheckConnectionFailed'));
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('azureDevOpsImport.errorUnknown'));
-    }
-  };
-
-  const loadWorkItems = async (forceRefresh = false) => {
-    // Don't load if not forcing refresh and we have recent cache
-    if (!forceRefresh && lastCacheTime) {
-      const now = Date.now();
-      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-      if (now - lastCacheTime < CACHE_DURATION) {
-        rendererLog.azure.debug('[AzureDevOps] Using recent cache, skipping load');
-        return;
-      }
-    }
-
-    setIsLoadingItems(true);
-    setError(null);
-    try {
-      const result = await globalThis.electronAPI.getAzureDevOpsWorkItems(
-        projectId,
-        undefined, // Use default project from config
-        undefined, // Use default item types (Bug, Task, User Story)
-        1000 // Max items
-      );
-
-      if (result.success) {
-        const workItems = result.data || [];
-        setWorkItems(workItems);
-        
-        // Save to cache
-        try {
-          const cacheKey = `azure-devops-workitems-cache-${projectId}`;
-          const cacheTimeKey = `azure-devops-workitems-cache-time-${projectId}`;
-          const now = Date.now();
-          
-          localStorage.setItem(cacheKey, JSON.stringify(workItems));
-          localStorage.setItem(cacheTimeKey, now.toString());
-          setLastCacheTime(now);
-          
-          rendererLog.azure.debug('[AzureDevOps] Work items cached successfully');
-        } catch (cacheError) {
-          rendererLog.azure.debug('[AzureDevOps] Failed to cache work items:', cacheError);
-        }
-      } else {
-        setError(result.error || t('azureDevOpsImport.errorLoadWorkItemsFailed'));
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('azureDevOpsImport.errorUnknown'));
-    } finally {
-      setIsLoadingItems(false);
-    }
-  };
+  }, [open, syncStatus?.connected, lastCacheTime, loadWorkItems]);
 
   const handleRefresh = () => {
     setSelectedIds(new Set());

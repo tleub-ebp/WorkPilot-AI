@@ -46,12 +46,7 @@ function isValidImplementationPlan(plan: ImplementationPlan): boolean {
 /**
  * Log debug information about why a plan validation failed
  */
-function logInvalidPlanDetails(taskId: string, plan: ImplementationPlan): void {
-  console.debug(`[agent-events-handlers] Skipping invalid plan update for ${taskId}: missing or invalid phases/subtasks`, {
-    hasPhasesArray: Array.isArray(plan.phases),
-    phasesLength: plan.phases?.length || 0,
-    phases: plan.phases
-  });
+function logInvalidPlanDetails(_taskId: string, _plan: ImplementationPlan): void {
 }
 
 /**
@@ -69,7 +64,6 @@ function restampXStateStatusIfNeeded(
   const currentXState = taskStateManager.getCurrentState(taskId);
   
   if (currentXState && !planWithStatus.xstateState && hasValidPhases && task && project) {
-    console.debug(`[agent-events-handlers] Re-stamping XState status on plan file for ${taskId} (state: ${currentXState})`);
     const mainPlanPath = getPlanPath(project, task);
     const { status, reviewReason } = mapStateToLegacy(currentXState);
     const phase = XSTATE_TO_PHASE[currentXState] || 'idle';
@@ -90,7 +84,6 @@ function restampXStateStatusIfNeeded(
       }
     }
   } else if (currentXState && !planWithStatus.xstateState && !hasValidPhases) {
-    console.debug(`[agent-events-handlers] Skipping re-stamp for ${taskId}: plan has no phases (stub/empty). Backend planner will populate it.`);
   }
 }
 
@@ -136,7 +129,7 @@ function initializeTaskSequenceIfNeeded(taskId: string, projectId?: string): voi
 /**
  * Persist last event to both main and worktree plan files
  */
-function persistLastEventToAllPlans(taskId: string, event: any, task: any, project: any): void {
+function persistLastEventToAllPlans(_taskId: string, event: any, task: any, project: any): void {
   const mainPlanPath = getPlanPath(project, task);
   persistPlanLastEventSync(mainPlanPath, event);
 
@@ -263,7 +256,6 @@ export function registerAgenteventsHandlers(
   });
 
   agentManager.on("task-event", (taskId: string, event, projectId?: string) => {
-    console.debug(`[agent-events-handlers] Received task-event for ${taskId}:`, event.type, event);
 
     // Forward decision log entries directly to renderer without going through XState (Feature 30)
     if (event.type === 'DECISION_LOG_ENTRY') {
@@ -281,18 +273,10 @@ export function registerAgenteventsHandlers(
 
     const { task, project } = findTaskAndProject(taskId, projectId);
     if (!task || !project) {
-      console.debug(`[agent-events-handlers] No task/project found for ${taskId}`);
       return;
     }
 
-    console.debug(`[agent-events-handlers] Task state before handleTaskEvent:`, {
-      status: task.status,
-      reviewReason: task.reviewReason,
-      phase: task.executionProgress?.phase
-    });
-
     const accepted = taskStateManager.handleTaskEvent(taskId, event, task, project);
-    console.debug(`[agent-events-handlers] Event ${event.type} accepted: ${accepted}`);
     
     if (!accepted) {
       return;
@@ -333,7 +317,6 @@ export function registerAgenteventsHandlers(
       if (existsSync(mainPlanPath)) {
         persistPlanPhaseSync(mainPlanPath, progress.phase, project.id);
       } else {
-        console.debug(`[agent-events-handlers] Skipping persistPlanPhaseSync for ${taskId}: plan file does not exist yet (backend planner will create it)`);
       }
 
       // Also persist to worktree if task has one
@@ -351,13 +334,11 @@ export function registerAgenteventsHandlers(
         }
       }
     } else if (xstateInTerminalState && progress.phase) {
-      console.debug(`[agent-events-handlers] Skipping persistPlanPhaseSync for ${taskId}: XState in '${currentXState}', not overwriting with phase '${progress.phase}'`);
     }
 
     // Skip sending execution-progress to renderer when XState has settled.
     // XState's emitPhaseFromState already sent the correct phase to the renderer.
     if (xstateInTerminalState) {
-      console.debug(`[agent-events-handlers] Skipping execution-progress to renderer for ${taskId}: XState in '${currentXState}', ignoring phase '${progress.phase}'`);
       return;
     }
     safeSendToRenderer(

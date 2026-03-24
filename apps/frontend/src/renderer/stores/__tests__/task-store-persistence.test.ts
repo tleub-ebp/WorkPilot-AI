@@ -35,7 +35,7 @@ describe('task-store-persistence', () => {
   let loadTasks: typeof import('../task-store').loadTasks;
   let createTask: typeof import('../task-store').createTask;
   // Helper to create test tasks with all required fields
-  const makeTask = (overrides: Partial<Task> = {}): Task => ({
+  const _makeTask = (overrides: Partial<Task> = {}): Task => ({
     id: 'task-1',
     specId: '001-test-task',
     projectId: 'test-project',
@@ -354,7 +354,7 @@ describe('task-store-persistence', () => {
       expect(loadingState.isLoading).toBe(true);
 
       // Resolve the IPC call
-      resolveGetTasks!({
+      resolveGetTasks?.({
         success: true,
         data: []
       });

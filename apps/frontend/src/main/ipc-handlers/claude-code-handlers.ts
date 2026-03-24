@@ -2249,11 +2249,7 @@ export function registerClaudeCodeHandlers(): void {
 
       try {
 
-        console.log('[Claude Code] Fetching available versions...');
-
         const versions = await fetchAvailableVersions();
-
-        console.log('[Claude Code] Found', versions.length, 'versions');
 
         return {
 
@@ -2313,19 +2309,9 @@ export function registerClaudeCodeHandlers(): void {
 
         }
 
-
-
-        console.log('[Claude Code] Installing version:', version);
-
         const command = getInstallVersionCommand(version);
 
-        console.log('[Claude Code] Install command:', command);
-
-        console.log('[Claude Code] Opening terminal...');
-
         await openTerminalWithCommand(command);
-
-        console.log('[Claude Code] Terminal opened successfully');
 
 
 
@@ -2369,8 +2355,6 @@ export function registerClaudeCodeHandlers(): void {
 
       try {
 
-        console.log('[Claude Code] Scanning for installations...');
-
 
 
         // Get current active path from settings
@@ -2382,8 +2366,6 @@ export function registerClaudeCodeHandlers(): void {
 
 
         const installations = await scanClaudeInstallations(activePath || null);
-
-        console.log('[Claude Code] Found', installations.length, 'installations');
 
 
 
@@ -2433,8 +2415,6 @@ export function registerClaudeCodeHandlers(): void {
 
       try {
 
-        console.log('[Claude Code] Setting active path:', cliPath);
-
 
 
         // Security validation: reject paths with shell metacharacters or directory traversal
@@ -2463,7 +2443,7 @@ export function registerClaudeCodeHandlers(): void {
 
 
 
-        const [isValid, version] = await validateClaudeCliAsync(normalizedPath);
+        const [isValid, _version] = await validateClaudeCliAsync(normalizedPath);
 
         if (!isValid) {
 
@@ -2494,10 +2474,6 @@ export function registerClaudeCodeHandlers(): void {
         // Update CLI tool manager cache
 
         configureTools({ claudePath: normalizedPath });
-
-
-
-        console.log('[Claude Code] Active path set:', normalizedPath, 'version:', version);
 
 
 

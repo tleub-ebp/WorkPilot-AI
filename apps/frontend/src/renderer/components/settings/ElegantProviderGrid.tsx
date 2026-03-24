@@ -99,7 +99,7 @@ export function ElegantProviderGrid({
     return { total, configured, working, errors };
   }, [providers]);
 
-  const categories = useMemo(() => {
+  const _categories = useMemo(() => {
     const cats = new Set(providers.map(p => p.category));
     return Array.from(cats).sort();
   }, [providers]);

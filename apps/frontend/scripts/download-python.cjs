@@ -234,7 +234,6 @@ function downloadFile(url, destPath) {
   const MAX_REDIRECTS = 10;
 
   return new Promise((resolve, reject) => {
-    console.log(`[download-python] Downloading from: ${url}`);
 
     let file = null;
     let redirectCount = 0;
@@ -269,7 +268,6 @@ function downloadFile(url, destPath) {
       currentRequest = https.get(urlString, { timeout: DOWNLOAD_TIMEOUT }, (response) => {
         // Handle redirects (GitHub uses them)
         if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-          console.log(`[download-python] Following redirect...`);
           response.resume(); // Consume response to free up memory
           request(response.headers.location);
           return;
@@ -290,7 +288,6 @@ function downloadFile(url, destPath) {
           if (totalSize > 0) {
             const percent = Math.floor((downloadedSize / totalSize) * 100);
             if (percent >= lastPercent + 10) {
-              console.log(`[download-python] Progress: ${percent}%`);
               lastPercent = percent;
             }
           }
@@ -301,7 +298,6 @@ function downloadFile(url, destPath) {
         file.on('finish', () => {
           file.close();
           file = null;
-          console.log(`[download-python] Download complete: ${destPath}`);
           resolve();
         });
 
@@ -332,19 +328,14 @@ function downloadFile(url, destPath) {
  */
 function verifyChecksum(filePath, expectedChecksum) {
   if (!expectedChecksum) {
-    console.log(`[download-python] Warning: No checksum available for verification`);
     return true;
   }
-
-  console.log(`[download-python] Verifying checksum...`);
   const fileBuffer = fs.readFileSync(filePath);
   const hash = nodeCrypto.createHash('sha256').update(fileBuffer).digest('hex');
 
   if (hash !== expectedChecksum) {
     throw new Error(`Checksum mismatch! Expected: ${expectedChecksum}, Got: ${hash}`);
   }
-
-  console.log(`[download-python] Checksum verified: ${hash.substring(0, 16)}...`);
   return true;
 }
 
@@ -352,7 +343,6 @@ function verifyChecksum(filePath, expectedChecksum) {
  * Extract a tar.gz file using spawnSync for safety.
  */
 function extractTarGz(archivePath, destDir) {
-  console.log(`[download-python] Extracting to: ${destDir}`);
 
   // Ensure destination exists
   fs.mkdirSync(destDir, { recursive: true });
@@ -393,8 +383,6 @@ function extractTarGz(archivePath, destDir) {
       throw new Error(`Failed to extract archive: tar exited with code ${result.status}`);
     }
   }
-
-  console.log(`[download-python] Extraction complete`);
 }
 
 /**
@@ -450,7 +438,7 @@ function getDirectorySize(dirPath) {
 /**
  * Format bytes to human readable string.
  */
-function formatBytes(bytes) {
+function _formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -526,10 +514,9 @@ function isCriticalPackageMissing(sitePackagesDir, pkg) {
  * This removes tests, docs, cache files, and other non-essential content.
  */
 function stripSitePackages(sitePackagesDir) {
-  console.log(`[download-python] Stripping unnecessary files from site-packages...`);
 
   const sizeBefore = getDirectorySize(sitePackagesDir);
-  let removedCount = 0;
+  let _removedCount = 0;
 
   // First, remove specific package paths (e.g., googleapiclient/discovery_cache/documents)
   // Use try/catch instead of existsSync to avoid TOCTOU race conditions
@@ -538,16 +525,15 @@ function stripSitePackages(sitePackagesDir) {
       const fullPath = path.join(sitePackagesDir, pkgPath);
       try {
         // Get size first (may throw ENOENT if path doesn't exist)
-        let pathSize = 0;
+        let _pathSize = 0;
         try {
-          pathSize = getDirectorySize(fullPath);
+          _pathSize = getDirectorySize(fullPath);
         } catch {
           // Path doesn't exist or can't get size - skip
           continue;
         }
         fs.rmSync(fullPath, { recursive: true, force: true });
-        console.log(`[download-python] Removed ${pkgPath} (${formatBytes(pathSize)})`);
-        removedCount++;
+        _removedCount++;
       } catch (err) {
         // ENOENT means file was already gone - not an error
         if (err.code !== 'ENOENT') {
@@ -598,7 +584,7 @@ function stripSitePackages(sitePackagesDir) {
         if (shouldRemoveDir(entry.name)) {
           try {
             fs.rmSync(fullPath, { recursive: true, force: true });
-            removedCount++;
+            _removedCount++;
           } catch {
             // Ignore removal errors
           }
@@ -609,7 +595,7 @@ function stripSitePackages(sitePackagesDir) {
         if (shouldRemoveFile(entry.name)) {
           try {
             fs.unlinkSync(fullPath);
-            removedCount++;
+            _removedCount++;
           } catch {
             // Ignore removal errors
           }
@@ -621,10 +607,7 @@ function stripSitePackages(sitePackagesDir) {
   walkAndStrip(sitePackagesDir);
 
   const sizeAfter = getDirectorySize(sitePackagesDir);
-  const savedPercent = ((sizeBefore - sizeAfter) / sizeBefore * 100).toFixed(1);
-
-  console.log(`[download-python] Stripped ${removedCount} files/dirs`);
-  console.log(`[download-python] Size reduced: ${formatBytes(sizeBefore)} → ${formatBytes(sizeAfter)} (saved ${savedPercent}%)`);
+  const _savedPercent = ((sizeBefore - sizeAfter) / sizeBefore * 100).toFixed(1);
 }
 
 /**
@@ -683,8 +666,6 @@ function fixPywin32(sitePackagesDir) {
     return;
   }
 
-  console.log(`[download-python] Fixing pywin32 for bundled packages...`);
-
   // 1. Copy pywintypes.py and pythoncom.py from win32/lib/ to root
   // These are the Python modules that load the DLLs
   const pyModules = ['pywintypes.py', 'pythoncom.py'];
@@ -695,7 +676,6 @@ function fixPywin32(sitePackagesDir) {
     if (fs.existsSync(srcPath)) {
       try {
         fs.copyFileSync(srcPath, destPath);
-        console.log(`[download-python] Copied ${pyModule} to site-packages root`);
       } catch (err) {
         console.warn(`[download-python] Failed to copy ${pyModule}: ${err.message}`);
       }
@@ -716,7 +696,6 @@ function fixPywin32(sitePackagesDir) {
 
     try {
       fs.copyFileSync(srcPath, destPath);
-      console.log(`[download-python] Copied ${sysloader} to site-packages root`);
     } catch (err) {
       console.warn(`[download-python] Failed to copy ${sysloader}: ${err.message}`);
     }
@@ -736,7 +715,6 @@ __path__ = [os.path.dirname(__file__)]
     // allow another process to create/modify the file between check and write.
     // See: https://nodejs.org/api/fs.html#file-system-flags
     fs.writeFileSync(initPath, initContent, { flag: 'wx' });
-    console.log(`[download-python] Created pywin32_system32/__init__.py`);
   } catch (err) {
     // EEXIST means file already exists - that's fine, we wanted to avoid overwriting
     if (err.code !== 'EEXIST') {
@@ -764,7 +742,6 @@ __path__ = [os.path.dirname(__file__)]
 
     try {
       fs.copyFileSync(srcPath, destPath);
-      console.log(`[download-python] Copied ${dll} to win32/`);
     } catch (err) {
       console.warn(`[download-python] Failed to copy ${dll} to win32/: ${err.message}`);
     }
@@ -777,24 +754,10 @@ __path__ = [os.path.dirname(__file__)]
 
     try {
       fs.copyFileSync(srcPath, destPath);
-      console.log(`[download-python] Copied ${dll} to site-packages root`);
     } catch (err) {
       console.warn(`[download-python] Failed to copy ${dll}: ${err.message}`);
     }
   }
-
-  // Note: We intentionally do NOT create a PYTHONSTARTUP bootstrap script.
-  // PYTHONSTARTUP only runs in interactive Python mode (python REPL), NOT when
-  // running scripts (python script.py). Since all our Python invocations pass
-  // scripts as arguments, PYTHONSTARTUP would never execute.
-  //
-  // The DLL copying above (steps 4 and 5) is what actually makes pywin32 work -
-  // it places DLLs in locations where Python's default DLL search finds them.
-  // The PATH modification in python-env-manager.ts provides an additional fallback.
-  //
-  // See: https://docs.python.org/3/using/cmdline.html (PYTHONSTARTUP documentation)
-
-  console.log(`[download-python] pywin32 fix complete`);
 }
 
 /**
@@ -802,8 +765,6 @@ __path__ = [os.path.dirname(__file__)]
  * Uses pip with optimizations for smaller output.
  */
 function installPackages(pythonBin, requirementsPath, targetSitePackages) {
-  console.log(`[download-python] Installing packages from: ${requirementsPath}`);
-  console.log(`[download-python] Target: ${targetSitePackages}`);
 
   // Check for blocked packages first
   checkForBlockedPackages(requirementsPath);
@@ -825,8 +786,6 @@ function installPackages(pythonBin, requirementsPath, targetSitePackages) {
     '-r', requirementsPath,
   ];
 
-  console.log(`[download-python] Running: ${pythonBin} ${pipArgs.join(' ')}`);
-
   const result = spawnSync(pythonBin, pipArgs, {
     stdio: 'inherit',
     env: {
@@ -846,8 +805,6 @@ function installPackages(pythonBin, requirementsPath, targetSitePackages) {
     throw new Error(`pip install failed with exit code ${result.status}`);
   }
 
-  console.log(`[download-python] Packages installed successfully`);
-
   // Fix pywin32 for Windows builds (must be done BEFORE stripping)
   fixPywin32(targetSitePackages);
 
@@ -859,7 +816,6 @@ function installPackages(pythonBin, requirementsPath, targetSitePackages) {
     const pinnedVersion = getPinnedPydanticCoreVersion(targetSitePackages);
     const coreSpec = pinnedVersion ? `pydantic-core==${pinnedVersion}` : 'pydantic-core';
     if (pinnedVersion) {
-      console.log(`[download-python] Reinstalling pydantic-core ${pinnedVersion} to match pydantic metadata`);
     } else {
       console.warn('[download-python] Unable to determine pydantic-core pin; reinstalling latest');
     }
@@ -897,15 +853,12 @@ function installPackages(pythonBin, requirementsPath, targetSitePackages) {
   const scriptsDir = path.join(targetSitePackages, 'Scripts');
   if (fs.existsSync(binDir)) {
     fs.rmSync(binDir, { recursive: true, force: true });
-    console.log(`[download-python] Removed bin/ directory`);
   }
   if (fs.existsSync(scriptsDir)) {
     fs.rmSync(scriptsDir, { recursive: true, force: true });
-    console.log(`[download-python] Removed Scripts/ directory`);
   }
 
-  const finalSize = getDirectorySize(targetSitePackages);
-  console.log(`[download-python] Final site-packages size: ${formatBytes(finalSize)}`);
+  const _finalSize = getDirectorySize(targetSitePackages);
 }
 
 /**
@@ -924,7 +877,6 @@ async function downloadPython(targetPlatform, targetArch, options = {}) {
   const { skipPackages = false, requirementsPath: customRequirementsPath } = options;
 
   const info = getDownloadInfo(platform, arch);
-  console.log(`[download-python] Setting up Python ${PYTHON_VERSION} for ${info.outputDir}`);
 
   const frontendDir = path.join(__dirname, '..');
   const runtimeDir = path.join(frontendDir, OUTPUT_DIR);
@@ -943,12 +895,10 @@ async function downloadPython(targetPlatform, targetArch, options = {}) {
   // Check if already fully set up (Python + packages)
   const packagesMarker = path.join(sitePackagesDir, '.bundled');
   if (fs.existsSync(pythonBin) && fs.existsSync(packagesMarker)) {
-    console.log(`[download-python] Python and packages already bundled at ${platformDir}`);
 
     // Verify Python works
     try {
-      const version = verifyPythonBinary(pythonBin);
-      console.log(`[download-python] Verified: ${version}`);
+      const _version = verifyPythonBinary(pythonBin);
 
       // Verify critical packages exist (fixes GitHub issue #416)
       // Without this check, corrupted caches with missing packages would be accepted
@@ -960,18 +910,14 @@ async function downloadPython(targetPlatform, targetArch, options = {}) {
       const missingPackages = criticalPackages.filter(pkg => isCriticalPackageMissing(sitePackagesDir, pkg));
 
       if (missingPackages.length > 0) {
-        console.log(`[download-python] Critical packages missing or incomplete: ${missingPackages.join(', ')}`);
-        console.log(`[download-python] Reinstalling packages...`);
         // Remove site-packages to force reinstall, keep Python binary
         // Flow continues below to re-install packages (skipPackages check at line 794)
         fs.rmSync(sitePackagesDir, { recursive: true, force: true });
       } else {
-        console.log(`[download-python] All critical packages verified`);
         return { success: true, pythonPath: pythonBin, sitePackagesPath: sitePackagesDir };
       }
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      console.log(`[download-python] Existing installation is broken: ${errorMsg}`);
+      const _errorMsg = err instanceof Error ? err.message : String(err);
       fs.rmSync(platformDir, { recursive: true, force: true });
     }
   }
@@ -982,11 +928,9 @@ async function downloadPython(targetPlatform, targetArch, options = {}) {
   if (fs.existsSync(pythonBin)) {
     // Verify existing Python
     try {
-      const version = verifyPythonBinary(pythonBin);
-      console.log(`[download-python] Found existing Python: ${version}`);
+      const _version = verifyPythonBinary(pythonBin);
       needsPythonDownload = false;
     } catch {
-      console.log(`[download-python] Existing Python is broken, re-downloading...`);
       fs.rmSync(platformDir, { recursive: true, force: true });
       needsPythonDownload = true;
     }
@@ -1001,13 +945,11 @@ async function downloadPython(targetPlatform, targetArch, options = {}) {
     let needsDownload = true;
 
     if (fs.existsSync(archivePath)) {
-      console.log(`[download-python] Found cached archive: ${archivePath}`);
       // Verify cached archive checksum
       try {
         verifyChecksum(archivePath, info.checksum);
         needsDownload = false;
-      } catch (err) {
-        console.log(`[download-python] Cached archive failed verification: ${err.message}`);
+      } catch (_err) {
         fs.unlinkSync(archivePath);
       }
     }
@@ -1032,8 +974,7 @@ async function downloadPython(targetPlatform, targetArch, options = {}) {
     }
 
     // Verify it works
-    const version = verifyPythonBinary(pythonBin);
-    console.log(`[download-python] Installed Python: ${version}`);
+    const _version = verifyPythonBinary(pythonBin);
   }
 
   // Install packages unless skipped
@@ -1044,7 +985,6 @@ async function downloadPython(targetPlatform, targetArch, options = {}) {
     } else {
       // Remove existing site-packages to ensure clean install
       if (fs.existsSync(sitePackagesDir)) {
-        console.log(`[download-python] Removing existing site-packages...`);
         fs.rmSync(sitePackagesDir, { recursive: true, force: true });
       }
 
@@ -1063,8 +1003,6 @@ async function downloadPython(targetPlatform, targetArch, options = {}) {
         throw new Error(`Package installation failed - missing critical packages: ${postInstallMissing.join(', ')}`);
       }
 
-      console.log(`[download-python] All critical packages verified after installation`);
-
       // Create marker file to indicate successful bundling
       fs.writeFileSync(packagesMarker, JSON.stringify({
         bundledAt: new Date().toISOString(),
@@ -1072,8 +1010,6 @@ async function downloadPython(targetPlatform, targetArch, options = {}) {
         platform: info.nodePlatform,
         arch: arch,
       }, null, 2));
-
-      console.log(`[download-python] Created bundle marker: ${packagesMarker}`);
     }
   }
 
@@ -1092,8 +1028,6 @@ async function downloadAllPlatforms() {
     { platform: 'linux', arch: 'arm64' },
   ];
 
-  console.log(`[download-python] Downloading Python for all platforms...`);
-
   for (const { platform, arch } of platforms) {
     try {
       await downloadPython(platform, arch);
@@ -1102,8 +1036,6 @@ async function downloadAllPlatforms() {
       throw error;
     }
   }
-
-  console.log(`[download-python] All platforms downloaded successfully!`);
 }
 
 // Valid platforms and architectures (for input validation)
@@ -1144,23 +1076,6 @@ async function main() {
     } else if (args[i] === '--all') {
       allPlatforms = true;
     } else if (args[i] === '--help' || args[i] === '-h') {
-      console.log(`
-Usage: node download-python.cjs [options]
-
-Options:
-  --platform <platform>  Target platform (darwin/mac, win32/win, linux)
-  --arch <arch>          Target architecture (x64, arm64)
-  --all                  Download for all supported platforms
-  --help, -h             Show this help message
-
-If no options specified, downloads for the current platform/arch.
-
-Examples:
-  node download-python.cjs                           # Current platform
-  node download-python.cjs --platform darwin --arch arm64
-  node download-python.cjs --platform mac --arch arm64  # Electron-builder style
-  node download-python.cjs --all                     # All platforms (for CI)
-`);
       process.exit(0);
     }
   }
@@ -1175,7 +1090,6 @@ Examples:
     } else {
       await downloadPython(platform, arch);
     }
-    console.log('[download-python] Done!');
   } catch (error) {
     console.error(`[download-python] Error: ${error.message}`);
     process.exit(1);

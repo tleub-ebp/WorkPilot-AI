@@ -359,7 +359,7 @@ def _infer_generic_layers(project_dir: Path) -> list[LayerConfig]:
     for dir_path, layer_name in common_structures.items():
         if (project_dir / dir_path).is_dir():
             # Only add if we don't already have this layer
-            if not any(l.name == layer_name for l in layers):
+            if not any(layer.name == layer_name for layer in layers):
                 layers.append(
                     LayerConfig(
                         name=layer_name,

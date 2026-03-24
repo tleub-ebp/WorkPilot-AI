@@ -42,8 +42,7 @@ export class TaskStateManager {
   }
 
   handleTaskEvent(taskId: string, event: TaskEventPayload, task: Task, project: Project): boolean {
-    const lastSeq = this.lastSequenceByTask.get(taskId);
-    console.debug(`[TaskStateManager] handleTaskEvent: ${event.type} seq=${event.sequence}, lastSeq=${lastSeq}`);
+    const _lastSeq = this.lastSequenceByTask.get(taskId);
     
     // Log détaillé pour les événements CODING_FAILED
     if (event.type === 'CODING_FAILED') {
@@ -58,7 +57,6 @@ export class TaskStateManager {
     }
 
     if (!this.isNewSequence(taskId, event.sequence)) {
-      console.debug(`[TaskStateManager] Event ${event.type} DROPPED - sequence ${event.sequence} not newer than ${lastSeq}`);
       return false;
     }
     this.setTaskContext(taskId, task, project);
@@ -69,11 +67,9 @@ export class TaskStateManager {
     }
 
     const actor = this.getOrCreateActor(taskId);
-    const stateBefore = String(actor.getSnapshot().value);
-    console.debug(`[TaskStateManager] Sending ${event.type} to actor in state: ${stateBefore}`);
+    const _stateBefore = String(actor.getSnapshot().value);
     actor.send(event as TaskEvent);
-    const stateAfter = String(actor.getSnapshot().value);
-    console.debug(`[TaskStateManager] After ${event.type}: state ${stateBefore} -> ${stateAfter}`);
+    const _stateAfter = String(actor.getSnapshot().value);
     return true;
   }
 
@@ -102,14 +98,11 @@ export class TaskStateManager {
   }
 
   handleUiEvent(taskId: string, event: TaskEvent, task: Task, project: Project): void {
-    console.debug(`[TaskStateManager] handleUiEvent: ${event.type} for task ${taskId}`);
     this.setTaskContext(taskId, task, project);
     const actor = this.getOrCreateActor(taskId);
-    const stateBefore = String(actor.getSnapshot().value);
-    console.debug(`[TaskStateManager] Sending UI event ${event.type} to actor in state: ${stateBefore}`);
+    const _stateBefore = String(actor.getSnapshot().value);
     actor.send(event);
-    const stateAfter = String(actor.getSnapshot().value);
-    console.debug(`[TaskStateManager] After UI event ${event.type}: state ${stateBefore} -> ${stateAfter}`);
+    const _stateAfter = String(actor.getSnapshot().value);
   }
 
   handleManualStatusChange(taskId: string, status: TaskStatus, task: Task, project: Project): boolean {
@@ -222,7 +215,6 @@ export class TaskStateManager {
     this.lastStateByTask.clear();
     this.terminalEventSeen.clear();
     this.taskContextById.clear();
-    console.log('[TaskStateManager] Cleared task actors and state for refresh (preserved sequence tracking)');
   }
 
   private setTaskContext(taskId: string, task: Task, project: Project): void {
@@ -232,7 +224,6 @@ export class TaskStateManager {
   private getOrCreateActor(taskId: string): TaskActor {
     const existing = this.actors.get(taskId);
     if (existing) {
-      console.debug(`[TaskStateManager] Using existing actor for ${taskId}, current state:`, String(existing.getSnapshot().value));
       return existing;
     }
 
@@ -242,14 +233,7 @@ export class TaskStateManager {
       : undefined;
 
     if (contextEntry) {
-      console.debug(`[TaskStateManager] Creating new actor for ${taskId} from task:`, {
-        status: contextEntry.task.status,
-        reviewReason: contextEntry.task.reviewReason,
-        phase: contextEntry.task.executionProgress?.phase,
-        initialState: snapshot ? String(snapshot.value) : 'default (backlog)'
-      });
     } else {
-      console.debug(`[TaskStateManager] Creating new actor for ${taskId} with default state (no context entry)`);
     }
 
     const actor = snapshot
@@ -259,12 +243,6 @@ export class TaskStateManager {
       const stateValue = String(snapshot.value);
       const lastState = this.lastStateByTask.get(taskId);
 
-      console.debug(`[TaskStateManager] XState transition for ${taskId}:`, {
-        from: lastState,
-        to: stateValue,
-        contextReviewReason: snapshot.context.reviewReason
-      });
-
       if (lastState === stateValue) {
         return;
       }
@@ -272,7 +250,6 @@ export class TaskStateManager {
 
       const contextEntry = this.taskContextById.get(taskId);
       if (!contextEntry) {
-        console.debug(`[TaskStateManager] No context for task ${taskId} during state transition to ${stateValue} - skipping emit (may occur after clearTask during event processing)`);
         return;
       }
       const { task, project } = contextEntry;
@@ -283,14 +260,6 @@ export class TaskStateManager {
 
       // Map XState state to execution phase for persistence
       const executionPhase = this.mapStateToExecutionPhase(stateValue);
-
-      console.debug(`[TaskStateManager] Emitting status for ${taskId}:`, {
-        status,
-        reviewReason,
-        xstateState: stateValue,
-        executionPhase,
-        projectId: project.id
-      });
 
       this.persistStatus(task, project, status, reviewReason, stateValue, executionPhase);
       this.emitStatus(taskId, status, reviewReason, project.id);
@@ -348,7 +317,6 @@ export class TaskStateManager {
       console.warn(`[TaskStateManager] emitStatus: No main window, cannot emit status ${status} for ${taskId}`);
       return;
     }
-    console.debug(`[TaskStateManager] emitStatus: Sending TASK_STATUS_CHANGE for ${taskId}:`, { status, reviewReason, projectId });
     safeSendToRenderer(
       this.getMainWindow,
       IPC_CHANNELS.TASK_STATUS_CHANGE,

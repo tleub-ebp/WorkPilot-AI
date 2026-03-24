@@ -95,7 +95,7 @@ export function SDKRateLimitModal() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSDKModalOpen, sdkRateLimitInfo, profiles]);
+  }, [isSDKModalOpen, sdkRateLimitInfo, profiles, loadAutoSwitchSettings]);
 
   // Reset selection when modal closes
   useEffect(() => {
