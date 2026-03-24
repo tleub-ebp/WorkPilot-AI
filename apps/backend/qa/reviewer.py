@@ -32,6 +32,13 @@ try:
 except ImportError:
     _ut_record_qa = None  # type: ignore[assignment]
 
+try:
+    from replay.recorder import get_replay_recorder as _get_replay_recorder
+    _REPLAY_AVAILABLE = True
+except ImportError:
+    _REPLAY_AVAILABLE = False
+    _get_replay_recorder = None  # type: ignore[assignment]
+
 import re
 from datetime import datetime, timezone
 
@@ -171,6 +178,25 @@ async def run_qa_agent_session(
     current_tool = None
     message_count = 0
     tool_count = 0
+
+    # Initialize replay recorder for this QA session (non-blocking, best-effort)
+    _rs_id = None
+    _rr = None
+    if _REPLAY_AVAILABLE:
+        try:
+            import uuid as _uuid_mod
+            _rr = _get_replay_recorder()
+            _rs_id = _uuid_mod.uuid4().hex[:16]
+            _rr.start_session(_rs_id, {
+                "agent_name": "QA Reviewer",
+                "agent_type": "qa_reviewer",
+                "task": spec_dir.name,
+                "project_path": str(spec_dir.parent.parent.parent),
+                "model": getattr(getattr(client, "options", None), "model", "") or "",
+            })
+        except Exception:
+            _rr = None
+            _rs_id = None
 
     # Load QA prompt with dynamically-injected project-specific MCP tools
     # This includes Electron validation for Electron apps, Puppeteer for web, etc.
@@ -330,6 +356,12 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
                                 LogPhase.VALIDATION,
                                 print_to_console=False,
                             )
+                        # Record agent response in replay
+                        if _rr and _rs_id and block.text.strip():
+                            try:
+                                _rr.record_response(_rs_id, block.text)
+                            except Exception:
+                                pass
                     elif block_type == "ToolUseBlock" and hasattr(block, "name"):
                         tool_name = block.name
                         tool_input_display = None
@@ -372,6 +404,20 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
                             else:
                                 print(f"   Input: {input_str}", flush=True)
                         current_tool = tool_name
+
+                        # Record tool use in replay
+                        if _rr and _rs_id:
+                            try:
+                                if tool_name in ("Edit", "Write") and inp and inp.get("file_path"):
+                                    _op = "update" if tool_name == "Edit" else "create"
+                                    _after = str(inp.get("new_string") or inp.get("content") or "")
+                                    _rr.record_file_change(_rs_id, inp["file_path"], operation=_op, after_content=_after)
+                                elif tool_name == "Bash" and inp and inp.get("command"):
+                                    _rr.record_command(_rs_id, inp["command"])
+                                else:
+                                    _rr.record_tool_call(_rs_id, tool_name, tool_input_dict=inp or {})
+                            except Exception:
+                                pass
 
             elif msg_type == "UserMessage" and hasattr(msg, "content"):
                 for block in msg.content:
@@ -429,6 +475,17 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
                                     phase=LogPhase.VALIDATION,
                                 )
 
+                        # Record tool result in replay
+                        if _rr and _rs_id and current_tool:
+                            try:
+                                _result_str = str(result_content)[:2000]
+                                if current_tool == "Bash":
+                                    _rr.record_command_output(_rs_id, _result_str, is_error=is_error)
+                                elif current_tool not in ("Edit", "Write"):
+                                    _rr.record_tool_result(_rs_id, current_tool, output=_result_str, success=not is_error)
+                            except Exception:
+                                pass
+
                         current_tool = None
 
         print("\n" + "-" * 70 + "\n")
@@ -471,7 +528,7 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
                 subtasks_completed=[f"qa_reviewer_{qa_session}"],
                 discoveries=qa_discoveries,
             )
-            return "approved", response_text
+            _qa_result = ("approved", response_text)
         elif status and status.get("status") == "rejected":
             debug_error("qa_reviewer", "QA REJECTED")
             if _ut_record_qa is not None:
@@ -495,7 +552,7 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
                 subtasks_completed=[],
                 discoveries=qa_discoveries,
             )
-            return "rejected", response_text
+            _qa_result = ("rejected", response_text)
         elif status and status.get("status") not in ("approved", "rejected"):
             # Non-standard status (e.g. "awaiting_manual_verification") — treat as human escalation
             non_standard = status.get("status", "unknown")
@@ -505,7 +562,7 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
             )
             print(f"\n⚠️  QA agent set non-standard status: {non_standard}")
             print("Treating as human escalation (manual verification required).")
-            return "human_escalation", response_text
+            _qa_result = ("human_escalation", response_text)
         else:
             # Agent didn't update the file - try to extract verdict from response
             extracted_verdict = _extract_verdict_from_response(response_text)
@@ -532,39 +589,48 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
                         f"✅ Programmatically updated implementation_plan.json "
                         f"with status: {extracted_verdict}"
                     )
-                    return extracted_verdict, response_text
+                    _qa_result = (extracted_verdict, response_text)
                 else:
                     debug_error(
                         "qa_reviewer",
                         "Failed to programmatically write qa_signoff",
                     )
+                    _qa_result = ("error", "Failed to write qa_signoff")
+            else:
+                # Agent didn't update the status and no clear verdict in response
+                debug_error(
+                    "qa_reviewer",
+                    "QA agent did not update implementation_plan.json",
+                    message_count=message_count,
+                    tool_count=tool_count,
+                    response_preview=response_text[:500] if response_text else "empty",
+                )
 
-            # Agent didn't update the status and no clear verdict in response
-            debug_error(
-                "qa_reviewer",
-                "QA agent did not update implementation_plan.json",
-                message_count=message_count,
-                tool_count=tool_count,
-                response_preview=response_text[:500] if response_text else "empty",
-            )
+                # Build informative error message for feedback loop
+                error_details = []
+                if result_error:
+                    # SDK-level error (rate limit, auth failure, subprocess crash)
+                    _qa_result = ("error", f"Claude session error: {result_error}")
+                else:
+                    if message_count == 0:
+                        error_details.append("No messages received from agent")
+                    if tool_count == 0:
+                        error_details.append("No tools were used by agent")
+                    if not response_text:
+                        error_details.append("Agent produced no output")
 
-            # Build informative error message for feedback loop
-            error_details = []
-            if result_error:
-                # SDK-level error (rate limit, auth failure, subprocess crash)
-                return "error", f"Claude session error: {result_error}"
-            if message_count == 0:
-                error_details.append("No messages received from agent")
-            if tool_count == 0:
-                error_details.append("No tools were used by agent")
-            if not response_text:
-                error_details.append("Agent produced no output")
+                    error_msg = "QA agent did not update implementation_plan.json"
+                    if error_details:
+                        error_msg += f" ({'; '.join(error_details)})"
 
-            error_msg = "QA agent did not update implementation_plan.json"
-            if error_details:
-                error_msg += f" ({'; '.join(error_details)})"
+                    _qa_result = ("error", error_msg)
 
-            return "error", error_msg
+        if _rr and _rs_id:
+            try:
+                _rr.end_session(_rs_id)
+            except Exception:
+                pass
+        return _qa_result
 
     except Exception as e:
         debug_error(
@@ -575,4 +641,9 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
         print(f"Error during QA session: {e}")
         if task_logger:
             task_logger.log_error(f"QA session error: {e}", LogPhase.VALIDATION)
+        if _rr and _rs_id:
+            try:
+                _rr.end_session(_rs_id)
+            except Exception:
+                pass
         return "error", str(e)
