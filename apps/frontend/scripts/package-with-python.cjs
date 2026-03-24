@@ -140,12 +140,14 @@ function buildEnv(frontendDir) {
 
   const env = { ...process.env, PATH: pathValue };
 
-  // When a code-signing secret (CSC_LINK, WIN_CSC_LINK) is not configured in CI, GitHub Actions
-  // evaluates the secret expression to an empty string and sets the env var to "".
-  // electron-builder then calls path.resolve(cwd, "") which resolves to the project directory
-  // (apps/frontend), and then fails with "<projectDir> not a file" when trying to import it
-  // as a certificate. Removing empty signing vars lets electron-builder skip code signing gracefully.
-  for (const signingVar of ['CSC_LINK', 'WIN_CSC_LINK']) {
+  // When code-signing secrets are not configured in CI, GitHub Actions evaluates the secret
+  // expression to an empty string and sets the env var to "".
+  // For CSC_LINK/WIN_CSC_LINK: electron-builder calls path.resolve(cwd, "") which resolves to the
+  // project directory (apps/frontend), then fails with "<projectDir> not a file".
+  // For CSC_KEY_PASSWORD/WIN_CSC_KEY_PASSWORD: electron-builder warns "empty password will be used"
+  // and may still attempt signing via CSC_IDENTITY_AUTO_DISCOVERY.
+  // Removing all empty signing vars lets electron-builder skip code signing gracefully.
+  for (const signingVar of ['CSC_LINK', 'WIN_CSC_LINK', 'CSC_KEY_PASSWORD', 'WIN_CSC_KEY_PASSWORD']) {
     if (signingVar in env && !env[signingVar].trim()) {
       delete env[signingVar];
     }
