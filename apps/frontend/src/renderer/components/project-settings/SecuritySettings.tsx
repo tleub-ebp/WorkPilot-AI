@@ -19,6 +19,7 @@ import {
 } from '../ui/select';
 import { Separator } from '../ui/separator';
 import { OllamaModelSelector } from '../onboarding/OllamaModelSelector';
+import { MemoryLifecycleSection } from './MemoryLifecycleSection';
 import type { ProjectEnvConfig, ProjectSettings as ProjectSettingsType, GraphitiEmbeddingProvider } from '../../../shared/types';
 import { useTranslation } from 'react-i18next';
 
@@ -27,6 +28,7 @@ interface SecuritySettingsProps {
   readonly settings: ProjectSettingsType;
   readonly setSettings: React.Dispatch<React.SetStateAction<ProjectSettingsType>>;
   readonly updateEnvConfig: (updates: Partial<ProjectEnvConfig>) => void;
+  readonly projectPath?: string;
 
   // Password visibility
   readonly showOpenAIKey: boolean;
@@ -42,6 +44,7 @@ export function SecuritySettings({
   settings,
   setSettings,
   updateEnvConfig,
+  projectPath,
   showOpenAIKey,
   setShowOpenAIKey,
   expanded,
@@ -484,6 +487,10 @@ export function SecuritySettings({
                   onChange={(e) => updateEnvConfig({ graphitiDbPath: e.target.value || undefined })}
                 />
               </div>
+
+              {projectPath && (
+                <MemoryLifecycleSection projectPath={projectPath} />
+              )}
             </>
           )}
         </div>

@@ -120,10 +120,14 @@ export const useCodePlaygroundStore = create<CodePlaygroundState>((set) => ({
  * Start code playground generation via IPC
  */
 export function startPlayground(projectId: string, idea: string, playgroundType: string, sandboxType: string) {
-  const store = useCodePlaygroundStore.getState();
-  store.reset();
-  store.setPhase('generating');
-  store.setStatus('Starting playground generation...');
+  useCodePlaygroundStore.setState({
+    phase: 'generating',
+    status: 'Starting playground generation...',
+    streamingOutput: '',
+    result: null,
+    error: null,
+    // isOpen intentionally not reset — dialog must stay open during generation
+  });
   
   if (globalThis.electronAPI && typeof globalThis.electronAPI.startCodePlayground === 'function') {
     globalThis.electronAPI.startCodePlayground(projectId, idea, playgroundType, sandboxType);
