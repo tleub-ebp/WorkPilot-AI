@@ -62,12 +62,12 @@ export interface IssueListProps {
 }
 
 export interface EmptyStateProps {
-  searchQuery?: string;
-  icon?: ComponentType<{ className?: string }>;
-  message: string;
+  readonly searchQuery?: string;
+  readonly icon?: ComponentType<{ className?: string }>;
+  readonly message: string;
 }
 
 export interface NotConnectedStateProps {
-  error: string | null;
-  onOpenSettings?: () => void;
+  readonly error: string | null;
+  readonly onOpenSettings?: () => void;
 }
