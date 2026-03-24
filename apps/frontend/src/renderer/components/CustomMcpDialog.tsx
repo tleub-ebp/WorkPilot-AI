@@ -21,7 +21,6 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { useTranslation } from 'react-i18next';
 import type { CustomMcpServer } from '../../shared/types';
 import { Terminal, Globe, X, ExternalLink } from 'lucide-react';
-import { Github } from '@/lib/icons';
 
 interface CustomMcpDialogProps {
   readonly open: boolean;
@@ -65,7 +64,7 @@ export function CustomMcpDialog({
     if (url.includes('github')) {
       return {
         provider: 'GitHub',
-        icon: Github,
+        icon: Globe,
         message: t('mcp.hints.github'),
         link: 'https://github.com/settings/tokens',
         linkText: t('mcp.hints.createGithubPat'),
