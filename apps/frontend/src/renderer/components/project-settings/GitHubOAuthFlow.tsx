@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Github,
+  Globe,
   Loader2,
   CheckCircle2,
   AlertCircle,
@@ -24,7 +24,7 @@ const DEBUG = process.env.NODE_ENV === 'development' || process.env.DEBUG === 't
 
 function debugLog(message: string, data?: unknown) {
   if (DEBUG) {
-    if (data !== undefined) {
+    if (data !== null && data !== undefined) {
       console.warn(`[GitHubOAuth] ${message}`, data);
     } else {
       console.warn(`[GitHubOAuth] ${message}`);
@@ -43,7 +43,6 @@ const AUTH_TIMEOUT_MS = 5 * 60 * 1000;
 export function GitHubOAuthFlow({ onSuccess, onCancel }: GitHubOAuthFlowProps) {
   const [status, setStatus] = useState<'checking' | 'need-install' | 'need-auth' | 'authenticating' | 'success' | 'error'>('checking');
   const [error, setError] = useState<string | null>(null);
-  const [_cliInstalled, setCliInstalled] = useState(false);
   const [cliVersion, setCliVersion] = useState<string | undefined>();
   const [username, setUsername] = useState<string | undefined>();
 
@@ -164,11 +163,9 @@ export function GitHubOAuthFlow({ onSuccess, onCancel }: GitHubOAuthFlowProps) {
       if (!cliResult.data?.installed) {
         debugLog('GitHub CLI not installed');
         setStatus('need-install');
-        setCliInstalled(false);
         return;
       }
 
-      setCliInstalled(true);
       setCliVersion(cliResult.data.version);
       debugLog('GitHub CLI installed, version:', cliResult.data.version);
 
@@ -383,7 +380,7 @@ export function GitHubOAuthFlow({ onSuccess, onCancel }: GitHubOAuthFlowProps) {
           <Card className="border border-info/30 bg-info/10">
             <CardContent className="p-5">
               <div className="flex items-start gap-4">
-                <Github className="h-6 w-6 text-info shrink-0 mt-0.5" />
+                <Globe className="h-6 w-6 text-info shrink-0 mt-0.5" />
                 <div className="flex-1 space-y-3">
                   <h3 className="text-lg font-medium text-foreground">
                     Connect to GitHub
@@ -404,7 +401,7 @@ export function GitHubOAuthFlow({ onSuccess, onCancel }: GitHubOAuthFlowProps) {
 
           <div className="flex justify-center">
             <Button onClick={handleStartAuth} size="lg" className="gap-2">
-              <Github className="h-5 w-5" />
+              <Globe className="h-5 w-5" />
               Authenticate with GitHub
             </Button>
           </div>
