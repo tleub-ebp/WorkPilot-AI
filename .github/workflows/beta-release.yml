@@ -94,7 +94,7 @@ jobs:
         uses: ./.github/actions/setup-node-frontend
 
       - name: Install node-pty in frontend
-        run: cd apps/frontend && npm install node-pty@1.1.0-beta42 --no-save
+        run: cd apps/frontend && npm install node-pty@1.1.0 --no-save
 
       - name: Install Rust toolchain (for building native Python packages)
         uses: dtolnay/rust-toolchain@stable
@@ -111,7 +111,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: apps/frontend/python-runtime
-          key: python-bundle-${{ runner.os }}-x64-3.12.8-rust-${{ hashFiles('apps/backend/requirements.txt') }}
+          key: python-bundle-${{ runner.os }}-x64-3.12.8-rust-${{ hashFiles('apps/backend/requirements.txt', 'apps/frontend/package.json') }}
           restore-keys: |
             python-bundle-${{ runner.os }}-x64-3.12.8-rust-
 
@@ -188,13 +188,13 @@ jobs:
         uses: ./.github/actions/setup-node-frontend
 
       - name: Install node-pty in frontend
-        run: cd apps/frontend && npm install node-pty@1.1.0-beta42 --no-save
+        run: cd apps/frontend && npm install node-pty@1.1.0 --no-save
 
       - name: Cache pip wheel cache
         uses: actions/cache@v5
         with:
           path: ~/Library/Caches/pip
-          key: pip-wheel-${{ runner.os }}-arm64-${{ hashFiles('apps/backend/requirements.txt') }}
+          key: pip-wheel-${{ runner.os }}-arm64-${{ hashFiles('apps/backend/requirements.txt', 'apps/frontend/package.json') }}
           restore-keys: |
             pip-wheel-${{ runner.os }}-arm64-
 
@@ -202,7 +202,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: apps/frontend/python-runtime
-          key: python-bundle-${{ runner.os }}-arm64-3.12.8-${{ hashFiles('apps/backend/requirements.txt') }}
+          key: python-bundle-${{ runner.os }}-arm64-3.12.8-${{ hashFiles('apps/backend/requirements.txt', 'apps/frontend/package.json') }}
           restore-keys: |
             python-bundle-${{ runner.os }}-arm64-3.12.8-
 
@@ -281,13 +281,13 @@ jobs:
         uses: ./.github/actions/setup-node-frontend
 
       - name: Install node-pty in frontend
-        run: cd apps/frontend && npm install node-pty@1.1.0-beta42 --no-save
+        run: cd apps/frontend && npm install node-pty@1.1.0 --no-save
 
       - name: Cache pip wheel cache
         uses: actions/cache@v5
         with:
           path: ~\AppData\Local\pip\Cache
-          key: pip-wheel-${{ runner.os }}-x64-${{ hashFiles('apps/backend/requirements.txt') }}
+          key: pip-wheel-${{ runner.os }}-x64-${{ hashFiles('apps/backend/requirements.txt', 'apps/frontend/package.json') }}
           restore-keys: |
             pip-wheel-${{ runner.os }}-x64-
 
@@ -295,7 +295,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: apps/frontend/python-runtime
-          key: python-bundle-${{ runner.os }}-x64-3.12.8-${{ hashFiles('apps/backend/requirements.txt') }}
+          key: python-bundle-${{ runner.os }}-x64-3.12.8-${{ hashFiles('apps/backend/requirements.txt', 'apps/frontend/package.json') }}
           restore-keys: |
             python-bundle-${{ runner.os }}-x64-3.12.8-
 
@@ -462,7 +462,7 @@ jobs:
         uses: ./.github/actions/setup-node-frontend
 
       - name: Install node-pty in frontend
-        run: cd apps/frontend && npm install node-pty@1.1.0-beta42 --no-save
+        run: cd apps/frontend && npm install node-pty@1.1.0 --no-save
 
       - name: Setup Flatpak and verification tools
         run: |
@@ -477,7 +477,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.cache/pip
-          key: pip-wheel-${{ runner.os }}-x64-${{ hashFiles('apps/backend/requirements.txt') }}
+          key: pip-wheel-${{ runner.os }}-x64-${{ hashFiles('apps/backend/requirements.txt', 'apps/frontend/package.json') }}
           restore-keys: |
             pip-wheel-${{ runner.os }}-x64-
 
@@ -485,7 +485,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: apps/frontend/python-runtime
-          key: python-bundle-${{ runner.os }}-x64-3.12.8-${{ hashFiles('apps/backend/requirements.txt') }}
+          key: python-bundle-${{ runner.os }}-x64-3.12.8-${{ hashFiles('apps/backend/requirements.txt', 'apps/frontend/package.json') }}
           restore-keys: |
             python-bundle-${{ runner.os }}-x64-3.12.8-
 
