@@ -11,7 +11,7 @@ import {
   AlertCircle,
   Import,
   Radio,
-  Github,
+  Globe,
   RefreshCw,
   GitBranch
 } from 'lucide-react';
@@ -102,9 +102,11 @@ export function IntegrationSettings({
   const loadBranches = useCallback(async () => {
     setIsLoadingBranches(true);
     try {
-      const result = await globalThis.electronAPI.getGitBranches(project.path);
+      const result = await globalThis.electronAPI.getGitBranchesWithInfo(project.path);
       if (result.success && result.data) {
-        setBranches(result.data);
+        // Extract branch names from GitBranchDetail array
+        const branchNames = result.data.map(branch => branch.name);
+        setBranches(branchNames);
         // Auto-detect main branch if not set and not already detected
         // Use mainBranchRef to avoid stale closure issues
         if (!mainBranchRef.current && !hasDetectedMainBranch.current) {
@@ -339,7 +341,7 @@ export function IntegrationSettings({
           className="w-full flex items-center justify-between text-sm font-semibold text-foreground hover:text-foreground/80"
         >
           <div className="flex items-center gap-2">
-            <Github className="h-4 w-4" />
+            <Globe className="h-4 w-4" />
             GitHub Integration
             {envConfig.githubEnabled && (
               <span className="px-2 py-0.5 text-xs bg-success/10 text-success rounded-full">
@@ -454,7 +456,7 @@ export function IntegrationSettings({
                 {gitHubConnectionStatus?.connected && (
                   <div className="rounded-lg border border-info/30 bg-info/5 p-3">
                     <div className="flex items-start gap-3">
-                      <Github className="h-5 w-5 text-info mt-0.5" />
+                      <Globe className="h-5 w-5 text-info mt-0.5" />
                       <div className="flex-1">
                         <p className="text-sm font-medium text-foreground">Issues Available</p>
                         <p className="text-xs text-muted-foreground mt-1">
