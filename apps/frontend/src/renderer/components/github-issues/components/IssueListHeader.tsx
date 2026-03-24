@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { RefreshCw, Search, Filter, Wand2, Loader2, Layers } from 'lucide-react';
-import { LucideGithub } from '@/lib/icons';
+import { Globe } from '@/lib/icons';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
@@ -44,7 +44,7 @@ export function IssueListHeader({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-muted">
-            <LucideGithub className="h-5 w-5" />
+            <Globe className="h-5 w-5" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-foreground">

@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import { LucideGithub } from '@/lib/icons';
+import { Globe } from '@/lib/icons';
 
 interface GitHubRemoteConfigModalProps {
   readonly open: boolean;
@@ -168,7 +168,7 @@ export function GitHubRemoteConfigModal({ open, onOpenChange, onSave, initialCon
       <DialogContent className="sm:max-w-2xl" onInteractOutside={e => e.preventDefault()} onEscapeKeyDown={e => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <LucideGithub className="h-5 w-5 text-primary" />
+            <Globe className="h-5 w-5 text-primary" />
             {t('githubSetup.title')}
           </DialogTitle>
           <DialogDescription>
