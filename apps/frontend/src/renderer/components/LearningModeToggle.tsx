@@ -14,9 +14,9 @@ import { cn } from '../lib/utils';
 import type { ExplanationLevel, LearningModeConfig } from '../../shared/types';
 
 interface LearningModeToggleProps {
-  config?: LearningModeConfig;
-  onConfigChange: (config: LearningModeConfig) => void;
-  disabled?: boolean;
+  readonly config?: LearningModeConfig;
+  readonly onConfigChange: (config: LearningModeConfig) => void;
+  readonly disabled?: boolean;
 }
 
 const EXPLANATION_LEVELS: Array<{ value: ExplanationLevel; label: string; description: string }> = [
@@ -84,7 +84,7 @@ export function LearningModeToggle({ config, onConfigChange, disabled }: Learnin
         disabled={disabled}
         className={cn(
           'transition-all',
-          currentConfig.enabled && 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
+          currentConfig.enabled && 'bg-linear-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
         )}
       >
         <GraduationCap className="mr-2 h-4 w-4" />

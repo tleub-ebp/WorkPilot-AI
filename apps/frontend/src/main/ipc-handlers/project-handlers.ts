@@ -471,6 +471,21 @@ export function registerProjectHandlers(
     }
   );
 
+  ipcMain.handle(
+    IPC_CHANNELS.PROJECT_RENAME,
+    async (_, projectId: string, name: string): Promise<IPCResult<Project>> => {
+      const trimmed = (name ?? '').trim();
+      if (!trimmed) {
+        return { success: false, error: 'Name cannot be empty' };
+      }
+      const project = projectStore.renameProject(projectId, trimmed);
+      if (project) {
+        return { success: true, data: project };
+      }
+      return { success: false, error: 'Project not found' };
+    }
+  );
+
   // ============================================
   // Tab State Operations (persisted in main process)
   // ============================================

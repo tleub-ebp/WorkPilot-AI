@@ -33,6 +33,7 @@ export interface ProjectAPI {
     projectId: string,
     settings: Partial<ProjectSettings>
   ) => Promise<IPCResult>;
+  renameProject: (projectId: string, name: string) => Promise<IPCResult<Project>>;
   initializeProject: (projectId: string) => Promise<IPCResult<InitializationResult>>;
   checkProjectVersion: (projectId: string) => Promise<IPCResult<AutoBuildVersionInfo>>;
 
@@ -167,6 +168,9 @@ export const createProjectAPI = (): ProjectAPI => ({
     settings: Partial<ProjectSettings>
   ): Promise<IPCResult> =>
     ipcRenderer.invoke(IPC_CHANNELS.PROJECT_UPDATE_SETTINGS, projectId, settings),
+
+  renameProject: (projectId: string, name: string): Promise<IPCResult<Project>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.PROJECT_RENAME, projectId, name),
 
   initializeProject: (projectId: string): Promise<IPCResult<InitializationResult>> =>
     ipcRenderer.invoke(IPC_CHANNELS.PROJECT_INITIALIZE, projectId),

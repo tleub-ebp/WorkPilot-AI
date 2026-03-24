@@ -318,6 +318,28 @@ export async function removeProject(projectId: string): Promise<boolean> {
 }
 
 /**
+ * Rename a project (display name only — path is never changed)
+ */
+export async function renameProject(projectId: string, name: string): Promise<boolean> {
+  const store = useProjectStore.getState();
+  const trimmed = name.trim();
+  if (!trimmed) return false;
+
+  try {
+    const result = await window.electronAPI.renameProject(projectId, trimmed);
+    if (result.success && result.data) {
+      store.setProjects(
+        store.projects.map((p) => (p.id === projectId ? { ...p, name: trimmed } : p))
+      );
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Update project settings
  */
 export async function updateProjectSettings(

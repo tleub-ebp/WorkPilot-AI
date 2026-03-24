@@ -10,13 +10,13 @@ import {
   DropdownMenuLabel
 } from './ui/dropdown-menu';
 import { DEFAULT_AGENT_PROFILES, AVAILABLE_MODELS } from '../../shared/constants';
-import type { InsightsModelConfig } from '../../shared/types';
+import type { InsightsModelConfig, ModelType } from '../../shared/types';
 import { CustomModelModal } from './CustomModelModal';
 
 interface InsightsModelSelectorProps {
-  currentConfig?: InsightsModelConfig;
-  onConfigChange: (config: InsightsModelConfig) => void;
-  disabled?: boolean;
+  readonly currentConfig?: InsightsModelConfig;
+  readonly onConfigChange: (config: InsightsModelConfig) => void;
+  readonly disabled?: boolean;
 }
 
 const iconMap: Record<string, React.ElementType> = {
@@ -39,9 +39,14 @@ export function InsightsModelSelector({
   const profile = DEFAULT_AGENT_PROFILES.find(p => p.id === selectedProfileId);
 
   // Get the appropriate icon
-  const Icon = selectedProfileId === 'custom'
-    ? Sliders
-    : (profile?.icon ? iconMap[profile.icon] : Scale);
+  let Icon: React.ElementType;
+  if (selectedProfileId === 'custom') {
+    Icon = Sliders;
+  } else if (profile?.icon && iconMap[profile.icon]) {
+    Icon = iconMap[profile.icon];
+  } else {
+    Icon = Scale;
+  }
 
   const handleSelectProfile = (profileId: string) => {
     if (profileId === 'custom') {
@@ -53,7 +58,7 @@ export function InsightsModelSelector({
     if (selected) {
       onConfigChange({
         profileId: selected.id,
-        model: selected.model,
+        model: selected.model as ModelType,
         thinkingLevel: selected.thinkingLevel
       });
     }
@@ -92,7 +97,7 @@ export function InsightsModelSelector({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
           <DropdownMenuLabel>Agent Profile</DropdownMenuLabel>
-          {DEFAULT_AGENT_PROFILES.filter(p => !p.isAutoProfile).map((p) => {
+          {DEFAULT_AGENT_PROFILES.filter(p => p.id !== 'auto').map((p) => {
             const ProfileIcon = iconMap[p.icon || 'Brain'];
             const isSelected = selectedProfileId === p.id;
             const modelLabel = AVAILABLE_MODELS.find(m => m.value === p.model)?.label;

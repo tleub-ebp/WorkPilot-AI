@@ -8,7 +8,9 @@
     "closeTab": "Fermer l'onglet",
     "closeTabAriaLabel": "Fermer l'onglet (supprime le projet de l'application)",
     "addProjectAriaLabel": "Ajouter un projet",
-    "addProjectTooltip": "Ajouter un nouveau projet"
+    "addProjectTooltip": "Ajouter un nouveau projet",
+    "selectTab": "Passer à {{projectName}}",
+    "renameAriaLabel": "Renommer le projet"
   },
   "accessibility": {
     "deleteFeatureAriaLabel": "Supprimer la fonctionnalité",
@@ -1028,5 +1030,16 @@
       "cancel": "Annuler",
       "confirm": "Supprimer"
     }
+  },
+  "navigationConfirm": {
+    "title": "Tâche en cours",
+    "description": "Une tâche est en cours d'exécution. Que souhaitez-vous faire avant de quitter cette page ?",
+    "taskLabel": "En cours : {{taskTitle}}",
+    "continueTask": "Continuer la tâche",
+    "continueTaskDescription": "Rester sur la page actuelle",
+    "stopTask": "Arrêter la tâche",
+    "stopTaskDescription": "Arrêter la tâche et naviguer",
+    "pauseTask": "Mettre en pause",
+    "pauseTaskDescription": "Naviguer et reprendre plus tard"
   }
 }

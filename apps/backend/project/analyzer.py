@@ -152,9 +152,32 @@ class ProjectAnalyzer:
                 except OSError:
                     continue
 
+        # Directories to skip during recursive glob (large/irrelevant dirs)
+        _SKIP_DIRS = frozenset([
+            "node_modules", ".venv", "venv", ".env", "__pycache__",
+            "dist", "build", ".build", "out", ".out",
+            ".git", ".hg", ".svn",
+            "target",  # Rust/Java build output
+            ".gradle", ".idea", ".vs", ".vscode",
+            "vendor",  # Go/PHP vendor dirs
+            "coverage", ".nyc_output",
+        ])
+
+        def _glob_excluding_large_dirs(pattern: str):
+            """Glob recursively but skip known large/irrelevant directories."""
+            for path in self.project_dir.rglob(pattern):
+                # Check if any part of the path (relative to project_dir) is in skip list
+                try:
+                    rel = path.relative_to(self.project_dir)
+                    if any(part in _SKIP_DIRS for part in rel.parts[:-1]):
+                        continue
+                    yield path
+                except ValueError:
+                    continue
+
         # Check glob patterns for project files that can be anywhere
         for pattern in glob_patterns:
-            for filepath in self.project_dir.glob(f"**/{pattern}"):
+            for filepath in _glob_excluding_large_dirs(pattern):
                 try:
                     stat = filepath.stat()
                     rel_path = filepath.relative_to(self.project_dir)
@@ -180,7 +203,7 @@ class ProjectAnalyzer:
                 "*.java",
             ]
             for ext in source_exts:
-                count = len(list(self.project_dir.glob(f"**/{ext}")))
+                count = len(list(_glob_excluding_large_dirs(ext)))
                 hasher.update(f"{ext}:{count}".encode())
             # Also include the project directory name for uniqueness
             hasher.update(self.project_dir.name.encode())

@@ -69,8 +69,8 @@ import { VersionWarningModal } from './components/VersionWarningModal';
 import { OnboardingWizard } from './components/onboarding';
 import { GitHubSetupModal } from './components/GitHubSetupModal';
 import { AzureDevOpsSetupModal } from './components/AzureDevOpsSetupModal';
-import { useProjectStore, loadProjects, addProject, removeProject } from './stores/project-store';
-import { useTaskStore, loadTasks } from './stores/task-store';
+import { useProjectStore, loadProjects, addProject, removeProject, renameProject } from './stores/project-store';
+import { useTaskStore, loadTasks, stopTask } from './stores/task-store';
 import { useSettingsStore, loadSettings, loadProfiles, saveActiveView, saveSettings } from './stores/settings-store';
 import { useClaudeProfileStore, loadClaudeProfiles } from './stores/claude-profile-store';
 import { useTerminalStore, restoreTerminalSessions } from './stores/terminal-store';
@@ -92,6 +92,7 @@ import { CommandPalette } from './components/CommandPalette';
 import { KeyboardShortcutsOverlay } from './components/KeyboardShortcutsOverlay';
 import { PromptOptimizerDialog } from './components/prompt-optimizer';
 import { VoiceControlDialog } from './components/voice-control';
+import { NavigationConfirmDialog } from './components/NavigationConfirmDialog';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { autoDetectAndUpdateProject } from './utils/repositoryDetector';
 
@@ -105,6 +106,7 @@ interface ProjectTabBarWithContextProps {
   readonly onProjectSelect: (projectId: string) => void;
   readonly onProjectClose: (projectId: string) => void;
   readonly onAddProject: () => void;
+  readonly onProjectRename: (projectId: string, name: string) => void;
   readonly onSettingsClick: () => void;
 }
 
@@ -114,6 +116,7 @@ function ProjectTabBarWithContext({
                                     onProjectSelect,
                                     onProjectClose,
                                     onAddProject,
+                                    onProjectRename,
                                     onSettingsClick
                                   }: ProjectTabBarWithContextProps) {
   return (
@@ -123,6 +126,7 @@ function ProjectTabBarWithContext({
           onProjectSelect={onProjectSelect}
           onProjectClose={onProjectClose}
           onAddProject={onAddProject}
+          onProjectRename={onProjectRename}
           onSettingsClick={onSettingsClick}
       />
   );
@@ -154,6 +158,7 @@ export function App() {
   const reorderTabs = useProjectStore((state) => state.reorderTabs);
   const tasks = useTaskStore((state) => state.tasks);
   const isLoadingTasks = useTaskStore((state) => state.isLoading);
+  const getTasksByStatus = useTaskStore((state) => state.getTasksByStatus);
   const settings = useSettingsStore((state) => state.settings);
   const settingsLoading = useSettingsStore((state) => state.isLoading);
 
@@ -191,6 +196,7 @@ export function App() {
   const [activeView, setActiveView] = useState<SidebarView>('kanban');
   const [hasRestoredView, setHasRestoredView] = useState(false);
   const isRestoringView = useRef(false);
+  const [pendingNavView, setPendingNavView] = useState<SidebarView | null>(null);
   const [isOnboardingWizardOpen, setIsOnboardingWizardOpen] = useState(false);
   const [isVersionWarningModalOpen, setIsVersionWarningModalOpen] = useState(false);
   const [isRefreshingTasks, setIsRefreshingTasks] = useState(false);
@@ -202,13 +208,45 @@ export function App() {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isShortcutsOverlayOpen, setIsShortcutsOverlayOpen] = useState(false);
 
+  // Navigation guard: intercept view changes when a task is in progress
+  const handleViewChange = (view: SidebarView) => {
+    if (view === 'kanban') {
+      setActiveView(view);
+      return;
+    }
+    const runningTasks = getTasksByStatus('in_progress');
+    if (runningTasks.length > 0) {
+      setPendingNavView(view);
+    } else {
+      setActiveView(view);
+    }
+  };
+
+  const pendingNavTask = pendingNavView
+    ? (getTasksByStatus('in_progress')[0] ?? null)
+    : null;
+
+  const handleNavContinue = () => setPendingNavView(null);
+
+  const handleNavStop = () => {
+    const runningTasks = getTasksByStatus('in_progress');
+    for (const t of runningTasks) stopTask(t.id);
+    if (pendingNavView) setActiveView(pendingNavView);
+    setPendingNavView(null);
+  };
+
+  const handleNavPause = () => {
+    if (pendingNavView) setActiveView(pendingNavView);
+    setPendingNavView(null);
+  };
+
   // Global keyboard shortcuts (Feature 9.4)
   useKeyboardShortcuts({
     onCommandPalette: () => setIsCommandPaletteOpen(true),
     onKeyboardShortcuts: () => setIsShortcutsOverlayOpen(true),
     onNewTask: () => setIsNewTaskDialogOpen(true),
     onOpenSettings: () => setIsSettingsDialogOpen(true),
-    onNavigate: (view) => setActiveView(view as SidebarView),
+    onNavigate: (view) => handleViewChange(view as SidebarView),
   });
 
   // Sauvegarder la vue active lorsqu'elle change (mais pas lors de la restauration)
@@ -788,6 +826,10 @@ export function App() {
     }
   };
 
+  const handleProjectRename = (projectId: string, name: string) => {
+    renameProject(projectId, name);
+  };
+
   // Handle confirm remove project
   const handleConfirmRemoveProject = () => {
     if (projectToRemove) {
@@ -1022,7 +1064,7 @@ export function App() {
                     onSettingsClick={() => setIsSettingsDialogOpen(true)}
                     onNewTaskClick={() => setIsNewTaskDialogOpen(true)}
                     activeView={activeView}
-                    onViewChange={setActiveView}
+                    onViewChange={handleViewChange}
                 />
 
                 {/* Main content */}
@@ -1059,6 +1101,7 @@ export function App() {
                               onProjectSelect={handleProjectTabSelect}
                               onProjectClose={handleProjectTabClose}
                               onAddProject={handleAddProject}
+                              onProjectRename={handleProjectRename}
                               onSettingsClick={() => setIsSettingsDialogOpen(true)}
                           />
                         </SortableContext>
@@ -1384,6 +1427,15 @@ export function App() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
+            {/* Navigation confirmation dialog when a task is running */}
+            <NavigationConfirmDialog
+              open={pendingNavView !== null}
+              runningTask={pendingNavTask}
+              onContinue={handleNavContinue}
+              onStop={handleNavStop}
+              onPause={handleNavPause}
+            />
           </CliStatusProvider>
         </ViewStateProvider>
       </ProviderContextProvider>

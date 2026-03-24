@@ -1,13 +1,13 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { existsSync, readFileSync } from 'fs';
-import { spawn } from 'child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { existsSync, readFileSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 import { app } from 'electron';
 
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { detectRateLimit, createSDKRateLimitInfo, getBestAvailableProfileEnv } from './rate-limit-detector';
 import { parsePythonCommand } from './python-detector';
 import { pythonEnvManager } from './python-env-manager';
@@ -339,7 +339,7 @@ asyncio.run(generate_name())
    */
   private cleanName(name: string): string {
     // Remove quotes if present
-    let cleaned = name.replace(/^["']|["']$/g, '');
+    let cleaned = name.replaceAll(/^["']|["']$/g, '');
 
     // Remove any "Terminal:" or similar prefixes
     cleaned = cleaned.replace(/^(terminal|name)[:\s]*/i, '');

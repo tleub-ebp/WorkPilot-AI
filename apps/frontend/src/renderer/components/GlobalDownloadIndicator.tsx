@@ -31,6 +31,31 @@ export function GlobalDownloadIndicator() {
 
   const hasActive = activeDownloads.length > 0;
 
+  // Determine which icon to show based on download status
+  let statusIcon;
+  if (hasActive) {
+    statusIcon = <Loader2 className="h-4 w-4 animate-spin text-primary" />;
+  } else if (completedDownloads.length > 0 && failedDownloads.length === 0) {
+    statusIcon = <Check className="h-4 w-4 text-success" />;
+  } else if (failedDownloads.length > 0) {
+    statusIcon = <AlertCircle className="h-4 w-4 text-destructive" />;
+  } else {
+    statusIcon = <Download className="h-4 w-4 text-muted-foreground" />;
+  }
+
+  // Determine status text based on download state
+  let statusText;
+  if (hasActive) {
+    statusText = t('downloads.downloading', { count: activeDownloads.length });
+  } else if (completedDownloads.length > 0) {
+    statusText = t('downloads.complete', { count: completedDownloads.length });
+  } else {
+    statusText = t('downloads.failed', { count: failedDownloads.length });
+  }
+
+  // Determine button background color based on active state
+  const buttonBgClass = hasActive ? 'bg-primary/10' : 'bg-muted/50';
+
   return (
     <div className="fixed bottom-4 right-4 z-50 max-w-sm">
       <div className="rounded-lg border border-border bg-card shadow-lg overflow-hidden">
@@ -39,28 +64,16 @@ export function GlobalDownloadIndicator() {
           type="button"
           className={cn(
             'flex items-center justify-between px-3 py-2 cursor-pointer w-full text-left',
-            hasActive ? 'bg-primary/10' : 'bg-muted/50'
+            buttonBgClass
           )}
           onClick={() => setIsExpanded(!isExpanded)}
           aria-expanded={isExpanded}
           aria-label={t('downloads.toggleExpand')}
         >
           <div className="flex items-center gap-2">
-            {hasActive ? (
-              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            ) : completedDownloads.length > 0 && failedDownloads.length === 0 ? (
-              <Check className="h-4 w-4 text-success" />
-            ) : failedDownloads.length > 0 ? (
-              <AlertCircle className="h-4 w-4 text-destructive" />
-            ) : (
-              <Download className="h-4 w-4 text-muted-foreground" />
-            )}
+            {statusIcon}
             <span className="text-sm font-medium">
-              {hasActive
-                ? t('downloads.downloading', { count: activeDownloads.length })
-                : completedDownloads.length > 0
-                  ? t('downloads.complete', { count: completedDownloads.length })
-                  : t('downloads.failed', { count: failedDownloads.length })}
+              {statusText}
             </span>
           </div>
           <div className="flex items-center gap-1">
@@ -114,7 +127,12 @@ export function GlobalDownloadIndicator() {
                     )}
                     {(download.status === 'starting' || download.status === 'downloading') && (
                       <span className="text-xs text-muted-foreground">
-                        {download.percentage > 0 ? `${Math.round(download.percentage)}%` : t('downloads.starting')}
+                        {(() => {
+                          if (download.percentage > 0) {
+                            return `${Math.round(download.percentage)}%`;
+                          }
+                          return t('downloads.starting');
+                        })()}
                       </span>
                     )}
                   </div>

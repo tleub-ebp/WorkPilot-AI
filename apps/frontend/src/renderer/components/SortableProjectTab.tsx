@@ -2,6 +2,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useTranslation } from 'react-i18next';
 import { Settings2 } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { cn } from '../lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { Project } from '../../shared/types';
@@ -13,6 +14,7 @@ interface SortableProjectTabProps {
   readonly tabIndex: number;
   readonly onSelect: () => void;
   readonly onClose: (e: React.MouseEvent) => void;
+  readonly onRename?: (projectId: string, name: string) => void;
   // Optional control props for active tab
   readonly onSettingsClick?: () => void;
 }
@@ -28,9 +30,14 @@ export function SortableProjectTab({
   tabIndex,
   onSelect,
   onClose,
+  onRename,
   onSettingsClick
 }: SortableProjectTabProps) {
   const { t } = useTranslation('common');
+  const [isEditing, setIsEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const committedRef = useRef(false);
+
   // Build tooltip with keyboard shortcut hint (only for tabs 1-9)
   const shortcutHint = tabIndex < 9 ? `${modKey}${tabIndex + 1}` : '';
   const closeShortcut = `${modKey}W`;
@@ -50,6 +57,27 @@ export function SortableProjectTab({
     zIndex: isDragging ? 50 : undefined
   };
 
+  const startEditing = () => {
+    committedRef.current = false;
+    setIsEditing(true);
+    setTimeout(() => inputRef.current?.select(), 0);
+  };
+
+  const commitRename = () => {
+    if (committedRef.current) return;
+    committedRef.current = true;
+    const trimmed = (inputRef.current?.value ?? '').trim();
+    if (trimmed && trimmed !== project.name) {
+      onRename?.(project.id, trimmed);
+    }
+    setIsEditing(false);
+  };
+
+  const cancelRename = () => {
+    committedRef.current = true;
+    setIsEditing(false);
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -63,44 +91,73 @@ export function SortableProjectTab({
       data-project-id={project.id}
       {...attributes}
     >
-      <Tooltip delayDuration={200}>
+      <Tooltip delayDuration={isEditing ? 99999 : 200}>
         <TooltipTrigger asChild>
-          <button
-            type="button"
-            className={cn(
-              'flex-1 flex items-center gap-1 sm:gap-2',
-              // Responsive padding: tighter on mobile, normal on desktop
-              'px-2 sm:px-3 md:px-4 py-2 sm:py-2.5',
-              'text-xs sm:text-sm',
-              'min-w-0 truncate hover:bg-muted/50 transition-colors',
-              'border-b-2 border-transparent cursor-pointer',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-              isActive && [
-                'bg-accent/80 border-b-primary text-foreground shadow-sm',
-                'hover:bg-accent/90'
-              ],
-              !isActive && [
-                'bg-muted/30 text-muted-foreground',
-                'hover:bg-muted/50 hover:text-foreground'
-              ]
-            )}
-            onClick={onSelect}
-            aria-label={t('projectTab.selectTab', { projectName: project.name })}
-          >
-            {/* Drag handle - visible on hover, hidden on mobile */}
+          {isEditing ? (
             <div
-              {...listeners}
               className={cn(
-                'hidden sm:block',
-                'opacity-0 group-hover:opacity-60 transition-opacity',
-                'cursor-grab active:cursor-grabbing',
-                'w-1 h-4 bg-muted-foreground rounded-full shrink-0'
+                'flex-1 flex items-center gap-1 sm:gap-2',
+                'px-2 sm:px-3 md:px-4 py-2 sm:py-2.5',
+                'text-xs sm:text-sm min-w-0',
+                'border-b-2 border-transparent',
+                isActive
+                  ? 'bg-accent/80 border-b-primary text-foreground shadow-sm'
+                  : 'bg-muted/30 text-muted-foreground'
               )}
-            />
-            <span className="truncate font-medium">
-              {project.name}
-            </span>
-          </button>
+            >
+              <div className="hidden sm:block w-1 h-4 shrink-0" />
+              <input
+                ref={inputRef}
+                type="text"
+                defaultValue={project.name}
+                onBlur={commitRename}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
+                  else if (e.key === 'Escape') { e.preventDefault(); cancelRename(); }
+                }}
+                className="truncate font-medium bg-transparent outline-none border-b border-primary w-full min-w-0"
+                aria-label={t('projectTab.renameAriaLabel')}
+              />
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={cn(
+                'flex-1 flex items-center gap-1 sm:gap-2',
+                'px-2 sm:px-3 md:px-4 py-2 sm:py-2.5',
+                'text-xs sm:text-sm',
+                'min-w-0 truncate hover:bg-muted/50 transition-colors',
+                'border-b-2 border-transparent cursor-pointer',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+                isActive && [
+                  'bg-accent/80 border-b-primary text-foreground shadow-sm',
+                  'hover:bg-accent/90'
+                ],
+                !isActive && [
+                  'bg-muted/30 text-muted-foreground',
+                  'hover:bg-muted/50 hover:text-foreground'
+                ]
+              )}
+              onClick={onSelect}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                if (onRename) startEditing();
+              }}
+              aria-label={t('projectTab.selectTab', { projectName: project.name })}
+            >
+              <div
+                {...listeners}
+                className={cn(
+                  'hidden sm:block',
+                  'opacity-0 group-hover:opacity-60 transition-opacity',
+                  'cursor-grab active:cursor-grabbing',
+                  'w-1 h-4 bg-muted-foreground rounded-full shrink-0'
+                )}
+              />
+              <span className="truncate font-medium">{project.name}</span>
+            </button>
+          )}
         </TooltipTrigger>
         <TooltipContent side="bottom" className="flex items-center gap-2">
           <span>{project.name}</span>
