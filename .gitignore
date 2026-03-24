@@ -11,6 +11,8 @@ Desktop.ini
 # ===========================
 # Security - Environment & Secrets
 # ===========================
+# All environment files centralized in .env-files directory
+.env-files/
 .env
 .env.*
 !.env.example
