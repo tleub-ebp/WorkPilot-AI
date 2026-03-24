@@ -251,7 +251,7 @@ Each spec in `.auto-claude/specs/XXX-name/` contains: `spec.md`, `requirements.j
 
 ### Memory System (Graphiti)
 
-Graph-based semantic memory in `integrations/graphiti/`. Configured through the Electron app's onboarding/settings UI (CLI users can alternatively set `GRAPHITI_ENABLED=true` in `.env`). See [ARCHITECTURE.md](shared_docs/ARCHITECTURE.md#memory-system) for details.
+Graph-based semantic memory in `integrations/graphiti/`. Configured through the Electron app's onboarding/settings UI (CLI users can alternatively set `GRAPHITI_ENABLED=true` in `.env-files/.env`). See [ARCHITECTURE.md](shared_docs/ARCHITECTURE.md#memory-system) for details.
 
 ### Skills System
 
@@ -438,7 +438,7 @@ Never hardcode paths. Use `findExecutable()` and `joinPaths()`. See [ARCHITECTUR
 QA agents can interact with the running Electron app via Chrome DevTools Protocol:
 
 1. Start app: `npm run dev:debug` (debug mode for AI self-validation via Electron MCP)
-2. Set `ELECTRON_MCP_ENABLED=true` in `apps/backend/.env`
+2. Set `ELECTRON_MCP_ENABLED=true` in `.env-files/.env`
 3. Run QA: `python run.py --spec 001 --qa`
 
 Tools: `take_screenshot`, `click_by_text`, `fill_input`, `get_page_structure`, `send_keyboard_shortcut`, `eval`. See [ARCHITECTURE.md](shared_docs/ARCHITECTURE.md#end-to-end-testing) for full capabilities.
@@ -447,7 +447,7 @@ Tools: `take_screenshot`, `click_by_text`, `fill_input`, `get_page_structure`, `
 
 Browser automation via [chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp) is available for **coder** and **QA** agents. It provides 29 tools for navigation, input, screenshots, debugging, emulation, and network inspection.
 
-**Enable:** Toggle "Chrome DevTools" in project Settings → Agent Tools → MCP Servers, or set `CHROME_DEVTOOLS_MCP_ENABLED=true` in `.auto-claude/.env`.
+**Enable:** Toggle "Chrome DevTools" in project Settings → Agent Tools → MCP Servers, or set `CHROME_DEVTOOLS_MCP_ENABLED=true` in `.env-files/.env`.
 
 **Optional:** Set `CHROME_DEVTOOLS_PORT=9222` to connect to a running Chrome instance (e.g., the app emulator). Without it, agents launch a headless Chrome.
 

@@ -38,8 +38,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# Charger les variables d'environnement à partir du fichier .env
-load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+# Charger les variables d'environnement à partir du fichier .env-files/.env
+load_dotenv(Path(__file__).parent.parent.parent / ".env-files" / ".env")
 
 # Ensure apps/backend is in path for core/cli/agents imports
 _BACKEND_DIR = Path(__file__).parent.resolve()

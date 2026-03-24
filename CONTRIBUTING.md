@@ -187,15 +187,15 @@ npm run dev
 - Detects Python 3.12+ on your system
 - Creates a virtual environment (`apps/backend/.venv`)
 - Installs backend runtime and test dependencies
-- Copies `.env.example` to `.env` (if not already present)
+- Copies `.env-files/.env.example` to `.env-files/.env` (if not already present)
 - Installs frontend npm dependencies
 
-After install, configure your credentials in `apps/backend/.env`:
+After install, configure your credentials in `.env-files/.env`:
 ```bash
 # Get your Claude Code OAuth token
 claude setup-token
 
-# Then edit apps/backend/.env with your token and any other provider keys
+# Then edit .env-files/.env with your token and any other provider keys
 ```
 
 ### Other Useful Commands

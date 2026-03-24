@@ -309,6 +309,7 @@ export function Sidebar({
 
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   const [showGitSetupModal, setShowGitSetupModal] = useState(false);
+  const gitSetupSkippedForProjectRef = useRef<string | null>(null);
   const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
   const [pendingProject, setPendingProject] = useState<Project | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['workspace'])); // Workspace group expanded by default
@@ -499,14 +500,19 @@ export function Sidebar({
 
   // Check git status when a project changes
   useEffect(() => {
+    // Reset the skip flag when the project changes so the modal shows for new projects
+    gitSetupSkippedForProjectRef.current = null;
+
     const checkGit = async () => {
       if (selectedProject) {
         try {
           const result = await globalThis.electronAPI.checkGitStatus(selectedProject.path);
           if (result.success && result.data) {
             setGitStatus(result.data);
-            // Show git setup modal if a project is not a git repo or has no commits
-            if (!result.data.isGitRepo || !result.data.hasCommits) {
+            // Show git setup modal if a project is not a git repo or has no commits,
+            // but only if the user hasn't explicitly dismissed it for this project yet
+            if ((!result.data.isGitRepo || !result.data.hasCommits) &&
+                gitSetupSkippedForProjectRef.current !== selectedProject.id) {
               setShowGitSetupModal(true);
             }
           }
@@ -1202,7 +1208,13 @@ const toggleGroupExpansion = (groupId: string) => {
       {/* Git Setup Modal */}
       <GitSetupModal
         open={showGitSetupModal}
-        onOpenChange={setShowGitSetupModal}
+        onOpenChange={(open) => {
+          if (!open && selectedProject) {
+            // Mark this project as skipped so the modal doesn't reopen due to async re-checks
+            gitSetupSkippedForProjectRef.current = selectedProject.id;
+          }
+          setShowGitSetupModal(open);
+        }}
         project={selectedProject || null}
         gitStatus={gitStatus}
         onGitInitialized={handleGitInitialized}
