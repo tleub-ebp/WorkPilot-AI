@@ -48,7 +48,7 @@ jobs:
     outputs:
       version: ${{ github.event.inputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: develop
           fetch-depth: 0
@@ -83,7 +83,7 @@ jobs:
       notarization_id: ${{ steps.notarize.outputs.notarization-id }}
       dmg_file: ${{ steps.notarize.outputs.dmg-file }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # Use tag for real releases, develop branch for dry runs
           ref: ${{ github.event.inputs.dry_run == 'true' && 'develop' || format('v{0}', needs.create-tag.outputs.version) }}
@@ -161,7 +161,7 @@ jobs:
           apple-team-id: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: macos-intel-builds
           path: |
@@ -177,7 +177,7 @@ jobs:
       notarization_id: ${{ steps.notarize.outputs.notarization-id }}
       dmg_file: ${{ steps.notarize.outputs.dmg-file }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # Use tag for real releases, develop branch for dry runs
           ref: ${{ github.event.inputs.dry_run == 'true' && 'develop' || format('v{0}', needs.create-tag.outputs.version) }}
@@ -252,7 +252,7 @@ jobs:
           apple-team-id: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: macos-arm64-builds
           path: |
@@ -270,7 +270,7 @@ jobs:
       # Job-level env so AZURE_CLIENT_ID is available for step-level if conditions
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # Use tag for real releases, develop branch for dry runs
           ref: ${{ github.event.inputs.dry_run == 'true' && 'develop' || format('v{0}', needs.create-tag.outputs.version) }}
@@ -440,7 +440,7 @@ jobs:
         run: echo "::warning::Windows signing skipped - AZURE_CLIENT_ID not configured. The .exe will be unsigned."
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: windows-builds
           path: |
@@ -451,7 +451,7 @@ jobs:
     needs: create-tag
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # Use tag for real releases, develop branch for dry runs
           ref: ${{ github.event.inputs.dry_run == 'true' && 'develop' || format('v{0}', needs.create-tag.outputs.version) }}
@@ -519,7 +519,7 @@ jobs:
         run: cd apps/frontend && npm run verify:linux
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: linux-builds
           path: |
@@ -533,16 +533,16 @@ jobs:
     needs: [build-macos-intel, build-macos-arm64]
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download Intel DMG
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: macos-intel-builds
           path: intel
 
       - name: Download ARM64 DMG
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: macos-arm64-builds
           path: arm64
@@ -559,13 +559,13 @@ jobs:
           arm64-dmg-file: ${{ needs.build-macos-arm64.outputs.dmg_file }}
 
       - name: Upload stapled Intel DMG
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: macos-intel-stapled
           path: intel/*.dmg
 
       - name: Upload stapled ARM64 DMG
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: macos-arm64-stapled
           path: arm64/*.dmg
@@ -577,13 +577,13 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: v${{ needs.create-tag.outputs.version }}
           fetch-depth: 0
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: dist
 
@@ -732,7 +732,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: develop
           token: ${{ secrets.PAT_TOKEN }}
@@ -764,10 +764,10 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.dry_run == 'true' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: dist
 
