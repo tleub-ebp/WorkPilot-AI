@@ -56,12 +56,12 @@ python3 -m venv .venv && source .venv/bin/activate && pip install -r requirement
 **Step 3:** Configure environment
 
 ```bash
-cp .env.example .env
+cp .env-files/.env.example .env-files/.env
 
 # Get your OAuth token
 claude setup-token
 
-# Add the token to apps/backend/.env
+# Add the token to .env-files/.env
 # CLAUDE_CODE_OAUTH_TOKEN=your-token-here
 ```
 
@@ -182,10 +182,10 @@ python validate_spec.py --spec-dir specs/001-feature --checkpoint all
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and configure as needed:
+Copy `.env-files/.env.example` to `.env-files/.env` and configure as needed:
 
 ```bash
-cp .env.example .env
+cp .env-files/.env.example .env-files/.env
 ```
 
 ### Core Settings
@@ -213,4 +213,4 @@ cp .env.example .env
 | `GRAPHITI_LLM_PROVIDER` | No | LLM provider: openai, anthropic, ollama, google, openrouter |
 | `GRAPHITI_EMBEDDER_PROVIDER` | No | Embedder: openai, voyage, ollama, google, openrouter |
 
-See `.env.example` for complete configuration options including provider-specific settings.
+See `.env-files/.env.example` for complete configuration options including provider-specific settings.

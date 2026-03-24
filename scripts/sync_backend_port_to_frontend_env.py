@@ -3,8 +3,8 @@ from pathlib import Path
 from dotenv import dotenv_values
 
 # Chemins des fichiers .env
-ROOT_ENV = Path(__file__).parent.parent / ".env"
-FRONTEND_ENV = Path(__file__).parent.parent / "apps" / "frontend" / ".env"
+ROOT_ENV = Path(__file__).parent.parent / ".env-files" / ".env"
+FRONTEND_ENV = Path(__file__).parent.parent / "apps" / "frontend" / ".env-files" / ".env"
 
 # Charge la variable BACKEND_PORT du .env racine
 root_env_vars = dotenv_values(ROOT_ENV)
