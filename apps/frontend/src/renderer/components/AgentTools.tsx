@@ -32,8 +32,7 @@ import {
   Terminal,
   Loader2,
   RefreshCw,
-  Lock,
-  Chrome
+  Lock
 } from 'lucide-react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { ScrollArea } from './ui/scroll-area';
@@ -468,15 +467,36 @@ const CATEGORIES = {
 };
 
 interface AgentCardProps {
-  id: string;
-  config: typeof AGENT_CONFIGS[keyof typeof AGENT_CONFIGS];
-  modelLabel: string;
-  thinkingLabel: string;
-  overrides: AgentMcpOverride | undefined;
-  mcpServerStates: ProjectEnvConfig['mcpServers'];
-  customServers: CustomMcpServer[];
-  onAddMcp: (agentId: string, mcpId: string) => void;
-  onRemoveMcp: (agentId: string, mcpId: string) => void;
+  readonly id: string;
+  readonly config: typeof AGENT_CONFIGS[keyof typeof AGENT_CONFIGS];
+  readonly modelLabel: string;
+  readonly thinkingLabel: string;
+  readonly overrides: AgentMcpOverride | undefined;
+  readonly mcpServerStates: ProjectEnvConfig['mcpServers'];
+  readonly customServers: CustomMcpServer[];
+  readonly onAddMcp: (agentId: string, mcpId: string) => void;
+  readonly onRemoveMcp: (agentId: string, mcpId: string) => void;
+}
+
+// Status indicator component for MCP servers
+function StatusIndicator({ isTesting, isChecking, health }: {
+  readonly isTesting: boolean;
+  readonly isChecking: boolean;
+  readonly health?: McpHealthCheckResult;
+}) {
+  if (isTesting || isChecking) {
+    return <Loader2 className="h-3.5 w-3.5 text-muted-foreground animate-spin" />;
+  }
+  switch (health?.status) {
+    case 'healthy':
+      return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />;
+    case 'needs_auth':
+      return <Lock className="h-3.5 w-3.5 text-amber-500" />;
+    case 'unhealthy':
+      return <AlertCircle className="h-3.5 w-3.5 text-destructive" />;
+    default:
+      return <Circle className="h-3.5 w-3.5 text-muted-foreground" />;
+  }
 }
 
 function AgentCard({ id, config, modelLabel, thinkingLabel, overrides, mcpServerStates, customServers, onAddMcp, onRemoveMcp }: AgentCardProps) {
@@ -546,7 +566,7 @@ function AgentCard({ id, config, modelLabel, thinkingLabel, overrides, mcpServer
   // Group available MCPs by category, filtered by search query
   const groupedAvailableMcps = useMemo(() => {
     const searchLower = mcpSearch.toLowerCase().trim();
-    const knownIds = MCP_CATEGORY_GROUPS.flatMap(g => g.ids);
+    const knownIds = new Set(MCP_CATEGORY_GROUPS.flatMap(g => g.ids));
     const result: Array<{ labelKey: string; fallback: string; items: string[] }> = [];
 
     for (const group of MCP_CATEGORY_GROUPS) {
@@ -563,7 +583,7 @@ function AgentCard({ id, config, modelLabel, thinkingLabel, overrides, mcpServer
 
     // Custom servers not in any known category
     const customItems = availableMcps.filter(id =>
-      !knownIds.includes(id) &&
+      !knownIds.has(id) &&
       (!searchLower ||
         id.toLowerCase().includes(searchLower) ||
         allMcpServers[id]?.name.toLowerCase().includes(searchLower)
@@ -760,21 +780,21 @@ function AgentCard({ id, config, modelLabel, thinkingLabel, overrides, mcpServer
                           onClick={() => { onAddMcp(id, mcpId); setShowAddDialog(false); setMcpSearch(''); }}
                           className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted transition-colors text-left group"
                         >
-                          <div className="flex-shrink-0 w-8 h-8 rounded-md bg-muted flex items-center justify-center group-hover:bg-background transition-colors">
+                          <div className="shrink-0 w-8 h-8 rounded-md bg-muted flex items-center justify-center group-hover:bg-background transition-colors">
                             <ServerIcon className="h-4 w-4 text-muted-foreground" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm">{server?.name || mcpId}</span>
                               {needsSetup && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium flex-shrink-0">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium shrink-0">
                                   {t('mcp.setupRequired', { defaultValue: 'Setup required' })}
                                 </span>
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground truncate">{server?.description}</p>
                           </div>
-                          <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 flex-shrink-0 transition-opacity" />
+                          <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0 transition-opacity" />
                         </button>
                       );
                     })}
@@ -804,14 +824,14 @@ function AgentCard({ id, config, modelLabel, thinkingLabel, overrides, mcpServer
                         onClick={() => { onAddMcp(id, mcpId); setShowAddDialog(false); }}
                         className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted transition-colors text-left group opacity-60 hover:opacity-100"
                       >
-                        <div className="flex-shrink-0 w-8 h-8 rounded-md bg-muted flex items-center justify-center">
+                        <div className="shrink-0 w-8 h-8 rounded-md bg-muted flex items-center justify-center">
                           <ServerIcon className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-sm">{server?.name || mcpId}</div>
                           <p className="text-xs text-muted-foreground truncate">{server?.description}</p>
                         </div>
-                        <RotateCcw className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 flex-shrink-0 transition-opacity" />
+                        <RotateCcw className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0 transition-opacity" />
                       </button>
                     );
                   })}
@@ -850,7 +870,7 @@ export function AgentTools() {
   useEffect(() => {
     if (selectedProjectId && selectedProject?.autoBuildPath) {
       setIsLoading(true);
-      window.electronAPI.getProjectEnv(selectedProjectId)
+      globalThis.electronAPI.getProjectEnv(selectedProjectId)
         .then((result) => {
           if (result.success && result.data) {
             setEnvConfig(result.data);
@@ -886,7 +906,7 @@ export function AgentTools() {
 
     // Save to backend
     try {
-      await window.electronAPI.updateProjectEnv(selectedProjectId, {
+      await globalThis.electronAPI.updateProjectEnv(selectedProjectId, {
         mcpServers: newMcpServers,
       });
     } catch (error) {
@@ -934,7 +954,7 @@ export function AgentTools() {
 
     // Save to backend
     try {
-      await window.electronAPI.updateProjectEnv(selectedProjectId, {
+      await globalThis.electronAPI.updateProjectEnv(selectedProjectId, {
         agentMcpOverrides: newOverrides,
       });
     } catch (error) {
@@ -985,7 +1005,7 @@ export function AgentTools() {
 
     // Save to backend
     try {
-      await window.electronAPI.updateProjectEnv(selectedProjectId, {
+      await globalThis.electronAPI.updateProjectEnv(selectedProjectId, {
         agentMcpOverrides: newOverrides,
       });
     } catch (error) {
@@ -1016,7 +1036,7 @@ export function AgentTools() {
 
     // Save to backend
     try {
-      await window.electronAPI.updateProjectEnv(selectedProjectId, {
+      await globalThis.electronAPI.updateProjectEnv(selectedProjectId, {
         customMcpServers: newServers,
       });
     } catch (error) {
@@ -1060,7 +1080,7 @@ export function AgentTools() {
 
     // Save to backend
     try {
-      await window.electronAPI.updateProjectEnv(selectedProjectId, {
+      await globalThis.electronAPI.updateProjectEnv(selectedProjectId, {
         customMcpServers: newServers,
         agentMcpOverrides: newOverrides,
       });
@@ -1087,14 +1107,15 @@ export function AgentTools() {
       }));
 
       try {
-        const result = await window.electronAPI.checkMcpHealth(server);
+        const result = await globalThis.electronAPI.checkMcpHealth(server);
         if (result.success && result.data) {
           setServerHealthStatus(prev => ({
             ...prev,
             [server.id]: result.data!,
           }));
         }
-      } catch (_error) {
+      } catch (error) {
+        console.warn(`Health check failed for MCP server ${server.id}:`, error);
         setServerHealthStatus(prev => ({
           ...prev,
           [server.id]: {
@@ -1120,7 +1141,7 @@ export function AgentTools() {
     setTestingServers(prev => new Set(prev).add(server.id));
 
     try {
-      const result = await window.electronAPI.testMcpConnection(server);
+      const result = await globalThis.electronAPI.testMcpConnection(server);
       if (result.success && result.data) {
         // Update health status based on test result
         setServerHealthStatus(prev => ({
@@ -1134,7 +1155,8 @@ export function AgentTools() {
           }
         }));
       }
-    } catch (_error) {
+    } catch (error) {
+      console.warn(`Connection test failed for MCP server ${server.id}:`, error);
       setServerHealthStatus(prev => ({
         ...prev,
         [server.id]: {
@@ -1367,7 +1389,7 @@ export function AgentTools() {
                   {/* Chrome DevTools */}
                   <div className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-3">
-                      <Chrome className="h-4 w-4 text-muted-foreground" />
+                      <Monitor className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <span className="text-sm font-medium">{t('settings:mcp.servers.chromeDevtools.name')}</span>
                         <p className="text-xs text-muted-foreground">{t('settings:mcp.servers.chromeDevtools.description')}</p>
@@ -1418,23 +1440,6 @@ export function AgentTools() {
                         const isTesting = testingServers.has(server.id);
                         const isChecking = health?.status === 'checking';
 
-                        // Status indicator component
-                        const StatusIndicator = () => {
-                          if (isTesting || isChecking) {
-                            return <Loader2 className="h-3.5 w-3.5 text-muted-foreground animate-spin" />;
-                          }
-                          switch (health?.status) {
-                            case 'healthy':
-                              return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />;
-                            case 'needs_auth':
-                              return <Lock className="h-3.5 w-3.5 text-amber-500" />;
-                            case 'unhealthy':
-                              return <AlertCircle className="h-3.5 w-3.5 text-destructive" />;
-                            default:
-                              return <Circle className="h-3.5 w-3.5 text-muted-foreground" />;
-                          }
-                        };
-
                         return (
                           <div
                             key={server.id}
@@ -1442,7 +1447,11 @@ export function AgentTools() {
                           >
                             <div className="flex items-center gap-3">
                               {/* Status indicator */}
-                              <StatusIndicator />
+                              <StatusIndicator 
+                                isTesting={isTesting}
+                                isChecking={isChecking}
+                                health={health}
+                              />
                               {server.type === 'command' ? (
                                 <Terminal className="h-4 w-4 text-muted-foreground" />
                               ) : (
