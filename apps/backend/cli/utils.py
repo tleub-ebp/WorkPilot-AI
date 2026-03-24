@@ -95,8 +95,8 @@ def setup_environment() -> Path:
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
 
-    # Load .env file - check both auto-claude/ and dev/auto-claude/ locations
-    env_file = script_dir / ".env"
+    # Load .env file from centralized .env-files directory
+    env_file = project_root / ".env-files" / ".env"
     dev_env_file = script_dir.parent / "dev" / "auto-claude" / ".env"
     if env_file.exists():
         load_dotenv(env_file)

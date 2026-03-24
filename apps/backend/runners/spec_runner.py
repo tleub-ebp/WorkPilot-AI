@@ -94,7 +94,7 @@ from cli.utils import import_dotenv
 
 load_dotenv = import_dotenv()
 
-env_file = Path(__file__).parent.parent / ".env"
+env_file = Path(__file__).parent.parent.parent.parent / ".env-files" / ".env"
 dev_env_file = Path(__file__).parent.parent.parent / "dev" / "auto-claude" / ".env"
 if env_file.exists():
     load_dotenv(env_file)
