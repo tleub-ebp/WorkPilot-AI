@@ -196,8 +196,7 @@
           "!**/.env",
           "!**/tests",
           "!**/*.egg-info",
-          "!**/.pytest_cache",
-          "!**/.mypy_cache"
+          "!**/.pytest_cache"
         ]
       }
     ],
@@ -210,34 +209,16 @@
       "entitlementsInherit": "resources/entitlements.mac.plist",
       "target": [
         "dmg",
-        "zip"
-      ],
-      "extraResources": [
-        {
-          "from": "python-runtime/${os}-${arch}/python",
-          "to": "python"
-        },
-        {
-          "from": "python-runtime/${os}-${arch}/site-packages",
-          "to": "python-site-packages"
-        }
+        "zip",
+        "mas"
       ]
     },
     "win": {
       "icon": "resources/icon.ico",
       "target": [
         "nsis",
-        "zip"
-      ],
-      "extraResources": [
-        {
-          "from": "python-runtime/${os}-${arch}/python",
-          "to": "python"
-        },
-        {
-          "from": "python-runtime/${os}-${arch}/site-packages",
-          "to": "python-site-packages"
-        }
+        "zip",
+        "portable"
       ]
     },
     "linux": {
@@ -245,19 +226,10 @@
       "target": [
         "AppImage",
         "deb",
-        "flatpak"
+        "flatpak",
+        "snap"
       ],
-      "category": "Development",
-      "extraResources": [
-        {
-          "from": "python-runtime/${os}-${arch}/python",
-          "to": "python"
-        },
-        {
-          "from": "python-runtime/${os}-${arch}/site-packages",
-          "to": "python-site-packages"
-        }
-      ]
+      "category": "Development"
     },
     "flatpak": {
       "runtime": "org.freedesktop.Platform",
