@@ -13,6 +13,9 @@ backend_port = root_env_vars.get("BACKEND_PORT", "9000")
 # Prépare la ligne à écrire dans le .env frontend
 backend_url = f"VITE_BACKEND_URL=http://localhost:{backend_port}"
 
+# Crée le dossier .env-files s'il n'existe pas
+FRONTEND_ENV.parent.mkdir(parents=True, exist_ok=True)
+
 # Lis le .env frontend existant (s'il existe)
 frontend_lines = []
 if FRONTEND_ENV.exists():
