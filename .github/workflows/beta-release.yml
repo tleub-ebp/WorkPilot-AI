@@ -92,9 +92,6 @@ jobs:
 
       # Setup Node.js and dependencies removed - using direct setup below
 
-      - name: Install node-pty in frontend
-        run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
@@ -102,11 +99,16 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: 'pnpm-lock.yaml'
 
-      - name: Install pnpm and frontend dependencies
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install frontend dependencies
         run: |
-          npm install -g pnpm
           rm -rf apps/frontend/node_modules
           cd apps/frontend && pnpm install --ignore-scripts
+
+      - name: Install node-pty in frontend
+        run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
 
       - name: Install Rust toolchain (for building native Python packages)
         uses: dtolnay/rust-toolchain@stable
@@ -198,9 +200,6 @@ jobs:
 
       # Setup Node.js and dependencies removed - using direct setup below
 
-      - name: Install node-pty in frontend
-        run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
@@ -208,11 +207,16 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: 'pnpm-lock.yaml'
 
-      - name: Install pnpm and frontend dependencies
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install frontend dependencies
         run: |
-          npm install -g pnpm
           rm -rf apps/frontend/node_modules
           cd apps/frontend && pnpm install --ignore-scripts
+
+      - name: Install node-pty in frontend
+        run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
 
       - name: Cache pip wheel cache
         uses: actions/cache@v5
@@ -303,9 +307,6 @@ jobs:
 
       # Setup Node.js and dependencies removed - using direct setup below
 
-      - name: Install node-pty in frontend
-        run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
@@ -313,11 +314,16 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: 'pnpm-lock.yaml'
 
-      - name: Install pnpm and frontend dependencies
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install frontend dependencies
         run: |
-          npm install -g pnpm
           rm -rf apps/frontend/node_modules
           cd apps/frontend && pnpm install --ignore-scripts
+
+      - name: Install node-pty in frontend
+        run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
 
       - name: Cache pip wheel cache
         uses: actions/cache@v5
@@ -496,9 +502,6 @@ jobs:
 
       # Setup Node.js and dependencies removed - using direct setup below
 
-      - name: Install node-pty in frontend
-        run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
@@ -506,11 +509,16 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: 'pnpm-lock.yaml'
 
-      - name: Install pnpm and frontend dependencies
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install frontend dependencies
         run: |
-          npm install -g pnpm
           rm -rf apps/frontend/node_modules
           cd apps/frontend && pnpm install --ignore-scripts
+
+      - name: Install node-pty in frontend
+        run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
 
       - name: Setup Flatpak and verification tools
         run: |
