@@ -842,11 +842,11 @@ async def run_agent_session(
                     usage.get("output_tokens", 0) if isinstance(usage, dict) else 0
                 )
                 cost_usd = getattr(_sdk_result_msg, "total_cost_usd", None) or 0.0
-                # Derive project_dir from spec_dir (spec_dir = project/.auto-claude/specs/XXX)
+                # Derive project_dir from spec_dir (spec_dir = project/.workpilot/specs/XXX)
                 _project_dir = spec_dir.parent.parent.parent
                 _model = getattr(getattr(client, "options", None), "model", "unknown")
                 # Resolve provider via the same multi-strategy logic used by create_agent_client
-                # (env vars, task_metadata.json, .auto-claude/.env) — get_selected_provider()
+                # (env vars, task_metadata.json, .workpilot/.env) — get_selected_provider()
                 # always returns None in subprocess context so it's useless here.
                 _provider = "anthropic"
                 try:

@@ -25,7 +25,7 @@ class PatternExtractor:
         thinking_level: str | None = None,
     ):
         self.project_dir = Path(project_dir)
-        self.specs_dir = self.project_dir / ".auto-claude" / "specs"
+        self.specs_dir = self.project_dir / ".workpilot" / "specs"
         self.model = model or "sonnet"
         self.thinking_level = thinking_level or "medium"
 

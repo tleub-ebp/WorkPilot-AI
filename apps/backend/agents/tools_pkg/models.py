@@ -2,7 +2,7 @@
 Tool Models and Constants
 ==========================
 
-Defines tool name constants and configuration for auto-claude MCP tools.
+Defines tool name constants and configuration for workpilot MCP tools.
 
 This module is the single source of truth for all tool definitions used by
 the Claude Agent SDK client. Tool lists are organized by category:
@@ -31,13 +31,13 @@ WEB_TOOLS = ["WebFetch", "WebSearch"]
 # WorkPilot AI MCP Tools (Custom build management)
 # =============================================================================
 
-# WorkPilot AI MCP tool names (prefixed with mcp__auto-claude__)
-TOOL_UPDATE_SUBTASK_STATUS = "mcp__auto-claude__update_subtask_status"
-TOOL_GET_BUILD_PROGRESS = "mcp__auto-claude__get_build_progress"
-TOOL_RECORD_DISCOVERY = "mcp__auto-claude__record_discovery"
-TOOL_RECORD_GOTCHA = "mcp__auto-claude__record_gotcha"
-TOOL_GET_SESSION_CONTEXT = "mcp__auto-claude__get_session_context"
-TOOL_UPDATE_QA_STATUS = "mcp__auto-claude__update_qa_status"
+# WorkPilot AI MCP tool names (prefixed with mcp__workpilot__)
+TOOL_UPDATE_SUBTASK_STATUS = "mcp__workpilot__update_subtask_status"
+TOOL_GET_BUILD_PROGRESS = "mcp__workpilot__get_build_progress"
+TOOL_RECORD_DISCOVERY = "mcp__workpilot__record_discovery"
+TOOL_RECORD_GOTCHA = "mcp__workpilot__record_gotcha"
+TOOL_GET_SESSION_CONTEXT = "mcp__workpilot__get_session_context"
+TOOL_UPDATE_QA_STATUS = "mcp__workpilot__update_qa_status"
 
 # =============================================================================
 # External MCP Tools
@@ -226,7 +226,7 @@ AGENT_CONFIGS = {
     # ═══════════════════════════════════════════════════════════════════════
     "planner": {
         "tools": BASE_READ_TOOLS + BASE_WRITE_TOOLS + WEB_TOOLS,
-        "mcp_servers": ["context7", "graphiti", "auto-claude"],
+        "mcp_servers": ["context7", "graphiti", "workpilot"],
         "mcp_servers_optional": ["linear"],  # Only if project setting enabled
         "auto_claude_tools": [
             TOOL_GET_BUILD_PROGRESS,
@@ -237,7 +237,7 @@ AGENT_CONFIGS = {
     },
     "coder": {
         "tools": BASE_READ_TOOLS + BASE_WRITE_TOOLS + WEB_TOOLS,
-        "mcp_servers": ["context7", "graphiti", "auto-claude", "chrome-devtools"],
+        "mcp_servers": ["context7", "graphiti", "workpilot", "chrome-devtools"],
         "mcp_servers_optional": ["linear"],
         "auto_claude_tools": [
             TOOL_UPDATE_SUBTASK_STATUS,
@@ -258,7 +258,7 @@ AGENT_CONFIGS = {
         "mcp_servers": [
             "context7",
             "graphiti",
-            "auto-claude",
+            "workpilot",
             "browser",
             "chrome-devtools",
         ],
@@ -275,7 +275,7 @@ AGENT_CONFIGS = {
         "mcp_servers": [
             "context7",
             "graphiti",
-            "auto-claude",
+            "workpilot",
             "browser",
             "chrome-devtools",
         ],
@@ -443,7 +443,7 @@ def _map_mcp_server_name(
         "electron": "electron",
         "puppeteer": "puppeteer",
         "chrome-devtools": "chrome-devtools",
-        "auto-claude": "auto-claude",
+        "workpilot": "workpilot",
         "github": "github",
         "brave-search": "brave-search",
         "jira": "jira",
@@ -476,14 +476,14 @@ def get_required_mcp_servers(
     - "browser" → electron (if is_electron) or puppeteer (if is_web_frontend)
     - "linear" → only if in mcp_servers_optional AND linear_enabled is True
     - "graphiti" → only if GRAPHITI_MCP_URL is set
-    - Respects per-project MCP config overrides from .auto-claude/.env
+    - Respects per-project MCP config overrides from .workpilot/.env
     - Applies per-agent ADD/REMOVE overrides from AGENT_MCP_<agent>_ADD/REMOVE
 
     Args:
         agent_type: The agent type identifier
         project_capabilities: Dict from detect_project_capabilities() or None
         linear_enabled: Whether Linear integration is enabled for this project
-        mcp_config: Per-project MCP server toggles from .auto-claude/.env
+        mcp_config: Per-project MCP server toggles from .workpilot/.env
                    Keys: CONTEXT7_ENABLED, LINEAR_MCP_ENABLED, ELECTRON_MCP_ENABLED,
                          PUPPETEER_MCP_ENABLED, CHROME_DEVTOOLS_MCP_ENABLED,
                          AGENT_MCP_<agent>_ADD/REMOVE
@@ -563,14 +563,14 @@ def get_required_mcp_servers(
             if mapped and mapped not in servers:
                 servers.append(mapped)
 
-    # Process removals (but never remove auto-claude)
+    # Process removals (but never remove workpilot)
     if remove_key in mcp_config:
         removals = [
             s.strip() for s in str(mcp_config[remove_key]).split(",") if s.strip()
         ]
         for server in removals:
             mapped = _map_mcp_server_name(server, custom_server_ids)
-            if mapped and mapped != "auto-claude":  # auto-claude cannot be removed
+            if mapped and mapped != "workpilot":  # workpilot cannot be removed
                 servers = [s for s in servers if s != mapped]
 
     return servers

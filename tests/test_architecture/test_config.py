@@ -24,7 +24,7 @@ from architecture.models import ArchitectureConfig
 @pytest.fixture
 def tmp_project(tmp_path):
     """Create a temporary project directory."""
-    auto_claude = tmp_path / ".auto-claude"
+    auto_claude = tmp_path / ".workpilot"
     auto_claude.mkdir()
     return tmp_path
 
@@ -71,7 +71,7 @@ class TestLoadArchitectureConfig:
             "ai_review": False,
         }
 
-        config_path = tmp_project / ".auto-claude" / "architecture_rules.json"
+        config_path = tmp_project / ".workpilot" / "architecture_rules.json"
         config_path.write_text(json.dumps(config_data), encoding="utf-8")
 
         result = load_architecture_config(tmp_project)
@@ -93,7 +93,7 @@ class TestLoadArchitectureConfig:
 
     def test_handles_malformed_json(self, tmp_project):
         """Should return None for malformed JSON."""
-        config_path = tmp_project / ".auto-claude" / "architecture_rules.json"
+        config_path = tmp_project / ".workpilot" / "architecture_rules.json"
         config_path.write_text("{ not valid json }", encoding="utf-8")
 
         result = load_architecture_config(tmp_project)
@@ -101,7 +101,7 @@ class TestLoadArchitectureConfig:
 
     def test_handles_empty_config(self, tmp_project):
         """Should handle an empty config with defaults."""
-        config_path = tmp_project / ".auto-claude" / "architecture_rules.json"
+        config_path = tmp_project / ".workpilot" / "architecture_rules.json"
         config_path.write_text("{}", encoding="utf-8")
 
         result = load_architecture_config(tmp_project)
@@ -122,7 +122,7 @@ class TestLoadArchitectureConfig:
                 }
             ]
         }
-        config_path = tmp_project / ".auto-claude" / "architecture_rules.json"
+        config_path = tmp_project / ".workpilot" / "architecture_rules.json"
         config_path.write_text(json.dumps(config_data), encoding="utf-8")
 
         result = load_architecture_config(tmp_project)

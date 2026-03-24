@@ -32,8 +32,8 @@ export const GIT_BRANCH_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9._/-]*[a-zA-Z0-9]$|^[a-zA
 /**
  * Validates a detected branch name and returns the safe branch to delete.
  *
- * Why `auto-claude/` prefix is considered safe:
- * - All task worktrees use branches named `auto-claude/{specId}`
+ * Why `workpilot/` prefix is considered safe:
+ * - All task worktrees use branches named `workpilot/{specId}`
  * - This pattern is controlled by WorkPilot AI, not user input
  * - If detected branch matches this pattern, it's a valid task branch
  * - If it doesn't match (e.g., `main`, `develop`, `feature/xxx`), it's likely
@@ -65,9 +65,9 @@ export function validateWorktreeBranch(
     };
   }
 
-  // Matches auto-claude pattern with valid specId (not just "auto-claude/")
+  // Matches workpilot pattern with valid specId (not just "workpilot/"))
   // The specId must be non-empty for this to be a valid task branch
-  if (detectedBranch.startsWith('auto-claude/') && detectedBranch.length > 'auto-claude/'.length) {
+  if (detectedBranch.startsWith('workpilot/') && detectedBranch.length > 'workpilot/'.length) {
     return {
       branchToDelete: detectedBranch,
       usedFallback: false,
@@ -1395,7 +1395,7 @@ function getEffectiveBaseBranch(projectPath: string, specId: string, projectMain
   }
 
   // 1. Try task metadata baseBranch
-  const specDir = path.join(projectPath, '.auto-claude', 'specs', specId);
+  const specDir = path.join(projectPath, '.workpilot', 'specs', specId);
   const taskBaseBranch = getTaskBaseBranch(specDir);
   if (taskBaseBranch) {
     return taskBaseBranch;
@@ -1694,7 +1694,7 @@ export function registerWorktreeHandlers(
 ): void {
   /**
    * Get the worktree status for a task
-   * Per-spec architecture: Each spec has its own worktree at .auto-claude/worktrees/tasks/{spec-name}/
+   * Per-spec architecture: Each spec has its own worktree at .workpilot/worktrees/tasks/{spec-name}/
    */
   ipcMain.handle(
     IPC_CHANNELS.TASK_WORKTREE_STATUS,
@@ -1705,7 +1705,7 @@ export function registerWorktreeHandlers(
           return { success: false, error: 'Task not found' };
         }
 
-        // Find worktree at .auto-claude/worktrees/tasks/{spec-name}/
+        // Find worktree at .workpilot/worktrees/tasks/{spec-name}/
         const worktreePath = findTaskWorktree(project.path, task.specId);
 
         if (!worktreePath) {
@@ -1808,7 +1808,7 @@ export function registerWorktreeHandlers(
 
   /**
    * Get the diff for a task's worktree
-   * Per-spec architecture: Each spec has its own worktree at .auto-claude/worktrees/tasks/{spec-name}/
+   * Per-spec architecture: Each spec has its own worktree at .workpilot/worktrees/tasks/{spec-name}/
    */
   ipcMain.handle(
     IPC_CHANNELS.TASK_WORKTREE_DIFF,
@@ -1819,7 +1819,7 @@ export function registerWorktreeHandlers(
           return { success: false, error: 'Task not found' };
         }
 
-        // Find worktree at .auto-claude/worktrees/tasks/{spec-name}/
+        // Find worktree at .workpilot/worktrees/tasks/{spec-name}/
         const worktreePath = findTaskWorktree(project.path, task.specId);
 
         if (!worktreePath) {
@@ -2000,7 +2000,7 @@ export function registerWorktreeHandlers(
         }
 
         const runScript = path.join(sourcePath, 'run.py');
-        const specDir = path.join(project.path, project.autoBuildPath || '.auto-claude', 'specs', task.specId);
+        const specDir = path.join(project.path, project.autoBuildPath || '.workpilot', 'specs', task.specId);
 
         if (!existsSync(specDir)) {
           debug('Spec directory not found:', specDir);
@@ -2282,7 +2282,7 @@ export function registerWorktreeHandlers(
 
                     if (!hasActualStagedChanges) {
                       // Check if worktree branch was already merged (merge commit exists)
-                      const specBranch = `auto-claude/${task.specId}`;
+                      const specBranch = `workpilot/${task.specId}`;
                       try {
                         // Check if current branch contains all commits from spec branch
                         // git merge-base --is-ancestor returns exit code 0 if true, 1 if false
@@ -2407,7 +2407,7 @@ export function registerWorktreeHandlers(
               ];
               // Add worktree plan path if worktree exists
               if (worktreePath) {
-                const worktreeSpecDir = path.join(worktreePath, project.autoBuildPath || '.auto-claude', 'specs', task.specId);
+                const worktreeSpecDir = path.join(worktreePath, project.autoBuildPath || '.workpilot', 'specs', task.specId);
                 planPaths.push({ path: path.join(worktreeSpecDir, AUTO_BUILD_PATHS.IMPLEMENTATION_PLAN), isMain: false });
               }
 
@@ -2639,7 +2639,7 @@ export function registerWorktreeHandlers(
         }
 
         const runScript = path.join(sourcePath, 'run.py');
-        const specDir = path.join(project.path, project.autoBuildPath || '.auto-claude', 'specs', task.specId);
+        const specDir = path.join(project.path, project.autoBuildPath || '.workpilot', 'specs', task.specId);
         const args = [
           runScript,
           '--spec', task.specId,
@@ -2766,7 +2766,7 @@ export function registerWorktreeHandlers(
 
   /**
    * Discard the worktree changes
-   * Per-spec architecture: Each spec has its own worktree at .auto-claude/worktrees/tasks/{spec-name}/
+   * Per-spec architecture: Each spec has its own worktree at .workpilot/worktrees/tasks/{spec-name}/
    *
    * Note: Uses the shared cleanupWorktree utility which handles Windows-specific issues
    * where `git worktree remove --force` fails when the directory contains untracked files.
@@ -2781,7 +2781,7 @@ export function registerWorktreeHandlers(
           return { success: false, error: 'Task not found' };
         }
 
-        // Find worktree at .auto-claude/worktrees/tasks/{spec-name}/
+        // Find worktree at .workpilot/worktrees/tasks/{spec-name}/
         const worktreePath = findTaskWorktree(project.path, task.specId);
 
         if (!worktreePath) {
@@ -2877,7 +2877,7 @@ export function registerWorktreeHandlers(
           return { success: false, error: 'Project path is invalid' };
         }
 
-        // Find worktree at .auto-claude/worktrees/tasks/{spec-name}/
+        // Find worktree at .workpilot/worktrees/tasks/{spec-name}/
         const worktreePath = findTaskWorktree(project.path, specName);
 
         if (!worktreePath) {
@@ -2929,7 +2929,7 @@ export function registerWorktreeHandlers(
 
   /**
    * List all spec worktrees for a project
-   * Per-spec architecture: Each spec has its own worktree at .auto-claude/worktrees/tasks/{spec-name}/
+   * Per-spec architecture: Each spec has its own worktree at .workpilot/worktrees/tasks/{spec-name}/
    */
   ipcMain.handle(
     IPC_CHANNELS.TASK_LIST_WORKTREES,
@@ -2958,7 +2958,7 @@ export function registerWorktreeHandlers(
         // Used for orphan detection - worktrees without a matching task are orphaned
         const tasks = projectStore.getTasks(projectId);
         // Track if task lookup was successful (empty array with existing specs dir = lookup failed)
-        const mainSpecsDir = path.join(project.path, '.auto-claude', 'specs');
+        const mainSpecsDir = path.join(project.path, '.workpilot', 'specs');
         const taskLookupSuccessful = tasks.length > 0 || !existsSync(mainSpecsDir);
 
         // Helper to process a single worktree entry (async)
@@ -3269,7 +3269,7 @@ export function registerWorktreeHandlers(
         }
 
         const runScript = path.join(sourcePath, 'run.py');
-        const specDir = path.join(project.path, project.autoBuildPath || '.auto-claude', 'specs', task.specId);
+        const specDir = path.join(project.path, project.autoBuildPath || '.workpilot', 'specs', task.specId);
 
         // Use EAFP pattern - try to read specDir and catch ENOENT
         try {

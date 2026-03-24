@@ -328,7 +328,7 @@ class TemplateLibrary:
     """
     Manages built-in and user-defined spec templates.
 
-    Custom templates are persisted in .auto-claude/spec_templates.json
+    Custom templates are persisted in .workpilot/spec_templates.json
     inside the project directory so teams can share templates via git.
     """
 
@@ -422,7 +422,7 @@ class TemplateLibrary:
     # ── Persistence ────────────────────────────────────────────────────────
 
     def _custom_templates_path(self) -> Path:
-        return self.project_dir / ".auto-claude" / self.CUSTOM_TEMPLATES_FILE
+        return self.project_dir / ".workpilot" / self.CUSTOM_TEMPLATES_FILE
 
     def _load_custom_templates(self) -> None:
         path = self._custom_templates_path()

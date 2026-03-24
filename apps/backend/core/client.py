@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 _PROJECT_INDEX_CACHE: dict[str, tuple[dict[str, Any], dict[str, bool], float]] = {}
 _CACHE_TTL_SECONDS = 300  # 5 minute TTL
 _CACHE_LOCK = threading.Lock()  # Protects _PROJECT_INDEX_CACHE access
-_AUTO_CLAUDE_DIR = ".auto-claude"  # Auto-Claude configuration directory
+_AUTO_CLAUDE_DIR = ".workpilot"  # Auto-Claude configuration directory
 
 
 def _get_cached_project_data(
@@ -584,7 +584,7 @@ def create_client(
     linear_enabled = is_linear_enabled()
     linear_api_key = os.environ.get("LINEAR_API_KEY", "")
 
-    # Check if custom auto-claude tools are available
+    # Check if custom workpilot tools are available
     auto_claude_tools_enabled = is_tools_available()
 
     # Load project capabilities for dynamic MCP tool selection
@@ -755,8 +755,8 @@ def create_client(
         mcp_servers_list.append("linear (project management)")
     if graphiti_mcp_enabled:
         mcp_servers_list.append("graphiti-memory (knowledge graph)")
-    if "auto-claude" in required_servers and auto_claude_tools_enabled:
-        mcp_servers_list.append(f"auto-claude ({agent_type} tools)")
+    if "workpilot" in required_servers and auto_claude_tools_enabled:
+        mcp_servers_list.append(f"workpilot ({agent_type} tools)")
     if mcp_servers_list:
         print(f"   - MCP servers: {', '.join(mcp_servers_list)}")
     else:
@@ -914,11 +914,11 @@ def create_client(
                 "env": {"TEAMS_WEBHOOK_URL": teams_webhook_url},
             }
 
-    # Add custom auto-claude MCP server if required and available
-    if "auto-claude" in required_servers and auto_claude_tools_enabled:
+    # Add custom workpilot MCP server if required and available
+    if "workpilot" in required_servers and auto_claude_tools_enabled:
         auto_claude_mcp_server = create_auto_claude_mcp_server(spec_dir, project_dir)
         if auto_claude_mcp_server:
-            mcp_servers["auto-claude"] = auto_claude_mcp_server
+            mcp_servers["workpilot"] = auto_claude_mcp_server
 
     # Add custom MCP servers from project config
     custom_servers = mcp_config.get("CUSTOM_MCP_SERVERS", [])

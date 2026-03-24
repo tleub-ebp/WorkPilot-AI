@@ -79,7 +79,7 @@ function loadManifest(specDir: string): MultiRepoOrchestration | null {
  * Find all multi-repo orchestrations for a project
  */
 function findOrchestrations(projectPath: string): MultiRepoOrchestration[] {
-  const specsDir = path.join(projectPath, '.auto-claude', 'specs');
+  const specsDir = path.join(projectPath, '.workpilot', 'specs');
   if (!existsSync(specsDir)) return [];
 
   const orchestrations: MultiRepoOrchestration[] = [];
@@ -135,7 +135,7 @@ export function registerMultiRepoHandlers(
         }
 
         // Create spec directory
-        const specsDir = path.join(project.path, '.auto-claude', 'specs');
+        const specsDir = path.join(project.path, '.workpilot', 'specs');
         mkdirSync(specsDir, { recursive: true });
 
         // Find next spec number
@@ -202,7 +202,7 @@ export function registerMultiRepoHandlers(
       const project = projectStore.getProject(projectId);
       if (!project) return { success: false, error: 'Project not found' };
 
-      const specDir = path.join(project.path, '.auto-claude', 'specs', orchestrationId);
+      const specDir = path.join(project.path, '.workpilot', 'specs', orchestrationId);
       const orchestration = loadManifest(specDir);
       return { success: true, data: orchestration };
     }
@@ -227,7 +227,7 @@ export function registerMultiRepoHandlers(
       const project = projectStore.getProject(projectId);
       if (!project) return { success: false, error: 'Project not found' };
 
-      const specDir = path.join(project.path, '.auto-claude', 'specs', orchestrationId);
+      const specDir = path.join(project.path, '.workpilot', 'specs', orchestrationId);
       const manifest = loadManifest(specDir);
       if (!manifest) return { success: false, error: 'Orchestration not found' };
 
@@ -276,7 +276,7 @@ export function registerMultiRepoHandlers(
       const project = projectStore.getProject(projectId);
       if (!project) return { success: false, error: 'Project not found' };
 
-      const specDir = path.join(project.path, '.auto-claude', 'specs', orchestrationId);
+      const specDir = path.join(project.path, '.workpilot', 'specs', orchestrationId);
       const manifest = loadManifest(specDir);
       if (!manifest) return { success: false, error: 'Orchestration not found' };
 

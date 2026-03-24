@@ -45,7 +45,7 @@ def mock_project_dir(tmp_path):
 @pytest.fixture
 def mock_spec_dir(tmp_path):
     """Create a mock spec directory."""
-    spec_dir = tmp_path / ".auto-claude" / "specs" / "001-test-spec"
+    spec_dir = tmp_path / ".workpilot" / "specs" / "001-test-spec"
     spec_dir.mkdir(parents=True)
     
     # Create implementation_plan.json

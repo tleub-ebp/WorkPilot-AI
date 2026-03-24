@@ -90,7 +90,7 @@ class AzureDevOpsOrchestrator:
         self.progress_callback = progress_callback
 
         # Azure DevOps directory for storing state
-        self.azdo_dir = self.project_dir / ".auto-claude" / "azure-devops"
+        self.azdo_dir = self.project_dir / ".workpilot" / "azure-devops"
         self.azdo_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize client

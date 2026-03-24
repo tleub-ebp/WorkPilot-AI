@@ -112,10 +112,10 @@ class IntentLearner:
         Initialize the intent learner.
 
         Args:
-            storage_dir: Directory to store learning data (defaults to ~/.auto-claude/intent)
+            storage_dir: Directory to store learning data (defaults to ~/.workpilot/intent)
         """
         if storage_dir is None:
-            storage_dir = Path.home() / ".auto-claude" / "intent"
+            storage_dir = Path.home() / ".workpilot" / "intent"
         self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 

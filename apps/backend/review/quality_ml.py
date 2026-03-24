@@ -35,7 +35,7 @@ class MLPatternDetector:
 
     def __init__(self, project_dir: Path):
         self.project_dir = project_dir
-        self.cache_dir = project_dir / ".auto-claude" / "ml-cache"
+        self.cache_dir = project_dir / ".workpilot" / "ml-cache"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.patterns: list[LearnedPattern] = []
         self.learned_data: dict[str, Any] = {}

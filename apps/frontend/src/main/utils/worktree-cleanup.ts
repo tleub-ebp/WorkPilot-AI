@@ -149,7 +149,7 @@ async function deleteDirectoryWithRetry(
  * @example
  * ```typescript
  * const result = await cleanupWorktree({
- *   worktreePath: 'C:/projects/my-app/.auto-claude/worktrees/tasks/001-feature',
+ *   worktreePath: 'C:/projects/my-app/.workpilot/worktrees/tasks/001-feature',
  *   projectPath: 'C:/projects/my-app',
  *   specId: '001-feature',
  *   logPrefix: '[TASK_DELETE]'

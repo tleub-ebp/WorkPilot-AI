@@ -751,7 +751,7 @@ The following files are gitignored and should NOT be committed:
 - `init.sh` - tracked locally only
 - `build-progress.txt` - tracked locally only
 
-These files live in `.auto-claude/specs/` which is gitignored. The orchestrator handles syncing them between worktrees and the main project.
+These files live in `.workpilot/specs/` which is gitignored. The orchestrator handles syncing them between worktrees and the main project.
 
 **Only code changes should be committed** - spec metadata stays local.
 

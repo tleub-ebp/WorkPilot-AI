@@ -17,7 +17,7 @@ from .models import CustomScripts
 class StructureAnalyzer:
     """Analyzes project structure for custom scripts."""
 
-    CUSTOM_ALLOWLIST_FILENAME = ".auto-claude-allowlist"
+    CUSTOM_ALLOWLIST_FILENAME = ".workpilot-allowlist"
 
     def __init__(self, project_dir: Path):
         """

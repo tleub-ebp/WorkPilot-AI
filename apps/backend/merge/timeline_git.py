@@ -197,7 +197,7 @@ class TimelineGitHelper:
 
         worktree_path = (
             self.project_path
-            / ".auto-claude"
+            / ".workpilot"
             / "worktrees"
             / "tasks"
             / spec_name

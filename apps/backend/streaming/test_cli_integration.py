@@ -31,11 +31,11 @@ class TestCLIStreamingIntegration:
             project_path = Path(temp_dir)
 
             # Create basic project structure
-            (project_path / "auto-claude").mkdir()
-            (project_path / "auto-claude" / "specs").mkdir()
+            (project_path / ".workpilot").mkdir()
+            (project_path / ".workpilot" / "specs").mkdir()
 
             # Create a test spec
-            spec_dir = project_path / "auto-claude" / "specs" / "001-test-streaming"
+            spec_dir = project_path / ".workpilot" / "specs" / "001-test-streaming"
             spec_dir.mkdir()
 
             # Create basic spec files
@@ -74,7 +74,7 @@ Test streaming functionality
             sys,
             "argv",
             [
-                "auto-claude",
+                "workpilot",
                 "--spec",
                 "001-test",
                 "--enable-streaming",
@@ -90,7 +90,7 @@ Test streaming functionality
 
     def test_parse_args_without_streaming(self):
         """Test CLI argument parsing without streaming options."""
-        with patch.object(sys, "argv", ["auto-claude", "--spec", "001-test"]):
+        with patch.object(sys, "argv", ["workpilot", "--spec", "001-test"]):
             args = parse_args()
 
         assert args.enable_streaming is False
@@ -100,7 +100,7 @@ Test streaming functionality
     @pytest.mark.asyncio
     async def test_handle_build_command_with_streaming(self, temp_project_dir):
         """Test build command with streaming options."""
-        spec_dir = temp_project_dir / "auto-claude" / "specs" / "001-test-streaming"
+        spec_dir = temp_project_dir / ".workpilot" / "specs" / "001-test-streaming"
 
         # Mock the agent execution to avoid actually running it
         with patch("cli.build_commands.run_autonomous_agent") as mock_run:
@@ -131,7 +131,7 @@ Test streaming functionality
     @pytest.mark.asyncio
     async def test_handle_build_command_without_streaming(self, temp_project_dir):
         """Test build command without streaming options."""
-        spec_dir = temp_project_dir / "auto-claude" / "specs" / "001-test-streaming"
+        spec_dir = temp_project_dir / ".workpilot" / "specs" / "001-test-streaming"
 
         with patch("cli.build_commands.run_autonomous_agent") as mock_run:
             mock_run.return_value = None
@@ -159,7 +159,7 @@ Test streaming functionality
     @pytest.mark.asyncio
     async def test_streaming_wrapper_integration(self, temp_project_dir):
         """Test streaming wrapper integration with agent execution."""
-        spec_dir = temp_project_dir / "auto-claude" / "specs" / "001-test-streaming"
+        spec_dir = temp_project_dir / ".workpilot" / "specs" / "001-test-streaming"
 
         # Mock streaming components
         with (
@@ -251,7 +251,7 @@ Test streaming functionality
     @pytest.mark.asyncio
     async def test_full_streaming_pipeline(self, temp_project_dir):
         """Test complete streaming pipeline from CLI to WebSocket."""
-        spec_dir = temp_project_dir / "auto-claude" / "specs" / "001-test-streaming"
+        spec_dir = temp_project_dir / ".workpilot" / "specs" / "001-test-streaming"
 
         # Mock all components for full pipeline test
         with (
@@ -317,7 +317,7 @@ Test streaming functionality
 
         try:
             # This should print help and exit
-            with patch.object(sys, "argv", ["auto-claude", "--help"]):
+            with patch.object(sys, "argv", ["workpilot", "--help"]):
                 with pytest.raises(SystemExit):
                     parse_args()
         except SystemExit:
@@ -334,7 +334,7 @@ Test streaming functionality
     @pytest.mark.asyncio
     async def test_error_handling_streaming_unavailable(self, temp_project_dir):
         """Test error handling when streaming is unavailable."""
-        spec_dir = temp_project_dir / "auto-claude" / "specs" / "001-test-streaming"
+        spec_dir = temp_project_dir / ".workpilot" / "specs" / "001-test-streaming"
 
         # Mock streaming import failure
         with (
@@ -370,7 +370,7 @@ class TestStreamingCLICommands:
         with patch.object(
             sys,
             "argv",
-            ["auto-claude", "--streaming-server", "--streaming-port", "9999"],
+            ["workpilot", "--streaming-server", "--streaming-port", "9999"],
         ):
             args = parse_args()
 
@@ -379,7 +379,7 @@ class TestStreamingCLICommands:
 
     def test_list_recordings_command_parsing(self):
         """Test list recordings command parsing."""
-        with patch.object(sys, "argv", ["auto-claude", "--list-recordings"]):
+        with patch.object(sys, "argv", ["workpilot", "--list-recordings"]):
             args = parse_args()
 
         assert args.list_recordings is True
@@ -390,7 +390,7 @@ class TestStreamingCLICommands:
             sys,
             "argv",
             [
-                "auto-claude",
+                "workpilot",
                 "--replay-recording",
                 "test-recording.json",
                 "--speed",

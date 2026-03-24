@@ -35,7 +35,7 @@ class ArchitectureVisualizerRunner:
         self.output_dir = (
             Path(output_dir)
             if output_dir
-            else self.project_dir / ".auto-claude" / "architecture"
+            else self.project_dir / ".workpilot" / "architecture"
         )
         self.diagram_types = diagram_types or [
             "module_dependencies",
@@ -81,7 +81,7 @@ class ArchitectureVisualizerRunner:
         }
 
     def save_diagrams(self, result: dict) -> str:
-        """Save diagrams to .auto-claude/architecture/ and return output path."""
+        """Save diagrams to .workpilot/architecture/ and return output path."""
         diagrams = result.get("diagrams", {})
         for diagram_type, diagram_data in diagrams.items():
             mermaid_code = diagram_data.get("mermaid_code", "")
@@ -123,7 +123,7 @@ def main():
     )
     parser.add_argument(
         "--output-dir",
-        help="Output directory for diagram files (default: .auto-claude/architecture/)",
+        help="Output directory for diagram files (default: .workpilot/architecture/)",
     )
     parser.add_argument(
         "--diagram-types",

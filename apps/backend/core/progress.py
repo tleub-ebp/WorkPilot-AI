@@ -245,7 +245,7 @@ def print_build_complete_banner(spec_dir: Path) -> None:
         "All subtasks have been implemented successfully.",
         "",
         muted("Next steps:"),
-        f"  1. Review the {highlight('auto-claude/*')} branch",
+        f"  1. Review the {highlight('workpilot/*')} branch",
         "  2. Run manual tests",
         "  3. Create a PR and merge to main",
     ]

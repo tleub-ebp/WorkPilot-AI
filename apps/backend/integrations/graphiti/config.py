@@ -19,7 +19,7 @@ Environment Variables:
 
     # Database
     GRAPHITI_DATABASE: Graph database name (default: auto_claude_memory)
-    GRAPHITI_DB_PATH: Database storage path (default: ~/.auto-claude/memories)
+    GRAPHITI_DB_PATH: Database storage path (default: ~/.workpilot/memories)
 
     # OpenAI
     OPENAI_API_KEY: Required for OpenAI provider
@@ -65,7 +65,7 @@ from typing import Optional
 
 # Default configuration values
 DEFAULT_DATABASE = "auto_claude_memory"
-DEFAULT_DB_PATH = "~/.auto-claude/memories"
+DEFAULT_DB_PATH = "~/.workpilot/memories"
 DEFAULT_OLLAMA_BASE_URL = "http://localhost:11434"
 
 # Graphiti state marker file (stores connection info and status)

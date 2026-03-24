@@ -12,7 +12,7 @@ print("\n1. Testing import...")
 try:
     result = subprocess.run(
         [sys.executable, "-c", "from apps.backend import self_healing; print('Import OK')"],
-        cwd=r"c:\Users\thomas.leberre\Repositories\Auto-Claude_EBP",
+        cwd=r"c:\Users\thomas.leberre\Repositories\WorkPilot-AI",
         capture_output=True,
         text=True,
         timeout=10
@@ -32,7 +32,7 @@ print("\n2. Testing CLI help...")
 try:
     result = subprocess.run(
         [sys.executable, "-m", "apps.backend.self_healing", "--help"],
-        cwd=r"c:\Users\thomas.leberre\Repositories\Auto-Claude_EBP",
+        cwd=r"c:\Users\thomas.leberre\Repositories\WorkPilot-AI",
         capture_output=True,
         text=True,
         timeout=10
@@ -54,7 +54,7 @@ print("\n3. Testing 'check' command...")
 try:
     result = subprocess.run(
         [sys.executable, "-m", "apps.backend.self_healing", "check", "--project-dir", "apps/backend"],
-        cwd=r"c:\Users\thomas.leberre\Repositories\Auto-Claude_EBP",
+        cwd=r"c:\Users\thomas.leberre\Repositories\WorkPilot-AI",
         capture_output=True,
         text=True,
         timeout=60

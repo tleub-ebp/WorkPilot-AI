@@ -63,4 +63,4 @@ Thumbs.db
 tests/
 
 # WorkPilot AI data directory
-.auto-claude/
+.workpilot/

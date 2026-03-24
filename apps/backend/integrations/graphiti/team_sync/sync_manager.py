@@ -57,7 +57,7 @@ def _episode_id(episode: dict) -> str:
 
 def _load_imported_ids(project_dir: Path) -> set[str]:
     """Load the set of already-imported episode IDs for this project."""
-    marker = project_dir / ".auto-claude" / IMPORT_MARKER_FILE
+    marker = project_dir / ".workpilot" / IMPORT_MARKER_FILE
     if not marker.exists():
         return set()
     try:
@@ -68,7 +68,7 @@ def _load_imported_ids(project_dir: Path) -> set[str]:
 
 
 def _save_imported_ids(project_dir: Path, ids: set[str]) -> None:
-    marker_dir = project_dir / ".auto-claude"
+    marker_dir = project_dir / ".workpilot"
     marker_dir.mkdir(parents=True, exist_ok=True)
     marker = marker_dir / IMPORT_MARKER_FILE
     try:
@@ -88,7 +88,7 @@ def _collect_file_based_episodes(project_dir: Path, member_id: str) -> list[dict
     Walk all spec directories and gather episodes from memory/*.json files.
     """
     episodes: list[dict] = []
-    auto_claude_dir = project_dir / ".auto-claude"
+    auto_claude_dir = project_dir / ".workpilot"
     if not auto_claude_dir.exists():
         return episodes
 
@@ -341,7 +341,7 @@ class TeamSyncManager:
         peer_member = snapshot.get("member_id", "unknown")
         imported_count = 0
         peer_memory_dir = (
-            self.project_dir / ".auto-claude" / "team_sync" / "peers" / peer_member
+            self.project_dir / ".workpilot" / "team_sync" / "peers" / peer_member
         )
         peer_memory_dir.mkdir(parents=True, exist_ok=True)
 
@@ -419,7 +419,7 @@ class TeamSyncManager:
                 status["peers"] = peers
 
         # Count imported episodes
-        peers_dir = self.project_dir / ".auto-claude" / "team_sync" / "peers"
+        peers_dir = self.project_dir / ".workpilot" / "team_sync" / "peers"
         imported_total = 0
         if peers_dir.exists():
             for peer_dir in peers_dir.iterdir():
@@ -476,7 +476,7 @@ class TeamSyncManager:
         """Return the episodes imported from a specific peer."""
         ep_file = (
             self.project_dir
-            / ".auto-claude"
+            / ".workpilot"
             / "team_sync"
             / "peers"
             / member_id

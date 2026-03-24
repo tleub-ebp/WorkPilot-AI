@@ -3,7 +3,7 @@
     "title": "Initialize WorkPilot AI",
     "description": "This project doesn't have WorkPilot AI initialized. Would you like to set it up now?",
     "willDo": "This will:",
-    "createFolder": "Create a .auto-claude folder in your project",
+    "createFolder": "Create a .workpilot folder in your project",
     "copyFramework": "Copy the WorkPilot AI framework files",
     "setupSpecs": "Set up the specs directory for your tasks",
     "sourcePathNotConfigured": "Source path not configured",

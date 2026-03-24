@@ -148,7 +148,7 @@ export function MemoriesTab({
               <>
                 <div className="grid gap-3 sm:grid-cols-2 text-sm">
                   <InfoItem label={t('context:memories.database')} value={memoryStatus.database || 'auto_claude_memory'} />
-                  <InfoItem label={t('context:memories.path')} value={memoryStatus.dbPath || '~/.auto-claude/memories'} />
+                  <InfoItem label={t('context:memories.path')} value={memoryStatus.dbPath || '~/.workpilot/memories'} />
                 </div>
 
                 {/* Memory Stats Summary */}

@@ -1286,7 +1286,7 @@ def _load_dashboard_snapshot(project_id: str) -> dict:
     import json as _json
     from pathlib import Path as _Path
 
-    snap_path = _Path(project_id) / ".auto-claude" / "dashboard_snapshot.json"
+    snap_path = _Path(project_id) / ".workpilot" / "dashboard_snapshot.json"
     if snap_path.exists():
         try:
             return _json.loads(snap_path.read_text(encoding="utf-8"))

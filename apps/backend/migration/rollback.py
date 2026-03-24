@@ -40,7 +40,7 @@ class RollbackManager:
             git_commit=commit_hash,
             timestamp=datetime.now(),
             state_file=str(
-                self.project_dir / f".auto-claude/migration/checkpoint_{phase_id}.json"
+                self.project_dir / f".workpilot/migration/checkpoint_{phase_id}.json"
             ),
             description=description or f"Checkpoint before {phase_id}",
         )

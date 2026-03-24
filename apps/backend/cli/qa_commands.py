@@ -126,7 +126,7 @@ def handle_qa_command(
             sys.exit(1)
     except KeyboardInterrupt:
         print("\n\nQA validation paused.")
-        print(f"Resume with: python auto-claude/run.py --spec {spec_dir.name} --qa")
+        print(f"Resume with: python workpilot/run.py --spec {spec_dir.name} --qa")
 
 
 def handle_auto_fix_command(
@@ -180,5 +180,5 @@ def handle_auto_fix_command(
     except KeyboardInterrupt:
         print("\n\nAuto-fix interrupted.")
         print(
-            f"Resume with: python auto-claude/run.py --spec {spec_dir.name} --auto-fix"
+            f"Resume with: python workpilot/run.py --spec {spec_dir.name} --auto-fix"
         )

@@ -163,7 +163,7 @@ async def demo_streaming_session():
     await wrapper.end_session()
 
     print("\n✅ Demo completed!")
-    print("\n📼 Recording saved to: ~/.auto-claude/recordings/")
+    print("\n📼 Recording saved to: ~/.workpilot/recordings/")
     print("\n💡 You can replay it with:")
     print("   python apps/backend/run.py --list-recordings")
     print("   python apps/backend/run.py --replay-recording <file>\n")

@@ -1,7 +1,7 @@
 """
 Pattern Storage for the Autonomous Agent Learning Loop.
 
-Reads/writes learning patterns to `.auto-claude/learning/patterns.json`.
+Reads/writes learning patterns to `.workpilot/learning/patterns.json`.
 Handles deduplication by merging similar patterns and increasing confidence.
 """
 
@@ -22,7 +22,7 @@ class PatternStorage:
 
     def __init__(self, project_dir: Path):
         self.project_dir = Path(project_dir)
-        self.patterns_dir = self.project_dir / ".auto-claude" / "learning_loop"
+        self.patterns_dir = self.project_dir / ".workpilot" / "learning_loop"
         self.patterns_file = self.patterns_dir / "patterns.json"
 
     def load_patterns(self) -> list[LearningPattern]:

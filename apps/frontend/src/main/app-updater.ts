@@ -30,7 +30,7 @@ import { isMacOS } from './platform';
 
 // GitHub repo info for API calls
 const GITHUB_OWNER = 'tleub-ebp';
-const GITHUB_REPO = 'Auto-Claude_EBP';
+const GITHUB_REPO = 'WorkPilot-AI';
 
 // Debug mode - DEBUG_UPDATER=true or development mode
 const DEBUG_UPDATER = process.env.DEBUG_UPDATER === 'true' || process.env.NODE_ENV === 'development';

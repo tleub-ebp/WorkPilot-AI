@@ -26,7 +26,7 @@ export function registerLearningLoopHandlers(
       // Read patterns from the project's learning loop storage
       const { readFileSync, existsSync } = require('node:fs');
       const path = require('node:path');
-      const patternsPath = path.join(projectDir, '.auto-claude', 'learning_loop', 'patterns.json');
+      const patternsPath = path.join(projectDir, '.workpilot', 'learning_loop', 'patterns.json');
 
       if (!existsSync(patternsPath)) {
         return { success: true, data: [] };
@@ -45,7 +45,7 @@ export function registerLearningLoopHandlers(
     try {
       const { readFileSync, existsSync } = require('node:fs');
       const path = require('node:path');
-      const patternsPath = path.join(projectDir, '.auto-claude', 'learning_loop', 'patterns.json');
+      const patternsPath = path.join(projectDir, '.workpilot', 'learning_loop', 'patterns.json');
 
       if (!existsSync(patternsPath)) {
         return {
@@ -114,7 +114,7 @@ export function registerLearningLoopHandlers(
     try {
       const { readFileSync, writeFileSync, existsSync } = require('node:fs');
       const path = require('node:path');
-      const patternsPath = path.join(projectDir, '.auto-claude', 'learning_loop', 'patterns.json');
+      const patternsPath = path.join(projectDir, '.workpilot', 'learning_loop', 'patterns.json');
 
       if (!existsSync(patternsPath)) {
         return { success: false, error: 'No patterns file found' };
@@ -142,7 +142,7 @@ export function registerLearningLoopHandlers(
     try {
       const { readFileSync, writeFileSync, existsSync } = require('node:fs');
       const path = require('node:path');
-      const patternsPath = path.join(projectDir, '.auto-claude', 'learning_loop', 'patterns.json');
+      const patternsPath = path.join(projectDir, '.workpilot', 'learning_loop', 'patterns.json');
 
       if (!existsSync(patternsPath)) {
         return { success: false, error: 'No patterns file found' };

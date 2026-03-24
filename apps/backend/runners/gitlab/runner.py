@@ -67,7 +67,7 @@ def get_config(args) -> GitLabRunnerConfig:
 
     # Project detection priority:
     # 1. Explicit --project flag (highest priority)
-    # 2. Auto-detect from .auto-claude/gitlab/config.json (primary for multi-project setups)
+    # 2. Auto-detect from .workpilot/gitlab/config.json (primary for multi-project setups)
     # 3. GITLAB_PROJECT env var (fallback only)
     project = args.project  # Only use explicit CLI flag initially
 
@@ -93,7 +93,7 @@ def get_config(args) -> GitLabRunnerConfig:
 
     # Auto-detect from project config (takes priority over env var)
     if not project:
-        config_path = Path(args.project_dir) / ".auto-claude" / "gitlab" / "config.json"
+        config_path = Path(args.project_dir) / ".workpilot" / "gitlab" / "config.json"
         if config_path.exists():
             try:
                 with open(config_path, encoding="utf-8") as f:

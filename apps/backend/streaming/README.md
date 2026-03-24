@@ -183,7 +183,7 @@ Environment variables:
 
 - `STREAMING_HOST` - WebSocket host (default: `localhost`)
 - `STREAMING_PORT` - WebSocket port (default: `8765`)
-- `STREAMING_RECORDINGS_DIR` - Recordings directory (default: `~/.auto-claude/recordings`)
+- `STREAMING_RECORDINGS_DIR` - Recordings directory (default: `~/.workpilot/recordings`)
 
 ## Testing
 

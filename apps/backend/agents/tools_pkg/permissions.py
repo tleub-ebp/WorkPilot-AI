@@ -48,7 +48,7 @@ def get_allowed_tools(
         project_capabilities: Optional dict from detect_project_capabilities()
                             containing flags like is_electron, is_web_frontend, etc.
         linear_enabled: Whether Linear integration is enabled for this project
-        mcp_config: Per-project MCP server toggles from .auto-claude/.env
+        mcp_config: Per-project MCP server toggles from .workpilot/.env
 
     Returns:
         List of allowed tool names
@@ -70,9 +70,9 @@ def get_allowed_tools(
         mcp_config,
     )
 
-    # Add auto-claude tools ONLY if the MCP server is available
+    # Add workpilot tools ONLY if the MCP server is available
     # This prevents allowing tools that won't work because the server isn't running
-    if "auto-claude" in required_servers and is_tools_available():
+    if "workpilot" in required_servers and is_tools_available():
         tools.extend(config.get("auto_claude_tools", []))
 
     # Add MCP tool names based on required servers
@@ -108,7 +108,7 @@ def _get_mcp_tools_for_servers(servers: list[str]) -> list[str]:
             tools.extend(PUPPETEER_TOOLS)
         elif server == "chrome-devtools":
             tools.extend(CHROME_DEVTOOLS_TOOLS)
-        # auto-claude tools are already added via config["auto_claude_tools"]
+        # workpilot tools are already added via config["auto_claude_tools"]
 
     return tools
 

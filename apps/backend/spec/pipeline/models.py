@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from init import init_auto_claude_dir
+from init import init_workpilot_dir
 from task_logger import update_task_logger_path
 from ui import Icons, highlight, print_status
 
@@ -24,23 +24,23 @@ if TYPE_CHECKING:
 def get_specs_dir(project_dir: Path) -> Path:
     """Get the specs directory path.
 
-    IMPORTANT: Only .auto-claude/ is considered an "installed" auto-claude.
+    IMPORTANT: Only .workpilot/ is considered an "installed" auto-claude.
     The auto-claude/ folder (if it exists) is SOURCE CODE being developed,
     not an installation. This allows WorkPilot AI to be used to develop itself.
 
-    This function also ensures .auto-claude is added to .gitignore on first use.
+    This function also ensures .workpilot is added to .gitignore on first use.
 
     Args:
         project_dir: The project root directory
 
     Returns:
-        Path to the specs directory within .auto-claude/
+        Path to the specs directory within .workpilot/
     """
-    # Initialize .auto-claude directory and ensure it's in .gitignore
-    init_auto_claude_dir(project_dir)
+    # Initialize .workpilot directory and ensure it's in .gitignore
+    init_workpilot_dir(project_dir)
 
     # Return the specs directory path
-    return project_dir / ".auto-claude" / "specs"
+    return project_dir / ".workpilot" / "specs"
 
 
 def cleanup_orphaned_pending_folders(specs_dir: Path) -> None:

@@ -160,7 +160,7 @@ vi.mock("electron", () => {
 // Setup test project structure
 function setupTestProject(): void {
   mkdirSync(TEST_PROJECT_PATH, { recursive: true });
-  mkdirSync(path.join(TEST_PROJECT_PATH, "auto-claude", "specs"), { recursive: true });
+  mkdirSync(path.join(TEST_PROJECT_PATH, ".workpilot", "specs"), { recursive: true });
 }
 
 // Cleanup test directories
@@ -503,9 +503,9 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
     it("should return tasks when specs exist", async () => {
       const fs = await vi.importMock('fs') as any;
       fs.existsSync.mockImplementation((path: string) => {
-        // Return true for TEST_PROJECT_PATH and any .auto-claude paths
+        // Return true for TEST_PROJECT_PATH and any .workpilot paths
         if (path === TEST_PROJECT_PATH) return true;
-        if (path.includes('.auto-claude')) return true;
+        if (path.includes('.workpilot')) return true;
         // Specifically return true for our spec directory and files
         if (path.includes('001-test-feature')) return true;
         if (path.includes('implementation_plan.json')) return true;
@@ -538,7 +538,7 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
       });
       
       fs.readdirSync.mockImplementation((path: string, _options?: any) => {
-        if (path.includes('.auto-claude/specs')) {
+        if (path.includes('.workpilot/specs')) {
           // Return our spec directory as a simple string array
           return ['001-test-feature'];
         }
@@ -557,15 +557,15 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
         mockPythonEnvManager as never
       );
 
-      // Create .auto-claude directory first (before adding project so it gets detected)
-      mkdirSync(path.join(TEST_PROJECT_PATH, ".auto-claude", "specs"), { recursive: true });
+      // Create .workpilot directory first (before adding project so it gets detected)
+      mkdirSync(path.join(TEST_PROJECT_PATH, ".workpilot", "specs"), { recursive: true });
 
-      // Add a project - it will detect .auto-claude
+      // Add a project - it will detect .workpilot
       const addResult = await ipcMain.invokeHandler("project:add", {}, TEST_PROJECT_PATH);
       const projectId = (addResult as { data: { id: string } }).data.id;
 
-      // Create a spec directory with implementation plan in .auto-claude/specs
-      const specDir = path.join(TEST_PROJECT_PATH, ".auto-claude", "specs", "001-test-feature");
+      // Create a spec directory with implementation plan in .workpilot/specs
+      const specDir = path.join(TEST_PROJECT_PATH, ".workpilot", "specs", "001-test-feature");
       mkdirSync(specDir, { recursive: true });
       
       // Create the implementation_plan.json file (required for task detection)
@@ -636,7 +636,7 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
     it("should create task in backlog status", async () => {
       const fs = await vi.importMock('fs') as any;
       fs.existsSync.mockImplementation((path: string) => {
-        return path === TEST_PROJECT_PATH || path.includes('.auto-claude');
+        return path === TEST_PROJECT_PATH || path.includes('.workpilot');
       });
       
       const { setupIpcHandlers } = await import("../ipc-handlers");
@@ -647,8 +647,8 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
         mockPythonEnvManager as never
       );
 
-      // Create .auto-claude directory first (before adding project so it gets detected)
-      mkdirSync(path.join(TEST_PROJECT_PATH, ".auto-claude", "specs"), { recursive: true });
+      // Create .workpilot directory first (before adding project so it gets detected)
+      mkdirSync(path.join(TEST_PROJECT_PATH, ".workpilot", "specs"), { recursive: true });
 
       // Add a project first
       const addResult = await ipcMain.invokeHandler("project:add", {}, TEST_PROJECT_PATH);

@@ -46,7 +46,7 @@ class TransformationEngine:
         self.enable_parallel = enable_parallel
 
         # Initialize cache
-        cache_dir = self.project_dir / ".auto-claude" / "migration" / "cache"
+        cache_dir = self.project_dir / ".workpilot" / "migration" / "cache"
         self.cache = MigrationCache(str(cache_dir)) if enable_cache else None
 
         # Initialize parallel processor

@@ -813,7 +813,7 @@ except Exception as e:
 
         const reviewFile = path.join(
           project.path,
-          '.auto-claude',
+          '.workpilot',
           'azure-devops',
           'pr',
           `review_${prId}.json`

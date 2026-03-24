@@ -63,7 +63,7 @@ def parse_repos(repos_str: str) -> list[dict[str, str]]:
 
 def create_master_spec_dir(project_dir: Path, task: str) -> Path:
     """Create and return the master spec directory for this orchestration."""
-    specs_dir = project_dir / ".auto-claude" / "specs"
+    specs_dir = project_dir / ".workpilot" / "specs"
     specs_dir.mkdir(parents=True, exist_ok=True)
 
     # Find next available spec number

@@ -20,7 +20,7 @@ class BrowserController:
         self.project_dir = Path(project_dir)
         self.headless = headless
         self.screenshots_dir = (
-            self.project_dir / ".auto-claude" / "browser-agent" / "screenshots"
+            self.project_dir / ".workpilot" / "browser-agent" / "screenshots"
         )
         self.screenshots_dir.mkdir(parents=True, exist_ok=True)
 

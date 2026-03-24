@@ -4,8 +4,8 @@ Git Worktree Manager - Per-Spec Architecture
 =============================================
 
 Each spec gets its own worktree:
-- Worktree path: .auto-claude/worktrees/tasks/{spec-name}/
-- Branch name: auto-claude/{spec-name}
+- Worktree path: .workpilot/worktrees/tasks/{spec-name}/
+- Branch name: workpilot/{spec-name}
 
 This allows:
 1. Multiple specs to be worked on simultaneously
@@ -225,8 +225,8 @@ class WorktreeManager:
     """
     Manages per-spec Git worktrees.
 
-    Each spec gets its own worktree in .auto-claude/worktrees/tasks/{spec-name}/ with
-    a corresponding branch auto-claude/{spec-name}.
+    Each spec gets its own worktree in .workpilot/worktrees/tasks/{spec-name}/ with
+    a corresponding branch workpilot/{spec-name}.
     """
 
     # Timeout constants for subprocess operations
@@ -243,7 +243,7 @@ class WorktreeManager:
         self.project_dir = project_dir
         self.base_branch = base_branch or self._detect_base_branch()
         self.use_local_branch = use_local_branch
-        self.worktrees_dir = project_dir / ".auto-claude" / "worktrees" / "tasks"
+        self.worktrees_dir = project_dir / ".workpilot" / "worktrees" / "tasks"
         self._merge_lock = asyncio.Lock()
 
     def _detect_base_branch(self) -> str:
@@ -318,10 +318,10 @@ class WorktreeManager:
     def _unstage_gitignored_files(self) -> None:
         """
         Unstage any staged files that are gitignored in the current branch,
-        plus any files in the .auto-claude directory which should never be merged.
+        plus any files in the .workpilot directory which should never be merged.
 
         This is needed after a --no-commit merge because files that exist in the
-        source branch (like spec files in .auto-claude/specs/) get staged even if
+        source branch (like spec files in .workpilot/specs/) get staged even if
         they're gitignored in the target branch.
         """
         # Get list of staged files
@@ -331,7 +331,7 @@ class WorktreeManager:
 
         staged_files = result.stdout.strip().split("\n")
 
-        # Files to unstage: gitignored files + .auto-claude directory files
+        # Files to unstage: gitignored files + .workpilot directory files
         files_to_unstage = set()
 
         # 1. Check which staged files are gitignored
@@ -347,23 +347,23 @@ class WorktreeManager:
                 if file.strip():
                     files_to_unstage.add(file.strip())
 
-        # 2. Always unstage .auto-claude directory files - these are project-specific
+        # 2. Always unstage .workpilot directory files - these are project-specific
         # and should never be merged from the worktree branch
-        auto_claude_patterns = [".auto-claude/", "auto-claude/specs/"]
+        workpilot_patterns = [".workpilot/", "workpilot/specs/"]
         for file in staged_files:
             file = file.strip()
             if not file:
                 continue
             # Normalize path separators for cross-platform (Windows backslash support)
             normalized = file.replace("\\", "/")
-            for pattern in auto_claude_patterns:
+            for pattern in workpilot_patterns:
                 if normalized.startswith(pattern) or f"/{pattern}" in normalized:
                     files_to_unstage.add(file)
                     break
 
         if files_to_unstage:
             print(
-                f"Unstaging {len(files_to_unstage)} auto-claude/gitignored file(s)..."
+                f"Unstaging {len(files_to_unstage)} workpilot/gitignored file(s)..."
             )
             # Unstage each file
             for file in files_to_unstage:
@@ -377,12 +377,12 @@ class WorktreeManager:
 
     def get_worktree_path(self, spec_name: str) -> Path:
         """Get the worktree path for a spec (checks new and legacy locations)."""
-        # New path first (.auto-claude/worktrees/tasks/)
+        # New path first (.workpilot/worktrees/tasks/)
         new_path = self.worktrees_dir / spec_name
         if new_path.exists():
             return new_path
 
-        # Legacy fallback (.worktrees/ instead of .auto-claude/worktrees/tasks/)
+        # Legacy fallback (.worktrees/ instead of .workpilot/worktrees/tasks/)
         legacy_path = self.project_dir / ".worktrees" / spec_name
         if legacy_path.exists():
             return legacy_path
@@ -392,7 +392,7 @@ class WorktreeManager:
 
     def get_branch_name(self, spec_name: str) -> str:
         """Get the branch name for a spec."""
-        return f"auto-claude/{spec_name}"
+        return f"workpilot/{spec_name}"
 
     def worktree_exists(self, spec_name: str) -> bool:
         """Check if a worktree exists for a spec."""
@@ -491,19 +491,19 @@ class WorktreeManager:
 
     def _check_branch_namespace_conflict(self) -> str | None:
         """
-        Check if a branch named 'auto-claude' exists, which would block creating
-        branches in the 'auto-claude/*' namespace.
+        Check if a branch named 'workpilot' exists, which would block creating
+        branches in the 'workpilot/*' namespace.
 
         Git stores branch refs as files under .git/refs/heads/, so a branch named
-        'auto-claude' creates a file that prevents creating the 'auto-claude/'
-        directory needed for 'auto-claude/{spec-name}' branches.
+        'workpilot' creates a file that prevents creating the 'workpilot/'
+        directory needed for 'workpilot/{spec-name}' branches.
 
         Returns:
             The conflicting branch name if found, None otherwise.
         """
-        result = self._run_git(["rev-parse", "--verify", "auto-claude"])
+        result = self._run_git(["rev-parse", "--verify", "workpilot"])
         if result.returncode == 0:
-            return "auto-claude"
+            return "workpilot"
         return None
 
     def _branch_exists(self, branch_name: str) -> bool:
@@ -514,7 +514,7 @@ class WorktreeManager:
         false positives from tags or other refs with the same name.
 
         Args:
-            branch_name: The name of the branch to check (e.g., 'auto-claude/my-spec')
+            branch_name: The name of the branch to check (e.g., 'workpilot/my-spec')
 
         Returns:
             True if the local branch exists, False otherwise.
@@ -685,14 +685,14 @@ class WorktreeManager:
         # This cleans up any stale references that might block operations
         self._run_git(["worktree", "prune"])
 
-        # Step 2: Check for branch namespace conflict (e.g., 'auto-claude' blocking 'auto-claude/*')
+        # Step 2: Check for branch namespace conflict (e.g., 'workpilot' blocking 'workpilot/*')
         conflicting_branch = self._check_branch_namespace_conflict()
         if conflicting_branch:
             raise WorktreeError(
                 f"Branch '{conflicting_branch}' exists and blocks creating '{branch_name}'.\n"
                 f"\n"
-                f"Git branch names work like file paths - a branch named 'auto-claude' prevents\n"
-                f"creating branches under 'auto-claude/' (like 'auto-claude/{spec_name}').\n"
+                f"Git branch names work like file paths - a branch named 'workpilot' prevents\n"
+                f"creating branches under 'workpilot/' (like 'workpilot/{spec_name}').\n"
                 f"\n"
                 f"Fix: Rename the conflicting branch:\n"
                 f"  git branch -m {conflicting_branch} {conflicting_branch}-backup"
@@ -885,7 +885,7 @@ class WorktreeManager:
             # --no-commit stages the merge but doesn't create the commit
             merge_args.append("--no-commit")
         else:
-            merge_args.extend(["-m", f"auto-claude: Merge {info.branch}"])
+            merge_args.extend(["-m", f"workpilot: Merge {info.branch}"])
 
         result = self._run_git(merge_args)
 
@@ -978,8 +978,8 @@ class WorktreeManager:
         return worktrees
 
     def list_all_spec_branches(self) -> list[str]:
-        """List all auto-claude branches (even if worktree removed)."""
-        result = self._run_git(["branch", "--list", "auto-claude/*"])
+        """List all workpilot branches (even if worktree removed)."""
+        result = self._run_git(["branch", "--list", "workpilot/*"])
         if result.returncode != 0:
             return []
 
@@ -1989,11 +1989,11 @@ class WorktreeManager:
             return None
 
         # Resolve spec directory
-        spec_dir = self.project_dir / ".auto-claude" / "specs" / spec_name
+        spec_dir = self.project_dir / ".workpilot" / "specs" / spec_name
         if not spec_dir.is_dir():
             # Try worktree-local spec path
             worktree_path = self.get_worktree_path(spec_name)
-            spec_dir = worktree_path / ".auto-claude" / "specs" / spec_name
+            spec_dir = worktree_path / ".workpilot" / "specs" / spec_name
             if not spec_dir.is_dir():
                 logger.warning("Spec directory not found for AI PR body generation")
                 return None
@@ -2058,12 +2058,12 @@ class WorktreeManager:
         """
         # ── locate spec.md ────────────────────────────────────────────
         worktree_path = self.get_worktree_path(spec_name)
-        spec_path = worktree_path / ".auto-claude" / "specs" / spec_name / "spec.md"
+        spec_path = worktree_path / ".workpilot" / "specs" / spec_name / "spec.md"
 
         if not spec_path.exists():
             # Try project spec path
             spec_path = (
-                self.project_dir / ".auto-claude" / "specs" / spec_name / "spec.md"
+                self.project_dir / ".workpilot" / "specs" / spec_name / "spec.md"
             )
 
         # ── extract raw summary text ──────────────────────────────────

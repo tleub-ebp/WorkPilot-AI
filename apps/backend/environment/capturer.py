@@ -7,7 +7,7 @@ Example:
     >>> from environment.capturer import EnvironmentCapturer
     >>> capturer = EnvironmentCapturer(Path("/my/project"))
     >>> capture = capturer.capture_from_compose()
-    >>> capturer.save_capture(capture, Path(".auto-claude/environment"))
+    >>> capturer.save_capture(capture, Path(".workpilot/environment"))
 """
 
 import json

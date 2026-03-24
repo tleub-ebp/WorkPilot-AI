@@ -39,7 +39,7 @@ class ReplayRecorder:
     """
 
     def __init__(self, storage_dir: Path | None = None):
-        self._storage_dir = storage_dir or Path.home() / ".auto-claude" / "replays"
+        self._storage_dir = storage_dir or Path.home() / ".workpilot" / "replays"
         self._storage_dir.mkdir(parents=True, exist_ok=True)
         self._active_sessions: dict[str, ReplaySession] = {}
         self._step_counter: dict[str, int] = {}

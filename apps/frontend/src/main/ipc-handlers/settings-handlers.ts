@@ -169,11 +169,11 @@ function migrateDefaultModelSync(settings: AppSettings): boolean {
 }
 
 /**
- * Migration: Normalize agentFramework to 'auto-claude'
+ * Migration: Normalize agentFramework to 'workpilot' (formerly 'auto-claude')
  */
 function migrateAgentFramework(settings: AppSettings): boolean {
-  if (settings.agentFramework && settings.agentFramework !== 'auto-claude') {
-    settings.agentFramework = 'auto-claude';
+  if (settings.agentFramework && settings.agentFramework !== 'workpilot') {
+    settings.agentFramework = 'workpilot';
     return true;
   }
   return false;
@@ -288,7 +288,7 @@ async function waitForRetry(attempt: number, isTimeout: boolean): Promise<void> 
 }
 
 /**
- * Auto-detect the auto-claude source path relative to the app location.
+ * Auto-detect the workpilot source path relative to the app location.
  * Works across platforms (macOS, Windows, Linux) in both dev and production modes.
  */
 const detectAutoBuildSourcePath = (): string | null => {
@@ -334,7 +334,7 @@ const detectAutoBuildSourcePath = (): string | null => {
 
   for (const p of possiblePaths) {
     // Use runners/spec_runner.py as marker - this is the file actually needed for task execution
-    // This prevents matching legacy 'auto-claude/' directories that don't have the runners
+    // This prevents matching legacy 'workpilot/' directories that don't have the runners
     const markerPath = path.join(p, 'runners', 'spec_runner.py');
     const exists = existsSync(p) && existsSync(markerPath);
 

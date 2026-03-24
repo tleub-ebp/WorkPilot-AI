@@ -136,7 +136,7 @@ logger = logging.getLogger(__name__)
 DEBUG_MODE = os.environ.get("DEBUG", "").lower() in ("true", "1", "yes")
 
 # Directory for PR review worktrees (inside github/pr for consistency)
-PR_WORKTREE_DIR = ".auto-claude/github/pr/worktrees"
+PR_WORKTREE_DIR = ".workpilot/github/pr/worktrees"
 
 
 def _is_finding_in_scope(

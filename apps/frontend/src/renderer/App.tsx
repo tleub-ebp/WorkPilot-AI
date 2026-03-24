@@ -542,7 +542,7 @@ export function App() {
     setInitError(null);
   }, []);
 
-  // Check if a selected project needs initialization (e.g., .auto-claude folder was deleted)
+  // Check if a selected project needs initialization (e.g., .workpilot folder was deleted)
   useEffect(() => {
     // Don't show dialog while initialization is in progress
     if (isInitializing) return;

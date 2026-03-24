@@ -80,7 +80,7 @@ Output: Raw JSON status data
 
 ## Status File
 
-Auto-build writes status to `.auto-claude-status` in your project root:
+Auto-build writes status to `.workpilot-status` in your project root:
 
 ```json
 {
@@ -121,7 +121,7 @@ When active, you'll see these indicators:
 ## Troubleshooting
 
 ### Status not showing?
-1. Check if `.auto-claude-status` exists in your project root
+1. Check if `.workpilot-status` exists in your project root
 2. Verify the path to `statusline.py` is correct
 3. Try running the command manually: `python auto-claude/statusline.py --format compact`
 

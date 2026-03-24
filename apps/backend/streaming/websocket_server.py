@@ -55,7 +55,7 @@ def _should_kill_process(
     is_stale_websocket = (
         "websocket_server.py" in cmdline_str
         and process_age > 30
-        and "auto-claude" not in cmdline_str.lower()
+        and "workpilot" not in cmdline_str.lower()
     )
 
     # Check for orphaned processes

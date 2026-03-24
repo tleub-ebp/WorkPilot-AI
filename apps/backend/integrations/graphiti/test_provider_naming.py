@@ -52,7 +52,7 @@ def test_provider_naming():
         print(f"  Embedding Dimension: {dimension}")
         print(f"  Provider Signature: {signature}")
         print(f"  Database Name: {db_name}")
-        print(f"  Full Path: ~/.auto-claude/memories/{db_name}/")
+        print(f"  Full Path: ~/.workpilot/memories/{db_name}/")
         print()
 
     print("=" * 70)
