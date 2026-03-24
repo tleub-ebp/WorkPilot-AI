@@ -40,7 +40,7 @@ jobs:
           echo "Valid version: $VERSION"
 
   create-tag:
-    name: Create tag (check if it doesn't already exist)
+    name: Create tag (check if it already exists)
     needs: validate-version
     runs-on: ubuntu-latest
     permissions:
