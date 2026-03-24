@@ -87,6 +87,7 @@ import { ViewStateProvider } from './contexts/ViewStateContext';
 import { ProviderSelector } from './components/ProviderSelector';
 import { ProviderContextProvider } from './components/ProviderContext';
 import { AddProjectModal } from './components/AddProjectModal';
+import { NoProjectPage } from './components/NoProjectPage';
 import { AlertCircle } from 'lucide-react';
 import { CommandPalette } from './components/CommandPalette';
 import { KeyboardShortcutsOverlay } from './components/KeyboardShortcutsOverlay';
@@ -836,8 +837,13 @@ export function App() {
       try {
         // Clear any previous error
         setRemoveProjectError(null);
+        const isLastProject = projects.length === 1;
         // Remove the project from the app (files are preserved on disk for re-adding later)
         removeProject(projectToRemove.id);
+        // If we just closed the last project, navigate to kanban to show the NoProjectPage
+        if (isLastProject) {
+          setActiveView('kanban');
+        }
         // Only clear dialog state on success
         setShowRemoveProjectDialog(false);
         setProjectToRemove(null);
@@ -1157,9 +1163,7 @@ export function App() {
                                 {isLoadingProjects && projects.length === 0 ? (
                                   <KanbanSkeleton />
                                 ) : (
-                                  <div className="flex items-center justify-center h-full text-muted">
-                                    {t('common:noProjectSelected')}
-                                  </div>
+                                  <NoProjectPage onAddProject={handleAddProject} />
                                 )}
                               </>
                           )}
