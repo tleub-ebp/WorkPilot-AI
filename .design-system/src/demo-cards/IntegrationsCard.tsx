@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Slack, Video, Globe } from 'lucide-react'
+import { MessageSquare, Monitor, Globe } from 'lucide-react'
 import { Card, Toggle } from '../components'
 
 export function IntegrationsCard() {
@@ -9,8 +9,8 @@ export function IntegrationsCard() {
 
   const integrations = [
     { icon: Globe, name: 'Github', desc: 'Enables automated workflows, code synchronization', enabled: github, toggle: setGithub, color: '#333' },
-    { icon: Slack, name: 'Slack', desc: 'Used as a main source of communication', enabled: slack, toggle: setSlack, color: '#E91E63' },
-    { icon: Video, name: 'Google meet', desc: 'Used for all types of calls', enabled: meet, toggle: setMeet, color: '#00897B' }
+    { icon: MessageSquare, name: 'Slack', desc: 'Used as a main source of communication', enabled: slack, toggle: setSlack, color: '#E91E63' },
+    { icon: Monitor, name: 'Google meet', desc: 'Used for all types of calls', enabled: meet, toggle: setMeet, color: '#00897B' }
   ]
 
   return (

@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import { GitlabIcon, Settings2 } from 'lucide-react';
+import { Globe, Settings2 } from 'lucide-react';
 import { Button } from '../../ui/button';
 import type { EmptyStateProps, NotConnectedStateProps } from '../types';
 
-export function EmptyState({ searchQuery, icon: Icon = GitlabIcon, message }: EmptyStateProps) {
+export function EmptyState({ searchQuery, icon: Icon = Globe, message }: EmptyStateProps) {
   const { t } = useTranslation('gitlab');
 
   return (
@@ -24,7 +24,7 @@ export function NotConnectedState({ error, onOpenSettings }: NotConnectedStatePr
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
       <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-        <GitlabIcon className="h-8 w-8 text-orange-500" />
+        <Globe className="h-8 w-8 text-orange-500" />
       </div>
       <h3 className="text-lg font-semibold text-foreground mb-2">
         {t('notConnected.title')}
