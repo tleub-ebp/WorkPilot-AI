@@ -116,7 +116,7 @@ jobs:
       - name: Install frontend dependencies
         run: |
           rm -rf apps/frontend/node_modules
-          cd apps/frontend && pnpm install --ignore-scripts
+          cd apps/frontend && pnpm install --ignore-scripts --no-frozen-lockfile
 
       - name: Install node-pty in frontend
         run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
@@ -235,7 +235,7 @@ jobs:
       - name: Install frontend dependencies
         run: |
           rm -rf apps/frontend/node_modules
-          cd apps/frontend && pnpm install --ignore-scripts
+          cd apps/frontend && pnpm install --ignore-scripts --no-frozen-lockfile
 
       - name: Install node-pty in frontend
         run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
@@ -353,7 +353,7 @@ jobs:
       - name: Install frontend dependencies
         run: |
           rm -rf apps/frontend/node_modules
-          cd apps/frontend && pnpm install --ignore-scripts
+          cd apps/frontend && pnpm install --ignore-scripts --no-frozen-lockfile
 
       - name: Install node-pty in frontend
         run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
@@ -559,7 +559,7 @@ jobs:
       - name: Install frontend dependencies
         run: |
           rm -rf apps/frontend/node_modules
-          cd apps/frontend && pnpm install --ignore-scripts
+          cd apps/frontend && pnpm install --ignore-scripts --no-frozen-lockfile
 
       - name: Install node-pty in frontend
         run: cd apps/frontend && pnpm add node-pty@1.1.0 --ignore-scripts --save-exact
