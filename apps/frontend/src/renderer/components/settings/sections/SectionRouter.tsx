@@ -263,6 +263,7 @@ export function SectionRouter({
               settings={settings}
               setSettings={setSettings}
               updateEnvConfig={updateEnvConfig}
+              projectPath={project.path}
               showOpenAIKey={showOpenAIKey}
               setShowOpenAIKey={setShowOpenAIKey}
               expanded={true}
