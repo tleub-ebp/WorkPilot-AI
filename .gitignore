@@ -16,6 +16,12 @@ Desktop.ini
 .env
 .env.*
 !.env.example
+/apps/backend/.env
+/apps/frontend/.env
+.env.local
+.env.development
+.env.production
+.env.test
 /config.json
 *.pem
 *.key
