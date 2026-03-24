@@ -5,7 +5,7 @@ inputs:
   node-version:
     description: 'Node.js version to use'
     required: false
-    default: '20'
+    default: '22'
   ignore-scripts:
     description: 'Whether to use --ignore-scripts flag during npm ci'
     required: false
@@ -20,43 +20,43 @@ runs:
   using: 'composite'
   steps:
     - name: Setup Node.js ${{ inputs.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.node-version }}
 
-    - name: Get npm cache directory
-      id: npm-cache-dir
+    - name: Get pnpm cache directory
+      id: pnpm-cache-dir
       shell: bash
-      run: echo "dir=$(npm config get cache)" >> "$GITHUB_OUTPUT"
+      run: echo "dir=$(pnpm store path)" >> "$GITHUB_OUTPUT"
 
-    - name: Cache npm dependencies
+    - name: Cache pnpm dependencies
       id: cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
-        path: ${{ steps.npm-cache-dir.outputs.dir }}
-        key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
-        restore-keys: ${{ runner.os }}-npm-
+        path: ${{ steps.pnpm-cache-dir.outputs.dir }}
+        key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-
 
     - name: Install dependencies
       shell: bash
-      # Run npm ci from root to properly handle workspace dependencies.
-      # With npm workspaces, the lock file is at root and dependencies are hoisted there.
-      # Running npm ci in apps/frontend would fail to populate node_modules correctly.
-      run: |
-        if [ "${{ inputs.ignore-scripts }}" == "true" ]; then
-          npm ci --ignore-scripts
-        else
-          npm ci
-        fi
+      # Install pnpm first since the project uses pnpm workspaces
+      run: npm install -g pnpm
 
-    - name: Verify root node_modules
+    - name: Install frontend dependencies with pnpm
+      shell: bash
+      # Use pnpm to install dependencies since the project uses pnpm workspaces
+      # Ignore scripts to avoid electron-rebuild issues in CI
+      run: cd apps/frontend && pnpm install --ignore-scripts
+
+    - name: Verify pnpm installation
       shell: bash
       run: |
-        if [ ! -d "node_modules" ]; then
-          echo "::error::Root node_modules does not exist. npm ci may have failed."
+        if [ ! -d "apps/frontend/node_modules" ]; then
+          echo "::error::Frontend node_modules does not exist. pnpm install may have failed."
           exit 1
         fi
-        echo "Root node_modules present ($(ls node_modules | wc -l) entries)"
+        echo "Frontend node_modules present ($(ls apps/frontend/node_modules | wc -l) entries)"
 
     - name: Install electron-vite build tool
       shell: bash
