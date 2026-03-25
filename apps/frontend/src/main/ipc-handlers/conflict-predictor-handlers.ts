@@ -69,6 +69,7 @@ export function setupConflictPredictorHandlers() {
 
       currentProcess = spawnedProcess;
 
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       let result: any = null;
       let stdoutError: string | null = null;
       let stderrOutput = '';

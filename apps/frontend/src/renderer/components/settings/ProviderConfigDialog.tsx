@@ -28,7 +28,9 @@ interface ProviderConfigDialogProps {
     readonly description?: string;
     readonly isConfigured: boolean;
   } | null;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   readonly settings: any;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   readonly onSettingsChange: (settings: any) => void;
   readonly onTest?: (providerId: string) => Promise<void>;
   readonly useSheet?: boolean;
@@ -85,6 +87,7 @@ export function ProviderConfigDialog({
         
         // Only log every 10th attempt to reduce noise
         if (checkCount % 10 === 1) {
+          // noop
         }
         
         try {
@@ -166,6 +169,7 @@ export function ProviderConfigDialog({
     return 'api';
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const initializeFormData = (config: ProviderConfig, currentSettings: any): Record<string, string> => {
     const initialData: Record<string, string> = {};
     
@@ -195,6 +199,7 @@ export function ProviderConfigDialog({
     if (provider.id === 'windsurf') {
       loadWindsurfAccountInfo();
     }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [provider, providerConfig, settings, isOpen, supportsOAuth, getDefaultActiveTab, initializeFormData, loadWindsurfAccountInfo, setWindsurfAccountInfo]);
 
   const handleSave = async () => {

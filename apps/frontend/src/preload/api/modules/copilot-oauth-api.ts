@@ -55,6 +55,7 @@ export interface CopilotOAuthAPI {
    * Get Copilot OAuth authentication status
    * Returns authentication status and list of profiles
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   invoke: (channel: string, ...args: any[]) => Promise<any>;
 
   /**
@@ -80,6 +81,7 @@ export interface CopilotOAuthAPI {
  * Creates the Copilot OAuth API implementation
  */
 export const createCopilotOAuthAPI = (): CopilotOAuthAPI => ({
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   invoke: (channel: string, ...args: any[]) => invokeIpc(channel, ...args),
 
   copilotOAuthStart: (profileName: string): Promise<CopilotOAuthStartResult> =>

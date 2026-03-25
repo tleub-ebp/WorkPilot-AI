@@ -343,6 +343,7 @@ describe('Task Store', () => {
         tasks: [createTestTask({ id: 'task-1', subtasks: [] })]
       });
 
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const invalidPlan = { feature: 'Test' } as any;
 
       useTaskStore.getState().updateTaskFromPlan('task-1', invalidPlan);

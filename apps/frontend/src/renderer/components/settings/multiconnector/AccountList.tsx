@@ -6,6 +6,7 @@ interface Props {
   provider: LLMProvider;
 }
 
+// biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
 const AccountList: React.FC<Props> = ({ accounts, provider }) => {
   if (!accounts.length) {
     return <div style={{ color: '#888', fontSize: 14 }}>Aucun compte configuré.</div>;
@@ -21,10 +22,10 @@ const AccountList: React.FC<Props> = ({ accounts, provider }) => {
           <div style={{ fontSize: 12, color: account.status === 'connected' ? 'green' : account.status === 'error' ? 'red' : '#888' }}>
             {account.status}
           </div>
-          <button style={{ fontSize: 12, marginRight: 4 }}>Activer</button>
-          <button style={{ fontSize: 12, marginRight: 4 }}>Tester</button>
+          <button type="button" style={{ fontSize: 12, marginRight: 4 }}>Activer</button>
+          <button type="button" style={{ fontSize: 12, marginRight: 4 }}>Tester</button>
           {account.apiKey && (
-            <button style={{ fontSize: 12, color: 'red' }}>Supprimer</button>
+            <button type="button" style={{ fontSize: 12, color: 'red' }}>Supprimer</button>
           )}
         </div>
       ))}

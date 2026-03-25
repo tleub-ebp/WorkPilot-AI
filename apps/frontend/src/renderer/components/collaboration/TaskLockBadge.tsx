@@ -53,7 +53,7 @@ export function TaskLockBadge({ taskId, className, showForceUnlock = false }: Ta
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <button
+          <button type="button"
             className={cn(
               'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium',
               isAgentLock

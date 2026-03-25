@@ -77,6 +77,7 @@ export function GitHubCopilotConfig() {
         title: t('githubCopilot.tokenSaved'),
         description: t('githubCopilot.tokenSavedDescription')
       });
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -97,6 +98,7 @@ export function GitHubCopilotConfig() {
         title: t('githubCopilot.tokenRemoved'),
         description: t('githubCopilot.tokenRemovedDescription')
       });
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -118,6 +120,7 @@ export function GitHubCopilotConfig() {
         terminalId,
         profileName: 'GitHub Copilot'
       });
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -170,6 +173,7 @@ export function GitHubCopilotConfig() {
         title: t('githubCopilot.logoutSuccess'),
         description: t('githubCopilot.logoutSuccessDescription')
       });
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -199,6 +203,7 @@ export function GitHubCopilotConfig() {
           description: result.message
         });
       }
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     } catch (error: any) {
       toast({
         variant: 'destructive',

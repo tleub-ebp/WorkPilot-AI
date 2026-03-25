@@ -164,6 +164,7 @@ export function formatFrontendLog(
 /**
  * Enhanced console.log replacement for frontend debugging
  */
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export function frontendDebugLog(message: string, ...args: any[]): void {
   if (process.env.DEBUG !== 'true') return;
   
@@ -171,20 +172,24 @@ export function frontendDebugLog(message: string, ...args: any[]): void {
   console.warn(formattedMessage, ...args);
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export function frontendInfoLog(message: string, ...args: any[]): void {
   const formattedMessage = formatFrontendLog(message, 'INFO');
   console.info(formattedMessage, ...args);
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export function frontendSuccessLog(message: string, ..._args: any[]): void {
   const _formattedMessage = formatFrontendLog(message, 'SUCCESS');
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export function frontendWarningLog(message: string, ...args: any[]): void {
   const formattedMessage = formatFrontendLog(message, 'WARNING');
   console.warn(formattedMessage, ...args);
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export function frontendErrorLog(message: string, ...args: any[]): void {
   const formattedMessage = formatFrontendLog(message, 'ERROR');
   console.error(formattedMessage, ...args);
@@ -193,14 +198,17 @@ export function frontendErrorLog(message: string, ...args: any[]): void {
 /**
  * Legacy debugLog function that maps to the new colored system
  */
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export function debugLog(message: string, ...args: any[]): void {
   frontendDebugLog(message, ...args);
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export function debugWarn(message: string, ...args: any[]): void {
   frontendWarningLog(message, ...args);
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export function debugError(message: string, ...args: any[]): void {
   frontendErrorLog(message, ...args);
 }

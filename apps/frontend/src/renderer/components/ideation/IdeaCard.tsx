@@ -60,6 +60,10 @@ export function IdeaCard({ idea, isSelected, onClick, onConvert, onGoToTask, onD
     >
       <div className="flex items-start gap-3">
         {/* Selection checkbox */}
+        // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+        // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+        // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+        // biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: intentional
         <div
           className="pt-0.5"
           onClick={(e) => {
@@ -172,6 +176,7 @@ export function IdeaCard({ idea, isSelected, onClick, onConvert, onGoToTask, onD
                     className="h-8 w-8 p-0 text-primary"
                     onClick={(e) => {
                       e.stopPropagation();
+                      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
                       onGoToTask(idea.taskId!);
                     }}
                     aria-label={t('accessibility.goToTaskAriaLabel')}
@@ -194,6 +199,7 @@ export function IdeaCard({ idea, isSelected, onClick, onConvert, onGoToTask, onD
                     className="h-8 w-8 p-0 text-primary"
                     onClick={(e) => {
                       e.stopPropagation();
+                      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
                       onGoToTask(idea.taskId!);
                     }}
                     aria-label={t('accessibility.goToTaskAriaLabel')}

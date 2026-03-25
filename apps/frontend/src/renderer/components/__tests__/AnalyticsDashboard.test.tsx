@@ -333,7 +333,7 @@ describe('AnalyticsDashboard', () => {
 
   it('displays loading state initially', () => {
     // Mock fetch to delay response
-    mockFetch.mockImplementation(() => new Promise(() => {}));
+    mockFetch.mockImplementation(() => new Promise(() => { /* noop */ }));
     
     render(<AnalyticsDashboard />);
     

@@ -391,6 +391,8 @@ function SortDropdown({
             const isFocused = focusedIndex === index;
             const Icon = option.icon;
             return (
+              // biome-ignore lint/a11y/useFocusableInteractive: element is focusable via tabIndex
+              // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
               <div
                 key={option.value}
                 role="option"
@@ -451,7 +453,7 @@ export function PRFilterBar({
             className="h-8 pl-9 bg-background/50 focus:bg-background transition-colors"
           />
           {filters.searchQuery && (
-            <button
+            <button type="button"
               onClick={() => onSearchChange('')}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               aria-label={t('prReview.clearSearch')}

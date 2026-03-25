@@ -162,6 +162,7 @@ export interface GitHubAPI {
     fetchAll?: boolean
   ) => Promise<IPCResult<PaginatedIssuesResult>>;
   getGitHubIssue: (projectId: string, issueNumber: number) => Promise<IPCResult<GitHubIssue>>;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   getIssueComments: (projectId: string, issueNumber: number) => Promise<IPCResult<any[]>>;
   checkGitHubConnection: (projectId: string) => Promise<IPCResult<GitHubSyncStatus>>;
   testGitHubConnection: (config: { repo: string; token: string }) => Promise<{ success: boolean; status?: number; error?: string }>;
@@ -515,6 +516,7 @@ export const createGitHubAPI = (): GitHubAPI => ({
   getGitHubIssue: (projectId: string, issueNumber: number): Promise<IPCResult<GitHubIssue>> =>
     invokeIpc(IPC_CHANNELS.GITHUB_GET_ISSUE, projectId, issueNumber),
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   getIssueComments: (projectId: string, issueNumber: number): Promise<IPCResult<any[]>> =>
     invokeIpc(IPC_CHANNELS.GITHUB_GET_ISSUE_COMMENTS, projectId, issueNumber),
 

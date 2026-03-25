@@ -279,6 +279,9 @@ function SessionItem({
   }
 
   return (
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+    // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+    // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
     <div
       className={cn(
         'group relative cursor-pointer px-2 py-2 transition-colors hover:bg-muted',

@@ -781,7 +781,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
             {/* Reconfigure link after success */}
             {success && (
               <div className="text-center text-sm text-muted-foreground">
-                <button
+                <button type="button"
                   onClick={handleReconfigure}
                   className="text-primary hover:text-primary/80 underline-offset-4 hover:underline"
                 >
@@ -845,7 +845,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
                           <li>Reduces repetitive explanations</li>
                           <li>No Docker required - uses embedded database</li>
                         </ul>
-                        <button
+                        <button type="button"
                           onClick={handleOpenDocs}
                           className="text-sm text-info hover:text-info/80 flex items-center gap-1"
                         >

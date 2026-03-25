@@ -75,6 +75,7 @@ describe('getOAuthModeClearVars', () => {
   describe('Edge cases', () => {
     it('should handle undefined gracefully (treat as empty)', () => {
       // TypeScript should prevent this, but runtime safety
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const result = getOAuthModeClearVars(undefined as any);
 
       // Should treat undefined as empty object -> OAuth mode
@@ -83,6 +84,7 @@ describe('getOAuthModeClearVars', () => {
 
     it('should handle null gracefully (treat as empty)', () => {
       // Runtime safety for null values
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const result = getOAuthModeClearVars(null as any);
 
       // Should treat null as OAuth mode and return clearing vars

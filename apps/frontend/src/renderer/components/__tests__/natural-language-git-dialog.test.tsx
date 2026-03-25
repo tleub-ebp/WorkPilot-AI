@@ -41,7 +41,9 @@ describe('NaturalLanguageGitDialog', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     (useNaturalLanguageGitStore as any).mockReturnValue(mockStore);
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     (useProjectStore as any).mockReturnValue(mockProjectStore);
   });
 

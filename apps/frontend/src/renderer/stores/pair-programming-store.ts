@@ -91,6 +91,7 @@ export const usePairProgrammingStore = create<PairProgrammingState>((set, get) =
       status,
       statusMessage: message,
       session: get().session
+        // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
         ? { ...get().session!, status: (status === 'idle' ? get().session?.status : status) as PairSession['status'], updatedAt: new Date().toISOString() }
         : null,
     }),

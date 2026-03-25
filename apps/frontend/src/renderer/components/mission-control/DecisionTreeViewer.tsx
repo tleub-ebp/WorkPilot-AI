@@ -101,6 +101,8 @@ function TreeNode({ node, allNodes, currentNodeId, depth }: TreeNodeProps) {
         )}
         style={{ paddingLeft: `${depth * 16 + 4}px` }}
         onClick={() => hasChildren && setExpanded(!expanded)}
+        // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
+        // biome-ignore lint/a11y/useSemanticElements: intentional
         role="button"
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { hasChildren && setExpanded(!expanded); } }}

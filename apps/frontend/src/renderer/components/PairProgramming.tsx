@@ -112,6 +112,8 @@ function SetupForm({ onStart }: SetupFormProps) {
       {/* Form */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
         <div className="flex flex-col gap-1.5">
+          // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+          // biome-ignore lint/a11y/noLabelWithoutControl: intentional
           <label className="text-sm font-medium">{t('setup.goalLabel')}</label>
           <Textarea
             value={goal}
@@ -121,6 +123,8 @@ function SetupForm({ onStart }: SetupFormProps) {
           />
         </div>
         <div className="flex flex-col gap-1.5">
+          // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+          // biome-ignore lint/a11y/noLabelWithoutControl: intentional
           <label className="text-sm font-medium">{t('setup.devScopeLabel')}</label>
           <Textarea
             value={devScope}
@@ -130,6 +134,8 @@ function SetupForm({ onStart }: SetupFormProps) {
           />
         </div>
         <div className="flex flex-col gap-1.5">
+          // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+          // biome-ignore lint/a11y/noLabelWithoutControl: intentional
           <label className="text-sm font-medium">{t('setup.aiScopeLabel')}</label>
           <Textarea
             value={aiScope}

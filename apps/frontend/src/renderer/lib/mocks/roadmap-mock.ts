@@ -35,7 +35,7 @@ export const roadmapMock = {
   }),
 
   // Roadmap Event Listeners
-  onRoadmapProgress: () => () => {},
-  onRoadmapComplete: () => () => {},
-  onRoadmapError: () => () => {}
+  onRoadmapProgress: () => () => { /* noop */ },
+  onRoadmapComplete: () => () => { /* noop */ },
+  onRoadmapError: () => () => { /* noop */ }
 };

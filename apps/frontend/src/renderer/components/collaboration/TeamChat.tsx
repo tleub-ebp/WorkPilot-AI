@@ -76,7 +76,7 @@ function MessageBubble({ message, isOwn, onReply }: MessageBubbleProps) {
         >
           {message.content}
         </div>
-        <button
+        <button type="button"
           onClick={() => onReply(message)}
           className="hidden text-xs text-muted-foreground hover:text-foreground group-hover:inline-flex items-center gap-0.5"
         >
@@ -135,7 +135,7 @@ export function TeamChat() {
   // Floating toggle button
   if (!chatOpen) {
     return (
-      <button
+      <button type="button"
         onClick={toggleChat}
         className="fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
         aria-label={t('chat.title')}
@@ -156,13 +156,13 @@ export function TeamChat() {
       <div className="flex items-center justify-between border-b px-3 py-2">
         <h3 className="text-sm font-semibold">{t('chat.title')}</h3>
         <div className="flex items-center gap-1">
-          <button
+          <button type="button"
             onClick={() => setShowSearch(!showSearch)}
             className="rounded p-1 hover:bg-accent"
           >
             <Search className="h-4 w-4" />
           </button>
-          <button onClick={toggleChat} className="rounded p-1 hover:bg-accent">
+          <button type="button" onClick={toggleChat} className="rounded p-1 hover:bg-accent">
             <ChevronDown className="h-4 w-4" />
           </button>
         </div>
@@ -208,7 +208,7 @@ export function TeamChat() {
           <span className="flex-1 truncate text-xs text-muted-foreground">
             {t('chat.replyTo', { user: replyingTo.senderName })}
           </span>
-          <button onClick={() => setReplyingTo(null)} className="text-muted-foreground hover:text-foreground">
+          <button type="button" onClick={() => setReplyingTo(null)} className="text-muted-foreground hover:text-foreground">
             <X className="h-3 w-3" />
           </button>
         </div>

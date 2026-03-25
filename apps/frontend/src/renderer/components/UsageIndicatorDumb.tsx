@@ -265,7 +265,7 @@ export function UsageIndicatorDumb({ selectedProvider: propSelectedProvider }: U
       <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground">
+            <button type="button" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground">
               <Activity className="h-3.5 w-3.5" />
               <span className="text-xs font-semibold">{t('common:usage.notAvailable')}</span>
             </button>
@@ -327,7 +327,7 @@ export function UsageIndicatorDumb({ selectedProvider: propSelectedProvider }: U
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <button
+        <button type="button"
           className={`flex items-center gap-1 px-2 py-1.5 rounded-md border transition-all hover:opacity-80 ${badgeColorClasses}`}
           aria-label={t('common:usage.usageStatusAriaLabel')}
           onMouseEnter={handleMouseEnter}

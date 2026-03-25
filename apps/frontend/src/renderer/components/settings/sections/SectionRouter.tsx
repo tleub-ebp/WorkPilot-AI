@@ -60,7 +60,9 @@ export function SectionRouter({
   isCheckingVersion,
   isUpdating,
   envConfig,
+  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
   isLoadingEnv,
+  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
   envError,
   updateEnvConfig,
   showLinearKey,
@@ -267,7 +269,7 @@ export function SectionRouter({
               showOpenAIKey={showOpenAIKey}
               setShowOpenAIKey={setShowOpenAIKey}
               expanded={true}
-              onToggle={() => {}}
+              onToggle={() => { /* noop */ }}
             />
           </InitializationGuard>
         </SettingsSection>

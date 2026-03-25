@@ -26,6 +26,7 @@ import { LivePreviewTerminal } from './LivePreviewTerminal';
  * All settings persist via localStorage through the Zustand store
  * Changes apply immediately to all active terminal instances
  */
+// biome-ignore lint/suspicious/noRedeclare: redeclaration is intentional in this context
 export function TerminalFontSettings() {
   const { t } = useTranslation('settings');
   const { toast } = useToast();

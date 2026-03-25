@@ -168,6 +168,7 @@ async function cleanupTestDirs(): Promise<void> {
   // For testing, we don't actually need to clean up the directories
   // The mock rmSync will handle this if needed
   try {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const fs = await vi.importMock('fs') as any;
     if (fs.rmSync) {
       fs.rmSync(TEST_DIR, { recursive: true, force: true });
@@ -279,6 +280,7 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
     });
 
     it("should return error for non-existent path", async () => {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const fs = await vi.importMock('fs') as any;
       fs.existsSync.mockReturnValue(false);
       
@@ -299,6 +301,7 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
     });
 
     it("should successfully add an existing project", async () => {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const fs = await vi.importMock('fs') as any;
       fs.existsSync.mockImplementation((path: string) => {
         return path === TEST_PROJECT_PATH;
@@ -322,6 +325,7 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
     });
 
     it("should return existing project if already added", async () => {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const fs = await vi.importMock('fs') as any;
       fs.existsSync.mockReturnValue(true);
       
@@ -442,6 +446,7 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
     });
 
     it("should successfully update project settings", async () => {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const fs = await vi.importMock('fs') as any;
       fs.existsSync.mockImplementation((path: string) => {
         return path === TEST_PROJECT_PATH;
@@ -475,6 +480,7 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
     });
 
     it("should return empty array for project with no specs", async () => {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const fs = await vi.importMock('fs') as any;
       fs.existsSync.mockImplementation((path: string) => {
         return path === TEST_PROJECT_PATH;
@@ -501,6 +507,7 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
     });
 
     it("should return tasks when specs exist", async () => {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const fs = await vi.importMock('fs') as any;
       fs.existsSync.mockImplementation((path: string) => {
         // Return true for TEST_PROJECT_PATH and any .workpilot paths
@@ -537,6 +544,7 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
         return '{}';
       });
       
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       fs.readdirSync.mockImplementation((path: string, _options?: any) => {
         if (path.includes('.workpilot/specs')) {
           // Return our spec directory as a simple string array
@@ -634,6 +642,7 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
     });
 
     it("should create task in backlog status", async () => {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const fs = await vi.importMock('fs') as any;
       fs.existsSync.mockImplementation((path: string) => {
         return path === TEST_PROJECT_PATH || path.includes('.workpilot');

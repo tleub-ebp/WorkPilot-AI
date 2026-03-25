@@ -867,6 +867,7 @@ describe('profile-service', () => {
 
     it('should return network error for connection refused', async () => {
       const networkError = new TypeError('Failed to fetch');
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       (networkError as any).code = 'ECONNREFUSED';
 
       vi.mocked(global.fetch).mockRejectedValue(networkError);
@@ -882,6 +883,7 @@ describe('profile-service', () => {
 
     it('should return network error for ENOTFOUND (DNS failure)', async () => {
       const dnsError = new TypeError('Failed to fetch');
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       (dnsError as any).code = 'ENOTFOUND';
 
       vi.mocked(global.fetch).mockRejectedValue(dnsError);

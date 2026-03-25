@@ -21,6 +21,7 @@ export class SessionManager {
   loadSession(projectId: string, projectPath: string): InsightsSession | null {
     // Check in-memory cache first
     if (this.sessions.has(projectId)) {
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       return this.sessions.get(projectId)!;
     }
 

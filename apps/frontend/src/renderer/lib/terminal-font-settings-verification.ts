@@ -83,4 +83,5 @@ export async function verifyTerminalSubscription(): Promise<boolean> {
  * This would be used in an integration test with actual xterm instances
  */
 export function verifyMultipleTerminalsUpdate(_terminalCount: number): void {
+  // noop
 }

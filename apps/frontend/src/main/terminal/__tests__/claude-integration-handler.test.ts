@@ -922,6 +922,7 @@ describe('claude-integration-handler - Helper Functions', () => {
         { name: 'Default', isDefault: true },
         '/tmp/project',
         Date.now(),
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         () => mockWindow as any,
         vi.fn()
       );
@@ -942,6 +943,7 @@ describe('claude-integration-handler - Helper Functions', () => {
         { name: 'Work Profile', isDefault: false },
         '/tmp/project',
         Date.now(),
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         () => mockWindow as any,
         vi.fn()
       );
@@ -963,6 +965,7 @@ describe('claude-integration-handler - Helper Functions', () => {
         undefined,
         '/tmp/project',
         Date.now(),
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         () => mockWindow as any,
         vi.fn()
       );
@@ -988,6 +991,7 @@ describe('claude-integration-handler - Helper Functions', () => {
         { name: 'Work Profile', isDefault: false },
         '/tmp/project',
         Date.now(),
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         () => mockWindow as any,
         vi.fn()
       );
@@ -1012,6 +1016,7 @@ describe('claude-integration-handler - Helper Functions', () => {
         undefined,
         '/tmp/project',
         Date.now(),
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         () => mockWindow as any,
         vi.fn()
       );

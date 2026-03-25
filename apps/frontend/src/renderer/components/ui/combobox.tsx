@@ -206,6 +206,8 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
             <input
               ref={inputRef}
               type="text"
+              // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
+              // biome-ignore lint/a11y/useSemanticElements: intentional
               role="searchbox"
               aria-controls={listboxId}
               aria-activedescendant={activeDescendant}

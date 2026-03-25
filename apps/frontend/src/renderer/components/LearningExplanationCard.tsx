@@ -122,6 +122,7 @@ export function LearningExplanationCard({ explanation, defaultExpanded = false }
               </div>
               <div className="space-y-2">
                 {explanation.alternative_approaches.map((alt, idx) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                   <div key={idx} className="bg-muted/50 p-3 rounded-md text-xs">
                     <div className="font-medium mb-1">{alt.name}</div>
                     {alt.description && (
@@ -153,6 +154,7 @@ export function LearningExplanationCard({ explanation, defaultExpanded = false }
               <div className="space-y-1">
                 {explanation.references.map((ref, idx) => (
                   <a
+                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                     key={idx}
                     href={ref}
                     target="_blank"

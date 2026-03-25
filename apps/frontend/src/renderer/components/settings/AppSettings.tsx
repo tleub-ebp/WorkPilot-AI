@@ -110,6 +110,7 @@ export type SettingsTheme =
   | 'system';           // Système & Maintenance
 
 // Configuration des thèmes de paramètres avec leurs sections
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 const createSettingsThemes = (t: any): Record<SettingsTheme, { 
   title: string; 
   icon: React.ElementType; 
@@ -294,7 +295,7 @@ export function AppSettingsDialog(props: AppSettingsDialogProps) {
 
     // If on project section with a project selected, save project settings too
     if (activeTopLevel === 'project' && selectedProject && projectSettingsHook) {
-      await projectSettingsHook.handleSave(() => {});
+      await projectSettingsHook.handleSave(() => { /* noop */ });
       // Check for project errors
       if (projectSettingsHook.error || projectSettingsHook.envError) {
         setProjectError(projectSettingsHook.error || projectSettingsHook.envError);
@@ -396,7 +397,7 @@ export function AppSettingsDialog(props: AppSettingsDialogProps) {
               <ScrollArea className="h-full">
                 <div className="space-y-4">
                   {/* Toggle button */}
-                  <button
+                  <button type="button"
                     onClick={() => setIsNavigationCollapsed(!isNavigationCollapsed)}
                     className={cn(
                       'w-full flex items-center justify-center p-2 rounded-lg transition-all',
@@ -426,7 +427,7 @@ export function AppSettingsDialog(props: AppSettingsDialogProps) {
                         <div key={themeKey} className="space-y-1">
                           {/* Theme Header */}
                           {isNavigationCollapsed ? (
-                            <button
+                            <button type="button"
                               onClick={() => {
                                 if (theme.sections.length === 1) {
                                   const section = theme.sections[0];
@@ -462,7 +463,7 @@ export function AppSettingsDialog(props: AppSettingsDialogProps) {
                             </button>
                           ) : (
                             <div className="px-3 py-2">
-                              <button
+                              <button type="button"
                                 onClick={() => toggleThemeCollapse(themeKey as SettingsTheme)}
                                 className={cn(
                                   'w-full flex items-center justify-between text-sm font-medium transition-all',
@@ -511,7 +512,7 @@ export function AppSettingsDialog(props: AppSettingsDialogProps) {
                                 );
 
                                 return (
-                                  <button
+                                  <button type="button"
                                     key={section.id}
                                     onClick={() => {
                                       if (section.type === 'app') {
@@ -541,7 +542,7 @@ export function AppSettingsDialog(props: AppSettingsDialogProps) {
                   {/* Re-run Wizard button - seulement si non replié */}
                   {!isNavigationCollapsed && onRerunWizard && (
                     <div className="pt-4 border-t border-border">
-                      <button
+                      <button type="button"
                         onClick={() => {
                           onOpenChange(false);
                           onRerunWizard();

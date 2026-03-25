@@ -162,6 +162,7 @@ export function initializeGit(projectPath: string, remoteConfig?: { url?: string
               stdio: 'pipe'
             });
           } else {
+            // noop
           }
         } catch (_error) {
           execFileSync(git, ['remote', 'add', remoteName, remoteConfig.url], {
@@ -190,6 +191,7 @@ export function initializeGit(projectPath: string, remoteConfig?: { url?: string
               });
               break;
             } catch {
+              // noop
             }
           }
         } catch (_error) {
@@ -199,6 +201,7 @@ export function initializeGit(projectPath: string, remoteConfig?: { url?: string
         // Don't fail the git initialization, but log the issue
       }
     } else {
+      // noop
     }
 
     return { success: true };

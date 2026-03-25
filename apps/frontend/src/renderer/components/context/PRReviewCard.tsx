@@ -227,6 +227,7 @@ export function PRReviewCard({ memory }: PRReviewCardProps) {
                 </div>
                 <div className="space-y-2 pl-6">
                   {parsed.keyFindings.slice(0, 5).map((finding, idx) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                     <div key={idx} className="text-sm">
                       <div className="flex items-center gap-2">
                         <Badge
@@ -269,6 +270,7 @@ export function PRReviewCard({ memory }: PRReviewCardProps) {
                 </div>
                 <ul className="space-y-1 pl-6">
                   {parsed.gotchas.map((gotcha, idx) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                     <li key={idx} className="text-sm text-red-400/80 py-1 pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-red-500/50">
                       {gotcha}
                     </li>
@@ -289,6 +291,7 @@ export function PRReviewCard({ memory }: PRReviewCardProps) {
                 </div>
                 <div className="flex flex-wrap gap-2 pl-6">
                   {parsed.patterns.map((pattern, idx) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                     <Badge key={idx} variant="secondary" className="text-xs bg-purple-500/10 text-purple-400">
                       {pattern}
                     </Badge>

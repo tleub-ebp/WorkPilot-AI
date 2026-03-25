@@ -60,6 +60,7 @@ export function McpInstalledList() {
           const catalogInfo = getCatalogInfo(server.serverId);
           const color = catalogInfo?.color || '#6B7280';
           
+          // biome-ignore lint/suspicious/noImplicitAnyLet: type inferred from assignment
           let statusIcon;
           if (server.status === 'installed' && server.enabled) {
             statusIcon = <CheckCircle2 className="h-4 w-4 text-green-500" />;

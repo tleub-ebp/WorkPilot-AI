@@ -36,6 +36,17 @@ sys.modules["claude_agent_sdk.types"] = _mock_sdk.types
 
 # Create runners package hierarchy WITHOUT triggering runners/__init__.py
 _BACKEND = _Path(__file__).parent.parent / "apps" / "backend"
+
+# Ensure backend is in sys.path so 'core' and other modules are importable
+if str(_BACKEND) not in sys.path:
+    sys.path.insert(0, str(_BACKEND))
+
+# Also add runners/github to sys.path so fallback imports like
+# 'from context_gatherer import ...' work when relative imports fail
+_RUNNERS_GITHUB = _BACKEND / "runners" / "github"
+if str(_RUNNERS_GITHUB) not in sys.path:
+    sys.path.insert(0, str(_RUNNERS_GITHUB))
+
 for _pkg, _subpath in [
     ("runners", "runners"),
     ("runners.github", "runners/github"),
@@ -120,12 +131,18 @@ class TestClaudeIntegrationPath:
     @pytest.mark.asyncio
     async def test_claude_agent_client_full_stream(self):
         """ClaudeAgentClient wraps SDK stream and preserves raw messages."""
-        # Simulate SDK messages
-        text_block = SimpleNamespace(type="text", text="Analysis complete")
-        text_block.__class__ = type("TextBlock", (), {})
-
-        assistant_msg = SimpleNamespace(content=[text_block], structured_output=None)
-        assistant_msg.__class__ = type("AssistantMessage", (), {})
+        # Simulate SDK messages using proper named classes (SimpleNamespace.__class__
+        # assignment is not supported for built-in types)
+        class TextBlock:
+            def __init__(self, type_, text):
+                self.type = type_
+                self.text = text
+        class AssistantMessage:
+            def __init__(self, content, structured_output=None):
+                self.content = content
+                self.structured_output = structured_output
+        text_block = TextBlock("text", "Analysis complete")
+        assistant_msg = AssistantMessage(content=[text_block], structured_output=None)
 
         sdk_mock = MagicMock()
         sdk_mock.query = AsyncMock()
@@ -222,7 +239,11 @@ class TestCopilotIntegrationPath:
     @pytest.mark.asyncio
     async def test_copilot_subagent_parallel_execution(self):
         """CopilotAgentClient.run_subagents executes agents in parallel."""
-        client = CopilotAgentClient(model="gpt-4o", github_token="ghp_test")
+        import time
+        client = CopilotAgentClient(model="gpt-4o", github_token="gho_test_oauth")
+        # Pre-set a valid copilot token to avoid real HTTP token exchange
+        client._copilot_token = "copilot_test_token"
+        client._copilot_token_expires_at = time.time() + 3600
 
         agents = {
             "sec": SubagentDefinition(description="Security", prompt="Check sec"),
@@ -352,19 +373,24 @@ class TestProcessAgentStreamIntegration:
         from runners.github.services.sdk_utils import process_agent_stream
 
         # Create a ClaudeAgentClient with mock SDK
-        text_block = SimpleNamespace(type="text", text="Review complete")
-        text_block.__class__ = type("TextBlock", (), {})
-
-        result_msg_raw = SimpleNamespace(
-            type="result", subtype=None,
-            structured_output={"verdict": "approve"}
-        )
-        result_msg_raw.__class__ = type("ResultMessage", (), {})
-
-        assistant_msg = SimpleNamespace(
-            content=[text_block], structured_output=None
-        )
-        assistant_msg.__class__ = type("AssistantMessage", (), {})
+        # Use proper named classes since SimpleNamespace.__class__ assignment is
+        # not supported for built-in types
+        class TextBlock:
+            def __init__(self, type_, text):
+                self.type = type_
+                self.text = text
+        class ResultMessage:
+            def __init__(self, type_, subtype, structured_output):
+                self.type = type_
+                self.subtype = subtype
+                self.structured_output = structured_output
+        class AssistantMessage:
+            def __init__(self, content, structured_output=None):
+                self.content = content
+                self.structured_output = structured_output
+        text_block = TextBlock("text", "Review complete")
+        result_msg_raw = ResultMessage("result", None, {"verdict": "approve"})
+        assistant_msg = AssistantMessage(content=[text_block], structured_output=None)
 
         sdk_mock = MagicMock()
         sdk_mock.query = AsyncMock()
@@ -390,9 +416,13 @@ class TestProcessAgentStreamIntegration:
     @pytest.mark.asyncio
     async def test_copilot_client_through_process_agent_stream(self):
         """CopilotAgentClient messages should be processed by process_agent_stream."""
+        import time
         from runners.github.services.sdk_utils import process_agent_stream
 
-        client = CopilotAgentClient(model="gpt-4o", github_token="ghp_test")
+        client = CopilotAgentClient(model="gpt-4o", github_token="gho_test_oauth")
+        # Pre-set a valid copilot token to avoid real HTTP token exchange
+        client._copilot_token = "copilot_test_token"
+        client._copilot_token_expires_at = time.time() + 3600
         await client.query("analyze code")
 
         # Mock the HTTP response

@@ -34,6 +34,7 @@ export interface VoiceControlAPI {
     transcript: string;
     command: string;
     action: string;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     parameters: Record<string, any>;
     confidence: number;
   }) => void) => () => void;
@@ -92,6 +93,7 @@ export function createVoiceControlAPI(): VoiceControlAPI {
         transcript: string;
         command: string;
         action: string;
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         parameters: Record<string, any>;
         confidence: number;
       }) => callback(result));

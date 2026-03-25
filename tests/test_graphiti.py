@@ -85,8 +85,9 @@ class TestGraphitiConfig:
             assert config.enabled is False
             assert config.database == "auto_claude_memory"
             assert (
-                "auto-claude" in config.db_path.lower()
-            )  # Default path in ~/.workpilot/
+                "workpilot" in config.db_path.lower()
+                or "auto-claude" in config.db_path.lower()
+            )  # Default path in ~/.workpilot/ (or legacy ~/.auto-claude/)
 
     def test_from_env_custom_values(self):
         """Config reads custom environment values."""

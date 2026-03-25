@@ -60,6 +60,7 @@ export const useAppEmulatorStore = create<AppEmulatorState>((set) => ({
   closeDialog: () => {
     // Stop server when closing
     try {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       (globalThis as any).electronAPI?.stopAppEmulator();
     } catch {
       // Ignore errors during cleanup
@@ -95,6 +96,7 @@ export async function startAppEmulator(projectDir: string): Promise<void> {
   store.setStatus('Detecting project type...');
 
   try {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const result = await (globalThis as any).electronAPI.detectAppProject(projectDir);
 
     if (!result.success) {
@@ -107,6 +109,7 @@ export async function startAppEmulator(projectDir: string): Promise<void> {
     store.setPhase('starting');
     store.setStatus(`Starting: ${config.startCommand}`);
 
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const startResult = await (globalThis as any).electronAPI.startAppEmulator(config);
     if (!startResult.success) {
       // "Already starting" means a concurrent call is in progress — silently ignore,
@@ -115,6 +118,7 @@ export async function startAppEmulator(projectDir: string): Promise<void> {
         store.setError(startResult.error || 'Failed to start server');
       }
     }
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   } catch (err: any) {
     store.setError(err.message || 'An unexpected error occurred');
   }
@@ -125,6 +129,7 @@ export async function startAppEmulator(projectDir: string): Promise<void> {
  */
 export async function stopAppEmulator(): Promise<void> {
   try {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     await (globalThis as any).electronAPI.stopAppEmulator();
   } catch {
     // Ignore
@@ -147,20 +152,25 @@ export function setupAppEmulatorListeners(): () => void {
     // First caller — register the actual IPC listeners
     const store = () => useAppEmulatorStore.getState();
 
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const unsubStatus = (globalThis as any).electronAPI.onAppEmulatorStatus((status: string) => {
       store().setStatus(status);
     });
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const unsubReady = (globalThis as any).electronAPI.onAppEmulatorReady((url: string) => {
       store().setUrl(url);
       store().setPhase('running');
       store().setStatus(`Running at ${url}`);
     });
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const unsubOutput = (globalThis as any).electronAPI.onAppEmulatorOutput((line: string) => {
       store().appendOutput(line);
     });
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const unsubError = (globalThis as any).electronAPI.onAppEmulatorError((error: string) => {
       store().setError(error);
     });
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const unsubStopped = (globalThis as any).electronAPI.onAppEmulatorStopped(() => {
       const currentPhase = store().phase;
       // Ignore stale stop events from the previous run during a retry (detecting/starting)
@@ -169,6 +179,7 @@ export function setupAppEmulatorListeners(): () => void {
         store().setStatus('Server stopped');
       }
     });
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const unsubConfig = (globalThis as any).electronAPI.onAppEmulatorConfig((config: AppEmulatorConfig) => {
       store().setConfig(config);
     });

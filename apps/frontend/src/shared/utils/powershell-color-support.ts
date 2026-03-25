@@ -85,10 +85,12 @@ export function forceEnableWindowsColors(): boolean {
 export function printColorDiagnostics(): void {
   const diagnostics = getColorDiagnostics();
   
+  // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
   Object.entries(diagnostics.envVars).forEach(([_key, _value]) => {
   });
   
   if (diagnostics.recommendations.length > 0) {
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
     diagnostics.recommendations.forEach((_rec, _index) => {
     });
   }

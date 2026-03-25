@@ -76,6 +76,7 @@ export function GitHubIntegration({
 
   // Fetch repos when entering oauth-success mode
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   useEffect(() => {
     if (authMode === 'oauth-success') {
       fetchUserRepos();
@@ -84,6 +85,7 @@ export function GitHubIntegration({
 
   // Fetch branches when GitHub is enabled and project path is available
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   useEffect(() => {
     debugLog(`useEffect[branches] - githubEnabled: ${envConfig?.githubEnabled}, projectPath: ${projectPath}`);
     if (envConfig?.githubEnabled && projectPath) {

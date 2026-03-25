@@ -70,6 +70,7 @@ function createUseSettingsStoreMock(overrides?: Partial<ReturnType<typeof useSet
     deleteProfile: vi.fn().mockResolvedValue(true),
     setActiveProfile: vi.fn().mockResolvedValue(true),
     profilesLoading: false,
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     settings: {} as any,
     isLoading: false,
     error: null,
@@ -131,6 +132,7 @@ describe('AuthStatusIndicator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock window.electronAPI usage functions
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     (window as any).electronAPI = {
       onUsageUpdated: vi.fn(() => vi.fn()), // Returns unsubscribe function
       requestUsageUpdate: vi.fn().mockResolvedValue({ success: false, data: null })

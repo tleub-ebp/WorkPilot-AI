@@ -327,6 +327,7 @@ interface PatternCardProps {
   readonly onToggleEnabled: () => void;
   readonly onDelete: () => void;
   readonly confidenceColor: (c: number) => string;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   readonly t: (key: string, options?: any) => string;
 }
 

@@ -133,6 +133,7 @@ export function CopilotAuthTerminal({
           background: '#1a1a1a',
           foreground: '#ffffff',
           cursor: '#ffffff',
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         } as any,
         rows: 20,
         cols: 80,

@@ -251,7 +251,7 @@ export function PRList({
           const hasReviewResult = reviewState?.result !== null && reviewState?.result !== undefined;
 
           return (
-            <button
+            <button type="button"
               key={pr.number}
               onClick={() => onSelectPR(pr.number)}
               className={cn(

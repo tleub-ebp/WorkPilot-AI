@@ -44,9 +44,13 @@ export interface ProviderSpecificDetails {
   
   /** OpenAI-specific details */
   openai?: {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     completions?: any;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     cost?: any;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     embeddings?: any;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     moderations?: any;
     estimatedCost?: number;
   };
@@ -63,6 +67,7 @@ export interface ProviderSpecificDetails {
   
   /** Generic provider details */
   generic?: {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     [key: string]: any;
   };
 }

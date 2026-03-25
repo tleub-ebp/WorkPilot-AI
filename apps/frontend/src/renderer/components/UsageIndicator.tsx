@@ -50,6 +50,7 @@ export function UsageIndicator() {
   const [activeProfileNeedsReauth, setActiveProfileNeedsReauth] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const [providerProfile, setProviderProfile] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
@@ -96,15 +97,18 @@ export function UsageIndicator() {
   /**
    * Handle successful usage data response
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const handleSuccessResponse = (result: any, provider: string): boolean => {
     if (result.success && result.data) {
       if (provider && result.data.providerName && result.data.providerName !== provider) {
+        // biome-ignore lint/suspicious/noConsole: logging retained for debugging
         console.log('[UsageIndicator] fetchUsageDeduplicated: FILTERED OUT — providerName mismatch', result.data.providerName, '!==', provider);
         return false;
       }
       setUsage(result.data);
       setIsAvailable(true);
       setIsLoading(false);
+      // biome-ignore lint/suspicious/noConsole: logging retained for debugging
       console.log('[UsageIndicator] fetchUsageDeduplicated: setIsLoading(false) called');
       return true;
     }
@@ -134,11 +138,13 @@ export function UsageIndicator() {
   /**
    * Handle timeout errors with retry logic
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const handleTimeoutError = async (error: any, provider: string, retryCount: number): Promise<void> => {
     const isTimeout = error instanceof Error && error.message.includes('timed out after 20s');
     
     if (isTimeout && retryCount < 2) {
       // For timeouts, retry with exponential backoff
+      // biome-ignore lint/suspicious/noConsole: logging retained for debugging
       console.log(`[UsageIndicator] Timeout detected, retrying (${retryCount + 1}/2)...`);
       await new Promise<void>((resolve) => {
         retryTimeoutRef.current = setTimeout(resolve, 5000 * (retryCount + 1)); // Longer backoff for timeouts
@@ -153,6 +159,7 @@ export function UsageIndicator() {
   /**
    * Execute the IPC call with timeout
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const executeIPCCall = async (provider: string): Promise<any> => {
     // Race the IPC call against a 20-second timeout so we never hang indefinitely.
     const ipcPromise = globalThis.electronAPI.requestUsageUpdate(provider);
@@ -167,17 +174,21 @@ export function UsageIndicator() {
    * Prevents multiple concurrent API calls that trigger 429 rate limits.
    * If the fetch returns null, retries once after a short delay.
    */
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   const fetchUsageDeduplicated = useCallback(async (provider: string, retryCount = 0): Promise<void> => {
     // If a fetch is already in-flight, piggyback on it instead of firing a new one
     if (pendingFetchRef.current) {
+      // biome-ignore lint/suspicious/noConsole: logging retained for debugging
       console.log('[UsageIndicator] fetchUsageDeduplicated: piggyback on in-flight fetch for', provider);
       return pendingFetchRef.current;
     }
 
     const doFetch = async () => {
+      // biome-ignore lint/suspicious/noConsole: logging retained for debugging
       console.log('[UsageIndicator] fetchUsageDeduplicated: starting IPC call for', provider, 'retry', retryCount);
       try {
         const result = await executeIPCCall(provider);
+        // biome-ignore lint/suspicious/noConsole: logging retained for debugging
         console.log('[UsageIndicator] fetchUsageDeduplicated: IPC result', {
           success: result?.success,
           hasData: !!result?.data,
@@ -364,6 +375,7 @@ export function UsageIndicator() {
           const profilesResult = await globalThis.electronAPI.invoke('claude:profilesGet');
           
           if (profilesResult.success && profilesResult.data?.profiles) {
+            // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
             const oauthProfile = profilesResult.data.profiles.find((profile: any) => 
               profile.isAuthenticated === true
             );
@@ -475,6 +487,7 @@ export function UsageIndicator() {
   useEffect(() => {
     // When selectedProvider changes, clear stale data from previous provider
     // to prevent showing wrong provider's account/usage info
+    // biome-ignore lint/suspicious/noConsole: logging retained for debugging
     console.log('[UsageIndicator] Effect @411 running, selectedProvider =', JSON.stringify(selectedProvider));
     setUsage(null);
     setOtherProfiles([]);
@@ -484,6 +497,7 @@ export function UsageIndicator() {
 
     // Listen for usage updates from main process
     const unsubscribe = globalThis.electronAPI.onUsageUpdated((snapshot: UsageSnapshot) => {
+      // biome-ignore lint/suspicious/noConsole: logging retained for debugging
       console.log('[UsageIndicator] onUsageUpdated received:', {
         providerName: snapshot?.providerName,
         sessionPercent: snapshot?.sessionPercent,
@@ -493,15 +507,18 @@ export function UsageIndicator() {
       // When selectedProvider is empty (still loading), reject all snapshots to avoid
       // accepting a wrong-provider snapshot that would linger after the real provider loads.
       if (!selectedProvider) {
+        // biome-ignore lint/suspicious/noConsole: logging retained for debugging
         console.log('[UsageIndicator] onUsageUpdated: REJECTED — selectedProvider is empty');
         return;
       }
       // Only reject if the snapshot explicitly declares a *different* provider.
       // Snapshots from the CLI path have no providerName — accept them for any provider.
       if (snapshot.providerName && snapshot.providerName !== selectedProvider) {
+        // biome-ignore lint/suspicious/noConsole: logging retained for debugging
         console.log('[UsageIndicator] onUsageUpdated: REJECTED — providerName mismatch', snapshot.providerName, '!==', selectedProvider);
         return;
       }
+      // biome-ignore lint/suspicious/noConsole: logging retained for debugging
       console.log('[UsageIndicator] onUsageUpdated: ACCEPTED — calling setIsLoading(false)');
       setUsage(snapshot);
       setIsAvailable(true);
@@ -538,14 +555,17 @@ export function UsageIndicator() {
 
     // Request initial usage on mount for the selected provider (deduplicated with retry)
     if (selectedProvider && KNOWN_PROVIDERS.has(selectedProvider.toLowerCase())) {
+      // biome-ignore lint/suspicious/noConsole: logging retained for debugging
       console.log('[UsageIndicator] Effect @411: calling fetchUsageDeduplicated for', selectedProvider);
       fetchUsageDeduplicated(selectedProvider);
     } else if (selectedProvider) {
       // Provider is set but not a known/supported provider — stop loading
+      // biome-ignore lint/suspicious/noConsole: logging retained for debugging
       console.log('[UsageIndicator] Effect @411: unknown provider, setIsLoading(false)');
       setIsLoading(false);
     } else {
       // selectedProvider is empty — isLoading stays true waiting for ProviderContext
+      // biome-ignore lint/suspicious/noConsole: logging retained for debugging
       console.log('[UsageIndicator] Effect @411: selectedProvider is empty, keeping isLoading=true');
     }
     // When selectedProvider is empty (''), keep isLoading=true to avoid
@@ -589,15 +609,18 @@ export function UsageIndicator() {
     // Debug OpenAI
     if (selectedProvider?.toLowerCase() === 'openai') {
       let debugProfiles = [];
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       if (typeof globalThis !== 'undefined' && (globalThis as any).debugProfiles) {
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         debugProfiles = (globalThis as any).debugProfiles;
       }
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const openaiError = typeof globalThis === 'undefined' ? undefined : (globalThis as any).lastOpenAIUsageError;
       return (
         <TooltipProvider delayDuration={200}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button
+              <button type="button"
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground"
                 aria-label={t('common:usage.dataUnavailable')}
               >
@@ -629,6 +652,8 @@ export function UsageIndicator() {
                 <div className="mt-2 p-1 bg-muted/30 rounded text-[10px]">
                   <b>{t('common:usage.debugProfiles')}</b>
                   <ul>
+                    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+                    // biome-ignore lint/suspicious/noExplicitAny: intentional
                     {debugProfiles.length > 0 ? debugProfiles.map((p: any) => (
                       <li key={`${p.name}-${p.baseUrl}`}>{p.name} | {p.baseUrl} | provider: {p.detectedProvider}</li>
                     )) : <li>{t('common:usage.noProfileDetected')}</li>}
@@ -648,7 +673,7 @@ export function UsageIndicator() {
         <TooltipProvider delayDuration={200}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button
+              <button type="button"
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground"
                 aria-label={t('common:usage.dataUnavailable')}
               >
@@ -677,7 +702,7 @@ export function UsageIndicator() {
       <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground">
+            <button type="button" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground">
               <Activity className="h-3.5 w-3.5" />
               <span className="text-xs font-semibold">{t('common:usage.notAvailable')}</span>
             </button>
@@ -743,9 +768,11 @@ export function UsageIndicator() {
 
   const hasErrorCondition = 
     usage.needsReauthentication ||
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     (isCopilot && (usage as any).error && (usage as any).error !== 'NONE') ||
     maxUsage >= THRESHOLD_WARNING;
 
+  // biome-ignore lint/suspicious/noImplicitAnyLet: type inferred from assignment
   let Icon;
   if (hasErrorCondition) {
     Icon = AlertCircle;
@@ -830,7 +857,7 @@ export function UsageIndicator() {
   return (
       <Popover open={isOpen} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
-          <button
+          <button type="button"
               className={`flex items-center gap-1 px-2 py-1.5 rounded-md border transition-all hover:opacity-80 ${badgeColorClasses}`}
               aria-label={t('common:usage.usageStatusAriaLabel')}
               onMouseEnter={handleMouseEnter}

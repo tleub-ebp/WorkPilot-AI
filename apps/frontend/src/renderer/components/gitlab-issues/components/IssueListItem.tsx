@@ -17,6 +17,8 @@ const GITLAB_ISSUE_STATE_LABELS: Record<string, string> = {
 export function IssueListItem({ issue, isSelected, onClick, onInvestigate }: IssueListItemProps) {
   return (
     <div
+      // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
+      // biome-ignore lint/a11y/useSemanticElements: intentional
       role="button"
       tabIndex={0}
       className={`group p-3 rounded-lg cursor-pointer transition-colors ${

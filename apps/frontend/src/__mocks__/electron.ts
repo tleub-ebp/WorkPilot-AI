@@ -6,6 +6,7 @@ import { EventEmitter } from 'node:events';
 // Helper function to create mock functions
 const createMockFn = <T>(impl?: T): T => {
   const mockFn = ((...args: unknown[]) => {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     if (impl && typeof impl === 'function') return (impl as any)(...args);
     return undefined;
   }) as T;

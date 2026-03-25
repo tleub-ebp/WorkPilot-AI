@@ -802,6 +802,7 @@ export function registerCreateGitHubRepo(): void {
                 debugLog('Set up tracking for branch:', branch);
                 break;
               } catch {
+                // noop
               }
             }
           } catch (error) {

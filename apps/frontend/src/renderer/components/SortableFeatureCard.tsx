@@ -127,6 +127,7 @@ export function SortableFeatureCard({
                 className="h-7 px-2"
                 onClick={(e) => {
                   e.stopPropagation();
+                  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
                   onGoToTask?.(feature.linkedSpecId!);
                 }}
               >

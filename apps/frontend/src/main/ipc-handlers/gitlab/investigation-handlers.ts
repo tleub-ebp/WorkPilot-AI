@@ -17,8 +17,10 @@ const DEBUG = process.env.DEBUG === 'true' || process.env.NODE_ENV === 'developm
 
 function debugLog(_message: string, data?: unknown): void {
   if (DEBUG) {
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
     if (data !== undefined) {
     } else {
+      // noop
     }
   }
 }

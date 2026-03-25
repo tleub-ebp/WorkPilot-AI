@@ -101,6 +101,7 @@ export const useFileExplorerStore = create<FileExplorerState>((set, get) => ({
       // Cache the result
       set((state) => {
         const newFiles = new Map(state.files);
+        // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
         newFiles.set(dirPath, result.data!);
         const newLoading = new Map(state.isLoading);
         newLoading.set(dirPath, false);

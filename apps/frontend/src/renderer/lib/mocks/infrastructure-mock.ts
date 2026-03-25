@@ -125,10 +125,12 @@ export const infrastructureMock = {
      percentage: number;
    }) => void) => {
      // Store callback for test verification
+     // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
      (window as any).__downloadProgressCallback = callback;
 
      // Return cleanup function
      return () => {
+       // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
        delete (window as any).__downloadProgressCallback;
      };
    },
@@ -166,13 +168,13 @@ export const infrastructureMock = {
 
   deleteMultipleIdeas: async () => ({ success: true }),
 
-  onIdeationProgress: () => () => {},
-  onIdeationLog: () => () => {},
-  onIdeationComplete: () => () => {},
-  onIdeationError: () => () => {},
-  onIdeationStopped: () => () => {},
-  onIdeationTypeComplete: () => () => {},
-  onIdeationTypeFailed: () => () => {},
+  onIdeationProgress: () => () => { /* noop */ },
+  onIdeationLog: () => () => { /* noop */ },
+  onIdeationComplete: () => () => { /* noop */ },
+  onIdeationError: () => () => { /* noop */ },
+  onIdeationStopped: () => () => { /* noop */ },
+  onIdeationTypeComplete: () => () => { /* noop */ },
+  onIdeationTypeFailed: () => () => { /* noop */ },
 
   // Shell Operations
   openExternal: async (url: string) => {

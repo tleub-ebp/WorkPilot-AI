@@ -386,6 +386,7 @@ describe('Prompt Optimizer Store', () => {
       mockOnPromptOptimizerStreamChunk.mockReturnValue(vi.fn());
       mockOnPromptOptimizerStatus.mockReturnValue(vi.fn());
       mockOnPromptOptimizerError.mockReturnValue(vi.fn());
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       mockOnPromptOptimizerComplete.mockImplementation((cb: (result: any) => void) => {
         cb(mockResult);
         return vi.fn();

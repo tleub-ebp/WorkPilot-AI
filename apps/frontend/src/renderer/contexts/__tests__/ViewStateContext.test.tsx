@@ -61,7 +61,7 @@ describe('ViewStateContext', () => {
   describe('useViewState Hook', () => {
     it('should throw error when used outside ViewStateProvider', () => {
       // Suppress console.error for this test since we expect an error
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { /* noop */ });
 
       expect(() => {
         renderHook(() => useViewState());
@@ -432,7 +432,7 @@ describe('ViewStateContext', () => {
 
   describe('Provider Error Message', () => {
     it('should have descriptive error message for useViewState outside provider', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { /* noop */ });
 
       try {
         renderHook(() => useViewState());

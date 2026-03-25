@@ -79,6 +79,7 @@ export function WelcomeStep({ onGetStarted, onSkip }: WelcomeStepProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
           {features.map((feature, index) => (
             <FeatureCard
+              // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
               key={index}
               icon={feature.icon}
               title={feature.title}

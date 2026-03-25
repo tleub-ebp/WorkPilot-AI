@@ -67,6 +67,7 @@ vi.mock('@/stores/smart-estimation-store', () => {
 });
 
 vi.mock('@/stores/project-store', () => ({
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   useProjectStore: (selector?: any) => {
     const store = mockProjectStore;
     return selector ? selector(store) : store;
@@ -79,16 +80,24 @@ vi.mock('@/lib/utils', () => ({
 
 // Mock UI components
 vi.mock('@/components/ui/dialog', () => ({
+  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   Dialog: ({ children, open, onOpenChange }: any) => 
     open ? <div data-testid="dialog">{children}</div> : null,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   DialogContent: ({ children }: any) => <div data-testid="dialog-content">{children}</div>,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   DialogTitle: ({ children }: any) => <div data-testid="dialog-title">{children}</div>,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   DialogDescription: ({ children }: any) => <div data-testid="dialog-description">{children}</div>,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   DialogFooter: ({ children }: any) => <div data-testid="dialog-footer">{children}</div>,
 }));
 
 vi.mock('@/components/ui/button', () => ({
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   Button: ({ children, onClick, disabled, ...props }: any) => 
     <button onClick={onClick} disabled={disabled} data-testid={props['data-testid']} {...props}>
       {children}
@@ -96,6 +105,7 @@ vi.mock('@/components/ui/button', () => ({
 }));
 
 vi.mock('@/components/ui/textarea', () => ({
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   Textarea: ({ value, onChange, disabled, placeholder, id }: any) => (
     <textarea
       value={value}
@@ -114,22 +124,30 @@ vi.mock('@/components/ui/textarea', () => ({
 }));
 
 vi.mock('@/components/ui/label', () => ({
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   Label: ({ children, htmlFor }: any) => <label htmlFor={htmlFor}>{children}</label>,
 }));
 
 vi.mock('@/components/ui/badge', () => ({
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   Badge: ({ children, variant }: any) => <span data-variant={variant}>{children}</span>,
 }));
 
 vi.mock('@/components/ui/progress', () => ({
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   Progress: ({ value }: any) => <div data-testid="progress" data-value={value} />,
 }));
 
 vi.mock('@/components/ui/card', () => ({
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   Card: ({ children }: any) => <div data-testid="card">{children}</div>,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   CardContent: ({ children }: any) => <div data-testid="card-content">{children}</div>,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   CardHeader: ({ children }: any) => <div data-testid="card-header">{children}</div>,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   CardTitle: ({ children }: any) => <div data-testid="card-title">{children}</div>,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   CardDescription: ({ children }: any) => <div data-testid="card-description">{children}</div>,
 }));
 
@@ -196,6 +214,7 @@ describe('SmartEstimationDialog', () => {
       expect(screen.getByTestId('dialog-description')).toBeInTheDocument();
       
       // Debug: check what's actually rendered
+      // biome-ignore lint/suspicious/noConsole: logging retained for debugging
       console.log('Document body:', document.body.innerHTML);
     });
 

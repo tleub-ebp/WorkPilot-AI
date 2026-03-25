@@ -105,8 +105,8 @@ export const insightsMock = {
     }
   }),
 
-  onInsightsStreamChunk: () => () => {},
-  onInsightsStatus: () => () => {},
-  onInsightsError: () => () => {},
-  onInsightsSessionUpdated: () => () => {}
+  onInsightsStreamChunk: () => () => { /* noop */ },
+  onInsightsStatus: () => () => { /* noop */ },
+  onInsightsError: () => () => { /* noop */ },
+  onInsightsSessionUpdated: () => () => { /* noop */ }
 };

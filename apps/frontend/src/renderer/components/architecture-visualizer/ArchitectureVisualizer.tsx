@@ -24,6 +24,7 @@ const DIAGRAM_ICONS: Record<DiagramType, string> = {
 };
 
 export function ArchitectureVisualizer(): React.ReactElement {
+  // biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
   const { t } = useTranslation(['common']);
   const activeProject = useProjectStore((s) => s.getActiveProject());
   const {
@@ -62,14 +63,14 @@ export function ArchitectureVisualizer(): React.ReactElement {
         </div>
         <div className="flex gap-2">
           {isRunning ? (
-            <button
+            <button type="button"
               onClick={cancelArchitectureVisualization}
               className="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-sm font-medium"
             >
               Cancel
             </button>
           ) : (
-            <button
+            <button type="button"
               onClick={handleGenerate}
               disabled={!activeProject || selectedDiagramTypes.length === 0}
               className="px-4 py-2 rounded-lg bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity text-sm font-medium"
@@ -117,7 +118,7 @@ export function ArchitectureVisualizer(): React.ReactElement {
               </h3>
               <div className="flex flex-col gap-1">
                 {result.diagram_types_analyzed.map((type) => (
-                  <button
+                  <button type="button"
                     key={type}
                     onClick={() => setSelectedDiagramView(type as DiagramType)}
                     className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-left transition-colors ${
@@ -154,6 +155,7 @@ export function ArchitectureVisualizer(): React.ReactElement {
           {(isRunning || status) && (
             <div className="px-4 py-2 bg-[var(--bg-secondary)] border-b border-[var(--border-color)] text-sm text-[var(--text-secondary)] flex items-center gap-2">
               {isRunning && (
+                // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
                 <svg className="animate-spin w-4 h-4 text-[var(--accent)]" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />

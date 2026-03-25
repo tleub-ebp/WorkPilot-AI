@@ -72,7 +72,7 @@ export function SchedulerSettings() {
                 <p className="text-sm font-medium">{t('tasks.settings.autoStart.label')}</p>
                 <p className="text-xs text-muted-foreground">{t('tasks.settings.autoStart.description')}</p>
               </div>
-              <button
+              <button type="button"
                 onClick={() => setAutoStart(!autoStart)}
                 className={cn(
                   'relative h-6 w-11 rounded-full transition-colors',
@@ -87,6 +87,8 @@ export function SchedulerSettings() {
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
+                // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                 <label className="text-xs font-medium text-muted-foreground">{t('tasks.settings.checkInterval.label')}</label>
                 <span className="text-xs font-mono tabular-nums text-foreground">{checkInterval}s</span>
               </div>
@@ -108,7 +110,7 @@ export function SchedulerSettings() {
               <Play className="h-4 w-4 text-primary" />
               {t('tasks.title')}
             </h4>
-            <button className="flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground">
+            <button type="button" className="flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground">
               <Plus className="h-3 w-3" />
               {t('tasks.addTask')}
             </button>

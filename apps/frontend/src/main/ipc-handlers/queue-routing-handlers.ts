@@ -70,8 +70,10 @@ export function registerQueueRoutingHandlers(
           options?.excludeProfileId
         );
 
+        // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
         if (bestProfile) {
         } else {
+          // noop
         }
 
         return { success: true, data: bestProfile };

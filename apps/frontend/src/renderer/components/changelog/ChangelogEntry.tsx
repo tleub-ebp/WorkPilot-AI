@@ -14,6 +14,7 @@ export function TaskCard({ task, isSelected, onToggle }: TaskCardProps) {
   const completedDate = new Date(task.completedAt).toLocaleDateString();
 
   return (
+    // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
     <label
       className={cn(
         'flex flex-col rounded-lg border p-4 cursor-pointer transition-all',

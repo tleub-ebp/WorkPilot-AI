@@ -128,6 +128,9 @@ export function IdeationDialogs({
               </div>
             ) : (
               availableTypesToAdd.map((type) => (
+                // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+                // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+                // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
                 <div
                   key={type}
                   className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${

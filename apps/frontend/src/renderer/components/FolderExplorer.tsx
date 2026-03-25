@@ -12,6 +12,7 @@ export const FolderExplorer = ({ selectedFolder, setSelectedFolder }: {
     async function fetchFolders() {
       if ('showDirectoryPicker' in window) {
         try {
+          // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
           const dirHandle = await (window as any).showDirectoryPicker();
           setCurrentPath(dirHandle.name);
           const entries = [];
@@ -37,7 +38,7 @@ export const FolderExplorer = ({ selectedFolder, setSelectedFolder }: {
       <ul>
         {folders.map(folder => (
           <li key={folder}>
-            <button
+            <button type="button"
               className={selectedFolder === folder ? 'selected' : ''}
               onClick={() => setSelectedFolder(folder)}
             >

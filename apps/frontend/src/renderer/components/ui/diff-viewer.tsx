@@ -38,6 +38,7 @@ export function DiffViewer({ patch, className }: DiffViewerProps) {
       <div className="diff-content">
         {lines.map((line, index) => (
           <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
             key={index}
             className={cn(
               "flex diff-line",

@@ -19,6 +19,7 @@ export interface UseGitHubCopilotReturn {
   removeToken: () => Promise<void>;
   authenticate: () => Promise<void>;
   logout: () => Promise<void>;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   testConnection: () => Promise<{ success: boolean; message: string; details?: any }>;
   refreshStatus: () => Promise<void>;
 
@@ -118,6 +119,7 @@ export function useGitHubCopilot(): UseGitHubCopilotReturn {
   /**
    * Tester la connexion
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const testConnection = useCallback(async (): Promise<{ success: boolean; message: string; details?: any }> => {
     try {
       setError(null);

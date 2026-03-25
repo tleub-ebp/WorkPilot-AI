@@ -107,6 +107,7 @@ export function PerformanceOptimizationDetails({ idea }: PerformanceOptimization
           </h3>
           <ul className="space-y-1">
             {idea.affectedAreas.map((area, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
               <li key={i} className="text-sm font-mono text-muted-foreground">
                 {area}
               </li>

@@ -72,6 +72,7 @@ export function registerCredentialHandlers(): void {
   /**
    * Tester un provider (incluant les cas spéciaux)
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   ipcMain.handle('credential:testProvider', async (_event, provider: string): Promise<{ success: boolean; message: string; details?: any }> => {
     return await credentialManager.testProvider(provider);
   });

@@ -290,7 +290,7 @@ describe('TerminalFontSettings - Infinite Re-render Loop Fix', () => {
     });
 
     it('should not log React warnings about getSnapshot caching', () => {
-      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { /* noop */ });
 
       renderWithI18n(<TerminalFontSettings />);
 
@@ -303,7 +303,7 @@ describe('TerminalFontSettings - Infinite Re-render Loop Fix', () => {
     });
 
     it('should not cause "Maximum update depth exceeded" error', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { /* noop */ });
 
       renderWithI18n(<TerminalFontSettings />);
 

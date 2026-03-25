@@ -382,6 +382,7 @@ export function App() {
       // Run detection with a small delay to ensure UI is responsive
       setTimeout(() => detectProjectsWithDelay(projectsToDetect), 500);
     }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [projects.length, activeProjectId, detectProjectsWithDelay, getProjectsToDetect]); // Trigger when projects change or active project changes
 
   // Restore tab state and open tabs for loaded projects
@@ -731,6 +732,7 @@ export function App() {
       setSelectedTask(updatedTask);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentionally omit selectedTask object to prevent infinite re-render loop
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [tasks, selectedTask?.id, selectedTask?.specId, selectedTask, compareTaskFields]);
 
   const handleTaskClick = (task: Task) => {
@@ -1175,17 +1177,23 @@ export function App() {
                             />
                           </div>
                           {activeView === 'roadmap' && (activeProjectId || selectedProjectId) && (
+                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
                               <Roadmap projectId={activeProjectId || selectedProjectId!} onGoToTask={handleGoToTask} />
                           )}
                           {activeView === 'context' && (activeProjectId || selectedProjectId) && (
                               <ErrorBoundary>
+                                // biome-ignore lint/suspicious/noCommentText: intentional
+                                // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+                                // biome-ignore lint/style/noNonNullAssertion: intentional
                                 <Context projectId={activeProjectId || selectedProjectId!} />
                               </ErrorBoundary>
                           )}
                           {activeView === 'ideation' && (activeProjectId || selectedProjectId) && (
+                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
                               <Ideation projectId={activeProjectId || selectedProjectId!} onGoToTask={handleGoToTask} />
                           )}
                           {activeView === 'insights' && (activeProjectId || selectedProjectId) && (
+                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
                               <Insights projectId={activeProjectId || selectedProjectId!} />
                           )}
                           {activeView === 'github-issues' && (activeProjectId || selectedProjectId) && (
@@ -1220,6 +1228,7 @@ export function App() {
                           )}
                           {activeView === 'gitlab-merge-requests' && (activeProjectId || selectedProjectId) && (
                               <GitLabMergeRequests
+                                  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
                                   projectId={activeProjectId || selectedProjectId!}
                                   onOpenSettings={() => {
                                     setSettingsInitialProjectSection('gitlab');
@@ -1234,6 +1243,7 @@ export function App() {
                               <AgentTools />
                           )}
                           {activeView === 'worktrees' && (activeProjectId || selectedProjectId) && (
+                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
                               <Worktrees projectId={activeProjectId || selectedProjectId!} />
                           )}
                           {activeView === 'migration' && (
@@ -1249,21 +1259,26 @@ export function App() {
                               <AnalyticsDashboard projectPath={selectedProject?.path} />
                           )}
                           {activeView === 'code-review' && (activeProjectId || selectedProjectId) && (
+                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
                               <CodeReview projectId={activeProjectId || selectedProjectId!} />
                           )}
                           {activeView === 'refactoring' && (activeProjectId || selectedProjectId) && (
+                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
                               <RefactoringView projectId={activeProjectId || selectedProjectId!} />
                           )}
                           {activeView === 'documentation' && (activeProjectId || selectedProjectId) && (
+                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
                               <DocumentationView projectId={activeProjectId || selectedProjectId!} />
                           )}
                           {activeView === 'cost-estimator' && selectedProject?.path && (
                               <CostEstimator projectPath={selectedProject.path} />
                           )}
                           {activeView === 'session-history' && (activeProjectId || selectedProjectId) && (
+                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
                               <SessionHistory projectId={activeProjectId || selectedProjectId!} />
                           )}
                           {activeView === 'pair-programming' && (activeProjectId || selectedProjectId) && (
+                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
                               <PairProgramming projectId={activeProjectId || selectedProjectId!} />
                           )}
                           {activeView === 'pipeline-generator' && (activeProjectId || selectedProjectId) && (
@@ -1291,6 +1306,7 @@ export function App() {
 
               {(activeProjectId || selectedProjectId) && (
                   <TaskCreationWizard
+                      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
                       projectId={activeProjectId || selectedProjectId!}
                       open={isNewTaskDialogOpen}
                       onOpenChange={setIsNewTaskDialogOpen}

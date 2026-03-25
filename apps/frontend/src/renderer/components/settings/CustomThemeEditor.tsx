@@ -56,11 +56,14 @@ export function CustomThemeEditor({ settings, onSettingsChange }: CustomThemeEdi
   const [editColors, setEditColors] = useState({ ...DEFAULT_CUSTOM_COLORS });
   const [importError, setImportError] = useState<string | null>(null);
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const customThemes: CustomThemeData[] = (settings as any).customThemes || [];
 
   const saveCustomThemes = useCallback((themes: CustomThemeData[]) => {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const updated = { ...settings, customThemes: themes } as any;
     onSettingsChange(updated);
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     updateStoreSettings({ customThemes: themes } as any);
   }, [settings, onSettingsChange, updateStoreSettings]);
 
@@ -144,7 +147,9 @@ export function CustomThemeEditor({ settings, onSettingsChange }: CustomThemeEdi
   };
 
   const handleSelectCustomTheme = (themeId: string) => {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     onSettingsChange({ ...settings, colorTheme: themeId as any });
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     updateStoreSettings({ colorTheme: themeId as any });
   };
 
@@ -272,7 +277,7 @@ export function CustomThemeEditor({ settings, onSettingsChange }: CustomThemeEdi
                   )}
 
                   {/* Clickable area for selection */}
-                  <button
+                  <button type="button"
                     onClick={() => handleSelectCustomTheme(theme.id)}
                     className="text-left flex-1"
                   >

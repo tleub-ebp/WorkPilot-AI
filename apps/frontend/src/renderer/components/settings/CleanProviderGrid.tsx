@@ -31,7 +31,9 @@ interface CleanProviderGridProps {
   onRefreshProviders?: () => void;
   isAutoSwitchingOpen?: boolean;
   testingProviders?: Set<string>;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   settings?: any;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onSettingsChange?: (settings: any) => void;
   className?: string;
 }

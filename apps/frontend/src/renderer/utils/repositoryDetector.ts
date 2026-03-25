@@ -56,6 +56,7 @@ export async function detectRepositoryProvider(projectPath: string): Promise<Rep
         }
       }
     } catch (_configError) {
+      // noop
     }
 
     // Fallback to the existing git command approach
@@ -105,6 +106,7 @@ export async function autoDetectAndUpdateProject(project: Project): Promise<{
     }
 
     // Update project environment based on detection
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const updates: any = {};
     
     if (detection.provider === 'github') {

@@ -33,6 +33,7 @@ export interface ProvidersResponse {
  * @param profiles - API profiles from profiles.json
  * @param settings - Optional global settings object to check for provider API keys (e.g., globalWindsurfApiKey)
  */
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export async function getStaticProviders(profiles: APIProfile[] = [], settings?: Record<string, any>): Promise<ProvidersResponse> {
   const allProviders = providerRegistry.getAllProviders()
     .filter((p) => p.name !== 'claude' && p.name !== 'custom');

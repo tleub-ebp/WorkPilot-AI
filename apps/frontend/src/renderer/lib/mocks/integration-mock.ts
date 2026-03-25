@@ -137,9 +137,9 @@ export const integrationMock = {
     }
   }),
 
-  onGitHubInvestigationProgress: () => () => {},
-  onGitHubInvestigationComplete: () => () => {},
-  onGitHubInvestigationError: () => () => {},
+  onGitHubInvestigationProgress: () => () => { /* noop */ },
+  onGitHubInvestigationComplete: () => () => { /* noop */ },
+  onGitHubInvestigationError: () => () => { /* noop */ },
 
   // GitHub OAuth Operations (gh CLI)
   checkGitHubCli: async () => ({
@@ -290,8 +290,8 @@ export const integrationMock = {
 
   // GitLab MR Review Operations (AI-powered)
   getGitLabMRReview: async () => null,
-  runGitLabMRReview: () => {},
-  runGitLabMRFollowupReview: () => {},
+  runGitLabMRReview: () => { /* noop */ },
+  runGitLabMRFollowupReview: () => { /* noop */ },
   postGitLabMRReview: async () => false,
   postGitLabMRNote: async () => false,
   mergeGitLabMR: async () => false,
@@ -301,9 +301,9 @@ export const integrationMock = {
   checkGitLabMRNewCommits: async () => ({ hasNewCommits: false }),
 
   // GitLab MR Review Event Listeners
-  onGitLabMRReviewProgress: () => () => {},
-  onGitLabMRReviewComplete: () => () => {},
-  onGitLabMRReviewError: () => () => {},
+  onGitLabMRReviewProgress: () => () => { /* noop */ },
+  onGitLabMRReviewComplete: () => () => { /* noop */ },
+  onGitLabMRReviewError: () => () => { /* noop */ },
 
   // GitLab OAuth Operations (glab CLI)
   checkGitLabCli: async () => ({
@@ -383,12 +383,12 @@ export const integrationMock = {
   }),
 
   // GitLab Event Listeners
-  onGitLabInvestigationProgress: () => () => {},
-  onGitLabInvestigationComplete: () => () => {},
-  onGitLabInvestigationError: () => () => {},
+  onGitLabInvestigationProgress: () => () => { /* noop */ },
+  onGitLabInvestigationComplete: () => () => { /* noop */ },
+  onGitLabInvestigationError: () => () => { /* noop */ },
 
   // OAuth device code event listener (for streaming device code during auth)
-  onGitHubAuthDeviceCode: () => () => {},
+  onGitHubAuthDeviceCode: () => () => { /* noop */ },
 
   // GitHub PR Operations
   getPRDetails: async (prNumber: number, _taskId?: string) => ({

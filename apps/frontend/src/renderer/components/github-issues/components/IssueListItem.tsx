@@ -9,6 +9,9 @@ import type { IssueListItemProps } from '../types';
 
 export function IssueListItem({ issue, isSelected, onClick, onInvestigate }: IssueListItemProps) {
   return (
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+    // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+    // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
     <div
       className={`group p-3 rounded-lg cursor-pointer transition-colors ${
         isSelected

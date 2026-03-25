@@ -109,6 +109,7 @@ function getPhaseConfig(
   return null;
 }
 
+// biome-ignore lint/suspicious/noRedeclare: redeclaration is intentional in this context
 export function TaskLogs({
   task,
   phaseLogs,
@@ -233,7 +234,7 @@ function PhaseLogSection({ phase, phaseLog, isExpanded, onToggle, isTaskStuck, p
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggle}>
       <CollapsibleTrigger asChild>
-        <button
+        <button type="button"
           className={cn(
             'w-full flex items-center justify-between p-3 rounded-lg border transition-colors',
             'hover:bg-secondary/50',
@@ -368,7 +369,7 @@ function LogEntry({ entry }: LogEntryProps) {
             <span className="text-muted-foreground">Done</span>
           </div>
           {hasDetail && (
-            <button
+            <button type="button"
               onClick={() => setIsExpanded(!isExpanded)}
               className={cn(
                 'flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded',
@@ -409,7 +410,7 @@ function LogEntry({ entry }: LogEntryProps) {
           <span className="break-words flex-1">{entry.content}</span>
           <SubphaseBadge />
           {hasDetail && (
-            <button
+            <button type="button"
               onClick={() => setIsExpanded(!isExpanded)}
               className={cn(
                 'flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded shrink-0',
@@ -462,7 +463,7 @@ function LogEntry({ entry }: LogEntryProps) {
         <span className="break-words whitespace-pre-wrap flex-1">{entry.content}</span>
         <SubphaseBadge />
         {hasDetail && (
-          <button
+          <button type="button"
             onClick={() => setIsExpanded(!isExpanded)}
             className={cn(
               'flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded shrink-0',

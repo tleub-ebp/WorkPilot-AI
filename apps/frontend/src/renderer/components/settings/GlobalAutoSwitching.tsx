@@ -41,6 +41,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, provid
   // Priority order state
   const [priorityOrder, setPriorityOrder] = useState<string[]>([]);
   const [isSavingPriority, setIsSavingPriority] = useState(false);
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const [profileUsageData] = useState<Map<string, any>>(new Map());
 
   // Authenticated providers (Copilot, OpenAI, etc.)
@@ -63,6 +64,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, provid
   }, []);
 
   // Detect authenticated providers on mount and when relevant settings change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   useEffect(() => {
     const detectAuthenticatedProviders = async () => {
       const providers: AuthenticatedProvider[] = [];
@@ -250,6 +252,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, provid
     };
     
     loadUnifiedAccounts();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [buildUnifiedAccounts]);
 
   // Load priority order from ClaudeProfileManager
@@ -290,6 +293,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, provid
       // Also refresh Claude profiles when opening
       loadGlobalClaudeProfiles();
     }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [isOpen, loadPriorityOrder]);
 
   const handleToggleAutoSwitch = async (enabled: boolean) => {
@@ -336,6 +340,7 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, provid
     await handleUpdateSetting({ routingStrategy: strategy });
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const handleUpdateSetting = async (updates: any) => {
     setIsLoading(true);
     try {

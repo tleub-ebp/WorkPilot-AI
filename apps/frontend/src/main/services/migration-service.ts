@@ -18,11 +18,13 @@ export interface MigrationStatus {
   state: string;
   currentPhase: string;
   progress: number;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   transformations?: any[];
   error?: string;
 }
 
 class MigrationService {
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   private activeMigrations: Map<string, any> = new Map();
 
   register() {
@@ -177,6 +179,7 @@ class MigrationService {
     });
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   private async startMigration(config: MigrationConfig): Promise<any> {
     return new Promise((resolve, reject) => {
       const pythonPath: string = process.env.PYTHON_PATH || 'python';
@@ -318,6 +321,7 @@ class MigrationService {
     });
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   private async resumeMigration(migrationId: string): Promise<any> {
     return new Promise((resolve, reject) => {
       const pythonPath: string = process.env.PYTHON_PATH || 'python';

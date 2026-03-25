@@ -176,6 +176,7 @@ export const startConflictPrediction = async (projectId: string) => {
 /**
  * Handle conflict prediction events
  */
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 const handleConflictPredictionEvent = (data: any) => {
   const { type, data: eventData } = data;
 
@@ -202,6 +203,7 @@ const handleConflictPredictionEvent = (data: any) => {
 /**
  * Handle conflict prediction completion
  */
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 const handleConflictPredictionComplete = (data: any) => {
   useConflictPredictorStore.setState({
     result: data,
@@ -225,8 +227,10 @@ const handleConflictPredictionError = (error: string) => {
  * Helper function to setup event listener with error handling
  */
 const setupEventListener = (
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   apiFunction: (callback: (data: any) => void) => (() => void) | undefined,
   eventName: string,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   handler: (data: any) => void,
   cleanupFns: (() => void)[]
 ) => {

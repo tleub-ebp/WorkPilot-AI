@@ -26,6 +26,7 @@ import type {
 
 // Debug logging
 function debugLog(_message: string, ..._args: unknown[]): void {
+  // noop
 }
 
 function sanitizeIssueUrl(rawUrl: unknown, instanceUrl: string): string {

@@ -83,7 +83,7 @@ export function SandboxSettings() {
           </p>
           <div className="grid grid-cols-2 gap-3">
             {modes.map((m) => (
-              <button
+              <button type="button"
                 key={m.id}
                 onClick={() => setMode(m.id)}
                 className={cn(
@@ -120,7 +120,7 @@ export function SandboxSettings() {
                 )}>
                   {rule.access === 'write' ? t('sections.sandbox.fileAccess.readWrite') : t('sections.sandbox.fileAccess.readOnly')}
                 </span>
-                <button onClick={() => handleRemovePath(i)} className="text-muted-foreground hover:text-destructive">
+                <button type="button" onClick={() => handleRemovePath(i)} className="text-muted-foreground hover:text-destructive">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -141,7 +141,7 @@ export function SandboxSettings() {
                 <option value="read">{t('sections.sandbox.fileAccess.read')}</option>
                 <option value="write">{t('sections.sandbox.fileAccess.write')}</option>
               </select>
-              <button
+              <button type="button"
                 onClick={handleAddPath}
                 disabled={!newPath.trim()}
                 className="flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
@@ -172,6 +172,8 @@ export function SandboxSettings() {
             ].map(({ key, label, min, max, step }) => (
               <div key={key} className="space-y-1">
                 <div className="flex items-center justify-between">
+                  // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                  // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                   <label className="text-xs font-medium text-muted-foreground">{label}</label>
                   <span className="text-xs font-mono tabular-nums text-foreground">{limits[key]}</span>
                 </div>

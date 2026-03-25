@@ -8,6 +8,7 @@ import type { RepoTarget } from '@shared/types';
  */
 export function RepoSelector() {
   const { t } = useTranslation(['multiRepo', 'common']);
+  // biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
   const { targetRepos, addRepo, removeRepo, updateRepo } = useMultiRepoStore();
   const [repoInput, setRepoInput] = useState('');
   const [pathInput, setPathInput] = useState('');
@@ -117,6 +118,7 @@ export function RepoSelector() {
                 className="rounded-md p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                 title={t('multiRepo:dialog.removeRepo')}
               >
+                {/* biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative, intentional */}
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>

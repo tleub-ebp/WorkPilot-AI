@@ -14,18 +14,24 @@ export interface TestGenerationAPI {
   cancelTestGeneration: () => Promise<{ success: boolean; cancelled?: boolean; error?: string }>;
   onTestGenerationStatus: (callback: (status: string) => void) => void;
   onTestGenerationError: (callback: (error: string) => void) => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onTestGenerationResult: (callback: (result: any) => void) => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onTestGenerationComplete: (callback: (result: any) => void) => void;
   removeTestGenerationStatusListener: (callback: (status: string) => void) => void;
   removeTestGenerationErrorListener: (callback: (error: string) => void) => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   removeTestGenerationResultListener: (callback: (result: any) => void) => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   removeTestGenerationCompleteListener: (callback: (result: any) => void) => void;
 }
 
 // Maps to store callback → actual IPC listener so removeListener can find the exact reference
 const statusListeners = new Map<Function, (event: IpcRendererEvent, status: string) => void>();
 const errorListeners = new Map<Function, (event: IpcRendererEvent, error: string) => void>();
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 const resultListeners = new Map<Function, (event: IpcRendererEvent, result: any) => void>();
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 const completeListeners = new Map<Function, (event: IpcRendererEvent, result: any) => void>();
 
 export const createTestGenerationAPI = (): TestGenerationAPI => ({
@@ -106,21 +112,25 @@ export const createTestGenerationAPI = (): TestGenerationAPI => ({
     ipcRenderer.on('test-generation:error', listener);
   },
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onTestGenerationResult: (callback: (result: any) => void) => {
     const existing = resultListeners.get(callback);
     if (existing) {
       ipcRenderer.removeListener('test-generation:result', existing);
     }
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const listener = (_event: IpcRendererEvent, result: any) => callback(result);
     resultListeners.set(callback, listener);
     ipcRenderer.on('test-generation:result', listener);
   },
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onTestGenerationComplete: (callback: (result: any) => void) => {
     const existing = completeListeners.get(callback);
     if (existing) {
       ipcRenderer.removeListener('test-generation:complete', existing);
     }
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const listener = (_event: IpcRendererEvent, result: any) => callback(result);
     completeListeners.set(callback, listener);
     ipcRenderer.on('test-generation:complete', listener);
@@ -142,6 +152,7 @@ export const createTestGenerationAPI = (): TestGenerationAPI => ({
     }
   },
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   removeTestGenerationResultListener: (callback: (result: any) => void) => {
     const listener = resultListeners.get(callback);
     if (listener) {
@@ -150,6 +161,7 @@ export const createTestGenerationAPI = (): TestGenerationAPI => ({
     }
   },
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   removeTestGenerationCompleteListener: (callback: (result: any) => void) => {
     const listener = completeListeners.get(callback);
     if (listener) {

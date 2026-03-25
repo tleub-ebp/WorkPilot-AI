@@ -235,6 +235,7 @@ export class GitHubCopilotService extends EventEmitter {
   /**
    * Tester la connexion GitHub Copilot
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   async testConnection(): Promise<{ success: boolean; message: string; details?: any }> {
     try {
       if (!this.status.installed) {

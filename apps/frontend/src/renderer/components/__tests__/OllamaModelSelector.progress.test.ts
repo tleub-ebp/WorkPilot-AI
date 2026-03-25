@@ -5,6 +5,7 @@ import { describe, it, expect } from 'vitest';
  * Tests for speed, time, and percentage calculations
  */
 
+// biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
 interface ProgressTracking {
   lastCompleted: number;
   lastUpdate: number;

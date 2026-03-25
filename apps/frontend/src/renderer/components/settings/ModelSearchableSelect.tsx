@@ -206,6 +206,7 @@ export function ModelSearchableSelect({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [isOpen, handleClose]);
 
   // Cleanup on unmount

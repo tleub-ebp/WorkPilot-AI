@@ -77,6 +77,7 @@ export const CopilotOAuthAuth: React.FC<CopilotOAuthAuthProps> = ({
 
   // Check authentication status on mount
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   useEffect(() => {
     checkAuthStatus();
   }, []);

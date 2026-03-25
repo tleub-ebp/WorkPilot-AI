@@ -32,6 +32,7 @@ const EFFORT_LABELS: Record<string, string> = {
 };
 
 export function PerformanceProfilerDashboard(): React.ReactElement {
+  // biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
   const { t } = useTranslation(['common']);
   const activeProject = useProjectStore((s) => s.getActiveProject());
   const {
@@ -69,14 +70,14 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
           </div>
           <div className="flex items-center gap-3">
             {isRunning ? (
-              <button
+              <button type="button"
                 onClick={cancelPerformanceProfiling}
                 className="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-sm font-medium"
               >
                 Cancel
               </button>
             ) : (
-              <button
+              <button type="button"
                 onClick={handleStart}
                 disabled={!activeProject}
                 className="px-4 py-2 rounded-lg bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity text-sm font-medium"
@@ -147,6 +148,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
             <div className="mt-auto">
               <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                 {isRunning && (
+                  // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
                   <svg className="animate-spin w-3.5 h-3.5 text-[var(--accent)] shrink-0" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -186,6 +188,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
                   <h2 className="text-sm font-semibold mb-2">Benchmarks</h2>
                   <div className="grid grid-cols-2 gap-2">
                     {result.report.benchmarks.map((b, i) => (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                       <div key={i} className="bg-[var(--bg-secondary)] rounded-lg p-3">
                         <div className="text-xs text-[var(--text-secondary)] mb-1">{b.name}</div>
                         <div className="text-sm font-mono">
@@ -206,6 +209,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
                   <div className="flex flex-col gap-2">
                     {result.report.bottlenecks.map((b, i) => (
                       <div
+                        // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                         key={i}
                         className={`rounded-lg p-3 border ${SEVERITY_COLORS[b.severity] ?? 'border-[var(--border-color)]'}`}
                       >
@@ -239,6 +243,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
                   </h2>
                   <div className="flex flex-col gap-3">
                     {result.report.suggestions.map((s, i) => (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                       <div key={i} className="bg-[var(--bg-secondary)] rounded-lg p-3">
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <div className="font-medium text-sm">{s.title}</div>

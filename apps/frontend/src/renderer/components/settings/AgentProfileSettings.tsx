@@ -116,6 +116,7 @@ export function AgentProfileSettings() {
         { spec: 'none' as ThinkingLevel, planning: 'none' as ThinkingLevel, coding: 'none' as ThinkingLevel, qa: 'none' as ThinkingLevel };
       
       // Auto-save defaults for the new provider
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const updates: any = {
         providerPhaseModels: { ...(settings.providerPhaseModels || {}), [provider]: defaultModels }
       };
@@ -209,7 +210,7 @@ export function AgentProfileSettings() {
     const Icon = iconMap[profile.icon || 'Brain'] || Brain;
 
     return (
-      <button
+      <button type="button"
         key={profile.id}
         onClick={() => handleSelectProfile(profile.id)}
         className={cn(

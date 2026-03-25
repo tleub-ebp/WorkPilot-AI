@@ -17,6 +17,7 @@ declare global {
 
 interface StreamingTestProps {
   readonly tasks: Task[];
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   readonly onTaskStart?: (taskId: string, options?: any) => void;
 }
 
@@ -101,6 +102,7 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
     checkStreamingServer();
     const interval = setInterval(checkStreamingServer, 5000);
     return () => clearInterval(interval);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [checkStreamingServer]);
 
   React.useEffect(() => {
@@ -109,6 +111,7 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
       const interval = setInterval(checkConnection, 3000);
       return () => clearInterval(interval);
     }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [sessionId, checkConnection]);
 
   const availableTasks = tasks.filter(task => task.status === 'backlog' || task.status === 'queue');
@@ -157,6 +160,8 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
             </div>
 
             <div>
+              // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
+              // biome-ignore lint/a11y/useSemanticElements: intentional
               <div className="block text-sm font-medium mb-2" role="status" aria-live="polite">
                 {t('streaming:test.connectionStatus')}
               </div>

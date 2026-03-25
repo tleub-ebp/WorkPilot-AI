@@ -452,6 +452,7 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
         );
       }
       if (swaps.length > this.config.maxNotificationsPerBatch) {
+        // noop
       }
     }
 

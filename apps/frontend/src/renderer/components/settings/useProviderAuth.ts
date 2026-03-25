@@ -89,6 +89,7 @@ export function useProviderAuth() {
     setIsAuthenticating(false);
   }, []);
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const handleAuthTerminalSuccess = useCallback((email?: string, onSettingsChange?: (settings: any) => void, settings?: any, providerId?: string) => {
     setIsAuthenticating(false);
 
@@ -149,7 +150,9 @@ export function useProviderAuth() {
   const handleWindsurfSave = useCallback((
     windsurfSsoToken: string,
     providerConfig: { apiKey?: string },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     onSettingsChange: (settings: any) => void,
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     settings: any,
     onProviderActivated?: (providerId: string) => void,
     providerId?: string,

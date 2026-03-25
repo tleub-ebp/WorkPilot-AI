@@ -815,6 +815,7 @@ function installPackages(pythonBin, requirementsPath, targetSitePackages) {
     console.warn('[download-python] pydantic_core binary missing after strip; reinstalling pydantic-core...');
     const pinnedVersion = getPinnedPydanticCoreVersion(targetSitePackages);
     const coreSpec = pinnedVersion ? `pydantic-core==${pinnedVersion}` : 'pydantic-core';
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
     if (pinnedVersion) {
     } else {
       console.warn('[download-python] Unable to determine pydantic-core pin; reinstalling latest');

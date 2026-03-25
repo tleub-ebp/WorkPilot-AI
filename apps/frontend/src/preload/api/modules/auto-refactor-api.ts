@@ -14,15 +14,18 @@ export interface AutoRefactorRequest {
 export interface AutoRefactorResult {
   analysis: {
     status: string;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     analysis: any;
     files_analyzed: number;
   };
   plan: {
     status: string;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     plan: any;
   };
   execution: {
     status: string;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     execution: any;
     auto_executed: boolean;
   };
@@ -47,6 +50,7 @@ export interface AutoRefactorAPI {
   onAutoRefactorStreamChunk: (callback: (chunk: string) => void) => () => void;
   onAutoRefactorError: (callback: (error: string) => void) => () => void;
   onAutoRefactorComplete: (callback: (result: AutoRefactorResult) => void) => () => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onAutoRefactorExecutionComplete: (callback: (result: any) => void) => () => void;
 }
 
@@ -78,6 +82,7 @@ export function createAutoRefactorAPI(): AutoRefactorAPI {
     onAutoRefactorComplete: (callback: (result: AutoRefactorResult) => void) => 
       window.electronAPI.on('auto-refactor:complete', callback),
     
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     onAutoRefactorExecutionComplete: (callback: (result: any) => void) => 
       window.electronAPI.on('auto-refactor:execution-complete', callback),
   };

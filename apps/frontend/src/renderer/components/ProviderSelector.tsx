@@ -150,7 +150,7 @@ interface ProviderSelectorProps {
 }
 
 // Ce composant synchronise le provider sélectionné via ProviderContext pour un usage temps réel dans UsageIndicator et AuthStatusIndicator
-export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: selectedProp = '', setSelected: setSelectedProp = () => {}, onOpenAccountsSettings = () => {} }) => {
+export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: selectedProp = '', setSelected: setSelectedProp = () => { /* noop */ }, onOpenAccountsSettings = () => { /* noop */ } }) => {
   const { t } = useTranslation();
   const { selectedProvider, setSelectedProvider } = useProviderContext();
   const { profiles, setActiveProfile, settings } = useSettingsStore();
@@ -187,6 +187,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
       setIsLoading(true);
       try {
         // Enrich settings with Claude OAuth status from CLI config files (main process)
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         const enrichedSettings = { ...(settings as Record<string, any>) };
         try {
           if (globalThis.electronAPI?.checkClaudeOAuth) {
@@ -233,6 +234,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
       // (without this, the default is lost on every page reload until the user explicitly selects)
       localStorage.setItem('selectedProvider', defaultProvider.name);
     }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [providers, selected, setSelected]);
 
   // Restore persisted provider selection from localStorage on mount
@@ -247,6 +249,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
         setActiveProfile(null);
       }
     }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [profiles, selected, setSelected, setActiveProfile]);
 
   const handleSelect = async (value: string) => {

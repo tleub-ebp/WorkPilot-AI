@@ -23,6 +23,7 @@ describe('ModelSearchableSelect', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     vi.mocked(useSettingsStore).mockImplementation((selector?: (state: any) => any): any => {
       const state = { discoverModels: mockDiscoverModels };
       return selector ? selector(state) : state;
@@ -87,7 +88,7 @@ describe('ModelSearchableSelect', () => {
 
   it('should display loading state while fetching', async () => {
     mockDiscoverModels.mockImplementation(
-      () => new Promise(() => {}) // Never resolves
+      () => new Promise(() => { /* noop */ }) // Never resolves
     );
 
     render(

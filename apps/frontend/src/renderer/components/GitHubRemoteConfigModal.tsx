@@ -163,7 +163,7 @@ export function GitHubRemoteConfigModal({ open, onOpenChange, onSave, initialCon
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={open} onOpenChange={() => { /* noop */ }}>
       <DialogContent className="sm:max-w-2xl" onInteractOutside={e => e.preventDefault()} onEscapeKeyDown={e => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

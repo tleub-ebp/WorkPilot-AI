@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+// biome-ignore lint/suspicious/noShadowRestrictedNames: shadow name is intentional
 import { AlertCircle, ExternalLink, Clock, RefreshCw, User, ChevronDown, Check, Star, Zap, FileText, ListTodo, Map, Lightbulb, Plus } from 'lucide-react';
 import {
   Dialog,
@@ -106,6 +107,7 @@ export function SDKRateLimitModal() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [isSDKModalOpen, sdkRateLimitInfo, profiles, loadAutoSwitchSettings]);
 
   // Reset selection when modal closes

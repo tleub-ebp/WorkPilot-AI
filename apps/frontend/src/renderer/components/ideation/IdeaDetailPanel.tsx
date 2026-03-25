@@ -114,6 +114,8 @@ export function IdeaDetailPanel({ idea, onClose, onConvert, onGoToTask, onDismis
       )}
       {isConverted && idea.taskId && onGoToTask && (
         <div className="shrink-0 p-4 border-t border-border">
+          // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+          // biome-ignore lint/style/noNonNullAssertion: intentional
           <Button className="w-full" onClick={() => onGoToTask(idea.taskId!)}>
             <ExternalLink className="h-4 w-4 mr-2" />
             {t('common:ideation.goToTask')}

@@ -69,6 +69,7 @@ export function setupVoiceControlEvents(): void {
   // Forward status updates
   voiceControlService.on('status', (status: string) => {
     const windows = require('electron').BrowserWindow.getAllWindows();
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     windows.forEach((window: any) => {
       if (!window.isDestroyed()) {
         window.webContents.send('voice-control:status', status);
@@ -79,6 +80,7 @@ export function setupVoiceControlEvents(): void {
   // Forward streaming chunks
   voiceControlService.on('stream-chunk', (chunk: string) => {
     const windows = require('electron').BrowserWindow.getAllWindows();
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     windows.forEach((window: any) => {
       if (!window.isDestroyed()) {
         window.webContents.send('voice-control:stream-chunk', chunk);
@@ -89,6 +91,7 @@ export function setupVoiceControlEvents(): void {
   // Forward errors
   voiceControlService.on('error', (error: string) => {
     const windows = require('electron').BrowserWindow.getAllWindows();
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     windows.forEach((window: any) => {
       if (!window.isDestroyed()) {
         window.webContents.send('voice-control:error', error);
@@ -97,8 +100,10 @@ export function setupVoiceControlEvents(): void {
   });
 
   // Forward completion results
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   voiceControlService.on('complete', (result: any) => {
     const windows = require('electron').BrowserWindow.getAllWindows();
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     windows.forEach((window: any) => {
       if (!window.isDestroyed()) {
         window.webContents.send('voice-control:complete', result);
@@ -109,6 +114,7 @@ export function setupVoiceControlEvents(): void {
   // Forward audio level updates
   voiceControlService.on('audio-level', (level: number) => {
     const windows = require('electron').BrowserWindow.getAllWindows();
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     windows.forEach((window: any) => {
       if (!window.isDestroyed()) {
         window.webContents.send('voice-control:audio-level', level);
@@ -119,6 +125,7 @@ export function setupVoiceControlEvents(): void {
   // Forward duration updates
   voiceControlService.on('duration', (duration: number) => {
     const windows = require('electron').BrowserWindow.getAllWindows();
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     windows.forEach((window: any) => {
       if (!window.isDestroyed()) {
         window.webContents.send('voice-control:duration', duration);

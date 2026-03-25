@@ -295,6 +295,7 @@ async function checkNewIssues(
     throw new Error(validation.error);
   }
 
+  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
   const backendPath = validation.backendPath!;
   const args = buildRunnerArgs(getRunnerPath(backendPath), project.path, 'check-new');
   const subprocessEnv = await getRunnerEnv();
@@ -640,6 +641,7 @@ export function registerAutoFixHandlers(
             throw new Error(validation.error);
           }
 
+          // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
           const backendPath = validation.backendPath!;
           const additionalArgs = issueNumbers && issueNumbers.length > 0 ? issueNumbers.map(n => n.toString()) : [];
           const args = buildRunnerArgs(getRunnerPath(backendPath), project.path, 'batch-issues', additionalArgs);
@@ -684,6 +686,7 @@ export function registerAutoFixHandlers(
             throw new Error(result.error ?? 'Failed to batch issues');
           }
 
+          // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
           sendComplete(result.data!);
         });
       } catch (error) {
@@ -757,6 +760,7 @@ export function registerAutoFixHandlers(
             throw new Error(validation.error);
           }
 
+          // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
           const backendPath = validation.backendPath!;
           const additionalArgs = ['--json'];
           if (maxIssues) {
@@ -795,6 +799,7 @@ export function registerAutoFixHandlers(
             throw new Error(result.error ?? 'Failed to analyze issues');
           }
 
+          // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
           sendComplete(result.data!);
         });
       } catch (error) {
@@ -859,6 +864,7 @@ export function registerAutoFixHandlers(
             throw new Error(validation.error);
           }
 
+          // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
           const backendPath = validation.backendPath!;
           const { execFileSync } = await import('child_process');
           // Use execFileSync with arguments array to prevent command injection

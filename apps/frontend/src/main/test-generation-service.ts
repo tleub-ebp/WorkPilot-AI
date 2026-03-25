@@ -220,6 +220,7 @@ export class TestGenerationService extends EventEmitter {
         this.emit('error', 'Test generation completed without output. Check that the source file is readable and Claude is authenticated.');
       } else {
         // Strip ANSI escape codes so the error message is readable
+        // biome-ignore lint/suspicious/noControlCharactersInRegex: control chars are intentional
         const clean = stderrOutput.replaceAll(/\x1b\[[0-9;]*[A-Za-z]/g, '').replaceAll(/[\u2500-\u257F]/g, '').trim();
         if (clean.includes('rate_limit') || clean.includes('Rate limit')) {
           this.emit('error', 'Rate limit reached. Please try again in a few moments.');

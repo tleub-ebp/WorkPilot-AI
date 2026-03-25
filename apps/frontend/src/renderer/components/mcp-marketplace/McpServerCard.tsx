@@ -163,7 +163,7 @@ export function McpServerCard({ server }: McpServerCardProps) {
           </div>
 
           {/* Expandable details */}
-          <button
+          <button type="button"
             onClick={() => setShowDetails(!showDetails)}
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-2"
           >

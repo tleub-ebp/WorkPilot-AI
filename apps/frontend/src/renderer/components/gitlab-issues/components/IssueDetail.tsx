@@ -82,6 +82,7 @@ export function IssueDetail({ issue, onInvestigate, investigationResult, linkedT
           <div className="flex flex-wrap gap-2">
             {issue.labels.map((label, index) => (
               <Badge
+                // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                 key={index}
                 variant="outline"
                 className="bg-orange-500/10 text-orange-500 border-orange-500/20"

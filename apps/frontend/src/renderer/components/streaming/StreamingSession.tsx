@@ -1,3 +1,4 @@
+// biome-ignore lint/suspicious/noIrregularWhitespace: whitespace is intentional
 ﻿﻿/**
  * Streaming Session Component - "Twitch-style" real-time coding view
  * 
@@ -24,6 +25,7 @@ import { Progress } from '../ui/progress';
 interface StreamingEvent {
   event_type: string;
   timestamp: number;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   data: Record<string, any>;
   session_id: string;
 }
@@ -386,6 +388,7 @@ export function StreamingSession({ sessionId, projectPath, onClose }: StreamingS
       // Fallback: download the file
       downloadRecording();
     }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [sessionId, events, sessionStats, projectPath, formatDuration, downloadRecording]);
 
   // Update duration every second

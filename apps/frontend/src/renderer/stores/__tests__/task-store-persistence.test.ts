@@ -348,7 +348,8 @@ describe('task-store-persistence', () => {
     });
 
     it('should set loading state during IPC call', async () => {
-      let resolveGetTasks: (value: any) => void = () => {};
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+      let resolveGetTasks: (value: any) => void = () => { /* noop */ };
       const getTasksPromise = new Promise((resolve) => {
         resolveGetTasks = resolve;
       });

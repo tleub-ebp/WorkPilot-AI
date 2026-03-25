@@ -164,6 +164,7 @@ export function CleanProviderCard({
   onConfigure,
   onTest,
   onToggle,
+  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
   onRemove,
   className,
   isAutoSwitchingOpen = false,
