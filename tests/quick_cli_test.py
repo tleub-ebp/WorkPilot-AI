@@ -3,7 +3,10 @@ Quick test to validate self_healing CLI works
 """
 import subprocess
 import sys
+from pathlib import Path
 
+# Get the project root directory dynamically
+PROJECT_ROOT = Path(__file__).parent.parent
 print("Testing self_healing CLI...")
 print("=" * 70)
 
@@ -12,7 +15,7 @@ print("\n1. Testing import...")
 try:
     result = subprocess.run(
         [sys.executable, "-c", "from apps.backend import self_healing; print('Import OK')"],
-        cwd=r"c:\Users\thomas.leberre\Repositories\WorkPilot-AI",
+        cwd=str(PROJECT_ROOT),
         capture_output=True,
         text=True,
         timeout=10
@@ -32,7 +35,7 @@ print("\n2. Testing CLI help...")
 try:
     result = subprocess.run(
         [sys.executable, "-m", "apps.backend.self_healing", "--help"],
-        cwd=r"c:\Users\thomas.leberre\Repositories\WorkPilot-AI",
+        cwd=str(PROJECT_ROOT),
         capture_output=True,
         text=True,
         timeout=10
@@ -41,7 +44,7 @@ try:
     if result.returncode == 0 and "Self-Healing Codebase System" in result.stdout:
         print("   ✅ CLI help works")
     else:
-        print(f"   ❌ CLI help failed")
+        print("   ❌ CLI help failed")
         print(f"   stdout: {result.stdout}")
         print(f"   stderr: {result.stderr}")
         sys.exit(1)
@@ -54,7 +57,7 @@ print("\n3. Testing 'check' command...")
 try:
     result = subprocess.run(
         [sys.executable, "-m", "apps.backend.self_healing", "check", "--project-dir", "apps/backend"],
-        cwd=r"c:\Users\thomas.leberre\Repositories\WorkPilot-AI",
+        cwd=str(PROJECT_ROOT),
         capture_output=True,
         text=True,
         timeout=60
