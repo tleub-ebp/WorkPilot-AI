@@ -14,9 +14,9 @@ print("Testing imports after optional dependency fix...\n")
 # Test 1: Import auto_fix_loop
 print("[1/3] Testing auto_fix_loop import...")
 try:
-    from qa.auto_fix_loop import AutoFixLoop, TestResult, AutoFixAttempt
+    from qa.auto_fix_loop import AutoFixLoop, AutoFixTestResult, AutoFixAttempt
     print("  ✓ AutoFixLoop imported successfully")
-    print("  ✓ TestResult imported successfully")
+    print("  ✓ AutoFixTestResult imported successfully")
     print("  ✓ AutoFixAttempt imported successfully")
 except Exception as e:
     print(f"  ✗ Error: {e}")

@@ -108,7 +108,7 @@ def main():
         print("\n✨ La feature Auto-Fix Loops est VALIDÉE!")
         print("\n✅ Features testées:")
         print("   - Import et structure du code")
-        print("   - Dataclasses TestResult et AutoFixAttempt")
+        print("   - Dataclasses AutoFixTestResult et AutoFixAttempt")
         print("   - Création d'instances AutoFixLoop")
         print("   - Integration avec auto_fix_metrics")
         print("   - Syntaxe Python valide")

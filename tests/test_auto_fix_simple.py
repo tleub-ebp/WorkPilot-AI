@@ -50,7 +50,7 @@ try:
     with open(backend_dir / "qa" / "auto_fix_loop.py", encoding='utf-8') as f:
         content = f.read()
         assert "@dataclass" in content, "Dataclass decorator not found"
-        assert "class TestResult" in content, "TestResult class not found"
+        assert "class AutoFixTestResult" in content, "AutoFixTestResult class not found"
         assert "class AutoFixAttempt" in content, "AutoFixAttempt class not found"
     
     print("  ✓ Fichiers existent")
