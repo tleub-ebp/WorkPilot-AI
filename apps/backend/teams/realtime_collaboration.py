@@ -95,7 +95,9 @@ class TaskLock:
         return time.time() > float(self.expires_at)
 
     def to_dict(self) -> dict[str, Any]:
-        lock_type_value = self.lock_type.value if hasattr(self.lock_type, 'value') else self.lock_type
+        lock_type_value = (
+            self.lock_type.value if hasattr(self.lock_type, "value") else self.lock_type
+        )
         return {
             "task_id": self.task_id,
             "locked_by": self.locked_by,
@@ -120,7 +122,11 @@ class RealtimeEvent:
         return len(self.target_users) == 0
 
     def to_dict(self) -> dict[str, Any]:
-        event_type_value = self.event_type.value if hasattr(self.event_type, 'value') else self.event_type
+        event_type_value = (
+            self.event_type.value
+            if hasattr(self.event_type, "value")
+            else self.event_type
+        )
         return {
             "event_id": self.event_id,
             "event_type": event_type_value,
@@ -174,7 +180,11 @@ class ConflictRecord:
         return self.resolved_at is not None
 
     def to_dict(self) -> dict[str, Any]:
-        resolution_value = self.resolution.value if hasattr(self.resolution, 'value') else self.resolution
+        resolution_value = (
+            self.resolution.value
+            if hasattr(self.resolution, "value")
+            else self.resolution
+        )
         return {
             "conflict_id": self.conflict_id,
             "task_id": self.task_id,
@@ -194,50 +204,53 @@ class CollaborationServer:
     def __init__(self, base_path: Path | None = None):
         self.base_path = base_path or Path(".collaboration")
         self.base_path.mkdir(parents=True, exist_ok=True)
-        
+
         # Active sessions
         self.users: dict[str, ConnectedUser] = {}
         self.task_locks: dict[str, TaskLock] = {}
         self.chat_messages: list[ChatMessage] = []
         self.events: list[RealtimeEvent] = []
         self.conflicts: dict[str, ConflictRecord] = {}
-        
+
         # Event handlers
         self.event_handlers: dict[EventType, list[callable]] = {}
 
     # User management
-    def connect_user(self, user_id: str, display_name: str, role: str = "developer") -> ConnectedUser:
+    def connect_user(
+        self, user_id: str, display_name: str, role: str = "developer"
+    ) -> ConnectedUser:
         user = ConnectedUser(user_id=user_id, display_name=display_name, role=role)
         self.users[user_id] = user
-        
+
         event = RealtimeEvent(
             event_id=str(uuid.uuid4()),
             event_type=EventType.USER_JOIN,
             sender_id=user_id,
-            data={"user": user.to_dict()}
+            data={"user": user.to_dict()},
         )
         self._add_event(event)
-        
+
         return user
 
     def disconnect_user(self, user_id: str) -> None:
         if user_id in self.users:
             user = self.users[user_id]
             user.status = UserStatus.OFFLINE
-            
+
             # Release user's locks
             locks_to_remove = [
-                task_id for task_id, lock in self.task_locks.items()
+                task_id
+                for task_id, lock in self.task_locks.items()
                 if lock.locked_by == user_id
             ]
             for task_id in locks_to_remove:
                 self.unlock_task(task_id, user_id)
-            
+
             event = RealtimeEvent(
                 event_id=str(uuid.uuid4()),
                 event_type=EventType.USER_LEAVE,
                 sender_id=user_id,
-                data={"user_id": user_id}
+                data={"user_id": user_id},
             )
             self._add_event(event)
 
@@ -249,20 +262,28 @@ class CollaborationServer:
                 event_id=str(uuid.uuid4()),
                 event_type=EventType.USER_JOINED,
                 sender_id=user_id,
-                data={"user_id": user_id, "status": status.value}
+                data={"user_id": user_id, "status": status.value},
             )
             self._add_event(event)
             return True
         return False
 
     # Task locking
-    def lock_task(self, task_id: str, user_id: str, lock_type: LockType = LockType.USER, reason: str = "") -> bool:
+    def lock_task(
+        self,
+        task_id: str,
+        user_id: str,
+        lock_type: LockType = LockType.USER,
+        reason: str = "",
+    ) -> bool:
         if task_id in self.task_locks and not self.task_locks[task_id].is_expired:
             return False
-        
-        lock = TaskLock(task_id=task_id, locked_by=user_id, lock_type=lock_type, reason=reason)
+
+        lock = TaskLock(
+            task_id=task_id, locked_by=user_id, lock_type=lock_type, reason=reason
+        )
         self.task_locks[task_id] = lock
-        
+
         event = RealtimeEvent(
             event_id=str(uuid.uuid4()),
             event_type=EventType.TASK_LOCK,
@@ -271,102 +292,116 @@ class CollaborationServer:
                 "task_id": task_id,
                 "locked_by": user_id,
                 "lock_type": lock_type.value,
-                "reason": reason
-            }
+                "reason": reason,
+            },
         )
         self._add_event(event)
-        
+
         return True
 
     def unlock_task(self, task_id: str, user_id: str) -> bool:
         if task_id not in self.task_locks:
             return False
-        
+
         lock = self.task_locks[task_id]
         if lock.locked_by != user_id:
             return False
-        
+
         del self.task_locks[task_id]
-        
+
         event = RealtimeEvent(
             event_id=str(uuid.uuid4()),
             event_type=EventType.TASK_UNLOCK,
             sender_id=user_id,
-            data={"task_id": task_id, "unlocked_by": user_id}
+            data={"task_id": task_id, "unlocked_by": user_id},
         )
         self._add_event(event)
-        
+
         return True
 
     def get_task_lock(self, task_id: str) -> TaskLock | None:
         return self.task_locks.get(task_id)
 
     # Chat functionality
-    def send_message(self, user_id: str, display_name: str, content: str, message_type: str = "text") -> ChatMessage:
+    def send_message(
+        self, user_id: str, display_name: str, content: str, message_type: str = "text"
+    ) -> ChatMessage:
         message = ChatMessage(
             sender_id=user_id,
             sender_name=display_name,
             content=content,
-            message_type=message_type
+            message_type=message_type,
         )
         self.chat_messages.append(message)
-        
+
         event = RealtimeEvent(
             event_id=str(uuid.uuid4()),
             event_type=EventType.CHAT_MESSAGE,
             sender_id=user_id,
-            data={"message": message.to_dict()}
+            data={"message": message.to_dict()},
         )
         self._add_event(event)
-        
+
         return message
 
     def get_chat_history(self, limit: int = 50) -> list[ChatMessage]:
         return self.chat_messages[-limit:] if limit > 0 else self.chat_messages
 
     # Conflict management
-    def detect_conflict(self, task_id: str, user_a: str, user_b: str, field_name: str, value_a: Any, value_b: Any) -> ConflictRecord:
+    def detect_conflict(
+        self,
+        task_id: str,
+        user_a: str,
+        user_b: str,
+        field_name: str,
+        value_a: Any,
+        value_b: Any,
+    ) -> ConflictRecord:
         conflict = ConflictRecord(
             task_id=task_id,
             user_a=user_a,
             user_b=user_b,
             field_name=field_name,
             value_a=value_a,
-            value_b=value_b
+            value_b=value_b,
         )
         self.conflicts[conflict.conflict_id] = conflict
-        
+
         event = RealtimeEvent(
             event_id=str(uuid.uuid4()),
             event_type=EventType.CONFLICT_DETECTED,
             sender_id="system",
-            data={"conflict": conflict.to_dict()}
+            data={"conflict": conflict.to_dict()},
         )
         self._add_event(event)
-        
+
         return conflict
 
-    def resolve_conflict(self, conflict_id: str, resolution: ConflictResolution, resolved_by: str) -> bool:
+    def resolve_conflict(
+        self, conflict_id: str, resolution: ConflictResolution, resolved_by: str
+    ) -> bool:
         if conflict_id not in self.conflicts:
             return False
-        
+
         conflict = self.conflicts[conflict_id]
         conflict.resolution = resolution
         conflict.resolved_by = resolved_by
         conflict.resolved_at = str(time.time())
-        
+
         event = RealtimeEvent(
             event_id=str(uuid.uuid4()),
             event_type=EventType.CONFLICT_RESOLVED,
             sender_id=resolved_by,
             data={
                 "conflict_id": conflict_id,
-                "resolution": resolution.value if hasattr(resolution, 'value') else resolution,
-                "resolved_by": resolved_by
-            }
+                "resolution": resolution.value
+                if hasattr(resolution, "value")
+                else resolution,
+                "resolved_by": resolved_by,
+            },
         )
         self._add_event(event)
-        
+
         return True
 
     # Event handling
@@ -375,7 +410,9 @@ class CollaborationServer:
             self.event_handlers[event_type] = []
         self.event_handlers[event_type].append(handler)
 
-    def get_events(self, event_type: EventType | None = None, limit: int = 100) -> list[RealtimeEvent]:
+    def get_events(
+        self, event_type: EventType | None = None, limit: int = 100
+    ) -> list[RealtimeEvent]:
         events = self.events
         if event_type:
             events = [e for e in events if e.event_type == event_type]
@@ -383,7 +420,7 @@ class CollaborationServer:
 
     def _add_event(self, event: RealtimeEvent) -> None:
         self.events.append(event)
-        
+
         # Trigger event handlers
         if event.event_type in self.event_handlers:
             for handler in self.event_handlers[event.event_type]:
@@ -394,10 +431,16 @@ class CollaborationServer:
 
     # Statistics and monitoring
     def get_stats(self) -> dict[str, Any]:
-        active_users = len([u for u in self.users.values() if u.status != UserStatus.OFFLINE])
-        active_locks = len([lock for lock in self.task_locks.values() if not lock.is_expired])
-        unresolved_conflicts = len([c for c in self.conflicts.values() if c.resolution is None])
-        
+        active_users = len(
+            [u for u in self.users.values() if u.status != UserStatus.OFFLINE]
+        )
+        active_locks = len(
+            [lock for lock in self.task_locks.values() if not lock.is_expired]
+        )
+        unresolved_conflicts = len(
+            [c for c in self.conflicts.values() if c.resolution is None]
+        )
+
         return {
             "active_users": active_users,
             "total_users": len(self.users),
@@ -406,7 +449,7 @@ class CollaborationServer:
             "unresolved_conflicts": unresolved_conflicts,
             "total_conflicts": len(self.conflicts),
             "chat_messages": len(self.chat_messages),
-            "total_events": len(self.events)
+            "total_events": len(self.events),
         }
 
     def get_connected_users(self) -> list[ConnectedUser]:
@@ -414,11 +457,10 @@ class CollaborationServer:
 
     def cleanup_expired_locks(self) -> int:
         expired_locks = [
-            task_id for task_id, lock in self.task_locks.items()
-            if lock.is_expired
+            task_id for task_id, lock in self.task_locks.items() if lock.is_expired
         ]
-        
+
         for task_id in expired_locks:
             del self.task_locks[task_id]
-        
+
         return len(expired_locks)
