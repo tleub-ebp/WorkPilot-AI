@@ -98,6 +98,8 @@ class TestInfo:
     path: str
     type: str  # 'playwright' | 'pytest' | 'custom'
 
+    __test__ = False  # Exclude from pytest collection
+
     def to_dict(self) -> dict:
         return {
             "name": self.name,
@@ -116,6 +118,8 @@ class TestResult:
     duration_ms: float
     error_message: str | None = None
     screenshot_path: str | None = None
+
+    __test__ = False  # Exclude from pytest collection
 
     def to_dict(self) -> dict:
         return {
@@ -138,6 +142,8 @@ class TestRunResult:
     skipped: int
     duration_ms: float
     results: list[TestResult] = field(default_factory=list)
+
+    __test__ = False  # Exclude from pytest collection
 
     def to_dict(self) -> dict:
         return {

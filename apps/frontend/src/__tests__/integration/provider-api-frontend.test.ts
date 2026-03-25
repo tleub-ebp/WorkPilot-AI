@@ -22,7 +22,7 @@ const mockTestConnection = vi.fn();
 const mockDiscoverModels = vi.fn();
 const mockGetClaudeCodeOnboardingStatus = vi.fn();
 
-vi.stubGlobal('window', {
+vi.stubGlobal('globalThis', {
   electronAPI: {
     getSettings: mockGetSettings,
     saveSettings: mockSaveSettings,

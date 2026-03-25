@@ -17,6 +17,8 @@ from .models import TestInfo, TestResult, TestRunResult
 class TestExecutor:
     """Discovers and runs E2E tests, returning structured results."""
 
+    __test__ = False  # Exclude from pytest collection
+
     # Common E2E test directories
     TEST_DIRS = ["e2e", "tests/e2e", "test/e2e", "browser-tests", "tests/browser"]
 

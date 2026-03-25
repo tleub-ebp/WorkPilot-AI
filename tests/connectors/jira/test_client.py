@@ -11,15 +11,39 @@ from unittest.mock import MagicMock, patch, PropertyMock
 
 import pytest
 import requests
+from pathlib import Path
+import sys
 
-from src.connectors.jira.client import JiraClient
-from src.connectors.jira.exceptions import (
-    JiraAPIError,
-    JiraAuthenticationError,
-    JiraConfigurationError,
-    JiraIssueNotFoundError,
-    JiraProjectNotFoundError,
-)
+# Helper function to import modules directly
+def import_module_direct(module_name, file_path):
+    """Import a module directly from file path, bypassing package __init__.py"""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+# Import modules directly to avoid circular import issues in __init__.py
+# First import exceptions, then client (which depends on exceptions)
+project_root = Path(__file__).parent.parent.parent.parent
+
+# Import exceptions first
+exceptions_module = import_module_direct("jira_exceptions", project_root / "src" / "connectors" / "jira" / "exceptions.py")
+
+# Make exceptions available in sys.modules so client can import them
+sys.modules["src.connectors.jira.exceptions"] = exceptions_module
+sys.modules["src.connectors.jira"] = type('Module', (), {'exceptions': exceptions_module})()
+
+# Now import client
+client_module = import_module_direct("jira_client", project_root / "src" / "connectors" / "jira" / "client.py")
+
+JiraClient = client_module.JiraClient
+JiraAPIError = exceptions_module.JiraAPIError
+JiraAuthenticationError = exceptions_module.JiraAuthenticationError
+JiraConfigurationError = exceptions_module.JiraConfigurationError
+JiraIssueNotFoundError = exceptions_module.JiraIssueNotFoundError
+JiraProjectNotFoundError = exceptions_module.JiraProjectNotFoundError
 
 
 # ── Initialization tests ────────────────────────────────────────────

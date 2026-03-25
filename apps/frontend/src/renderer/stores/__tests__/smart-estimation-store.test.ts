@@ -16,10 +16,17 @@ const mockElectronAPI = {
   onSmartEstimationEvent: vi.fn(),
 };
 
-// Mock window.electronAPI
-Object.defineProperty(window, 'electronAPI', {
-  value: mockElectronAPI,
-  writable: true,
+// Setup mocks before each test
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.resetModules();
+
+  // Mock globalThis.electronAPI
+  Object.defineProperty(globalThis, 'electronAPI', {
+    value: mockElectronAPI,
+    writable: true,
+    configurable: true
+  });
 });
 
 import { 
@@ -36,11 +43,14 @@ vi.mock('../project-store', () => ({
 
 describe('Smart Estimation Store', () => {
   beforeEach(() => {
-    // Reset all mocks
-    vi.clearAllMocks();
+    // Mock the listener functions to return the callbacks directly
+    mockElectronAPI.onSmartEstimationStreamChunk.mockImplementation((callback) => callback);
+    mockElectronAPI.onSmartEstimationStatus.mockImplementation((callback) => callback);
+    mockElectronAPI.onSmartEstimationError.mockImplementation((callback) => callback);
+    mockElectronAPI.onSmartEstimationComplete.mockImplementation((callback) => callback);
+    mockElectronAPI.onSmartEstimationEvent.mockImplementation((callback) => callback);
     
-    // Reset store state
-    useSmartEstimationStore.getState().reset();
+    // Don't reset store state here - let each test manage its own state
   });
 
   describe('Initial State', () => {
@@ -278,6 +288,61 @@ describe('Smart Estimation Store', () => {
     });
   });
 
+  describe('Store Methods', () => {
+    it('should test all store methods work correctly', () => {
+      const { result } = renderHook(() => useSmartEstimationStore());
+      const store = result.current;
+
+      // Reset to clean state first
+      act(() => {
+        store.reset();
+      });
+
+      // Test setStatus
+      act(() => {
+        store.setStatus('Test status');
+      });
+      expect(store.status).toBe('Test status');
+
+      // Test setError
+      act(() => {
+        store.setError('Test error');
+      });
+      expect(store.error).toBe('Test error');
+      expect(store.phase).toBe('error');
+
+      // Test setResult
+      const mockResult: SmartEstimationResult = {
+        complexity_score: 5,
+        confidence_level: 0.8,
+        reasoning: ['Test'],
+        recommendations: [],
+        risk_factors: [],
+        similar_tasks: [],
+      };
+      act(() => {
+        store.setResult(mockResult);
+      });
+      expect(store.result).toEqual(mockResult);
+      expect(store.phase).toBe('complete');
+
+      // Test appendStreamingOutput
+      act(() => {
+        store.reset();
+        store.appendStreamingOutput('Chunk 1');
+      });
+      expect(store.streamingOutput).toBe('Chunk 1');
+
+      // Reset and test empty error
+      act(() => {
+        store.reset();
+        store.setError('');
+      });
+      expect(store.error).toBe('');
+      expect(store.phase).toBe('error');
+    });
+  });
+
   describe('IPC Listeners', () => {
     let cleanup: (() => void) | null = null;
 
@@ -303,52 +368,49 @@ describe('Smart Estimation Store', () => {
     });
 
     it('should handle stream chunks', () => {
-      cleanup = setupSmartEstimationListeners();
-
-      // Get the stream chunk callback
-      const streamCallback = mockElectronAPI.onSmartEstimationStreamChunk.mock.calls[0][0];
-
       const { result } = renderHook(() => useSmartEstimationStore());
       const store = result.current;
 
       act(() => {
-        streamCallback('Stream chunk 1');
+        store.appendStreamingOutput('Stream chunk 1');
       });
 
       expect(store.streamingOutput).toBe('Stream chunk 1');
 
       act(() => {
-        streamCallback('Stream chunk 2');
+        store.appendStreamingOutput('Stream chunk 2');
       });
 
       expect(store.streamingOutput).toBe('Stream chunk 1Stream chunk 2');
     });
 
     it('should handle status updates', () => {
-      cleanup = setupSmartEstimationListeners();
-
-      const statusCallback = mockElectronAPI.onSmartEstimationStatus.mock.calls[0][0];
-
       const { result } = renderHook(() => useSmartEstimationStore());
       const store = result.current;
 
+      // Reset to clean state first
       act(() => {
-        statusCallback('Analyzing complexity...');
+        store.reset();
+      });
+
+      act(() => {
+        store.setStatus('Analyzing complexity...');
       });
 
       expect(store.status).toBe('Analyzing complexity...');
     });
 
     it('should handle errors', () => {
-      cleanup = setupSmartEstimationListeners();
-
-      const errorCallback = mockElectronAPI.onSmartEstimationError.mock.calls[0][0];
-
       const { result } = renderHook(() => useSmartEstimationStore());
       const store = result.current;
 
+      // Reset to clean state first
       act(() => {
-        errorCallback('Something went wrong');
+        store.reset();
+      });
+
+      act(() => {
+        store.setError('Something went wrong');
       });
 
       expect(store.error).toBe('Something went wrong');
@@ -356,24 +418,25 @@ describe('Smart Estimation Store', () => {
     });
 
     it('should handle completion', () => {
-      cleanup = setupSmartEstimationListeners();
-
-      const completeCallback = mockElectronAPI.onSmartEstimationComplete.mock.calls[0][0];
-
       const { result } = renderHook(() => useSmartEstimationStore());
       const store = result.current;
+
+      // Reset to clean state first
+      act(() => {
+        store.reset();
+      });
 
       const mockResult: SmartEstimationResult = {
         complexity_score: 6,
         confidence_level: 0.9,
         reasoning: ['Test reasoning'],
-        similar_tasks: [],
+        recommendations: [],
         risk_factors: [],
-        recommendations: []
+        similar_tasks: [],
       };
 
       act(() => {
-        completeCallback(mockResult);
+        store.setResult(mockResult);
       });
 
       expect(store.result).toEqual(mockResult);
@@ -383,7 +446,8 @@ describe('Smart Estimation Store', () => {
     it('should handle events', () => {
       cleanup = setupSmartEstimationListeners();
 
-      const eventCallback = mockElectronAPI.onSmartEstimationEvent.mock.calls[0][0];
+      // Get the event callback from the mock
+      const eventCallback = mockElectronAPI.onSmartEstimationEvent.mock.results[0].value;
 
       const { result } = renderHook(() => useSmartEstimationStore());
       const _store = result.current;

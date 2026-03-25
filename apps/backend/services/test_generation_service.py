@@ -41,6 +41,8 @@ class PostBuildGenerationResult:
 class TestGenerationService:
     """Service for automatic test generation after builds."""
 
+    __test__ = False  # Exclude from pytest collection
+
     def __init__(self, project_path: Path):
         """
         Initialize the test generation service.

@@ -53,10 +53,18 @@ try:
     from .services.io_utils import safe_print
 except (ImportError, ValueError, SystemError):
     # When imported directly (runner.py adds github dir to path)
-    from bot_detection import BotDetector
-    from context_gatherer import PRContext, PRContextGatherer
-    from gh_client import GHClient
-    from models import (
+    import sys
+    from pathlib import Path
+
+    # Add parent directory to path for absolute imports
+    parent_dir = Path(__file__).parent.parent
+    if str(parent_dir) not in sys.path:
+        sys.path.insert(0, str(parent_dir))
+
+    from runners.github.bot_detection import BotDetector
+    from runners.github.context_gatherer import PRContext, PRContextGatherer
+    from runners.github.gh_client import GHClient
+    from runners.github.models import (
         BRANCH_BEHIND_BLOCKER_MSG,
         BRANCH_BEHIND_REASONING,
         AICommentTriage,
@@ -71,19 +79,19 @@ except (ImportError, ValueError, SystemError):
         StructuralIssue,
         TriageResult,
     )
-    from permissions import GitHubPermissionChecker
-    from rate_limiter import RateLimiter
-    from services import (
+    from runners.github.permissions import GitHubPermissionChecker
+    from runners.github.rate_limiter import RateLimiter
+    from runners.github.services import (
         AutoFixProcessor,
         BatchProcessor,
         PRReviewEngine,
         TriageEngine,
     )
-    from services.deep_context_provider import (
+    from runners.github.services.deep_context_provider import (
         DeepContextProvider,
         store_review_learnings,
     )
-    from services.io_utils import safe_print
+    from runners.github.services.io_utils import safe_print
 
 
 @dataclass

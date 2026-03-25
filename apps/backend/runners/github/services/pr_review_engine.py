@@ -26,18 +26,26 @@ try:
     from .prompt_manager import PromptManager
     from .response_parsers import ResponseParser
 except (ImportError, ValueError, SystemError):
-    from context_gatherer import PRContext
-    from models import (
+    import sys
+    from pathlib import Path
+
+    # Add backend root to path for absolute imports
+    backend_root = Path(__file__).parent.parent.parent.parent
+    if str(backend_root) not in sys.path:
+        sys.path.insert(0, str(backend_root))
+
+    from phase_config import resolve_model_id
+    from runners.github.context_gatherer import PRContext
+    from runners.github.models import (
         AICommentTriage,
         GitHubRunnerConfig,
         PRReviewFinding,
         ReviewPass,
         StructuralIssue,
     )
-    from phase_config import resolve_model_id
-    from services.io_utils import safe_print
-    from services.prompt_manager import PromptManager
-    from services.response_parsers import ResponseParser
+    from runners.github.services.io_utils import safe_print
+    from runners.github.services.prompt_manager import PromptManager
+    from runners.github.services.response_parsers import ResponseParser
 
 
 # Define a local ProgressCallback to avoid circular import

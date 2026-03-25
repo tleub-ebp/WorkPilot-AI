@@ -11,15 +11,40 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
+from pathlib import Path
+import sys
 
-from src.connectors.postman.client import PostmanClient
-from src.connectors.postman.exceptions import (
-    PostmanAPIError,
-    PostmanAuthenticationError,
-    PostmanCollectionNotFoundError,
-    PostmanConfigurationError,
-    PostmanEnvironmentNotFoundError,
-)
+# Helper function to import modules directly
+def import_module_direct(module_name, file_path):
+    """Import a module directly from file path, bypassing package __init__.py"""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+# Import modules directly to avoid circular import issues in __init__.py
+project_root = Path(__file__).parent.parent.parent.parent
+
+# Import exceptions first
+exceptions_module = import_module_direct("postman_exceptions", project_root / "src" / "connectors" / "postman" / "exceptions.py")
+
+# Make exceptions available in sys.modules so client can import them
+sys.modules["src.connectors.postman.exceptions"] = exceptions_module
+postman_package = type('Package', (), {'exceptions': exceptions_module})()
+sys.modules["src.connectors.postman"] = postman_package
+sys.modules["src.connectors"] = type('Package', (), {'postman': postman_package})()
+
+# Now import client
+client_module = import_module_direct("postman_client", project_root / "src" / "connectors" / "postman" / "client.py")
+
+PostmanClient = client_module.PostmanClient
+PostmanAPIError = exceptions_module.PostmanAPIError
+PostmanAuthenticationError = exceptions_module.PostmanAuthenticationError
+PostmanCollectionNotFoundError = exceptions_module.PostmanCollectionNotFoundError
+PostmanConfigurationError = exceptions_module.PostmanConfigurationError
+PostmanEnvironmentNotFoundError = exceptions_module.PostmanEnvironmentNotFoundError
 
 
 # ── Initialization tests ────────────────────────────────────────────
