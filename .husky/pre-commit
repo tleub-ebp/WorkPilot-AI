@@ -1,6 +1,10 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+# Format Python (Ruff)
+echo "🔧 Running ruff format on backend..."
+python -m ruff format apps/backend/
+
 # Lint Python (Ruff)
 ruff check --fix .
 
