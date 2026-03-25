@@ -541,7 +541,7 @@ def _validate_openai_base_url(base_url: str | None) -> str:
 
     hostname = parsed.hostname or ""
     # Restrict to known-safe OpenAI host(s). Extend this list if needed.
-   _allowed_hosts = {"api.openai.com"}
+    _allowed_hosts = {"api.openai.com"}
     if hostname not in _allowed_hosts:
         raise ValueError("base_url host is not allowed.")
 
