@@ -5,8 +5,10 @@
 echo "🔧 Running ruff format on backend..."
 python -m ruff format apps/backend/
 
-# Lint Python (Ruff)
-ruff check --fix .
+# Lint and fix Python (Ruff)
+echo "🔍 Running ruff check and fix on backend..."
+python -m ruff check --fix --exit-non-zero-on-fix apps/backend/
 
 # Lint et typecheck frontend
+echo "🔍 Running frontend lint and typecheck..."
 cd apps/frontend && pnpm lint && pnpm typecheck

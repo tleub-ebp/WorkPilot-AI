@@ -9,7 +9,7 @@ if errorlevel 1 (
 )
 
 echo 🔧 Running ruff check on backend...
-ruff check --fix .
+python -m ruff check --fix --exit-non-zero-on-fix apps/backend/
 if errorlevel 1 (
     echo ❌ Ruff check failed
     exit /b 1
