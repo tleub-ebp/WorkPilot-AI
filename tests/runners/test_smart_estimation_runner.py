@@ -10,8 +10,35 @@ from pathlib import Path
 import argparse
 
 # Add the apps/backend directory to the Python path
-backend_path = Path(__file__).parent.parent.parent
+backend_path = Path(__file__).parent.parent.parent / "apps" / "backend"
 sys.path.insert(0, str(backend_path))
+
+# Mock the missing modules before importing
+import unittest.mock
+
+# Create comprehensive mocks for the entire import chain
+mock_sdk = unittest.mock.MagicMock()
+mock_sdk.types = unittest.mock.MagicMock()
+mock_sdk.types.ResultMessage = unittest.mock.MagicMock()
+mock_sdk.ClaudeSDKClient = unittest.mock.MagicMock()
+mock_sdk.ClaudeAgentOptions = unittest.mock.MagicMock()
+mock_sdk.AgentDefinition = unittest.mock.MagicMock()
+sys.modules['claude_agent_sdk'] = mock_sdk
+sys.modules['claude_agent_sdk.types'] = mock_sdk.types
+
+# Mock core modules
+sys.modules['core.context_manager'] = unittest.mock.MagicMock()
+sys.modules['services.smart_estimation_service'] = unittest.mock.MagicMock()
+
+# Mock QA modules to prevent import chain issues
+mock_qa = unittest.mock.MagicMock()
+mock_qa.loop = unittest.mock.MagicMock()
+mock_qa.reviewer = unittest.mock.MagicMock()
+mock_qa.MAX_QA_ITERATIONS = 3
+mock_qa.run_qa_validation_loop = unittest.mock.MagicMock()
+sys.modules['qa'] = mock_qa
+sys.modules['qa.loop'] = mock_qa.loop
+sys.modules['qa.reviewer'] = mock_qa.reviewer
 
 from runners.smart_estimation_runner import SmartEstimationRunner
 
@@ -22,25 +49,25 @@ class TestSmartEstimationRunner:
     @pytest.fixture
     def runner(self):
         """Create a fresh runner instance for each test"""
-        with patch('runners.smart_estimation_runner.ClaudeAgentSDK'), \
-             patch('runners.smart_estimation_runner.get_smart_estimation_service'):
+        with patch('runners.smart_estimation_runner.get_smart_estimation_service'):
             return SmartEstimationRunner()
 
     @pytest.fixture
     def mock_estimation_service(self):
         """Mock the estimation service"""
         service = Mock()
-        service.analyze_task_description.return_value = Mock(
-            complexity_score=7,
-            confidence_level=0.85,
-            reasoning=['Test reasoning'],
-            similar_tasks=[],
-            risk_factors=[],
-            estimated_duration_hours=3.5,
-            estimated_qa_iterations=2.0,
-            token_cost_estimate=1.75,
-            recommendations=['Test recommendation']
-        )
+        # Create a mock result object with attributes
+        mock_result = Mock()
+        mock_result.complexity_score = 7
+        mock_result.confidence_level = 0.85
+        mock_result.reasoning = ['Test reasoning']
+        mock_result.similar_tasks = []
+        mock_result.risk_factors = []
+        mock_result.estimated_duration_hours = 3.5
+        mock_result.estimated_qa_iterations = 2.0
+        mock_result.token_cost_estimate = 1.75
+        mock_result.recommendations = ['Test recommendation']
+        service.analyze_task_description.return_value = mock_result
         return service
 
     @pytest.fixture
@@ -69,7 +96,7 @@ class TestSmartEstimationRunner:
 
         # Verify result structure
         assert result['complexity_score'] == 7
-        assert result['confidence_level'] == 0.85
+        assert abs(result['confidence_level'] - 0.85) < 1e-9
         assert 'reasoning' in result
         assert 'similar_tasks' in result
         assert 'risk_factors' in result
@@ -117,7 +144,7 @@ class TestSmartEstimationRunner:
         """Test event emission"""
         with patch('builtins.print') as mock_print:
             with patch('runners.smart_estimation_runner.datetime') as mock_datetime:
-                mock_datetime.utcnow.return_value.isoformat.return_value = '2023-01-01T00:00:00'
+                mock_datetime.datetime.utcnow.return_value.isoformat.return_value = '2023-01-01T00:00:00'
                 
                 runner._emit_event('test_event', {'data': 'test_data'})
 
@@ -136,12 +163,12 @@ class TestSmartEstimationRunner:
     def test_get_timestamp(self, runner):
         """Test timestamp generation"""
         with patch('runners.smart_estimation_runner.datetime') as mock_datetime:
-            mock_datetime.utcnow.return_value.isoformat.return_value = '2023-01-01T12:00:00'
+            mock_datetime.datetime.utcnow.return_value.isoformat.return_value = '2023-01-01T12:00:00'
             
             timestamp = runner._get_timestamp()
             
             assert timestamp == '2023-01-01T12:00:00'
-            mock_datetime.utcnow.assert_called_once()
+            mock_datetime.datetime.utcnow.assert_called_once()
 
 
 class TestSmartEstimationRunnerCLI:
@@ -237,47 +264,46 @@ class TestSmartEstimationRunnerIntegration:
 
     @patch('runners.smart_estimation_runner.get_project_context')
     @patch('runners.smart_estimation_runner.get_smart_estimation_service')
-    @patch('runners.smart_estimation_runner.ClaudeAgentSDK')
-    def test_full_runner_integration(self, mock_sdk, mock_get_service, mock_get_context):
+    def test_full_runner_integration(self, mock_get_service, mock_get_context):
         """Test full runner integration with real service"""
         # Setup realistic service response
         mock_service = Mock()
-        mock_service.analyze_task_description.return_value = {
-            'complexity_score': 8,
-            'confidence_level': 0.75,
-            'reasoning': [
-                'High file impact (8 files) suggests significant changes',
-                'Identified 2 risk factors that increase complexity',
-                'Similar tasks historically score 7.5 on average',
-                'Task has moderate complexity with several components'
-            ],
-            'similar_tasks': [
-                {
-                    'build_id': 'build-123',
-                    'spec_name': 'Add user authentication',
-                    'similarity_score': 0.85,
-                    'complexity_score': 7,
-                    'duration_hours': 2.5,
-                    'qa_iterations': 2,
-                    'success_rate': 0.9,
-                    'tokens_used': 8000,
-                    'cost_usd': 4.0,
-                    'status': 'COMPLETE'
-                }
-            ],
-            'risk_factors': [
-                'Authentication changes affect core functionality',
-                'Security changes require careful testing'
-            ],
-            'estimated_duration_hours': 3.0,
-            'estimated_qa_iterations': 2.5,
-            'token_cost_estimate': 4.0,
-            'recommendations': [
-                'Consider creating a separate branch for this high-risk task',
-                'Implement comprehensive testing before deployment',
-                'Schedule additional code review time'
-            ]
-        }
+        mock_result = Mock()
+        mock_result.complexity_score = 8
+        mock_result.confidence_level = 0.75
+        mock_result.reasoning = [
+            'High file impact (8 files) suggests significant changes',
+            'Identified 2 risk factors that increase complexity',
+            'Similar tasks historically score 7.5 on average',
+            'Task has moderate complexity with several components'
+        ]
+        mock_result.similar_tasks = [
+            {
+                'build_id': 'build-123',
+                'spec_name': 'Add user authentication',
+                'similarity_score': 0.85,
+                'complexity_score': 7,
+                'duration_hours': 2.5,
+                'qa_iterations': 2,
+                'success_rate': 0.9,
+                'tokens_used': 8000,
+                'cost_usd': 4.0,
+                'status': 'COMPLETE'
+            }
+        ]
+        mock_result.risk_factors = [
+            'Authentication changes affect core functionality',
+            'Security changes require careful testing'
+        ]
+        mock_result.estimated_duration_hours = 3.0
+        mock_result.estimated_qa_iterations = 2.5
+        mock_result.token_cost_estimate = 4.0
+        mock_result.recommendations = [
+            'Consider creating a separate branch for this high-risk task',
+            'Implement comprehensive testing before deployment',
+            'Schedule additional code review time'
+        ]
+        mock_service.analyze_task_description.return_value = mock_result
         mock_get_service.return_value = mock_service
         
         mock_get_context.return_value = {
@@ -294,13 +320,13 @@ class TestSmartEstimationRunnerIntegration:
 
         # Verify comprehensive result
         assert result['complexity_score'] == 8
-        assert result['confidence_level'] == 0.75
+        assert abs(result['confidence_level'] - 0.75) < 1e-9
         assert len(result['reasoning']) == 4
         assert len(result['similar_tasks']) == 1
         assert len(result['risk_factors']) == 2
-        assert result['estimated_duration_hours'] == 3.0
-        assert result['estimated_qa_iterations'] == 2.5
-        assert result['token_cost_estimate'] == 4.0
+        assert abs(result['estimated_duration_hours'] - 3.0) < 1e-9
+        assert abs(result['estimated_qa_iterations'] - 2.5) < 1e-9
+        assert abs(result['token_cost_estimate'] - 4.0) < 1e-9
         assert len(result['recommendations']) == 3
 
         # Verify event flow
