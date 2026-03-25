@@ -131,9 +131,7 @@ def print_merge_success(
                 ]
             )
             if spec_name:
-                lines.append(
-                    f"  python workpilot/run.py --spec {spec_name} --discard"
-                )
+                lines.append(f"  python workpilot/run.py --spec {spec_name} --discard")
         else:
             lines.extend(
                 [

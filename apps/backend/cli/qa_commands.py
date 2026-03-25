@@ -179,6 +179,4 @@ def handle_auto_fix_command(
             sys.exit(1)
     except KeyboardInterrupt:
         print("\n\nAuto-fix interrupted.")
-        print(
-            f"Resume with: python workpilot/run.py --spec {spec_dir.name} --auto-fix"
-        )
+        print(f"Resume with: python workpilot/run.py --spec {spec_dir.name} --auto-fix")

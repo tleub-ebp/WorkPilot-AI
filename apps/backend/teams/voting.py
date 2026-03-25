@@ -76,20 +76,20 @@ class VotingSystem:
         self.votes_dir = self.base_path / "debates" / "votes"
         self.votes_dir.mkdir(parents=True, exist_ok=True)
 
-    def conduct_vote(
-        self, votes: list[Vote], strategy, topic: str
-    ) -> VotingResult:
+    def conduct_vote(self, votes: list[Vote], strategy, topic: str) -> VotingResult:
         from teams.config import DebateStrategy
 
         # Check for blocking vetoes first
         blocking_vetoes = [v for v in votes if v.is_blocking()]
 
         approve_weight = sum(
-            v.weight for v in votes
+            v.weight
+            for v in votes
             if v.vote_choice in (VoteChoice.APPROVE, VoteChoice.APPROVE_WITH_CHANGES)
         )
         reject_weight = sum(
-            v.weight for v in votes
+            v.weight
+            for v in votes
             if v.vote_choice in (VoteChoice.REJECT, VoteChoice.VETO)
         )
         total_weight = sum(v.weight for v in votes)
@@ -101,7 +101,9 @@ class VotingSystem:
         elif strategy == DebateStrategy.CONSENSUS:
             decision, reasoning = self._consensus_decision(votes)
         elif strategy == DebateStrategy.SUPER_MAJORITY:
-            decision, reasoning = self._super_majority_decision(approve_weight, total_weight)
+            decision, reasoning = self._super_majority_decision(
+                approve_weight, total_weight
+            )
         else:  # WEIGHTED_VOTE / SIMPLE_MAJORITY
             decision, reasoning = self._weighted_decision(approve_weight, reject_weight)
 
@@ -127,18 +129,31 @@ class VotingSystem:
                 return "needs_changes", f"{v.agent_role} has concerns: {v.reasoning}"
         return "approved", "All agents approved (consensus)"
 
-    def _super_majority_decision(self, approve_weight: int, total_weight: int) -> tuple[str, str]:
+    def _super_majority_decision(
+        self, approve_weight: int, total_weight: int
+    ) -> tuple[str, str]:
         if total_weight == 0:
             return "rejected", "No votes cast"
         ratio = approve_weight / total_weight
         if ratio >= 0.75:
             return "approved", f"Super majority reached ({ratio:.0%} approval)"
-        return "rejected", f"Super majority not reached ({ratio:.0%} approval, need 75%)"
+        return (
+            "rejected",
+            f"Super majority not reached ({ratio:.0%} approval, need 75%)",
+        )
 
-    def _weighted_decision(self, approve_weight: int, reject_weight: int) -> tuple[str, str]:
+    def _weighted_decision(
+        self, approve_weight: int, reject_weight: int
+    ) -> tuple[str, str]:
         if approve_weight > reject_weight:
-            return "approved", f"Approved by weighted vote ({approve_weight} vs {reject_weight})"
-        return "rejected", f"Rejected by weighted vote ({reject_weight} vs {approve_weight})"
+            return (
+                "approved",
+                f"Approved by weighted vote ({approve_weight} vs {reject_weight})",
+            )
+        return (
+            "rejected",
+            f"Rejected by weighted vote ({reject_weight} vs {approve_weight})",
+        )
 
     def _save_result(self, result: VotingResult) -> None:
         filename = f"vote_{int(result.timestamp * 1000)}.json"
