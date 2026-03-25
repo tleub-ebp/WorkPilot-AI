@@ -21,7 +21,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
 
-from test_discovery import (
+from analysis.test_discovery import (
     TestDiscovery,
     TestDiscoveryResult,
     TestFramework,
