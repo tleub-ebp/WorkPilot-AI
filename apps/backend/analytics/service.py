@@ -138,7 +138,6 @@ class AnalyticsService:
         Handle a single phase event.
         """
         phase = phase_data.get("phase", "")
-        message = phase_data.get("message", "")
 
         if phase == "planning":
             self.collector.start_phase("planning", "planner")
@@ -330,7 +329,7 @@ class AgentExecutionTracker:
         """
         Track a complete agent run with analytics.
         """
-        with self.analytics.start_build_from_spec(spec_path, **kwargs) as build_id:
+        with self.analytics.start_build_from_spec(spec_path, **kwargs) as _:
             try:
                 # Start the appropriate phase
                 if agent_type == "planner":

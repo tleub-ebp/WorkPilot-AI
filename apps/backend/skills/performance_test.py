@@ -17,17 +17,17 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
 # Import new optimization systems
-from composite_skills import CompositeSkill, CompositeSkillExecutor
-from context_optimizer import create_context_optimizer
-from dynamic_skill_manager import DynamicSkillManager
-from optimization_config import get_optimization_config
-from personalized_context import PersonalizedSkillManager
-from token_optimizer import create_token_optimizer
+from skills.composite_skills import CompositeSkill, CompositeSkillExecutor
+from skills.context_optimizer import create_context_optimizer
+from skills.dynamic_skill_manager import DynamicSkillManager
+from skills.optimization_config import get_optimization_config
+from skills.personalized_context import PersonalizedSkillManager
+from skills.token_optimizer import create_token_optimizer
 
 # Legacy imports for comparison
 try:
-    from optimized_skill_manager import OptimizedSkillManager
-    from skill_manager import SkillManager
+    from skills.optimized_skill_manager import OptimizedSkillManager
+    from skills.skill_manager import SkillManager
 
     LEGACY_AVAILABLE = True
 except ImportError:

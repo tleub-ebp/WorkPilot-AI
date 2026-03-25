@@ -13,8 +13,8 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from agent_wrapper import StreamingAgentWrapper, create_streaming_wrapper
-from websocket_server import StreamingManager
+from streaming.agent_wrapper import StreamingAgentWrapper, create_streaming_wrapper
+from streaming.streaming_manager import StreamingManager
 
 
 class TestStreamingAgentWrapper:
@@ -83,13 +83,6 @@ class TestStreamingAgentWrapper:
 
         thinking = "Analyzing the code structure..."
         await streaming_wrapper.emit_agent_thinking(thinking)
-
-        expected_event = {
-            "event_type": "agent_thinking",
-            "timestamp": pytest.approx(float, rel=1e-6),
-            "data": {"thinking": thinking, "session_id": "test-session-123"},
-            "session_id": "test-session-123",
-        }
 
         mock_streaming_manager.broadcast_event.assert_called_once()
         call_args = mock_streaming_manager.broadcast_event.call_args[0]
@@ -220,10 +213,10 @@ class TestStreamingIntegration:
         # Mock the broadcast to capture events
         events = []
 
-        async def capture_broadcast(session_id, event):
+        def capture_broadcast(session_id, event):
             events.append((session_id, event))
 
-        manager.broadcast_event = capture_broadcast
+        manager._broadcast_event = capture_broadcast
 
         # Create wrapper
         wrapper = StreamingAgentWrapper("integration-test", enable_recording=False)

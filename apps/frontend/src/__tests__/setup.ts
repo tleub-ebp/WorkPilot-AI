@@ -1,57 +1,57 @@
 /**
  * Test setup file for Vitest
  */
-import { vi, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, rmSync, existsSync } from 'fs';
-import path from 'path';
+import { mkdirSync, rmSync, existsSync } from 'node:fs';
+import path from 'node:path';
+import '@testing-library/jest-dom';
 
 // Mock localStorage for tests that need it
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
 
   return {
-    getItem: vi.fn((key: string) => store[key] || null),
-    setItem: vi.fn((key: string, value: string) => {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => {
       store[key] = value;
-    }),
-    removeItem: vi.fn((key: string) => {
+    },
+    removeItem: (key: string) => {
       delete store[key];
-    }),
-    clear: vi.fn(() => {
+    },
+    clear: () => {
       store = {};
-    })
+    }
   };
 })();
 
 // Make localStorage available globally
-Object.defineProperty(global, 'localStorage', {
+Object.defineProperty(globalThis, 'localStorage', {
   value: localStorageMock
 });
 
 // Mock scrollIntoView for Radix Select in jsdom
 if (typeof HTMLElement !== 'undefined' && !HTMLElement.prototype.scrollIntoView) {
   Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
-    value: vi.fn(),
+    value: () => {},
     writable: true
   });
 }
 
 // Mock requestAnimationFrame/cancelAnimationFrame for jsdom
 // Required by useXterm.ts which uses requestAnimationFrame for initial fit
-if (typeof global.requestAnimationFrame === 'undefined') {
-  global.requestAnimationFrame = vi.fn((callback: FrameRequestCallback) => {
+if (globalThis.requestAnimationFrame === undefined) {
+  globalThis.requestAnimationFrame = (callback: FrameRequestCallback) => {
     return setTimeout(() => callback(Date.now()), 0) as unknown as number;
-  });
-  global.cancelAnimationFrame = vi.fn((id: number) => {
+  };
+  globalThis.cancelAnimationFrame = (id: number) => {
     clearTimeout(id);
-  });
+  };
 }
 
 // Test data directory for isolated file operations
 export const TEST_DATA_DIR = '/tmp/workpilot-ai-tests';
 
 // Create fresh test directory before each test
-beforeEach(() => {
+const setupTest = () => {
   // Clear localStorage
   localStorageMock.clear();
 
@@ -74,47 +74,52 @@ beforeEach(() => {
   } catch {
     // Ignore errors if directory already exists from another parallel test
   }
-});
+};
+
+// Export setup function for use in tests
+export { setupTest };
 
 // Clean up test directory after each test
-afterEach(() => {
-  vi.clearAllMocks();
-  vi.resetModules();
-});
+const cleanupTest = () => {
+  // Manual cleanup without vitest
+};
+
+// Export cleanup function for use in tests
+export { cleanupTest };
 
 // Mock window.electronAPI for renderer tests
-if (typeof window !== 'undefined') {
-  (window as unknown as { electronAPI: unknown }).electronAPI = {
-    addProject: vi.fn(),
-    removeProject: vi.fn(),
-    getProjects: vi.fn(),
-    updateProjectSettings: vi.fn(),
-    getTasks: vi.fn(),
-    createTask: vi.fn(),
-    startTask: vi.fn(),
-    stopTask: vi.fn(),
-    submitReview: vi.fn(),
-    onTaskProgress: vi.fn(() => vi.fn()),
-    onTaskError: vi.fn(() => vi.fn()),
-    onTaskLog: vi.fn(() => vi.fn()),
-    onTaskStatusChange: vi.fn(() => vi.fn()),
-    getSettings: vi.fn(),
-    saveSettings: vi.fn(),
-    selectDirectory: vi.fn(),
-    getAppVersion: vi.fn(),
+if (typeof globalThis !== 'undefined') {
+  (globalThis as unknown as { electronAPI: unknown }).electronAPI = {
+    addProject: () => Promise.resolve({ success: true }),
+    removeProject: () => Promise.resolve({ success: true }),
+    getProjects: () => Promise.resolve({ success: true, data: [] }),
+    updateProjectSettings: () => Promise.resolve({ success: true }),
+    getTasks: () => Promise.resolve({ success: true, data: [] }),
+    createTask: () => Promise.resolve({ success: true, data: { id: 'test-task' } }),
+    startTask: () => Promise.resolve({ success: true }),
+    stopTask: () => Promise.resolve({ success: true }),
+    submitReview: () => Promise.resolve({ success: true }),
+    onTaskProgress: () => () => {},
+    onTaskError: () => () => {},
+    onTaskLog: () => () => {},
+    onTaskStatusChange: () => () => {},
+    getSettings: () => Promise.resolve({ success: true, data: {} }),
+    saveSettings: () => Promise.resolve({ success: true }),
+    selectDirectory: () => Promise.resolve({ success: true, data: '/test/path' }),
+    getAppVersion: () => Promise.resolve({ success: true, data: '1.0.0' }),
     // Tab state persistence (IPC-based)
-    getTabState: vi.fn().mockResolvedValue({
+    getTabState: () => Promise.resolve({
       success: true,
       data: { openProjectIds: [], activeProjectId: null, tabOrder: [] }
     }),
-    saveTabState: vi.fn().mockResolvedValue({ success: true }),
+    saveTabState: () => Promise.resolve({ success: true }),
     // Profile-related API methods (API Profile feature)
-    getAPIProfiles: vi.fn(),
-    saveAPIProfile: vi.fn(),
-    updateAPIProfile: vi.fn(),
-    deleteAPIProfile: vi.fn(),
-    setActiveAPIProfile: vi.fn(),
-    testConnection: vi.fn()
+    getAPIProfiles: () => Promise.resolve({ success: true, data: [] }),
+    saveAPIProfile: () => Promise.resolve({ success: true }),
+    updateAPIProfile: () => Promise.resolve({ success: true }),
+    deleteAPIProfile: () => Promise.resolve({ success: true }),
+    setActiveAPIProfile: () => Promise.resolve({ success: true }),
+    testConnection: () => Promise.resolve({ success: true })
   };
 }
 

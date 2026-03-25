@@ -6,8 +6,8 @@
  */
 
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { join } from 'path';
-import { tmpdir } from 'os';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 // Store registered IPC handlers so we can call them directly
 type IpcHandler = (event: unknown, ...args: unknown[]) => Promise<unknown>;
@@ -40,9 +40,9 @@ vi.mock('@electron-toolkit/utils', () => ({
   },
 }));
 
-// Mock fs
+// Mock node:fs
 const mockFiles: Map<string, string> = new Map();
-vi.mock('fs', () => ({
+vi.mock('node:fs', () => ({
   existsSync: vi.fn((path: string) => mockFiles.has(path)),
   readFileSync: vi.fn((path: string) => {
     const content = mockFiles.get(path);
@@ -260,7 +260,7 @@ describe('SETTINGS_CLAUDE_CODE_GET_ONBOARDING_STATUS handler', () => {
   describe('error handling', () => {
     test('should handle read errors gracefully', async () => {
       // Get the mocked functions (vitest stores the implementation)
-      const { existsSync, readFileSync } = await import('fs');
+      const { existsSync, readFileSync } = await import('node:fs');
 
       // Cast to vi.Mock for accessing mock methods
       type MockFn = ReturnType<typeof vi.fn>;

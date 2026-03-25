@@ -22,6 +22,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
+import sys
+import os
+
 from src.config.settings import Settings
 
 # ── 1. Top-level imports ─────────────────────────────────────────────
@@ -354,7 +357,7 @@ class TestExceptionHierarchy:
     def test_rate_limit_error_has_retry_after(self):
         """RateLimitError stores a retry_after attribute."""
         exc = RateLimitError("rate limited", retry_after=30.0)
-        assert exc.retry_after == 30.0
+        assert exc.retry_after == 30
         assert "30.0" in str(exc)
 
 

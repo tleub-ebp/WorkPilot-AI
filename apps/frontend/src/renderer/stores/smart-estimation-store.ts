@@ -54,7 +54,7 @@ const initialState = {
   status: '',
   streamingOutput: '',
   result: null,
-  error: null,
+  error: null as string | null,
   isOpen: false,
   initialTaskDescription: '',
 };
@@ -123,7 +123,7 @@ export function startSmartEstimation(projectId: string): void {
   useSmartEstimationStore.setState({ streamingOutput: '', error: null, result: null });
 
   // Send estimation request via IPC
-  window.electronAPI.runSmartEstimation(projectId, initialTaskDescription);
+  globalThis.electronAPI.runSmartEstimation(projectId, initialTaskDescription);
 }
 
 /**
@@ -135,31 +135,38 @@ export function setupSmartEstimationListeners(): () => void {
   const store = () => useSmartEstimationStore.getState();
 
   // Listen for streaming chunks
-  const unsubChunk = window.electronAPI.onSmartEstimationStreamChunk((chunk: string) => {
+  const unsubChunk = globalThis.electronAPI.onSmartEstimationStreamChunk((chunk: string) => {
     store().appendStreamingOutput(chunk);
   });
 
   // Listen for status updates
-  const unsubStatus = window.electronAPI.onSmartEstimationStatus((status: string) => {
+  const unsubStatus = globalThis.electronAPI.onSmartEstimationStatus((status: string) => {
     store().setStatus(status);
   });
 
   // Listen for errors
-  const unsubError = window.electronAPI.onSmartEstimationError((error: string) => {
+  const unsubError = globalThis.electronAPI.onSmartEstimationError((error: string) => {
     store().setError(error);
   });
 
   // Listen for completion with structured result
-  const unsubComplete = window.electronAPI.onSmartEstimationComplete(
+  const unsubComplete = globalThis.electronAPI.onSmartEstimationComplete(
     (result: SmartEstimationResult) => {
       store().setResult(result);
     }
   );
+
+  // Listen for events (for future extensibility)
+  const unsubEvent = globalThis.electronAPI.onSmartEstimationEvent((event: any) => {
+    // Events are handled by the runner, but we store them if needed
+    console.log('Smart estimation event:', event);
+  });
 
   return () => {
     unsubChunk();
     unsubStatus();
     unsubError();
     unsubComplete();
+    unsubEvent();
   };
 }

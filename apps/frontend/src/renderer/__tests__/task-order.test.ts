@@ -354,20 +354,19 @@ describe('Task Order State Management', () => {
       const order = createTestTaskOrder({ backlog: ['task-1'] });
       useTaskStore.setState({ taskOrder: order });
 
-      // Mock localStorage.setItem to throw
-      const originalSetItem = localStorage.setItem;
-      localStorage.setItem = vi.fn(() => {
-        throw new Error('Storage quota exceeded');
-      });
+      // Mock localStorage.setItem to throw using our test setup helper
+      const testError = new Error('Storage quota exceeded');
+      (localStorage as any)._setShouldThrow(true, testError);
 
       // Should not throw
       expect(() => {
         useTaskStore.getState().saveTaskOrder('project-1');
       }).not.toThrow();
 
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to save task order:', expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to save task order:', testError);
 
-      localStorage.setItem = originalSetItem;
+      // Reset localStorage mock
+      (localStorage as any)._setShouldThrow(false);
       consoleSpy.mockRestore();
     });
 

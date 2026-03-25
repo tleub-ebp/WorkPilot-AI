@@ -14,20 +14,29 @@ import type { Task, TaskStatus } from '../../../shared/types';
 const mockGetTasks = vi.fn();
 const mockCreateTask = vi.fn();
 
-vi.stubGlobal('window', {
-  electronAPI: {
-    getTasks: mockGetTasks,
-    createTask: mockCreateTask,
-    startTask: vi.fn(),
-    stopTask: vi.fn(),
-    submitReview: vi.fn(),
-    updateTaskStatus: vi.fn(),
-    updateTask: vi.fn(),
-    checkTaskRunning: vi.fn(),
-    recoverStuckTask: vi.fn(),
-    deleteTask: vi.fn(),
-    archiveTasks: vi.fn()
-  }
+// Setup mocks before each test
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.resetModules();
+
+  // Mock globalThis.electronAPI
+  Object.defineProperty(globalThis, 'electronAPI', {
+    value: {
+      getTasks: mockGetTasks,
+      createTask: mockCreateTask,
+      startTask: vi.fn(),
+      stopTask: vi.fn(),
+      submitReview: vi.fn(),
+      updateTaskStatus: vi.fn(),
+      updateTask: vi.fn(),
+      checkTaskRunning: vi.fn(),
+      recoverStuckTask: vi.fn(),
+      deleteTask: vi.fn(),
+      archiveTasks: vi.fn()
+    },
+    writable: true,
+    configurable: true
+  });
 });
 
 describe('task-store-persistence', () => {
@@ -48,7 +57,6 @@ describe('task-store-persistence', () => {
     updatedAt: new Date(),
     ...overrides
   });
-
 
   beforeEach(async () => {
     vi.clearAllMocks();

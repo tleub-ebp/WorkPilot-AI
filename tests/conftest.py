@@ -20,15 +20,19 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# Add the project root to the Python path
+_PROJECT_ROOT = str(Path(__file__).parent.parent)
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
 # ---------------------------------------------------------------------------
 # Backend packages that are frequently polluted by MagicMock in test files.
 # Before each test file is collected we remove any MagicMock entries so
 # Python's import machinery can resolve real sub-modules.
-# ---------------------------------------------------------------------------
-
-_BACKEND = str(Path(__file__).parent.parent / "apps" / "backend")
-if _BACKEND not in sys.path:
-    sys.path.insert(0, _BACKEND)
+# NOTE: Commented out apps/backend path addition as it interferes with connector tests
+# _BACKEND = str(Path(__file__).parent.parent / "apps" / "backend")
+# if _BACKEND not in sys.path:
+#     sys.path.insert(0, _BACKEND)
 
 # Packages that get polluted by test files setting sys.modules[name] = MagicMock().
 # This list must cover EVERY top-level package name that any test file mocks via
@@ -88,7 +92,7 @@ def _clean_mock_modules() -> None:
     instead of hitting a MagicMock that cannot resolve sub-modules.
     """
     keys_to_remove = []
-    for key, mod in list(sys.modules.items()):
+    for key, mod in sys.modules.items():
         if not isinstance(mod, MagicMock):
             continue
         # Check if this key belongs to a protected package
@@ -131,9 +135,9 @@ def temp_git_repo(tmp_path):
         "GIT_CONFIG_NOSYSTEM": "1",
         "HOME": str(tmp_path),
         "GIT_AUTHOR_NAME": "Test",
-        "GIT_AUTHOR_EMAIL": "test@test.com",
+        "GIT_AUTHOR_EMAIL": TEST_EMAIL,
         "GIT_COMMITTER_NAME": "Test",
-        "GIT_COMMITTER_EMAIL": "test@test.com",
+        "GIT_COMMITTER_EMAIL": TEST_EMAIL,
     }
 
     subprocess.run(
@@ -144,7 +148,7 @@ def temp_git_repo(tmp_path):
         check=True,
     )
     subprocess.run(
-        ["git", "config", "user.email", "test@test.com"],
+        ["git", "config", "user.email", TEST_EMAIL],
         cwd=repo,
         capture_output=True,
         check=True,
@@ -195,6 +199,7 @@ TEST_ORG_URL = "https://dev.azure.com/test-organization"
 TEST_PROJECT = "TestProject"
 TEST_REPO_ID = "abc12345-def6-7890-abcd-ef1234567890"
 TEST_REPO_NAME = "test-repository"
+TEST_EMAIL = "test@test.com"
 
 
 # ── Settings fixtures ───────────────────────────────────────────────
@@ -491,6 +496,86 @@ def sample_api_file_content():
 # ============================================================================
 # pytest-asyncio configuration for async tests
 # ============================================================================
+
+# ── Directory fixtures for spec tests ────────────────────────────────
+
+
+@pytest.fixture
+def temp_dir(tmp_path):
+    """Create a temporary directory for testing."""
+    return tmp_path
+
+
+@pytest.fixture
+def spec_dir(tmp_path):
+    """Create a temporary spec directory for testing."""
+    spec_path = tmp_path / "specs"
+    spec_path.mkdir(exist_ok=True)
+    return spec_path
+
+
+@pytest.fixture
+def mock_run_agent_fn():
+    """Mock run_agent function."""
+    from unittest.mock import MagicMock
+    import asyncio
+    
+    def _create_mock(success=True, output="Success"):
+        def mock_async(*args, **kwargs):
+            return success, output
+        
+        mock = MagicMock()
+        mock.side_effect = mock_async
+        return mock
+    
+    return _create_mock
+
+
+@pytest.fixture
+def mock_task_logger():
+    """Mock task logger."""
+    from unittest.mock import MagicMock
+    return MagicMock()
+
+
+@pytest.fixture
+def mock_ui_module():
+    """Mock UI module."""
+    from unittest.mock import MagicMock
+    return MagicMock()
+
+
+@pytest.fixture
+def mock_spec_validator():
+    """Mock spec validator."""
+    from unittest.mock import MagicMock
+    
+    def _create_mock(spec_valid=True, plan_valid=True, context_valid=True, all_valid=True):
+        mock = MagicMock()
+        
+        # Create mock validation results
+        class MockValidationResult:
+            def __init__(self, valid, checkpoint, errors=None, fixes=None):
+                self.valid = valid
+                self.checkpoint = checkpoint
+                self.errors = errors or []
+                self.fixes = fixes or []
+        
+        # Mock validate_all method
+        def validate_all():
+            results = []
+            # Use the individual valid flags, not the all_valid flag
+            results.append(MockValidationResult(spec_valid, "spec"))
+            results.append(MockValidationResult(plan_valid, "plan"))
+            results.append(MockValidationResult(context_valid, "context"))
+            return results
+        
+        mock.validate_all = validate_all
+        mock.validate_all.return_value = validate_all()
+        
+        return mock
+    
+    return _create_mock
 
 # Import asyncio event loop plugin
 pytest_plugins = ('pytest_asyncio',)

@@ -8,8 +8,10 @@ from contextlib import asynccontextmanager
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
+import ipaddress
 import json
 import os
+import socket
 from typing import Annotated, Any
 from urllib.parse import urlparse
 
@@ -45,6 +47,31 @@ GENERATION_FAILED = "Generation failed: {e}"
 TEMPLATE_NOT_FOUND = "Template not found"
 GITHUB_CLI_AUTH_SUCCESS = "Logged in to github.com"
 API_MODELS_ENDPOINT = "/v1/models"
+
+# SSRF Protection - Authorized URLs list
+AUTHORIZED_URLS = {
+    "anthropic": "https://api.anthropic.com",
+    "openai": "https://api.openai.com",
+    "google": "https://generativelanguage.googleapis.com",
+    "mistral": "https://api.mistral.ai",
+    "deepseek": "https://api.deepseek.com",
+    "grok": "https://api.x.ai",
+    "meta": "https://api.together.xyz",
+    "cursor": "https://api.cursor.com",
+    "windsurf": "https://server.codeium.com",
+}
+
+# Private IP ranges for SSRF protection
+PRIVATE_IP_RANGES = [
+    ipaddress.IPv4Network("10.0.0.0/8"),
+    ipaddress.IPv4Network("172.16.0.0/12"),
+    ipaddress.IPv4Network("192.168.0.0/16"),
+    ipaddress.IPv4Network("127.0.0.0/8"),
+    ipaddress.IPv4Network("169.254.0.0/16"),
+    ipaddress.IPv6Network("::1/128"),
+    ipaddress.IPv6Network("fc00::/7"),
+    ipaddress.IPv6Network("fe80::/10"),
+]
 
 
 # Lazy import: llm_discovery is only needed by endpoint functions, not at module init.
@@ -97,7 +124,7 @@ def force_claude_provider_config(*args, **kwargs):
     return _get_llm_config()["force_claude_provider_config"](*args, **kwargs)
 
 
-from validated_keys_db import is_validated, set_validated
+from apps.backend.validated_keys_db import is_validated, set_validated
 
 
 @asynccontextmanager
@@ -523,6 +550,116 @@ def test_provider(request: Request, provider: str):
         raise HTTPException(status_code=400, detail=PROVIDER_TEST_FAILED.format(e=e))
 
 
+def validate_url_ssrf(provider: str, url: str) -> str:
+    """
+    Public wrapper for SSRF URL validation - intended for testing purposes.
+
+    Args:
+        provider: Provider name for authorized URL lookup
+        url: User-provided URL to validate
+
+    Returns:
+        Safe, normalized URL string
+
+    Raises:
+        ValueError: If URL is invalid or potentially malicious
+    """
+    return _validate_url_ssrf(provider, url)
+
+
+def _validate_url_ssrf(provider: str, url: str) -> str:
+    """
+    Validate URL against SSRF attacks using authorized URLs list and IP verification.
+
+    Args:
+        provider: Provider name for authorized URL lookup
+        url: User-provided URL to validate
+
+    Returns:
+        Safe, normalized URL string
+
+    Raises:
+        ValueError: If URL is invalid or potentially malicious
+    """
+    if not url:
+        raise ValueError("URL cannot be empty")
+
+    try:
+        parsed = urlparse(url)
+    except Exception as e:
+        raise ValueError(f"Invalid URL format: {e}")
+
+    # Check scheme
+    if parsed.scheme not in ("https", "http"):
+        raise ValueError("Only HTTP and HTTPS schemes are allowed")
+
+    # For HTTPS providers, enforce authorized URLs
+    if provider in AUTHORIZED_URLS:
+        authorized_url = AUTHORIZED_URLS[provider]
+        authorized_parsed = urlparse(authorized_url)
+
+        # Check if hostname matches authorized hostname
+        if parsed.hostname != authorized_parsed.hostname:
+            raise ValueError(
+                f"Hostname {parsed.hostname} is not authorized for provider {provider}"
+            )
+
+        # Check if port matches authorized port (if specified)
+        if (
+            authorized_parsed.port
+            and parsed.port
+            and parsed.port != authorized_parsed.port
+        ):
+            raise ValueError(
+                f"Port {parsed.port} is not authorized for provider {provider}"
+            )
+
+        # Rebuild safe URL with authorized scheme and host
+        safe_url = f"{authorized_parsed.scheme}://{authorized_parsed.netloc}"
+        return safe_url.rstrip("/")
+
+    # For local providers (like Ollama), perform IP validation
+    hostname = parsed.hostname or ""
+    if hostname in ("localhost", "127.0.0.1"):
+        # Allow localhost for local providers
+        safe_url = f"{parsed.scheme}://{hostname}"
+        if parsed.port:
+            safe_url += f":{parsed.port}"
+        return safe_url.rstrip("/")
+
+    # For any other hostname, perform IP address validation
+    try:
+        # Resolve hostname to IP address
+        ip = socket.gethostbyname(hostname)
+
+        # Try to parse as IPv4 first, then IPv6
+        try:
+            ip_obj = ipaddress.IPv4Address(ip)
+        except ipaddress.AddressValueError:
+            # For IPv6, we'd need the getaddrinfo instead of gethostbyname
+            # For now, we'll be conservative and block unknown hostnames
+            raise ValueError(
+                f"Unable to validate IPv6 address for hostname: {hostname}"
+            )
+
+        # Check if IP is in private ranges
+        for private_range in PRIVATE_IP_RANGES:
+            if ip_obj in private_range:
+                raise ValueError(f"IP address {ip} is in private range and not allowed")
+
+    except socket.gaierror:
+        raise ValueError(f"Unable to resolve hostname: {hostname}")
+    except ValueError:
+        # Re-raise our custom ValueError
+        raise
+    except Exception as e:
+        raise ValueError(f"IP validation failed: {e}")
+
+    # If all checks pass, return normalized URL
+    safe_url = f"{parsed.scheme}://{parsed.netloc}"
+    return safe_url.rstrip("/")
+
+
 def _validate_openai_base_url(base_url: str | None) -> str:
     """
     Validate a user-provided OpenAI base URL to prevent SSRF.
@@ -533,21 +670,10 @@ def _validate_openai_base_url(base_url: str | None) -> str:
     if not base_url:
         return "https://api.openai.com"
 
-    parsed = urlparse(base_url)
-    if parsed.scheme != "https":
-        raise ValueError("Invalid base_url scheme; only https is allowed.")
-    if not parsed.netloc:
-        raise ValueError("Invalid base_url; host is required.")
-
-    hostname = parsed.hostname or ""
-    # Restrict to known-safe OpenAI host(s). Extend this list if needed.
-    _allowed_hosts = {"api.openai.com"}
-    if hostname not in _allowed_hosts:
-        raise ValueError("base_url host is not allowed.")
-
-    # Rebuild a normalized base URL without path/query/fragment.
-    normalized = f"{parsed.scheme}://{parsed.netloc}"
-    return normalized.rstrip("/")
+    try:
+        return _validate_url_ssrf("openai", base_url)
+    except ValueError as e:
+        raise ValueError(f"Invalid OpenAI base URL: {e}")
 
 
 @app.post("/providers/test-key/{provider}")
@@ -557,7 +683,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
     api_key = payload.get("api_key")
     base_url = payload.get("base_url")
 
-    async def _test_bearer(url: str, key: str) -> dict:
+    async def _test_bearer(url: str, key: str, provider: str) -> dict:
         """Helper: test a Bearer-authenticated API_MODELS_ENDPOINT endpoint."""
         try:
             headers = {"Authorization": f"Bearer {key}"}
@@ -575,13 +701,14 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
     # --- Anthropic ---
     if provider in ("anthropic", "claude"):
         try:
+            # Use authorized URL for Anthropic
+            safe_url = (
+                _validate_url_ssrf("anthropic", "https://api.anthropic.com")
+                + API_MODELS_ENDPOINT
+            )
             headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01"}
             async with httpx.AsyncClient() as client:
-                resp = await client.get(
-                    "https://api.anthropic.comAPI_MODELS_ENDPOINT",
-                    headers=headers,
-                    timeout=10,
-                )
+                resp = await client.get(safe_url, headers=headers, timeout=10)
             if resp.status_code in (200, 403):
                 set_validated(provider, api_key, True)
                 return {"success": True}
@@ -597,17 +724,20 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
             safe_base_url = _validate_openai_base_url(base_url)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
-        url = safe_base_url + "API_MODELS_ENDPOINT"
-        return await _test_bearer(url, api_key)
+        url = safe_base_url + API_MODELS_ENDPOINT
+        return await _test_bearer(url, api_key, provider)
 
     # --- Google Gemini ---
     if provider == "google":
         try:
-            async with httpx.AsyncClient() as client:
-                resp = await client.get(
-                    f"https://generativelanguage.googleapis.comAPI_MODELS_ENDPOINT?key={api_key}",
-                    timeout=10,
+            safe_url = (
+                _validate_url_ssrf(
+                    "google", "https://generativelanguage.googleapis.com"
                 )
+                + API_MODELS_ENDPOINT
+            )
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(f"{safe_url}?key={api_key}", timeout=10)
             if resp.status_code == 200:
                 set_validated(provider, api_key, True)
                 return {"success": True}
@@ -619,27 +749,57 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
 
     # --- Mistral AI ---
     if provider == "mistral":
-        url = (base_url or "https://api.mistral.ai") + "API_MODELS_ENDPOINT"
-        return await _test_bearer(url, api_key)
+        try:
+            safe_base_url = _validate_url_ssrf(
+                "mistral", base_url or "https://api.mistral.ai"
+            )
+            url = safe_base_url + API_MODELS_ENDPOINT
+            return await _test_bearer(url, api_key, provider)
+        except ValueError as e:
+            return {"success": False, "error": str(e)}
 
     # --- DeepSeek ---
     if provider == "deepseek":
-        url = (base_url or "https://api.deepseek.com") + "API_MODELS_ENDPOINT"
-        return await _test_bearer(url, api_key)
+        try:
+            safe_base_url = _validate_url_ssrf(
+                "deepseek", base_url or "https://api.deepseek.com"
+            )
+            url = safe_base_url + API_MODELS_ENDPOINT
+            return await _test_bearer(url, api_key, provider)
+        except ValueError as e:
+            return {"success": False, "error": str(e)}
 
     # --- Grok (xAI) ---
     if provider == "grok":
-        return await _test_bearer("https://api.x.aiAPI_MODELS_ENDPOINT", api_key)
+        try:
+            safe_url = (
+                _validate_url_ssrf("grok", "https://api.x.ai") + API_MODELS_ENDPOINT
+            )
+            return await _test_bearer(safe_url, api_key, provider)
+        except ValueError as e:
+            return {"success": False, "error": str(e)}
 
     # --- Meta (via Together AI / Replicate — OpenAI-compatible) ---
     if provider == "meta":
-        url = (base_url or "https://api.together.xyz") + "API_MODELS_ENDPOINT"
-        return await _test_bearer(url, api_key)
+        try:
+            safe_base_url = _validate_url_ssrf(
+                "meta", base_url or "https://api.together.xyz"
+            )
+            url = safe_base_url + API_MODELS_ENDPOINT
+            return await _test_bearer(url, api_key, provider)
+        except ValueError as e:
+            return {"success": False, "error": str(e)}
 
     # --- Cursor ---
     if provider == "cursor":
-        url = (base_url or "https://api.cursor.com") + "API_MODELS_ENDPOINT"
-        return await _test_bearer(url, api_key)
+        try:
+            safe_base_url = _validate_url_ssrf(
+                "cursor", base_url or "https://api.cursor.com"
+            )
+            url = safe_base_url + API_MODELS_ENDPOINT
+            return await _test_bearer(url, api_key, provider)
+        except ValueError as e:
+            return {"success": False, "error": str(e)}
 
     # --- Windsurf (Codeium) ---
     if provider == "windsurf":
@@ -657,10 +817,14 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
         except Exception as mcp_error:
             logging.warning(f"MCP test failed, trying direct API: {mcp_error}")
         try:
-            url = "https://server.codeium.com/apiAPI_MODELS_ENDPOINT"
+            safe_url = (
+                _validate_url_ssrf("windsurf", "https://server.codeium.com")
+                + "/api"
+                + API_MODELS_ENDPOINT
+            )
             headers = {"Authorization": f"Bearer {oauth_token}"}
             async with httpx.AsyncClient() as client:
-                resp = await client.get(url, headers=headers, timeout=10)
+                resp = await client.get(safe_url, headers=headers, timeout=10)
             if resp.status_code in [200, 404]:
                 set_validated(provider, oauth_token, True)
                 return {"success": True, "method": "direct_api"}

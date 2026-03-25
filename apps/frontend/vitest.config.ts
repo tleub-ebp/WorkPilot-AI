@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config';
-import { resolve } from 'path';
+import { resolve } from 'node:path';
 
 export default defineConfig({
   test: {
@@ -19,8 +19,8 @@ export default defineConfig({
       '@sentry/electron/main': resolve(__dirname, 'src/__mocks__/sentry-electron-main.ts'),
       '@sentry/electron/renderer': resolve(__dirname, 'src/__mocks__/sentry-electron-renderer.ts')
     },
-    // Setup files for test environment
-    setupFiles: ['src/__tests__/setup.ts']
+    // Setup files for test environment - use setupFiles to avoid vitest import issues
+    setupFiles: ['./src/__tests__/testSetup.ts']
   },
   resolve: {
     alias: {
