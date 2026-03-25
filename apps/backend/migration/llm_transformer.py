@@ -6,6 +6,7 @@ Uses Claude to improve code transformation quality with context-aware refactorin
 import asyncio
 import os
 from pathlib import Path
+from typing import Optional
 
 import anthropic
 
@@ -15,7 +16,7 @@ from .models import TransformationResult
 class LLMTransformer:
     """Enhance transformations with LLM intelligence."""
 
-    def __init__(self, project_dir: str, api_key: str | None = None):
+    def __init__(self, project_dir: str, api_key: Optional[str] = None):
         self.project_dir = Path(project_dir)
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         self.client = (
@@ -171,7 +172,7 @@ Ensure the transformation:
 """
 
     async def validate_transformation(
-        self, result: TransformationResult, test_files: list[str] | None = None
+        self, result: TransformationResult, test_files: Optional[list[str]] = None
     ) -> bool:
         """
         Use LLM to validate if transformation is correct.
