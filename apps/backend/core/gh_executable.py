@@ -46,31 +46,14 @@ def _verify_gh_executable(path: str) -> bool:
 
 
 def _run_where_command() -> str | None:
-    """Run Windows 'where gh' command to find gh executable.
+    """Find gh executable using shutil.which() (cross-platform).
 
     Returns:
-        First path found, or None if command failed
+        Path to gh executable, or None if not found
     """
-    try:
-        result = subprocess.run(
-            "where gh",
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            timeout=5,
-            shell=True,  # Required: 'where' command must be executed through shell on Windows
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            found_path = result.stdout.strip().split("\n")[0].strip()
-            if (
-                found_path
-                and os.path.isfile(found_path)
-                and _verify_gh_executable(found_path)
-            ):
-                return found_path
-    except (subprocess.TimeoutExpired, OSError):
-        # 'where' command failed or timed out - fall through to return None
-        pass
+    found_path = shutil.which("gh")
+    if found_path and os.path.isfile(found_path) and _verify_gh_executable(found_path):
+        return found_path
     return None
 
 
@@ -102,40 +85,73 @@ def get_gh_executable() -> str | None:
 def _find_gh_executable() -> str | None:
     """Internal function to find gh executable."""
     # 1. Check GITHUB_CLI_PATH env var (set by Electron frontend)
-    env_path = os.environ.get("GITHUB_CLI_PATH")
-    if env_path and os.path.isfile(env_path) and _verify_gh_executable(env_path):
+    env_path = _check_env_path()
+    if env_path:
         return env_path
 
     # 2. Try shutil.which (works if gh is in PATH)
+    system_path = _check_system_path()
+    if system_path:
+        return system_path
+
+    # 3-4. Platform-specific paths
+    platform_path = _check_platform_paths()
+    if platform_path:
+        return platform_path
+
+    # 5. Windows-specific: Try 'where' command
+    return _run_where_command() if os.name == "nt" else None
+
+
+def _check_env_path() -> str | None:
+    """Check GITHUB_CLI_PATH environment variable."""
+    env_path = os.environ.get("GITHUB_CLI_PATH")
+    if env_path and os.path.isfile(env_path) and _verify_gh_executable(env_path):
+        return env_path
+    return None
+
+
+def _check_system_path() -> str | None:
+    """Check system PATH for gh executable."""
     gh_path = shutil.which("gh")
     if gh_path and _verify_gh_executable(gh_path):
         return gh_path
+    return None
 
-    # 3. macOS-specific: check Homebrew paths
+
+def _check_platform_paths() -> str | None:
+    """Check platform-specific installation paths."""
     if os.name != "nt":  # Unix-like systems (macOS, Linux)
-        homebrew_paths = [
-            "/opt/homebrew/bin/gh",  # Apple Silicon
-            "/usr/local/bin/gh",  # Intel Mac
-            "/home/linuxbrew/.linuxbrew/bin/gh",  # Linux Homebrew
-        ]
-        for path in homebrew_paths:
-            if os.path.isfile(path) and _verify_gh_executable(path):
-                return path
+        return _check_unix_paths()
+    else:  # Windows
+        return _check_windows_paths()
 
-    # 4. Windows-specific: check Program Files paths
-    if os.name == "nt":
-        windows_paths = [
-            os.path.expandvars(r"%PROGRAMFILES%\GitHub CLI\gh.exe"),
-            os.path.expandvars(r"%PROGRAMFILES(X86)%\GitHub CLI\gh.exe"),
-            os.path.expandvars(r"%LOCALAPPDATA%\Programs\GitHub CLI\gh.exe"),
-        ]
-        for path in windows_paths:
-            if os.path.isfile(path) and _verify_gh_executable(path):
-                return path
 
-        # 5. Try 'where' command with shell=True (more reliable on Windows)
-        return _run_where_command()
+def _check_unix_paths() -> str | None:
+    """Check Unix-like system paths (macOS/Linux Homebrew)."""
+    homebrew_paths = [
+        "/opt/homebrew/bin/gh",  # Apple Silicon
+        "/usr/local/bin/gh",  # Intel Mac
+        "/home/linuxbrew/.linuxbrew/bin/gh",  # Linux Homebrew
+    ]
+    return _find_valid_path(homebrew_paths)
 
+
+def _check_windows_paths() -> str | None:
+    """Check Windows-specific installation paths."""
+    windows_paths = [
+        os.path.expandvars(r"%PROGRAMFILES%\GitHub CLI\gh.exe"),
+        os.path.expandvars(r"%PROGRAMFILES(X86)%\GitHub CLI\gh.exe"),
+        os.path.expandvars(r"%LOCALAPPDATA%\Programs\GitHub CLI\gh.exe"),
+    ]
+    return _find_valid_path(windows_paths)
+
+
+def _find_valid_path(paths: list[str]) -> str | None:
+    """Find first valid path from a list of candidate paths."""
+    for path in paths:
+        if os.path.isfile(path) and _verify_gh_executable(path):
+            return path
     return None
 
 

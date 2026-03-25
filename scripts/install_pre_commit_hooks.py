@@ -13,7 +13,8 @@ def run_command(cmd, description):
     """Run a command and handle errors."""
     print(f"\n🔧 {description}...")
     try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=True)
+        cmd_list = cmd.split() if isinstance(cmd, str) else cmd
+        result = subprocess.run(cmd_list, capture_output=True, text=True, check=True)
         print(f"✅ {description} completed successfully")
         if result.stdout:
             print(result.stdout)
@@ -40,7 +41,7 @@ def main():
         print("✅ pre-commit is already installed")
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("📦 Installing pre-commit...")
-        if not run_command(f"{sys.executable} -m pip install pre-commit", "Installing pre-commit"):
+        if not run_command([sys.executable, "-m", "pip", "install", "pre-commit"], "Installing pre-commit"):
             sys.exit(1)
     
     # Install the hooks

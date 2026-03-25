@@ -481,7 +481,7 @@ def create_hybrid_entry(agent_name: str, decision: str, rationale: str,
                        context: Dict[str, Any], quality_score: float,
                        tags: List[str] = None) -> MemoryEntry:
     """Crée une entrée de mémoire hybride"""
-    entry_id = hashlib.md5(
+    entry_id = hashlib.sha256(
         f"{agent_name}{decision}{datetime.now().isoformat()}".encode()
     ).hexdigest()
     

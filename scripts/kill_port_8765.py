@@ -15,7 +15,7 @@ def find_processes_using_port(port):
     processes = []
     try:
         # Méthode 1: utiliser netstat
-        result = subprocess.run(['netstat', '-ano'], capture_output=True, text=True, shell=True)
+        result = subprocess.run(['netstat', '-ano'], capture_output=True, text=True)
         lines = result.stdout.split('\n')
         for line in lines:
             if f':{port}' in line and 'LISTENING' in line:
