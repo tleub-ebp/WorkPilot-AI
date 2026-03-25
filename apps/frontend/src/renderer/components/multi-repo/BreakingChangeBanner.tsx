@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import type { BreakingChange } from '@shared/types';
 
 interface BreakingChangeBannerProps {
-  breakingChanges: BreakingChange[];
+  readonly breakingChanges: BreakingChange[];
 }
 
 /**
@@ -29,9 +29,8 @@ export function BreakingChangeBanner({ breakingChanges }: BreakingChangeBannerPr
       </div>
 
       <div className="space-y-2">
-        {errors.map((bc, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-          <div key={`err-${i}`} className="flex items-start gap-2 text-sm">
+        {errors.map((bc) => (
+          <div key={`error-${bc.sourceRepo}-${bc.targetRepo}-${bc.changeType}-${bc.filePath}`} className="flex items-start gap-2 text-sm">
             <span className="shrink-0 rounded-full bg-destructive/20 px-1.5 py-0.5 text-xs font-medium text-destructive">
               {t('multiRepo:breakingChanges.severity.error')}
             </span>
@@ -52,9 +51,8 @@ export function BreakingChangeBanner({ breakingChanges }: BreakingChangeBannerPr
           </div>
         ))}
 
-        {warnings.map((bc, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-          <div key={`warn-${i}`} className="flex items-start gap-2 text-sm">
+        {warnings.map((bc) => (
+          <div key={`warning-${bc.sourceRepo}-${bc.targetRepo}-${bc.changeType}-${bc.filePath}`} className="flex items-start gap-2 text-sm">
             <span className="shrink-0 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
               {t('multiRepo:breakingChanges.severity.warning')}
             </span>
