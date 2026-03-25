@@ -12,13 +12,13 @@ import {
 } from './ui/alert-dialog';
 
 interface WorktreeCleanupDialogProps {
-  open: boolean;
-  taskTitle: string;
-  worktreePath?: string;
-  isProcessing: boolean;
-  error?: string;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
+  readonly open: boolean;
+  readonly taskTitle: string;
+  readonly worktreePath?: string;
+  readonly isProcessing: boolean;
+  readonly error?: string;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onConfirm: () => void;
 }
 
 /**
@@ -34,6 +34,30 @@ export function WorktreeCleanupDialog({
   onConfirm
 }: WorktreeCleanupDialogProps) {
   const { t } = useTranslation(['dialogs', 'common']);
+
+  let buttonContent;
+  if (isProcessing) {
+    buttonContent = (
+      <>
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        {t('dialogs:worktreeCleanup.completing')}
+      </>
+    );
+  } else if (error) {
+    buttonContent = (
+      <>
+        <RefreshCw className="mr-2 h-4 w-4" />
+        {t('dialogs:worktreeCleanup.retry')}
+      </>
+    );
+  } else {
+    buttonContent = (
+      <>
+        <FolderX className="mr-2 h-4 w-4" />
+        {t('dialogs:worktreeCleanup.confirm')}
+      </>
+    );
+  }
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -88,22 +112,7 @@ export function WorktreeCleanupDialog({
             disabled={isProcessing}
             className={error ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-success text-success-foreground hover:bg-success/90"}
           >
-            {isProcessing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t('dialogs:worktreeCleanup.completing')}
-              </>
-            ) : error ? (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                {t('dialogs:worktreeCleanup.retry')}
-              </>
-            ) : (
-              <>
-                <FolderX className="mr-2 h-4 w-4" />
-                {t('dialogs:worktreeCleanup.confirm')}
-              </>
-            )}
+            {buttonContent}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

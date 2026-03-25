@@ -167,6 +167,18 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ selected: se
     }
   };
 
+  // Sync the effective selection into ProviderContext when the context hasn't been
+  // populated yet. This handles the case where App.tsx resolves the provider via its
+  // own local state (e.g., backend auto-detection) before ProviderContext is updated,
+  // which would leave UsageIndicator stuck on "Chargement..." indefinitely.
+  useEffect(() => {
+    if (selected && !selectedProvider) {
+      setSelectedProvider(selected);
+      // Also persist so ProviderContext reads it immediately on the next launch.
+      try { localStorage.setItem('selectedProvider', selected); } catch { /* ignore */ }
+    }
+  }, [selected, selectedProvider, setSelectedProvider]);
+
   const [providersData, setProvidersData] = useState<ProvidersResponse>({ providers: [], status: {} });
   const [isLoading, setIsLoading] = useState(true);
 

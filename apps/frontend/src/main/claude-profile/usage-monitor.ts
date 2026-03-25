@@ -1104,6 +1104,11 @@ export class UsageMonitor extends EventEmitter {
       }
 
       // Step 3: Emit usage update for UI (always emit, regardless of proactive swap settings)
+      // Ensure providerName is always set so the renderer can filter by provider correctly.
+      // CLI-fetched snapshots (fetchUsageViaCLI) do not set providerName, so we add it here.
+      if (!usage.providerName && provider) {
+        usage = { ...usage, providerName: provider };
+      }
       this.emit('usage-updated', usage);
 
       // Step 3.5: Emit all profiles usage for multi-profile display
@@ -3437,10 +3442,11 @@ export class UsageMonitor extends EventEmitter {
           // Get credential for the OAuth profile
           const credential = await this.getCredentialForProfile(oauthProfile);
           if (!credential) {
-            console.warn('[UsageMonitor:getUsageForProvider] Step 2: No credential found for OAuth profile:', oauthProfile.name, '— user may need to re-authenticate');
-            return null;
-          }
-          
+            // No credential yet (fresh install, token expired, etc.)
+            // Fall through to Step 4 to return a minimal Anthropic snapshot so the
+            // UI exits loading state instead of spinning indefinitely.
+            console.warn('[UsageMonitor:getUsageForProvider] Step 2: No credential found for OAuth profile:', oauthProfile.name, '— falling through to minimal snapshot');
+          } else {
           // Use the complete fetchUsage method which includes CLI fallback
           const snapshot = await this.fetchUsage(
               oauthProfile.id,
@@ -3450,9 +3456,14 @@ export class UsageMonitor extends EventEmitter {
               true // suppressErrors - Step 2 is also a best-effort attempt
           );
           if (snapshot) {
+            // CLI-fetched snapshots lack providerName — ensure it is always set before returning.
+            if (!snapshot.providerName) {
+              snapshot.providerName = 'anthropic';
+            }
             return snapshot;
           }
           console.warn('[UsageMonitor:getUsageForProvider] Step 2: fetchUsage returned null for OAuth profile:', oauthProfile.name);
+          }
         } else {
           console.warn('[UsageMonitor:getUsageForProvider] Step 2: No OAuth profiles found in ClaudeProfileManager (total profiles:', allOauthProfiles?.length ?? 0, ')');
         }
