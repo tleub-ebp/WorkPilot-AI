@@ -8,10 +8,9 @@ Message bus, debate threads, and consensus detection for multi-agent teams.
 import json
 import time
 import uuid
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional
 
 
 class MessageType(str, Enum):
@@ -47,13 +46,13 @@ class DebateThread:
         self.thread_id = thread_id
         self.topic = topic
         self.status = "active"
-        self.messages: List[AgentMessage] = []
+        self.messages: list[AgentMessage] = []
         self.created_at = time.time()
 
     def add_message(self, message: AgentMessage) -> None:
         self.messages.append(message)
 
-    def get_participants(self) -> List[str]:
+    def get_participants(self) -> list[str]:
         return list({msg.agent_role for msg in self.messages})
 
     def has_veto(self) -> bool:

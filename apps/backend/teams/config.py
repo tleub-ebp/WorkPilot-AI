@@ -7,7 +7,6 @@ Team configuration, modes, and debate strategies.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional
 
 
 class TeamMode(str, Enum):
@@ -30,7 +29,7 @@ class TeamConfig:
     security_can_veto: bool = False
     architect_can_veto: bool = False
     max_debate_rounds: int = 3
-    active_roles: List[str] = field(default_factory=lambda: ["architect", "developer", "security", "qa"])
+    active_roles: list[str] = field(default_factory=lambda: ["architect", "developer", "security", "qa"])
 
     @classmethod
     def for_critical_task(cls) -> "TeamConfig":

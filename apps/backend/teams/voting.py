@@ -10,7 +10,6 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import List
 
 
 class VoteChoice(str, Enum):
@@ -47,8 +46,8 @@ class Vote:
 class VotingResult:
     decision: str
     reasoning: str
-    votes: List[Vote]
-    vetoes: List[Vote]
+    votes: list[Vote]
+    vetoes: list[Vote]
     approve_weight: int
     reject_weight: int
     total_weight: int
@@ -78,7 +77,7 @@ class VotingSystem:
         self.votes_dir.mkdir(parents=True, exist_ok=True)
 
     def conduct_vote(
-        self, votes: List[Vote], strategy, topic: str
+        self, votes: list[Vote], strategy, topic: str
     ) -> VotingResult:
         from teams.config import DebateStrategy
 
@@ -120,7 +119,7 @@ class VotingSystem:
         self._save_result(result)
         return result
 
-    def _consensus_decision(self, votes: List[Vote]):
+    def _consensus_decision(self, votes: list[Vote]) -> tuple[str, str]:
         for v in votes:
             if v.vote_choice == VoteChoice.REJECT:
                 return "needs_changes", f"{v.agent_role} rejected: {v.reasoning}"
@@ -128,7 +127,7 @@ class VotingSystem:
                 return "needs_changes", f"{v.agent_role} has concerns: {v.reasoning}"
         return "approved", "All agents approved (consensus)"
 
-    def _super_majority_decision(self, approve_weight: int, total_weight: int):
+    def _super_majority_decision(self, approve_weight: int, total_weight: int) -> tuple[str, str]:
         if total_weight == 0:
             return "rejected", "No votes cast"
         ratio = approve_weight / total_weight
@@ -136,7 +135,7 @@ class VotingSystem:
             return "approved", f"Super majority reached ({ratio:.0%} approval)"
         return "rejected", f"Super majority not reached ({ratio:.0%} approval, need 75%)"
 
-    def _weighted_decision(self, approve_weight: int, reject_weight: int):
+    def _weighted_decision(self, approve_weight: int, reject_weight: int) -> tuple[str, str]:
         if approve_weight > reject_weight:
             return "approved", f"Approved by weighted vote ({approve_weight} vs {reject_weight})"
         return "rejected", f"Rejected by weighted vote ({reject_weight} vs {approve_weight})"
