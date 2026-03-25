@@ -101,6 +101,7 @@ export function CleanProviderSection({
   };
 
   // Load real data when section is opened (runs once when panel opens)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (isOpen) {
       loadConnectors();
@@ -108,9 +109,10 @@ export function CleanProviderSection({
       loadProviderTestResults();
       loadCredentialManagerUsageData();
     }
-  }, [isOpen, loadConnectors, loadCredentialManagerUsageData, loadProfileUsageData, loadProviderTestResults]);
+  }, [isOpen]);
 
   // Subscribe to live usage updates so the card refreshes without reopening settings
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!isOpen) return;
 
@@ -125,7 +127,7 @@ export function CleanProviderSection({
       unsubscribeUsage?.();
       unsubscribeAllProfiles?.();
     };
-  }, [isOpen, handleAllProfilesUsageUpdated, handleUsageUpdated]);
+  }, [isOpen]);
 
   // Extracted callback handlers to reduce nesting
   const handleUsageUpdated = (snapshot: UsageSnapshot) => {
@@ -418,9 +420,10 @@ export function CleanProviderSection({
   const [providerStatus, setProviderStatus] = useState<Record<string, boolean>>({});
 
   // Charger les providers de manière asynchrone
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     loadProviders();
-  }, [loadProviders]);
+  }, []);
 
   // Extracted functions to reduce nesting
   const enrichSettingsWithOAuth = async (baseSettings: any) => {

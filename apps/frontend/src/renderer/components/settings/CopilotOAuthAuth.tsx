@@ -40,11 +40,6 @@ export const CopilotOAuthAuth: React.FC<CopilotOAuthAuthProps> = ({
   } | null>(null);
   const [isStartingOAuth, setIsStartingOAuth] = useState(false);
 
-  // Check authentication status on mount
-  useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
-
   const checkAuthStatus = async () => {
     try {
       setIsCheckingStatus(true);
@@ -79,6 +74,12 @@ export const CopilotOAuthAuth: React.FC<CopilotOAuthAuthProps> = ({
       setIsCheckingStatus(false);
     }
   };
+
+  // Check authentication status on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
 
   const startOAuth = async (profileName: string = 'GitHub Copilot') => {
     try {

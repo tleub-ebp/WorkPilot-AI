@@ -7,6 +7,7 @@ import { useSettingsStore } from '../../stores/settings-store';
 
 interface AuthChoiceStepProps {
   readonly onNext: () => void;
+  readonly onBack?: () => void;
   readonly onSkip: () => void;
   readonly onAPIKeyPathComplete?: () => void; // Called when profile is created (skips oauth)
 }
@@ -60,7 +61,7 @@ function AuthOptionCard({ icon, title, description, onClick, variant = 'default'
  * AC Coverage:
  * - AC1: Displays first-run screen with two clear options
  */
-export function AuthChoiceStep({ onNext, onSkip, onAPIKeyPathComplete }: AuthChoiceStepProps) {
+export function AuthChoiceStep({ onNext, onBack, onSkip, onAPIKeyPathComplete }: AuthChoiceStepProps) {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const profiles = useSettingsStore((state) => state.profiles);
 
@@ -145,8 +146,18 @@ export function AuthChoiceStep({ onNext, onSkip, onAPIKeyPathComplete }: AuthCho
             </p>
           </div>
 
-          {/* Skip Button */}
-          <div className="flex justify-center">
+          {/* Action Buttons */}
+          <div className="flex justify-center gap-4">
+            {onBack && (
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={onBack}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Back
+              </Button>
+            )}
             <Button
               size="lg"
               variant="ghost"

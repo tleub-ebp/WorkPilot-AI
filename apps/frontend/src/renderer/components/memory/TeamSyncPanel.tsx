@@ -96,7 +96,7 @@ export function TeamSyncPanel({ projectDir }: Props) {
     loadStatus();
     loadPeers();
 
-    const unsub = api.onTeamSyncServerStatus((s) => {
+    const unsub = api.onTeamSyncServerStatus((s: { running: boolean; port: number }) => {
       setStatus((prev) => prev ? { ...prev, server_running: s.running, server_port: s.port } : prev);
     });
     return unsub;

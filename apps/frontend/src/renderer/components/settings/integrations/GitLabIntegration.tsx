@@ -80,12 +80,12 @@ export function GitLabIntegration({
   debugLog('Render - envConfig:', envConfig ? { gitlabEnabled: envConfig.gitlabEnabled, hasToken: !!envConfig.gitlabToken, defaultBranch: envConfig.defaultBranch } : null);
 
   // Fetch projects when entering oauth-success mode
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (authMode === 'oauth-success') {
       fetchUserProjects();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authMode, fetchUserProjects]);
+  }, [authMode]);
 
   // Check glab CLI on mount
   useEffect(() => {
@@ -120,7 +120,7 @@ export function GitLabIntegration({
       debugLog('useEffect[branches] - Skipping fetchBranches (conditions not met)');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [envConfig?.gitlabEnabled, projectPath, fetchBranches]);
+  }, [envConfig?.gitlabEnabled, projectPath]);
 
   /**
    * Handler for branch selection changes.

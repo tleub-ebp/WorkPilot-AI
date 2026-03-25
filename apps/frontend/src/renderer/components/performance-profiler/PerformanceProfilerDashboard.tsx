@@ -174,7 +174,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
           {isComplete && result && (
             <div className="flex-1 overflow-auto p-4 flex flex-col gap-4">
               {/* Implementation result banner */}
-              {implementationResult && (
+              {Boolean(implementationResult) && (
                 <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm">
                   ✅ Auto-implementation complete
                 </div>

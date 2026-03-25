@@ -209,7 +209,8 @@
     "shortPhases": {
       "plan": "Plan",
       "code": "Code",
-      "qa": "QA"
+      "qa": "QA",
+      "planTooltip": "View implementation plan"
     }
   },
   "files": {

@@ -41,7 +41,7 @@ function buildEnv(projectDir: string, config: Record<string, string> = {}): Reco
         const eqIdx = trimmed.indexOf('=');
         if (eqIdx < 0) continue;
         const key = trimmed.slice(0, eqIdx).trim();
-        const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+        const val = trimmed.slice(eqIdx + 1).trim().replaceAll(/^["']|["']$/g, '');
         baseEnv[key] = val;
       }
     } catch {
@@ -51,12 +51,12 @@ function buildEnv(projectDir: string, config: Record<string, string> = {}): Reco
   return { ...baseEnv, ...config };
 }
 
-async function runPythonRunner(
+function runPythonRunner(
   projectDir: string,
   args: string[],
   extraEnv: Record<string, string> = {},
 ): Promise<{ success: boolean; data?: unknown; error?: string }> {
-  const pythonPath = await getConfiguredPythonPath(projectDir);
+  const pythonPath = getConfiguredPythonPath();
   const [cmd, baseArgs] = parsePythonCommand(pythonPath);
   const cmdArgs = [...baseArgs, getRunnerPath(), ...args];
 
@@ -101,7 +101,7 @@ function readSyncConfig(projectDir: string): Record<string, string> {
       const eqIdx = trimmed.indexOf('=');
       if (eqIdx < 0) continue;
       const key = trimmed.slice(0, eqIdx).trim();
-      const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+      const val = trimmed.slice(eqIdx + 1).trim().replaceAll(/^["']|["']$/g, '');
       result[key] = val;
     }
   } catch {
@@ -134,6 +134,54 @@ function writeSyncConfig(projectDir: string, config: Record<string, string>): vo
   fs.writeFileSync(envPath, content, 'utf-8');
 }
 
+/** Extract peer information from team directory snapshots */
+function extractPeerInfo(syncPath: string, teamId: string, memberId: string): { peers: string[]; localEpisodeCount: number; lastExport: string | null } {
+  const teamDir = path.join(syncPath, teamId);
+  const result: { peers: string[]; localEpisodeCount: number; lastExport: string | null } = { peers: [], localEpisodeCount: 0, lastExport: null };
+
+  try {
+    if (!fs.existsSync(teamDir)) return result;
+
+    result.peers = fs
+      .readdirSync(teamDir)
+      .filter((f) => f.endsWith('_snapshot.json') && f !== `${memberId}_snapshot.json`)
+      .map((f) => f.replace('_snapshot.json', ''));
+
+    const ownSnapshot = path.join(teamDir, `${memberId}_snapshot.json`);
+    if (fs.existsSync(ownSnapshot)) {
+      const snap = JSON.parse(fs.readFileSync(ownSnapshot, 'utf-8'));
+      result.localEpisodeCount = snap.episode_count ?? 0;
+      result.lastExport = snap.exported_at ?? null;
+    }
+  } catch {
+    // ignore errors
+  }
+
+  return result;
+}
+
+/** Count imported episodes from peer directories */
+function countImportedEpisodes(projectDir: string): number {
+  const peersDir = path.join(projectDir, '.workpilot', 'team_sync', 'peers');
+  let importedEpisodeCount = 0;
+
+  try {
+    if (!fs.existsSync(peersDir)) return 0;
+
+    for (const peer of fs.readdirSync(peersDir)) {
+      const epFile = path.join(peersDir, peer, 'imported_episodes.json');
+      if (fs.existsSync(epFile)) {
+        const data = JSON.parse(fs.readFileSync(epFile, 'utf-8'));
+        importedEpisodeCount += Array.isArray(data) ? data.length : 0;
+      }
+    }
+  } catch {
+    // ignore errors
+  }
+
+  return importedEpisodeCount;
+}
+
 /** Build a status object from local .workpilot data without spawning Python. */
 function getLocalStatus(projectDir: string): object {
   const config = readSyncConfig(projectDir);
@@ -144,46 +192,13 @@ function getLocalStatus(projectDir: string): object {
   const serverUrl = config['TEAM_SYNC_SERVER_URL'] || '';
   const enabled = mode === 'directory' ? Boolean(syncPath) : Boolean(serverUrl);
 
-  let peers: string[] = [];
-  let localEpisodeCount = 0;
-  let importedEpisodeCount = 0;
-  let lastExport: string | null = null;
-
+  const peerInfo = { peers: [], localEpisodeCount: 0, lastExport: null };
+  
   if (enabled && mode === 'directory' && syncPath) {
-    const teamDir = path.join(syncPath, teamId);
-    try {
-      if (fs.existsSync(teamDir)) {
-        peers = fs
-          .readdirSync(teamDir)
-          .filter((f) => f.endsWith('_snapshot.json') && f !== `${memberId}_snapshot.json`)
-          .map((f) => f.replace('_snapshot.json', ''));
-
-        const ownSnapshot = path.join(teamDir, `${memberId}_snapshot.json`);
-        if (fs.existsSync(ownSnapshot)) {
-          const snap = JSON.parse(fs.readFileSync(ownSnapshot, 'utf-8'));
-          localEpisodeCount = snap.episode_count ?? 0;
-          lastExport = snap.exported_at ?? null;
-        }
-      }
-    } catch {
-      // ignore
-    }
+    Object.assign(peerInfo, extractPeerInfo(syncPath, teamId, memberId));
   }
 
-  const peersDir = path.join(projectDir, '.workpilot', 'team_sync', 'peers');
-  try {
-    if (fs.existsSync(peersDir)) {
-      for (const peer of fs.readdirSync(peersDir)) {
-        const epFile = path.join(peersDir, peer, 'imported_episodes.json');
-        if (fs.existsSync(epFile)) {
-          const data = JSON.parse(fs.readFileSync(epFile, 'utf-8'));
-          importedEpisodeCount += Array.isArray(data) ? data.length : 0;
-        }
-      }
-    }
-  } catch {
-    // ignore
-  }
+  const importedEpisodeCount = countImportedEpisodes(projectDir);
 
   return {
     enabled,
@@ -192,9 +207,9 @@ function getLocalStatus(projectDir: string): object {
     member_id: memberId,
     sync_path: syncPath,
     server_url: serverUrl,
-    peers,
-    last_export: lastExport,
-    local_episode_count: localEpisodeCount,
+    peers: peerInfo.peers,
+    last_export: peerInfo.lastExport,
+    local_episode_count: peerInfo.localEpisodeCount,
     imported_episode_count: importedEpisodeCount,
     server_running: _serverProcess !== null,
     server_port: _serverPort,
@@ -340,7 +355,7 @@ export function registerTeamSyncHandlers(): void {
         return { success: true, port: _serverPort };
       }
       try {
-        const pythonPath = await getConfiguredPythonPath(projectDir);
+        const pythonPath = getConfiguredPythonPath();
         const [cmd, baseArgs] = parsePythonCommand(pythonPath);
         const cmdArgs = [
           ...baseArgs,

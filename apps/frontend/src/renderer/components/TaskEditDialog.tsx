@@ -103,7 +103,7 @@ export function TaskEditDialog({ task, open, onOpenChange, onSaved, onCloseTask 
     }
     return settings.selectedAgentProfile || 'auto';
   });
-  const [model, setModel] = useState<ModelType | ''>(task.metadata?.model || selectedProfile.model);
+  const [model, setModel] = useState<string | ''>(task.metadata?.model || selectedProfile.model);
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel | ''>(
     task.metadata?.thinkingLevel || selectedProfile.thinkingLevel
   );

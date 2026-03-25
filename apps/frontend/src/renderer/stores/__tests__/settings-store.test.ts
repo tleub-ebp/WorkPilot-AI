@@ -167,7 +167,7 @@ describe('Settings Store', () => {
     });
 
     it('should set loading true during load and false after', async () => {
-      let resolveSettings: (value: unknown) => void;
+      let resolveSettings: (value: unknown) => void = () => {};
       const settingsPromise = new Promise((resolve) => { resolveSettings = resolve; });
       mockGetSettings.mockReturnValue(settingsPromise);
 
@@ -428,7 +428,7 @@ describe('Settings Store', () => {
     });
 
     it('should set isTestingConnection during test', async () => {
-      let resolveTest: (value: unknown) => void;
+      let resolveTest: (value: unknown) => void = () => {};
       const testPromise = new Promise((resolve) => { resolveTest = resolve; });
       mockTestConnection.mockReturnValue(testPromise);
 

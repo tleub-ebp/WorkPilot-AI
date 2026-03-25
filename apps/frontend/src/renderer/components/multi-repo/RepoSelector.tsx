@@ -31,11 +31,11 @@ export function RepoSelector() {
   const handleBrowse = async () => {
     try {
       const result = await window.electronAPI.selectDirectory();
-      if (result?.success && result.data) {
-        setPathInput(result.data);
+      if (result) {
+        setPathInput(result);
         if (!repoInput.trim()) {
           // Auto-fill repo name from directory name
-          const dirName = result.data.split(/[\\/]/).pop() || '';
+          const dirName = result.split(/[\\/]/).pop() || '';
           setRepoInput(dirName);
         }
       }

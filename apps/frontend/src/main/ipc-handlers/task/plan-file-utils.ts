@@ -37,7 +37,7 @@ async function withPlanLock<T>(planPath: string, operation: () => Promise<T>): P
   const currentLock = planLocks.get(planPath) || Promise.resolve();
 
   // Create a new promise that will resolve after our operation completes
-  let resolve: () => void;
+  let resolve: () => void = () => { /* placeholder, will be overwritten by Promise constructor */ };
   const newLock = new Promise<void>((r) => { resolve = r; });
   planLocks.set(planPath, newLock);
 

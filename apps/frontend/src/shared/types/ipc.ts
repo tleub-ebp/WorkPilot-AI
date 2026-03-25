@@ -990,7 +990,7 @@ export interface PlatformInfo {
 declare global {
   interface Window {
     electronAPI: ElectronAPI;
-    DEBUG: boolean;
+    DEBUG?: boolean;
     platform?: PlatformInfo;
   }
 }

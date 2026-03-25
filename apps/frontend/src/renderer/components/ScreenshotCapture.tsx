@@ -34,8 +34,12 @@ interface ScreenshotCaptureProps {
  * Get the appropriate paste keyboard shortcut based on platform
  */
 const getPasteShortcut = (): string => {
-  const isMac = navigator.platform.toUpperCase().includes('MAC');
-  return isMac ? 'Cmd+V' : 'Ctrl+V';
+  // Use modern userAgentData if available, otherwise check userAgent for Mac
+  if (navigator.userAgentData?.platform) {
+    return navigator.userAgentData.platform.toUpperCase().includes('MAC') ? 'Cmd+V' : 'Ctrl+V';
+  }
+  // Fallback: check userAgent instead of deprecated platform
+  return /mac|iphone|ipad|ipod/i.test(navigator.userAgent) ? 'Cmd+V' : 'Ctrl+V';
 };
 
 export function ScreenshotCapture({ open, onOpenChange, onCapture }: ScreenshotCaptureProps) {

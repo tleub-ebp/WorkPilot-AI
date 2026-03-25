@@ -55,20 +55,6 @@ export function AzureDevOpsImportModal({
   const [importResult, setImportResult] = useState<AzureDevOpsImportResult | null>(null);
   const [syncStatus, setSyncStatus] = useState<AzureDevOpsSyncStatus | null>(null);
 
-  // Load connection status
-  useEffect(() => {
-    if (open) {
-      loadConnectionStatus();
-    }
-  }, [open, loadConnectionStatus]);
-
-  // Load work items when modal opens
-  useEffect(() => {
-    if (open && syncStatus?.connected) {
-      loadWorkItems();
-    }
-  }, [open, syncStatus?.connected, loadWorkItems]);
-
   const loadConnectionStatus = async () => {
     try {
       const result = await globalThis.electronAPI.checkAzureDevOpsConnection(projectId);
@@ -107,6 +93,20 @@ export function AzureDevOpsImportModal({
       setIsLoadingItems(false);
     }
   };
+
+  // Load connection status
+  useEffect(() => {
+    if (open) {
+      loadConnectionStatus();
+    }
+  }, [open, loadConnectionStatus]);
+
+  // Load work items when modal opens
+  useEffect(() => {
+    if (open && syncStatus?.connected) {
+      loadWorkItems();
+    }
+  }, [open, syncStatus?.connected, loadWorkItems]);
 
   const handleRefresh = () => {
     setSelectedIds(new Set());
