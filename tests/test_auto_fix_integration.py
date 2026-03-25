@@ -18,7 +18,7 @@ def test_imports():
             AutoFixLoop,
             run_auto_fix_loop,
             DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
-            TestResult,
+            AutoFixTestResult,
             AutoFixAttempt,
         )
         print("✓ auto_fix_loop imports OK")
@@ -69,10 +69,10 @@ def test_classes():
     print("\nTesting class instantiation...")
     
     try:
-        from qa.auto_fix_loop import TestResult, AutoFixAttempt
+        from qa.auto_fix_loop import AutoFixTestResult, AutoFixAttempt
         
-        # Test TestResult
-        result = TestResult(
+        # Test AutoFixTestResult
+        result = AutoFixTestResult(
             executed=True,
             passed=False,
             output="test output",
@@ -81,7 +81,7 @@ def test_classes():
             test_count=5,
             failed_count=2,
         )
-        print(f"✓ TestResult created: {result.test_count} tests, {result.failed_count} failed")
+        print(f"✓ AutoFixTestResult created: {result.test_count} tests, {result.failed_count} failed")
         
         # Test AutoFixAttempt
         attempt = AutoFixAttempt(
@@ -154,7 +154,7 @@ def test_error_patterns():
     
     try:
         import tempfile
-        from qa.auto_fix_loop import AutoFixLoop, TestResult
+        from qa.auto_fix_loop import AutoFixLoop, AutoFixTestResult
         
         with tempfile.TemporaryDirectory() as tmpdir:
             project_dir = Path(tmpdir)
@@ -167,7 +167,7 @@ def test_error_patterns():
             loop = AutoFixLoop(project_dir, spec_dir, "test-model")
             
             # Test assertion failure
-            result = TestResult(
+            result = AutoFixTestResult(
                 executed=True,
                 passed=False,
                 output="AssertionError: expected 5 but got 3",
@@ -179,7 +179,7 @@ def test_error_patterns():
             print(f"✓ Assertion failure detected: {pattern}")
             
             # Test timeout
-            result = TestResult(
+            result = AutoFixTestResult(
                 executed=True,
                 passed=False,
                 output="Test timeout after 30 seconds",
@@ -191,7 +191,7 @@ def test_error_patterns():
             print(f"✓ Timeout detected: {pattern}")
             
             # Test import error
-            result = TestResult(
+            result = AutoFixTestResult(
                 executed=True,
                 passed=False,
                 output="ImportError: No module named 'foo'",

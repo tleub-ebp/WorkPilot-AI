@@ -29,10 +29,14 @@ try:
     from agents.memory_manager import get_graphiti_context, save_session_memory
 except ImportError:
     # Fallback if memory manager not available
-    async def get_graphiti_context(*args, **kwargs):
+    def get_graphiti_context(*args, **kwargs):
+        # Fallback implementation when memory manager is not available
+        # Return empty context string to prevent crashes in environments without memory management
         return ""
 
-    async def save_session_memory(*args, **kwargs):
+    def save_session_memory(*args, **kwargs):
+        # Fallback implementation when memory manager is not available
+        # Silently ignore memory save calls to prevent crashes in environments without memory management
         pass
 
 
@@ -62,18 +66,28 @@ try:
 except ImportError:
 
     def debug(*args, **kwargs):
+        # Fallback implementation when debug module is not available
+        # Silently ignore debug calls to prevent crashes in environments without debug utilities
         pass
 
     def debug_error(*args, **kwargs):
+        # Fallback implementation when debug module is not available
+        # Silently ignore debug error calls to prevent crashes in environments without debug utilities
         pass
 
     def debug_section(*args, **kwargs):
+        # Fallback implementation when debug module is not available
+        # Silently ignore debug section calls to prevent crashes in environments without debug utilities
         pass
 
     def debug_success(*args, **kwargs):
+        # Fallback implementation when debug module is not available
+        # Silently ignore debug success calls to prevent crashes in environments without debug utilities
         pass
 
     def debug_warning(*args, **kwargs):
+        # Fallback implementation when debug module is not available
+        # Silently ignore debug warning calls to prevent crashes in environments without debug utilities
         pass
 
 
@@ -105,7 +119,7 @@ TEST_EXECUTION_TIMEOUT = 300.0  # 5 minutes
 
 
 @dataclass
-class TestResult:
+class AutoFixTestResult:
     """Result of test execution."""
 
     executed: bool
@@ -122,7 +136,7 @@ class AutoFixAttempt:
     """Record of a single auto-fix attempt."""
 
     attempt_number: int
-    test_result: TestResult
+    test_result: AutoFixTestResult
     fix_applied: bool
     fix_status: str
     duration: float
@@ -262,7 +276,7 @@ class AutoFixLoop:
                 await self._save_success_to_memory(attempt_number, memory_context)
 
                 # Update metrics
-                await self._update_metrics(success=True, attempts=attempt_number)
+                self._update_metrics(success=True, attempts=attempt_number)
 
                 # Emit success event
                 self.task_event_emitter.emit(
@@ -320,7 +334,7 @@ class AutoFixLoop:
             )
 
             # Step 3: Generate fix request
-            await self._create_fix_request(test_result, error_pattern, memory_context)
+            self._create_fix_request(test_result, error_pattern, memory_context)
 
             # Step 4: Apply fix using QA fixer
             debug("auto_fix_loop", "Applying automated fix...")
@@ -361,10 +375,10 @@ class AutoFixLoop:
         await self._save_failure_to_memory(attempt_number, memory_context)
 
         # Update metrics
-        await self._update_metrics(success=False, attempts=attempt_number)
+        self._update_metrics(success=False, attempts=attempt_number)
 
         # Escalate to human
-        await self._escalate_to_human()
+        self._escalate_to_human()
 
         # Emit failure event
         self.task_event_emitter.emit(
@@ -388,14 +402,14 @@ class AutoFixLoop:
 
         return False
 
-    async def _run_tests(self) -> TestResult:
+    async def _run_tests(self) -> AutoFixTestResult:
         """Execute project tests and return results."""
         start_time = time.time()
 
         try:
             test_cmd = self.test_info.test_command
             if not test_cmd:
-                return TestResult(
+                return AutoFixTestResult(
                     executed=False,
                     passed=False,
                     output="",
@@ -421,7 +435,7 @@ class AutoFixLoop:
             except asyncio.TimeoutError:
                 debug_error("auto_fix_loop", "Tests timed out")
                 proc.kill()
-                return TestResult(
+                return AutoFixTestResult(
                     executed=True,
                     passed=False,
                     output="",
@@ -437,7 +451,7 @@ class AutoFixLoop:
             # Parse test counts from output (framework-specific)
             test_count, failed_count = self._parse_test_counts(output + error_output)
 
-            return TestResult(
+            return AutoFixTestResult(
                 executed=True,
                 passed=passed,
                 output=output + "\n" + error_output,
@@ -449,7 +463,7 @@ class AutoFixLoop:
 
         except Exception as e:
             debug_error("auto_fix_loop", f"Test execution failed: {e}")
-            return TestResult(
+            return AutoFixTestResult(
                 executed=False,
                 passed=False,
                 output="",
@@ -495,7 +509,7 @@ class AutoFixLoop:
 
         return 0, 0
 
-    def _analyze_failure(self, test_result: TestResult) -> str:
+    def _analyze_failure(self, test_result: AutoFixTestResult) -> str:
         """
         Analyze test failure to identify error pattern.
 
@@ -522,8 +536,8 @@ class AutoFixLoop:
         else:
             return "general_failure"
 
-    async def _create_fix_request(
-        self, test_result: TestResult, error_pattern: str, memory_context: str
+    def _create_fix_request(
+        self, test_result: AutoFixTestResult, error_pattern: str, memory_context: str
     ) -> None:
         """Create QA_FIX_REQUEST.md for the fixer agent."""
         fix_request_file = self.spec_dir / "QA_FIX_REQUEST.md"
@@ -674,7 +688,7 @@ The automated tests have failed. Please analyze the test output below and apply 
         except Exception as e:
             debug_error("auto_fix_loop", f"Failed to save failure to memory: {e}")
 
-    async def _update_metrics(self, success: bool, attempts: int) -> None:
+    def _update_metrics(self, success: bool, attempts: int) -> None:
         """Update auto-fix metrics in implementation_plan.json."""
         try:
             plan_file = self.spec_dir / "implementation_plan.json"
@@ -735,7 +749,7 @@ The automated tests have failed. Please analyze the test output below and apply 
         except Exception as e:
             debug_error("auto_fix_loop", f"Failed to update metrics: {e}")
 
-    async def _escalate_to_human(self) -> None:
+    def _escalate_to_human(self) -> None:
         """Escalate to human review after auto-fix failure."""
         try:
             escalation_file = self.spec_dir / "AUTO_FIX_ESCALATION.md"
