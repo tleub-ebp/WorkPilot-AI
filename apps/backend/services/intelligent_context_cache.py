@@ -400,6 +400,7 @@ class IntelligentContextCache:
             self._cache.clear()
         # Force garbage collection to help with file locks on Windows
         import gc
+
         gc.collect()
 
     def __del__(self):

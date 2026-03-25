@@ -71,10 +71,18 @@ export function createElectronAPIMock() {
     startTask: () => Promise.resolve({ success: true }),
     stopTask: () => Promise.resolve({ success: true }),
     submitReview: () => Promise.resolve({ success: true }),
-    onTaskProgress: () => () => {},
-    onTaskError: () => () => {},
-    onTaskLog: () => () => {},
-    onTaskStatusChange: () => () => {},
+    onTaskProgress: () => () => {
+      // Intentionally empty for tests
+    },
+    onTaskError: () => () => {
+      // Intentionally empty for tests
+    },
+    onTaskLog: () => () => {
+      // Intentionally empty for tests
+    },
+    onTaskStatusChange: () => () => {
+      // Intentionally empty for tests
+    },
     getSettings: () => Promise.resolve({ success: true, data: {} }),
     saveSettings: () => Promise.resolve({ success: true }),
     selectDirectory: () => Promise.resolve({ success: true, data: '/test/path' }),
@@ -106,7 +114,9 @@ export function setupGlobalMocks() {
     // Mock scrollIntoView for Radix Select in jsdom
     if (typeof HTMLElement !== 'undefined' && !HTMLElement.prototype.scrollIntoView) {
       Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
-        value: () => {},
+        value: () => {
+        // Intentionally empty for tests
+      },
         writable: true
       });
     }
@@ -122,7 +132,7 @@ export function setupGlobalMocks() {
     }
 
     // Mock electronAPI
-    (globalThis as any).electronAPI = createElectronAPIMock();
+    (globalThis as unknown as Record<string, unknown>).electronAPI = createElectronAPIMock();
   }
 
   // Suppress console errors in tests unless explicitly testing error scenarios
