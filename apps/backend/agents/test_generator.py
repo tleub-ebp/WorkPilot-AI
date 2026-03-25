@@ -361,13 +361,15 @@ class CodeAnalyzer:
             return []
 
         functions = []
-        
+
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
                 # Process methods within this class
                 for child in node.body:
                     if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        func_info = self._extract_function_info(child, module, node.name)
+                        func_info = self._extract_function_info(
+                            child, module, node.name
+                        )
                         if func_info:
                             functions.append(func_info)
             elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -378,7 +380,7 @@ class CodeAnalyzer:
                     func_info = self._extract_function_info(node, module)
                     if func_info:
                         functions.append(func_info)
-        
+
         return functions
 
     def _find_parent_node(self, tree: ast.AST, target_node: ast.AST) -> ast.AST | None:
@@ -389,7 +391,12 @@ class CodeAnalyzer:
                     return node
         return None
 
-    def _extract_function_info(self, node: "ast.FunctionDef | ast.AsyncFunctionDef", module: str, class_name: str | None = None) -> FunctionInfo | None:
+    def _extract_function_info(
+        self,
+        node: "ast.FunctionDef | ast.AsyncFunctionDef",
+        module: str,
+        class_name: str | None = None,
+    ) -> FunctionInfo | None:
         """Extract function information from AST node."""
 
         # Get basic info
@@ -410,7 +417,11 @@ class CodeAnalyzer:
         # Get return type from annotation if available
         if node.returns:
             try:
-                return_type = ast.unparse(node.returns) if hasattr(ast, 'unparse') else str(node.returns)
+                return_type = (
+                    ast.unparse(node.returns)
+                    if hasattr(ast, "unparse")
+                    else str(node.returns)
+                )
             except Exception:
                 return_type = None
 
@@ -871,38 +882,49 @@ Return ONLY a raw JSON object (no markdown) matching this schema:
 
     # ── Response parsing ─────────────────────────────────────────────
 
-    def _parse_gaps(self, response: str, file_path: str, existing_test_content: str = "") -> list[CoverageGap]:
+    def _parse_gaps(
+        self, response: str, file_path: str, existing_test_content: str = ""
+    ) -> list[CoverageGap]:
         data = self._extract_json(response)
-        
+
         # If we got empty data due to rate limit, create basic gaps from source analysis
-        if not data.get("gaps") and ("limit" in response.lower() or "error" in response.lower()):
+        if not data.get("gaps") and (
+            "limit" in response.lower() or "error" in response.lower()
+        ):
             try:
                 # Fallback: analyze source with CodeAnalyzer to create basic gaps
                 source = self._read_file(file_path)
                 if source:
                     analyzer = CodeAnalyzer()
                     functions = analyzer.analyze_source(source, file_path)
-                    
+
                     # Analyze existing tests to exclude already tested functions
                     tested_functions = set()
                     if existing_test_content:
-                        tested_functions = self._extract_tested_functions(existing_test_content)
-                    
+                        tested_functions = self._extract_tested_functions(
+                            existing_test_content
+                        )
+
                     gaps = []
                     for func in functions:
                         # Create gaps for public functions only, but include __init__
                         # Exclude functions that are already tested
-                        if ((not func.is_private and not func.is_dunder) or func.name == "__init__") and func.name not in tested_functions:
-                            gaps.append(CoverageGap(
-                                function=func,
-                                priority="medium",
-                                reason="Function needs test coverage (fallback analysis)",
-                                suggested_test_count=1
-                            ))
+                        if (
+                            (not func.is_private and not func.is_dunder)
+                            or func.name == "__init__"
+                        ) and func.name not in tested_functions:
+                            gaps.append(
+                                CoverageGap(
+                                    function=func,
+                                    priority="medium",
+                                    reason="Function needs test coverage (fallback analysis)",
+                                    suggested_test_count=1,
+                                )
+                            )
                     return gaps
             except Exception as exc:
                 logger.warning("Fallback analysis failed: %s", exc)
-        
+
         # Parse gaps from JSON response
         gaps: list[CoverageGap] = []
         for g in data.get("gaps", []):
@@ -927,6 +949,7 @@ Return ONLY a raw JSON object (no markdown) matching this schema:
         tested_functions = set()
         try:
             import ast
+
             tree = ast.parse(test_content)
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
@@ -934,21 +957,36 @@ Return ONLY a raw JSON object (no markdown) matching this schema:
                     # e.g., "test_get_user_returns_expected" -> "get_user"
                     func_name = node.name[5:]  # Remove "test_" prefix
                     # Remove common suffixes
-                    for suffix in ["_returns_expected", "_success", "_error", "_invalid", "_valid", "_test"]:
+                    for suffix in [
+                        "_returns_expected",
+                        "_success",
+                        "_error",
+                        "_invalid",
+                        "_valid",
+                        "_test",
+                    ]:
                         if func_name.endswith(suffix):
-                            func_name = func_name[:-len(suffix)]
+                            func_name = func_name[: -len(suffix)]
                             break
                     tested_functions.add(func_name)
         except Exception:
             # Fallback: simple regex extraction
             import re
-            matches = re.findall(r'def test_(\w+)', test_content)
+
+            matches = re.findall(r"def test_(\w+)", test_content)
             for match in matches:
                 func_name = match
                 # Remove common suffixes
-                for suffix in ["_returns_expected", "_success", "_error", "_invalid", "_valid", "_test"]:
+                for suffix in [
+                    "_returns_expected",
+                    "_success",
+                    "_error",
+                    "_invalid",
+                    "_valid",
+                    "_test",
+                ]:
                     if func_name.endswith(suffix):
-                        func_name = func_name[:-len(suffix)]
+                        func_name = func_name[: -len(suffix)]
                         break
                 tested_functions.add(func_name)
         return tested_functions
@@ -970,7 +1008,7 @@ Return ONLY a raw JSON object (no markdown) matching this schema:
                 # Generate a basic stub test file for testing purposes
                 stem = Path(file_path).stem
                 language = framework_info.get("language", "python")
-                
+
                 if language == "python":
                     # Try to analyze source to generate more realistic test count
                     source = self._read_file(file_path)
@@ -978,10 +1016,16 @@ Return ONLY a raw JSON object (no markdown) matching this schema:
                     if source:
                         analyzer = CodeAnalyzer()
                         functions = analyzer.analyze_source(source, file_path)
-                        functions_count = len([f for f in functions if not f.is_private])
-                    
+                        functions_count = len(
+                            [f for f in functions if not f.is_private]
+                        )
+
                     # For TDD tests, generate more specific test names
-                    if test_type == "unit" and file_path.startswith("tdd_") and spec_name:
+                    if (
+                        test_type == "unit"
+                        and file_path.startswith("tdd_")
+                        and spec_name
+                    ):
                         feature_name = spec_name
                         test_file_content = f'''"""Auto-generated TDD tests for {feature_name}."""
 
@@ -1015,7 +1059,7 @@ def test_placeholder():
                         tests_generated = max(1, functions_count)  # At least 1 test
                         functions_analyzed = functions_count
                 else:
-                    test_file_content = f'// Auto-generated E2E tests for {stem}\n// Tests would be generated here when API is available\n'
+                    test_file_content = f"// Auto-generated E2E tests for {stem}\n// Tests would be generated here when API is available\n"
                     tests_generated = 1
                     functions_analyzed = 0
             else:
@@ -1026,10 +1070,12 @@ def test_placeholder():
         else:
             tests_generated = data.get("tests_generated", 0)
             functions_analyzed = data.get("functions_analyzed", 0)
-        
+
         # Update tests_generated for fallback scenarios
         generated_tests = []  # Initialize here to avoid "used before defined" error
-        if ("limit" in response.lower() or "error" in response.lower()) and not data.get("tests_generated"):
+        if (
+            "limit" in response.lower() or "error" in response.lower()
+        ) and not data.get("tests_generated"):
             if test_type == "unit" and file_path.startswith("tdd_"):
                 tests_generated = 3  # TDD expects at least 3 tests
             elif test_type == "e2e":
@@ -1041,7 +1087,7 @@ def test_placeholder():
             "test_file_path",
             self._compute_test_file_path(file_path, framework_info),
         )
-        
+
         # Ensure E2E tests have 'e2e' in the path
         if test_type == "e2e" and "e2e" not in test_file_path:
             stem = Path(file_path).stem.lower()
@@ -1050,13 +1096,15 @@ def test_placeholder():
             test_file_path = f"e2e/test_{stem}.{ext}"
 
         # Generate basic generated_tests list for fallback
-        if not data.get("generated_tests") and ("limit" in response.lower() or "error" in response.lower()):
+        if not data.get("generated_tests") and (
+            "limit" in response.lower() or "error" in response.lower()
+        ):
             source = self._read_file(file_path)
             if source:
                 analyzer = CodeAnalyzer()
                 functions = analyzer.analyze_source(source, file_path)
                 public_functions = [f for f in functions if not f.is_private]
-                
+
                 # For TDD tests, generate more tests to meet test expectations
                 if test_type == "unit" and file_path.startswith("tdd_"):
                     test_count = 3  # TDD tests expect at least 3
@@ -1064,14 +1112,16 @@ def test_placeholder():
                     test_count = 1  # E2E tests expect at least 1
                 else:
                     test_count = min(3, len(public_functions))  # Regular unit tests
-                
+
                 generated_tests = [
                     GeneratedTest(
-                        test_name=f"test_{func.name}_placeholder" if source else f"test_placeholder_{i}",
+                        test_name=f"test_{func.name}_placeholder"
+                        if source
+                        else f"test_placeholder_{i}",
                         test_code="# Placeholder test code",
                         target_function=func.name if source else file_path,
                         test_type=test_type,
-                        description=f"Placeholder test for {func.name if source else 'feature'}"
+                        description=f"Placeholder test for {func.name if source else 'feature'}",
                     )
                     for i, func in enumerate(public_functions[:test_count])
                 ]
@@ -1081,14 +1131,14 @@ def test_placeholder():
                     test_count = 3
                 else:
                     test_count = 1
-                    
+
                 generated_tests = [
                     GeneratedTest(
                         test_name=f"test_placeholder_{i}",
                         test_code="# Placeholder test code",
                         target_function=file_path,
                         test_type=test_type,
-                        description=f"Placeholder test {i}"
+                        description=f"Placeholder test {i}",
                     )
                     for i in range(test_count)
                 ]
@@ -1103,15 +1153,19 @@ def test_placeholder():
                 )
                 for t in data.get("generated_tests", [])
             ]
-        
+
         # Update tests_generated if it was set to 0 earlier
-        if ("limit" in response.lower() or "error" in response.lower()) and not data.get("tests_generated"):
+        if (
+            "limit" in response.lower() or "error" in response.lower()
+        ) and not data.get("tests_generated"):
             if test_type == "unit" and file_path.startswith("tdd_"):
                 tests_generated = 3  # Already set
             elif test_type == "e2e":
                 tests_generated = 1  # Already set
             else:
-                tests_generated = len(generated_tests)  # Set based on actual generated tests
+                tests_generated = len(
+                    generated_tests
+                )  # Set based on actual generated tests
 
         return TestGenerationResult(
             source_file=file_path,
@@ -1129,10 +1183,19 @@ def test_placeholder():
             return {}
 
         # Check for rate limit or error messages
-        if "limit" in text.lower() or "error" in text.lower() or "reset" in text.lower():
+        if (
+            "limit" in text.lower()
+            or "error" in text.lower()
+            or "reset" in text.lower()
+        ):
             logger.error("Rate limit or error message received: %.100s", text)
             # Return empty result structure for tests to continue
-            return {"functions_analyzed": 0, "gaps": [], "tests_generated": 0, "generated_tests": []}
+            return {
+                "functions_analyzed": 0,
+                "gaps": [],
+                "tests_generated": 0,
+                "generated_tests": [],
+            }
 
         # Strip markdown code fences
         if "```json" in text:
@@ -1163,7 +1226,12 @@ def test_placeholder():
 
         logger.error("Failed to parse JSON from response: %.200s", text)
         # Return empty result structure for tests to continue
-        return {"functions_analyzed": 0, "gaps": [], "tests_generated": 0, "generated_tests": []}
+        return {
+            "functions_analyzed": 0,
+            "gaps": [],
+            "tests_generated": 0,
+            "generated_tests": [],
+        }
 
     def _compute_test_file_path(
         self, source_path: str, framework_info: dict[str, str]
@@ -1208,7 +1276,9 @@ def test_placeholder():
         slug = slug.strip(" _")
         return slug or "unnamed"
 
-    def _compute_test_file_path(self, source_path: str, framework_info: dict[str, str] | None = None) -> str:
+    def _compute_test_file_path(
+        self, source_path: str, framework_info: dict[str, str] | None = None
+    ) -> str:
         """Generate test file path from source path."""
         if framework_info:
             language = framework_info.get("language", "python")
@@ -1216,7 +1286,7 @@ def test_placeholder():
             # Try to detect from extension
             ext = Path(source_path).suffix.lower()
             language = self._project_analyzer.EXTENSION_TO_LANGUAGE.get(ext, "python")
-        
+
         stem = Path(source_path).stem
         if language == "python":
             return f"tests/test_{stem}.py"
@@ -1237,24 +1307,25 @@ def test_placeholder():
     def _path_to_module(self, path: str) -> str:
         """Convert file path to module string."""
         # Remove extension and replace path separators with dots
-        path_without_ext = str(Path(path).with_suffix(''))
-        return path_without_ext.replace('/', '.').replace('\\', '.')
+        path_without_ext = str(Path(path).with_suffix(""))
+        return path_without_ext.replace("/", ".").replace("\\", ".")
 
     def _parse_user_story(self, story: str) -> list[dict[str, Any]]:
         """Parse user story into structured scenarios."""
         scenarios = []
-        lines = story.strip().split('\n')
-        
+        lines = story.strip().split("\n")
+
         current_scenario = {"title": "", "steps": []}
-        
+
         for line in lines:
             line = line.strip()
             if not line:
                 continue
-                
+
             # Check if this is a title (first line or line without Given/When/Then/And/But)
             if not current_scenario["title"] and not any(
-                line.startswith(prefix) for prefix in ["Given", "When", "Then", "And", "But", "-"]
+                line.startswith(prefix)
+                for prefix in ["Given", "When", "Then", "And", "But", "-"]
             ):
                 current_scenario["title"] = line
             elif line.startswith("-"):
@@ -1262,13 +1333,16 @@ def test_placeholder():
                 if not current_scenario["title"]:
                     current_scenario["title"] = "Feature test"
                 current_scenario["steps"].append(line[1:].strip())
-            elif any(line.startswith(prefix) for prefix in ["Given", "When", "Then", "And", "But"]):
+            elif any(
+                line.startswith(prefix)
+                for prefix in ["Given", "When", "Then", "And", "But"]
+            ):
                 # Given/When/Then format
                 if not current_scenario["title"]:
                     current_scenario["title"] = "Test scenario"
                 current_scenario["steps"].append(line)
-        
+
         if current_scenario["title"] or current_scenario["steps"]:
             scenarios.append(current_scenario)
-            
+
         return scenarios
