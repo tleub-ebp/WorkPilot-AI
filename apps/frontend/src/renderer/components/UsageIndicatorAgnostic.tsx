@@ -59,11 +59,9 @@ export function UsageIndicatorAgnostic({ selectedProvider }: UsageIndicatorAgnos
     isAvailable,
     error,
     providerConfig,
-    formatValue,
     getColorClass,
     getInitials,
     needsReauth,
-    isRateLimited,
     limitingPercent,
     sessionPercent,
     periodicPercent,
@@ -89,7 +87,7 @@ export function UsageIndicatorAgnostic({ selectedProvider }: UsageIndicatorAgnos
       const event = new CustomEvent<AppSection>('open-app-settings', {
         detail: 'accounts'
       });
-      window.dispatchEvent(event);
+      globalThis.dispatchEvent(event);
     }, 100);
   }, []);
 
@@ -254,8 +252,8 @@ export function UsageIndicatorAgnostic({ selectedProvider }: UsageIndicatorAgnos
               <div className="mt-2">
                 <p className="text-[10px] font-medium">Suggestions:</p>
                 <ul className="text-[10px] list-disc list-inside">
-                  {error.suggestions.map((suggestion: string, idx: number) => (
-                    <li key={idx}>{suggestion}</li>
+                  {error.suggestions.map((suggestion: string) => (
+                    <li key={suggestion}>{suggestion}</li>
                   ))}
                 </ul>
               </div>
@@ -337,7 +335,7 @@ export function UsageIndicatorAgnostic({ selectedProvider }: UsageIndicatorAgnos
                 <AlertCircle className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="text-xs font-medium text-orange-500">
-                    {(error as any).code?.replace(/_/g, ' ') || 'Error'}
+                    {(error as any).code?.replaceAll('_', ' ') || 'Error'}
                   </p>
                   <p className="text-[10px] text-muted-foreground leading-relaxed">
                     {(error as any).message || 'Unknown error occurred'}
@@ -346,8 +344,8 @@ export function UsageIndicatorAgnostic({ selectedProvider }: UsageIndicatorAgnos
                     <div className="text-[10px] text-muted-foreground">
                       <strong>Suggestions:</strong>
                       <ul className="list-disc list-inside space-y-0.5 mt-1">
-                        {(error as any).suggestions.map((suggestion: string, idx: number) => (
-                          <li key={idx}>{suggestion}</li>
+                        {(error as any).suggestions.map((suggestion: string, _idx: number) => (
+                          <li key={suggestion}>{suggestion}</li>
                         ))}
                       </ul>
                     </div>

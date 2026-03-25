@@ -32,17 +32,18 @@ function parseVersion(version: string): {
   const [baseStr, prereleaseStr] = version.split('-');
 
   // Parse base version numbers
-  const base = baseStr.split('.').map(n => parseInt(n, 10) || 0);
+  const base = baseStr.split('.').map(n => Number.parseInt(n, 10) || 0);
 
   // Parse prerelease if present
   let prerelease: { type: string; num: number } | null = null;
   if (prereleaseStr) {
     // Handle formats like "beta.6", "alpha.1", "rc.2"
-    const match = prereleaseStr.match(/^([a-zA-Z]+)\.?(\d*)$/);
+    const regex = /^([a-zA-Z]+)\.?(\d*)$/;
+    const match = regex.exec(prereleaseStr);
     if (match) {
       prerelease = {
         type: match[1].toLowerCase(),
-        num: parseInt(match[2], 10) || 0
+        num: Number.parseInt(match[2], 10) || 0
       };
     }
   }
@@ -81,15 +82,15 @@ export function compareVersions(a: string, b: string): number {
 
   // Both have prereleases - compare type then number
   const prereleaseOrder: Record<string, number> = { alpha: 0, beta: 1, rc: 2 };
-  const typeA = prereleaseOrder[parsedA.prerelease?.type] ?? 1;
-  const typeB = prereleaseOrder[parsedB.prerelease?.type] ?? 1;
+  const typeA = prereleaseOrder[parsedA.prerelease!.type] ?? 1;
+  const typeB = prereleaseOrder[parsedB.prerelease!.type] ?? 1;
 
   if (typeA > typeB) return 1;
   if (typeA < typeB) return -1;
 
   // Same prerelease type, compare numbers
-  if (parsedA.prerelease?.num > parsedB.prerelease?.num) return 1;
-  if (parsedA.prerelease?.num < parsedB.prerelease?.num) return -1;
+  if (parsedA.prerelease!.num > parsedB.prerelease!.num) return 1;
+  if (parsedA.prerelease!.num < parsedB.prerelease!.num) return -1;
 
   return 0;
 }

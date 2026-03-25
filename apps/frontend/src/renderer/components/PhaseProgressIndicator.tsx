@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
-import { memo, useRef, useState, useEffect } from 'react';
+import { memo, useRef, useState, useEffect, type MouseEvent } from 'react';
 import { cn } from '../lib/utils';
 import type { ExecutionPhase, TaskLogs, Subtask } from '../../shared/types';
 
@@ -13,6 +13,8 @@ interface PhaseProgressIndicatorProps {
   isStuck?: boolean;
   isRunning?: boolean;
   className?: string;
+  /** Called when the user clicks the completed Plan pill to view the implementation plan */
+  onPlanClick?: () => void;
 }
 
 // Phase display configuration (colors only - labels are translated)
@@ -57,6 +59,7 @@ export const PhaseProgressIndicator = memo(function PhaseProgressIndicator({
   isStuck = false,
   isRunning = false,
   className,
+  onPlanClick,
 }: PhaseProgressIndicatorProps) {
   const { t } = useTranslation('tasks');
   const phase = rawPhase || 'idle';
@@ -255,7 +258,7 @@ export const PhaseProgressIndicator = memo(function PhaseProgressIndicator({
 
       {/* Phase steps indicator (shows overall flow) */}
       {(isRunning || phase !== 'idle') && (
-        <PhaseStepsIndicator currentPhase={phase} isStuck={isStuck} isVisible={isVisible} />
+        <PhaseStepsIndicator currentPhase={phase} isStuck={isStuck} isVisible={isVisible} onPlanClick={onPlanClick} />
       )}
     </div>
   );
@@ -268,10 +271,12 @@ const PhaseStepsIndicator = memo(function PhaseStepsIndicator({
   currentPhase,
   isStuck,
   isVisible = true,
+  onPlanClick,
 }: {
   currentPhase: ExecutionPhase;
   isStuck: boolean;
   isVisible?: boolean;
+  onPlanClick?: () => void;
 }) {
   const { t } = useTranslation('tasks');
 
@@ -295,11 +300,17 @@ const PhaseStepsIndicator = memo(function PhaseStepsIndicator({
     return 'pending';
   };
 
+  const handlePlanClick = (e: MouseEvent) => {
+    e.stopPropagation();
+    onPlanClick?.();
+  };
+
   return (
     <div className="flex items-center gap-1 mt-2">
       {phases.map((phase, index) => {
         const state = getPhaseState(phase.key);
         const shouldAnimate = state === 'active' && !isStuck && isVisible;
+        const isPlanClickable = phase.key === 'planning' && state === 'complete' && !!onPlanClick;
 
         return (
           <div key={phase.key} className="flex items-center">
@@ -310,10 +321,14 @@ const PhaseStepsIndicator = memo(function PhaseStepsIndicator({
                 state === 'active' && 'bg-primary/10 text-primary',
                 state === 'stuck' && 'bg-warning/10 text-warning',
                 state === 'failed' && 'bg-destructive/10 text-destructive',
-                state === 'pending' && 'bg-muted text-muted-foreground'
+                state === 'pending' && 'bg-muted text-muted-foreground',
+                isPlanClickable && 'cursor-pointer hover:bg-success/20 transition-colors'
               )}
               animate={shouldAnimate ? { opacity: [1, 0.6, 1] } : { opacity: 1 }}
               transition={shouldAnimate ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' } : undefined}
+              onClick={isPlanClickable ? handlePlanClick : undefined}
+              title={isPlanClickable ? t('execution.shortPhases.planTooltip') : undefined}
+              role={isPlanClickable ? 'button' : undefined}
             >
               {state === 'complete' && (
                 <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

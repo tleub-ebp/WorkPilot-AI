@@ -113,7 +113,7 @@ describe('AuthChoiceStep', () => {
       );
 
       // Both cards should have icon containers
-      const iconContainers = document.querySelectorAll('.bg-primary\\/10');
+      const iconContainers = document.querySelectorAll(String.raw`.bg-primary\/10`);
       expect(iconContainers.length).toBeGreaterThanOrEqual(2);
     });
   });

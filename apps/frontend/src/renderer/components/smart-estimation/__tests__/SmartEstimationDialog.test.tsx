@@ -24,9 +24,25 @@ Object.defineProperty(window, 'electronAPI', {
 });
 
 // Mock the stores
-const mockSmartEstimationStore = {
+const mockSmartEstimationStore: {
+  isOpen: boolean;
+  phase: string;
+  status: string;
+  streamingOutput: string;
+  result: Record<string, unknown> | null;
+  error: string | null;
+  initialTaskDescription: string;
+  openDialog: ReturnType<typeof vi.fn>;
+  closeDialog: ReturnType<typeof vi.fn>;
+  setPhase: ReturnType<typeof vi.fn>;
+  setStatus: ReturnType<typeof vi.fn>;
+  appendStreamingOutput: ReturnType<typeof vi.fn>;
+  setResult: ReturnType<typeof vi.fn>;
+  setError: ReturnType<typeof vi.fn>;
+  reset: ReturnType<typeof vi.fn>;
+} = {
   isOpen: false,
-  phase: 'idle' as const,
+  phase: 'idle',
   status: '',
   streamingOutput: '',
   result: null,
@@ -42,7 +58,10 @@ const mockSmartEstimationStore = {
   reset: vi.fn(),
 };
 
-const mockProjectStore = {
+const mockProjectStore: {
+  selectedProjectId: string | null;
+  projects: Array<{ id: string; name: string }>;
+} = {
   selectedProjectId: 'test-project-id',
   projects: [
     { id: 'test-project-id', name: 'Test Project' }
@@ -137,7 +156,7 @@ vi.mock('lucide-react', () => ({
   Shield: () => <span data-testid="shield-icon" />,
 }));
 
-import SmartEstimationDialog from '../smart-estimation-dialog';
+import SmartEstimationDialog from '../SmartEstimationDialog';
 
 describe('Smart Estimation Dialog', () => {
   beforeEach(() => {

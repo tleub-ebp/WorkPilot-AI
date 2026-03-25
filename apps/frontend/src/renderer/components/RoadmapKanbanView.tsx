@@ -31,21 +31,21 @@ import {
 import type { RoadmapFeature, RoadmapFeatureStatus, Roadmap } from '../../shared/types';
 
 interface RoadmapKanbanViewProps {
-  roadmap: Roadmap;
-  onFeatureClick: (feature: RoadmapFeature) => void;
-  onConvertToSpec?: (feature: RoadmapFeature) => void;
-  onGoToTask?: (specId: string) => void;
-  onSave?: () => void;
+  readonly roadmap: Roadmap;
+  readonly onFeatureClick: (feature: RoadmapFeature) => void;
+  readonly onConvertToSpec?: (feature: RoadmapFeature) => void;
+  readonly onGoToTask?: (specId: string) => void;
+  readonly onSave?: () => void;
 }
 
 interface DroppableStatusColumnProps {
-  column: RoadmapStatusColumn;
-  features: RoadmapFeature[];
-  roadmap: Roadmap;
-  onFeatureClick: (feature: RoadmapFeature) => void;
-  onConvertToSpec?: (feature: RoadmapFeature) => void;
-  onGoToTask?: (specId: string) => void;
-  isOver: boolean;
+  readonly column: RoadmapStatusColumn;
+  readonly features: RoadmapFeature[];
+  readonly roadmap: Roadmap;
+  readonly onFeatureClick: (feature: RoadmapFeature) => void;
+  readonly onConvertToSpec?: (feature: RoadmapFeature) => void;
+  readonly onGoToTask?: (specId: string) => void;
+  readonly isOver: boolean;
 }
 
 // Get icon component for status
@@ -61,6 +61,20 @@ function getStatusIcon(iconName: string) {
       return <Check className="h-3.5 w-3.5" />;
     default:
       return null;
+  }
+}
+
+// Get status color classes based on column ID
+function getStatusColorClasses(columnId: string): string {
+  switch (columnId) {
+    case 'done':
+      return 'bg-success/10 text-success';
+    case 'in_progress':
+      return 'bg-primary/10 text-primary';
+    case 'planned':
+      return 'bg-info/10 text-info';
+    default:
+      return 'bg-muted text-muted-foreground';
   }
 }
 
@@ -83,7 +97,7 @@ function DroppableStatusColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        'flex min-w-80 max-w-[32rem] flex-1 flex-col rounded-xl border border-white/5 bg-linear-to-b from-secondary/30 to-transparent backdrop-blur-sm transition-all duration-200',
+        'flex min-w-80 max-w-lg flex-1 flex-col rounded-xl border border-white/5 bg-linear-to-b from-secondary/30 to-transparent backdrop-blur-sm transition-all duration-200',
         column.color,
         'border-t-2',
         isOver && 'drop-zone-highlight'
@@ -95,13 +109,7 @@ function DroppableStatusColumn({
           <div
             className={cn(
               'w-6 h-6 rounded-full flex items-center justify-center',
-              column.id === 'done'
-                ? 'bg-success/10 text-success'
-                : column.id === 'in_progress'
-                ? 'bg-primary/10 text-primary'
-                : column.id === 'planned'
-                ? 'bg-info/10 text-info'
-                : 'bg-muted text-muted-foreground'
+              getStatusColorClasses(column.id)
             )}
           >
             {getStatusIcon(column.icon)}

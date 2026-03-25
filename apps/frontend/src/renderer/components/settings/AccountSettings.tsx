@@ -524,6 +524,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
   };
 
   // Load data when section is opened
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (isOpen) {
       loadClaudeProfiles();
@@ -533,8 +534,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
       // This bypasses the 1-minute cache to ensure accurate duplicate detection
       loadProfileUsageData(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, loadProfileUsageData, loadAutoSwitchSettings, loadClaudeProfiles, loadPriorityOrder]);
+  }, [isOpen, loadProfileUsageData]);
 
   // Subscribe to usage updates for real-time data
   useEffect(() => {

@@ -89,7 +89,7 @@ interface UsageIndicatorDumbProps {
 }
 
 export function UsageIndicatorDumb({ selectedProvider: propSelectedProvider }: UsageIndicatorDumbProps = {}) {
-  const { t, i18n } = useTranslation(['common']);
+  const { t } = useTranslation(['common']);
   const { selectedProvider: contextProvider } = useProviderContext();
   const selectedProvider = propSelectedProvider || contextProvider;
 
@@ -114,7 +114,7 @@ export function UsageIndicatorDumb({ selectedProvider: propSelectedProvider }: U
       const event = new CustomEvent<AppSection>('open-app-settings', {
         detail: 'accounts'
       });
-      window.dispatchEvent(event);
+      globalThis.dispatchEvent(event);
     }, 100);
   }, []);
 
@@ -304,13 +304,24 @@ export function UsageIndicatorDumb({ selectedProvider: propSelectedProvider }: U
     : undefined;
 
   const maxUsage = Math.max(sessionPercent, weeklyPercent);
-  const Icon = usageData.usage.needsReauthentication
-    ? AlertCircle
-    : maxUsage >= THRESHOLD_WARNING
-      ? AlertCircle
-      : maxUsage >= THRESHOLD_ELEVATED
-        ? TrendingUp
-        : Activity;
+  
+  /**
+   * Determine which icon to show based on usage and authentication status
+   */
+  const getUsageIcon = () => {
+    if (usageData.usage.needsReauthentication) {
+      return AlertCircle;
+    }
+    if (maxUsage >= THRESHOLD_WARNING) {
+      return AlertCircle;
+    }
+    if (maxUsage >= THRESHOLD_ELEVATED) {
+      return TrendingUp;
+    }
+    return Activity;
+  };
+
+  const Icon = getUsageIcon();
 
   // Rendu du composant
   return (

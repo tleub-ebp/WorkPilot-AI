@@ -38,6 +38,7 @@ export class PythonEnvManager extends EventEmitter {
   private sitePackagesPath: string | null = null;
   private usingBundledPackages = false;
   private isReady = false;
+  private isInitializing = false;
   private initializationPromise: Promise<PythonEnvStatus> | null = null;
   private activeProcesses: Set<ChildProcess> = new Set();
   private static readonly VENV_CREATION_TIMEOUT_MS = 120000; // 2 minutes timeout for venv creation

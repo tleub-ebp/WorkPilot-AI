@@ -4,9 +4,9 @@
  * Handles IPC communication for the Smart Estimation feature
  */
 
-import { ipcMain } from 'electron';
-import { spawn, ChildProcess } from 'child_process';
-import { app } from 'electron';
+import { app, ipcMain } from 'electron';
+import { ChildProcess, spawn } from 'node:child_process';
+import path from 'node:path';
 
 interface SmartEstimationRequest {
   projectId: string;
@@ -29,10 +29,10 @@ export function setupSmartEstimationHandlers() {
     return new Promise((resolve, reject) => {
       killExistingProcess();
 
-      const backendPath = resolve(app.getAppPath(), 'apps', 'backend');
-      const runnerPath = resolve(backendPath, 'runners', 'smart_estimation_runner.py');
+      const backendPath = path.resolve(app.getAppPath(), 'apps', 'backend');
+      const runnerPath = path.resolve(backendPath, 'runners', 'smart_estimation_runner.py');
 
-      const spawnedProcess = spawn('python', [
+      const spawnedProcess: ChildProcess = spawn('python', [
         runnerPath,
         '--project-id', projectId,
         '--task-description', taskDescription
@@ -42,7 +42,7 @@ export function setupSmartEstimationHandlers() {
           ...process.env,
           PYTHONPATH: backendPath
         }
-      });
+      } as Parameters<typeof spawn>[2]);
 
       currentProcess = spawnedProcess;
 

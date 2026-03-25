@@ -1,5 +1,5 @@
 import { Button } from '../ui/button';
-import { Loader2, LogIn, Users, CheckCircle } from 'lucide-react';
+import { AlertCircle, Loader2, LogIn, Users, CheckCircle } from 'lucide-react';
 import { AuthTerminal } from './AuthTerminal';
 
 interface AuthTerminalState {

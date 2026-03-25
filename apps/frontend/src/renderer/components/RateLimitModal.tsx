@@ -38,6 +38,17 @@ export function RateLimitModal() {
   const [isAddingProfile, setIsAddingProfile] = useState(false);
   const [newProfileName, setNewProfileName] = useState('');
 
+  const loadAutoSwitchSettings = async () => {
+    try {
+      const result = await globalThis.electronAPI.getAutoSwitchSettings();
+      if (result.success && result.data) {
+        setAutoSwitchEnabled(result.data.autoSwitchOnRateLimit);
+      }
+    } catch (err) {
+      debugError('[RateLimitModal] Failed to load auto-switch settings:', err);
+    }
+  };
+
   // Load profiles and auto-switch settings when modal opens
   useEffect(() => {
     if (isModalOpen) {
@@ -60,17 +71,6 @@ export function RateLimitModal() {
       setNewProfileName('');
     }
   }, [isModalOpen]);
-
-  const loadAutoSwitchSettings = async () => {
-    try {
-      const result = await globalThis.electronAPI.getAutoSwitchSettings();
-      if (result.success && result.data) {
-        setAutoSwitchEnabled(result.data.autoSwitchOnRateLimit);
-      }
-    } catch (err) {
-      debugError('[RateLimitModal] Failed to load auto-switch settings:', err);
-    }
-  };
 
   const handleAutoSwitchToggle = async (enabled: boolean) => {
     setIsLoadingSettings(true);

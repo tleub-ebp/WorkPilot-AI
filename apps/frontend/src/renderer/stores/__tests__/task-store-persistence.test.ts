@@ -340,7 +340,7 @@ describe('task-store-persistence', () => {
     });
 
     it('should set loading state during IPC call', async () => {
-      let resolveGetTasks: (value: any) => void;
+      let resolveGetTasks: (value: any) => void = () => {};
       const getTasksPromise = new Promise((resolve) => {
         resolveGetTasks = resolve;
       });

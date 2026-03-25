@@ -4,7 +4,7 @@ export * from './KanbanBoard';
 export * from './TaskCard';
 export * from './TaskCreationWizard';
 export * from './TaskEditDialog';
-export * from './AppSettings';
+// AppSettings has been refactored - import from './settings' instead
 export * from './Context';
 export * from './Ideation';
 export * from './GitHubIssues';

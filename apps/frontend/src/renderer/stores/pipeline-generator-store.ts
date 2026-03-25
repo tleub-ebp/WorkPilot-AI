@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { CiPlatform, PipelineGeneratorResult, } from '../../main/pipeline-generator-service';
 
+export type { CiPlatform };
+
 export type PipelineGeneratorPhase = 'idle' | 'generating' | 'complete' | 'error';
 
 export const CI_PLATFORMS: CiPlatform[] = ['github', 'gitlab', 'circleci'];
