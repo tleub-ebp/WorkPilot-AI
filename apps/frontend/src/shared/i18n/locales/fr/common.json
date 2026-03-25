@@ -89,7 +89,11 @@
     "continue": "Continuer",
     "saving": "Enregistrement...",
     "deleting": "Suppression...",
-    "undo": "Annuler"
+    "undo": "Annuler",
+    "test": "Tester",
+    "testing": "Test...",
+    "generate": "Générer",
+    "generating": "Génération..."
   },
   "actions": {
     "save": "Enregistrer",

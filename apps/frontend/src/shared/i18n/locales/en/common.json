@@ -89,7 +89,11 @@
     "continue": "Continue",
     "saving": "Saving...",
     "deleting": "Deleting...",
-    "undo": "Undo"
+    "undo": "Undo",
+    "test": "Test",
+    "testing": "Testing...",
+    "generate": "Generate",
+    "generating": "Generating..."
   },
   "actions": {
     "save": "Save",
