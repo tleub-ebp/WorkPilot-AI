@@ -24,9 +24,9 @@ try:
         AutoFixTestResult,
         AutoFixAttempt,
     )
-    print(f"  ✓ AutoFixLoop importé")
-    print(f"  ✓ AutoFixTestResult importé")
-    print(f"  ✓ AutoFixAttempt importé")
+    print("  ✓ AutoFixLoop importé")
+    print("  ✓ AutoFixTestResult importé")
+    print("  ✓ AutoFixAttempt importé")
     print(f"  ✓ DEFAULT_MAX_AUTO_FIX_ATTEMPTS = {DEFAULT_MAX_AUTO_FIX_ATTEMPTS}")
     print("  ✅ Imports OK")
 except Exception as e:
@@ -42,8 +42,8 @@ try:
         get_auto_fix_stats,
         record_auto_fix_run,
     )
-    print(f"  ✓ AutoFixMetricsTracker importé")
-    print(f"  ✓ get_auto_fix_stats importé")
+    print("  ✓ AutoFixMetricsTracker importé")
+    print("  ✓ get_auto_fix_stats importé")
     print("  ✅ Imports métriques OK")
 except Exception as e:
     print(f"  ❌ Erreur: {e}")
@@ -70,7 +70,7 @@ try:
             verbose=False
         )
         
-        print(f"  ✓ AutoFixLoop créé")
+        print("  ✓ AutoFixLoop créé")
         print(f"  ✓ project_dir: {loop.project_dir.name}")
         print(f"  ✓ spec_dir: {loop.spec_dir.name}")
         print(f"  ✓ model: {loop.model}")

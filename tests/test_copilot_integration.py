@@ -230,8 +230,6 @@ class TestCopilotIntegrationPath:
             "logic": SubagentDefinition(description="Logic", prompt="Check logic"),
         }
 
-        call_urls = []
-
         def make_response(text):
             resp = MagicMock()
             resp.status = 200
@@ -472,8 +470,14 @@ class TestSessionProviderRouting:
         from core.agent_client import AgentMessage, ContentBlock, ContentBlockType
 
         class SimpleTestClient(AgentClient):
+            def __init__(self):
+                self.stored_prompt = None
+                
             async def query(self, prompt):
-                pass
+                # Store the prompt for test verification - this mock client
+                # doesn't need to process it since receive_response() provides
+                # a predefined response for testing purposes
+                self.stored_prompt = prompt
 
             async def receive_response(self):
                 yield AgentMessage(
@@ -488,6 +492,10 @@ class TestSessionProviderRouting:
 
             def provider_name(self):
                 return "test"
+
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                # Mock implementation - no cleanup needed for test client
+                pass
 
         client = SimpleTestClient()
 

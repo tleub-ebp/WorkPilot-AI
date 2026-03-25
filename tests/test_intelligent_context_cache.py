@@ -134,17 +134,23 @@ class TestIntelligentContextCache:
     @pytest.fixture
     def context_cache(self, temp_project, cache_config):
         """Create context cache instance."""
-        return IntelligentContextCache(temp_project, cache_config)
+        cache = IntelligentContextCache(temp_project, cache_config)
+        yield cache
+        # Cleanup after test
+        cache.close()
     
     def test_cache_initialization(self, temp_project, cache_config):
         """Test cache initialization."""
         cache = IntelligentContextCache(temp_project, cache_config)
         
-        assert cache.project_path == temp_project
-        assert cache.config == cache_config
-        assert cache.semantic_hasher is not None
-        assert cache.freshness_scorer is not None
-        assert len(cache._cache) == 0
+        try:
+            assert cache.project_path == temp_project
+            assert cache.config == cache_config
+            assert cache.semantic_hasher is not None
+            assert cache.freshness_scorer is not None
+            assert len(cache._cache) == 0
+        finally:
+            cache.close()
     
     def test_context_caching(self, context_cache):
         """Test basic context caching."""

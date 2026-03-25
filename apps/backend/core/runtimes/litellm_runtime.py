@@ -56,12 +56,21 @@ class LiteLLMRuntime(AgentRuntime):
         self.tool_definitions = get_tool_definitions(agent_type)
         self.max_turns = 10
 
+    async def __aenter__(self):
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit."""
+        # Cleanup LLM client if needed
+        if hasattr(self.llm_client, 'close'):
+            await self.llm_client.close()
+
     async def run_session(
         self, prompt: str, tools: list[dict[str, Any]] | None = None, **kwargs
     ) -> SessionResult:
         turn = 0
         last_response = None
-        tool_calls_count = 0
         error_info = None
         usage = None
         while turn < self.max_turns:
@@ -75,7 +84,6 @@ class LiteLLMRuntime(AgentRuntime):
                 if llm_response.has_tool_calls:
                     tool_results = {}
                     for tool_call in llm_response.tool_calls:
-                        tool_calls_count += 1
                         try:
                             result = await self.tool_executor.execute(
                                 tool_call.name, tool_call.arguments

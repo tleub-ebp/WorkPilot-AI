@@ -13,10 +13,16 @@ Tests the worktree.py module functionality including:
 """
 
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 
 import pytest
+
+# Add the apps/backend directory to the Python path
+backend_path = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_path))
+
 from worktree import WorktreeManager
 
 
@@ -87,7 +93,7 @@ class TestWorktreeCreation:
         info = manager.create_worktree("test-spec")
 
         assert info.path.exists()
-        assert info.branch == "auto-claude/test-spec"
+        assert info.branch == "workpilot/test-spec"
         assert info.is_active is True
         assert (info.path / "README.md").exists()
 
@@ -758,7 +764,7 @@ class TestWorktreeUtilities:
         info = manager.get_worktree_info("test-spec")
 
         assert info is not None
-        assert info.branch == "auto-claude/test-spec"
+        assert info.branch == "workpilot/test-spec"
 
     def test_get_worktree_path(self, temp_git_repo: Path):
         """get_worktree_path returns correct path."""

@@ -26,11 +26,11 @@ class ContextLevel(Enum):
 class ContextInfo:
     """Information about task context"""
 
-    files: Optional[list[str]] = field(default=None)
-    recent_history: Optional[list[str]] = field(default=None)
-    dependencies: Optional[list[str]] = field(default=None)
-    constraints: Optional[dict[str, Any]] = field(default=None)
-    examples: Optional[list[str]] = field(default=None)
+    files: list[str] | None = field(default=None)
+    recent_history: list[str] | None = field(default=None)
+    dependencies: list[str] | None = field(default=None)
+    constraints: dict[str, Any] | None = field(default=None)
+    examples: list[str] | None = field(default=None)
 
 
 class DynamicPromptTemplate:

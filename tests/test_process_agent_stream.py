@@ -98,6 +98,10 @@ class MockAgentClient(AgentClient):
     def provider_name(self):
         return "mock"
 
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        # Mock implementation - no cleanup needed for test client
+        pass
+
 
 def _text_msg(text):
     """Create a simple text AgentMessage."""

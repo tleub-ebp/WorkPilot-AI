@@ -394,6 +394,21 @@ class IntelligentContextCache:
         # Load existing cache
         self._load_cache_from_db()
 
+    def close(self):
+        """Close database connections and cleanup resources."""
+        with self._cache_lock:
+            self._cache.clear()
+        # Force garbage collection to help with file locks on Windows
+        import gc
+        gc.collect()
+
+    def __del__(self):
+        """Cleanup when object is destroyed."""
+        try:
+            self.close()
+        except Exception:
+            pass  # Ignore errors during cleanup
+
     def _init_database(self):
         """Initialize SQLite database for persistent cache."""
         self.db_path = self.project_path / ".workpilot" / self.config.db_path

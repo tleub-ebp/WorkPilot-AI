@@ -322,7 +322,7 @@ class StreamingWebSocketServer:
         # when init_session changes the session. A plain string variable would not
         # be updated by the child method due to Python scoping rules.
         ctx = {"session_id": None}
-        
+
         try:
             await self._setup_client_connection(websocket, ctx)
             await self._handle_client_messages(websocket, ctx)
@@ -332,7 +332,9 @@ class StreamingWebSocketServer:
         finally:
             self._ensure_cleanup(ctx, websocket)
 
-    async def _setup_client_connection(self, websocket: WebSocketServerProtocol, ctx: dict):
+    async def _setup_client_connection(
+        self, websocket: WebSocketServerProtocol, ctx: dict
+    ):
         """Setup initial client connection and session."""
         # Extract path and session ID
         path = self._extract_websocket_path(websocket)
@@ -351,7 +353,9 @@ class StreamingWebSocketServer:
         session_info = self.streaming_manager.get_session_info(ctx["session_id"])
         await self._send_welcome_message(ctx["session_id"], websocket, session_info)
 
-    async def _handle_client_messages(self, websocket: WebSocketServerProtocol, ctx: dict):
+    async def _handle_client_messages(
+        self, websocket: WebSocketServerProtocol, ctx: dict
+    ):
         """Handle incoming messages from client."""
         try:
             async for message in websocket:
@@ -359,9 +363,7 @@ class StreamingWebSocketServer:
         except websockets.exceptions.ConnectionClosed:
             logger.info(f"Client disconnected from session {ctx['session_id']}")
         except websockets.exceptions.ConnectionClosedOK:
-            logger.info(
-                f"Client cleanly disconnected from session {ctx['session_id']}"
-            )
+            logger.info(f"Client cleanly disconnected from session {ctx['session_id']}")
         except websockets.exceptions.ConnectionClosedError as e:
             logger.warning(
                 f"Client connection closed with error from session {ctx['session_id']}: {e}"
@@ -377,7 +379,9 @@ class StreamingWebSocketServer:
         finally:
             self._cleanup_client(ctx["session_id"], websocket)
 
-    def _handle_critical_error(self, ctx: dict, websocket: WebSocketServerProtocol, _error: Exception):
+    def _handle_critical_error(
+        self, ctx: dict, websocket: WebSocketServerProtocol, _error: Exception
+    ):
         """Handle critical errors during client setup."""
         # Ensure cleanup even if connection fails early
         try:
@@ -426,20 +430,32 @@ class StreamingWebSocketServer:
         except Exception as e:
             logger.error(f"Error handling message: {e}")
 
-    async def _handle_init_session(self, ctx: dict, websocket: WebSocketServerProtocol, data: dict):
+    async def _handle_init_session(
+        self, ctx: dict, websocket: WebSocketServerProtocol, data: dict
+    ):
         """Handle session initialization message."""
         actual_session_id = data.get("session_id")
         current_session_id = ctx["session_id"]
-        
+
         if not actual_session_id or actual_session_id == current_session_id:
             return
-            
-        logger.info(f"Client requested session change: {current_session_id} -> {actual_session_id}")
-        
-        await self._move_client_to_session(ctx, websocket, current_session_id, actual_session_id)
+
+        logger.info(
+            f"Client requested session change: {current_session_id} -> {actual_session_id}"
+        )
+
+        await self._move_client_to_session(
+            ctx, websocket, current_session_id, actual_session_id
+        )
         await self._send_session_confirmation(websocket, actual_session_id)
 
-    async def _move_client_to_session(self, ctx: dict, websocket: WebSocketServerProtocol, old_session_id: str, new_session_id: str):
+    async def _move_client_to_session(
+        self,
+        ctx: dict,
+        websocket: WebSocketServerProtocol,
+        old_session_id: str,
+        new_session_id: str,
+    ):
         """Move client from old session to new session."""
         # Remove from old session
         if old_session_id in self._clients:
@@ -476,7 +492,9 @@ class StreamingWebSocketServer:
             )
             logger.info(f"Auto-created session {session_id}")
 
-    async def _send_session_confirmation(self, websocket: WebSocketServerProtocol, session_id: str):
+    async def _send_session_confirmation(
+        self, websocket: WebSocketServerProtocol, session_id: str
+    ):
         """Send session confirmation message to client."""
         confirmation = {
             "event_type": "session_confirmed",
@@ -490,21 +508,21 @@ class StreamingWebSocketServer:
         await websocket.send(json.dumps(confirmation))
         logger.info(f"Sent confirmation for session: {session_id}")
 
-    async def _handle_agent_event(self, session_id: str, data: dict, websocket: WebSocketServerProtocol):
+    async def _handle_agent_event(
+        self, session_id: str, data: dict, websocket: WebSocketServerProtocol
+    ):
         """Handle agent event message."""
         event_data = data.get("event")
         if not event_data:
             return
-            
+
         from .streaming_manager import EventType, StreamingEvent
 
         # Use session_id from event data as authoritative source
         event_session = event_data.get("session_id", session_id)
         try:
             event = StreamingEvent(
-                event_type=EventType(
-                    event_data.get("event_type", "agent_thinking")
-                ),
+                event_type=EventType(event_data.get("event_type", "agent_thinking")),
                 timestamp=event_data.get("timestamp", time.time()),
                 data=event_data.get("data", {}),
                 session_id=event_session,
