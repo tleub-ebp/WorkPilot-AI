@@ -6,12 +6,11 @@ Coordinates multi-agent team debates, voting, and decision-making.
 """
 
 from pathlib import Path
-from typing import List, Optional
 
-from teams.config import TeamConfig, DebateStrategy
-from teams.communication import CommunicationBus, MessageType
-from teams.roles import AgentRole, get_role_definition, get_active_roles
-from teams.voting import Vote, VoteChoice, VotingSystem
+from teams.communication import CommunicationBus
+from teams.config import TeamConfig
+from teams.roles import get_active_roles
+from teams.voting import VotingSystem
 
 
 class ClaudeTeam:
