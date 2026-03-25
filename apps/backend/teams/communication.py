@@ -128,7 +128,9 @@ class CommunicationBus:
         if any(m.message_type == MessageType.CHALLENGE for m in recent):
             return False
 
-        support_count = sum(1 for m in messages if m.message_type == MessageType.SUPPORT)
+        support_count = sum(
+            1 for m in messages if m.message_type == MessageType.SUPPORT
+        )
         return support_count >= 3
 
     def save_all_threads(self) -> None:
@@ -137,7 +139,11 @@ class CommunicationBus:
             "total_threads": len(self._threads),
             "total_messages": total_messages,
             "threads": [
-                {"thread_id": t.thread_id, "topic": t.topic, "message_count": len(t.messages)}
+                {
+                    "thread_id": t.thread_id,
+                    "topic": t.topic,
+                    "message_count": len(t.messages),
+                }
                 for t in self._threads.values()
             ],
         }

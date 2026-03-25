@@ -667,6 +667,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
 
     # --- Ollama (local — no key needed) ---
     if provider == "ollama":
+
         def build_ollama_url(raw_base_url: str | None) -> str:
             """
             Build a safe Ollama URL from an optional base URL.

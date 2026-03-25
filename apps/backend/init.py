@@ -235,7 +235,9 @@ def _migrate_legacy_auto_claude_dir(project_dir: Path) -> bool:
     if old_dir.exists() and not new_dir.exists():
         try:
             shutil.move(str(old_dir), str(new_dir))
-            logger.info(f"Migrated {old_dir} → {new_dir} (Auto-Claude_EBP → WorkPilot-AI)")
+            logger.info(
+                f"Migrated {old_dir} → {new_dir} (Auto-Claude_EBP → WorkPilot-AI)"
+            )
             return True
         except Exception as exc:
             logger.warning(f"Could not migrate {old_dir} to {new_dir}: {exc}")
