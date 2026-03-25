@@ -6,7 +6,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional, Union, List, Dict
 
 
 class MigrationState(Enum):
@@ -48,17 +48,17 @@ class StackInfo:
     framework: str  # e.g., "react", "vue", "django", "flask"
     language: str  # e.g., "typescript", "python", "java"
     version: str  # Version of the framework/language
-    database: str | None = None  # e.g., "mysql", "postgresql"
-    db_version: str | None = None
-    dependencies: dict[str, str] = field(default_factory=dict)  # name → version
-    additional_tools: list[str] = field(default_factory=list)  # e.g., webpack, docker
+    database: Optional[str] = None  # e.g., "mysql", "postgresql"
+    db_version: Optional[str] = None
+    dependencies: Dict[str, str] = field(default_factory=dict)  # name → version
+    additional_tools: List[str] = field(default_factory=list)  # e.g., webpack, docker
     package_manager: str = "npm"  # npm, pip, maven, etc.
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "StackInfo":
+    def from_dict(cls, data: Dict[str, Any]) -> "StackInfo":
         return cls(**data)
 
 
@@ -70,21 +70,21 @@ class MigrationStep:
     title: str
     description: str
     category: str  # e.g., "component", "database", "config", "api"
-    files_affected: list[str]
+    files_affected: List[str]
     transformation_type: str  # e.g., "api_mapping", "syntax_conversion"
 
     # Execution details
     expected_changes: int  # Expected number of file changes
-    rollback_procedure: str | None = None
-    validation_checks: list[str] = field(default_factory=list)
-    dependencies: list[str] = field(default_factory=list)  # Step IDs this depends on
+    rollback_procedure: Optional[str] = None
+    validation_checks: List[str] = field(default_factory=list)
+    dependencies: List[str] = field(default_factory=list)  # Step IDs this depends on
 
     # Status tracking
     status: str = "pending"  # pending, in_progress, completed, failed
-    error: str | None = None
-    applied_at: datetime | None = None
+    error: Optional[str] = None
+    applied_at: Optional[datetime] = None
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
         if self.applied_at:
             data["applied_at"] = self.applied_at.isoformat()
@@ -102,16 +102,16 @@ class MigrationPhase:
     # Metadata
     estimated_effort: str = "medium"  # Low, Medium, High
 
-    steps: list[MigrationStep] = field(default_factory=list)
+    steps: List[MigrationStep] = field(default_factory=list)
     risk_level: RiskLevel = RiskLevel.MEDIUM
     requires_approval: bool = False
 
     # Status
     status: str = "pending"  # pending, in_progress, completed, failed
-    started_at: datetime | None = None
-    completed_at: datetime | None = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
         data["steps"] = [step.to_dict() for step in self.steps]
         data["risk_level"] = self.risk_level.value
@@ -134,15 +134,15 @@ class TransformationResult:
     confidence: float  # 0-1 confidence in transformation quality
 
     # Validation
-    errors: list[str] = field(default_factory=list)
-    warnings: list[str] = field(default_factory=list)
+    errors: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
     validation_passed: bool = False
 
     # Metadata
     applied: bool = False
-    applied_at: datetime | None = None
+    applied_at: Optional[datetime] = None
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
         if self.applied_at:
             data["applied_at"] = self.applied_at.isoformat()
@@ -190,7 +190,7 @@ class MigrationPlan:
     # Status
     status: str = "pending"  # pending, approved, in_progress, completed, failed
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
         data["source_stack"] = self.source_stack.to_dict()
         data["target_stack"] = self.target_stack.to_dict()
@@ -200,14 +200,13 @@ class MigrationPlan:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "MigrationPlan":
+    def from_dict(cls, data: Dict[str, Any]) -> "MigrationPlan":
         """Deserialize from dict."""
         data = dict(data)
         data["source_stack"] = StackInfo.from_dict(data["source_stack"])
         data["target_stack"] = StackInfo.from_dict(data["target_stack"])
         data["risk_level"] = RiskLevel(data["risk_level"])
         # Phases would need similar reconstruction
-        phases = data.get("phases", [])
         data["phases"] = []  # Simplified for now
         data["created_at"] = datetime.fromisoformat(data["created_at"])
         return cls(**data)
@@ -223,25 +222,25 @@ class MigrationContext:
     project_dir: str
 
     # Planning
-    plan: MigrationPlan | None = None
+    plan: Optional[MigrationPlan] = None
 
     # Execution
     state: MigrationState = MigrationState.PLANNING
-    transformations: list[TransformationResult] = field(default_factory=list)
-    test_results: dict[str, Any] = field(default_factory=dict)
+    transformations: List[TransformationResult] = field(default_factory=list)
+    test_results: Dict[str, Any] = field(default_factory=dict)
 
     # Tracking
-    checkpoints: dict[str, str] = field(default_factory=dict)  # phase_id → git_commit
+    checkpoints: Dict[str, str] = field(default_factory=dict)  # phase_id → git_commit
     rollback_available: bool = False
-    current_phase: str | None = None
+    current_phase: Optional[str] = None
 
     # Metadata
-    started_at: datetime | None = None
-    paused_at: datetime | None = None
-    completed_at: datetime | None = None
-    last_error: str | None = None
+    started_at: Optional[datetime] = None
+    paused_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    last_error: Optional[str] = None
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
         data["source_stack"] = self.source_stack.to_dict()
         data["target_stack"] = self.target_stack.to_dict()
@@ -283,23 +282,23 @@ class ValidationReport:
     skipped_tests: int = 0
 
     # Coverage
-    before_coverage: float | None = None  # percentage
-    after_coverage: float | None = None
-    coverage_change: float | None = None
+    before_coverage: Optional[float] = None  # percentage
+    after_coverage: Optional[float] = None
+    coverage_change: Optional[float] = None
 
     # Regressions
     regression_detected: bool = False
-    regressions: list[str] = field(default_factory=list)
+    regressions: List[str] = field(default_factory=list)
 
     # Issues
-    errors: list[str] = field(default_factory=list)
-    warnings: list[str] = field(default_factory=list)
+    errors: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
 
     # Metadata
     duration_seconds: float = 0.0
     completed_at: datetime = field(default_factory=datetime.now)
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
         data["completed_at"] = self.completed_at.isoformat()
         return data
@@ -316,7 +315,7 @@ class RollbackCheckpoint:
     state_file: str  # Path to saved context
     description: str
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "phase_id": self.phase_id,
             "checkpoint_id": self.checkpoint_id,
