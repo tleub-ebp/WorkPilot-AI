@@ -419,10 +419,10 @@ export function UsageIndicator() {
 
     // Listen for usage updates from main process
     const unsubscribe = globalThis.electronAPI.onUsageUpdated((snapshot: UsageSnapshot) => {
-      // Only accept snapshots that match the selected provider
-      // Reject snapshots from other providers AND snapshots without providerName
-      // (those are legacy Anthropic-only snapshots)
-      if (selectedProvider && snapshot.providerName !== selectedProvider) return;
+      // Only accept snapshots that match the selected provider.
+      // When selectedProvider is empty (still loading), reject all snapshots to avoid
+      // accepting a wrong-provider snapshot that would linger after the real provider loads.
+      if (!selectedProvider || snapshot.providerName !== selectedProvider) return;
       setUsage(snapshot);
       setIsAvailable(true);
       setIsLoading(false);

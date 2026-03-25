@@ -833,7 +833,7 @@ export class UsageMonitor extends EventEmitter {
           rateLimitType: rateLimitStatus.type,
           isAuthenticated: profile.isAuthenticated ?? true,
       }),
-      isActive: usage.profileId === profileManager.getActiveProfile()?.id,
+      isActive: profile.id === profileManager.getActiveProfile()?.id,
       lastFetchedAt: usage.fetchedAt?.toISOString(),
       needsReauthentication: this.needsReauthProfiles.has(profile.id)
     };
@@ -1295,7 +1295,11 @@ export class UsageMonitor extends EventEmitter {
       const selectedProvider = appSettings?.selectedProvider as string | undefined;
       const globalWindsurfKey = appSettings?.globalWindsurfApiKey as string | undefined;
 
-      if (selectedProvider === 'windsurf' || globalWindsurfKey?.trim()) {
+      // Only detect Windsurf via globalWindsurfApiKey when no explicit provider is set.
+      // If the user has explicitly selected another provider (e.g. 'anthropic'), respect it
+      // and do not override it just because a Windsurf API key happens to be configured.
+      const windsurfKeyActive = selectedProvider === 'windsurf' || (!selectedProvider && !!globalWindsurfKey?.trim());
+      if (windsurfKeyActive) {
         const reason = selectedProvider === 'windsurf'
           ? 'settings.selectedProvider'
           : 'settings.globalWindsurfApiKey present';
