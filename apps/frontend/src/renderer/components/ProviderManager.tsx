@@ -27,54 +27,72 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
   const [claudeModelsError, setClaudeModelsError] = useState<string>("");
   const [_providersError, setProvidersError] = useState<string>("");
 
+  // Loading states
+  const [isLoadingProviders, setIsLoadingProviders] = useState(false);
+  const [isLoadingConfigs, setIsLoadingConfigs] = useState(false);
+  const [isLoadingCapabilities, setIsLoadingCapabilities] = useState(false);
+  const [isLoadingSchema, setIsLoadingSchema] = useState(false);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
+  const [isDeletingConfig, setIsDeletingConfig] = useState(false);
+  const [isTestingProvider, setIsTestingProvider] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+
   useEffect(() => {
-    fetch(`${API_BASE}/providers`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const contentType = res.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('Response is not JSON');
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setProviders(data.providers || []);
-        setStatus(data.status || {});
+    setIsLoadingProviders(true);
+    setIsLoadingConfigs(true);
+    
+    Promise.all([
+      fetch(`${API_BASE}/providers`)
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const contentType = res.headers.get('content-type');
+          if (!contentType?.includes('application/json')) {
+            throw new Error('Response is not JSON');
+          }
+          return res.json();
+        }),
+      fetch(`${API_BASE}/providers/configs`)
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const contentType = res.headers.get('content-type');
+          if (!contentType?.includes('application/json')) {
+            throw new Error('Response is not JSON');
+          }
+          return res.json();
+        })
+    ])
+      .then(([providersData, configsData]) => {
+        setProviders(providersData.providers || []);
+        setStatus(providersData.status || {});
+        setConfigs(configsData.configs || []);
         setProvidersError("");
       })
       .catch((err) => {
         if (err.message === 'Response is not JSON') {
           console.info('[ProviderManager] Backend providers API not available');
         } else {
-          console.error('Failed to fetch providers:', err);
+          console.error('Failed to fetch data:', err);
         }
         setProviders([]);
         setStatus({});
-        setProvidersError(`Erreur lors de la récupération des providers: ${err.message}`);
-      });
-    fetch(`${API_BASE}/providers/configs`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const contentType = res.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('Response is not JSON');
-        }
-        return res.json();
-      })
-      .then((data) => setConfigs(data.configs || []))
-      .catch((err) => {
-        console.error('Failed to fetch provider configs:', err);
         setConfigs([]);
+        setProvidersError(`Erreur lors de la récupération des providers: ${err.message}`);
+      })
+      .finally(() => {
+        setIsLoadingProviders(false);
+        setIsLoadingConfigs(false);
       });
   }, []);
 
   useEffect(() => {
     if (selected) {
+      setIsLoadingCapabilities(true);
       fetch(`${API_BASE}/providers/capabilities/${selected}`)
         .then((res) => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const contentType = res.headers.get('content-type');
-          if (!contentType || !contentType.includes('application/json')) {
+          if (!contentType?.includes('application/json')) {
             throw new Error('Response is not JSON');
           }
           return res.json();
@@ -83,53 +101,61 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
         .catch((err) => {
           console.error('Failed to fetch provider capabilities:', err);
           setCapabilities(null);
+        })
+        .finally(() => {
+          setIsLoadingCapabilities(false);
         });
     } else {
       setCapabilities(null);
+      setIsLoadingCapabilities(false);
     }
   }, [selected]);
 
-  // Charger le schéma de config quand un provider est sélectionné
   useEffect(() => {
     if (selected) {
-      fetch(`${API_BASE}/providers/schema/${selected}`)
-        .then((res) => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const contentType = res.headers.get('content-type');
-          if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Response is not JSON');
-          }
-          return res.json();
+      setIsLoadingSchema(true);
+      Promise.all([
+        fetch(`${API_BASE}/providers/schema/${selected}`)
+          .then((res) => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const contentType = res.headers.get('content-type');
+            if (!contentType?.includes('application/json')) {
+              throw new Error('Response is not JSON');
+            }
+            return res.json();
+          }),
+        fetch(`${API_BASE}/providers/config/${selected}`)
+          .then((res) => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const contentType = res.headers.get('content-type');
+            if (!contentType?.includes('application/json')) {
+              throw new Error('Response is not JSON');
+            }
+            return res.json();
+          })
+      ])
+        .then(([schemaData, configData]) => {
+          setSchema(schemaData);
+          setConfigForm(configData || {});
         })
-        .then((data) => setSchema(data))
         .catch((err) => {
-          console.error('Failed to fetch provider schema:', err);
+          console.error('Failed to fetch provider schema/config:', err);
           setSchema(null);
-        });
-      fetch(`${API_BASE}/providers/config/${selected}`)
-        .then((res) => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const contentType = res.headers.get('content-type');
-          if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Response is not JSON');
-          }
-          return res.json();
-        })
-        .then((data) => setConfigForm(data || {}))
-        .catch((err) => {
-          console.error('Failed to fetch provider config:', err);
           setConfigForm({});
+        })
+        .finally(() => {
+          setIsLoadingSchema(false);
         });
     } else {
       setSchema(null);
       setConfigForm({});
+      setIsLoadingSchema(false);
     }
   }, [selected]);
 
-  // Détection dynamique des profils Claude Code (comme UsageIndicator)
   useEffect(() => {
-    if (window.electronAPI?.requestAllProfilesUsage) {
-      window.electronAPI.requestAllProfilesUsage().then((result: any) => {
+    if (globalThis.electronAPI?.requestAllProfilesUsage) {
+      globalThis.electronAPI.requestAllProfilesUsage().then((result: any) => {
         if (result?.success && result.data) {
           setClaudeProfiles(result.data.allProfiles || []);
           setActiveClaudeProfile(result.data.allProfiles.find((p: any) => p.isActive) || null);
@@ -141,18 +167,19 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
     }
   }, []);
 
-  // Récupération dynamique des modèles pour le provider sélectionné
   useEffect(() => {
     if (!selected) {
       setClaudeModels([]);
       setClaudeModelsError("");
+      setIsLoadingModels(false);
       return;
     }
+    setIsLoadingModels(true);
     fetch(`${API_BASE}/providers/models/${selected}`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const contentType = res.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
+        if (!contentType?.includes('application/json')) {
           throw new Error('Response is not JSON');
         }
         return res.json();
@@ -169,14 +196,18 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
         console.error('Failed to fetch provider models:', err);
         setClaudeModels([]);
         setClaudeModelsError(`Failed to fetch models: ${err.message}`);
+      })
+      .finally(() => {
+        setIsLoadingModels(false);
       });
   }, [selected]);
 
-  // Ajout/édition de config
   const handleConfigChange = (k: string, v: string) => {
     setConfigForm((f: any) => ({ ...f, [k]: v }));
   };
   const saveConfig = useCallback(() => {
+    setIsSavingConfig(true);
+    setTestResult("");
     fetch(`${API_BASE}/providers/config/${selected}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -185,39 +216,49 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const contentType = res.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
+        if (!contentType?.includes('application/json')) {
           throw new Error('Response is not JSON');
         }
         return res.json();
       })
-      .then(() => window.location.reload())
+      .then(() => globalThis.location.reload())
       .catch((err) => {
         console.error('Failed to save provider config:', err);
         setTestResult(`Failed to save config: ${err.message}`);
+      })
+      .finally(() => {
+        setIsSavingConfig(false);
       });
   }, [selected, configForm]);
   const deleteConfig = useCallback(() => {
+    setIsDeletingConfig(true);
+    setTestResult("");
     fetch(`${API_BASE}/providers/config/${selected}`, { method: "DELETE" })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const contentType = res.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
+        if (!contentType?.includes('application/json')) {
           throw new Error('Response is not JSON');
         }
         return res.json();
       })
-      .then(() => window.location.reload())
+      .then(() => globalThis.location.reload())
       .catch((err) => {
         console.error('Failed to delete provider config:', err);
         setTestResult(`Failed to delete config: ${err.message}`);
+      })
+      .finally(() => {
+        setIsDeletingConfig(false);
       });
   }, [selected]);
   const testProvider = useCallback(() => {
+    setIsTestingProvider(true);
+    setTestResult("");
     fetch(`${API_BASE}/providers/test/${selected}`, { method: "POST" })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const contentType = res.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
+        if (!contentType?.includes('application/json')) {
           throw new Error('Response is not JSON');
         }
         return res.json();
@@ -226,10 +267,19 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
       .catch((err) => {
         console.error('Failed to test provider:', err);
         setTestResult(`Failed to test: ${err.message}`);
+      })
+      .finally(() => {
+        setIsTestingProvider(false);
       });
   }, [selected]);
   const handlePrompt = (e: React.ChangeEvent<HTMLInputElement>) => setPrompt(e.target.value);
   const generate = useCallback(() => {
+    if (!prompt.trim()) {
+      setGeneration("Please enter a prompt first.");
+      return;
+    }
+    setIsGenerating(true);
+    setGeneration("");
     fetch(`${API_BASE}/providers/generate/${selected}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -238,7 +288,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const contentType = res.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
+        if (!contentType?.includes('application/json')) {
           throw new Error('Response is not JSON');
         }
         return res.json();
@@ -247,6 +297,9 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
       .catch((err) => {
         console.error('Failed to generate text:', err);
         setGeneration(`Failed to generate: ${err.message}`);
+      })
+      .finally(() => {
+        setIsGenerating(false);
       });
   }, [selected, prompt]);
 
@@ -271,75 +324,121 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
       {selected && (
         <div style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}>
           <h4>{t('providers:availableModels', 'Modèles disponibles pour «' + selected + '»', { provider: selected })}</h4>
-          {claudeModelsError ? (
-            <span style={{ color: 'red' }}>{t('providers:modelError', claudeModelsError, { error: claudeModelsError })}</span>
-          ) : claudeModels.length > 0 ? (
-            <ul>
-              {claudeModels.map((m) => (
-                <li key={m}>{m}</li>
-              ))}
-            </ul>
-          ) : (
-            <span style={{ color: 'orange' }}>{t('providers:noModels', 'Aucun modèle détecté ou chargement...')}</span>
-          )}
+          {(() => {
+            if (isLoadingModels) {
+              return <span style={{ color: 'blue' }}>{t('common:loading', 'Chargement...')}</span>;
+            }
+            
+            if (claudeModelsError) {
+              return (
+                <span style={{ color: 'red' }}>{t('providers:modelError', claudeModelsError, { error: claudeModelsError })}</span>
+              );
+            }
+            
+            if (claudeModels.length > 0) {
+              return (
+                <ul>
+                  {claudeModels.map((m) => (
+                    <li key={m}>{m}</li>
+                  ))}
+                </ul>
+              );
+            }
+            
+            return (
+              <span style={{ color: 'orange' }}>{t('providers:noModels', 'Aucun modèle détecté ou chargement...')}</span>
+            );
+          })()}
         </div>
       )}
       <div>
         <h3>{t('providers:savedConfigs', 'Configurations enregistrées :')}</h3>
-        <ul>
-          {configs.map((c) => (
-            <li key={c}>{c}</li>
-          ))}
-        </ul>
+        {isLoadingConfigs ? (
+          <span style={{ color: 'blue' }}>{t('common:loading', 'Chargement...')}</span>
+        ) : (
+          <ul>
+            {configs.map((c) => (
+              <li key={c}>{c}</li>
+            ))}
+          </ul>
+        )}
       </div>
-      {selected && capabilities && (
-        <div>
-          <h3>{t('providers:providerCapabilities', 'Capacités du provider «' + selected + '» :', { provider: selected })}</h3>
-          <pre
-            style={{
-              background: "#f5f5f5",
-              padding: 8,
-            }}
-          >
-            {JSON.stringify(capabilities, null, 2)}
-          </pre>
-        </div>
-      )}
-      {selected && schema && (
-        <div style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}>
-          <h4>{t('providers:configureProvider', 'Configurer «' + selected + '»', { provider: selected })}</h4>
-          {Object.entries(schema).map(([k, v]) => (
-            <div key={k} style={{ marginBottom: 8 }}>
-              <label>{t(`providers:configField_${k}`, k, { field: k })} ({String(v)})</label>
-              <input
-                type="text"
-                value={configForm[k] || ""}
-                onChange={e => handleConfigChange(k, e.target.value)}
-                style={{ marginLeft: 8 }}
-              />
-            </div>
-          ))}
-          <button onClick={saveConfig}>{t('common:save', 'Enregistrer')}</button>
-          <button onClick={deleteConfig} style={{ marginLeft: 8 }}>{t('common:delete', 'Supprimer')}</button>
-          <button onClick={testProvider} style={{ marginLeft: 8 }}>{t('common:test', 'Tester')}</button>
-          {testResult && <span style={{ marginLeft: 8 }}>{testResult}</span>}
-        </div>
-      )}
       {selected && (
-        <div style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}>
-          <h4>{t('providers:generateWithProvider', 'Générer avec «' + selected + '»', { provider: selected })}</h4>
-          <input
-            type="text"
-            value={prompt}
-            onChange={handlePrompt}
-            placeholder={t('providers:promptPlaceholder', 'Prompt...')}
-            style={{ width: 300 }}
-          />
-          <button onClick={generate} style={{ marginLeft: 8 }}>{t('common:generate', 'Générer')}</button>
-          {generation && <pre style={{ background: "#f5f5f5", padding: 8 }}>{generation}</pre>}
-        </div>
+        <>
+          {isLoadingCapabilities ? (
+            <div style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}>
+              <h3>{t('providers:providerCapabilities', 'Capacités du provider «' + selected + '» :', { provider: selected })}</h3>
+              <span style={{ color: 'blue' }}>{t('common:loading', 'Chargement...')}</span>
+            </div>
+          ) : capabilities && (
+            <div>
+              <h3>{t('providers:providerCapabilities', 'Capacités du provider «' + selected + '» :', { provider: selected })}</h3>
+              <pre
+                style={{
+                  background: "#f5f5f5",
+                  padding: 8,
+                }}
+              >
+                {JSON.stringify(capabilities, null, 2)}
+              </pre>
+            </div>
+          )}
+          {isLoadingSchema ? (
+            <div style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}>
+              <h4>{t('providers:configureProvider', 'Configurer «' + selected + '»', { provider: selected })}</h4>
+              <span style={{ color: 'blue' }}>{t('common:loading', 'Chargement...')}</span>
+            </div>
+          ) : schema && (
+            <div style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}>
+              <h4>{t('providers:configureProvider', 'Configurer «' + selected + '»', { provider: selected })}</h4>
+              {Object.entries(schema).map(([k, v]) => (
+                <div key={k} style={{ marginBottom: 8 }}>
+                  <label>{t(`providers:configField_${k}`, k, { field: k })} ({String(v)})</label>
+                  <input
+                    type="text"
+                    value={configForm[k] || ""}
+                    onChange={e => handleConfigChange(k, e.target.value)}
+                    style={{ marginLeft: 8 }}
+                  />
+                </div>
+              ))}
+              <button onClick={saveConfig} disabled={isSavingConfig}>
+                {isSavingConfig ? t('common:saving', 'Enregistrement...') : t('common:save', 'Enregistrer')}
+              </button>
+              <button onClick={deleteConfig} style={{ marginLeft: 8 }} disabled={isDeletingConfig}>
+                {isDeletingConfig ? t('common:deleting', 'Suppression...') : t('common:delete', 'Supprimer')}
+              </button>
+              <button onClick={testProvider} style={{ marginLeft: 8 }} disabled={isTestingProvider}>
+                {isTestingProvider ? t('common:testing', 'Test...') : t('common:test', 'Tester')}
+              </button>
+              {testResult && (
+                <span style={{ marginLeft: 8, color: testResult.includes('Failed') ? 'red' : 'green' }}>
+                  {testResult}
+                </span>
+              )}
+            </div>
+          )}
+          <div style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}>
+            <h4>{t('providers:generateWithProvider', 'Générer avec «' + selected + '»', { provider: selected })}</h4>
+            <input
+              type="text"
+              value={prompt}
+              onChange={handlePrompt}
+              placeholder={t('providers:promptPlaceholder', 'Prompt...')}
+              style={{ width: 300 }}
+              disabled={isGenerating}
+            />
+            <button onClick={generate} style={{ marginLeft: 8 }} disabled={isGenerating || !prompt.trim()}>
+              {isGenerating ? t('common:generating', 'Génération...') : t('common:generate', 'Générer')}
+            </button>
+            {generation && (
+              <pre style={{ background: "#f5f5f5", padding: 8 }}>
+                {generation}
+              </pre>
+            )}
+          </div>
+        </>
       )}
-      {/* TODO: Améliorer la gestion des erreurs et des états de chargement */}
     </div>
   );
 };
