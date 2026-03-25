@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-const API_BASE = typeof import.meta.env?.VITE_BACKEND_URL ? import.meta.env.VITE_BACKEND_URL : '';
+const API_BASE = import.meta.env?.VITE_BACKEND_URL ?? '';
 
 // Squelette de gestion des providers LLM
 export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) => {
