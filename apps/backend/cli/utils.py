@@ -201,9 +201,7 @@ def validate_environment(spec_dir: Path) -> bool:
     if is_linear_enabled():
         print("Linear integration: ENABLED")
         # Show Linear project status if initialized
-        project_dir = (
-            spec_dir.parent.parent
-        )  # workpilot/specs/001-name -> project root
+        project_dir = spec_dir.parent.parent  # workpilot/specs/001-name -> project root
         linear_manager = LinearManager(spec_dir, project_dir)
         if linear_manager.is_initialized:
             summary = linear_manager.get_progress_summary()

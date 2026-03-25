@@ -121,7 +121,9 @@ class DynamicSkill:
         # Check required fields
         for required_field in rule.required_fields:
             if required_field not in self.metadata:
-                logger.error(f"Skill {self.name} missing required field: {required_field}")
+                logger.error(
+                    f"Skill {self.name} missing required field: {required_field}"
+                )
                 return False
 
         # Check token limits

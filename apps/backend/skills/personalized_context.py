@@ -400,7 +400,7 @@ class PersonalizedSkillManager:
 
         # Apply personalization with optimization
         personalized_skills = self._apply_personalization(
-            base_skills, user_id, project_id, optimized_query.get("context")
+            base_skills, user_id, project_id, optimized_query.get("context"), query
         )
 
         # Optimize results before returning
@@ -431,6 +431,7 @@ class PersonalizedSkillManager:
         user_id: str,
         project_id: str | None,
         context: dict | None,
+        query: str,
     ) -> list[str]:
         """Apply personalization to skill results with optimization."""
         user_profile = self.user_profiles[user_id]
@@ -474,7 +475,9 @@ class PersonalizedSkillManager:
         # Apply learning-based predictions (reduced limit)
         if context:
             predicted_skills = self.learner.predict_next_skills(
-                query, context, limit=2  # noqa: F821
+                query,
+                context,
+                limit=2,  # noqa: F821
             )  # Reduced from 3
             predicted_skill_names = [skill[0] for skill in predicted_skills]
 

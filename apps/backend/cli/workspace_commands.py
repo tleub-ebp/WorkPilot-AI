@@ -530,9 +530,7 @@ def handle_list_worktrees_command(project_dir: Path) -> None:
         print("  To review:  python workpilot/run.py --spec <name> --review")
         print("  To discard: python workpilot/run.py --spec <name> --discard")
         print()
-        print(
-            "  To cleanup all worktrees: python workpilot/run.py --cleanup-worktrees"
-        )
+        print("  To cleanup all worktrees: python workpilot/run.py --cleanup-worktrees")
     print()
 
 
