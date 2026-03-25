@@ -1,16 +1,16 @@
 import { renderHook, act } from '@testing-library/react';
 import { useAutoRefactorStore, startAutoRefactor, cancelAutoRefactor, setupAutoRefactorListeners } from '../auto-refactor-store';
-import type { AutoRefactorResult } from '../auto-refactor-store';
+import type { AutoRefactorResult, AutoRefactorPhase } from '../auto-refactor-store';
 
 // Mock electronAPI
 const mockElectronAPI = {
-  startAutoRefactor: jest.fn(),
-  cancelAutoRefactor: jest.fn(),
-  onAutoRefactorStatus: jest.fn(),
-  onAutoRefactorStreamChunk: jest.fn(),
-  onAutoRefactorError: jest.fn(),
-  onAutoRefactorComplete: jest.fn(),
-  onAutoRefactorExecutionComplete: jest.fn(),
+  startAutoRefactor: vi.fn(),
+  cancelAutoRefactor: vi.fn(),
+  onAutoRefactorStatus: vi.fn(),
+  onAutoRefactorStreamChunk: vi.fn(),
+  onAutoRefactorError: vi.fn(),
+  onAutoRefactorComplete: vi.fn(),
+  onAutoRefactorExecutionComplete: vi.fn(),
 };
 
 // Mock window.electronAPI
@@ -25,7 +25,7 @@ describe('AutoRefactorStore', () => {
     useAutoRefactorStore.getState().reset();
     
     // Clear all mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Mock event listener cleanup functions
     mockElectronAPI.onAutoRefactorStatus.mockReturnValue(() => {});
@@ -318,7 +318,7 @@ describe('AutoRefactorStore Actions', () => {
   beforeEach(() => {
     // Reset store before each test
     useAutoRefactorStore.getState().reset();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('startAutoRefactor', () => {

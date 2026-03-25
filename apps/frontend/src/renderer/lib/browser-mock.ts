@@ -235,7 +235,8 @@ const browserMockAPI: ElectronAPI = {
     approveBatches: async () => ({ success: true, batches: [] }),
     onAnalyzePreviewProgress: () => () => {},
     onAnalyzePreviewComplete: () => () => {},
-    onAnalyzePreviewError: () => () => {}
+    onAnalyzePreviewError: () => () => {},
+    testGitHubConnection: async () => ({ success: false, error: 'Not available in browser mode' })
   },
 
   // Queue Routing API (rate limit recovery)
@@ -440,8 +441,24 @@ const browserMockAPI: ElectronAPI = {
   onLearningLoopError: () => () => {},
   onLearningLoopComplete: () => () => {},
 
-  // Test GitHub connection
-  testGitHubConnection: async () => ({ success: false, error: 'Not available in browser mode' })
+  // Provider selection
+  selectProvider: async () => ({ success: false, error: 'Not available in browser mode' }),
+  getSelectedProvider: async () => ({ success: false, data: null }),
+
+  // Conflict Predictor
+  runConflictPrediction: async () => {},
+  cancelConflictPrediction: async () => false,
+  onConflictPredictionStreamChunk: () => () => {},
+  onConflictPredictionStatus: () => () => {},
+  onConflictPredictionError: () => () => {},
+  onConflictPredictionComplete: () => () => {},
+  onConflictPredictionEvent: () => () => {},
+
+  // Token/OAuth detection
+  detectWindsurfToken: async () => ({ success: false, error: 'Not available in browser mode' }),
+  checkClaudeOAuth: async () => ({ isAuthenticated: false }),
+  checkOpenAICodexOAuth: async () => ({ isAuthenticated: false }),
+
 };
 
 /**

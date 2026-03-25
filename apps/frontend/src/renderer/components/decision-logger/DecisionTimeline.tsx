@@ -190,7 +190,7 @@ export function DecisionTimeline({
     store.setLoadingHistory(true);
     api
       .getDecisionLog(specDirPath, taskId, specId ?? taskId)
-      .then((result) => {
+      .then((result: { success: boolean; data?: import('../../../shared/types/decision-logger').DecisionLog; error?: string }) => {
         if (result.success && result.data) {
           store.setHistoricalEntries(taskId, result.data.entries);
         }

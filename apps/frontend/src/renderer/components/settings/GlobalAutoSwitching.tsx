@@ -119,14 +119,14 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, provid
     if (isOpen) {
       detectAuthenticatedProviders();
     }
-  }, [isOpen, 
-    settings.globalOpenAIApiKey, 
-    settings.globalGoogleDeepMindApiKey, 
-    settings.globalMistralApiKey, 
-    settings.globalGrokApiKey, 
-    settings.globalDeepSeekApiKey, 
-    settings.globalAWSApiKey, 
-    settings.globalMetaApiKey, settings[key as keyof AppSettings]
+  }, [isOpen,
+    settings.globalOpenAIApiKey,
+    settings.globalGoogleDeepMindApiKey,
+    settings.globalMistralApiKey,
+    settings.globalGrokApiKey,
+    settings.globalDeepSeekApiKey,
+    settings.globalAWSApiKey,
+    settings.globalMetaApiKey,
   ]);
 
   // Sync autoSwitchEnabled with settings

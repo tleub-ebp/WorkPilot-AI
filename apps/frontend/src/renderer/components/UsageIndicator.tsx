@@ -94,6 +94,75 @@ export function UsageIndicator() {
   }, []);
 
   /**
+   * Handle successful usage data response
+   */
+  const handleSuccessResponse = (result: any, provider: string): boolean => {
+    if (result.success && result.data) {
+      if (provider && result.data.providerName && result.data.providerName !== provider) {
+        console.log('[UsageIndicator] fetchUsageDeduplicated: FILTERED OUT — providerName mismatch', result.data.providerName, '!==', provider);
+        return false;
+      }
+      setUsage(result.data);
+      setIsAvailable(true);
+      setIsLoading(false);
+      console.log('[UsageIndicator] fetchUsageDeduplicated: setIsLoading(false) called');
+      return true;
+    }
+    return false;
+  };
+
+  /**
+   * Handle retry logic for failed requests
+   */
+  const handleRetry = async (provider: string, retryCount: number): Promise<void> => {
+    if (retryCount < 2) {
+      // API returned null (429 rate limit, token refresh failure, etc.)
+      // Retry after a short backoff instead of immediately showing "N/D"
+      await new Promise<void>((resolve) => {
+        retryTimeoutRef.current = setTimeout(resolve, 3000 * (retryCount + 1));
+      });
+      pendingFetchRef.current = null; // Allow the retry to create a new fetch
+      await fetchUsageDeduplicated(provider, retryCount + 1);
+    } else {
+      // All retries exhausted — only set unavailable if we never had data
+      setIsLoading(false);
+      // Keep existing data if we have it (stale-while-revalidate)
+      setIsAvailable((prev) => prev); // No-op: don't clear if we had data before
+    }
+  };
+
+  /**
+   * Handle timeout errors with retry logic
+   */
+  const handleTimeoutError = async (error: any, provider: string, retryCount: number): Promise<void> => {
+    const isTimeout = error instanceof Error && error.message.includes('timed out after 20s');
+    
+    if (isTimeout && retryCount < 2) {
+      // For timeouts, retry with exponential backoff
+      console.log(`[UsageIndicator] Timeout detected, retrying (${retryCount + 1}/2)...`);
+      await new Promise<void>((resolve) => {
+        retryTimeoutRef.current = setTimeout(resolve, 5000 * (retryCount + 1)); // Longer backoff for timeouts
+      });
+      pendingFetchRef.current = null; // Allow the retry to create a new fetch
+      await fetchUsageDeduplicated(provider, retryCount + 1);
+    } else if (isTimeout) {
+      console.warn('[UsageIndicator] All timeout retries exhausted, showing stale data if available');
+    }
+  };
+
+  /**
+   * Execute the IPC call with timeout
+   */
+  const executeIPCCall = async (provider: string): Promise<any> => {
+    // Race the IPC call against a 20-second timeout so we never hang indefinitely.
+    const ipcPromise = globalThis.electronAPI.requestUsageUpdate(provider);
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('[UsageIndicator] requestUsageUpdate timed out after 20s')), 20000)
+    );
+    return await Promise.race([ipcPromise, timeoutPromise]);
+  };
+
+  /**
    * Centralized, deduplicated usage fetch with retry.
    * Prevents multiple concurrent API calls that trigger 429 rate limits.
    * If the fetch returns null, retries once after a short delay.
@@ -108,43 +177,21 @@ export function UsageIndicator() {
     const doFetch = async () => {
       console.log('[UsageIndicator] fetchUsageDeduplicated: starting IPC call for', provider, 'retry', retryCount);
       try {
-        // Race the IPC call against a 20-second timeout so we never hang indefinitely.
-        const ipcPromise = globalThis.electronAPI.requestUsageUpdate(provider);
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('[UsageIndicator] requestUsageUpdate timed out after 20s')), 20000)
-        );
-        const result = await Promise.race([ipcPromise, timeoutPromise]);
+        const result = await executeIPCCall(provider);
         console.log('[UsageIndicator] fetchUsageDeduplicated: IPC result', {
           success: result?.success,
           hasData: !!result?.data,
           providerName: result?.data?.providerName,
           sessionPercent: result?.data?.sessionPercent,
         });
-        if (result.success && result.data) {
-          if (provider && result.data.providerName && result.data.providerName !== provider) {
-            console.log('[UsageIndicator] fetchUsageDeduplicated: FILTERED OUT — providerName mismatch', result.data.providerName, '!==', provider);
-            return;
-          }
-          setUsage(result.data);
-          setIsAvailable(true);
-          setIsLoading(false);
-          console.log('[UsageIndicator] fetchUsageDeduplicated: setIsLoading(false) called');
-        } else if (retryCount < 2) {
-          // API returned null (429 rate limit, token refresh failure, etc.)
-          // Retry after a short backoff instead of immediately showing "N/D"
-          await new Promise<void>((resolve) => {
-            retryTimeoutRef.current = setTimeout(resolve, 3000 * (retryCount + 1));
-          });
-          pendingFetchRef.current = null; // Allow the retry to create a new fetch
-          return fetchUsageDeduplicated(provider, retryCount + 1);
-        } else {
-          // All retries exhausted — only set unavailable if we never had data
-          setIsLoading(false);
-          // Keep existing data if we have it (stale-while-revalidate)
-          setIsAvailable((prev) => prev); // No-op: don't clear if we had data before
+        
+        const handled = handleSuccessResponse(result, provider);
+        if (!handled) {
+          await handleRetry(provider, retryCount);
         }
       } catch (error) {
         console.warn('[UsageIndicator] Failed to fetch usage data:', error);
+        await handleTimeoutError(error, provider, retryCount);
         setIsLoading(false);
       } finally {
         pendingFetchRef.current = null;

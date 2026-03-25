@@ -27,10 +27,10 @@ import {
   startSmartEstimation, 
   setupSmartEstimationListeners,
   type SmartEstimationResult 
-} from '../../../src/renderer/stores/smart-estimation-store';
+} from '../smart-estimation-store';
 
 // Mock the project store
-vi.mock('../../../src/renderer/stores/project-store', () => ({
+vi.mock('../project-store', () => ({
   useProjectStore: vi.fn(),
 }));
 
@@ -213,7 +213,7 @@ describe('Smart Estimation Store', () => {
   describe('Smart Estimation Execution', () => {
     beforeEach(() => {
       // Mock project store to return a selected project
-      vi.doMock('../../../src/renderer/stores/project-store', () => ({
+      vi.doMock('../project-store', () => ({
         useProjectStore: vi.fn(() => ({
           selectedProjectId: 'test-project-id'
         }))
@@ -406,7 +406,7 @@ describe('Smart Estimation Store', () => {
       expect(typeof cleanup).toBe('function');
 
       // Call cleanup to verify it doesn't throw
-      expect(() => cleanup()).not.toThrow();
+      expect(() => cleanup!()).not.toThrow();
     });
   });
 

@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import {cn, sanitizeMarkdownForDisplay} from '../lib/utils';
+import { setPendingTaskDetailTab } from '../lib/task-detail-nav';
 import { PhaseProgressIndicator } from './PhaseProgressIndicator';
 import { StreamingSessionButton } from './streaming/StreamingSessionButton';
 import {
@@ -782,6 +783,11 @@ export const TaskCard = memo(function TaskCard({
     onClick();
   };
 
+  const handlePlanClick = () => {
+    setPendingTaskDetailTab('subtasks');
+    onClick();
+  };
+
 
   // When executionPhase is 'complete', always show 'completed' badge regardless of reviewReason
   // This ensures the user sees "Complete" when the task finished successfully
@@ -900,6 +906,7 @@ export const TaskCard = memo(function TaskCard({
               phaseProgress={task.executionProgress?.phaseProgress}
               isStuck={isStuck}
               isRunning={isRunning}
+              onPlanClick={task.subtasks.length > 0 ? handlePlanClick : undefined}
             />
           </div>
         )}

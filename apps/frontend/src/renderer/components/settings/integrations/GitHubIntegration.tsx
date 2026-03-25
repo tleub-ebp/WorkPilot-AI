@@ -75,14 +75,15 @@ export function GitHubIntegration({
   debugLog('Render - envConfig:', envConfig ? { githubEnabled: envConfig.githubEnabled, hasToken: !!envConfig.githubToken, defaultBranch: envConfig.defaultBranch } : null);
 
   // Fetch repos when entering oauth-success mode
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (authMode === 'oauth-success') {
       fetchUserRepos();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authMode, fetchUserRepos]);
+  }, [authMode]);
 
   // Fetch branches when GitHub is enabled and project path is available
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     debugLog(`useEffect[branches] - githubEnabled: ${envConfig?.githubEnabled}, projectPath: ${projectPath}`);
     if (envConfig?.githubEnabled && projectPath) {
@@ -91,8 +92,7 @@ export function GitHubIntegration({
     } else {
       debugLog('useEffect[branches] - Skipping fetchBranches (conditions not met)');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [envConfig?.githubEnabled, projectPath, fetchBranches]);
+  }, [envConfig?.githubEnabled, projectPath]);
 
   /**
    * Handler for branch selection changes.
