@@ -7,10 +7,11 @@ import asyncio
 import hashlib
 import json
 import pickle
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 from .models import TransformationResult
 
@@ -285,7 +286,7 @@ class TransformationBatcher:
         self,
         files: list[str],
         process_func: Callable,
-        on_batch_complete: Optional[Callable] = None,
+        on_batch_complete: Callable | None = None,
     ) -> list[Any]:
         """Process files in batches."""
         batches = self.batch_files(files)
