@@ -22,7 +22,6 @@ class AutomatedDataCollector:
     """
 
     def __init__(self):
-
         self.collectors = {
             "token_usage": _TokenUsageCollector(),
             "performance": _PerformanceCollector(),
