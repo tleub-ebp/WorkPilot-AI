@@ -7,7 +7,6 @@ Role definitions, weights, and veto rights for team agents.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import List
 
 
 class AgentRole(str, Enum):
@@ -26,7 +25,7 @@ class RoleDefinition:
     description: str
     decision_weight: int
     can_veto: bool
-    focus_areas: List[str]
+    focus_areas: list[str]
 
 
 _ROLE_DEFINITIONS: dict[AgentRole, RoleDefinition] = {
@@ -85,7 +84,7 @@ def get_role_definition(role: AgentRole) -> RoleDefinition:
     return _ROLE_DEFINITIONS[role]
 
 
-def get_active_roles(role_names: List[str]) -> List[RoleDefinition]:
+def get_active_roles(role_names: list[str]) -> list[RoleDefinition]:
     result = []
     for name in role_names:
         try:
