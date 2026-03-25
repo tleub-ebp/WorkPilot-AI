@@ -18,18 +18,18 @@
 > Beta releases may contain bugs and breaking changes. [View all releases](https://github.com/tleub-ebp/WorkPilot-AI/releases)
 
 <!-- BETA_VERSION_BADGE -->
-[![Beta](https://img.shields.io/badge/beta-1.0.0--alpha-orange?style=flat-square)](https://github.com/tleub-ebp/WorkPilot-AI/releases/tag/v1.0.0-alpha.2)
+[![Beta](https://img.shields.io/badge/beta-1.0.0--alpha-orange?style=flat-square)](https://github.com/tleub-ebp/WorkPilot-AI/releases/tag/v1.0.0-alpha.1)
 <!-- BETA_VERSION_BADGE_END -->
 
 <!-- BETA_DOWNLOADS -->
 | Platform | Download |
 |----------|----------|
-| **Windows** | [WorkPilot-AI-1.0.0-alpha.2-win32-x64.exe](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-win32-x64.exe) |
-| **macOS (Apple Silicon)** | [WorkPilot-AI-1.0.0-alpha.2-darwin-arm64.dmg](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-darwin-arm64.dmg) |
-| **macOS (Intel)** | [WorkPilot-AI-1.0.0-alpha.2-darwin-x64.dmg](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-darwin-x64.dmg) |
-| **Linux** | [WorkPilot-AI-1.0.0-alpha.2-linux-x86_64.AppImage](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-linux-x86_64.AppImage) |
-| **Linux (Debian)** | [WorkPilot-AI-1.0.0-alpha.2-linux-amd64.deb](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-linux-amd64.deb) |
-| **Linux (Flatpak)** | [WorkPilot-AI-1.0.0-alpha.2-linux-x86_64.flatpak](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.2/WorkPilot-AI-1.0.0-alpha.2-linux-x86_64.flatpak) |
+| **Windows** | [WorkPilot-AI-1.0.0-alpha.1-win32-x64.exe](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.1/WorkPilot-AI-1.0.0-alpha.1-win32-x64.exe) |
+| **macOS (Apple Silicon)** | [WorkPilot-AI-1.0.0-alpha.1-darwin-arm64.dmg](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.1/WorkPilot-AI-1.0.0-alpha.1-darwin-arm64.dmg) |
+| **macOS (Intel)** | [WorkPilot-AI-1.0.0-alpha.1-darwin-x64.dmg](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.1/WorkPilot-AI-1.0.0-alpha.1-darwin-x64.dmg) |
+| **Linux** | [WorkPilot-AI-1.0.0-alpha.1-linux-x86_64.AppImage](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.1/WorkPilot-AI-1.0.0-alpha.1-linux-x86_64.AppImage) |
+| **Linux (Debian)** | [WorkPilot-AI-1.0.0-alpha.1-linux-amd64.deb](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.1/WorkPilot-AI-1.0.0-alpha.1-linux-amd64.deb) |
+| **Linux (Flatpak)** | [WorkPilot-AI-1.0.0-alpha.1-linux-x86_64.flatpak](https://github.com/tleub-ebp/WorkPilot-AI/releases/download/v1.0.0-alpha.1/WorkPilot-AI-1.0.0-alpha.1-linux-x86_64.flatpak) |
 <!-- BETA_DOWNLOADS_END -->
 
 > All releases include SHA256 checksums and VirusTotal scan results for security verification.
