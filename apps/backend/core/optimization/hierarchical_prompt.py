@@ -19,7 +19,7 @@ class PromptLevel(Enum):
 
     MINIMAL = "minimal"
     STANDARD = "standard"
-    COMPREHENSENSIVE = "comprehensive"
+    COMPREHENSIVE = "comprehensive"
 
 
 @dataclass
@@ -202,16 +202,13 @@ class HierarchicalPrompt:
 
     def _get_general_template(self) -> str:
         """General context template"""
-        return """You are an AI assistant helping with the following task:
-
-{task_description}
+        return """Task: {task_description}
 
 Focus on providing a clear, efficient solution that follows best practices."""
 
     def _get_specific_template(self) -> str:
         """Specific requirements template"""
-        return """Specific requirements:
-{constraints}
+        return """Requirements: {constraints}
 
 Ensure your solution meets all these requirements exactly."""
 
@@ -224,14 +221,14 @@ Use this context to inform your solution."""
 
     def _get_examples_template(self) -> str:
         """Examples template"""
-        return """Examples to follow:
+        return """Examples:
 {examples}
 
 Use these examples as guidance for your solution format and approach."""
 
     def _get_validation_template(self) -> str:
         """Validation criteria template"""
-        return """Validation criteria:
+        return """Validation:
 - Solution meets all requirements
 - Code follows best practices
 - Solution is efficient and maintainable

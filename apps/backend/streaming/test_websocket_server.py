@@ -64,7 +64,7 @@ class TestStreamingManager:
         await streaming_manager.start_session(session_id, {"task": "test"})
 
         # Add client
-        await streaming_manager.subscribe(session_id, mock_client)
+        streaming_manager.subscribe(session_id, mock_client)
 
         # Verify client is subscribed (check internal state)
         assert session_id in streaming_manager._subscribers
@@ -78,11 +78,11 @@ class TestStreamingManager:
 
         # Start session and add client
         await streaming_manager.start_session(session_id, {"task": "test"})
-        await streaming_manager.subscribe(session_id, mock_client)
+        streaming_manager.subscribe(session_id, mock_client)
         assert len(streaming_manager._subscribers[session_id]) == 1
 
         # Remove client
-        await streaming_manager.unsubscribe(session_id, mock_client)
+        streaming_manager.unsubscribe(session_id, mock_client)
         assert len(streaming_manager._subscribers[session_id]) == 0
 
     @pytest.mark.asyncio
@@ -98,8 +98,8 @@ class TestStreamingManager:
 
         # Start session and add clients
         await streaming_manager.start_session(session_id, {"task": "test"})
-        await streaming_manager.subscribe(session_id, mock_client1)
-        await streaming_manager.subscribe(session_id, mock_client2)
+        streaming_manager.subscribe(session_id, mock_client1)
+        streaming_manager.subscribe(session_id, mock_client2)
 
         # Emit an event using the API
         await streaming_manager.emit_agent_thinking(
@@ -130,8 +130,11 @@ class TestStreamingManager:
         # Emit event (should not raise error)
         await streaming_manager.emit_agent_thinking(session_id, "test")
 
-        # Should complete without error
-        assert True
+        # If we reach this point, the test passed (no exceptions raised)
+        # Verify session still exists and is properly managed
+        session_info = streaming_manager.get_session_info(session_id)
+        assert session_info is not None
+        assert session_info["status"] == "active"
 
     @pytest.mark.asyncio
     async def test_broadcast_event_nonexistent_session(self, streaming_manager):
@@ -139,8 +142,10 @@ class TestStreamingManager:
         # Should not raise error
         await streaming_manager.emit_agent_thinking("nonexistent-session", "test")
 
-        # Should complete without error
-        assert True
+        # If we reach this point, the test passed (no exceptions raised)
+        # Verify the session doesn't exist (as expected for nonexistent session)
+        session_info = streaming_manager.get_session_info("nonexistent-session")
+        assert session_info is None
 
 
 class TestStreamingWebSocketServer:
@@ -195,7 +200,7 @@ class TestStreamingWebSocketServer:
         init_message = {"type": "init_session", "session_id": "updated-session-456"}
 
         await websocket_server._handle_message(
-            session_id, mock_websocket, json.dumps(init_message)
+            {"session_id": session_id}, mock_websocket, json.dumps(init_message)
         )
 
         # Verify a response was sent
@@ -214,7 +219,7 @@ class TestStreamingWebSocketServer:
         await websocket_server.streaming_manager.start_session(
             session_id, {"task": "test"}
         )
-        await websocket_server.streaming_manager.subscribe(session_id, mock_websocket)
+        websocket_server.streaming_manager.subscribe(session_id, mock_websocket)
 
         # Send chat message
         chat_message = {
@@ -223,7 +228,7 @@ class TestStreamingWebSocketServer:
         }
 
         await websocket_server._handle_message(
-            session_id, mock_websocket, json.dumps(chat_message)
+            {"session_id": session_id}, mock_websocket, json.dumps(chat_message)
         )
 
         # Verify message was broadcast to all clients
@@ -244,16 +249,16 @@ class TestStreamingWebSocketServer:
         await websocket_server.streaming_manager.start_session(
             session_id, {"task": "test"}
         )
-        await websocket_server.streaming_manager.subscribe(session_id, mock_websocket)
+        websocket_server.streaming_manager.subscribe(session_id, mock_websocket)
 
         # Mock websocket send method
         mock_websocket.send = AsyncMock()
 
-        # Send pause control message
-        control_message = {"type": "control", "action": "pause"}
+        # Send toggle_pause control message (implementation handles "toggle_pause" not "pause")
+        control_message = {"type": "control", "action": "toggle_pause"}
 
         await websocket_server._handle_message(
-            session_id, mock_websocket, json.dumps(control_message)
+            {"session_id": session_id}, mock_websocket, json.dumps(control_message)
         )
 
         # Verify some response was sent (control events are broadcast)
@@ -272,17 +277,22 @@ class TestStreamingWebSocketServer:
         await websocket_server.streaming_manager.start_session(
             session_id, {"task": "test"}
         )
-        await websocket_server.streaming_manager.subscribe(session_id, mock_websocket)
+        websocket_server.streaming_manager.subscribe(session_id, mock_websocket)
 
         # Send unknown message type
         unknown_message = {"type": "unknown_type", "data": "test"}
 
         await websocket_server._handle_message(
-            session_id, mock_websocket, json.dumps(unknown_message)
+            {"session_id": session_id}, mock_websocket, json.dumps(unknown_message)
         )
 
-        # Should handle gracefully without error
-        assert True
+        # Should handle gracefully without error - verify no response was sent
+        mock_websocket.send.assert_not_called()
+        
+        # Verify session is still active and properly managed
+        session_info = websocket_server.streaming_manager.get_session_info(session_id)
+        assert session_info is not None
+        assert session_info["status"] == "active"
 
     def test_get_active_sessions(self, websocket_server):
         """Test getting active sessions."""
