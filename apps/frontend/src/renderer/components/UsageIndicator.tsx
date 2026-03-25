@@ -101,17 +101,34 @@ export function UsageIndicator() {
   const fetchUsageDeduplicated = useCallback(async (provider: string, retryCount = 0): Promise<void> => {
     // If a fetch is already in-flight, piggyback on it instead of firing a new one
     if (pendingFetchRef.current) {
+      console.log('[UsageIndicator] fetchUsageDeduplicated: piggyback on in-flight fetch for', provider);
       return pendingFetchRef.current;
     }
 
     const doFetch = async () => {
+      console.log('[UsageIndicator] fetchUsageDeduplicated: starting IPC call for', provider, 'retry', retryCount);
       try {
-        const result = await globalThis.electronAPI.requestUsageUpdate(provider);
+        // Race the IPC call against a 20-second timeout so we never hang indefinitely.
+        const ipcPromise = globalThis.electronAPI.requestUsageUpdate(provider);
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('[UsageIndicator] requestUsageUpdate timed out after 20s')), 20000)
+        );
+        const result = await Promise.race([ipcPromise, timeoutPromise]);
+        console.log('[UsageIndicator] fetchUsageDeduplicated: IPC result', {
+          success: result?.success,
+          hasData: !!result?.data,
+          providerName: result?.data?.providerName,
+          sessionPercent: result?.data?.sessionPercent,
+        });
         if (result.success && result.data) {
-          if (provider && result.data.providerName && result.data.providerName !== provider) return;
+          if (provider && result.data.providerName && result.data.providerName !== provider) {
+            console.log('[UsageIndicator] fetchUsageDeduplicated: FILTERED OUT — providerName mismatch', result.data.providerName, '!==', provider);
+            return;
+          }
           setUsage(result.data);
           setIsAvailable(true);
           setIsLoading(false);
+          console.log('[UsageIndicator] fetchUsageDeduplicated: setIsLoading(false) called');
         } else if (retryCount < 2) {
           // API returned null (429 rate limit, token refresh failure, etc.)
           // Retry after a short backoff instead of immediately showing "N/D"
@@ -411,6 +428,7 @@ export function UsageIndicator() {
   useEffect(() => {
     // When selectedProvider changes, clear stale data from previous provider
     // to prevent showing wrong provider's account/usage info
+    console.log('[UsageIndicator] Effect @411 running, selectedProvider =', JSON.stringify(selectedProvider));
     setUsage(null);
     setOtherProfiles([]);
     setIsAvailable(false);
@@ -419,10 +437,25 @@ export function UsageIndicator() {
 
     // Listen for usage updates from main process
     const unsubscribe = globalThis.electronAPI.onUsageUpdated((snapshot: UsageSnapshot) => {
+      console.log('[UsageIndicator] onUsageUpdated received:', {
+        providerName: snapshot?.providerName,
+        sessionPercent: snapshot?.sessionPercent,
+        selectedProvider,
+      });
       // Only accept snapshots that match the selected provider.
       // When selectedProvider is empty (still loading), reject all snapshots to avoid
       // accepting a wrong-provider snapshot that would linger after the real provider loads.
-      if (!selectedProvider || snapshot.providerName !== selectedProvider) return;
+      if (!selectedProvider) {
+        console.log('[UsageIndicator] onUsageUpdated: REJECTED — selectedProvider is empty');
+        return;
+      }
+      // Only reject if the snapshot explicitly declares a *different* provider.
+      // Snapshots from the CLI path have no providerName — accept them for any provider.
+      if (snapshot.providerName && snapshot.providerName !== selectedProvider) {
+        console.log('[UsageIndicator] onUsageUpdated: REJECTED — providerName mismatch', snapshot.providerName, '!==', selectedProvider);
+        return;
+      }
+      console.log('[UsageIndicator] onUsageUpdated: ACCEPTED — calling setIsLoading(false)');
       setUsage(snapshot);
       setIsAvailable(true);
       setIsLoading(false);
@@ -458,10 +491,15 @@ export function UsageIndicator() {
 
     // Request initial usage on mount for the selected provider (deduplicated with retry)
     if (selectedProvider && KNOWN_PROVIDERS.has(selectedProvider.toLowerCase())) {
+      console.log('[UsageIndicator] Effect @411: calling fetchUsageDeduplicated for', selectedProvider);
       fetchUsageDeduplicated(selectedProvider);
     } else if (selectedProvider) {
       // Provider is set but not a known/supported provider — stop loading
+      console.log('[UsageIndicator] Effect @411: unknown provider, setIsLoading(false)');
       setIsLoading(false);
+    } else {
+      // selectedProvider is empty — isLoading stays true waiting for ProviderContext
+      console.log('[UsageIndicator] Effect @411: selectedProvider is empty, keeping isLoading=true');
     }
     // When selectedProvider is empty (''), keep isLoading=true to avoid
     // flashing "N/D" while ProviderContext resolves the real provider
