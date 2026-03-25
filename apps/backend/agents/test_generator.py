@@ -12,8 +12,8 @@ Example:
     >>> result = agent.generate_unit_tests("src/utils/calculator.ts", project_path="/my/project")
 """
 
-import asyncio
 import ast
+import asyncio
 import json
 import logging
 import os
@@ -890,7 +890,7 @@ Return ONLY a raw JSON object (no markdown) matching this schema:
                     
                     gaps = []
                     for func in functions:
-                        # Create gaps for public functions only, but include __init__ 
+                        # Create gaps for public functions only, but include __init__
                         # Exclude functions that are already tested
                         if ((not func.is_private and not func.is_dunder) or func.name == "__init__") and func.name not in tested_functions:
                             gaps.append(CoverageGap(
