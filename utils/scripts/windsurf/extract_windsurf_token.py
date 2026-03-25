@@ -42,7 +42,7 @@ def find_windsurf_token():
     for var in env_vars:
         value = os.getenv(var)
         if value:
-            print(f"✅ {var}: {value[:20]}...{value[-10:]}")
+            print(f"✅ {var}: ****** (set, {len(value)} chars)")
             return value
     
     print("❌ Token non trouvé automatiquement")

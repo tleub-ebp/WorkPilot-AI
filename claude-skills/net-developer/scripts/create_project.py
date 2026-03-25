@@ -9,6 +9,7 @@ Usage:
 """
 
 import os
+import shlex
 import subprocess
 import argparse
 import sys
@@ -17,7 +18,8 @@ from pathlib import Path
 def run_command(command, cwd=None):
     """Exécute une commande et retourne le résultat."""
     try:
-        result = subprocess.run(command, shell=True, cwd=cwd, capture_output=True, text=True)
+        cmd_list = shlex.split(command) if isinstance(command, str) else command
+        result = subprocess.run(cmd_list, cwd=cwd, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"Erreur lors de l'exécution de {command}: {result.stderr}")
             return False
