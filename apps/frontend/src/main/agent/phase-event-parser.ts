@@ -18,11 +18,13 @@ export function parsePhaseEvent(line: string): PhaseEventPayload | null {
   }
 
   if (DEBUG) {
+    // noop
   }
 
   const rawJsonStr = line.slice(markerIndex + PHASE_MARKER_PREFIX.length).trim();
   if (!rawJsonStr) {
     if (DEBUG) {
+      // noop
     }
     return null;
   }
@@ -30,11 +32,13 @@ export function parsePhaseEvent(line: string): PhaseEventPayload | null {
   const jsonStr = extractJsonObject(rawJsonStr);
   if (!jsonStr) {
     if (DEBUG) {
+      // noop
     }
     return null;
   }
 
   if (DEBUG) {
+    // noop
   }
 
   try {
@@ -43,16 +47,19 @@ export function parsePhaseEvent(line: string): PhaseEventPayload | null {
 
     if (!result.success) {
       if (DEBUG) {
+        // noop
       }
       return null;
     }
 
     if (DEBUG) {
+      // noop
     }
 
     return result.data;
   } catch (_e) {
     if (DEBUG) {
+      // noop
     }
     return null;
   }

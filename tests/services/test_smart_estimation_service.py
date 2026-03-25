@@ -76,10 +76,12 @@ class TestSmartEstimationService:
         """Test complexity indicator identification"""
         complex_desc = "Create a scalable real-time distributed system with async operations"
         indicators = service._identify_complexity_indicators(complex_desc)
-        
-        assert any('scalable' in indicator.lower() for indicator in indicators)
+
+        # The reason for "scalable" is "Scalability requirements add architectural complexity"
+        assert any('scalabilit' in indicator.lower() for indicator in indicators)
         assert any('real-time' in indicator.lower() for indicator in indicators)
         assert any('distributed' in indicator.lower() for indicator in indicators)
+        # The reason for "async" is "Asynchronous operations are harder to test"
         assert any('async' in indicator.lower() for indicator in indicators)
 
     def test_calculate_text_similarity(self, service):

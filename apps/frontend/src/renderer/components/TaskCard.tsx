@@ -81,6 +81,7 @@ interface MetadataBadgesProps {
   hasActiveExecution?: boolean;
   executionPhase?: string;
   reviewReasonInfo: { label: string; variant: 'success' | 'destructive' | 'warning' } | null;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   t: any;
 }
 
@@ -256,6 +257,7 @@ interface ActionButtonsProps {
   isIncomplete: boolean;
   isRunning: boolean;
   task: Task;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   currentProject?: any;
   onViewPRFiles?: (prUrl: string, taskId: string) => void;
   onPreviewApp?: () => void;
@@ -264,6 +266,7 @@ interface ActionButtonsProps {
   handleViewPR: (e: React.MouseEvent) => void;
   handleArchive: (e: React.MouseEvent) => void;
   statusMenuItems: React.ReactNode;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   t: any;
 }
 
@@ -280,6 +283,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   handleStartStop,
   handleViewPR,
   handleArchive,
+  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
   statusMenuItems,
   t
 }) => {
@@ -489,6 +493,7 @@ const getStatusBadgeVariant = (status: string): "default" | "destructive" | "out
   }
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 const getReviewReasonLabel = (reason?: ReviewReason, t?: any): { label: string; variant: 'success' | 'destructive' | 'warning' } | null => {
   if (!reason || !t) return null;
   switch (reason) {
@@ -507,6 +512,7 @@ const getReviewReasonLabel = (reason?: ReviewReason, t?: any): { label: string; 
   }
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 const getStatusLabel = (status: string, t?: any): string => {
   if (!t) return status;
   switch (status) {
@@ -587,6 +593,7 @@ function taskCardPropsAreEqual(prevProps: TaskCardProps, nextProps: TaskCardProp
   );
 
   // Only log when actually re-rendering (reduces noise significantly)
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   if ((globalThis as any).DEBUG && !isEqual) {
     const changes: string[] = [];
     if (prevTask.status !== nextTask.status) changes.push(`status: ${prevTask.status} -> ${nextTask.status}`);
@@ -598,6 +605,7 @@ function taskCardPropsAreEqual(prevProps: TaskCardProps, nextProps: TaskCardProp
     }
     
     if (changes.length > 0) {
+      // biome-ignore lint/suspicious/noConsole: logging retained for debugging
       console.log(`TaskCard ${nextTask.id} re-rendering due to: ${changes.join(', ')}`);
     }
   }
@@ -762,7 +770,9 @@ export const TaskCard = memo(function TaskCard({
 
   const handleViewPR = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     if (task.metadata?.prUrl && (globalThis as any).electronAPI?.openExternal) {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       (globalThis as any).electronAPI.openExternal(task.metadata.prUrl);
     }
   };

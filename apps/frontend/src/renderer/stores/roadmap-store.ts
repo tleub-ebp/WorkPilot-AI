@@ -343,6 +343,7 @@ export function generateRoadmap(
 ): void {
   // Debug logging
   if (window.DEBUG) {
+    // noop
   }
 
   useRoadmapStore.getState().setGenerationStatus({
@@ -360,6 +361,7 @@ export function refreshRoadmap(
 ): void {
   // Debug logging
   if (window.DEBUG) {
+    // noop
   }
 
   useRoadmapStore.getState().setGenerationStatus({
@@ -375,6 +377,7 @@ export async function stopRoadmap(projectId: string): Promise<boolean> {
 
   // Debug logging
   if (window.DEBUG) {
+    // noop
   }
 
   // Always update UI state to 'idle' when user requests stop, regardless of backend response
@@ -389,9 +392,11 @@ export async function stopRoadmap(projectId: string): Promise<boolean> {
 
   // Debug logging
   if (window.DEBUG) {
+    // noop
   }
 
   if (!result.success) {
+    // noop
   }
 
   return result.success;

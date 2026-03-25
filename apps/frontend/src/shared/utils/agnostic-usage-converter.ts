@@ -35,8 +35,11 @@ export function convertToAgnosticUsage(snapshot: UsageSnapshot): AgnosticUsageDa
   
   if (snapshot.providerName === 'anthropic') {
     details.anthropic = {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       subscriptionType: (snapshot as any).subscriptionType,
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       rateLimitTier: (snapshot as any).rateLimitTier,
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       opusUsagePercent: (snapshot as any).opusUsagePercent
     };
   } else if (snapshot.providerName === 'openai') {
@@ -45,18 +48,24 @@ export function convertToAgnosticUsage(snapshot: UsageSnapshot): AgnosticUsageDa
     details.copilot = snapshot.copilotUsageDetails || {};
   } else {
     // Generic provider - store any extra data
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     details.generic = { ...(snapshot as any) };
   }
 
   // Error handling
   let error: UsageError | undefined;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   if ((snapshot as any).error) {
     error = {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       code: (snapshot as any).error,
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       message: (snapshot as any).errorMessage || 'Unknown error occurred',
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       suggestions: (snapshot as any).suggestions || [],
       provider: snapshot.providerName,
       requiresAction: true,
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       actionType: getActionTypeForError((snapshot as any).error)
     };
   }
@@ -69,8 +78,10 @@ export function convertToAgnosticUsage(snapshot: UsageSnapshot): AgnosticUsageDa
     metrics,
     details,
     error,
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     isAuthenticated: !(snapshot as any).isRateLimited || snapshot.needsReauthentication !== true,
     needsReauthentication: snapshot.needsReauthentication || false,
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     isRateLimited: (snapshot as any).isRateLimited || false,
     rateLimitType: snapshot.limitType === 'session' ? 'session' : 'periodic',
     fetchedAt: snapshot.fetchedAt,
@@ -84,6 +95,7 @@ export function convertToAgnosticUsage(snapshot: UsageSnapshot): AgnosticUsageDa
 /**
  * Convert backend error to UsageError
  */
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export function convertBackendError(provider: string, backendError: any): UsageError {
   const errorCode = backendError.error || backendError.code || 'UNKNOWN_ERROR';
   

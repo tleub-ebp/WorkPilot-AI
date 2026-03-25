@@ -81,6 +81,7 @@ export function GitLabIntegration({
 
   // Fetch projects when entering oauth-success mode
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   useEffect(() => {
     if (authMode === 'oauth-success') {
       fetchUserProjects();
@@ -111,6 +112,7 @@ export function GitLabIntegration({
   }, []);
 
   // Fetch branches when GitLab is enabled and project path is available
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   useEffect(() => {
     debugLog(`useEffect[branches] - gitlabEnabled: ${envConfig?.gitlabEnabled}, projectPath: ${projectPath}`);
     if (envConfig?.gitlabEnabled && projectPath) {
@@ -800,6 +802,7 @@ function IssuesAvailableInfo() {
   return (
     <div className="rounded-lg border border-info/30 bg-info/5 p-3">
       <div className="flex items-start gap-3">
+        {/* biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative, intentional */}
         <svg className="h-5 w-5 text-info mt-0.5" viewBox="0 0 24 24" fill="currentColor">
           <path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 4.82 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0 1 18.6 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.51L23 13.45a.84.84 0 0 1-.35.94z"/>
         </svg>

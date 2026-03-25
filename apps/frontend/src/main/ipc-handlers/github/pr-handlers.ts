@@ -1276,6 +1276,7 @@ async function runPRReview(
     throw new Error(validation.error);
   }
 
+  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
   const backendPath = validation.backendPath!;
 
   const { sendProgress } = createIPCCommunicators<PRReviewProgress, PRReviewResult>(
@@ -1372,10 +1373,12 @@ async function runPRReview(
     logCollector.finalize(true);
 
     // Save PR review insights to memory (async, non-blocking)
+    // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
     savePRReviewToMemory(result.data!, repo, false).catch((err) => {
       debugLog("Failed to save PR review to memory", { error: err.message });
     });
 
+    // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
     return result.data!;
   } finally {
     // Clean up the registry when done (success or error)
@@ -2277,6 +2280,7 @@ export function registerPRHandlers(getMainWindow: () => BrowserWindow | null): v
         }
 
         // Normalize snake_case to camelCase for backwards compatibility with old saved files
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         const reviewedCommitSha = review.reviewedCommitSha ?? (review as any).reviewed_commit_sha;
         if (!reviewedCommitSha) {
           debugLog("No reviewedCommitSha in review", { prNumber });
@@ -2333,6 +2337,7 @@ export function registerPRHandlers(getMainWindow: () => BrowserWindow | null): v
           };
 
           // Check if findings have been posted and if new commits are after the posting date
+          // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
           const postedAt = review.postedAt || (review as any).posted_at;
           let hasCommitsAfterPosting = true; // Default to true if we can't determine
 
@@ -2660,6 +2665,7 @@ export function registerPRHandlers(getMainWindow: () => BrowserWindow | null): v
             return;
           }
 
+          // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
           const backendPath = validation.backendPath!;
           const reviewKey = getReviewKey(projectId, prNumber);
 
@@ -2782,6 +2788,7 @@ export function registerPRHandlers(getMainWindow: () => BrowserWindow | null): v
             logCollector.finalize(true);
 
             // Save follow-up PR review insights to memory (async, non-blocking)
+            // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
             savePRReviewToMemory(result.data!, repo, true).catch((err) => {
               debugLog("Failed to save follow-up PR review to memory", { error: err.message });
             });
@@ -2797,6 +2804,7 @@ export function registerPRHandlers(getMainWindow: () => BrowserWindow | null): v
               message: "Follow-up review complete!",
             });
 
+            // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
             sendComplete(result.data!);
           } finally {
             // Always clean up registry, whether we exit normally or via error

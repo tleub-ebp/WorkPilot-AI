@@ -554,6 +554,7 @@ describe('ProjectTabBar', () => {
     it('should handle archived count edge cases', () => {
       // Zero archived
       expect(0).toBe(0);
+      // biome-ignore lint/suspicious/noSelfCompare: NaN check pattern
       expect(0 > 0).toBe(false);
 
       // Some archived
@@ -688,10 +689,10 @@ describe('ProjectTabBar', () => {
       }
 
       const validControlProps: ControlProps = {
-        onSettingsClick: () => {},
+        onSettingsClick: () => { /* noop */ },
         showArchived: false,
         archivedCount: 0,
-        onToggleArchived: () => {}
+        onToggleArchived: () => { /* noop */ }
       };
 
       expect(validControlProps.onSettingsClick).toBeDefined();
@@ -726,14 +727,14 @@ describe('ProjectTabBar', () => {
 
       // Only settings provided
       const settingsOnlyProps: ControlProps = {
-        onSettingsClick: () => {}
+        onSettingsClick: () => { /* noop */ }
       };
       expect(settingsOnlyProps.onSettingsClick).toBeDefined();
       expect(settingsOnlyProps.onToggleArchived).toBeUndefined();
 
       // Only archive toggle provided
       const archiveOnlyProps: ControlProps = {
-        onToggleArchived: () => {},
+        onToggleArchived: () => { /* noop */ },
         showArchived: true,
         archivedCount: 5
       };

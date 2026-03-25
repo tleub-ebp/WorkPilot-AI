@@ -25,10 +25,13 @@ if (fs.existsSync(runtimePath)) {
     try {
       const _version = execSync(`"${pythonExe}" --version`, { encoding: 'utf8' }).trim();
     } catch (_e) {
+      // noop
     }
   } else {
+    // noop
   }
 } else {
+  // noop
 }
 const packageJson = require(path.join(FRONTEND_DIR, 'package.json'));
 const extraResources = packageJson.build?.extraResources || [];
@@ -38,18 +41,23 @@ const pythonResource = extraResources.find(r =>
   (typeof r === 'object' && r.from?.includes('python'))
 );
 
+// biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
 if (pythonResource) {
 } else {
+  // noop
 }
 try {
   // Find system Python for testing
   const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
 
   const result = spawnSync(pythonCmd, ['-m', 'venv', '--help'], { encoding: 'utf8' });
+  // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
   if (result.status === 0) {
   } else {
+    // noop
   }
 } catch (_e) {
+  // noop
 }
 const backendDir = path.join(FRONTEND_DIR, '..', 'backend');
 const requirementsPath = path.join(backendDir, 'requirements.txt');
@@ -59,4 +67,5 @@ if (fs.existsSync(requirementsPath)) {
   const _hasDotenv = content.includes('python-dotenv');
   const _hasSDK = content.includes('claude-agent-sdk');
 } else {
+  // noop
 }

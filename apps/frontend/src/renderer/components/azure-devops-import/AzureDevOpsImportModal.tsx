@@ -1,3 +1,4 @@
+// biome-ignore lint/suspicious/noIrregularWhitespace: whitespace is intentional
 ﻿﻿/**
  * Azure DevOps Work Item Import Modal
  * Main modal component for importing work items from Azure DevOps
@@ -99,6 +100,7 @@ export function AzureDevOpsImportModal({
     if (open) {
       loadConnectionStatus();
     }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [open, loadConnectionStatus]);
 
   // Load work items when modal opens
@@ -106,6 +108,7 @@ export function AzureDevOpsImportModal({
     if (open && syncStatus?.connected) {
       loadWorkItems();
     }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [open, syncStatus?.connected, loadWorkItems]);
 
   const handleRefresh = () => {

@@ -76,6 +76,7 @@ interface AccountSettingsProps {
 /**
  * Unified account settings with tabs for Claude Code and Custom Endpoints
  */
+// biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
 export function AccountSettings({ settings, onSettingsChange, isOpen, connector, showAutoSwitching = true }: AccountSettingsProps) {
   const { t } = useTranslation('settings');
   const { t: tCommon } = useTranslation('common');
@@ -235,6 +236,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
     setAuthStatus('loading');
     setAuthMessage('');
     try {
+      // biome-ignore lint/suspicious/noImplicitAnyLet: type inferred from assignment
       let response;
       switch (connector.id) {
         case 'openai':
@@ -525,6 +527,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
 
   // Load data when section is opened
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   useEffect(() => {
     if (isOpen) {
       loadClaudeProfiles();
@@ -797,6 +800,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen, connector,
     setAuthTerminal(null);
     setAuthenticatingProfileId(null);
     await loadClaudeProfiles();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [loadClaudeProfiles]);
 
   const handleAuthTerminalError = useCallback(() => {

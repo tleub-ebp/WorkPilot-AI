@@ -15,6 +15,7 @@ global.window.electronAPI = {
   updateProjectEnv: vi.fn().mockResolvedValue({ success: true }),
   checkMcpHealth: vi.fn().mockResolvedValue({ success: true, data: null }),
   testMcpConnection: vi.fn().mockResolvedValue({ success: true, data: null }),
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 } as any;
 
 describe('AgentTools - Agent Profile Resolution', () => {
@@ -160,8 +161,11 @@ describe('AgentTools - Agent Profile Resolution', () => {
 
   describe('Agent Settings Resolution (Utility)', () => {
     it('should resolve phase-based agent settings correctly', () => {
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       const profile = DEFAULT_AGENT_PROFILES.find(p => p.id === 'auto')!;
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       const phaseModels = profile.phaseModels!;
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       const phaseThinking = profile.phaseThinking!;
       const featureModels = DEFAULT_FEATURE_MODELS;
       const featureThinking = DEFAULT_FEATURE_THINKING;

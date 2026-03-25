@@ -104,7 +104,7 @@ class TestWorktreeCreation:
 
         info = manager.create_worktree("my-feature-spec")
 
-        assert info.branch == "auto-claude/my-feature-spec"
+        assert info.branch == "workpilot/my-feature-spec"
 
     def test_get_or_create_replaces_existing_worktree(self, temp_git_repo: Path):
         """get_or_create_worktree returns existing worktree."""
@@ -130,7 +130,7 @@ class TestWorktreeCreation:
         # First creation should succeed
         info1 = manager.create_worktree("test-spec")
         assert info1.path.exists()
-        assert info1.branch == "auto-claude/test-spec"
+        assert info1.branch == "workpilot/test-spec"
 
         # Create a file in the worktree to verify it's preserved
         (info1.path / "test-file.txt").write_text("test content")
@@ -140,7 +140,7 @@ class TestWorktreeCreation:
 
         # Should return valid worktree info
         assert info2.path.exists()
-        assert info2.branch == "auto-claude/test-spec"
+        assert info2.branch == "workpilot/test-spec"
         # The test file should still be there (same worktree returned)
         assert (info2.path / "test-file.txt").exists()
         assert (info2.path / "test-file.txt").read_text() == "test content"
@@ -154,7 +154,7 @@ class TestWorktreeCreation:
         info1 = manager.create_worktree("test-spec")
         branch_name = info1.branch
         assert info1.path.exists()
-        assert branch_name == "auto-claude/test-spec"
+        assert branch_name == "workpilot/test-spec"
 
         # Remove worktree but keep the branch (delete_branch=False is default)
         manager.remove_worktree("test-spec", delete_branch=False)

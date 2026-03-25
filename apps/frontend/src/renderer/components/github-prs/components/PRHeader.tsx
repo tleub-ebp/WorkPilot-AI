@@ -94,7 +94,7 @@ export function PRHeader({ pr, isLoadingFiles = false }: PRHeaderProps) {
 
         <div className="flex items-center gap-4 ml-auto">
           {/* Clickable files indicator */}
-          <button
+          <button type="button"
             onClick={() => setShowFiles(!showFiles)}
             className={cn(
               "flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors",

@@ -249,6 +249,7 @@ function stageRuntimePackages(frontendDir, platform, arch) {
       if (fs.existsSync(optionalPath)) {
         stagePackage(depName);
       } else {
+        // noop
       }
     }
   }

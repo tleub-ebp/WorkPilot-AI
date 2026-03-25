@@ -58,6 +58,7 @@ export function UIUXDetails({ idea }: UIUXDetailsProps) {
           </h3>
           <ul className="space-y-1">
             {idea.affectedComponents.map((component, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
               <li key={i} className="text-sm font-mono text-muted-foreground">
                 {component}
               </li>

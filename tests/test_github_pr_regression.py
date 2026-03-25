@@ -25,6 +25,30 @@ from core.git_provider import detect_git_provider
 from worktree import PullRequestResult, WorktreeInfo, WorktreeManager
 
 
+# ============================================================================
+# Fixtures
+# ============================================================================
+
+
+@pytest.fixture
+def temp_project_dir(tmp_path):
+    """Create a temporary project directory with .workpilot structure."""
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    workpilot_dir = project_dir / ".workpilot"
+    workpilot_dir.mkdir()
+    return project_dir
+
+
+@pytest.fixture
+def worktree_manager(temp_project_dir):
+    """Create a WorktreeManager instance backed by a temporary project directory."""
+    return WorktreeManager(
+        project_dir=temp_project_dir,
+        base_branch="main",
+    )
+
+
 class TestGitHubProviderDetection:
     """Test that GitHub remotes are still detected correctly."""
 

@@ -408,6 +408,7 @@ export function generateIdeation(projectId: string): void {
   const config = store.config;
 
   if (window.DEBUG) {
+    // noop
   }
 
   clearGenerationTimeout(projectId);
@@ -451,6 +452,7 @@ export async function stopIdeation(projectId: string): Promise<boolean> {
 
   // Debug logging
   if (window.DEBUG) {
+    // noop
   }
 
   store.setIsGenerating(false);
@@ -465,6 +467,7 @@ export async function stopIdeation(projectId: string): Promise<boolean> {
 
   // Debug logging
   if (window.DEBUG) {
+    // noop
   }
 
   if (!result.success) {
@@ -652,12 +655,14 @@ export function setupIdeationListeners(): () => void {
     // Only process events for the current project
     if (!isCurrentProject(projectId)) {
       if (window.DEBUG) {
+        // noop
       }
       return;
     }
 
     // Debug logging
     if (window.DEBUG) {
+      // noop
     }
     store().setGenerationStatus(status);
   });
@@ -674,12 +679,14 @@ export function setupIdeationListeners(): () => void {
       // Only process events for the current project
       if (!isCurrentProject(projectId)) {
         if (window.DEBUG) {
+          // noop
         }
         return;
       }
 
       // Debug logging
       if (window.DEBUG) {
+        // noop
       }
 
       store().addIdeasForType(ideationType, ideas);
@@ -731,11 +738,13 @@ export function setupIdeationListeners(): () => void {
     // Only process events for the current project
     if (!isCurrentProject(projectId)) {
       if (window.DEBUG) {
+        // noop
       }
       return;
     }
 
     if (window.DEBUG) {
+      // noop
     }
 
     clearGenerationTimeout(projectId);
@@ -777,6 +786,7 @@ export function setupIdeationListeners(): () => void {
     if (!isCurrentProject(projectId)) return;
 
     if (window.DEBUG) {
+      // noop
     }
 
     clearGenerationTimeout(projectId);

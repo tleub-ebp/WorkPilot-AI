@@ -73,6 +73,7 @@ function createSettingsStoreMock(overrides: Partial<ReturnType<typeof useSetting
     deleteProfile: mockDeleteProfile,
     setActiveProfile: mockSetActiveProfile,
     profilesLoading: false,
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     settings: {} as any,
     isLoading: false,
     error: null,

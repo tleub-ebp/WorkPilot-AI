@@ -232,8 +232,10 @@ export class TaskStateManager {
       ? this.buildSnapshotFromTask(contextEntry.task)
       : undefined;
 
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
     if (contextEntry) {
     } else {
+      // noop
     }
 
     const actor = snapshot

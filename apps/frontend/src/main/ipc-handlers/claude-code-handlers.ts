@@ -1747,6 +1747,7 @@ export async function openTerminalWithCommand(command: string): Promise<void> {
 
         break;
 
+      // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
       } catch {
 
       }
@@ -2025,6 +2026,7 @@ export function registerClaudeCodeHandlers(): void {
 
         // Get installed version via cli-tool-manager
 
+        // biome-ignore lint/suspicious/noImplicitAnyLet: type inferred from assignment
         let detectionResult;
 
         try {

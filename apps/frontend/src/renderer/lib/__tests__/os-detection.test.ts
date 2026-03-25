@@ -15,6 +15,7 @@ describe('os-detection', () => {
   let isLinux: typeof import('../os-detection').isLinux;
 
   const originalPlatform = navigator.platform;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const originalUserAgentData = (navigator as any).userAgentData;
 
   beforeEach(async () => {
@@ -42,6 +43,7 @@ describe('os-detection', () => {
         configurable: true,
       });
     } else {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       delete (navigator as any).userAgentData;
     }
   });

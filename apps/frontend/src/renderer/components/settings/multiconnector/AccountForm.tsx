@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 
 interface Props {
   provider: LLMProvider;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onSave: (data: any) => void;
   onCancel: () => void;
 }
@@ -101,6 +102,7 @@ const AccountForm: React.FC<Props> = ({ provider, onSave, onCancel }) => {
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const model = formState['model'] || '';
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const config: any = { model };
     if (formState['apiKey']) config.api_key = formState['apiKey'];
     if (formState['oauthToken']) config.oauth_token = formState['oauthToken'];

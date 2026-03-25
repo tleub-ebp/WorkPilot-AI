@@ -65,7 +65,7 @@ export function FileTree({ rootPath, onSelectFolder, selectedFolder }: FileTreeP
   if (rootPath !== "C:\\" && rootPath !== "/") {
     return (
       <div>
-        <button className="mb-2 px-2 py-1 border rounded bg-muted" onClick={() => {
+        <button type="button" className="mb-2 px-2 py-1 border rounded bg-muted" onClick={() => {
           // Navigue vers le parent
           const parent = rootPath.replace(/\\$/, "");
           const parentPath = parent.substring(0, parent.lastIndexOf("\\")) || "C:\\";

@@ -167,7 +167,7 @@ describe('Settings Store', () => {
     });
 
     it('should set loading true during load and false after', async () => {
-      let resolveSettings: (value: unknown) => void = () => {};
+      let resolveSettings: (value: unknown) => void = () => { /* noop */ };
       const settingsPromise = new Promise((resolve) => { resolveSettings = resolve; });
       mockGetSettings.mockReturnValue(settingsPromise);
 
@@ -277,6 +277,7 @@ describe('Settings Store', () => {
           baseUrl: 'https://api.openai.com/v1',
           apiKey: 'sk-test-key',
           model: 'gpt-4',
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         } as any);
 
         expect(result).toBe(true);
@@ -290,6 +291,7 @@ describe('Settings Store', () => {
 
         const result = await useSettingsStore.getState().saveProfile({
           name: 'Test Profile',
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         } as any);
 
         expect(result).toBe(false);
@@ -428,7 +430,7 @@ describe('Settings Store', () => {
     });
 
     it('should set isTestingConnection during test', async () => {
-      let resolveTest: (value: unknown) => void = () => {};
+      let resolveTest: (value: unknown) => void = () => { /* noop */ };
       const testPromise = new Promise((resolve) => { resolveTest = resolve; });
       mockTestConnection.mockReturnValue(testPromise);
 
@@ -500,6 +502,7 @@ describe('Settings Store', () => {
 
   describe('setProviderPriorityOrder', () => {
     it('should update provider priority order in settings', () => {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const order = ['anthropic', 'openai', 'google'] as any[];
       useSettingsStore.getState().setProviderPriorityOrder(order);
 
@@ -507,6 +510,7 @@ describe('Settings Store', () => {
     });
 
     it('should persist to main process via IPC', () => {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const order = ['openai'] as any[];
       useSettingsStore.getState().setProviderPriorityOrder(order);
 

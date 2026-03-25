@@ -235,6 +235,7 @@ export function CostEstimator({ projectPath }: CostEstimatorProps) {
   }, [i18n.language]);
 
   // Helper function to handle API response
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const handleApiResponse = useCallback((result: PromiseSettledResult<any>, setter: (value: any) => void, silent: boolean, errorKey: string) => {
     if (result.status === 'fulfilled' && result.value?.success) {
       setter(result.value.success ? result.value.summary || result.value.budget : null);

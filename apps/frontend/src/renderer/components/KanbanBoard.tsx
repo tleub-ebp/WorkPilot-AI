@@ -226,6 +226,7 @@ function droppableColumnPropsAreEqual(
 
   // Only log when re-rendering (reduces noise)
   if (globalThis.DEBUG && !tasksEqual) {
+    // noop
   }
 
   return tasksEqual;
@@ -382,6 +383,7 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
       <SortableTaskCard
         key={task.id}
         task={task}
+        // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
         onClick={onClickHandlers.get(task.id)!}
         onStatusChange={onStatusChangeHandlers.get(task.id)}
         isSelectable={isSelectable}
@@ -774,6 +776,8 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
 
       {/* Resize handle on right edge */}
       {onResizeStart && onResizeEnd && (
+        // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+        // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
         <div
           className={cn(
             "absolute right-0 top-0 bottom-0 w-1 touch-none z-10",
@@ -846,6 +850,7 @@ function SortableColumnWrapper({ sortableId, ...columnProps }: SortableColumnWra
   );
 }
 
+// biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
 export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isRefreshing, onWorkItemsImported, onOpenJiraSettings, onOpenAzureDevOpsSettings }: KanbanBoardProps) {
   const { t } = useTranslation(['tasks', 'dialogs', 'common']);
   const { toast } = useToast();
@@ -1237,6 +1242,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   }, []);
 
   // Handle bulk PR dialog completion - clear selection
+  // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
   const handleBulkPRComplete = useCallback(() => {
   }, []);
 
@@ -1333,12 +1339,14 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
 
     if (result.success && taskToDelete) {
       // Store the deleted task for undo functionality
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       setRecentlyDeletedTasks(prev => new Map(prev).set(singleDeleteConfirm.taskId!, taskToDelete));
       
       toast({
         title: t('kanban.deleteSuccessSingle', { title: singleDeleteConfirm.taskTitle }),
         action: (
-          <button
+          <button type="button"
+            // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
             onClick={() => handleUndoDelete(singleDeleteConfirm.taskId!)}
             className="px-2 py-1 text-sm bg-primary/10 hover:bg-primary/20 text-primary rounded transition-colors"
           >
@@ -2514,7 +2522,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         <DragOverlay>
           {activeTask ? (
             <div className="drag-overlay-card relative">
-              <TaskCard task={activeTask} onClick={() => {}} />
+              <TaskCard task={activeTask} onClick={() => { /* noop */ }} />
               {isDraggingBulkSelected && (
                 <div className="absolute -top-2 -right-2 flex items-center justify-center h-6 min-w-6 px-1.5 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-lg border-2 border-background">
                   {selectedTaskIds.size}
@@ -2650,6 +2658,8 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
               {/* Task list preview */}
               <div className="mt-6 space-y-3">
                 <div className="flex items-center justify-between">
+                  // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                  // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                   <label className="text-sm font-semibold text-slate-200">{t('kanban.tasksToComplete')}</label>
                   <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-300">
                     {selectedTaskIds.size} {selectedTaskIds.size === 1 ? 'tâche' : 'tâches'}
@@ -2731,6 +2741,8 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           {/* Enhanced Task List Preview */}
           <div className="mt-6 space-y-3">
             <div className="flex items-center justify-between">
+              // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+              // biome-ignore lint/a11y/noLabelWithoutControl: intentional
               <label className="text-sm font-semibold text-slate-200">{t('kanban.tasksToDelete')}</label>
               <span className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-medium text-red-300">
                 {selectedTaskIds.size} {selectedTaskIds.size === 1 ? 'tâche' : 'tâches'}

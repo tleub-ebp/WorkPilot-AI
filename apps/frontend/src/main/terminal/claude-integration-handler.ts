@@ -916,12 +916,14 @@ export function handleClaudeExit(
  */
 interface ExecuteProfileCommandOptions {
   needsEnvOverride: boolean;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   activeProfile: any;
   cwdCommand: string;
   pathPrefix: string;
   escapedClaudeCmd: string;
   extraFlags: string | undefined;
   terminal: TerminalProcess;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   profileManager: any;
   projectPath: string | undefined;
   startTime: number;

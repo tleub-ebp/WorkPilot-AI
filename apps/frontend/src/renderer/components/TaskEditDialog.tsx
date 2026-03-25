@@ -66,6 +66,7 @@ export function TaskEditDialog({ task, open, onOpenChange, onSaved, onCloseTask 
   const { settings } = useSettingsStore();
   const selectedProfile = DEFAULT_AGENT_PROFILES.find(
     p => p.id === settings.selectedAgentProfile
+  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
   ) || DEFAULT_AGENT_PROFILES.find(p => p.id === 'auto')!;
 
   // Get project path for loading image thumbnails from disk

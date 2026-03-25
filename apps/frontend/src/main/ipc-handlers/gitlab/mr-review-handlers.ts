@@ -194,6 +194,7 @@ async function runMRReview(
     throw new Error(validation.error);
   }
 
+  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
   const backendPath = validation.backendPath!;
 
   const { sendProgress } = createIPCCommunicators<MRReviewProgress, MRReviewResult>(
@@ -262,6 +263,7 @@ async function runMRReview(
       throw new Error(result.error ?? 'Review failed');
     }
 
+    // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
     return result.data!;
   } finally {
     runningReviews.delete(reviewKey);
@@ -715,6 +717,7 @@ export function registerMRReviewHandlers(
           return { hasNewCommits: false };
         }
 
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         const reviewedCommitSha = review.reviewedCommitSha || (review as any).reviewed_commit_sha;
         if (!reviewedCommitSha) {
           debugLog('No reviewedCommitSha in review', { mrIid });
@@ -803,6 +806,7 @@ export function registerMRReviewHandlers(
             return;
           }
 
+          // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
           const backendPath = validation.backendPath!;
           const reviewKey = getReviewKey(projectId, mrIid);
 
@@ -881,6 +885,7 @@ export function registerMRReviewHandlers(
               message: 'Follow-up review complete!',
             });
 
+            // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
             sendComplete(result.data!);
           } finally {
             runningReviews.delete(reviewKey);

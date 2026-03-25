@@ -93,12 +93,12 @@ export const taskMock = {
   unwatchTaskLogs: async () => ({ success: true }),
 
   // Event Listeners (no-op in browser)
-  onTaskProgress: () => () => {},
-  onTaskError: () => () => {},
-  onTaskLog: () => () => {},
-  onTaskStatusChange: () => () => {},
-  onTaskExecutionProgress: () => () => {},
-  onTaskLogsChanged: () => () => {},
-  onTaskLogsStream: () => () => {},
-  onMergeProgress: () => () => {}
+  onTaskProgress: () => () => { /* noop */ },
+  onTaskError: () => () => { /* noop */ },
+  onTaskLog: () => () => { /* noop */ },
+  onTaskStatusChange: () => () => { /* noop */ },
+  onTaskExecutionProgress: () => () => { /* noop */ },
+  onTaskLogsChanged: () => () => { /* noop */ },
+  onTaskLogsStream: () => () => { /* noop */ },
+  onMergeProgress: () => () => { /* noop */ }
 };

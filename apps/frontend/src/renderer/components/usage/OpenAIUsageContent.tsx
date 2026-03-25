@@ -37,6 +37,7 @@ export function OpenAIUsageContent({ usage }: OpenAIUsageContentProps) {
 }
 
 interface OpenAIUsageDetailsProps {
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   readonly details: any;
 }
 
@@ -51,6 +52,7 @@ function OpenAIUsageDetails({ details }: OpenAIUsageDetailsProps) {
           <div className="font-medium">{t('common:usage.completionsLabel')}</div>
           <ul>
             {details.completions.data && details.completions.data.length > 0 ? (
+              // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
               details.completions.data.map((item: any, idx: number) => (
                 <li key={`completions-${item.model || idx}`}>
                   {item.model}: {item.n_input_tokens_total || 0} in, {item.n_output_tokens_total || 0} out
@@ -67,6 +69,7 @@ function OpenAIUsageDetails({ details }: OpenAIUsageDetailsProps) {
           <div className="font-medium">{t('common:usage.costByModelLabel')}</div>
           <ul>
             {details.cost.data && details.cost.data.length > 0 ? (
+              // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
               details.cost.data.map((item: any, idx: number) => (
                 <li key={`cost-${item.model || idx}`}>
                   {item.model}: ${item.cost_usd ? (Math.round(item.cost_usd * 100) / 100).toFixed(2) : '0.00'}
@@ -83,6 +86,7 @@ function OpenAIUsageDetails({ details }: OpenAIUsageDetailsProps) {
           <div className="font-medium">{t('common:usage.embeddingsLabel')}</div>
           <ul>
             {details.embeddings.data && details.embeddings.data.length > 0 ? (
+              // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
               details.embeddings.data.map((item: any, idx: number) => (
                 <li key={`embeddings-${item.model || idx}`}>
                   {item.model}: {item.n_input_tokens_total || 0}

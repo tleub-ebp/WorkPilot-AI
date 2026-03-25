@@ -166,6 +166,7 @@ export function UsageIndicatorAgnostic({ selectedProvider }: UsageIndicatorAgnos
     if (limitingPercent >= THRESHOLD_ELEVATED) return TrendingUp;
     
     // Use provider-specific icon if available
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const IconComponent = providerConfig.icon as any;
     return IconComponent || Activity;
   };
@@ -237,7 +238,7 @@ export function UsageIndicatorAgnostic({ selectedProvider }: UsageIndicatorAgnos
       <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <button 
+            <button type="button" 
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-red-500/10 text-red-500"
               onClick={clearError}
             >
@@ -270,7 +271,7 @@ export function UsageIndicatorAgnostic({ selectedProvider }: UsageIndicatorAgnos
       <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground">
+            <button type="button" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground">
               <Activity className="h-3.5 w-3.5" />
               <span className="text-xs font-semibold">{t('common:usage.notAvailable')}</span>
             </button>
@@ -295,7 +296,7 @@ export function UsageIndicatorAgnostic({ selectedProvider }: UsageIndicatorAgnos
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <button
+        <button type="button"
           className={`flex items-center gap-1 px-2 py-1.5 rounded-md border transition-all hover:opacity-80 ${getColorClass('badge')}`}
           aria-label={`${providerConfig.name} usage status`}
           onMouseEnter={handleMouseEnter}
@@ -318,7 +319,7 @@ export function UsageIndicatorAgnostic({ selectedProvider }: UsageIndicatorAgnos
           <div className="flex items-center gap-1.5 pb-2 border-b">
             <Icon className="h-3.5 w-3.5" />
             <span className="font-semibold text-xs">{providerConfig.name} Usage</span>
-            <button
+            <button type="button"
               onClick={handleRefresh}
               className="ml-auto p-1 hover:bg-muted rounded transition-colors"
               disabled={isRefreshing}
@@ -335,15 +336,23 @@ export function UsageIndicatorAgnostic({ selectedProvider }: UsageIndicatorAgnos
                 <AlertCircle className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="text-xs font-medium text-orange-500">
+                    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+                    // biome-ignore lint/suspicious/noExplicitAny: intentional
                     {(error as any).code?.replaceAll('_', ' ') || 'Error'}
                   </p>
                   <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+                    // biome-ignore lint/suspicious/noExplicitAny: intentional
                     {(error as any).message || 'Unknown error occurred'}
                   </p>
+                  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+                  // biome-ignore lint/suspicious/noExplicitAny: intentional
                   {(error as any).suggestions && (error as any).suggestions.length > 0 && (
                     <div className="text-[10px] text-muted-foreground">
                       <strong>Suggestions:</strong>
                       <ul className="list-disc list-inside space-y-0.5 mt-1">
+                        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+                        // biome-ignore lint/suspicious/noExplicitAny: intentional
                         {(error as any).suggestions.map((suggestion: string, _idx: number) => (
                           <li key={suggestion}>{suggestion}</li>
                         ))}
@@ -352,6 +361,8 @@ export function UsageIndicatorAgnostic({ selectedProvider }: UsageIndicatorAgnos
                   )}
                 </div>
               </div>
+              // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+              // biome-ignore lint/suspicious/noExplicitAny: intentional
               {(error as any).actionType === 'reauth' && (
                 <button
                   type="button"

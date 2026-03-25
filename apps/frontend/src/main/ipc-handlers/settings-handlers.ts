@@ -971,6 +971,7 @@ ipcMain.handle(
         try {
           const content = readFileSync(envPath, 'utf-8');
           existingVars = parseEnvFile(content);
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         } catch (error: any) {
           if (error.code === 'ENOENT') {
             // File doesn't exist - start with empty vars (expected for first-time setup)

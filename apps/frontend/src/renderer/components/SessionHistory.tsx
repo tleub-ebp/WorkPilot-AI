@@ -124,7 +124,7 @@ function SessionCard({ session }: { readonly session: SessionEntry }) {
       )}
     >
       {/* Header row */}
-      <button
+      <button type="button"
         className="w-full flex items-center gap-3 text-left"
         onClick={() => setExpanded(!expanded)}
       >

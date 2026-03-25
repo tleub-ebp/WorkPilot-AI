@@ -124,6 +124,7 @@ export function registerFileHandlers(): void {
 
   ipcMain.handle(
     IPC_CHANNELS.FILE_EXPLORER_SAVE,
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     async (_, dirPath: string, fileName: string, data: any): Promise<IPCResult<boolean>> => {
       try {
         // Validate and normalize path

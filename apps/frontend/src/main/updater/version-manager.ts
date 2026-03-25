@@ -82,14 +82,18 @@ export function compareVersions(a: string, b: string): number {
 
   // Both have prereleases - compare type then number
   const prereleaseOrder: Record<string, number> = { alpha: 0, beta: 1, rc: 2 };
+  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
   const typeA = prereleaseOrder[parsedA.prerelease!.type] ?? 1;
+  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
   const typeB = prereleaseOrder[parsedB.prerelease!.type] ?? 1;
 
   if (typeA > typeB) return 1;
   if (typeA < typeB) return -1;
 
   // Same prerelease type, compare numbers
+  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
   if (parsedA.prerelease!.num > parsedB.prerelease!.num) return 1;
+  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
   if (parsedA.prerelease!.num < parsedB.prerelease!.num) return -1;
 
   return 0;

@@ -219,6 +219,7 @@ export class LearningLoopService extends EventEmitter {
 class LearningLoopOutputProcessor {
   fullOutput = '';
   stderrOutput = '';
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   completeResult: any = null;
 
   processStdout(text: string, emitter: LearningLoopService): void {

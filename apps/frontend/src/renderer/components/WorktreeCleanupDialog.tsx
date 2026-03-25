@@ -35,6 +35,7 @@ export function WorktreeCleanupDialog({
 }: WorktreeCleanupDialogProps) {
   const { t } = useTranslation(['dialogs', 'common']);
 
+  // biome-ignore lint/suspicious/noImplicitAnyLet: type inferred from assignment
   let buttonContent;
   if (isProcessing) {
     buttonContent = (

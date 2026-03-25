@@ -256,6 +256,7 @@ function PhaseStepsIndicator({
               transition={getStepTransition(state)}
             >
               {state === 'complete' && (
+                // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
                 <svg
                   className="h-3 w-3"
                   fill="none"

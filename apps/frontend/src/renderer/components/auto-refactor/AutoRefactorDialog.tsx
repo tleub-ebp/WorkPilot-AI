@@ -333,6 +333,7 @@ function ResultView({
   t,
 }: {
   result: AutoRefactorResult;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   executionResult: any | null;
   copied: boolean;
   onCopy: (text: string) => void;

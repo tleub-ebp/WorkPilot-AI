@@ -54,6 +54,7 @@ export function TaskCreationWizard({
   const { selectedProvider } = useProviderContext();
   const selectedProfile = DEFAULT_AGENT_PROFILES.find(
     p => p.id === settings.selectedAgentProfile
+  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
   ) || DEFAULT_AGENT_PROFILES.find(p => p.id === 'auto')!;
 
   // Form state
@@ -524,6 +525,7 @@ export function TaskCreationWizard({
         if (part.match(/^@[\w\-./\\]+\.\w+$/)) {
           return (
             <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
               key={i}
               className="bg-info/20 text-info-foreground rounded px-0.5"
               style={{ color: 'hsl(var(--info))' }}
@@ -532,6 +534,7 @@ export function TaskCreationWizard({
             </span>
           );
         }
+        // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
         return <span key={i}>{part}</span>;
       })}
     </div>

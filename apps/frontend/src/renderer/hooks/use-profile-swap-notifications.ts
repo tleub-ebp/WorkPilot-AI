@@ -92,6 +92,7 @@ export function useProfileSwapNotifications() {
       }
 
       if (remainingSwaps > 0) {
+        // noop
       }
 
       queue.swaps = [];

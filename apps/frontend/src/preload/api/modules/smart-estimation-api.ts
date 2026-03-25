@@ -12,7 +12,9 @@ export interface SmartEstimationAPI {
   onSmartEstimationStreamChunk: (callback: (chunk: string) => void) => () => void;
   onSmartEstimationStatus: (callback: (status: string) => void) => () => void;
   onSmartEstimationError: (callback: (error: string) => void) => () => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onSmartEstimationComplete: (callback: (result: any) => void) => () => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onSmartEstimationEvent: (callback: (event: any) => void) => () => void;
 }
 
@@ -38,11 +40,13 @@ export const createSmartEstimationAPI = (): SmartEstimationAPI => ({
     return () => { /* TODO: Implement cleanup */ };
   },
   
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onSmartEstimationComplete: (_callback: (result: any) => void) => {
     // TODO: Implement event listener setup
     return () => { /* TODO: Implement cleanup */ };
   },
   
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onSmartEstimationEvent: (_callback: (event: any) => void) => {
     // TODO: Implement event listener setup
     return () => { /* TODO: Implement cleanup */ };

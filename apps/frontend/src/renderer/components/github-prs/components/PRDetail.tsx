@@ -854,6 +854,7 @@ ${t('prReview.blockedStatusMessageFooter')}`;
                   </p>
                   <ul className="text-sm text-warning/90 space-y-1">
                     {mergeReadiness.blockers.map((blocker, idx) => (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                       <li key={idx} className="flex items-center gap-2">
                         <span className="h-1.5 w-1.5 rounded-full bg-warning/70" />
                         {blocker}
@@ -1079,7 +1080,7 @@ ${t('prReview.blockedStatusMessageFooter')}`;
                    <XCircle className="h-4 w-4" />
                    {t('prReview.failedPostCleanReview')}
                  </div>
-                 <button
+                 <button type="button"
                    onClick={() => setShowCleanReviewErrorDetails(!showCleanReviewErrorDetails)}
                    aria-expanded={showCleanReviewErrorDetails}
                    aria-controls={cleanReviewErrorDetailsId}

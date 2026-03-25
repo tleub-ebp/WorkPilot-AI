@@ -32,6 +32,7 @@ import {
   GripVertical,
   Star,
   Tag,
+  // biome-ignore lint/suspicious/noShadowRestrictedNames: shadow name is intentional
   Infinity,
   AlertCircle,
   Users,

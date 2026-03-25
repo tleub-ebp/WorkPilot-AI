@@ -448,6 +448,9 @@ export function OllamaModelSelector({
            const progress = download;
 
            return (
+             // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+             // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+             // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
              <div
                key={model.name}
                className={cn(

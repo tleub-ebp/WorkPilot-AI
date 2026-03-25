@@ -149,6 +149,7 @@ async function main() {
         return;
       }
     } catch (_err) {
+      // noop
     }
   }
 

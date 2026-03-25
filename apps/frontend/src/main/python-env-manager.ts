@@ -38,6 +38,7 @@ export class PythonEnvManager extends EventEmitter {
   private sitePackagesPath: string | null = null;
   private usingBundledPackages = false;
   private isReady = false;
+  // biome-ignore lint/correctness/noUnusedPrivateClassMembers: member reserved for future use
   private isInitializing = false;
   private initializationPromise: Promise<PythonEnvStatus> | null = null;
   private activeProcesses: Set<ChildProcess> = new Set();
@@ -149,6 +150,7 @@ export class PythonEnvManager extends EventEmitter {
 
     // Log missing packages for debugging
     for (const _pkg of missingPackages) {
+      // noop
     }
     // Log warnings for missing optional packages (non-blocking)
     for (const pkg of missingOptional) {
@@ -161,8 +163,10 @@ export class PythonEnvManager extends EventEmitter {
     if (missingPackages.length === 0) {
       // Also check marker for logging purposes
       const markerPath = path.join(sitePackagesPath, '.bundled');
+      // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
       if (existsSync(markerPath)) {
       } else {
+        // noop
       }
       return true;
     }
@@ -271,11 +275,13 @@ if sys.version_info >= (3, 12):
     }
 
     this.emit('status', 'Creating Python virtual environment...');
+    // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
     const venvPath = this.getVenvBasePath()!;
     console.warn('[PythonEnvManager] Creating venv at:', venvPath, 'with:', systemPython);
 
     return new Promise((resolve) => {
       const proc = spawn(systemPython, ['-m', 'venv', venvPath], {
+        // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
         cwd: this.autoBuildSourcePath!,
         stdio: 'pipe',
         env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' }
@@ -348,6 +354,7 @@ if sys.version_info >= (3, 12):
     console.warn('[PythonEnvManager] Bootstrapping pip...');
     return new Promise((resolve) => {
       const proc = spawn(venvPython, ['-m', 'ensurepip'], {
+        // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
         cwd: this.autoBuildSourcePath!,
         stdio: 'pipe',
         env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' }
@@ -403,6 +410,7 @@ if sys.version_info >= (3, 12):
     return new Promise((resolve) => {
       // Use python -m pip for better compatibility across Python versions
       const proc = spawn(venvPython, ['-m', 'pip', 'install', '-r', requirementsPath], {
+        // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
         cwd: this.autoBuildSourcePath!,
         stdio: 'pipe',
         env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' }

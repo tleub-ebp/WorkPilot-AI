@@ -223,6 +223,7 @@ export function ScreenshotCapture({ open, onOpenChange, onCapture }: ScreenshotC
                       {isSelected && (
                         <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
                           <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
+                            {/* biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative, intentional */}
                             <svg
                               className="w-6 h-6 text-primary-foreground"
                               fill="none"

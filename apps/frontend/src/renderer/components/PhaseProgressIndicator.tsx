@@ -77,6 +77,7 @@ export const PhaseProgressIndicator = memo(function PhaseProgressIndicator({
         const nowVisible = entry.isIntersecting;
 
         if (prevVisibleRef.current !== nowVisible && window.DEBUG) {
+          // noop
         }
 
         prevVisibleRef.current = nowVisible;
@@ -150,6 +151,7 @@ export const PhaseProgressIndicator = memo(function PhaseProgressIndicator({
               {activeEntries} {activeEntries === 1 ? t('execution.labels.entry') : t('execution.labels.entries')}
             </span>
           ) : isRunning && isIndeterminatePhase && (phaseProgress ?? 0) > 0 ? (
+            // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
             `${Math.round(Math.min(phaseProgress!, 100))}%`
           ) : (
             '—'
@@ -331,6 +333,7 @@ const PhaseStepsIndicator = memo(function PhaseStepsIndicator({
               role={isPlanClickable ? 'button' : undefined}
             >
               {state === 'complete' && (
+                // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
                 <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>

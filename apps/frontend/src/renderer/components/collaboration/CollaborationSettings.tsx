@@ -50,7 +50,7 @@ export function CollaborationSettings() {
         </div>
         <div className="grid grid-cols-2 gap-2">
           {CONFLICT_STRATEGIES.map((strategy) => (
-            <button
+            <button type="button"
               key={strategy.value}
               onClick={() => updateSettings({ conflictStrategy: strategy.value })}
               className={cn(

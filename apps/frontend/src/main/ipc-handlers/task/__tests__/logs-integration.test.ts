@@ -94,6 +94,7 @@ describe('Task Logs Integration (Simplified)', () => {
     mockMainWindow = {
       webContents: {
         send: vi.fn()
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       } as any
     };
     getMainWindow = vi.fn(() => mockMainWindow as BrowserWindow);

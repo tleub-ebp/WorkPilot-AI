@@ -15,6 +15,7 @@ export function CopilotUsageContent({ usage }: CopilotUsageContentProps) {
 }
 
 function renderCopilotErrorState(usage: UsageSnapshot) {
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const error = (usage as any).error;
 
   if (error === 'INSUFFICIENT_PERMISSIONS') {
@@ -43,6 +44,8 @@ function CopilotInsufficientPermissions({ usage }: CopilotInsufficientPermission
           {t('common:usage.copilotInsuffPermissions')}
         </p>
         <p className="text-[10px] text-muted-foreground leading-relaxed">
+          // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+          // biome-ignore lint/suspicious/noExplicitAny: intentional
           {(usage as any).errorMessage || t('common:usage.copilotInsuffPermissionsDesc')}
         </p>
         <div className="text-[10px] text-muted-foreground">

@@ -54,6 +54,7 @@ export function ConflictDetailsDialog({
             <div className="space-y-3">
               {mergePreview.conflicts.map((conflict, idx) => (
                 <div
+                  // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                   key={idx}
                   className={cn(
                     "p-3 rounded-lg border",

@@ -88,6 +88,7 @@ export function ProjectTabBar({
       container.removeEventListener('scroll', checkScrollPosition);
       globalThis.removeEventListener('resize', checkScrollPosition);
     };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [checkScrollPosition]);
 
   // Keyboard shortcuts for tab navigation

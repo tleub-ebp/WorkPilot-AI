@@ -197,7 +197,7 @@ export async function toggleLearningPattern(projectDir: string, patternId: strin
  */
 export function setupLearningLoopListeners(): () => void {
   const store = () => useLearningLoopStore.getState();
-  const noop = () => {};
+  const noop = () => { /* noop */ };
 
   // Guard: API methods may not exist in browser-mock / dev mode
   const api = globalThis.electronAPI;

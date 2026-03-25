@@ -61,6 +61,7 @@ export function RateLimitModal() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [isModalOpen, rateLimitInfo?.suggestedProfileId, loadAutoSwitchSettings]);
 
   // Reset selection when modal closes

@@ -40,6 +40,7 @@ export interface UseAgnosticUsageReturn {
   setActiveProvider: (provider: string, type: 'oauth' | 'api_key', profileId?: string) => Promise<void>;
   refreshUsageData: (provider?: string) => Promise<void>;
   validateCredentials: () => Promise<boolean>;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   testProvider: (provider: string) => Promise<{ success: boolean; message: string; details?: any }>;
   clearError: () => void;
   
@@ -92,6 +93,7 @@ export function useAgnosticUsage(selectedProvider?: string): UseAgnosticUsageRet
         weeklyResetTimestamp: legacyData.usage.weeklyResetTimestamp?.toString(),
         profileId: legacyData.profileId || '',
         profileName: legacyData.profileName || '',
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         profileEmail: (legacyData as any).profileEmail,
         fetchedAt: new Date(legacyData.timestamp),
         needsReauthentication: legacyData.usage.needsReauthentication,
@@ -275,6 +277,7 @@ export function useAgnosticUsage(selectedProvider?: string): UseAgnosticUsageRet
   /**
    * Test provider
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const handleTestProvider = useCallback(async (providerName: string): Promise<{ success: boolean; message: string; details?: any }> => {
     try {
       setError(null);

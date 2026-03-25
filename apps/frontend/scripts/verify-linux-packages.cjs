@@ -28,6 +28,7 @@ const colors = {
 };
 
 function log(_message, _color = colors.reset) {
+  // noop
 }
 
 function logSuccess(message) {

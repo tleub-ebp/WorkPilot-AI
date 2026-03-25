@@ -28,11 +28,11 @@ describe('AutoRefactorStore', () => {
     vi.clearAllMocks();
     
     // Mock event listener cleanup functions
-    mockElectronAPI.onAutoRefactorStatus.mockReturnValue(() => {});
-    mockElectronAPI.onAutoRefactorStreamChunk.mockReturnValue(() => {});
-    mockElectronAPI.onAutoRefactorError.mockReturnValue(() => {});
-    mockElectronAPI.onAutoRefactorComplete.mockReturnValue(() => {});
-    mockElectronAPI.onAutoRefactorExecutionComplete.mockReturnValue(() => {});
+    mockElectronAPI.onAutoRefactorStatus.mockReturnValue(() => { /* noop */ });
+    mockElectronAPI.onAutoRefactorStreamChunk.mockReturnValue(() => { /* noop */ });
+    mockElectronAPI.onAutoRefactorError.mockReturnValue(() => { /* noop */ });
+    mockElectronAPI.onAutoRefactorComplete.mockReturnValue(() => { /* noop */ });
+    mockElectronAPI.onAutoRefactorExecutionComplete.mockReturnValue(() => { /* noop */ });
   });
 
   describe('initial state', () => {

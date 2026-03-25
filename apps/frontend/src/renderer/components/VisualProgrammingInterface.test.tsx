@@ -47,7 +47,9 @@ import { CanvasPanel } from './visual-to-code/CanvasPanel';
 
 describe('CanvasPanel', () => {
   beforeEach(() => {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     (globalThis as any).electronAPI = {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       ...((globalThis as any).electronAPI),
       onVisualProgrammingStatus: vi.fn(() => vi.fn()),
       onVisualProgrammingError: vi.fn(() => vi.fn()),
@@ -56,6 +58,7 @@ describe('CanvasPanel', () => {
       saveJsonFile: vi.fn().mockResolvedValue({ success: true }),
       getUserHome: vi.fn().mockReturnValue('/home/user'),
     };
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     (globalThis as any).platform = { isWindows: false };
   });
 

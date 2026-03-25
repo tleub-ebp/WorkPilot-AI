@@ -155,6 +155,7 @@ function createSessionObject(terminal: TerminalProcess): TerminalSession {
     id: terminal.id,
     title: terminal.title,
     cwd: terminal.cwd,
+    // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
     projectPath: terminal.projectPath!,
     isClaudeMode: terminal.isClaudeMode,
     claudeSessionId: terminal.claudeSessionId,

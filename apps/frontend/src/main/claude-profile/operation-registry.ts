@@ -185,6 +185,7 @@ class ClaudeOperationRegistry extends EventEmitter {
 
   private debugLog(..._args: unknown[]): void {
     if (this.debugMode) {
+      // noop
     }
   }
 

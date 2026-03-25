@@ -260,6 +260,7 @@ function findKnownProvider(remotes: Map<string, { fetch?: string; push?: string 
   const origin = remotes.get('origin');
   if (origin) {
     const url = getRemoteUrl(origin);
+    // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
     const provider = detectProviderFromUrl(url!);
     if (provider !== 'unknown') {
       return createProviderResult(provider, 'origin', url);
@@ -269,6 +270,7 @@ function findKnownProvider(remotes: Map<string, { fetch?: string; push?: string 
   // Try all other remotes
   for (const [name, urls] of remotes.entries()) {
     const url = getRemoteUrl(urls);
+    // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
     const provider = detectProviderFromUrl(url!);
     if (provider !== 'unknown') {
       return createProviderResult(provider, name, url);
@@ -428,6 +430,7 @@ export function registerProjectHandlers(
         if (existsSync(oldDir) && !existsSync(newDir)) {
           try {
             renameSync(oldDir, newDir);
+            // biome-ignore lint/suspicious/noConsole: logging retained for debugging
             console.log(`[Project] Migrated .auto-claude → .workpilot in ${projectPath}`);
           } catch (migrateErr) {
             console.warn(`[Project] Could not migrate .auto-claude to .workpilot: ${migrateErr}`);
@@ -465,6 +468,7 @@ export function registerProjectHandlers(
         if (existsSync(oldDir) && !existsSync(newDir)) {
           try {
             renameSync(oldDir, newDir);
+            // biome-ignore lint/suspicious/noConsole: logging retained for debugging
             console.log(`[Project] Migrated .auto-claude → .workpilot in ${proj.path}`);
           } catch (migrateErr) {
             console.warn(`[Project] Could not migrate .auto-claude to .workpilot: ${migrateErr}`);

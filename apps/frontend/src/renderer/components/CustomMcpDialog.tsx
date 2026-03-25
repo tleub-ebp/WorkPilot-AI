@@ -464,7 +464,7 @@ export function CustomMcpDialog({
                                   {value.length > 20 ? `${value.substring(0, 20)}...` : value}
                                 </span>
                               </span>
-                              <button
+                              <button type="button"
                                 onClick={() => removeHeader(key)}
                                 className="text-muted-foreground hover:text-destructive transition-colors"
                               >

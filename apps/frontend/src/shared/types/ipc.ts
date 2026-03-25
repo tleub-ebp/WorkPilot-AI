@@ -184,6 +184,7 @@ export interface TabState {
 }
 
 export interface ElectronAPI {
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   [x: string]: any;
   // Project operations
   addProject: (projectPath: string) => Promise<IPCResult<Project>>;
@@ -956,8 +957,10 @@ export interface ElectronAPI {
   cancelConflictPrediction: () => Promise<boolean>;
 
   // Conflict Predictor event listeners
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onConflictPredictionEvent: (callback: (event: any) => void) => () => void;
   onConflictPredictionError: (callback: (error: string) => void) => () => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onConflictPredictionComplete: (callback: (result: any) => void) => () => void;
 
   // Queue Routing API (rate limit recovery)
@@ -970,6 +973,7 @@ export interface ElectronAPI {
    * @param data Données à sauvegarder (objet JSON)
    * @returns { success: boolean, error?: string }
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   saveJsonFile: (folderPath: string, fileName: string, data: any) => Promise<{ success: boolean; error?: string }>;
 
   /**

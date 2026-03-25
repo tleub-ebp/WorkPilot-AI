@@ -7,6 +7,7 @@ export interface VoiceControlResult {
   transcript: string;
   command: string;
   action: string;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   parameters: Record<string, any>;
   confidence: number;
 }

@@ -562,6 +562,7 @@ export async function ensureValidToken(
 
   // Step 4: Refresh the token (with concurrency lock)
   const refreshPromise = (async (): Promise<EnsureValidTokenResult> => {
+    // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
     const refreshResult = await refreshOAuthToken(creds.refreshToken!, expandedConfigDir);
 
     if (!refreshResult.success || !refreshResult.accessToken || !refreshResult.refreshToken || !refreshResult.expiresAt) {

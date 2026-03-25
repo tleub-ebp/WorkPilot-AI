@@ -10,6 +10,7 @@ import {
   Settings,
   LayoutGrid,
   Terminal,
+  // biome-ignore lint/suspicious/noShadowRestrictedNames: shadow name is intentional
   Map,
   BookOpen,
   Lightbulb,
@@ -711,7 +712,7 @@ const toggleGroupExpansion = (groupId: string) => {
     };
 
     const button = (
-      <button
+      <button type="button"
         key={item.id}
         onClick={() => handleNavClick(item.id)}
         disabled={!selectedProjectId}
@@ -890,7 +891,7 @@ const toggleGroupExpansion = (groupId: string) => {
 
     return (
       <div key={group.id} className="space-y-1">
-        <button
+        <button type="button"
           onClick={() => toggleGroupExpansion(group.id)}
           className={cn(
             'flex w-full items-center rounded-lg text-sm transition-all duration-200 hover:scale-[1.02]',
@@ -983,7 +984,7 @@ const toggleGroupExpansion = (groupId: string) => {
                     className="w-full bg-transparent pl-7 pr-7 py-1 text-sm placeholder:text-muted-foreground/60 focus:outline-none"
                   />
                   {searchQuery && (
-                    <button
+                    <button type="button"
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => { setSearchQuery(''); searchInputRef.current?.focus(); }}
                       className="absolute right-1.5 text-muted-foreground hover:text-foreground transition-colors"
@@ -1163,6 +1164,8 @@ const toggleGroupExpansion = (groupId: string) => {
 
         {/* Resize handle */}
         {!isCollapsed && (
+          // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+          // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
           <div
             onMouseDown={handleResizeStart}
             className={cn(

@@ -100,6 +100,7 @@ interface TaskMetadataProps {
 const COLLAPSED_HEIGHT = 200;
 
 // Custom code component for ReactMarkdown
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 const CustomCodeComponent = (props: any) => {
   const { children, className, node, ...rest } = props;
   const match = /language-(\w+)/.exec(className || '');
@@ -122,6 +123,7 @@ const CustomCodeComponent = (props: any) => {
 };
 
 // Custom table component for ReactMarkdown
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 const CustomTableComponent = (props: any) => {
   const { children, ...rest } = props;
   return (
@@ -459,6 +461,7 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
                 // Rendu HTML pur avec DOMPurify et transformation des styles
                 <div
                   className="html-content"
+                  // biome-ignore lint/security/noDangerouslySetInnerHtml: content is sanitized before use
                   dangerouslySetInnerHTML={{
                     __html: DOMPurify.sanitize(
                       transformHtmlStyles(displayDescription || ''),

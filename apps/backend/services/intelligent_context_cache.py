@@ -23,6 +23,9 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+# SQL query constants
+DELETE_CACHE_ENTRY_QUERY = "DELETE FROM context_cache WHERE cache_key = ?"
+
 
 @dataclass
 class ContextCacheEntry:
@@ -145,7 +148,11 @@ class SemanticHasher:
             terms.extend(context_data["frameworks"])
 
         if "patterns" in context_data:
-            terms.extend(context_data["patterns"].keys())
+            patterns = context_data["patterns"]
+            if isinstance(patterns, dict):
+                terms.extend(patterns.keys())
+            elif isinstance(patterns, list):
+                terms.extend(patterns)
 
         if "description" in context_data:
             # Extract terms from description
@@ -398,6 +405,12 @@ class IntelligentContextCache:
         """Close database connections and cleanup resources."""
         with self._cache_lock:
             self._cache.clear()
+        # On Windows, run a WAL checkpoint so SQLite releases journal files
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        except Exception:
+            pass  # Ignore errors during cleanup
         # Force garbage collection to help with file locks on Windows
         import gc
 
@@ -652,7 +665,7 @@ class IntelligentContextCache:
         # Remove from database
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(
-                "DELETE FROM context_cache WHERE cache_key = ?",
+                DELETE_CACHE_ENTRY_QUERY,
                 (worst_entry.cache_key,),
             )
 
@@ -725,11 +738,25 @@ class IntelligentContextCache:
         logger.info(f"Loaded {len(self._cache)} cache entries from database")
 
     def invalidate_cache(self, pattern: str | None = None):
-        """Invalidate cache entries, optionally filtered by pattern."""
+        """Invalidate cache entries, optionally filtered by pattern.
+
+        The pattern is matched against the cache key, the semantic signature,
+        and any string values in the context data (e.g. task_type).
+        """
         with self._cache_lock:
             if pattern:
-                # Invalidate entries matching pattern
-                keys_to_remove = [key for key in self._cache.keys() if pattern in key]
+                # Invalidate entries matching pattern in key OR context data
+                keys_to_remove = []
+                for key, entry in self._cache.items():
+                    if pattern in key:
+                        keys_to_remove.append(key)
+                    elif pattern in entry.semantic_signature:
+                        keys_to_remove.append(key)
+                    else:
+                        # Check string values in context_data
+                        context_str = json.dumps(entry.context_data, default=str)
+                        if pattern in context_str:
+                            keys_to_remove.append(key)
             else:
                 # Invalidate all entries
                 keys_to_remove = list(self._cache.keys())
@@ -737,15 +764,16 @@ class IntelligentContextCache:
             for key in keys_to_remove:
                 del self._cache[key]
 
-                # Remove from database
-                with sqlite3.connect(self.db_path) as conn:
-                    if pattern:
+            # Remove from database
+            with sqlite3.connect(self.db_path) as conn:
+                if pattern:
+                    for key in keys_to_remove:
                         conn.execute(
-                            "DELETE FROM context_cache WHERE cache_key LIKE ?",
-                            (f"%{pattern}%",),
+                            DELETE_CACHE_ENTRY_QUERY,
+                            (key,),
                         )
-                    else:
-                        conn.execute("DELETE FROM context_cache")
+                else:
+                    conn.execute("DELETE FROM context_cache")
 
         logger.info(f"Invalidated {len(keys_to_remove)} cache entries")
 
@@ -809,7 +837,7 @@ class IntelligentContextCache:
 
                 with sqlite3.connect(self.db_path) as conn:
                     conn.execute(
-                        "DELETE FROM context_cache WHERE cache_key = ?", (key,)
+                        DELETE_CACHE_ENTRY_QUERY, (key,)
                     )
 
             logger.info(f"Optimized cache: removed {len(stale_keys)} stale entries")

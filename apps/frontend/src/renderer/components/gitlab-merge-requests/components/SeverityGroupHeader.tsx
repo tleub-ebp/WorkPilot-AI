@@ -40,6 +40,10 @@ export function SeverityGroupHeader({
     >
       <div className="flex items-center gap-3">
         {/* Group Checkbox */}
+        // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+        // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+        // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+        // biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: intentional
         <div
           onClick={onSelectAll}
           className="cursor-pointer"

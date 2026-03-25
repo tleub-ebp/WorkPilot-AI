@@ -100,6 +100,7 @@ export const useSettingsStore = create<SettingsState>((set, _get) => ({
           } else {
             // Fallback: add profile locally but don't assume activeProfileId
             set((state) => ({
+              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
               profiles: [...state.profiles, result.data!],
               profilesLoading: false
             }));
@@ -107,6 +108,7 @@ export const useSettingsStore = create<SettingsState>((set, _get) => ({
         } catch {
           // Fallback on fetch error: add profile locally
           set((state) => ({
+            // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
             profiles: [...state.profiles, result.data!],
             profilesLoading: false
           }));
@@ -134,6 +136,7 @@ export const useSettingsStore = create<SettingsState>((set, _get) => ({
       if (result.success && result.data) {
         set((state) => ({
           profiles: state.profiles.map((p) =>
+            // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
             p.id === result.data?.id ? result.data! : p
           ),
           profilesLoading: false

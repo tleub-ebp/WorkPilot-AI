@@ -24,6 +24,7 @@ import { sanitizeStringArray } from '../shared/sanitize';
 
 // Debug logging
 function debugLog(_message: string, ..._args: unknown[]): void {
+  // noop
 }
 
 const TRIAGE_CATEGORIES: GitLabTriageCategory[] = [

@@ -267,6 +267,7 @@ export async function loadProjects(): Promise<void> {
     } else if (!result.success) {
       store.setError(result.error || 'Erreur lors du chargement des projets.');
     }
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   } catch (err: any) {
     // Gestion d'erreur améliorée pour les réponses HTML ou backend injoignable
     const message =

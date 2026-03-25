@@ -154,7 +154,9 @@ export function usePRFiltering(
 
     // Sort the filtered results
     return filtered.sort((a, b) => {
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       const aTime = timestamps.get(a.number)!;
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       const bTime = timestamps.get(b.number)!;
 
       switch (filters.sortBy) {

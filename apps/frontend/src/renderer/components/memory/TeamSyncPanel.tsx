@@ -107,6 +107,7 @@ export function TeamSyncPanel({ projectDir }: Props) {
     try {
       const res = await api.teamSyncPush(projectDir);
       if (res.success) {
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         showFeedback('success', t('feedback.pushSuccess', { count: (res.data as any)?.episode_count ?? '?' }));
         loadStatus();
         loadPeers();
@@ -122,6 +123,7 @@ export function TeamSyncPanel({ projectDir }: Props) {
     setPulling(true);
     try {
       const res = await api.teamSyncPull(projectDir);
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const data = res.data as any;
       if (res.success) {
         const count = data?.imported ?? 0;
@@ -196,14 +198,14 @@ export function TeamSyncPanel({ projectDir }: Props) {
           <p className="text-sm text-white/50 mt-1">{t('subtitle')}</p>
         </div>
         <div className="flex gap-2">
-          <button
+          <button type="button"
             onClick={() => { loadStatus(); loadPeers(); }}
             disabled={loadingStatus}
             className="px-3 py-1.5 rounded-md text-sm bg-white/10 hover:bg-white/15 text-white/70 disabled:opacity-40 transition-colors"
           >
             {t('actions.refresh')}
           </button>
-          <button
+          <button type="button"
             onClick={() => setShowConfig(!showConfig)}
             className="px-3 py-1.5 rounded-md text-sm bg-white/10 hover:bg-white/15 text-white/70 transition-colors"
           >
@@ -246,10 +248,12 @@ export function TeamSyncPanel({ projectDir }: Props) {
 
           {/* Mode */}
           <div className="flex flex-col gap-1">
+            // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+            // biome-ignore lint/a11y/noLabelWithoutControl: intentional
             <label className="text-xs text-white/60">{t('config.mode')}</label>
             <div className="flex gap-2">
               {(['directory', 'http'] as SyncMode[]).map((m) => (
-                <button
+                <button type="button"
                   key={m}
                   onClick={() => setConfigMode(m)}
                   className={`flex-1 py-1.5 rounded-md text-sm transition-colors ${configMode === m ? 'bg-blue-600 text-white' : 'bg-white/10 text-white/60 hover:bg-white/15'}`}
@@ -266,6 +270,8 @@ export function TeamSyncPanel({ projectDir }: Props) {
           {/* Mode-specific fields */}
           {configMode === 'directory' ? (
             <div className="flex flex-col gap-1">
+              // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+              // biome-ignore lint/a11y/noLabelWithoutControl: intentional
               <label className="text-xs text-white/60">{t('config.syncPath')}</label>
               <input
                 value={configSyncPath}
@@ -277,6 +283,8 @@ export function TeamSyncPanel({ projectDir }: Props) {
           ) : (
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
+                // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                 <label className="text-xs text-white/60">{t('config.serverUrl')}</label>
                 <input
                   value={configServerUrl}
@@ -287,6 +295,8 @@ export function TeamSyncPanel({ projectDir }: Props) {
               </div>
               <div className="flex gap-3">
                 <div className="flex flex-col gap-1 flex-1">
+                  // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                  // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                   <label className="text-xs text-white/60">{t('config.serverPort')}</label>
                   <input
                     type="number"
@@ -302,6 +312,8 @@ export function TeamSyncPanel({ projectDir }: Props) {
           {/* Team + member */}
           <div className="flex gap-3">
             <div className="flex flex-col gap-1 flex-1">
+              // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+              // biome-ignore lint/a11y/noLabelWithoutControl: intentional
               <label className="text-xs text-white/60">{t('config.teamId')}</label>
               <input
                 value={configTeamId}
@@ -311,6 +323,8 @@ export function TeamSyncPanel({ projectDir }: Props) {
               />
             </div>
             <div className="flex flex-col gap-1 flex-1">
+              // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+              // biome-ignore lint/a11y/noLabelWithoutControl: intentional
               <label className="text-xs text-white/60">{t('config.memberId')}</label>
               <input
                 value={configMemberId}
@@ -324,6 +338,8 @@ export function TeamSyncPanel({ projectDir }: Props) {
           {/* Auto-sync */}
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1 flex-1 mr-4">
+              // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+              // biome-ignore lint/a11y/noLabelWithoutControl: intentional
               <label className="text-xs text-white/60">{t('config.autoSyncInterval')}</label>
               <input
                 type="number"
@@ -343,7 +359,7 @@ export function TeamSyncPanel({ projectDir }: Props) {
             </label>
           </div>
 
-          <button
+          <button type="button"
             onClick={handleSaveConfig}
             disabled={savingConfig}
             className="self-end px-4 py-1.5 rounded-md text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50 transition-colors"
@@ -355,7 +371,7 @@ export function TeamSyncPanel({ projectDir }: Props) {
 
       {/* Action buttons */}
       <div className="flex gap-3">
-        <button
+        <button type="button"
           onClick={handlePush}
           disabled={pushing || !status?.enabled}
           className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm disabled:opacity-40 transition-colors"
@@ -365,7 +381,7 @@ export function TeamSyncPanel({ projectDir }: Props) {
           ) : '↑'}
           {t('actions.push')}
         </button>
-        <button
+        <button type="button"
           onClick={handlePull}
           disabled={pulling || !status?.enabled}
           className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-white/10 hover:bg-white/15 text-white font-medium text-sm disabled:opacity-40 transition-colors"
@@ -376,7 +392,7 @@ export function TeamSyncPanel({ projectDir }: Props) {
           {t('actions.pull')}
         </button>
         {configMode === 'http' && (
-          <button
+          <button type="button"
             onClick={handleToggleServer}
             className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${status?.server_running ? 'bg-red-600/80 hover:bg-red-500 text-white' : 'bg-white/10 hover:bg-white/15 text-white/70'}`}
           >
@@ -416,7 +432,7 @@ export function TeamSyncPanel({ projectDir }: Props) {
                       {t('peers.episodes', { count: peer.episode_count })}
                     </span>
                     {!peer.is_self && (
-                      <button
+                      <button type="button"
                         onClick={() => handleViewPeerEpisodes(peer.member_id)}
                         className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
                       >
@@ -434,6 +450,7 @@ export function TeamSyncPanel({ projectDir }: Props) {
                       <p className="text-xs text-white/30 italic">{t('episodes.empty')}</p>
                     ) : (
                       peerEpisodes.slice(0, 50).map((ep, i) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                         <div key={i} className="flex flex-col gap-1 bg-white/5 rounded-md px-3 py-2">
                           <div className="flex items-center gap-2">
                             <EpisodeTypeBadge type={ep.type} />
@@ -464,7 +481,7 @@ export function TeamSyncPanel({ projectDir }: Props) {
               </li>
             ))}
           </ol>
-          <button
+          <button type="button"
             onClick={() => setShowConfig(true)}
             className="mt-4 px-4 py-1.5 rounded-md text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors"
           >

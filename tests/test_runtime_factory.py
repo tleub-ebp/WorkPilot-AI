@@ -30,16 +30,21 @@ def test_runtime_factory_litellm():
     assert hasattr(runtime, 'run_session')
 
 def test_runtime_factory_claude():
+    """Claude SDK runtime is now a real runtime (not NotImplementedError)."""
+    from core.runtimes.claude_sdk_runtime import ClaudeSDKRuntime
+
     class DummyConfig:
         is_claude_sdk = True
-    with pytest.raises(NotImplementedError):
-        create_agent_runtime(
-            spec_dir=None,
-            phase="test",
-            project_dir=None,
-            agent_type="test",
-            cli_provider=None,
-            cli_model=None,
-            cli_thinking=None,
-            config=DummyConfig(),
-        )
+    # The factory now returns a ClaudeSDKRuntime instead of raising NotImplementedError
+    runtime = create_agent_runtime(
+        spec_dir=None,
+        phase="test",
+        project_dir=None,
+        agent_type="test",
+        cli_provider=None,
+        cli_model=None,
+        cli_thinking=None,
+        config=DummyConfig(),
+    )
+    assert runtime is not None
+    assert isinstance(runtime, ClaudeSDKRuntime)

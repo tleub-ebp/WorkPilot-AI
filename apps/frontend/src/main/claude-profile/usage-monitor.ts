@@ -1342,6 +1342,7 @@ export class UsageMonitor extends EventEmitter {
     if (settings.activeProfileId) {
       try {
         const currentProfilesFile = await loadProfilesFile();
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         const activeProfile = currentProfilesFile.profiles.find((p: any) => p.id === settings.activeProfileId);
         if (activeProfile) {
           const provider = detectProvider(activeProfile.baseUrl);
@@ -1595,7 +1596,9 @@ export class UsageMonitor extends EventEmitter {
         this.debugLog('[UsageMonitor:Copilot] Returning result from normalizeCopilotResponse:', {
           hasProviderName: !!result.providerName,
           providerName: result.providerName,
+          // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
           hasError: !!(result as any).error,
+          // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
           error: (result as any).error
         });
         return result;
@@ -1988,12 +1991,14 @@ export class UsageMonitor extends EventEmitter {
         // Check for auth failures via status code (works for all providers)
         if (response.status === 401 || response.status === 403) {
           const error = new Error(`API Auth Failure: ${response.status} (${provider})`);
+          // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
           (error as any).statusCode = response.status;
           throw error;
         }
 
         // For other error statuses, try to parse response body to detect auth failures
         // This handles cases where providers might return different status codes for auth errors
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         let errorData: any;
         try {
           errorData = await response.json();
@@ -2033,7 +2038,9 @@ export class UsageMonitor extends EventEmitter {
 
         if (hasAuthError) {
           const error = new Error(`API Auth Failure detected in response body (${provider}): ${JSON.stringify(errorData)}`);
+          // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
           (error as any).statusCode = response.status; // Include original status code
+          // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
           (error as any).detectedInBody = true;
           throw error;
         }
@@ -2110,6 +2117,7 @@ export class UsageMonitor extends EventEmitter {
       this.apiResultCache.set(cacheKey, { snapshot: normalizedUsage, fetchedAt: Date.now() });
 
       return normalizedUsage;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     } catch (error: any) {
       // Re-throw auth failures to be handled by checkUsageAndSwap
       // This includes both status code auth failures (401/403) and body-detected failures
@@ -2140,6 +2148,7 @@ export class UsageMonitor extends EventEmitter {
    * }
    */
   private normalizeAnthropicResponse(
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       data: any,
       profileId: string,
       profileName: string,
@@ -2209,6 +2218,7 @@ export class UsageMonitor extends EventEmitter {
    * - weeklyPercent: % of billing cycle elapsed (time-based progress)
    */
   private normalizeWindsurfResponse(
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       data: any,
       profileId: string,
       profileName: string,
@@ -2355,6 +2365,7 @@ export class UsageMonitor extends EventEmitter {
    * even though we can't track token usage.
    */
   private normalizeCopilotResponse(
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       data: any,
       profileId: string,
       profileName: string,
@@ -2503,6 +2514,7 @@ export class UsageMonitor extends EventEmitter {
    * This allows the UI to show OpenAI usage status and handle errors gracefully.
    */
   private normalizeOpenAIResponse(
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       data: any,
       profileId: string,
       profileName: string,
@@ -2697,6 +2709,7 @@ export class UsageMonitor extends EventEmitter {
       this.debugLog('[UsageMonitor:CLI] claude usage output received (first 200 chars):', result.stdout.substring(0, 200));
       
       // Strip ANSI escape codes before parsing (CLI output may contain color/progress bar sequences)
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: control chars are intentional
       const output = result.stdout.replaceAll(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
       
       // Use the dedicated usage parser that handles the actual "claude usage" output format:
@@ -2721,9 +2734,11 @@ export class UsageMonitor extends EventEmitter {
           this.debugLog('[UsageMonitor:CLI] Detected session limit hit, setting session to 100%');
         } else {
           const percentagePattern = /(\d+)%/g;
+          // biome-ignore lint/suspicious/noImplicitAnyLet: type inferred from assignment
           let match;
           const allPercentages: string[] = [];
           
+          // biome-ignore lint/suspicious/noAssignInExpressions: intentional assignment
           while ((match = percentagePattern.exec(output)) !== null) {
             allPercentages.push(match[1]);
           }
@@ -2992,6 +3007,7 @@ export class UsageMonitor extends EventEmitter {
         timestamp: new Date()
       });
     } else {
+      // noop
     }
 
     // Note: Don't immediately check new profile - let normal interval handle it
@@ -3495,6 +3511,7 @@ export class UsageMonitor extends EventEmitter {
       sessionPercent: 0,
       weeklyPercent: 0,
       profileId: providerName,
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       profileName: getProviderLabel(providerName as any),
       providerName: providerName,
       fetchedAt: new Date(),

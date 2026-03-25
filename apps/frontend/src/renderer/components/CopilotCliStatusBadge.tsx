@@ -46,6 +46,7 @@ interface CopilotIconProps {
   readonly className?: string;
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
 type StatusType = "loading" | "installed" | "outdated" | "not-found" | "gh-missing" | "error";
 
 const _CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
@@ -57,6 +58,7 @@ const _UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000; // Check for updates every 5 mi
  */
 function CopilotIcon({ className }: CopilotIconProps) {
   return (
+    // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
     <svg
       className={className}
       viewBox="0 0 24 24"
@@ -423,7 +425,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
               <p className="font-medium">Requires GitHub CLI (gh)</p>
               <p className="mt-1 text-muted-foreground">
                 Install from{" "}
-                <button
+                <button type="button"
                   className="underline text-primary"
                   onClick={() => globalThis.electronAPI?.openExternal?.("https://cli.github.com")}
                 >

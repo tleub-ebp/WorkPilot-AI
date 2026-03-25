@@ -199,6 +199,7 @@ async function fetchLatestCopilotVersion(): Promise<string> {
         },
         (res) => {
           let body = '';
+          // biome-ignore lint/suspicious/noAssignInExpressions: intentional assignment
           res.on('data', (chunk: Buffer | string) => (body += chunk));
           res.on('end', () => resolve(body));
         }
@@ -212,6 +213,7 @@ async function fetchLatestCopilotVersion(): Promise<string> {
 
     const releases = JSON.parse(data);
     // Find the first non-prerelease release
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const stableRelease = releases.find((release: any) => !release.prerelease);
     const version = stableRelease ? (stableRelease.tag_name || '').replace(/^v/, '') : '';
     
@@ -394,6 +396,7 @@ export function registerCopilotCliHandlers(): void {
         console.warn('[Copilot CLI] Checking version...');
 
         // Get installed version via cli-tool-manager
+        // biome-ignore lint/suspicious/noImplicitAnyLet: type inferred from assignment
         let detectionResult;
         try {
           detectionResult = getToolInfo('copilot');

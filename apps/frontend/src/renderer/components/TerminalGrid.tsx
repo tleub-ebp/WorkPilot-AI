@@ -477,6 +477,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
   // Empty state
   if (terminals.length === 0) {
     return (
+      // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
       <div className="flex h-full flex-col items-center justify-center gap-6 p-8" role="region" aria-label="Terminal grid empty state">
         <div className="flex flex-col items-center gap-3 text-center">
           <div className="rounded-full bg-card p-4">

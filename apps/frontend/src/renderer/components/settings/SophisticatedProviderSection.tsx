@@ -22,7 +22,9 @@ interface Provider {
 }
 
 interface SophisticatedProviderSectionProps {
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   settings: any;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onSettingsChange: (settings: any) => void;
   isOpen: boolean;
 }

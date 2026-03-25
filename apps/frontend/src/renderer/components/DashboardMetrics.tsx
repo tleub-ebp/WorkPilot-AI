@@ -201,6 +201,7 @@ export function DashboardMetrics({ projectPath }: DashboardMetricsProps) {
     try {
       const result = await window.electronAPI.getDashboardSnapshot(projectPath);
       if (result.success) {
+        // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
         setSnapshot(result.snapshot!);
       } else {
         setError(result.error || 'Failed to load dashboard');

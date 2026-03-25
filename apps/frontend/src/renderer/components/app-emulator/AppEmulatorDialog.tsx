@@ -106,6 +106,7 @@ function classifyLogLine(line: string): string {
 /** Render log text with per-line color highlighting based on log level. */
 function renderColorizedContent(text: string) {
   return text.split('\n').map((line, i) => (
+    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
     <span key={i} className={`block ${classifyLogLine(line)}`}>
       {line}
     </span>
@@ -242,13 +243,17 @@ export function AppEmulatorDialog() {
 
   const handleRefresh = useCallback(() => {
     if (iframeRef.current) {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       (iframeRef.current as any).reload?.();
     }
   }, []);
 
   const handleOpenInBrowser = useCallback(() => {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const currentUrl = (iframeRef.current as any)?.getURL?.() ?? url;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     if (currentUrl && (globalThis as any).electronAPI?.openExternal) {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       (globalThis as any).electronAPI.openExternal(currentUrl);
     }
   }, [url]);
@@ -431,6 +436,7 @@ export function AppEmulatorDialog() {
           {/* Keep webview mounted to avoid reloads; toggle visibility via CSS */}
           {phase === 'running' && isWeb && url && (
             <webview
+              // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
               ref={iframeRef as any}
               src={url}
               className="flex-1 min-h-0 w-full border-0 bg-white"

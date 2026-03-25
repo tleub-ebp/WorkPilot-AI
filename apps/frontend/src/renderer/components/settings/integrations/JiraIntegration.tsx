@@ -60,7 +60,9 @@ export function JiraIntegration({
 
     try {
       // Test connection via IPC if available, otherwise show mock status
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       if (window.electronAPI && typeof (window.electronAPI as any).testJiraConnection === 'function') {
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         const result = await (window.electronAPI as any).testJiraConnection({
           instanceUrl: jiraInstanceUrl,
           email: jiraEmail,

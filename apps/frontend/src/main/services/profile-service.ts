@@ -487,6 +487,7 @@ export async function testConnection(
 
       // TypeError with ECONNREFUSED/ENOTFOUND → network error
       if (error instanceof TypeError) {
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         const errorCode = (error as any).code;
         if (errorCode === 'ECONNREFUSED' || errorCode === 'ENOTFOUND') {
           return {

@@ -43,6 +43,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   complexity: '📊',
 };
 
+// biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
 export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScorePanelProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
@@ -162,6 +163,7 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
                               const severityColor = SEVERITY_COLORS[issue.severity];
 
                               return (
+                                // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                                 <div key={idx} className="text-sm pl-6 py-2 border-l-2 border-muted">
                                   <div className="flex items-start gap-2">
                                     <SeverityIcon className={cn('h-4 w-4 mt-0.5 flex-shrink-0', severityColor)} />

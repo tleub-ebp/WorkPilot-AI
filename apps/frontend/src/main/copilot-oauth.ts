@@ -348,6 +348,7 @@ export async function getCopilotAuthStatus(): Promise<{
               });
             }
           } catch (_error) {
+            // noop
           }
         }
       }

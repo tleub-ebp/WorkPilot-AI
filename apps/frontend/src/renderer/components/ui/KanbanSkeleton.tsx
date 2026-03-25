@@ -20,6 +20,8 @@ export function KanbanSkeleton({
 }: KanbanSkeletonProps) {
   return (
     <div
+      // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
+      // biome-ignore lint/a11y/useSemanticElements: intentional
       role="status"
       aria-label={showRefreshText ? "Refreshing kanban board..." : "Loading kanban board..."}
       className={cn('flex gap-3 p-4 h-full overflow-hidden', className)}
@@ -32,6 +34,7 @@ export function KanbanSkeleton({
       )}
       {Array.from({ length: columns }).map((_, colIdx) => (
         <div
+          // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
           key={colIdx}
           className="flex flex-col flex-1 min-w-[220px] max-w-[350px]"
         >
@@ -45,6 +48,7 @@ export function KanbanSkeleton({
           <div className="flex-1 space-y-2 rounded-lg bg-muted/30 p-2">
             {Array.from({ length: cardsPerColumn[colIdx] ?? 2 }).map(
               (_, cardIdx) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                 <KanbanCardSkeleton key={cardIdx} />
               )
             )}

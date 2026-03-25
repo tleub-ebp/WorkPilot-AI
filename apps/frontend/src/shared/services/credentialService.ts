@@ -181,6 +181,7 @@ class CredentialService {
   /**
    * Tester un provider (incluant les cas spéciaux comme Copilot)
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   async testProvider(provider: string): Promise<{ success: boolean; message: string; details?: any }> {
     if (!window.electronAPI?.invoke) {
       console.warn('[CredentialService] Electron API not available');
@@ -224,6 +225,7 @@ class CredentialService {
   /**
    * Émettre un événement
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   private emit(event: string, data: any): void {
     const listeners = this.eventListeners.get(event);
     if (listeners) {

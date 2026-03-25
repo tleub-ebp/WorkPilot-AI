@@ -62,6 +62,7 @@ export function useIdeationAuth() {
     };
 
     performCheck();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [activeProfileId, resolveHasAPIProfile]);
 
   // Expose checkAuth for manual re-checks

@@ -251,11 +251,11 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
         typesToAdd={showEmptyState ? [] : typesToAdd}
         availableTypesToAdd={showEmptyState ? [] : getAvailableTypesToAdd()}
         onToggleIdeationType={toggleIdeationType}
-        onToggleTypeToAdd={showEmptyState ? () => {} : toggleTypeToAdd}
+        onToggleTypeToAdd={showEmptyState ? () => { /* noop */ } : toggleTypeToAdd}
         onSetConfig={setConfig}
         onCloseConfigDialog={() => setShowConfigDialog(false)}
         onCloseAddMoreDialog={() => setShowAddMoreDialog(false)}
-        onConfirmAddMore={showEmptyState ? () => {} : handleAddMoreIdeas}
+        onConfirmAddMore={showEmptyState ? () => { /* noop */ } : handleAddMoreIdeas}
       />
 
       {/* Environment Configuration Modal */}

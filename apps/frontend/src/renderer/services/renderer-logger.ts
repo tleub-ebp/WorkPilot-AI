@@ -27,11 +27,13 @@ interface LogMessage {
   level: 'debug' | 'info' | 'success' | 'warning' | 'error';
   message: string;
   module?: string;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   args?: any[];
 }
 
 // Service de logging pour le renderer
 export const rendererLog = {
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   debug: (message: string, ...args: any[]) => {
     const logMessage: LogMessage = {
       level: 'debug',
@@ -42,6 +44,7 @@ export const rendererLog = {
     sendToMainProcess(logMessage);
   },
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   info: (message: string, ...args: any[]) => {
     const logMessage: LogMessage = {
       level: 'info',
@@ -52,6 +55,7 @@ export const rendererLog = {
     sendToMainProcess(logMessage);
   },
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   success: (message: string, ...args: any[]) => {
     const logMessage: LogMessage = {
       level: 'success',
@@ -62,6 +66,7 @@ export const rendererLog = {
     sendToMainProcess(logMessage);
   },
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   warning: (message: string, ...args: any[]) => {
     const logMessage: LogMessage = {
       level: 'warning',
@@ -72,6 +77,7 @@ export const rendererLog = {
     sendToMainProcess(logMessage);
   },
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   error: (message: string, ...args: any[]) => {
     const logMessage: LogMessage = {
       level: 'error',
@@ -84,72 +90,92 @@ export const rendererLog = {
 
   // Module-specific loggers
   context: {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     debug: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'debug', message, module: 'context', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     info: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'info', message, module: 'context', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     success: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'success', message, module: 'context', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     warning: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'warning', message, module: 'context', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     error: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'error', message, module: 'context', args });
     },
   },
 
   github: {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     debug: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'debug', message, module: 'github', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     info: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'info', message, module: 'github', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     success: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'success', message, module: 'github', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     warning: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'warning', message, module: 'github', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     error: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'error', message, module: 'github', args });
     },
   },
 
   azure: {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     debug: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'debug', message, module: 'azure', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     info: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'info', message, module: 'azure', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     success: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'success', message, module: 'azure', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     warning: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'warning', message, module: 'azure', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     error: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'error', message, module: 'azure', args });
     },
   },
 
   changelog: {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     debug: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'debug', message, module: 'changelog', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     info: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'info', message, module: 'changelog', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     success: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'success', message, module: 'changelog', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     warning: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'warning', message, module: 'changelog', args });
     },
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     error: (message: string, ...args: any[]) => {
       sendToMainProcess({ level: 'error', message, module: 'changelog', args });
     },
@@ -186,10 +212,15 @@ function sendToMainProcess(logMessage: LogMessage): void {
 }
 
 // Export convenience functions
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export const logRendererDebug = (message: string, ...args: any[]) => rendererLog.debug(message, ...args);
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export const logRendererInfo = (message: string, ...args: any[]) => rendererLog.info(message, ...args);
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export const logRendererSuccess = (message: string, ...args: any[]) => rendererLog.success(message, ...args);
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export const logRendererWarning = (message: string, ...args: any[]) => rendererLog.warning(message, ...args);
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export const logRendererError = (message: string, ...args: any[]) => rendererLog.error(message, ...args);
 
 export default rendererLog;

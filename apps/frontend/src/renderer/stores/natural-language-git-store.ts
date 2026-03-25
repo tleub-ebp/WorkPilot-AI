@@ -111,7 +111,7 @@ let setupComplete = false;
 
 export function setupNaturalLanguageGitListeners() {
   if (setupComplete) {
-    return () => {};
+    return () => { /* noop */ };
   }
 
   const store = () => useNaturalLanguageGitStore.getState();

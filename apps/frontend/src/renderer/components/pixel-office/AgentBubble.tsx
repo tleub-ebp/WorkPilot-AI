@@ -258,6 +258,7 @@ function LogStream({ taskId }: { readonly taskId: string }) {
             <div className="p-3 space-y-1">
               {visibleLines.map((line, i) => (
                 <p
+                  // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                   key={`${line}-${i}`}
                   className="text-[11px] font-mono leading-relaxed break-all"
                   style={{ color: logLineColor(line) }}

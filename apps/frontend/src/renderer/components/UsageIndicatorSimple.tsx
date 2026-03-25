@@ -78,6 +78,7 @@ export function UsageIndicatorSimple() {
     isLoading,
     isAvailable,
     error,
+    // biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
     setActiveProvider,
     clearError
   } = useCredentialService(selectedProvider);
@@ -166,7 +167,7 @@ export function UsageIndicatorSimple() {
       <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <button 
+            <button type="button" 
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-red-500/10 text-red-500"
               onClick={clearError}
             >
@@ -199,7 +200,7 @@ export function UsageIndicatorSimple() {
       <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground">
+            <button type="button" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-muted/50 text-muted-foreground">
               <Activity className="h-3.5 w-3.5" />
               <span className="text-xs font-semibold">{t('common:usage.notAvailable')}</span>
             </button>
@@ -247,7 +248,7 @@ export function UsageIndicatorSimple() {
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <button
+        <button type="button"
           className={`flex items-center gap-1 px-2 py-1.5 rounded-md border transition-all hover:opacity-80 ${badgeColorClasses}`}
           aria-label={t('common:usage.usageStatusAriaLabel')}
           onMouseEnter={handleMouseEnter}

@@ -36,16 +36,23 @@ vi.mock('@/stores/project-store', () => ({
 
 // Mock UI components
 vi.mock('@/components/ui/dialog', () => ({
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   Dialog: ({ children, open }: any) => 
     open ? <div data-testid="dialog">{children}</div> : null,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   DialogContent: ({ children }: any) => <div data-testid="dialog-content">{children}</div>,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   DialogTitle: ({ children }: any) => <div data-testid="dialog-title">{children}</div>,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   DialogDescription: ({ children }: any) => <div data-testid="dialog-description">{children}</div>,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   DialogFooter: ({ children }: any) => <div data-testid="dialog-footer">{children}</div>,
 }));
 
 vi.mock('@/components/ui/textarea', () => ({
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   Textarea: ({ value, onChange, disabled, placeholder, id }: any) => (
     <textarea
       value={value}
@@ -59,6 +66,7 @@ vi.mock('@/components/ui/textarea', () => ({
 }));
 
 vi.mock('@/components/ui/label', () => ({
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   Label: ({ children, htmlFor }: any) => <label htmlFor={htmlFor}>{children}</label>,
 }));
 
@@ -72,10 +80,12 @@ import SmartEstimationDialog from '../SmartEstimationDialog';
 
 describe('Debug Test', () => {
   it('should render dialog when open', () => {
+    // biome-ignore lint/suspicious/noConsole: logging retained for debugging
     console.log('Mock store:', mockStore);
     
     render(<SmartEstimationDialog />);
     
+    // biome-ignore lint/suspicious/noConsole: logging retained for debugging
     console.log('Document body:', document.body.innerHTML);
     
     expect(screen.getByTestId('dialog')).toBeInTheDocument();

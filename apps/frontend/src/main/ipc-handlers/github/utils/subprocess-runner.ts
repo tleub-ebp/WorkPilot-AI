@@ -41,6 +41,7 @@ function createFallbackRunnerEnv(): Record<string, string> {
 
   for (const key of safeEnvVars) {
     if (process.env[key]) {
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       fallbackEnv[key] = process.env[key]!;
     }
   }
@@ -170,7 +171,7 @@ export function runPythonSubprocess<T = unknown>(
             if (!isWindows()) {
               process.kill(-child.pid, 'SIGTERM');
             } else {
-              execFile('taskkill', ['/pid', String(child.pid), '/T', '/F'], () => {});
+              execFile('taskkill', ['/pid', String(child.pid), '/T', '/F'], () => { /* noop */ });
             }
           } catch {
             child.kill('SIGTERM');
@@ -476,6 +477,7 @@ export function getRunnerPath(backendPath: string): string {
  */
 export function getBackendPath(project: Project): string | null {
   // Import app module for production path detection
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   let app: any;
   try {
     app = require('electron').app;
@@ -604,6 +606,7 @@ export async function validateGitHubModule(project: Project): Promise<GitHubModu
   try {
     await execAsync('gh auth status 2>&1');
     result.ghAuthenticated = true;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   } catch (error: any) {
     // gh auth status returns non-zero when not authenticated
     // Check the output to determine if it's an auth issue

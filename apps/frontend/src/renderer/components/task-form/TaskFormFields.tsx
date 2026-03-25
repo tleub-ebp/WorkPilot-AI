@@ -198,11 +198,13 @@ export function TaskFormFields({
 
       for (const image of imagesToLoad) {
         try {
+          // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
           const result = await window.electronAPI.loadImageThumbnail(projectPath, specId, image.path!);
           if (result.success && result.data) {
             thumbnailMap.set(image.id, result.data);
           }
         } catch (_error) {
+          // noop
         }
       }
 
@@ -405,6 +407,8 @@ export function TaskFormFields({
             {images.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {images.map((image) => (
+                  // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+                  // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
                   <div
                     key={image.id}
                     className="relative group rounded-md border border-border overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"

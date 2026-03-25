@@ -10,9 +10,9 @@ const mockFetch = vi.fn();
 globalThis.fetch = mockFetch;
 
 // Mock console methods to avoid noise in tests
-const mockConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
+const mockConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => { /* noop */ });
+const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => { /* noop */ });
+const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => { /* noop */ });
 
 describe("Network Error Handling", () => {
   beforeEach(() => {
