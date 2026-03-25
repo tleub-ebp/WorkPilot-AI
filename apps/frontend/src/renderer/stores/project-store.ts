@@ -247,12 +247,21 @@ export async function loadProjects(): Promise<void> {
     }
     if (result.success && result.data) {
       store.setProjects(result.data);
-      // Restore selected project from localStorage if available
+      // Restore selected project from localStorage if available, fallback to activeProjectId from tab state
       const lastSelectedProjectId = localStorage.getItem(LAST_SELECTED_PROJECT_KEY);
       if (lastSelectedProjectId) {
         const lastSelectedProject = result.data.find((p) => p.id === lastSelectedProjectId);
         if (lastSelectedProject) {
           store.selectProject(lastSelectedProjectId);
+        }
+      } else {
+        // localStorage is empty (e.g. fresh userData directory) — fall back to tab state activeProjectId
+        const activeProjectId = useProjectStore.getState().activeProjectId;
+        if (activeProjectId) {
+          const activeProject = result.data.find((p) => p.id === activeProjectId);
+          if (activeProject) {
+            store.selectProject(activeProjectId);
+          }
         }
       }
     } else if (!result.success) {
