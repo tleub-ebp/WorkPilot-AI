@@ -24,6 +24,10 @@ import importlib.util
 import types as _types_mod
 from pathlib import Path as _Path
 
+# Add the apps/backend directory to the Python path
+backend_path = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_path))
+
 # Mock claude_agent_sdk before any imports
 _mock_sdk = MagicMock()
 _mock_sdk.ClaudeSDKClient = MagicMock()
@@ -79,6 +83,9 @@ class FakeAgentClient(AgentClient):
     def provider_name(self):
         return self._provider
 
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        pass
+
 
 class ErrorAgentClient(AgentClient):
     """AgentClient that raises an exception during query or receive."""
@@ -101,6 +108,9 @@ class ErrorAgentClient(AgentClient):
 
     def provider_name(self):
         return "error"
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        pass
 
 
 # =============================================================================

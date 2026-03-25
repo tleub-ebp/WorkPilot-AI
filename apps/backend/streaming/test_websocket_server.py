@@ -288,7 +288,7 @@ class TestStreamingWebSocketServer:
 
         # Should handle gracefully without error - verify no response was sent
         mock_websocket.send.assert_not_called()
-        
+
         # Verify session is still active and properly managed
         session_info = websocket_server.streaming_manager.get_session_info(session_id)
         assert session_info is not None

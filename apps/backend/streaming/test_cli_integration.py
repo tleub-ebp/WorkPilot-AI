@@ -204,11 +204,13 @@ Test streaming functionality
             mock_wrapper.end_session.assert_called_once()
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Requires real WebSocket network connection between processes")
+    @pytest.mark.skip(
+        reason="Requires real WebSocket network connection between processes"
+    )
     async def test_websocket_server_integration(self):
         """Test WebSocket server integration with streaming."""
-        from streaming.websocket_server import StreamingWebSocketServer
         from streaming.streaming_manager import StreamingManager
+        from streaming.websocket_server import StreamingWebSocketServer
 
         # Create server on test port
         server = StreamingWebSocketServer(host="localhost", port=8767)
@@ -233,7 +235,9 @@ Test streaming functionality
             # Emit events
             await wrapper.emit_agent_thinking("WebSocket integration test")
             await wrapper.emit_agent_response("Response from WebSocket test")
-            await wrapper.emit_file_change("/test/file.ts", content="console.log('test');")
+            await wrapper.emit_file_change(
+                "/test/file.ts", content="console.log('test');"
+            )
 
             # End session
             await wrapper.end_session()

@@ -197,7 +197,9 @@ class TestStreamingIntegration:
         await wrapper.emit_file_change("/test/app.ts", content="console.log('test');")
         await wrapper.emit_command("npm run build", "/test")
         await wrapper.emit_agent_response("Implementation completed successfully")
-        await wrapper.emit_command_output("Warning: Deprecated API used", is_error=False)
+        await wrapper.emit_command_output(
+            "Warning: Deprecated API used", is_error=False
+        )
 
         # Verify events were sent: session_start + 5 events = 6 total
         assert wrapper._send_event.call_count == 6
