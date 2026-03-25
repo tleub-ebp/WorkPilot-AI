@@ -51,7 +51,7 @@ describe('task-event-parser', () => {
     const input = '__TASK_EVENT__:{"config": {"path": "C:\\\\temp\\\\file.txt", "description": "A \\"special\\" file"}, "status": "ready"}extra garbage';
     const result = parseTaskEvent(input);
     expect(result).not.toBeNull();
-    expect(result?.config?.path).toBe('C:\\temp\\file.txt');
-    expect(result?.config?.description).toBe('A "special" file');
+    expect((result as any)?.config?.path).toBe('C:\\temp\\file.txt');
+    expect((result as any)?.config?.description).toBe('A "special" file');
   });
 });
