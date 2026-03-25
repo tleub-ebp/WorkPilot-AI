@@ -45,7 +45,7 @@ jobs:
         run: |
           # Install node-pty in frontend directory
           cd apps/frontend
-          npm install node-pty@1.1.0-beta42 --no-save
+          pnpm add node-pty@1.1.0-beta42 --save-dev --ignore-scripts
 
           # Get Electron ABI version using Node.js (more reliable than electron-abi package)
           $electronAbi = (node -e "console.log(require('electron-abi')('$env:ELECTRON_VERSION'))" 2>$null)

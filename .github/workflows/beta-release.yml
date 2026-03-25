@@ -152,7 +152,7 @@ jobs:
             python-bundle-${{ runner.os }}-x64-3.12.8-rust-
 
       - name: Build application
-        run: cd apps/frontend && npm run build
+        run: cd apps/frontend && pnpm run build
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_TRACES_SAMPLE_RATE: ${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}
@@ -174,7 +174,7 @@ jobs:
       - name: Package macOS (Intel)
         run: |
           VERSION="${{ needs.create-tag.outputs.version }}"
-          cd apps/frontend && npm run package:mac -- --x64 --config.extraMetadata.version="$VERSION"
+          cd apps/frontend && pnpm run package:mac -- --x64 --config.extraMetadata.version="$VERSION"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
@@ -279,7 +279,7 @@ jobs:
             python-bundle-${{ runner.os }}-arm64-3.12.8-
 
       - name: Build application
-        run: cd apps/frontend && npm run build
+        run: cd apps/frontend && pnpm run build
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_TRACES_SAMPLE_RATE: ${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}
@@ -301,7 +301,7 @@ jobs:
       - name: Package macOS (Apple Silicon)
         run: |
           VERSION="${{ needs.create-tag.outputs.version }}"
-          cd apps/frontend && npm run package:mac -- --arm64 --config.extraMetadata.version="$VERSION"
+          cd apps/frontend && pnpm run package:mac -- --arm64 --config.extraMetadata.version="$VERSION"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
@@ -408,7 +408,7 @@ jobs:
             python-bundle-${{ runner.os }}-x64-3.12.8-
 
       - name: Build application
-        run: cd apps/frontend && npm run build
+        run: cd apps/frontend && pnpm run build
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_TRACES_SAMPLE_RATE: ${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}
@@ -421,7 +421,7 @@ jobs:
         shell: bash
         run: |
           VERSION="${{ needs.create-tag.outputs.version }}"
-          cd apps/frontend && npm run package:win -- --config.extraMetadata.version="$VERSION"
+          cd apps/frontend && pnpm run package:win -- --config.extraMetadata.version="$VERSION"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Disable electron-builder's built-in signing (we use Azure Trusted Signing instead)
@@ -634,7 +634,7 @@ jobs:
             python-bundle-${{ runner.os }}-x64-3.12.8-
 
       - name: Build application
-        run: cd apps/frontend && npm run build
+        run: cd apps/frontend && pnpm run build
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_TRACES_SAMPLE_RATE: ${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}
@@ -646,7 +646,7 @@ jobs:
       - name: Package Linux
         run: |
           VERSION="${{ needs.create-tag.outputs.version }}"
-          cd apps/frontend && npm run package:linux -- --config.extraMetadata.version="$VERSION"
+          cd apps/frontend && pnpm run package:linux -- --config.extraMetadata.version="$VERSION"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
@@ -654,7 +654,7 @@ jobs:
           SENTRY_PROFILES_SAMPLE_RATE: ${{ secrets.SENTRY_PROFILES_SAMPLE_RATE }}
 
       - name: Verify Linux packages
-        run: cd apps/frontend && npm run verify:linux
+        run: cd apps/frontend && pnpm run verify:linux
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
