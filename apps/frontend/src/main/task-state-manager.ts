@@ -56,13 +56,13 @@ export class TaskStateManager {
       });
     }
 
-    if (!this.isNewSequence(taskId, event.sequence)) {
+    if (!this.isNewSequence(taskId, event.sequence ?? 0)) {
       return false;
     }
     this.setTaskContext(taskId, task, project);
-    this.lastSequenceByTask.set(taskId, event.sequence);
+    this.lastSequenceByTask.set(taskId, event.sequence ?? 0);
 
-    if (TERMINAL_EVENTS.has(event.type)) {
+    if (event.type && TERMINAL_EVENTS.has(event.type)) {
       this.terminalEventSeen.add(taskId);
     }
 

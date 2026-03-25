@@ -35,17 +35,17 @@ declare global {
       }>;
 
       // Generic invoke method
-      invoke: (channel: string, ...args: any[]) => Promise<any>;
+      invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
 
       // Self-Healing API
       selfHealing: {
-        getDashboard(projectPath: string): Promise<{ success: boolean; data?: any }>;
-        getIncidents(projectPath: string, mode?: string): Promise<{ success: boolean; data?: any[] }>;
-        getOperations(projectPath: string): Promise<{ success: boolean; data?: any[] }>;
-        getFragility(projectPath: string): Promise<{ success: boolean; data?: any[] }>;
+        getDashboard(projectPath: string): Promise<{ success: boolean; data?: unknown }>;
+        getIncidents(projectPath: string, mode?: string): Promise<{ success: boolean; data?: unknown[] }>;
+        getOperations(projectPath: string): Promise<{ success: boolean; data?: unknown[] }>;
+        getFragility(projectPath: string): Promise<{ success: boolean; data?: unknown[] }>;
         cicdEnable(projectPath: string): Promise<{ success: boolean; error?: string }>;
         cicdDisable(projectPath: string): Promise<{ success: boolean; error?: string }>;
-        cicdConfig(projectPath: string, config: Record<string, unknown>): Promise<{ success: boolean; config?: any; error?: string }>;
+        cicdConfig(projectPath: string, config: Record<string, unknown>): Promise<{ success: boolean; config?: unknown; error?: string }>;
         productionConnect(projectPath: string, sourceConfig: Record<string, unknown>): Promise<{ success: boolean; error?: string }>;
         productionDisconnect(projectPath: string, source: string): Promise<{ success: boolean; error?: string }>;
         productionConfig(projectPath: string, config: Record<string, unknown>): Promise<{ success: boolean; error?: string }>;

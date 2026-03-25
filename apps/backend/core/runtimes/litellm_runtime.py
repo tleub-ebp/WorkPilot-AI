@@ -63,7 +63,7 @@ class LiteLLMRuntime(AgentRuntime):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit."""
         # Cleanup LLM client if needed
-        if hasattr(self.llm_client, 'close'):
+        if hasattr(self.llm_client, "close"):
             await self.llm_client.close()
 
     async def run_session(
