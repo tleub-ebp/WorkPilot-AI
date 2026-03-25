@@ -7,10 +7,10 @@ import { Separator } from './ui/separator';
 import type { Project } from '../../shared/types';
 
 interface WelcomeScreenProps {
-  projects: Project[];
-  onNewProject: () => void;
-  onOpenProject: () => void;
-  onSelectProject: (projectId: string) => void;
+  readonly projects: Project[];
+  readonly onNewProject: () => void;
+  readonly onOpenProject: () => void;
+  readonly onSelectProject: (projectId: string) => void;
 }
 
 export function WelcomeScreen({
