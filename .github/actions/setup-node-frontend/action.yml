@@ -67,4 +67,4 @@ runs:
       shell: bash
       # electron-vite bin link is not reliably created by npm ci for workspace devDependencies.
       # Install it explicitly at root so node_modules/.bin/electron-vite is always present.
-      run: npm install electron-vite@5.0.0 --no-save --ignore-scripts --omit=optional
+      run: cd apps/frontend && pnpm add electron-vite@5.0.0 --save-dev --ignore-scripts

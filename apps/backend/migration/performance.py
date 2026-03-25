@@ -10,7 +10,7 @@ import pickle
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Optional
 
 from .models import TransformationResult
 
@@ -284,8 +284,8 @@ class TransformationBatcher:
     def process_batches(
         self,
         files: list[str],
-        process_func: callable,
-        on_batch_complete: callable | None = None,
+        process_func: Callable,
+        on_batch_complete: Optional[Callable] = None,
     ) -> list[Any]:
         """Process files in batches."""
         batches = self.batch_files(files)
