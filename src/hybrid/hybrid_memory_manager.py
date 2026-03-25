@@ -64,7 +64,7 @@ class HybridMemoryManager:
         """Génère un ID de session unique"""
         timestamp = datetime.now().isoformat()
         ide_name = self.ide_info.get('ide_name', 'generic')
-        return hashlib.md5(f"{timestamp}_{ide_name}".encode()).hexdigest()[:16]
+        return hashlib.sha256(f"{timestamp}_{ide_name}".encode()).hexdigest()[:16]
     
     def store_decision(self, decision_type: str, decision_data: Dict[str, Any]) -> str:
         """

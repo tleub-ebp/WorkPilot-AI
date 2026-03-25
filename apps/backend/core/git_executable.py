@@ -87,61 +87,91 @@ def get_git_executable() -> str:
 def _find_git_executable() -> str:
     """Internal function to find git executable."""
     # 1. Check CLAUDE_CODE_GIT_BASH_PATH (set by Electron frontend)
-    # This env var points to bash.exe, we can derive git.exe from it
-    bash_path = os.environ.get("CLAUDE_CODE_GIT_BASH_PATH")
-    if bash_path:
-        try:
-            bash_path_obj = Path(bash_path)
-            if bash_path_obj.exists():
-                git_dir = bash_path_obj.parent.parent
-                # Try cmd/git.exe first (preferred), then bin/git.exe
-                for git_subpath in ["cmd/git.exe", "bin/git.exe"]:
-                    git_path = git_dir / git_subpath
-                    if git_path.is_file():
-                        return str(git_path)
-        except (OSError, ValueError):
-            pass  # Invalid path or permission error - try next method
+    bash_derived_path = _check_bash_path()
+    if bash_derived_path:
+        return bash_derived_path
 
     # 2. Try shutil.which (works if git is in PATH)
-    git_path = shutil.which("git")
-    if git_path:
-        return git_path
+    system_path = _check_system_git_path()
+    if system_path:
+        return system_path
 
     # 3. Windows-specific: check common installation locations
     if os.name == "nt":
-        common_paths = [
-            os.path.expandvars(r"%PROGRAMFILES%\Git\cmd\git.exe"),
-            os.path.expandvars(r"%PROGRAMFILES%\Git\bin\git.exe"),
-            os.path.expandvars(r"%PROGRAMFILES(X86)%\Git\cmd\git.exe"),
-            os.path.expandvars(r"%LOCALAPPDATA%\Programs\Git\cmd\git.exe"),
-            r"C:\Program Files\Git\cmd\git.exe",
-            r"C:\Program Files (x86)\Git\cmd\git.exe",
-        ]
-        for path in common_paths:
-            try:
-                if os.path.isfile(path):
-                    return path
-            except OSError:
-                continue
+        windows_path = _check_windows_git_paths()
+        if windows_path:
+            return windows_path
 
-        # 4. Try 'where' command with shell=True (more reliable on Windows)
-        try:
-            result = subprocess.run(
-                "where git",
-                capture_output=True,
-                text=True,
-                timeout=5,
-                shell=True,
-            )
-            if result.returncode == 0 and result.stdout.strip():
-                found_path = result.stdout.strip().split("\n")[0].strip()
-                if found_path and os.path.isfile(found_path):
-                    return found_path
-        except (subprocess.TimeoutExpired, OSError):
-            pass  # 'where' command failed - fall through to default
+        # 4. Try shutil.which() again for Windows (cross-platform, no shell needed)
+        fallback_path = _fallback_system_path()
+        if fallback_path:
+            return fallback_path
 
     # Default fallback - let subprocess handle it (may fail)
     return "git"
+
+
+def _check_bash_path() -> str | None:
+    """Check CLAUDE_CODE_GIT_BASH_PATH and derive git.exe from bash.exe."""
+    bash_path = os.environ.get("CLAUDE_CODE_GIT_BASH_PATH")
+    if not bash_path:
+        return None
+
+    try:
+        bash_path_obj = Path(bash_path)
+        if not bash_path_obj.exists():
+            return None
+
+        git_dir = bash_path_obj.parent.parent
+        # Try cmd/git.exe first (preferred), then bin/git.exe
+        for git_subpath in ["cmd/git.exe", "bin/git.exe"]:
+            git_path = git_dir / git_subpath
+            if git_path.is_file():
+                return str(git_path)
+    except (OSError, ValueError):
+        pass  # Invalid path or permission error - try next method
+
+    return None
+
+
+def _check_system_git_path() -> str | None:
+    """Check system PATH for git executable."""
+    git_path = shutil.which("git")
+    if git_path:
+        return git_path
+    return None
+
+
+def _check_windows_git_paths() -> str | None:
+    """Check Windows-specific Git installation locations."""
+    common_paths = [
+        os.path.expandvars(r"%PROGRAMFILES%\Git\cmd\git.exe"),
+        os.path.expandvars(r"%PROGRAMFILES%\Git\bin\git.exe"),
+        os.path.expandvars(r"%PROGRAMFILES(X86)%\Git\cmd\git.exe"),
+        os.path.expandvars(r"%LOCALAPPDATA%\Programs\Git\cmd\git.exe"),
+        r"C:\Program Files\Git\cmd\git.exe",
+        r"C:\Program Files (x86)\Git\cmd\git.exe",
+    ]
+    return _find_existing_file(common_paths)
+
+
+def _fallback_system_path() -> str | None:
+    """Fallback check for git in system PATH with file validation."""
+    found_path = shutil.which("git")
+    if found_path and os.path.isfile(found_path):
+        return found_path
+    return None
+
+
+def _find_existing_file(paths: list[str]) -> str | None:
+    """Find first existing file from a list of candidate paths."""
+    for path in paths:
+        try:
+            if os.path.isfile(path):
+                return path
+        except OSError:
+            continue
+    return None
 
 
 def run_git(

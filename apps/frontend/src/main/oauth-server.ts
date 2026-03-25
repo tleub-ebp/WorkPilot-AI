@@ -69,12 +69,19 @@ export class OAuthServer {
    * Handle incoming HTTP requests
    */
   private async handleRequest(req: any, res: any): Promise<void> {
-    const url = new URL(req.url!, `http://localhost:${this.port}${req.url}`);
-    
-    // Enable CORS for all requests
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    const url = new URL(req.url!, `http://localhost:${this.port}`);
+
+    // CORS restricted to localhost only
+    const origin = req.headers.origin;
+    if (origin && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    // Security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Cache-Control', 'no-store');
 
     if (req.method === 'OPTIONS') {
       res.writeHead(200);

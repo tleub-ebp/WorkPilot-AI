@@ -644,7 +644,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="text-sm text-muted-foreground space-y-3">
-                <p dangerouslySetInnerHTML={{ __html: t('tasks:modal.delete.confirmMessage', { title: task.title }) }} />
+                <p dangerouslySetInnerHTML={{ __html: t('tasks:modal.delete.confirmMessage', { title: task.title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'), interpolation: { escapeValue: false } }) }} />
                 <p className="text-destructive">
                   {t('tasks:modal.delete.warningMessage')}
                 </p>
