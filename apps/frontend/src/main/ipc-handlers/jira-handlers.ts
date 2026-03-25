@@ -75,12 +75,11 @@ import json
 import os
 from pathlib import Path
 
-# Add connector src paths
+# Add project root (parent of src/) to sys.path
 sys.path.insert(0, str(Path('${connectorSrcPath.replace(/\\/g, '\\\\')}').parent))
-sys.path.insert(0, str(Path('${connectorSrcPath.replace(/\\/g, '\\\\')}')))
 
-from connectors.jira.client import JiraClient
-from connectors.jira.connector import JiraConnector
+from src.connectors.jira.client import JiraClient
+from src.connectors.jira.connector import JiraConnector
 
 try:
     instance_url = os.getenv('JIRA_URL') or os.getenv('JIRA_INSTANCE_URL')

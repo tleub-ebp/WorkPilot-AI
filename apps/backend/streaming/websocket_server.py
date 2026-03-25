@@ -279,14 +279,14 @@ class StreamingWebSocketServer:
             )
             logger.info(f"Auto-created session {session_id} for client connection")
 
-    async def _register_client(
+    def _register_client(
         self, session_id: str, websocket: WebSocketServerProtocol
     ) -> None:
         """Register client with session and streaming manager."""
         if session_id not in self._clients:
             self._clients[session_id] = set()
         self._clients[session_id].add(websocket)
-        await self.streaming_manager.subscribe(session_id, websocket)
+        self.streaming_manager.subscribe(session_id, websocket)
         logger.info(f"Client connected to session {session_id}")
 
     async def _send_welcome_message(
@@ -308,12 +308,12 @@ class StreamingWebSocketServer:
         except Exception as e:
             logger.warning(f"Failed to send welcome message: {e}")
 
-    async def _cleanup_client(
+    def _cleanup_client(
         self, session_id: str, websocket: WebSocketServerProtocol
     ) -> None:
         """Clean up client connection."""
         self._clients[session_id].discard(websocket)
-        await self.streaming_manager.unsubscribe(session_id, websocket)
+        self.streaming_manager.unsubscribe(session_id, websocket)
         logger.info(f"Client cleanup completed for session {session_id}")
 
     async def _handle_client(self, websocket: WebSocketServerProtocol):
@@ -322,57 +322,79 @@ class StreamingWebSocketServer:
         # when init_session changes the session. A plain string variable would not
         # be updated by the child method due to Python scoping rules.
         ctx = {"session_id": None}
+        
         try:
-            # Extract path and session ID
-            path = self._extract_websocket_path(websocket)
-            ctx["session_id"] = self._extract_session_id(path, websocket)
-            logger.info(
-                f"New connection for session {ctx['session_id']} from {websocket.remote_address}"
-            )
-
-            # Setup session if needed
-            await self._setup_session(ctx["session_id"])
-
-            # Register client
-            await self._register_client(ctx["session_id"], websocket)
-
-            # Send welcome message
-            session_info = self.streaming_manager.get_session_info(ctx["session_id"])
-            await self._send_welcome_message(ctx["session_id"], websocket, session_info)
-
-            # Handle incoming messages
-            try:
-                async for message in websocket:
-                    await self._handle_message(ctx, websocket, message)
-            except websockets.exceptions.ConnectionClosed:
-                logger.info(f"Client disconnected from session {ctx['session_id']}")
-            except websockets.exceptions.ConnectionClosedOK:
-                logger.info(
-                    f"Client cleanly disconnected from session {ctx['session_id']}"
-                )
-            except websockets.exceptions.ConnectionClosedError as e:
-                logger.warning(
-                    f"Client connection closed with error from session {ctx['session_id']}: {e}"
-                )
-            except websockets.exceptions.InvalidMessage as e:
-                logger.warning(
-                    f"Invalid message received from session {ctx['session_id']}: {e}"
-                )
-            except Exception as e:
-                logger.error(
-                    f"Unexpected error in client handler for session {ctx['session_id']}: {e}"
-                )
-            finally:
-                await self._cleanup_client(ctx["session_id"], websocket)
-
+            await self._setup_client_connection(websocket, ctx)
+            await self._handle_client_messages(websocket, ctx)
         except Exception as e:
             logger.error(f"Critical error in _handle_client: {e}")
-            # Ensure cleanup even if connection fails early
+            self._handle_critical_error(ctx, websocket, e)
+        finally:
+            self._ensure_cleanup(ctx, websocket)
+
+    async def _setup_client_connection(self, websocket: WebSocketServerProtocol, ctx: dict):
+        """Setup initial client connection and session."""
+        # Extract path and session ID
+        path = self._extract_websocket_path(websocket)
+        ctx["session_id"] = self._extract_session_id(path, websocket)
+        logger.info(
+            f"New connection for session {ctx['session_id']} from {websocket.remote_address}"
+        )
+
+        # Setup session if needed
+        await self._setup_session(ctx["session_id"])
+
+        # Register client
+        self._register_client(ctx["session_id"], websocket)
+
+        # Send welcome message
+        session_info = self.streaming_manager.get_session_info(ctx["session_id"])
+        await self._send_welcome_message(ctx["session_id"], websocket, session_info)
+
+    async def _handle_client_messages(self, websocket: WebSocketServerProtocol, ctx: dict):
+        """Handle incoming messages from client."""
+        try:
+            async for message in websocket:
+                await self._handle_message(ctx, websocket, message)
+        except websockets.exceptions.ConnectionClosed:
+            logger.info(f"Client disconnected from session {ctx['session_id']}")
+        except websockets.exceptions.ConnectionClosedOK:
+            logger.info(
+                f"Client cleanly disconnected from session {ctx['session_id']}"
+            )
+        except websockets.exceptions.ConnectionClosedError as e:
+            logger.warning(
+                f"Client connection closed with error from session {ctx['session_id']}: {e}"
+            )
+        except websockets.exceptions.InvalidMessage as e:
+            logger.warning(
+                f"Invalid message received from session {ctx['session_id']}: {e}"
+            )
+        except Exception as e:
+            logger.error(
+                f"Unexpected error in client handler for session {ctx['session_id']}: {e}"
+            )
+        finally:
+            self._cleanup_client(ctx["session_id"], websocket)
+
+    def _handle_critical_error(self, ctx: dict, websocket: WebSocketServerProtocol, _error: Exception):
+        """Handle critical errors during client setup."""
+        # Ensure cleanup even if connection fails early
+        try:
+            if ctx["session_id"]:
+                self._cleanup_client(ctx["session_id"], websocket)
+        except Exception as cleanup_error:
+            logger.error(f"Error during cleanup: {cleanup_error}")
+
+    def _ensure_cleanup(self, ctx: dict, websocket: WebSocketServerProtocol):
+        """Ensure cleanup is performed if not already done."""
+        # Only cleanup if we haven't already done so in the message handler
+        if ctx.get("session_id") and not ctx.get("cleaned_up", False):
             try:
-                if ctx["session_id"]:
-                    await self._cleanup_client(ctx["session_id"], websocket)
+                self._cleanup_client(ctx["session_id"], websocket)
+                ctx["cleaned_up"] = True
             except Exception as cleanup_error:
-                logger.error(f"Error during cleanup: {cleanup_error}")
+                logger.error(f"Error during final cleanup: {cleanup_error}")
 
     async def _handle_message(
         self, ctx: dict, websocket: WebSocketServerProtocol, message: str
@@ -388,104 +410,122 @@ class StreamingWebSocketServer:
             msg_type = data.get("type")
             session_id = ctx["session_id"]
 
-            # Special handling for session initialization
+            # Route message to appropriate handler
             if msg_type == "init_session":
-                # Client is sending the actual session ID
-                actual_session_id = data.get("session_id")
-                if actual_session_id and actual_session_id != session_id:
-                    logger.info(
-                        f"Client requested session change: {session_id} -> {actual_session_id}"
-                    )
-
-                    # Move client to the requested session
-                    if session_id in self._clients:
-                        self._clients[session_id].discard(websocket)
-                    await self.streaming_manager.unsubscribe(session_id, websocket)
-                    logger.info(f"Unsubscribed from old session: {session_id}")
-
-                    session_id = actual_session_id
-                    ctx["session_id"] = session_id  # Update the mutable context
-
-                    # Check if new session exists, create if needed
-                    session_info = self.streaming_manager.get_session_info(session_id)
-                    if not session_info:
-                        await self.streaming_manager.start_session(
-                            session_id,
-                            {
-                                "session_id": session_id,
-                                "task": "Live Coding Session",
-                                "project_path": "unknown",
-                                "auto_created": True,
-                                "status": "watching",
-                            },
-                        )
-                        logger.info(f"Auto-created session {session_id}")
-
-                    # Register with new session
-                    if session_id not in self._clients:
-                        self._clients[session_id] = set()
-                    self._clients[session_id].add(websocket)
-                    await self.streaming_manager.subscribe(session_id, websocket)
-                    logger.info(f"Subscribed to new session: {session_id}")
-
-                    # Send confirmation
-                    confirmation = {
-                        "event_type": "session_confirmed",
-                        "timestamp": time.time(),
-                        "data": {
-                            "session_id": session_id,
-                            "message": f"Connected to session {session_id}",
-                        },
-                        "session_id": session_id,
-                    }
-                    await websocket.send(json.dumps(confirmation))
-                    logger.info(f"Sent confirmation for session: {session_id}")
-                    return
-
-            if msg_type == "agent_event":
-                # Agent process is publishing an event — broadcast to all subscribers
-                event_data = data.get("event")
-                if event_data:
-                    from .streaming_manager import EventType, StreamingEvent
-
-                    # Use session_id from event data as authoritative source
-                    event_session = event_data.get("session_id", session_id)
-                    try:
-                        event = StreamingEvent(
-                            event_type=EventType(
-                                event_data.get("event_type", "agent_thinking")
-                            ),
-                            timestamp=event_data.get("timestamp", time.time()),
-                            data=event_data.get("data", {}),
-                            session_id=event_session,
-                        )
-                        logger.info(
-                            f"Broadcasting agent event '{event_data.get('event_type')}' to session {event_session} ({len(self._clients.get(event_session, set()))} subscribers)"
-                        )
-                        await self._broadcast_to_subscribers(
-                            event_session, event, exclude=websocket
-                        )
-                    except (ValueError, KeyError) as e:
-                        logger.warning(f"Invalid agent event: {e}")
-
+                await self._handle_init_session(ctx, websocket, data)
+            elif msg_type == "agent_event":
+                await self._handle_agent_event(session_id, data, websocket)
             elif msg_type == "chat_message":
-                # User sent a chat message
-                await self.streaming_manager.emit_chat_message(
-                    session_id=session_id,
-                    message=data.get("message", ""),
-                    author="User",
-                    author_type="user",
-                )
-
+                await self._handle_chat_message(session_id, data)
             elif msg_type == "control":
-                # Control command (pause/resume/stop)
-                action = data.get("action")
-                await self._handle_control(session_id, action)
+                await self._handle_control(session_id, data.get("action"))
+            # Unknown message types are ignored gracefully
 
         except json.JSONDecodeError:
             logger.error(f"Invalid JSON message: {message}")
         except Exception as e:
             logger.error(f"Error handling message: {e}")
+
+    async def _handle_init_session(self, ctx: dict, websocket: WebSocketServerProtocol, data: dict):
+        """Handle session initialization message."""
+        actual_session_id = data.get("session_id")
+        current_session_id = ctx["session_id"]
+        
+        if not actual_session_id or actual_session_id == current_session_id:
+            return
+            
+        logger.info(f"Client requested session change: {current_session_id} -> {actual_session_id}")
+        
+        await self._move_client_to_session(ctx, websocket, current_session_id, actual_session_id)
+        await self._send_session_confirmation(websocket, actual_session_id)
+
+    async def _move_client_to_session(self, ctx: dict, websocket: WebSocketServerProtocol, old_session_id: str, new_session_id: str):
+        """Move client from old session to new session."""
+        # Remove from old session
+        if old_session_id in self._clients:
+            self._clients[old_session_id].discard(websocket)
+        self.streaming_manager.unsubscribe(old_session_id, websocket)
+        logger.info(f"Unsubscribed from old session: {old_session_id}")
+
+        # Update context
+        ctx["session_id"] = new_session_id
+
+        # Ensure new session exists
+        await self._ensure_session_exists(new_session_id)
+
+        # Register with new session
+        if new_session_id not in self._clients:
+            self._clients[new_session_id] = set()
+        self._clients[new_session_id].add(websocket)
+        self.streaming_manager.subscribe(new_session_id, websocket)
+        logger.info(f"Subscribed to new session: {new_session_id}")
+
+    async def _ensure_session_exists(self, session_id: str):
+        """Create session if it doesn't exist."""
+        session_info = self.streaming_manager.get_session_info(session_id)
+        if not session_info:
+            await self.streaming_manager.start_session(
+                session_id,
+                {
+                    "session_id": session_id,
+                    "task": "Live Coding Session",
+                    "project_path": "unknown",
+                    "auto_created": True,
+                    "status": "watching",
+                },
+            )
+            logger.info(f"Auto-created session {session_id}")
+
+    async def _send_session_confirmation(self, websocket: WebSocketServerProtocol, session_id: str):
+        """Send session confirmation message to client."""
+        confirmation = {
+            "event_type": "session_confirmed",
+            "timestamp": time.time(),
+            "data": {
+                "session_id": session_id,
+                "message": f"Connected to session {session_id}",
+            },
+            "session_id": session_id,
+        }
+        await websocket.send(json.dumps(confirmation))
+        logger.info(f"Sent confirmation for session: {session_id}")
+
+    async def _handle_agent_event(self, session_id: str, data: dict, websocket: WebSocketServerProtocol):
+        """Handle agent event message."""
+        event_data = data.get("event")
+        if not event_data:
+            return
+            
+        from .streaming_manager import EventType, StreamingEvent
+
+        # Use session_id from event data as authoritative source
+        event_session = event_data.get("session_id", session_id)
+        try:
+            event = StreamingEvent(
+                event_type=EventType(
+                    event_data.get("event_type", "agent_thinking")
+                ),
+                timestamp=event_data.get("timestamp", time.time()),
+                data=event_data.get("data", {}),
+                session_id=event_session,
+            )
+            logger.info(
+                f"Broadcasting agent event '{event_data.get('event_type')}' to session {event_session} ({len(self._clients.get(event_session, set()))} subscribers)"
+            )
+            await self._broadcast_to_subscribers(
+                event_session, event, exclude=websocket
+            )
+        except (ValueError, KeyError) as e:
+            logger.warning(f"Invalid agent event: {e}")
+
+    async def _handle_chat_message(self, session_id: str, data: dict):
+        """Handle chat message."""
+        await self.streaming_manager.emit_chat_message(
+            session_id=session_id,
+            message=data.get("message", ""),
+            author="User",
+            author_type="user",
+        )
 
     async def _broadcast_to_subscribers(self, session_id: str, event, exclude=None):
         """Broadcast an event to all subscribers of a session, optionally excluding the sender."""
@@ -504,7 +544,7 @@ class StreamingWebSocketServer:
 
         for ws in disconnected:
             subscribers.discard(ws)
-            await self.streaming_manager.unsubscribe(session_id, ws)
+            self.streaming_manager.unsubscribe(session_id, ws)
 
     async def _handle_control(self, session_id: str, action: str):
         """Handle control commands."""

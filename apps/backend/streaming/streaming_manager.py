@@ -337,13 +337,13 @@ class StreamingManager:
         for ws in disconnected:
             subscribers.discard(ws)
 
-    async def subscribe(self, session_id: str, websocket: Any) -> None:
+    def subscribe(self, session_id: str, websocket: Any) -> None:
         """Subscribe a websocket to a session."""
         if session_id not in self._subscribers:
             self._subscribers[session_id] = set()
         self._subscribers[session_id].add(websocket)
 
-    async def unsubscribe(self, session_id: str, websocket: Any) -> None:
+    def unsubscribe(self, session_id: str, websocket: Any) -> None:
         """Unsubscribe a websocket from a session."""
         if session_id in self._subscribers:
             self._subscribers[session_id].discard(websocket)

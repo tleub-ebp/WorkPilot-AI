@@ -7,9 +7,9 @@ Implements dynamic prompt generation with context optimization.
 
 import logging
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +26,11 @@ class ContextLevel(Enum):
 class ContextInfo:
     """Information about task context"""
 
-    files: list[str] = None
-    recent_history: list[str] = None
-    dependencies: list[str] = None
-    constraints: dict[str, Any] = None
-    examples: list[str] = None
+    files: Optional[list[str]] = field(default=None)
+    recent_history: Optional[list[str]] = field(default=None)
+    dependencies: Optional[list[str]] = field(default=None)
+    constraints: Optional[dict[str, Any]] = field(default=None)
+    examples: Optional[list[str]] = field(default=None)
 
 
 class DynamicPromptTemplate:
@@ -149,7 +149,7 @@ Priority: {priority}
     def _determine_context_level(
         self,
         task_description: str,
-        context_info: ContextInfo | None,
+        _context_info: Optional["ContextInfo"],
         max_tokens: int | None,
     ) -> ContextLevel:
         """Determine optimal context level based on task and constraints"""
@@ -216,8 +216,9 @@ Priority: {priority}
             context_parts.append(f"Relevant files: {', '.join(context_info.files[:3])}")
 
         if context_info.constraints:
-            key_constraints = list(context_info.constraints.keys())[:3]
-            context_parts.append(f"Key constraints: {', '.join(key_constraints)}")
+            key_constraints = list(context_info.constraints.items())[:3]
+            constraints_str = ", ".join(f"{k}: {v}" for k, v in key_constraints)
+            context_parts.append(f"Key constraints: {constraints_str}")
 
         return (
             "\n".join(context_parts) if context_parts else "Minimal context available."

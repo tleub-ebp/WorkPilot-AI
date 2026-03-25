@@ -380,7 +380,15 @@ class TestFigmaConnector:
 
     def test_parse_figma_file_url(self):
         """Should parse standard Figma file URLs."""
-        from src.connectors.figma_connector import FigmaConnector
+        import sys
+        from pathlib import Path
+        
+        # Add the src directory to Python path for proper imports
+        src_path = Path(__file__).parent.parent.parent / "src"
+        if str(src_path) not in sys.path:
+            sys.path.insert(0, str(src_path))
+        
+        from connectors.figma_connector import FigmaConnector
 
         result = FigmaConnector.parse_figma_url(
             "https://www.figma.com/file/abc123def/My-Design"
@@ -391,7 +399,15 @@ class TestFigmaConnector:
 
     def test_parse_figma_design_url_with_node(self):
         """Should parse Figma design URL with node-id."""
-        from src.connectors.figma_connector import FigmaConnector
+        import sys
+        from pathlib import Path
+        
+        # Add the src directory to Python path for proper imports
+        src_path = Path(__file__).parent.parent.parent / "src"
+        if str(src_path) not in sys.path:
+            sys.path.insert(0, str(src_path))
+        
+        from connectors.figma_connector import FigmaConnector
 
         result = FigmaConnector.parse_figma_url(
             "https://www.figma.com/design/abc123def/Title?node-id=1%3A2"
@@ -402,14 +418,30 @@ class TestFigmaConnector:
 
     def test_parse_invalid_url(self):
         """Should return None for non-Figma URLs."""
-        from src.connectors.figma_connector import FigmaConnector
+        import sys
+        from pathlib import Path
+        
+        # Add the src directory to Python path for proper imports
+        src_path = Path(__file__).parent.parent.parent / "src"
+        if str(src_path) not in sys.path:
+            sys.path.insert(0, str(src_path))
+        
+        from connectors.figma_connector import FigmaConnector
 
         result = FigmaConnector.parse_figma_url("https://google.com")
         assert result is None
 
     def test_is_configured_without_token(self):
         """Should report not configured when no token."""
-        from src.connectors.figma_connector import FigmaConnector
+        import sys
+        from pathlib import Path
+        
+        # Add the src directory to Python path for proper imports
+        src_path = Path(__file__).parent.parent.parent / "src"
+        if str(src_path) not in sys.path:
+            sys.path.insert(0, str(src_path))
+        
+        from connectors.figma_connector import FigmaConnector
 
         with patch.dict("os.environ", {}, clear=True):
             import os
@@ -419,14 +451,30 @@ class TestFigmaConnector:
 
     def test_is_configured_with_token(self):
         """Should report configured when token is present."""
-        from src.connectors.figma_connector import FigmaConnector
+        import sys
+        from pathlib import Path
+        
+        # Add the src directory to Python path for proper imports
+        src_path = Path(__file__).parent.parent.parent / "src"
+        if str(src_path) not in sys.path:
+            sys.path.insert(0, str(src_path))
+        
+        from connectors.figma_connector import FigmaConnector
 
         connector = FigmaConnector(access_token="test-token-123")
         assert connector.is_configured() is True
 
     def test_token_name_conversion(self):
         """Should convert Figma style names to token names."""
-        from src.connectors.figma_connector import FigmaConnector
+        import sys
+        from pathlib import Path
+        
+        # Add the src directory to Python path for proper imports
+        src_path = Path(__file__).parent.parent.parent / "src"
+        if str(src_path) not in sys.path:
+            sys.path.insert(0, str(src_path))
+        
+        from connectors.figma_connector import FigmaConnector
 
         assert FigmaConnector._to_token_name("Color/Primary/500") == "color-primary-500"
         assert FigmaConnector._to_token_name("Font Size/Base") == "font-size-base"

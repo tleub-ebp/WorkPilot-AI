@@ -168,6 +168,10 @@ class TokenAwareAgentBase(ABC):
         if not self.auto_decompose:
             return False
 
+        # Never decompose tasks that are already at the lowest complexity level
+        if task.complexity == TaskComplexity.SIMPLE:
+            return False
+
         # Check complexity
         complexity_score = self.get_complexity_value(task.complexity)
         if complexity_score > self.complexity_threshold:

@@ -100,15 +100,22 @@ import json
 import os
 from pathlib import Path
 
-# Add connector src paths for both app repo and project
-sys.path.insert(0, str(Path('${connectorSrcPath.replace(/\\/g, '\\\\')}').parent))
-sys.path.insert(0, str(Path('${connectorSrcPath.replace(/\\/g, '\\\\')}')))
-sys.path.insert(0, str(Path('${projectPath.replace(/\\/g, '\\\\')}').parent / 'src'))
-# Add apps/backend path for core.git_provider
-sys.path.insert(0, str(Path('${backendPath.replace(/\\/g, '\\\\')}')))
-
-from connectors.azure_devops import AzureDevOpsConnector
-from config.settings import Settings
+# Add project root (parent of src/) at the front so it takes priority
+sys.path.insert(0, str(Path('${connectorSrcPath.replaceAll('\\', '\\\\')}').parent))
+# Append apps/backend at the end (lower priority) for core.git_provider
+sys.path.append(str(Path('${backendPath.replaceAll('\\', '\\\\')}')))
+from src.connectors.azure_devops import AzureDevOpsConnector
+try:
+    from src.config.settings import Settings
+except (ImportError, ModuleNotFoundError):
+    from dataclasses import dataclass
+    from typing import Optional
+    @dataclass
+    class Settings:
+        pat: str
+        organization_url: str
+        project: Optional[str] = None
+        repository: Optional[str] = None
 
 try:
     # Try to import git_provider for auto-detection
@@ -132,7 +139,7 @@ try:
     project = None
     if has_git_provider:
         try:
-            project_dir = Path('${projectPath.replace(/\\/g, '\\\\')}')
+            project_dir = Path('${projectPath.replaceAll('\\', '\\\\')}')
             project = extract_azure_devops_project(project_dir)
         except Exception:
             pass
@@ -371,13 +378,13 @@ import sys
 import json
 from pathlib import Path
 
-sys.path.insert(0, str(Path('${connectorSrcPath.replace(/\\/g, '\\\\')}').parent))
-sys.path.insert(0, str(Path('${backendPath.replace(/\\/g, '\\\\')}')))
+sys.path.insert(0, str(Path('${connectorSrcPath.replaceAll('\\', '\\\\')}').parent))
+sys.path.insert(0, str(Path('${backendPath.replaceAll('\\', '\\\\')}')))
 
 try:
     from core.git_provider import extract_azure_devops_repository
     
-    project_dir = Path('${projectPath.replace(/\\/g, '\\\\')}')
+    project_dir = Path('${projectPath.replaceAll('\\', '\\\\')}')
     repository = extract_azure_devops_repository(project_dir)
     
     print(json.dumps({'data': {'repository': repository}}))
@@ -883,9 +890,9 @@ except Exception as e:
         const pythonScript = `
 import sys, json, os
 from pathlib import Path
-sys.path.insert(0, '${backendPath.replace(/\\/g, '\\\\')}')
-sys.path.insert(0, str(Path('${connectorSrcPath.replace(/\\/g, '\\\\')}').parent))
-sys.path.insert(0, '${connectorSrcPath.replace(/\\/g, '\\\\')}')
+sys.path.insert(0, '${backendPath.replaceAll('\\', '\\\\')}')
+sys.path.insert(0, str(Path('${connectorSrcPath.replaceAll('\\', '\\\\')}').parent))
+sys.path.insert(0, '${connectorSrcPath.replaceAll('\\', '\\\\')}')
 
 from src.config.settings import Settings
 from src.connectors.azure_devops.client import AzureDevOpsClient
