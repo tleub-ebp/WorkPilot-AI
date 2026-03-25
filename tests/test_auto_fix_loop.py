@@ -21,7 +21,7 @@ from qa.auto_fix_loop import (
     DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
     AutoFixAttempt,
     AutoFixLoop,
-    TestResult,
+    AutoFixTestResult,
     run_auto_fix_loop,
 )
 from qa.auto_fix_metrics import (
@@ -198,7 +198,7 @@ class TestAutoFixLoop:
         loop = AutoFixLoop(mock_project_dir, mock_spec_dir, "test-model")
 
         # Test assertion failure
-        result = TestResult(
+        result = AutoFixTestResult(
             executed=True,
             passed=False,
             output="AssertionError: expected 5 but got 3",
@@ -209,7 +209,7 @@ class TestAutoFixLoop:
         assert pattern == "assertion_failure"
 
         # Test timeout
-        result = TestResult(
+        result = AutoFixTestResult(
             executed=True,
             passed=False,
             output="Test timeout after 30 seconds",
@@ -220,7 +220,7 @@ class TestAutoFixLoop:
         assert pattern == "timeout"
 
         # Test import error
-        result = TestResult(
+        result = AutoFixTestResult(
             executed=True,
             passed=False,
             output="ImportError: No module named 'foo'",
@@ -237,7 +237,7 @@ class TestAutoFixLoop:
         """Test fix request creation."""
         loop = AutoFixLoop(mock_project_dir, mock_spec_dir, "test-model")
 
-        test_result = TestResult(
+        test_result = AutoFixTestResult(
             executed=True,
             passed=False,
             output="test failed",
@@ -266,7 +266,7 @@ class TestAutoFixLoop:
 
         # Mock tests passing on first run
         with patch.object(loop, "_run_tests") as mock_run_tests:
-            mock_run_tests.return_value = TestResult(
+            mock_run_tests.return_value = AutoFixTestResult(
                 executed=True,
                 passed=True,
                 output="5 passed",
@@ -297,10 +297,10 @@ class TestAutoFixLoop:
         # Mock tests failing first, then passing
         call_count = [0]
 
-        async def mock_run_tests():
+        def mock_run_tests():
             call_count[0] += 1
             if call_count[0] == 1:
-                return TestResult(
+                return AutoFixTestResult(
                     executed=True,
                     passed=False,
                     output="2 failed",
@@ -310,7 +310,7 @@ class TestAutoFixLoop:
                     failed_count=2,
                 )
             else:
-                return TestResult(
+                return AutoFixTestResult(
                     executed=True,
                     passed=True,
                     output="5 passed",
@@ -344,7 +344,7 @@ class TestAutoFixLoop:
 
         # Mock tests always failing
         with patch.object(loop, "_run_tests") as mock_run_tests:
-            mock_run_tests.return_value = TestResult(
+            mock_run_tests.return_value = AutoFixTestResult(
                 executed=True,
                 passed=False,
                 output="2 failed",
@@ -382,7 +382,7 @@ class TestAutoFixMetrics:
         stats = tracker.load_stats()
 
         assert stats.total_runs == 0
-        assert stats.success_rate == 0.0
+        assert stats.success_rate == 0
 
     def test_load_stats_no_stats(self, mock_spec_dir):
         """Test loading stats when stats don't exist."""
@@ -390,7 +390,7 @@ class TestAutoFixMetrics:
         stats = tracker.load_stats()
 
         assert stats.total_runs == 0
-        assert stats.success_rate == 0.0
+        assert stats.success_rate == 0
 
     def test_record_run_success(self, mock_spec_dir):
         """Test recording a successful run."""
@@ -407,8 +407,8 @@ class TestAutoFixMetrics:
         stats = tracker.load_stats()
         assert stats.total_runs == 1
         assert stats.successful_runs == 1
-        assert stats.success_rate == 1.0
-        assert stats.average_attempts == 2.0
+        assert stats.success_rate == 1
+        assert stats.average_attempts == 2
 
     def test_record_run_failure(self, mock_spec_dir):
         """Test recording a failed run."""
@@ -425,8 +425,8 @@ class TestAutoFixMetrics:
         stats = tracker.load_stats()
         assert stats.total_runs == 1
         assert stats.successful_runs == 0
-        assert stats.success_rate == 0.0
-        assert stats.average_attempts == 5.0
+        assert stats.success_rate == 0
+        assert stats.average_attempts == 5
 
     def test_record_multiple_runs(self, mock_spec_dir):
         """Test recording multiple runs."""
@@ -486,8 +486,8 @@ class TestAutoFixMetrics:
 
         assert dashboard["totalRuns"] == 2
         assert dashboard["successfulRuns"] == 2
-        assert dashboard["successRate"] == 100.0
-        assert dashboard["averageAttempts"] == 2.5
+        assert dashboard["successRate"] == 100
+        assert dashboard["averageAttempts"] == pytest.approx(2.5)
         assert "commonPatterns" in dashboard
         assert "recentRuns" in dashboard
 
@@ -523,7 +523,7 @@ class TestAutoFixMetrics:
         stats = tracker.load_stats()
         assert stats.total_runs == 0
         assert stats.successful_runs == 0
-        assert stats.success_rate == 0.0
+        assert stats.success_rate == 0
 
 
 class TestAutoFixPublicAPI:

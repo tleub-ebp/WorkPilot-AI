@@ -41,7 +41,7 @@ try:
         AutoFixLoop,
         run_auto_fix_loop,
         DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
-        TestResult,
+        AutoFixTestResult,
         AutoFixAttempt,
     )
     print(f"  ✓ AutoFixLoop importé")
@@ -109,9 +109,9 @@ except ImportError as e:
 # Test 6: Instantiation de classes
 print("\n[6/7] 🏗️  Test instantiation classes...")
 try:
-    from qa.auto_fix_loop import TestResult, AutoFixAttempt
+    from qa.auto_fix_loop import AutoFixTestResult, AutoFixAttempt
     
-    result = TestResult(
+    result = AutoFixTestResult(
         executed=True,
         passed=False,
         output="test output",
@@ -120,7 +120,7 @@ try:
         test_count=5,
         failed_count=2,
     )
-    print(f"  ✓ TestResult créé: {result.test_count} tests, {result.failed_count} failed")
+    print(f"  ✓ AutoFixTestResult créé: {result.test_count} tests, {result.failed_count} failed")
     
     attempt = AutoFixAttempt(
         attempt_number=1,

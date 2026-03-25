@@ -21,11 +21,11 @@ try:
     from qa.auto_fix_loop import (
         DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
         AutoFixLoop,
-        TestResult,
+        AutoFixTestResult,
         AutoFixAttempt,
     )
     print(f"  ✓ AutoFixLoop importé")
-    print(f"  ✓ TestResult importé")
+    print(f"  ✓ AutoFixTestResult importé")
     print(f"  ✓ AutoFixAttempt importé")
     print(f"  ✓ DEFAULT_MAX_AUTO_FIX_ATTEMPTS = {DEFAULT_MAX_AUTO_FIX_ATTEMPTS}")
     print("  ✅ Imports OK")
@@ -81,11 +81,11 @@ except Exception as e:
     traceback.print_exc()
     sys.exit(1)
 
-# Test 4: TestResult et AutoFixAttempt
+# Test 4: AutoFixTestResult et AutoFixAttempt
 print("\n[4/4] 📋 Test dataclasses...")
 try:
-    # Créer un TestResult
-    result = TestResult(
+    # Créer un AutoFixTestResult
+    result = AutoFixTestResult(
         executed=True,
         passed=False,
         output="test output",
@@ -94,7 +94,7 @@ try:
         test_count=5,
         failed_count=2,
     )
-    print(f"  ✓ TestResult créé: {result.test_count} tests, {result.failed_count} failed")
+    print(f"  ✓ AutoFixTestResult créé: {result.test_count} tests, {result.failed_count} failed")
     
     # Créer un AutoFixAttempt
     attempt = AutoFixAttempt(
